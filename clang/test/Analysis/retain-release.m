@@ -115,10 +115,15 @@ typedef struct _NSZone NSZone;
 - (id)retain;
 - (oneway void)release;
 - (id)autorelease;
+- (NSString *)description;
 - (id)init;
-@end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
-@end  @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
-@end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
+@end
+@protocol NSCopying 
+- (id)copyWithZone:(NSZone *)zone;
+@end
+@protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
+@end
+@protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end
 @interface NSObject <NSObject> {}
 + (id)allocWithZone:(NSZone *)zone;
@@ -132,13 +137,22 @@ extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
 typedef struct {
 }
 NSFastEnumerationState;
-@protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
-@end           @class NSString, NSDictionary;
+@protocol NSFastEnumeration 
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
+@end
+@class NSString, NSDictionary;
 @interface NSValue : NSObject <NSCopying, NSCoding>  - (void)getValue:(void *)value;
 @end  @interface NSNumber : NSValue  - (char)charValue;
 - (id)initWithInt:(int)value;
 @end   @class NSString;
-@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
+@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
+- (NSUInteger)count;
+- (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (id)arrayWithObject:(id)anObject;
++ (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (id)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithArray:(NSArray *)array;
 @end  @interface NSArray (NSArrayCreation)  + (id)array;
 @end       @interface NSAutoreleasePool : NSObject {
 }
@@ -158,8 +172,12 @@ typedef double NSTimeInterval;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
 @end   @class NSLocale, NSDate, NSCalendar, NSTimeZone, NSError, NSArray, NSMutableDictionary;
-@interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
-@end    @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
+@interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
+- (NSUInteger)count;
++ (id)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
++ (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
+@end
+@interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
 @end  @interface NSMutableDictionary (NSMutableDictionaryCreation)  + (id)dictionaryWithCapacity:(NSUInteger)numItems;
 @end  typedef double CGFloat;
@@ -1627,5 +1645,54 @@ void rdar9658496() {
   xpc = _CFXPCCreateXPCObjectFromCFObject( cf );
   CFRelease(cf);
   xpc_release(xpc);
+}
+
+//===----------------------------------------------------------------------===//
+// ObjC literals support.
+//===----------------------------------------------------------------------===//
+
+void test_objc_arrays() {
+    { // CASE ONE -- OBJECT IN ARRAY CREATED DIRECTLY
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a = [[NSArray alloc] initWithObjects:o, (void*)0]; // expected-warning {{leak}}
+        [o release];
+        [a description];
+        [o description];
+    }
+
+    { // CASE TWO -- OBJECT IN ARRAY CREATED BY DUPING AUTORELEASED ARRAY
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a1 = [NSArray arrayWithObjects:o, (void*)0];
+        NSArray *a2 = [[NSArray alloc] initWithArray:a1]; // expected-warning {{leak}}
+        [o release];        
+        [a2 description];
+        [o description];
+    }
+
+    { // CASE THREE -- OBJECT IN RETAINED @[]
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a3 = [@[o] retain]; // expected-warning {{leak}}
+        [o release];        
+        [a3 description];
+        [o description];
+    }
+    
+    { // CASE FOUR -- OBJECT IN ARRAY CREATED BY DUPING @[]
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a = [[NSArray alloc] initWithArray:@[o]]; // expected-warning {{leak}}
+        [o release];
+        
+        [a description];
+        [o description];
+    }
+    
+    { // CASE FIVE -- OBJECT IN RETAINED @{}
+        NSValue *o = [[NSValue alloc] init];
+        NSDictionary *a = [@{o : o} retain]; // expected-warning {{leak}}
+        [o release];
+        
+        [a description];
+        [o description];
+    }
 }
 

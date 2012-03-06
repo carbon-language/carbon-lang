@@ -79,6 +79,9 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
         else
           return svalBuilder.makeIntVal(cast<IntegerLiteral>(E));
       }
+      case Stmt::ObjCBoolLiteralExprClass:
+        return svalBuilder.makeBoolVal(cast<ObjCBoolLiteralExpr>(E));
+
       // For special C0xx nullptr case, make a null pointer SVal.
       case Stmt::CXXNullPtrLiteralExprClass:
         return svalBuilder.makeNull();

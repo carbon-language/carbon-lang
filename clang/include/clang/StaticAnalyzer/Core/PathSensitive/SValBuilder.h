@@ -16,6 +16,8 @@
 #define LLVM_CLANG_GR_SVALBUILDER
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
@@ -215,6 +217,10 @@ public:
     return nonloc::ConcreteInt(
         BasicVals.getValue(integer->getValue(),
                      integer->getType()->isUnsignedIntegerOrEnumerationType()));
+  }
+  
+  nonloc::ConcreteInt makeBoolVal(const ObjCBoolLiteralExpr *boolean) {
+    return makeTruthVal(boolean->getValue(), boolean->getType());
   }
 
   nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *boolean);

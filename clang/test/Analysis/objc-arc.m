@@ -3,6 +3,7 @@
 typedef signed char BOOL;
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
+typedef unsigned long NSUInteger;
 
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
@@ -10,12 +11,30 @@ typedef struct _NSZone NSZone;
 @protocol NSCopying
 - (id)copyWithZone:(NSZone *)zone;
 @end
-@protocol NSCoding
+@protocol NSCoding;
+@protocol NSMutableCopying;
+@protocol NSFastEnumeration
 - (void)encodeWithCoder:(NSCoder *)aCoder;
+@end
+@protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
+@end
+@protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end
 @interface NSObject <NSObject> {}
 + (id)alloc;
+- (id)init;
+- (NSString *)description;
 @end
+@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
+- (NSUInteger)count;
+- (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (id)arrayWithObject:(id)anObject;
++ (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
++ (id)arrayWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithArray:(NSArray *)array;
+@end
+
 typedef const struct __CFAllocator * CFAllocatorRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 typedef double CFTimeInterval;
@@ -152,4 +171,33 @@ id test_return() {
   id x = (__bridge_transfer id) CFCreateString();
   return x; // no-warning
 }
+
+void test_objc_arrays() {
+    { // CASE ONE -- OBJECT IN ARRAY CREATED DIRECTLY
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a = [[NSArray alloc] initWithObjects:o, (void*)0];
+        [a description];
+        [o description];
+    }
+
+    { // CASE TWO -- OBJECT IN ARRAY CREATED BY DUPING AUTORELEASED ARRAY
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a1 = [NSArray arrayWithObjects:o, (void*)0];
+        NSArray *a2 = [[NSArray alloc] initWithArray:a1];
+        [a2 description];
+        [o description];
+    }
+
+    { // CASE THREE -- OBJECT IN RETAINED @[]
+        NSObject *o = [[NSObject alloc] init];
+        NSArray *a3 = @[o];
+        [a3 description];
+        [o description];
+    }
+    {
+      // CASE 4, verify analyzer still working.
+      CFCreateString(); // expected-warning {{leak}}
+    }
+}
+
 

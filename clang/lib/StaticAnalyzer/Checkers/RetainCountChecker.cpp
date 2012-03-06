@@ -1861,41 +1861,49 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   if (!PrevT) {
     const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
 
-    if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
-      // Get the name of the callee (if it is available).
-      SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee(), LCtx);
-      if (const FunctionDecl *FD = X.getAsFunctionDecl())
-        os << "Call to function '" << *FD << '\'';
-      else
-        os << "function call";
+    if (isa<ObjCArrayLiteral>(S)) {
+      os << "NSArray literal is an object with a +0 retain count";
     }
-    else {
-      assert(isa<ObjCMessageExpr>(S));      
-      // The message expression may have between written directly or as
-      // a property access.  Lazily determine which case we are looking at.
-      os << (isPropertyAccess(S, N->getParentMap()) ? "Property" : "Method");
+    else if (isa<ObjCDictionaryLiteral>(S)) {
+      os << "NSDictionary literal is an object with a +0 retain count";
     }
-
-    if (CurrV.getObjKind() == RetEffect::CF) {
-      os << " returns a Core Foundation object with a ";
-    }
-    else {
-      assert (CurrV.getObjKind() == RetEffect::ObjC);
-      os << " returns an Objective-C object with a ";
-    }
-
-    if (CurrV.isOwned()) {
-      os << "+1 retain count";
-
-      if (GCEnabled) {
-        assert(CurrV.getObjKind() == RetEffect::CF);
-        os << ".  "
-        "Core Foundation objects are not automatically garbage collected.";
+    else {      
+      if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
+        // Get the name of the callee (if it is available).
+        SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee(), LCtx);
+        if (const FunctionDecl *FD = X.getAsFunctionDecl())
+          os << "Call to function '" << *FD << '\'';
+        else
+          os << "function call";
       }
-    }
-    else {
-      assert (CurrV.isNotOwned());
-      os << "+0 retain count";
+      else {
+        assert(isa<ObjCMessageExpr>(S));      
+        // The message expression may have between written directly or as
+        // a property access.  Lazily determine which case we are looking at.
+        os << (isPropertyAccess(S, N->getParentMap()) ? "Property" : "Method");
+      }
+
+      if (CurrV.getObjKind() == RetEffect::CF) {
+        os << " returns a Core Foundation object with a ";
+      }
+      else {
+        assert (CurrV.getObjKind() == RetEffect::ObjC);
+        os << " returns an Objective-C object with a ";
+      }
+
+      if (CurrV.isOwned()) {
+        os << "+1 retain count";
+
+        if (GCEnabled) {
+          assert(CurrV.getObjKind() == RetEffect::CF);
+          os << ".  "
+          "Core Foundation objects are not automatically garbage collected.";
+        }
+      }
+      else {
+        assert (CurrV.isNotOwned());
+        os << "+0 retain count";
+      }
     }
 
     PathDiagnosticLocation Pos(S, BRC.getSourceManager(),
@@ -2295,6 +2303,8 @@ class RetainCountChecker
                     check::PostStmt<CastExpr>,
                     check::PostStmt<CallExpr>,
                     check::PostStmt<CXXConstructExpr>,
+                    check::PostStmt<ObjCArrayLiteral>,
+                    check::PostStmt<ObjCDictionaryLiteral>,
                     check::PostObjCMessage,
                     check::PreStmt<ReturnStmt>,
                     check::RegionChanges,
@@ -2439,7 +2449,10 @@ public:
 
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPostStmt(const CXXConstructExpr *CE, CheckerContext &C) const;
+  void checkPostStmt(const ObjCArrayLiteral *AL, CheckerContext &C) const;
+  void checkPostStmt(const ObjCDictionaryLiteral *DL, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const;
+                      
   void checkSummary(const RetainSummary &Summ, const CallOrObjCMessage &Call,
                     CheckerContext &C) const;
 
@@ -2474,6 +2487,8 @@ public:
   void processNonLeakError(ProgramStateRef St, SourceRange ErrorRange,
                            RefVal::Kind ErrorKind, SymbolRef Sym,
                            CheckerContext &C) const;
+                      
+  void processObjCLiterals(CheckerContext &C, const Expr *Ex) const;
 
   const ProgramPointTag *getDeadSymbolTag(SymbolRef sym) const;
 
@@ -2635,6 +2650,49 @@ void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
 
   ProgramStateRef state = C.getState();
   checkSummary(*Summ, CallOrObjCMessage(CE, state, C.getLocationContext()), C);
+}
+
+void RetainCountChecker::processObjCLiterals(CheckerContext &C,
+                                             const Expr *Ex) const {
+  ProgramStateRef state = C.getState();
+  const ExplodedNode *pred = C.getPredecessor();  
+  for (Stmt::const_child_iterator it = Ex->child_begin(), et = Ex->child_end() ;
+       it != et ; ++it) {
+    const Stmt *child = *it;
+    SVal V = state->getSVal(child, pred->getLocationContext());
+    if (SymbolRef sym = V.getAsSymbol())
+      if (const RefVal* T = state->get<RefBindings>(sym)) {
+        RefVal::Kind hasErr = (RefVal::Kind) 0;
+        state = updateSymbol(state, sym, *T, MayEscape, hasErr, C);
+        if (hasErr) {
+          processNonLeakError(state, child->getSourceRange(), hasErr, sym, C);
+          return;
+        }
+      }
+  }
+  
+  // Return the object as autoreleased.
+  //  RetEffect RE = RetEffect::MakeNotOwned(RetEffect::ObjC);
+  if (SymbolRef sym = 
+        state->getSVal(Ex, pred->getLocationContext()).getAsSymbol()) {
+    QualType ResultTy = Ex->getType();
+    state = state->set<RefBindings>(sym, RefVal::makeNotOwned(RetEffect::ObjC,
+                                                              ResultTy));
+  }
+  
+  C.addTransition(state);  
+}
+
+void RetainCountChecker::checkPostStmt(const ObjCArrayLiteral *AL,
+                                       CheckerContext &C) const {
+  // Apply the 'MayEscape' to all values.
+  processObjCLiterals(C, AL);
+}
+
+void RetainCountChecker::checkPostStmt(const ObjCDictionaryLiteral *DL,
+                                       CheckerContext &C) const {
+  // Apply the 'MayEscape' to all keys and values.
+  processObjCLiterals(C, DL);
 }
 
 void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg, 

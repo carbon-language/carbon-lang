@@ -555,6 +555,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
 
+    // FIXME.
+    case Stmt::ObjCSubscriptRefExprClass:
+      break;
+      
     case Stmt::ObjCPropertyRefExprClass:
       // Implicitly handled by Environment::getSVal().
       break;
@@ -586,6 +590,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ObjCIsaExprClass:
     case Stmt::ObjCProtocolExprClass:
     case Stmt::ObjCSelectorExprClass:
+    case Expr::ObjCNumericLiteralClass:
     case Stmt::ParenListExprClass:
     case Stmt::PredefinedExprClass:
     case Stmt::ShuffleVectorExprClass:
@@ -602,6 +607,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::IntegerLiteralClass:
     case Stmt::CharacterLiteralClass:
     case Stmt::CXXBoolLiteralExprClass:
+    case Stmt::ObjCBoolLiteralExprClass:
     case Stmt::FloatingLiteralClass:
     case Stmt::SizeOfPackExprClass:
     case Stmt::StringLiteralClass:
@@ -614,6 +620,36 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       getCheckerManager().runCheckersForPostStmt(Dst, preVisit, S, *this);
       Bldr.addNodes(Dst);
       break;
+    }
+
+    case Expr::ObjCArrayLiteralClass:
+    case Expr::ObjCDictionaryLiteralClass: {
+      Bldr.takeNodes(Pred);
+
+      ExplodedNodeSet preVisit;
+      getCheckerManager().runCheckersForPreStmt(preVisit, Pred, S, *this);
+      
+      // FIXME: explicitly model with a region and the actual contents
+      // of the container.  For now, conjure a symbol.
+      ExplodedNodeSet Tmp;
+      StmtNodeBuilder Bldr2(preVisit, Tmp, *currentBuilderContext);
+
+      for (ExplodedNodeSet::iterator it = preVisit.begin(), et = preVisit.end();
+           it != et; ++it) {      
+        ExplodedNode *N = *it;
+        const Expr *Ex = cast<Expr>(S);
+        QualType resultType = Ex->getType();
+        const LocationContext *LCtx = N->getLocationContext();
+        SVal result =
+          svalBuilder.getConjuredSymbolVal(0, Ex, LCtx, resultType, 
+                                 currentBuilderContext->getCurrentBlockCount());
+        ProgramStateRef state = N->getState()->BindExpr(Ex, LCtx, result);
+        Bldr2.generateNode(S, N, state);
+      }
+      
+      getCheckerManager().runCheckersForPostStmt(Dst, Tmp, S, *this);
+      Bldr.addNodes(Dst);
+      break;      
     }
 
     case Stmt::ArraySubscriptExprClass:

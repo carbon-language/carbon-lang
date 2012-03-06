@@ -345,7 +345,8 @@ my %CompileOptionMap = (
 );
 
 my %LinkerOptionMap = (
-  '-framework' => 1
+  '-framework' => 1,
+  '-fobjc-link-runtime' => 0
 );
 
 my %CompilerLinkerOptionMap = (
