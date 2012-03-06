@@ -3081,36 +3081,44 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
     <tr>
       <td>1</td>
       <td align="left">
-        <dt><b>Error</b></dt>
-        <dd>Emits an error if two values disagree. It is an error to have an ID
-            with both an Error and a Warning behavior.</dd>
+        <dl>
+          <dt><b>Error</b></dt>
+          <dd>Emits an error if two values disagree. It is an error to have an ID
+              with both an Error and a Warning behavior.</dd>
+        </dl>
       </td>
     </tr>
     <tr>
       <td>2</td>
       <td align="left">
-        <dt><b>Warning</b></dt>
-        <dd>Emits a warning if two values disagree.</dd>
+        <dl>
+          <dt><b>Warning</b></dt>
+          <dd>Emits a warning if two values disagree.</dd>
+        </dl>
       </td>
     </tr>
     <tr>
       <td>3</td>
       <td align="left">
-        <dt><b>Require</b></dt>
-        <dd>Emits an error when the specified value is not present or doesn't
-            have the specified value. It is an error for two (or more)
-            <tt>llvm.module.flags</tt> with the same ID to have the Require
-            behavior but different values. There may be multiple Require flags
-            per ID.</dd>
+        <dl>
+          <dt><b>Require</b></dt>
+          <dd>Emits an error when the specified value is not present or doesn't
+              have the specified value. It is an error for two (or more)
+              <tt>llvm.module.flags</tt> with the same ID to have the Require
+              behavior but different values. There may be multiple Require flags
+              per ID.</dd>
+        </dl>
       </td>
     </tr>
     <tr>
       <td>4</td>
       <td align="left">
-        <dt><b>Override</b></dt>
-        <dd>Uses the specified value if the two values disagree. It is an error
-            for two (or more) <tt>llvm.module.flags</tt> with the same ID to
-            have the Override behavior but different values.</dd>
+        <dl>
+          <dt><b>Override</b></dt>
+          <dd>Uses the specified value if the two values disagree. It is an
+              error for two (or more) <tt>llvm.module.flags</tt> with the same
+              ID to have the Override behavior but different values.</dd>
+        </dl>
       </td>
     </tr>
   </tbody>
@@ -3176,7 +3184,7 @@ metadata !{ metadata !"foo", i32 1 }
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
-      <th width="30%">Key</th>
+      <th>Key</th>
       <th>Value</th>
     </tr>
     <tr>
