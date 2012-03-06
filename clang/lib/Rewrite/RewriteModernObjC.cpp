@@ -3250,12 +3250,9 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   ObjCInterfaceDecl *RCDecl = CDecl->getSuperClass();
   SmallVector<ObjCIvarDecl *, 8> IVars;
   for (ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
-       IVD; IVD = IVD->getNextIvar()) {
-    // Ignore unnamed bit-fields.
-    if (!IVD->getDeclName())
-      continue;
+       IVD; IVD = IVD->getNextIvar())
     IVars.push_back(IVD);
-  }
+  
   SourceLocation LocStart = CDecl->getLocStart();
   SourceLocation LocEnd = CDecl->getEndOfDefinitionLoc();
   
