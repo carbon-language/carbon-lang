@@ -463,7 +463,7 @@ static void
 emitRegisterNameString(raw_ostream &O, StringRef AltName,
   const std::vector<CodeGenRegister*> &Registers) {
   StringToOffsetTable StringTable;
-  O << "  static const unsigned RegAsmOffset" << AltName << "[] = {\n    ";
+  O << "  static const uint16_t RegAsmOffset" << AltName << "[] = {\n    ";
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = *Registers[i];
 
@@ -507,7 +507,7 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
     << "  };\n"
     << "\n";
 
-  O << "  const char *AsmStrs" << AltName << " =\n";
+  O << "  const char *const AsmStrs" << AltName << " =\n";
   StringTable.EmitString(O);
   O << ";\n";
 }
@@ -541,7 +541,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
     emitRegisterNameString(O, "", Registers);
 
   if (hasAltNames) {
-    O << "  const unsigned *RegAsmOffset;\n"
+    O << "  const uint16_t *RegAsmOffset;\n"
       << "  const char *AsmStrs;\n"
       << "  switch(AltIdx) {\n"
       << "  default: llvm_unreachable(\"Invalid register alt name index!\");\n";
@@ -583,7 +583,7 @@ void AsmWriterEmitter::EmitGetInstructionName(raw_ostream &O) {
   << "  assert(Opcode < " << NumberedInstructions.size()
   << " && \"Invalid instruction number!\");\n"
   << "\n"
-  << "  static const unsigned InstAsmOffset[] = {";
+  << "  static const uint16_t InstAsmOffset[] = {";
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     const CodeGenInstruction &Inst = *NumberedInstructions[i];
 
@@ -597,7 +597,7 @@ void AsmWriterEmitter::EmitGetInstructionName(raw_ostream &O) {
   << "  };\n"
   << "\n";
 
-  O << "  const char *Strs =\n";
+  O << "  const char *const Strs =\n";
   StringTable.EmitString(O);
   O << ";\n";
 
