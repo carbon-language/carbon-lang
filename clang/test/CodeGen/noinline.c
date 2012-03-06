@@ -11,4 +11,3 @@ void foo() {
 // NOINLINE: dont_inline_me
     pa[0] = dont_inline_me(pa[1],pa[2]);	
 }
-

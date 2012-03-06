@@ -7,4 +7,3 @@
 
 // CHECK: clang
 // CHECK: "-fno-inline"
-
