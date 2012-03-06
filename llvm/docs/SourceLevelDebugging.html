@@ -63,7 +63,14 @@
 	<li><a href="#objcpropertynewattributes">New DWARF Attributes</a></li>
 	<li><a href="#objcpropertynewconstants">New DWARF Constants</a></li>
       </ul>
-
+      <li><a href="#acceltable">Name Accelerator Tables</a></li>
+      <ul>
+        <li><a href="#acceltableintroduction">Introduction</a></li>
+        <li><a href="#acceltablehashes">Hash Tables</a></li>
+        <li><a href="#acceltabledetails">Details</a></li>
+        <li><a href="#acceltablecontents">Contents</a></li>
+        <li><a href="#acceltableextensions">Language Extensions and File Format Changes</a></li>
+      </ul>
     </ol>
   </li>
 </ul>
@@ -2113,6 +2120,661 @@ The DWARF for this would be:
 </table>
 
 </div>
+</div>
+</div>
+
+<div>
+<!-- ======================================================================= -->
+<h3>
+  <a name="acceltable">Name Accelerator Tables</a>
+</h3>
+<!-- ======================================================================= -->
+<!-- ======================================================================= -->
+<h4>
+  <a name="acceltableintro">Introduction</a>
+</h4>
+<!-- ======================================================================= -->
+<div>
+<p>The .debug_pubnames and .debug_pubtypes formats are not what a debugger
+  needs. The "pub" in the section name indicates that the entries in the
+  table are publicly visible names only. This means no static or hidden
+  functions show up in the .debug_pubnames. No static variables or private class
+  variables are in the .debug_pubtypes. Many compilers add different things to
+  these tables, so we can't rely upon the contents between gcc, icc, or clang.
+
+<p>The typical query given by users tends not to match up with the contents of
+  these tables. For example, the DWARF spec states that "In the case of the
+  name of a function member or static data member of a C++ structure, class or
+  union, the name presented in the .debug_pubnames section is not the simple
+  name given by the DW_AT_name attribute of the referenced debugging information
+  entry, but rather the fully qualified name of the data or function member."
+  So the only names in these tables for complex C++ entries is a fully
+  qualified name.  Debugger users tend not to enter their search strings as
+  "a::b::c(int,const Foo&) const", but rather as "c", "b::c" , or "a::b::c".  So
+  the name entered in the name table must be demangled in order to chop it up
+  appropriately and additional names must be manually entered into the table
+  to make it effective as a name lookup table for debuggers to use.
+
+<p>All debuggers currently ignore the .debug_pubnames table as a result of
+  its inconsistent and useless public-only name content making it a waste of
+  space in the object file. These tables, when they are written to disk, are
+  not sorted in any way, leaving every debugger to do its own parsing
+  and sorting. These tables also include an inlined copy of the string values
+  in the table itself making the tables much larger than they need to be on
+  disk, especially for large C++ programs.
+
+<p>Can't we just fix the sections by adding all of the names we need to this
+  table? No, because that is not what the tables are defined to contain and we
+  won't know the difference between the old bad tables and the new good tables.
+  At best we could make our own renamed sections that contain all of the data
+  we need.
+
+<p>These tables are also insufficient for what a debugger like LLDB needs.
+  LLDB uses clang for its expression parsing where LLDB acts as a PCH. LLDB is
+  then often asked to look for type "foo" or namespace "bar", or list items in
+  namespace "baz". Namespaces are not included in the pubnames or pubtypes
+  tables. Since clang asks a lot of questions when it is parsing an expression,
+  we need to be very fast when looking up names, as it happens a lot. Having new
+  accelerator tables that are optimized for very quick lookups will benefit
+  this type of debugging experience greatly.
+
+<p>We would like to generate name lookup tables that can be mapped into
+  memory from disk, and used as is, with little or no up-front parsing. We would
+  also be able to control the exact content of these different tables so they
+  contain exactly what we need. The Name Accelerator Tables were designed
+  to fix these issues. In order to solve these issues we need to:
+<ul>
+  <li>Have a format that can be mapped into memory from disk and used as is</li>
+  <li>Lookups should be very fast</li>
+  <li>Extensible table format so these tables can be made by many producers</li>
+  <li>Contain all of the names needed for typical lookups out of the box</li>
+  <li>Strict rules for the contents of tables</li>
+</ul>
+<p>Table size is important and the accelerator table format should allow the
+  reuse of strings from common string tables so the strings for the names are
+  not duplicated. We also want to make sure the table is ready to be used as-is
+  by simply mapping the table into memory with minimal header parsing.
+
+<p>The name lookups need to be fast and optimized for the kinds of lookups
+  that debuggers tend to do. Optimally we would like to touch as few parts of
+  the mapped table as possible when doing a name lookup and be able to quickly
+  find the name entry we are looking for, or discover there are no matches. In
+  the case of debuggers we optimized for lookups that fail most of the time.
+
+<p>Each table that is defined should have strict rules on exactly what is in
+  the accelerator tables and documented so clients can rely on the content.
+</div>
+<!-- ======================================================================= -->
+<h4>
+  <a name="acceltablehashes">Hash Tables</a>
+</h4>
+<!-- ======================================================================= -->
+<div>
+<h5>Standard Hash Tables</h5>
+<p>Typical hash tables have a header, buckets, and each bucket points to the
+bucket contents:
+<div class="doc_code">
+<pre>
+.------------.
+|  HEADER    |
+|------------|
+|  BUCKETS   |
+|------------|
+|  DATA      |
+`------------'
+</pre>
+</div>
+<p>The BUCKETS are an array of offsets to DATA for each hash:
+<div class="doc_code">
+<pre>
+.------------.
+| 0x00001000 | BUCKETS[0]
+| 0x00002000 | BUCKETS[1]
+| 0x00002200 | BUCKETS[2]
+| 0x000034f0 | BUCKETS[3]
+|            | ...
+| 0xXXXXXXXX | BUCKETS[n_buckets]
+'------------'
+</pre>
+</div>
+<p>So for bucket[3] in the example above, we have an offset into the table
+  0x000034f0 which points to a chain of entries for the bucket. Each bucket
+  must contain a next pointer, full 32 bit hash value, the string itself,
+  and the data for the current string value.
+<div class="doc_code">
+<pre>
+            .------------.
+0x000034f0: | 0x00003500 | next pointer
+            | 0x12345678 | 32 bit hash
+            | "erase"    | string value
+            | data[n]    | HashData for this bucket
+            |------------|
+0x00003500: | 0x00003550 | next pointer
+            | 0x29273623 | 32 bit hash
+            | "dump"     | string value
+            | data[n]    | HashData for this bucket
+            |------------|
+0x00003550: | 0x00000000 | next pointer
+            | 0x82638293 | 32 bit hash
+            | "main"     | string value
+            | data[n]    | HashData for this bucket
+            `------------'
+</pre>
+</div>
+<p>The problem with this layout for debuggers is that we need to optimize for
+  the negative lookup case where the symbol we're searching for is not present.
+  So if we were to lookup "printf" in the table above, we would make a 32 hash
+  for "printf", it might match bucket[3]. We would need to go to the offset
+  0x000034f0 and start looking to see if our 32 bit hash matches. To do so, we
+  need to read the next pointer, then read the hash, compare it, and skip to
+  the next bucket. Each time we are skipping many bytes in memory and touching
+  new cache pages just to do the compare on the full 32 bit hash. All of these
+  accesses then tell us that we didn't have a match.
+
+<h5>Name Hash Tables</h5>
+
+<p>To solve the issues mentioned above we have structured the hash tables
+  a bit differently: a header, buckets, an array of all unique 32 bit hash
+  values, followed by an array of hash value data offsets, one for each hash
+  value, then the data for all hash values:
+<div class="doc_code">
+<pre>
+.-------------.
+|  HEADER     |
+|-------------|
+|  BUCKETS    |
+|-------------|
+|  HASHES     |
+|-------------|
+|  OFFSETS    |
+|-------------|
+|  DATA       |
+`-------------'
+</pre>
+</div>
+<p>The BUCKETS in the Apple tables is an index into the HASHES array. By
+  making all of the full 32 bit hash values contiguous in memory, we allow
+  ourselves to efficiently check for a match while touching as little
+  memory as possible. Most often, checking the 32 bit hash values is as far as
+  the lookup goes. If it does match, it usually is a match with no collisions.
+  So for a table with "n_buckets" buckets, and "n_hashes" unique 32 bit hash
+  values, we can clarify the contents of the BUCKETS, HASHES and OFFSETS as:
+<div class="doc_code">
+<pre>
+.-------------------------.
+|  HEADER.magic           | uint32_t
+|  HEADER.version         | uint16_t
+|  HEADER.hash_function   | uint16_t
+|  HEADER.bucket_count    | uint32_t
+|  HEADER.hashes_count    | uint32_t
+|  HEADER.header_data_len | uint32_t
+|  HEADER_DATA            | HeaderData
+|-------------------------|
+|  BUCKETS                | uint32_t[n_buckets] // 32 bit hash indexes
+|-------------------------|
+|  HASHES                 | uint32_t[n_buckets] // 32 bit hash values
+|-------------------------|
+|  OFFSETS                | uint32_t[n_buckets] // 32 bit offsets to hash value data
+|-------------------------|
+|  ALL HASH DATA          |
+`-------------------------'
+</pre>
+</div>
+<p>So taking the exact same data from the standard hash example above we end up
+  with:
+<div class="doc_code">
+<pre>
+            .------------.
+            | HEADER     |
+            |------------|
+            |          0 | BUCKETS[0]
+            |          2 | BUCKETS[1]
+            |          5 | BUCKETS[2]
+            |          6 | BUCKETS[3]
+            |            | ...
+            |        ... | BUCKETS[n_buckets]
+            |------------|
+            | 0x........ | HASHES[0]
+            | 0x........ | HASHES[1]
+            | 0x........ | HASHES[2]
+            | 0x........ | HASHES[3]
+            | 0x........ | HASHES[4]
+            | 0x........ | HASHES[5]
+            | 0x12345678 | HASHES[6]    hash for BUCKETS[3]
+            | 0x29273623 | HASHES[7]    hash for BUCKETS[3]
+            | 0x82638293 | HASHES[8]    hash for BUCKETS[3]
+            | 0x........ | HASHES[9]
+            | 0x........ | HASHES[10]
+            | 0x........ | HASHES[11]
+            | 0x........ | HASHES[12]
+            | 0x........ | HASHES[13]
+            | 0x........ | HASHES[n_hashes]
+            |------------|
+            | 0x........ | OFFSETS[0]
+            | 0x........ | OFFSETS[1]
+            | 0x........ | OFFSETS[2]
+            | 0x........ | OFFSETS[3]
+            | 0x........ | OFFSETS[4]
+            | 0x........ | OFFSETS[5]
+            | 0x000034f0 | OFFSETS[6]   offset for BUCKETS[3]
+            | 0x00003500 | OFFSETS[7]   offset for BUCKETS[3]
+            | 0x00003550 | OFFSETS[8]   offset for BUCKETS[3]
+            | 0x........ | OFFSETS[9]
+            | 0x........ | OFFSETS[10]
+            | 0x........ | OFFSETS[11]
+            | 0x........ | OFFSETS[12]
+            | 0x........ | OFFSETS[13]
+            | 0x........ | OFFSETS[n_hashes]
+            |------------|
+            |            |
+            |            |
+            |            |
+            |            |
+            |            |
+            |------------|
+0x000034f0: | 0x00001203 | .debug_str ("erase")
+            | 0x00000004 | A 32 bit array count - number of HashData with name "erase"
+            | 0x........ | HashData[0]
+            | 0x........ | HashData[1]
+            | 0x........ | HashData[2]
+            | 0x........ | HashData[3]
+            | 0x00000000 | String offset into .debug_str (terminate data for hash)
+            |------------|
+0x00003500: | 0x00001203 | String offset into .debug_str ("collision")
+            | 0x00000002 | A 32 bit array count - number of HashData with name "collision"
+            | 0x........ | HashData[0]
+            | 0x........ | HashData[1]
+            | 0x00001203 | String offset into .debug_str ("dump")
+            | 0x00000003 | A 32 bit array count - number of HashData with name "dump"
+            | 0x........ | HashData[0]
+            | 0x........ | HashData[1]
+            | 0x........ | HashData[2]
+            | 0x00000000 | String offset into .debug_str (terminate data for hash)
+            |------------|
+0x00003550: | 0x00001203 | String offset into .debug_str ("main")
+            | 0x00000009 | A 32 bit array count - number of HashData with name "main"
+            | 0x........ | HashData[0]
+            | 0x........ | HashData[1]
+            | 0x........ | HashData[2]
+            | 0x........ | HashData[3]
+            | 0x........ | HashData[4]
+            | 0x........ | HashData[5]
+            | 0x........ | HashData[6]
+            | 0x........ | HashData[7]
+            | 0x........ | HashData[8]
+            | 0x00000000 | String offset into .debug_str (terminate data for hash)
+            `------------'
+</pre>
+</div>
+<p>So we still have all of the same data, we just organize it more efficiently
+  for debugger lookup. If we repeat the same "printf" lookup from above, we
+  would hash "printf" and find it matches BUCKETS[3] by taking the 32 bit hash
+  value and modulo it by n_buckets. BUCKETS[3] contains "6" which is the index
+  into the HASHES table. We would then compare any consecutive 32 bit hashes
+  values in the HASHES array as long as the hashes would be in BUCKETS[3]. We
+  do this by verifying that each subsequent hash value modulo n_buckets is still
+  3. In the case of a failed lookup we would access the memory for BUCKETS[3], and
+  then compare a few consecutive 32 bit hashes before we know that we have no match.
+  We don't end up marching through multiple words of memory and we really keep the
+  number of processor data cache lines being accessed as small as possible.
+
+<p>The string hash that is used for these lookup tables is the Daniel J.
+  Bernstein hash which is also used in the ELF GNU_HASH sections. It is a very
+  good hash for all kinds of names in programs with very few hash collisions.
+
+<p>Empty buckets are designated by using an invalid hash index of UINT32_MAX.
+</div>
+<!-- ======================================================================= -->
+<h4>
+  <a name="acceltabledetails">Details</a>
+</h4>
+<!-- ======================================================================= -->
+<div>
+<p>These name hash tables are designed to be generic where specializations of
+  the table get to define additional data that goes into the header
+  ("HeaderData"), how the string value is stored ("KeyType") and the content
+  of the data for each hash value.
+
+<h5>Header Layout</h5>
+<p>The header has a fixed part, and the specialized part. The exact format of
+  the header is:
+<div class="doc_code">
+<pre>
+struct Header
+{
+  uint32_t   magic;           // 'HASH' magic value to allow endian detection
+  uint16_t   version;         // Version number
+  uint16_t   hash_function;   // The hash function enumeration that was used
+  uint32_t   bucket_count;    // The number of buckets in this hash table
+  uint32_t   hashes_count;    // The total number of unique hash values and hash data offsets in this table
+  uint32_t   header_data_len; // The bytes to skip to get to the hash indexes (buckets) for correct alignment
+                              // Specifically the length of the following HeaderData field - this does not
+                              // include the size of the preceding fields
+  HeaderData header_data;     // Implementation specific header data
+};
+</pre>
+</div>
+<p>The header starts with a 32 bit "magic" value which must be 'HASH' encoded as
+  an ASCII integer. This allows the detection of the start of the hash table and
+  also allows the table's byte order to be determined so the table can be
+  correctly extracted. The "magic" value is followed by a 16 bit version number
+  which allows the table to be revised and modified in the future. The current
+  version number is 1. "hash_function" is a uint16_t enumeration that specifies
+  which hash function was used to produce this table. The current values for the
+  hash function enumerations include:
+<div class="doc_code">
+<pre>
+enum HashFunctionType
+{
+  eHashFunctionDJB = 0u, // Daniel J Bernstein hash function
+};
+</pre>
+</div>
+<p>"bucket_count" is a 32 bit unsigned integer that represents how many buckets
+  are in the BUCKETS array. "hashes_count" is the number of unique 32 bit hash
+  values that are in the HASHES array, and is the same number of offsets are
+  contained in the OFFSETS array. "header_data_len" specifies the size in
+  bytes of the HeaderData that is filled in by specialized versions of this
+  table.
+
+<h5>Fixed Lookup</h5>
+<p>The header is followed by the buckets, hashes, offsets, and hash value
+  data.
+<div class="doc_code">
+<pre>
+struct FixedTable
+{
+  uint32_t buckets[Header.bucket_count];  // An array of hash indexes into the "hashes[]" array below
+  uint32_t hashes [Header.hashes_count];  // Every unique 32 bit hash for the entire table is in this table
+  uint32_t offsets[Header.hashes_count];  // An offset that corresponds to each item in the "hashes[]" array above
+};
+</pre>
+</div>
+<p>"buckets" is an array of 32 bit indexes into the "hashes" array. The
+  "hashes" array contains all of the 32 bit hash values for all names in the
+  hash table. Each hash in the "hashes" table has an offset in the "offsets"
+  array that points to the data for the hash value.
+
+<p>This table setup makes it very easy to repurpose these tables to contain
+  different data, while keeping the lookup mechanism the same for all tables.
+  This layout also makes it possible to save the table to disk and map it in
+  later and do very efficient name lookups with little or no parsing.
+
+<p>DWARF lookup tables can be implemented in a variety of ways and can store
+  a lot of information for each name. We want to make the DWARF tables
+  extensible and able to store the data efficiently so we have used some of the
+  DWARF features that enable efficient data storage to define exactly what kind
+  of data we store for each name.
+
+<p>The "HeaderData" contains a definition of the contents of each HashData
+  chunk. We might want to store an offset to all of the debug information
+  entries (DIEs) for each name. To keep things extensible, we create a list of
+  items, or Atoms, that are contained in the data for each name. First comes the
+  type of the data in each atom:
+<div class="doc_code">
+<pre>
+enum AtomType
+{
+  eAtomTypeNULL       = 0u,
+  eAtomTypeDIEOffset  = 1u,   // DIE offset, check form for encoding
+  eAtomTypeCUOffset   = 2u,   // DIE offset of the compiler unit header that contains the item in question
+  eAtomTypeTag        = 3u,   // DW_TAG_xxx value, should be encoded as DW_FORM_data1 (if no tags exceed 255) or DW_FORM_data2
+  eAtomTypeNameFlags  = 4u,   // Flags from enum NameFlags
+  eAtomTypeTypeFlags  = 5u,   // Flags from enum TypeFlags
+};
+</pre>
+</div>
+<p>The enumeration values and their meanings are:
+<div class="doc_code">
+<pre>
+  eAtomTypeNULL       - a termination atom that specifies the end of the atom list
+  eAtomTypeDIEOffset  - an offset into the .debug_info section for the DWARF DIE for this name
+  eAtomTypeCUOffset   - an offset into the .debug_info section for the CU that contains the DIE
+  eAtomTypeDIETag     - The DW_TAG_XXX enumeration value so you don't have to parse the DWARF to see what it is
+  eAtomTypeNameFlags  - Flags for functions and global variables (isFunction, isInlined, isExternal...)
+  eAtomTypeTypeFlags  - Flags for types (isCXXClass, isObjCClass, ...)
+</pre>
+</div>
+<p>Then we allow each atom type to define the atom type and how the data for
+  each atom type data is encoded:
+<div class="doc_code">
+<pre>
+struct Atom
+{
+  uint16_t type;  // AtomType enum value
+  uint16_t form;  // DWARF DW_FORM_XXX defines
+};
+</pre>
+</div>
+<p>The "form" type above is from the DWARF specification and defines the
+  exact encoding of the data for the Atom type. See the DWARF specification for
+  the DW_FORM_ definitions.
+<div class="doc_code">
+<pre>
+struct HeaderData
+{
+  uint32_t die_offset_base;
+  uint32_t atom_count;
+  Atoms    atoms[atom_count0];
+};
+</pre>
+</div>
+<p>"HeaderData" defines the base DIE offset that should be added to any atoms
+  that are encoded using the DW_FORM_ref1, DW_FORM_ref2, DW_FORM_ref4,
+  DW_FORM_ref8 or DW_FORM_ref_udata. It also defines what is contained in
+  each "HashData" object -- Atom.form tells us how large each field will be in
+  the HashData and the Atom.type tells us how this data should be interpreted.
+
+<p>For the current implementations of the ".apple_names" (all functions + globals),
+  the ".apple_types" (names of all types that are defined), and the
+  ".apple_namespaces" (all namespaces), we currently set the Atom array to be:
+<div class="doc_code">
+<pre>
+HeaderData.atom_count = 1;
+HeaderData.atoms[0].type = eAtomTypeDIEOffset;
+HeaderData.atoms[0].form = DW_FORM_data4;
+</pre>
+</div>
+<p>This defines the contents to be the DIE offset (eAtomTypeDIEOffset) that is
+  encoded as a 32 bit value (DW_FORM_data4). This allows a single name to have
+  multiple matching DIEs in a single file, which could come up with an inlined
+  function for instance. Future tables could include more information about the
+  DIE such as flags indicating if the DIE is a function, method, block,
+  or inlined.
+
+<p>The KeyType for the DWARF table is a 32 bit string table offset into the
+  ".debug_str" table. The ".debug_str" is the string table for the DWARF which
+  may already contain copies of all of the strings. This helps make sure, with
+  help from the compiler, that we reuse the strings between all of the DWARF
+  sections and keeps the hash table size down. Another benefit to having the
+  compiler generate all strings as DW_FORM_strp in the debug info, is that
+  DWARF parsing can be made much faster.
+
+<p>After a lookup is made, we get an offset into the hash data. The hash data
+  needs to be able to deal with 32 bit hash collisions, so the chunk of data
+  at the offset in the hash data consists of a triple:
+<div class="doc_code">
+<pre>
+uint32_t str_offset
+uint32_t hash_data_count
+HashData[hash_data_count]
+</pre>
+</div>
+<p>If "str_offset" is zero, then the bucket contents are done. 99.9% of the
+  hash data chunks contain a single item (no 32 bit hash collision):
+<div class="doc_code">
+<pre>
+.------------.
+| 0x00001023 | uint32_t KeyType (.debug_str[0x0001023] => "main")
+| 0x00000004 | uint32_t HashData count
+| 0x........ | uint32_t HashData[0] DIE offset
+| 0x........ | uint32_t HashData[1] DIE offset
+| 0x........ | uint32_t HashData[2] DIE offset
+| 0x........ | uint32_t HashData[3] DIE offset
+| 0x00000000 | uint32_t KeyType (end of hash chain)
+`------------'
+</pre>
+</div>
+<p>If there are collisions, you will have multiple valid string offsets:
+<div class="doc_code">
+<pre>
+.------------.
+| 0x00001023 | uint32_t KeyType (.debug_str[0x0001023] => "main")
+| 0x00000004 | uint32_t HashData count
+| 0x........ | uint32_t HashData[0] DIE offset
+| 0x........ | uint32_t HashData[1] DIE offset
+| 0x........ | uint32_t HashData[2] DIE offset
+| 0x........ | uint32_t HashData[3] DIE offset
+| 0x00002023 | uint32_t KeyType (.debug_str[0x0002023] => "print")
+| 0x00000002 | uint32_t HashData count
+| 0x........ | uint32_t HashData[0] DIE offset
+| 0x........ | uint32_t HashData[1] DIE offset
+| 0x00000000 | uint32_t KeyType (end of hash chain)
+`------------'
+</pre>
+</div>
+<p>Current testing with real world C++ binaries has shown that there is around 1
+  32 bit hash collision per 100,000 name entries.
+</div>
+<!-- ======================================================================= -->
+<h4>
+  <a name="acceltablecontents">Contents</a>
+</h4>
+<!-- ======================================================================= -->
+<div>
+<p>As we said, we want to strictly define exactly what is included in the
+  different tables. For DWARF, we have 3 tables: ".apple_names", ".apple_types",
+  and ".apple_namespaces".
+
+<p>".apple_names" sections should contain an entry for each DWARF DIE whose
+  DW_TAG is a DW_TAG_label, DW_TAG_inlined_subroutine, or DW_TAG_subprogram that
+  has address attributes: DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges or
+  DW_AT_entry_pc. It also contains DW_TAG_variable DIEs that have a DW_OP_addr
+  in the location (global and static variables). All global and static variables
+  should be included, including those scoped withing functions and classes. For
+  example using the following code:
+<div class="doc_code">
+<pre>
+static int var = 0;
+
+void f ()
+{
+  static int var = 0;
+}
+</pre>
+</div>
+<p>Both of the static "var" variables would be included in the table. All
+  functions should emit both their full names and their basenames. For C or C++,
+  the full name is the mangled name (if available) which is usually in the
+  DW_AT_MIPS_linkage_name attribute, and the DW_AT_name contains the function
+  basename. If global or static variables have a mangled name in a
+  DW_AT_MIPS_linkage_name attribute, this should be emitted along with the
+  simple name found in the DW_AT_name attribute.
+
+<p>".apple_types" sections should contain an entry for each DWARF DIE whose
+  tag is one of:
+<ul>
+  <li>DW_TAG_array_type</li>
+  <li>DW_TAG_class_type</li>
+  <li>DW_TAG_enumeration_type</li>
+  <li>DW_TAG_pointer_type</li>
+  <li>DW_TAG_reference_type</li>
+  <li>DW_TAG_string_type</li>
+  <li>DW_TAG_structure_type</li>
+  <li>DW_TAG_subroutine_type</li>
+  <li>DW_TAG_typedef</li>
+  <li>DW_TAG_union_type</li>
+  <li>DW_TAG_ptr_to_member_type</li>
+  <li>DW_TAG_set_type</li>
+  <li>DW_TAG_subrange_type</li>
+  <li>DW_TAG_base_type</li>
+  <li>DW_TAG_const_type</li>
+  <li>DW_TAG_constant</li>
+  <li>DW_TAG_file_type</li>
+  <li>DW_TAG_namelist</li>
+  <li>DW_TAG_packed_type</li>
+  <li>DW_TAG_volatile_type</li>
+  <li>DW_TAG_restrict_type</li>
+  <li>DW_TAG_interface_type</li>
+  <li>DW_TAG_unspecified_type</li>
+  <li>DW_TAG_shared_type</li>
+</ul>
+<p>Only entries with a DW_AT_name attribute are included, and the entry must
+  not be a forward declaration (DW_AT_declaration attribute with a non-zero value).
+  For example, using the following code:
+<div class="doc_code">
+<pre>
+int main ()
+{
+  int *b = 0;
+  return *b;
+}
+</pre>
+</div>
+<p>We get a few type DIEs:
+<div class="doc_code">
+<pre>
+0x00000067:     TAG_base_type [5]
+                AT_encoding( DW_ATE_signed )
+                AT_name( "int" )
+                AT_byte_size( 0x04 )
+
+0x0000006e:     TAG_pointer_type [6]
+                AT_type( {0x00000067} ( int ) )
+                AT_byte_size( 0x08 )
+</pre>
+</div>
+<p>The DW_TAG_pointer_type is not included because it does not have a DW_AT_name.
+
+<p>".apple_namespaces" section should contain all DW_TAG_namespace DIEs. If
+  we run into a namespace that has no name this is an anonymous namespace,
+  and the name should be output as "(anonymous namespace)" (without the quotes).
+  Why? This matches the output of the abi::cxa_demangle() that is in the standard
+  C++ library that demangles mangled names.
+</div>
+
+<!-- ======================================================================= -->
+<h4>
+  <a name="acceltableextensions">Language Extensions and File Format Changes</a>
+</h4>
+<!-- ======================================================================= -->
+<div>
+<h5>Objective-C Extensions</h5>
+<p>".apple_objc" section should contain all DW_TAG_subprogram DIEs for an
+  Objective-C class. The name used in the hash table is the name of the
+  Objective-C class itself. If the Objective-C class has a category, then an
+  entry is made for both the class name without the category, and for the class
+  name with the category. So if we have a DIE at offset 0x1234 with a name
+  of method "-[NSString(my_additions) stringWithSpecialString:]", we would add
+  an entry for "NSString" that points to DIE 0x1234, and an entry for
+  "NSString(my_additions)" that points to 0x1234. This allows us to quickly
+  track down all Objective-C methods for an Objective-C class when doing
+  expressions. It is needed because of the dynamic nature of Objective-C where
+  anyone can add methods to a class. The DWARF for Objective-C methods is also
+  emitted differently from C++ classes where the methods are not usually
+  contained in the class definition, they are scattered about across one or more
+  compile units. Categories can also be defined in different shared libraries.
+  So we need to be able to quickly find all of the methods and class functions
+  given the Objective-C class name, or quickly find all methods and class
+  functions for a class + category name. This table does not contain any selector
+  names, it just maps Objective-C class names (or class names + category) to all
+  of the methods and class functions. The selectors are added as function
+  basenames in the .debug_names section.
+
+<p>In the ".apple_names" section for Objective-C functions, the full name is the
+  entire function name with the brackets ("-[NSString stringWithCString:]") and the
+  basename is the selector only ("stringWithCString:").
+
+<h5>Mach-O Changes</h5>
+<p>The sections names for the apple hash tables are for non mach-o files. For
+  mach-o files, the sections should be contained in the "__DWARF" segment with
+  names as follows:
+<ul>
+  <li>".apple_names" -> "__apple_names"</li>
+  <li>".apple_types" -> "__apple_types"</li>
+  <li>".apple_namespaces" -> "__apple_namespac" (16 character limit)</li>
+  <li> ".apple_objc" -> "__apple_objc"</li>
+</ul>
 </div>
 </div>
 
