@@ -556,17 +556,6 @@ AutoType *Type::getContainedAutoType() const {
   return GetContainedAutoVisitor().Visit(this);
 }
 
-bool Type::isIntegerType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Int128;
-  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
-    // Incomplete enum types are not treated as integer types.
-    // FIXME: In C++, enum types are never integer types.
-    return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
-  return false;
-}
-
 bool Type::hasIntegerRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
@@ -605,18 +594,6 @@ bool Type::isIntegralType(ASTContext &Ctx) const {
   return false;
 }
 
-bool Type::isIntegralOrEnumerationType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Int128;
-
-  // Check for a complete enum type; incomplete enum types are not properly an
-  // enumeration type in the sense required here.
-  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
-    return ET->getDecl()->isComplete();
-
-  return false;  
-}
 
 bool Type::isIntegralOrUnscopedEnumerationType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
@@ -634,9 +611,15 @@ bool Type::isIntegralOrUnscopedEnumerationType() const {
 }
 
 
-bool Type::isBooleanType() const {
+
+bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::Bool;
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::Int128;
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    // Incomplete enum types are not treated as integer types.
+    // FIXME: In C++, enum types are never integer types.
+    return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
   return false;
 }
 
@@ -767,13 +750,6 @@ bool Type::hasUnsignedIntegerRepresentation() const {
     return isUnsignedIntegerType();
 }
 
-bool Type::isHalfType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::Half;
-  // FIXME: Should we allow complex __fp16? Probably not.
-  return false;
-}
-
 bool Type::isFloatingType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Half &&
@@ -818,21 +794,6 @@ bool Type::isArithmeticType() const {
     // unwanted implicit conversions.
     return !ET->getDecl()->isScoped() && ET->getDecl()->isComplete();
   return isa<ComplexType>(CanonicalType);
-}
-
-bool Type::isScalarType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() > BuiltinType::Void &&
-           BT->getKind() <= BuiltinType::NullPtr;
-  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
-    // Enums are scalar types, but only if they are defined.  Incomplete enums
-    // are not treated as scalar types.
-    return ET->getDecl()->isComplete();
-  return isa<PointerType>(CanonicalType) ||
-         isa<BlockPointerType>(CanonicalType) ||
-         isa<MemberPointerType>(CanonicalType) ||
-         isa<ComplexType>(CanonicalType) ||
-         isa<ObjCObjectPointerType>(CanonicalType);
 }
 
 Type::ScalarTypeKind Type::getScalarTypeKind() const {
@@ -1309,12 +1270,6 @@ bool Type::isPromotableIntegerType() const {
     return true;
   }
   
-  return false;
-}
-
-bool Type::isNullPtrType() const {
-  if (const BuiltinType *BT = getAs<BuiltinType>())
-    return BT->getKind() == BuiltinType::NullPtr;
   return false;
 }
 

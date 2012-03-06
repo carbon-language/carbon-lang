@@ -4816,6 +4816,55 @@ inline bool Type::isNonOverloadPlaceholderType() const {
   return false;
 }
 
+inline bool Type::isHalfType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Half;
+  // FIXME: Should we allow complex __fp16? Probably not.
+  return false;
+}
+
+inline bool Type::isNullPtrType() const {
+  if (const BuiltinType *BT = getAs<BuiltinType>())
+    return BT->getKind() == BuiltinType::NullPtr;
+  return false;
+}
+
+extern bool IsEnumDeclComplete(EnumDecl *);
+
+inline bool Type::isScalarType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() > BuiltinType::Void &&
+           BT->getKind() <= BuiltinType::NullPtr;
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    // Enums are scalar types, but only if they are defined.  Incomplete enums
+    // are not treated as scalar types.
+    return IsEnumDeclComplete(ET->getDecl());
+  return isa<PointerType>(CanonicalType) ||
+         isa<BlockPointerType>(CanonicalType) ||
+         isa<MemberPointerType>(CanonicalType) ||
+         isa<ComplexType>(CanonicalType) ||
+         isa<ObjCObjectPointerType>(CanonicalType);
+}
+
+inline bool Type::isIntegralOrEnumerationType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::Int128;
+
+  // Check for a complete enum type; incomplete enum types are not properly an
+  // enumeration type in the sense required here.
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    return IsEnumDeclComplete(ET->getDecl());
+
+  return false;  
+}
+
+inline bool Type::isBooleanType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Bool;
+  return false;
+}
+
 /// \brief Determines whether this is a type for which one can define
 /// an overloaded operator.
 inline bool Type::isOverloadableType() const {

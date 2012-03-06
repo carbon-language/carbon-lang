@@ -3273,6 +3273,16 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
     ND->ClearLinkageCache();
 }
 
+// Inline function definitions.
+
+/// \brief Check if the given decl is complete.
+///
+/// We use this function to break a cycle between the inline definitions in
+/// Type.h and Decl.h.
+inline bool IsEnumDeclComplete(EnumDecl *ED) {
+  return ED->isComplete();
+}
+
 }  // end namespace clang
 
 #endif
