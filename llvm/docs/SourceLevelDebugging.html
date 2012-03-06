@@ -2131,7 +2131,7 @@ The DWARF for this would be:
 <!-- ======================================================================= -->
 <!-- ======================================================================= -->
 <h4>
-  <a name="acceltableintro">Introduction</a>
+  <a name="acceltableintroduction">Introduction</a>
 </h4>
 <!-- ======================================================================= -->
 <div>
@@ -2292,10 +2292,10 @@ bucket contents:
 `-------------'
 </pre>
 </div>
-<p>The BUCKETS in the Apple tables is an index into the HASHES array. By
+<p>The BUCKETS in the name tables are an index into the HASHES array. By
   making all of the full 32 bit hash values contiguous in memory, we allow
   ourselves to efficiently check for a match while touching as little
-  memory as possible. Most often, checking the 32 bit hash values is as far as
+  memory as possible. Most often checking the 32 bit hash values is as far as
   the lookup goes. If it does match, it usually is a match with no collisions.
   So for a table with "n_buckets" buckets, and "n_hashes" unique 32 bit hash
   values, we can clarify the contents of the BUCKETS, HASHES and OFFSETS as:
