@@ -181,7 +181,9 @@ public:
                 if (byte_size_option_set)
                 {
                     if (byte_size_value > 1)
-                        error.SetErrorString ("use --count option to specify an end address to display a number of bytes");
+                        error.SetErrorStringWithFormat ("display format (bytes/bytes with ascii) conflicts with the specified byte size %llu\n"
+                                                        "\tconsider using a different display format or don't specify the byte size",
+                                                        byte_size_value.GetCurrentValue());
                 }
                 else
                     byte_size_value = 1;
