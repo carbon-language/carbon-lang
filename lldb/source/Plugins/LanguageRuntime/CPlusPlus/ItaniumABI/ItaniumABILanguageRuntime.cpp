@@ -255,30 +255,58 @@ ItaniumABILanguageRuntime::GetPluginVersion()
     return 1;
 }
 
-static const char *exception_names[] = {"__cxa_throw", "__cxa_allocate_exception", "__cxa_rethrow", "__cxa_begin_catch"};
+static const char *exception_names[] = { "__cxa_begin_catch", "__cxa_throw", "__cxa_rethrow", "__cxa_allocate_exception"};
 static const int num_throw_names = 3;
+static const int num_expression_throw_names = 1;
 
 BreakpointResolverSP
 ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp)
 {
+    return CreateExceptionResolver (bkpt, catch_bp, throw_bp, false);
+}
+
+BreakpointResolverSP
+ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp, bool for_expressions)
+{
     BreakpointResolverSP resolver_sp;
+    static const int total_expressions = sizeof (exception_names)/sizeof (char *);
     
+    // One complication here is that most users DON'T want to stop at __cxa_allocate_expression, but until we can do
+    // anything better with predicting unwinding the expression parser does.  So we have two forms of the exception
+    // breakpoints, one for expressions that leaves out __cxa_allocate_exception, and one that includes it.
+    // The SetExceptionBreakpoints does the latter, the CreateExceptionBreakpoint in the runtime the former.
+    
+    uint32_t num_expressions;
     if (catch_bp && throw_bp)
+    {
+        if (for_expressions)
+            num_expressions = total_expressions;
+        else
+            num_expressions = total_expressions - num_expression_throw_names;
+            
         resolver_sp.reset (new BreakpointResolverName (bkpt,
                                                        exception_names,
-                                                       sizeof (exception_names)/sizeof (char *),
+                                                       num_expressions,
                                                        eFunctionNameTypeBase,
                                                        eLazyBoolNo));
+    }
     else if (throw_bp)
+    {
+        if (for_expressions)
+            num_expressions = num_throw_names - num_expression_throw_names;
+        else
+            num_expressions = num_throw_names;
+            
         resolver_sp.reset (new BreakpointResolverName (bkpt,
-                                                       exception_names,
-                                                       num_throw_names,
+                                                       exception_names + 1,
+                                                       num_expressions,
                                                        eFunctionNameTypeBase,
                                                        eLazyBoolNo));
+    }
     else if (catch_bp)
         resolver_sp.reset (new BreakpointResolverName (bkpt,
-                                                       exception_names + num_throw_names,
-                                                       sizeof (exception_names)/sizeof (char *) - num_throw_names,
+                                                       exception_names,
+                                                       total_expressions - num_throw_names,
                                                        eFunctionNameTypeBase,
                                                        eLazyBoolNo));
 
@@ -294,13 +322,20 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
     const bool catch_bp = false;
     const bool throw_bp = true;
     const bool is_internal = true;
+    const bool for_expressions = true;
+    
+    // For the exception breakpoints set by the Expression parser, we'll be a little more aggressive and
+    // stop at exception allocation as well.
     
     if (!m_cxx_exception_bp_sp)
-        m_cxx_exception_bp_sp = LanguageRuntime::CreateExceptionBreakpoint (m_process->GetTarget(),
-                                                                            GetLanguageType(),
-                                                                            catch_bp, 
-                                                                            throw_bp, 
-                                                                            is_internal);
+    {
+        Target &target = m_process->GetTarget();
+        
+        BreakpointResolverSP exception_resolver_sp = CreateExceptionResolver (NULL, catch_bp, throw_bp, for_expressions);
+        SearchFilterSP filter_sp = target.GetSearchFilterForModule(NULL);
+        
+        m_cxx_exception_bp_sp = target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal);
+    }
     else
         m_cxx_exception_bp_sp->SetEnabled (true);
     

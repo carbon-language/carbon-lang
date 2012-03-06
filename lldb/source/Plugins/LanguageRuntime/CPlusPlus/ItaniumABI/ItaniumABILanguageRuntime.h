@@ -77,6 +77,9 @@ namespace lldb_private {
         virtual lldb::BreakpointResolverSP
         CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
 
+        virtual lldb::BreakpointResolverSP
+        CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp, bool for_expressions);
+
     private:
         ItaniumABILanguageRuntime(Process *process) : lldb_private::CPPLanguageRuntime(process) { } // Call CreateInstance instead.
         
