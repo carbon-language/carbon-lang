@@ -1601,7 +1601,7 @@ public:
   ///
   void addOverriddenMethod(const CXXMethodDecl *MD);
 
-  typedef const CXXMethodDecl ** method_iterator;
+  typedef const CXXMethodDecl *const* method_iterator;
 
   method_iterator begin_overridden_methods() const;
   method_iterator end_overridden_methods() const;

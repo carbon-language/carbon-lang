@@ -32,7 +32,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/UsuallyTinyPtrVector.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
@@ -322,7 +322,7 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// Since most C++ member functions aren't virtual and therefore
   /// don't override anything, we store the overridden functions in
   /// this map on the side rather than within the CXXMethodDecl structure.
-  typedef llvm::UsuallyTinyPtrVector<const CXXMethodDecl> CXXMethodVector;
+  typedef llvm::TinyPtrVector<const CXXMethodDecl*> CXXMethodVector;
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector> OverriddenMethods;
 
   /// \brief Mapping from each declaration context to its corresponding lambda 

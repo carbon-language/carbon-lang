@@ -259,12 +259,6 @@ ASTContext::~ASTContext() {
   for (unsigned I = 0, N = Deallocations.size(); I != N; ++I)
     Deallocations[I].first(Deallocations[I].second);
   
-  // Release all of the memory associated with overridden C++ methods.
-  for (llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::iterator 
-         OM = OverriddenMethods.begin(), OMEnd = OverriddenMethods.end();
-       OM != OMEnd; ++OM)
-    OM->second.Destroy();
-  
   // ASTRecordLayout objects in ASTRecordLayouts must always be destroyed
   // because they can contain DenseMaps.
   for (llvm::DenseMap<const ObjCContainerDecl*,
