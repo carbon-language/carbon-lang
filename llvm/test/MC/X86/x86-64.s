@@ -340,19 +340,27 @@ rclb	$2, %bl   // CHECK: rclb $2, %bl # encoding: [0xc0,0xd3,0x02]
 
 // rdar://8418316
 // PR12173
-// CHECK: shldw	%cl, %bx, %bx
-// CHECK: shldw	%cl, %bx, %bx
-// CHECK: shldw	$1, %bx, %bx
-// CHECK: shrdw	%cl, %bx, %bx
-// CHECK: shrdw	%cl, %bx, %bx
-// CHECK: shrdw	$1, %bx, %bx
+// CHECK: shldw	%cl, %bx, %dx
+// CHECK: shldw	%cl, %bx, %dx
+// CHECK: shldw	$1, %bx, %dx
+// CHECK: shldw	%cl, %bx, (%rax)
+// CHECK: shldw	%cl, %bx, (%rax)
+// CHECK: shrdw	%cl, %bx, %dx
+// CHECK: shrdw	%cl, %bx, %dx
+// CHECK: shrdw	$1, %bx, %dx
+// CHECK: shrdw	%cl, %bx, (%rax)
+// CHECK: shrdw	%cl, %bx, (%rax)
 
-shld  %bx, %bx
-shld  %cl, %bx, %bx
-shld  $1, %bx, %bx
-shrd  %bx, %bx
-shrd  %cl, %bx, %bx
-shrd  $1, %bx, %bx
+shld  %bx, %dx
+shld  %cl, %bx, %dx
+shld  $1, %bx, %dx
+shld  %bx, (%rax)
+shld  %cl, %bx, (%rax)
+shrd  %bx, %dx
+shrd  %cl, %bx, %dx
+shrd  $1, %bx, %dx
+shrd  %bx, (%rax)
+shrd  %cl, %bx, (%rax)
 
 // CHECK: sldtl	%ecx
 // CHECK: encoding: [0x0f,0x00,0xc1]

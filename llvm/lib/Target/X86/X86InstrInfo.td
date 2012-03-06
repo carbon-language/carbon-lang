@@ -1856,19 +1856,19 @@ def : InstAlias<"outl $port", (OUT32ir i8imm:$port)>;
 def : InstAlias<"sldt $mem", (SLDT16m i16mem:$mem)>;
 
 // shld/shrd op,op -> shld op, op, CL
-def : InstAlias<"shldw $r1, $r2", (SHLD16rrCL GR16:$r1, GR16:$r2)>;
-def : InstAlias<"shldl $r1, $r2", (SHLD32rrCL GR32:$r1, GR32:$r2)>;
-def : InstAlias<"shldq $r1, $r2", (SHLD64rrCL GR64:$r1, GR64:$r2)>;
-def : InstAlias<"shrdw $r1, $r2", (SHRD16rrCL GR16:$r1, GR16:$r2)>;
-def : InstAlias<"shrdl $r1, $r2", (SHRD32rrCL GR32:$r1, GR32:$r2)>;
-def : InstAlias<"shrdq $r1, $r2", (SHRD64rrCL GR64:$r1, GR64:$r2)>;
+def : InstAlias<"shldw $r2, $r1", (SHLD16rrCL GR16:$r1, GR16:$r2)>;
+def : InstAlias<"shldl $r2, $r1", (SHLD32rrCL GR32:$r1, GR32:$r2)>;
+def : InstAlias<"shldq $r2, $r1", (SHLD64rrCL GR64:$r1, GR64:$r2)>;
+def : InstAlias<"shrdw $r2, $r1", (SHRD16rrCL GR16:$r1, GR16:$r2)>;
+def : InstAlias<"shrdl $r2, $r1", (SHRD32rrCL GR32:$r1, GR32:$r2)>;
+def : InstAlias<"shrdq $r2, $r1", (SHRD64rrCL GR64:$r1, GR64:$r2)>;
 
-def : InstAlias<"shldw $mem, $reg", (SHLD16mrCL i16mem:$mem, GR16:$reg)>;
-def : InstAlias<"shldl $mem, $reg", (SHLD32mrCL i32mem:$mem, GR32:$reg)>;
-def : InstAlias<"shldq $mem, $reg", (SHLD64mrCL i64mem:$mem, GR64:$reg)>;
-def : InstAlias<"shrdw $mem, $reg", (SHRD16mrCL i16mem:$mem, GR16:$reg)>;
-def : InstAlias<"shrdl $mem, $reg", (SHRD32mrCL i32mem:$mem, GR32:$reg)>;
-def : InstAlias<"shrdq $mem, $reg", (SHRD64mrCL i64mem:$mem, GR64:$reg)>;
+def : InstAlias<"shldw $reg, $mem", (SHLD16mrCL i16mem:$mem, GR16:$reg)>;
+def : InstAlias<"shldl $reg, $mem", (SHLD32mrCL i32mem:$mem, GR32:$reg)>;
+def : InstAlias<"shldq $reg, $mem", (SHLD64mrCL i64mem:$mem, GR64:$reg)>;
+def : InstAlias<"shrdw $reg, $mem", (SHRD16mrCL i16mem:$mem, GR16:$reg)>;
+def : InstAlias<"shrdl $reg, $mem", (SHRD32mrCL i32mem:$mem, GR32:$reg)>;
+def : InstAlias<"shrdq $reg, $mem", (SHRD64mrCL i64mem:$mem, GR64:$reg)>;
 
 /*  FIXME: This is disabled because the asm matcher is currently incapable of
  *  matching a fixed immediate like $1.
