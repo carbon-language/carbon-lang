@@ -190,35 +190,42 @@ public:
   }
 
   /// If -- This hook is called whenever an #if is seen.
-  /// \param Range The SourceRange of the expression being tested.
+  /// \param Loc the source location of the directive.
+  /// \param ConditionRange The SourceRange of the expression being tested.
   // FIXME: better to pass in a list (or tree!) of Tokens.
   virtual void If(SourceLocation Loc, SourceRange ConditionRange) {
   }
 
   /// Elif -- This hook is called whenever an #elif is seen.
-  /// \param Range The SourceRange of the expression being tested.
+  /// \param Loc the source location of the directive.
+  /// \param ConditionRange The SourceRange of the expression being tested.
+  /// \param IfLoc the source location of the #if/#ifdef/#ifndef directive.
   // FIXME: better to pass in a list (or tree!) of Tokens.
   virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
                     SourceLocation IfLoc) {
   }
 
   /// Ifdef -- This hook is called whenever an #ifdef is seen.
-  /// \param Loc The location of the token being tested.
+  /// \param Loc the source location of the directive.
   /// \param II Information on the token being tested.
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
   }
 
   /// Ifndef -- This hook is called whenever an #ifndef is seen.
-  /// \param Loc The location of the token being tested.
+  /// \param Loc the source location of the directive.
   /// \param II Information on the token being tested.
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok) {
   }
 
   /// Else -- This hook is called whenever an #else is seen.
+  /// \param Loc the source location of the directive.
+  /// \param IfLoc the source location of the #if/#ifdef/#ifndef directive.
   virtual void Else(SourceLocation Loc, SourceLocation IfLoc) {
   }
 
   /// Endif -- This hook is called whenever an #endif is seen.
+  /// \param Loc the source location of the directive.
+  /// \param IfLoc the source location of the #if/#ifdef/#ifndef directive.
   virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) {
   }
 };
