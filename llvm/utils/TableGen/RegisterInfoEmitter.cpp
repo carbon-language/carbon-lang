@@ -31,6 +31,9 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
                               CodeGenTarget &Target, CodeGenRegBank &Bank) {
   const std::vector<CodeGenRegister*> &Registers = Bank.getRegisters();
 
+  // Register enums are stored as uint16_t in the tables. Make sure we'll fit
+  assert(Registers.size() <= 0xffff && "Too many regs to fit in tables");
+
   std::string Namespace = Registers[0]->TheDef->getValueAsString("Namespace");
 
   EmitSourceFileHeader("Target Register Enum Values", OS);
@@ -60,6 +63,11 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
 
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = Bank.getRegClasses();
   if (!RegisterClasses.empty()) {
+
+    // RegisterClass enums are stored as uint16_t in the tables.
+    assert(RegisterClasses.size() <= 0xffff &&
+           "Too many register classes to fit in tables");
+
     OS << "\n// Register classes\n";
     if (!Namespace.empty())
       OS << "namespace " << Namespace << " {\n";
@@ -399,6 +407,13 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = *RegisterClasses[rc];
+
+    // Asserts to make sure values will fit in table assuming types from
+    // MCRegisterInfo.h
+    assert((RC.SpillSize/8) <= 0xffff && "SpillSize too large.");
+    assert((RC.SpillAlignment/8) <= 0xffff && "SpillAlignment too large.");
+    assert(RC.CopyCost >= -128 && RC.CopyCost <= 127 && "Copy cost too large.");
+
     OS << "  { " << '\"' << RC.getName() << "\", "
        << RC.getName() << ", " << RC.getName() << "Bits, "
        << RC.getOrder().size() << ", sizeof(" << RC.getName() << "Bits), "
@@ -415,7 +430,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
   if (SubRegIndices.size()) {
     OS << "const uint16_t " << TargetName << "SubRegTable[]["
-      << SubRegIndices.size() << "] = {\n";
+       << SubRegIndices.size() << "] = {\n";
     for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
       const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
       OS << "  /* " << Regs[i]->TheDef->getName() << " */\n";
