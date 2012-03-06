@@ -258,7 +258,8 @@ public:
                       const char *plugin_name,
                       const Address &start,
                       const void *bytes,
-                      size_t length);
+                      size_t length,
+                      uint32_t num_instructions = UINT32_MAX);
 
     static bool
     Disassemble (Debugger &debugger,

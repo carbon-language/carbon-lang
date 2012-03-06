@@ -1993,6 +1993,35 @@ SBTarget::GetSourceManager()
 }
 
 lldb::SBInstructionList
+SBTarget::ReadInstructions (lldb::SBAddress base_addr, uint32_t count)
+{
+    SBInstructionList sb_instructions;
+    
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        Address *addr_ptr = base_addr.get();
+        
+        if (addr_ptr)
+        {
+            DataBufferHeap data (target_sp->GetArchitecture().GetMaximumOpcodeByteSize() * count, 0);
+            bool prefer_file_cache = false;
+            lldb_private::Error error;
+            const size_t bytes_read = target_sp->ReadMemory(*addr_ptr, prefer_file_cache, data.GetBytes(), data.GetByteSize(), error);
+            sb_instructions.SetDisassembler (Disassembler::DisassembleBytes (target_sp->GetArchitecture(),
+                                                                             NULL,
+                                                                             *addr_ptr,
+                                                                             data.GetBytes(),
+                                                                             bytes_read,
+                                                                             count));
+        }
+    }
+    
+    return sb_instructions;
+    
+}
+
+lldb::SBInstructionList
 SBTarget::GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size)
 {
     SBInstructionList sb_instructions;

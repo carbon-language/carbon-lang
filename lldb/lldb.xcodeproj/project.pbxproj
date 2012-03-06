@@ -445,7 +445,6 @@
 		49DA65031485C92A005FF180 /* AppleObjCSymbolVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA65021485C92A005FF180 /* AppleObjCSymbolVendor.cpp */; };
 		4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C66499F14EEE7F100B0316F /* StreamCallback.h */; };
 		4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6649A214EEE81000B0316F /* StreamCallback.cpp */; };
-		4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CAA56121422D96A001FFA01 /* BreakpointResolverFileRegex.h */; };
 		4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
 		4CCA644D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA643D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp */; };
@@ -508,7 +507,6 @@
 		B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
 		ED236E0814F84F6800153F6F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
-		EDB919B314F6EC85008FF64B /* LauncherXPCService.h in Headers */ = {isa = PBXBuildFile; fileRef = EDB919B214F6EC85008FF64B /* LauncherXPCService.h */; };
 		EDB919B714F6F22D008FF64B /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
 		EDC6D4AA14E5C49E001B75F8 /* LauncherXPCService.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */; };
 		EDE274E414EDCE1F005B0F75 /* LauncherXPCService.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */; };
@@ -3103,10 +3101,8 @@
 				26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */,
 				26D265BC136B4269002EEE45 /* lldb-public.h in Headers */,
 				4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */,
-				4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */,
 				26B8283D142D01E9002DBC64 /* SBSection.h in Headers */,
 				B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */,
-				EDB919B314F6EC85008FF64B /* LauncherXPCService.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

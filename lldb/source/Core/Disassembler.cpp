@@ -240,7 +240,8 @@ Disassembler::DisassembleBytes
     const char *plugin_name,
     const Address &start,
     const void *bytes,
-    size_t length
+    size_t length,
+    uint32_t num_instructions
 )
 {
     lldb::DisassemblerSP disasm_sp;
@@ -256,7 +257,7 @@ Disassembler::DisassembleBytes
             (void)disasm_sp->DecodeInstructions (start,
                                                  data,
                                                  0,
-                                                 UINT32_MAX,
+                                                 num_instructions,
                                                  false);
         }
     }

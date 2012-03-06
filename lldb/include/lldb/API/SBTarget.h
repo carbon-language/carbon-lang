@@ -713,6 +713,9 @@ public:
     GetSourceManager();
     
     lldb::SBInstructionList
+    ReadInstructions (lldb::SBAddress base_addr, uint32_t count);
+
+    lldb::SBInstructionList
     GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size);
     
     lldb::SBInstructionList
