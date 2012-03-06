@@ -438,13 +438,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
 }
 
 // Darwin ABI Calls.
-let isCall = 1, PPC970_Unit = 7, 
-  // All calls clobber the non-callee saved registers...
-  Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
-          F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
-          V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
-          LR,CTR,
-          CR0,CR1,CR5,CR6,CR7,CARRY] in {
+let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL_Darwin  : IForm<18, 0, 1,
@@ -463,13 +457,7 @@ let isCall = 1, PPC970_Unit = 7,
 }
 
 // SVR4 ABI Calls.
-let isCall = 1, PPC970_Unit = 7, 
-  // All calls clobber the non-callee saved registers...
-  Defs = [R0,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
-          F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
-          V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
-          LR,CTR,
-          CR0,CR1,CR5,CR6,CR7,CARRY] in {
+let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL_SVR4  : IForm<18, 0, 1,

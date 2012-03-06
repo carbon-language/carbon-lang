@@ -100,104 +100,20 @@ PPCRegisterInfo::getPointerRegClass(unsigned Kind) const {
 
 const uint16_t*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  // 32-bit Darwin calling convention. 
-  static const uint16_t Darwin32_CalleeSavedRegs[] = {
-              PPC::R13, PPC::R14, PPC::R15,
-    PPC::R16, PPC::R17, PPC::R18, PPC::R19,
-    PPC::R20, PPC::R21, PPC::R22, PPC::R23,
-    PPC::R24, PPC::R25, PPC::R26, PPC::R27,
-    PPC::R28, PPC::R29, PPC::R30, PPC::R31,
-
-    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
-    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
-    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
-    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
-    PPC::F30, PPC::F31,
-    
-    PPC::CR2, PPC::CR3, PPC::CR4,
-    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
-    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
-    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-    
-    PPC::LR,  0
-  };
-
-  // 32-bit SVR4 calling convention.
-  static const uint16_t SVR4_CalleeSavedRegs[] = {
-                        PPC::R14, PPC::R15,
-    PPC::R16, PPC::R17, PPC::R18, PPC::R19,
-    PPC::R20, PPC::R21, PPC::R22, PPC::R23,
-    PPC::R24, PPC::R25, PPC::R26, PPC::R27,
-    PPC::R28, PPC::R29, PPC::R30, PPC::R31,
-
-    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
-    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
-    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
-    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
-    PPC::F30, PPC::F31,
-    
-    PPC::CR2, PPC::CR3, PPC::CR4,
-    
-    PPC::VRSAVE,
-    
-    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
-    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
-    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-    
-    0
-  };
-  // 64-bit Darwin calling convention. 
-  static const uint16_t Darwin64_CalleeSavedRegs[] = {
-    PPC::X14, PPC::X15,
-    PPC::X16, PPC::X17, PPC::X18, PPC::X19,
-    PPC::X20, PPC::X21, PPC::X22, PPC::X23,
-    PPC::X24, PPC::X25, PPC::X26, PPC::X27,
-    PPC::X28, PPC::X29, PPC::X30, PPC::X31,
-    
-    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
-    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
-    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
-    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
-    PPC::F30, PPC::F31,
-    
-    PPC::CR2, PPC::CR3, PPC::CR4,
-    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
-    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
-    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-    
-    PPC::LR8,  0
-  };
-
-  // 64-bit SVR4 calling convention.
-  static const uint16_t SVR4_64_CalleeSavedRegs[] = {
-    PPC::X14, PPC::X15,
-    PPC::X16, PPC::X17, PPC::X18, PPC::X19,
-    PPC::X20, PPC::X21, PPC::X22, PPC::X23,
-    PPC::X24, PPC::X25, PPC::X26, PPC::X27,
-    PPC::X28, PPC::X29, PPC::X30, PPC::X31,
-
-    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
-    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
-    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
-    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
-    PPC::F30, PPC::F31,
-
-    PPC::CR2, PPC::CR3, PPC::CR4,
-
-    PPC::VRSAVE,
-
-    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
-    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
-    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-
-    0
-  };
-  
   if (Subtarget.isDarwinABI())
-    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegs :
-                                 Darwin32_CalleeSavedRegs;
+    return Subtarget.isPPC64() ? CSR_Darwin64_SaveList :
+                                 CSR_Darwin32_SaveList;
 
-  return Subtarget.isPPC64() ? SVR4_64_CalleeSavedRegs : SVR4_CalleeSavedRegs;
+  return Subtarget.isPPC64() ? CSR_SVR464_SaveList : CSR_SVR432_SaveList;
+}
+
+const unsigned*
+PPCRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  if (Subtarget.isDarwinABI())
+    return Subtarget.isPPC64() ? CSR_Darwin64_RegMask :
+                                 CSR_Darwin32_RegMask;
+
+  return Subtarget.isPPC64() ? CSR_SVR464_RegMask : CSR_SVR432_RegMask;
 }
 
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
