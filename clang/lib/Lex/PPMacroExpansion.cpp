@@ -825,6 +825,16 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
     return false;
   }
 
+  // Get ')'.
+  PP.LexNonComment(Tok);
+
+  // Ensure we have a trailing ).
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(Tok.getLocation(), diag::err_pp_missing_rparen) << II->getName();
+    PP.Diag(LParenLoc, diag::note_matching) << "(";
+    return false;
+  }
+
   bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(), Filename);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
   // error.
@@ -836,20 +846,8 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   const FileEntry *File =
       PP.LookupFile(Filename, isAngled, LookupFrom, CurDir, NULL, NULL, NULL);
 
-  // Get the result value.  Result = true means the file exists.
-  bool Result = File != 0;
-
-  // Get ')'.
-  PP.LexNonComment(Tok);
-
-  // Ensure we have a trailing ).
-  if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(Tok.getLocation(), diag::err_pp_missing_rparen) << II->getName();
-    PP.Diag(LParenLoc, diag::note_matching) << "(";
-    return false;
-  }
-
-  return Result;
+  // Get the result value.  A result of true means the file exists.
+  return File != 0;
 }
 
 /// EvaluateHasInclude - Process a '__has_include("path")' expression.
@@ -1091,6 +1089,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
         // from macro expansion.
         SmallVector<Token, 4> StrToks;
         while (Tok.is(tok::string_literal)) {
+          // Complain about, and drop, any ud-suffix.
+          if (Tok.hasUDSuffix())
+            Diag(Tok, diag::err_invalid_string_udl);
           StrToks.push_back(Tok);
           LexUnexpandedToken(Tok);
         }

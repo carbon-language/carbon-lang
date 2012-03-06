@@ -1797,10 +1797,8 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 
   ExprResult AsmString(ParseAsmStringLiteral());
   if (AsmString.isInvalid()) {
-    // If the reason we are recovering is because of an improper string
-    // literal, it makes the most sense just to consume to the ')'.
-    if (isTokenStringLiteral())
-      T.skipToEnd();
+    // Consume up to and including the closing paren.
+    T.skipToEnd();
     return StmtError();
   }
 

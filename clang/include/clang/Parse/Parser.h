@@ -1359,7 +1359,7 @@ private:
                                                   SourceLocation LParenLoc,
                                                   SourceLocation RParenLoc);
 
-  ExprResult ParseStringLiteralExpression();
+  ExprResult ParseStringLiteralExpression(bool AllowUserDefinedLiteral = false);
 
   ExprResult ParseGenericSelectionExpression();
 

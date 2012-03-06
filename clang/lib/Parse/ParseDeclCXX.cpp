@@ -272,6 +272,11 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
   if (Invalid)
     return 0;
 
+  // FIXME: This is incorrect: linkage-specifiers are parsed in translation
+  // phase 7, so string-literal concatenation is supposed to occur.
+  //   extern "" "C" "" "+" "+" { } is legal.
+  if (Tok.hasUDSuffix())
+    Diag(Tok, diag::err_invalid_string_udl);
   SourceLocation Loc = ConsumeStringToken();
 
   ParseScope LinkageScope(this, Scope::DeclScope);
@@ -617,8 +622,10 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   }
 
   ExprResult AssertMessage(ParseStringLiteralExpression());
-  if (AssertMessage.isInvalid())
+  if (AssertMessage.isInvalid()) {
+    SkipUntil(tok::semi);
     return 0;
+  }
 
   T.consumeClose();
 

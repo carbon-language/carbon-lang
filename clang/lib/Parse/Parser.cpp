@@ -1127,9 +1127,13 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
   switch (Tok.getKind()) {
     case tok::string_literal:
       break;
+    case tok::utf8_string_literal:
+    case tok::utf16_string_literal:
+    case tok::utf32_string_literal:
     case tok::wide_string_literal: {
       SourceLocation L = Tok.getLocation();
       Diag(Tok, diag::err_asm_operand_wide_string_literal)
+        << (Tok.getKind() == tok::wide_string_literal)
         << SourceRange(L, L);
       return ExprError();
     }
@@ -1138,10 +1142,7 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
       return ExprError();
   }
 
-  ExprResult Res(ParseStringLiteralExpression());
-  if (Res.isInvalid()) return move(Res);
-
-  return move(Res);
+  return ParseStringLiteralExpression();
 }
 
 /// ParseSimpleAsm

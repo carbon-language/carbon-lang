@@ -497,14 +497,14 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
 ///         unary-operator cast-expression
 ///         'sizeof' unary-expression
 ///         'sizeof' '(' type-name ')'
-/// [C++0x] 'sizeof' '...' '(' identifier ')'
+/// [C++11] 'sizeof' '...' '(' identifier ')'
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
-/// [C++0x] 'alignof' '(' type-id ')'
+/// [C++11] 'alignof' '(' type-id ')'
 /// [GNU]   '&&' identifier
+/// [C++11] 'noexcept' '(' expression ')' [C++11 5.3.7]
 /// [C++]   new-expression
 /// [C++]   delete-expression
-/// [C++0x] 'noexcept' '(' expression ')'
 ///
 ///       unary-operator: one of
 ///         '&'  '*'  '+'  '-'  '~'  '!'
@@ -516,7 +516,8 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
 ///         constant
 ///         string-literal
 /// [C++]   boolean-literal  [C++ 2.13.5]
-/// [C++0x] 'nullptr'        [C++0x 2.14.7]
+/// [C++11] 'nullptr'        [C++11 2.14.7]
+/// [C++11] user-defined-literal
 ///         '(' expression ')'
 /// [C11]   generic-selection
 ///         '__func__'        [C99 6.4.2.2]
@@ -535,9 +536,9 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
 /// [OBJC]  '@encode' '(' type-name ')'
 /// [OBJC]  objc-string-literal
 /// [C++]   simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
-/// [C++0x] simple-type-specifier braced-init-list                  [C++ 5.2.3]
+/// [C++11] simple-type-specifier braced-init-list                  [C++11 5.2.3]
 /// [C++]   typename-specifier '(' expression-list[opt] ')'         [C++ 5.2.3]
-/// [C++0x] typename-specifier braced-init-list                     [C++ 5.2.3]
+/// [C++11] typename-specifier braced-init-list                     [C++11 5.2.3]
 /// [C++]   'const_cast' '<' type-name '>' '(' expression ')'       [C++ 5.2p1]
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
@@ -850,7 +851,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::utf8_string_literal:
   case tok::utf16_string_literal:
   case tok::utf32_string_literal:
-    Res = ParseStringLiteralExpression();
+    Res = ParseStringLiteralExpression(true);
     break;
   case tok::kw__Generic:   // primary-expression: generic-selection [C11 6.5.1]
     Res = ParseGenericSelectionExpression();
@@ -2102,7 +2103,7 @@ Parser::ParseCompoundLiteralExpression(ParsedType Ty,
 ///
 ///       primary-expression: [C99 6.5.1]
 ///         string-literal
-ExprResult Parser::ParseStringLiteralExpression() {
+ExprResult Parser::ParseStringLiteralExpression(bool AllowUserDefinedLiteral) {
   assert(isTokenStringLiteral() && "Not a string literal!");
 
   // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
@@ -2110,6 +2111,12 @@ ExprResult Parser::ParseStringLiteralExpression() {
   SmallVector<Token, 4> StringToks;
 
   do {
+    if (!AllowUserDefinedLiteral && Tok.hasUDSuffix()) {
+      Diag(Tok, diag::err_invalid_string_udl);
+      do ConsumeStringToken(); while (isTokenStringLiteral());
+      return ExprError();
+    }
+
     StringToks.push_back(Tok);
     ConsumeStringToken();
   } while (isTokenStringLiteral());

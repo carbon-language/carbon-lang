@@ -1905,8 +1905,13 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
 
   if (getLang().CPlusPlus0x && Tok.is(tok::string_literal)) {
     Diag(Tok.getLocation(), diag::warn_cxx98_compat_literal_operator);
+    // FIXME: Add a FixIt to insert a space before the suffix, and recover.
+    if (Tok.hasUDSuffix()) {
+      Diag(Tok.getLocation(), diag::err_literal_operator_missing_space);
+      return true;
+    }
     if (Tok.getLength() != 2)
-      Diag(Tok.getLocation(), diag::err_operator_string_not_empty);
+      Diag(Tok.getLocation(), diag::err_literal_operator_string_not_empty);
     ConsumeStringToken();
 
     if (Tok.isNot(tok::identifier)) {

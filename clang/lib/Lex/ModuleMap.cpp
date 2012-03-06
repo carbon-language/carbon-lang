@@ -617,6 +617,12 @@ retry:
     break;
       
   case tok::string_literal: {
+    if (LToken.hasUDSuffix()) {
+      Diags.Report(LToken.getLocation(), diag::err_invalid_string_udl);
+      HadError = true;
+      goto retry;
+    }
+
     // Parse the string literal.
     LangOptions LangOpts;
     StringLiteralParser StringLiteral(&LToken, 1, SourceMgr, LangOpts, *Target);

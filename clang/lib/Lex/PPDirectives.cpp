@@ -822,8 +822,10 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
     ; // ok
   else if (StrTok.isNot(tok::string_literal)) {
     Diag(StrTok, diag::err_pp_line_invalid_filename);
-    DiscardUntilEndOfDirective();
-    return;
+    return DiscardUntilEndOfDirective();
+  } else if (StrTok.hasUDSuffix()) {
+    Diag(StrTok, diag::err_invalid_string_udl);
+    return DiscardUntilEndOfDirective();
   } else {
     // Parse and validate the string, converting it into a unique ID.
     StringLiteralParser Literal(&StrTok, 1, *this);
@@ -957,6 +959,9 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
   else if (StrTok.isNot(tok::string_literal)) {
     Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
     return DiscardUntilEndOfDirective();
+  } else if (StrTok.hasUDSuffix()) {
+    Diag(StrTok, diag::err_invalid_string_udl);
+    return DiscardUntilEndOfDirective();
   } else {
     // Parse and validate the string, converting it into a unique ID.
     StringLiteralParser Literal(&StrTok, 1, *this);
@@ -1045,6 +1050,11 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
     if (StrTok.isNot(tok::eod))
       DiscardUntilEndOfDirective();
     return;
+  }
+
+  if (StrTok.hasUDSuffix()) {
+    Diag(StrTok, diag::err_invalid_string_udl);
+    return DiscardUntilEndOfDirective();
   }
 
   // Verify that there is nothing after the string, other than EOD.

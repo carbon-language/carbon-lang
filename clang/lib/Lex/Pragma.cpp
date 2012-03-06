@@ -133,6 +133,20 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   Lex(Tok);
   if (Tok.isNot(tok::string_literal) && Tok.isNot(tok::wide_string_literal)) {
     Diag(PragmaLoc, diag::err__Pragma_malformed);
+    // Skip this token, and the ')', if present.
+    if (Tok.isNot(tok::r_paren))
+      Lex(Tok);
+    if (Tok.is(tok::r_paren))
+      Lex(Tok);
+    return;
+  }
+
+  if (Tok.hasUDSuffix()) {
+    Diag(Tok, diag::err_invalid_string_udl);
+    // Skip this token, and the ')', if present.
+    Lex(Tok);
+    if (Tok.is(tok::r_paren))
+      Lex(Tok);
     return;
   }
 
@@ -442,6 +456,8 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     // "foo " "bar" "Baz"
     SmallVector<Token, 4> StrToks;
     while (Tok.is(tok::string_literal)) {
+      if (Tok.hasUDSuffix())
+        Diag(Tok, diag::err_invalid_string_udl);
       StrToks.push_back(Tok);
       Lex(Tok);
     }
@@ -518,6 +534,8 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
   // "foo " "bar" "Baz"
   SmallVector<Token, 4> StrToks;
   while (Tok.is(tok::string_literal)) {
+    if (Tok.hasUDSuffix())
+      Diag(Tok, diag::err_invalid_string_udl);
     StrToks.push_back(Tok);
     Lex(Tok);
   }
@@ -574,6 +592,11 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   if (Tok.isNot(tok::string_literal)) {
     Diag(PragmaTok.getLocation(), diag::err_pragma_push_pop_macro_malformed)
       << getSpelling(PragmaTok);
+    return 0;
+  }
+
+  if (Tok.hasUDSuffix()) {
+    Diag(Tok, diag::err_invalid_string_udl);
     return 0;
   }
 

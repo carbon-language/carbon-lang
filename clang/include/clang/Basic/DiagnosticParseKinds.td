@@ -200,7 +200,7 @@ def err_address_of_label_outside_fn : Error<
   "use of address-of-label extension outside of a function body">;
 def err_expected_string_literal : Error<"expected string literal">;
 def err_asm_operand_wide_string_literal : Error<
-  "cannot use wide string literal in 'asm'">;
+  "cannot use %select{unicode|wide}0 string literal in 'asm'">;
 def err_expected_selector_for_method : Error<
   "expected selector for Objective-C method">;
 def err_expected_property_name : Error<"expected property name">;
@@ -425,8 +425,11 @@ def err_parser_impl_limit_overflow : Error<
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
 
 // C++ operator overloading
-def err_operator_string_not_empty : Error<
+def err_literal_operator_string_not_empty : Error<
   "string literal after 'operator' must be '\"\"'">;
+def err_literal_operator_missing_space : Error<
+  "C++11 requires a space between the \"\" and the user-defined suffix in a "
+  "literal operator">;
 def warn_cxx98_compat_literal_operator : Warning<
   "literal operators are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;

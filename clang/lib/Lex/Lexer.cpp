@@ -1582,6 +1582,7 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   if (isIdentifierHead(C)) {
+    Result.setFlag(Token::HasUDSuffix);
     do {
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);

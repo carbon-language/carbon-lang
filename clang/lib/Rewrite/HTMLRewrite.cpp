@@ -409,6 +409,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
       --TokLen;
       // FALL THROUGH.
     case tok::string_literal:
+      // FIXME: Exclude the optional ud-suffix from the highlighted range.
       HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
                      "<span class='string_literal'>", "</span>");
       break;

@@ -75,7 +75,8 @@ public:
     LeadingSpace  = 0x02,  // Whitespace exists before this token.
     DisableExpand = 0x04,  // This identifier may never be macro expanded.
     NeedsCleaning = 0x08,   // Contained an escaped newline or trigraph.
-    LeadingEmptyMacro = 0x10 // Empty macro exists before this token.
+    LeadingEmptyMacro = 0x10, // Empty macro exists before this token.
+    HasUDSuffix = 0x20     // This string or character literal has a ud-suffix.
   };
 
   tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }
@@ -263,6 +264,9 @@ public:
     return (Flags & LeadingEmptyMacro) ? true : false;
   }
 
+  /// \brief Return true if this token is a string or character literal which
+  /// has a ud-suffix.
+  bool hasUDSuffix() const { return (Flags & HasUDSuffix) ? true : false; }
 };
 
 /// PPConditionalInfo - Information about the conditional stack (#if directives)
