@@ -2085,27 +2085,22 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       OutStreamer.EmitLabel(Syms[i]);
   }
 
+  // Print some verbose block comments.
+  if (isVerbose()) {
+    if (const BasicBlock *BB = MBB->getBasicBlock())
+      if (BB->hasName())
+        OutStreamer.AddComment("%" + BB->getName());
+    EmitBasicBlockLoopComments(*MBB, LI, *this);
+  }
+
   // Print the main label for the block.
   if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
-      if (const BasicBlock *BB = MBB->getBasicBlock())
-        if (BB->hasName())
-          OutStreamer.AddComment("%" + BB->getName());
-
-      EmitBasicBlockLoopComments(*MBB, LI, *this);
-
       // NOTE: Want this comment at start of line, don't emit with AddComment.
       OutStreamer.EmitRawText(Twine(MAI->getCommentString()) + " BB#" +
                               Twine(MBB->getNumber()) + ":");
     }
   } else {
-    if (isVerbose()) {
-      if (const BasicBlock *BB = MBB->getBasicBlock())
-        if (BB->hasName())
-          OutStreamer.AddComment("%" + BB->getName());
-      EmitBasicBlockLoopComments(*MBB, LI, *this);
-    }
-
     OutStreamer.EmitLabel(MBB->getSymbol());
   }
 }
