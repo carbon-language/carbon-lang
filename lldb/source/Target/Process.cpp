@@ -259,9 +259,9 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
     {
         if (m_flags.Test(eLaunchFlagDisableSTDIO))
         {
-            AppendSuppressFileAction (STDERR_FILENO, true , true );
-            AppendSuppressFileAction (STDIN_FILENO , true , false);
-            AppendSuppressFileAction (STDOUT_FILENO, false, true );
+            AppendSuppressFileAction (STDIN_FILENO , true, false);
+            AppendSuppressFileAction (STDOUT_FILENO, false, true);
+            AppendSuppressFileAction (STDERR_FILENO, false, true);
         }
         else
         {
@@ -274,9 +274,9 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
             const char *err_path = NULL;
             if (target)
             {
-                in_path = target->GetStandardErrorPath();
-                out_path = target->GetStandardInputPath();
-                err_path = target->GetStandardOutputPath();
+                in_path = target->GetStandardInputPath();
+                out_path = target->GetStandardOutputPath();
+                err_path = target->GetStandardErrorPath();
             }
             
             if (default_to_use_pty && (!in_path && !out_path && !err_path))
@@ -288,13 +288,14 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
             }
 
             if (in_path)
-                AppendOpenFileAction(STDERR_FILENO, in_path, true, true);
-
+                AppendOpenFileAction(STDIN_FILENO, in_path, true, false);
+            
             if (out_path)
-                AppendOpenFileAction(STDIN_FILENO, out_path, true, false);
+                AppendOpenFileAction(STDOUT_FILENO, out_path, false, true);
 
             if (err_path)
-                AppendOpenFileAction(STDOUT_FILENO, err_path, false, true);            
+                AppendOpenFileAction(STDERR_FILENO, err_path, false, true);
+
         }
     }
 }
@@ -518,18 +519,10 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             launch_info.GetFlags().Set (eLaunchFlagStopAtEntry); 
             break;
             
-        case 'e':   // STDERR for read + write
-            {   
-                ProcessLaunchInfo::FileAction action;
-                if (action.Open(STDERR_FILENO, option_arg, true, true))
-                    launch_info.AppendFileAction (action);
-            }
-            break;
-            
         case 'i':   // STDIN for read only
             {   
                 ProcessLaunchInfo::FileAction action;
-                if (action.Open(STDIN_FILENO, option_arg, true, false))
+                if (action.Open (STDIN_FILENO, option_arg, true, false))
                     launch_info.AppendFileAction (action);
             }
             break;
@@ -537,11 +530,20 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
         case 'o':   // Open STDOUT for write only
             {   
                 ProcessLaunchInfo::FileAction action;
-                if (action.Open(STDOUT_FILENO, option_arg, false, true))
+                if (action.Open (STDOUT_FILENO, option_arg, false, true))
+                    launch_info.AppendFileAction (action);
+            }
+            break;
+
+        case 'e':   // STDERR for write only
+            {   
+                ProcessLaunchInfo::FileAction action;
+                if (action.Open (STDERR_FILENO, option_arg, false, true))
                     launch_info.AppendFileAction (action);
             }
             break;
             
+
         case 'p':   // Process plug-in name
             launch_info.SetProcessPluginName (option_arg);    
             break;
@@ -549,11 +551,11 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
         case 'n':   // Disable STDIO
             {
                 ProcessLaunchInfo::FileAction action;
-                if (action.Open(STDERR_FILENO, "/dev/null", true, true))
+                if (action.Open (STDIN_FILENO, "/dev/null", true, false))
                     launch_info.AppendFileAction (action);
-                if (action.Open(STDOUT_FILENO, "/dev/null", false, true))
+                if (action.Open (STDOUT_FILENO, "/dev/null", false, true))
                     launch_info.AppendFileAction (action);
-                if (action.Open(STDIN_FILENO, "/dev/null", true, false))
+                if (action.Open (STDERR_FILENO, "/dev/null", false, true))
                     launch_info.AppendFileAction (action);
             }
             break;

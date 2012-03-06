@@ -815,7 +815,7 @@ GDBRemoteCommunicationServer::Handle_QSetSTDERR (StringExtractorGDBRemote &packe
     std::string path;
     packet.GetHexByteString(path);
     const bool read = true;
-    const bool write = true;
+    const bool write = false;
     if (file_action.Open(STDERR_FILENO, path.c_str(), read, write))
     {
         m_process_launch_info.AppendFileAction(file_action);

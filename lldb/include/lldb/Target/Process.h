@@ -520,12 +520,12 @@ public:
         m_monitor_callback_baton (NULL),
         m_monitor_signals (false)
     {
-        if (stderr_path)
+        if (stdin_path)
         {
             ProcessLaunchInfo::FileAction file_action;
             const bool read = true;
-            const bool write = true;
-            if (file_action.Open(STDERR_FILENO, stderr_path, read, write))
+            const bool write = false;
+            if (file_action.Open(STDIN_FILENO, stdin_path, read, write))
                 AppendFileAction (file_action);
         }
         if (stdout_path)
@@ -536,12 +536,12 @@ public:
             if (file_action.Open(STDOUT_FILENO, stdout_path, read, write))
                 AppendFileAction (file_action);
         }
-        if (stdin_path)
+        if (stderr_path)
         {
             ProcessLaunchInfo::FileAction file_action;
-            const bool read = true;
-            const bool write = false;
-            if (file_action.Open(STDIN_FILENO, stdin_path, read, write))
+            const bool read = false;
+            const bool write = true;
+            if (file_action.Open(STDERR_FILENO, stderr_path, read, write))
                 AppendFileAction (file_action);
         }
         if (working_directory)

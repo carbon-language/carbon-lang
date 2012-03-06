@@ -1723,7 +1723,7 @@ MachProcess::PosixSpawnChildForPTraceDebugging
                 err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDOUT_FILENO, path=/dev/null)");
             
             err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDERR_FILENO, "/dev/null", 
-                                                              O_RDWR | O_NOCTTY, 0), DNBError::POSIX);
+                                                              O_WRONLY | O_NOCTTY, 0), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
                 err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDERR_FILENO, path=/dev/null)");
         }
@@ -1733,9 +1733,9 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             if (stdout_path == NULL) stdout_path = "/dev/null";
             if (stderr_path == NULL) stderr_path = "/dev/null";
             
-            int slave_fd_err = open (stderr_path, O_NOCTTY | O_CREAT | O_RDWR   , 0640);
-            int slave_fd_in  = open (stdin_path , O_NOCTTY | O_RDONLY);
-            int slave_fd_out = open (stdout_path, O_NOCTTY | O_CREAT | O_WRONLY , 0640);
+            const int slave_fd_in  = open (stdin_path , O_NOCTTY | O_RDONLY);
+            const int slave_fd_out = open (stdout_path, O_NOCTTY | O_CREAT | O_WRONLY , 0640);
+            const int slave_fd_err = open (stderr_path, O_NOCTTY | O_CREAT | O_WRONLY , 0640);
 
             err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_err, STDERR_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
