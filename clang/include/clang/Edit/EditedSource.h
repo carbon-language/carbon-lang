@@ -62,7 +62,7 @@ public:
 
   StringRef copyString(StringRef str) {
     char *buf = StrAlloc.Allocate<char>(str.size());
-    std::uninitialized_copy(str.begin(), str.end(), buf);
+    std::memcpy(buf, str.data(), str.size());
     return StringRef(buf, str.size());
   }
   StringRef copyString(const Twine &twine);
