@@ -254,7 +254,7 @@ protected:
   /// @brief Get the new version of a Value.
   ///
   /// @param Old       The old Value.
-  /// @param BBMap     A mapping form old values to their new values
+  /// @param BBMap     A mapping from old values to their new values
   ///                  (for values recalculated within this basic block).
   /// @param GlobalMap A mapping from old values to their new values
   ///                  (for values recalculated in the new ScoP, but not
@@ -291,7 +291,7 @@ protected:
   /// This copies a single Instruction and updates references to old values
   /// with references to new values, as defined by GlobalMap and BBMap.
   ///
-  /// @param BBMap     A mapping form old values to their new values
+  /// @param BBMap     A mapping from old values to their new values
   ///                  (for values recalculated within this basic block).
   /// @param GlobalMap A mapping from old values to their new values
   ///                  (for values recalculated in the new ScoP, but not
@@ -1878,7 +1878,7 @@ class CodeGeneration : public ScopPass {
 char CodeGeneration::ID = 1;
 
 INITIALIZE_PASS_BEGIN(CodeGeneration, "polly-codegen",
-                      "Polly - Create LLVM-IR form SCoPs", false, false)
+                      "Polly - Create LLVM-IR from SCoPs", false, false)
 INITIALIZE_PASS_DEPENDENCY(CloogInfo)
 INITIALIZE_PASS_DEPENDENCY(Dependences)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
@@ -1887,7 +1887,7 @@ INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(ScopDetection)
 INITIALIZE_PASS_DEPENDENCY(TargetData)
 INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
-                      "Polly - Create LLVM-IR form SCoPs", false, false)
+                      "Polly - Create LLVM-IR from SCoPs", false, false)
 
 Pass *polly::createCodeGenerationPass() {
   return new CodeGeneration();
