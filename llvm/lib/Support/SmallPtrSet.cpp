@@ -14,6 +14,7 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
 #include <cstdlib>
 
 using namespace llvm;
@@ -221,6 +222,55 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   
   NumElements = RHS.NumElements;
   NumTombstones = RHS.NumTombstones;
+}
+
+void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
+  if (this == &RHS) return;
+
+  // We can only avoid copying elements if neither set is small.
+  if (!this->isSmall() && !RHS.isSmall()) {
+    std::swap(this->CurArray, RHS.CurArray);
+    std::swap(this->CurArraySize, RHS.CurArraySize);
+    std::swap(this->NumElements, RHS.NumElements);
+    std::swap(this->NumTombstones, RHS.NumTombstones);
+    return;
+  }
+
+  // FIXME: From here on we assume that both sets have the same small size.
+
+  // If only RHS is small, copy the small elements into LHS and move the pointer
+  // from LHS to RHS.
+  if (!this->isSmall() && RHS.isSmall()) {
+    std::copy(RHS.SmallArray, RHS.SmallArray+RHS.NumElements, this->SmallArray);
+    std::swap(this->NumElements, RHS.NumElements);
+    std::swap(this->CurArraySize, RHS.CurArraySize);
+    RHS.CurArray = this->CurArray;
+    RHS.NumTombstones = this->NumTombstones;
+    this->CurArray = this->SmallArray;
+    this->NumTombstones = 0;
+    return;
+  }
+
+  // If only LHS is small, copy the small elements into RHS and move the pointer
+  // from RHS to LHS.
+  if (this->isSmall() && !RHS.isSmall()) {
+    std::copy(this->SmallArray, this->SmallArray+this->NumElements,
+              RHS.SmallArray);
+    std::swap(RHS.NumElements, this->NumElements);
+    std::swap(RHS.CurArraySize, this->CurArraySize);
+    this->CurArray = RHS.CurArray;
+    this->NumTombstones = RHS.NumTombstones;
+    RHS.CurArray = RHS.SmallArray;
+    RHS.NumTombstones = 0;
+    return;
+  }
+
+  // Both a small, just swap the small elements.
+  assert(this->isSmall() && RHS.isSmall());
+  assert(this->CurArraySize == RHS.CurArraySize);
+  unsigned MaxElems = std::max(this->NumElements, RHS.NumElements);
+  std::swap_ranges(this->SmallArray, this->SmallArray+MaxElems, RHS.SmallArray);
+  std::swap(this->NumElements, RHS.NumElements);
 }
 
 SmallPtrSetImpl::~SmallPtrSetImpl() {
