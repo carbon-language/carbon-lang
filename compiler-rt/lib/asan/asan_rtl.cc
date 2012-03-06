@@ -259,6 +259,7 @@ static NOINLINE void force_interface_symbols() {
     __asan_unregister_globals(NULL, 0);
     __asan_set_death_callback(NULL);
     __asan_set_error_report_callback(NULL);
+    __asan_handle_no_return();
   }
 }
 
@@ -293,7 +294,7 @@ int __asan_set_error_exit_code(int exit_code) {
   return old;
 }
 
-void __asan_handle_no_return() {
+void NOINLINE __asan_handle_no_return() {
   int local_stack;
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
   CHECK(curr_thread);
