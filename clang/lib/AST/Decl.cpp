@@ -1313,8 +1313,11 @@ VarDecl::DefinitionKind VarDecl::hasDefinition() const {
   
   const VarDecl *First = getFirstDeclaration();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
-       I != E; ++I)
+       I != E; ++I) {
     Kind = std::max(Kind, (*I)->isThisDeclarationADefinition());
+    if (Kind == Definition)
+      break;
+  }
 
   return Kind;
 }
