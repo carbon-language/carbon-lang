@@ -10810,8 +10810,7 @@ ExprResult RebuildUnknownAnyExpr::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
 ExprResult RebuildUnknownAnyExpr::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   // The only case we should ever see here is a function-to-pointer decay.
-  if (E->getCastKind() == CK_FunctionToPointerDecay)
-  {
+  if (E->getCastKind() == CK_FunctionToPointerDecay) {
     assert(E->getValueKind() == VK_RValue);
     assert(E->getObjectKind() == OK_Ordinary);
   
@@ -10825,9 +10824,7 @@ ExprResult RebuildUnknownAnyExpr::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   
     E->setSubExpr(Result.take());
     return S.Owned(E);
-  }
-  else if (E->getCastKind() == CK_LValueToRValue)
-  {
+  } else if (E->getCastKind() == CK_LValueToRValue) {
     assert(E->getValueKind() == VK_RValue);
     assert(E->getObjectKind() == OK_Ordinary);
 
@@ -10843,9 +10840,7 @@ ExprResult RebuildUnknownAnyExpr::VisitImplicitCastExpr(ImplicitCastExpr *E) {
 
     E->setSubExpr(Result.take());
     return S.Owned(E);
-  }
-  else
-  {
+  } else {
     llvm_unreachable("Unhandled cast type!");
   }
 }
