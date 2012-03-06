@@ -55,7 +55,7 @@
   </ol></li>
   <li><a href="#llvmdwarfextension">LLVM Dwarf Extensions</a>
     <ol>
-      <li><a href="#objcproperty">Debugging Information Extension 
+      <li><a href="#objcproperty">Debugging Information Extension
 	  for Objective C Properties</a></li>
       <ul>
 	<li><a href="#objcpropertyintroduction">Introduction</a></li>
@@ -244,8 +244,8 @@ height="369">
    for the optimizer to optimize the program and debugging information without
    necessarily having to know anything about debugging information.  In
    particular, the use of metadata avoids duplicated debugging information from
-   the beginning, and the global dead code elimination pass automatically 
-   deletes debugging information for a function if it decides to delete the 
+   the beginning, and the global dead code elimination pass automatically
+   deletes debugging information for a function if it decides to delete the
    function. </p>
 
 <p>To do this, most of the debugging information (descriptors for types,
@@ -254,9 +254,9 @@ height="369">
 
 <p>Debug information is designed to be agnostic about the target debugger and
    debugging information representation (e.g. DWARF/Stabs/etc).  It uses a
-   generic pass to decode the information that represents variables, types, 
-   functions, namespaces, etc: this allows for arbitrary source-language 
-   semantics and type-systems to be used, as long as there is a module 
+   generic pass to decode the information that represents variables, types,
+   functions, namespaces, etc: this allows for arbitrary source-language
+   semantics and type-systems to be used, as long as there is a module
    written for the target debugger to interpret the information. </p>
 
 <p>To provide basic functionality, the LLVM debugger does have to make some
@@ -292,7 +292,7 @@ height="369">
    the range 0x1000 through 0x2000 (there is a defined enum DW_TAG_user_base =
    0x1000.)</p>
 
-<p>The fields of debug descriptors used internally by LLVM 
+<p>The fields of debug descriptors used internally by LLVM
    are restricted to only the simple data types <tt>i32</tt>, <tt>i1</tt>,
    <tt>float</tt>, <tt>double</tt>, <tt>mdstring</tt> and <tt>mdnode</tt>. </p>
 
@@ -314,7 +314,7 @@ height="369">
    with the current debug version (LLVMDebugVersion = 8 &lt;&lt; 16 or
    0x80000 or 524288.)</a></p>
 
-<p>The details of the various descriptors follow.</p>  
+<p>The details of the various descriptors follow.</p>
 
 <!-- ======================================================================= -->
 <h4>
@@ -326,14 +326,14 @@ height="369">
 <div class="doc_code">
 <pre>
 !0 = metadata !{
-  i32,       ;; Tag = 17 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+  i32,       ;; Tag = 17 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
              ;; (DW_TAG_compile_unit)
-  i32,       ;; Unused field. 
-  i32,       ;; DWARF language identifier (ex. DW_LANG_C89) 
+  i32,       ;; Unused field.
+  i32,       ;; DWARF language identifier (ex. DW_LANG_C89)
   metadata,  ;; Source file name
   metadata,  ;; Source file directory (includes trailing slash)
   metadata   ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
-  i1,        ;; True if this is a main compile unit. 
+  i1,        ;; True if this is a main compile unit.
   i1,        ;; True if this is optimized.
   metadata,  ;; Flags
   i32        ;; Runtime version
@@ -353,7 +353,7 @@ height="369">
 
 <p>Compile unit descriptors provide the root context for objects declared in a
    specific compilation unit. File descriptors are defined using this context.
-   These descriptors are collected by a named metadata 
+   These descriptors are collected by a named metadata
    <tt>!llvm.dbg.cu</tt>. Compile unit descriptor keeps track of subprograms,
    global variables and type information.
 
@@ -369,7 +369,7 @@ height="369">
 <div class="doc_code">
 <pre>
 !0 = metadata !{
-  i32,       ;; Tag = 41 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+  i32,       ;; Tag = 41 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
              ;; (DW_TAG_file_type)
   metadata,  ;; Source file name
   metadata,  ;; Source file directory (includes trailing slash)
@@ -397,7 +397,7 @@ height="369">
 <div class="doc_code">
 <pre>
 !1 = metadata !{
-  i32,      ;; Tag = 52 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+  i32,      ;; Tag = 52 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
             ;; (DW_TAG_variable)
   i32,      ;; Unused field.
   metadata, ;; Reference to context descriptor
@@ -444,7 +444,7 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
   i1,       ;; True if the global is defined in the compile unit (not extern)
   i32,      ;; Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
   i32,      ;; Index into a virtual function
-  metadata, ;; indicates which base type contains the vtable pointer for the 
+  metadata, ;; indicates which base type contains the vtable pointer for the
             ;; derived class
   i32,      ;; Flags - Artifical, Private, Protected, Explicit, Prototyped.
   i1,       ;; isOptimized
@@ -512,9 +512,9 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
 <div class="doc_code">
 <pre>
 !4 = metadata !{
-  i32,      ;; Tag = 36 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+  i32,      ;; Tag = 36 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
             ;; (DW_TAG_base_type)
-  metadata, ;; Reference to context 
+  metadata, ;; Reference to context
   metadata, ;; Name (may be "" for anonymous types)
   metadata, ;; Reference to file where defined (may be NULL)
   i32,      ;; Line number where defined (may be 0)
@@ -574,8 +574,8 @@ DW_ATE_unsigned_char = 8
   i64,      ;; Offset in bits
   i32,      ;; Flags to encode attributes, e.g. private
   metadata, ;; Reference to type derived from
-  metadata, ;; (optional) Name of the Objective C property associated with 
-            ;; Objective-C an ivar 
+  metadata, ;; (optional) Name of the Objective C property associated with
+            ;; Objective-C an ivar
   metadata, ;; (optional) Name of the Objective C property getter selector.
   metadata, ;; (optional) Name of the Objective C property setter selector.
   i32       ;; (optional) Objective C property attributes.
@@ -609,8 +609,8 @@ DW_TAG_restrict_type    = 55
 
 <p><tt>DW_TAG_typedef</tt> is used to provide a name for the derived type.</p>
 
-<p><tt>DW_TAG_pointer_type</tt>, <tt>DW_TAG_reference_type</tt>, 
-   <tt>DW_TAG_const_type</tt>, <tt>DW_TAG_volatile_type</tt> and 
+<p><tt>DW_TAG_pointer_type</tt>, <tt>DW_TAG_reference_type</tt>,
+   <tt>DW_TAG_const_type</tt>, <tt>DW_TAG_volatile_type</tt> and
    <tt>DW_TAG_restrict_type</tt> are used to qualify
    the <a href="#format_derived_type">derived type</a>. </p>
 
@@ -750,7 +750,7 @@ DW_TAG_inheritance      = 28
 <div class="doc_code">
 <pre>
 !6 = metadata !{
-  i32,      ;; Tag = 40 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+  i32,      ;; Tag = 40 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
             ;; (DW_TAG_enumerator)
   metadata, ;; Name
   i64       ;; Value
@@ -918,27 +918,27 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-!0 = metadata !{i32 459008, metadata !1, metadata !"X", 
+!0 = metadata !{i32 459008, metadata !1, metadata !"X",
                 metadata !3, i32 2, metadata !6}; [ DW_TAG_auto_variable ]
 !1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
-!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", metadata !"foo", 
-               metadata !"foo", metadata !3, i32 1, metadata !4, 
+!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", metadata !"foo",
+               metadata !"foo", metadata !3, i32 1, metadata !4,
                i1 false, i1 true}; [DW_TAG_subprogram ]
-!3 = metadata !{i32 458769, i32 0, i32 12, metadata !"foo.c", 
-                metadata !"/private/tmp", metadata !"clang 1.1", i1 true, 
+!3 = metadata !{i32 458769, i32 0, i32 12, metadata !"foo.c",
+                metadata !"/private/tmp", metadata !"clang 1.1", i1 true,
                 i1 false, metadata !"", i32 0}; [DW_TAG_compile_unit ]
-!4 = metadata !{i32 458773, metadata !3, metadata !"", null, i32 0, i64 0, i64 0, 
+!4 = metadata !{i32 458773, metadata !3, metadata !"", null, i32 0, i64 0, i64 0,
                 i64 0, i32 0, null, metadata !5, i32 0}; [DW_TAG_subroutine_type ]
 !5 = metadata !{null}
-!6 = metadata !{i32 458788, metadata !3, metadata !"int", metadata !3, i32 0, 
+!6 = metadata !{i32 458788, metadata !3, metadata !"int", metadata !3, i32 0,
                 i64 32, i64 32, i64 0, i32 0, i32 5}; [DW_TAG_base_type ]
 !7 = metadata !{i32 2, i32 7, metadata !1, null}
 !8 = metadata !{i32 2, i32 3, metadata !1, null}
-!9 = metadata !{i32 459008, metadata !1, metadata !"Y", metadata !3, i32 3, 
+!9 = metadata !{i32 459008, metadata !1, metadata !"Y", metadata !3, i32 3,
                 metadata !6}; [ DW_TAG_auto_variable ]
 !10 = metadata !{i32 3, i32 7, metadata !1, null}
 !11 = metadata !{i32 3, i32 3, metadata !1, null}
-!12 = metadata !{i32 459008, metadata !13, metadata !"Z", metadata !3, i32 5, 
+!12 = metadata !{i32 459008, metadata !13, metadata !"Z", metadata !3, i32 5,
                  metadata !6}; [ DW_TAG_auto_variable ]
 !13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
 !14 = metadata !{i32 5, i32 9, metadata !13, null}
@@ -958,7 +958,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 <div class="doc_code">
 <pre>
-call void @llvm.dbg.declare(metadata, metadata !0), !dbg !7   
+call void @llvm.dbg.declare(metadata, metadata !0), !dbg !7
 </pre>
 </div>
 
@@ -972,9 +972,9 @@ call void @llvm.dbg.declare(metadata, metadata !0), !dbg !7
 <pre>
 !7 = metadata !{i32 2, i32 7, metadata !1, null}
 !1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
-!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", 
-                metadata !"foo", metadata !"foo", metadata !3, i32 1, 
-                metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]   
+!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo",
+                metadata !"foo", metadata !"foo", metadata !3, i32 1,
+                metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]
 </pre>
 </div>
 
@@ -999,7 +999,7 @@ call void @llvm.dbg.declare(metadata, metadata !12), !dbg !14
 
 <p>The second intrinsic
    <tt>%<a href="#format_common_declare">llvm.dbg.declare</a></tt>
-   encodes debugging information for variable <tt>Z</tt>. The metadata 
+   encodes debugging information for variable <tt>Z</tt>. The metadata
    <tt>!dbg !14</tt> attached to the intrinsic provides scope information for
    the variable <tt>Z</tt>.</p>
 
@@ -1080,9 +1080,9 @@ int main(int argc, char *argv[]) {
   i32 524305,    ;; Tag
   i32 0,         ;; Unused
   i32 4,         ;; Language Id
-  metadata !"MySource.cpp", 
-  metadata !"/Users/mine/sources", 
-  metadata !"4.2.1 (Based on Apple Inc. build 5649) (LLVM build 00)", 
+  metadata !"MySource.cpp",
+  metadata !"/Users/mine/sources",
+  metadata !"4.2.1 (Based on Apple Inc. build 5649) (LLVM build 00)",
   i1 true,       ;; Main Compile Unit
   i1 false,      ;; Optimized compile unit
   metadata !"",  ;; Compiler flags
@@ -1093,8 +1093,8 @@ int main(int argc, char *argv[]) {
 ;;
 !1 = metadata !{
   i32 524329,    ;; Tag
-  metadata !"MySource.cpp", 
-  metadata !"/Users/mine/sources", 
+  metadata !"MySource.cpp",
+  metadata !"/Users/mine/sources",
   metadata !2    ;; Compile unit
 }
 
@@ -1104,7 +1104,7 @@ int main(int argc, char *argv[]) {
 !3 = metadata !{
   i32 524329,    ;; Tag
   metadata !"Myheader.h"
-  metadata !"/Users/mine/sources", 
+  metadata !"/Users/mine/sources",
   metadata !2    ;; Compile unit
 }
 
@@ -1112,9 +1112,9 @@ int main(int argc, char *argv[]) {
 </pre>
 </div>
 
-<p>llvm::Instruction provides easy access to metadata attached with an 
+<p>llvm::Instruction provides easy access to metadata attached with an
 instruction. One can extract line number information encoded in LLVM IR
-using <tt>Instruction::getMetadata()</tt> and 
+using <tt>Instruction::getMetadata()</tt> and
 <tt>DILocation::getLineNumber()</tt>.
 <pre>
  if (MDNode *N = I->getMetadata("dbg")) {  // Here I is an LLVM instruction
@@ -1177,7 +1177,7 @@ int MyGlobal = 100;
 ;;
 ;; Define the basic type of 32 bit signed integer.  Note that since int is an
 ;; intrinsic type the source file is NULL and line 0.
-;;    
+;;
 !4 = metadata !{
   i32 524324,              ;; Tag
   metadata !1,             ;; Context
@@ -1232,7 +1232,7 @@ int main(int argc, char *argv[]) {
   metadata !1,       ;; File
   i32 1,             ;; Line number
   metadata !4,       ;; Type
-  i1 false,          ;; Is local 
+  i1 false,          ;; Is local
   i1 true,           ;; Is definition
   i32 0,             ;; Virtuality attribute, e.g. pure virtual function
   i32 0,             ;; Index into virtual table for C++ methods
@@ -1326,7 +1326,7 @@ define i32 @main(i32 %argc, i8** %argv) {
 !2 = metadata !{
   i32 524324,        ;; Tag
   metadata !1,       ;; Context
-  metadata !"unsigned char", 
+  metadata !"unsigned char",
   metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 8,             ;; Size in Bits
@@ -1835,15 +1835,15 @@ Properties</a></li>
 <!-- *********************************************************************** -->
 
 <div>
-<p>Objective C provides a simpler way to declare and define accessor methods 
-using declared properties. The language provides features to declare a 
+<p>Objective C provides a simpler way to declare and define accessor methods
+using declared properties. The language provides features to declare a
 property and to let compiler synthesize accessor methods.
 </p>
 
-<p>The debugger lets developer inspect Objective C interfaces and their 
-instance variables and class variables. However, the debugger does not know 
+<p>The debugger lets developer inspect Objective C interfaces and their
+instance variables and class variables. However, the debugger does not know
 anything about the properties defined in Objective C interfaces. The debugger
-consumes information generated by compiler in DWARF format. The format does 
+consumes information generated by compiler in DWARF format. The format does
 not support encoding of Objective C properties. This proposal describes DWARF
 extensions to encode Objective C properties, which the debugger can use to let
 developers inspect Objective C properties.
@@ -1860,27 +1860,27 @@ developers inspect Objective C properties.
 
 <div>
 <p>Objective C properties exist separately from class members. A property
-can be defined only by &quot;setter&quot; and &quot;getter&quot; selectors, and 
-be calculated anew on each access.  Or a property can just be a direct access 
-to some declared ivar.  Finally it can have an ivar &quot;automatically 
-synthesized&quot; for it by the compiler, in which case the property can be 
-referred to in user code directly using the standard C dereference syntax as 
-well as through the property &quot;dot&quot; syntax, but there is no entry in 
+can be defined only by &quot;setter&quot; and &quot;getter&quot; selectors, and
+be calculated anew on each access.  Or a property can just be a direct access
+to some declared ivar.  Finally it can have an ivar &quot;automatically
+synthesized&quot; for it by the compiler, in which case the property can be
+referred to in user code directly using the standard C dereference syntax as
+well as through the property &quot;dot&quot; syntax, but there is no entry in
 the @interface declaration corresponding to this ivar.
 </p>
 <p>
-To facilitate debugging, these properties we will add a new DWARF TAG into the 
-DW_TAG_structure_type definition for the class to hold the description of a 
+To facilitate debugging, these properties we will add a new DWARF TAG into the
+DW_TAG_structure_type definition for the class to hold the description of a
 given property, and a set of DWARF attributes that provide said description.
-The property tag will also contain the name and declared type of the property.  
+The property tag will also contain the name and declared type of the property.
 </p>
 <p>
-If there is a related ivar, there will also be a DWARF property attribute placed 
-in the DW_TAG_member DIE for that ivar referring back to the property TAG for 
-that property. And in the case where the compiler synthesizes the ivar directly, 
-the compiler is expected to generate a DW_TAG_member for that ivar (with the 
-DW_AT_artificial set to 1), whose name will be the name used to access this 
-ivar directly in code, and with the property attribute pointing back to the 
+If there is a related ivar, there will also be a DWARF property attribute placed
+in the DW_TAG_member DIE for that ivar referring back to the property TAG for
+that property. And in the case where the compiler synthesizes the ivar directly,
+the compiler is expected to generate a DW_TAG_member for that ivar (with the
+DW_AT_artificial set to 1), whose name will be the name used to access this
+ivar directly in code, and with the property attribute pointing back to the
 property it is backing.
 </p>
 <p>
@@ -1889,17 +1889,17 @@ The following examples will serve as illustration for our discussion:
 
 <div class="doc_code">
 <pre>
-@interface I1 { 
+@interface I1 {
   int n2;
-} 
+}
 
-@property int p1; 
-@property int p2; 
+@property int p1;
+@property int p2;
 @end
 
-@implementation I1 
-@synthesize p1; 
-@synthesize p2 = n2; 
+@implementation I1
+@synthesize p1;
+@synthesize p2 = n2;
 @end
 </pre>
 </div>
@@ -1909,10 +1909,10 @@ This produces the following DWARF (this is a &quot;pseudo dwarfdump&quot; output
 </p>
 <div class="doc_code">
 <pre>
-0x00000100:  TAG_structure_type [7] * 
+0x00000100:  TAG_structure_type [7] *
                AT_APPLE_runtime_class( 0x10 )
                AT_name( "I1" )
-               AT_decl_file( "Objc_Property.m" ) 
+               AT_decl_file( "Objc_Property.m" )
                AT_decl_line( 3 )
 
 0x00000110    TAG_APPLE_property
@@ -1923,13 +1923,13 @@ This produces the following DWARF (this is a &quot;pseudo dwarfdump&quot; output
                 AT_name ( "p2" )
                 AT_type ( {0x00000150} ( int ) )
 
-0x00000130:   TAG_member [8] 
+0x00000130:   TAG_member [8]
                 AT_name( "_p1" )
                 AT_APPLE_property ( {0x00000110} "p1" )
                 AT_type( {0x00000150} ( int ) )
                 AT_artificial ( 0x1 )
 
-0x00000140:    TAG_member [8] 
+0x00000140:    TAG_member [8]
                  AT_name( "n2" )
                  AT_APPLE_property ( {0x00000120} "p2" )
                  AT_type( {0x00000150} ( int ) )
@@ -1938,7 +1938,7 @@ This produces the following DWARF (this is a &quot;pseudo dwarfdump&quot; output
 </pre>
 </div>
 
-<p> Note, the current convention is that the name of the ivar for an 
+<p> Note, the current convention is that the name of the ivar for an
 auto-synthesized property is the name of the property from which it derives with
 an underscore prepended, as is shown in the example.
 But we actually don't need to know this convention, since we are given the name
@@ -1946,14 +1946,14 @@ of the ivar directly.
 </p>
 
 <p>
-Also, it is common practice in ObjC to have different property declarations in 
-the @interface and @implementation - e.g. to provide a read-only property in 
-the interface,and a read-write interface in the implementation.  In that case, 
-the compiler should emit whichever property declaration will be in force in the 
+Also, it is common practice in ObjC to have different property declarations in
+the @interface and @implementation - e.g. to provide a read-only property in
+the interface,and a read-write interface in the implementation.  In that case,
+the compiler should emit whichever property declaration will be in force in the
 current translation unit.
 </p>
 
-<p> Developers can decorate a property with attributes which are encoded using 
+<p> Developers can decorate a property with attributes which are encoded using
 DW_AT_APPLE_property_attribute.
 </p>
 
@@ -1967,26 +1967,26 @@ Which produces a property tag:
 <p>
 <div class="doc_code">
 <pre>
-TAG_APPLE_property [8] 
-  AT_name( "pr" ) 
-  AT_type ( {0x00000147} (int) ) 
+TAG_APPLE_property [8]
+  AT_name( "pr" )
+  AT_type ( {0x00000147} (int) )
   AT_APPLE_property_attribute (DW_APPLE_PROPERTY_readonly, DW_APPLE_PROPERTY_nonatomic)
 </pre>
 </div>
 
-<p> The setter and getter method names are attached to the property using 
+<p> The setter and getter method names are attached to the property using
 DW_AT_APPLE_property_setter and DW_AT_APPLE_property_getter attributes.
 </p>
 <div class="doc_code">
 <pre>
-@interface I1 
-@property (setter=myOwnP3Setter:) int p3; 
--(void)myOwnP3Setter:(int)a; 
+@interface I1
+@property (setter=myOwnP3Setter:) int p3;
+-(void)myOwnP3Setter:(int)a;
 @end
 
-@implementation I1 
+@implementation I1
 @synthesize p3;
--(void)myOwnP3Setter:(int)a{ } 
+-(void)myOwnP3Setter:(int)a{ }
 @end
 </pre>
 </div>
@@ -1996,19 +1996,19 @@ The DWARF for this would be:
 </p>
 <div class="doc_code">
 <pre>
-0x000003bd: TAG_structure_type [7] * 
+0x000003bd: TAG_structure_type [7] *
               AT_APPLE_runtime_class( 0x10 )
               AT_name( "I1" )
-              AT_decl_file( "Objc_Property.m" ) 
+              AT_decl_file( "Objc_Property.m" )
               AT_decl_line( 3 )
 
 0x000003cd      TAG_APPLE_property
                   AT_name ( "p3" )
                   AT_APPLE_property_setter ( "myOwnP3Setter:" )
                   AT_type( {0x00000147} ( int ) )
-              
-0x000003f3:     TAG_member [8] 
-                  AT_name( "_p3" ) 
+
+0x000003f3:     TAG_member [8]
+                  AT_name( "_p3" )
                   AT_type ( {0x00000147} ( int ) )
                   AT_APPLE_property ( {0x000003cd} )
                   AT_artificial ( 0x1 )
