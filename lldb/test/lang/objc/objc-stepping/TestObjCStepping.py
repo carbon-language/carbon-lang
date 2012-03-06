@@ -10,8 +10,6 @@ class TestObjCStepping(TestBase):
 
     mydir = os.path.join("lang", "objc", "objc-stepping")
 
-    # rdar://problem/10986147
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_with_dsym_and_python_api(self):
@@ -19,8 +17,6 @@ class TestObjCStepping(TestBase):
         self.buildDsym()
         self.objc_stepping()
 
-    # rdar://problem/10986147
-    @unittest2.expectedFailure
     @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Test stepping through ObjC method dispatch in various forms."""
@@ -81,6 +77,9 @@ class TestObjCStepping(TestBase):
         self.assertTrue(mySource_isa, "Found mySource->isa local variable.")
         mySource_isa.GetValue ()
 
+        if self.TraceOn():
+             print mySource_isa
+
         # Lets delete mySource so we can check that after stepping a child variable
         # with no parent persists and is useful.
         del (mySource)
@@ -120,6 +119,9 @@ class TestObjCStepping(TestBase):
         
         mySource_isa.GetValue ()
         did_change = mySource_isa.GetValueDidChange ()
+
+        if self.TraceOn():
+             print mySource_isa
 
         self.assertTrue (did_change, "The isa did indeed change, swizzled!")
 

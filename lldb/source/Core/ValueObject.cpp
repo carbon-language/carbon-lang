@@ -1204,7 +1204,15 @@ ValueObject::GetValueAsCString ()
                 }
             }
         }
-        GetValueAsCString(my_format, m_value_str);
+        if (GetValueAsCString(my_format, m_value_str))
+        {
+            if (!m_value_did_change && m_old_value_valid)
+            {
+                // The value was gotten successfully, so we consider the
+                // value as changed if the value string differs
+                SetValueDidChange (m_old_value_str != m_value_str);
+            }
+        }
     }
     if (m_value_str.empty())
         return NULL;
