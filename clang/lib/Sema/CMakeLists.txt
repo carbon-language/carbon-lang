@@ -1,4 +1,10 @@
-set(LLVM_USED_LIBS clangBasic clangAST clangLex clangAnalysis)
+set(LLVM_USED_LIBS
+  clangAST
+  clangAnalysis
+  clangBasic
+  clangEdit
+  clangLex
+  )
 
 add_clang_library(clangSema
   AnalysisBasedWarnings.cpp

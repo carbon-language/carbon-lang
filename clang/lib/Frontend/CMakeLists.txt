@@ -2,6 +2,7 @@ set( LLVM_USED_LIBS
   clangAST
   clangBasic
   clangDriver
+  clangEdit
   clangLex
   clangParse
   clangSema
