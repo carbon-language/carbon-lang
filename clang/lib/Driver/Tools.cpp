@@ -2138,6 +2138,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fgnu89-inline");
 
+  if (Args.hasArg(options::OPT_fno_inline))
+    CmdArgs.push_back("-fno-inline");
+
   // -fobjc-nonfragile-abi=0 is default.
   ObjCRuntime objCRuntime;
   unsigned objcABIVersion = 0;
