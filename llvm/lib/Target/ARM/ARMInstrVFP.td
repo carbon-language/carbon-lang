@@ -294,7 +294,7 @@ def : Pat<(fmul (fneg SPR:$a), SPR:$b),
           (VNMULS SPR:$a, SPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
 
 // These are encoded as unary instructions.
-let Defs = [FPSCR] in {
+let Defs = [FPSCR_NZCV] in {
 def VCMPED : ADuI<0b11101, 0b11, 0b0100, 0b11, 0,
                   (outs), (ins DPR:$Dd, DPR:$Dm),
                   IIC_fpCMP64, "vcmpe", ".f64\t$Dd, $Dm",
@@ -323,7 +323,7 @@ def VCMPS  : ASuI<0b11101, 0b11, 0b0100, 0b01, 0,
   // VFP pipelines on A8.
   let D = VFPNeonA8Domain;
 }
-} // Defs = [FPSCR]
+} // Defs = [FPSCR_NZCV]
 
 //===----------------------------------------------------------------------===//
 // FP Unary Operations.
@@ -343,7 +343,7 @@ def VABSS  : ASuIn<0b11101, 0b11, 0b0000, 0b11, 0,
   let D = VFPNeonA8Domain;
 }
 
-let Defs = [FPSCR] in {
+let Defs = [FPSCR_NZCV] in {
 def VCMPEZD : ADuI<0b11101, 0b11, 0b0101, 0b11, 0,
                    (outs), (ins DPR:$Dd),
                    IIC_fpCMP64, "vcmpe", ".f64\t$Dd, #0",
@@ -384,7 +384,7 @@ def VCMPZS  : ASuI<0b11101, 0b11, 0b0101, 0b01, 0,
   // VFP pipelines on A8.
   let D = VFPNeonA8Domain;
 }
-} // Defs = [FPSCR]
+} // Defs = [FPSCR_NZCV]
 
 def VCVTDS  : ASuI<0b11101, 0b11, 0b0111, 0b11, 0,
                    (outs DPR:$Dd), (ins SPR:$Sm),
@@ -1174,7 +1174,7 @@ class MovFromVFP<bits<4> opc19_16, dag oops, dag iops, string opc, string asm,
 
 // APSR is the application level alias of CPSR. This FPSCR N, Z, C, V flags
 // to APSR.
-let Defs = [CPSR], Uses = [FPSCR], Rt = 0b1111 /* apsr_nzcv */ in
+let Defs = [CPSR], Uses = [FPSCR_NZCV], Rt = 0b1111 /* apsr_nzcv */ in
 def FMSTAT : MovFromVFP<0b0001 /* fpscr */, (outs), (ins),
                         "vmrs", "\tapsr_nzcv, fpscr", [(arm_fmstat)]>;
 

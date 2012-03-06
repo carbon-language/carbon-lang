@@ -153,11 +153,16 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 }
 
 // Current Program Status Register.
-def CPSR    : ARMReg<0, "cpsr">;
-def APSR    : ARMReg<1, "apsr">;
-def SPSR    : ARMReg<2, "spsr">;
-def FPSCR   : ARMReg<3, "fpscr">;
-def ITSTATE : ARMReg<4, "itstate">;
+// We model fpscr with two registers: FPSCR models the control bits and will be
+// reserved. FPSCR_NZCV models the flag bits and will be unreserved. 
+def CPSR       : ARMReg<0, "cpsr">;
+def APSR       : ARMReg<1, "apsr">;
+def SPSR       : ARMReg<2, "spsr">;
+def FPSCR      : ARMReg<3, "fpscr">;
+def FPSCR_NZCV : ARMReg<3, "fpscr_nzcv"> {
+  let Aliases = [FPSCR];
+}
+def ITSTATE    : ARMReg<4, "itstate">;
 
 // Special Registers - only available in privileged mode.
 def FPSID   : ARMReg<0, "fpsid">;

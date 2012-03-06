@@ -1496,7 +1496,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   Constant *Zero = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = TargetMaterializeConstant(Zero);
   bool isFloat = (Ty->isFloatTy() || Ty->isDoubleTy());
-  unsigned CondReg = isFloat ? ARM::FPSCR : ARM::CPSR;
+  unsigned CondReg = isFloat ? ARM::FPSCR_NZCV : ARM::CPSR;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), DestReg)
           .addReg(ZeroReg).addImm(1)
           .addImm(ARMPred).addReg(CondReg);
