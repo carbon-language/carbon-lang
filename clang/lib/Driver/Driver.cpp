@@ -143,7 +143,7 @@ const {
              (PhaseArg = DAL.getLastArg(options::OPT_rewrite_objc)) ||
              (PhaseArg = DAL.getLastArg(options::OPT__migrate)) ||
              (PhaseArg = DAL.getLastArg(options::OPT__analyze,
-                                              options::OPT__analyze_auto)) ||
+                                        options::OPT__analyze_auto)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_emit_ast)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Compile;
