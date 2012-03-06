@@ -227,6 +227,10 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::UnaryExprOrTypeTraitExprClass:
   case Stmt::UnaryTypeTraitExprClass:
   case Stmt::VAArgExprClass:
+  case Stmt::ObjCArrayLiteralClass:
+  case Stmt::ObjCDictionaryLiteralClass:
+  case Stmt::ObjCNumericLiteralClass:
+  case Stmt::ObjCSubscriptRefExprClass:
     K = CXCursor_UnexposedExpr;
     break;
 
@@ -395,7 +399,11 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::ObjCProtocolExprClass:
     K = CXCursor_ObjCProtocolExpr;
     break;
-
+      
+  case Stmt::ObjCBoolLiteralExprClass:
+    K = CXCursor_ObjCBoolLiteralExpr;
+    break;
+      
   case Stmt::ObjCBridgedCastExprClass:
     K = CXCursor_ObjCBridgedCastExpr;
     break;

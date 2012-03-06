@@ -8,7 +8,7 @@ struct X {
 
 void f(struct X *x) {
   // CHECK: error: no member named 'wobble' in 'struct X'; did you mean 'wibble'?
-  // CHECK-NOT: FIX-IT
+  // CHECK: FIX-IT: Replace [13:12 - 13:24] with "wibble"
   // CHECK: note: 'wibble' declared here
   MACRO(x->wobble = 17);
   // CHECK: error: no member named 'wabble' in 'struct X'; did you mean 'wibble'?

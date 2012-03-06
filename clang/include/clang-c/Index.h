@@ -1745,7 +1745,11 @@ enum CXCursorKind {
    */
   CXCursor_LambdaExpr                    = 144,
   
-  CXCursor_LastExpr                      = CXCursor_LambdaExpr,
+  /** \brief Objective-c Boolean Literal.
+   */
+  CXCursor_ObjCBoolLiteralExpr           = 145,
+
+  CXCursor_LastExpr                      = CXCursor_ObjCBoolLiteralExpr,
 
   /* Statements */
   CXCursor_FirstStmt                     = 200,
