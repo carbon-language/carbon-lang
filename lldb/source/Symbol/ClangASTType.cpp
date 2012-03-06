@@ -510,6 +510,9 @@ ClangASTType::GetFormat ()
 lldb::Format
 ClangASTType::GetFormat (clang_type_t clang_type)
 {
+    if (clang_type == NULL)
+        return lldb::eFormatDefault;
+        
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
 
     switch (qual_type->getTypeClass())
