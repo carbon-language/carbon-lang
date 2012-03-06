@@ -16,6 +16,7 @@
 #define LLVM_CONSTANTSCONTEXT_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
@@ -656,48 +657,20 @@ private:
       return ConstantClassInfo::getTombstoneKey();
     }
     static unsigned getHashValue(const ConstantClass *CP) {
-      // This is adapted from SuperFastHash by Paul Hsieh.
-      unsigned Hash = TypeClassInfo::getHashValue(CP->getType());
-      for (unsigned I = 0, E = CP->getNumOperands(); I < E; ++I) {
-        unsigned Data = ConstantInfo::getHashValue(CP->getOperand(I));
-        Hash         += Data & 0xFFFF;
-        unsigned Tmp  = ((Data >> 16) << 11) ^ Hash;
-        Hash          = (Hash << 16) ^ Tmp;
-        Hash         += Hash >> 11;
-      }
-
-      // Force "avalanching" of final 127 bits.
-      Hash ^= Hash << 3;
-      Hash += Hash >> 5;
-      Hash ^= Hash << 4;
-      Hash += Hash >> 17;
-      Hash ^= Hash << 25;
-      Hash += Hash >> 6;
-      return Hash;
+      hash_code code = hash_value(CP->getType());
+      for (unsigned I = 0, E = CP->getNumOperands(); I < E; ++I)
+        code = hash_combine(code, hash_value(CP->getOperand(I)));
+      return code;
     }
     static bool isEqual(const ConstantClass *LHS, const ConstantClass *RHS) {
       return LHS == RHS;
     }
     static unsigned getHashValue(const LookupKey &Val) {
-      // This is adapted from SuperFastHash by Paul Hsieh.
-      unsigned Hash = TypeClassInfo::getHashValue(Val.first);
+      hash_code code = hash_value(Val.first);
       for (Operands::const_iterator
-        I = Val.second.begin(), E = Val.second.end(); I != E; ++I) {
-        unsigned Data = ConstantInfo::getHashValue(*I);
-        Hash         += Data & 0xFFFF;
-        unsigned Tmp  = ((Data >> 16) << 11) ^ Hash;
-        Hash          = (Hash << 16) ^ Tmp;
-        Hash         += Hash >> 11;
-      }
-
-      // Force "avalanching" of final 127 bits.
-      Hash ^= Hash << 3;
-      Hash += Hash >> 5;
-      Hash ^= Hash << 4;
-      Hash += Hash >> 17;
-      Hash ^= Hash << 25;
-      Hash += Hash >> 6;
-      return Hash;
+           I = Val.second.begin(), E = Val.second.end(); I != E; ++I)
+        code = hash_combine(code, hash_value(*I));
+      return code;
     }
     static bool isEqual(const LookupKey &LHS, const ConstantClass *RHS) {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
