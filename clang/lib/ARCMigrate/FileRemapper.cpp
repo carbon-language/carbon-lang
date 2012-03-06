@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/ARCMigrate/FileRemapper.h"
-#include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/FileSystem.h"
@@ -50,9 +51,15 @@ std::string FileRemapper::getRemapInfoFile(StringRef outputDir) {
 
 bool FileRemapper::initFromDisk(StringRef outputDir, DiagnosticsEngine &Diag,
                                 bool ignoreIfFilesChanged) {
+  std::string infoFile = getRemapInfoFile(outputDir);
+  return initFromFile(infoFile, Diag, ignoreIfFilesChanged);
+}
+
+bool FileRemapper::initFromFile(StringRef filePath, DiagnosticsEngine &Diag,
+                                bool ignoreIfFilesChanged) {
   assert(FromToMappings.empty() &&
          "initFromDisk should be called before any remap calls");
-  std::string infoFile = getRemapInfoFile(outputDir);
+  std::string infoFile = filePath;
   bool fileExists = false;
   llvm::sys::fs::exists(infoFile, fileExists);
   if (!fileExists)
@@ -108,8 +115,15 @@ bool FileRemapper::flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag) {
   if (fs::create_directory(outputDir, existed) != llvm::errc::success)
     return report("Could not create directory: " + outputDir, Diag);
 
-  std::string errMsg;
   std::string infoFile = getRemapInfoFile(outputDir);
+  return flushToFile(infoFile, Diag);
+}
+
+bool FileRemapper::flushToFile(StringRef outputPath, DiagnosticsEngine &Diag) {
+  using namespace llvm::sys;
+
+  std::string errMsg;
+  std::string infoFile = outputPath;
   llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg,
                                llvm::raw_fd_ostream::F_Binary);
   if (!errMsg.empty())
@@ -189,8 +203,7 @@ bool FileRemapper::overwriteOriginal(DiagnosticsEngine &Diag,
   return false;
 }
 
-void FileRemapper::applyMappings(CompilerInvocation &CI) const {
-  PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+void FileRemapper::applyMappings(PreprocessorOptions &PPOpts) const {
   for (MappingsTy::const_iterator
          I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
     if (const FileEntry *FE = I->second.dyn_cast<const FileEntry *>()) {
@@ -204,8 +217,7 @@ void FileRemapper::applyMappings(CompilerInvocation &CI) const {
   PPOpts.RetainRemappedFileBuffers = true;
 }
 
-void FileRemapper::transferMappingsAndClear(CompilerInvocation &CI) {
-  PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+void FileRemapper::transferMappingsAndClear(PreprocessorOptions &PPOpts) {
   for (MappingsTy::iterator
          I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
     if (const FileEntry *FE = I->second.dyn_cast<const FileEntry *>()) {

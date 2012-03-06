@@ -428,6 +428,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::RewriteObjC:            return "-rewrite-objc";
   case frontend::RewriteTest:            return "-rewrite-test";
   case frontend::RunAnalysis:            return "-analyze";
+  case frontend::MigrateSource:          return "-migrate";
   case frontend::RunPreprocessorOnly:    return "-Eonly";
   }
 
@@ -483,9 +484,9 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-arcmt-migrate");
     break;
   }
-  if (!Opts.ARCMTMigrateDir.empty()) {
-    Res.push_back("-arcmt-migrate-directory");
-    Res.push_back(Opts.ARCMTMigrateDir);
+  if (!Opts.MTMigrateDir.empty()) {
+    Res.push_back("-mt-migrate-directory");
+    Res.push_back(Opts.MTMigrateDir);
   }
   if (!Opts.ARCMTMigrateReportOut.empty()) {
     Res.push_back("-arcmt-migrate-report-output");
@@ -493,6 +494,11 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   }
   if (Opts.ARCMTMigrateEmitARCErrors)
     Res.push_back("-arcmt-migrate-emit-errors");
+
+  if (Opts.ObjCMTAction & ~FrontendOptions::ObjCMT_Literals)
+    Res.push_back("-objcmt-migrate-literals");
+  if (Opts.ObjCMTAction & ~FrontendOptions::ObjCMT_Subscripting)
+    Res.push_back("-objcmt-migrate-subscripting");
 
   bool NeedLang = false;
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i)
@@ -828,6 +834,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fdebugger-support");
   if (Opts.DebuggerCastResultToId)
     Res.push_back("-fdebugger-cast-result-to-id");
+  if (Opts.DebuggerObjCLiteral)
+    Res.push_back("-fdebugger-objc-literal");
   if (Opts.DelayedTemplateParsing)
     Res.push_back("-fdelayed-template-parsing");
   if (Opts.Deprecated)
@@ -1376,6 +1384,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::RewriteTest; break;
     case OPT_analyze:
       Opts.ProgramAction = frontend::RunAnalysis; break;
+    case OPT_migrate:
+      Opts.ProgramAction = frontend::MigrateSource; break;
     case OPT_Eonly:
       Opts.ProgramAction = frontend::RunPreprocessorOnly; break;
     }
@@ -1432,7 +1442,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.FixToTemporaries = Args.hasArg(OPT_fixit_to_temp);
   Opts.OverrideRecordLayoutsFile
     = Args.getLastArgValue(OPT_foverride_record_layout_EQ);
-  Opts.ARCMTAction = FrontendOptions::ARCMT_None;
   if (const Arg *A = Args.getLastArg(OPT_arcmt_check,
                                      OPT_arcmt_modify,
                                      OPT_arcmt_migrate)) {
@@ -1450,11 +1459,22 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       break;
     }
   }
-  Opts.ARCMTMigrateDir = Args.getLastArgValue(OPT_arcmt_migrate_directory);
+  Opts.MTMigrateDir = Args.getLastArgValue(OPT_mt_migrate_directory);
   Opts.ARCMTMigrateReportOut
     = Args.getLastArgValue(OPT_arcmt_migrate_report_output);
   Opts.ARCMTMigrateEmitARCErrors
     = Args.hasArg(OPT_arcmt_migrate_emit_arc_errors);
+
+  if (Args.hasArg(OPT_objcmt_migrate_literals))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Literals;
+  if (Args.hasArg(OPT_objcmt_migrate_subscripting))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_Subscripting;
+
+  if (Opts.ARCMTAction != FrontendOptions::ARCMT_None &&
+      Opts.ObjCMTAction != FrontendOptions::ObjCMT_None) {
+    Diags.Report(diag::err_drv_argument_not_allowed_with)
+      << "ARC migration" << "ObjC migration";
+  }
 
   InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {
@@ -1899,6 +1919,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ParseUnknownAnytype = Args.hasArg(OPT_funknown_anytype);
   Opts.DebuggerSupport = Args.hasArg(OPT_fdebugger_support);
   Opts.DebuggerCastResultToId = Args.hasArg(OPT_fdebugger_cast_result_to_id);
+  Opts.DebuggerObjCLiteral = Args.hasArg(OPT_fdebugger_objc_literal);
   Opts.AddressSanitizer = Args.hasArg(OPT_faddress_sanitizer);
   Opts.ThreadSanitizer = Args.hasArg(OPT_fthread_sanitizer);
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);

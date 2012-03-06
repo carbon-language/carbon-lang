@@ -39,6 +39,7 @@ public:
     PreprocessJobClass,
     PrecompileJobClass,
     AnalyzeJobClass,
+    MigrateJobClass,
     CompileJobClass,
     AssembleJobClass,
     LinkJobClass,
@@ -169,6 +170,17 @@ public:
     return A->getKind() == AnalyzeJobClass;
   }
   static bool classof(const AnalyzeJobAction *) { return true; }
+};
+
+class MigrateJobAction : public JobAction {
+  virtual void anchor();
+public:
+  MigrateJobAction(Action *Input, types::ID OutputType);
+
+  static bool classof(const Action *A) {
+    return A->getKind() == MigrateJobClass;
+  }
+  static bool classof(const MigrateJobAction *) { return true; }
 };
 
 class CompileJobAction : public JobAction {

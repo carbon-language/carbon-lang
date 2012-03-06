@@ -14,6 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/FixItRewriter.h"
+#include "clang/Edit/Commit.h"
+#include "clang/Edit/EditsReceiver.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
@@ -29,6 +31,7 @@ FixItRewriter::FixItRewriter(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                              const LangOptions &LangOpts,
                              FixItOptions *FixItOpts)
   : Diags(Diags),
+    Editor(SourceMgr, LangOpts),
     Rewrite(SourceMgr, LangOpts),
     FixItOpts(FixItOpts),
     NumFailures(0),
@@ -51,12 +54,33 @@ bool FixItRewriter::WriteFixedFile(FileID ID, raw_ostream &OS) {
   return false;
 }
 
+namespace {
+
+class RewritesReceiver : public edit::EditsReceiver {
+  Rewriter &Rewrite;
+
+public:
+  RewritesReceiver(Rewriter &Rewrite) : Rewrite(Rewrite) { }
+
+  virtual void insert(SourceLocation loc, StringRef text) {
+    Rewrite.InsertText(loc, text);
+  }
+  virtual void replace(CharSourceRange range, StringRef text) {
+    Rewrite.ReplaceText(range.getBegin(), Rewrite.getRangeSize(range), text);
+  }
+};
+
+}
+
 bool FixItRewriter::WriteFixedFiles(
             std::vector<std::pair<std::string, std::string> > *RewrittenFiles) {
   if (NumFailures > 0 && !FixItOpts->FixWhatYouCan) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
     return true;
   }
+
+  RewritesReceiver Rec(Rewrite);
+  Editor.applyRewrites(Rec);
 
   for (iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
     const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
@@ -116,16 +140,28 @@ void FixItRewriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
 
   // Make sure that we can perform all of the modifications we
   // in this diagnostic.
-  bool CanRewrite = Info.getNumFixItHints() > 0;
+  edit::Commit commit(Editor);
   for (unsigned Idx = 0, Last = Info.getNumFixItHints();
        Idx < Last; ++Idx) {
     const FixItHint &Hint = Info.getFixItHint(Idx);
-    if (Hint.RemoveRange.isValid() &&
-        Rewrite.getRangeSize(Hint.RemoveRange) == -1) {
-      CanRewrite = false;
-      break;
+
+    if (Hint.CodeToInsert.empty()) {
+      if (Hint.InsertFromRange.isValid())
+        commit.insertFromRange(Hint.RemoveRange.getBegin(),
+                           Hint.InsertFromRange, /*afterToken=*/false,
+                           Hint.BeforePreviousInsertions);
+      else
+        commit.remove(Hint.RemoveRange);
+    } else {
+      if (Hint.RemoveRange.isTokenRange() ||
+          Hint.RemoveRange.getBegin() != Hint.RemoveRange.getEnd())
+        commit.replace(Hint.RemoveRange, Hint.CodeToInsert);
+      else
+        commit.insert(Hint.RemoveRange.getBegin(), Hint.CodeToInsert,
+                    /*afterToken=*/false, Hint.BeforePreviousInsertions);
     }
   }
+  bool CanRewrite = Info.getNumFixItHints() > 0 && commit.isCommitable();
 
   if (!CanRewrite) {
     if (Info.getNumFixItHints() > 0)
@@ -138,27 +174,8 @@ void FixItRewriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
     }
     return;
   }
-
-  bool Failed = false;
-  for (unsigned Idx = 0, Last = Info.getNumFixItHints();
-       Idx < Last; ++Idx) {
-    const FixItHint &Hint = Info.getFixItHint(Idx);
-
-    if (Hint.CodeToInsert.empty()) {
-      // We're removing code.
-      if (Rewrite.RemoveText(Hint.RemoveRange))
-        Failed = true;
-      continue;
-    }
-
-    // We're replacing code.
-    if (Rewrite.ReplaceText(Hint.RemoveRange.getBegin(),
-                            Rewrite.getRangeSize(Hint.RemoveRange),
-                            Hint.CodeToInsert))
-      Failed = true;
-  }
-
-  if (Failed) {
+  
+  if (!Editor.commit(commit)) {
     ++NumFailures;
     Diag(Info.getLocation(), diag::note_fixit_failed);
     return;

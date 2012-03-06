@@ -1,4 +1,4 @@
-##===- lib/Makefile ----------------------------------------*- Makefile -*-===##
+##===- clang/lib/Edit/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,11 +6,9 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-CLANG_LEVEL := ..
 
-PARALLEL_DIRS = Headers Basic Lex Parse AST Sema CodeGen Analysis \
-                StaticAnalyzer Edit Rewrite ARCMigrate Serialization Frontend \
-                FrontendTool Index Driver
+CLANG_LEVEL := ../..
+LIBRARYNAME := clangEdit
 
 include $(CLANG_LEVEL)/Makefile
 

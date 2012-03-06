@@ -227,6 +227,7 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
     case Action::PreprocessJobClass:
       T = new tools::darwin::Preprocess(*this); break;
     case Action::AnalyzeJobClass:
+    case Action::MigrateJobClass:
       T = new tools::Clang(*this); break;
     case Action::PrecompileJobClass:
     case Action::CompileJobClass:
@@ -1409,6 +1410,7 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
     case Action::PrecompileJobClass:
       T = new tools::gcc::Precompile(*this); break;
     case Action::AnalyzeJobClass:
+    case Action::MigrateJobClass:
       T = new tools::Clang(*this); break;
     case Action::CompileJobClass:
       T = new tools::gcc::Compile(*this); break;

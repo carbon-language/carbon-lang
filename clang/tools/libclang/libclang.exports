@@ -132,6 +132,7 @@ clang_getRange
 clang_getRangeEnd
 clang_getRangeStart
 clang_getRemappings
+clang_getRemappingsFromFileList
 clang_getResultType
 clang_getSpecializedCursorTemplate
 clang_getSpellingLocation

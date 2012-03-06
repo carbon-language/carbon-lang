@@ -118,12 +118,20 @@ def ccc_arrmt_check : Flag<"-ccc-arrmt-check">, Alias<ccc_arcmt_check>;
 def ccc_arrmt_modify : Flag<"-ccc-arrmt-modify">, Alias<ccc_arcmt_modify>;
 def ccc_arcmt_migrate : Separate<"-ccc-arcmt-migrate">, CCCDriverOpt,
   HelpText<"Apply modifications and produces temporary files that conform to ARC">;
-def ccc_arcmt_migrate_EQ : Joined<"-ccc-arcmt-migrate=">, CCCDriverOpt,
-  Alias<ccc_arcmt_migrate>;
 def arcmt_migrate_report_output : Separate<"-arcmt-migrate-report-output">,
   HelpText<"Output path for the plist report">;
 def arcmt_migrate_emit_arc_errors : Flag<"-arcmt-migrate-emit-errors">,
   HelpText<"Emit ARC errors even if the migrator can fix them">;
+
+def _migrate : Flag<"--migrate">, Flags<[DriverOption]>,
+  HelpText<"Run the migrator">;
+def ccc_objcmt_migrate : Separate<"-ccc-objcmt-migrate">, CCCDriverOpt,
+  HelpText<"Apply modifications and produces temporary files to migrate to "
+   "modern ObjC syntax">;
+def objcmt_migrate_literals : Flag<"-objcmt-migrate-literals">,
+  HelpText<"Enable migration to modern ObjC literals">;
+def objcmt_migrate_subscripting : Flag<"-objcmt-migrate-subscripting">,
+  HelpText<"Enable migration to modern ObjC subscripting">;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;

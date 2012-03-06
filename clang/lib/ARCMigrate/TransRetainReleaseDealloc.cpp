@@ -21,6 +21,8 @@
 #include "Internals.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/Lex/Lexer.h"
+#include "clang/Basic/SourceManager.h"
 
 using namespace clang;
 using namespace arcmt;
@@ -128,27 +130,105 @@ public:
     Transaction Trans(Pass.TA);
     clearDiagnostics(rec->getExprLoc());
 
-    if (E->getMethodFamily() == OMF_release &&
-        isRemovable(E) && isInAtFinally(E)) {
+    ObjCMessageExpr *Msg = E;
+    Expr *RecContainer = Msg;
+    SourceRange RecRange = rec->getSourceRange();
+    checkForGCDOrXPC(Msg, RecContainer, rec, RecRange);
+
+    if (Msg->getMethodFamily() == OMF_release &&
+        isRemovable(RecContainer) && isInAtFinally(RecContainer)) {
       // Change the -release to "receiver = nil" in a finally to avoid a leak
       // when an exception is thrown.
-      Pass.TA.replace(E->getSourceRange(), rec->getSourceRange());
+      Pass.TA.replace(RecContainer->getSourceRange(), RecRange);
       std::string str = " = ";
       str += getNilString(Pass.Ctx);
-      Pass.TA.insertAfterToken(rec->getLocEnd(), str);
+      Pass.TA.insertAfterToken(RecRange.getEnd(), str);
       return true;
     }
 
-    if (!hasSideEffects(E, Pass.Ctx)) {
-      if (tryRemoving(E))
+    if (!hasSideEffects(rec, Pass.Ctx)) {
+      if (tryRemoving(RecContainer))
         return true;
     }
-    Pass.TA.replace(E->getSourceRange(), rec->getSourceRange());
+    Pass.TA.replace(RecContainer->getSourceRange(), RecRange);
 
     return true;
   }
 
 private:
+  /// \brief Check if the retain/release is due to a GCD/XPC macro that are
+  /// defined as:
+  ///
+  /// #define dispatch_retain(object) ({ dispatch_object_t _o = (object); _dispatch_object_validate(_o); (void)[_o retain]; })
+  /// #define dispatch_release(object) ({ dispatch_object_t _o = (object); _dispatch_object_validate(_o); [_o release]; })
+  /// #define xpc_retain(object) ({ xpc_object_t _o = (object); _xpc_object_validate(_o); [_o retain]; })
+  /// #define xpc_release(object) ({ xpc_object_t _o = (object); _xpc_object_validate(_o); [_o release]; })
+  ///
+  /// and return the top container which is the StmtExpr and the macro argument
+  /// expression.
+  void checkForGCDOrXPC(ObjCMessageExpr *Msg, Expr *&RecContainer,
+                        Expr *&Rec, SourceRange &RecRange) {
+    SourceLocation Loc = Msg->getExprLoc();
+    if (!Loc.isMacroID())
+      return;
+    SourceManager &SM = Pass.Ctx.getSourceManager();
+    StringRef MacroName = Lexer::getImmediateMacroName(Loc, SM,
+                                                     Pass.Ctx.getLangOptions());
+    bool isGCDOrXPC = llvm::StringSwitch<bool>(MacroName)
+        .Case("dispatch_retain", true)
+        .Case("dispatch_release", true)
+        .Case("xpc_retain", true)
+        .Case("xpc_release", true)
+        .Default(false);
+    if (!isGCDOrXPC)
+      return;
+
+    StmtExpr *StmtE = 0;
+    Stmt *S = Msg;
+    while (S) {
+      if (StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
+        StmtE = SE;
+        break;
+      }
+      S = StmtMap->getParent(S);
+    }
+
+    if (!StmtE)
+      return;
+
+    Stmt::child_range StmtExprChild = StmtE->children();
+    if (!StmtExprChild)
+      return;
+    CompoundStmt *CompS = dyn_cast_or_null<CompoundStmt>(*StmtExprChild);
+    if (!CompS)
+      return;
+
+    Stmt::child_range CompStmtChild = CompS->children();
+    if (!CompStmtChild)
+      return;
+    DeclStmt *DeclS = dyn_cast_or_null<DeclStmt>(*CompStmtChild);
+    if (!DeclS)
+      return;
+    if (!DeclS->isSingleDecl())
+      return;
+    VarDecl *VD = dyn_cast_or_null<VarDecl>(DeclS->getSingleDecl());
+    if (!VD)
+      return;
+    Expr *Init = VD->getInit();
+    if (!Init)
+      return;
+
+    RecContainer = StmtE;
+    Rec = Init->IgnoreParenImpCasts();
+    if (ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Rec))
+      Rec = EWC->getSubExpr()->IgnoreParenImpCasts();
+    RecRange = Rec->getSourceRange();
+    if (SM.isMacroArgExpansion(RecRange.getBegin()))
+      RecRange.setBegin(SM.getImmediateSpellingLoc(RecRange.getBegin()));
+    if (SM.isMacroArgExpansion(RecRange.getEnd()))
+      RecRange.setEnd(SM.getImmediateSpellingLoc(RecRange.getEnd()));
+  }
+
   void clearDiagnostics(SourceLocation loc) const {
     Pass.TA.clearDiagnostic(diag::err_arc_illegal_explicit_message,
                             diag::err_unavailable,

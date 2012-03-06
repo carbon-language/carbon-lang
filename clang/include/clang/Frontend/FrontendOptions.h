@@ -46,6 +46,7 @@ namespace frontend {
     RewriteObjC,            ///< ObjC->C Rewriter.
     RewriteTest,            ///< Rewriter playground
     RunAnalysis,            ///< Run one or more source code analyses.
+    MigrateSource,          ///< Run migrator.
     RunPreprocessorOnly     ///< Just lex, no output.
   };
 }
@@ -118,7 +119,16 @@ public:
     ARCMT_Migrate
   } ARCMTAction;
 
-  std::string ARCMTMigrateDir;
+  enum {
+    ObjCMT_None = 0,
+    /// \brief Enable migration to modern ObjC literals.
+    ObjCMT_Literals = 0x1,
+    /// \brief Enable migration to modern ObjC subscripting.
+    ObjCMT_Subscripting = 0x2
+  };
+  unsigned ObjCMTAction;
+
+  std::string MTMigrateDir;
   std::string ARCMTMigrateReportOut;
 
   /// The input files and their types.
@@ -177,6 +187,7 @@ public:
     ShowVersion = 0;
     ARCMTAction = ARCMT_None;
     ARCMTMigrateEmitARCErrors = 0;
+    ObjCMTAction = ObjCMT_None;
   }
 
   /// getInputKindForExtension - Return the appropriate input kind for a file

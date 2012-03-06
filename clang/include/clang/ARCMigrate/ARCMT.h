@@ -76,6 +76,15 @@ bool getFileRemappings(std::vector<std::pair<std::string,std::string> > &remap,
                        StringRef outputDir,
                        DiagnosticConsumer *DiagClient);
 
+/// \brief Get the set of file remappings from a list of files with remapping
+/// info.
+///
+/// \returns false if no error is produced, true otherwise.
+bool getFileRemappingsFromFileList(
+                        std::vector<std::pair<std::string,std::string> > &remap,
+                        ArrayRef<StringRef> remapFiles,
+                        DiagnosticConsumer *DiagClient);
+
 typedef void (*TransformFn)(MigrationPass &pass);
 
 std::vector<TransformFn> getAllTransformations(LangOptions::GCMode OrigGCMode,

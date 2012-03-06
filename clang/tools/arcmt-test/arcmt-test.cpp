@@ -135,9 +135,8 @@ static bool checkForMigration(StringRef resourcesPath,
 }
 
 static void printResult(FileRemapper &remapper, raw_ostream &OS) {
-  CompilerInvocation CI;
-  remapper.applyMappings(CI);
-  PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+  PreprocessorOptions PPOpts;
+  remapper.applyMappings(PPOpts);
   // The changed files will be in memory buffers, print them.
   for (unsigned i = 0, e = PPOpts.RemappedFileBuffers.size(); i != e; ++i) {
     const llvm::MemoryBuffer *mem = PPOpts.RemappedFileBuffers[i].second;

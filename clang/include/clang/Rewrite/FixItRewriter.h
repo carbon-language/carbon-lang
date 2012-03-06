@@ -18,6 +18,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Rewrite/Rewriter.h"
+#include "clang/Edit/EditedSource.h"
 
 namespace clang {
 
@@ -55,6 +56,8 @@ public:
 class FixItRewriter : public DiagnosticConsumer {
   /// \brief The diagnostics machinery.
   DiagnosticsEngine &Diags;
+
+  edit::EditedSource Editor;
 
   /// \brief The rewriter used to perform the various code
   /// modifications.

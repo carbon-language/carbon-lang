@@ -24,7 +24,7 @@ namespace clang {
   class FileManager;
   class FileEntry;
   class DiagnosticsEngine;
-  class CompilerInvocation;
+  class PreprocessorOptions;
 
 namespace arcmt {
 
@@ -44,7 +44,10 @@ public:
   
   bool initFromDisk(StringRef outputDir, DiagnosticsEngine &Diag,
                     bool ignoreIfFilesChanged);
+  bool initFromFile(StringRef filePath, DiagnosticsEngine &Diag,
+                    bool ignoreIfFilesChanged);
   bool flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag);
+  bool flushToFile(StringRef outputPath, DiagnosticsEngine &Diag);
 
   bool overwriteOriginal(DiagnosticsEngine &Diag,
                          StringRef outputDir = StringRef());
@@ -52,9 +55,9 @@ public:
   void remap(StringRef filePath, llvm::MemoryBuffer *memBuf);
   void remap(StringRef filePath, StringRef newPath);
 
-  void applyMappings(CompilerInvocation &CI) const;
+  void applyMappings(PreprocessorOptions &PPOpts) const;
 
-  void transferMappingsAndClear(CompilerInvocation &CI);
+  void transferMappingsAndClear(PreprocessorOptions &PPOpts);
 
   void clear(StringRef outputDir = StringRef());
 

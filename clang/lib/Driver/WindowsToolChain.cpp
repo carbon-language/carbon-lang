@@ -59,6 +59,7 @@ Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
     case Action::PreprocessJobClass:
     case Action::PrecompileJobClass:
     case Action::AnalyzeJobClass:
+    case Action::MigrateJobClass:
     case Action::CompileJobClass:
       T = new tools::Clang(*this); break;
     case Action::AssembleJobClass:

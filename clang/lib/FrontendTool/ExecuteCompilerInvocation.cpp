@@ -76,6 +76,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case RewriteObjC:            return new RewriteObjCAction();
   case RewriteTest:            return new RewriteTestAction();
   case RunAnalysis:            return new ento::AnalysisAction();
+  case MigrateSource:          return new arcmt::MigrateSourceAction();
   case RunPreprocessorOnly:    return new PreprocessOnlyAction();
   }
   llvm_unreachable("Invalid program action!");
@@ -105,10 +106,16 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
     break;
   case FrontendOptions::ARCMT_Migrate:
     Act = new arcmt::MigrateAction(Act,
-                                   FEOpts.ARCMTMigrateDir,
+                                   FEOpts.MTMigrateDir,
                                    FEOpts.ARCMTMigrateReportOut,
                                    FEOpts.ARCMTMigrateEmitARCErrors);
     break;
+  }
+
+  if (FEOpts.ObjCMTAction != FrontendOptions::ObjCMT_None) {
+    Act = new arcmt::ObjCMigrateAction(Act, FEOpts.MTMigrateDir,
+                   FEOpts.ObjCMTAction & ~FrontendOptions::ObjCMT_Literals,
+                   FEOpts.ObjCMTAction & ~FrontendOptions::ObjCMT_Subscripting);
   }
 
   // If there are any AST files to merge, create a frontend action

@@ -4,6 +4,7 @@ add_clang_library(clangARCMigrate
   ARCMT.cpp
   ARCMTActions.cpp
   FileRemapper.cpp
+  ObjCMT.cpp
   PlistReporter.cpp
   TransAPIUses.cpp
   TransARCAssign.cpp

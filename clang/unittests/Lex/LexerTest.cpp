@@ -66,10 +66,10 @@ TEST_F(LexerTest, LexAPI) {
     "N(INN(val)) N(NOF1) N(NOF2) N(val)";
 
   MemoryBuffer *buf = MemoryBuffer::getMemBuffer(source);
-  SourceMgr.createMainFileIDForMemBuffer(buf);
+  FileID mainFileID = SourceMgr.createMainFileIDForMemBuffer(buf);
 
   VoidModuleLoader ModLoader;
-  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts, &*Target);
+  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts, Target.getPtr());
   Preprocessor PP(Diags, LangOpts,
                   Target.getPtr(),
                   SourceMgr, HeaderInfo, ModLoader,

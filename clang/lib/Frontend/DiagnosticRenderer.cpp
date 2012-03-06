@@ -12,6 +12,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Edit/EditedSource.h"
+#include "clang/Edit/Commit.h"
+#include "clang/Edit/EditsReceiver.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -127,6 +130,54 @@ DiagnosticRenderer::DiagnosticRenderer(const SourceManager &SM,
 
 DiagnosticRenderer::~DiagnosticRenderer() {}
 
+namespace {
+
+class FixitReceiver : public edit::EditsReceiver {
+  SmallVectorImpl<FixItHint> &MergedFixits;
+
+public:
+  FixitReceiver(SmallVectorImpl<FixItHint> &MergedFixits)
+    : MergedFixits(MergedFixits) { }
+  virtual void insert(SourceLocation loc, StringRef text) {
+    MergedFixits.push_back(FixItHint::CreateInsertion(loc, text));
+  }
+  virtual void replace(CharSourceRange range, StringRef text) {
+    MergedFixits.push_back(FixItHint::CreateReplacement(range, text));
+  }
+};
+
+}
+
+static void mergeFixits(ArrayRef<FixItHint> FixItHints,
+                        const SourceManager &SM, const LangOptions &LangOpts,
+                        SmallVectorImpl<FixItHint> &MergedFixits) {
+  edit::Commit commit(SM, LangOpts);
+  for (ArrayRef<FixItHint>::const_iterator
+         I = FixItHints.begin(), E = FixItHints.end(); I != E; ++I) {
+    const FixItHint &Hint = *I;
+    if (Hint.CodeToInsert.empty()) {
+      if (Hint.InsertFromRange.isValid())
+        commit.insertFromRange(Hint.RemoveRange.getBegin(),
+                           Hint.InsertFromRange, /*afterToken=*/false,
+                           Hint.BeforePreviousInsertions);
+      else
+        commit.remove(Hint.RemoveRange);
+    } else {
+      if (Hint.RemoveRange.isTokenRange() ||
+          Hint.RemoveRange.getBegin() != Hint.RemoveRange.getEnd())
+        commit.replace(Hint.RemoveRange, Hint.CodeToInsert);
+      else
+        commit.insert(Hint.RemoveRange.getBegin(), Hint.CodeToInsert,
+                    /*afterToken=*/false, Hint.BeforePreviousInsertions);
+    }
+  }
+
+  edit::EditedSource Editor(SM, LangOpts);
+  if (Editor.commit(commit)) {
+    FixitReceiver Rec(MergedFixits);
+    Editor.applyRewrites(Rec);
+  }
+}
 
 void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
                                         DiagnosticsEngine::Level Level,
@@ -152,6 +203,12 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
     SmallVector<CharSourceRange, 20> MutableRanges(Ranges.begin(),
                                                    Ranges.end());
     
+    llvm::SmallVector<FixItHint, 8> MergedFixits;
+    if (!FixItHints.empty()) {
+      mergeFixits(FixItHints, SM, LangOpts, MergedFixits);
+      FixItHints = MergedFixits;
+    }
+
     for (ArrayRef<FixItHint>::const_iterator I = FixItHints.begin(),
          E = FixItHints.end();
          I != E; ++I)
