@@ -63,8 +63,10 @@ public:
     return Val.template get<VecTy*>()->size();
   }
   
-  typedef const EltTy *iterator;
-  iterator begin() const {
+  typedef const EltTy *const const_iterator;
+  typedef EltTy *iterator;
+
+  iterator begin() {
     if (empty())
       return 0;
     
@@ -74,7 +76,7 @@ public:
     return Val.template get<VecTy *>()->begin();
 
   }
-  iterator end() const {
+  iterator end() {
     if (empty())
       return 0;
     
@@ -84,7 +86,14 @@ public:
     return Val.template get<VecTy *>()->end();
   }
 
-  
+  const_iterator begin() const {
+    return (const_iterator)const_cast<TinyPtrVector*>(this)->begin();
+  }
+
+  const_iterator end() const {
+    return (const_iterator)const_cast<TinyPtrVector*>(this)->end();
+  }
+
   EltTy operator[](unsigned i) const {
     assert(!Val.isNull() && "can't index into an empty vector");
     if (EltTy V = Val.template dyn_cast<EltTy>()) {
@@ -132,6 +141,20 @@ public:
       Vec->clear();
     }
     // Otherwise, we're already empty.
+  }
+
+  iterator erase(iterator I) {
+    // If we have a single value, convert to empty.
+    if (Val.template is<EltTy>()) {
+      if (I == begin())
+        Val = (EltTy)0;
+    } else if (VecTy *Vec = Val.template dyn_cast<VecTy*>()) {
+      // multiple items in a vector; just do the erase, there is no
+      // benefit to collapsing back to a pointer
+      return Vec->erase(I);
+    }
+
+    return 0;
   }
   
 private:
