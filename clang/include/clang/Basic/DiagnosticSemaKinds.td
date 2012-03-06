@@ -4953,9 +4953,6 @@ def err_blocks_disable : Error<"blocks support disabled - compile with -fblocks"
   " or pick a deployment target that supports them">;
 def err_block_returning_array_function : Error<
   "block cannot return %select{array|function}0 type %1">;
-def warn_block_missing_return_type : Warning<
-  "block literal is missing explicit return type and "
-  "returns non-void values">, InGroup<BlockMissingReturnType>, DefaultIgnore;
 
 // Builtin annotation string.
 def err_builtin_annotation_not_string_constant : Error<

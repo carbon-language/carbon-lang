@@ -134,7 +134,6 @@ def OverloadedVirtual : DiagGroup<"overloaded-virtual">;
 def ObjCPropertyImpl : DiagGroup<"objc-property-implementation">;
 def ObjCMissingSuperCalls : DiagGroup<"objc-missing-super-calls">;
 def ObjCRetainBlockProperty : DiagGroup<"objc-noncopy-retain-block-property">;
-def BlockMissingReturnType : DiagGroup<"block-missing-explicit-return-type">;
 def ObjCReadonlyPropertyHasSetter : DiagGroup<"objc-readonly-with-setter-property">;
 def Packed : DiagGroup<"packed">;
 def Padded : DiagGroup<"padded">;
