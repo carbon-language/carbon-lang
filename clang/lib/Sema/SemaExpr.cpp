@@ -10810,20 +10810,44 @@ ExprResult RebuildUnknownAnyExpr::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
 ExprResult RebuildUnknownAnyExpr::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   // The only case we should ever see here is a function-to-pointer decay.
-  assert(E->getCastKind() == CK_FunctionToPointerDecay);
-  assert(E->getValueKind() == VK_RValue);
-  assert(E->getObjectKind() == OK_Ordinary);
+  if (E->getCastKind() == CK_FunctionToPointerDecay)
+  {
+    assert(E->getValueKind() == VK_RValue);
+    assert(E->getObjectKind() == OK_Ordinary);
+  
+    E->setType(DestType);
+  
+    // Rebuild the sub-expression as the pointee (function) type.
+    DestType = DestType->castAs<PointerType>()->getPointeeType();
+  
+    ExprResult Result = Visit(E->getSubExpr());
+    if (!Result.isUsable()) return ExprError();
+  
+    E->setSubExpr(Result.take());
+    return S.Owned(E);
+  }
+  else if (E->getCastKind() == CK_LValueToRValue)
+  {
+    assert(E->getValueKind() == VK_RValue);
+    assert(E->getObjectKind() == OK_Ordinary);
 
-  E->setType(DestType);
+    assert(isa<BlockPointerType>(E->getType()));
 
-  // Rebuild the sub-expression as the pointee (function) type.
-  DestType = DestType->castAs<PointerType>()->getPointeeType();
+    E->setType(DestType);
 
-  ExprResult Result = Visit(E->getSubExpr());
-  if (!Result.isUsable()) return ExprError();
+    // The sub-expression has to be a lvalue reference, so rebuild it as such.
+    DestType = S.Context.getLValueReferenceType(DestType);
 
-  E->setSubExpr(Result.take());
-  return S.Owned(E);
+    ExprResult Result = Visit(E->getSubExpr());
+    if (!Result.isUsable()) return ExprError();
+
+    E->setSubExpr(Result.take());
+    return S.Owned(E);
+  }
+  else
+  {
+    llvm_unreachable("Unhandled cast type!");
+  }
 }
 
 ExprResult RebuildUnknownAnyExpr::resolveDecl(Expr *E, ValueDecl *VD) {
