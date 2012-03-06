@@ -35,6 +35,7 @@ public:
 
     struct PortInfo
     {
+        exception_mask_t        mask; // the exception mask for this device which may be a subset of EXC_MASK_ALL...
         exception_mask_t        masks[EXC_TYPES_COUNT];
         mach_port_t             ports[EXC_TYPES_COUNT];
         exception_behavior_t    behaviors[EXC_TYPES_COUNT];

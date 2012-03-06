@@ -486,23 +486,26 @@ MachException::PortInfo::Save (task_t task)
     // and back off to just what is supported on the current system
     DNBError err;
 
-    exception_mask_t exception_mask = EXC_MASK_ALL;
+    mask = EXC_MASK_ALL;
 
     count = (sizeof (ports) / sizeof (ports[0]));
-    err = ::task_get_exception_ports (task, exception_mask, masks, &count, ports, behaviors, flavors);
+    err = ::task_get_exception_ports (task, mask, masks, &count, ports, behaviors, flavors);
     if (DNBLogCheckLogBit(LOG_EXCEPTIONS) || err.Fail())
-        err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, exception_mask, count);
+        err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, mask, count);
 
-    if (err.Error() == KERN_INVALID_ARGUMENT && exception_mask != PREV_EXC_MASK_ALL)
+    if (err.Error() == KERN_INVALID_ARGUMENT && mask != PREV_EXC_MASK_ALL)
     {
-        exception_mask = PREV_EXC_MASK_ALL;
+        mask = PREV_EXC_MASK_ALL;
         count = (sizeof (ports) / sizeof (ports[0]));
-        err = ::task_get_exception_ports (task, exception_mask, masks, &count, ports, behaviors, flavors);
+        err = ::task_get_exception_ports (task, mask, masks, &count, ports, behaviors, flavors);
         if (DNBLogCheckLogBit(LOG_EXCEPTIONS) || err.Fail())
-            err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, exception_mask, count);
+            err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, mask, count);
     }
     if (err.Fail())
+    {
+        mask = 0;
         count = 0;
+    }
     return err.Error();
 }
 

@@ -367,8 +367,25 @@ MachTask::StartExceptionThread(DNBError &err)
         // Save the original state of the exception ports for our child process
         SaveExceptionPortInfo();
 
+        // We weren't able to save the info for our exception ports, we must stop...
+        if (m_exc_port_info.mask == 0)
+        {
+            err.SetErrorString("failed to get exception port info");
+            return false;
+        }
+
         // Set the ability to get all exceptions on this port
-        err = ::task_set_exception_ports (task, EXC_MASK_ALL, m_exception_port, EXCEPTION_DEFAULT | MACH_EXCEPTION_CODES, THREAD_STATE_NONE);
+        err = ::task_set_exception_ports (task, m_exc_port_info.mask, m_exception_port, EXCEPTION_DEFAULT | MACH_EXCEPTION_CODES, THREAD_STATE_NONE);
+        if (DNBLogCheckLogBit(LOG_EXCEPTIONS) || err.Fail())
+        {
+            err.LogThreaded("::task_set_exception_ports ( task = 0x%4.4x, exception_mask = 0x%8.8x, new_port = 0x%4.4x, behavior = 0x%8.8x, new_flavor = 0x%8.8x )",
+                            task,
+                            m_exc_port_info.mask,
+                            m_exception_port,
+                            (EXCEPTION_DEFAULT | MACH_EXCEPTION_CODES),
+                            THREAD_STATE_NONE);
+        }
+
         if (err.Fail())
             return false;
 
