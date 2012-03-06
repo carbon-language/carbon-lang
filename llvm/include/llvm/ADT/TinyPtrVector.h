@@ -69,7 +69,7 @@ public:
       return 0;
     
     if (Val.template is<EltTy>())
-      return Val.template getAddrOf<EltTy>();
+      return Val.getAddrOfPtr1();
     
     return Val.template get<VecTy *>()->begin();
 

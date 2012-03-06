@@ -142,16 +142,19 @@ namespace llvm {
       return T();
     }
 
-    /// \brief If the union is set to the first pointer type we can get an
-    /// address pointing to it.
-    template <typename T>
-    PT1 const *getAddrOf() const {
+    /// \brief If the union is set to the first pointer type get an address
+    /// pointing to it.
+    PT1 const *getAddrOfPtr1() const {
+      return const_cast<PointerUnion *>(this)->getAddrOfPtr1();
+    }
+
+    /// \brief If the union is set to the first pointer type get an address
+    /// pointing to it.
+    PT1 *getAddrOfPtr1() {
       assert(is<PT1>() && "Val is not the first pointer");
       assert(get<PT1>() == Val.getPointer() &&
          "Can't get the address because PointerLikeTypeTraits changes the ptr");
-      T const *can_only_get_address_of_first_pointer_type
-                        = reinterpret_cast<PT1 const *>(Val.getAddrOfPointer());
-      return can_only_get_address_of_first_pointer_type;
+      return (PT1 *)Val.getAddrOfPointer();
     }
     
     /// Assignment operators - Allow assigning into this union from either
