@@ -1101,11 +1101,6 @@ public:
     return VectorList.Count == 4;
   }
 
-  bool isVecListTwoQ() const {
-    if (!isDoubleSpacedVectorList()) return false;
-    return VectorList.Count == 2;
-  }
-
   bool isVecListDPairSpaced() const {
     if (!isSingleSpacedVectorList()) return false;
     return (ARMMCRegisterClasses[ARM::DPairSpcRegClassID]
@@ -1139,7 +1134,7 @@ public:
               .contains(VectorList.RegNum));
   }
 
-  bool isVecListTwoQAllLanes() const {
+  bool isVecListDPairSpacedAllLanes() const {
     if (!isDoubleSpacedVectorAllLanes()) return false;
     return VectorList.Count == 2;
   }
@@ -3169,8 +3164,10 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   case AllLanes:
     // Two-register operands have been converted to the
     // composite register classes.
-    if (Count == 2 && Spacing == 1) {
-      const MCRegisterClass *RC = &ARMMCRegisterClasses[ARM::DPairRegClassID];
+    if (Count == 2) {
+      const MCRegisterClass *RC = (Spacing == 1) ?
+        &ARMMCRegisterClasses[ARM::DPairRegClassID] :
+        &ARMMCRegisterClasses[ARM::DPairSpcRegClassID];
       FirstReg = MRI->getMatchingSuperReg(FirstReg, ARM::dsub_0, RC);
     }
     Operands.push_back(ARMOperand::CreateVectorListAllLanes(FirstReg, Count,

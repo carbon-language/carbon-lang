@@ -163,14 +163,14 @@ def VecListDPairAllLanes : RegisterOperand<DPair,
   let ParserMatchClass = VecListDPairAllLanesAsmOperand;
 }
 // Register list of two D registers spaced by 2 (two sequential Q registers).
-def VecListTwoQAllLanesAsmOperand : AsmOperandClass {
-  let Name = "VecListTwoQAllLanes";
+def VecListDPairSpacedAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListDPairSpacedAllLanes";
   let ParserMethod = "parseVectorList";
   let RenderMethod = "addVecListOperands";
 }
-def VecListTwoQAllLanes : RegisterOperand<DPR,
+def VecListDPairSpacedAllLanes : RegisterOperand<DPair,
                                          "printVectorListTwoSpacedAllLanes"> {
-  let ParserMatchClass = VecListTwoQAllLanesAsmOperand;
+  let ParserMatchClass = VecListDPairSpacedAllLanesAsmOperand;
 }
 // Register list of three D registers, with "all lanes" subscripting.
 def VecListThreeDAllLanesAsmOperand : AsmOperandClass {
@@ -1369,10 +1369,10 @@ def VLD2DUPd8  : VLD2DUP<{0,0,0,?}, "8",  VecListDPairAllLanes>;
 def VLD2DUPd16 : VLD2DUP<{0,1,0,?}, "16", VecListDPairAllLanes>;
 def VLD2DUPd32 : VLD2DUP<{1,0,0,?}, "32", VecListDPairAllLanes>;
 
-// ...with double-spaced registers (not used for codegen):
-def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8",  VecListTwoQAllLanes>;
-def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16", VecListTwoQAllLanes>;
-def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32", VecListTwoQAllLanes>;
+// ...with double-spaced registers
+def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8",  VecListDPairSpacedAllLanes>;
+def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16", VecListDPairSpacedAllLanes>;
+def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32", VecListDPairSpacedAllLanes>;
 
 // ...with address register writeback:
 multiclass VLD2DUPWB<bits<4> op7_4, string Dt, RegisterOperand VdTy> {
@@ -1401,9 +1401,9 @@ defm VLD2DUPd8wb    : VLD2DUPWB<{0,0,0,0}, "8",  VecListDPairAllLanes>;
 defm VLD2DUPd16wb   : VLD2DUPWB<{0,1,0,?}, "16", VecListDPairAllLanes>;
 defm VLD2DUPd32wb   : VLD2DUPWB<{1,0,0,?}, "32", VecListDPairAllLanes>;
 
-defm VLD2DUPd8x2wb  : VLD2DUPWB<{0,0,1,0}, "8",  VecListTwoQAllLanes>;
-defm VLD2DUPd16x2wb : VLD2DUPWB<{0,1,1,?}, "16", VecListTwoQAllLanes>;
-defm VLD2DUPd32x2wb : VLD2DUPWB<{1,0,1,?}, "32", VecListTwoQAllLanes>;
+defm VLD2DUPd8x2wb  : VLD2DUPWB<{0,0,1,0}, "8",  VecListDPairSpacedAllLanes>;
+defm VLD2DUPd16x2wb : VLD2DUPWB<{0,1,1,?}, "16", VecListDPairSpacedAllLanes>;
+defm VLD2DUPd32x2wb : VLD2DUPWB<{1,0,1,?}, "32", VecListDPairSpacedAllLanes>;
 
 //   VLD3DUP  : Vector Load (single 3-element structure to all lanes)
 class VLD3DUP<bits<4> op7_4, string Dt>

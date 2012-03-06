@@ -2572,6 +2572,13 @@ static DecodeStatus DecodeVLD2DupInstruction(llvm::MCInst &Inst, unsigned Insn,
     if (!Check(S, DecodeDPairRegisterClass(Inst, Rd, Address, Decoder)))
       return MCDisassembler::Fail;
     break;
+  case ARM::VLD2DUPd16x2: case ARM::VLD2DUPd32x2: case ARM::VLD2DUPd8x2:
+  case ARM::VLD2DUPd16x2wb_fixed: case ARM::VLD2DUPd16x2wb_register:
+  case ARM::VLD2DUPd32x2wb_fixed: case ARM::VLD2DUPd32x2wb_register:
+  case ARM::VLD2DUPd8x2wb_fixed: case ARM::VLD2DUPd8x2wb_register:
+    if (!Check(S, DecodeDPairSpacedRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+    break;
   default:
     if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
       return MCDisassembler::Fail;
