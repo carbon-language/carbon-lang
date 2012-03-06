@@ -480,7 +480,7 @@ public:
                                   const FieldDecl *LastFD) const;
 
   // Access to the set of methods overridden by the given C++ method.
-  typedef CXXMethodVector::iterator overridden_cxx_method_iterator;
+  typedef CXXMethodVector::const_iterator overridden_cxx_method_iterator;
   overridden_cxx_method_iterator
   overridden_methods_begin(const CXXMethodDecl *Method) const;
 
