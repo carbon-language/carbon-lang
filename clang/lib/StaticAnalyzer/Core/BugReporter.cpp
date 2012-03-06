@@ -1279,6 +1279,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           PathDiagnosticEventPiece *p =
             new PathDiagnosticEventPiece(L,
                                         "Looping back to the head of the loop");
+          p->setPrunable(true);
 
           EB.addEdge(p->getLocation(), true);
           PD.getActivePath().push_front(p);
