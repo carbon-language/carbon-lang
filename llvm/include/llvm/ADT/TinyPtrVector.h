@@ -63,7 +63,7 @@ public:
     return Val.template get<VecTy*>()->size();
   }
   
-  typedef const EltTy *const const_iterator;
+  typedef const EltTy *const_iterator;
   typedef EltTy *iterator;
 
   iterator begin() {
