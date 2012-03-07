@@ -34,7 +34,7 @@ namespace llvm {
   /// For example, loop induction variable increments should be
   /// scheduled as soon as possible after the variable's last use.
   ///
-  class LLVM_LIBRARY_VISIBILITY LoopDependencies {
+  class LoopDependencies {
     const MachineLoopInfo &MLI;
     const MachineDominatorTree &MDT;
 
@@ -164,7 +164,7 @@ namespace llvm {
 
   /// ScheduleDAGInstrs - A ScheduleDAG subclass for scheduling lists of
   /// MachineInstrs.
-  class LLVM_LIBRARY_VISIBILITY ScheduleDAGInstrs : public ScheduleDAG {
+  class ScheduleDAGInstrs : public ScheduleDAG {
   protected:
     const MachineLoopInfo &MLI;
     const MachineDominatorTree &MDT;
