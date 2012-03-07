@@ -1143,7 +1143,8 @@ CommandObjectSettingsAppend::ExecuteRawCommandString (const char *raw_command, C
     }
 
     var_name_string = var_name;
-    cmd_args.Shift();
+    // Do not perform cmd_args.Shift() since StringRef is manipulating the
+    // raw character string later on.
 
     // Split the raw command into var_name and value pair.
     llvm::StringRef raw_str(raw_command);
