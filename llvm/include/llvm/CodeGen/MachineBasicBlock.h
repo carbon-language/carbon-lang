@@ -117,6 +117,10 @@ public:
   /// "(null)".
   StringRef getName() const;
 
+  /// getFullName - Return a formatted string to identify this block and its
+  /// parent function.
+  std::string getFullName() const;
+
   /// hasAddressTaken - Test whether this block is potentially the target
   /// of an indirect branch.
   bool hasAddressTaken() const { return AddressTaken; }

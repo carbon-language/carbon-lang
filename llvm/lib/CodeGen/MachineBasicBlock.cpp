@@ -238,6 +238,18 @@ StringRef MachineBasicBlock::getName() const {
     return "(null)";
 }
 
+/// Return a hopefully unique identifier for this block.
+std::string MachineBasicBlock::getFullName() const {
+  std::string Name;
+  if (getParent())
+    Name = (getParent()->getFunction()->getName() + ":").str();
+  if (getBasicBlock())
+    Name += getBasicBlock()->getName();
+  else
+    Name += (Twine("BB") + Twine(getNumber())).str();
+  return Name;
+}
+
 void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   const MachineFunction *MF = getParent();
   if (!MF) {
