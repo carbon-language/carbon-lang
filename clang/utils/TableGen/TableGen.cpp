@@ -37,6 +37,8 @@ enum ActionType {
   GenClangAttrSpellingList,
   GenClangAttrLateParsedList,
   GenClangAttrTemplateInstantiate,
+  GenClangAttrParsedAttrList,
+  GenClangAttrParsedAttrKinds,
   GenClangDiagsDefs,
   GenClangDiagGroups,
   GenClangDiagsIndexName,
@@ -75,6 +77,12 @@ namespace {
                     clEnumValN(GenClangAttrTemplateInstantiate,
                                "gen-clang-attr-template-instantiate",
                                "Generate a clang template instantiate code"),
+                    clEnumValN(GenClangAttrParsedAttrList,
+                               "gen-clang-attr-parsed-attr-list",
+                               "Generate a clang parsed attribute list"),
+                    clEnumValN(GenClangAttrParsedAttrKinds,
+                               "gen-clang-attr-parsed-attr-kinds",
+                               "Generate a clang parsed attribute kinds"),
                     clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
                                "Generate Clang diagnostics definitions"),
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
@@ -128,6 +136,12 @@ public:
       break;
     case GenClangAttrTemplateInstantiate:
       ClangAttrTemplateInstantiateEmitter(Records).run(OS);
+      break;
+    case GenClangAttrParsedAttrList:
+      ClangAttrParsedAttrListEmitter(Records).run(OS);
+      break;
+    case GenClangAttrParsedAttrKinds:
+      ClangAttrParsedAttrKindsEmitter(Records).run(OS);
       break;
     case GenClangDiagsDefs:
       ClangDiagsDefsEmitter(Records, ClangComponent).run(OS);

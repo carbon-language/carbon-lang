@@ -270,7 +270,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     AttributeList *attr =
       Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
                    ParmName, ParmLoc, ArgExprs.take(), ArgExprs.size());
-    if (BuiltinType && attr->getKind() == AttributeList::AT_IBOutletCollection)
+    if (BuiltinType && attr->getKind() == AttributeList::AT_iboutletcollection)
       Diag(Tok, diag::err_iboutletcollection_builtintype);
   }
 }

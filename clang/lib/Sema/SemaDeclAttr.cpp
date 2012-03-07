@@ -3561,9 +3561,9 @@ static void ProcessNonInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
                                        const AttributeList &Attr) {
   switch (Attr.getKind()) {
-  case AttributeList::AT_IBAction:            handleIBAction(S, D, Attr); break;
-    case AttributeList::AT_IBOutlet:          handleIBOutlet(S, D, Attr); break;
-  case AttributeList::AT_IBOutletCollection:
+    case AttributeList::AT_ibaction:            handleIBAction(S, D, Attr); break;
+    case AttributeList::AT_iboutlet:          handleIBOutlet(S, D, Attr); break;
+    case AttributeList::AT_iboutletcollection:
       handleIBOutletCollection(S, D, Attr); break;
   case AttributeList::AT_address_space:
   case AttributeList::AT_opencl_image_access:
@@ -3648,17 +3648,17 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_cf_returns_retained:
     handleNSReturnsRetainedAttr(S, D, Attr); break;
 
-  case AttributeList::AT_reqd_wg_size:
+  case AttributeList::AT_reqd_work_group_size:
     handleReqdWorkGroupSize(S, D, Attr); break;
 
   case AttributeList::AT_init_priority: 
       handleInitPriorityAttr(S, D, Attr); break;
       
   case AttributeList::AT_packed:      handlePackedAttr      (S, D, Attr); break;
-  case AttributeList::AT_MsStruct:    handleMsStructAttr    (S, D, Attr); break;
+  case AttributeList::AT_ms_struct:    handleMsStructAttr    (S, D, Attr); break;
   case AttributeList::AT_section:     handleSectionAttr     (S, D, Attr); break;
   case AttributeList::AT_unavailable: handleUnavailableAttr (S, D, Attr); break;
-  case AttributeList::AT_arc_weakref_unavailable: 
+  case AttributeList::AT_objc_arc_weak_reference_unavailable: 
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
     break;
   case AttributeList::AT_objc_requires_property_definitions: 
@@ -3684,7 +3684,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_objc_method_family:
     handleObjCMethodFamilyAttr(S, D, Attr);
     break;
-  case AttributeList::AT_nsobject:    handleObjCNSObject    (S, D, Attr); break;
+  case AttributeList::AT_NSObject:    handleObjCNSObject    (S, D, Attr); break;
   case AttributeList::AT_blocks:      handleBlocksAttr      (S, D, Attr); break;
   case AttributeList::AT_sentinel:    handleSentinelAttr    (S, D, Attr); break;
   case AttributeList::AT_const:       handleConstAttr       (S, D, Attr); break;

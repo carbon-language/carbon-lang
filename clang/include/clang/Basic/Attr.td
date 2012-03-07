@@ -95,6 +95,8 @@ class Attr {
   bit LateParsed = 0;  
   // Set to true for attributes which must be instantiated within templates
   bit TemplateDependent = 0;
+  // Set to true for attributes which have handler in Sema.
+  bit SemaHandler = 1;
   // Any additional text that should be included verbatim in the class.  
   code AdditionalMembers = [{}];
 }
@@ -124,6 +126,7 @@ def Aligned : InheritableAttr {
 
 def AlignMac68k : InheritableAttr {
   let Spellings = [];
+  let SemaHandler = 0;
 }
 
 def AlwaysInline : InheritableAttr {
@@ -142,6 +145,7 @@ def Annotate : InheritableParamAttr {
 def AsmLabel : InheritableAttr {
   let Spellings = [];
   let Args = [StringArgument<"Label">];
+  let SemaHandler = 0;
 }
 
 def Availability : InheritableAttr {
@@ -276,6 +280,7 @@ def FastCall : InheritableAttr {
 
 def Final : InheritableAttr { 
   let Spellings = [];
+  let SemaHandler = 0;
 }
 
 def MsStruct : InheritableAttr {
@@ -317,6 +322,7 @@ def Malloc : InheritableAttr {
 def MaxFieldAlignment : InheritableAttr {
   let Spellings = [];
   let Args = [UnsignedArgument<"Alignment">];
+  let SemaHandler = 0;
 }
 
 def MayAlias : InheritableAttr {
@@ -326,14 +332,17 @@ def MayAlias : InheritableAttr {
 def MSP430Interrupt : InheritableAttr {
   let Spellings = [];
   let Args = [UnsignedArgument<"Number">];
+  let SemaHandler = 0;
 }
 
 def MBlazeInterruptHandler : InheritableAttr {
   let Spellings = [];
+  let SemaHandler = 0;
 }
 
 def MBlazeSaveVolatiles : InheritableAttr {
   let Spellings = [];
+  let SemaHandler = 0;
 }
 
 def Naked : InheritableAttr {
@@ -449,6 +458,7 @@ def Overloadable : Attr {
 
 def Override : InheritableAttr { 
   let Spellings = [];
+  let SemaHandler = 0;
 }
 
 def Ownership : InheritableAttr {

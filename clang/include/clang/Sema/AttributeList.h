@@ -159,124 +159,21 @@ private:
   friend class AttributeFactory;
 
 public:
-  enum Kind {             // Please keep this list alphabetized.
-    AT_acquired_after,
-    AT_acquired_before,
-    AT_address_space,
-    AT_alias,
-    AT_aligned,
-    AT_always_inline,
-    AT_analyzer_noreturn,
-    AT_annotate,
-    AT_arc_weakref_unavailable,
-    AT_objc_requires_property_definitions,
-    AT_availability,      // Clang-specific
-    AT_base_check,
-    AT_blocks,
-    AT_carries_dependency,
-    AT_cdecl,
-    AT_cf_audited_transfer,     // Clang-specific.
-    AT_cf_consumed,             // Clang-specific.
-    AT_cf_returns_autoreleased, // Clang-specific.
-    AT_cf_returns_not_retained, // Clang-specific.
-    AT_cf_returns_retained,     // Clang-specific.
-    AT_cf_unknown_transfer,     // Clang-specific.
-    AT_cleanup,
-    AT_common,
-    AT_const,
-    AT_constant,
-    AT_constructor,
-    AT_deprecated,
-    AT_destructor,
-    AT_device,
-    AT_dllexport,
-    AT_dllimport,
-    AT_exclusive_lock_function,
-    AT_exclusive_locks_required,
-    AT_exclusive_trylock_function,
-    AT_ext_vector_type,
-    AT_fastcall,
-    AT_format,
-    AT_format_arg,
-    AT_global,
-    AT_gnu_inline,
-    AT_guarded_by,
-    AT_guarded_var,
-    AT_host,
-    AT_IBAction,          // Clang-specific.
-    AT_IBOutlet,          // Clang-specific.
-    AT_IBOutletCollection, // Clang-specific.
-    AT_init_priority,
-    AT_launch_bounds,
-    AT_lock_returned,
-    AT_lockable,
-    AT_locks_excluded,
-    AT_malloc,
-    AT_may_alias,
-    AT_mode,
-    AT_MsStruct,
-    AT_naked,
-    AT_neon_polyvector_type,    // Clang-specific.
-    AT_neon_vector_type,        // Clang-specific.
-    AT_no_address_safety_analysis,
-    AT_no_instrument_function,
-    AT_no_thread_safety_analysis,
-    AT_nocommon,
-    AT_nodebug,
-    AT_noinline,
-    AT_nonnull,
-    AT_noreturn,
-    AT_nothrow,
-    AT_ns_bridged,              // Clang-specific.
-    AT_ns_consumed,             // Clang-specific.
-    AT_ns_consumes_self,        // Clang-specific.
-    AT_ns_returns_autoreleased, // Clang-specific.
-    AT_ns_returns_not_retained, // Clang-specific.
-    AT_ns_returns_retained,     // Clang-specific.
-    AT_nsobject,
-    AT_objc_exception,
-    AT_objc_gc,
-    AT_objc_method_family,
-    AT_objc_ownership,          // Clang-specific.
-    AT_objc_precise_lifetime,   // Clang-specific.
-    AT_objc_returns_inner_pointer, // Clang-specific.
-    AT_opencl_image_access,     // OpenCL-specific.
-    AT_opencl_kernel_function,  // OpenCL-specific.
-    AT_overloadable,       // Clang-specific.
-    AT_ownership_holds,    // Clang-specific.
-    AT_ownership_returns,  // Clang-specific.
-    AT_ownership_takes,    // Clang-specific.
-    AT_packed,
-    AT_pascal,
-    AT_pcs,  // ARM specific
-    AT_pt_guarded_by,
-    AT_pt_guarded_var,
-    AT_pure,
-    AT_regparm,
-    AT_reqd_wg_size,
-    AT_scoped_lockable,
-    AT_section,
-    AT_sentinel,
-    AT_shared,
-    AT_shared_lock_function,
-    AT_shared_locks_required,
-    AT_shared_trylock_function,
-    AT_stdcall,
-    AT_thiscall,
-    AT_transparent_union,
-    AT_unavailable,
-    AT_unlock_function,
-    AT_unused,
-    AT_used,
-    AT_uuid,
-    AT_vecreturn,     // PS3 PPU-specific.
-    AT_vector_size,
-    AT_visibility,
-    AT_warn_unused_result,
-    AT_weak,
-    AT_weak_import,
-    AT_weakref,
-    AT_returns_twice,
+  enum Kind {           
+    #define PARSED_ATTR(NAME) AT_##NAME,
+    #include "clang/Sema/AttrParsedAttrList.inc"
+    PARSED_ATTR(address_space)
+    PARSED_ATTR(base_check)
+    PARSED_ATTR(cf_returns_autoreleased)
+    PARSED_ATTR(ext_vector_type)
+    PARSED_ATTR(mode)
+    PARSED_ATTR(neon_polyvector_type)
+    PARSED_ATTR(neon_vector_type)
+    PARSED_ATTR(objc_gc)
+    PARSED_ATTR(objc_ownership)
+    PARSED_ATTR(opencl_image_access)
+    PARSED_ATTR(vector_size)
+    #undef PARSED_ATTR
     IgnoredAttribute,
     UnknownAttribute
   };
