@@ -1902,7 +1902,7 @@ Target::RunStopHooks ()
             if ((cur_hook_sp->GetSpecifier () == NULL 
                   || cur_hook_sp->GetSpecifier()->SymbolContextMatches(sym_ctx_with_reasons[i]))
                 && (cur_hook_sp->GetThreadSpecifier() == NULL
-                    || cur_hook_sp->GetThreadSpecifier()->ThreadPassesBasicTests(exc_ctx_with_reasons[i].GetThreadPtr())))
+                    || cur_hook_sp->GetThreadSpecifier()->ThreadPassesBasicTests(exc_ctx_with_reasons[i].GetThreadRef())))
             {
                 if (!hooks_ran)
                 {

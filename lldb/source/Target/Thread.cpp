@@ -542,7 +542,7 @@ Thread::MatchesSpec (const ThreadSpec *spec)
     if (spec == NULL)
         return true;
         
-    return spec->ThreadPassesBasicTests(this);    
+    return spec->ThreadPassesBasicTests(*this);
 }
 
 void

@@ -58,22 +58,58 @@ ThreadSpec::GetQueueName () const
 }
 
 bool
-ThreadSpec::ThreadPassesBasicTests (Thread *thread) const
+ThreadSpec::TIDMatches (Thread &thread) const
+{
+    if (m_tid == LLDB_INVALID_THREAD_ID)
+        return true;
+        
+    lldb::tid_t thread_id = thread.GetID();
+    return TIDMatches (thread_id);
+}
+bool 
+ThreadSpec::IndexMatches (Thread &thread) const
+{
+    if (m_index == UINT32_MAX)
+        return true;
+    uint32_t index = thread.GetIndexID();
+    return IndexMatches (index);
+}
+bool 
+ThreadSpec::NameMatches (Thread &thread) const
+{
+    if (m_name.empty())
+        return true;
+        
+    const char *name = thread.GetName();
+    return NameMatches (name);
+}
+bool 
+ThreadSpec::QueueNameMatches (Thread &thread) const
+{
+    if (m_queue_name.empty())
+        return true;
+        
+    const char *queue_name = thread.GetQueueName();
+    return QueueNameMatches (queue_name);
+}
+
+bool
+ThreadSpec::ThreadPassesBasicTests (Thread &thread) const
 {
 
     if (!HasSpecification())
         return true;
         
-    if (!TIDMatches(thread->GetID()))
+    if (!TIDMatches(thread))
         return false;
         
-    if (!IndexMatches(thread->GetIndexID()))
+    if (!IndexMatches(thread))
         return false;
         
-    if (!NameMatches (thread->GetName()))
+    if (!NameMatches (thread))
         return false;
         
-    if (!QueueNameMatches (thread->GetQueueName()))
+    if (!QueueNameMatches (thread))
         return false;
         
     return true;

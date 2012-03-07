@@ -89,6 +89,9 @@ public:
         else
             return thread_id == m_tid;
     }
+        
+    bool
+    TIDMatches (Thread &thread) const;
     
     bool 
     IndexMatches (uint32_t index) const
@@ -98,6 +101,9 @@ public:
         else
             return index == m_index;
     }
+    
+    bool 
+    IndexMatches (Thread &thread) const;
     
     bool 
     NameMatches (const char *name) const
@@ -111,6 +117,9 @@ public:
     }
     
     bool 
+    NameMatches (Thread &thread) const;
+    
+    bool 
     QueueNameMatches (const char *queue_name) const
     {
         if (m_queue_name.empty())
@@ -121,8 +130,11 @@ public:
             return m_queue_name == queue_name;
     }
     
+    bool 
+    QueueNameMatches (Thread &thread) const;
+    
     bool
-    ThreadPassesBasicTests (Thread *thread) const;
+    ThreadPassesBasicTests (Thread &thread) const;
     
     bool
     HasSpecification () const;
