@@ -22,29 +22,49 @@ using namespace llvm::object;
 namespace llvm {
 
 bool RuntimeDyldMachO::
-resolveRelocation(uint8_t *Address, uint64_t Value, bool isPCRel,
-                  unsigned Type, unsigned Size, int64_t Addend) {
+resolveRelocation(uint8_t *LocalAddress,
+                  uint64_t FinalAddress,
+                  uint64_t Value,
+                  bool isPCRel,
+                  unsigned Type,
+                  unsigned Size,
+                  int64_t Addend) {
   // This just dispatches to the proper target specific routine.
   switch (CPUType) {
   default: llvm_unreachable("Unsupported CPU type!");
   case mach::CTM_x86_64:
-    return resolveX86_64Relocation((uintptr_t)Address, (uintptr_t)Value,
-                                   isPCRel, Type, Size, Addend);
+    return resolveX86_64Relocation(LocalAddress,
+                                   FinalAddress,
+                                   (uintptr_t)Value,
+                                   isPCRel,
+                                   Type,
+                                   Size,
+                                   Addend);
   case mach::CTM_ARM:
-    return resolveARMRelocation((uintptr_t)Address, (uintptr_t)Value,
-                                isPCRel, Type, Size, Addend);
+    return resolveARMRelocation(LocalAddress,
+                                FinalAddress,
+                                (uintptr_t)Value,
+                                isPCRel,
+                                Type,
+                                Size,
+                                Addend);
   }
 }
 
 bool RuntimeDyldMachO::
-resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
-                        unsigned Type, unsigned Size, int64_t Addend) {
+resolveX86_64Relocation(uint8_t *LocalAddress,
+                        uint64_t FinalAddress,
+                        uint64_t Value,
+                        bool isPCRel,
+                        unsigned Type,
+                        unsigned Size,
+                        int64_t Addend) {
   // If the relocation is PC-relative, the value to be encoded is the
   // pointer difference.
   if (isPCRel)
     // FIXME: It seems this value needs to be adjusted by 4 for an effective PC
     // address. Is that expected? Only for branches, perhaps?
-    Value -= Address + 4;
+    Value -= FinalAddress + 4;
 
   switch(Type) {
   default:
@@ -58,7 +78,7 @@ resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
     Value += Addend;
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
-    uint8_t *p = (uint8_t*)Address;
+    uint8_t *p = (uint8_t*)LocalAddress;
     for (unsigned i = 0; i < Size; ++i) {
       *p++ = (uint8_t)Value;
       Value >>= 8;
@@ -74,12 +94,17 @@ resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
 }
 
 bool RuntimeDyldMachO::
-resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
-                     unsigned Type, unsigned Size, int64_t Addend) {
+resolveARMRelocation(uint8_t *LocalAddress,
+                     uint64_t FinalAddress,
+                     uint64_t Value,
+                     bool isPCRel,
+                     unsigned Type,
+                     unsigned Size,
+                     int64_t Addend) {
   // If the relocation is PC-relative, the value to be encoded is the
   // pointer difference.
   if (isPCRel) {
-    Value -= Address;
+    Value -= FinalAddress;
     // ARM PCRel relocations have an effective-PC offset of two instructions
     // (four bytes in Thumb mode, 8 bytes in ARM mode).
     // FIXME: For now, assume ARM mode.
@@ -92,7 +117,7 @@ resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
   case macho::RIT_Vanilla: {
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
-    uint8_t *p = (uint8_t*)Address;
+    uint8_t *p = (uint8_t*)LocalAddress;
     for (unsigned i = 0; i < Size; ++i) {
       *p++ = (uint8_t)Value;
       Value >>= 8;
@@ -102,7 +127,7 @@ resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
   case macho::RIT_ARM_Branch24Bit: {
     // Mask the value into the target address. We know instructions are
     // 32-bit aligned, so we can do it all at once.
-    uint32_t *p = (uint32_t*)Address;
+    uint32_t *p = (uint32_t*)LocalAddress;
     // The low two bits of the value are not encoded.
     Value >>= 2;
     // Mask the value to 24 bits.
@@ -569,6 +594,7 @@ void RuntimeDyldMachO::reassignSectionAddress(unsigned SectionID,
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     RelocationEntry &RE = Relocs[i];
     uint8_t *Target = (uint8_t*)Sections[RE.SectionID].base() + RE.Offset;
+    uint64_t FinalTarget = (uint64_t)SectionLoadAddress[RE.SectionID] + RE.Offset;
     bool isPCRel = (RE.Data >> 24) & 1;
     unsigned Type = (RE.Data >> 28) & 0xf;
     unsigned Size = 1 << ((RE.Data >> 25) & 3);
@@ -580,7 +606,13 @@ void RuntimeDyldMachO::reassignSectionAddress(unsigned SectionID,
           << ", type: " << Type << ", Size: " << Size << ", Addend: "
           << RE.Addend << ").\n");
 
-    resolveRelocation(Target, Addr, isPCRel, Type, Size, RE.Addend);
+    resolveRelocation(Target,
+                      FinalTarget,
+                      Addr,
+                      isPCRel,
+                      Type,
+                      Size,
+                      RE.Addend);
   }
 }
 

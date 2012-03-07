@@ -51,12 +51,27 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
   // relocations by definition. Indexed by symbol name.
   StringMap<RelocationList> UnresolvedRelocations;
 
-  bool resolveRelocation(uint8_t *Address, uint64_t Value, bool isPCRel,
-                         unsigned Type, unsigned Size, int64_t Addend);
-  bool resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
-                               unsigned Type, unsigned Size, int64_t Addend);
-  bool resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
-                            unsigned Type, unsigned Size, int64_t Addend);
+  bool resolveRelocation(uint8_t *LocalAddress,
+                         uint64_t FinalAddress,
+                         uint64_t Value,
+                         bool isPCRel,
+                         unsigned Type,
+                         unsigned Size,
+                         int64_t Addend);
+  bool resolveX86_64Relocation(uint8_t *LocalAddress,
+                               uint64_t FinalAddress,
+                               uint64_t Value,
+                               bool isPCRel,
+                               unsigned Type,
+                               unsigned Size,
+                               int64_t Addend);
+  bool resolveARMRelocation(uint8_t *LocalAddress,
+                            uint64_t FinalAddress,
+                            uint64_t Value,
+                            bool isPCRel,
+                            unsigned Type,
+                            unsigned Size,
+                            int64_t Addend);
 
   bool loadSegment32(const MachOObject *Obj,
                      const MachOObject::LoadCommandInfo *SegmentLCI,
