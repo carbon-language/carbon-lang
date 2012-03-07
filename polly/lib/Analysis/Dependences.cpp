@@ -46,42 +46,18 @@ static cl::opt<bool>
 
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) {
-  must_dep = may_dep = NULL;
-  sink = must_source = may_source = NULL;
-  war_dep = waw_dep = NULL;
+  RAW = WAR = WAW = NULL;
 }
 
-bool Dependences::runOnScop(Scop &S) {
+void Dependences::collectInfo(Scop &S,
+                              isl_union_map **Read, isl_union_map **Write,
+                              isl_union_map **MayWrite,
+                              isl_union_map **Schedule) {
   isl_space *Space = S.getParamSpace();
-
-  if (sink)
-    isl_union_map_free(sink);
-
-  if (must_source)
-    isl_union_map_free(must_source);
-
-  if (may_source)
-    isl_union_map_free(may_source);
-
-  sink = isl_union_map_empty(isl_space_copy(Space));
-  must_source = isl_union_map_empty(isl_space_copy(Space));
-  may_source = isl_union_map_empty(isl_space_copy(Space));
-  isl_union_map *schedule = isl_union_map_empty(Space);
-
-  if (must_dep)
-    isl_union_map_free(must_dep);
-
-  if (may_dep)
-    isl_union_map_free(may_dep);
-
-  if (war_dep)
-    isl_union_map_free(war_dep);
-
-  if (waw_dep)
-    isl_union_map_free(waw_dep);
-
-  must_dep = may_dep = NULL;
-  war_dep = waw_dep = NULL;
+  *Read = isl_union_map_empty(isl_space_copy(Space));
+  *Write = isl_union_map_empty(isl_space_copy(Space));
+  *MayWrite = isl_union_map_empty(isl_space_copy(Space));
+  *Schedule = isl_union_map_empty(Space);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
@@ -94,43 +70,41 @@ bool Dependences::runOnScop(Scop &S) {
       accdom = isl_map_intersect_domain(accdom, domcp);
 
       if ((*MI)->isRead())
-        sink = isl_union_map_add_map(sink, accdom);
+        *Read = isl_union_map_add_map(*Read, accdom);
       else
-        must_source = isl_union_map_add_map(must_source, accdom);
+        *Write = isl_union_map_add_map(*Write, accdom);
     }
-    schedule = isl_union_map_add_map(schedule, Stmt->getScattering());
+    *Schedule = isl_union_map_add_map(*Schedule, Stmt->getScattering());
   }
+}
 
-  DEBUG(
-    dbgs().indent(4) << "Sink:\n";
-    dbgs().indent(8) << stringFromIslObj(sink) << "\n";
+void Dependences::calculateDependences(Scop &S) {
+  isl_union_map *Read, *Write, *MayWrite, *Schedule;
 
-    dbgs().indent(4) << "MustSource:\n";
-    dbgs().indent(8) << stringFromIslObj(must_source) << "\n";
+  collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
 
-    dbgs().indent(4) << "MaySource:\n";
-    dbgs().indent(8) << stringFromIslObj(may_source) << "\n";
+  isl_union_map_compute_flow(isl_union_map_copy(Read),
+                              isl_union_map_copy(Write),
+                              isl_union_map_copy(MayWrite),
+                              isl_union_map_copy(Schedule),
+                              &RAW, NULL, NULL, NULL);
 
-    dbgs().indent(4) << "Schedule:\n";
-    dbgs().indent(8) << stringFromIslObj(schedule) << "\n";
-  );
+  isl_union_map_compute_flow(isl_union_map_copy(Write),
+                             isl_union_map_copy(Write),
+                             Read, Schedule,
+                             &WAW, &WAR, NULL, NULL);
 
-  isl_union_map_compute_flow(isl_union_map_copy(sink),
-                              isl_union_map_copy(must_source),
-                              isl_union_map_copy(may_source),
-                              isl_union_map_copy(schedule),
-                              &must_dep, &may_dep, NULL, NULL);
+  isl_union_map_free(MayWrite);
+  isl_union_map_free(Write);
 
-  isl_union_map_compute_flow(isl_union_map_copy(must_source),
-                             isl_union_map_copy(must_source),
-                             isl_union_map_copy(sink), schedule,
-                             &waw_dep, &war_dep, NULL, NULL);
+  RAW = isl_union_map_coalesce(RAW);
+  WAW = isl_union_map_coalesce(WAW);
+  WAR = isl_union_map_coalesce(WAR);
+}
 
-  // Remove redundant statements.
-  must_dep = isl_union_map_coalesce(must_dep);
-  may_dep = isl_union_map_coalesce(may_dep);
-  waw_dep = isl_union_map_coalesce(waw_dep);
-  war_dep = isl_union_map_coalesce(war_dep);
+bool Dependences::runOnScop(Scop &S) {
+  releaseMemory();
+  calculateDependences(S);
 
   return false;
 }
@@ -211,17 +185,17 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
 
   scheduleSubset = isl_union_set_from_set(isl_set_copy(loopDomain));
 
-  scheduleDeps = isl_union_map_apply_range(isl_union_map_copy(must_dep),
+  scheduleDeps = isl_union_map_apply_range(isl_union_map_copy(RAW),
                                            isl_union_map_copy(schedule));
   scheduleDeps = isl_union_map_apply_domain(scheduleDeps,
                                             isl_union_map_copy(schedule));
 
-  scheduleDeps_war = isl_union_map_apply_range(isl_union_map_copy(war_dep),
+  scheduleDeps_war = isl_union_map_apply_range(isl_union_map_copy(WAR),
                                                isl_union_map_copy(schedule));
   scheduleDeps_war = isl_union_map_apply_domain(scheduleDeps_war,
                                                 isl_union_map_copy(schedule));
 
-  scheduleDeps_waw = isl_union_map_apply_range(isl_union_map_copy(waw_dep),
+  scheduleDeps_waw = isl_union_map_apply_range(isl_union_map_copy(WAW),
                                                isl_union_map_copy(schedule));
   scheduleDeps_waw = isl_union_map_apply_domain(scheduleDeps_waw, schedule);
 
@@ -301,60 +275,32 @@ bool Dependences::isParallelFor(const clast_for *f) {
 }
 
 void Dependences::printScop(raw_ostream &OS) const {
-  OS.indent(4) << "Must dependences:\n";
-  OS.indent(8) << stringFromIslObj(must_dep) << "\n";
-
-  OS.indent(4) << "May dependences:\n";
-  OS.indent(8) << stringFromIslObj(may_dep) << "\n";
 }
 
 void Dependences::releaseMemory() {
-  if (must_dep)
-    isl_union_map_free(must_dep);
+  isl_union_map_free(RAW);
+  isl_union_map_free(WAR);
+  isl_union_map_free(WAW);
 
-  if (may_dep)
-    isl_union_map_free(may_dep);
-
-  if (war_dep)
-    isl_union_map_free(war_dep);
-
-  if (waw_dep)
-    isl_union_map_free(waw_dep);
-
-  must_dep = may_dep = NULL;
-  war_dep = waw_dep = NULL;
-
-  if (sink)
-    isl_union_map_free(sink);
-
-  if (must_source)
-    isl_union_map_free(must_source);
-
-  if (may_source)
-    isl_union_map_free(may_source);
-
-  sink = must_source = may_source = NULL;
+  RAW = WAR = WAW  = NULL;
 }
 
-isl_union_map *Dependences::getDependences(int type) {
-  isl_space *Space = isl_union_map_get_space(must_dep);
-  isl_union_map *dependences = isl_union_map_empty(Space);
+isl_union_map *Dependences::getDependences(int Kinds) {
+  isl_space *Space = isl_union_map_get_space(RAW);
+  isl_union_map *Deps = isl_union_map_empty(Space);
 
-  if (type & TYPE_RAW)
-    dependences = isl_union_map_union(dependences,
-                                      isl_union_map_copy(must_dep));
+  if (Kinds & TYPE_RAW)
+    Deps = isl_union_map_union(Deps, isl_union_map_copy(RAW));
 
-  if (type & TYPE_WAR)
-    dependences = isl_union_map_union(dependences,
-                                      isl_union_map_copy(war_dep));
+  if (Kinds & TYPE_WAR)
+    Deps = isl_union_map_union(Deps, isl_union_map_copy(WAR));
 
-  if (type & TYPE_WAW)
-    dependences = isl_union_map_union(dependences,
-                                      isl_union_map_copy(waw_dep));
+  if (Kinds & TYPE_WAW)
+    Deps = isl_union_map_union(Deps, isl_union_map_copy(WAW));
 
-  dependences = isl_union_map_coalesce(dependences);
-  dependences = isl_union_map_detect_equalities(dependences);
-  return dependences;
+  Deps = isl_union_map_coalesce(Deps);
+  Deps = isl_union_map_detect_equalities(Deps);
+  return Deps;
 }
 
 void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {

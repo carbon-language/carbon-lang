@@ -105,15 +105,17 @@ namespace polly {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
-    isl_union_map *must_dep, *may_dep;
+    // The different kinds of dependences we calculate.
+    isl_union_map *RAW;
+    isl_union_map *WAR;
+    isl_union_map *WAW;
 
-    isl_union_map *war_dep;
-    isl_union_map *waw_dep;
+    /// @brief Collect information about the SCoP.
+    void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
+                     isl_union_map **MayWrite, isl_union_map **Schedule);
 
-
-    isl_union_map *sink;
-    isl_union_map *must_source;
-    isl_union_map *may_source;
+    // @brief Calculate the dependences for a certain SCoP.
+    void calculateDependences(Scop &S);
   };
 
 
