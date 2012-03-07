@@ -370,7 +370,7 @@ namespace InitFromConst {
 
   const bool b = true;
   const int n = 5;
-  const double d = 4.3;
+  constexpr double d = 4.3;
 
   struct S { int n = 7; S *p = 0; };
   constexpr S s = S();

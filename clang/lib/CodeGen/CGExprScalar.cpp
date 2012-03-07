@@ -214,6 +214,14 @@ public:
     
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
+    VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
+    if (!VD && !isa<EnumConstantDecl>(E->getDecl()))
+      return EmitLoadOfLValue(E);
+    if (VD && !VD->isUsableInConstantExpressions())
+      return EmitLoadOfLValue(E);
+
+    // This is an enumerator or a variable which is usable in constant
+    // expressions. Try to emit its value instead.
     Expr::EvalResult Result;
     bool IsReferenceConstant = false;
     QualType EvalTy = E->getType();
@@ -232,10 +240,11 @@ public:
     llvm::Constant *C = CGF.CGM.EmitConstantValue(Result.Val, EvalTy, &CGF);
 
     // Make sure we emit a debug reference to the global variable.
-    if (VarDecl *VD = dyn_cast<VarDecl>(E->getDecl())) {
+    if (VD) {
       if (!CGF.getContext().DeclMustBeEmitted(VD))
         CGF.EmitDeclRefExprDbgValue(E, C);
-    } else if (isa<EnumConstantDecl>(E->getDecl())) {
+    } else {
+      assert(isa<EnumConstantDecl>(E->getDecl()));
       CGF.EmitDeclRefExprDbgValue(E, C);
     }
 
