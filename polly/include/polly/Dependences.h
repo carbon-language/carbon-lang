@@ -26,6 +26,7 @@
 #include "polly/ScopPass.h"
 
 #include <map>
+#include "isl/ctx.h"
 
 struct isl_union_map;
 struct isl_union_set;
@@ -80,7 +81,8 @@ namespace polly {
     ///
     /// @return bool Returns true, if executing parallelDimension in parallel is
     ///              valid for the scattering domain subset given.
-    bool isParallelDimension(isl_set *LoopDomain, unsigned ParallelDimension);
+    bool isParallelDimension(__isl_take isl_set *LoopDomain,
+                             unsigned ParallelDimension);
 
     /// @brief Check if a loop is parallel
     ///

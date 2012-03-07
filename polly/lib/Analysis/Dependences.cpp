@@ -172,106 +172,63 @@ isl_union_map *getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
   return schedule;
 }
 
-bool Dependences::isParallelDimension(isl_set *loopDomain,
-                                      unsigned parallelDimension) {
+bool Dependences::isParallelDimension(__isl_take isl_set *Domain,
+                                      unsigned ParallelDim) {
+  isl_union_map *Schedule, *Deps;
+  isl_union_set *ScheduleSubset;
   Scop *S = &getCurScop();
-  isl_union_map *schedule = getCombinedScheduleForSpace(S, parallelDimension);
 
-  // Calculate distance vector.
-  isl_union_set *scheduleSubset;
-  isl_union_map *scheduleDeps, *restrictedDeps;
-  isl_union_map *scheduleDeps_war, *restrictedDeps_war;
-  isl_union_map *scheduleDeps_waw, *restrictedDeps_waw;
+  Schedule = getCombinedScheduleForSpace(S, ParallelDim);
+  Deps = getDependences(TYPE_ALL);
 
-  scheduleSubset = isl_union_set_from_set(isl_set_copy(loopDomain));
-
-  scheduleDeps = isl_union_map_apply_range(isl_union_map_copy(RAW),
-                                           isl_union_map_copy(schedule));
-  scheduleDeps = isl_union_map_apply_domain(scheduleDeps,
-                                            isl_union_map_copy(schedule));
-
-  scheduleDeps_war = isl_union_map_apply_range(isl_union_map_copy(WAR),
-                                               isl_union_map_copy(schedule));
-  scheduleDeps_war = isl_union_map_apply_domain(scheduleDeps_war,
-                                                isl_union_map_copy(schedule));
-
-  scheduleDeps_waw = isl_union_map_apply_range(isl_union_map_copy(WAW),
-                                               isl_union_map_copy(schedule));
-  scheduleDeps_waw = isl_union_map_apply_domain(scheduleDeps_waw, schedule);
+  ScheduleSubset = isl_union_set_from_set(Domain);
+  Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
+  Deps = isl_union_map_apply_domain(Deps, Schedule);
 
   // Dependences need to originate and to terminate in the scheduling space
   // enumerated by this loop.
-  restrictedDeps = isl_union_map_intersect_domain(scheduleDeps,
-    isl_union_set_copy(scheduleSubset));
-  restrictedDeps = isl_union_map_intersect_range(restrictedDeps,
-    isl_union_set_copy(scheduleSubset));
+  Deps = isl_union_map_intersect_domain(Deps,
+                                        isl_union_set_copy(ScheduleSubset));
+  Deps = isl_union_map_intersect_range(Deps, ScheduleSubset);
 
-  isl_union_set *distance = isl_union_map_deltas(restrictedDeps);
+  isl_union_set *Distance = isl_union_map_deltas(Deps);
 
-  restrictedDeps_war = isl_union_map_intersect_domain(scheduleDeps_war,
-    isl_union_set_copy(scheduleSubset));
-  restrictedDeps_war = isl_union_map_intersect_range(restrictedDeps_war,
-    isl_union_set_copy(scheduleSubset));
-
-  isl_union_set *distance_war = isl_union_map_deltas(restrictedDeps_war);
-
-  restrictedDeps_waw = isl_union_map_intersect_domain(scheduleDeps_waw,
-    isl_union_set_copy(scheduleSubset));
-  restrictedDeps_waw = isl_union_map_intersect_range(restrictedDeps_waw,
-    scheduleSubset);
-
-  isl_union_set *distance_waw = isl_union_map_deltas(restrictedDeps_waw);
-
-  isl_space *Space = isl_space_set_alloc(S->getIslCtx(), 0, parallelDimension);
+  isl_space *Space = isl_space_set_alloc(S->getIslCtx(), 0, ParallelDim);
 
   // [0, 0, 0, 0] - All zero
-  isl_set *allZero = isl_set_universe(isl_space_copy(Space));
-  unsigned dimensions = isl_space_dim(Space, isl_dim_set);
+  isl_set *AllZero = isl_set_universe(isl_space_copy(Space));
+  unsigned Dimensions = isl_space_dim(Space, isl_dim_set);
 
-  for (unsigned i = 0; i < dimensions; i++)
-    allZero = isl_set_fix_si(allZero, isl_dim_set, i, 0);
+  for (unsigned i = 0; i < Dimensions; i++)
+    AllZero = isl_set_fix_si(AllZero, isl_dim_set, i, 0);
 
-  allZero = isl_set_align_params(allZero, S->getParamSpace());
+  AllZero = isl_set_align_params(AllZero, S->getParamSpace());
 
   // All zero, last unknown.
   // [0, 0, 0, ?]
-  isl_set *lastUnknown = isl_set_universe(isl_space_copy(Space));
+  isl_set *LastUnknown = isl_set_universe(Space);
 
-  for (unsigned i = 0; i < dimensions - 1; i++)
-    lastUnknown = isl_set_fix_si(lastUnknown, isl_dim_set, i, 0);
+  for (unsigned i = 0; i < Dimensions - 1; i++)
+    LastUnknown = isl_set_fix_si(LastUnknown, isl_dim_set, i, 0);
 
-  lastUnknown = isl_set_align_params(lastUnknown, S->getParamSpace());
+  LastUnknown = isl_set_align_params(LastUnknown, S->getParamSpace());
 
   // Valid distance vectors
-  isl_set *validDistances = isl_set_subtract(lastUnknown, allZero);
-  validDistances = isl_set_complement(validDistances);
-  isl_union_set *validDistancesUS = isl_union_set_from_set(validDistances);
+  isl_set *ValidDistances = isl_set_subtract(LastUnknown, AllZero);
+  ValidDistances = isl_set_complement(ValidDistances);
+  isl_union_set *ValidDistancesUS = isl_union_set_from_set(ValidDistances);
+  isl_union_set *Invalid = isl_union_set_subtract(Distance, ValidDistancesUS);
 
-  isl_union_set *nonValid = isl_union_set_subtract(distance,
-    isl_union_set_copy(validDistancesUS));
-
-  isl_union_set *nonValid_war = isl_union_set_subtract(distance_war,
-    isl_union_set_copy(validDistancesUS));
-
-  isl_union_set *nonValid_waw = isl_union_set_subtract(distance_waw,
-                                                       validDistancesUS);
-  bool is_parallel = isl_union_set_is_empty(nonValid)
-    && isl_union_set_is_empty(nonValid_war)
-    && isl_union_set_is_empty(nonValid_waw);
-
-  isl_space_free(Space);
-  isl_union_set_free(nonValid);
-  isl_union_set_free(nonValid_war);
-  isl_union_set_free(nonValid_waw);
-
-  return is_parallel;
+  bool IsParallel = isl_union_set_is_empty(Invalid);
+  isl_union_set_free(Inalid);
+  return IsParallel;
 }
 
 bool Dependences::isParallelFor(const clast_for *f) {
-  isl_set *loopDomain = isl_set_from_cloog_domain(f->domain);
-  assert(loopDomain && "Cannot access domain of loop");
+  isl_set *Domain = isl_set_from_cloog_domain(f->domain);
+  assert(Domain && "Cannot access domain of loop");
 
-  return isParallelDimension(loopDomain, isl_set_n_dim(loopDomain));
+  return isParallelDimension(isl_set_copy(Domain), isl_set_n_dim(Domain));
 }
 
 void Dependences::printScop(raw_ostream &OS) const {
