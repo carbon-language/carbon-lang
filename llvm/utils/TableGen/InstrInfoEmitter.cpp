@@ -213,20 +213,18 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
                OperandInfoIDs, OS);
   OS << "};\n\n";
 
-  OS << "extern const uint16_t " << TargetName <<"InstrNameIndices[] = {\n    ";
+  OS << "extern const unsigned " << TargetName <<"InstrNameIndices[] = {\n    ";
   StringToOffsetTable StringTable;
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     const CodeGenInstruction *Instr = NumberedInstructions[i];
-    unsigned Idx = StringTable.GetOrAddStringOffset(Instr->TheDef->getName());
-    assert(Idx <= 0xffff && "String offset too large to fit in table");
-    OS << Idx << "U, ";
+    OS << StringTable.GetOrAddStringOffset(Instr->TheDef->getName()) << "U, ";
     if (i % 8 == 0)
       OS << "\n    ";
   }
 
   OS << "\n};\n\n";
 
-  OS << "extern const char *const " << TargetName << "InstrNameData =\n";
+  OS << "const char *" << TargetName << "InstrNameData =\n";
   StringTable.EmitString(OS);
   OS << ";\n\n";
 
@@ -259,7 +257,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
 
   OS << "namespace llvm {\n";
   OS << "extern const MCInstrDesc " << TargetName << "Insts[];\n";
-  OS << "extern const uint16_t " << TargetName << "InstrNameIndices[];\n";
+  OS << "extern const unsigned " << TargetName << "InstrNameIndices[];\n";
   OS << "extern const char *" << TargetName << "InstrNameData;\n";
   OS << ClassName << "::" << ClassName << "(int SO, int DO)\n"
      << "  : TargetInstrInfoImpl(SO, DO) {\n"
