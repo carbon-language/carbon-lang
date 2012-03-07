@@ -6243,6 +6243,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXTypeidExprClass:
   case Expr::CXXUuidofExprClass:
   case Expr::CXXNullPtrLiteralExprClass:
+  case Expr::UserDefinedLiteralClass:
   case Expr::CXXThisExprClass:
   case Expr::CXXThrowExprClass:
   case Expr::CXXNewExprClass:

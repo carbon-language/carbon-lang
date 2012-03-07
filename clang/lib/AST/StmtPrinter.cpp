@@ -1222,6 +1222,31 @@ void StmtPrinter::VisitCXXUuidofExpr(CXXUuidofExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitUserDefinedLiteral(UserDefinedLiteral *Node) {
+  switch (Node->getLiteralOperatorKind()) {
+  case UserDefinedLiteral::LOK_Raw:
+    OS << cast<StringLiteral>(Node->getArg(0))->getString();
+    break;
+  case UserDefinedLiteral::LOK_Template: {
+    DeclRefExpr *DRE = cast<DeclRefExpr>(Node->getCallee());
+    assert(DRE->hasExplicitTemplateArgs());
+    const TemplateArgumentLoc *Args = DRE->getTemplateArgs();
+    for (unsigned i = 0, e = DRE->getNumTemplateArgs(); i != e; ++i) {
+      char C = (char)Args[i].getArgument().getAsIntegral()->getZExtValue();
+      OS << C;
+    }
+    break;
+  }
+  case UserDefinedLiteral::LOK_Integer:
+  case UserDefinedLiteral::LOK_Floating:
+  case UserDefinedLiteral::LOK_String:
+  case UserDefinedLiteral::LOK_Character:
+    PrintExpr(Node->getCookedLiteral());
+    break;
+  }
+  OS << Node->getUDSuffix()->getName();
+}
+
 void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }

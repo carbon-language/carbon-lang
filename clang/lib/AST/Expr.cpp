@@ -1681,7 +1681,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // Fallthrough for generic call handling.
   }
   case CallExprClass:
-  case CXXMemberCallExprClass: {
+  case CXXMemberCallExprClass:
+  case UserDefinedLiteralClass: {
     // If this is a direct call, get the callee.
     const CallExpr *CE = cast<CallExpr>(this);
     if (const Decl *FD = CE->getCalleeDecl()) {
@@ -2014,7 +2015,8 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     //     exception-specification
   case CallExprClass:
   case CXXMemberCallExprClass:
-  case CXXOperatorCallExprClass: {
+  case CXXOperatorCallExprClass:
+  case UserDefinedLiteralClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     CanThrowResult CT;
     if (isTypeDependent())

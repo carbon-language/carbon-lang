@@ -624,6 +624,39 @@ CXXFunctionalCastExpr::CreateEmpty(ASTContext &C, unsigned PathSize) {
   return new (Buffer) CXXFunctionalCastExpr(EmptyShell(), PathSize);
 }
 
+UserDefinedLiteral::LiteralOperatorKind
+UserDefinedLiteral::getLiteralOperatorKind() const {
+  if (getNumArgs() == 0)
+    return LOK_Template;
+  if (getNumArgs() == 2)
+    return LOK_String;
+
+  assert(getNumArgs() == 1 && "unexpected #args in literal operator call");
+  QualType ParamTy =
+    cast<FunctionDecl>(getCalleeDecl())->getParamDecl(0)->getType();
+  if (ParamTy->isPointerType())
+    return LOK_Raw;
+  if (ParamTy->isAnyCharacterType())
+    return LOK_Character;
+  if (ParamTy->isIntegerType())
+    return LOK_Integer;
+  if (ParamTy->isFloatingType())
+    return LOK_Floating;
+
+  llvm_unreachable("unknown kind of literal operator");
+}
+
+Expr *UserDefinedLiteral::getCookedLiteral() {
+#ifndef NDEBUG
+  LiteralOperatorKind LOK = getLiteralOperatorKind();
+  assert(LOK != LOK_Template && LOK != LOK_Raw && "not a cooked literal");
+#endif
+  return getArg(0);
+}
+
+const IdentifierInfo *UserDefinedLiteral::getUDSuffix() const {
+  return cast<FunctionDecl>(getCalleeDecl())->getLiteralIdentifier();
+}
 
 CXXDefaultArgExpr *
 CXXDefaultArgExpr::Create(ASTContext &C, SourceLocation Loc, 

@@ -935,6 +935,7 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass:
     case Stmt::CXXMemberCallExprClass:
+    case Stmt::UserDefinedLiteralClass:
       return VisitCallExpr(cast<CallExpr>(S), asc);
 
     case Stmt::CaseStmtClass:

@@ -446,6 +446,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::CXXConstructExprClass:  
   case Stmt::CXXTemporaryObjectExprClass:
   case Stmt::CXXUnresolvedConstructExprClass:
+  case Stmt::UserDefinedLiteralClass:
     K = CXCursor_CallExpr;
     break;
       

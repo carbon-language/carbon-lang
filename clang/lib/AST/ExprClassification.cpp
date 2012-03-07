@@ -269,6 +269,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::CallExprClass:
   case Expr::CXXOperatorCallExprClass:
   case Expr::CXXMemberCallExprClass:
+  case Expr::UserDefinedLiteralClass:
   case Expr::CUDAKernelCallExprClass:
     return ClassifyUnnamed(Ctx, cast<CallExpr>(E)->getCallReturnType());
 

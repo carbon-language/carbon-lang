@@ -1161,6 +1161,11 @@ void ASTStmtReader::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
   E->setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 
+void ASTStmtReader::VisitUserDefinedLiteral(UserDefinedLiteral *E) {
+  VisitCallExpr(E);
+  E->UDSuffixLoc = ReadSourceLocation(Record, Idx);
+}
+
 void ASTStmtReader::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
   VisitExpr(E);
   E->setValue(Record[Idx++]);
@@ -2027,6 +2032,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case EXPR_CXX_FUNCTIONAL_CAST:
       S = CXXFunctionalCastExpr::CreateEmpty(Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
+      break;
+
+    case EXPR_USER_DEFINED_LITERAL:
+      S = new (Context) UserDefinedLiteral(Context, Empty);
       break;
 
     case EXPR_CXX_BOOL_LITERAL:

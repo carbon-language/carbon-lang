@@ -324,6 +324,67 @@ public:
   static bool classof(const CXXConstCastExpr *) { return true; }
 };
 
+/// UserDefinedLiteral - A call to a literal operator (C++11 [over.literal])
+/// written as a user-defined literal (C++11 [lit.ext]).
+///
+/// Represents a user-defined literal, e.g. "foo"_bar or 1.23_xyz. While this
+/// is semantically equivalent to a normal call, this AST node provides better
+/// information about the syntactic representation of the literal.
+///
+/// Since literal operators are never found by ADL and can only be declared at
+/// namespace scope, a user-defined literal is never dependent.
+class UserDefinedLiteral : public CallExpr {
+  /// \brief The location of a ud-suffix within the literal.
+  SourceLocation UDSuffixLoc;
+
+public:
+  UserDefinedLiteral(ASTContext &C, Expr *Fn, Expr **Args, unsigned NumArgs,
+                     QualType T, ExprValueKind VK, SourceLocation LitEndLoc,
+                     SourceLocation SuffixLoc)
+    : CallExpr(C, UserDefinedLiteralClass, Fn, 0, Args, NumArgs, T, VK,
+               LitEndLoc), UDSuffixLoc(SuffixLoc) {}
+  explicit UserDefinedLiteral(ASTContext &C, EmptyShell Empty)
+    : CallExpr(C, UserDefinedLiteralClass, Empty) {}
+
+  /// The kind of literal operator which is invoked.
+  enum LiteralOperatorKind {
+    LOK_Raw,      ///< Raw form: operator "" X (const char *)
+    LOK_Template, ///< Raw form: operator "" X<cs...> ()
+    LOK_Integer,  ///< operator "" X (unsigned long long)
+    LOK_Floating, ///< operator "" X (long double)
+    LOK_String,   ///< operator "" X (const CharT *, size_t)
+    LOK_Character ///< operator "" X (CharT)
+  };
+
+  /// getLiteralOperatorKind - Returns the kind of literal operator invocation
+  /// which this expression represents.
+  LiteralOperatorKind getLiteralOperatorKind() const;
+
+  /// getCookedLiteral - If this is not a raw user-defined literal, get the
+  /// underlying cooked literal (representing the literal with the suffix
+  /// removed).
+  Expr *getCookedLiteral();
+  const Expr *getCookedLiteral() const {
+    return const_cast<UserDefinedLiteral*>(this)->getCookedLiteral();
+  }
+
+  /// getUDSuffixLoc - Returns the location of a ud-suffix in the expression.
+  /// For a string literal, there may be multiple identical suffixes. This
+  /// returns the first.
+  SourceLocation getUDSuffixLoc() const { return getRParenLoc(); }
+
+  /// getUDSuffix - Returns the ud-suffix specified for this literal.
+  const IdentifierInfo *getUDSuffix() const;
+
+  static bool classof(const Stmt *S) {
+    return S->getStmtClass() == UserDefinedLiteralClass;
+  }
+  static bool classof(const UserDefinedLiteral *) { return true; }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+};
+
 /// CXXBoolLiteralExpr - [C++ 2.13.5] C++ Boolean Literal.
 ///
 class CXXBoolLiteralExpr : public Expr {

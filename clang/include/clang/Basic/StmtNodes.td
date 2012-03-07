@@ -98,6 +98,7 @@ def CXXReinterpretCastExpr : DStmt<CXXNamedCastExpr>;
 def CXXConstCastExpr : DStmt<CXXNamedCastExpr>;
 def CXXFunctionalCastExpr : DStmt<ExplicitCastExpr>;
 def CXXTypeidExpr : DStmt<Expr>;
+def UserDefinedLiteral : DStmt<CallExpr>;
 def CXXBoolLiteralExpr : DStmt<Expr>;
 def CXXNullPtrLiteralExpr : DStmt<Expr>;
 def CXXThisExpr : DStmt<Expr>;

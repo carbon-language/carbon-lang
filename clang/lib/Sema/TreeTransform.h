@@ -6088,6 +6088,12 @@ TreeTransform<Derived>::TransformCharacterLiteral(CharacterLiteral *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformUserDefinedLiteral(UserDefinedLiteral *E) {
+  return SemaRef.MaybeBindToTemporary(E);
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformGenericSelectionExpr(GenericSelectionExpr *E) {
   ExprResult ControllingExpr =
     getDerived().TransformExpr(E->getControllingExpr());

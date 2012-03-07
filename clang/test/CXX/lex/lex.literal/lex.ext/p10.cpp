@@ -10,6 +10,6 @@ void f() {
   // FIXME: Reject these for the right reason.
   123wibble; // expected-error {{suffix 'wibble'}}
   123.0wibble; // expected-error {{suffix 'wibble'}}
-  ""wibble; // expected-warning {{unused}}
-  R"x("hello")x"wibble; // expected-warning {{unused}}
+  ""wibble;
+  R"x("hello")x"wibble;
 }

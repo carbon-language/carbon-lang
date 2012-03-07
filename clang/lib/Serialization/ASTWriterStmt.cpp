@@ -1144,6 +1144,12 @@ void ASTStmtWriter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
   Code = serialization::EXPR_CXX_FUNCTIONAL_CAST;
 }
 
+void ASTStmtWriter::VisitUserDefinedLiteral(UserDefinedLiteral *E) {
+  VisitCallExpr(E);
+  Writer.AddSourceLocation(E->UDSuffixLoc, Record);
+  Code = serialization::EXPR_USER_DEFINED_LITERAL;
+}
+
 void ASTStmtWriter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getValue());

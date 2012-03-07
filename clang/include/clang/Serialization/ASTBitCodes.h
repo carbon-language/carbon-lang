@@ -1136,6 +1136,8 @@ namespace clang {
       EXPR_CXX_CONST_CAST,
       /// \brief A CXXFunctionalCastExpr record.
       EXPR_CXX_FUNCTIONAL_CAST,
+      /// \brief A UserDefinedLiteral record.
+      EXPR_USER_DEFINED_LITERAL,
       /// \brief A CXXBoolLiteralExpr record.
       EXPR_CXX_BOOL_LITERAL,
       EXPR_CXX_NULL_PTR_LITERAL,  // CXXNullPtrLiteralExpr

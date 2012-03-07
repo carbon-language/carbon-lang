@@ -2545,6 +2545,11 @@ public:
                                       const DeclarationNameInfo &NameInfo,
                                       NamedDecl *D);
 
+  ExprResult BuildLiteralOperatorCall(IdentifierInfo *UDSuffix,
+                                      SourceLocation UDSuffixLoc,
+                                      ArrayRef<Expr*> Args,
+                                      SourceLocation LitEndLoc);
+
   ExprResult ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind);
   ExprResult ActOnIntegerConstant(SourceLocation Loc, uint64_t Val);
   ExprResult ActOnNumericConstant(const Token &Tok);

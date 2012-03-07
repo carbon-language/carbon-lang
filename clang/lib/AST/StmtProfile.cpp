@@ -738,6 +738,10 @@ void StmtProfiler::VisitCXXConstCastExpr(const CXXConstCastExpr *S) {
   VisitCXXNamedCastExpr(S);
 }
 
+void StmtProfiler::VisitUserDefinedLiteral(const UserDefinedLiteral *S) {
+  VisitCallExpr(S);
+}
+
 void StmtProfiler::VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->getValue());

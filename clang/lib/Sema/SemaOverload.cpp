@@ -10895,6 +10895,109 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   return MaybeBindToTemporary(TheCall);
 }
 
+static void FilterLookupForLiteralOperator(Sema &S, LookupResult &R,
+                                           ArrayRef<Expr*> Args) {
+  LookupResult::Filter F = R.makeFilter();
+
+  while (F.hasNext()) {
+    FunctionDecl *D = dyn_cast<FunctionDecl>(F.next());
+    // FIXME: using-decls?
+
+    if (!D || D->getNumParams() != Args.size()) {
+      F.erase();
+    } else {
+      // The literal operator's parameter types must exactly match the decayed
+      // argument types.
+      for (unsigned ArgIdx = 0; ArgIdx != Args.size(); ++ArgIdx) {
+        QualType ArgTy = Args[ArgIdx]->getType();
+        QualType ParamTy = D->getParamDecl(ArgIdx)->getType();
+        if (ArgTy->isArrayType())
+          ArgTy = S.Context.getArrayDecayedType(ArgTy);
+        if (!S.Context.hasSameUnqualifiedType(ArgTy, ParamTy)) {
+          F.erase();
+          break;
+        }
+      }
+    }
+  }
+
+  F.done();
+}
+
+/// BuildLiteralOperatorCall - A user-defined literal was found. Look up the
+/// corresponding literal operator, and build a call to it.
+/// FIXME: Support for raw literal operators and literal operator templates.
+ExprResult
+Sema::BuildLiteralOperatorCall(IdentifierInfo *UDSuffix,
+                               SourceLocation UDSuffixLoc,
+                               ArrayRef<Expr*> Args, SourceLocation LitEndLoc) {
+  DeclarationName OpName =
+    Context.DeclarationNames.getCXXLiteralOperatorName(UDSuffix);
+  DeclarationNameInfo OpNameInfo(OpName, UDSuffixLoc);
+  OpNameInfo.setCXXLiteralOperatorNameLoc(UDSuffixLoc);
+
+  LookupResult R(*this, OpName, UDSuffixLoc, LookupOrdinaryName);
+  LookupName(R, /*FIXME*/CurScope);
+  assert(R.getResultKind() != LookupResult::Ambiguous &&
+         "literal operator lookup can't be ambiguous");
+
+  // Filter the lookup results appropriately.
+  FilterLookupForLiteralOperator(*this, R, Args);
+
+  // FIXME: For literal operator templates, we need to perform overload
+  // resolution to deal with SFINAE.
+  FunctionDecl *FD = R.getAsSingle<FunctionDecl>();
+  if (!FD || FD->getNumParams() != Args.size())
+    return ExprError(
+        Diag(UDSuffixLoc, diag::err_ovl_no_viable_oper) << UDSuffix->getName());
+  bool HadMultipleCandidates = false;
+
+  // Check the argument types. This should almost always be a no-op, except
+  // that array-to-pointer decay is applied to string literals.
+  assert(Args.size() <= 2 && "too many arguments for literal operator");
+  Expr *ConvArgs[2];
+  for (unsigned ArgIdx = 0; ArgIdx != Args.size(); ++ArgIdx) {
+    ExprResult InputInit = PerformCopyInitialization(
+      InitializedEntity::InitializeParameter(Context, FD->getParamDecl(ArgIdx)),
+      SourceLocation(), Args[ArgIdx]);
+    if (InputInit.isInvalid())
+      return true;
+    ConvArgs[ArgIdx] = InputInit.take();
+  }
+
+  MarkFunctionReferenced(UDSuffixLoc, FD);
+  DiagnoseUseOfDecl(FD, UDSuffixLoc);
+
+  ExprResult Fn = CreateFunctionRefExpr(*this, FD, HadMultipleCandidates,
+                                        OpNameInfo.getLoc(),
+                                        OpNameInfo.getInfo());
+  if (Fn.isInvalid())
+    return true;
+
+  QualType ResultTy = FD->getResultType();
+  ExprValueKind VK = Expr::getValueKindForType(ResultTy);
+  ResultTy = ResultTy.getNonLValueExprType(Context);
+
+  // FIXME: A literal operator call never uses default arguments.
+  // But is this ambiguous?
+  //   void operator"" _x(const char *p);
+  //   void operator"" _x(const char *p, size_t n = 0);
+  //   123_x
+  // g++ says no, but bizarrely rejects it if the default argument is omitted.
+
+  UserDefinedLiteral *UDL =
+    new (Context) UserDefinedLiteral(Context, Fn.take(), ConvArgs, Args.size(),
+                                     ResultTy, VK, LitEndLoc, UDSuffixLoc);
+
+  if (CheckCallReturnType(FD->getResultType(), UDSuffixLoc, UDL, FD))
+    return ExprError();
+
+  if (CheckFunctionCall(FD, UDL))
+    return ExprError();
+
+  return MaybeBindToTemporary(UDL);
+}
+
 /// FixOverloadedFunctionReference - E is an expression that refers to
 /// a C++ overloaded function (possibly with some parentheses and
 /// perhaps a '&' around it). We have resolved the overloaded function

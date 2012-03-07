@@ -1172,10 +1172,27 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
                                        ArrayType::Normal, 0);
 
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return Owned(StringLiteral::Create(Context, Literal.GetString(),
-                                     Kind, Literal.Pascal, StrTy,
-                                     &StringTokLocs[0],
-                                     StringTokLocs.size()));
+  StringLiteral *Lit = StringLiteral::Create(Context, Literal.GetString(),
+                                             Kind, Literal.Pascal, StrTy,
+                                             &StringTokLocs[0],
+                                             StringTokLocs.size());
+  if (Literal.getUDSuffix().empty())
+    return Owned(Lit);
+
+  // We're building a user-defined literal.
+  IdentifierInfo *UDSuffix = &Context.Idents.get(Literal.getUDSuffix());
+  SourceLocation UDSuffixLoc = StringTokLocs[0];
+  // FIXME: = Literal.getUDSuffixLoc(getSourceManager());
+
+  // C++11 [lex.ext]p5: The literal L is treated as a call of the form
+  //   operator "" X (str, len)
+  QualType SizeType = Context.getSizeType();
+  llvm::APInt Len(Context.getIntWidth(SizeType), Literal.GetNumStringChars());
+  IntegerLiteral *LenArg = IntegerLiteral::Create(Context, Len, SizeType,
+                                                  StringTokLocs[0]);
+  Expr *Args[] = { Lit, LenArg };
+  return BuildLiteralOperatorCall(UDSuffix, UDSuffixLoc, Args,
+                                  StringTokLocs.back());
 }
 
 ExprResult

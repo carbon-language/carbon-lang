@@ -712,7 +712,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass:
-    case Stmt::CXXMemberCallExprClass: {
+    case Stmt::CXXMemberCallExprClass:
+    case Stmt::UserDefinedLiteralClass: {
       Bldr.takeNodes(Pred);
       VisitCallExpr(cast<CallExpr>(S), Pred, Dst);
       Bldr.addNodes(Dst);
