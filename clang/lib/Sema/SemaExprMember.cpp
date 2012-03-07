@@ -1189,16 +1189,17 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                    dyn_cast<ObjCCategoryImplDecl>(ObjCImpDecl))
           ClassOfMethodDecl = CatImplClass->getClassInterface();
       }
-
-      if (IV->getAccessControl() == ObjCIvarDecl::Private) {
-        if (!declaresSameEntity(ClassDeclared, IDecl) ||
-            !declaresSameEntity(ClassOfMethodDecl, ClassDeclared))
-          Diag(MemberLoc, diag::error_private_ivar_access)
+      if (!getLangOptions().DebuggerSupport) {
+        if (IV->getAccessControl() == ObjCIvarDecl::Private) {
+          if (!declaresSameEntity(ClassDeclared, IDecl) ||
+              !declaresSameEntity(ClassOfMethodDecl, ClassDeclared))
+            Diag(MemberLoc, diag::error_private_ivar_access)
+              << IV->getDeclName();
+        } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
+          // @protected
+          Diag(MemberLoc, diag::error_protected_ivar_access)
             << IV->getDeclName();
-      } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
-        // @protected
-        Diag(MemberLoc, diag::error_protected_ivar_access)
-          << IV->getDeclName();
+      }
     }
     if (getLangOptions().ObjCAutoRefCount) {
       Expr *BaseExp = BaseExpr.get()->IgnoreParenImpCasts();

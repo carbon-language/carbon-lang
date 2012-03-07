@@ -1748,7 +1748,8 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
 
       // Diagnose the use of an ivar outside of the declaring class.
       if (IV->getAccessControl() == ObjCIvarDecl::Private &&
-          !declaresSameEntity(ClassDeclared, IFace))
+          !declaresSameEntity(ClassDeclared, IFace) &&
+          !getLangOptions().DebuggerSupport)
         Diag(Loc, diag::error_private_ivar_access) << IV->getDeclName();
 
       // FIXME: This should use a new expr for a direct reference, don't
