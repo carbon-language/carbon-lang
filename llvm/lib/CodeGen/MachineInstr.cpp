@@ -1850,10 +1850,13 @@ MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
   // MachineOperand, but currently that doesn't work because there are many
   // different ideas of "equality" and thus different sets of information that
   // contribute to the hash code. This one happens to want to take a specific
-  // subset. It's not clear that this routine uses the correct set of
-  // information, it would be good to somehow ensure this function is
-  // MachineInstr::isIdenticalTo with the 'IgnoreVRegDefs' filter look at the
-  // same bits.
+  // subset. And it's still not clear that this routine uses the *correct*
+  // subset of information when computing the hash code. The goal is to use the
+  // same inputs for the hash code here that MachineInstr::isIdenticalTo uses to
+  // test for equality when passed the 'IgnoreVRegDefs' filter flag. It would
+  // be very useful to factor the selection of relevant inputs out of the two
+  // functions and into a common routine, but it's not clear how that can be
+  // done.
   SmallVector<size_t, 8> HashComponents;
   HashComponents.reserve(MI->getNumOperands() + 1);
   HashComponents.push_back(MI->getOpcode());
