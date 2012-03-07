@@ -63,6 +63,17 @@ SBLaunchInfo::SBLaunchInfo (const char **argv) :
         m_opaque_sp->GetArguments().SetArguments(argv);
 }
 
+SBLaunchInfo::~SBLaunchInfo()
+{
+}
+
+lldb_private::ProcessLaunchInfo &
+SBLaunchInfo::ref ()
+{
+    return *m_opaque_sp;
+}
+
+
 uint32_t
 SBLaunchInfo::GetUserID()
 {
@@ -249,18 +260,18 @@ SBLaunchInfo::AddSuppressFileAction (int fd, bool read, bool write)
 
 
 SBAttachInfo::SBAttachInfo () :
-m_opaque_sp (new ProcessAttachInfo())
+    m_opaque_sp (new ProcessAttachInfo())
 {
 }
 
 SBAttachInfo::SBAttachInfo (lldb::pid_t pid) :
-m_opaque_sp (new ProcessAttachInfo())
+    m_opaque_sp (new ProcessAttachInfo())
 {
     m_opaque_sp->SetProcessID (pid);
 }
 
 SBAttachInfo::SBAttachInfo (const char *path, bool wait_for) :
-m_opaque_sp (new ProcessAttachInfo())
+    m_opaque_sp (new ProcessAttachInfo())
 {
     if (path && path[0])
         m_opaque_sp->GetExecutableFile().SetFile(path, false);
@@ -268,9 +279,19 @@ m_opaque_sp (new ProcessAttachInfo())
 }
 
 SBAttachInfo::SBAttachInfo (const SBAttachInfo &rhs) :
-m_opaque_sp (new ProcessAttachInfo())
+    m_opaque_sp (new ProcessAttachInfo())
 {
     *m_opaque_sp = *rhs.m_opaque_sp;
+}
+
+SBAttachInfo::~SBAttachInfo()
+{
+}
+
+lldb_private::ProcessAttachInfo &
+SBAttachInfo::ref ()
+{
+    return *m_opaque_sp;
 }
 
 SBAttachInfo &

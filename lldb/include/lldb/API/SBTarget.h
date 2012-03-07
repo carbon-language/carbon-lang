@@ -25,6 +25,8 @@ class SBLaunchInfo
 public:
     SBLaunchInfo (const char **argv);
     
+    ~SBLaunchInfo();
+
     uint32_t
     GetUserID();
     
@@ -110,10 +112,7 @@ protected:
     friend class SBTarget;
     
     lldb_private::ProcessLaunchInfo &
-    ref ()
-    {
-        return *m_opaque_sp;
-    }
+    ref ();
 
     ProcessLaunchInfoSP m_opaque_sp;
 };
@@ -129,6 +128,8 @@ public:
     
     SBAttachInfo (const SBAttachInfo &rhs);
     
+    ~SBAttachInfo();
+
     SBAttachInfo &
     operator = (const SBAttachInfo &rhs);
     
@@ -212,10 +213,7 @@ protected:
     friend class SBTarget;
 
     lldb_private::ProcessAttachInfo &
-    ref ()
-    {
-        return *m_opaque_sp;
-    }
+    ref ();
     
     ProcessAttachInfoSP m_opaque_sp;
 };
