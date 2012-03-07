@@ -281,8 +281,10 @@ namespace llvm {
 
     virtual void dumpNode(const SUnit *SU) const;
 
+    /// Return a label for a DAG node that points to an instruction.
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;
 
+    /// Return a label for the region of code covered by the DAG.
     virtual std::string getDAGName() const;
 
   protected:
