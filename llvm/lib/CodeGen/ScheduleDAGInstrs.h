@@ -297,6 +297,8 @@ namespace llvm {
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.
     ///
+    /// Typically, a scheduling algorithm will implement Schedule() without
+    /// overriding enterRegion() or exitRegion().
     virtual void Schedule() = 0;
 
     virtual void dumpNode(const SUnit *SU) const;
