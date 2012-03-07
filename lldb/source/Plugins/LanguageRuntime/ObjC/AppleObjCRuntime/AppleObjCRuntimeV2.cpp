@@ -538,7 +538,7 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
     SymbolContextList sc_list;
     Target &target = m_process->GetTarget();
     
-    target.GetImages().FindSymbolsWithNameAndType(ivar_const_str, eSymbolTypeRuntime, sc_list);
+    target.GetImages().FindSymbolsWithNameAndType(ivar_const_str, eSymbolTypeObjCIVar, sc_list);
 
     SymbolContext ivar_offset_symbol;
     if (sc_list.GetSize() != 1 
