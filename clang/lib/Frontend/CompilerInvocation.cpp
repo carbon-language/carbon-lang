@@ -2196,7 +2196,10 @@ std::string CompilerInvocation::getModuleHash() const {
   ModuleSignature Signature;
   
   // Start the signature with the compiler version.
-  Signature.add(getClangFullRepositoryVersion());
+  // FIXME: The full version string can be quite long.  Omit it from the
+  // module hash for now to avoid failures where the path name becomes too
+  // long.  An MD5 or similar checksum would work well here.
+  // Signature.add(getClangFullRepositoryVersion());
   
   // Extend the signature with the language options
 #define LANGOPT(Name, Bits, Default, Description) \
