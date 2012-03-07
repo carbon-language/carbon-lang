@@ -4084,7 +4084,7 @@ numpunct_byname<char>::__init(const char* nm)
     {
         __locale_unique_ptr loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
-        if (loc == 0)
+        if (loc == nullptr)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
@@ -4127,7 +4127,7 @@ numpunct_byname<wchar_t>::__init(const char* nm)
     {
         __locale_unique_ptr loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
-        if (loc == 0)
+        if (loc == nullptr)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
@@ -5518,7 +5518,7 @@ moneypunct_byname<char, false>::init(const char* nm)
     typedef moneypunct<char, false> base;
     __locale_unique_ptr loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    if (loc == 0)
+    if (loc == nullptr)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
@@ -5560,7 +5560,7 @@ moneypunct_byname<char, true>::init(const char* nm)
     typedef moneypunct<char, true> base;
     __locale_unique_ptr loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    if (loc == 0)
+    if (loc == nullptr)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
@@ -5615,7 +5615,7 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
     typedef moneypunct<wchar_t, false> base;
     __locale_unique_ptr loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    if (loc == 0)
+    if (loc == nullptr)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
@@ -5692,7 +5692,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     typedef moneypunct<wchar_t, true> base;
     __locale_unique_ptr loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    if (loc == 0)
+    if (loc == nullptr)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS

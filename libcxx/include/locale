@@ -3561,7 +3561,7 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
             __throw_bad_alloc();
         __hn.reset(__bb);
         __hd.reset((char_type*)malloc(__n * sizeof(char_type)));
-        if (__hd == 0)
+        if (__hd == nullptr)
             __throw_bad_alloc();
         __db = __hd.get();
     }
