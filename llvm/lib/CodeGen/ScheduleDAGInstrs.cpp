@@ -137,13 +137,13 @@ void ScheduleDAGInstrs::finishBlock() {
 }
 
 /// Initialize the map with the number of registers.
-void ScheduleDAGInstrs::Reg2SUnitsMap::setRegLimit(unsigned Limit) {
+void Reg2SUnitsMap::setRegLimit(unsigned Limit) {
   PhysRegSet.setUniverse(Limit);
   SUnits.resize(Limit);
 }
 
 /// Clear the map without deallocating storage.
-void ScheduleDAGInstrs::Reg2SUnitsMap::clear() {
+void Reg2SUnitsMap::clear() {
   for (const_iterator I = reg_begin(), E = reg_end(); I != E; ++I) {
     SUnits[*I].clear();
   }
