@@ -226,7 +226,7 @@ void ScheduleTopDownLive::schedule() {
       releaseNode(&(*I));
   }
 
-  InsertPos = Begin;
+  MachineBasicBlock::iterator InsertPos = Begin;
   while (SUnit *SU = pickNode()) {
     DEBUG(dbgs() << "*** Scheduling Instruction:\n"; SU->dump(this));
 

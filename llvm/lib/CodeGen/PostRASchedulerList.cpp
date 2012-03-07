@@ -365,8 +365,8 @@ void SchedulePostRATDList::schedule() {
 
   if (AntiDepBreak != NULL) {
     unsigned Broken =
-      AntiDepBreak->BreakAntiDependencies(SUnits, Begin, InsertPos,
-                                          InsertPosIndex, DbgValues);
+      AntiDepBreak->BreakAntiDependencies(SUnits, Begin, End, EndIndex,
+                                          DbgValues);
 
     if (Broken != 0) {
       // We made changes. Update the dependency graph.
@@ -396,7 +396,7 @@ void SchedulePostRATDList::schedule() {
 ///
 void SchedulePostRATDList::Observe(MachineInstr *MI, unsigned Count) {
   if (AntiDepBreak != NULL)
-    AntiDepBreak->Observe(MI, Count, InsertPosIndex);
+    AntiDepBreak->Observe(MI, Count, EndIndex);
 }
 
 /// FinishBlock - Clean up register live-range state.
@@ -761,24 +761,24 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
 // EmitSchedule - Emit the machine code in scheduled order.
 void SchedulePostRATDList::EmitSchedule() {
-  Begin = InsertPos;
+  Begin = End;
 
   // If first instruction was a DBG_VALUE then put it back.
   if (FirstDbgValue)
-    BB->splice(InsertPos, BB, FirstDbgValue);
+    BB->splice(End, BB, FirstDbgValue);
 
   // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
-      BB->splice(InsertPos, BB, SU->getInstr());
+      BB->splice(End, BB, SU->getInstr());
     else
       // Null SUnit* is a noop.
-      TII->insertNoop(*BB, InsertPos);
+      TII->insertNoop(*BB, End);
 
     // Update the Begin iterator, as the first instruction in the block
     // may have been scheduled later.
     if (i == 0)
-      Begin = prior(InsertPos);
+      Begin = prior(End);
   }
 
   // Reinsert any remaining debug_values.

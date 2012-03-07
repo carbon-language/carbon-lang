@@ -119,16 +119,14 @@ namespace llvm {
     // The block in which to insert instructions
     MachineBasicBlock *BB;
 
-    // The beginning of the range to
-    // be scheduled. The range extends
-    // to InsertPos.
+    /// The beginning of the range to be scheduled.
     MachineBasicBlock::iterator Begin;
 
-    // The position to insert instructions
-    MachineBasicBlock::iterator InsertPos;
+    /// The end of the range to be scheduled.
+    MachineBasicBlock::iterator End;
 
-    // The index in BB of InsertPos.
-    unsigned InsertPosIndex;
+    /// The index in BB of End.
+    unsigned EndIndex;
 
     /// After calling BuildSchedGraph, each machine instruction in the current
     /// scheduling region is mapped to an SUnit.
@@ -239,7 +237,7 @@ namespace llvm {
     MachineBasicBlock::iterator begin() const { return Begin; }
 
     /// end - Return an iterator to the bottom of the current scheduling region.
-    MachineBasicBlock::iterator end() const { return InsertPos; }
+    MachineBasicBlock::iterator end() const { return End; }
 
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///

@@ -160,8 +160,8 @@ void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
                                     unsigned endcount) {
   BB = bb;
   Begin = begin;
-  InsertPos = end;
-  InsertPosIndex = endcount;
+  End = end;
+  EndIndex = endcount;
 
   // Check to see if the scheduler cares about latencies.
   UnitLatencies = forceUnitLatencies();
@@ -184,7 +184,7 @@ void ScheduleDAGInstrs::exitRegion() {
 /// are too high to be hidden by the branch or when the liveout registers
 /// used by instructions in the fallthrough block.
 void ScheduleDAGInstrs::addSchedBarrierDeps() {
-  MachineInstr *ExitMI = InsertPos != BB->end() ? &*InsertPos : 0;
+  MachineInstr *ExitMI = End != BB->end() ? &*End : 0;
   ExitSU.setInstr(ExitMI);
   bool AllDepKnown = ExitMI &&
     (ExitMI->isCall() || ExitMI->isBarrier());
@@ -476,7 +476,7 @@ void ScheduleDAGInstrs::initSUnits() {
   // which is contained within a basic block.
   SUnits.reserve(BB->size());
 
-  for (MachineBasicBlock::iterator I = Begin; I != InsertPos; ++I) {
+  for (MachineBasicBlock::iterator I = Begin; I != End; ++I) {
     MachineInstr *MI = I;
     if (MI->isDebugValue())
       continue;
@@ -534,7 +534,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA) {
 
   // Walk the list of instructions, from bottom moving up.
   MachineInstr *PrevMI = NULL;
-  for (MachineBasicBlock::iterator MII = InsertPos, MIE = Begin;
+  for (MachineBasicBlock::iterator MII = End, MIE = Begin;
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
     if (MI && PrevMI) {
