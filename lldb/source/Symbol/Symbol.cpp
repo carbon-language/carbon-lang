@@ -158,28 +158,10 @@ Symbol::Clear()
     m_addr_range.Clear();
 }
 
-AddressRange *
-Symbol::GetAddressRangePtr()
+bool
+Symbol::ValueIsAddress() const
 {
-    if (m_addr_range.GetBaseAddress().GetSection())
-    {
-        if (!m_calculated_size)
-            GetByteSize();
-        return &m_addr_range;
-    }
-    return NULL;
-}
-
-const AddressRange *
-Symbol::GetAddressRangePtr() const
-{
-    if (m_addr_range.GetBaseAddress().GetSection())
-    {
-        if (!m_calculated_size)
-            GetByteSize();
-        return &m_addr_range;
-    }
-    return NULL;
+    return m_addr_range.GetBaseAddress().GetSection().get() != NULL;
 }
 
 uint32_t
@@ -245,8 +227,10 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
               m_is_external ? 'X' : ' ',
               GetTypeAsString());
 
-    SectionSP section_sp (m_addr_range.GetBaseAddress().GetSection());
-    if (section_sp)
+    // Make sure the size of the symbol is up to date before dumping
+    GetByteSize();
+
+    if (ValueIsAddress())
     {
         if (!m_addr_range.GetBaseAddress().Dump(s, NULL, Address::DumpStyleFileAddress))
             s->Printf("%*s", 18, "");
@@ -304,13 +288,6 @@ Symbol::GetPrologueByteSize ()
     return 0;
 }
 
-void
-Symbol::SetValue(addr_t value)
-{
-    m_addr_range.GetBaseAddress().SetRawAddress(value);
-}
-
-
 bool
 Symbol::Compare(const ConstString& name, SymbolType type) const
 {
@@ -365,9 +342,8 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
 {
     // Symbols can reconstruct the symbol and the module in the symbol context
     sc->symbol = this;
-    const AddressRange *range = GetAddressRangePtr();
-    if (range)
-        sc->module_sp = range->GetBaseAddress().GetModule();
+    if (ValueIsAddress())
+        sc->module_sp = GetAddress().GetModule();
     else
         sc->module_sp.reset();
 }
@@ -375,9 +351,8 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
 ModuleSP
 Symbol::CalculateSymbolContextModule ()
 {
-    const AddressRange *range = GetAddressRangePtr();
-    if (range)
-        return range->GetBaseAddress().GetModule();
+    if (ValueIsAddress())
+        return GetAddress().GetModule();
     return ModuleSP();
 }
 
@@ -392,10 +367,9 @@ void
 Symbol::DumpSymbolContext (Stream *s)
 {
     bool dumped_module = false;
-    const AddressRange *range = GetAddressRangePtr();
-    if (range)
-    {   
-        ModuleSP module_sp (range->GetBaseAddress().GetModule());
+    if (ValueIsAddress())
+    {
+        ModuleSP module_sp (GetAddress().GetModule());
         if (module_sp)
         {
             dumped_module = true;
@@ -416,10 +390,9 @@ Symbol::GetByteSize () const
     if (byte_size == 0 && !m_calculated_size)
     {
         const_cast<Symbol*>(this)->m_calculated_size = true;
-        const AddressRange *range = GetAddressRangePtr();
-        if (range)
+        if (ValueIsAddress())
         {
-            ModuleSP module_sp (range->GetBaseAddress().GetModule());
+            ModuleSP module_sp (GetAddress().GetModule());
             if (module_sp)
             {
                 ObjectFile *objfile = module_sp->GetObjectFile();
@@ -428,7 +401,7 @@ Symbol::GetByteSize () const
                     Symtab *symtab = objfile->GetSymtab();
                     if (symtab)
                     {
-                        const_cast<AddressRange &>(m_addr_range).SetByteSize(symtab->CalculateSymbolSize (const_cast<Symbol *>(this)));
+                        const_cast<Symbol*>(this)->SetByteSize (symtab->CalculateSymbolSize (const_cast<Symbol *>(this)));
                         byte_size = m_addr_range.GetByteSize();
                     }
                 }

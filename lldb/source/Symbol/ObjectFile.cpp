@@ -266,10 +266,9 @@ ObjectFile::GetAddressClass (addr_t file_addr)
         Symbol *symbol = symtab->FindSymbolContainingFileAddress(file_addr);
         if (symbol)
         {
-            const AddressRange *range_ptr = symbol->GetAddressRangePtr();
-            if (range_ptr)
+            if (symbol->ValueIsAddress())
             {
-                const SectionSP section_sp (range_ptr->GetBaseAddress().GetSection());
+                const SectionSP section_sp (symbol->GetAddress().GetSection());
                 if (section_sp)
                 {
                     const SectionType section_type = section_sp->GetType();

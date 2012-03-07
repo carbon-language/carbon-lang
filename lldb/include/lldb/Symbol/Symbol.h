@@ -65,20 +65,36 @@ public:
     void
     Dump (Stream *s, Target *target, uint32_t index) const;
 
-    AddressRange *
-    GetAddressRangePtr ();
+    bool
+    ValueIsAddress() const;
 
-    const AddressRange *
-    GetAddressRangePtr () const;
+    //------------------------------------------------------------------
+    // Access the address value. Do NOT hand out the AddressRange as an
+    // object as the byte size of the address range may not be filled in
+    // and it should be accessed via GetByteSize().
+    //------------------------------------------------------------------
+    Address &
+    GetAddress()
+    {
+        return m_addr_range.GetBaseAddress();
+    }
 
-    AddressRange &
-    GetAddressRangeRef() { return m_addr_range; }
-
-    const AddressRange &
-    GetAddressRangeRef() const { return m_addr_range; }
+    //------------------------------------------------------------------
+    // Access the address value. Do NOT hand out the AddressRange as an
+    // object as the byte size of the address range may not be filled in
+    // and it should be accessed via GetByteSize().
+    //------------------------------------------------------------------
+    const Address &
+    GetAddress() const
+    {
+        return m_addr_range.GetBaseAddress();
+    }
 
     const ConstString &
-    GetName () { return m_mangled.GetName(); }
+    GetName ()
+    {
+        return m_mangled.GetName();
+    }
 
     uint32_t
     GetID() const
@@ -93,85 +109,140 @@ public:
     }
 
     Mangled&
-    GetMangled () { return m_mangled; }
+    GetMangled ()
+    {
+        return m_mangled;
+    }
 
     const Mangled&
-    GetMangled () const { return m_mangled; }
-
-    bool
-    GetSizeIsSibling () const { return m_size_is_sibling; }
-
-    bool
-    GetSizeIsSynthesized() const { return m_size_is_synthesized; }
+    GetMangled () const
+    {
+        return m_mangled;
+    }
 
     uint32_t
     GetSiblingIndex () const;
 
-    lldb::addr_t
-    GetByteSize () const;
-
     lldb::SymbolType
-    GetType () const { return (lldb::SymbolType)m_type; }
+    GetType () const
+    {
+        return (lldb::SymbolType)m_type;
+    }
 
     void
-    SetType (lldb::SymbolType type) { m_type = (lldb::SymbolType)type; }
+    SetType (lldb::SymbolType type)
+    {
+        m_type = (lldb::SymbolType)type;
+    }
 
     const char *
     GetTypeAsString () const;
 
     uint32_t
-    GetFlags () const { return m_flags; }
+    GetFlags () const
+    {
+        return m_flags;
+    }
 
     void
-    SetFlags (uint32_t flags) { m_flags = flags; }
+    SetFlags (uint32_t flags)
+    {
+        m_flags = flags;
+    }
 
     void
     GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const;
 
-    Address &
-    GetValue () { return m_addr_range.GetBaseAddress(); }
+    bool
+    IsSynthetic () const
+    {
+        return m_is_synthetic;
+    }
 
-    const Address &
-    GetValue () const { return m_addr_range.GetBaseAddress(); }
+    void
+    SetIsSynthetic (bool b)
+    {
+        m_is_synthetic = b;
+    }
+
+    
+    bool
+    GetSizeIsSynthesized() const
+    {
+        return m_size_is_synthesized;
+    }
+    
+    void
+    SetSizeIsSynthesized(bool b)
+    {
+        m_size_is_synthesized = b;
+    }
 
     bool
-    IsSynthetic () const { return m_is_synthetic; }
+    IsDebug () const
+    {
+        return m_is_debug;
+    }
 
     void
-    SetIsSynthetic (bool b) { m_is_synthetic = b; }
-
-    void
-    SetSizeIsSynthesized(bool b) { m_size_is_synthesized = b; }
+    SetDebug (bool b)
+    {
+        m_is_debug = b;
+    }
 
     bool
-    IsDebug () const { return m_is_debug; }
+    IsExternal () const
+    {
+        return m_is_external;
+    }
 
     void
-    SetDebug (bool b) { m_is_debug = b; }
-
-    bool
-    IsExternal () const { return m_is_external; }
-
-    void
-    SetExternal (bool b) { m_is_external = b; }
+    SetExternal (bool b)
+    {
+        m_is_external = b;
+    }
 
     bool
     IsTrampoline () const;
 
+    lldb::addr_t
+    GetByteSize () const;
+    
     void
-    SetByteSize (uint32_t size) { m_addr_range.SetByteSize(size); }
+    SetByteSize (uint32_t size)
+    {
+        m_addr_range.SetByteSize(size);
+    }
+
+    bool
+    GetSizeIsSibling () const
+    {
+        return m_size_is_sibling;
+    }
 
     void
-    SetSizeIsSibling (bool b) { m_size_is_sibling = b; }
+    SetSizeIsSibling (bool b)
+    {
+        m_size_is_sibling = b;
+    }
 
-    void
-    SetValue (Address &value) { m_addr_range.GetBaseAddress() = value; }
-
-    void
-    SetValue (const AddressRange &range) { m_addr_range = range; }
-
-    void
-    SetValue (lldb::addr_t value);
+//    void
+//    SetValue (Address &value)
+//    {
+//        m_addr_range.GetBaseAddress() = value;
+//    }
+//
+//    void
+//    SetValue (const AddressRange &range)
+//    {
+//        m_addr_range = range;
+//    }
+//
+//    void
+//    SetValue (lldb::addr_t value);
+//    {
+//        m_addr_range.GetBaseAddress().SetRawAddress(value);
+//    }
 
     // If m_type is "Code" or "Function" then this will return the prologue size
     // in bytes, else it will return zero.

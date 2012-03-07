@@ -3586,11 +3586,7 @@ public:
                                         //ModuleSP new_module_sp (new Module (target_module_file, target_module_arch));
                                         ModuleSP new_module_sp;
                                                                 
-                                        Error error (ModuleList::GetSharedModule (module_spec, 
-                                                                                  new_module_sp, 
-                                                                                  &target->GetExecutableSearchPaths(),
-                                                                                  NULL,
-                                                                                  NULL));
+                                        new_module_sp = target->GetSharedModule (module_spec);
                                                         
                                         if (new_module_sp)
                                         {

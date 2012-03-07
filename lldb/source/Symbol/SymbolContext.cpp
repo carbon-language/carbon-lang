@@ -206,9 +206,9 @@ SymbolContext::DumpStopContext
             symbol->GetMangled().GetName().Dump(s);
         }
 
-        if (addr.IsValid() && symbol->GetAddressRangePtr())
+        if (addr.IsValid() && symbol->ValueIsAddress())
         {
-            const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset();
+            const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddress().GetOffset();
             if (symbol_offset)
             {
                 dumped_something = true;
@@ -431,10 +431,10 @@ SymbolContext::GetAddressRange (uint32_t scope,
     {
         if (range_idx == 0)
         {
-            const AddressRange *range_ptr = symbol->GetAddressRangePtr();
-            if (range_ptr)
+            if (symbol->ValueIsAddress())
             {
-                range = *range_ptr;
+                range.GetBaseAddress() = symbol->GetAddress();
+                range.SetByteSize (symbol->GetByteSize());
                 return true;
             }
         }
@@ -551,7 +551,7 @@ SymbolContext::GetFunctionName (Mangled::NamePreference preference)
         }
         return function->GetMangled().GetName(preference);
     }
-    else if (symbol && symbol->GetAddressRangePtr())
+    else if (symbol && symbol->ValueIsAddress())
     {
         return symbol->GetMangled().GetName(preference);
     }
@@ -934,14 +934,13 @@ SymbolContextList::AppendIfUnique (const SymbolContext& sc, bool merge_symbol_in
         && sc.block     == NULL
         && sc.line_entry.IsValid() == false)
     {
-        const AddressRange *symbol_range = sc.symbol->GetAddressRangePtr();
-        if (symbol_range)
+        if (sc.symbol->ValueIsAddress())
         {
             for (pos = m_symbol_contexts.begin(); pos != end; ++pos)
             {
                 if (pos->function)
                 {
-                    if (pos->function->GetAddressRange().GetBaseAddress() == symbol_range->GetBaseAddress())
+                    if (pos->function->GetAddressRange().GetBaseAddress() == sc.symbol->GetAddress())
                     {
                         // Do we already have a function with this symbol?
                         if (pos->symbol == sc.symbol)

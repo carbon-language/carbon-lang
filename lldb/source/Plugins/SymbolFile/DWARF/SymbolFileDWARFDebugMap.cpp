@@ -330,8 +330,8 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                 if (oso_fun_symbol)
                                 {
                                     // If we found the symbol, then we
-                                    SectionSP exe_fun_section (exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
-                                    SectionSP oso_fun_section (oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    SectionSP exe_fun_section (exe_symbol->GetAddress().GetSection());
+                                    SectionSP oso_fun_section (oso_fun_symbol->GetAddress().GetSection());
                                     if (oso_fun_section)
                                     {
                                         // Now we create a section that we will add as a child of the
@@ -342,17 +342,17 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                         // size will reflect any size changes (ppc has been known to
                                         // shrink function sizes when it gets rid of jump islands that
                                         // aren't needed anymore).
-                                        SectionSP oso_fun_section_sp (new Section (oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection(),
+                                        SectionSP oso_fun_section_sp (new Section (oso_fun_symbol->GetAddress().GetSection(),
                                                                                         oso_module_sp,                         // Module (the .o file)
                                                                                         sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
                                                                                         exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
                                                                                         eSectionTypeDebug,
-                                                                                        oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(),  // File VM address offset in the current section
+                                                                                        oso_fun_symbol->GetAddress().GetOffset(),  // File VM address offset in the current section
                                                                                         exe_symbol->GetByteSize(),          // File size (we need the size from the executable)
                                                                                         0, 0, 0));
 
                                         oso_fun_section_sp->SetLinkedLocation (exe_fun_section,
-                                                                               exe_symbol->GetValue().GetFileAddress() - exe_fun_section->GetFileAddress());
+                                                                               exe_symbol->GetAddress().GetFileAddress() - exe_fun_section->GetFileAddress());
                                         oso_fun_section->GetChildren().AddSection(oso_fun_section_sp);
                                         comp_unit_info->debug_map_sections_sp->AddSection(oso_fun_section_sp);
                                     }
@@ -381,24 +381,24 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                                                                                       Symtab::eDebugNo, 
                                                                                                       Symtab::eVisibilityAny);
 
-                                if (exe_symbol && oso_gsym_symbol && exe_symbol->GetAddressRangePtr() && oso_gsym_symbol->GetAddressRangePtr())
+                                if (exe_symbol && oso_gsym_symbol && exe_symbol->ValueIsAddress() && oso_gsym_symbol->ValueIsAddress())
                                 {
                                     // If we found the symbol, then we
-                                    SectionSP exe_gsym_section (exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
-                                    SectionSP oso_gsym_section (oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    SectionSP exe_gsym_section (exe_symbol->GetAddress().GetSection());
+                                    SectionSP oso_gsym_section (oso_gsym_symbol->GetAddress().GetSection());
                                     if (oso_gsym_section)
                                     {
-                                        SectionSP oso_gsym_section_sp (new Section (oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection(),
+                                        SectionSP oso_gsym_section_sp (new Section (oso_gsym_symbol->GetAddress().GetSection(),
                                                                                     oso_module_sp,                         // Module (the .o file)
                                                                                     sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
                                                                                     exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
                                                                                     eSectionTypeDebug,
-                                                                                    oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(),  // File VM address offset in the current section
+                                                                                    oso_gsym_symbol->GetAddress().GetOffset(),  // File VM address offset in the current section
                                                                                     1,                                   // We don't know the size of the global, just do the main address for now.
                                                                                     0, 0, 0));
 
                                         oso_gsym_section_sp->SetLinkedLocation (exe_gsym_section,
-                                                                                exe_symbol->GetValue().GetFileAddress() - exe_gsym_section->GetFileAddress());
+                                                                                exe_symbol->GetAddress().GetFileAddress() - exe_gsym_section->GetFileAddress());
                                         oso_gsym_section->GetChildren().AddSection(oso_gsym_section_sp);
                                         comp_unit_info->debug_map_sections_sp->AddSection(oso_gsym_section_sp);
                                     }

@@ -136,10 +136,15 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_i386 (const ExecutionContext &exe_
 
             SymbolContext first_frame_sc (first_frame->GetSymbolContext(resolve_scope));
             const AddressRange *addr_range_ptr = NULL;
+            AddressRange range;
             if (first_frame_sc.function)
                 addr_range_ptr = &first_frame_sc.function->GetAddressRange();
             else if (first_frame_sc.symbol)
-                addr_range_ptr = first_frame_sc.symbol->GetAddressRangePtr();
+            {
+                range.GetBaseAddress() = first_frame_sc.symbol->GetAddress();
+                range.SetByteSize (first_frame_sc.symbol->GetByteSize());
+                addr_range_ptr = &range;
+            }
 
             if (addr_range_ptr)
             {
@@ -230,10 +235,15 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_x86_64 (const ExecutionContext &ex
 
             SymbolContext first_frame_sc(first_frame->GetSymbolContext(resolve_scope));
             const AddressRange *addr_range_ptr = NULL;
+            AddressRange range;
             if (first_frame_sc.function)
                 addr_range_ptr = &first_frame_sc.function->GetAddressRange();
             else if (first_frame_sc.symbol)
-                addr_range_ptr = first_frame_sc.symbol->GetAddressRangePtr();
+            {
+                range.GetBaseAddress() = first_frame_sc.symbol->GetAddress();
+                range.SetByteSize (first_frame_sc.symbol->GetByteSize());
+                addr_range_ptr = &range;
+            }
 
             if (addr_range_ptr)
             {

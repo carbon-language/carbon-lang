@@ -6076,10 +6076,9 @@ SymbolFileDWARF::ParseVariableDIE
                                                                                                                            Symtab::eVisibilityExtern);
                                                 if (defined_symbol)
                                                 {
-                                                    const AddressRange *defined_range = defined_symbol->GetAddressRangePtr();
-                                                    if (defined_range)
+                                                    if (defined_symbol->ValueIsAddress())
                                                     {
-                                                        const addr_t defined_addr = defined_range->GetBaseAddress().GetFileAddress();
+                                                        const addr_t defined_addr = defined_symbol->GetAddress().GetFileAddress();
                                                         if (defined_addr != LLDB_INVALID_ADDRESS)
                                                         {
                                                             if (location.Update_DW_OP_addr (defined_addr))

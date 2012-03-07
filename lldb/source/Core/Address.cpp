@@ -468,7 +468,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                     if (symbol_name)
                                     {
                                         s->PutCString(symbol_name);
-                                        addr_t delta = file_Addr - symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress();
+                                        addr_t delta = file_Addr - symbol->GetAddress().GetFileAddress();
                                         if (delta)
                                             s->Printf(" + %llu", delta);
                                         showed_info = true;
@@ -632,9 +632,9 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         if (sc.function == NULL && sc.symbol != NULL)
                         {
                             // If we have just a symbol make sure it is in the right section
-                            if (sc.symbol->GetAddressRangePtr())
+                            if (sc.symbol->ValueIsAddress())
                             {
-                                if (sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() != GetSection())
+                                if (sc.symbol->GetAddress().GetSection() != GetSection())
                                 {
                                     // don't show the module if the symbol is a trampoline symbol
                                     show_stop_context = false;
@@ -685,7 +685,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                     // as our address. If it isn't, then we might have just found
                     // the last symbol that came before the address that we are 
                     // looking up that has nothing to do with our address lookup.
-                    if (sc.symbol->GetAddressRangePtr() && sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() != GetSection())
+                    if (sc.symbol->ValueIsAddress() && sc.symbol->GetAddress().GetSection() != GetSection())
                         sc.symbol = NULL;
                 }
                 sc.GetDescription(s, eDescriptionLevelBrief, target);

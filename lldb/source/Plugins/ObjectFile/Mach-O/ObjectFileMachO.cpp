@@ -606,10 +606,9 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
         Symbol *symbol = symtab->FindSymbolContainingFileAddress(file_addr);
         if (symbol)
         {
-            const AddressRange *range_ptr = symbol->GetAddressRangePtr();
-            if (range_ptr)
+            if (symbol->ValueIsAddress())
             {
-                SectionSP section_sp (range_ptr->GetBaseAddress().GetSection());
+                SectionSP section_sp (symbol->GetAddress().GetSection());
                 if (section_sp)
                 {
                     const SectionType section_type = section_sp->GetType();
@@ -1881,8 +1880,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                         sym[sym_idx].SetID (nlist_idx);
                         sym[sym_idx].SetType (type);
-                        sym[sym_idx].GetAddressRangeRef().GetBaseAddress().SetSection (symbol_section);
-                        sym[sym_idx].GetAddressRangeRef().GetBaseAddress().SetOffset (symbol_value);
+                        sym[sym_idx].GetAddress().SetSection (symbol_section);
+                        sym[sym_idx].GetAddress().SetOffset (symbol_value);
                         sym[sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
 
                         ++sym_idx;
@@ -1905,7 +1904,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                      nlist_idx < symtab_load_command.nsyms && (global_symbol = symtab->FindSymbolWithType (eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, nlist_idx)) != NULL;
                      nlist_idx++)
                 {
-                    if (global_symbol->GetValue().GetFileAddress() == 0)
+                    if (global_symbol->GetAddress().GetFileAddress() == 0)
                     {
                         std::vector<uint32_t> indexes;
                         if (symtab->AppendSymbolIndexesWithName (global_symbol->GetMangled().GetName(), indexes) > 0)
@@ -1917,7 +1916,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 symbol_ptr = symtab->SymbolAtIndex(*pos);
                                 if (symbol_ptr != global_symbol && symbol_ptr->IsDebug() == false)
                                 {
-                                    global_symbol->SetValue(symbol_ptr->GetValue());
+                                    global_symbol->GetAddress() = symbol_ptr->GetAddress();
                                     break;
                                 }
                             }
@@ -1997,8 +1996,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                 // for no good reason.
                                                 stub_symbol->SetType (eSymbolTypeTrampoline);
                                                 stub_symbol->SetExternal (false);
-                                                stub_symbol->GetAddressRangeRef().GetBaseAddress() = so_addr;
-                                                stub_symbol->GetAddressRangeRef().SetByteSize (symbol_stub_byte_size);
+                                                stub_symbol->GetAddress() = so_addr;
+                                                stub_symbol->SetByteSize (symbol_stub_byte_size);
                                             }
                                             else
                                             {
@@ -2009,8 +2008,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                 sym[sym_idx].GetMangled() = stub_symbol->GetMangled();
                                                 sym[sym_idx].SetType (eSymbolTypeTrampoline);
                                                 sym[sym_idx].SetIsSynthetic (true);
-                                                sym[sym_idx].GetAddressRangeRef().GetBaseAddress() = so_addr;
-                                                sym[sym_idx].GetAddressRangeRef().SetByteSize (symbol_stub_byte_size);
+                                                sym[sym_idx].GetAddress() = so_addr;
+                                                sym[sym_idx].SetByteSize (symbol_stub_byte_size);
                                                 ++sym_idx;
                                             }
                                         }
@@ -2252,7 +2251,7 @@ ObjectFileMachO::GetEntryPointAddress ()
             if (module_sp->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
             {
                 if (contexts.GetContextAtIndex(0, context))
-                    m_entry_point_address = context.symbol->GetValue();
+                    m_entry_point_address = context.symbol->GetAddress();
             }
         }
     }

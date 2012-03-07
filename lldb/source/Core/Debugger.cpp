@@ -2163,8 +2163,8 @@ Debugger::FormatPrompt
                                                     func_addr = inline_range.GetBaseAddress();
                                             }
                                         }
-                                        else if (sc->symbol && sc->symbol->GetAddressRangePtr())
-                                            func_addr = sc->symbol->GetAddressRangePtr()->GetBaseAddress();
+                                        else if (sc->symbol && sc->symbol->ValueIsAddress())
+                                            func_addr = sc->symbol->GetAddress();
                                     }
                                     
                                     if (func_addr.IsValid())

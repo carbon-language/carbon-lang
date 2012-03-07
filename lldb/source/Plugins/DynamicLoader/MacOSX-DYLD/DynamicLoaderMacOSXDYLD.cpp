@@ -342,7 +342,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
                 static ConstString g_dyld_all_image_infos ("dyld_all_image_infos");
                 const Symbol *symbol = dyld_module_sp->FindFirstSymbolWithNameAndType (g_dyld_all_image_infos, eSymbolTypeData);
                 if (symbol)
-                    m_dyld_all_image_infos_addr = symbol->GetValue().GetLoadAddress(&m_process->GetTarget());
+                    m_dyld_all_image_infos_addr = symbol->GetAddress().GetLoadAddress(&m_process->GetTarget());
             }
 
             // Update all image infos
@@ -1333,11 +1333,7 @@ DynamicLoaderMacOSXDYLD::AlwaysRelyOnEHUnwindInfo (SymbolContext &sym_ctx)
     ModuleSP module_sp;
     if (sym_ctx.symbol)
     {
-        AddressRange *ar = sym_ctx.symbol->GetAddressRangePtr();
-        if (ar)
-        {
-            module_sp = ar->GetBaseAddress().GetModule();
-        }
+        module_sp = sym_ctx.symbol->GetAddress().GetModule();
     }
     if (module_sp.get() == NULL && sym_ctx.function)
     {

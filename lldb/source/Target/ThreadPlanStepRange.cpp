@@ -184,9 +184,10 @@ ThreadPlanStepRange::InSymbol()
     {
         return m_addr_context.function->GetAddressRange().ContainsLoadAddress (cur_pc, m_thread.CalculateTarget().get());
     }
-    else if (m_addr_context.symbol != NULL)
+    else if (m_addr_context.symbol)
     {
-        return m_addr_context.symbol->GetAddressRangeRef().ContainsLoadAddress (cur_pc, m_thread.CalculateTarget().get());
+        AddressRange range(m_addr_context.symbol->GetAddress(), m_addr_context.symbol->GetByteSize());
+        return range.ContainsLoadAddress (cur_pc, m_thread.CalculateTarget().get());
     }
     return false;
 }

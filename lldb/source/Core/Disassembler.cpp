@@ -484,9 +484,10 @@ Disassembler::Disassemble
         {
             range = sc.function->GetAddressRange();
         }
-        else if (sc.symbol && sc.symbol->GetAddressRangePtr())
+        else if (sc.symbol && sc.symbol->ValueIsAddress())
         {
-            range = *sc.symbol->GetAddressRangePtr();
+            range.GetBaseAddress() = sc.symbol->GetAddress();
+            range.SetByteSize (sc.symbol->GetByteSize());
         }
         else
         {

@@ -355,10 +355,10 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                                                                                             eSymbolTypeData);
         if (trampoline_symbol != NULL)
         {
-            if (!trampoline_symbol->GetValue().IsValid())
+            if (!trampoline_symbol->GetAddress().IsValid())
                 return false;
                 
-            m_trampoline_header = trampoline_symbol->GetValue().GetLoadAddress(&target);
+            m_trampoline_header = trampoline_symbol->GetAddress().GetLoadAddress(&target);
             if (m_trampoline_header == LLDB_INVALID_ADDRESS)
                 return false;
             
@@ -368,10 +368,10 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                                                                                              eSymbolTypeCode);
             if (changed_symbol != NULL)
             {
-                if (!changed_symbol->GetValue().IsValid())
+                if (!changed_symbol->GetAddress().IsValid())
                     return false;
                     
-                lldb::addr_t changed_addr = changed_symbol->GetValue().GetOpcodeLoadAddress (&target);
+                lldb::addr_t changed_addr = changed_symbol->GetAddress().GetOpcodeLoadAddress (&target);
                 if (changed_addr != LLDB_INVALID_ADDRESS)
                 {
                     BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true);
@@ -543,13 +543,13 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process
     const Symbol *msg_forward_stret = m_objc_module_sp->FindFirstSymbolWithNameAndType (msg_forward_stret_name, eSymbolTypeCode);
     
     if (class_getMethodImplementation)
-        m_impl_fn_addr = class_getMethodImplementation->GetValue().GetOpcodeLoadAddress (target);
+        m_impl_fn_addr = class_getMethodImplementation->GetAddress().GetOpcodeLoadAddress (target);
     if  (class_getMethodImplementation_stret)
-        m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetValue().GetOpcodeLoadAddress (target);
+        m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetAddress().GetOpcodeLoadAddress (target);
     if (msg_forward)
-        m_msg_forward_addr = msg_forward->GetValue().GetOpcodeLoadAddress(target);
+        m_msg_forward_addr = msg_forward->GetAddress().GetOpcodeLoadAddress(target);
     if  (msg_forward_stret)
-        m_msg_forward_stret_addr = msg_forward_stret->GetValue().GetOpcodeLoadAddress(target);
+        m_msg_forward_stret_addr = msg_forward_stret->GetAddress().GetOpcodeLoadAddress(target);
     
     // FIXME: Do some kind of logging here.
     if (m_impl_fn_addr == LLDB_INVALID_ADDRESS || m_impl_stret_fn_addr == LLDB_INVALID_ADDRESS)
@@ -570,7 +570,7 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process
             // Problem is we also need to lookup the dispatch function.  For now we could have a side table of stret & non-stret
             // dispatch functions.  If that's as complex as it gets, we're fine.
             
-            lldb::addr_t sym_addr = msgSend_symbol->GetValue().GetOpcodeLoadAddress(target);
+            lldb::addr_t sym_addr = msgSend_symbol->GetAddress().GetOpcodeLoadAddress(target);
             
             m_msgSend_map.insert(std::pair<lldb::addr_t, int>(sym_addr, i));
         }
@@ -888,7 +888,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                         SymbolContext sc;
                         sc_list.GetContextAtIndex(0, sc);
                         if (sc.symbol != NULL)
-                            impl_code_address = sc.symbol->GetValue();
+                            impl_code_address = sc.symbol->GetAddress();
                             
                         //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.GetTargetPtr());
                         //printf ("Getting address for our_utility_function: 0x%llx.\n", addr);

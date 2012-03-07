@@ -315,7 +315,7 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
             const Symbol *symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (kext_summary_symbol, eSymbolTypeData);
             if (symbol)
             {
-                m_kext_summary_header_ptr_addr = symbol->GetValue();
+                m_kext_summary_header_ptr_addr = symbol->GetAddress();
                 // Update all image infos
                 ReadAllKextSummaries ();
             }

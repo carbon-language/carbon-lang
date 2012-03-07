@@ -546,7 +546,7 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
         || ivar_offset_symbol.symbol == NULL)
         return LLDB_INVALID_IVAR_OFFSET;
     
-    addr_t ivar_offset_address = ivar_offset_symbol.symbol->GetValue().GetLoadAddress (&target);
+    addr_t ivar_offset_address = ivar_offset_symbol.symbol->GetAddress().GetLoadAddress (&target);
     
     Error error;
     

@@ -732,7 +732,7 @@ ClangExpressionDeclMap::GetFunctionAddress
     if (sym_ctx.function)
         func_so_addr = &sym_ctx.function->GetAddressRange().GetBaseAddress();
     else if (sym_ctx.symbol)
-        func_so_addr = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+        func_so_addr = &sym_ctx.symbol->GetAddress();
     else
         return false;
     
@@ -759,7 +759,7 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &nam
         SymbolContext sym_ctx;
         sc_list.GetContextAtIndex(i, sym_ctx);
     
-        const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+        const Address *sym_address = &sym_ctx.symbol->GetAddress();
         
         if (!sym_address || !sym_address->IsValid())
             return LLDB_INVALID_ADDRESS;
@@ -1036,7 +1036,7 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl, ClangExpressionVaria
         }
         else if (expr_var_sp->m_parser_vars->m_lldb_sym)
         {
-            const Address sym_address = expr_var_sp->m_parser_vars->m_lldb_sym->GetAddressRangeRef().GetBaseAddress();
+            const Address sym_address = expr_var_sp->m_parser_vars->m_lldb_sym->GetAddress();
             
             if (!sym_address.IsValid())
                 return Value();
@@ -3008,8 +3008,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     
     std::auto_ptr<Value> symbol_location(new Value);
     
-    AddressRange &symbol_range = symbol.GetAddressRangeRef();
-    Address &symbol_address = symbol_range.GetBaseAddress();
+    Address &symbol_address = symbol.GetAddress();
     lldb::addr_t symbol_load_addr = symbol_address.GetLoadAddress(target);
     
     symbol_location->SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());
@@ -3196,8 +3195,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     }
     else if (symbol)
     {
-        fun_address = &symbol->GetAddressRangeRef().GetBaseAddress();
-        
+        fun_address = &symbol->GetAddress();
         fun_decl = context.AddGenericFunDecl();
     }
     else

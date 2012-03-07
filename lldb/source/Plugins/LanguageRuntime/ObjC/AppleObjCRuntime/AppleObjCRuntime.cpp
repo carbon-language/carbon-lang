@@ -184,7 +184,7 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
         
         contexts.GetContextAtIndex(0, context);
         
-        m_PrintForDebugger_addr.reset(new Address(context.symbol->GetValue()));
+        m_PrintForDebugger_addr.reset(new Address(context.symbol->GetAddress()));
     }
     
     return m_PrintForDebugger_addr.get();

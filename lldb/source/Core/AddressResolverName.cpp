@@ -160,9 +160,9 @@ AddressResolverName::SearchCallback
                 SymbolContext symbol_sc;
                 if (sym_list.GetContextAtIndex(j, symbol_sc))
                 {
-                    if (symbol_sc.symbol && symbol_sc.symbol->GetAddressRangePtr())
+                    if (symbol_sc.symbol && symbol_sc.symbol->ValueIsAddress())
                     {
-                        if (sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddressRangePtr()->GetBaseAddress())
+                        if (sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddress())
                         {
                             sym_list.RemoveContextAtIndex(j);
                             continue;   // Don't increment j
@@ -206,10 +206,10 @@ AddressResolverName::SearchCallback
     {
         if (sym_list.GetContextAtIndex(i, sc))
         {
-            if (sc.symbol && sc.symbol->GetAddressRangePtr())
+            if (sc.symbol && sc.symbol->ValueIsAddress())
             {
-                func_addr = sc.symbol->GetAddressRangePtr()->GetBaseAddress();
-                addr_t byte_size = sc.symbol->GetAddressRangePtr()->GetByteSize();
+                func_addr = sc.symbol->GetAddress();
+                addr_t byte_size = sc.symbol->GetByteSize();
 
                 if (skip_prologue)
                 {

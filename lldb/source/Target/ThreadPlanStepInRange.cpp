@@ -201,7 +201,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             }
             else if (sc.symbol)
             {
-                func_start_address = sc.symbol->GetValue();
+                func_start_address = sc.symbol->GetAddress();
                 if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget().get()))
                     bytes_to_skip = sc.symbol->GetPrologueByteSize();
             }

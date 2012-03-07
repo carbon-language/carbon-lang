@@ -129,16 +129,16 @@ SBSymbol::GetInstructions (SBTarget target)
             api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
             target_sp->CalculateExecutionContext (exe_ctx);
         }
-        const AddressRange *symbol_range = m_opaque_ptr->GetAddressRangePtr();
-        if (symbol_range)
+        if (m_opaque_ptr->ValueIsAddress())
         {
-            ModuleSP module_sp (symbol_range->GetBaseAddress().GetModule());
+            ModuleSP module_sp (m_opaque_ptr->GetAddress().GetModule());
             if (module_sp)
             {
+                AddressRange symbol_range (m_opaque_ptr->GetAddress(), m_opaque_ptr->GetByteSize());
                 sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture (),
                                                                                  NULL,
                                                                                  exe_ctx,
-                                                                                 *symbol_range));
+                                                                                 symbol_range));
             }
         }
     }
@@ -161,14 +161,9 @@ SBAddress
 SBSymbol::GetStartAddress ()
 {
     SBAddress addr;
-    if (m_opaque_ptr)
+    if (m_opaque_ptr && m_opaque_ptr->ValueIsAddress())
     {
-        // Make sure the symbol is an address based symbol first:
-        AddressRange *symbol_arange_ptr = m_opaque_ptr->GetAddressRangePtr();
-        if (symbol_arange_ptr)
-        {
-            addr.SetAddress (&symbol_arange_ptr->GetBaseAddress());
-        }
+        addr.SetAddress (&m_opaque_ptr->GetAddress());
     }
     return addr;
 }
@@ -177,17 +172,13 @@ SBAddress
 SBSymbol::GetEndAddress ()
 {
     SBAddress addr;
-    if (m_opaque_ptr)
+    if (m_opaque_ptr && m_opaque_ptr->ValueIsAddress())
     {
-        AddressRange *symbol_arange_ptr = m_opaque_ptr->GetAddressRangePtr();
-        if (symbol_arange_ptr)
+        lldb::addr_t range_size = m_opaque_ptr->GetByteSize();
+        if (range_size > 0)
         {
-            addr_t byte_size = symbol_arange_ptr->GetByteSize();
-            if (byte_size > 0)
-            {
-                addr.SetAddress (&symbol_arange_ptr->GetBaseAddress());
-                addr->Slide (byte_size);
-            }
+            addr.SetAddress (&m_opaque_ptr->GetAddress());
+            addr->Slide (m_opaque_ptr->GetByteSize());
         }
     }
     return addr;

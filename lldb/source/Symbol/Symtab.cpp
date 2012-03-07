@@ -442,15 +442,8 @@ namespace {
         const std::vector<Symbol>& symbols;
         SymbolIndexComparator(const std::vector<Symbol>& s) : symbols(s) { }
         bool operator()(uint32_t index_a, uint32_t index_b) {
-            addr_t value_a;
-            addr_t value_b;
-            if (symbols[index_a].GetValue().GetSection() == symbols[index_b].GetValue().GetSection()) {
-                value_a = symbols[index_a].GetValue ().GetOffset();
-                value_b = symbols[index_b].GetValue ().GetOffset();
-            } else {
-                value_a = symbols[index_a].GetValue ().GetFileAddress();
-                value_b = symbols[index_b].GetValue ().GetFileAddress();
-            }
+            addr_t value_a = symbols[index_a].GetAddress().GetFileAddress();
+            addr_t value_b = symbols[index_b].GetAddress().GetFileAddress();
 
             if (value_a == value_b) {
                 // The if the values are equal, use the original symbol user ID
@@ -741,10 +734,9 @@ SymbolWithFileAddress (SymbolSearchInfo *info, const uint32_t *index_ptr)
 
     // lldb::Symbol::GetAddressRangePtr() will only return a non NULL address
     // range if the symbol has a section!
-    const AddressRange *curr_range = curr_symbol->GetAddressRangePtr();
-    if (curr_range)
+    if (curr_symbol->ValueIsAddress())
     {
-        const addr_t curr_file_addr = curr_range->GetBaseAddress().GetFileAddress();
+        const addr_t curr_file_addr = curr_symbol->GetAddress().GetFileAddress();
         if (info_file_addr < curr_file_addr)
             return -1;
         if (info_file_addr > curr_file_addr)
@@ -765,10 +757,9 @@ SymbolWithClosestFileAddress (SymbolSearchInfo *info, const uint32_t *index_ptr)
         return -1;
 
     const addr_t info_file_addr = info->file_addr;
-    const AddressRange *curr_range = symbol->GetAddressRangePtr();
-    if (curr_range)
+    if (symbol->ValueIsAddress())
     {
-        const addr_t curr_file_addr = curr_range->GetBaseAddress().GetFileAddress();
+        const addr_t curr_file_addr = symbol->GetAddress().GetFileAddress();
         if (info_file_addr < curr_file_addr)
             return -1;
 
@@ -819,7 +810,7 @@ Symtab::InitAddressIndexes()
         const_iterator end = m_symbols.end();
         for (const_iterator pos = m_symbols.begin(); pos != end; ++pos)
         {
-            if (pos->GetAddressRangePtr())
+            if (pos->ValueIsAddress())
                 m_addr_indexes.push_back (std::distance(begin, pos));
         }
 #endif
@@ -851,15 +842,18 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
 
     // Else if this is an address based symbol, figure out the delta between
     // it and the next address based symbol
-    if (symbol->GetAddressRangePtr())
+    if (symbol->ValueIsAddress())
     {
         if (!m_addr_indexes_computed)
             InitAddressIndexes();
         const size_t num_addr_indexes = m_addr_indexes.size();
-        SymbolSearchInfo info = FindIndexPtrForSymbolContainingAddress(this, symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress(), &m_addr_indexes.front(), num_addr_indexes);
+        SymbolSearchInfo info = FindIndexPtrForSymbolContainingAddress (this,
+                                                                        symbol->GetAddress().GetFileAddress(),
+                                                                        &m_addr_indexes.front(),
+                                                                        num_addr_indexes);
         if (info.match_index_ptr != NULL)
         {
-            const lldb::addr_t curr_file_addr = symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress();
+            const lldb::addr_t curr_file_addr = symbol->GetAddress().GetFileAddress();
             // We can figure out the address range of all symbols except the
             // last one by taking the delta between the current symbol and
             // the next symbol
@@ -872,12 +866,11 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
                 if (next_symbol == NULL)
                     break;
 
-                assert (next_symbol->GetAddressRangePtr());
-                const lldb::addr_t next_file_addr = next_symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress();
+                const lldb::addr_t next_file_addr = next_symbol->GetAddress().GetFileAddress();
                 if (next_file_addr > curr_file_addr)
                 {
                     byte_size = next_file_addr - curr_file_addr;
-                    symbol->GetAddressRangePtr()->SetByteSize(byte_size);
+                    symbol->SetByteSize(byte_size);
                     symbol->SetSizeIsSynthesized(true);
                     break;
                 }

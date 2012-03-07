@@ -207,7 +207,7 @@ SymbolFileSymtab::ParseCompileUnitFunctions (const SymbolContext &sc)
                 if (curr_symbol)
                 {
                     // Union of all ranges in the function DIE (if the function is discontiguous)
-                    AddressRange func_range(curr_symbol->GetValue(), 0);
+                    AddressRange func_range(curr_symbol->GetAddress(), 0);
                     if (func_range.GetBaseAddress().IsSectionOffset())
                     {
                         uint32_t symbol_size = curr_symbol->GetByteSize();
@@ -218,7 +218,7 @@ SymbolFileSymtab::ParseCompileUnitFunctions (const SymbolContext &sc)
                             next_symbol = symtab->SymbolAtIndex(m_code_indexes[idx + 1]);
                             if (next_symbol)
                             {
-                                func_range.SetByteSize(next_symbol->GetValue().GetOffset() - curr_symbol->GetValue().GetOffset());
+                                func_range.SetByteSize(next_symbol->GetAddress().GetOffset() - curr_symbol->GetAddress().GetOffset());
                             }
                         }
 
