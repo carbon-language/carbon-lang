@@ -58,9 +58,11 @@ std::string getLLVMRepositoryPath() {
 #endif
 
   // Trim path prefix off, assuming path came from standard llvm path.
+  // Leave "llvm/" prefix to distinguish the following llvm revision from the
+  // clang revision.
   size_t Start = URL.find("llvm/");
   if (Start != StringRef::npos)
-    URL = URL.substr(Start + 5);
+    URL = URL.substr(Start);
 
   return URL;
 }
@@ -86,20 +88,25 @@ std::string getClangFullRepositoryVersion() {
   llvm::raw_string_ostream OS(buf);
   std::string Path = getClangRepositoryPath();
   std::string Revision = getClangRevision();
-  if (!Path.empty())
-    OS << Path;
-  if (!Revision.empty()) {
+  if (!Path.empty() || !Revision.empty()) {
+    OS << '(';
     if (!Path.empty())
-      OS << ' ';
-    OS << Revision;
-  }
+      OS << Path;
+    if (!Revision.empty()) {
+      if (!Path.empty())
+        OS << ' ';
+      OS << Revision;
+    }
+    OS << ')';
+  }  
   // Support LLVM in a separate repository.
   std::string LLVMRev = getLLVMRevision();
   if (!LLVMRev.empty() && LLVMRev != Revision) {
+    OS << " (";    
     std::string LLVMRepo = getLLVMRepositoryPath();
     if (!LLVMRepo.empty())
-      OS << ' ' << LLVMRepo;
-    OS << ' ' << LLVMRev;
+      OS << LLVMRepo << ' ';
+    OS << LLVMRev << ')';
   }
   return OS.str();
 }
@@ -110,8 +117,8 @@ std::string getClangFullVersion() {
 #ifdef CLANG_VENDOR
   OS << CLANG_VENDOR;
 #endif
-  OS << "clang version " CLANG_VERSION_STRING " ("
-     << getClangFullRepositoryVersion() << ')';
+  OS << "clang version " CLANG_VERSION_STRING " "
+     << getClangFullRepositoryVersion();
 
   // If vendor supplied, include the base LLVM version as well.
 #ifdef CLANG_VENDOR
