@@ -14,6 +14,7 @@
 			);
 			dependencies = (
 				26CEF3B014FD591F007286B2 /* PBXTargetDependency */,
+				2687EACD1508115900DD8C2E /* PBXTargetDependency */,
 			);
 			name = desktop_no_xpc;
 			productName = snowleopard;
@@ -27,6 +28,7 @@
 				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
 				26CEF3B914FD5952007286B2 /* PBXTargetDependency */,
 				26CEF3B714FD594E007286B2 /* PBXTargetDependency */,
+				2687EACB1508115000DD8C2E /* PBXTargetDependency */,
 			);
 			name = desktop;
 			productName = desktop;
@@ -38,6 +40,7 @@
 			);
 			dependencies = (
 				26CEF3C214FD5973007286B2 /* PBXTargetDependency */,
+				2687EACF1508116300DD8C2E /* PBXTargetDependency */,
 			);
 			name = ios;
 			productName = ios;
@@ -534,6 +537,27 @@
 			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
 			remoteInfo = LLDB;
 		};
+		2687EACA1508115000DD8C2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2687EAC51508110B00DD8C2E;
+			remoteInfo = "install-headers";
+		};
+		2687EACC1508115900DD8C2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2687EAC51508110B00DD8C2E;
+			remoteInfo = "install-headers";
+		};
+		2687EACE1508116300DD8C2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2687EAC51508110B00DD8C2E;
+			remoteInfo = "install-headers";
+		};
 		2689011413353E9B00698AC0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -784,6 +808,7 @@
 		26651A14133BEC76005B64B7 /* lldb-public.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-public.h"; path = "include/lldb/lldb-public.h"; sourceTree = "<group>"; };
 		26651A15133BF9CC005B64B7 /* Opcode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Opcode.h; path = include/lldb/Core/Opcode.h; sourceTree = "<group>"; };
 		26651A17133BF9DF005B64B7 /* Opcode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Opcode.cpp; path = source/Core/Opcode.cpp; sourceTree = "<group>"; };
+		2665CD0D15080846002C8FAE /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConnectionSharedMemory.cpp; path = source/Core/ConnectionSharedMemory.cpp; sourceTree = "<group>"; };
 		266603CC1345B5C0004DA8B6 /* ConnectionSharedMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConnectionSharedMemory.h; path = include/lldb/Core/ConnectionSharedMemory.h; sourceTree = "<group>"; };
 		26680207115FD0ED008E1FE4 /* LLDB.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LLDB.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -2048,6 +2073,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		2665CD0915080846002C8FAE /* install-headers */ = {
+			isa = PBXGroup;
+			children = (
+				2665CD0D15080846002C8FAE /* Makefile */,
+			);
+			name = "install-headers";
+			path = "tools/install-headers";
+			sourceTree = "<group>";
+		};
 		266960581199F4230075C61A /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
@@ -2892,6 +2926,7 @@
 				26579F55126A255E0007C5CB /* darwin-debug */,
 				265E9BE0115C2B8500D0DCCB /* debugserver */,
 				26F5C22510F3D956009D5894 /* Driver */,
+				2665CD0915080846002C8FAE /* install-headers */,
 				26DC6A1B1337FEA400FF7998 /* lldb-platform */,
 			);
 			name = Tools;
@@ -3124,6 +3159,23 @@
 		};
 /* End PBXHeadersBuildPhase section */
 
+/* Begin PBXLegacyTarget section */
+		2687EAC51508110B00DD8C2E /* install-headers */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 2687EAC61508110B00DD8C2E /* Build configuration list for PBXLegacyTarget "install-headers" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(SRCROOT)/tools/install-headers";
+			dependencies = (
+			);
+			name = "install-headers";
+			passBuildSettingsInEnvironment = 1;
+			productName = "install-headers";
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		26579F67126A25920007C5CB /* darwin-debug */ = {
 			isa = PBXNativeTarget;
@@ -3287,6 +3339,7 @@
 				26DC6A0F1337FE6900FF7998 /* lldb-platform */,
 				EDC6D49814E5C19B001B75F8 /* launcherXPCService */,
 				EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */,
+				2687EAC51508110B00DD8C2E /* install-headers */,
 			);
 		};
 /* End PBXProject section */
@@ -3868,6 +3921,21 @@
 			target = 26680206115FD0ED008E1FE4 /* LLDB */;
 			targetProxy = 266803611160110D008E1FE4 /* PBXContainerItemProxy */;
 		};
+		2687EACB1508115000DD8C2E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2687EAC51508110B00DD8C2E /* install-headers */;
+			targetProxy = 2687EACA1508115000DD8C2E /* PBXContainerItemProxy */;
+		};
+		2687EACD1508115900DD8C2E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2687EAC51508110B00DD8C2E /* install-headers */;
+			targetProxy = 2687EACC1508115900DD8C2E /* PBXContainerItemProxy */;
+		};
+		2687EACF1508116300DD8C2E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2687EAC51508110B00DD8C2E /* install-headers */;
+			targetProxy = 2687EACE1508116300DD8C2E /* PBXContainerItemProxy */;
+		};
 		2689011513353E9B00698AC0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
@@ -4176,6 +4244,62 @@
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		2687EAC71508110B00DD8C2E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		2687EAC81508110B00DD8C2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2687EAC91508110B00DD8C2E /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = BuildAndIntegration;
 		};
 		2689FFD513353D7A00698AC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -4936,6 +5060,15 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
+		};
+		2687EAC61508110B00DD8C2E /* Build configuration list for PBXLegacyTarget "install-headers" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2687EAC71508110B00DD8C2E /* Debug */,
+				2687EAC81508110B00DD8C2E /* Release */,
+				2687EAC91508110B00DD8C2E /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		2689FFD813353D7A00698AC0 /* Build configuration list for PBXNativeTarget "lldb-core" */ = {
 			isa = XCConfigurationList;
