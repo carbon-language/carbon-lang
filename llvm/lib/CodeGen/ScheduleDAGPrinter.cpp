@@ -41,12 +41,12 @@ namespace llvm {
     static bool renderGraphFromBottomUp() {
       return true;
     }
-    
+
     static bool hasNodeAddressLabel(const SUnit *Node,
                                     const ScheduleDAG *Graph) {
       return true;
     }
-    
+
     /// If you want to override the dot attributes printed for a particular
     /// edge, override this method.
     static std::string getEdgeAttributes(const SUnit *Node,
@@ -58,7 +58,7 @@ namespace llvm {
         return "color=blue,style=dashed";
       return "";
     }
-    
+
 
     std::string getNodeLabel(const SUnit *Node, const ScheduleDAG *Graph);
     static std::string getNodeAttributes(const SUnit *N,

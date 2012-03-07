@@ -774,7 +774,7 @@ void SelectionDAGISel::PrepareEHLandingPad() {
 
   // Assign the call site to the landing pad's begin label.
   MF->getMMI().setCallSiteLandingPad(Label, SDB->LPadToCallSiteMap[MBB]);
-    
+
   const MCInstrDesc &II = TM.getInstrInfo()->get(TargetOpcode::EH_LABEL);
   BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
@@ -934,9 +934,9 @@ static void collectFailStats(const Instruction *I) {
   case Instruction::FPToSI:   NumFastIselFailFPToSI++; return;
   case Instruction::UIToFP:   NumFastIselFailUIToFP++; return;
   case Instruction::SIToFP:   NumFastIselFailSIToFP++; return;
-  case Instruction::IntToPtr: NumFastIselFailIntToPtr++; return; 
+  case Instruction::IntToPtr: NumFastIselFailIntToPtr++; return;
   case Instruction::PtrToInt: NumFastIselFailPtrToInt++; return;
-  case Instruction::BitCast:  NumFastIselFailBitCast++; return; 
+  case Instruction::BitCast:  NumFastIselFailBitCast++; return;
 
   // Other instructions...
   case Instruction::ICmp:           NumFastIselFailICmp++; return;
