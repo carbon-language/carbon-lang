@@ -54,3 +54,9 @@ namespace N {
 
   void f0( Y<int,1> y){ 1 << y; } // expected-note{{in instantiation of function template specialization 'N::operator<<<Y, int, 1>' requested here}}
 }
+
+// PR12179
+template <typename Primitive, template <Primitive...> class F>
+struct unbox_args {
+  typedef typename Primitive::template call<F> x;
+};
