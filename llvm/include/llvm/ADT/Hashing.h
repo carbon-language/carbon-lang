@@ -419,8 +419,6 @@ hash_code hash_combine_range_impl(InputIteratorT first, InputIteratorT last) {
   while (first != last && store_and_advance(buffer_ptr, buffer_end,
                                             get_hashable_data(*first)))
     ++first;
-/// \brief Metafunction that determines whether the given type is an integral
-/// type.
   if (first == last)
     return hash_short(buffer, buffer_ptr - buffer, seed);
   assert(buffer_ptr == buffer_end);
