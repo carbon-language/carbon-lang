@@ -241,7 +241,7 @@ void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
   // If only RHS is small, copy the small elements into LHS and move the pointer
   // from LHS to RHS.
   if (!this->isSmall() && RHS.isSmall()) {
-    std::copy(RHS.SmallArray, RHS.SmallArray+RHS.NumElements, this->SmallArray);
+    std::copy(RHS.SmallArray, RHS.SmallArray+CurArraySize, this->SmallArray);
     std::swap(this->NumElements, RHS.NumElements);
     std::swap(this->CurArraySize, RHS.CurArraySize);
     RHS.CurArray = this->CurArray;
@@ -254,8 +254,7 @@ void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
   // If only LHS is small, copy the small elements into RHS and move the pointer
   // from RHS to LHS.
   if (this->isSmall() && !RHS.isSmall()) {
-    std::copy(this->SmallArray, this->SmallArray+this->NumElements,
-              RHS.SmallArray);
+    std::copy(this->SmallArray, this->SmallArray+CurArraySize, RHS.SmallArray);
     std::swap(RHS.NumElements, this->NumElements);
     std::swap(RHS.CurArraySize, this->CurArraySize);
     this->CurArray = RHS.CurArray;
@@ -268,8 +267,8 @@ void SmallPtrSetImpl::swap(SmallPtrSetImpl &RHS) {
   // Both a small, just swap the small elements.
   assert(this->isSmall() && RHS.isSmall());
   assert(this->CurArraySize == RHS.CurArraySize);
-  unsigned MaxElems = std::max(this->NumElements, RHS.NumElements);
-  std::swap_ranges(this->SmallArray, this->SmallArray+MaxElems, RHS.SmallArray);
+  std::swap_ranges(this->SmallArray, this->SmallArray+CurArraySize,
+                   RHS.SmallArray);
   std::swap(this->NumElements, RHS.NumElements);
 }
 
