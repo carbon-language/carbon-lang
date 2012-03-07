@@ -43,7 +43,7 @@ namespace {
     SmallVector<SUnit *, 16> Queue;
 
     bool empty() const { return Queue.empty(); }
-    
+
     void push(SUnit *U) {
       Queue.push_back(U);
     }
@@ -112,7 +112,7 @@ void ScheduleDAGFast::Schedule() {
   DEBUG(dbgs() << "********** List Scheduling **********\n");
 
   NumLiveRegs = 0;
-  LiveRegDefs.resize(TRI->getNumRegs(), NULL);  
+  LiveRegDefs.resize(TRI->getNumRegs(), NULL);
   LiveRegCycles.resize(TRI->getNumRegs(), 0);
 
   // Build the scheduling graph.
@@ -159,7 +159,7 @@ void ScheduleDAGFast::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
     ReleasePred(SU, &*I);
     if (I->isAssignedRegDep()) {
       // This is a physical register dependency and it's impossible or
-      // expensive to copy the register. Make sure nothing that can 
+      // expensive to copy the register. Make sure nothing that can
       // clobber the register is scheduled between the predecessor and
       // this node.
       if (!LiveRegDefs[I->getReg()]) {
@@ -248,7 +248,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     SUnit *NewSU = NewSUnit(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
-      
+
     const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
     for (unsigned i = 0; i != MCID.getNumOperands(); ++i) {
       if (MCID.getOperandConstraint(i, MCOI::TIED_TO) != -1) {
@@ -329,7 +329,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
         D.setSUnit(LoadSU);
         AddPred(SuccDep, D);
       }
-    } 
+    }
     if (isNewLoad) {
       AddPred(NewSU, SDep(LoadSU, SDep::Order, LoadSU->Latency));
     }
