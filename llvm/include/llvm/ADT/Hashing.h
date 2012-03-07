@@ -113,7 +113,7 @@ public:
 /// differing argument types even if they would implicit promote to a common
 /// type without changing the value.
 template <typename T>
-typename enable_if<is_integral<T>, hash_code>::type hash_value(T value);
+typename enable_if<is_integral_or_enum<T>, hash_code>::type hash_value(T value);
 
 /// \brief Compute a hash_code for a pointer's address.
 ///
@@ -349,14 +349,15 @@ inline size_t get_execution_seed() {
 /// reading the underlying data. It is false if values of this type must
 /// first be passed to hash_value, and the resulting hash_codes combined.
 //
-// FIXME: We want to replace is_integral and is_pointer here with a predicate
-// which asserts that comparing the underlying storage of two values of the
-// type for equality is equivalent to comparing the two values for equality.
-// For all the platforms we care about, this holds for integers and pointers,
-// but there are platforms where it doesn't and we would like to support
-// user-defined types which happen to satisfy this property.
+// FIXME: We want to replace is_integral_or_enum and is_pointer here with
+// a predicate which asserts that comparing the underlying storage of two
+// values of the type for equality is equivalent to comparing the two values
+// for equality. For all the platforms we care about, this holds for integers
+// and pointers, but there are platforms where it doesn't and we would like to
+// support user-defined types which happen to satisfy this property.
 template <typename T> struct is_hashable_data
-  : integral_constant<bool, ((is_integral<T>::value || is_pointer<T>::value) &&
+  : integral_constant<bool, ((is_integral_or_enum<T>::value ||
+                              is_pointer<T>::value) &&
                              64 % sizeof(T) == 0)> {};
 
 // Special case std::pair to detect when both types are viable and when there
@@ -732,7 +733,8 @@ inline hash_code hash_integer_value(uint64_t value) {
 // Declared and documented above, but defined here so that any of the hashing
 // infrastructure is available.
 template <typename T>
-typename enable_if<is_integral<T>, hash_code>::type hash_value(T value) {
+typename enable_if<is_integral_or_enum<T>, hash_code>::type
+hash_value(T value) {
   return ::llvm::hashing::detail::hash_integer_value(value);
 }
 

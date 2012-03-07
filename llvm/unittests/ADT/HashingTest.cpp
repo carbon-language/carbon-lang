@@ -51,6 +51,10 @@ using namespace llvm;
 
 namespace {
 
+enum TestEnumeration {
+  TE_Foo = 42,
+  TE_Bar = 43
+};
 
 TEST(HashingTest, HashValueBasicTest) {
   int x = 42, y = 43, c = 'x';
@@ -61,7 +65,9 @@ TEST(HashingTest, HashValueBasicTest) {
   const volatile int cvi = 71;
   uintptr_t addr = reinterpret_cast<uintptr_t>(&y);
   EXPECT_EQ(hash_value(42), hash_value(x));
+  EXPECT_EQ(hash_value(42), hash_value(TE_Foo));
   EXPECT_NE(hash_value(42), hash_value(y));
+  EXPECT_NE(hash_value(42), hash_value(TE_Bar));
   EXPECT_NE(hash_value(42), hash_value(p));
   EXPECT_EQ(hash_value(71), hash_value(i));
   EXPECT_EQ(hash_value(71), hash_value(ci));
