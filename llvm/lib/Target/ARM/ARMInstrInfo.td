@@ -5256,6 +5256,16 @@ def : ARMInstAlias<"neg${s}${p} $Rd, $Rm",
 def : InstAlias<"nop${p}", (MOVr R0, R0, pred:$p, zero_reg)>,
          Requires<[IsARM, NoV6]>;
 
+// UMULL/SMULL are available on all arches, but the instruction definitions
+// need difference constraints pre-v6. Use these aliases for the assembly
+// parsing on pre-v6.
+def : InstAlias<"smull${s}${p} $RdLo, $RdHi, $Rn, $Rm",
+            (SMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+         Requires<[IsARM, NoV6]>;
+def : InstAlias<"umull${s}${p} $RdLo, $RdHi, $Rn, $Rm",
+            (UMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+         Requires<[IsARM, NoV6]>;
+
 // 'it' blocks in ARM mode just validate the predicates. The IT itself
 // is discarded.
 def ITasm : ARMAsmPseudo<"it$mask $cc", (ins it_pred:$cc, it_mask:$mask)>;
