@@ -53,7 +53,6 @@ size_t _msize(void *ptr) {
   GET_STACK_TRACE_HERE_FOR_MALLOC;
   return asan_malloc_usable_size(ptr, &stack);
 }
-
 }  // extern "C"
 
 using __interception::GetRealFunctionAddress;
