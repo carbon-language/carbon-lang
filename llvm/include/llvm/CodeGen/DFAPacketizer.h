@@ -36,6 +36,7 @@ class MachineInstr;
 class MachineLoopInfo;
 class MachineDominatorTree;
 class InstrItineraryData;
+class ScheduleDAGInstrs;
 class SUnit;
 
 class DFAPacketizer {
@@ -91,7 +92,7 @@ class VLIWPacketizerList {
   const TargetInstrInfo *TII;
 
   // Encapsulate data types not exposed to the target interface.
-  void *SchedulerImpl;
+  ScheduleDAGInstrs *SchedulerImpl;
 
 protected:
   // Vector of instructions assigned to the current packet.

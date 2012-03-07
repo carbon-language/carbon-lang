@@ -103,9 +103,6 @@ void DFAPacketizer::reserveResources(llvm::MachineInstr *MI) {
 namespace {
 // DefaultVLIWScheduler - This class extends ScheduleDAGInstrs and overrides
 // Schedule method to build the dependence graph.
-//
-// ScheduleDAGInstrs has LLVM_LIBRARY_VISIBILITY so we have to reference it as
-// an opaque pointer in VLIWPacketizerList.
 class DefaultVLIWScheduler : public ScheduleDAGInstrs {
 public:
   DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
@@ -137,7 +134,7 @@ VLIWPacketizerList::VLIWPacketizerList(
 
 // VLIWPacketizerList Dtor
 VLIWPacketizerList::~VLIWPacketizerList() {
-  delete (DefaultVLIWScheduler *)SchedulerImpl;
+  delete SchedulerImpl;
   delete ResourceTracker;
 }
 
@@ -184,20 +181,15 @@ void VLIWPacketizerList::endPacket(MachineBasicBlock *MBB,
 void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator BeginItr,
                                       MachineBasicBlock::iterator EndItr) {
-  DefaultVLIWScheduler *Scheduler = (DefaultVLIWScheduler *)SchedulerImpl;
-  Scheduler->enterRegion(MBB, BeginItr, EndItr, MBB->size());
-  Scheduler->schedule();
-  Scheduler->exitRegion();
+  assert(MBB->end() == EndItr && "Bad EndIndex");
+
+  SchedulerImpl->enterRegion(MBB, BeginItr, EndItr, MBB->size());
+
+  // Build the DAG without reordering instructions.
+  SchedulerImpl->schedule();
 
   // Remember scheduling units.
-  SUnits = Scheduler->SUnits;
-
-  // Generate MI -> SU map.
-  std::map <MachineInstr*, SUnit*> MIToSUnit;
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    SUnit *SU = &SUnits[i];
-    MIToSUnit[SU->getInstr()] = SU;
-  }
+  SUnits = SchedulerImpl->SUnits;
 
   // The main packetizer loop.
   for (; BeginItr != EndItr; ++BeginItr) {
@@ -213,7 +205,7 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
       continue;
     }
 
-    SUnit *SUI = MIToSUnit[MI];
+    SUnit *SUI = SchedulerImpl->getSUnit(MI);
     assert(SUI && "Missing SUnit Info!");
 
     // Ask DFA if machine resource is available for MI.
@@ -223,7 +215,7 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
       for (std::vector<MachineInstr*>::iterator VI = CurrentPacketMIs.begin(),
            VE = CurrentPacketMIs.end(); VI != VE; ++VI) {
         MachineInstr *MJ = *VI;
-        SUnit *SUJ = MIToSUnit[MJ];
+        SUnit *SUJ = SchedulerImpl->getSUnit(MJ);
         assert(SUJ && "Missing SUnit Info!");
 
         // Is it legal to packetize SUI and SUJ together.
@@ -247,4 +239,6 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
 
   // End any packet left behind.
   endPacket(MBB, EndItr);
+
+  SchedulerImpl->exitRegion();
 }

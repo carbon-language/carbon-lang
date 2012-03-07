@@ -245,15 +245,16 @@ namespace llvm {
     /// end - Return an iterator to the bottom of the current scheduling region.
     MachineBasicBlock::iterator end() const { return End; }
 
-    /// NewSUnit - Creates a new SUnit and return a ptr to it.
+    /// newSUnit - Creates a new SUnit and return a ptr to it.
     SUnit *newSUnit(MachineInstr *MI);
 
+    /// getSUnit - Return an existing SUnit for this MI, or NULL.
+    SUnit *getSUnit(MachineInstr *MI) const;
+
     /// startBlock - Prepare to perform scheduling in the given block.
-    ///
     virtual void startBlock(MachineBasicBlock *BB);
 
     /// finishBlock - Clean up after scheduling in the given block.
-    ///
     virtual void finishBlock();
 
     /// Initialize the scheduler state for the next scheduling region.
@@ -304,13 +305,6 @@ namespace llvm {
     virtual std::string getDAGName() const;
 
   protected:
-    SUnit *getSUnit(MachineInstr *MI) const {
-      DenseMap<MachineInstr*, SUnit*>::const_iterator I = MISUnitMap.find(MI);
-      if (I == MISUnitMap.end())
-        return 0;
-      return I->second;
-    }
-
     void initSUnits();
     void addPhysRegDataDeps(SUnit *SU, const MachineOperand &MO);
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
@@ -322,8 +316,7 @@ namespace llvm {
     }
   };
 
-  /// NewSUnit - Creates a new SUnit and return a ptr to it.
-  ///
+  /// newSUnit - Creates a new SUnit and return a ptr to it.
   inline SUnit *ScheduleDAGInstrs::newSUnit(MachineInstr *MI) {
 #ifndef NDEBUG
     const SUnit *Addr = SUnits.empty() ? 0 : &SUnits[0];
@@ -333,6 +326,14 @@ namespace llvm {
            "SUnits std::vector reallocated on the fly!");
     SUnits.back().OrigNode = &SUnits.back();
     return &SUnits.back();
+  }
+
+  /// getSUnit - Return an existing SUnit for this MI, or NULL.
+  inline SUnit *ScheduleDAGInstrs::getSUnit(MachineInstr *MI) const {
+    DenseMap<MachineInstr*, SUnit*>::const_iterator I = MISUnitMap.find(MI);
+    if (I == MISUnitMap.end())
+      return 0;
+    return I->second;
   }
 } // namespace llvm
 
