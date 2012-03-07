@@ -103,9 +103,12 @@ def NSData_SummaryProvider (valobj,dict):
 	        summary = None
 	    if summary == None:
 	        summary = 'no valid data here'
-	    if summary == 1:
-	        return '1 byte'
-	    return str(summary) + " bytes"
+	    else:
+	        if summary == 1:
+	           summary = '1 byte'
+	        else:
+	           summary = str(summary) + ' bytes'
+	    return summary
 	return ''
 
 def __lldb_init_module(debugger,dict):

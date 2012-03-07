@@ -121,7 +121,7 @@ def NSIndexSet_SummaryProvider (valobj,dict):
 		if summary == None:
 			summary = 'no valid set here'
 		else:
-			summary = str(summary) + ' objects'
+			summary = str(summary) + (' objects' if summary > 1 else ' object')
 		return summary
 	return ''
 

@@ -203,7 +203,9 @@ def NSSet_SummaryProvider (valobj,dict):
 	    #    summary = None
 	    if summary == None:
 	        summary = 'no valid set here'
-	    return str(summary) + ' objects'
+	    else:
+	        summary = str(summary) + (' objects' if summary > 1 else ' object')
+	    return summary
 	return ''
 
 def NSSet_SummaryProvider2 (valobj,dict):
@@ -222,8 +224,9 @@ def NSSet_SummaryProvider2 (valobj,dict):
 			summary = 'no valid set here'
 		else:
 			if provider.sys_params.is_64_bit:
-				summary = int(summary) & ~0x1fff000000000000
-		return str(summary) + ' objects'
+				summary = summary & ~0x1fff000000000000
+		 	summary = str(summary) + (' objects' if summary > 1 else ' object')
+		return summary
 	return ''
 
 

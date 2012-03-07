@@ -176,12 +176,12 @@ def CFDictionary_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 	    try:
-	        summary = str(provider.num_children());
+	        summary = provider.num_children();
 	    except:
 	        summary = None
 	    if summary == None:
 	        summary = 'no valid dictionary here'
-	    return summary + " key/value pairs"
+	    return str(summary) + (" key/value pairs" if summary > 1 else " key/value pair")
 	return ''
 
 def CFDictionary_SummaryProvider2 (valobj,dict):
@@ -193,10 +193,12 @@ def CFDictionary_SummaryProvider2 (valobj,dict):
 			summary = None
 		if summary == None:
 			summary = 'no valid dictionary here'
+		else:
 		# needed on OSX Mountain Lion
-		elif provider.sys_params.is_64_bit:
-			summary = summary & ~0x0f1f000000000000
-		return str(summary) + " key/value pairs"
+			if provider.sys_params.is_64_bit:
+				summary = summary & ~0x0f1f000000000000
+			summary = str(summary) + (" key/value pairs" if summary > 1 else " key/value pair")
+		return summary
 	return ''
 
 def __lldb_init_module(debugger,dict):

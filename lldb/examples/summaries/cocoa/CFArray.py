@@ -160,12 +160,14 @@ def CFArray_SummaryProvider (valobj,dict):
 	provider = NSArray_SynthProvider(valobj,dict);
 	if provider.invalid == False:
 	    try:
-	        summary = str(provider.num_children());
+	        summary = int(provider.num_children());
 	    except:
 	        summary = None
 	    if summary == None:
 	        summary = 'no valid array here'
-	    return summary + " objects"
+	    else:
+	        summary = str(summary) + (" objects" if summary > 1 else " object")
+	    return summary
 	return ''
 
 def __lldb_init_module(debugger,dict):
