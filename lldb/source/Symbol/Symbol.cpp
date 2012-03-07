@@ -183,9 +183,10 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target)
     
     if (m_addr_range.GetBaseAddress().GetSection())
     {
-        if (m_addr_range.GetBaseAddress().IsSectionOffset())
+        if (ValueIsAddress())
         {
-            if (m_addr_range.GetByteSize() > 0)
+            const lldb::addr_t byte_size = GetByteSize();
+            if (byte_size > 0)
             {
                 s->PutCString (", range = ");
                 m_addr_range.Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
@@ -244,7 +245,7 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
                             " Sibling -> [%5llu] 0x%8.8x %s\n":
                             " 0x%16.16llx 0x%8.8x %s\n";
         s->Printf(  format,
-                    m_addr_range.GetByteSize(),
+                    GetByteSize(),
                     m_flags,
                     m_mangled.GetName().AsCString(""));
     }
@@ -255,7 +256,7 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
                             "0x%16.16llx                    0x%16.16llx 0x%8.8x %s\n";
         s->Printf(  format,
                     m_addr_range.GetBaseAddress().GetOffset(),
-                    m_addr_range.GetByteSize(),
+                    GetByteSize(),
                     m_flags,
                     m_mangled.GetName().AsCString(""));
     }
