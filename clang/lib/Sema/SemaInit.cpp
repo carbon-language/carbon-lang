@@ -5110,7 +5110,7 @@ InitializationSequence::Perform(Sema &S,
       // unwrap references here and rewrap them afterwards.
       // We also need to create a InitializeTemporary entity for this.
       QualType Ty = ResultType ? ResultType->getNonReferenceType() : Step->Type;
-      bool IsTemporary = ResultType && (*ResultType)->isReferenceType();
+      bool IsTemporary = Entity.getType()->isReferenceType();
       InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(Ty);
       InitListChecker PerformInitList(S, IsTemporary ? TempEntity : Entity,
           InitList, Ty, /*VerifyOnly=*/false,

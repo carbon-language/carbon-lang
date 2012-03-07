@@ -77,3 +77,11 @@ namespace reference {
   }
 
 }
+
+namespace PR12182 {
+  void f(int const(&)[3]);
+
+  void g() {
+      f({1, 2});
+  }
+}
