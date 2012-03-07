@@ -202,6 +202,9 @@ RegisterValue::SetFromMemoryData (const RegisterInfo *reg_info,
     else if (value_type == eTypeBytes)
     {
         m_data.buffer.byte_order = src_byte_order;
+        // Make sure to set the buffer length of the destination buffer to avoid
+        // problems due to uninitalized variables.
+        m_data.buffer.length = src_len;
     }
 
     const uint32_t bytes_copied = src_data.CopyByteOrderedData (0,               // src offset
