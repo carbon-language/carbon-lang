@@ -133,7 +133,7 @@ template <typename T> class is_integral_or_enum {
   // types (or with nullptr_t in C++11).
   template <typename U, U u = U()> struct check1_return_type { char c[2]; };
   template <typename U> static check1_return_type<U> checker1(U*);
-  static char checker1(...);
+  template <typename U> static char checker1(...);
 
   // Form a return type that can only be instantiated with nullptr_t in C++11
   // mode. It's harmless in C++98 mode, but this allows us to filter nullptr_t
@@ -143,12 +143,12 @@ template <typename T> class is_integral_or_enum {
   template <typename U, nonce* u = U()>
   struct check2_return_type { char c[2]; };
   template <typename U> static check2_return_type<U> checker2(U*);
-  static char checker2(...);
+  template <typename U> static char checker2(...);
 
 public:
   enum {
-    value = (sizeof(char) != sizeof(checker1((T*)0)) &&
-             sizeof(char) == sizeof(checker2((T*)0)))
+    value = (sizeof(char) != sizeof(checker1<T>(0)) &&
+             sizeof(char) == sizeof(checker2<T>(0)))
   };
 };
 
