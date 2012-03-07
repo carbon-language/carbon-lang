@@ -657,20 +657,18 @@ private:
       return ConstantClassInfo::getTombstoneKey();
     }
     static unsigned getHashValue(const ConstantClass *CP) {
-      hash_code code = hash_value(CP->getType());
+      SmallVector<Constant*, 8> CPOperands;
+      CPOperands.reserve(CP->getNumOperands());
       for (unsigned I = 0, E = CP->getNumOperands(); I < E; ++I)
-        code = hash_combine(code, hash_value(CP->getOperand(I)));
-      return code;
+        CPOperands.push_back(CP->getOperand(I));
+      return getHashValue(LookupKey(CP->getType(), CPOperands));
     }
     static bool isEqual(const ConstantClass *LHS, const ConstantClass *RHS) {
       return LHS == RHS;
     }
     static unsigned getHashValue(const LookupKey &Val) {
-      hash_code code = hash_value(Val.first);
-      for (Operands::const_iterator
-           I = Val.second.begin(), E = Val.second.end(); I != E; ++I)
-        code = hash_combine(code, hash_value(*I));
-      return code;
+      return hash_combine(Val.first, hash_combine_range(Val.second.begin(),
+                                                        Val.second.end()));
     }
     static bool isEqual(const LookupKey &LHS, const ConstantClass *RHS) {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
