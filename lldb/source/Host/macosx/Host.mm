@@ -1315,7 +1315,7 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
                 CFStringRef prompt = CFSTR("The debugger needs administrator rights to debug a root process.");
                 CFStringRef keys[] = { CFSTR("en") };
                 CFTypeRef values[] = { prompt };
-                CFDictionaryRef promptDict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys, (const void **)values, 2, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+                CFDictionaryRef promptDict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys, (const void **)values, 1, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
                 
                 CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),                       CFSTR("default-prompt"), CFSTR("shared") };
                 CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR("com.apple.lldb.LaunchUsingXPC"), promptDict,              kCFBooleanFalse };
