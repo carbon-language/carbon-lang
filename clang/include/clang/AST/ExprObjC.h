@@ -18,7 +18,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/SelectorLocationsKind.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Sema/Ownership.h"
 
 namespace clang {
   class IdentifierInfo;
