@@ -50,14 +50,14 @@ compiler flags (Polly is only available at -O3).
 To automatically detect parallel loops and generate OpenMP code for them you
 also need to add <b>-mllvm -enable-polly-openmp -lgomp</b> to your CFLAGS.
 
-<pre class="code">pollycc -O3 -mllvm -enable-polly-openmp -lgomp file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -polly -mllvm -enable-polly-openmp -lgomp file.c</pre>
 
 <h2>Automatic Vector code generation</h2>
 
 Automatic vector code generation can be enabled by adding <b>-mllvm
 -enable-polly-vector</b> to your CFLAGS.
 
-<pre class="code">pollycc -O3 -mllvm -enable-polly-vector file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -polly -mllvm -enable-polly-vector file.c</pre>
 
 <h2>Extract a preoptimized LLVM-IR file</h2>
 
@@ -101,13 +101,13 @@ contain.
 Polly automatically runs by default a polyhedral optimizer to optimize the
 schedules. <b>-polly-no-optimizer</b> disables this optimizer.
 
-<h3>Use the PoCC optimizer</h3>
+<h3>Change the Polly optimizer</h3>
 Polly uses by default the isl scheduling optimizer, a new implementation of the
 well known Pluto algorithm. The main reason for the isl scheduler being the
 default is that it does not require any additional libraries or tools to be
 installed. As the new scheduler may still have some bugs and because being
 able to compare is good in general, it is possible to switch the used optimizer
-back to PoCC. For this add the option <b>-polly-use-pocc</b>.
+back to PoCC. For this add the option <b>-polly-optimizer=pocc</b>.
 
 <h3>Disable tiling in the optimizer</h3>
 By default both optimizers perform tiling, if possible. In case this is not
