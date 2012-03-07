@@ -80,7 +80,6 @@ add_llvm_library(LLVMCodeGen
   RegisterScavenging.cpp
   RenderMachineFunction.cpp
   ScheduleDAG.cpp
-  ScheduleDAGEmit.cpp
   ScheduleDAGInstrs.cpp
   ScheduleDAGPrinter.cpp
   ScoreboardHazardRecognizer.cpp
