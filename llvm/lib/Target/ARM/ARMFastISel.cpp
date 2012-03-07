@@ -1475,7 +1475,6 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
 
 bool ARMFastISel::SelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
-  Type *Ty = CI->getOperand(0)->getType();
 
   // Get the compare predicate.
   ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
@@ -1495,11 +1494,10 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   unsigned DestReg = createResultReg(RC);
   Constant *Zero = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = TargetMaterializeConstant(Zero);
-  bool isFloat = (Ty->isFloatTy() || Ty->isDoubleTy());
-  unsigned CondReg = isFloat ? ARM::FPSCR_NZCV : ARM::CPSR;
+  // ARMEmitCmp emits a FMSTAT when necessary, so it's always safe to use CPSR.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), DestReg)
           .addReg(ZeroReg).addImm(1)
-          .addImm(ARMPred).addReg(CondReg);
+          .addImm(ARMPred).addReg(ARM::CPSR);
 
   UpdateValueMap(I, DestReg);
   return true;
