@@ -2030,7 +2030,7 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
     if (Lit.isInvalid()) {
       return move(Lit);
     }
-    SourceLocation EndLoc = ConsumeToken();         // consume the literal token.
+    ConsumeToken(); // Consume the literal token.
 
     Lit = Actions.ActOnUnaryOp(getCurScope(), OpLoc, Kind, Lit.take());
     if (Lit.isInvalid())
@@ -2563,7 +2563,7 @@ ExprResult Parser::ParseObjCCharacterLiteral(SourceLocation AtLoc) {
   if (Lit.isInvalid()) {
     return move(Lit);
   }
-  SourceLocation EndLoc = ConsumeToken();         // consume the literal token.
+  ConsumeToken(); // Consume the literal token.
   return Owned(Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
 }
 
@@ -2577,7 +2577,7 @@ ExprResult Parser::ParseObjCNumericLiteral(SourceLocation AtLoc) {
   if (Lit.isInvalid()) {
     return move(Lit);
   }
-  SourceLocation EndLoc = ConsumeToken();         // consume the literal token.
+  ConsumeToken(); // Consume the literal token.
   return Owned(Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
 }
 
