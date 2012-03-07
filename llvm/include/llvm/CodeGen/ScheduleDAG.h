@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the ScheduleDAG class, which is used as the common
-// base class for instruction schedulers.
+// base class for instruction schedulers. This encapsulates the scheduling DAG,
+// which is shared between SelectionDAG and MachineInstr scheduling.
 //
 //===----------------------------------------------------------------------===//
 

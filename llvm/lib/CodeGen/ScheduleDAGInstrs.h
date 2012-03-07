@@ -112,6 +112,8 @@ namespace llvm {
     /// Live Intervals provides reaching defs in preRA scheduling.
     LiveIntervals *LIS;
 
+    /// After calling BuildSchedGraph, each machine instruction in the current
+    /// scheduling region is mapped to an SUnit.
     DenseMap<MachineInstr*, SUnit*> MISUnitMap;
 
     /// UnitLatencies (misnamed) flag avoids computing def-use latencies, using
