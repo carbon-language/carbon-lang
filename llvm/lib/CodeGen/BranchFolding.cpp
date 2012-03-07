@@ -1019,12 +1019,27 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
   return MBB2I->isCall() && !MBB1I->isCall();
 }
 
+/// getBranchDebugLoc - Find and return, if any, the DebugLoc of the branch
+/// instructions on the block. Always use the DebugLoc of the first
+/// branching instruction found unless its absent, in which case use the
+/// DebugLoc of the second if present.
+static DebugLoc getBranchDebugLoc(MachineBasicBlock &MBB) {
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin())
+    return DebugLoc();
+  --I;
+  while (I->isDebugValue() && I != MBB.begin())
+    --I;
+  if (I->isBranch())
+    return I->getDebugLoc();
+  return DebugLoc();
+}
+
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
 /// block.  This is never called on the entry block.
 bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   bool MadeChange = false;
   MachineFunction &MF = *MBB->getParent();
-  DebugLoc dl;  // FIXME: this is nowhere
 ReoptimizeBlock:
 
   MachineFunction::iterator FallThrough = MBB;
@@ -1073,6 +1088,7 @@ ReoptimizeBlock:
     // destination, remove the branch, replacing it with an unconditional one or
     // a fall-through.
     if (PriorTBB && PriorTBB == PriorFBB) {
+      DebugLoc dl = getBranchDebugLoc(PrevBB);
       TII->RemoveBranch(PrevBB);
       PriorCond.clear();
       if (PriorTBB != MBB)
@@ -1130,6 +1146,7 @@ ReoptimizeBlock:
     // If the prior block branches somewhere else on the condition and here if
     // the condition is false, remove the uncond second branch.
     if (PriorFBB == MBB) {
+      DebugLoc dl = getBranchDebugLoc(PrevBB);
       TII->RemoveBranch(PrevBB);
       TII->InsertBranch(PrevBB, PriorTBB, 0, PriorCond, dl);
       MadeChange = true;
@@ -1143,6 +1160,7 @@ ReoptimizeBlock:
     if (PriorTBB == MBB) {
       SmallVector<MachineOperand, 4> NewPriorCond(PriorCond);
       if (!TII->ReverseBranchCondition(NewPriorCond)) {
+        DebugLoc dl = getBranchDebugLoc(PrevBB);
         TII->RemoveBranch(PrevBB);
         TII->InsertBranch(PrevBB, PriorFBB, 0, NewPriorCond, dl);
         MadeChange = true;
@@ -1180,6 +1198,7 @@ ReoptimizeBlock:
           DEBUG(dbgs() << "\nMoving MBB: " << *MBB
                        << "To make fallthrough to: " << *PriorTBB << "\n");
 
+          DebugLoc dl = getBranchDebugLoc(PrevBB);
           TII->RemoveBranch(PrevBB);
           TII->InsertBranch(PrevBB, MBB, 0, NewPriorCond, dl);
 
@@ -1209,6 +1228,7 @@ ReoptimizeBlock:
     if (CurTBB && CurFBB && CurFBB == MBB && CurTBB != MBB) {
       SmallVector<MachineOperand, 4> NewCond(CurCond);
       if (!TII->ReverseBranchCondition(NewCond)) {
+        DebugLoc dl = getBranchDebugLoc(*MBB);
         TII->RemoveBranch(*MBB);
         TII->InsertBranch(*MBB, CurFBB, CurTBB, NewCond, dl);
         MadeChange = true;
@@ -1222,6 +1242,7 @@ ReoptimizeBlock:
     if (CurTBB && CurCond.empty() && CurFBB == 0 &&
         IsBranchOnlyBlock(MBB) && CurTBB != MBB &&
         !MBB->hasAddressTaken()) {
+      DebugLoc dl = getBranchDebugLoc(*MBB);
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.
@@ -1264,8 +1285,9 @@ ReoptimizeBlock:
               assert(PriorFBB == 0 && "Machine CFG out of date!");
               PriorFBB = MBB;
             }
+            DebugLoc pdl = getBranchDebugLoc(PrevBB);
             TII->RemoveBranch(PrevBB);
-            TII->InsertBranch(PrevBB, PriorTBB, PriorFBB, PriorCond, dl);
+            TII->InsertBranch(PrevBB, PriorTBB, PriorFBB, PriorCond, pdl);
           }
 
           // Iterate through all the predecessors, revectoring each in-turn.
@@ -1289,9 +1311,10 @@ ReoptimizeBlock:
               bool NewCurUnAnalyzable = TII->AnalyzeBranch(*PMBB, NewCurTBB,
                       NewCurFBB, NewCurCond, true);
               if (!NewCurUnAnalyzable && NewCurTBB && NewCurTBB == NewCurFBB) {
+                DebugLoc pdl = getBranchDebugLoc(*PMBB);
                 TII->RemoveBranch(*PMBB);
                 NewCurCond.clear();
-                TII->InsertBranch(*PMBB, NewCurTBB, 0, NewCurCond, dl);
+                TII->InsertBranch(*PMBB, NewCurTBB, 0, NewCurCond, pdl);
                 MadeChange = true;
                 ++NumBranchOpts;
                 PMBB->CorrectExtraCFGEdges(NewCurTBB, 0, false);
@@ -1351,7 +1374,7 @@ ReoptimizeBlock:
           if (CurFallsThru) {
             MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(MBB));
             CurCond.clear();
-            TII->InsertBranch(*MBB, NextBB, 0, CurCond, dl);
+            TII->InsertBranch(*MBB, NextBB, 0, CurCond, DebugLoc());
           }
           MBB->moveAfter(PredBB);
           MadeChange = true;
