@@ -85,11 +85,11 @@ namespace llvm {
 
     virtual void dump(ScheduleDAG* DAG) const;
 
-    // ScheduledNode - As nodes are scheduled, we look to see if there are any
+    // scheduledNode - As nodes are scheduled, we look to see if there are any
     // successor nodes that have a single unscheduled predecessor.  If so, that
     // single predecessor has a higher priority, since scheduling it will make
     // the node available.
-    void ScheduledNode(SUnit *Node);
+    void scheduledNode(SUnit *Node);
 
 private:
     void AdjustPriorityOfUnscheduledPreds(SUnit *SU);

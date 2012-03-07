@@ -125,14 +125,14 @@ static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI,
   return 0;
 }
 
-void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
+void ScheduleDAGInstrs::startBlock(MachineBasicBlock *BB) {
   LoopRegs.Deps.clear();
   if (MachineLoop *ML = MLI.getLoopFor(BB))
     if (BB == ML->getLoopLatch())
       LoopRegs.VisitLoop(ML);
 }
 
-void ScheduleDAGInstrs::FinishBlock() {
+void ScheduleDAGInstrs::finishBlock() {
   // Nothing to do.
 }
 
@@ -164,7 +164,7 @@ void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
   InsertPosIndex = endcount;
 
   // Check to see if the scheduler cares about latencies.
-  UnitLatencies = ForceUnitLatencies();
+  UnitLatencies = forceUnitLatencies();
 
   ScheduleDAG::clearDAG();
 }
@@ -175,7 +175,7 @@ void ScheduleDAGInstrs::exitRegion() {
   // Nothing to do.
 }
 
-/// AddSchedBarrierDeps - Add dependencies from instructions in the current
+/// addSchedBarrierDeps - Add dependencies from instructions in the current
 /// list of instructions being scheduled to scheduling barrier by adding
 /// the exit SU to the register defs and use list. This is because we want to
 /// make sure instructions which define registers that are either used by
@@ -183,7 +183,7 @@ void ScheduleDAGInstrs::exitRegion() {
 /// especially important when the definition latency of the return value(s)
 /// are too high to be hidden by the branch or when the liveout registers
 /// used by instructions in the fallthrough block.
-void ScheduleDAGInstrs::AddSchedBarrierDeps() {
+void ScheduleDAGInstrs::addSchedBarrierDeps() {
   MachineInstr *ExitMI = InsertPos != BB->end() ? &*InsertPos : 0;
   ExitSU.setInstr(ExitMI);
   bool AllDepKnown = ExitMI &&
@@ -259,7 +259,7 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
       // perform its own adjustments.
       const SDep& dep = SDep(SU, SDep::Data, LDataLatency, *Alias);
       if (!UnitLatencies) {
-        ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
+        computeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
         ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
       }
       UseSU->addPred(dep);
@@ -449,7 +449,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
       if (!UnitLatencies) {
         // Adjust the dependence latency using operand def/use information, then
         // allow the target to perform its own adjustments.
-        ComputeOperandLatency(DefSU, SU, const_cast<SDep &>(dep));
+        computeOperandLatency(DefSU, SU, const_cast<SDep &>(dep));
         const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
         ST.adjustSchedDependency(DefSU, SU, const_cast<SDep &>(dep));
       }
@@ -481,7 +481,7 @@ void ScheduleDAGInstrs::initSUnits() {
     if (MI->isDebugValue())
       continue;
 
-    SUnit *SU = NewSUnit(MI);
+    SUnit *SU = newSUnit(MI);
     MISUnitMap[MI] = SU;
 
     SU->isCall = MI->isCall();
@@ -491,11 +491,11 @@ void ScheduleDAGInstrs::initSUnits() {
     if (UnitLatencies)
       SU->Latency = 1;
     else
-      ComputeLatency(SU);
+      computeLatency(SU);
   }
 }
 
-void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
+void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA) {
   // Create an SUnit for each real instruction.
   initSUnits();
 
@@ -530,7 +530,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
 
   // Model data dependencies between instructions being scheduled and the
   // ExitSU.
-  AddSchedBarrierDeps();
+  addSchedBarrierDeps();
 
   // Walk the list of instructions, from bottom moving up.
   MachineInstr *PrevMI = NULL;
@@ -728,7 +728,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   MISUnitMap.clear();
 }
 
-void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
+void ScheduleDAGInstrs::computeLatency(SUnit *SU) {
   // Compute the latency for the node.
   if (!InstrItins || InstrItins->isEmpty()) {
     SU->Latency = 1;
@@ -742,7 +742,7 @@ void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
   }
 }
 
-void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
+void ScheduleDAGInstrs::computeOperandLatency(SUnit *Def, SUnit *Use,
                                               SDep& dep) const {
   if (!InstrItins || InstrItins->isEmpty())
     return;

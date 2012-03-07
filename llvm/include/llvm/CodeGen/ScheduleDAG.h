@@ -467,13 +467,13 @@ namespace llvm {
 
     virtual void dump(ScheduleDAG *) const {}
 
-    /// ScheduledNode - As each node is scheduled, this method is invoked.  This
+    /// scheduledNode - As each node is scheduled, this method is invoked.  This
     /// allows the priority function to adjust the priority of related
     /// unscheduled nodes, for example.
     ///
-    virtual void ScheduledNode(SUnit *) {}
+    virtual void scheduledNode(SUnit *) {}
 
-    virtual void UnscheduledNode(SUnit *) {}
+    virtual void unscheduledNode(SUnit *) {}
 
     void setCurCycle(unsigned Cycle) {
       CurCycle = Cycle;
@@ -543,18 +543,18 @@ namespace llvm {
   protected:
     /// ComputeLatency - Compute node latency.
     ///
-    virtual void ComputeLatency(SUnit *SU) = 0;
+    virtual void computeLatency(SUnit *SU) = 0;
 
     /// ComputeOperandLatency - Override dependence edge latency using
     /// operand use/def information
     ///
-    virtual void ComputeOperandLatency(SUnit *, SUnit *,
+    virtual void computeOperandLatency(SUnit *, SUnit *,
                                        SDep&) const { }
 
     /// ForceUnitLatencies - Return true if all scheduling edges should be given
     /// a latency value of one.  The default is to return false; schedulers may
     /// override this as needed.
-    virtual bool ForceUnitLatencies() const { return false; }
+    virtual bool forceUnitLatencies() const { return false; }
 
   private:
     // Return the MCInstrDesc of this SDNode or NULL.

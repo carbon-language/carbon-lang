@@ -71,7 +71,7 @@ namespace llvm {
 
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///
-    SUnit *NewSUnit(SDNode *N);
+    SUnit *newSUnit(SDNode *N);
 
     /// Clone - Creates a clone of the specified SUnit. It does not copy the
     /// predecessors / successors info nor the temporary scheduling states.
@@ -94,17 +94,17 @@ namespace llvm {
     ///
     void InitNumRegDefsLeft(SUnit *SU);
 
-    /// ComputeLatency - Compute node latency.
+    /// computeLatency - Compute node latency.
     ///
-    virtual void ComputeLatency(SUnit *SU);
+    virtual void computeLatency(SUnit *SU);
 
-    /// ComputeOperandLatency - Override dependence edge latency using
+    /// computeOperandLatency - Override dependence edge latency using
     /// operand use/def information
     ///
-    virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
+    virtual void computeOperandLatency(SUnit *Def, SUnit *Use,
                                        SDep& dep) const { }
 
-    virtual void ComputeOperandLatency(SDNode *Def, SDNode *Use,
+    virtual void computeOperandLatency(SDNode *Def, SDNode *Use,
                                        unsigned OpIdx, SDep& dep) const;
 
     /// Schedule - Order nodes according to selected style, filling

@@ -158,7 +158,7 @@ void ScheduleDAGVLIW::scheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 
   releaseSuccessors(SU);
   SU->isScheduled = true;
-  AvailableQueue->ScheduledNode(SU);
+  AvailableQueue->scheduledNode(SU);
 }
 
 /// listScheduleTopDown - The main loop of list scheduling for top-down
@@ -202,7 +202,7 @@ void ScheduleDAGVLIW::listScheduleTopDown() {
     // don't advance the hazard recognizer.
     if (AvailableQueue->empty()) {
       // Reset DFA state.
-      AvailableQueue->ScheduledNode(0);
+      AvailableQueue->scheduledNode(0);
       ++CurCycle;
       continue;
     }

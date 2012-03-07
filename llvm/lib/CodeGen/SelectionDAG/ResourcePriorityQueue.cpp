@@ -470,7 +470,7 @@ signed ResourcePriorityQueue::SUSchedulingCost(SUnit *SU) {
 
 
 /// Main resource tracking point.
-void ResourcePriorityQueue::ScheduledNode(SUnit *SU) {
+void ResourcePriorityQueue::scheduledNode(SUnit *SU) {
   // Use NULL entry as an event marker to reset
   // the DFA state.
   if (!SU) {

@@ -65,7 +65,7 @@ void ScheduleDAGSDNodes::Run(SelectionDAG *dag, MachineBasicBlock *bb) {
 
 /// NewSUnit - Creates a new SUnit and return a ptr to it.
 ///
-SUnit *ScheduleDAGSDNodes::NewSUnit(SDNode *N) {
+SUnit *ScheduleDAGSDNodes::newSUnit(SDNode *N) {
 #ifndef NDEBUG
   const SUnit *Addr = 0;
   if (!SUnits.empty())
@@ -87,7 +87,7 @@ SUnit *ScheduleDAGSDNodes::NewSUnit(SDNode *N) {
 }
 
 SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
-  SUnit *SU = NewSUnit(Old->getNode());
+  SUnit *SU = newSUnit(Old->getNode());
   SU->OrigNode = Old->OrigNode;
   SU->Latency = Old->Latency;
   SU->isVRegCycle = Old->isVRegCycle;
@@ -310,7 +310,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     // If this node has already been processed, stop now.
     if (NI->getNodeId() != -1) continue;
 
-    SUnit *NodeSUnit = NewSUnit(NI);
+    SUnit *NodeSUnit = newSUnit(NI);
 
     // See if anything is glued to this node, if so, add them to glued
     // nodes.  Nodes can have at most one glue input and one glue output.  Glue
@@ -368,7 +368,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     InitNumRegDefsLeft(NodeSUnit);
 
     // Assign the Latency field of NodeSUnit using target-provided information.
-    ComputeLatency(NodeSUnit);
+    computeLatency(NodeSUnit);
   }
 
   // Find all call operands.
@@ -390,7 +390,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
   const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
 
   // Check to see if the scheduler cares about latencies.
-  bool UnitLatencies = ForceUnitLatencies();
+  bool UnitLatencies = forceUnitLatencies();
 
   // Pass 2: add the preds, succs, etc.
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
@@ -456,7 +456,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         const SDep &dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
                                OpLatency, PhysReg);
         if (!isChain && !UnitLatencies) {
-          ComputeOperandLatency(OpN, N, i, const_cast<SDep &>(dep));
+          computeOperandLatency(OpN, N, i, const_cast<SDep &>(dep));
           ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
         }
 
@@ -549,7 +549,7 @@ void ScheduleDAGSDNodes::InitNumRegDefsLeft(SUnit *SU) {
   }
 }
 
-void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
+void ScheduleDAGSDNodes::computeLatency(SUnit *SU) {
   SDNode *N = SU->getNode();
 
   // TokenFactor operands are considered zero latency, and some schedulers
@@ -561,7 +561,7 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   }
 
   // Check to see if the scheduler cares about latencies.
-  if (ForceUnitLatencies()) {
+  if (forceUnitLatencies()) {
     SU->Latency = 1;
     return;
   }
@@ -583,10 +583,10 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
       SU->Latency += TII->getInstrLatency(InstrItins, N);
 }
 
-void ScheduleDAGSDNodes::ComputeOperandLatency(SDNode *Def, SDNode *Use,
+void ScheduleDAGSDNodes::computeOperandLatency(SDNode *Def, SDNode *Use,
                                                unsigned OpIdx, SDep& dep) const{
   // Check to see if the scheduler cares about latencies.
-  if (ForceUnitLatencies())
+  if (forceUnitLatencies())
     return;
 
   if (dep.getKind() != SDep::Data)

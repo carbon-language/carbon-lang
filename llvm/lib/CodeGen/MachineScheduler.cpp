@@ -160,7 +160,7 @@ public:
     Pass(P) {}
 
   /// ScheduleDAGInstrs callback.
-  void Schedule();
+  void schedule();
 
   /// Interface implemented by the selected top-down liveinterval scheduler.
   ///
@@ -203,10 +203,10 @@ void ScheduleTopDownLive::releaseSuccessors(SUnit *SU) {
   }
 }
 
-/// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+/// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
 /// time to do some work.
-void ScheduleTopDownLive::Schedule() {
-  BuildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
+void ScheduleTopDownLive::schedule() {
+  buildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
 
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
@@ -273,7 +273,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     unsigned RemainingCount = MBB->size();
     for(MachineBasicBlock::iterator RegionEnd = MBB->end();
         RegionEnd != MBB->begin();) {
-      Scheduler->StartBlock(MBB);
+      Scheduler->startBlock(MBB);
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
@@ -301,8 +301,8 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
             dbgs() << " Remaining: " << RemainingCount << "\n");
 
       // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
-      // to our Schedule() method.
-      Scheduler->Schedule();
+      // to our schedule() method.
+      Scheduler->schedule();
       Scheduler->exitRegion();
 
       // Scheduling has invalidated the current iterator 'I'. Ask the
@@ -310,7 +310,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
       RegionEnd = Scheduler->begin();
     }
     assert(RemainingCount == 0 && "Instruction count mismatch!");
-    Scheduler->FinishBlock();
+    Scheduler->finishBlock();
   }
   return true;
 }
@@ -331,9 +331,9 @@ public:
     ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false, P->LIS),
     Pass(P) {}
 
-  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+  /// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
-  void Schedule();
+  void schedule();
 };
 } // namespace
 
@@ -348,8 +348,8 @@ SchedDefaultRegistry("default", "Activate the scheduler pass, "
 
 /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
 /// time to do some work.
-void DefaultMachineScheduler::Schedule() {
-  BuildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
+void DefaultMachineScheduler::schedule() {
+  buildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
 
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)

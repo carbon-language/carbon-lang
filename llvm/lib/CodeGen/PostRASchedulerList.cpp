@@ -139,10 +139,10 @@ namespace {
 
     ~SchedulePostRATDList();
 
-    /// StartBlock - Initialize register live-range state for scheduling in
+    /// startBlock - Initialize register live-range state for scheduling in
     /// this block.
     ///
-    void StartBlock(MachineBasicBlock *BB);
+    void startBlock(MachineBasicBlock *BB);
 
     /// Initialize the scheduler state for the next scheduling region.
     virtual void enterRegion(MachineBasicBlock *bb,
@@ -155,7 +155,7 @@ namespace {
 
     /// Schedule - Schedule the instruction range using list scheduling.
     ///
-    void Schedule();
+    void schedule();
 
     void EmitSchedule();
 
@@ -164,9 +164,9 @@ namespace {
     ///
     void Observe(MachineInstr *MI, unsigned Count);
 
-    /// FinishBlock - Clean up register live-range state.
+    /// finishBlock - Clean up register live-range state.
     ///
-    void FinishBlock();
+    void finishBlock();
 
     /// FixupKills - Fix register kill flags that have been made
     /// invalid due to scheduling
@@ -301,7 +301,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 #endif
 
     // Initialize register live-range state for scheduling in this block.
-    Scheduler.StartBlock(MBB);
+    Scheduler.startBlock(MBB);
 
     // Schedule each sequence of instructions not interrupted by a label
     // or anything else that effectively needs to shut down scheduling.
@@ -314,7 +314,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       // don't need to worry about register pressure.
       if (MI->isCall() || TII->isSchedulingBoundary(MI, MBB, Fn)) {
         Scheduler.enterRegion(MBB, I, Current, CurrentCount);
-        Scheduler.Schedule();
+        Scheduler.schedule();
         Scheduler.exitRegion();
         Scheduler.EmitSchedule();
         Current = MI;
@@ -330,12 +330,12 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     assert((MBB->begin() == Current || CurrentCount != 0) &&
            "Instruction count mismatch!");
     Scheduler.enterRegion(MBB, MBB->begin(), Current, CurrentCount);
-    Scheduler.Schedule();
+    Scheduler.schedule();
     Scheduler.exitRegion();
     Scheduler.EmitSchedule();
 
     // Clean up register live-range state.
-    Scheduler.FinishBlock();
+    Scheduler.finishBlock();
 
     // Update register kills
     Scheduler.FixupKills(MBB);
@@ -347,9 +347,9 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 /// StartBlock - Initialize register live-range state for scheduling in
 /// this block.
 ///
-void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
+void SchedulePostRATDList::startBlock(MachineBasicBlock *BB) {
   // Call the superclass.
-  ScheduleDAGInstrs::StartBlock(BB);
+  ScheduleDAGInstrs::startBlock(BB);
 
   // Reset the hazard recognizer and anti-dep breaker.
   HazardRec->Reset();
@@ -359,9 +359,9 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
 
 /// Schedule - Schedule the instruction range using list scheduling.
 ///
-void SchedulePostRATDList::Schedule() {
+void SchedulePostRATDList::schedule() {
   // Build the scheduling graph.
-  BuildSchedGraph(AA);
+  buildSchedGraph(AA);
 
   if (AntiDepBreak != NULL) {
     unsigned Broken =
@@ -376,7 +376,7 @@ void SchedulePostRATDList::Schedule() {
       // that register, and add new anti-dependence and output-dependence
       // edges based on the next live range of the register.
       ScheduleDAG::clearDAG();
-      BuildSchedGraph(AA);
+      buildSchedGraph(AA);
 
       NumFixedAnti += Broken;
     }
@@ -401,12 +401,12 @@ void SchedulePostRATDList::Observe(MachineInstr *MI, unsigned Count) {
 
 /// FinishBlock - Clean up register live-range state.
 ///
-void SchedulePostRATDList::FinishBlock() {
+void SchedulePostRATDList::finishBlock() {
   if (AntiDepBreak != NULL)
     AntiDepBreak->FinishBlock();
 
   // Call the superclass.
-  ScheduleDAGInstrs::FinishBlock();
+  ScheduleDAGInstrs::finishBlock();
 }
 
 /// StartBlockForKills - Initialize register live-range state for updating kills
@@ -635,7 +635,7 @@ void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 
   ReleaseSuccessors(SU);
   SU->isScheduled = true;
-  AvailableQueue.ScheduledNode(SU);
+  AvailableQueue.scheduledNode(SU);
 }
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down

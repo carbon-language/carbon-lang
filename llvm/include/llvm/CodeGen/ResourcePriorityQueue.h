@@ -76,7 +76,7 @@ namespace llvm {
 
   public:
     ResourcePriorityQueue(SelectionDAGISel *IS);
-    
+
     ~ResourcePriorityQueue() {
       delete ResourcesModel;
     }
@@ -126,8 +126,8 @@ namespace llvm {
 
     virtual void dump(ScheduleDAG* DAG) const;
 
-    /// ScheduledNode - Main resource tracking point.
-    void ScheduledNode(SUnit *Node);
+    /// scheduledNode - Main resource tracking point.
+    void scheduledNode(SUnit *Node);
     bool isResourceAvailable(SUnit *SU);
     void reserveResources(SUnit *SU);
 

@@ -101,8 +101,8 @@ private:
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
   void ListScheduleBottomUp();
 
-  /// ForceUnitLatencies - The fast scheduler doesn't care about real latencies.
-  bool ForceUnitLatencies() const { return true; }
+  /// forceUnitLatencies - The fast scheduler doesn't care about real latencies.
+  bool forceUnitLatencies() const { return true; }
 };
 }  // end anonymous namespace
 
@@ -245,7 +245,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     DAG->ReplaceAllUsesOfValueWith(SDValue(SU->getNode(), OldNumVals-1),
                                    SDValue(LoadNode, 1));
 
-    SUnit *NewSU = NewSUnit(N);
+    SUnit *NewSU = newSUnit(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
 
@@ -268,7 +268,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
       LoadSU = &SUnits[LoadNode->getNodeId()];
       isNewLoad = false;
     } else {
-      LoadSU = NewSUnit(LoadNode);
+      LoadSU = newSUnit(LoadNode);
       LoadNode->setNodeId(LoadSU->NodeNum);
     }
 
@@ -381,11 +381,11 @@ void ScheduleDAGFast::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
                                               const TargetRegisterClass *DestRC,
                                               const TargetRegisterClass *SrcRC,
                                                SmallVector<SUnit*, 2> &Copies) {
-  SUnit *CopyFromSU = NewSUnit(static_cast<SDNode *>(NULL));
+  SUnit *CopyFromSU = newSUnit(static_cast<SDNode *>(NULL));
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
 
-  SUnit *CopyToSU = NewSUnit(static_cast<SDNode *>(NULL));
+  SUnit *CopyToSU = newSUnit(static_cast<SDNode *>(NULL));
   CopyToSU->CopySrcRC = DestRC;
   CopyToSU->CopyDstRC = SrcRC;
 

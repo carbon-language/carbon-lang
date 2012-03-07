@@ -243,7 +243,7 @@ namespace llvm {
 
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///
-    SUnit *NewSUnit(MachineInstr *MI) {
+    SUnit *newSUnit(MachineInstr *MI) {
 #ifndef NDEBUG
       const SUnit *Addr = SUnits.empty() ? 0 : &SUnits[0];
 #endif
@@ -254,13 +254,13 @@ namespace llvm {
       return &SUnits.back();
     }
 
-    /// StartBlock - Prepare to perform scheduling in the given block.
+    /// startBlock - Prepare to perform scheduling in the given block.
     ///
-    virtual void StartBlock(MachineBasicBlock *BB);
+    virtual void startBlock(MachineBasicBlock *BB);
 
-    /// FinishBlock - Clean up after scheduling in the given block.
+    /// finishBlock - Clean up after scheduling in the given block.
     ///
-    virtual void FinishBlock();
+    virtual void finishBlock();
 
     /// Initialize the scheduler state for the next scheduling region.
     virtual void enterRegion(MachineBasicBlock *bb,
@@ -271,35 +271,35 @@ namespace llvm {
     /// Notify that the scheduler has finished scheduling the current region.
     virtual void exitRegion();
 
-    /// BuildSchedGraph - Build SUnits from the MachineBasicBlock that we are
+    /// buildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    void BuildSchedGraph(AliasAnalysis *AA);
+    void buildSchedGraph(AliasAnalysis *AA);
 
-    /// AddSchedBarrierDeps - Add dependencies from instructions in the current
+    /// addSchedBarrierDeps - Add dependencies from instructions in the current
     /// list of instructions being scheduled to scheduling barrier. We want to
     /// make sure instructions which define registers that are either used by
     /// the terminator or are live-out are properly scheduled. This is
     /// especially important when the definition latency of the return value(s)
     /// are too high to be hidden by the branch or when the liveout registers
     /// used by instructions in the fallthrough block.
-    void AddSchedBarrierDeps();
+    void addSchedBarrierDeps();
 
-    /// ComputeLatency - Compute node latency.
+    /// computeLatency - Compute node latency.
     ///
-    virtual void ComputeLatency(SUnit *SU);
+    virtual void computeLatency(SUnit *SU);
 
-    /// ComputeOperandLatency - Override dependence edge latency using
+    /// computeOperandLatency - Override dependence edge latency using
     /// operand use/def information
     ///
-    virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
+    virtual void computeOperandLatency(SUnit *Def, SUnit *Use,
                                        SDep& dep) const;
 
-    /// Schedule - Order nodes according to selected style, filling
+    /// schedule - Order nodes according to selected style, filling
     /// in the Sequence member.
     ///
-    /// Typically, a scheduling algorithm will implement Schedule() without
+    /// Typically, a scheduling algorithm will implement schedule() without
     /// overriding enterRegion() or exitRegion().
-    virtual void Schedule() = 0;
+    virtual void schedule() = 0;
 
     virtual void dumpNode(const SUnit *SU) const;
 

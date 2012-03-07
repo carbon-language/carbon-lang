@@ -111,7 +111,7 @@ public:
   DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
                        MachineDominatorTree &MDT, bool IsPostRA);
   // Schedule - Actual scheduling work.
-  void Schedule();
+  void schedule();
 };
 } // end anonymous namespace
 
@@ -121,9 +121,9 @@ DefaultVLIWScheduler::DefaultVLIWScheduler(
   ScheduleDAGInstrs(MF, MLI, MDT, IsPostRA) {
 }
 
-void DefaultVLIWScheduler::Schedule() {
+void DefaultVLIWScheduler::schedule() {
   // Build the scheduling graph.
-  BuildSchedGraph(0);
+  buildSchedGraph(0);
 }
 
 // VLIWPacketizerList Ctor
@@ -186,7 +186,7 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator EndItr) {
   DefaultVLIWScheduler *Scheduler = (DefaultVLIWScheduler *)SchedulerImpl;
   Scheduler->enterRegion(MBB, BeginItr, EndItr, MBB->size());
-  Scheduler->Schedule();
+  Scheduler->schedule();
   Scheduler->exitRegion();
 
   // Remember scheduling units.
