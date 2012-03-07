@@ -38,8 +38,9 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      bool IsPostRAFlag,
                                      LiveIntervals *lis)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
-    InstrItins(mf.getTarget().getInstrItineraryData()), IsPostRA(IsPostRAFlag),
-    LIS(lis), UnitLatencies(false), LoopRegs(MLI, MDT), FirstDbgValue(0) {
+    InstrItins(mf.getTarget().getInstrItineraryData()), LIS(lis),
+    IsPostRA(IsPostRAFlag), UnitLatencies(false), LoopRegs(MLI, MDT),
+    FirstDbgValue(0) {
   assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
   DbgValues.clear();
   assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
