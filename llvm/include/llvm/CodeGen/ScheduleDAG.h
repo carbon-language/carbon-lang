@@ -519,6 +519,7 @@ namespace llvm {
     /// viewGraph - Pop up a GraphViz/gv window with the ScheduleDAG rendered
     /// using 'dot'.
     ///
+    void viewGraph(const Twine &Name, const Twine &Title);
     void viewGraph();
 
     /// EmitSchedule - Insert MachineInstrs into the MachineBasicBlock
@@ -533,6 +534,9 @@ namespace llvm {
     /// getGraphNodeLabel - Return a label for an SUnit node in a visualization
     /// of the ScheduleDAG.
     virtual std::string getGraphNodeLabel(const SUnit *SU) const = 0;
+
+    /// getDAGLabel - Return a label for the region of code covered by the DAG.
+    virtual std::string getDAGName() const = 0;
 
     /// addCustomGraphFeatures - Add custom features for a visualization of
     /// the ScheduleDAG.

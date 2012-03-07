@@ -285,6 +285,8 @@ namespace llvm {
 
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;
 
+    virtual std::string getDAGName() const;
+
   protected:
     SUnit *getSUnit(MachineInstr *MI) const {
       DenseMap<MachineInstr*, SUnit*>::const_iterator I = MISUnitMap.find(MI);

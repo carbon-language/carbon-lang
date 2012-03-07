@@ -115,6 +115,8 @@ namespace llvm {
 
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;
 
+    virtual std::string getDAGName() const;
+
     virtual void getCustomGraphFeatures(GraphWriter<ScheduleDAG*> &GW) const;
 
     /// RegDefIter - In place iteration over the values defined by an

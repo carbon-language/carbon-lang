@@ -800,3 +800,8 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
   InsertPos = Emitter.getInsertPos();
   return BB;
 }
+
+/// Return the basic block label.
+std::string ScheduleDAGSDNodes::getDAGName() const {
+  return "sunit-dag." + BB->getFullName();
+}

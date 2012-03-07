@@ -808,6 +808,12 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
   return oss.str();
 }
 
+/// Return the basic block label. It is not necessarilly unique because a block
+/// contains multiple scheduling regions. But it is fine for visualization.
+std::string ScheduleDAGInstrs::getDAGName() const {
+  return "dag." + BB->getFullName();
+}
+
 // EmitSchedule - Emit the machine code in scheduled order.
 MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
   Begin = InsertPos;

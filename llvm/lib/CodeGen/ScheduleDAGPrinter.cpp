@@ -81,18 +81,17 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
 /// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
 /// rendered using 'dot'.
 ///
-void ScheduleDAG::viewGraph() {
-// This code is only for debugging!
+void ScheduleDAG::viewGraph(const Twine &Name, const Twine &Title) {
+  // This code is only for debugging!
 #ifndef NDEBUG
-  if (BB->getBasicBlock())
-    ViewGraph(this, "dag." + MF.getFunction()->getName(), false,
-              "Scheduling-Units Graph for " + MF.getFunction()->getName() +
-              ":" + BB->getBasicBlock()->getName());
-  else
-    ViewGraph(this, "dag." + MF.getFunction()->getName(), false,
-              "Scheduling-Units Graph for " + MF.getFunction()->getName());
+  ViewGraph(this, Name, false, Title);
 #else
   errs() << "ScheduleDAG::viewGraph is only available in debug builds on "
          << "systems with Graphviz or gv!\n";
 #endif  // NDEBUG
+}
+
+/// Out-of-line implementation with no arguments is handy for gdb.
+void ScheduleDAG::viewGraph() {
+  viewGraph(getDAGName(), "Scheduling-Units Graph for " + getDAGName());
 }
