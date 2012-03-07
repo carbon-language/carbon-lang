@@ -30,6 +30,13 @@
 
 using namespace llvm;
 
+#ifndef NDEBUG
+static cl::opt<bool> ViewMISchedDAGs("view-misched-dags", cl::Hidden,
+  cl::desc("Pop up a window to show MISched dags after they are processed"));
+#else
+static bool ViewMISchedDAGs = false;
+#endif // NDEBUG
+
 //===----------------------------------------------------------------------===//
 // Machine Instruction Scheduling Pass and Registry
 //===----------------------------------------------------------------------===//
@@ -204,6 +211,8 @@ void ScheduleTopDownLive::Schedule() {
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
+
+  if (ViewMISchedDAGs) viewGraph();
 
   // Release any successors of the special Entry node. It is currently unused,
   // but we keep up appearances.
