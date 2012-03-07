@@ -2010,12 +2010,6 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
   case ARM::VLD2d16wb_fixed: case ARM::VLD2d16wb_register:
   case ARM::VLD2d32wb_fixed: case ARM::VLD2d32wb_register:
   case ARM::VLD2d8wb_fixed: case ARM::VLD2d8wb_register:
-
-    // FIXME: These go in the VLDnDup* functions, not here.
-  case ARM::VLD2DUPd16: case ARM::VLD2DUPd32: case ARM::VLD2DUPd8:
-  case ARM::VLD2DUPd16wb_fixed: case ARM::VLD2DUPd16wb_register:
-  case ARM::VLD2DUPd32wb_fixed: case ARM::VLD2DUPd32wb_register:
-  case ARM::VLD2DUPd8wb_fixed: case ARM::VLD2DUPd8wb_register:
     if (!Check(S, DecodeDPairRegisterClass(Inst, Rd, Address, Decoder)))
       return MCDisassembler::Fail;
     break;
