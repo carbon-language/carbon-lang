@@ -260,15 +260,6 @@ public:
     }
     BecameZero = allzero;
   }
-
-  // Get a hash value for this element;
-  uint64_t getHashValue() const {
-    uint64_t HashVal = 0;
-    for (unsigned i = 0; i < BITWORDS_PER_ELEMENT; ++i) {
-      HashVal ^= Bits[i];
-    }
-    return HashVal;
-  }
 };
 
 template <unsigned ElementSize = 128>
@@ -808,18 +799,6 @@ public:
 
   iterator end() const {
     return iterator(this, true);
-  }
-
-  // Get a hash value for this bitmap.
-  uint64_t getHashValue() const {
-    uint64_t HashVal = 0;
-    for (ElementListConstIter Iter = Elements.begin();
-         Iter != Elements.end();
-         ++Iter) {
-      HashVal ^= Iter->index();
-      HashVal ^= Iter->getHashValue();
-    }
-    return HashVal;
   }
 };
 
