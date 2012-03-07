@@ -1691,10 +1691,6 @@ static bool AreElementsOfSameArray(QualType ObjType,
 static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
                                            QualType Type,
                                            const LValue &LVal, APValue &RVal) {
-  // In C, an lvalue-to-rvalue conversion is never a constant expression.
-  if (!Info.getLangOpts().CPlusPlus)
-    Info.CCEDiag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
-
   if (LVal.Designator.Invalid)
     // A diagnostic will have already been produced.
     return false;
