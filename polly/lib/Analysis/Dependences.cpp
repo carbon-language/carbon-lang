@@ -47,7 +47,6 @@ static cl::opt<bool>
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) {
   must_dep = may_dep = NULL;
-  must_no_source = may_no_source = NULL;
   sink = must_source = may_source = NULL;
   war_dep = waw_dep = NULL;
 }
@@ -75,12 +74,6 @@ bool Dependences::runOnScop(Scop &S) {
   if (may_dep)
     isl_union_map_free(may_dep);
 
-  if (must_no_source)
-    isl_union_map_free(must_no_source);
-
-  if (may_no_source)
-    isl_union_map_free(may_no_source);
-
   if (war_dep)
     isl_union_map_free(war_dep);
 
@@ -88,8 +81,6 @@ bool Dependences::runOnScop(Scop &S) {
     isl_union_map_free(waw_dep);
 
   must_dep = may_dep = NULL;
-  must_no_source = may_no_source = NULL;
-
   war_dep = waw_dep = NULL;
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
@@ -128,8 +119,7 @@ bool Dependences::runOnScop(Scop &S) {
                               isl_union_map_copy(must_source),
                               isl_union_map_copy(may_source),
                               isl_union_map_copy(schedule),
-                              &must_dep, &may_dep, &must_no_source,
-                              &may_no_source);
+                              &must_dep, &may_dep, NULL, NULL);
 
   isl_union_map_compute_flow(isl_union_map_copy(must_source),
                              isl_union_map_copy(must_source),
@@ -139,8 +129,6 @@ bool Dependences::runOnScop(Scop &S) {
   // Remove redundant statements.
   must_dep = isl_union_map_coalesce(must_dep);
   may_dep = isl_union_map_coalesce(may_dep);
-  must_no_source = isl_union_map_coalesce(must_no_source);
-  may_no_source = isl_union_map_coalesce(may_no_source);
   waw_dep = isl_union_map_coalesce(waw_dep);
   war_dep = isl_union_map_coalesce(war_dep);
 
@@ -318,12 +306,6 @@ void Dependences::printScop(raw_ostream &OS) const {
 
   OS.indent(4) << "May dependences:\n";
   OS.indent(8) << stringFromIslObj(may_dep) << "\n";
-
-  OS.indent(4) << "Must no source:\n";
-  OS.indent(8) << stringFromIslObj(must_no_source) << "\n";
-
-  OS.indent(4) << "May no source:\n";
-  OS.indent(8) << stringFromIslObj(may_no_source) << "\n";
 }
 
 void Dependences::releaseMemory() {
@@ -333,12 +315,6 @@ void Dependences::releaseMemory() {
   if (may_dep)
     isl_union_map_free(may_dep);
 
-  if (must_no_source)
-    isl_union_map_free(must_no_source);
-
-  if (may_no_source)
-    isl_union_map_free(may_no_source);
-
   if (war_dep)
     isl_union_map_free(war_dep);
 
@@ -346,7 +322,6 @@ void Dependences::releaseMemory() {
     isl_union_map_free(waw_dep);
 
   must_dep = may_dep = NULL;
-  must_no_source = may_no_source = NULL;
   war_dep = waw_dep = NULL;
 
   if (sink)

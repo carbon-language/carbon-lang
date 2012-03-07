@@ -43,7 +43,6 @@ namespace polly {
   class Dependences : public ScopPass {
 
     isl_union_map *must_dep, *may_dep;
-    isl_union_map *must_no_source, *may_no_source;
 
     isl_union_map *war_dep;
     isl_union_map *waw_dep;
