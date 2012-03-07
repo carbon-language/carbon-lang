@@ -56,7 +56,7 @@ namespace N {
 }
 
 // PR12179
-template <typename Primitive, template <Primitive...> class F>
+template <typename Primitive, template <Primitive...> class F> // expected-warning {{variadic templates are a C++11 extension}}
 struct unbox_args {
   typedef typename Primitive::template call<F> x;
 };
