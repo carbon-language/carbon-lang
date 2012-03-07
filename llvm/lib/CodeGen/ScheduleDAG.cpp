@@ -52,17 +52,6 @@ const MCInstrDesc *ScheduleDAG::getNodeDesc(const SDNode *Node) const {
   return &TII->get(Node->getMachineOpcode());
 }
 
-/// dump - dump the schedule.
-void ScheduleDAG::dumpSchedule() const {
-  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    if (SUnit *SU = Sequence[i])
-      SU->dump(this);
-    else
-      dbgs() << "**** NOOP ****\n";
-  }
-}
-
-
 /// Run - perform scheduling.
 ///
 void ScheduleDAG::Run(MachineBasicBlock *bb,
@@ -76,12 +65,6 @@ void ScheduleDAG::Run(MachineBasicBlock *bb,
   ExitSU = SUnit();
 
   Schedule();
-
-  DEBUG({
-      dbgs() << "*** Final schedule ***\n";
-      dumpSchedule();
-      dbgs() << '\n';
-    });
 }
 
 /// addPred - This adds the specified edge as a pred of the current node if

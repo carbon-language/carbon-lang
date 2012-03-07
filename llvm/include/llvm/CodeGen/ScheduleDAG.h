@@ -527,8 +527,6 @@ namespace llvm {
     ///
     virtual MachineBasicBlock *EmitSchedule() = 0;
 
-    void dumpSchedule() const;
-
     virtual void dumpNode(const SUnit *SU) const = 0;
 
     /// getGraphNodeLabel - Return a label for an SUnit node in a visualization

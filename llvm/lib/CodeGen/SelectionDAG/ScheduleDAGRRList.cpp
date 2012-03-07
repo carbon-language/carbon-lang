@@ -327,6 +327,12 @@ void ScheduleDAGRRList::Schedule() {
   ListScheduleBottomUp();
 
   AvailableQueue->releaseState();
+
+  DEBUG({
+      dbgs() << "*** Final schedule ***\n";
+      dumpSchedule();
+      dbgs() << '\n';
+    });
 }
 
 //===----------------------------------------------------------------------===//

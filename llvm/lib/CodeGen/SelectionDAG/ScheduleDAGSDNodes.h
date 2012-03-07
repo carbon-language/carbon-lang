@@ -117,6 +117,8 @@ namespace llvm {
 
     virtual void dumpNode(const SUnit *SU) const;
 
+    void dumpSchedule() const;
+
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;
 
     virtual std::string getDAGName() const;

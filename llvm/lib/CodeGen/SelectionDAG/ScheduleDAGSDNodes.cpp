@@ -621,6 +621,15 @@ void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
   }
 }
 
+void ScheduleDAGSDNodes::dumpSchedule() const {
+  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
+    if (SUnit *SU = Sequence[i])
+      SU->dump(this);
+    else
+      dbgs() << "**** NOOP ****\n";
+  }
+}
+
 #ifndef NDEBUG
 /// VerifyScheduledSequence - Verify that all SUnits were scheduled and that
 /// their state is consistent with the nodes listed in Sequence.

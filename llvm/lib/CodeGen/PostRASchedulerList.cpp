@@ -170,6 +170,8 @@ namespace {
     // adjustments may be made to the instruction if necessary. Return
     // true if the operand has been deleted, false if not.
     bool ToggleKillFlag(MachineInstr *MI, MachineOperand &MO);
+
+    void dumpSchedule() const;
   };
 }
 
@@ -200,6 +202,16 @@ SchedulePostRATDList::SchedulePostRATDList(
 SchedulePostRATDList::~SchedulePostRATDList() {
   delete HazardRec;
   delete AntiDepBreak;
+}
+
+/// dumpSchedule - dump the scheduled Sequence.
+void SchedulePostRATDList::dumpSchedule() const {
+  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
+    if (SUnit *SU = Sequence[i])
+      SU->dump(this);
+    else
+      dbgs() << "**** NOOP ****\n";
+  }
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
@@ -343,6 +355,12 @@ void SchedulePostRATDList::Schedule() {
   AvailableQueue.initNodes(SUnits);
   ListScheduleTopDown();
   AvailableQueue.releaseState();
+
+  DEBUG({
+      dbgs() << "*** Final schedule ***\n";
+      dumpSchedule();
+      dbgs() << '\n';
+    });
 }
 
 /// Observe - Update liveness information to account for the current
