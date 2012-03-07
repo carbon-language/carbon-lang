@@ -216,8 +216,6 @@ namespace llvm {
     ///
     LoopDependencies LoopRegs;
 
-  protected:
-
     /// DbgValues - Remember instruction that preceeds DBG_VALUE.
     typedef std::vector<std::pair<MachineInstr *, MachineInstr *> >
       DbgValueVector;
