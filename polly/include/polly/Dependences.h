@@ -41,16 +41,6 @@ namespace polly {
   class ScopStmt;
 
   class Dependences : public ScopPass {
-
-    isl_union_map *must_dep, *may_dep;
-
-    isl_union_map *war_dep;
-    isl_union_map *waw_dep;
-
-    isl_union_map *sink;
-    isl_union_map *must_source;
-    isl_union_map *may_source;
-
   public:
     static char ID;
 
@@ -83,14 +73,14 @@ namespace polly {
 
     /// @brief Check if a dimension of the Scop can be executed in parallel.
     ///
-    /// @param loopDomain The subset of the scattering space that is executed in
+    /// @param LoopDomain The subset of the scattering space that is executed in
     ///                   parallel.
-    /// @param parallelDimension The scattering dimension that is being executed
+    /// @param ParallelDimension The scattering dimension that is being executed
     ///                          in parallel.
     ///
     /// @return bool Returns true, if executing parallelDimension in parallel is
     ///              valid for the scattering domain subset given.
-    bool isParallelDimension(isl_set *loopDomain, unsigned parallelDimension);
+    bool isParallelDimension(isl_set *LoopDomain, unsigned ParallelDimension);
 
     /// @brief Check if a loop is parallel
     ///
@@ -100,21 +90,33 @@ namespace polly {
     ///
     /// @return bool Returns true if the incoming clast_for statement can
     ///              execute in parallel.
-    bool isParallelFor(const clast_for *f);
+    bool isParallelFor(const clast_for *For);
 
     /// @brief Get the dependences in this Scop.
     ///
-    /// @param dependenceKinds This integer defines the different kinds of
-    ///                        dependences that will be returned. To return
-    ///                        more than one kind, the different kinds are
-    ///                        'ored' together.
-    isl_union_map *getDependences(int dependenceKinds);
+    /// @param Kinds This integer defines the different kinds of dependences
+    ///              that will be returned. To return more than one kind, the
+    ///              different kinds are 'ored' together.
+    isl_union_map *getDependences(int Kinds);
 
     bool runOnScop(Scop &S);
     void printScop(raw_ostream &OS) const;
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+private:
+    isl_union_map *must_dep, *may_dep;
+
+    isl_union_map *war_dep;
+    isl_union_map *waw_dep;
+
+
+    isl_union_map *sink;
+    isl_union_map *must_source;
+    isl_union_map *may_source;
   };
+
+
 } // End polly namespace.
 
 namespace llvm {
