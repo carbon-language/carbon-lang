@@ -121,19 +121,15 @@ template <> struct is_integral_impl<unsigned long long> : true_type {};
 template <typename T>
 struct is_integral : is_integral_impl<T> {};
 
-/// \brief Metafunction that determines whether the given type is either an
-/// integral type or an enumeration type.
-///
-/// Note that this accepts potentially more integral types than we whitelist
-/// above for is_integral, it should accept essentially anything the compiler
-/// believes is an integral type.
-template <typename T> class is_integral_or_enum {
-
+namespace dont_use {
   // Form a return type that can only be instantiated with an integral or enum
   // types (or with nullptr_t in C++11).
-  template <typename U, U u = U()> struct check1_return_type { char c[2]; };
-  template <typename U> static check1_return_type<U> checker1(U*);
-  template <typename U> static char checker1(...);
+  template <typename U, U u = U()> struct check_nontype_temp_param_return_type {
+    char c[2];
+  };
+  template <typename U>
+  check_nontype_temp_param_return_type<U> check_nontype_temp_param(U*);
+  template <typename U> char check_nontype_temp_param(...);
 
   // Form a return type that can only be instantiated with nullptr_t in C++11
   // mode. It's harmless in C++98 mode, but this allows us to filter nullptr_t
@@ -141,14 +137,22 @@ template <typename T> class is_integral_or_enum {
   // different compiler.
   struct nonce {};
   template <typename U, nonce* u = U()>
-  struct check2_return_type { char c[2]; };
-  template <typename U> static check2_return_type<U> checker2(U*);
-  template <typename U> static char checker2(...);
+  struct check_nullptr_t_like_return_type { char c[2]; };
+  template <typename U>
+  check_nullptr_t_like_return_type<U> check_nullptr_t_like(U*);
+  template <typename U> char check_nullptr_t_like(...);
+} // namespace dont_use
 
-public:
+/// \brief Metafunction that determines whether the given type is either an
+/// integral type or an enumeration type.
+///
+/// Note that this accepts potentially more integral types than we whitelist
+/// above for is_integral, it should accept essentially anything the compiler
+/// believes is an integral type.
+template <typename T> struct is_integral_or_enum {
   enum {
-    value = (sizeof(char) != sizeof(checker1<T>(0)) &&
-             sizeof(char) == sizeof(checker2<T>(0)))
+    value = (sizeof(char) != sizeof(dont_use::check_nontype_temp_param<T>(0)) &&
+             sizeof(char) == sizeof(dont_use::check_nullptr_t_like<T>(0)))
   };
 };
 
