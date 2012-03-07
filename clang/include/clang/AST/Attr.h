@@ -40,19 +40,17 @@ namespace clang {
 
 // Defined in ASTContext.h
 void *operator new(size_t Bytes, const clang::ASTContext &C,
-                   size_t Alignment = 16) throw ();
+                   size_t Alignment = 16);
 // FIXME: Being forced to not have a default argument here due to redeclaration
 //        rules on default arguments sucks
 void *operator new[](size_t Bytes, const clang::ASTContext &C,
-                     size_t Alignment) throw ();
+                     size_t Alignment);
 
 // It is good practice to pair new/delete operators.  Also, MSVC gives many
 // warnings if a matching delete overload is not declared, even though the
 // throw() spec guarantees it will not be implicitly called.
-void operator delete(void *Ptr, const clang::ASTContext &C, size_t)
-              throw ();
-void operator delete[](void *Ptr, const clang::ASTContext &C, size_t)
-              throw ();
+void operator delete(void *Ptr, const clang::ASTContext &C, size_t);
+void operator delete[](void *Ptr, const clang::ASTContext &C, size_t);
 
 namespace clang {
 
