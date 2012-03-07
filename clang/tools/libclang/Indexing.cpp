@@ -369,6 +369,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   bool CacheCodeCompletionResults = false;
   PreprocessorOptions &PPOpts = CInvok->getPreprocessorOpts(); 
   PPOpts.DetailedRecord = false;
+  PPOpts.AllowPCHWithCompilerErrors = true;
 
   if (requestedToGetTU) {
     OnlyLocalDecls = CXXIdx->getOnlyLocalDecls();

@@ -535,6 +535,7 @@ public:
   void createPCHExternalASTSource(StringRef Path,
                                   bool DisablePCHValidation,
                                   bool DisableStatCache,
+                                  bool AllowPCHWithCompilerErrors,
                                   void *DeserializationListener);
 
   /// Create an external AST source to read a PCH file.
@@ -544,6 +545,7 @@ public:
   createPCHExternalASTSource(StringRef Path, const std::string &Sysroot,
                              bool DisablePCHValidation,
                              bool DisableStatCache,
+                             bool AllowPCHWithCompilerErrors,
                              Preprocessor &PP, ASTContext &Context,
                              void *DeserializationListener, bool Preamble);
 

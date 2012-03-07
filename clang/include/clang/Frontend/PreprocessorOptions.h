@@ -69,6 +69,9 @@ public:
   /// precompiled header or AST file.
   bool DisableStatCache;
 
+  /// \brief When true, a PCH with compiler errors will not be rejected.
+  bool AllowPCHWithCompilerErrors;
+
   /// \brief Dump declarations that are deserialized from PCH, for testing.
   bool DumpDeserializedPCHDecls;
 
@@ -165,6 +168,7 @@ public:
   PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
                           DetailedRecordConditionalDirectives(false),
                           DisablePCHValidation(false), DisableStatCache(false),
+                          AllowPCHWithCompilerErrors(false),
                           DumpDeserializedPCHDecls(false),
                           PrecompiledPreambleBytes(0, true),
                           RemappedFilesKeepOriginalName(true),

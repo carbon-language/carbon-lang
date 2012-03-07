@@ -652,7 +652,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   bool OnlyLocalDecls,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles,
-                                  bool CaptureDiagnostics) {
+                                  bool CaptureDiagnostics,
+                                  bool AllowPCHWithCompilerErrors) {
   OwningPtr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
@@ -748,7 +749,11 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                             /*DelayInitialization=*/true);
   ASTContext &Context = *AST->Ctx;
 
-  Reader.reset(new ASTReader(PP, Context));
+  Reader.reset(new ASTReader(PP, Context,
+                             /*isysroot=*/"",
+                             /*DisableValidation=*/false,
+                             /*DisableStatCache=*/false,
+                             AllowPCHWithCompilerErrors));
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
@@ -1862,7 +1867,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool RemappedFilesKeepOriginalName,
                                       bool PrecompilePreamble,
                                       TranslationUnitKind TUKind,
-                                      bool CacheCodeCompletionResults) {
+                                      bool CacheCodeCompletionResults,
+                                      bool AllowPCHWithCompilerErrors) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1898,8 +1904,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
       CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first, fname);
     }
   }
-  CI->getPreprocessorOpts().RemappedFilesKeepOriginalName =
-                                                  RemappedFilesKeepOriginalName;
+  PreprocessorOptions &PPOpts = CI->getPreprocessorOpts();
+  PPOpts.RemappedFilesKeepOriginalName = RemappedFilesKeepOriginalName;
+  PPOpts.AllowPCHWithCompilerErrors = AllowPCHWithCompilerErrors;
   
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
@@ -2388,9 +2395,6 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
 }
 
 CXSaveError ASTUnit::Save(StringRef File) {
-  if (getDiagnostics().hasUnrecoverableErrorOccurred())
-    return CXSaveError_TranslationErrors;
-
   // Write to a temporary file and later rename it to the actual file, to avoid
   // possible race conditions.
   SmallString<128> TempPath;
@@ -2420,14 +2424,13 @@ CXSaveError ASTUnit::Save(StringRef File) {
 }
 
 bool ASTUnit::serialize(raw_ostream &OS) {
-  if (getDiagnostics().hasErrorOccurred())
-    return true;
+  bool hasErrors = getDiagnostics().hasErrorOccurred();
 
   SmallString<128> Buffer;
   llvm::BitstreamWriter Stream(Buffer);
   ASTWriter Writer(Stream);
   // FIXME: Handle modules
-  Writer.WriteAST(getSema(), 0, std::string(), 0, "");
+  Writer.WriteAST(getSema(), 0, std::string(), 0, "", hasErrors);
   
   // Write the generated bitstream to "Out".
   if (!Buffer.empty())

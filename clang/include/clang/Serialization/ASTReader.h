@@ -579,6 +579,9 @@ private:
   /// \brief Whether to disable the use of stat caches in AST files.
   bool DisableStatCache;
 
+  /// \brief Whether to accept an AST file with compiler errors.
+  bool AllowASTWithCompilerErrors;
+
   /// \brief The current "generation" of the module file import stack, which 
   /// indicates how many separate module file load operations have occurred.
   unsigned CurrentGeneration;
@@ -875,8 +878,13 @@ public:
   /// help when an AST file is being used in cases where the
   /// underlying files in the file system may have changed, but
   /// parsing should still continue.
+  ///
+  /// \param AllowASTWithCompilerErrors If true, the AST reader will accept an
+  /// AST file the was created out of an AST with compiler errors,
+  /// otherwise it will reject it.
   ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot = "",
-            bool DisableValidation = false, bool DisableStatCache = false);
+            bool DisableValidation = false, bool DisableStatCache = false,
+            bool AllowASTWithCompilerErrors = false);
 
   ~ASTReader();
 

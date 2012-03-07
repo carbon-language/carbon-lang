@@ -642,7 +642,8 @@ public:
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,
                                   unsigned NumRemappedFiles = 0,
-                                  bool CaptureDiagnostics = false);
+                                  bool CaptureDiagnostics = false,
+                                  bool AllowPCHWithCompilerErrors = false);
 
 private:
   /// \brief Helper function for \c LoadFromCompilerInvocation() and
@@ -730,7 +731,8 @@ public:
                                       bool RemappedFilesKeepOriginalName = true,
                                       bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
-                                      bool CacheCodeCompletionResults = false);
+                                      bool CacheCodeCompletionResults = false,
+                                      bool AllowPCHWithCompilerErrors = false);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.

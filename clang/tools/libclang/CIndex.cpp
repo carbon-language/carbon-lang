@@ -2438,7 +2438,9 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
   ASTUnit *TU = ASTUnit::LoadFromASTFile(ast_filename, Diags, FileSystemOpts,
                                   CXXIdx->getOnlyLocalDecls(),
-                                  0, 0, true);
+                                  0, 0,
+                                  /*CaptureDiagnostics=*/true,
+                                  /*AllowPCHWithCompilerErrors=*/true);
   return MakeCXTranslationUnit(TU);
 }
 
@@ -2575,7 +2577,8 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
                                  TUKind,
-                                 CacheCodeCompetionResults));
+                                 CacheCodeCompetionResults,
+                                 /*AllowPCHWithCompilerErrors=*/true));
 
   if (NumErrors != Diags->getClient()->getNumErrors()) {
     // Make sure to check that 'Unit' is non-NULL.

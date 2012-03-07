@@ -109,6 +109,9 @@ private:
   /// serialization, rather than just queueing updates.
   bool WritingAST;
 
+  /// \brief Indicates that the AST contained compiler errors.
+  bool ASTHasCompilerErrors;
+
   /// \brief Stores a declaration or a type to be written to the AST file.
   class DeclOrType {
   public:
@@ -467,7 +470,8 @@ public:
   /// are relative to the given system root.
   void WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const std::string &OutputFile,
-                Module *WritingModule, StringRef isysroot);
+                Module *WritingModule, StringRef isysroot,
+                bool hasErrors = false);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record);
