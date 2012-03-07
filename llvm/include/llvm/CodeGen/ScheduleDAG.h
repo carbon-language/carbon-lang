@@ -549,11 +549,6 @@ namespace llvm {
     ///
     void Run(MachineBasicBlock *bb, MachineBasicBlock::iterator insertPos);
 
-    /// BuildSchedGraph - Build SUnits and set up their Preds and Succs
-    /// to form the scheduling dependency graph.
-    ///
-    virtual void BuildSchedGraph(AliasAnalysis *AA) = 0;
-
     /// ComputeLatency - Compute node latency.
     ///
     virtual void ComputeLatency(SUnit *SU) = 0;

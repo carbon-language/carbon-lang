@@ -79,7 +79,7 @@ namespace llvm {
     /// are input.  This SUnit graph is similar to the SelectionDAG, but
     /// excludes nodes that aren't interesting to scheduling, and represents
     /// flagged together nodes with a single SUnit.
-    virtual void BuildSchedGraph(AliasAnalysis *AA);
+    void BuildSchedGraph(AliasAnalysis *AA);
 
     /// InitVRegCycleFlag - Set isVRegCycle if this node's single use is
     /// CopyToReg and its only active data operands are CopyFromReg within a

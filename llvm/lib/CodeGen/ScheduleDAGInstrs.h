@@ -245,7 +245,7 @@ namespace llvm {
 
     /// BuildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    virtual void BuildSchedGraph(AliasAnalysis *AA);
+    void BuildSchedGraph(AliasAnalysis *AA);
 
     /// AddSchedBarrierDeps - Add dependencies from instructions in the current
     /// list of instructions being scheduled to scheduling barrier. We want to
