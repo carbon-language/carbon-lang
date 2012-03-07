@@ -46,15 +46,21 @@ static cl::opt<int> HighLatencyCycles(
            "instructions take for targets with no itinerary"));
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
-  : ScheduleDAG(mf),
+  : ScheduleDAG(mf), BB(0), DAG(0),
     InstrItins(mf.getTarget().getInstrItineraryData()) {}
 
 /// Run - perform scheduling.
 ///
-void ScheduleDAGSDNodes::Run(SelectionDAG *dag, MachineBasicBlock *bb,
-                             MachineBasicBlock::iterator insertPos) {
+void ScheduleDAGSDNodes::Run(SelectionDAG *dag, MachineBasicBlock *bb) {
+  BB = bb;
   DAG = dag;
-  ScheduleDAG::Run(bb, insertPos);
+
+  // Clear the scheduler's SUnit DAG.
+  ScheduleDAG::clearDAG();
+  Sequence.clear();
+
+  // Invoke the target's selection of scheduler.
+  Schedule();
 }
 
 /// NewSUnit - Creates a new SUnit and return a ptr to it.
@@ -752,7 +758,8 @@ EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap,
 /// InsertPos and MachineBasicBlock that contains this insertion
 /// point. ScheduleDAGSDNodes holds a BB pointer for convenience, but this does
 /// not necessarily refer to returned BB. The emitter may split blocks.
-MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
+MachineBasicBlock *ScheduleDAGSDNodes::
+EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
   InstrEmitter Emitter(BB, InsertPos);
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
@@ -860,9 +867,8 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     }
   }
 
-  BB = Emitter.getBlock();
   InsertPos = Emitter.getInsertPos();
-  return BB;
+  return Emitter.getBlock();
 }
 
 /// Return the basic block label.

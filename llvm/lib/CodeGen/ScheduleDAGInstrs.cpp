@@ -46,22 +46,6 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
          "Virtual registers must be removed prior to PostRA scheduling");
 }
 
-/// Run - perform scheduling.
-///
-void ScheduleDAGInstrs::Run(MachineBasicBlock *bb,
-                            MachineBasicBlock::iterator begin,
-                            MachineBasicBlock::iterator end,
-                            unsigned endcount) {
-  BB = bb;
-  Begin = begin;
-  InsertPosIndex = endcount;
-
-  // Check to see if the scheduler cares about latencies.
-  UnitLatencies = ForceUnitLatencies();
-
-  ScheduleDAG::Run(bb, end);
-}
-
 /// getUnderlyingObjectFromInt - This is the function that does the work of
 /// looking through basic ptrtoint+arithmetic+inttoptr sequences.
 static const Value *getUnderlyingObjectFromInt(const Value *V) {
@@ -148,6 +132,10 @@ void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
       LoopRegs.VisitLoop(ML);
 }
 
+void ScheduleDAGInstrs::FinishBlock() {
+  // Nothing to do.
+}
+
 /// Initialize the map with the number of registers.
 void ScheduleDAGInstrs::Reg2SUnitsMap::setRegLimit(unsigned Limit) {
   PhysRegSet.setUniverse(Limit);
@@ -160,6 +148,31 @@ void ScheduleDAGInstrs::Reg2SUnitsMap::clear() {
     SUnits[*I].clear();
   }
   PhysRegSet.clear();
+}
+
+/// Initialize the DAG and common scheduler state for the current scheduling
+/// region. This does not actually create the DAG, only clears it. The
+/// scheduling driver may call BuildSchedGraph multiple times per scheduling
+/// region.
+void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
+                                    MachineBasicBlock::iterator begin,
+                                    MachineBasicBlock::iterator end,
+                                    unsigned endcount) {
+  BB = bb;
+  Begin = begin;
+  InsertPos = end;
+  InsertPosIndex = endcount;
+
+  // Check to see if the scheduler cares about latencies.
+  UnitLatencies = ForceUnitLatencies();
+
+  ScheduleDAG::clearDAG();
+}
+
+/// Close the current scheduling region. Don't clear any state in case the
+/// driver wants to refer to the previous scheduling region.
+void ScheduleDAGInstrs::exitRegion() {
+  // Nothing to do.
 }
 
 /// AddSchedBarrierDeps - Add dependencies from instructions in the current
@@ -713,10 +726,6 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   VRegDefs.clear();
   PendingLoads.clear();
   MISUnitMap.clear();
-}
-
-void ScheduleDAGInstrs::FinishBlock() {
-  // Nothing to do.
 }
 
 void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {

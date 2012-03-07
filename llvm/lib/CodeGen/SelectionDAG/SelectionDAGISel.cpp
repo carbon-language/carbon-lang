@@ -673,7 +673,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   {
     NamedRegionTimer T("Instruction Scheduling", GroupName,
                        TimePassesIsEnabled);
-    Scheduler->Run(CurDAG, FuncInfo->MBB, FuncInfo->InsertPt);
+    Scheduler->Run(CurDAG, FuncInfo->MBB);
   }
 
   if (ViewSUnitDAGs) Scheduler->viewGraph();
@@ -684,8 +684,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   {
     NamedRegionTimer T("Instruction Creation", GroupName, TimePassesIsEnabled);
 
-    LastMBB = FuncInfo->MBB = Scheduler->EmitSchedule();
-    FuncInfo->InsertPt = Scheduler->InsertPos;
+    // FuncInfo->InsertPt is passed by reference and set to the end of the
+    // scheduled instructions.
+    LastMBB = FuncInfo->MBB = Scheduler->EmitSchedule(FuncInfo->InsertPt);
   }
 
   // If the block was split, make sure we update any references that are used to

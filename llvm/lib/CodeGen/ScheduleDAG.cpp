@@ -46,25 +46,17 @@ ScheduleDAG::ScheduleDAG(MachineFunction &mf)
 
 ScheduleDAG::~ScheduleDAG() {}
 
+/// Clear the DAG state (e.g. between scheduling regions).
+void ScheduleDAG::clearDAG() {
+  SUnits.clear();
+  EntrySU = SUnit();
+  ExitSU = SUnit();
+}
+
 /// getInstrDesc helper to handle SDNodes.
 const MCInstrDesc *ScheduleDAG::getNodeDesc(const SDNode *Node) const {
   if (!Node || !Node->isMachineOpcode()) return NULL;
   return &TII->get(Node->getMachineOpcode());
-}
-
-/// Run - perform scheduling.
-///
-void ScheduleDAG::Run(MachineBasicBlock *bb,
-                      MachineBasicBlock::iterator insertPos) {
-  BB = bb;
-  InsertPos = insertPos;
-
-  SUnits.clear();
-  Sequence.clear();
-  EntrySU = SUnit();
-  ExitSU = SUnit();
-
-  Schedule();
 }
 
 /// addPred - This adds the specified edge as a pred of the current node if

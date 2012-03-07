@@ -35,8 +35,12 @@ namespace llvm {
   ///
   class ScheduleDAGSDNodes : public ScheduleDAG {
   public:
+    MachineBasicBlock *BB;
     SelectionDAG *DAG;                    // DAG of the current basic block
     const InstrItineraryData *InstrItins;
+
+    /// The schedule. Null SUnit*'s represent noop instructions.
+    std::vector<SUnit*> Sequence;
 
     explicit ScheduleDAGSDNodes(MachineFunction &mf);
 
@@ -44,8 +48,7 @@ namespace llvm {
 
     /// Run - perform scheduling.
     ///
-    void Run(SelectionDAG *dag, MachineBasicBlock *bb,
-             MachineBasicBlock::iterator insertPos);
+    void Run(SelectionDAG *dag, MachineBasicBlock *bb);
 
     /// isPassiveNode - Return true if the node is a non-scheduled leaf.
     ///
@@ -103,8 +106,6 @@ namespace llvm {
 
     virtual void ComputeOperandLatency(SDNode *Def, SDNode *Use,
                                        unsigned OpIdx, SDep& dep) const;
-
-    virtual MachineBasicBlock *EmitSchedule();
 
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.

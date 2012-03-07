@@ -486,15 +486,11 @@ namespace llvm {
 
   class ScheduleDAG {
   public:
-    MachineBasicBlock *BB;          // The block in which to insert instructions
-    MachineBasicBlock::iterator InsertPos;// The position to insert instructions
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
     MachineFunction &MF;                  // Machine function
     MachineRegisterInfo &MRI;             // Virtual/real register map
-    std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
-                                          // represent noop instructions.
     std::vector<SUnit> SUnits;            // The scheduling units.
     SUnit EntrySU;                        // Special node for the region entry.
     SUnit ExitSU;                         // Special node for the region exit.
@@ -508,6 +504,9 @@ namespace llvm {
     explicit ScheduleDAG(MachineFunction &mf);
 
     virtual ~ScheduleDAG();
+
+    /// clearDAG - clear the DAG state (between regions).
+    void clearDAG();
 
     /// getInstrDesc - Return the MCInstrDesc of this SUnit.
     /// Return NULL for SDNodes without a machine opcode.
@@ -542,10 +541,6 @@ namespace llvm {
 #endif
 
   protected:
-    /// Run - perform scheduling.
-    ///
-    void Run(MachineBasicBlock *bb, MachineBasicBlock::iterator insertPos);
-
     /// ComputeLatency - Compute node latency.
     ///
     virtual void ComputeLatency(SUnit *SU) = 0;
@@ -555,11 +550,6 @@ namespace llvm {
     ///
     virtual void ComputeOperandLatency(SUnit *, SUnit *,
                                        SDep&) const { }
-
-    /// Schedule - Order nodes according to selected style, filling
-    /// in the Sequence member.
-    ///
-    virtual void Schedule() = 0;
 
     /// ForceUnitLatencies - Return true if all scheduling edges should be given
     /// a latency value of one.  The default is to return false; schedulers may

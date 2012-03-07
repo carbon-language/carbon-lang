@@ -185,7 +185,9 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator BeginItr,
                                       MachineBasicBlock::iterator EndItr) {
   DefaultVLIWScheduler *Scheduler = (DefaultVLIWScheduler *)SchedulerImpl;
-  Scheduler->Run(MBB, BeginItr, EndItr, MBB->size());
+  Scheduler->enterRegion(MBB, BeginItr, EndItr, MBB->size());
+  Scheduler->Schedule();
+  Scheduler->exitRegion();
 
   // Remember scheduling units.
   SUnits = Scheduler->SUnits;

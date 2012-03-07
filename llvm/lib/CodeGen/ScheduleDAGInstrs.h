@@ -101,6 +101,7 @@ namespace llvm {
   /// ScheduleDAGInstrs - A ScheduleDAG subclass for scheduling lists of
   /// MachineInstrs.
   class LLVM_LIBRARY_VISIBILITY ScheduleDAGInstrs : public ScheduleDAG {
+  protected:
     const MachineLoopInfo &MLI;
     const MachineDominatorTree &MDT;
     const MachineFrameInfo *MFI;
@@ -111,6 +112,23 @@ namespace llvm {
 
     /// Live Intervals provides reaching defs in preRA scheduling.
     LiveIntervals *LIS;
+
+    /// State specific to the current scheduling region.
+    ///
+
+    // The block in which to insert instructions
+    MachineBasicBlock *BB;
+
+    // The beginning of the range to
+    // be scheduled. The range extends
+    // to InsertPos.
+    MachineBasicBlock::iterator Begin;
+
+    // The position to insert instructions
+    MachineBasicBlock::iterator InsertPos;
+
+    // The index in BB of InsertPos.
+    unsigned InsertPosIndex;
 
     /// After calling BuildSchedGraph, each machine instruction in the current
     /// scheduling region is mapped to an SUnit.
@@ -209,11 +227,6 @@ namespace llvm {
     MachineInstr *FirstDbgValue;
 
   public:
-    MachineBasicBlock::iterator Begin;    // The beginning of the range to
-                                          // be scheduled. The range extends
-                                          // to InsertPos.
-    unsigned InsertPosIndex;              // The index in BB of InsertPos.
-
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo &mli,
                                const MachineDominatorTree &mdt,
@@ -221,6 +234,12 @@ namespace llvm {
                                LiveIntervals *LIS = 0);
 
     virtual ~ScheduleDAGInstrs() {}
+
+    /// begin - Return an iterator to the top of the current scheduling region.
+    MachineBasicBlock::iterator begin() const { return Begin; }
+
+    /// end - Return an iterator to the bottom of the current scheduling region.
+    MachineBasicBlock::iterator end() const { return InsertPos; }
 
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///
@@ -235,13 +254,22 @@ namespace llvm {
       return &SUnits.back();
     }
 
-
-    /// Run - perform scheduling.
+    /// StartBlock - Prepare to perform scheduling in the given block.
     ///
-    void Run(MachineBasicBlock *bb,
-             MachineBasicBlock::iterator begin,
-             MachineBasicBlock::iterator end,
-             unsigned endindex);
+    virtual void StartBlock(MachineBasicBlock *BB);
+
+    /// FinishBlock - Clean up after scheduling in the given block.
+    ///
+    virtual void FinishBlock();
+
+    /// Initialize the scheduler state for the next scheduling region.
+    virtual void enterRegion(MachineBasicBlock *bb,
+                             MachineBasicBlock::iterator begin,
+                             MachineBasicBlock::iterator end,
+                             unsigned endcount);
+
+    /// Notify that the scheduler has finished scheduling the current region.
+    virtual void exitRegion();
 
     /// BuildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
@@ -266,18 +294,10 @@ namespace llvm {
     virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
                                        SDep& dep) const;
 
-    /// StartBlock - Prepare to perform scheduling in the given block.
-    ///
-    virtual void StartBlock(MachineBasicBlock *BB);
-
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.
     ///
     virtual void Schedule() = 0;
-
-    /// FinishBlock - Clean up after scheduling in the given block.
-    ///
-    virtual void FinishBlock();
 
     virtual void dumpNode(const SUnit *SU) const;
 

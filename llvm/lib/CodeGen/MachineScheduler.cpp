@@ -281,15 +281,17 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
         if (TII->isSchedulingBoundary(llvm::prior(I), MBB, *MF))
           break;
       }
-      if (I == RegionEnd) {
-        // Skip empty scheduling regions.
+      // Notify the scheduler of the region, even if we may skip scheduling
+      // it. Perhaps it still needs to be bundled.
+      Scheduler->enterRegion(MBB, I, RegionEnd, RemainingCount);
+
+      // Skip empty scheduling regions (0 or 1 schedulable instructions).
+      if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
         RegionEnd = llvm::prior(RegionEnd);
-        --RemainingCount;
-        continue;
-      }
-      // Skip regions with one instruction.
-      if (I == llvm::prior(RegionEnd)) {
-        RegionEnd = llvm::prior(RegionEnd);
+        if (I != RegionEnd)
+          --RemainingCount;
+        // Close the current region. Bundle the terminator if needed.
+        Scheduler->exitRegion();
         continue;
       }
       DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
@@ -300,8 +302,12 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
       // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
       // to our Schedule() method.
-      Scheduler->Run(MBB, I, RegionEnd, MBB->size());
-      RegionEnd = Scheduler->Begin;
+      Scheduler->Schedule();
+      Scheduler->exitRegion();
+
+      // Scheduling has invalidated the current iterator 'I'. Ask the
+      // scheduler for the top of it's scheduled region.
+      RegionEnd = Scheduler->begin();
     }
     assert(RemainingCount == 0 && "Instruction count mismatch!");
     Scheduler->FinishBlock();

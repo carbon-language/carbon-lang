@@ -127,6 +127,9 @@ namespace {
     /// LiveRegs - true if the register is live.
     BitVector LiveRegs;
 
+    /// The schedule. Null SUnit*'s represent noop instructions.
+    std::vector<SUnit*> Sequence;
+
   public:
     SchedulePostRATDList(
       MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
@@ -140,6 +143,15 @@ namespace {
     /// this block.
     ///
     void StartBlock(MachineBasicBlock *BB);
+
+    /// Initialize the scheduler state for the next scheduling region.
+    virtual void enterRegion(MachineBasicBlock *bb,
+                             MachineBasicBlock::iterator begin,
+                             MachineBasicBlock::iterator end,
+                             unsigned endcount);
+
+    /// Notify that the scheduler has finished scheduling the current region.
+    virtual void exitRegion();
 
     /// Schedule - Schedule the instruction range using list scheduling.
     ///
@@ -204,6 +216,25 @@ SchedulePostRATDList::SchedulePostRATDList(
 SchedulePostRATDList::~SchedulePostRATDList() {
   delete HazardRec;
   delete AntiDepBreak;
+}
+
+/// Initialize state associated with the next scheduling region.
+void SchedulePostRATDList::enterRegion(MachineBasicBlock *bb,
+                 MachineBasicBlock::iterator begin,
+                 MachineBasicBlock::iterator end,
+                 unsigned endcount) {
+  ScheduleDAGInstrs::enterRegion(bb, begin, end, endcount);
+  Sequence.clear();
+}
+
+/// Print the schedule before exiting the region.
+void SchedulePostRATDList::exitRegion() {
+  DEBUG({
+      dbgs() << "*** Final schedule ***\n";
+      dumpSchedule();
+      dbgs() << '\n';
+    });
+  ScheduleDAGInstrs::exitRegion();
 }
 
 /// dumpSchedule - dump the scheduled Sequence.
@@ -282,7 +313,9 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       // post-ra we don't gain anything by scheduling across calls since we
       // don't need to worry about register pressure.
       if (MI->isCall() || TII->isSchedulingBoundary(MI, MBB, Fn)) {
-        Scheduler.Run(MBB, I, Current, CurrentCount);
+        Scheduler.enterRegion(MBB, I, Current, CurrentCount);
+        Scheduler.Schedule();
+        Scheduler.exitRegion();
         Scheduler.EmitSchedule();
         Current = MI;
         CurrentCount = Count - 1;
@@ -296,7 +329,9 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     assert(Count == 0 && "Instruction count mismatch!");
     assert((MBB->begin() == Current || CurrentCount != 0) &&
            "Instruction count mismatch!");
-    Scheduler.Run(MBB, MBB->begin(), Current, CurrentCount);
+    Scheduler.enterRegion(MBB, MBB->begin(), Current, CurrentCount);
+    Scheduler.Schedule();
+    Scheduler.exitRegion();
     Scheduler.EmitSchedule();
 
     // Clean up register live-range state.
@@ -340,10 +375,7 @@ void SchedulePostRATDList::Schedule() {
       // the def's anti-dependence *and* output-dependence edges due to
       // that register, and add new anti-dependence and output-dependence
       // edges based on the next live range of the register.
-      SUnits.clear();
-      Sequence.clear();
-      EntrySU = SUnit();
-      ExitSU = SUnit();
+      ScheduleDAG::clearDAG();
       BuildSchedGraph(AA);
 
       NumFixedAnti += Broken;
@@ -357,12 +389,6 @@ void SchedulePostRATDList::Schedule() {
   AvailableQueue.initNodes(SUnits);
   ListScheduleTopDown();
   AvailableQueue.releaseState();
-
-  DEBUG({
-      dbgs() << "*** Final schedule ***\n";
-      dumpSchedule();
-      dbgs() << '\n';
-    });
 }
 
 /// Observe - Update liveness information to account for the current
