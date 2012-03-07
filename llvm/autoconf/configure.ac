@@ -1005,16 +1005,6 @@ if test "$XDOT_PY" != "echo xdot.py" ; then
    [Define to path to xdot.py program if found or 'echo xdot.py' otherwise])
 fi
 
-dnl Look for a sufficiently recent version of Perl.
-LLVM_PROG_PERL([5.006])
-AC_SUBST(PERL)
-if test x"$PERL" = xnone; then
-   AC_SUBST(HAVE_PERL,0)
-   AC_MSG_ERROR([perl is required but was not found, please install it])
-else
-   AC_SUBST(HAVE_PERL,1)
-fi
-
 dnl Find the install program
 AC_PROG_INSTALL
 dnl Prepend src dir to install path dir if it's a relative path

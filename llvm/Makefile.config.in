@@ -175,7 +175,6 @@ SED        := @SED@
 TAR        := @TAR@
 
 # Paths to miscellaneous programs we hope are present but might not be
-PERL       := @PERL@
 BZIP2      := @BZIP2@
 CAT        := @CAT@
 DOT        := @DOT@
@@ -194,7 +193,6 @@ RUNTEST    := @RUNTEST@
 TCLSH      := @TCLSH@
 ZIP        := @ZIP@
 
-HAVE_PERL    := @HAVE_PERL@
 HAVE_PTHREAD := @HAVE_PTHREAD@
 
 LIBS       := @LIBS@
