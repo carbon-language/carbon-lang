@@ -42,7 +42,7 @@ public:
     if (Val.isNull())
       return ArrayRef<EltTy>();
     if (Val.template is<EltTy>())
-      return *Val.template getAddrOf<EltTy>();
+      return *Val.getAddrOfPtr1();
     return *Val.template get<VecTy*>();
   }
   
