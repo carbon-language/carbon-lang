@@ -1574,14 +1574,21 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
 }
 
 /// LexUDSuffix - Lex the ud-suffix production for user-defined literal suffixes
-/// in C++11.
+/// in C++11, or warn on a ud-suffix in C++98.
 const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
-  assert(getFeatures().CPlusPlus0x && "ud-suffix only exists in C++11");
+  assert(getFeatures().CPlusPlus);
 
   // Maximally munch an identifier. FIXME: UCNs.
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   if (isIdentifierHead(C)) {
+    if (!getFeatures().CPlusPlus0x) {
+      if (!isLexingRawMode())
+        Diag(CurPtr, diag::warn_cxx11_compat_user_defined_literal)
+          << FixItHint::CreateInsertion(getSourceLocation(CurPtr), " ");
+      return CurPtr;
+    }
+
     Result.setFlag(Token::HasUDSuffix);
     do {
       CurPtr = ConsumeChar(CurPtr, Size, Result);
@@ -1631,7 +1638,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
   }
 
   // If we are in C++11, lex the optional ud-suffix.
-  if (getFeatures().CPlusPlus0x)
+  if (getFeatures().CPlusPlus)
     CurPtr = LexUDSuffix(Result, CurPtr);
 
   // If a nul character existed in the string, warn about it.
@@ -1714,7 +1721,7 @@ void Lexer::LexRawStringLiteral(Token &Result, const char *CurPtr,
   }
 
   // If we are in C++11, lex the optional ud-suffix.
-  if (getFeatures().CPlusPlus0x)
+  if (getFeatures().CPlusPlus)
     CurPtr = LexUDSuffix(Result, CurPtr);
 
   // Update the location of token as well as BufferPtr.
@@ -1801,7 +1808,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
   }
 
   // If we are in C++11, lex the optional ud-suffix.
-  if (getFeatures().CPlusPlus0x)
+  if (getFeatures().CPlusPlus)
     CurPtr = LexUDSuffix(Result, CurPtr);
 
   // If a nul character existed in the character, warn about it.
