@@ -375,6 +375,10 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 void Driver::generateCompilationDiagnostics(Compilation &C,
                                             const Command *FailingCommand) {
   if (C.getArgs().hasArg(options::OPT_fno_crash_diagnostics))
+    return;  
+
+  // Don't try to generate diagnostics for link jobs.
+  if (FailingCommand->getCreator().isLinkJob())
     return;
 
   Diag(clang::diag::note_drv_command_failed_diag_msg)

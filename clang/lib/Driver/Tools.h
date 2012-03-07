@@ -148,6 +148,7 @@ namespace gcc {
                                        "linker (via gcc)", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
                                      ArgStringList &CmdArgs) const;
@@ -179,6 +180,7 @@ namespace hexagon {
       "hexagon-ld", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
                                      ArgStringList &CmdArgs) const;
@@ -285,6 +287,7 @@ namespace darwin {
     Link(const ToolChain &TC) : DarwinTool("darwin::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -356,6 +359,7 @@ namespace openbsd {
     Link(const ToolChain &TC) : Tool("openbsd::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -385,6 +389,7 @@ namespace freebsd {
     Link(const ToolChain &TC) : Tool("freebsd::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -417,6 +422,7 @@ namespace netbsd {
       : Tool("netbsd::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -446,6 +452,7 @@ namespace linuxtools {
     Link(const ToolChain &TC) : Tool("linux::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -474,6 +481,7 @@ namespace minix {
     Link(const ToolChain &TC) : Tool("minix::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -503,6 +511,7 @@ namespace solaris {
     Link(const ToolChain &TC) : Tool("solaris::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -532,6 +541,7 @@ namespace auroraux {
     Link(const ToolChain &TC) : Tool("auroraux::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -561,6 +571,7 @@ namespace dragonfly {
     Link(const ToolChain &TC) : Tool("dragonfly::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
@@ -577,6 +588,7 @@ namespace visualstudio {
     Link(const ToolChain &TC) : Tool("visualstudio::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isLinkJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
