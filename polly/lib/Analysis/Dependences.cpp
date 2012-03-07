@@ -31,6 +31,7 @@
 #include "llvm/Support/CommandLine.h"
 
 #include <isl/flow.h>
+#include <isl/aff.h>
 #define CLOOG_INT_GMP 1
 #include <cloog/cloog.h>
 #include <cloog/isl/cloog.h>
@@ -152,87 +153,45 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   if (LegalityCheckDisabled)
     return true;
 
+  isl_union_map *Dependences = getDependences(TYPE_ALL);
   isl_space *Space = S.getParamSpace();
+  isl_union_map *Scattering = isl_union_map_empty(Space);
 
-  isl_union_map *schedule = isl_union_map_empty(Space);
+  isl_space *ScatteringSpace = 0;
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
 
-    isl_map *scattering;
+    isl_map *StmtScat;
 
     if (NewScattering->find(*SI) == NewScattering->end())
-      scattering = Stmt->getScattering();
+      StmtScat = Stmt->getScattering();
     else
-      scattering = isl_map_copy((*NewScattering)[Stmt]);
+      StmtScat = isl_map_copy((*NewScattering)[Stmt]);
 
-    schedule = isl_union_map_add_map(schedule, scattering);
+    if (!ScatteringSpace)
+      ScatteringSpace = isl_space_range(isl_map_get_space(StmtScat));
+
+    Scattering = isl_union_map_add_map(Scattering, StmtScat);
   }
 
-  isl_union_map *temp_must_dep, *temp_may_dep;
-  isl_union_map *temp_must_no_source, *temp_may_no_source;
+  Dependences = isl_union_map_apply_domain(Dependences,
+                                           isl_union_map_copy(Scattering));
+  Dependences = isl_union_map_apply_range(Dependences, Scattering);
 
-  DEBUG(
-    dbgs().indent(4) << "Sink :=\n";
-    dbgs().indent(8) << stringFromIslObj(sink) << ";\n";
+  isl_set *Zero = isl_set_universe(isl_space_copy(ScatteringSpace));
+  for (unsigned i = 0; i < isl_set_dim(Zero, isl_dim_set); i++)
+    Zero = isl_set_fix_si(Zero, isl_dim_set, i, 0);
 
-    dbgs().indent(4) << "MustSource :=\n";
-    dbgs().indent(8) << stringFromIslObj(must_source) << ";\n";
+  isl_union_set *UDeltas = isl_union_map_deltas(Dependences);
+  isl_set *Deltas = isl_union_set_extract_set(UDeltas, ScatteringSpace);
+  isl_union_set_free(UDeltas);
 
-    dbgs().indent(4) << "MaySource :=\n";
-    dbgs().indent(8) << stringFromIslObj(may_source) << ";\n";
+  isl_map *NonPositive = isl_set_lex_le_set(Deltas, Zero);
+  bool IsValid = isl_map_is_empty(NonPositive);
+  isl_map_free(NonPositive);
 
-    dbgs().indent(4) << "Schedule :=\n";
-    dbgs().indent(8) << stringFromIslObj(schedule) << ";\n";
-  );
-
-  isl_union_map_compute_flow(isl_union_map_copy(sink),
-                              isl_union_map_copy(must_source),
-                              isl_union_map_copy(may_source), schedule,
-                              &temp_must_dep, &temp_may_dep,
-                              &temp_must_no_source, &temp_may_no_source);
-
-  DEBUG(dbgs().indent(4) << "\nDependences calculated\n");
-  DEBUG(
-    dbgs().indent(4) << "TempMustDep:=\n";
-    dbgs().indent(8) << stringFromIslObj(temp_must_dep) << ";\n";
-
-    dbgs().indent(4) << "MustDep:=\n";
-    dbgs().indent(8) << stringFromIslObj(must_dep) << ";\n";
-  );
-
-  // Remove redundant statements.
-  temp_must_dep = isl_union_map_coalesce(temp_must_dep);
-  temp_may_dep = isl_union_map_coalesce(temp_may_dep);
-  temp_must_no_source = isl_union_map_coalesce(temp_must_no_source);
-  temp_may_no_source = isl_union_map_coalesce(temp_may_no_source);
-
-  bool isValid = true;
-
-  if (!isl_union_map_is_equal(temp_must_dep, must_dep)) {
-    DEBUG(dbgs().indent(4) << "\nEqual 1 calculated\n");
-    isValid = false;
-  }
-
-  DEBUG(dbgs().indent(4) << "\nEqual 1 calculated\n");
-
-  if (!isl_union_map_is_equal(temp_may_dep, may_dep))
-    isValid = false;
-
-  DEBUG(dbgs().indent(4) << "\nEqual 2 calculated\n");
-
-  if (!isl_union_map_is_equal(temp_must_no_source, must_no_source))
-    isValid = false;
-
-  if (!isl_union_map_is_equal(temp_may_no_source, may_no_source))
-    isValid = false;
-
-  isl_union_map_free(temp_must_dep);
-  isl_union_map_free(temp_may_dep);
-  isl_union_map_free(temp_must_no_source);
-  isl_union_map_free(temp_may_no_source);
-
-  return isValid;
+  return IsValid;
 }
 
 isl_union_map *getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {

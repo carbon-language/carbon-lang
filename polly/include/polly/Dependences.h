@@ -64,12 +64,22 @@ namespace polly {
       TYPE_RAW = 0x2,
 
       // Write after write
-      TYPE_WAW = 0x4
+      TYPE_WAW = 0x4,
+
+      // All dependences
+      TYPE_ALL = (TYPE_WAR | TYPE_RAW | TYPE_WAW)
     };
 
     typedef std::map<ScopStmt*, isl_map*> StatementToIslMapTy;
 
     Dependences();
+
+    // @brief Check if a new scattering is valid.
+    //
+    // @param NewScattering The new scatterings
+    //
+    // @return bool True if the new scattering is valid, false it it reverses
+    //              dependences.
     bool isValidScattering(StatementToIslMapTy *NewScatterings);
 
     /// @brief Check if a dimension of the Scop can be executed in parallel.
