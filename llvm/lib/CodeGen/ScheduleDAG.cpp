@@ -346,13 +346,12 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
 }
 
 #ifndef NDEBUG
-/// VerifySchedule - Verify that all SUnits were scheduled and that
-/// their state is consistent.
+/// VerifyScheduledDAG - Verify that all SUnits were scheduled and that
+/// their state is consistent. Return the number of scheduled nodes.
 ///
-void ScheduleDAG::VerifySchedule(bool isBottomUp) {
+unsigned ScheduleDAG::VerifyScheduledDAG(bool isBottomUp) {
   bool AnyNotSched = false;
   unsigned DeadNodes = 0;
-  unsigned Noops = 0;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     if (!SUnits[i].isScheduled) {
       if (SUnits[i].NumPreds == 0 && SUnits[i].NumSuccs == 0) {
@@ -393,12 +392,8 @@ void ScheduleDAG::VerifySchedule(bool isBottomUp) {
       }
     }
   }
-  for (unsigned i = 0, e = Sequence.size(); i != e; ++i)
-    if (!Sequence[i])
-      ++Noops;
   assert(!AnyNotSched);
-  assert(Sequence.size() + DeadNodes - Noops == SUnits.size() &&
-         "The number of nodes scheduled doesn't match the expected number!");
+  return SUnits.size() - DeadNodes;
 }
 #endif
 

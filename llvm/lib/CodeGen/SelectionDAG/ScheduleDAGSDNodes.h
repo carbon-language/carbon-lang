@@ -111,6 +111,10 @@ namespace llvm {
     ///
     virtual void Schedule() = 0;
 
+    /// VerifyScheduledSequence - Verify that all SUnits are scheduled and
+    /// consistent with the Sequence of scheduled instructions.
+    void VerifyScheduledSequence(bool isBottomUp);
+
     virtual void dumpNode(const SUnit *SU) const;
 
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;

@@ -261,7 +261,7 @@ void ScheduleDAGVLIW::listScheduleTopDown() {
   }
 
 #ifndef NDEBUG
-  VerifySchedule(/*isBottomUp=*/false);
+  VerifyScheduledSequence(/*isBottomUp=*/false);
 #endif
 }
 

@@ -703,6 +703,12 @@ void SchedulePostRATDList::ListScheduleTopDown() {
   }
 
 #ifndef NDEBUG
-  VerifySchedule(/*isBottomUp=*/false);
-#endif
+  unsigned ScheduledNodes = VerifyScheduledDAG(/*isBottomUp=*/false);
+  unsigned Noops = 0;
+  for (unsigned i = 0, e = Sequence.size(); i != e; ++i)
+    if (!Sequence[i])
+      ++Noops;
+  assert(Sequence.size() - Noops == ScheduledNodes &&
+         "The number of nodes scheduled doesn't match the expected number!");
+#endif // NDEBUG
 }

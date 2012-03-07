@@ -543,9 +543,9 @@ namespace llvm {
     virtual void addCustomGraphFeatures(GraphWriter<ScheduleDAG*> &) const {}
 
 #ifndef NDEBUG
-    /// VerifySchedule - Verify that all SUnits were scheduled and that
-    /// their state is consistent.
-    void VerifySchedule(bool isBottomUp);
+    /// VerifyScheduledDAG - Verify that all SUnits were scheduled and that
+    /// their state is consistent. Return the number of scheduled SUnits.
+    unsigned VerifyScheduledDAG(bool isBottomUp);
 #endif
 
   protected:

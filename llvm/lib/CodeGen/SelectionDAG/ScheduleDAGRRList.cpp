@@ -1475,7 +1475,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   std::reverse(Sequence.begin(), Sequence.end());
 
 #ifndef NDEBUG
-  VerifySchedule(/*isBottomUp=*/true);
+  VerifyScheduledSequence(/*isBottomUp=*/true);
 #endif
 }
 

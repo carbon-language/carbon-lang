@@ -621,6 +621,21 @@ void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
   }
 }
 
+#ifndef NDEBUG
+/// VerifyScheduledSequence - Verify that all SUnits were scheduled and that
+/// their state is consistent with the nodes listed in Sequence.
+///
+void ScheduleDAGSDNodes::VerifyScheduledSequence(bool isBottomUp) {
+  unsigned ScheduledNodes = ScheduleDAG::VerifyScheduledDAG(isBottomUp);
+  unsigned Noops = 0;
+  for (unsigned i = 0, e = Sequence.size(); i != e; ++i)
+    if (!Sequence[i])
+      ++Noops;
+  assert(Sequence.size() - Noops == ScheduledNodes &&
+         "The number of nodes scheduled doesn't match the expected number!");
+}
+#endif // NDEBUG
+
 namespace {
   struct OrderSorter {
     bool operator()(const std::pair<unsigned, MachineInstr*> &A,
