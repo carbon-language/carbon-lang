@@ -1726,12 +1726,6 @@ void Record::setName(Init *NewName) {
   }  // Otherwise this isn't yet registered.
   Name = NewName;
   checkName();
-  // Since the Init for the name was changed, see if we can resolve
-  // any of it using members of the Record.
-  Init *ComputedName = Name->resolveReferences(*this, 0);
-  if (ComputedName != Name) {
-    setName(ComputedName);
-  }
   // DO NOT resolve record values to the name at this point because
   // there might be default values for arguments of this def.  Those
   // arguments might not have been resolved yet so we don't want to
@@ -1754,6 +1748,8 @@ void Record::setName(const std::string &Name) {
 /// references.
 void Record::resolveReferencesTo(const RecordVal *RV) {
   for (unsigned i = 0, e = Values.size(); i != e; ++i) {
+    if (RV == &Values[i]) // Skip resolve the same field as the given one
+      continue;
     if (Init *V = Values[i].getValue())
       Values[i].setValue(V->resolveReferences(*this, RV));
   }
