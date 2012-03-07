@@ -264,6 +264,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     unsigned RemainingCount = MBB->size();
     for(MachineBasicBlock::iterator RegionEnd = MBB->end();
         RegionEnd != MBB->begin();) {
+      Scheduler->StartBlock(MBB);
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
@@ -294,6 +295,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
       RegionEnd = Scheduler->Begin;
     }
     assert(RemainingCount == 0 && "Instruction count mismatch!");
+    Scheduler->FinishBlock();
   }
   return true;
 }
