@@ -40,6 +40,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Hashing.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -1843,49 +1844,52 @@ void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
 
 unsigned
 MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
-  unsigned Hash = MI->getOpcode() * 37;
+  // Build up a buffer of hash code components.
+  //
+  // FIXME: This is a total hack. We should have a hash_value overload for
+  // MachineOperand, but currently that doesn't work because there are many
+  // different ideas of "equality" and thus different sets of information that
+  // contribute to the hash code. This one happens to want to take a specific
+  // subset. It's not clear that this routine uses the correct set of
+  // information, it would be good to somehow ensure this function is
+  // MachineInstr::isIdenticalTo with the 'IgnoreVRegDefs' filter look at the
+  // same bits.
+  SmallVector<size_t, 8> HashComponents;
+  HashComponents.reserve(MI->getNumOperands() + 1);
+  HashComponents.push_back(MI->getOpcode());
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    uint64_t Key = (uint64_t)MO.getType() << 32;
     switch (MO.getType()) {
     default: break;
     case MachineOperand::MO_Register:
       if (MO.isDef() && TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         continue;  // Skip virtual register defs.
-      Key |= MO.getReg();
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getReg()));
       break;
     case MachineOperand::MO_Immediate:
-      Key |= MO.getImm();
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getImm()));
       break;
     case MachineOperand::MO_FrameIndex:
     case MachineOperand::MO_ConstantPoolIndex:
     case MachineOperand::MO_JumpTableIndex:
-      Key |= MO.getIndex();
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getIndex()));
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      Key |= DenseMapInfo<void*>::getHashValue(MO.getMBB());
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getMBB()));
       break;
     case MachineOperand::MO_GlobalAddress:
-      Key |= DenseMapInfo<void*>::getHashValue(MO.getGlobal());
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getGlobal()));
       break;
     case MachineOperand::MO_BlockAddress:
-      Key |= DenseMapInfo<void*>::getHashValue(MO.getBlockAddress());
+      HashComponents.push_back(hash_combine(MO.getType(),
+                                            MO.getBlockAddress()));
       break;
     case MachineOperand::MO_MCSymbol:
-      Key |= DenseMapInfo<void*>::getHashValue(MO.getMCSymbol());
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getMCSymbol()));
       break;
     }
-    Key += ~(Key << 32);
-    Key ^= (Key >> 22);
-    Key += ~(Key << 13);
-    Key ^= (Key >> 8);
-    Key += (Key << 3);
-    Key ^= (Key >> 15);
-    Key += ~(Key << 27);
-    Key ^= (Key >> 31);
-    Hash = (unsigned)Key + Hash * 37;
   }
-  return Hash;
+  return hash_combine_range(HashComponents.begin(), HashComponents.end());
 }
 
 void MachineInstr::emitError(StringRef Msg) const {
