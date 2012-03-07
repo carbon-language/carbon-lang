@@ -185,16 +185,7 @@ bool Type::isSizedDerivedType() const {
   if (!this->isStructTy()) 
     return false;
 
-  // Opaque structs have no size.
-  if (cast<StructType>(this)->isOpaque())
-    return false;
-  
-  // Okay, our struct is sized if all of the elements are.
-  for (subtype_iterator I = subtype_begin(), E = subtype_end(); I != E; ++I)
-    if (!(*I)->isSized()) 
-      return false;
-
-  return true;
+  return cast<StructType>(this)->isSized();
 }
 
 //===----------------------------------------------------------------------===//
@@ -579,6 +570,26 @@ StructType *StructType::create(StringRef Name, Type *type, ...) {
   return llvm::StructType::create(Ctx, StructFields, Name);
 }
 
+bool StructType::isSized() const {
+  if ((getSubclassData() & SCDB_IsSized) != 0)
+    return true;
+  if (isOpaque())
+    return false;
+
+  // Okay, our struct is sized if all of the elements are, but if one of the
+  // elements is opaque, the struct isn't sized *yet*, but may become sized in
+  // the future, so just bail out without caching.
+  for (element_iterator I = element_begin(), E = element_end(); I != E; ++I)
+    if (!(*I)->isSized())
+      return false;
+
+  // Here we cheat a bit and cast away const-ness. The goal is to memoize when
+  // we find a sized type, as types can only move from opaque to sized, not the
+  // other way.
+  const_cast<StructType*>(this)->setSubclassData(
+    getSubclassData() | SCDB_IsSized);
+  return true;
+}
 
 StringRef StructType::getName() const {
   assert(!isLiteral() && "Literal structs never have names");
