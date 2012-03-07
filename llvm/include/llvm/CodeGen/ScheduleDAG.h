@@ -522,11 +522,6 @@ namespace llvm {
     void viewGraph(const Twine &Name, const Twine &Title);
     void viewGraph();
 
-    /// EmitSchedule - Insert MachineInstrs into the MachineBasicBlock
-    /// according to the order specified in Sequence.
-    ///
-    virtual MachineBasicBlock *EmitSchedule() = 0;
-
     virtual void dumpNode(const SUnit *SU) const = 0;
 
     /// getGraphNodeLabel - Return a label for an SUnit node in a visualization
@@ -570,12 +565,6 @@ namespace llvm {
     /// a latency value of one.  The default is to return false; schedulers may
     /// override this as needed.
     virtual bool ForceUnitLatencies() const { return false; }
-
-    /// EmitNoop - Emit a noop instruction.
-    ///
-    void EmitNoop();
-
-    void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
   private:
     // Return the MCInstrDesc of this SDNode or NULL.

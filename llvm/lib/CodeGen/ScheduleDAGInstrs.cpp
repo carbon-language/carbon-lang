@@ -813,38 +813,3 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
 std::string ScheduleDAGInstrs::getDAGName() const {
   return "dag." + BB->getFullName();
 }
-
-// EmitSchedule - Emit the machine code in scheduled order.
-MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
-  Begin = InsertPos;
-
-  // If first instruction was a DBG_VALUE then put it back.
-  if (FirstDbgValue)
-    BB->splice(InsertPos, BB, FirstDbgValue);
-
-  // Then re-insert them according to the given schedule.
-  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    if (SUnit *SU = Sequence[i])
-      BB->splice(InsertPos, BB, SU->getInstr());
-    else
-      // Null SUnit* is a noop.
-      EmitNoop();
-
-    // Update the Begin iterator, as the first instruction in the block
-    // may have been scheduled later.
-    if (i == 0)
-      Begin = prior(InsertPos);
-  }
-
-  // Reinsert any remaining debug_values.
-  for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
-         DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
-    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
-    MachineInstr *DbgValue = P.first;
-    MachineBasicBlock::iterator OrigPrivMI = P.second;
-    BB->splice(++OrigPrivMI, BB, DbgValue);
-  }
-  DbgValues.clear();
-  FirstDbgValue = NULL;
-  return BB;
-}

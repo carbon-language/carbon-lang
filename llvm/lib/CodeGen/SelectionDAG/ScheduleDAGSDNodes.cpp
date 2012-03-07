@@ -17,6 +17,8 @@
 #include "ScheduleDAGSDNodes.h"
 #include "InstrEmitter.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -710,8 +712,46 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
   ProcessSDDbgValues(N, DAG, Emitter, Orders, VRBaseMap, Order);
 }
 
+void ScheduleDAGSDNodes::
+EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap,
+                MachineBasicBlock::iterator InsertPos) {
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl()) continue;  // ignore chain preds
+    if (I->getSUnit()->CopyDstRC) {
+      // Copy to physical register.
+      DenseMap<SUnit*, unsigned>::iterator VRI = VRBaseMap.find(I->getSUnit());
+      assert(VRI != VRBaseMap.end() && "Node emitted out of order - late");
+      // Find the destination physical register.
+      unsigned Reg = 0;
+      for (SUnit::const_succ_iterator II = SU->Succs.begin(),
+             EE = SU->Succs.end(); II != EE; ++II) {
+        if (II->isCtrl()) continue;  // ignore chain preds
+        if (II->getReg()) {
+          Reg = II->getReg();
+          break;
+        }
+      }
+      BuildMI(*BB, InsertPos, DebugLoc(), TII->get(TargetOpcode::COPY), Reg)
+        .addReg(VRI->second);
+    } else {
+      // Copy from physical register.
+      assert(I->getReg() && "Unknown physical register!");
+      unsigned VRBase = MRI.createVirtualRegister(SU->CopyDstRC);
+      bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase)).second;
+      (void)isNew; // Silence compiler warning.
+      assert(isNew && "Node emitted out of order - early");
+      BuildMI(*BB, InsertPos, DebugLoc(), TII->get(TargetOpcode::COPY), VRBase)
+        .addReg(I->getReg());
+    }
+    break;
+  }
+}
 
-/// EmitSchedule - Emit the machine code in scheduled order.
+/// EmitSchedule - Emit the machine code in scheduled order. Return the new
+/// InsertPos and MachineBasicBlock that contains this insertion
+/// point. ScheduleDAGSDNodes holds a BB pointer for convenience, but this does
+/// not necessarily refer to returned BB. The emitter may split blocks.
 MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
   InstrEmitter Emitter(BB, InsertPos);
   DenseMap<SDValue, unsigned> VRBaseMap;
@@ -735,7 +775,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     SUnit *SU = Sequence[i];
     if (!SU) {
       // Null SUnit* is a noop.
-      EmitNoop();
+      TII->insertNoop(*Emitter.getBlock(), InsertPos);
       continue;
     }
 
@@ -743,7 +783,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     // SDNode and any glued SDNodes and append them to the block.
     if (!SU->getNode()) {
       // Emit a copy.
-      EmitPhysRegCopy(SU, CopyVRBaseMap);
+      EmitPhysRegCopy(SU, CopyVRBaseMap, InsertPos);
       continue;
     }
 

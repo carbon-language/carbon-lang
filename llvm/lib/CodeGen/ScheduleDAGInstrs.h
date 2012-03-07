@@ -266,8 +266,6 @@ namespace llvm {
     virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
                                        SDep& dep) const;
 
-    virtual MachineBasicBlock *EmitSchedule();
-
     /// StartBlock - Prepare to perform scheduling in the given block.
     ///
     virtual void StartBlock(MachineBasicBlock *BB);

@@ -115,6 +115,11 @@ namespace llvm {
     /// consistent with the Sequence of scheduled instructions.
     void VerifyScheduledSequence(bool isBottomUp);
 
+    /// EmitSchedule - Insert MachineInstrs into the MachineBasicBlock
+    /// according to the order specified in Sequence.
+    ///
+    MachineBasicBlock *EmitSchedule(MachineBasicBlock::iterator &InsertPos);
+
     virtual void dumpNode(const SUnit *SU) const;
 
     void dumpSchedule() const;
@@ -168,6 +173,9 @@ namespace llvm {
     /// BuildSchedUnits, AddSchedEdges - Helper functions for BuildSchedGraph.
     void BuildSchedUnits();
     void AddSchedEdges();
+
+    void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap,
+                         MachineBasicBlock::iterator InsertPos);
   };
 }
 
