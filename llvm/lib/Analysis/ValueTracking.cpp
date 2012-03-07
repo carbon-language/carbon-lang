@@ -106,16 +106,18 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   // The address of an aligned GlobalValue has trailing zeros.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     unsigned Align = GV->getAlignment();
-    if (Align == 0 && TD && GV->getType()->getElementType()->isSized()) {
+    if (Align == 0 && TD) {
       if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
         Type *ObjectType = GVar->getType()->getElementType();
-        // If the object is defined in the current Module, we'll be giving
-        // it the preferred alignment. Otherwise, we have to assume that it
-        // may only have the minimum ABI alignment.
-        if (!GVar->isDeclaration() && !GVar->isWeakForLinker())
-          Align = TD->getPreferredAlignment(GVar);
-        else
-          Align = TD->getABITypeAlignment(ObjectType);
+        if (ObjectType->isSized()) {
+          // If the object is defined in the current Module, we'll be giving
+          // it the preferred alignment. Otherwise, we have to assume that it
+          // may only have the minimum ABI alignment.
+          if (!GVar->isDeclaration() && !GVar->isWeakForLinker())
+            Align = TD->getPreferredAlignment(GVar);
+          else
+            Align = TD->getABITypeAlignment(ObjectType);
+        }
       }
     }
     if (Align > 0)
