@@ -870,11 +870,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (CTy.isAppleBlockExtension())
       addUInt(&Buffer, dwarf::DW_AT_APPLE_block, dwarf::DW_FORM_flag, 1);
 
-    unsigned RLang = CTy.getRunTimeLang();
-    if (RLang)
-      addUInt(&Buffer, dwarf::DW_AT_APPLE_runtime_class,
-              dwarf::DW_FORM_data1, RLang);
-
     DICompositeType ContainingType = CTy.getContainingType();
     if (DIDescriptor(ContainingType).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
@@ -922,6 +917,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     // Add source line info if available.
     if (!CTy.isForwardDecl())
       addSourceLine(&Buffer, CTy);
+
+    // No harm in adding the runtime language to the declaration.
+    unsigned RLang = CTy.getRunTimeLang();
+    if (RLang)
+      addUInt(&Buffer, dwarf::DW_AT_APPLE_runtime_class,
+              dwarf::DW_FORM_data1, RLang);
   }
 }
 
