@@ -5252,6 +5252,10 @@ def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
 def : ARMInstAlias<"neg${s}${p} $Rd, $Rm",
                    (RSBri GPR:$Rd, GPR:$Rm, 0, pred:$p, cc_out:$s)>;
 
+// Pre-v6, 'mov r0, r0' was used as a NOP encoding.
+def : InstAlias<"nop${p}", (MOVr R0, R0, pred:$p, zero_reg)>,
+         Requires<[IsARM, NoV6]>;
+
 // 'it' blocks in ARM mode just validate the predicates. The IT itself
 // is discarded.
 def ITasm : ARMAsmPseudo<"it$mask $cc", (ins it_pred:$cc, it_mask:$mask)>;
