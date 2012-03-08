@@ -467,6 +467,14 @@ def CFGDumper : Checker<"DumpCFG">,
   HelpText<"Display Control-Flow Graphs">,
   DescFile<"DebugCheckers.cpp">;
 
+def CallGraphViewer : Checker<"ViewCallGraph">,
+  HelpText<"View Call Graph using GraphViz">,
+  DescFile<"DebugCheckers.cpp">;
+
+def CallGraphDumper : Checker<"DumpCallGraph">,
+  HelpText<"Display Call Graph">,
+  DescFile<"DebugCheckers.cpp">;
+
 def AnalyzerStatsChecker : Checker<"Stats">,
   HelpText<"Emit warnings with analyzer statistics">,
   DescFile<"AnalyzerStatsChecker.cpp">;
