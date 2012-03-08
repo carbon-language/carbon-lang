@@ -162,10 +162,8 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
 }
 
-// CountCodeReductionForConstant - Figure out an approximation for how many
-// instructions will be constant folded if the specified value is constant.
-//
-unsigned CodeMetrics::CountCodeReductionForConstant(Value *V) {
+unsigned InlineCostAnalyzer::FunctionInfo::countCodeReductionForConstant(
+    const CodeMetrics &Metrics, Value *V) {
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
     User *U = *UI;
@@ -175,7 +173,7 @@ unsigned CodeMetrics::CountCodeReductionForConstant(Value *V) {
       const unsigned NumSucc = TI.getNumSuccessors();
       unsigned Instrs = 0;
       for (unsigned I = 0; I != NumSucc; ++I)
-        Instrs += NumBBInsts[TI.getSuccessor(I)];
+        Instrs += Metrics.NumBBInsts.lookup(TI.getSuccessor(I));
       // We don't know which blocks will be eliminated, so use the average size.
       Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
     } else {
@@ -207,18 +205,15 @@ unsigned CodeMetrics::CountCodeReductionForConstant(Value *V) {
 
         // And any other instructions that use it which become constants
         // themselves.
-        Reduction += CountCodeReductionForConstant(&Inst);
+        Reduction += countCodeReductionForConstant(Metrics, &Inst);
       }
     }
   }
   return Reduction;
 }
 
-// CountCodeReductionForAlloca - Figure out an approximation of how much smaller
-// the function will be if it is inlined into a context where an argument
-// becomes an alloca.
-//
-unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
+unsigned InlineCostAnalyzer::FunctionInfo::countCodeReductionForAlloca(
+    const CodeMetrics &Metrics, Value *V) {
   if (!V->getType()->isPointerTy()) return 0;  // Not a pointer
   unsigned Reduction = 0;
 
@@ -331,7 +326,8 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
         if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
           BasicBlock *BB = BI->getSuccessor(Result ? 0 : 1);
           if (BB->getSinglePredecessor())
-            Reduction += InlineConstants::InstrCost * NumBBInsts[BB];
+            Reduction
+              += InlineConstants::InstrCost * Metrics.NumBBInsts.lookup(BB);
         }
       }
     } while (!Worklist.empty());
@@ -372,8 +368,8 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F,
   // code can be eliminated if one of the arguments is a constant.
   ArgumentWeights.reserve(F->arg_size());
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
-    ArgumentWeights.push_back(ArgInfo(Metrics.CountCodeReductionForConstant(I),
-                                      Metrics.CountCodeReductionForAlloca(I)));
+    ArgumentWeights.push_back(ArgInfo(countCodeReductionForConstant(Metrics, I),
+                                      countCodeReductionForAlloca(Metrics, I)));
 }
 
 /// NeverInline - returns true if the function should never be inlined into
