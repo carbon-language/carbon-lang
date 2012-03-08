@@ -45,7 +45,7 @@ class NumericLiteralParser {
 
   unsigned radix;
 
-  bool saw_exponent, saw_period;
+  bool saw_exponent, saw_period, saw_ud_suffix;
 
 public:
   NumericLiteralParser(const char *begin, const char *end,
@@ -64,8 +64,17 @@ public:
   bool isFloatingLiteral() const {
     return saw_period || saw_exponent;
   }
-  bool hasSuffix() const {
-    return SuffixBegin != ThisTokEnd;
+
+  bool hasUDSuffix() const {
+    return saw_ud_suffix;
+  }
+  StringRef getUDSuffix() const {
+    assert(saw_ud_suffix);
+    return StringRef(SuffixBegin, ThisTokEnd - SuffixBegin);
+  }
+  unsigned getUDSuffixOffset() const {
+    assert(saw_ud_suffix);
+    return SuffixBegin - ThisTokBegin;
   }
 
   unsigned getRadix() const { return radix; }

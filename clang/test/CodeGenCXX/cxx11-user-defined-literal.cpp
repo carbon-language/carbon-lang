@@ -4,15 +4,21 @@ struct S { S(); ~S(); S(const S &); void operator()(int); };
 using size_t = decltype(sizeof(int));
 S operator"" _x(const char *, size_t);
 S operator"" _y(wchar_t);
+S operator"" _z(unsigned long long);
+S operator"" _f(long double);
 
 void f() {
   // CHECK: call void @_Zli2_xPKcm({{.*}}, i8* getelementptr inbounds ([4 x i8]* @{{.*}}, i32 0, i32 0), i64 3)
   // CHECK: call void @_Zli2_xPKcm({{.*}}, i8* getelementptr inbounds ([4 x i8]* @{{.*}}, i32 0, i32 0), i64 3)
   // CHECK: call void @_Zli2_yw({{.*}} 97)
+  // CHECK: call void @_Zli2_zy({{.*}} 42)
+  // CHECK: call void @_Zli2_fe({{.*}} x86_fp80 0xK3FFF8000000000000000)
   // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
   // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
   // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
-  "foo"_x, "bar"_x, L'a'_y;
+  // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
+  // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
+  "foo"_x, "bar"_x, L'a'_y, 42_z, 1.0_f;
 }
 
 template<typename T> auto g(T t) -> decltype("foo"_x(t)) { return "foo"_x(t); }

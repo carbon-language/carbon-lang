@@ -215,6 +215,10 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     }
     assert(Literal.isIntegerLiteral() && "Unknown ppnumber");
 
+    // Complain about, and drop, any ud-suffix.
+    if (Literal.hasUDSuffix())
+      PP.Diag(PeekTok, diag::err_pp_invalid_udl) << /*integer*/1;
+
     // long long is a C99 feature.
     if (!PP.getLangOptions().C99 && Literal.isLongLong)
       PP.Diag(PeekTok, PP.getLangOptions().CPlusPlus0x ?
@@ -253,7 +257,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   case tok::utf32_char_constant:    // U'x'
     // Complain about, and drop, any ud-suffix.
     if (PeekTok.hasUDSuffix())
-      PP.Diag(PeekTok, diag::err_pp_invalid_char_udl);
+      PP.Diag(PeekTok, diag::err_pp_invalid_udl) << /*character*/0;
 
     SmallString<32> CharBuffer;
     bool CharInvalid = false;
