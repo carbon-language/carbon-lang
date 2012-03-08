@@ -59,8 +59,8 @@ namespace {
                                                *M, *TD, Diags));
     }
 
-    virtual void MarkVarRequired(VarDecl *VD) {
-      Builder->MarkVarRequired(VD);
+    virtual void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
+      Builder->HandleCXXStaticMemberVarInstantiation(VD);
     }
 
     virtual bool HandleTopLevelDecl(DeclGroupRef DG) {

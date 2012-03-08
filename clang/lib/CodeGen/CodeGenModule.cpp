@@ -1722,8 +1722,12 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
   }
 }
 
-void CodeGenModule::MarkVarRequired(VarDecl *VD) {
-  GetAddrOfGlobalVar(VD);
+void CodeGenModule::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
+  TemplateSpecializationKind TSK = VD->getTemplateSpecializationKind();
+  // If we have a definition, this might be a deferred decl. If the
+  // instantiation is explicit, make sure we emit it at the end.
+  if (VD->getDefinition() && TSK == TSK_ExplicitInstantiationDefinition)
+    GetAddrOfGlobalVar(VD);
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {

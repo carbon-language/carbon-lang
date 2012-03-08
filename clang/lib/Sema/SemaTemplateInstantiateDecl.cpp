@@ -2609,12 +2609,11 @@ void Sema::InstantiateStaticDataMemberDefinition(
   if (TSK == TSK_ExplicitInstantiationDeclaration)
     return;
 
+  Consumer.HandleCXXStaticMemberVarInstantiation(Var);
+
   // If we already have a definition, we're done.
-  if (Var->getDefinition()) {
-    if (TSK == TSK_ExplicitInstantiationDefinition)
-      Consumer.MarkVarRequired(Var);
+  if (Var->getDefinition())
     return;
-  }
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst)
