@@ -1,4 +1,4 @@
-// RUN: %clang --analyze %s -Xclang -analyzer-inline-call -o %t
+// RUN: %clang --analyze %s -Xclang -analyzer-ipa=inlining -o %t
 // RUN: FileCheck -input-file %t %s
 
 // <rdar://problem/10967815>

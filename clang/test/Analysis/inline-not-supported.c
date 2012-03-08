@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -analyze -analyzer-checker=core -analyzer-inline-call -analyzer-store region -verify %s
+// RUN: %clang_cc1 -fblocks -analyze -analyzer-checker=core -analyzer-ipa=inlining -analyzer-store region -verify %s
 
 // For now, don't inline varargs.
 void foo(int *x, ...) {

@@ -78,8 +78,29 @@ static const char *getAnalysisDiagClientName(AnalysisDiagClients Kind) {
 static const char *getAnalysisPurgeModeName(AnalysisPurgeMode Kind) {
   switch (Kind) {
   default:
-    llvm_unreachable("Unknown analysis client!");
+    llvm_unreachable("Unknown analysis purge mode!");
 #define ANALYSIS_PURGE(NAME, CMDFLAG, DESC) \
+  case NAME: return CMDFLAG;
+#include "clang/Frontend/Analyses.def"
+  }
+}
+
+static const char *getAnalysisIPAModeName(AnalysisIPAMode Kind) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown analysis ipa mode!");
+#define ANALYSIS_IPA(NAME, CMDFLAG, DESC) \
+  case NAME: return CMDFLAG;
+#include "clang/Frontend/Analyses.def"
+  }
+}
+
+static const char *
+  getAnalysisInliningModeName(AnalysisInliningMode Kind) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown analysis inlining mode!");
+#define ANALYSIS_INLINE_SELECTION(NAME, CMDFLAG, DESC) \
   case NAME: return CMDFLAG;
 #include "clang/Frontend/Analyses.def"
   }
@@ -113,6 +134,15 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyze-function");
     Res.push_back(Opts.AnalyzeSpecificFunction);
   }
+  if (Opts.IPAMode != Inlining) {
+    Res.push_back("-analyzer-ipa");
+    Res.push_back(getAnalysisIPAModeName(Opts.IPAMode));
+  }
+  if (Opts.InliningMode != All) {
+    Res.push_back("-analyzer-inlining-mode");
+    Res.push_back(getAnalysisInliningModeName(Opts.InliningMode));
+  }
+
   if (Opts.AnalyzeAll)
     Res.push_back("-analyzer-opt-analyze-headers");
   if (Opts.AnalyzerDisplayProgress)
@@ -1036,6 +1066,38 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     }
   }
 
+  if (Arg *A = Args.getLastArg(OPT_analyzer_ipa)) {
+    StringRef Name = A->getValue(Args);
+    AnalysisIPAMode Value = llvm::StringSwitch<AnalysisIPAMode>(Name)
+#define ANALYSIS_IPA(NAME, CMDFLAG, DESC) \
+      .Case(CMDFLAG, NAME)
+#include "clang/Frontend/Analyses.def"
+      .Default(NumIPAModes);
+    if (Value == NumIPAModes) {
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << Name;
+      Success = false;
+    } else {
+      Opts.IPAMode = Value;
+    }
+  }
+
+  if (Arg *A = Args.getLastArg(OPT_analyzer_inlining_mode)) {
+    StringRef Name = A->getValue(Args);
+    AnalysisInliningMode Value = llvm::StringSwitch<AnalysisInliningMode>(Name)
+#define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC) \
+      .Case(CMDFLAG, NAME)
+#include "clang/Frontend/Analyses.def"
+      .Default(NumInliningModes);
+    if (Value == NumInliningModes) {
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << Name;
+      Success = false;
+    } else {
+      Opts.InliningMode = Value;
+    }
+  }
+
   Opts.ShowCheckerHelp = Args.hasArg(OPT_analyzer_checker_help);
   Opts.VisualizeEGDot = Args.hasArg(OPT_analyzer_viz_egraph_graphviz);
   Opts.VisualizeEGUbi = Args.hasArg(OPT_analyzer_viz_egraph_ubigraph);
@@ -1052,8 +1114,6 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.MaxNodes = Args.getLastArgIntValue(OPT_analyzer_max_nodes, 150000,Diags);
   Opts.MaxLoop = Args.getLastArgIntValue(OPT_analyzer_max_loop, 4, Diags);
   Opts.EagerlyTrimEGraph = !Args.hasArg(OPT_analyzer_no_eagerly_trim_egraph);
-  if (Args.hasArg(OPT_analyzer_inline_call))
-    Opts.InlineCall = 1;
   Opts.PrintStats = Args.hasArg(OPT_analyzer_stats);
   Opts.InlineMaxStackDepth =
     Args.getLastArgIntValue(OPT_analyzer_inline_max_stack_depth,

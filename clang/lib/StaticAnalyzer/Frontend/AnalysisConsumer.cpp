@@ -167,12 +167,14 @@ public:
                                   Opts.MaxNodes, Opts.MaxLoop,
                                   Opts.VisualizeEGDot, Opts.VisualizeEGUbi,
                                   Opts.AnalysisPurgeOpt, Opts.EagerlyAssume,
-                                  Opts.TrimGraph, Opts.InlineCall,
+                                  Opts.TrimGraph,
                                   Opts.UnoptimizedCFG, Opts.CFGAddImplicitDtors,
                                   Opts.CFGAddInitializers,
                                   Opts.EagerlyTrimEGraph,
+                                  Opts.IPAMode,
                                   Opts.InlineMaxStackDepth,
-                                  Opts.InlineMaxFunctionSize));
+                                  Opts.InlineMaxFunctionSize,
+                                  Opts.InliningMode));
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);

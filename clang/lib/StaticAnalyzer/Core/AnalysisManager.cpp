@@ -27,21 +27,25 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  bool vizdot, bool vizubi,
                                  AnalysisPurgeMode purge,
                                  bool eager, bool trim,
-                                 bool inlinecall, bool useUnoptimizedCFG,
+                                 bool useUnoptimizedCFG,
                                  bool addImplicitDtors, bool addInitializers,
                                  bool eagerlyTrimEGraph,
+                                 AnalysisIPAMode ipa,
                                  unsigned inlineMaxStack,
-                                 unsigned inlineMaxFunctionSize)
+                                 unsigned inlineMaxFunctionSize,
+                                 AnalysisInliningMode IMode)
   : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
     Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
     CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
     CheckerMgr(checkerMgr), Idxer(idxer),
     AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
     VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-    EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall),
+    EagerlyAssume(eager), TrimGraph(trim),
     EagerlyTrimEGraph(eagerlyTrimEGraph),
+    IPAMode(ipa),
     InlineMaxStackDepth(inlineMaxStack),
-    InlineMaxFunctionSize(inlineMaxFunctionSize)
+    InlineMaxFunctionSize(inlineMaxFunctionSize),
+    InliningMode(IMode)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
@@ -65,10 +69,11 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     PurgeDead(ParentAM.PurgeDead),
     EagerlyAssume(ParentAM.EagerlyAssume),
     TrimGraph(ParentAM.TrimGraph),
-    InlineCall(ParentAM.InlineCall),
     EagerlyTrimEGraph(ParentAM.EagerlyTrimEGraph),
+    IPAMode(ParentAM.IPAMode),
     InlineMaxStackDepth(ParentAM.InlineMaxStackDepth),
-    InlineMaxFunctionSize(ParentAM.InlineMaxFunctionSize)
+    InlineMaxFunctionSize(ParentAM.InlineMaxFunctionSize),
+    InliningMode(ParentAM.InliningMode)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }

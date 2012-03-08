@@ -60,6 +60,20 @@ enum AnalysisPurgeMode {
 NumPurgeModes
 };
 
+/// AnalysisIPAMode - Set of inter-procedural modes.
+enum AnalysisIPAMode {
+#define ANALYSIS_IPA(NAME, CMDFLAG, DESC) NAME,
+#include "clang/Frontend/Analyses.def"
+NumIPAModes
+};
+
+/// AnalysisInlineFunctionSelection - Set of inlining function selection heuristics.
+enum AnalysisInliningMode {
+#define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC) NAME,
+#include "clang/Frontend/Analyses.def"
+NumInliningModes
+};
+
 class AnalyzerOptions {
 public:
   /// \brief Pair of checker name and enable/disable.
@@ -68,6 +82,7 @@ public:
   AnalysisConstraints AnalysisConstraintsOpt;
   AnalysisDiagClients AnalysisDiagOpt;
   AnalysisPurgeMode AnalysisPurgeOpt;
+  AnalysisIPAMode IPAMode;
   std::string AnalyzeSpecificFunction;
   unsigned MaxNodes;
   unsigned MaxLoop;
@@ -79,7 +94,6 @@ public:
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;
   unsigned VisualizeEGUbi : 1;
-  unsigned InlineCall : 1;
   unsigned UnoptimizedCFG : 1;
   unsigned CFGAddImplicitDtors : 1;
   unsigned CFGAddInitializers : 1;
@@ -87,6 +101,7 @@ public:
   unsigned PrintStats : 1;
   unsigned InlineMaxStackDepth;
   unsigned InlineMaxFunctionSize;
+  AnalysisInliningMode InliningMode;
 
 public:
   AnalyzerOptions() {
@@ -94,6 +109,7 @@ public:
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
     AnalysisPurgeOpt = PurgeStmt;
+    IPAMode = Inlining;
     ShowCheckerHelp = 0;
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
@@ -102,7 +118,6 @@ public:
     TrimGraph = 0;
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;
-    InlineCall = 1;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
     CFGAddInitializers = 0;
@@ -111,6 +126,7 @@ public:
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
     InlineMaxStackDepth = 5;
     InlineMaxFunctionSize = 200;
+    InliningMode = All;
   }
 };
 

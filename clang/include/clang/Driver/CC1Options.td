@@ -80,12 +80,25 @@ def analyzer_viz_egraph_graphviz : Flag<"-analyzer-viz-egraph-graphviz">,
   HelpText<"Display exploded graph using GraphViz">;
 def analyzer_viz_egraph_ubigraph : Flag<"-analyzer-viz-egraph-ubigraph">,
   HelpText<"Display exploded graph using Ubigraph">;
-def analyzer_inline_call : Flag<"-analyzer-inline-call">,
-  HelpText<"Experimental: Inline callees when their definitions are available">;
+
 def analyzer_inline_max_stack_depth : Separate<"-analyzer-inline-max-stack-depth">,
   HelpText<"Bound on stack depth while inlining (4 by default)">;
+def analyzer_inline_max_stack_depth_EQ : Joined<"-analyzer-inline-max-stack-depth=">, 
+  Alias<analyzer_inline_max_stack_depth>;
+  
 def analyzer_inline_max_function_size : Separate<"-analyzer-inline-max-function-size">,
   HelpText<"Bound on the number of basic blocks in an inlined function (200 by default)">;
+def analyzer_inline_max_function_size_EQ : Joined<"-analyzer-inline-max-function-size=">, 
+  Alias<analyzer_inline_max_function_size>;
+
+def analyzer_ipa : Separate<"-analyzer-ipa">,
+  HelpText<"Specify the inter-procedural analysis mode">;
+def analyzer_ipa_EQ : Joined<"-analyzer-ipa=">, Alias<analyzer_ipa>;
+  
+def analyzer_inlining_mode : Separate<"-analyzer-inlining-mode">,
+  HelpText<"Specify the function selection heuristic used during inlining">;
+def analyzer_inlining_mode_EQ : Joined<"-analyzer-inlining-mode=">, Alias<analyzer_inlining_mode>;
+  
 def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
   HelpText<"The maximum number of nodes the analyzer can generate (150000 default, 0 = no limit)">;
 def analyzer_max_loop : Separate<"-analyzer-max-loop">,

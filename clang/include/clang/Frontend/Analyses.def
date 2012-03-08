@@ -41,8 +41,24 @@ ANALYSIS_PURGE(PurgeStmt,  "statement", "Purge symbols, bindings, and constraint
 ANALYSIS_PURGE(PurgeBlock, "block", "Purge symbols, bindings, and constraints before every basic block")
 ANALYSIS_PURGE(PurgeNone,  "none", "Do not purge symbols, bindings, or constraints")
 
+#ifndef ANALYSIS_IPA
+#define ANALYSIS_IPA(NAME, CMDFLAG, DESC)
+#endif
+
+ANALYSIS_IPA(None, "none", "Perform only intra-procedural analysis")
+ANALYSIS_IPA(Inlining, "inlining", "Experimental: Inline callees when their definitions are available")
+
+#ifndef ANALYSIS_INLINING_MODE
+#define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC)
+#endif
+
+ANALYSIS_INLINING_MODE(All,  "all", "Analyze all functions in the order defined in the TU")
+ANALYSIS_INLINING_MODE(NoRedundancy, "noredundancy", "Do not analyze a function which has been previously inlined, use call graph to order")
+
 #undef ANALYSIS_STORE
 #undef ANALYSIS_CONSTRAINTS
 #undef ANALYSIS_DIAGNOSTICS
 #undef ANALYSIS_PURGE
+#undef ANALYSIS_INLINING_MODE
+#undef ANALYSIS_IPA
 
