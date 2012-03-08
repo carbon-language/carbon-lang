@@ -182,7 +182,7 @@ test and then leave the fuzzed inputs in place to examine the failure.
 For each fuzzed input, %prog will run the test command given on the command
 line. Each argument in the command is subject to string interpolation before
 being executed. The syntax is "%(VARIABLE)FORMAT" where FORMAT is a standard
-printf format, and VARIBLE is one of:
+printf format, and VARIABLE is one of:
 
   'index' - the test index being run
   'inputs' - the full list of test inputs
