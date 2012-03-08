@@ -576,6 +576,39 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG& DAG,
   return CreateCMovFP(DAG, Cond, True, False, N->getDebugLoc());
 }
 
+static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG& DAG,
+                                    TargetLowering::DAGCombinerInfo &DCI,
+                                    const MipsSubtarget* Subtarget) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  SDValue SetCC = N->getOperand(0);
+
+  if ((SetCC.getOpcode() != ISD::SETCC) ||
+      !SetCC.getOperand(0).getValueType().isInteger())
+    return SDValue();
+
+  SDValue False = N->getOperand(2);
+  EVT FalseTy = False.getValueType();
+
+  if (!FalseTy.isInteger())
+    return SDValue();
+
+  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(False);
+
+  if (!CN || CN->getZExtValue())
+    return SDValue();
+
+  const DebugLoc DL = N->getDebugLoc();
+  ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
+  SDValue True = N->getOperand(1);
+  
+  SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
+                       SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+  
+  return DAG.getNode(ISD::SELECT, DL, FalseTy, SetCC, False, True);
+}
+
 static SDValue PerformANDCombine(SDNode *N, SelectionDAG& DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const MipsSubtarget* Subtarget) {
@@ -686,6 +719,8 @@ SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
     return PerformDivRemCombine(N, DAG, DCI, Subtarget);
   case ISD::SETCC:
     return PerformSETCCCombine(N, DAG, DCI, Subtarget);
+  case ISD::SELECT:
+    return PerformSELECTCombine(N, DAG, DCI, Subtarget);  
   case ISD::AND:
     return PerformANDCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:
