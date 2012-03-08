@@ -983,7 +983,7 @@ bool NamedDecl::hasLinkage() const {
   return getLinkage() != NoLinkage;
 }
 
-NamedDecl *NamedDecl::getUnderlyingDecl() {
+NamedDecl *NamedDecl::getUnderlyingDeclImpl() {
   NamedDecl *ND = this;
   while (true) {
     if (UsingShadowDecl *UD = dyn_cast<UsingShadowDecl>(ND))

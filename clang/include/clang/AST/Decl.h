@@ -323,7 +323,13 @@ public:
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
-  NamedDecl *getUnderlyingDecl();
+  NamedDecl *getUnderlyingDecl() {
+    if (!(this->getKind() == UsingShadow) &&
+        !(this->getKind() == ObjCCompatibleAlias))
+      return this;
+    return getUnderlyingDeclImpl();
+  }
+  NamedDecl *getUnderlyingDeclImpl();
   const NamedDecl *getUnderlyingDecl() const {
     return const_cast<NamedDecl*>(this)->getUnderlyingDecl();
   }
