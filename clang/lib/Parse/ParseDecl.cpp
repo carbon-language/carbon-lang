@@ -818,7 +818,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
                                                         OrigLoc))
     while (Tok.getLocation() != OrigLoc && Tok.isNot(tok::eof))
-        ConsumeAnyToken();
+      ConsumeAnyToken();
   }
 }
 

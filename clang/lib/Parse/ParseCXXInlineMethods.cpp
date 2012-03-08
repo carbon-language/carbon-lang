@@ -193,7 +193,7 @@ void Parser::ParseCXXNonStaticMemberInitializer(Decl *VarD) {
   tok::TokenKind kind = Tok.getKind();
   if (kind == tok::equal) {
     Toks.push_back(Tok);
-    ConsumeAnyToken();
+    ConsumeToken();
   }
 
   if (kind == tok::l_brace) {

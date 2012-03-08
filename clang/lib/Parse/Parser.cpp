@@ -1651,68 +1651,43 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
   return Actions.ConvertDeclToDeclGroup(Import.get());
 }
 
-bool Parser::BalancedDelimiterTracker::consumeOpen() {
-  // Try to consume the token we are holding
-  if (P.Tok.is(Kind)) {
-    P.QuantityTracker.push(Kind);
-    Cleanup = true;
-    if (P.QuantityTracker.getDepth(Kind) < MaxDepth) {
-      LOpen = P.ConsumeAnyToken();
-      return false;
-    } else {
-      P.Diag(P.Tok, diag::err_parser_impl_limit_overflow);
-      P.SkipUntil(tok::eof);
-    }
-  }
-  return true;
+bool Parser::BalancedDelimiterTracker::diagnoseOverflow() {
+  P.Diag(P.Tok, diag::err_parser_impl_limit_overflow);
+  P.SkipUntil(tok::eof);
+  return true;  
 }
 
 bool Parser::BalancedDelimiterTracker::expectAndConsume(unsigned DiagID, 
                                             const char *Msg,
                                             tok::TokenKind SkipToToc ) {
   LOpen = P.Tok.getLocation();
-  if (!P.ExpectAndConsume(Kind, DiagID, Msg, SkipToToc)) {
-    P.QuantityTracker.push(Kind);
-    Cleanup = true;
-    if (P.QuantityTracker.getDepth(Kind) < MaxDepth) {
-      return false;
-    } else {
-      P.Diag(P.Tok, diag::err_parser_impl_limit_overflow);
-      P.SkipUntil(tok::eof);
-    }
-  }
-  return true;
+  if (P.ExpectAndConsume(Kind, DiagID, Msg, SkipToToc))
+    return true;
+  
+  if (getDepth() < MaxDepth)
+    return false;
+    
+  return diagnoseOverflow();
 }
 
-bool Parser::BalancedDelimiterTracker::consumeClose() {
-  if (P.Tok.is(Close)) {
-    LClose = P.ConsumeAnyToken();
-    if (Cleanup)
-      P.QuantityTracker.pop(Kind);
-
-    Cleanup = false;
-    return false;
-  } else {
-    const char *LHSName = "unknown";
-    diag::kind DID = diag::err_parse_error;
-    switch (Close) {
-    default: break;
-    case tok::r_paren : LHSName = "("; DID = diag::err_expected_rparen; break;
-    case tok::r_brace : LHSName = "{"; DID = diag::err_expected_rbrace; break;
-    case tok::r_square: LHSName = "["; DID = diag::err_expected_rsquare; break;
-    case tok::greater:  LHSName = "<"; DID = diag::err_expected_greater; break;
-    case tok::greatergreatergreater:
-                        LHSName = "<<<"; DID = diag::err_expected_ggg; break;
-    }
-    P.Diag(P.Tok, DID);
-    P.Diag(LOpen, diag::note_matching) << LHSName;
-    if (P.SkipUntil(Close))
-      LClose = P.Tok.getLocation();
+bool Parser::BalancedDelimiterTracker::diagnoseMissingClose() {
+  assert(!P.Tok.is(Close) && "Should have consumed closing delimiter");
+  
+  const char *LHSName = "unknown";
+  diag::kind DID = diag::err_parse_error;
+  switch (Close) {
+  default: break;
+  case tok::r_paren : LHSName = "("; DID = diag::err_expected_rparen; break;
+  case tok::r_brace : LHSName = "{"; DID = diag::err_expected_rbrace; break;
+  case tok::r_square: LHSName = "["; DID = diag::err_expected_rsquare; break;
   }
+  P.Diag(P.Tok, DID);
+  P.Diag(LOpen, diag::note_matching) << LHSName;
+  if (P.SkipUntil(Close))
+    LClose = P.Tok.getLocation();
   return true;
 }
 
 void Parser::BalancedDelimiterTracker::skipToEnd() {
   P.SkipUntil(Close, false);
-  Cleanup = false;
 }

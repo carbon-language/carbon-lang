@@ -432,87 +432,77 @@ private:
     return PP.LookAhead(0);
   }
 
-  class BalancedDelimiterTracker;
-
-  /// \brief Tracks information about the current nesting depth of
-  /// opening delimiters of each kind.
-  class DelimiterTracker {
-  private:
-    friend class Parser;
-    friend class BalancedDelimiterTracker;
-
-    unsigned Paren, Brace, Square, Less, LLLess;
-    unsigned& get(tok::TokenKind t) {
-      switch (t) {
-      default: llvm_unreachable("Unexpected balanced token");
-      case tok::l_brace:  return Brace;
-      case tok::l_paren:  return Paren;
-      case tok::l_square: return Square;
-      case tok::less:  return Less;
-      case tok::lesslessless:  return LLLess;
-      }
-    }
-
-    void push(tok::TokenKind t) {
-      get(t)++;
-    }
-
-    void pop(tok::TokenKind t) {
-      get(t)--;
-    }
-
-    unsigned getDepth(tok::TokenKind t) {
-      return get(t);
-    }
-
-  public:
-    DelimiterTracker() : Paren(0), Brace(0), Square(0), Less(0), LLLess(0) { }
-  };
-
   /// \brief RAII class that helps handle the parsing of an open/close delimiter
   /// pair, such as braces { ... } or parentheses ( ... ).
   class BalancedDelimiterTracker {
-    tok::TokenKind Kind, Close;
     Parser& P;
-    bool Cleanup;
-    const unsigned MaxDepth;
+    tok::TokenKind Kind, Close;
+    SourceLocation (Parser::*Consumer)();
     SourceLocation LOpen, LClose;
 
-    void assignClosingDelimiter() {
+    unsigned short &getDepth() {
       switch (Kind) {
-      default: llvm_unreachable("Unexpected balanced token");
-      case tok::l_brace:  Close = tok::r_brace; break;
-      case tok::l_paren:  Close = tok::r_paren; break;
-      case tok::l_square: Close = tok::r_square; break;
-      case tok::less:  Close = tok::greater; break;
-      case tok::lesslessless:  Close = tok::greatergreatergreater; break;
+      case tok::l_brace: return P.BraceCount;
+      case tok::l_square: return P.BracketCount;
+      case tok::l_paren: return P.ParenCount;
+      default: llvm_unreachable("Wrong token kind");
       }
     }
-
+    
+    enum { MaxDepth = 256 };
+    
+    bool diagnoseOverflow();
+    bool diagnoseMissingClose();
+    
   public:
-    BalancedDelimiterTracker(Parser& p, tok::TokenKind k)
-      : Kind(k), P(p), Cleanup(false), MaxDepth(256) {
-      assignClosingDelimiter();
-    }
-
-    ~BalancedDelimiterTracker() {
-      if (Cleanup)
-        P.QuantityTracker.pop(Kind);
+    BalancedDelimiterTracker(Parser& p, tok::TokenKind k) : P(p), Kind(k) {
+      switch (Kind) {
+      default: llvm_unreachable("Unexpected balanced token");
+      case tok::l_brace:
+        Close = tok::r_brace; 
+        Consumer = &Parser::ConsumeBrace;
+        break;
+      case tok::l_paren:
+        Close = tok::r_paren; 
+        Consumer = &Parser::ConsumeParen;
+        break;
+        
+      case tok::l_square:
+        Close = tok::r_square; 
+        Consumer = &Parser::ConsumeBracket;
+        break;
+      }      
     }
 
     SourceLocation getOpenLocation() const { return LOpen; }
     SourceLocation getCloseLocation() const { return LClose; }
     SourceRange getRange() const { return SourceRange(LOpen, LClose); }
 
-    bool consumeOpen();
+    bool consumeOpen() {
+      if (!P.Tok.is(Kind))
+        return true;
+      
+      if (getDepth() < MaxDepth) {
+        LOpen = (P.*Consumer)();
+        return false;
+      }
+      
+      return diagnoseOverflow();
+    }
+    
     bool expectAndConsume(unsigned DiagID,
                           const char *Msg = "",
                           tok::TokenKind SkipToTok = tok::unknown);
-    bool consumeClose();
+    bool consumeClose() {
+      if (P.Tok.is(Close)) {
+        LClose = (P.*Consumer)();
+        return false;
+      } 
+
+      return diagnoseMissingClose();
+    }
     void skipToEnd();
   };
-
-  DelimiterTracker QuantityTracker;
 
   /// getTypeAnnotation - Read a parsed type out of an annotation token.
   static ParsedType getTypeAnnotation(Token &Tok) {
