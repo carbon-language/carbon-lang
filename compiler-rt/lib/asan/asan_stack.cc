@@ -69,7 +69,7 @@ void AsanStackTrace::FastUnwindStack(uintptr_t pc, uintptr_t bp) {
   uintptr_t *top = (uintptr_t*)t->stack_top();
   uintptr_t *bottom = (uintptr_t*)t->stack_bottom();
   while (frame >= prev_frame &&
-         frame < top &&
+         frame < top - 2 &&
          frame > bottom &&
          size < max_size) {
     uintptr_t pc1 = frame[1];
