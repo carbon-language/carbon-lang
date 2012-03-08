@@ -2392,17 +2392,17 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
   printBranchToBlock(SI.getParent(), SI.getDefaultDest(), 2);
   Out << ";\n";
 
-  unsigned NumCases = SI.getNumCases();
   // Skip the first item since that's the default case.
-  for (unsigned i = 0; i < NumCases; ++i) {
-    ConstantInt* CaseVal = SI.getCaseValue(i);
-    BasicBlock* Succ = SI.getCaseSuccessor(i);
+  for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd(); i != e; ++i) {
+    ConstantInt* CaseVal = i.getCaseValue();
+    BasicBlock* Succ = i.getCaseSuccessor();
     Out << "  case ";
     writeOperand(CaseVal);
     Out << ":\n";
     printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
     printBranchToBlock(SI.getParent(), Succ, 2);
-    if (Function::iterator(Succ) == llvm::next(Function::iterator(SI.getParent())))
+    if (Function::iterator(Succ) ==
+        llvm::next(Function::iterator(SI.getParent())))
       Out << "    break;\n";
   }
 

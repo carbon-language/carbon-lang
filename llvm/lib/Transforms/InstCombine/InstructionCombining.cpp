@@ -1245,15 +1245,15 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
     if (I->getOpcode() == Instruction::Add)
       if (ConstantInt *AddRHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
         // change 'switch (X+4) case 1:' into 'switch (X) case -3'
-        unsigned NumCases = SI.getNumCases();
         // Skip the first item since that's the default case.
-        for (unsigned i = 0; i < NumCases; ++i) {
-          ConstantInt* CaseVal = SI.getCaseValue(i);
+        for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd();
+             i != e; ++i) {
+          ConstantInt* CaseVal = i.getCaseValue();
           Constant* NewCaseVal = ConstantExpr::getSub(cast<Constant>(CaseVal),
                                                       AddRHS);
           assert(isa<ConstantInt>(NewCaseVal) &&
                  "Result of expression should be constant");
-          SI.setCaseValue(i, cast<ConstantInt>(NewCaseVal));
+          i.setValue(cast<ConstantInt>(NewCaseVal));
         }
         SI.setCondition(I->getOperand(0));
         Worklist.Add(I);
@@ -1873,9 +1873,10 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
       if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
         // See if this is an explicit destination.
-        for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i)
-          if (SI->getCaseValue(i) == Cond) {
-            BasicBlock *ReachableBB = SI->getCaseSuccessor(i);
+        for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+             i != e; ++i)
+          if (i.getCaseValue() == Cond) {
+            BasicBlock *ReachableBB = i.getCaseSuccessor();
             Worklist.push_back(ReachableBB);
             continue;
           }

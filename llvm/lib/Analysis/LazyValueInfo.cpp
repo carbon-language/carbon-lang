@@ -866,10 +866,11 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
       // BBFrom to BBTo.
       unsigned NumEdges = 0;
       ConstantInt *EdgeVal = 0;
-      for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
-        if (SI->getCaseSuccessor(i) != BBTo) continue;
+      for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+           i != e; ++i) {
+        if (i.getCaseSuccessor() != BBTo) continue;
         if (NumEdges++) break;
-        EdgeVal = SI->getCaseValue(i);
+        EdgeVal = i.getCaseValue();
       }
       assert(EdgeVal && "Missing successor?");
       if (NumEdges == 1) {

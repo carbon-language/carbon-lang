@@ -2411,14 +2411,14 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
 
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
   // Start with "simple" cases
-  for (size_t i = 0; i < SI.getNumCases(); ++i) {
-    BasicBlock *SuccBB = SI.getCaseSuccessor(i);
+  for (SwitchInst::ConstCaseIt i = SI.caseBegin(), e = SI.caseEnd();
+       i != e; ++i) {
+    const BasicBlock *SuccBB = i.getCaseSuccessor();
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[SuccBB];
 
     uint32_t ExtraWeight = BPI ? BPI->getEdgeWeight(SI.getParent(), SuccBB) : 0;
 
-    Cases.push_back(Case(SI.getCaseValue(i),
-                         SI.getCaseValue(i),
+    Cases.push_back(Case(i.getCaseValue(), i.getCaseValue(),
                          SMBB, ExtraWeight));
   }
   std::sort(Cases.begin(), Cases.end(), CaseCmp());

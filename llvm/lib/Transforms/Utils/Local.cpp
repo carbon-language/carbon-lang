@@ -106,31 +106,32 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
     // If we are switching on a constant, we can convert the switch into a
     // single branch instruction!
     ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition());
-    BasicBlock *TheOnlyDest = SI->getDefaultDest();  // The default dest
+    BasicBlock *TheOnlyDest = SI->getDefaultDest();
     BasicBlock *DefaultDest = TheOnlyDest;
 
     // Figure out which case it goes to.
-    for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
+    for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+         i != e; ++i) {
       // Found case matching a constant operand?
-      if (SI->getCaseValue(i) == CI) {
-        TheOnlyDest = SI->getCaseSuccessor(i);
+      if (i.getCaseValue() == CI) {
+        TheOnlyDest = i.getCaseSuccessor();
         break;
       }
 
       // Check to see if this branch is going to the same place as the default
       // dest.  If so, eliminate it as an explicit compare.
-      if (SI->getCaseSuccessor(i) == DefaultDest) {
+      if (i.getCaseSuccessor() == DefaultDest) {
         // Remove this entry.
         DefaultDest->removePredecessor(SI->getParent());
         SI->removeCase(i);
-        --i; --e;  // Don't skip an entry...
+        --i; --e;
         continue;
       }
 
       // Otherwise, check to see if the switch only branches to one destination.
       // We do this by reseting "TheOnlyDest" to null when we find two non-equal
       // destinations.
-      if (SI->getCaseSuccessor(i) != TheOnlyDest) TheOnlyDest = 0;
+      if (i.getCaseSuccessor() != TheOnlyDest) TheOnlyDest = 0;
     }
 
     if (CI && !TheOnlyDest) {
@@ -167,11 +168,13 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
     if (SI->getNumCases() == 1) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
+      SwitchInst::CaseIt FirstCase = SI->caseBegin();
       Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
-                                         SI->getCaseValue(0), "cond");
+          FirstCase.getCaseValue(), "cond");
 
       // Insert the new branch.
-      Builder.CreateCondBr(Cond, SI->getCaseSuccessor(0), SI->getDefaultDest());
+      Builder.CreateCondBr(Cond, FirstCase.getCaseSuccessor(),
+                           SI->getDefaultDest());
 
       // Delete the old switch.
       SI->eraseFromParent();

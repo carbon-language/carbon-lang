@@ -1142,9 +1142,10 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals.push_back(VE.getTypeID(SI.getCondition()->getType()));
       Vals.push_back(VE.getValueID(SI.getCondition()));
       Vals.push_back(VE.getValueID(SI.getDefaultDest()));
-      for (unsigned i = 0, e = SI.getNumCases(); i != e; ++i) {
-        Vals.push_back(VE.getValueID(SI.getCaseValue(i)));
-        Vals.push_back(VE.getValueID(SI.getCaseSuccessor(i)));
+      for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd();
+           i != e; ++i) {
+        Vals.push_back(VE.getValueID(i.getCaseValue()));
+        Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
       }
     }
     break;

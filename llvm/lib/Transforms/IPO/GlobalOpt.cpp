@@ -2582,8 +2582,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
         ConstantInt *Val =
           dyn_cast<ConstantInt>(getVal(SI->getCondition()));
         if (!Val) return false;  // Cannot determine.
-        unsigned ValTISucc = SI->resolveSuccessorIndex(SI->findCaseValue(Val));
-        NextBB = SI->getSuccessor(ValTISucc);
+        NextBB = SI->findCaseValue(Val).getCaseSuccessor();
       } else if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(CurInst)) {
         Value *Val = getVal(IBI->getAddress())->stripPointerCasts();
         if (BlockAddress *BA = dyn_cast<BlockAddress>(Val))

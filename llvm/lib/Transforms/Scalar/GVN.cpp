@@ -2158,10 +2158,11 @@ bool GVN::processInstruction(Instruction *I) {
     Value *SwitchCond = SI->getCondition();
     BasicBlock *Parent = SI->getParent();
     bool Changed = false;
-    for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
-      BasicBlock *Dst = SI->getCaseSuccessor(i);
+    for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+         i != e; ++i) {
+      BasicBlock *Dst = i.getCaseSuccessor();
       if (isOnlyReachableViaThisEdge(Parent, Dst, DT))
-        Changed |= propagateEquality(SwitchCond, SI->getCaseValue(i), Dst);
+        Changed |= propagateEquality(SwitchCond, i.getCaseValue(), Dst);
     }
     return Changed;
   }

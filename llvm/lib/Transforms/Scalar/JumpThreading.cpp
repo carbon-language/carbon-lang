@@ -1087,8 +1087,7 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
     else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
       DestBB = BI->getSuccessor(cast<ConstantInt>(Val)->isZero());
     else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
-      unsigned ValCase = SI->findCaseValue(cast<ConstantInt>(Val));
-      DestBB = SI->getSuccessor(SI->resolveSuccessorIndex(ValCase));
+      DestBB = SI->findCaseValue(cast<ConstantInt>(Val)).getCaseSuccessor();
     } else {
       assert(isa<IndirectBrInst>(BB->getTerminator())
               && "Unexpected terminator");

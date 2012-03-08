@@ -1731,12 +1731,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ", ";
     writeOperand(SI.getDefaultDest(), true);
     Out << " [";
-    unsigned NumCases = SI.getNumCases();
-    for (unsigned i = 0; i < NumCases; ++i) {
+    for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd();
+         i != e; ++i) {
       Out << "\n    ";
-      writeOperand(SI.getCaseValue(i), true);
+      writeOperand(i.getCaseValue(), true);
       Out << ", ";
-      writeOperand(SI.getCaseSuccessor(i), true);
+      writeOperand(i.getCaseSuccessor(), true);
     }
     Out << "\n  ]";
   } else if (isa<IndirectBrInst>(I)) {
