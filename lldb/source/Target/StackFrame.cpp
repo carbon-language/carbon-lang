@@ -724,13 +724,23 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 
                                 if (valobj_sp->IsPointerType ())
                                 {
-                                    if (no_synth_child == false
-                                        && 
-                                        ClangASTType::GetMinimumLanguage(valobj_sp->GetClangAST(),
-                                                                         valobj_sp->GetClangType()) == eLanguageTypeObjC /* is ObjC pointer */
-                                        &&
-                                        ClangASTContext::IsPointerType(ClangASTType::GetPointeeType(valobj_sp->GetClangType())) == false /* is not double-ptr */)
+                                    bool is_objc_pointer = true;
+                                    
+                                    if (ClangASTType::GetMinimumLanguage(valobj_sp->GetClangAST(), valobj_sp->GetClangType()) != eLanguageTypeObjC)
+                                        is_objc_pointer = false;
+                                    else if (!ClangASTContext::IsPointerType(valobj_sp->GetClangType()))
+                                        is_objc_pointer = false;
+
+                                    if (no_synth_child && is_objc_pointer)
                                     {
+                                        error.SetErrorStringWithFormat("\"(%s) %s\" is an Objective-C pointer, and cannot be subscripted",
+                                                                       valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                       var_expr_path_strm.GetString().c_str());
+                                        
+                                        return ValueObjectSP();
+                                    }
+                                    else if (is_objc_pointer)
+                                    {                                            
                                         // dereferencing ObjC variables is not valid.. so let's try and recur to synthetic children
                                         ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(eUseSyntheticFilter);
                                         if (synthetic.get() == NULL /* no synthetic */

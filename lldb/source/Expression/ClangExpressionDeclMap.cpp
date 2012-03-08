@@ -2807,9 +2807,7 @@ ClangExpressionDeclMap::GetVariableValue
         return NULL;
     }
 
-#ifdef EXPRESSION_PARSER_SUPPORTS_BLOCKS
     var_opaque_type = MaybePromoteToBlockPointerType (ast, var_opaque_type);
-#endif
     
     DWARFExpression &var_location_expr = var->LocationExpression();
     

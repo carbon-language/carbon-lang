@@ -48,8 +48,6 @@ class AnonymousTestCase(TestBase):
             substrs = ['stopped',
                        'stop reason = breakpoint'])
 
-    # <rdar://problem/10413887>
-    @unittest2.expectedFailure
     def expr(self):
         self.common_setup()
 

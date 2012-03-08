@@ -27,7 +27,8 @@ ObjCLanguageRuntime::~ObjCLanguageRuntime()
 }
 
 ObjCLanguageRuntime::ObjCLanguageRuntime (Process *process) :
-    LanguageRuntime (process)
+    LanguageRuntime (process),
+    m_has_new_literals_and_indexing (eLazyBoolCalculate)
 {
 
 }

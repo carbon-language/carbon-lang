@@ -21,8 +21,8 @@ our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "151777";
-our $clang_revision = "151777";
+our $llvm_revision = "152265";
+our $clang_revision = "152265";
 
 our $SRCROOT = "$ENV{SRCROOT}";
 our $llvm_dstroot_zip = "$SRCROOT/llvm.zip";
@@ -52,6 +52,7 @@ our @archive_files = (
 	"$llvm_configuration/lib/libclangAST.a",
 	"$llvm_configuration/lib/libclangBasic.a",
 	"$llvm_configuration/lib/libclangCodeGen.a",
+    "$llvm_configuration/lib/libclangEdit.a",
 	"$llvm_configuration/lib/libclangFrontend.a",
 	"$llvm_configuration/lib/libclangDriver.a",
 	"$llvm_configuration/lib/libclangIndex.a",

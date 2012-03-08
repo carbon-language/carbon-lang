@@ -2217,6 +2217,17 @@ ObjectFileMachO::GetEntryPointAddress ()
                 }
             }
             break;
+        case LoadCommandMain:
+            {
+                ConstString text_segment_name ("__TEXT");
+                uint64_t entryoffset = m_data.GetU64(&offset);
+                SectionSP text_segment_sp = GetSectionList()->FindSectionByName(text_segment_name);
+                if (text_segment_sp)
+                {
+                    done = true;
+                    start_address = text_segment_sp->GetFileAddress() + entryoffset;
+                }
+            }
 
         default:
             break;

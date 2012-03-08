@@ -352,3 +352,21 @@ AppleObjCRuntime::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
     
     return false;
 }
+
+bool
+AppleObjCRuntime::CalculateHasNewLiteralsAndIndexing()
+{
+    if (!m_process)
+        return false;
+    
+    Target &target(m_process->GetTarget());
+    
+    static ConstString s_method_signature("-[NSDictionary objectForKeyedSubscript:]");
+    
+    SymbolContextList sc_list;
+    
+    if (target.GetImages().FindSymbolsWithNameAndType(s_method_signature, eSymbolTypeCode, sc_list))
+        return true;
+    else
+        return false;
+}

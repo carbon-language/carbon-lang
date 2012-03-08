@@ -224,6 +224,10 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         break;
     }
     
+    m_compiler->getLangOpts().DebuggerSupport = true; // Features specifically for debugger clients
+    if (expr.DesiredResultType() == ClangExpression::eResultTypeId)
+        m_compiler->getLangOpts().DebuggerCastResultToId = true;
+    
     lldb::ProcessSP process_sp;
     if (exe_scope)
         process_sp = exe_scope->CalculateProcess();
@@ -237,16 +241,17 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
                 m_compiler->getLangOpts().ObjCNonFragileABI = true;     // NOT i386
                 m_compiler->getLangOpts().ObjCNonFragileABI2 = true;    // NOT i386
             }
+            
+            if (process_sp->GetObjCLanguageRuntime()->HasNewLiteralsAndIndexing())
+            {
+                m_compiler->getLangOpts().DebuggerObjCLiteral = true;
+            }
         }
     }
 
     m_compiler->getLangOpts().ThreadsafeStatics = false;
     m_compiler->getLangOpts().AccessControl = false; // Debuggers get universal access
     m_compiler->getLangOpts().DollarIdents = true; // $ indicates a persistent variable name
-    
-    m_compiler->getLangOpts().DebuggerSupport = true; // Features specifically for debugger clients
-    if (expr.DesiredResultType() == ClangExpression::eResultTypeId)
-        m_compiler->getLangOpts().DebuggerCastResultToId = true;
     
     // Set CodeGen options
     m_compiler->getCodeGenOpts().EmitDeclMetadata = true;
