@@ -54,7 +54,7 @@ heap_node *node_from_offset ( const heap_offset offset )
     { return (heap_node *) ( heap + ( offset * sizeof (heap_node))); }
 
 heap_offset offset_from_node ( const heap_node *ptr )
-    { return static_cast<size_t>(((char *) ptr ) - heap)  / sizeof (heap_node); }
+    { return static_cast<heap_offset>(static_cast<size_t>(((char *) ptr ) - heap)  / sizeof (heap_node)); }
  
 void init_heap () {
     freelist = (heap_node *) heap;
@@ -87,7 +87,7 @@ void *fallback_malloc(size_t len) {
             p->len -= nelems;
             q = p + p->len;
             q->next_node = 0;
-            q->len = nelems;
+            q->len = static_cast<heap_size>(nelems);
             return (void *) (q + 1);
         }
         

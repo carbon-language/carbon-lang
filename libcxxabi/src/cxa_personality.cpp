@@ -247,7 +247,7 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
         p += sizeof(uint32_t);
         break;
     case DW_EH_PE_udata8:
-        result = *((uint64_t*)p);
+        result = static_cast<uintptr_t>(*((uint64_t*)p));
         p += sizeof(uint64_t);
         break;
     case DW_EH_PE_sdata2:
@@ -527,7 +527,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     // Walk call-site table looking for range that 
     // includes current PC. 
     uint8_t callSiteEncoding = *lsda++;
-    uint32_t callSiteTableLength = readULEB128(&lsda);
+    uint32_t callSiteTableLength = static_cast<uint32_t>(readULEB128(&lsda));
     const uint8_t* callSiteTableStart = lsda;
     const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
     const uint8_t* actionTableStart = callSiteTableEnd;

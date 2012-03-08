@@ -460,7 +460,7 @@ class __source_name
     : public __node
 {
 public:
-    __source_name(const char* __name, unsigned __size)
+    __source_name(const char* __name, size_t __size)
     {
         __name_ = __name;
         __size_ = __size;
@@ -5962,7 +5962,7 @@ class __dot_suffix
     : public __node
 {
 public:
-    __dot_suffix(__node* name, const char* suffix, unsigned sz)
+    __dot_suffix(__node* name, const char* suffix, size_t sz)
     {
         __left_ = name;
         __name_ = suffix;
@@ -10259,7 +10259,7 @@ __demangle_tree::__parse_nested_name(const char* first, const char* last)
                 }
                 break;
             case 'U':
-                assert(!"__parse_nested_name U");
+                // assert(!"__parse_nested_name U");
                 // could have following <template-args>
                 break;
             case 'T':
