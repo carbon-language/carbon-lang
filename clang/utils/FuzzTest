@@ -156,6 +156,7 @@ def run_one_test(test_application, index, input_files, args):
         print 'FAIL: %d' % index
     elif not opts.succinct:
         print 'PASS: %d' % index
+    return test_result
 
 def main():
     global opts
@@ -194,6 +195,10 @@ printf format, and VARIABLE is one of:
 By default, the script will run forever continually picking new tests to
 run. You can limit the number of tests that are run with '--max-tests <number>',
 and you can run a particular test with '--test <index>'.
+
+You can specify '--stop-on-fail' to stop the script on the first failure
+without reverting the changes.
+
 """)
     parser.add_option("-v", "--verbose", help="Show more output",
                       action='store_true', dest="verbose", default=False)
@@ -244,6 +249,8 @@ and you can run a particular test with '--test <index>'.
                      action='store_false', dest="enable_replace", default=True)
     group.add_option("", "--no-revert", help="Don't revert changes",
                      action='store_false', dest="revert", default=True)
+    group.add_option("", "--stop-on-fail", help="Stop on first failure",
+                     action='store_true', dest="stop_on_fail", default=False)
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Test Selection")
@@ -329,7 +336,10 @@ and you can run a particular test with '--test <index>'.
         ta = TestApplication(tg, t)
         try:
             ta.apply()
-            run_one_test(ta, test, input_files, args)
+            test_result = run_one_test(ta, test, input_files, args)
+            if not test_result and opts.stop_on_fail:
+                opts.revert = False
+                sys.exit(1)
         finally:
             if opts.revert:
                 ta.revert()
