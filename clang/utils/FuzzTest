@@ -250,7 +250,7 @@ and you can run a particular test with '--test <index>'.
     group.add_option("", "--test", help="Run a particular test",
                      type=int, dest="test", default=None, metavar="INDEX")
     group.add_option("", "--max-tests", help="Maximum number of tests",
-                     type=int, dest="max_tests", default=10, metavar="COUNT")
+                     type=int, dest="max_tests", default=None, metavar="COUNT")
     group.add_option("", "--pick-input",
                      help="Randomly select an input byte as well as fuzzing",
                      action='store_true', dest="pick_input", default=False)
