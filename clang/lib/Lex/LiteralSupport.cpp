@@ -333,7 +333,7 @@ static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 ///         decimal-constant integer-suffix
 ///         octal-constant integer-suffix
 ///         hexadecimal-constant integer-suffix
-///       user-defiend-integer-literal: [C++11 lex.ext]
+///       user-defined-integer-literal: [C++11 lex.ext]
 ///         decimal-literal ud-suffix
 ///         octal-literal ud-suffix
 ///         hexadecimal-literal ud-suffix
@@ -1167,17 +1167,14 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         ++ThisTokBuf;
       ++ThisTokBuf; // skip '('
 
-      // remove same number of characters from the end
-      if (ThisTokEnd >= ThisTokBuf + (ThisTokBuf - Prefix))
-        ThisTokEnd -= (ThisTokBuf - Prefix);
+      // Remove same number of characters from the end
+      ThisTokEnd -= ThisTokBuf - Prefix;
+      assert(ThisTokEnd >= ThisTokBuf && "malformed raw string literal");
 
       // Copy the string over
-      if (CopyStringFragment(StringRef(ThisTokBuf,ThisTokEnd-ThisTokBuf)))
-      {
+      if (CopyStringFragment(StringRef(ThisTokBuf, ThisTokEnd - ThisTokBuf)))
         if (DiagnoseBadString(StringToks[i]))
           hadError = true;
-      }
-
     } else {
       assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
       ++ThisTokBuf; // skip "
@@ -1204,11 +1201,9 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
           } while (ThisTokBuf != ThisTokEnd && ThisTokBuf[0] != '\\');
 
           // Copy the character span over.
-          if (CopyStringFragment(StringRef(InStart,ThisTokBuf-InStart)))
-          {
+          if (CopyStringFragment(StringRef(InStart, ThisTokBuf - InStart)))
             if (DiagnoseBadString(StringToks[i]))
               hadError = true;
-          }
           continue;
         }
         // Is this a Universal Character Name escape?
@@ -1292,8 +1287,8 @@ bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
   ConversionResult result = conversionOK;
   // Copy the character span over.
   if (CharByteWidth == 1) {
-    if (!isLegalUTF8Sequence(reinterpret_cast<const UTF8*>(Fragment.begin()),
-                             reinterpret_cast<const UTF8*>(Fragment.end())))
+    if (!isLegalUTF8String(reinterpret_cast<const UTF8*>(Fragment.begin()),
+                           reinterpret_cast<const UTF8*>(Fragment.end())))
       result = sourceIllegal;
     memcpy(ResultPtr, Fragment.data(), Fragment.size());
     ResultPtr += Fragment.size();

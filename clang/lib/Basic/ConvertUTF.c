@@ -387,10 +387,26 @@ static Boolean isLegalUTF8(const UTF8 *source, int length) {
  */
 Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
     int length = trailingBytesForUTF8[*source]+1;
-    if (source+length > sourceEnd) {
+    if (length > sourceEnd - source) {
         return false;
     }
     return isLegalUTF8(source, length);
+}
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Exported function to return whether a UTF-8 string is legal or not.
+ * This is not used here; it's just exported.
+ */
+Boolean isLegalUTF8String(const UTF8 *source, const UTF8 *sourceEnd) {
+    while (source != sourceEnd) {
+        int length = trailingBytesForUTF8[*source] + 1;
+        if (length > sourceEnd - source || !isLegalUTF8(source, length))
+            return false;
+        source += length;
+    }
+    return true;
 }
 
 /* --------------------------------------------------------------------- */
@@ -404,7 +420,7 @@ ConversionResult ConvertUTF8toUTF16 (
     while (source < sourceEnd) {
         UTF32 ch = 0;
         unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
-        if (source + extraBytesToRead >= sourceEnd) {
+        if (extraBytesToRead >= sourceEnd - source) {
             result = sourceExhausted; break;
         }
         /* Do this check whether lenient or strict */
@@ -477,7 +493,7 @@ ConversionResult ConvertUTF8toUTF32 (
     while (source < sourceEnd) {
         UTF32 ch = 0;
         unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
-        if (source + extraBytesToRead >= sourceEnd) {
+        if (extraBytesToRead >= sourceEnd - source) {
             result = sourceExhausted; break;
         }
         /* Do this check whether lenient or strict */

@@ -15,4 +15,19 @@ void f() {
 
     char const *g = "Àéîõü"; // expected-warning {{illegal character encoding in string literal}}
     char const *h = u8"Àéîõü"; // expected-error {{illegal character encoding in string literal}}
+    char const *i = R"(Àéîõü)"; // expected-warning {{illegal character encoding in string literal}}
+}
+
+void g() {
+    wchar_t const *a = L"foo Àéîõü"; // expected-error {{illegal character encoding in string literal}}
+
+    char16_t const *b = u"foo Àéîõü"; // expected-error {{illegal character encoding in string literal}}
+    char32_t const *c = U"foo Àéîõü"; // expected-error {{illegal character encoding in string literal}}
+    wchar_t const *d = LR"(foo Àéîõü)"; // expected-error {{illegal character encoding in string literal}}
+    char16_t const *e = uR"(foo Àéîõü)"; // expected-error {{illegal character encoding in string literal}}
+    char32_t const *f = UR"(foo Àéîõü)"; // expected-error {{illegal character encoding in string literal}}
+
+    char const *g = "foo Àéîõü"; // expected-warning {{illegal character encoding in string literal}}
+    char const *h = u8"foo Àéîõü"; // expected-error {{illegal character encoding in string literal}}
+    char const *i = R"(foo Àéîõü)"; // expected-warning {{illegal character encoding in string literal}}
 }
