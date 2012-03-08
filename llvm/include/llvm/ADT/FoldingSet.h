@@ -17,6 +17,7 @@
 #define LLVM_ADT_FOLDINGSET_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -310,6 +311,7 @@ public:
   void AddInteger(unsigned long long I);
   void AddBoolean(bool B) { AddInteger(B ? 1U : 0U); }
   void AddString(StringRef String);
+  /// AddNodeID - Adds the Bit data of another ID to *this.
   void AddNodeID(const FoldingSetNodeID &ID);
 
   template <typename T>
@@ -675,6 +677,50 @@ template<typename T> struct FoldingSetTrait<T*> {
     ID.AddPointer(X);
   }
 };
+
+//===----------------------------------------------------------------------===//
+// FoldingSetNodeID Inline function definitions
+
+/// Add* - Add various data types to Bit data.
+///
+inline void FoldingSetNodeID::AddPointer(const void *Ptr) {
+  // Note: this adds pointers to the hash using sizes and endianness that
+  // depend on the host.  It doesn't matter however, because hashing on
+  // pointer values in inherently unstable.  Nothing  should depend on the 
+  // ordering of nodes in the folding set.
+  Bits.append(reinterpret_cast<unsigned *>(&Ptr),
+              reinterpret_cast<unsigned *>(&Ptr+1));
+}
+inline void FoldingSetNodeID::AddInteger(signed I) {
+  Bits.push_back(I);
+}
+inline void FoldingSetNodeID::AddInteger(unsigned I) {
+  Bits.push_back(I);
+}
+inline void FoldingSetNodeID::AddInteger(long I) {
+  AddInteger((unsigned long)I);
+}
+inline void FoldingSetNodeID::AddInteger(unsigned long I) {
+  if (sizeof(long) == sizeof(int))
+    AddInteger(unsigned(I));
+  else if (sizeof(long) == sizeof(long long)) {
+    AddInteger((unsigned long long)I);
+  } else {
+    llvm_unreachable("unexpected sizeof(long)");
+  }
+}
+inline void FoldingSetNodeID::AddInteger(long long I) {
+  AddInteger((unsigned long long)I);
+}
+inline void FoldingSetNodeID::AddInteger(unsigned long long I) {
+  AddInteger(unsigned(I));
+  if ((uint64_t)(unsigned)I != I)
+    Bits.push_back(unsigned(I >> 32));
+}
+inline void FoldingSetNodeID::AddNodeID(const FoldingSetNodeID &ID) {
+  Bits.append(ID.Bits.begin(), ID.Bits.end());
+}
+
 } // End of namespace llvm.
 
 #endif
