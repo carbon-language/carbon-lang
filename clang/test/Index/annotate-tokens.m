@@ -271,7 +271,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: ")" [38:12 - 38:13] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
 // CHECK: Identifier: "actionMethod" [38:14 - 38:26] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
 // CHECK: Punctuation: ":" [38:26 - 38:27] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Keyword: "in" [38:28 - 38:30] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition) [Overrides @33:1]
+// CHECK: Keyword: "in" [38:28 - 38:30] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
 // CHECK: Identifier: "id" [38:31 - 38:33] TypeRef=id:0:0
 // CHECK: Punctuation: ")" [38:33 - 38:34] ParmDecl=arg:38:34 (Definition)
 // CHECK: Identifier: "arg" [38:34 - 38:37] ParmDecl=arg:38:34 (Definition)
