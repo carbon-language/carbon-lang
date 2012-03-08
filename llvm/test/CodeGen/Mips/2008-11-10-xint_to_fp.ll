@@ -1,7 +1,6 @@
-; RUN: llc < %s
+; RUN: llc -march=mips -soft-float < %s
 ; PR2667
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "psp"
 	%struct._Bigint = type { %struct._Bigint*, i32, i32, i32, i32, [1 x i32] }
 	%struct.__FILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*, i8*, i32)*, i32 (i8*, i8*, i32)*, i32 (i8*, i32, i32)*, i32 (i8*)*, %struct.__sbuf, i8*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i32, %struct._reent*, i32 }
 	%struct.__sbuf = type { i8*, i32 }
