@@ -953,6 +953,7 @@ __cxa_call_unexpected(void* arg)
             //   uint8_t ttypeEncoding
             uint8_t lpStartEncoding = *lsda++;
             const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
+            (void)lpStart;  // purposefully unused.  Just needed to increment lsda.
             uint8_t ttypeEncoding = *lsda++;
             if (ttypeEncoding == DW_EH_PE_omit)
                 std::__terminate(t_handler);
