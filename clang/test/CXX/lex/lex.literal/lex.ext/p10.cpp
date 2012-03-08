@@ -7,9 +7,8 @@ void operator "" wibble(const char *, size_t); // expected-warning {{user-define
 template<typename T>
 void f() {
   // A program containing a reserved ud-suffix is ill-formed.
-  // FIXME: Reject these for the right reason.
-  123wibble; // expected-error {{suffix 'wibble'}}
-  123.0wibble; // expected-error {{suffix 'wibble'}}
+  123wibble; // expected-error {{invalid suffix 'wibble'}}
+  123.0wibble; // expected-error {{invalid suffix 'wibble'}}
   const char *p = ""wibble; // expected-error {{invalid suffix on literal; C++11 requires a space between literal and identifier}} expected-error {{expected ';'}}
   const char *q = R"x("hello")x"wibble; // expected-error {{invalid suffix on literal; C++11 requires a space between literal and identifier}} expected-error {{expected ';'}}
 }
