@@ -985,15 +985,13 @@ bool NamedDecl::hasLinkage() const {
 
 NamedDecl *NamedDecl::getUnderlyingDeclImpl() {
   NamedDecl *ND = this;
-  while (true) {
-    if (UsingShadowDecl *UD = dyn_cast<UsingShadowDecl>(ND))
-      ND = UD->getTargetDecl();
-    else if (ObjCCompatibleAliasDecl *AD
-              = dyn_cast<ObjCCompatibleAliasDecl>(ND))
-      return AD->getClassInterface();
-    else
-      return ND;
-  }
+  while (UsingShadowDecl *UD = dyn_cast<UsingShadowDecl>(ND))
+    ND = UD->getTargetDecl();
+
+  if (ObjCCompatibleAliasDecl *AD = dyn_cast<ObjCCompatibleAliasDecl>(ND))
+    return AD->getClassInterface();
+
+  return ND;
 }
 
 bool NamedDecl::isCXXInstanceMember() const {
