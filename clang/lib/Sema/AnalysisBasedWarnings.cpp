@@ -425,17 +425,24 @@ public:
 }
 
 static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
+  QualType VariableTy = VD->getType().getCanonicalType();
+  if (VariableTy->isBlockPointerType() &&
+      !VD->hasAttr<BlocksAttr>()) {
+    S.Diag(VD->getLocation(), diag::note_block_var_fixit_add_initialization) << VD->getDeclName()
+    << FixItHint::CreateInsertion(VD->getLocation(), "__block ");
+    return true;
+  }
+  
   // Don't issue a fixit if there is already an initializer.
   if (VD->getInit())
     return false;
-
+  
   // Suggest possible initialization (if any).
-  QualType VariableTy = VD->getType().getCanonicalType();
   const char *Init = S.getFixItZeroInitializerForType(VariableTy);
   if (!Init)
     return false;
-
   SourceLocation Loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
+  
   S.Diag(Loc, diag::note_var_fixit_add_initialization) << VD->getDeclName()
     << FixItHint::CreateInsertion(Loc, Init);
   return true;
@@ -489,10 +496,15 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
     }
   } else {
     const BlockExpr *BE = cast<BlockExpr>(E);
-    S.Diag(BE->getLocStart(),
-           isAlwaysUninit ? diag::warn_uninit_var_captured_by_block
-                          : diag::warn_maybe_uninit_var_captured_by_block)
-      << VD->getDeclName();
+    if (VD->getType()->isBlockPointerType() &&
+        !VD->hasAttr<BlocksAttr>())
+      S.Diag(BE->getLocStart(), diag::warn_uninit_byref_blockvar_captured_by_block)
+        << VD->getDeclName();
+    else
+      S.Diag(BE->getLocStart(),
+             isAlwaysUninit ? diag::warn_uninit_var_captured_by_block
+                            : diag::warn_maybe_uninit_var_captured_by_block)
+        << VD->getDeclName();
   }
 
   // Report where the variable was declared when the use wasn't within
