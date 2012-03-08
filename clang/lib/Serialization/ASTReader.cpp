@@ -3447,9 +3447,10 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
       
   case PPD_INCLUSION_DIRECTIVE: {
     const char *FullFileNameStart = BlobStart + Record[0];
-    const FileEntry *File
-      = PP.getFileManager().getFile(StringRef(FullFileNameStart,
-                                               BlobLen - Record[0]));
+    StringRef FullFileName(FullFileNameStart, BlobLen - Record[0]);
+    const FileEntry *File = 0;
+    if (!FullFileName.empty())
+      File = PP.getFileManager().getFile(FullFileName);
     
     // FIXME: Stable encoding
     InclusionDirective::InclusionKind Kind

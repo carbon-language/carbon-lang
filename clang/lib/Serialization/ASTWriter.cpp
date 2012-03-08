@@ -1832,7 +1832,10 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       Record.push_back(static_cast<unsigned>(ID->getKind()));
       SmallString<64> Buffer;
       Buffer += ID->getFileName();
-      Buffer += ID->getFile()->getName();
+      // Check that the FileEntry is not null because it was not resolved and
+      // we create a PCH even with compiler errors.
+      if (ID->getFile())
+        Buffer += ID->getFile()->getName();
       Stream.EmitRecordWithBlob(InclusionAbbrev, Record, Buffer);
       continue;
     }
