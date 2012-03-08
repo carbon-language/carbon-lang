@@ -177,10 +177,7 @@ terminate() _NOEXCEPT
                 (unwind_exception->exception_class & get_vendor_and_language) ==
                                (kOurExceptionClass & get_vendor_and_language);
             if (native_exception)
-            {
-                __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
                 __terminate(exception_header->terminateHandler);
-            }
         }
     }
     __terminate(get_terminate());
