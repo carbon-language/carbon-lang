@@ -10,199 +10,106 @@
 <body>
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
-<h3> Setup infrastructure at LLVM </h3>
 
-<p>We are currently moving to the LLVM infrastructure
-</p>
+<h2> Overview</h3>
+<ul>
+<li><a href="#phase3">Phase 3 - Improve Robustness, Interoperability and
+Optimizations (ongoing)</a></li>
+<li><a href="#llvm">Polly as a LLVM Project (Finished February 2012)</a></li>
+<li><a href="#phase2">Phase 2 - First Optimizations and Enhanced User Experience (Finished
+February 2012)</a></li>
+<li><a href="#phase1">Phase 1 - Get Something Working (Finished October 2010)</a>
+</li>
+</ul>
+<h2> Individual Phases</h3>
+
+<h3 id="phase3"> Phase 3 - Improve Robustness, Interoperability and
+Optimizations (ongoing)</h3>
 <table class="wikitable" cellpadding="2">
+<p> </p>
 
-<tbody><tr>
-<th>Task
-</th><th> Status
-</th><th>Owner
-</th></tr>
+<tbody>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Frontend </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
 <tr>
-<th align="left"> Move to LLVM SVN
-</th><td class="done" align="center"> done</br>
-<a
-href="http://llvm.org/svn/llvm-project/polly"
->http://llvm.org/svn/llvm-project/polly</a>
-</td><td> Tobias
+<tr>
+<th align="left"> Non-affine access functions
+</th><td align="center" class='done'> Done, needs testing
+</td><td>Marcello
+</td></tr>
 
-</td></tr>
 <tr>
-<th align="left"> Git mirror
-</th><td class="done" align="center"> done<br />
-git://llvm.org/git/polly.git
-</td><td> Tobias
-</td></tr>
-<tr>
-<th align="left"> Commit mails
-</th><td class="done" align="center"> done <br />
-llvm-commits@cs.uiuc.edu
+<th align="left"> Model integer wrapping
+</th><td align="center" class='inprogress'> Planning
 </td><td> Tobias
 </td></tr>
 <tr>
-
-<th align="left"> LLVM Bugzilla category
-</th><td class="done" align="center"> done <br />
-<a href="http://llvm.org/bugs/enter_bug.cgi?product=Projects">LLVM Bugzilla</a>
-<br />
-(Product is 'Projects', Component is 'Polly')
-</td><td> Tobias
-<tr>
-<th align="left"> Website
-</th><td class="done" align="center">
-<br />
-<a href="http://polly.llvm.org">http://polly.llvm.org</a>,
+<th align="left"> Variable size multi-dimensional arrays
+</th><td align="center" class='inprogress'> Planning
 </td><td> Tobias
 </td></tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Middle Part </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
 <tr>
-<th align="left">Buildbot that runs 'make polly-test'
-</th><td class="done" align="center">
-done<br />
-<a
-href="http://lab.llvm.org:8011/console">http://lab.llvm.org:8011/console</a>
-<td> Tobias,<br />Raghesh,<br /> Andreas
-</td></tr>
-<tr>
-<th align="left"> Nightly performance/coverage tests<br /> (with the llvm
-test-suite)
-</th><td align="center">
-</th><td> Andreas
-</td></tr>
-</th><td>
-
-</td></tr>
-</tbody></table>
-<h3> Phase 2 </h3>
-<p>The second phase of Polly can build on a robust, but very limited framework.
-In this phase work on removing limitations and extending the framework is
-planned. Also we plan the first very simple transformations. Furthermore the
-build system will be improved to simplify deployment.
-</p>
-<table class="wikitable" cellpadding="2">
-
-<tbody><tr>
-
-<th colspan="3" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> Frontend
-</th></tr>
-<tr>
-<th width="400px"> Task
-</th><th width="150px"> Status
-</th><th>Owner
-</th></tr>
-<tr>
-<th align="left"> Support for casts in expressions
-</th><td>
+<th align="left"> Polyhedral dead code elimination
+</th><td class="open">Open
 </td><td>
+</td></tr>
+<th align="left"> Import/Export - Update to released OpenSCoP format
+</th><td class="open">Open
 </td><td>
 </td></tr>
 
-<tr>
-<th align="left"> Support multi dimensional arrays.
-</th><td align="center"> planning
-</td><td> Tobias
-</td></tr>
-<tr>
-<th align="left"> Alias sets
-</th></tr>
-<tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> Middle end
-</th></tr>
-<tr>
-
-<th width="400px"> Task
-</th><th width="80px"> Status
-</th><th>Owner
-</th></tr>
-<tr>
-<th align="left"> Implement ISL dependency analysis pass
-</th><td class="done" align="center"> working
-</td><td> Tobias
-</td></tr>
-<tr>
-<th align="left"> Connect pocc/pluto
-
-</th><td class="done" align="center"> working
-</td><td> Tobias
-</td></tr>
-<tr>
-<th align="left"> Finish OpenSCoP support
-</th><td class="open">Blocked (waiting for OpenSCoP)
-</td><td>
-</td><td>
-</td></tr>
-
-<tr>
-<th align="left"> Add SCoPLib 0.2 support to connect pocc
-</th><td class="done" align="center">done
-
-</td><td> Tobias
-</td></tr>
-<tr>
-<th align="left"> Write simple loop blocking
-</th><td>
-</td><td>
-</td><td>
-</td></tr>
-<tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> Backend
-</th></tr>
-<tr>
-<th width="400px"> Task
-
-</th><th width="80px"> Status
-</th><th>Owner
-</th></tr>
-<tr>
-<th align="left"> Code generation for non 64bit targets
-</th><td>
-</td><td>
-</td><td>
-</td></tr>
-<tr>
-<th align="left"> Add write support for data access functions
-</th><td class="open">Still open
-</td><td>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Back End</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<th align="left"> Allow optimizers to change memory access functions
+</th><td class="inprogress">10% done
+</td><td>Raghesh, Tobias
 </td><td>
 
 </td></tr>
 <tr>
-<th align="left"> Create vector loops
-</th><td class="inprogress">70% done
-</td><td>Tobias
+<th align="left"> Derive optimal types (instead of always using i64)
+</th><td class="open"> Waiting for code generator support
+</td><td>
 </td></tr>
 <tr>
-<th align="left">Create OpenMP
-loops
-</th><td class="inprogress">90% done
-</td><td> Raghesh &amp; Tobias
-
+<th align="left"> Modularize the code generation to allow FPGA/GPU backends
+</th><td class="inprogress">In progress
+</td><td>Tobias, Ether?
 </td></tr>
 <tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> General tasks
-</th></tr>
-<tr>
-<th width="300px"> Task
-</th><th width="80px"> Status
-</th><th>Owner
-</th></tr>
-
-<tr>
-<th align="left"> Commit RegionPass patch upstream
-</th><td class="done" align="center"> done
-
-</td><td> Tobias
+<th align="left"> Integrate with the LLVM BBVectorizer
+</th><td class="inprogress">In progress
+</td><td>Sebastian
 </td></tr>
+
+<tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> General</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
 <tr>
 <th align="left"> Build against an installed LLVM
-</th><td class="inprogress"> Partial (cmake build without tests)
-</td><td> ether
+</th><td class="inprogress"> Partial <br />(cmake only, no tests)
+</td><td> Ether
 </td></tr>
 <tr>
 <th align="left"> Setup buildbot regression testers using LNT
@@ -212,38 +119,193 @@ loops
 
 </td></tr>
 </tbody></table>
-<h3>Phase 1 - Get something
-working (Finished October 2010)</span></h3>
-<p>The first iteration of this project aims to create a minimal working version
-of this framework, that is capable to transform an LLVM-IR program to the
-polyhedral model
-and back to LLVM-IR without applying any transformations.
-</p>
+<h3 id="llvm"> Polly as a LLVM Project (Finished February 2012)</h3>
+
 <table class="wikitable" cellpadding="2">
 
-<tbody><tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> Frontend
-</th></tr>
-
-<tr>
-<th width="300px"> Task
-</th><th width="150px"> Status
+<tbody>
+<tr style="background: rgb(239, 239, 239);">
+<th>Task
+</th><th> Status
 </th><th>Owner
 </th></tr>
 <tr>
+<th align="left"> Move to LLVM SVN
+</th><td class="done" align="center">
+<a
+href="http://llvm.org/svn/llvm-project/polly"
+>http://llvm.org/svn/llvm-project/polly</a>
+</td><td> Tobias
+
+</td></tr>
+<tr>
+<th align="left"> Git mirror
+</th><td class="done" align="center">
+git://llvm.org/git/polly.git
+</td><td> Tobias
+</td></tr>
+<tr>
+<th align="left"> Commit mails
+</th><td class="done" align="center">
+llvm-commits@cs.uiuc.edu
+</td><td> Tobias
+</td></tr>
+<tr>
+
+<th align="left"> LLVM Bugzilla category
+</th><td class="done" align="center">
+<a href="http://llvm.org/bugs/enter_bug.cgi?product=Projects">LLVM Bugzilla</a>
+<br />
+(Product is 'Projects', Component is 'Polly')
+</td><td> Tobias
+<tr>
+<th align="left"> Website
+</th><td class="done" align="center">
+<a href="http://polly.llvm.org">http://polly.llvm.org</a>
+</td><td> Tobias
+</td></tr>
+<tr>
+<th align="left">Buildbot that runs 'make polly-test'
+</th><td class="done" align="center">
+<a href="http://lab.llvm.org:8011/console">Buildbot</a>
+</td>
+<td> Tobias, Andreas
+</td></tr>
+</th><td>
+
+</td></tr>
+</tbody></table>
+<h3 id="phase2"> Phase 2 - First Optimizations and Enhanced User Experience (Finished
+February 2012)</h3>
+<p>
+
+First optimizations to show the usefullness of Polly and enhance the user
+experience. We also try to increase the amount of code we can optimize.
+</p>
+<table class="wikitable" cellpadding="2">
+
+<tbody>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Frontend </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<tr>
+<tr>
+<th align="left"> Allow parameters in access functions
+</th><td align="center" class='done'> Done
+</td><td> Tobias
+</td></tr>
+
+<tr>
+<th align="left"> Improved Scalar Evolution parsing
+</th><td align="center" class='done'> Done
+</td><td> Tobias
+</td></tr>
+<tr>
+<th align="left"> (Graphical) user feedback on Scop Detection
+</th><td align="center" class='done'> Done
+</td><td> Tobias
+</td></tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Middle Part </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<tr>
+<th align="left"> Dependency Analysis
+</th><td class="done" align="center"> Done
+</td><td> Tobias
+</td></tr>
+<tr>
+<tr>
+<th align="left"> Optimizer - Connect Pluto (through PoCC)
+</th><td class="done" align="center"> Done
+</td><td> Tobias
+</td></tr>
+<tr>
+<tr>
+<th align="left"> Optimizer - Add ISL internal Pluto like optimizer
+</th><td class="done" align="center"> Done
+</td><td> Tobias
+</td></tr>
+
+<tr>
+<th align="left"> Import/Export - SCoPLib 0.2 (needed for PoCC)
+</th><td class="done" align="center">Done
+
+</td><td> Tobias
+</td></tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Back End</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<tr>
+<th align="left">SIMD code generation for trivially vectorizable loops
+</th><td class="done">Done
+</td><td>Tobias
+</td></tr>
+<tr>
+<th align="left">OpenMP code generation
+</th><td class="done">Done
+</td><td> Raghesh, Tobias
+
+</td></tr>
+<tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> General</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<tr>
+<th align="left"> clang integration
+</th><td class="done" align="center"> done
+
+</td><td> Tobias
+</td></tr>
+<tr>
+<th align="left"> Commit RegionPass patch upstream
+</th><td class="done" align="center"> done
+
+</td><td> Tobias
+</td></tr>
+<tr>
+</tbody></table>
+<h3 id="phase1">Phase 1 - Get Something Working (Finished October 2010)</h3>
+<p>Create a minimal version of Polly that can transform an LLVM-IR program to
+the polyhedral model and back to LLVM-IR. No transformations are performed.
+</p>
+<table class="wikitable" cellpadding="2">
+
+<tbody>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Front End</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+
 <th align="left"> Region detection
-</td><td class="done"> Working + Committed upstream
+</td><td class="done"> Done
 </td><td>Ether
 </td></tr>
 <tr>
 <th align="left"> Access Functions
-</td><td class="done"> Working
-</td><td>John + Ether
+</td><td class="done"> Done
+</td><td>John, Ether
 </td></tr>
 <tr>
 <th align="left"> Alias sets
-</td><td class="open"> Still open
+</td><td class="done"> Done
+</td><td>Ether
 </td></tr>
 <tr>
 <th align="left"> Scalar evolution to affine expression
@@ -254,61 +316,53 @@ Ether
 </td></tr>
 <tr>
 <th align="left"> SCoP extraction
-</td><td class="done"> Working
-</td><td>Tobias + Ether
+</td><td class="done"> Done
+</td><td>Tobias, Ether
 
 </td></tr>
 <tr>
 <th align="left"> SCoPs to polyhedral model
-</td><td class="done"> Working
-</td><td>Tobias + Ether
+</td><td class="done"> Done
+</td><td>Tobias, Ether
 </td></tr>
-<tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> Middle end
-
-</th></tr>
-<tr>
-<th width="300px"> Task
-</th><th width="80px"> Status
-</th><th>Owner
-</th></tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Middle Part</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
 <tr>
 <th align="left"> Define polyhedral description
-</td><td class="done"> Working
+</td><td class="done"> Done
 </td><td>Tobias
 
 </td></tr>
 <tr>
 <th align="left"> Import/Export using current openscop version
-</td><td class="done"> Working
+</td><td class="done"> Done
 </td><td>Tobias
 </td></tr>
-<tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> Backend
-</th></tr>
-<tr>
-
-<th width="300px"> Task
-</th><th width="80px"> Status
-</th><th>Owner
-</th></tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Back End</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
 <tr>
 <th align="left"> Create LLVM-IR using CLooG
-</td><td class="done"> Working
+</td><td class="done"> Done
 </td><td> Tobias
 
 </td></tr>
-<tr>
-<th colspan="4" style="background: none repeat scroll 0% 0% rgb(239, 239,
-239);"> General tasks
-</th></tr>
-<tr>
-<th width="300px"> Task
-</th><th width="80px"> Status
-</th><th>Owner
-</th></tr>
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> General</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
 <tr>
 <th align="left"> Setup git repositories
 
@@ -317,66 +371,10 @@ Ether
 </td></tr>
 <tr>
 <th align="left"> Add CLooG/isl to build system
-</td><td class="done"> Works on Unix
+</td><td class="done"> Done
 </td><td> Tobias
 
 </td></tr></tbody></table>
-<h3>Further projects </h3>
-<p>There are several great projects related to polly that can already be started
-or are possible in the near future.  </p>
-<h4>Extend the post dominance analysis for infinite loops (small)</h4>
-
-<p>At the moment the post dominance analysis cannot handle infinite loops. All
-basic blocks in the CFG that do not return are - at the moment - not part of the
-post dominance tree.
-However by adding some virtual edges, they could be added to the post dominator
-tree. Where to add the edges needs some research.
-</p><p>This is a small project, that is is well defined. As it is directly in
-LLVM it can be easily committed upstream. It is useful for polly, as the
-RegionInfo pass will be able to detect regions in parts of the CFG that never
-return.
-</p><p><i>A good starter to get into LLVM</i>
-</p>
-<h4>Vectorization </h4>
-<p>It is planned to use Polly to support vectorization in LLVM.
-</p><p>The basic idea is to use Polly and the polyhedral tools to transform code
-such that the innermost loops can be executed in parallel. Afterwards during
-code generation in LLVM the loops will be created using vector instructions.
-</p><p>To start we plan to use <a href="http://pluto-compiler.sf.net"
-class="external text" title="http://pluto-compiler.sf.net"
-rel="nofollow">Pluto</a> to transform the loop nests. Pluto can generate vector
-parallel code and annotate the vector parallel loops. Some impressive results
-were shown on code that was afterwards vectorized by the icc enforcing
-vectorization. We believe LLVM can do even better, as it can interact directly
-with the polyhedral information.
-
-</p><p>As an example simple matrix multiplication:
-</p>
-<pre>
-for(i=0; i&lt;M; i++)
-  for(j=0; j&lt;N; j++)
-    for(k=0; k&lt;K; k++)
-      C[i][j] = beta*C[i][j] + alpha*A[i][k] * B[k][j];
-</pre>
-<p>After plutos transformations with added tiling and
-vectorization hints:
-</p>
-<pre>
-if ((K &gt;= 1) &amp;&amp; (M &gt;= 1) &amp;&amp; (N &gt;= 1))
-  for (t1=0;t1&lt;=floord(M-1,32);t1++)
-    for (t2=0;t2&lt;=floord(N-1,32);t2++)
-      for (t3=0;t3&lt;=floord(K-1,32);t3++)
-        for (t4=32*t1;t4&lt;=min(M-1,32*t1+31);t4++)
-          for (t5=32*t3;t5&lt;=min(K-1,32*t3+31);t5++) {
-            lbv=32*t2;
-            ubv=min(N-1,32*t2+31);
-            #pragma ivdep
-            #pragma vector always
-            for (t6=lbv; t6&lt;=ubv; t6++)
-              C[t4][t6]=beta*C[t4][t6]+alpha*A[t4][t5]*B[t5][t6];;
-         }
-</pre>
-<p>In this example the innermost loop is parallel without any dependencies. </p>
 </div>
 </body>
 </html>
