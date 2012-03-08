@@ -41,6 +41,43 @@ bool FoldingSetNodeIDRef::operator==(FoldingSetNodeIDRef RHS) const {
 //===----------------------------------------------------------------------===//
 // FoldingSetNodeID Implementation
 
+/// Add* - Add various data types to Bit data.
+///
+void FoldingSetNodeID::AddPointer(const void *Ptr) {
+  // Note: this adds pointers to the hash using sizes and endianness that
+  // depend on the host.  It doesn't matter however, because hashing on
+  // pointer values in inherently unstable.  Nothing  should depend on the 
+  // ordering of nodes in the folding set.
+  Bits.append(reinterpret_cast<unsigned *>(&Ptr),
+              reinterpret_cast<unsigned *>(&Ptr+1));
+}
+void FoldingSetNodeID::AddInteger(signed I) {
+  Bits.push_back(I);
+}
+void FoldingSetNodeID::AddInteger(unsigned I) {
+  Bits.push_back(I);
+}
+void FoldingSetNodeID::AddInteger(long I) {
+  AddInteger((unsigned long)I);
+}
+void FoldingSetNodeID::AddInteger(unsigned long I) {
+  if (sizeof(long) == sizeof(int))
+    AddInteger(unsigned(I));
+  else if (sizeof(long) == sizeof(long long)) {
+    AddInteger((unsigned long long)I);
+  } else {
+    llvm_unreachable("unexpected sizeof(long)");
+  }
+}
+void FoldingSetNodeID::AddInteger(long long I) {
+  AddInteger((unsigned long long)I);
+}
+void FoldingSetNodeID::AddInteger(unsigned long long I) {
+  AddInteger(unsigned(I));
+  if ((uint64_t)(unsigned)I != I)
+    Bits.push_back(unsigned(I >> 32));
+}
+
 void FoldingSetNodeID::AddString(StringRef String) {
   unsigned Size =  String.size();
   Bits.push_back(Size);
@@ -92,7 +129,12 @@ void FoldingSetNodeID::AddString(StringRef String) {
   Bits.push_back(V);
 }
 
-/// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to
+// AddNodeID - Adds the Bit data of another ID to *this.
+void FoldingSetNodeID::AddNodeID(const FoldingSetNodeID &ID) {
+  Bits.append(ID.Bits.begin(), ID.Bits.end());
+}
+
+/// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to 
 /// lookup the node in the FoldingSetImpl.
 unsigned FoldingSetNodeID::ComputeHash() const {
   return FoldingSetNodeIDRef(Bits.data(), Bits.size()).ComputeHash();
