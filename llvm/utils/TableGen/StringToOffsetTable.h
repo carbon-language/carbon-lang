@@ -40,6 +40,9 @@ public:
   }
   
   void EmitString(raw_ostream &O) {
+    assert(AggregateString.size() <= 65536 &&
+           "Aggregate string too large to be portable");
+
     // Escape the string.
     SmallString<256> Str;
     raw_svector_ostream(Str).write_escaped(AggregateString);

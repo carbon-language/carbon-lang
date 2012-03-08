@@ -25,14 +25,14 @@ namespace llvm {
 ///
 class MCInstrInfo {
   const MCInstrDesc *Desc;          // Raw array to allow static init'n
-  const unsigned *InstrNameIndices; // Array for name indices in InstrNameData
+  const uint16_t *InstrNameIndices; // Array for name indices in InstrNameData
   const char *InstrNameData;        // Instruction name string pool
   unsigned NumOpcodes;              // Number of entries in the desc array
 
 public:
   /// InitMCInstrInfo - Initialize MCInstrInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
-  void InitMCInstrInfo(const MCInstrDesc *D, const unsigned *NI, const char *ND,
+  void InitMCInstrInfo(const MCInstrDesc *D, const uint16_t *NI, const char *ND,
                        unsigned NO) {
     Desc = D;
     InstrNameIndices = NI;

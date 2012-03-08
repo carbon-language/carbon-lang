@@ -306,6 +306,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     }
 
     // Bias offset by one since we want 0 as a sentinel.
+    assert((Idx+1) <= 0xffff && "String offset too large to fit in table");
     OpcodeInfo.push_back(Idx+1);
   }
 
@@ -373,7 +374,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "  };\n\n";
 
   // Emit the string itself.
-  O << "  const char *AsmStrs = \n";
+  O << "  const char *const AsmStrs = \n";
   StringTable.EmitString(O);
   O << ";\n\n";
 
@@ -496,7 +497,9 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
       }
     }
 
-    O << StringTable.GetOrAddStringOffset(AsmName);
+    unsigned Idx = StringTable.GetOrAddStringOffset(AsmName);
+    assert(Idx <= 0xffff && "String offset too large to fit in table");
+    O << Idx;
     if (((i + 1) % 14) == 0)
       O << ",\n    ";
     else
@@ -591,7 +594,9 @@ void AsmWriterEmitter::EmitGetInstructionName(raw_ostream &O) {
     if ((i % 14) == 0)
       O << "\n    ";
 
-    O << StringTable.GetOrAddStringOffset(AsmName) << ", ";
+    unsigned Idx = StringTable.GetOrAddStringOffset(AsmName);
+    assert(Idx <= 0xffff && "String offset too large to fit in table");
+    O << Idx << ", ";
   }
   O << "0\n"
   << "  };\n"
