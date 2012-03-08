@@ -192,7 +192,7 @@ readULEB128(const uint8_t** data)
 /// @param data reference variable holding memory pointer to decode from
 /// @returns decoded value
 static
-uintptr_t
+intptr_t
 readSLEB128(const uint8_t** data)
 {
     uintptr_t result = 0;
@@ -208,7 +208,7 @@ readSLEB128(const uint8_t** data)
     *data = p;
     if ((byte & 0x40) && (shift < (sizeof(result) << 3)))
         result |= static_cast<uintptr_t>(~0) << shift;
-    return result;
+    return static_cast<intptr_t>(result);
 }
 
 /// Read a pointer encoded value and advance pointer 
@@ -236,7 +236,7 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
         result = readULEB128(&p);
         break;
     case DW_EH_PE_sleb128:
-        result = readSLEB128(&p);
+        result = static_cast<uintptr_t>(readSLEB128(&p));
         break;
     case DW_EH_PE_udata2:
         result = *((uint16_t*)p);
@@ -251,15 +251,15 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
         p += sizeof(uint64_t);
         break;
     case DW_EH_PE_sdata2:
-        result = *((int16_t*)p);
+        result = static_cast<uintptr_t>(*((int16_t*)p));
         p += sizeof(int16_t);
         break;
     case DW_EH_PE_sdata4:
-        result = *((int32_t*)p);
+        result = static_cast<uintptr_t>(*((int32_t*)p));
         p += sizeof(int32_t);
         break;
     case DW_EH_PE_sdata8:
-        result = *((int64_t*)p);
+        result = static_cast<uintptr_t>(*((int64_t*)p));
         p += sizeof(int64_t);
         break;
     default:
@@ -309,7 +309,7 @@ call_terminate(bool native_exception, _Unwind_Exception* unwind_exception)
 
 static
 const __shim_type_info*
-get_shim_type_info(int64_t ttypeIndex, const uint8_t* classInfo,
+get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
                    uint8_t ttypeEncoding, bool native_exception,
                    _Unwind_Exception* unwind_exception)
 {
@@ -586,9 +586,9 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                     // Found a catch, does it actually catch?
                     // First check for catch (...)
                     const __shim_type_info* catchType =
-                        get_shim_type_info(ttypeIndex, classInfo,
-                                           ttypeEncoding, native_exception,
-                                           unwind_exception);
+                        get_shim_type_info(static_cast<uint64_t>(ttypeIndex),
+                                           classInfo, ttypeEncoding,
+                                           native_exception, unwind_exception);
                     if (catchType == 0)
                     {
                         // Found catch (...) catches everything, including foreign exceptions
@@ -876,7 +876,7 @@ __gxx_personality_v0
             }
             // Jump to the handler
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
+            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), (uintptr_t)results.ttypeIndex);
             _Unwind_SetIP(context, results.landingPad);
             return _URC_INSTALL_CONTEXT;
         }
@@ -888,7 +888,7 @@ __gxx_personality_v0
         {
             // Found a non-catching handler.  Jump to it:
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
+            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), (uintptr_t)results.ttypeIndex);
             _Unwind_SetIP(context, results.landingPad);
             return _URC_INSTALL_CONTEXT;
         }

@@ -64,8 +64,8 @@ public:
     virtual size_t size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = first_size() + second_size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(first_size() + second_size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const {return buf;}
     virtual char* second_demangled_name(char* buf) const {return buf;}
@@ -157,8 +157,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -188,8 +188,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -220,9 +220,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __left_->size()
-                                                  + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__left_->size()
+                                                  + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -260,8 +260,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -291,8 +291,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -322,8 +322,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = n + static_cast<long>(__right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -353,8 +353,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(n + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -384,8 +384,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(n + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -415,8 +415,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(n + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -442,8 +442,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(n + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -473,9 +473,9 @@ public:
             if (__size_ >= 10 && strncmp(__name_, "_GLOBAL__N", 10) == 0)
                 const_cast<long&>(__cached_size_) = 21;
             else
-                const_cast<long&>(__cached_size_) = __size_;
+                const_cast<long&>(__cached_size_) = static_cast<long>(__size_);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -553,11 +553,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator&&") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -603,11 +605,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 3+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(3 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator&") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -649,11 +651,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator&") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -700,11 +704,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator&=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -751,11 +757,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -801,11 +809,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__right_)
-                const_cast<long&>(__cached_size_) = __right_->size() + 10;
+                const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 10);
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator alignof") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -846,11 +854,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__right_)
-                const_cast<long&>(__cached_size_) = __right_->size() + 10;
+                const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 10);
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator alignof") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -905,11 +913,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator,") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -955,11 +965,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 3+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(3 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator~") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1015,9 +1025,9 @@ public:
             }
             else
                 off = n +  __right_->size();;
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1061,13 +1071,14 @@ public:
     {
         __left_ = type;
         __name_ = f;
-        __size_ = l - f;
+        __size_ = static_cast<size_t>(l - f);
     }
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = 2 + __left_->size() + __size_;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(2 +
+                                                   __left_->size() + __size_);
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1098,11 +1109,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 3+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(3 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator*") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1144,11 +1155,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator/") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1195,11 +1208,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator/=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1246,11 +1261,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator^") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1297,11 +1314,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator^=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1348,11 +1367,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator==") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1399,11 +1420,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator>=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1450,11 +1473,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 9 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                        __left_->size() + 9 +
+                                                        __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator>") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1516,11 +1541,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator<=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1567,11 +1594,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator<") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1618,11 +1647,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator<<") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1669,11 +1700,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 9 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                        __left_->size() + 9 +
+                                                        __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator<<=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1720,11 +1753,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator-") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1771,11 +1806,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator-=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1822,11 +1859,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator*") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1873,11 +1912,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator*=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1924,11 +1965,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 4+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(4 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator--") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -1983,11 +2024,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator!=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2033,11 +2076,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 3+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(3 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator-") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2078,11 +2121,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 3+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(3 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator!") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2124,11 +2167,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator||") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2175,11 +2220,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator|") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2226,11 +2273,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator|=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2277,11 +2326,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 9 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                        __left_->size() + 9 +
+                                                        __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator->*") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2328,11 +2379,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator+") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2379,11 +2432,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator+=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2430,11 +2485,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 4+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(4 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator++") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2488,11 +2543,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = 3+__left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(3 + __left_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator+") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2534,11 +2589,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator->") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2588,12 +2645,15 @@ public:
             if (__left_)
             {
                 __node* op1 = (__node*)__name_;
-                const_cast<long&>(__cached_size_) = op1->size() + __left_->size() + 12 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                        op1->size() +
+                                                        __left_->size() + 12 +
+                                                        __right_->size());
             }
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator?") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2646,11 +2706,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 7 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 7 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator%") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2697,11 +2759,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator%=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2748,11 +2812,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 8 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                       __left_->size() + 8 +
+                                                       __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator>>") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2799,11 +2865,13 @@ public:
         if (__cached_size_ == -1)
         {
             if (__left_)
-                const_cast<long&>(__cached_size_) = __left_->size() + 9 + __right_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(
+                                                        __left_->size() + 9 +
+                                                        __right_->size());
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator>>=") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2849,11 +2917,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__right_)
-                const_cast<long&>(__cached_size_) = __right_->size() + 9;
+                const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 9);
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator sizeof") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2894,11 +2962,11 @@ public:
         if (__cached_size_ == -1)
         {
             if (__right_)
-                const_cast<long&>(__cached_size_) = __right_->size() + 9;
+                const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 9);
             else
                 const_cast<long&>(__cached_size_) = sizeof("operator sizeof") - 1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2936,8 +3004,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __right_->size() + 8;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 8);
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -2965,8 +3033,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __right_->size() + 6;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 6);
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3005,8 +3073,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __right_->size() + 11;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__right_->size() + 11);
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3035,8 +3103,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 14 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                             14 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3069,8 +3138,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 16 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                             16 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3103,8 +3173,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 20 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                             20 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3137,8 +3208,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 15 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                             15 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3175,9 +3247,9 @@ public:
             size_t off = __left_->size() + 2;
             if (__right_)
                 off += __right_->size();
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3210,8 +3282,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = (__size_ ? 2 : 0) + 9 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>((__size_ ? 2 : 0) +
+                                                               9 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3242,8 +3315,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = (__size_ ? 2 : 0) + 7 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>((__size_ ? 2 : 0) +
+                                                               7 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3298,9 +3372,9 @@ public:
                 if (__right_)
                     off += __right_->size();
             }
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3360,8 +3434,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 2 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                              2 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3390,8 +3465,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 1 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                              1 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3419,8 +3495,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 2 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                              2 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3671,8 +3748,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                                  __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3711,16 +3789,16 @@ public:
             if (__left_ == NULL)
                 const_cast<long&>(__cached_size_) = 0;
             else if (__right_ == NULL)
-                const_cast<long&>(__cached_size_) = __left_->size();
+                const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size());
             else
             {
                 size_t off = __right_->size();
                 if (off > 0)
                     off += 2;
-                const_cast<long&>(__cached_size_) = __left_->size() + off;
+                const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() + off);
             }
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3788,9 +3866,9 @@ public:
                     ++off;
                 off += __right_->size();
             }
-            const_cast<long&>(__cached_size_) = __left_->size() + off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() + off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -3836,8 +3914,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = 2 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(2 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -4229,9 +4307,9 @@ public:
                 off += 2;
                 off += __right_->first_size();
             }
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual bool is_function() const
@@ -4478,8 +4556,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __left_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(n + __left_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -4506,8 +4584,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = n + __left_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(n + __left_->size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -4563,9 +4641,9 @@ public:
                     bottom->__left_ = sub;
                 }
             }
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -4643,7 +4721,7 @@ public:
     explicit __wchar_t_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4715,7 +4793,7 @@ public:
     explicit __char_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4762,7 +4840,7 @@ public:
     explicit __signed_char_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4809,7 +4887,7 @@ public:
     explicit __unsigned_char_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4846,7 +4924,7 @@ public:
     explicit __short_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4893,7 +4971,7 @@ public:
     explicit __unsigned_short_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4932,7 +5010,7 @@ public:
     explicit __int_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -4977,7 +5055,7 @@ public:
     explicit __unsigned_int_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5014,7 +5092,7 @@ public:
     explicit __long_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5060,7 +5138,7 @@ public:
     explicit __unsigned_long_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5098,7 +5176,7 @@ public:
     explicit __long_long_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5145,7 +5223,7 @@ public:
     explicit __unsigned_long_long_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5184,7 +5262,7 @@ public:
     explicit __int128_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5231,7 +5309,7 @@ public:
     explicit __unsigned_int128_literal(const char* __first, const char* __last)
     {
         __name_ = __first;
-        __size_ = __last - __first;
+        __size_ = static_cast<size_t>(__last - __first);
     }
 
     virtual size_t first_size() const
@@ -5264,14 +5342,14 @@ public:
             float v = static_cast<float>(__value_);
             const_cast<long&>(__cached_size_) = sprintf(num, "%a", v)+1;
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
         char num[20] = {0};
         float v = static_cast<float>(__value_);
         int n = sprintf(num, "%a", v);
-        strncpy(buf, num, n);
+        strncpy(buf, num, static_cast<size_t>(n));
         buf += n;
         *buf++ = 'f';
         return buf;
@@ -5309,14 +5387,14 @@ public:
             double v = static_cast<double>(__value_);
             const_cast<long&>(__cached_size_) = sprintf(num, "%a", v);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
         char num[30] = {0};
         double v = static_cast<double>(__value_);
         int n = sprintf(num, "%a", v);
-        strncpy(buf, num, n);
+        strncpy(buf, num, static_cast<size_t>(n));
         return buf + n;
     }
 };
@@ -5521,10 +5599,10 @@ public:
             if (__right_ != 0)
                 r += __right_->size();
             else if (__size_ != 0)
-                r += snprintf(0, 0, "%ld", __size_);
-            const_cast<long&>(__cached_size_) = r;
+                r += static_cast<size_t>(snprintf(0, 0, "%ld", __size_));
+            const_cast<long&>(__cached_size_) = static_cast<long>(r);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual char* get_demangled_name(char* buf) const
@@ -5536,7 +5614,7 @@ public:
             buf = __right_->get_demangled_name(buf);
         else if (__size_ != 0)
         {
-            size_t rs = sprintf(buf, "%ld", __size_);
+            int rs = sprintf(buf, "%ld", __size_);
             buf += rs;
         }
         *buf++ = ']';
@@ -5561,7 +5639,7 @@ public:
         if (__right_ != 0)
             r += __right_->size();
         else if (__size_ != 0)
-            r += snprintf(0, 0, "%ld", __size_);
+            r += static_cast<size_t>(snprintf(0, 0, "%ld", __size_));
         return r;
     }
 
@@ -5573,7 +5651,7 @@ public:
             buf = __right_->get_demangled_name(buf);
         else if (__size_ != 0)
         {
-            size_t off = sprintf(buf, "%ld", __size_);
+            int off = sprintf(buf, "%ld", __size_);
             buf += off;
         }
         char* t = buf;
@@ -5610,10 +5688,10 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 3
-                                                + __right_->first_size()
-                                                + __right_->second_size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() + 3
+                                                                + __right_->first_size()
+                                                                + __right_->second_size());
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -5652,8 +5730,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = 10 + __right_->size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(10 + __right_->size());
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual char* first_demangled_name(char* buf) const
@@ -5684,8 +5762,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + __right_->size() + 2;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__left_->size() +
+                                                                  __right_->size() + 2);
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual char* first_demangled_name(char* buf) const
@@ -5740,9 +5819,10 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = (__left_ ? __left_->size() + 2 : 0) +
-                                                 __right_->size() + __size_ * 2;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>((__left_ ?
+                                                     __left_->size() + 2 : 0) +
+                                                     __right_->size() + __size_ * 2);
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual char* first_demangled_name(char* buf) const
@@ -5816,8 +5896,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __right_->base_size();
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__right_->base_size());
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual char* first_demangled_name(char* buf) const
@@ -5855,8 +5935,8 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __right_->base_size() + 1;
-        return __cached_size_;
+            const_cast<long&>(__cached_size_) = static_cast<long>(__right_->base_size() + 1);
+        return static_cast<size_t>(__cached_size_);
     }
 
     virtual char* first_demangled_name(char* buf) const
@@ -5895,9 +5975,9 @@ public:
         {
             size_t off = __left_->size();
             off += __size_ + 3;
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -5948,9 +6028,9 @@ public:
                 off += __right_->size();
             else if (__size_ > 0)
                 off += __size_;
-            const_cast<long&>(__cached_size_) = off;
+            const_cast<long&>(__cached_size_) = static_cast<long>(off);
         }
-        return __cached_size_;
+        return static_cast<size_t>(__cached_size_);
     }
     virtual char* first_demangled_name(char* buf) const
     {
@@ -6527,11 +6607,11 @@ __demangle_tree::__parse_hex_number(const char* first, const char* last, unsigne
         if (t == first)
             n = 0;
         if (isdigit(*t))
-            n = n * 16 + *t - '0';
+            n = n * 16 + static_cast<unsigned long long>(*t - '0');
         else if (isupper(*t))
-            n = n * 16 + *t - 'A' + 10;
+            n = n * 16 + static_cast<unsigned long long>(*t - 'A') + 10;
         else
-            n = n * 16 + *t - 'a' + 10;
+            n = n * 16 + static_cast<unsigned long long>(*t - 'a') + 10;
     }
     first = t;
     return first;
@@ -6567,11 +6647,11 @@ __demangle_tree::__parse_expr_primary(const char* first, const char* last)
                 switch (first[2])
                 {
                 case '0':
-                    if (__make<__bool_literal>("false", 5))
+                    if (__make<__bool_literal>("false", 5u))
                         first += 4;
                     break;
                 case '1':
-                    if (__make<__bool_literal>("true", 4))
+                    if (__make<__bool_literal>("true", 4u))
                         first += 4;
                     break;
                 }
@@ -7943,10 +8023,10 @@ __demangle_tree::__parse_array_type(const char* first, const char* last)
         }
         else if ('1' <= first[1] && first[1] <= '9')
         {
-            size_t dim = first[1] - '0';
+            size_t dim = static_cast<size_t>(first[1] - '0');
             const char* t = first+2;
             for (; t != last && isdigit(*t); ++t)
-                dim = dim * 10 + *t - '0';
+                dim = dim * 10 + static_cast<size_t>(*t - '0');
             if (t != last && *t == '_')
             {
                 const char* t2 = __parse_type(t+1, last);
@@ -8060,11 +8140,11 @@ __demangle_tree::__parse_template_param(const char* first, const char* last)
             else if (isdigit(first[1]))
             {
                 const char* t = first+1;
-                size_t sub = *t - '0';
+                size_t sub = static_cast<size_t>(*t - '0');
                 for (++t; t != last && isdigit(*t); ++t)
                 {
                     sub *= 10;
-                    sub += *t - '0';
+                    sub += static_cast<size_t>(*t - '0');
                 }
                 if (t == last || *t != '_')
                     return first;
@@ -8109,7 +8189,7 @@ __demangle_tree::__parse_vector_type(const char* first, const char* last)
                     return first;
             }
             const char* num = first + 2;
-            size_t sz = t - num;
+            size_t sz = static_cast<size_t>(t - num);
             if (++t != last)
             {
                 if (*t != 'p')
@@ -9991,10 +10071,10 @@ __demangle_tree::__parse_source_name(const char* first, const char* last)
         if ('1' <= c && c <= '9' && first+1 != last)
         {
             const char* t = first+1;
-            size_t n = c - '0';
+            size_t n = static_cast<size_t>(c - '0');
             for (c = *t; '0' <= c && c <= '9'; c = *t)
             {
-                n = n * 10 + c - '0';
+                n = n * 10 + static_cast<size_t>(c - '0');
                 if (++t == last)
                     return first;
             }
@@ -10482,16 +10562,16 @@ __demangle_tree::__parse_substitution(const char* first, const char* last)
                     size_t sub = 0;
                     const char* t = first+1;
                     if (isdigit(*t))
-                        sub = *t - '0';
+                        sub = static_cast<size_t>(*t - '0');
                     else
-                        sub = *t - 'A' + 10;
+                        sub = static_cast<size_t>(*t - 'A') + 10;
                     for (++t; t != last && (isdigit(*t) || isupper(*t)); ++t)
                     {
                         sub *= 36;
                         if (isdigit(*t))
-                            sub += *t - '0';
+                            sub += static_cast<size_t>(*t - '0');
                         else
-                            sub += *t - 'A' + 10;
+                            sub += static_cast<size_t>(*t - 'A') + 10;
                     }
                     if (t == last || *t != '_')
                         return first;
@@ -10593,7 +10673,7 @@ __demangle_tree::__parse_dot_suffix(const char* first, const char* last)
 {
     if (first != last && *first == '.')
     {
-        if (__make<__dot_suffix>(__root_, first, last-first))
+        if (__make<__dot_suffix>(__root_, first, static_cast<size_t>(last-first)))
             first = last;
     }
     return first;
@@ -10742,10 +10822,10 @@ printf("\n");
         s = e - tmp;
     }
     else
-        s = dmg_tree.size() + 1;
+        s = static_cast<ptrdiff_t>(dmg_tree.size() + 1);
     if (s > bs)
     {
-        buf = static_cast<char*>(realloc(buf, s));
+        buf = static_cast<char*>(realloc(buf, static_cast<size_t>(s)));
         if (buf == NULL)
         {
             if (status)
@@ -10753,12 +10833,12 @@ printf("\n");
             return NULL;
         }
         if (n)
-            *n = s;
+            *n = static_cast<size_t>(s);
     }
     if (est > bs)
     {
         if (est <= N)
-            strncpy(buf, tmp, s);
+            strncpy(buf, tmp, static_cast<size_t>(s));
         else
             *dmg_tree.__get_demangled_name(buf) = '\0';
     }

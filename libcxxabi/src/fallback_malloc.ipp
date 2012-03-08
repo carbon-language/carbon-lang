@@ -54,7 +54,7 @@ heap_node *node_from_offset ( const heap_offset offset )
     { return (heap_node *) ( heap + ( offset * sizeof (heap_node))); }
 
 heap_offset offset_from_node ( const heap_node *ptr )
-    { return (((char *) ptr ) - heap)  / sizeof (heap_node); }
+    { return static_cast<size_t>(((char *) ptr ) - heap)  / sizeof (heap_node); }
  
 void init_heap () {
     freelist = (heap_node *) heap;
