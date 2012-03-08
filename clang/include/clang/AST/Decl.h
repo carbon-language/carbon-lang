@@ -3283,6 +3283,14 @@ inline bool IsEnumDeclComplete(EnumDecl *ED) {
   return ED->isComplete();
 }
 
+/// \brief Check if the given decl is scoped.
+///
+/// We use this function to break a cycle between the inline definitions in
+/// Type.h and Decl.h.
+inline bool IsEnumDeclScoped(EnumDecl *ED) {
+  return ED->isScoped();
+}
+
 }  // end namespace clang
 
 #endif

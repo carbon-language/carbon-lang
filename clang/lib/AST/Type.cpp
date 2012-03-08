@@ -612,17 +612,6 @@ bool Type::isIntegralOrUnscopedEnumerationType() const {
 
 
 
-bool Type::isIntegerType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Int128;
-  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
-    // Incomplete enum types are not treated as integer types.
-    // FIXME: In C++, enum types are never integer types.
-    return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
-  return false;
-}
-
 bool Type::isCharType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Char_U ||

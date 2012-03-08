@@ -4830,6 +4830,20 @@ inline bool Type::isNullPtrType() const {
 }
 
 extern bool IsEnumDeclComplete(EnumDecl *);
+extern bool IsEnumDeclScoped(EnumDecl *);
+
+inline bool Type::isIntegerType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::Int128;
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
+    // Incomplete enum types are not treated as integer types.
+    // FIXME: In C++, enum types are never integer types.
+    return IsEnumDeclComplete(ET->getDecl()) &&
+      !IsEnumDeclScoped(ET->getDecl());
+  }
+  return false;
+}
 
 inline bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
