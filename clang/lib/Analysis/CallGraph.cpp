@@ -63,7 +63,7 @@ public:
         CallGraphNode *CalleeNode = G->getOrInsertFunction(CalleeDecl);
         CallerNode->addCallee(CalleeNode, G);
       }
-  };
+  }
 
   void VisitChildren(Stmt *S) {
     for (Stmt::child_range I = S->children(); I; ++I)
