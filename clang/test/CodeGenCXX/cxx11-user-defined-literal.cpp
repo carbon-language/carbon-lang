@@ -3,13 +3,16 @@
 struct S { S(); ~S(); S(const S &); void operator()(int); };
 using size_t = decltype(sizeof(int));
 S operator"" _x(const char *, size_t);
+S operator"" _y(wchar_t);
 
 void f() {
   // CHECK: call void @_Zli2_xPKcm({{.*}}, i8* getelementptr inbounds ([4 x i8]* @{{.*}}, i32 0, i32 0), i64 3)
   // CHECK: call void @_Zli2_xPKcm({{.*}}, i8* getelementptr inbounds ([4 x i8]* @{{.*}}, i32 0, i32 0), i64 3)
+  // CHECK: call void @_Zli2_yw({{.*}} 97)
   // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
   // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
-  "foo"_x, "bar"_x;
+  // CHECK: call void @_ZN1SD1Ev({{.*}}) nounwind
+  "foo"_x, "bar"_x, L'a'_y;
 }
 
 template<typename T> auto g(T t) -> decltype("foo"_x(t)) { return "foo"_x(t); }

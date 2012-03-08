@@ -791,6 +791,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       --end;
     } while (end[-1] != '\'');
     UDSuffixBuf.assign(end, UDSuffixEnd);
+    UDSuffixOffset = end - begin + 1;
   }
 
   // Trim the ending quote.
@@ -1113,6 +1114,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
 
       if (UDSuffixBuf.empty()) {
         UDSuffixBuf.assign(UDSuffix);
+        UDSuffixToken = i;
+        UDSuffixOffset = ThisTokEnd - ThisTokBuf;
         UDSuffixTokLoc = StringToks[i].getLocation();
       } else if (!UDSuffixBuf.equals(UDSuffix)) {
         // C++11 [lex.ext]p8: At the end of phase 6, if a string literal is the
