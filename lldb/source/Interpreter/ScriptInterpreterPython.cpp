@@ -240,6 +240,8 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_embedded_thread_input_reader_sp (),
     m_dbg_stdout (interpreter.GetDebugger().GetOutputFile().GetStream()),
     m_new_sysout (NULL),
+    m_old_sysout (NULL),
+    m_old_syserr (NULL),
     m_run_one_line (NULL),
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
     m_terminal_state (),
@@ -332,8 +334,10 @@ ScriptInterpreterPython::ResetOutputFileHandle (FILE *fh)
         
     m_dbg_stdout = fh;
 
-    Locker py_lock(this);
-    
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock);
+
     m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
 }
 
@@ -365,8 +369,10 @@ ScriptInterpreterPython::LeaveSession ()
 
     if (m_new_sysout && sysmod && sysdict)
     {
-        PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_old_sysout);
-        PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_old_sysout);
+        if (m_old_sysout)
+            PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_old_sysout);
+        if (m_old_syserr)
+            PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_old_syserr);
     }
 
     m_session_is_active = false;
@@ -410,8 +416,11 @@ ScriptInterpreterPython::EnterSession ()
     {
         m_old_sysout = PyDict_GetItemString(sysdict, "stdout");
         m_old_syserr = PyDict_GetItemString(sysdict, "stderr");
-        PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_new_sysout);
-        PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_new_sysout);
+        if (m_new_sysout)
+        {
+            PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_new_sysout);
+            PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_new_sysout);
+        }
     }
 
     if (PyErr_Occurred())
