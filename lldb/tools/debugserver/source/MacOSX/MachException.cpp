@@ -165,12 +165,16 @@ catch_mach_exception_raise
                         (uint64_t)(exc_data_count > 1 ? exc_data[1] : 0xBADDBADD));
     }
 
-    g_message->task_port = task_port;
-    g_message->thread_port = thread_port;
-    g_message->exc_type = exc_type;
-    g_message->exc_data.resize(exc_data_count);
-    ::memcpy (&g_message->exc_data[0], exc_data, g_message->exc_data.size() * sizeof (mach_exception_data_type_t));
-    return KERN_SUCCESS;
+    if (task_port == g_message->task_port)
+    {
+        g_message->task_port = task_port;
+        g_message->thread_port = thread_port;
+        g_message->exc_type = exc_type;
+        g_message->exc_data.resize(exc_data_count);
+        ::memcpy (&g_message->exc_data[0], exc_data, g_message->exc_data.size() * sizeof (mach_exception_data_type_t));
+        return KERN_SUCCESS;
+    }
+    return KERN_FAILURE;
 }
 
 
@@ -318,12 +322,13 @@ MachException::Message::Receive(mach_port_t port, mach_msg_option_t options, mac
 }
 
 bool
-MachException::Message::CatchExceptionRaise()
+MachException::Message::CatchExceptionRaise(task_t task)
 {
     bool success = false;
     // locker will keep a mutex locked until it goes out of scope
 //    PThreadMutex::Locker locker(&g_message_mutex);
     //    DNBLogThreaded("calling  mach_exc_server");
+    state.task_port = task;
     g_message = &state;
     // The exc_server function is the MIG generated server handling function
     // to handle messages from the kernel relating to the occurrence of an

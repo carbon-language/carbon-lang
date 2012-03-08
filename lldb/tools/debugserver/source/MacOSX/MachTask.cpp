@@ -592,7 +592,7 @@ MachTask::ExceptionThread (void *arg)
         }
         else
         {
-            if (exception_message.CatchExceptionRaise())
+            if (exception_message.CatchExceptionRaise(task))
             {
                 ++num_exceptions_received;
                 mach_proc->ExceptionMessageReceived(exception_message);

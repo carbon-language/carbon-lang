@@ -101,7 +101,7 @@ public:
             memset(&exc_msg,   0, sizeof(exc_msg));
             memset(&reply_msg, 0, sizeof(reply_msg));
         }
-        bool CatchExceptionRaise();
+        bool CatchExceptionRaise(task_t task);
         void Dump() const;
         kern_return_t Reply (MachProcess *process, int signal);
         kern_return_t Receive( mach_port_t receive_port,
