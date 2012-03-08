@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "AnalysisConsumer"
+
 #include "AnalysisConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
@@ -18,6 +20,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/Analysis/CallGraph.h"
 #include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
@@ -35,13 +38,17 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 
 using namespace clang;
 using namespace ento;
+using llvm::SmallPtrSet;
 
 static ExplodedNode::Auditor* CreateUbiViz();
+
+STATISTIC(NumFunctionsAnalyzed, "The # of functions analysed (as top level).");
 
 //===----------------------------------------------------------------------===//
 // Special PathDiagnosticConsumers.
@@ -180,6 +187,7 @@ public:
   virtual void HandleTranslationUnit(ASTContext &C);
   void HandleDeclContext(ASTContext &C, DeclContext *dc);
   void HandleDeclContextDecl(ASTContext &C, Decl *D);
+  void HandleDeclContextDeclFunction(ASTContext &C, Decl *D);
 
   void HandleCode(Decl *D);
 };
@@ -195,6 +203,50 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
        I != E; ++I) {
     HandleDeclContextDecl(C, *I);
   }
+
+  // If inlining is not turned on, use the simplest function order.
+  if (!Mgr->shouldInlineCall()) {
+    for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
+         I != E; ++I)
+      HandleDeclContextDeclFunction(C, *I);
+    return;
+  }
+
+  // Otherwise, use the Callgraph to derive the order.
+  // Build the Call Graph.
+  CallGraph CG;
+  CG.addToCallGraph(dc);
+
+  // Find the top level nodes - children of root + the unreachable (parentless)
+  // nodes.
+  llvm::SmallVector<CallGraphNode*, 24>  TopLevelFunctions;
+  CallGraphNode *Entry = CG.getRoot();
+  for (CallGraphNode::iterator I = Entry->begin(),
+                               E = Entry->end(); I != E; ++I)
+    TopLevelFunctions.push_back(*I);
+
+  for (CallGraph::nodes_iterator TI = CG.parentless_begin(),
+                                 TE = CG.parentless_end(); TI != TE; ++TI)
+    TopLevelFunctions.push_back(*TI);
+
+  // TODO: Sort TopLevelFunctions.
+
+  // DFS over all of the top level nodes. Use external Visited set, which is
+  // also modified when we inline a function.
+  SmallPtrSet<CallGraphNode*,24> Visited;
+  for (llvm::SmallVector<CallGraphNode*, 24>::iterator
+         TI = TopLevelFunctions.begin(), TE = TopLevelFunctions.end();
+         TI != TE; ++TI) {
+    for (llvm::df_ext_iterator<CallGraphNode*, SmallPtrSet<CallGraphNode*,24> >
+        DFI = llvm::df_ext_begin(*TI, Visited),
+        E = llvm::df_ext_end(*TI, Visited);
+        DFI != E; ++DFI) {
+      Decl *D = (*DFI)->getDecl();
+      assert(D);
+      HandleCode(D);
+    }
+  }
+
 }
 
 void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
@@ -208,6 +260,24 @@ void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
       HandleDeclContext(C, cast<NamespaceDecl>(D));
       break;
     }
+    case Decl::ObjCCategoryImpl:
+    case Decl::ObjCImplementation: {
+      ObjCImplDecl *ID = cast<ObjCImplDecl>(D);
+      for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(),
+           ME = ID->meth_end(); MI != ME; ++MI) {
+        BugReporter BR(*Mgr);
+        checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
+void AnalysisConsumer::HandleDeclContextDeclFunction(ASTContext &C, Decl *D) {
+  switch (D->getKind()) {
     case Decl::CXXConstructor:
     case Decl::CXXDestructor:
     case Decl::CXXConversion:
@@ -221,7 +291,6 @@ void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
         if (!Opts.AnalyzeSpecificFunction.empty() &&
             FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
           break;
-        DisplayFunction(FD);
         HandleCode(FD);
       }
       break;
@@ -230,19 +299,13 @@ void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
     case Decl::ObjCCategoryImpl:
     case Decl::ObjCImplementation: {
       ObjCImplDecl *ID = cast<ObjCImplDecl>(D);
-      HandleCode(ID);
-      
       for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(), 
            ME = ID->meth_end(); MI != ME; ++MI) {
-        BugReporter BR(*Mgr);
-        checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
-
         if ((*MI)->isThisDeclarationADefinition()) {
           if (!Opts.AnalyzeSpecificFunction.empty() &&
               Opts.AnalyzeSpecificFunction != 
                 (*MI)->getSelector().getAsString())
             continue;
-          DisplayFunction(*MI);
           HandleCode(*MI);
         }
       }
@@ -290,7 +353,24 @@ static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
 static void RunPathSensitiveChecks(AnalysisConsumer &C, AnalysisManager &mgr,
                                    Decl *D);
 
+static std::string getFunctionName(const Decl *D) {
+  if (const ObjCMethodDecl *ID = dyn_cast<ObjCMethodDecl>(D)) {
+    return ID->getSelector().getAsString();
+  }
+  if (const FunctionDecl *ND = dyn_cast<FunctionDecl>(D)) {
+    IdentifierInfo *II = ND->getIdentifier();
+    if (II)
+      return II->getName();
+  }
+  return "";
+}
+
 void AnalysisConsumer::HandleCode(Decl *D) {
+  if (!Opts.AnalyzeSpecificFunction.empty() &&
+      getFunctionName(D) != Opts.AnalyzeSpecificFunction)
+    return;
+
+  DisplayFunction(D);
 
   // Don't run the actions if an error has occurred with parsing the file.
   DiagnosticsEngine &Diags = PP.getDiagnostics();
@@ -322,6 +402,7 @@ void AnalysisConsumer::HandleCode(Decl *D) {
       if (checkerMgr->hasPathSensitiveCheckers())
         RunPathSensitiveChecks(*this, *Mgr, *WI);
     }
+  NumFunctionsAnalyzed++;
 }
 
 //===----------------------------------------------------------------------===//
