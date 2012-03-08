@@ -42,8 +42,8 @@ public:
     size_t __size_;
     __node* __left_;
     __node* __right_;
-    long double __value_;
     long __cached_size_;
+    long double __value_;
 public:
     __node()
         : __name_(0), __size_(0), __left_(0), __right_(0), __cached_size_(-1)
@@ -3718,7 +3718,7 @@ public:
     {
         if (__left_ == 0)
         {
-            if (__size_ < t_end - t_begin)
+            if (__size_ < static_cast<size_t>(t_end - t_begin))
             {
                 __left_ = t_begin[__size_];
                 __size_ = 0;
@@ -8149,7 +8149,7 @@ __demangle_tree::__parse_template_param(const char* first, const char* last)
                 if (t == last || *t != '_')
                     return first;
                 ++sub;
-                if (sub < __t_end_ - __t_begin_)
+                if (sub < static_cast<size_t>(__t_end_ - __t_begin_))
                 {
                     if (__make<__sub>(__t_begin_[sub]))
                         first = t+1;
@@ -10078,7 +10078,7 @@ __demangle_tree::__parse_source_name(const char* first, const char* last)
                 if (++t == last)
                     return first;
             }
-            if (last - t >= n && __make<__source_name>(t, n))
+            if (static_cast<size_t>(last - t) >= n && __make<__source_name>(t, n))
                 first = t + n;
         }
     }
@@ -10576,7 +10576,7 @@ __demangle_tree::__parse_substitution(const char* first, const char* last)
                     if (t == last || *t != '_')
                         return first;
                     ++sub;
-                    if (sub < __sub_end_ - __sub_begin_)
+                    if (sub < static_cast<size_t>(__sub_end_ - __sub_begin_))
                     {
                         if (__make<__sub>(__sub_begin_[sub]))
                             first = t+1;
@@ -10809,13 +10809,13 @@ printf("\n");
     const unsigned N = 4096;
     char tmp[N];
     ptrdiff_t s;
-    if (est <= bs)
+    if (static_cast<size_t>(est) <= bs)
     {
         char* e = dmg_tree.__get_demangled_name(buf);
         *e++ = '\0';
         s = e - buf;
     }
-    else if (est <= N)
+    else if (static_cast<size_t>(est) <= N)
     {
         char* e = dmg_tree.__get_demangled_name(tmp);
         *e++ = '\0';
@@ -10823,7 +10823,7 @@ printf("\n");
     }
     else
         s = static_cast<ptrdiff_t>(dmg_tree.size() + 1);
-    if (s > bs)
+    if (static_cast<size_t>(s) > bs)
     {
         buf = static_cast<char*>(realloc(buf, static_cast<size_t>(s)));
         if (buf == NULL)
@@ -10835,9 +10835,9 @@ printf("\n");
         if (n)
             *n = static_cast<size_t>(s);
     }
-    if (est > bs)
+    if (static_cast<size_t>(est) > bs)
     {
-        if (est <= N)
+        if (static_cast<size_t>(est) <= N)
             strncpy(buf, tmp, static_cast<size_t>(s));
         else
             *dmg_tree.__get_demangled_name(buf) = '\0';
