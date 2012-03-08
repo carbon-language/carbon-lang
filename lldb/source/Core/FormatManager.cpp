@@ -696,6 +696,7 @@ AddSummary(TypeCategoryImpl::SharedPointer category_sp,
                                             summary_sp);
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 static void
 AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
                  const char* funct_name,
@@ -712,7 +713,7 @@ AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
     category_sp->GetSummaryNavigator()->Add(type_name,
                                             summary_sp);
 }
-
+#endif
 
 #ifndef LLDB_DISABLE_PYTHON
 void

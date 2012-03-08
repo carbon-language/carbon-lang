@@ -12,10 +12,10 @@
 #include <AvailabilityMacros.h>
 
 #if !defined(MAC_OS_X_VERSION_10_7) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-#define BUILDING_ON_SNOW_LEOPARD 1
+#define NO_XPC_SERVICES 1 
 #endif
 
-#if !BUILDING_ON_SNOW_LEOPARD
+#if !defined(NO_XPC_SERVICES)
 #define __XPC_PRIVATE_H__
 #include <xpc/xpc.h>
 #include "LauncherXPCService.h"
@@ -1260,7 +1260,7 @@ GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
     return flags;
 }
 
-#if !BUILDING_ON_SNOW_LEOPARD
+#if !NO_XPC_SERVICES
 static void
 PackageXPCArguments (xpc_object_t message, const char *prefix, const Args& args)
 {
@@ -1355,7 +1355,7 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
 static Error
 LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
 {
-#if !BUILDING_ON_SNOW_LEOPARD
+#if !NO_XPC_SERVICES
     Error error = getXPCAuthorization(launch_info);
     if (error.Fail())
         return error;
@@ -1439,9 +1439,9 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
             error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
         }
     }
-#endif
     
     return error;
+#endif
 }
 
 static Error
@@ -1596,7 +1596,7 @@ ShouldLaunchUsingXPC(const char *exe_path, ProcessLaunchInfo &launch_info)
 {
     bool result = false;
 
-#if !BUILDING_ON_SNOW_LEOPARD    
+#if !NO_XPC_SERVICES    
     const char *debugserver = "/debugserver";
     int len = strlen(debugserver);
     int exe_len = strlen(exe_path);
