@@ -1237,7 +1237,12 @@ void StmtPrinter::VisitUserDefinedLiteral(UserDefinedLiteral *Node) {
     }
     break;
   }
-  case UserDefinedLiteral::LOK_Integer:
+  case UserDefinedLiteral::LOK_Integer: {
+    // Print integer literal without suffix.
+    IntegerLiteral *Int = cast<IntegerLiteral>(Node->getCookedLiteral());
+    OS << Int->getValue().toString(10, /*isSigned*/false);
+    break;
+  }
   case UserDefinedLiteral::LOK_Floating:
   case UserDefinedLiteral::LOK_String:
   case UserDefinedLiteral::LOK_Character:
