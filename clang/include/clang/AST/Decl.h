@@ -205,8 +205,8 @@ public:
     return DC->isRecord();
   }
 
-  /// \brief Given that this declaration is a C++ class member,
-  /// determine whether it's an instance member of its class.
+  /// \brief Determine whether the given declaration is an instance member of
+  /// a C++ class.
   bool isCXXInstanceMember() const;
 
   class LinkageInfo {

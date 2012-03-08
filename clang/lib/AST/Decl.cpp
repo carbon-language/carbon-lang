@@ -997,9 +997,9 @@ NamedDecl *NamedDecl::getUnderlyingDecl() {
 }
 
 bool NamedDecl::isCXXInstanceMember() const {
-  assert(isCXXClassMember() &&
-         "checking whether non-member is instance member");
-
+  if (!isCXXClassMember())
+    return false;
+  
   const NamedDecl *D = this;
   if (isa<UsingShadowDecl>(D))
     D = cast<UsingShadowDecl>(D)->getTargetDecl();

@@ -174,3 +174,13 @@ namespace N2764 {
 }
 
 enum class N2764::B {};
+
+namespace PR12106 {
+  template<typename E> struct Enum {
+    Enum() : m_e(E::Last) {}
+    E m_e;
+  };
+
+  enum eCOLORS { Last };
+  Enum<eCOLORS> e;
+}
