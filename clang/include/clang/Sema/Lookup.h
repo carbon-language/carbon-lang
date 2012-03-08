@@ -600,7 +600,13 @@ private:
   void configure();
 
   // Sanity checks.
-  void sanity() const;
+  void sanityImpl() const;
+
+  void sanity() const {
+#ifndef NDEBUG
+    sanityImpl();
+#endif
+  }
 
   bool sanityCheckUnresolved() const {
     for (iterator I = begin(), E = end(); I != E; ++I)
