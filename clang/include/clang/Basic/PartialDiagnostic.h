@@ -141,6 +141,16 @@ private:
     if (!DiagStorage)
       return;
 
+    // The hot path for PartialDiagnostic is when we just used it to wrap an ID
+    // (typically so we have the flexibility of passing a more complex
+    // diagnostic into the callee, but that does not commonly occur).
+    //
+    // Split this out into a slow function for silly compilers (*cough*) which
+    // can't do decent partial inlining.
+    freeStorageSlow();
+  }
+
+  void freeStorageSlow() {
     if (Allocator)
       Allocator->Deallocate(DiagStorage);
     else if (Allocator != reinterpret_cast<StorageAllocator *>(~uintptr_t(0)))
