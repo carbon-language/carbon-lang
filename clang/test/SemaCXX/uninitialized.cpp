@@ -33,6 +33,7 @@ class A {
     int num;
     static int count;
     int get() const { return num; }
+    int get2() { return num; }
     void set(int x) { num = x; }
     static int zero() { return 0; }
 
@@ -67,6 +68,7 @@ void setupA() {
   A a14 = A(a14);  // expected-warning {{variable 'a14' is uninitialized when used within its own initialization}}
   A a15 = getA(a15.num);  // expected-warning {{variable 'a15' is uninitialized when used within its own initialization}}
   A a16(&a16.num);  // expected-warning {{variable 'a16' is uninitialized when used within its own initialization}}
+  A a17(a17.get2());  // expected-warning {{variable 'a17' is uninitialized when used within its own initialization}}
 }
 
 struct B {
