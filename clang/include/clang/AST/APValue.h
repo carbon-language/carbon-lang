@@ -385,7 +385,11 @@ public:
   const APValue &operator=(const APValue &RHS);
 
 private:
-  void MakeUninit();
+  void DestroyDataAndMakeUninit();
+  void MakeUninit() {
+    if (Kind != Uninitialized)
+      DestroyDataAndMakeUninit();
+  }
   void MakeInt() {
     assert(isUninit() && "Bad state change");
     new ((void*)Data) APSInt(1);

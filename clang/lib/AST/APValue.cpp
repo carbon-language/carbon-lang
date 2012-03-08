@@ -189,7 +189,7 @@ const APValue &APValue::operator=(const APValue &RHS) {
   return *this;
 }
 
-void APValue::MakeUninit() {
+void APValue::DestroyDataAndMakeUninit() {
   if (Kind == Int)
     ((APSInt*)(char*)Data)->~APSInt();
   else if (Kind == Float)
