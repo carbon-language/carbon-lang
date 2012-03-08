@@ -37,10 +37,11 @@ class AsanProcMaps {
                                      char filename[], size_t filename_size) {
     Reset();
     uintptr_t start, end, file_offset;
-    while (Next(&start, &end, &file_offset,
-                filename, filename_size)) {
+    for (int i = 0; Next(&start, &end, &file_offset, filename, filename_size);
+         i++) {
       if (addr >= start && addr < end) {
-        *offset = (addr - start) + file_offset;
+        // Don't subtract 'start' for the first entry. Don't ask me why.
+        *offset = (addr - (i ? start : 0)) + file_offset;
         return true;
       }
     }

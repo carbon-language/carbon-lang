@@ -213,7 +213,7 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
   return true;
 }
 
-#ifdef __arm__
+#if 1
 
 // Gets the object name and the offset by walking AsanProcMaps.
 bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
@@ -222,8 +222,9 @@ bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
 
-#else  // __arm__
-
+#else
+// dl_iterate_phdr machinery is not working well for us.
+// We either need to fix it or get rid of it.
 struct DlIterateData {
   int count;
   uintptr_t addr;
