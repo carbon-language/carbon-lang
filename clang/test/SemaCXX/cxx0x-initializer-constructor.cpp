@@ -218,3 +218,21 @@ namespace PR12117 {
   struct B { B(A); } b{{0}};
   struct C { C(int); } c{0};
 }
+
+namespace PR12167 {
+  template<int N> struct string {};
+
+  struct X {
+    X(const char v);
+    template<typename T> bool operator()(T) const;
+  };
+
+  template<int N, class Comparator> bool g(const string<N>& s, Comparator cmp) {
+    return cmp(s);
+  }
+  template<int N> bool f(const string<N> &s) {
+    return g(s, X{'x'});
+  }
+
+  bool s = f(string<1>());
+}

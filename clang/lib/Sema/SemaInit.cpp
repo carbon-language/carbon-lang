@@ -4671,9 +4671,10 @@ PerformConstructorInitialization(Sema &S,
 
 
   if (Entity.getKind() == InitializedEntity::EK_Temporary &&
-      NumArgs != 1 && // FIXME: Hack to work around cast weirdness
-      (Kind.getKind() == InitializationKind::IK_Direct ||
-       Kind.getKind() == InitializationKind::IK_Value)) {
+      (Kind.getKind() == InitializationKind::IK_DirectList ||
+       (NumArgs != 1 && // FIXME: Hack to work around cast weirdness
+        (Kind.getKind() == InitializationKind::IK_Direct ||
+         Kind.getKind() == InitializationKind::IK_Value)))) {
     // An explicitly-constructed temporary, e.g., X(1, 2).
     unsigned NumExprs = ConstructorArgs.size();
     Expr **Exprs = (Expr **)ConstructorArgs.take();
@@ -4683,13 +4684,16 @@ PerformConstructorInitialization(Sema &S,
     TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
     if (!TSInfo)
       TSInfo = S.Context.getTrivialTypeSourceInfo(Entity.getType(), Loc);
+    SourceRange ParenRange;
+    if (Kind.getKind() != InitializationKind::IK_DirectList)
+      ParenRange = Kind.getParenRange();
 
     CurInit = S.Owned(new (S.Context) CXXTemporaryObjectExpr(S.Context,
                                                              Constructor,
                                                              TSInfo,
                                                              Exprs,
                                                              NumExprs,
-                                                     Kind.getParenRange(),
+                                                             ParenRange,
                                                      HadMultipleCandidates,
                                          ConstructorInitRequiresZeroInit));
   } else {
