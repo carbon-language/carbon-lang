@@ -189,7 +189,7 @@ Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(ID) {
 }
 
 static bool HasImplicitCPSRDef(const MCInstrDesc &MCID) {
-  for (const unsigned *Regs = MCID.ImplicitDefs; *Regs; ++Regs)
+  for (const uint16_t *Regs = MCID.getImplicitDefs(); *Regs; ++Regs)
     if (*Regs == ARM::CPSR)
       return true;
   return false;

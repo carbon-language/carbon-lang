@@ -425,7 +425,7 @@ static EVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
   const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
   assert(MCID.ImplicitDefs && "Physical reg def must be in implicit def list!");
   unsigned NumRes = MCID.getNumDefs();
-  for (const unsigned *ImpDef = MCID.getImplicitDefs(); *ImpDef; ++ImpDef) {
+  for (const uint16_t *ImpDef = MCID.getImplicitDefs(); *ImpDef; ++ImpDef) {
     if (Reg == *ImpDef)
       break;
     ++NumRes;
@@ -508,7 +508,7 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
     const MCInstrDesc &MCID = TII->get(Node->getMachineOpcode());
     if (!MCID.ImplicitDefs)
       continue;
-    for (const unsigned *Reg = MCID.ImplicitDefs; *Reg; ++Reg) {
+    for (const uint16_t *Reg = MCID.getImplicitDefs(); *Reg; ++Reg) {
       CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
     }
   }

@@ -490,10 +490,10 @@ MachineInstr::MachineInstr()
 
 void MachineInstr::addImplicitDefUseOperands() {
   if (MCID->ImplicitDefs)
-    for (const unsigned *ImpDefs = MCID->ImplicitDefs; *ImpDefs; ++ImpDefs)
+    for (const uint16_t *ImpDefs = MCID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
       addOperand(MachineOperand::CreateReg(*ImpDefs, true, true));
   if (MCID->ImplicitUses)
-    for (const unsigned *ImpUses = MCID->ImplicitUses; *ImpUses; ++ImpUses)
+    for (const uint16_t *ImpUses = MCID->getImplicitUses(); *ImpUses; ++ImpUses)
       addOperand(MachineOperand::CreateReg(*ImpUses, false, true));
 }
 
