@@ -137,6 +137,7 @@ struct ContentTypeMapping {
 static const ContentTypeMapping typeMappings[] = {
   { "unknown",        DefinedAtom::typeUnknown },
   { "code",           DefinedAtom::typeCode },
+  { "stub",           DefinedAtom::typeStub },
   { "resolver",       DefinedAtom::typeResolver },
   { "constant",       DefinedAtom::typeConstant },
   { "c-string",       DefinedAtom::typeCString },

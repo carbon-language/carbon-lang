@@ -92,9 +92,15 @@ public:
   }
   
   virtual llvm::ArrayRef<uint8_t> rawContent() const;
-    
-  virtual void forEachReference(ReferenceHandler&) const;
-   
+  
+  virtual reference_iterator referencesBegin() const;
+  
+  virtual reference_iterator referencesEnd() const;
+
+  virtual const Reference* derefIterator(const void*) const;
+  
+  virtual void incrementIterator(const void*& it) const;
+
 private:
   const NativeAtomAttributesV1& attributes() const;
   
@@ -299,53 +305,29 @@ public:
     // the _definedAtoms array which was allocated to contain an array
     // of Atom objects.  The atoms have empty destructors, so it is ok
     // to just delete the memory.
-    delete _definedAtoms.arrayStart;
-    delete _undefinedAtoms.arrayStart;
-    delete _sharedLibraryAtoms.arrayStart;
-    delete _absoluteAtoms.arrayStart;
+    delete _definedAtoms._arrayStart;
+    delete _undefinedAtoms._arrayStart;
+    delete _sharedLibraryAtoms._arrayStart;
+    delete _absoluteAtoms._arrayStart;
     delete _references.arrayStart;
     delete _targetsTable;
   }
   
-  // visits each atom in the file
-  virtual bool forEachAtom(AtomHandler& handler) const {
-    bool didSomething = false;
-    for(const uint8_t* p=_definedAtoms.arrayStart; p != _definedAtoms.arrayEnd; 
-          p += _definedAtoms.elementSize) {
-      const DefinedAtom* atom = reinterpret_cast<const DefinedAtom*>(p);
-      handler.doDefinedAtom(*atom);
-      didSomething = true;
-    }
-    for(const uint8_t* p=_undefinedAtoms.arrayStart; 
-                      p != _undefinedAtoms.arrayEnd; 
-                      p += _undefinedAtoms.elementSize) {
-      const UndefinedAtom* atom = reinterpret_cast<const UndefinedAtom*>(p);
-      handler.doUndefinedAtom(*atom);
-      didSomething = true;
-    }
-    for(const uint8_t* p=_sharedLibraryAtoms.arrayStart; 
-                  p != _sharedLibraryAtoms.arrayEnd; 
-                  p += _sharedLibraryAtoms.elementSize) {
-      const SharedLibraryAtom* atom 
-                          = reinterpret_cast<const SharedLibraryAtom*>(p);
-      handler.doSharedLibraryAtom(*atom);
-      didSomething = true;
-    }
-    for(const uint8_t* p=_absoluteAtoms.arrayStart; 
-                  p != _absoluteAtoms.arrayEnd; 
-                  p += _absoluteAtoms.elementSize) {
-      const AbsoluteAtom* atom 
-                          = reinterpret_cast<const AbsoluteAtom*>(p);
-      handler.doAbsoluteAtom(*atom);
-      didSomething = true;
-    }
-    return didSomething;
+  virtual const atom_collection<DefinedAtom>&  defined() const {
+    return _definedAtoms;
   }
-  
-  // not used
-  virtual bool justInTimeforEachAtom(llvm::StringRef name,
-                                              AtomHandler &) const {
-    return false;
+  virtual const atom_collection<UndefinedAtom>& undefined() const {
+      return _undefinedAtoms;
+  }
+  virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
+      return _sharedLibraryAtoms;
+  }
+  virtual const atom_collection<AbsoluteAtom>& absolute() const {
+      return _absoluteAtoms;
+  }
+
+  virtual void addAtom(const Atom&) {
+    assert(0 && "cannot add atoms to native .o files");
   }
   
 private:
@@ -378,10 +360,10 @@ private:
       new (atomAllocSpace) NativeDefinedAtomV1(*this, ivarData);
       ++ivarData;
     }
-    this->_definedAtoms.arrayStart = atomsStart;
-    this->_definedAtoms.arrayEnd = atomsEnd;
-    this->_definedAtoms.elementSize = atomSize;
-    this->_definedAtoms.elementCount = chunk->elementCount;
+    this->_definedAtoms._arrayStart = atomsStart;
+    this->_definedAtoms._arrayEnd = atomsEnd;
+    this->_definedAtoms._elementSize = atomSize;
+    this->_definedAtoms._elementCount = chunk->elementCount;
     return make_error_code(native_reader_error::success);
   }
   
@@ -416,10 +398,10 @@ private:
       new (atomAllocSpace) NativeUndefinedAtomV1(*this, ivarData);
       ++ivarData;
     }
-    this->_undefinedAtoms.arrayStart = atomsStart;
-    this->_undefinedAtoms.arrayEnd = atomsEnd;
-    this->_undefinedAtoms.elementSize = atomSize;
-    this->_undefinedAtoms.elementCount = chunk->elementCount;
+    this->_undefinedAtoms._arrayStart = atomsStart;
+    this->_undefinedAtoms._arrayEnd = atomsEnd;
+    this->_undefinedAtoms._elementSize = atomSize;
+    this->_undefinedAtoms._elementCount = chunk->elementCount;
     return make_error_code(native_reader_error::success);
   }
   
@@ -447,10 +429,10 @@ private:
       new (atomAllocSpace) NativeSharedLibraryAtomV1(*this, ivarData);
       ++ivarData;
     }
-    this->_sharedLibraryAtoms.arrayStart = atomsStart;
-    this->_sharedLibraryAtoms.arrayEnd = atomsEnd;
-    this->_sharedLibraryAtoms.elementSize = atomSize;
-    this->_sharedLibraryAtoms.elementCount = chunk->elementCount;
+    this->_sharedLibraryAtoms._arrayStart = atomsStart;
+    this->_sharedLibraryAtoms._arrayEnd = atomsEnd;
+    this->_sharedLibraryAtoms._elementSize = atomSize;
+    this->_sharedLibraryAtoms._elementCount = chunk->elementCount;
     return make_error_code(native_reader_error::success);
   }
   
@@ -478,10 +460,10 @@ private:
       new (atomAllocSpace) NativeAbsoluteAtomV1(*this, ivarData);
       ++ivarData;
     }
-    this->_absoluteAtoms.arrayStart = atomsStart;
-    this->_absoluteAtoms.arrayEnd = atomsEnd;
-    this->_absoluteAtoms.elementSize = atomSize;
-    this->_absoluteAtoms.elementCount = chunk->elementCount;
+    this->_absoluteAtoms._arrayStart = atomsStart;
+    this->_absoluteAtoms._arrayEnd = atomsEnd;
+    this->_absoluteAtoms._elementSize = atomSize;
+    this->_absoluteAtoms._elementCount = chunk->elementCount;
     return make_error_code(native_reader_error::success);
   }
   
@@ -529,33 +511,33 @@ private:
     this->_targetsTable = new const Atom*[chunk->elementCount];
     for (uint32_t i=0; i < chunk->elementCount; ++i) {
       const uint32_t index = targetIndexes[i];
-      if ( index < _definedAtoms.elementCount ) {
-        const uint8_t* p = _definedAtoms.arrayStart 
-                                    + index * _definedAtoms.elementSize;
+      if ( index < _definedAtoms._elementCount ) {
+        const uint8_t* p = _definedAtoms._arrayStart 
+                                    + index * _definedAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const DefinedAtom*>(p);
         continue;
       }
-      const uint32_t undefIndex = index - _definedAtoms.elementCount;
-      if ( undefIndex < _undefinedAtoms.elementCount ) {
-        const uint8_t* p = _undefinedAtoms.arrayStart 
-                                    + undefIndex * _undefinedAtoms.elementSize;
+      const uint32_t undefIndex = index - _definedAtoms._elementCount;
+      if ( undefIndex < _undefinedAtoms._elementCount ) {
+        const uint8_t* p = _undefinedAtoms._arrayStart 
+                                    + undefIndex * _undefinedAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const UndefinedAtom*>(p);
         continue;
       }
-      const uint32_t slIndex = index - _definedAtoms.elementCount 
-                                     - _undefinedAtoms.elementCount;
-      if ( slIndex < _sharedLibraryAtoms.elementCount ) {
-        const uint8_t* p = _sharedLibraryAtoms.arrayStart 
-                                  + slIndex * _sharedLibraryAtoms.elementSize;
+      const uint32_t slIndex = index - _definedAtoms._elementCount 
+                                     - _undefinedAtoms._elementCount;
+      if ( slIndex < _sharedLibraryAtoms._elementCount ) {
+        const uint8_t* p = _sharedLibraryAtoms._arrayStart 
+                                  + slIndex * _sharedLibraryAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const SharedLibraryAtom*>(p);
         continue;
       }
-      const uint32_t abIndex = index - _definedAtoms.elementCount 
-                                     - _undefinedAtoms.elementCount
-                                     - _sharedLibraryAtoms.elementCount;
-      if ( abIndex < _absoluteAtoms.elementCount ) {
-        const uint8_t* p = _absoluteAtoms.arrayStart 
-                                  + slIndex * _absoluteAtoms.elementSize;
+      const uint32_t abIndex = index - _definedAtoms._elementCount 
+                                     - _undefinedAtoms._elementCount
+                                     - _sharedLibraryAtoms._elementCount;
+      if ( abIndex < _absoluteAtoms._elementCount ) {
+        const uint8_t* p = _absoluteAtoms._arrayStart 
+                                  + slIndex * _absoluteAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const AbsoluteAtom*>(p);
         continue;
       }
@@ -612,21 +594,13 @@ private:
     assert((result+size) <= _contentEnd);
     return result;
   }
-
-  void forEachReference(DefinedAtom::ReferenceHandler& handler, 
-                                        uint32_t start, uint32_t count) const {
-    assert(start < _references.elementCount);
-    assert(start+count <= _references.elementCount);
-    const uint8_t* arrStart = _references.arrayStart 
-                                   + start * _references.elementSize;
-    const uint8_t* arrEnd = arrStart + count * _references.elementSize;
-    for(const uint8_t* p=arrStart; p != arrEnd; p += _references.elementSize) {
-      const NativeReferenceV1* ref 
-                              = reinterpret_cast<const NativeReferenceV1*>(p);
-      handler.doReference(*ref);
-    }
-  }
   
+  const Reference* referenceByIndex(uintptr_t index) const {
+    assert(index < _references.elementCount);
+    const uint8_t* p = _references.arrayStart + index * _references.elementSize;
+    return reinterpret_cast<const NativeReferenceV1*>(p);
+  }
+
   const Atom* target(uint32_t index) const {
     assert(index < _targetsTableCount);
     return _targetsTable[index];
@@ -656,21 +630,52 @@ private:
                                                   (_buffer->getBufferStart());
   }
 
+  template <typename T>
+  class AtomArray : public File::atom_collection<T> {
+  public:
+     AtomArray() : _arrayStart(NULL), _arrayEnd(NULL), 
+                   _elementSize(0), _elementCount(0) { }
+                                    
+    virtual atom_iterator<T> begin() const { 
+      return atom_iterator<T>(*this, reinterpret_cast<const void*>(_arrayStart));
+    }
+    virtual atom_iterator<T> end() const{ 
+      return atom_iterator<T>(*this, reinterpret_cast<const void*>(_arrayEnd));
+    }
+    virtual const T* deref(const void* it) const {
+      return reinterpret_cast<const T*>(it);
+    }
+    virtual void next(const void*& it) const {
+      const uint8_t* p = reinterpret_cast<const uint8_t*>(it);
+      p += _elementSize;
+      it = reinterpret_cast<const void*>(p);
+    }
+    const uint8_t*     _arrayStart;
+    const uint8_t*     _arrayEnd;
+    uint32_t           _elementSize;
+    uint32_t           _elementCount;
+  };
+
   struct IvarArray {
-                      IvarArray() : arrayStart(NULL), arrayEnd(NULL), 
-                                    elementSize(0), elementCount(0) { }
+                      IvarArray() : 
+                        arrayStart(NULL), 
+                        arrayEnd(NULL), 
+                        elementSize(0), 
+                        elementCount(0) { } 
+    
     const uint8_t*     arrayStart;
     const uint8_t*     arrayEnd;
     uint32_t           elementSize;
     uint32_t           elementCount;
- };
+  };
+
 
   llvm::OwningPtr<llvm::MemoryBuffer>  _buffer;
   const NativeFileHeader*         _header;
-  IvarArray                       _definedAtoms;
-  IvarArray                       _undefinedAtoms;
-  IvarArray                       _sharedLibraryAtoms;
-  IvarArray                       _absoluteAtoms;
+  AtomArray<DefinedAtom>          _definedAtoms;
+  AtomArray<UndefinedAtom>        _undefinedAtoms;
+  AtomArray<SharedLibraryAtom>    _sharedLibraryAtoms;
+  AtomArray<AbsoluteAtom>         _absoluteAtoms;
   const uint8_t*                  _attributes;
   uint32_t                        _attributesMaxOffset;
   IvarArray                       _references;
@@ -684,14 +689,14 @@ private:
   const uint8_t*                  _contentEnd;
 };
 
- 
+
 inline const class File& NativeDefinedAtomV1::file() const {
   return *_file;
 }
 
 inline uint64_t NativeDefinedAtomV1:: ordinal() const {
   const uint8_t* p = reinterpret_cast<const uint8_t*>(_ivarData);
-  return p - _file->_definedAtoms.arrayStart;
+  return p - _file->_definedAtoms._arrayStart;
 }
 
 inline llvm::StringRef NativeDefinedAtomV1::name() const {
@@ -715,11 +720,27 @@ inline llvm::StringRef NativeDefinedAtomV1::customSectionName() const {
   return _file->string(offset);
 }
 
-inline void NativeDefinedAtomV1::forEachReference(ReferenceHandler& hnd) const {
-  if ( _ivarData->referencesCount == 0 )
-    return;
-  _file->forEachReference(hnd, _ivarData->referencesStartIndex, 
-                               _ivarData->referencesCount);
+DefinedAtom::reference_iterator NativeDefinedAtomV1::referencesBegin() const {
+  uintptr_t index = _ivarData->referencesStartIndex;
+  const void* it = reinterpret_cast<const void*>(index);
+  return reference_iterator(*this, it);
+}
+  
+DefinedAtom::reference_iterator NativeDefinedAtomV1::referencesEnd() const {
+  uintptr_t index = _ivarData->referencesStartIndex+_ivarData->referencesCount;
+  const void* it = reinterpret_cast<const void*>(index);
+  return reference_iterator(*this, it);
+}
+
+const Reference* NativeDefinedAtomV1::derefIterator(const void* it) const {
+  uintptr_t index = reinterpret_cast<uintptr_t>(it);
+  return _file->referenceByIndex(index);
+}
+  
+void NativeDefinedAtomV1::incrementIterator(const void*& it) const {
+  uintptr_t index = reinterpret_cast<uintptr_t>(it);
+  ++index;
+  it = reinterpret_cast<const void*>(index);
 }
 
 inline const class File& NativeUndefinedAtomV1::file() const {

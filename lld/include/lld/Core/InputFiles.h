@@ -24,15 +24,26 @@ namespace lld {
 /// The searchLibraries() method is used to lazily search libraries.
 class InputFiles {
 public:
+  class Handler {
+  public:
+    virtual ~Handler() {}
+    virtual void doFile(const class File &) = 0;
+    virtual void doDefinedAtom(const class DefinedAtom &) = 0;
+    virtual void doUndefinedAtom(const class UndefinedAtom &) = 0;
+    virtual void doSharedLibraryAtom(const class SharedLibraryAtom &) = 0;
+    virtual void doAbsoluteAtom(const class AbsoluteAtom &) = 0;
+  };
+
+
   /// @brief iterates all atoms in initial files
-  virtual void forEachInitialAtom(File::AtomHandler &) const = 0;
+  virtual void forEachInitialAtom(Handler &) const = 0;
 
   /// @brief searches libraries for name
   virtual bool searchLibraries(  llvm::StringRef name
                                , bool searchDylibs
                                , bool searchArchives
                                , bool dataSymbolOnly
-                               , File::AtomHandler &) const = 0;
+                               , Handler &) const = 0;
 };
 
 } // namespace lld

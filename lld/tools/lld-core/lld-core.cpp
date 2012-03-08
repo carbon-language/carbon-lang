@@ -11,6 +11,7 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/YamlWriter.h"
@@ -22,6 +23,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -49,15 +51,110 @@ static bool error(llvm::error_code ec) {
 }
 
 namespace {
-class LdCore : public InputFiles, public Platform {
-public:
-  LdCore(std::vector<File *> &f) : _files(f) { }
 
-  // InputFiles interface
-  virtual void forEachInitialAtom(File::AtomHandler &) const;
-  virtual bool searchLibraries(llvm::StringRef name, bool searchDylibs,
-                               bool searchArchives, bool dataSymbolOnly,
-                               File::AtomHandler &) const;
+
+//
+// Simple atoms created by the stubs pass.
+//
+class TestingStubAtom : public DefinedAtom {
+public:
+        TestingStubAtom(const File& f, const SharedLibraryAtom& shlib) :
+                        _file(f), _shlib(shlib) {
+          static uint32_t lastOrdinal = 0;
+          _ordinal = lastOrdinal++; 
+        }
+
+  virtual const File& file() const {
+    return _file;
+  }
+
+  virtual llvm::StringRef name() const {
+    return llvm::StringRef();
+  }
+  
+  virtual uint64_t ordinal() const {
+    return _ordinal;
+  }
+
+  virtual uint64_t size() const {
+    return 0;
+  }
+
+  virtual Scope scope() const {
+    return DefinedAtom::scopeLinkageUnit;
+  }
+  
+  virtual Interposable interposable() const {
+    return DefinedAtom::interposeNo;
+  }
+  
+  virtual Merge merge() const {
+    return DefinedAtom::mergeNo;
+  }
+  
+  virtual ContentType contentType() const  {
+    return DefinedAtom::typeStub;
+  }
+
+  virtual Alignment alignment() const {
+    return Alignment(0,0);
+  }
+  
+  virtual SectionChoice sectionChoice() const {
+    return DefinedAtom::sectionBasedOnContent;
+  }
+    
+  virtual llvm::StringRef customSectionName() const {
+    return llvm::StringRef();
+  }
+  virtual DeadStripKind deadStrip() const {
+    return DefinedAtom::deadStripNormal;
+  }
+    
+  virtual ContentPermissions permissions() const  {
+    return DefinedAtom::permR_X;
+  }
+  
+  virtual bool isThumb() const {
+    return false;
+  }
+    
+  virtual bool isAlias() const {
+    return false;
+  }
+  
+  virtual llvm::ArrayRef<uint8_t> rawContent() const {
+    return llvm::ArrayRef<uint8_t>();
+  }
+  
+  virtual reference_iterator referencesBegin() const {
+    return reference_iterator(*this, NULL);
+  }
+  
+  virtual reference_iterator referencesEnd() const {
+    return reference_iterator(*this, NULL);
+  }
+  
+  virtual const Reference* derefIterator(const void* iter) const {
+    return NULL;
+  }
+  
+  virtual void incrementIterator(const void*& iter) const {
+  
+  }
+  
+private:
+  const File&               _file;
+  const SharedLibraryAtom&  _shlib;
+  uint32_t                  _ordinal;
+};
+
+
+//
+// A simple platform for testing.
+//
+class TestingPlatform : public Platform {
+public:
 
   virtual void initialize() { }
 
@@ -155,97 +252,163 @@ public:
   // last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *> &all) {}
 
-private:
-  std::vector<File *> &_files;
+  virtual bool outputUsesStubs() { return true; };
+  
+
+  struct KindMapping {
+    const char*           string;
+    Reference::Kind       value;
+    bool                  isBranch;
+  };
+
+  static const KindMapping _s_kindMappings[]; 
+  
+  virtual Reference::Kind kindFromString(llvm::StringRef kindName) {
+    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+      if ( kindName.equals(p->string) )
+        return p->value;
+    }
+    int k;
+    kindName.getAsInteger(0, k);
+    return k;
+  }
+  
+  virtual llvm::StringRef kindToString(Reference::Kind value) {
+    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+      if ( value == p->value)
+        return p->string;
+    }
+    return llvm::StringRef("???");
+  }
+
+
+  virtual bool isBranch(const Reference* ref) { 
+    Reference::Kind value = ref->kind();
+    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+      if ( value == p->value )
+        return p->isBranch;
+    }
+    return false;
+  }
+  
+  virtual const Atom* makeStub(const SharedLibraryAtom& shlibAtom, File& file) {
+    return new TestingStubAtom(file, shlibAtom);
+  }
 };
-}
 
-void LdCore::forEachInitialAtom(File::AtomHandler &handler) const {
-  for (std::vector<File *>::iterator it = _files.begin();
-       it != _files.end(); ++it) {
-    const File *file = *it;
-    handler.doFile(*file);
-    file->forEachAtom(handler);
-  }
-}
 
-bool LdCore::searchLibraries(llvm::StringRef name, bool searchDylibs,
-                             bool searchArchives, bool dataSymbolOnly,
-                             File::AtomHandler &) const {
-  return false;
-}
+//
+// Table of fixup kinds in YAML documents used for testing
+//
+const TestingPlatform::KindMapping TestingPlatform::_s_kindMappings[] = {
+    { "call32",         1,    true },
+    { "pcrel32",        2,    false },
+    { "gotLoad32",      3,    false },
+    { NULL,             0,    false }
+  };
 
-namespace {
-class MergedFile : public File {
+
+//
+// A simple input files wrapper for testing.
+//
+class TestingInputFiles : public InputFiles {
 public:
-  MergedFile(std::vector<const Atom *> &a)
-    : File("path"), _atoms(a) { }
+  TestingInputFiles(std::vector<const File*>& f) : _files(f) { }
 
-  virtual bool forEachAtom(File::AtomHandler &handler) const {
-    handler.doFile(*this);
-    // visit defined atoms
-    for (std::vector<const Atom *>::iterator it = _atoms.begin();
-         it != _atoms.end(); ++it) {
-      const DefinedAtom* atom = (*it)->definedAtom();
-      if ( atom ) 
-          handler.doDefinedAtom(*atom);
+  // InputFiles interface
+  virtual void forEachInitialAtom(InputFiles::Handler& handler) const {
+    for (std::vector<const File *>::iterator fit = _files.begin();
+                                       fit != _files.end(); ++fit) {
+      const File* file = *fit;
+      handler.doFile(*file);
+      for(auto it=file->definedAtomsBegin(),end=file->definedAtomsEnd(); 
+                                 it != end; ++it) {
+        handler.doDefinedAtom(**it);
+      }
+      for(auto it=file->undefinedAtomsBegin(), end=file->undefinedAtomsEnd(); 
+                                 it != end; ++it) {
+        handler.doUndefinedAtom(**it);
+      }
+      for(auto it=file->sharedLibraryAtomsBegin(), end=file->sharedLibraryAtomsEnd(); 
+                                 it != end; ++it) {
+        handler.doSharedLibraryAtom(**it);
+      }
+      for(auto it=file->absoluteAtomsBegin(),end=file->absoluteAtomsEnd(); 
+                                 it != end; ++it) {
+        handler.doAbsoluteAtom(**it);
+      }
     }
-    // visit undefined atoms
-    for (std::vector<const Atom *>::iterator it = _atoms.begin();
-         it != _atoms.end(); ++it) {
-      const UndefinedAtom* atom = (*it)->undefinedAtom();
-      if ( atom ) 
-          handler.doUndefinedAtom(*atom);
-    }
-    // visit shared library atoms
-    for (std::vector<const Atom *>::iterator it = _atoms.begin();
-         it != _atoms.end(); ++it) {
-      const SharedLibraryAtom* atom = (*it)->sharedLibraryAtom();
-      if ( atom ) 
-          handler.doSharedLibraryAtom(*atom);
-    }
-    // visit absolute atoms
-    for (std::vector<const Atom *>::iterator it = _atoms.begin();
-         it != _atoms.end(); ++it) {
-      const AbsoluteAtom* atom = (*it)->absoluteAtom();
-      if ( atom ) 
-          handler.doAbsoluteAtom(*atom);
-    }
-    return true;
   }
 
-  virtual bool justInTimeforEachAtom(llvm::StringRef name,
-                                     File::AtomHandler &) const {
+  virtual bool searchLibraries(llvm::StringRef name, bool searchDylibs,
+                               bool searchArchives, bool dataSymbolOnly,
+                               InputFiles::Handler &) const {
     return false;
   }
 
+
 private:
-  std::vector<const Atom *> &_atoms;
+  std::vector<const File*>&        _files;
 };
-} //anonymous namespace
+}
 
 
-int main(int argc, const char *argv[]) {
+
+
+
+
+llvm::cl::opt<std::string> 
+gInputFilePath(llvm::cl::Positional,
+              llvm::cl::desc("<input file>"),
+              llvm::cl::init("-"));
+
+llvm::cl::opt<std::string> 
+gOutputFilePath("o", 
+              llvm::cl::desc("Specify output filename"), 
+              llvm::cl::value_desc("filename"));
+
+llvm::cl::opt<bool> 
+gDoStubsPass("stubs_pass", 
+          llvm::cl::desc("Run pass to create stub atoms"));
+
+
+int main(int argc, char *argv[]) {
   // Print a stack trace if we signal out.
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm::llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
+  // parse options
+  llvm::cl::ParseCommandLineOptions(argc, argv);
+
+  // create platform for testing
+  TestingPlatform testingPlatform;
+  
   // read input YAML doc into object file(s)
-  std::vector<File *> files;
-  if (error(yaml::parseObjectTextFileOrSTDIN(llvm::StringRef(argv[1]), files)))
+  std::vector<const File *> files;
+  if (error(yaml::parseObjectTextFileOrSTDIN(gInputFilePath, 
+                                            testingPlatform, files))) {
     return 1;
-
+  }
+  
+  // create object to mange input files
+  TestingInputFiles inputFiles(files);
+  
   // merge all atom graphs
-  LdCore core(files);
-  Resolver resolver(core, core);
-  std::vector<const Atom *> &mergedAtoms = resolver.resolve();
-  MergedFile outFile(mergedAtoms);
+  Resolver resolver(testingPlatform, inputFiles);
+  resolver.resolve();
 
+  // run passes
+  if ( gDoStubsPass ) {
+    StubsPass  addStubs(resolver.resultFile(), testingPlatform);
+    addStubs.perform();
+  }
+  
   // write new atom graph out as YAML doc
   std::string errorInfo;
-  llvm::raw_fd_ostream out("-", errorInfo);
-//  yaml::writeObjectText(outFile, out);
+  const char* outPath = gOutputFilePath.empty() ? "-" : gOutputFilePath.c_str();
+  llvm::raw_fd_ostream out(outPath, errorInfo);
+//  yaml::writeObjectText(resolver.resultFile(), out);
 
   // make unique temp .o file to put generated object file
   int fd;
@@ -254,7 +417,7 @@ int main(int argc, const char *argv[]) {
   llvm::raw_fd_ostream  binaryOut(fd, /*shouldClose=*/true);
   
   // write native file
-  writeNativeObjectFile(outFile, binaryOut);
+  writeNativeObjectFile(resolver.resultFile(), binaryOut);
   binaryOut.close();  // manually close so that file can be read next
 
 //  out << "native file: " << tempPath.str() << "\n";
@@ -265,7 +428,7 @@ int main(int argc, const char *argv[]) {
 	return 1;
 	
   // write new atom graph out as YAML doc
-  yaml::writeObjectText(*natFile, out);
+  yaml::writeObjectText(*natFile, testingPlatform, out);
 
   // delete temp .o file
   bool existed;

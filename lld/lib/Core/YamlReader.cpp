@@ -20,6 +20,8 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 
+#include "lld/Platform/Platform.h"
+
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -297,10 +299,23 @@ public:
     : File("path")
     , _lastRefIndex(0) {}
 
-  virtual bool forEachAtom(File::AtomHandler &) const;
-  virtual bool justInTimeforEachAtom(llvm::StringRef name,
-                                     File::AtomHandler &) const;
+  virtual const atom_collection<DefinedAtom>& defined() const {
+    return _definedAtoms;
+  }
+  virtual const atom_collection<UndefinedAtom>& undefined() const {
+      return _undefinedAtoms;
+  }
+  virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
+      return _sharedLibraryAtoms;
+  }
+  virtual const atom_collection<AbsoluteAtom>& absolute() const {
+      return _absoluteAtoms;
+  }
 
+  virtual void addAtom(const Atom&) {
+    assert(0 && "cannot add atoms to YAML files");
+  }
+   
   void bindTargetReferences();
   void addDefinedAtom(YAMLDefinedAtom* atom, const char* refName);
   void addUndefinedAtom(UndefinedAtom* atom);
@@ -314,13 +329,13 @@ public:
     Atom*        atom;
   };
 
-  std::vector<YAMLDefinedAtom*>   _definedAtoms;
-  std::vector<UndefinedAtom*>     _undefinedAtoms;
-  std::vector<SharedLibraryAtom*> _sharedLibraryAtoms;
-  std::vector<AbsoluteAtom*>      _absoluteAtoms;
-  std::vector<YAMLReference>      _references;
-  std::vector<NameAtomPair>       _nameToAtomMapping;
-  unsigned int                    _lastRefIndex;
+  atom_collection_vector<DefinedAtom>         _definedAtoms;
+  atom_collection_vector<UndefinedAtom>       _undefinedAtoms;
+  atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;
+  atom_collection_vector<AbsoluteAtom>        _absoluteAtoms;
+  std::vector<YAMLReference>                  _references;
+  std::vector<NameAtomPair>                   _nameToAtomMapping;
+  unsigned int                                _lastRefIndex;
 };
 
 
@@ -434,14 +449,35 @@ public:
     return _ord;
   }
 
-  
-  virtual void forEachReference(ReferenceHandler& handler) const {
-    for (uint32_t i=_refStartIndex; i < _refEndIndex; ++i) {
-      handler.doReference(_file._references[i]);
-    }
+  DefinedAtom::reference_iterator referencesBegin() const {
+    uintptr_t index = _refStartIndex;
+    const void* it = reinterpret_cast<const void*>(index);
+    return reference_iterator(*this, it);
   }
     
-  void bindTargetReferences() {
+  DefinedAtom::reference_iterator referencesEnd() const {
+    uintptr_t index = _refEndIndex;
+    const void* it = reinterpret_cast<const void*>(index);
+    return reference_iterator(*this, it);
+  }
+
+  const Reference* derefIterator(const void* it) const {
+    uintptr_t index = reinterpret_cast<uintptr_t>(it);
+    assert(index >= _refStartIndex);
+    assert(index < _refEndIndex);
+    assert(index < _file._references.size());
+    return &_file._references[index];
+  }
+    
+  void incrementIterator(const void*& it) const {
+    uintptr_t index = reinterpret_cast<uintptr_t>(it);
+    ++index;
+    it = reinterpret_cast<const void*>(index);
+  }
+
+  
+    
+  void bindTargetReferences() const {
     for (unsigned int i=_refStartIndex; i < _refEndIndex; ++i) {
       const char* targetName = _file._references[i]._targetName;
       Atom* targetAtom = _file.findAtom(targetName);
@@ -559,40 +595,9 @@ private:
 
 
 
-
-bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
-  handler.doFile(*this);
-  for (std::vector<YAMLDefinedAtom *>::const_iterator it = _definedAtoms.begin();
-       it != _definedAtoms.end(); ++it) {
-    handler.doDefinedAtom(**it);
-  }
-  for (std::vector<UndefinedAtom *>::const_iterator it = _undefinedAtoms.begin();
-       it != _undefinedAtoms.end(); ++it) {
-    handler.doUndefinedAtom(**it);
-  }
-  for (std::vector<SharedLibraryAtom *>::const_iterator 
-        it = _sharedLibraryAtoms.begin();
-        it != _sharedLibraryAtoms.end(); ++it) {
-    handler.doSharedLibraryAtom(**it);
-  }
-  for (std::vector<AbsoluteAtom *>::const_iterator 
-        it = _absoluteAtoms.begin();
-        it != _absoluteAtoms.end(); ++it) {
-    handler.doAbsoluteAtom(**it);
-  }
-  
-  return true;
-}
-
-bool YAMLFile::justInTimeforEachAtom(llvm::StringRef name,
-                                     File::AtomHandler &handler) const {
-  return false;
-}
-
 void YAMLFile::bindTargetReferences() {
-    for (std::vector<YAMLDefinedAtom *>::const_iterator 
-         it = _definedAtoms.begin(); it != _definedAtoms.end(); ++it) {
-      YAMLDefinedAtom* atom = *it;   
+    for (defined_iterator it = definedAtomsBegin(); it != definedAtomsEnd(); ++it) {
+      const YAMLDefinedAtom* atom = reinterpret_cast<const YAMLDefinedAtom*>(*it);   
       atom->bindTargetReferences();
     }
 }
@@ -607,31 +612,31 @@ Atom* YAMLFile::findAtom(const char* name) {
 }
 
 void YAMLFile::addDefinedAtom(YAMLDefinedAtom* atom, const char* refName) {
-  _definedAtoms.push_back(atom);
+  _definedAtoms._atoms.push_back(atom);
   assert(refName != NULL);
   _nameToAtomMapping.push_back(NameAtomPair(refName, atom));
 }
 
 void YAMLFile::addUndefinedAtom(UndefinedAtom* atom) {
-  _undefinedAtoms.push_back(atom);
+  _undefinedAtoms._atoms.push_back(atom);
   _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
 }
 
 void YAMLFile::addSharedLibraryAtom(SharedLibraryAtom* atom) {
-  _sharedLibraryAtoms.push_back(atom);
+  _sharedLibraryAtoms._atoms.push_back(atom);
   _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
 }
 
 void YAMLFile::addAbsoluteAtom(AbsoluteAtom* atom) {
-  _absoluteAtoms.push_back(atom);
+  _absoluteAtoms._atoms.push_back(atom);
   _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
 }
 
 
 class YAMLAtomState {
 public:
-  YAMLAtomState();
-
+  YAMLAtomState(Platform& platform);
+  
   void setName(const char *n);
   void setRefName(const char *n);
   void setAlign2(const char *n);
@@ -642,6 +647,7 @@ public:
 
   void makeAtom(YAMLFile&);
 
+  Platform&                   _platform;
   const char *                _name;
   const char *                _refName;
   const char *                _sectionName;
@@ -666,8 +672,9 @@ public:
 };
 
 
-YAMLAtomState::YAMLAtomState()
-  : _name(NULL)
+YAMLAtomState::YAMLAtomState(Platform& platform)
+  : _platform(platform)
+  , _name(NULL)
   , _refName(NULL)
   , _sectionName(NULL)
   , _loadName(NULL)
@@ -764,15 +771,7 @@ void YAMLAtomState::setAlign2(const char *s) {
 
 
 void YAMLAtomState::setFixupKind(const char *s) {
-  if (strcmp(s, "pcrel32") == 0)
-    _ref._kind = 1;
-  else if (strcmp(s, "call32") == 0)
-    _ref._kind = 2;
-  else {
-    int k;
-    llvm::StringRef(s).getAsInteger(10, k);
-    _ref._kind = k;
-  }
+  _ref._kind = _platform.kindFromString(llvm::StringRef(s));
 }
 
 void YAMLAtomState::setFixupTarget(const char *s) {
@@ -800,12 +799,13 @@ void YAMLAtomState::addFixup(YAMLFile *f) {
 /// parseObjectText - Parse the specified YAML formatted MemoryBuffer
 /// into lld::File object(s) and append each to the specified vector<File*>.
 llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
-                                , std::vector<File *> &result) {
+                                , Platform& platform
+                                , std::vector<const File *> &result) {
   std::vector<const YAML::Entry *> entries;
   YAML::parse(mb, entries);
 
   YAMLFile *file = NULL;
-  YAMLAtomState atomState;
+  YAMLAtomState atomState(platform);
   bool inAtoms       = false;
   bool inFixups      = false;
   int depthForAtoms  = -1;
@@ -985,13 +985,14 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
 // Fill in vector<File*> from path to input text file.
 //
 llvm::error_code parseObjectTextFileOrSTDIN(llvm::StringRef path
-                                 , std::vector<File*>& result) {
+                                          , Platform&  platform
+                                          , std::vector<const File*>& result) {
   llvm::OwningPtr<llvm::MemoryBuffer> mb;
   llvm::error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
   if ( ec ) 
       return ec;
       
-  return parseObjectText(mb.get(), result);
+  return parseObjectText(mb.get(), platform, result);
 }
 
 

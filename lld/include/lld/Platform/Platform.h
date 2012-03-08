@@ -12,9 +12,12 @@
 
 #include <vector>
 
+#include "lld/Core/Reference.h"
+ 
 namespace lld {
 class Atom;
 class DefinedAtom;
+
 
 /// The Platform class encapsulated plaform specific linking knowledge.
 ///
@@ -98,6 +101,26 @@ public:
 
   /// @brief last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *>& all) = 0;
+  
+  /// If the output being generated uses needs stubs for external calls
+  virtual bool outputUsesStubs() = 0;
+  
+  /// Converts a reference kind string to a in-memory numeric value. 
+  /// For use with parsing YAML encoded object files.
+  virtual Reference::Kind kindFromString(llvm::StringRef) = 0;
+  
+  /// Converts an in-memory reference kind value to a string.
+  /// For use with writing YAML encoded object files.
+  virtual llvm::StringRef kindToString(Reference::Kind) = 0;
+  
+  /// If Reference is a branch instruction that might need to be changed
+  /// to target a stub (PLT entry). 
+  virtual bool isBranch(const Reference*) = 0;
+  
+  /// Create a platform specific atom which contains a stub/PLT entry 
+  /// targeting the specified shared library atom.
+  virtual const Atom* makeStub(const SharedLibraryAtom&, File&) = 0;
+
 };
 
 } // namespace lld

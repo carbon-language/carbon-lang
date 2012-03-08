@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <vector>
-#include <map>
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -26,15 +25,36 @@ namespace lld {
 ///
 /// Class for writing native object files.
 ///
-class NativeWriter : public File::AtomHandler, 
-                     public DefinedAtom::ReferenceHandler {
+class NativeWriter {
 public:
   /// construct writer for an lld::File object
   NativeWriter(const lld::File& file) : _file(file) { 
     // reserve first byte for unnamed atoms
     _stringPool.push_back('\0');
     // visit all atoms
-    _file.forEachAtom(*this);
+    for(File::defined_iterator it=file.definedAtomsBegin(), 
+                              end=file.definedAtomsEnd(); 
+                               it != end; ++it) {
+      this->addIVarsForDefinedAtom(**it);
+    }
+    for(File::undefined_iterator it=file.undefinedAtomsBegin(), 
+                              end=file.undefinedAtomsEnd(); 
+                               it != end; ++it) {
+      this->addIVarsForUndefinedAtom(**it);
+    }
+    for(File::shared_library_iterator it=file.sharedLibraryAtomsBegin(), 
+                              end=file.sharedLibraryAtomsEnd(); 
+                               it != end; ++it) {
+      this->addIVarsForSharedLibraryAtom(**it);
+    }
+    for(File::absolute_iterator it=file.absoluteAtomsBegin(), 
+                              end=file.absoluteAtomsEnd(); 
+                               it != end; ++it) {
+      this->addIVarsForAbsoluteAtom(**it);
+    }
+
+    
+    
     // construct file header based on atom information accumulated
     makeHeader();
   }
@@ -105,8 +125,7 @@ public:
 
 private:
 
-  // visitor routine called by forEachAtom() 
-  virtual void doDefinedAtom(const DefinedAtom& atom) {
+  void addIVarsForDefinedAtom(const DefinedAtom& atom) {
     _definedAtomIndex[&atom] = _definedAtomIvars.size();
     NativeDefinedAtomIvarsV1 ivar;
     unsigned refsCount;
@@ -119,8 +138,7 @@ private:
     _definedAtomIvars.push_back(ivar);
   }
   
-  // visitor routine called by forEachAtom() 
-  virtual void doUndefinedAtom(const UndefinedAtom& atom) {
+  void addIVarsForUndefinedAtom(const UndefinedAtom& atom) {
     _undefinedAtomIndex[&atom] = _undefinedAtomIvars.size();
     NativeUndefinedAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
@@ -128,8 +146,7 @@ private:
     _undefinedAtomIvars.push_back(ivar);
   }
   
-  // visitor routine called by forEachAtom() 
-  virtual void doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+  void addIVarsForSharedLibraryAtom(const SharedLibraryAtom& atom) {
     _sharedLibraryAtomIndex[&atom] = _sharedLibraryAtomIvars.size();
     NativeSharedLibraryAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
@@ -138,18 +155,13 @@ private:
     _sharedLibraryAtomIvars.push_back(ivar);
   }
    
-  // visitor routine called by forEachAtom() 
-  virtual void doAbsoluteAtom(const AbsoluteAtom& atom) {
+  void addIVarsForAbsoluteAtom(const AbsoluteAtom& atom) {
     _absoluteAtomIndex[&atom] = _absoluteAtomIvars.size();
     NativeAbsoluteAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
     ivar.reserved = 0;
     ivar.value = atom.value();
     _absoluteAtomIvars.push_back(ivar);
-  }
-
-  // visitor routine called by forEachAtom() 
-  virtual void doFile(const File &) {
   }
 
   // fill out native file header and chunk directory
@@ -304,6 +316,7 @@ private:
         return chunks[i];
     }
     assert(0 && "findChunk() signature not found");
+    static NativeChunk x; return x; // suppress warning
   }
 
   // append atom name to string pool and return offset
@@ -403,23 +416,23 @@ private:
     count = 0;
     size_t startRefSize = _references.size();
     uint32_t result = startRefSize;
-    atom.forEachReference(*this);
+    for (auto it=atom.referencesBegin(), end=atom.referencesEnd();
+                                                    it != end; ++it) {
+      const Reference* ref = *it;
+      NativeReferenceIvarsV1 nref;
+      nref.offsetInAtom = ref->offsetInAtom();
+      nref.kind = ref->kind();
+      nref.targetIndex = this->getTargetIndex(ref->target());
+      nref.addendIndex = this->getAddendIndex(ref->addend());
+      _references.push_back(nref);
+    }
     count = _references.size() - startRefSize;
     if ( count == 0 )
       return 0;
     else
       return result;
   }
-  
-  void doReference(const Reference& ref) {
-    NativeReferenceIvarsV1 nref;
-    nref.offsetInAtom = ref.offsetInAtom();
-    nref.kind = ref.kind();
-    nref.targetIndex = this->getTargetIndex(ref.target());
-    nref.addendIndex = this->getAddendIndex(ref.addend());
-    _references.push_back(nref);
-  }
-  
+    
   uint32_t getTargetIndex(const Atom* target) {
     TargetToIndex::const_iterator pos = _targetsTableIndex.find(target);
     if ( pos != _targetsTableIndex.end() ) {

@@ -195,13 +195,6 @@ public:
     uint16_t modulus;
   };
 
-  /// for use iterating over this Atom's References
-  class ReferenceHandler {
-  public:
-    virtual ~ReferenceHandler() {}
-    virtual void doReference(const Reference &) = 0;
-  };
-
   /// ordinal - returns a value for the order of this Atom within its file.
   /// This is used by the linker to order the layout of Atoms so that
   /// the resulting image is stable and reproducible.
@@ -266,10 +259,43 @@ public:
   /// rawContent - returns a reference to the raw (unrelocated) bytes of 
   /// this Atom's content.
   virtual llvm::ArrayRef<uint8_t> rawContent() const = 0;
-
-  /// iterator over this Atom's References
-  virtual void forEachReference(ReferenceHandler&) const = 0;
   
+  /// This class abstracts iterating over the sequence of References
+  /// in an Atom.  Concrete instances of DefinedAtom must implement
+  /// the derefIterator() and incrementIterator methods.
+  class reference_iterator {
+  public:
+    reference_iterator(const DefinedAtom& a, const void* it) 
+              : _atom(a), _it(it) { }
+
+    const Reference* operator*() const {
+      return _atom.derefIterator(_it);
+    }
+    
+    const Reference* operator->() const {
+      return _atom.derefIterator(_it);
+    }
+
+    bool operator!=(const reference_iterator& other) const {
+      return (this->_it != other._it);
+    }
+
+    reference_iterator& operator++() {
+      _atom.incrementIterator(_it);
+      return *this;
+    }
+  private:
+    const DefinedAtom&   _atom;
+    const void*          _it;
+  };
+
+  /// Returns an iterator to the beginning of this Atom's References
+  virtual reference_iterator referencesBegin() const = 0;
+  
+  /// Returns an iterator to the end of this Atom's References
+  virtual reference_iterator referencesEnd() const = 0;
+ 
+ 
 protected:
   /// DefinedAtom is an abstract base class.  
   /// Only subclasses can access constructor.
@@ -280,6 +306,15 @@ protected:
   /// delete on an Atom.  In fact, some File objects may bulk allocate
   /// an array of Atoms, so they cannot be individually deleted by anyone.
   virtual ~DefinedAtom() {}
+  
+  /// Returns a pointer to the Reference object that the abstract
+  /// iterator "points" to.
+  virtual const Reference* derefIterator(const void* iter) const = 0;
+  
+  /// Adjusts the abstract iterator to "point" to the next Reference object
+  /// for this Atom.
+  virtual void incrementIterator(const void*& iter) const = 0;
+
 };
 
 } // namespace lld

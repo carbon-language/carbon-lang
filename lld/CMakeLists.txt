@@ -1,6 +1,8 @@
 # If we are not building as a part of LLVM, build lld as a standalone project,
 # using LLVM as an external library.
 
+
+
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(lld)
   cmake_minimum_required(VERSION 2.8)
@@ -57,6 +59,20 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 "This process created the file `CMakeCache.txt' and the directory "
 "`CMakeFiles'. Please delete them.")
 endif()
+
+#
+# lld now requires C++11 to build
+#
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-std=c++11" SUPPORTS_CXX11_FLAG)
+if( SUPPORTS_CXX11_FLAG )
+  message(STATUS "Building with -std=c++11")
+  set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+else( SUPPORTS_CXX11_FLAG )
+  message(WARNING "-std=c++11 not supported.")
+endif()
+
 
 macro(add_lld_library name)
   llvm_process_sources(srcs ${ARGN})

@@ -1,5 +1,6 @@
 set(LLVM_USED_LIBS
   lldCore
+  lldPasses
   )
 
 set(LLVM_LINK_COMPONENTS

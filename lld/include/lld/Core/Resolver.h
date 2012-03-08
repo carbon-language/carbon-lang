@@ -11,6 +11,7 @@
 #define LLD_CORE_RESOLVER_H_
 
 #include "lld/Core/File.h"
+#include "lld/Core/InputFiles.h"
 #include "lld/Core/SymbolTable.h"
 
 #include "llvm/ADT/DenseSet.h"
@@ -30,7 +31,7 @@ class SymbolTable;
 ///
 /// All platform specific resolving is done by delegating to the
 /// Platform object specified.
-class Resolver : public File::AtomHandler {
+class Resolver : public InputFiles::Handler {
 public:
   Resolver(Platform &plat, const InputFiles &inputs)
     : _platform(plat)
@@ -40,7 +41,7 @@ public:
     , _addToFinalSection(false)
     , _completedInitialObjectFiles(false) {}
 
-  // AtomHandler methods
+  // InputFiles::Handler methods
   virtual void doDefinedAtom(const class DefinedAtom&);
   virtual void doUndefinedAtom(const class UndefinedAtom&);
   virtual void doSharedLibraryAtom(const class SharedLibraryAtom &);
@@ -48,7 +49,11 @@ public:
   virtual void doFile(const File&);
 
   /// @brief do work of merging and resolving and return list
-  std::vector<const Atom *> &resolve();
+  void resolve();
+
+  File& resultFile() {
+    return _result;
+  }
 
 private:
   struct WhyLiveBackChain {
@@ -73,31 +78,49 @@ private:
   void addAtoms(const std::vector<const DefinedAtom *>&);
 
 
-  // helper to update targets for use with forEachReference()
-  class MarkLiveReferences : public DefinedAtom::ReferenceHandler {
+  class MergedFile : public File {
   public:
-             MarkLiveReferences(Resolver& resolver, WhyLiveBackChain* chain) 
-                  : _resolver(resolver), _chain(chain) { }
+    MergedFile() : File("<linker-internal>") { }
     
-    virtual void doReference(const Reference& ref) {
-    _resolver.markLive(*ref.target(), _chain);
-    }
+
+
+  virtual const atom_collection<DefinedAtom>& defined() const {
+    return _definedAtoms;
+  }
+  virtual const atom_collection<UndefinedAtom>& undefined() const {
+      return _undefinedAtoms;
+  }
+  virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
+      return _sharedLibraryAtoms;
+  }
+  virtual const atom_collection<AbsoluteAtom>& absolute() const {
+      return _absoluteAtoms;
+  }
+ 
+  void addAtoms(std::vector<const Atom*>& atoms);
+
+  virtual void addAtom(const Atom& atom);  
 
   private:
-    Resolver&          _resolver;
-    WhyLiveBackChain*  _chain;
+    atom_collection_vector<DefinedAtom>         _definedAtoms;
+    atom_collection_vector<UndefinedAtom>       _undefinedAtoms;
+    atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;
+    atom_collection_vector<AbsoluteAtom>        _absoluteAtoms;
   };
-
-  Platform &_platform;
-  const InputFiles &_inputFiles;
-  SymbolTable _symbolTable;
-  std::vector<const Atom *> _atoms;
-  std::set<const Atom *> _deadStripRoots;
-  std::vector<const Atom *> _atomsWithUnresolvedReferences;
-  llvm::DenseSet<const Atom *> _liveAtoms;
-  bool _haveLLVMObjs;
-  bool _addToFinalSection;
-  bool _completedInitialObjectFiles;
+  
+  
+  
+  Platform&                     _platform;
+  const InputFiles&             _inputFiles;
+  SymbolTable                   _symbolTable;
+  std::vector<const Atom *>     _atoms;
+  std::set<const Atom *>        _deadStripRoots;
+  std::vector<const Atom *>     _atomsWithUnresolvedReferences;
+  llvm::DenseSet<const Atom *>  _liveAtoms;
+  MergedFile                    _result;
+  bool                          _haveLLVMObjs;
+  bool                          _addToFinalSection;
+  bool                          _completedInitialObjectFiles;
 };
 
 } // namespace lld

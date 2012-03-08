@@ -14,6 +14,8 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 
+#include "lld/Platform/Platform.h"
+
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
@@ -41,44 +43,50 @@ namespace {
 /// In that case referencing the function by name is ambiguous, so a unique
 /// ref-name is added.
 ///
-class RefNameBuilder : public File::AtomHandler, 
-                       public DefinedAtom::ReferenceHandler {
+class RefNameBuilder {
 public:
-  RefNameBuilder() { }
-
-  virtual void doReference(const Reference& ref) {
-    // create refname for any unnamed reference target
-    if ( ref.target()->name().empty() ) {
-      char* buffer;
-      asprintf(&buffer, "L%03d", _unnamedCounter++);
-      _refNames[ref.target()] = buffer;
+  RefNameBuilder(const File& file) 
+                : _collisionCount(0), _unnamedCounter(0) { 
+    // visit all atoms
+    for(File::defined_iterator it=file.definedAtomsBegin(), 
+                              end=file.definedAtomsEnd(); 
+                               it != end; ++it) {
+      const DefinedAtom* atom = *it;  
+      // Build map of atoms names to detect duplicates
+      if ( ! atom->name().empty() )
+        buildDuplicateNameMap(*atom);
+      
+      // Find references to unnamed atoms and create ref-names for them.
+      for (auto rit=atom->referencesBegin(), rend=atom->referencesEnd();
+                                                        rit != rend; ++rit) {
+        const Reference* ref = *rit;
+        // create refname for any unnamed reference target
+        if ( ref->target()->name().empty() ) {
+          char* buffer;
+          asprintf(&buffer, "L%03d", _unnamedCounter++);
+          _refNames[ref->target()] = buffer;
+        }
+      }
     }
-  }
+    for(File::undefined_iterator it=file.undefinedAtomsBegin(), 
+                              end=file.undefinedAtomsEnd(); 
+                               it != end; ++it) {
+      buildDuplicateNameMap(**it);
+    }
+    for(File::shared_library_iterator it=file.sharedLibraryAtomsBegin(), 
+                              end=file.sharedLibraryAtomsEnd(); 
+                               it != end; ++it) {
+      buildDuplicateNameMap(**it);
+    }
+    for(File::absolute_iterator it=file.absoluteAtomsBegin(), 
+                              end=file.absoluteAtomsEnd(); 
+                               it != end; ++it) {
+      buildDuplicateNameMap(**it);
+    }
 
-  virtual void doFile(const File &) { }
   
-  virtual void doDefinedAtom(const DefinedAtom& atom) {
-    // Build map of atoms names to detect duplicates
-    if ( ! atom.name().empty() )
-      buildDuplicateNameMap(atom);
-    
-    // Find references to unnamed atoms and create ref-names for them.
-    _unnamedCounter = 0;
-    atom.forEachReference(*this);
   }
-  
-  virtual void doUndefinedAtom(const UndefinedAtom& atom) {
-    buildDuplicateNameMap(atom);
-  }
-  
-  virtual void doSharedLibraryAtom(const SharedLibraryAtom& atom) {
-    buildDuplicateNameMap(atom);
-  }
-
-  virtual void doAbsoluteAtom(const AbsoluteAtom& atom) {
-    buildDuplicateNameMap(atom);
-  }
-                         
+                           
   void buildDuplicateNameMap(const Atom& atom) {
     assert(!atom.name().empty());
     NameToAtom::iterator pos = _nameMap.find(atom.name());
@@ -131,27 +139,55 @@ private:
 ///
 /// Helper class for writeObjectText() to write out atoms in yaml format.
 ///
-class AtomWriter : public File::AtomHandler,
-                   public DefinedAtom::ReferenceHandler {
+class AtomWriter {
 public:
-  AtomWriter(RefNameBuilder& rnb, llvm::raw_ostream &out) 
-    : _out(out), _rnb(rnb), _firstAtom(true) { }
+  AtomWriter(const File& file, Platform& platform, RefNameBuilder& rnb) 
+    : _file(file), _platform(platform), _rnb(rnb), _firstAtom(true) { }
 
-  virtual void doFile(const class File &) { _firstAtom = true; }
+
+  void write(llvm::raw_ostream& out) {
+    // write header 
+    out << "---\n";
+    
+    // visit all atoms
+    for(File::defined_iterator it=_file.definedAtomsBegin(), 
+                              end=_file.definedAtomsEnd(); 
+                               it != end; ++it) {
+      writeDefinedAtom(**it, out);
+    }
+    for(File::undefined_iterator it=_file.undefinedAtomsBegin(), 
+                              end=_file.undefinedAtomsEnd(); 
+                               it != end; ++it) {
+      writeUndefinedAtom(**it, out);
+    }
+    for(File::shared_library_iterator it=_file.sharedLibraryAtomsBegin(), 
+                              end=_file.sharedLibraryAtomsEnd(); 
+                               it != end; ++it) {
+      writeSharedLibraryAtom(**it, out);
+    }
+    for(File::absolute_iterator it=_file.absoluteAtomsBegin(), 
+                              end=_file.absoluteAtomsEnd(); 
+                               it != end; ++it) {
+      writeAbsoluteAtom(**it, out);
+    }
+    
+    out << "...\n";
+  }
+
   
-  virtual void doDefinedAtom(const class DefinedAtom &atom) {
+  void writeDefinedAtom(const DefinedAtom &atom, llvm::raw_ostream& out) {
     if ( _firstAtom ) {
-      _out << "atoms:\n";
+      out << "atoms:\n";
       _firstAtom = false;
     }
     else {
       // add blank line between atoms for readability
-      _out << "\n";
+      out << "\n";
     }
     
     bool hasDash = false;
     if ( !atom.name().empty() ) {
-      _out  << "    - "
+      out   << "    - "
             << KeyValues::nameKeyword
             << ":"
             << spacePadding(KeyValues::nameKeyword)
@@ -161,7 +197,7 @@ public:
     }
      
     if ( _rnb.hasRefName(&atom) ) {
-      _out  << (hasDash ? "      " : "    - ")
+      out   << (hasDash ? "      " : "    - ")
             << KeyValues::refNameKeyword
             << ":"
             << spacePadding(KeyValues::refNameKeyword)
@@ -171,7 +207,7 @@ public:
     }
     
     if ( atom.definition() != KeyValues::definitionDefault ) {
-      _out  << (hasDash ? "      " : "    - ")
+      out   << (hasDash ? "      " : "    - ")
             << KeyValues::definitionKeyword 
             << ":"
             << spacePadding(KeyValues::definitionKeyword)
@@ -181,7 +217,7 @@ public:
     }
     
     if ( atom.scope() != KeyValues::scopeDefault ) {
-      _out  << (hasDash ? "      " : "    - ")
+      out   << (hasDash ? "      " : "    - ")
             << KeyValues::scopeKeyword 
             << ":"
             << spacePadding(KeyValues::scopeKeyword)
@@ -191,7 +227,7 @@ public:
     }
     
      if ( atom.interposable() != KeyValues::interposableDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::interposableKeyword 
             << ":"
             << spacePadding(KeyValues::interposableKeyword)
@@ -200,7 +236,7 @@ public:
     }
     
     if ( atom.merge() != KeyValues::mergeDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::mergeKeyword 
             << ":"
             << spacePadding(KeyValues::mergeKeyword)
@@ -209,7 +245,7 @@ public:
     }
     
     if ( atom.contentType() != KeyValues::contentTypeDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::contentTypeKeyword 
             << ":"
             << spacePadding(KeyValues::contentTypeKeyword)
@@ -218,7 +254,7 @@ public:
     }
 
     if ( atom.deadStrip() != KeyValues::deadStripKindDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::deadStripKindKeyword 
             << ":"
             << spacePadding(KeyValues::deadStripKindKeyword)
@@ -227,14 +263,14 @@ public:
     }
 
     if ( atom.sectionChoice() != KeyValues::sectionChoiceDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::sectionChoiceKeyword 
             << ":"
             << spacePadding(KeyValues::sectionChoiceKeyword)
             << KeyValues::sectionChoice(atom.sectionChoice()) 
             << "\n";
       assert( ! atom.customSectionName().empty() );
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::sectionNameKeyword 
             << ":"
             << spacePadding(KeyValues::sectionNameKeyword)
@@ -243,7 +279,7 @@ public:
     }
 
     if ( atom.isThumb() != KeyValues::isThumbDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::isThumbKeyword 
             << ":"
             << spacePadding(KeyValues::isThumbKeyword)
@@ -252,7 +288,7 @@ public:
     }
 
     if ( atom.isAlias() != KeyValues::isAliasDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::isAliasKeyword 
             << ":"
             << spacePadding(KeyValues::isAliasKeyword)
@@ -262,7 +298,7 @@ public:
 
     if ( (atom.contentType() != DefinedAtom::typeZeroFill) 
                                    && (atom.size() != 0) ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::contentKeyword 
             << ":"
             << spacePadding(KeyValues::contentKeyword)
@@ -271,77 +307,77 @@ public:
       bool needComma = false;
       for (unsigned int i=0; i < arr.size(); ++i) {
         if ( needComma )
-          _out << ", ";
-        _out << hexdigit(arr[i] >> 4);
-        _out << hexdigit(arr[i] & 0x0F);
+          out  << ", ";
+        out  << hexdigit(arr[i] >> 4);
+        out  << hexdigit(arr[i] & 0x0F);
         needComma = true;
       }
-      _out << " ]\n";
+      out  << " ]\n";
     }
 
-    _wroteFirstFixup = false;
-    atom.forEachReference(*this);
+    bool wroteFirstFixup = false;
+    for (auto it=atom.referencesBegin(), end=atom.referencesEnd();
+                                                    it != end; ++it) {
+      const Reference* ref = *it;
+      if ( !wroteFirstFixup ) {
+        out  << "      fixups:\n";
+        wroteFirstFixup = true;
+      }
+      out   << "      - "
+            << KeyValues::fixupsOffsetKeyword
+            << ":"
+            << spacePadding(KeyValues::fixupsOffsetKeyword)
+            << ref->offsetInAtom()
+            << "\n";
+      out   << "        "
+            << KeyValues::fixupsKindKeyword
+            << ":"
+            << spacePadding(KeyValues::fixupsKindKeyword)
+            << _platform.kindToString(ref->kind())
+            << "\n";
+      const Atom* target = ref->target();
+      if ( target != NULL ) {
+        llvm::StringRef refName = target->name();
+        if ( _rnb.hasRefName(target) )
+          refName = _rnb.refName(target);
+        assert(!refName.empty());
+        out   << "        "
+              << KeyValues::fixupsTargetKeyword
+              << ":"
+              << spacePadding(KeyValues::fixupsTargetKeyword)
+              << refName 
+              << "\n";
+      }
+      if ( ref->addend() != 0 ) {
+        out   << "        "
+              << KeyValues::fixupsAddendKeyword
+              << ":"
+              << spacePadding(KeyValues::fixupsAddendKeyword)
+              << ref->addend()
+              << "\n";
+      }
+    }
   }
     
-  virtual void doReference(const Reference& ref) {
-    if ( !_wroteFirstFixup ) {
-      _out << "      fixups:\n";
-      _wroteFirstFixup = true;
-    }
-    _out  << "      - "
-          << KeyValues::fixupsOffsetKeyword
-          << ":"
-          << spacePadding(KeyValues::fixupsOffsetKeyword)
-          << ref.offsetInAtom()
-          << "\n";
-    _out  << "        "
-          << KeyValues::fixupsKindKeyword
-          << ":"
-          << spacePadding(KeyValues::fixupsKindKeyword)
-          << ref.kind()
-          << "\n";
-    const Atom* target = ref.target();
-    if ( target != NULL ) {
-      llvm::StringRef refName = target->name();
-      if ( _rnb.hasRefName(target) )
-        refName = _rnb.refName(target);
-      assert(!refName.empty());
-      _out  << "        "
-            << KeyValues::fixupsTargetKeyword
-            << ":"
-            << spacePadding(KeyValues::fixupsTargetKeyword)
-            << refName 
-            << "\n";
-    }
-    if ( ref.addend() != 0 ) {
-      _out  << "        "
-            << KeyValues::fixupsAddendKeyword
-            << ":"
-            << spacePadding(KeyValues::fixupsAddendKeyword)
-            << ref.addend()
-            << "\n";
-    }
-  }
 
-
-  virtual void doUndefinedAtom(const class UndefinedAtom &atom) {
+  void writeUndefinedAtom(const UndefinedAtom &atom, llvm::raw_ostream& out) {
     if ( _firstAtom ) {
-      _out << "atoms:\n";
+      out  << "atoms:\n";
       _firstAtom = false;
     }
     else {
       // add blank line between atoms for readability
-      _out << "\n";
+      out  << "\n";
     }
         
-    _out  << "    - "
+    out   << "    - "
           << KeyValues::nameKeyword
           << ":"
           << spacePadding(KeyValues::nameKeyword)
           << atom.name() 
           << "\n";
 
-    _out  << "      " 
+    out   << "      " 
           << KeyValues::definitionKeyword 
           << ":"
           << spacePadding(KeyValues::definitionKeyword)
@@ -349,7 +385,7 @@ public:
           << "\n";
 
     if ( atom.canBeNull() != KeyValues::canBeNullDefault ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::canBeNullKeyword 
             << ":"
             << spacePadding(KeyValues::canBeNullKeyword)
@@ -358,24 +394,24 @@ public:
     }
   }
 
-   virtual void doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+  void writeSharedLibraryAtom(const SharedLibraryAtom& atom, llvm::raw_ostream& out) {
     if ( _firstAtom ) {
-      _out << "atoms:\n";
+      out  << "atoms:\n";
       _firstAtom = false;
     }
     else {
       // add blank line between atoms for readability
-      _out << "\n";
+      out  << "\n";
     }
         
-    _out  << "    - "
+    out   << "    - "
           << KeyValues::nameKeyword
           << ":"
           << spacePadding(KeyValues::nameKeyword)
           << atom.name() 
           << "\n";
 
-    _out  << "      " 
+    out   << "      " 
           << KeyValues::definitionKeyword 
           << ":"
           << spacePadding(KeyValues::definitionKeyword)
@@ -383,7 +419,7 @@ public:
           << "\n";
 
     if ( !atom.loadName().empty() ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::loadNameKeyword 
             << ":"
             << spacePadding(KeyValues::loadNameKeyword)
@@ -392,7 +428,7 @@ public:
     }
 
     if ( atom.canBeNullAtRuntime() ) {
-      _out  << "      " 
+      out   << "      " 
             << KeyValues::canBeNullKeyword 
             << ":"
             << spacePadding(KeyValues::canBeNullKeyword)
@@ -401,37 +437,37 @@ public:
     }
    }
    
-   virtual void doAbsoluteAtom(const AbsoluteAtom& atom) {
+  void writeAbsoluteAtom(const AbsoluteAtom& atom, llvm::raw_ostream& out) {
      if ( _firstAtom ) {
-      _out << "atoms:\n";
+      out << "atoms:\n";
       _firstAtom = false;
     }
     else {
       // add blank line between atoms for readability
-      _out << "\n";
+      out << "\n";
     }
         
-    _out  << "    - "
+    out   << "    - "
           << KeyValues::nameKeyword
           << ":"
           << spacePadding(KeyValues::nameKeyword)
           << atom.name() 
           << "\n";
 
-    _out  << "      " 
+    out   << "      " 
           << KeyValues::definitionKeyword 
           << ":"
           << spacePadding(KeyValues::definitionKeyword)
           << KeyValues::definition(atom.definition()) 
           << "\n";
     
-    _out  << "      " 
+    out   << "      " 
           << KeyValues::valueKeyword 
           << ":"
           << spacePadding(KeyValues::valueKeyword)
           << "0x";
-     _out.write_hex(atom.value());
-     _out << "\n";
+     out.write_hex(atom.value());
+     out << "\n";
    }
                      
 
@@ -450,10 +486,10 @@ private:
       return 'A' + nibble - 0x0A;
   }
 
-  llvm::raw_ostream&  _out;
-  RefNameBuilder      _rnb;
+  const File&         _file;
+  Platform&           _platform;
+  RefNameBuilder&     _rnb;
   bool                _firstAtom;
-  bool                _wroteFirstFixup;
 };
 
 } // anonymous namespace
@@ -464,16 +500,14 @@ private:
 /// writeObjectText - writes the lld::File object as in YAML
 /// format to the specified stream.
 ///
-void writeObjectText(const File &file, llvm::raw_ostream &out) {
+void writeObjectText(const File& file, Platform& platform, 
+                      llvm::raw_ostream &out) {
   // Figure what ref-name labels are needed
-  RefNameBuilder rnb;
-  file.forEachAtom(rnb);
+  RefNameBuilder rnb(file);
   
   // Write out all atoms
-  AtomWriter h(rnb, out);
-  out << "---\n";
-  file.forEachAtom(h);
-  out << "...\n";
+  AtomWriter writer(file, platform, rnb);
+  writer.write(out);
 }
 
 } // namespace yaml

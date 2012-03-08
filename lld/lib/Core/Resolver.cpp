@@ -217,29 +217,18 @@ void Resolver::resolveUndefines() {
   }
 }
 
-// helper to update targets for use with forEachReference()
-class ReferenceUpdater : public DefinedAtom::ReferenceHandler {
-public:
-		           ReferenceUpdater(SymbolTable& sym) : _symbolTable(sym) { }
-	
-	virtual void doReference(const Reference& ref) {
-    const Atom* newTarget = _symbolTable.replacement(ref.target());
-    (const_cast<Reference*>(&ref))->setTarget(newTarget);
-  }
-
-private:
-	SymbolTable&  _symbolTable;
-};
-
 
 // switch all references to undefined or coalesced away atoms
 // to the new defined atom
 void Resolver::updateReferences() {
-  ReferenceUpdater updater(_symbolTable);
-  for (std::vector<const Atom *>::iterator it = _atoms.begin();
-       it != _atoms.end(); ++it) {
-    if ( const DefinedAtom* defAtom = (*it)->definedAtom() ) {
-      defAtom->forEachReference(updater);
+  for (auto ait = _atoms.begin(); ait != _atoms.end(); ++ait) {
+    if ( const DefinedAtom* defAtom = (*ait)->definedAtom() ) {
+      for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
+                                                        rit != end; ++rit) {
+        const Reference* ref = *rit;
+        const Atom* newTarget = _symbolTable.replacement(ref->target());
+        (const_cast<Reference*>(ref))->setTarget(newTarget);
+      }
     }
   }
 }
@@ -272,8 +261,11 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   thisChain.previous = previous;
   thisChain.referer = &atom;
   if ( const DefinedAtom* defAtom = atom.definedAtom() ) {
-    MarkLiveReferences markRefs(*this, &thisChain);
-    defAtom->forEachReference(markRefs);
+    for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
+                                                        rit != end; ++rit) {
+      const Reference* ref = *rit;
+      this->markLive(*ref->target(), &thisChain);
+    }
   }
 }
 
@@ -382,7 +374,7 @@ void Resolver::linkTimeOptimize() {
   // FIX ME
 }
 
-std::vector<const Atom *> &Resolver::resolve() {
+void Resolver::resolve() {
   this->initializeState();
   this->addInitialUndefines();
   this->buildInitialAtomList();
@@ -394,7 +386,32 @@ std::vector<const Atom *> &Resolver::resolve() {
   this->checkDylibSymbolCollisions();
   this->linkTimeOptimize();
   this->tweakAtoms();
-  return _atoms;
+  this->_result.addAtoms(_atoms);
 }
+
+void Resolver::MergedFile::addAtom(const Atom& atom) {
+  if ( const DefinedAtom* defAtom = atom.definedAtom() ) {
+    _definedAtoms._atoms.push_back(defAtom);
+  }
+  else if ( const UndefinedAtom* undefAtom = atom.undefinedAtom() ) {
+    _undefinedAtoms._atoms.push_back(undefAtom);
+  }
+  else if ( const SharedLibraryAtom* slAtom = atom.sharedLibraryAtom() ) {
+    _sharedLibraryAtoms._atoms.push_back(slAtom);
+  }
+  else if ( const AbsoluteAtom* abAtom = atom.absoluteAtom() ) {
+    _absoluteAtoms._atoms.push_back(abAtom);
+  }
+  else {
+    assert(0 && "atom has unknown definition kind");
+  }
+}
+
+void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
+  for(std::vector<const Atom*>::iterator it=all.begin(); it != all.end(); ++it) {
+    this->addAtom(**it);
+  }
+}
+
 
 } // namespace lld

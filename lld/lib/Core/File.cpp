@@ -13,8 +13,8 @@ namespace lld {
 
 File::~File() {}
 
-bool File::translationUnitSource(llvm::StringRef &path) const {
-  return false;
+llvm::StringRef File::translationUnitSource() const {
+  return llvm::StringRef();
 }
 
 

@@ -24,7 +24,7 @@ class UndefinedAtom;
 class SharedLibraryAtom;
 class AbsoluteAtom;
 
-  ///
+///
 /// The linker has a Graph Theory model of linking. An object file is seen
 /// as a set of Atoms with References to other Atoms.  Each Atom is a node
 /// and each Reference is an edge. An Atom can be a DefinedAtom which has
