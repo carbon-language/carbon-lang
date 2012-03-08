@@ -220,7 +220,7 @@ bool Dependences::isParallelDimension(__isl_take isl_set *Domain,
   isl_union_set *Invalid = isl_union_set_subtract(Distance, ValidDistancesUS);
 
   bool IsParallel = isl_union_set_is_empty(Invalid);
-  isl_union_set_free(Inalid);
+  isl_union_set_free(Invalid);
   return IsParallel;
 }
 
