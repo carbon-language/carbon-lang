@@ -87,6 +87,7 @@ CallGraph::~CallGraph() {
 }
 
 void CallGraph::addToCallGraph(Decl* D, bool IsGlobal) {
+  assert(D);
   CallGraphNode *Node = getOrInsertFunction(D);
 
   if (IsGlobal)
@@ -141,7 +142,9 @@ CallGraphNode *CallGraph::getOrInsertFunction(Decl *F) {
     return Node;
 
   Node = new CallGraphNode(F);
-  ParentlessNodes.insert(Node);
+  // If not root, add to the parentless list.
+  if (F != 0)
+    ParentlessNodes.insert(Node);
   return Node;
 }
 
