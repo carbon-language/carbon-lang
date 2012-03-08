@@ -99,6 +99,8 @@ private:
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
 
+  void ProcessFunctionAfterISel(MachineFunction &MF);
+  bool ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI, const MachineInstr&);
   void InitGlobalBaseReg(MachineFunction &MF);
 
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
@@ -181,10 +183,57 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   }
 }
 
+bool MipsDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
+                                              const MachineInstr& MI) {
+  unsigned DstReg = 0, ZeroReg = 0;
+
+  // Check if MI is "addiu $dst, $zero, 0" or "daddiu $dst, $zero, 0".
+  if ((MI.getOpcode() == Mips::ADDiu) &&
+      (MI.getOperand(1).getReg() == Mips::ZERO) &&
+      (MI.getOperand(2).getImm() == 0)) {
+    DstReg = MI.getOperand(0).getReg();
+    ZeroReg = Mips::ZERO;
+  } else if ((MI.getOpcode() == Mips::DADDiu) &&
+             (MI.getOperand(1).getReg() == Mips::ZERO_64) &&
+             (MI.getOperand(2).getImm() == 0)) {
+    DstReg = MI.getOperand(0).getReg();
+    ZeroReg = Mips::ZERO_64;
+  }
+
+  if (!DstReg)
+    return false;
+
+  // Replace uses with ZeroReg.
+  for (MachineRegisterInfo::use_iterator U = MRI->use_begin(DstReg),
+       E = MRI->use_end(); U != E; ++U) {
+    MachineOperand &MO = U.getOperand();
+    MachineInstr *MI = MO.getParent();
+
+    // Do not replace if it is a phi's operand or is tied to def operand.
+    if (MI->isPHI() || MI->isRegTiedToDefOperand(U.getOperandNo()))
+      continue;
+
+    MO.setReg(ZeroReg);
+  }
+
+  return true;
+}
+
+void MipsDAGToDAGISel::ProcessFunctionAfterISel(MachineFunction &MF) {
+  InitGlobalBaseReg(MF);
+
+  MachineRegisterInfo *MRI = &MF.getRegInfo();
+
+  for (MachineFunction::iterator MFI = MF.begin(), MFE = MF.end(); MFI != MFE;
+       ++MFI)
+    for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I)
+      ReplaceUsesWithZeroReg(MRI, *I);
+}
+
 bool MipsDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   bool Ret = SelectionDAGISel::runOnMachineFunction(MF);
 
-  InitGlobalBaseReg(MF);
+  ProcessFunctionAfterISel(MF);
 
   return Ret;
 }
