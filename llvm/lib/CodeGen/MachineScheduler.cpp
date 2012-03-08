@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "misched"
 
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachinePassRegistry.h"
+#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -43,14 +43,9 @@ static bool ViewMISchedDAGs = false;
 
 namespace {
 /// MachineScheduler runs after coalescing and before register allocation.
-class MachineScheduler : public MachineFunctionPass {
+class MachineScheduler : public MachineSchedContext,
+                         public MachineFunctionPass {
 public:
-  MachineFunction *MF;
-  const TargetInstrInfo *TII;
-  const MachineLoopInfo *MLI;
-  const MachineDominatorTree *MDT;
-  LiveIntervals *LIS;
-
   MachineScheduler();
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -78,7 +73,7 @@ INITIALIZE_PASS_END(MachineScheduler, "misched",
                     "Machine Instruction Scheduler", false, false)
 
 MachineScheduler::MachineScheduler()
-: MachineFunctionPass(ID), MF(0), MLI(0), MDT(0) {
+: MachineFunctionPass(ID) {
   initializeMachineSchedulerPass(*PassRegistry::getPassRegistry());
 }
 
@@ -95,47 +90,9 @@ void MachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-namespace {
-/// MachineSchedRegistry provides a selection of available machine instruction
-/// schedulers.
-class MachineSchedRegistry : public MachinePassRegistryNode {
-public:
-  typedef ScheduleDAGInstrs *(*ScheduleDAGCtor)(MachineScheduler *);
-
-  // RegisterPassParser requires a (misnamed) FunctionPassCtor type.
-  typedef ScheduleDAGCtor FunctionPassCtor;
-
-  static MachinePassRegistry Registry;
-
-  MachineSchedRegistry(const char *N, const char *D, ScheduleDAGCtor C)
-    : MachinePassRegistryNode(N, D, (MachinePassCtor)C) {
-    Registry.Add(this);
-  }
-  ~MachineSchedRegistry() { Registry.Remove(this); }
-
-  // Accessors.
-  //
-  MachineSchedRegistry *getNext() const {
-    return (MachineSchedRegistry *)MachinePassRegistryNode::getNext();
-  }
-  static MachineSchedRegistry *getList() {
-    return (MachineSchedRegistry *)Registry.getList();
-  }
-  static ScheduleDAGCtor getDefault() {
-    return (ScheduleDAGCtor)Registry.getDefault();
-  }
-  static void setDefault(ScheduleDAGCtor C) {
-    Registry.setDefault((MachinePassCtor)C);
-  }
-  static void setListener(MachinePassRegistryListener *L) {
-    Registry.setListener(L);
-  }
-};
-} // namespace
-
 MachinePassRegistry MachineSchedRegistry::Registry;
 
-static ScheduleDAGInstrs *createDefaultMachineSched(MachineScheduler *P);
+static ScheduleDAGInstrs *createDefaultMachineSched(MachineSchedContext *C);
 
 /// MachineSchedOpt allows command line selection of the scheduler.
 static cl::opt<MachineSchedRegistry::ScheduleDAGCtor, false,
@@ -144,115 +101,15 @@ MachineSchedOpt("misched",
                 cl::init(&createDefaultMachineSched), cl::Hidden,
                 cl::desc("Machine instruction scheduler to use"));
 
-//===----------------------------------------------------------------------===//
-// Machine Instruction Scheduling Common Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-/// ScheduleTopDownLive is an implementation of ScheduleDAGInstrs that schedules
-/// machine instructions while updating LiveIntervals.
-class ScheduleTopDownLive : public ScheduleDAGInstrs {
-protected:
-  MachineScheduler *Pass;
-public:
-  ScheduleTopDownLive(MachineScheduler *P):
-    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false, P->LIS),
-    Pass(P) {}
-
-  /// ScheduleDAGInstrs callback.
-  void schedule();
-
-  /// Interface implemented by the selected top-down liveinterval scheduler.
-  ///
-  /// Pick the next node to schedule, or return NULL.
-  virtual SUnit *pickNode() = 0;
-
-  /// When all preceeding dependencies have been resolved, free this node for
-  /// scheduling.
-  virtual void releaseNode(SUnit *SU) = 0;
-
-protected:
-  void releaseSucc(SUnit *SU, SDep *SuccEdge);
-  void releaseSuccessors(SUnit *SU);
-};
-} // namespace
-
-/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
-/// NumPredsLeft reaches zero, release the successor node.
-void ScheduleTopDownLive::releaseSucc(SUnit *SU, SDep *SuccEdge) {
-  SUnit *SuccSU = SuccEdge->getSUnit();
-
-#ifndef NDEBUG
-  if (SuccSU->NumPredsLeft == 0) {
-    dbgs() << "*** Scheduling failed! ***\n";
-    SuccSU->dump(this);
-    dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
-  }
-#endif
-  --SuccSU->NumPredsLeft;
-  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
-    releaseNode(SuccSU);
-}
-
-/// releaseSuccessors - Call releaseSucc on each of SU's successors.
-void ScheduleTopDownLive::releaseSuccessors(SUnit *SU) {
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    releaseSucc(SU, &*I);
-  }
-}
-
-/// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-/// time to do some work.
-void ScheduleTopDownLive::schedule() {
-  buildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
-
-  DEBUG(dbgs() << "********** MI Scheduling **********\n");
-  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(this));
-
-  if (ViewMISchedDAGs) viewGraph();
-
-  // Release any successors of the special Entry node. It is currently unused,
-  // but we keep up appearances.
-  releaseSuccessors(&EntrySU);
-
-  // Release all DAG roots for scheduling.
-  for (std::vector<SUnit>::iterator I = SUnits.begin(), E = SUnits.end();
-       I != E; ++I) {
-    // A SUnit is ready to schedule if it has no predecessors.
-    if (I->Preds.empty())
-      releaseNode(&(*I));
-  }
-
-  MachineBasicBlock::iterator InsertPos = Begin;
-  while (SUnit *SU = pickNode()) {
-    DEBUG(dbgs() << "*** Scheduling Instruction:\n"; SU->dump(this));
-
-    // Move the instruction to its new location in the instruction stream.
-    MachineInstr *MI = SU->getInstr();
-    if (&*InsertPos == MI)
-      ++InsertPos;
-    else {
-      BB->splice(InsertPos, BB, MI);
-      Pass->LIS->handleMove(MI);
-      if (Begin == InsertPos)
-        Begin = MI;
-    }
-
-    // Release dependent instructions for scheduling.
-    releaseSuccessors(SU);
-  }
-}
-
 bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   // Initialize the context of the pass.
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
   MDT = &getAnalysis<MachineDominatorTree>();
+  AA = &getAnalysis<AliasAnalysis>();
+
   LIS = &getAnalysis<LiveIntervals>();
-  TII = MF->getTarget().getInstrInfo();
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   // Select the scheduler, or set the default.
   MachineSchedRegistry::ScheduleDAGCtor Ctor =
@@ -320,16 +177,118 @@ void MachineScheduler::print(raw_ostream &O, const Module* m) const {
 }
 
 //===----------------------------------------------------------------------===//
-// Placeholder for extending the machine instruction scheduler.
+// ScheduleTopeDownLive - Base class for basic top-down scheduling with
+// LiveIntervals preservation.
+// ===----------------------------------------------------------------------===//
+
+namespace {
+/// ScheduleTopDownLive is an implementation of ScheduleDAGInstrs that schedules
+/// machine instructions while updating LiveIntervals.
+class ScheduleTopDownLive : public ScheduleDAGInstrs {
+  AliasAnalysis *AA;
+public:
+  ScheduleTopDownLive(MachineSchedContext *C):
+    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
+    AA(C->AA) {}
+
+  /// ScheduleDAGInstrs interface.
+  void schedule();
+
+  /// Interface implemented by the selected top-down liveinterval scheduler.
+  ///
+  /// Pick the next node to schedule, or return NULL.
+  virtual SUnit *pickNode() = 0;
+
+  /// When all preceeding dependencies have been resolved, free this node for
+  /// scheduling.
+  virtual void releaseNode(SUnit *SU) = 0;
+
+protected:
+  void releaseSucc(SUnit *SU, SDep *SuccEdge);
+  void releaseSuccessors(SUnit *SU);
+};
+} // namespace
+
+/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
+/// NumPredsLeft reaches zero, release the successor node.
+void ScheduleTopDownLive::releaseSucc(SUnit *SU, SDep *SuccEdge) {
+  SUnit *SuccSU = SuccEdge->getSUnit();
+
+#ifndef NDEBUG
+  if (SuccSU->NumPredsLeft == 0) {
+    dbgs() << "*** Scheduling failed! ***\n";
+    SuccSU->dump(this);
+    dbgs() << " has been released too many times!\n";
+    llvm_unreachable(0);
+  }
+#endif
+  --SuccSU->NumPredsLeft;
+  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
+    releaseNode(SuccSU);
+}
+
+/// releaseSuccessors - Call releaseSucc on each of SU's successors.
+void ScheduleTopDownLive::releaseSuccessors(SUnit *SU) {
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    releaseSucc(SU, &*I);
+  }
+}
+
+/// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+/// time to do some work.
+void ScheduleTopDownLive::schedule() {
+  buildSchedGraph(AA);
+
+  DEBUG(dbgs() << "********** MI Scheduling **********\n");
+  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
+          SUnits[su].dumpAll(this));
+
+  if (ViewMISchedDAGs) viewGraph();
+
+  // Release any successors of the special Entry node. It is currently unused,
+  // but we keep up appearances.
+  releaseSuccessors(&EntrySU);
+
+  // Release all DAG roots for scheduling.
+  for (std::vector<SUnit>::iterator I = SUnits.begin(), E = SUnits.end();
+       I != E; ++I) {
+    // A SUnit is ready to schedule if it has no predecessors.
+    if (I->Preds.empty())
+      releaseNode(&(*I));
+  }
+
+  MachineBasicBlock::iterator InsertPos = Begin;
+  while (SUnit *SU = pickNode()) {
+    DEBUG(dbgs() << "*** Scheduling Instruction:\n"; SU->dump(this));
+
+    // Move the instruction to its new location in the instruction stream.
+    MachineInstr *MI = SU->getInstr();
+    if (&*InsertPos == MI)
+      ++InsertPos;
+    else {
+      BB->splice(InsertPos, BB, MI);
+      LIS->handleMove(MI);
+      if (Begin == InsertPos)
+        Begin = MI;
+    }
+
+    // Release dependent instructions for scheduling.
+    releaseSuccessors(SU);
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Placeholder for the default machine instruction scheduler.
 //===----------------------------------------------------------------------===//
 
 namespace {
 class DefaultMachineScheduler : public ScheduleDAGInstrs {
-  MachineScheduler *Pass;
+  AliasAnalysis *AA;
 public:
-  DefaultMachineScheduler(MachineScheduler *P):
-    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false, P->LIS),
-    Pass(P) {}
+  DefaultMachineScheduler(MachineSchedContext *C):
+    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
+    AA(C->AA) {}
 
   /// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
@@ -337,19 +296,18 @@ public:
 };
 } // namespace
 
-static ScheduleDAGInstrs *createDefaultMachineSched(MachineScheduler *P) {
-  return new DefaultMachineScheduler(P);
+static ScheduleDAGInstrs *createDefaultMachineSched(MachineSchedContext *C) {
+  return new DefaultMachineScheduler(C);
 }
 static MachineSchedRegistry
 SchedDefaultRegistry("default", "Activate the scheduler pass, "
                      "but don't reorder instructions",
                      createDefaultMachineSched);
 
-
 /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
 /// time to do some work.
 void DefaultMachineScheduler::schedule() {
-  buildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
+  buildSchedGraph(AA);
 
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
@@ -382,8 +340,8 @@ struct ShuffleSUnitOrder {
 class InstructionShuffler : public ScheduleTopDownLive {
   std::priority_queue<SUnit*, std::vector<SUnit*>, ShuffleSUnitOrder> Queue;
 public:
-  InstructionShuffler(MachineScheduler *P):
-    ScheduleTopDownLive(P) {}
+  InstructionShuffler(MachineSchedContext *C):
+    ScheduleTopDownLive(C) {}
 
   /// ScheduleTopDownLive Interface
 
@@ -400,8 +358,8 @@ public:
 };
 } // namespace
 
-static ScheduleDAGInstrs *createInstructionShuffler(MachineScheduler *P) {
-  return new InstructionShuffler(P);
+static ScheduleDAGInstrs *createInstructionShuffler(MachineSchedContext *C) {
+  return new InstructionShuffler(C);
 }
 static MachineSchedRegistry ShufflerRegistry("shuffle",
                                              "Shuffle machine instructions",
