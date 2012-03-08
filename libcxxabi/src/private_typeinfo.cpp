@@ -152,6 +152,9 @@ __enum_type_info::can_catch(const __shim_type_info* thrown_type,
     return this == thrown_type;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+
 // Handles bullets 1 and 2
 bool
 __class_type_info::can_catch(const __shim_type_info* thrown_type,
@@ -175,6 +178,8 @@ __class_type_info::can_catch(const __shim_type_info* thrown_type,
     }
     return false;
 }
+
+#pragma clang diagnostic pop
 
 void
 __class_type_info::process_found_base_class(__dynamic_cast_info* info,
@@ -277,6 +282,9 @@ __pbase_type_info::can_catch(const __shim_type_info* thrown_type,
     return thrown_type == &typeid(std::nullptr_t);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+
 // Handles bullets 1, 3 and 4
 bool
 __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
@@ -319,8 +327,13 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     return false;
 }
 
+#pragma clang diagnostic pop
+
 #pragma GCC visibility pop
 #pragma GCC visibility push(default)
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
 
 // __dynamic_cast
 
@@ -457,6 +470,8 @@ __dynamic_cast(const void* static_ptr,
     }
     return const_cast<void*>(dst_ptr);
 }
+
+#pragma clang diagnostic pop
 
 #pragma GCC visibility pop
 #pragma GCC visibility push(hidden)
