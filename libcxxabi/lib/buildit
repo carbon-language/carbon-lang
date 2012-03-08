@@ -30,7 +30,8 @@ fi
 EXTRA_FLAGS="-std=c++0x -stdlib=libc++ -fstrict-aliasing -Wstrict-aliasing=2 \
              -Wsign-conversion -Wshadow -Wconversion -Wunused-variable \
              -Wmissing-field-initializers -Wchar-subscripts -Wmismatched-tags \
-             -Wmissing-braces -Wshorten-64-to-32 -Wsign-compare -Wnewline-eof"
+             -Wmissing-braces -Wshorten-64-to-32 -Wsign-compare \
+             -Wstrict-aliasing=2 -Wnewline-eof"
 
 case $TRIPLE in
   *-apple-*)
