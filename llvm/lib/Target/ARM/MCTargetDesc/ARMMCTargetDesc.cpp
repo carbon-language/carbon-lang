@@ -151,13 +151,13 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())
-    return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
+    return createMachOStreamer(Ctx, MAB, OS, Emitter, false);
 
   if (TheTriple.isOSWindows()) {
     llvm_unreachable("ARM does not support Windows COFF format");
   }
 
-  return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  return createELFStreamer(Ctx, MAB, OS, Emitter, false, NoExecStack);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
