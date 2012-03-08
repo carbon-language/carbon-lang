@@ -102,9 +102,6 @@ Json::Value JSONExporter::getJSON(Scop &scop) const {
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
 
-    if (Stmt->isFinalRead())
-      continue;
-
     Json::Value statement;
 
     statement["name"] = Stmt->getBaseName();
@@ -246,12 +243,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
   int index = 0;
 
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-    ScopStmt *Stmt = *SI;
-
-    if (Stmt->isFinalRead())
-      continue;
     Json::Value schedule = jscop["statements"][index]["schedule"];
-
     isl_map *m = isl_map_read_from_str(S->getIslCtx(), schedule.asCString());
     NewScattering[*SI] = m;
     index++;
@@ -273,9 +265,6 @@ bool JSONImporter::runOnScop(Scop &scop) {
   int statementIdx = 0;
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
-
-    if (Stmt->isFinalRead())
-      continue;
 
     int memoryAccessIdx = 0;
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),

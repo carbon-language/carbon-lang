@@ -148,10 +148,6 @@ StatementToIslMapTy *readScattering(Scop *S, openscop_scop_p OScop) {
   openscop_statement_p stmt = OScop->statement;
 
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-
-    if ((*SI)->isFinalRead())
-      continue;
-
     if (!stmt) {
       errs() << "Not enough statements available in OpenScop file\n";
       delete &NewScattering;

@@ -176,8 +176,6 @@ openscop_statement_p OpenScop::initializeStatement(ScopStmt *stmt) {
 void OpenScop::initializeStatements() {
   for (Scop::reverse_iterator SI = PollyScop->rbegin(), SE = PollyScop->rend();
        SI != SE; ++SI) {
-    if ((*SI)->isFinalRead())
-      continue;
     openscop_statement_p stmt = initializeStatement(*SI);
     stmt->next = openscop->statement;
     openscop->statement = stmt;

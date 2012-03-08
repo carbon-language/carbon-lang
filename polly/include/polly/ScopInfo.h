@@ -283,9 +283,6 @@ class ScopStmt {
            BasicBlock &bb, SmallVectorImpl<Loop*> &NestLoops,
            SmallVectorImpl<unsigned> &Scatter);
 
-  /// Create the finalization statement.
-  ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter);
-
   friend class Scop;
 public:
 
@@ -352,12 +349,6 @@ public:
 
   /// @brief Return the SCEV for a loop dimension.
   const SCEVAddRecExpr *getSCEVForDimension(unsigned Dimension) const;
-
-  /// @brief Is this statement the final read statement?
-  ///
-  /// A final read statement is scheduled after all statements to model
-  /// that all data used in the Scop is read after the Scop.
-  bool isFinalRead() { return getBasicBlock() == NULL; }
 
   /// @brief Align the parameters in the statement to the scop context
   void realignParams();

@@ -79,14 +79,3 @@ bb2:                                              ; preds = %bb, %entry
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05_reg2mem[0] };
 ; CHECK:             WriteAccess :=
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
-; CHECK:     	FinalRead
-; CHECK:             Domain :=
-; CHECK:                 [n] -> { FinalRead[0] };
-; CHECK:             Scattering :=
-; CHECK:                 [n] -> { FinalRead[i0] -> scattering[200000000, o1, o2] };
-; CHECK:             ReadAccess :=
-; CHECK:                 [n] -> { FinalRead[i0] -> MemRef_a[o0] };
-; CHECK:             ReadAccess :=
-; CHECK:                 [n] -> { FinalRead[i0] -> MemRef_k_05_reg2mem[o0] };
-; CHECK:             ReadAccess :=
-; CHECK:                 -> { FinalRead[i0] -> MemRef__reg2mem[o0] };

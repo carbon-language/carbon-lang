@@ -168,10 +168,6 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
 
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
-
-    if (Stmt->isFinalRead())
-      continue;
-
     CloogScattering *Scattering;
     CloogDomain *Domain;
 

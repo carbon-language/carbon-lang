@@ -104,10 +104,6 @@ static int getSingleMap(__isl_take isl_map *map, void *user) {
 static void extendScattering(Scop &S, unsigned NewDimensions) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
-
-    if (Stmt->isFinalRead())
-      continue;
-
     unsigned OldDimensions = Stmt->getNumScattering();
     isl_space *Space;
     isl_basic_map *ChangeScattering;
@@ -529,10 +525,6 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
-
-    if (Stmt->isFinalRead())
-      continue;
-
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;
     StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),

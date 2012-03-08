@@ -649,45 +649,6 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
   buildAccesses(tempScop, CurRegion);
 }
 
-ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
-  : Parent(parent), BB(NULL), IVS(0) {
-
-  BaseName = "FinalRead";
-
-  // Build iteration domain.
-  std::string IterationDomainString = "{[i0] : i0 = 0}";
-  Domain = isl_set_read_from_str(getIslCtx(), IterationDomainString.c_str());
-  Domain = isl_set_set_tuple_name(Domain, getBaseName());
-
-  // Build scattering.
-  unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_space *Space = isl_space_alloc(getIslCtx(), 0, 1, ScatSpace);
-  Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
-  Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
-  Scattering = isl_map_universe(Space);
-
-  // TODO: This is incorrect. We should not use a very large number to ensure
-  // that this statement is executed last.
-  Scattering = isl_map_fix_si(Scattering, isl_dim_out, 0, 200000000);
-
-  // Build memory accesses, use SetVector to keep the order of memory accesses
-  // and prevent the same memory access inserted more than once.
-  SetVector<const Value*> BaseAddressSet;
-
-  for (Scop::const_iterator SI = Parent.begin(), SE = Parent.end(); SI != SE;
-       ++SI) {
-    ScopStmt *Stmt = *SI;
-
-    for (MemoryAccessVec::const_iterator I = Stmt->memacc_begin(),
-         E = Stmt->memacc_end(); I != E; ++I)
-      BaseAddressSet.insert((*I)->getBaseAddr());
-  }
-
-  for (SetVector<const Value*>::iterator BI = BaseAddressSet.begin(),
-       BE = BaseAddressSet.end(); BI != BE; ++BI)
-    MemAccs.push_back(new MemoryAccess(*BI, this));
-}
-
 std::string ScopStmt::getDomainStr() const {
   return stringFromIslObj(Domain);
 }
@@ -857,7 +818,6 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   // Build the iteration domain, access functions and scattering functions
   // traversing the region tree.
   buildScop(tempScop, getRegion(), NestLoops, Scatter, LI);
-  Stmts.push_back(new ScopStmt(*this, Scatter));
 
   realignParams();
 
@@ -942,9 +902,7 @@ __isl_give isl_union_set *Scop::getDomains() {
   isl_union_set *Domain = NULL;
 
   for (Scop::iterator SI = begin(), SE = end(); SI != SE; ++SI)
-    if ((*SI)->isFinalRead())
-      continue;
-    else if (!Domain)
+    if (!Domain)
       Domain = isl_union_set_from_set((*SI)->getDomain());
     else
       Domain = isl_union_set_union(Domain,

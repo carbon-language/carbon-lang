@@ -120,10 +120,6 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
 void ScopLib::initializeStatements() {
   for (Scop::reverse_iterator SI = PollyScop->rbegin(), SE = PollyScop->rend();
        SI != SE; ++SI) {
-
-    if ((*SI)->isFinalRead())
-      continue;
-
     scoplib_statement_p stmt = initializeStatement(*SI);
     stmt->next = scoplib->statement;
     scoplib->statement = stmt;
@@ -706,10 +702,6 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
   }
 
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-
-    if ((*SI)->isFinalRead())
-      continue;
-
     if (!stmt) {
       errs() << "Not enough statements available in OpenScop file\n";
       freeStmtToIslMap(&NewScattering);
