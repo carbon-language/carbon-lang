@@ -429,6 +429,8 @@ def err_parser_impl_limit_overflow : Error<
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
 
 // C++ operator overloading
+def err_literal_operator_string_prefix : Error<
+  "string literal after 'operator' cannot have an encoding prefix">;
 def err_literal_operator_string_not_empty : Error<
   "string literal after 'operator' must be '\"\"'">;
 def err_literal_operator_missing_space : Error<

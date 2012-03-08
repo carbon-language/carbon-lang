@@ -92,3 +92,21 @@ _no_such_suffix; // expected-error {{'_no_such_suffix'}}
 int k =
 1234567.89\
 _no_such_suffix; // expected-error {{'_no_such_suffix'}}
+
+// Make sure we handle more interesting ways of writing a string literal which
+// is "" in translation phase 7.
+void operator "\
+" _foo(unsigned long long); // ok
+
+void operator R"xyzzy()xyzzy" _foo(long double); // ok
+
+void operator"" "" R"()" "" _foo(const char *); // ok
+
+// Ensure we diagnose the bad cases.
+void operator "\0" _non_empty(const char *); // expected-error {{must be '""'}}
+void operator ""_no_space(const char *); // expected-error {{C++11 requires a space}}
+void operator L"" _not_char(const char *); // expected-error {{cannot have an encoding prefix}}
+void operator "" ""
+U"" // expected-error {{cannot have an encoding prefix}}
+"" _also_not_char(const char *);
+void operator "" u8"" "\u0123" "hello"_all_of_the_things ""(const char*); // expected-error {{must be '""'}}

@@ -15,6 +15,7 @@
 #include "clang/Parse/Parser.h"
 #include "RAIIObjectsForParser.h"
 #include "clang/Basic/PrettyStackTrace.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
@@ -1903,24 +1904,68 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   //   literal-operator-id: [C++0x 13.5.8]
   //     operator "" identifier
 
-  if (getLang().CPlusPlus0x && Tok.is(tok::string_literal)) {
+  if (getLang().CPlusPlus0x && isTokenStringLiteral()) {
     Diag(Tok.getLocation(), diag::warn_cxx98_compat_literal_operator);
-    // FIXME: Add a FixIt to insert a space before the suffix, and recover.
-    if (Tok.hasUDSuffix()) {
-      Diag(Tok.getLocation(), diag::err_literal_operator_missing_space);
-      return true;
-    }
-    if (Tok.getLength() != 2)
-      Diag(Tok.getLocation(), diag::err_literal_operator_string_not_empty);
-    ConsumeStringToken();
 
-    if (Tok.isNot(tok::identifier)) {
+    SourceLocation DiagLoc;
+    unsigned DiagId = 0;
+
+    // We're past translation phase 6, so perform string literal concatenation
+    // before checking for "".
+    llvm::SmallVector<Token, 4> Toks;
+    llvm::SmallVector<SourceLocation, 4> TokLocs;
+    while (isTokenStringLiteral()) {
+      if (!Tok.is(tok::string_literal) && !DiagId) {
+        DiagLoc = Tok.getLocation();
+        DiagId = diag::err_literal_operator_string_prefix;
+      }
+      Toks.push_back(Tok);
+      TokLocs.push_back(ConsumeStringToken());
+    }
+
+    StringLiteralParser Literal(Toks.data(), Toks.size(), PP);
+    if (Literal.hadError)
+      return true;
+
+    // Grab the literal operator's suffix, which will be either the next token
+    // or a ud-suffix from the string literal.
+    IdentifierInfo *II = 0;
+    SourceLocation SuffixLoc;
+    if (!Literal.getUDSuffix().empty()) {
+      II = &PP.getIdentifierTable().get(Literal.getUDSuffix());
+      SuffixLoc =
+        Lexer::AdvanceToTokenCharacter(TokLocs[Literal.getUDSuffixToken()],
+                                       Literal.getUDSuffixOffset(),
+                                       PP.getSourceManager(), getLang());
+      // This form is not permitted by the standard (yet).
+      DiagLoc = SuffixLoc;
+      DiagId = diag::err_literal_operator_missing_space;
+    } else if (Tok.is(tok::identifier)) {
+      II = Tok.getIdentifierInfo();
+      SuffixLoc = ConsumeToken();
+      TokLocs.push_back(SuffixLoc);
+    } else {
       Diag(Tok.getLocation(), diag::err_expected_ident);
       return true;
     }
 
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    Result.setLiteralOperatorId(II, KeywordLoc, ConsumeToken());
+    // The string literal must be empty.
+    if (!Literal.GetString().empty() || Literal.Pascal) {
+      DiagLoc = TokLocs.front();
+      DiagId = diag::err_literal_operator_string_not_empty;
+    }
+
+    if (DiagId) {
+      // This isn't a valid literal-operator-id, but we think we know
+      // what the user meant. Tell them what they should have written.
+      llvm::SmallString<32> Str;
+      Str += "\"\" ";
+      Str += II->getName();
+      Diag(DiagLoc, DiagId) << FixItHint::CreateReplacement(
+          SourceRange(TokLocs.front(), TokLocs.back()), Str);
+    }
+
+    Result.setLiteralOperatorId(II, KeywordLoc, SuffixLoc);
     return false;
   }
   
