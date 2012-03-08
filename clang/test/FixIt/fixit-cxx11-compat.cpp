@@ -6,4 +6,6 @@
 // This is a test of the code modification hints for C++11-compatibility problems.
 
 #define bar "bar"
-const char *p = "foo"bar; // expected-warning {{will be treated as a user-defined literal suffix}}
+const char *p = "foo"bar; // expected-warning {{will be treated as a reserved user-defined literal suffix}}
+#define _bar "_bar"
+const char *q = "foo"_bar; // expected-warning {{will be treated as a user-defined literal suffix}}

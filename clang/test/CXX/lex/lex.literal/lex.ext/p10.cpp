@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -std=c++11 -verify %s
 
 using size_t = decltype(sizeof(int));
-void operator "" wibble(const char *); // expected-warning {{preempted}}
-void operator "" wibble(const char *, size_t); // expected-warning {{preempted}}
+void operator "" wibble(const char *); // expected-warning {{user-defined literal suffixes not starting with '_' are reserved; no literal will invoke this operator}}
+void operator "" wibble(const char *, size_t); // expected-warning {{user-defined literal suffixes not starting with '_' are reserved; no literal will invoke this operator}}
 
 template<typename T>
 void f() {
@@ -10,6 +10,6 @@ void f() {
   // FIXME: Reject these for the right reason.
   123wibble; // expected-error {{suffix 'wibble'}}
   123.0wibble; // expected-error {{suffix 'wibble'}}
-  ""wibble;
-  R"x("hello")x"wibble;
+  const char *p = ""wibble; // expected-error {{invalid suffix on literal; C++11 requires a space between literal and identifier}} expected-error {{expected ';'}}
+  const char *q = R"x("hello")x"wibble; // expected-error {{invalid suffix on literal; C++11 requires a space between literal and identifier}} expected-error {{expected ';'}}
 }

@@ -1584,7 +1584,20 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
   if (isIdentifierHead(C)) {
     if (!getFeatures().CPlusPlus0x) {
       if (!isLexingRawMode())
-        Diag(CurPtr, diag::warn_cxx11_compat_user_defined_literal)
+        Diag(CurPtr,
+             C == '_' ? diag::warn_cxx11_compat_user_defined_literal
+                      : diag::warn_cxx11_compat_reserved_user_defined_literal)
+          << FixItHint::CreateInsertion(getSourceLocation(CurPtr), " ");
+      return CurPtr;
+    }
+
+    // C++11 [lex.ext]p10, [usrlit.suffix]p1: A program containing a ud-suffix
+    // that does not start with an underscore is ill-formed. As a conforming
+    // extension, we treat all such suffixes as if they had whitespace before
+    // them.
+    if (C != '_') {
+      if (!isLexingRawMode())
+        Diag(CurPtr, diag::ext_reserved_user_defined_literal)
           << FixItHint::CreateInsertion(getSourceLocation(CurPtr), " ");
       return CurPtr;
     }

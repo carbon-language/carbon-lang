@@ -32,8 +32,8 @@ t = { 1234 }; // expected-warning {{constant expression evaluates to 1234 which 
 int printf(const char *, ...);
 typedef __typeof(sizeof(int)) size_t;
 void h(size_t foo, size_t bar) {
-  printf("foo is %"PRIuS", bar is %"PRIuS, foo, bar); // expected-warning 2{{identifier after literal will be treated as a user-defined literal suffix in C++11}}
+  printf("foo is %"PRIuS", bar is %"PRIuS, foo, bar); // expected-warning 2{{identifier after literal will be treated as a reserved user-defined literal suffix in C++11}}
 }
 
-#define x + 1
-char c = 'x'x; // expected-warning {{will be treated as a user-defined literal suffix}}
+#define _x + 1
+char c = 'x'_x; // expected-warning {{will be treated as a user-defined literal suffix}}

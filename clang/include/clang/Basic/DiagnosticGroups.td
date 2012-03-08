@@ -79,7 +79,15 @@ def : DiagGroup<"c++0x-narrowing", [CXX11Narrowing]>;
 // Name of this warning in GCC
 def : DiagGroup<"narrowing", [CXX11Narrowing]>;
 
-def CXX11Compat : DiagGroup<"c++11-compat", [CXX11Narrowing]>;
+def CXX11CompatReservedUserDefinedLiteral :
+  DiagGroup<"c++11-compat-reserved-user-defined-literal">;
+def ReservedUserDefinedLiteral :
+  DiagGroup<"reserved-user-defined-literal",
+            [CXX11CompatReservedUserDefinedLiteral]>;
+
+def CXX11Compat : DiagGroup<"c++11-compat",
+                            [CXX11Narrowing,
+                             CXX11CompatReservedUserDefinedLiteral]>;
 def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
 
 def : DiagGroup<"effc++">;

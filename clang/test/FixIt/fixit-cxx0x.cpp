@@ -60,3 +60,8 @@ void S2::f(int i) {
   (void)[] mutable { }; // expected-error{{lambda requires '()' before 'mutable'}}
   (void)[] -> int { }; // expected-error{{lambda requires '()' before return type}}
 }
+
+#define bar "bar"
+const char *p = "foo"bar; // expected-error {{requires a space between}}
+#define ord - '0'
+int k = '4'ord; // expected-error {{requires a space between}}

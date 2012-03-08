@@ -4757,13 +4757,11 @@ def err_literal_operator_params : Error<
   "parameter declaration for literal operator %0 is not valid">;
 def err_literal_operator_extern_c : Error<
   "literal operator must have C++ linkage">;
-def warn_user_literal_hexfloat : Warning<
-  "user-defined literal with suffix '%0' is preempted by C99 hexfloat "
-  "extension">, InGroup<UserDefinedLiterals>;
 def warn_user_literal_reserved : Warning<
-  "user-defined literals not starting with '_' are reserved by the "
-  "implementation">, InGroup<UserDefinedLiterals>;
-  
+  "user-defined literal suffixes not starting with '_' are reserved; "
+  "no literal will invoke this operator">,
+  InGroup<UserDefinedLiterals>;
+
 // C++ conversion functions
 def err_conv_function_not_member : Error<
   "conversion function must be a non-static member function">;
