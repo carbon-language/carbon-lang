@@ -223,7 +223,7 @@ and you can run a particular test with '--test <index>'.
                      type=str, action="append", dest="input_files", default=[])
     group.add_option("", "--filelist", metavar="LIST",
                      help="Add a list of inputs files to fuzz (one per line)",
-                     type=int, action="append", dest="filelists", default=[])
+                     type=str, action="append", dest="filelists", default=[])
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Fuzz Options")
