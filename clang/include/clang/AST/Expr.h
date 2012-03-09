@@ -176,7 +176,7 @@ public:
 
   /// getExprLoc - Return the preferred location for the arrow when diagnosing
   /// a problem with a generic expression.
-  SourceLocation getExprLoc() const;
+  SourceLocation getExprLoc() const LLVM_READONLY;
 
   /// isUnusedResultAWarning - Return true if this immediate expression should
   /// be warned about if the result is unused.  If so, fill in Loc and Ranges
@@ -721,7 +721,7 @@ public:
     if (SourceExpr) return SourceExpr->getSourceRange();
     return Loc;
   }
-  SourceLocation getExprLoc() const {
+  SourceLocation getExprLoc() const LLVM_READONLY {
     if (SourceExpr) return SourceExpr->getExprLoc();
     return Loc;
   }
@@ -1608,7 +1608,7 @@ public:
     else
       return SourceRange(Loc, Val->getLocEnd());
   }
-  SourceLocation getExprLoc() const { return Loc; }
+  SourceLocation getExprLoc() const LLVM_READONLY { return Loc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryOperatorClass;
@@ -1994,7 +1994,7 @@ public:
   SourceLocation getRBracketLoc() const { return RBracketLoc; }
   void setRBracketLoc(SourceLocation L) { RBracketLoc = L; }
 
-  SourceLocation getExprLoc() const { return getBase()->getExprLoc(); }
+  SourceLocation getExprLoc() const LLVM_READONLY { return getBase()->getExprLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ArraySubscriptExprClass;
@@ -2400,7 +2400,7 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY;
   SourceLocation getLocEnd() const LLVM_READONLY;
 
-  SourceLocation getExprLoc() const { return MemberLoc; }
+  SourceLocation getExprLoc() const LLVM_READONLY { return MemberLoc; }
 
   /// \brief Determine whether the base of this explicit is implicit.
   bool isImplicitAccess() const {
@@ -2793,7 +2793,7 @@ public:
   explicit BinaryOperator(EmptyShell Empty)
     : Expr(BinaryOperatorClass, Empty), Opc(BO_Comma) { }
 
-  SourceLocation getExprLoc() const { return OpLoc; }
+  SourceLocation getExprLoc() const LLVM_READONLY { return OpLoc; }
   SourceLocation getOperatorLoc() const { return OpLoc; }
   void setOperatorLoc(SourceLocation L) { OpLoc = L; }
 
@@ -4476,7 +4476,7 @@ public:
     return const_cast<PseudoObjectExpr*>(this)->getSemanticExpr(index);
   }
 
-  SourceLocation getExprLoc() const {
+  SourceLocation getExprLoc() const LLVM_READONLY {
     return getSyntacticForm()->getExprLoc();
   }
   SourceRange getSourceRange() const LLVM_READONLY {

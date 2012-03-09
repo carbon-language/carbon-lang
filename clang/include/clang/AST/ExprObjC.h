@@ -1358,7 +1358,7 @@ public:
     return SourceRange(getBase()->getLocStart(), IsaMemberLoc);
   }
 
-  SourceLocation getExprLoc() const { return IsaMemberLoc; }
+  SourceLocation getExprLoc() const LLVM_READONLY { return IsaMemberLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCIsaExprClass;
@@ -1427,8 +1427,12 @@ public:
   child_range children() { return child_range(&Operand, &Operand+1); }  
 
   // Source locations are determined by the subexpression.
-  SourceRange getSourceRange() const LLVM_READONLY { return Operand->getSourceRange(); }
-  SourceLocation getExprLoc() const { return getSubExpr()->getExprLoc(); }
+  SourceRange getSourceRange() const LLVM_READONLY {
+    return Operand->getSourceRange();
+  }
+  SourceLocation getExprLoc() const LLVM_READONLY {
+    return getSubExpr()->getExprLoc();
+  }
 
   static bool classof(const Stmt *s) {
     return s->getStmtClass() == ObjCIndirectCopyRestoreExprClass;
