@@ -405,13 +405,13 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
     return FILTER_STRONG;
     
     
-  // Filter out artificial instructions
+  // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
+  // printed as a separate "instruction".
     
   if (Name.find("_Int") != Name.npos       ||
       Name.find("Int_") != Name.npos       ||
       Name.find("_NOREX") != Name.npos     ||
-      Name.find("2SDL") != Name.npos       ||
-      Name == "LOCK_PREFIX")
+      Name.find("2SDL") != Name.npos)
     return FILTER_STRONG;
 
   // Filter out instructions with segment override prefixes.
