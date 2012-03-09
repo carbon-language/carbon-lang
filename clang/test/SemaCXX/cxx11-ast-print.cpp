@@ -10,6 +10,15 @@ decltype(""_foo) operator"" _bar(unsigned long long);
 // CHECK: decltype(42_bar) operator "" _baz(long double);
 decltype(42_bar) operator"" _baz(long double);
 
+// CHECK: decltype(4.5_baz) operator "" _baz(char);
+decltype(4.5_baz) operator"" _baz(char);
+
+// CHECK: const char *operator "" _quux(const char *);
+const char *operator"" _quux(const char *);
+
+// CHECK: template <char...> const char *operator "" _fritz();
+template<char...> const char *operator"" _fritz();
+
 // CHECK: const char *p1 = "bar1"_foo;
 const char *p1 = "bar1"_foo;
 // CHECK: const char *p2 = "bar2"_foo;
@@ -20,3 +29,13 @@ const char *p3 = u8"bar3"_foo;
 const char *p4 = 0x129_bar;
 // CHECK: const char *p5 = 1.0E+12_baz;
 const char *p5 = 1e12_baz;
+// CHECK: const char *p6 = 'x'_baz;
+const char *p6 = 'x'_baz;
+// CHECK: const char *p7 = 123_quux;
+const char *p7 = 123_quux;
+// CHECK: const char *p8 = 4.9_quux;
+const char *p8 = 4.9_quux;
+// CHECK: const char *p9 = 0x42e3F_fritz;
+const char *p9 = 0x42e3F_fritz;
+// CHECK: const char *p10 = 3.300e+15_fritz;
+const char *p10 = 3.300e+15_fritz;
