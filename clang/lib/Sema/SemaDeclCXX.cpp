@@ -86,7 +86,7 @@ namespace {
       //   evaluated. Parameters of a function declared before a default
       //   argument expression are in scope and can hide namespace and
       //   class member names.
-      return S->Diag(DRE->getSourceRange().getBegin(),
+      return S->Diag(DRE->getLocStart(),
                      diag::err_param_default_argument_references_param)
          << Param->getDeclName() << DefaultArg->getSourceRange();
     } else if (VarDecl *VDecl = dyn_cast<VarDecl>(Decl)) {
@@ -94,7 +94,7 @@ namespace {
       //   Local variables shall not be used in default argument
       //   expressions.
       if (VDecl->isLocalVarDecl())
-        return S->Diag(DRE->getSourceRange().getBegin(),
+        return S->Diag(DRE->getLocStart(),
                        diag::err_param_default_argument_references_local)
           << VDecl->getDeclName() << DefaultArg->getSourceRange();
     }
@@ -107,7 +107,7 @@ namespace {
     // C++ [dcl.fct.default]p8:
     //   The keyword this shall not be used in a default argument of a
     //   member function.
-    return S->Diag(ThisE->getSourceRange().getBegin(),
+    return S->Diag(ThisE->getLocStart(),
                    diag::err_param_default_argument_references_this)
                << ThisE->getSourceRange();
   }
@@ -680,7 +680,7 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD) {
         << RD->getNumVBases();
       for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
              E = RD->vbases_end(); I != E; ++I)
-        Diag(I->getSourceRange().getBegin(),
+        Diag(I->getLocStart(),
              diag::note_constexpr_virtual_base_here) << I->getSourceRange();
       return false;
     }
@@ -1134,7 +1134,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
       // C++ [class.mi]p3:
       //   A class shall not be specified as a direct base class of a
       //   derived class more than once.
-      Diag(Bases[idx]->getSourceRange().getBegin(),
+      Diag(Bases[idx]->getLocStart(),
            diag::err_duplicate_base_class)
         << KnownBase->getType()
         << Bases[idx]->getSourceRange();
@@ -1442,7 +1442,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   // For anonymous bitfields, the location should point to the type.
   if (Loc.isInvalid())
-    Loc = D.getSourceRange().getBegin();
+    Loc = D.getLocStart();
 
   Expr *BitWidth = static_cast<Expr*>(BW);
 
@@ -1907,7 +1907,7 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
             const CXXBaseSpecifier *BaseSpec = DirectBaseSpec? DirectBaseSpec 
                                                              : VirtualBaseSpec;
-            Diag(BaseSpec->getSourceRange().getBegin(),
+            Diag(BaseSpec->getLocStart(),
                  diag::note_base_class_specified_here)
               << BaseSpec->getType()
               << BaseSpec->getSourceRange();
@@ -3333,7 +3333,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     assert(Dtor && "No dtor found for BaseClassDecl!");
 
     // FIXME: caret should be on the start of the class name
-    CheckDestructorAccess(Base->getSourceRange().getBegin(), Dtor,
+    CheckDestructorAccess(Base->getLocStart(), Dtor,
                           PDiag(diag::err_access_dtor_base)
                             << Base->getType()
                             << Base->getSourceRange());
@@ -5863,7 +5863,7 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
   case UnqualifiedId::IK_ConstructorName:
   case UnqualifiedId::IK_ConstructorTemplateId:
     // C++0x inherited constructors.
-    Diag(Name.getSourceRange().getBegin(),
+    Diag(Name.getLocStart(),
          getLangOptions().CPlusPlus0x ?
            diag::warn_cxx98_compat_using_decl_constructor :
            diag::err_using_decl_constructor)
@@ -5874,12 +5874,12 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
     return 0;
       
   case UnqualifiedId::IK_DestructorName:
-    Diag(Name.getSourceRange().getBegin(), diag::err_using_decl_destructor)
+    Diag(Name.getLocStart(), diag::err_using_decl_destructor)
       << SS.getRange();
     return 0;
       
   case UnqualifiedId::IK_TemplateId:
-    Diag(Name.getSourceRange().getBegin(), diag::err_using_decl_template_id)
+    Diag(Name.getLocStart(), diag::err_using_decl_template_id)
       << SourceRange(Name.TemplateId->LAngleLoc, Name.TemplateId->RAngleLoc);
     return 0;
   }
@@ -5894,7 +5894,7 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
   // talk about access decls instead of using decls in the
   // diagnostics.
   if (!HasUsingKeyword) {
-    UsingLoc = Name.getSourceRange().getBegin();
+    UsingLoc = Name.getLocStart();
     
     Diag(UsingLoc, diag::warn_access_decl_deprecated)
       << FixItHint::CreateInsertion(SS.getRange().getBegin(), "using ");
@@ -9615,7 +9615,7 @@ Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   }
 
   VarDecl *ExDecl = BuildExceptionDeclaration(S, TInfo,
-                                              D.getSourceRange().getBegin(),
+                                              D.getLocStart(),
                                               D.getIdentifierLoc(),
                                               D.getIdentifier());
   if (Invalid)
@@ -9871,7 +9871,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
 ///   template <> template <class T> friend class A<int>::B;
 Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
                                 MultiTemplateParamsArg TempParams) {
-  SourceLocation Loc = DS.getSourceRange().getBegin();
+  SourceLocation Loc = DS.getLocStart();
 
   assert(DS.isFriendSpecified());
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
@@ -10344,7 +10344,7 @@ static void SearchForReturnInStmt(Sema &Self, Stmt *S) {
     if (!SubStmt)
       continue;
     if (isa<ReturnStmt>(SubStmt))
-      Self.Diag(SubStmt->getSourceRange().getBegin(),
+      Self.Diag(SubStmt->getLocStart(),
            diag::err_return_in_constructor_handler);
     if (!isa<Expr>(SubStmt))
       SearchForReturnInStmt(Self, SubStmt);

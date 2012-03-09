@@ -693,9 +693,9 @@ void IfStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
     return;
   }
   
-  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), 
-                                   V->getSourceRange().getBegin(),
-                                   V->getSourceRange().getEnd());
+  SourceRange VarRange = V->getSourceRange();
+  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), VarRange.getBegin(),
+                                   VarRange.getEnd());
 }
 
 ForStmt::ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar, 
@@ -724,9 +724,9 @@ void ForStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
     return;
   }
   
-  SubExprs[CONDVAR] = new (C) DeclStmt(DeclGroupRef(V), 
-                                       V->getSourceRange().getBegin(),
-                                       V->getSourceRange().getEnd());
+  SourceRange VarRange = V->getSourceRange();
+  SubExprs[CONDVAR] = new (C) DeclStmt(DeclGroupRef(V), VarRange.getBegin(),
+                                       VarRange.getEnd());
 }
 
 SwitchStmt::SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond) 
@@ -751,9 +751,9 @@ void SwitchStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
     return;
   }
   
-  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), 
-                                   V->getSourceRange().getBegin(),
-                                   V->getSourceRange().getEnd());
+  SourceRange VarRange = V->getSourceRange();
+  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), VarRange.getBegin(),
+                                   VarRange.getEnd());
 }
 
 Stmt *SwitchCase::getSubStmt() {
@@ -784,10 +784,10 @@ void WhileStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
     SubExprs[VAR] = 0;
     return;
   }
-  
-  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), 
-                                   V->getSourceRange().getBegin(),
-                                   V->getSourceRange().getEnd());
+
+  SourceRange VarRange = V->getSourceRange();
+  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), VarRange.getBegin(),
+                                   VarRange.getEnd());
 }
 
 // IndirectGotoStmt

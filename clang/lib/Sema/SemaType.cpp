@@ -548,7 +548,7 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
   // faking up the function chunk is still the right thing to do.
 
   // Otherwise, we need to fake up a function declarator.
-  SourceLocation loc = declarator.getSourceRange().getBegin();
+  SourceLocation loc = declarator.getLocStart();
 
   // ...and *prepend* it to the declarator.
   declarator.AddInnermostTypeInfo(DeclaratorChunk::getFunction(
@@ -584,7 +584,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
   const DeclSpec &DS = declarator.getDeclSpec();
   SourceLocation DeclLoc = declarator.getIdentifierLoc();
   if (DeclLoc.isInvalid())
-    DeclLoc = DS.getSourceRange().getBegin();
+    DeclLoc = DS.getLocStart();
   
   ASTContext &Context = S.Context;
 
@@ -662,7 +662,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       if (DS.isEmpty()) {
         S.Diag(DeclLoc, diag::ext_missing_declspec)
           << DS.getSourceRange()
-        << FixItHint::CreateInsertion(DS.getSourceRange().getBegin(), "int");
+        << FixItHint::CreateInsertion(DS.getLocStart(), "int");
       }
     } else if (!DS.hasTypeSpecifier()) {
       // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:
@@ -2492,7 +2492,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static) &&
         !IsTypedefName &&
         D.getContext() != Declarator::TemplateTypeArgContext) {
-      SourceLocation Loc = D.getSourceRange().getBegin();
+      SourceLocation Loc = D.getLocStart();
       SourceRange RemovalRange;
       unsigned I;
       if (D.isFunctionDeclarator(I)) {
@@ -4282,7 +4282,7 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
       << RD->isStruct() << RD->getNumVBases();
     for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
            E = RD->vbases_end(); I != E; ++I)
-      Diag(I->getSourceRange().getBegin(),
+      Diag(I->getLocStart(),
            diag::note_constexpr_virtual_base_here) << I->getSourceRange();
   } else if (!RD->isAggregate() && !RD->hasConstexprNonCopyMoveConstructor() &&
              !RD->hasTrivialDefaultConstructor()) {
@@ -4291,7 +4291,7 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
     for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
       if (!I->getType()->isLiteralType()) {
-        Diag(I->getSourceRange().getBegin(),
+        Diag(I->getLocStart(),
              diag::note_non_literal_base_class)
           << RD << I->getType() << I->getSourceRange();
         return true;

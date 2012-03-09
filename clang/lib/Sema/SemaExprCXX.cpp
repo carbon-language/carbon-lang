@@ -1057,12 +1057,12 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       return ExprError(Diag(StartLoc, diag::err_auto_new_requires_ctor_arg)
                        << AllocType << TypeRange);
     if (initStyle == CXXNewExpr::ListInit)
-      return ExprError(Diag(Inits[0]->getSourceRange().getBegin(),
+      return ExprError(Diag(Inits[0]->getLocStart(),
                             diag::err_auto_new_requires_parens)
                        << AllocType << TypeRange);
     if (NumInits > 1) {
       Expr *FirstBad = Inits[1];
-      return ExprError(Diag(FirstBad->getSourceRange().getBegin(),
+      return ExprError(Diag(FirstBad->getLocStart(),
                             diag::err_auto_new_ctor_multiple_expressions)
                        << AllocType << TypeRange);
     }
@@ -1157,11 +1157,11 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                         llvm::APInt::getNullValue(Value.getBitWidth()),
                                  Value.isUnsigned())) {
           if (getLangOptions().CPlusPlus0x)
-            Diag(ArraySize->getSourceRange().getBegin(),
+            Diag(ArraySize->getLocStart(),
                  diag::warn_typecheck_negative_array_new_size)
               << ArraySize->getSourceRange();
           else
-            return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
+            return ExprError(Diag(ArraySize->getLocStart(),
                                   diag::err_typecheck_negative_array_size)
                              << ArraySize->getSourceRange());
         } else if (!AllocType->isDependentType()) {
@@ -1169,12 +1169,12 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
             ConstantArrayType::getNumAddressingBits(Context, AllocType, Value);
           if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
             if (getLangOptions().CPlusPlus0x)
-              Diag(ArraySize->getSourceRange().getBegin(),
+              Diag(ArraySize->getLocStart(),
                    diag::warn_array_new_too_large)
                 << Value.toString(10)
                 << ArraySize->getSourceRange();
             else
-              return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
+              return ExprError(Diag(ArraySize->getLocStart(),
                                     diag::err_array_too_large)
                                << Value.toString(10)
                                << ArraySize->getSourceRange());
@@ -2453,7 +2453,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     if (!Fn)
       return ExprError();
 
-    if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
+    if (DiagnoseUseOfDecl(Fn, From->getLocStart()))
       return ExprError();
 
     From = FixOverloadedFunctionReference(From, Found, Fn);
@@ -2562,12 +2562,12 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     if (SCS.IncompatibleObjC && Action != AA_Casting) {
       // Diagnose incompatible Objective-C conversions
       if (Action == AA_Initializing || Action == AA_Assigning)
-        Diag(From->getSourceRange().getBegin(),
+        Diag(From->getLocStart(),
              diag::ext_typecheck_convert_incompatible_pointer)
           << ToType << From->getType() << Action
           << From->getSourceRange() << 0;
       else
-        Diag(From->getSourceRange().getBegin(),
+        Diag(From->getLocStart(),
              diag::ext_typecheck_convert_incompatible_pointer)
           << From->getType() << ToType << Action
           << From->getSourceRange() << 0;
@@ -2580,10 +2580,10 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
              !CheckObjCARCUnavailableWeakConversion(ToType, 
                                                     From->getType())) {
       if (Action == AA_Initializing)
-        Diag(From->getSourceRange().getBegin(), 
+        Diag(From->getLocStart(), 
              diag::err_arc_weak_unavailable_assign);
       else
-        Diag(From->getSourceRange().getBegin(),
+        Diag(From->getLocStart(),
              diag::err_arc_convesion_of_weak_unavailable) 
           << (Action == AA_Casting) << From->getType() << ToType 
           << From->getSourceRange();
@@ -3280,7 +3280,7 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
       if (T->isObjectType() || T->isFunctionType())
         T = S.Context.getRValueReferenceType(T);
       OpaqueArgExprs.push_back(
-        OpaqueValueExpr(Args[I]->getTypeLoc().getSourceRange().getBegin(), 
+        OpaqueValueExpr(Args[I]->getTypeLoc().getLocStart(), 
                         T.getNonLValueExprType(S.Context),
                         Expr::getValueKindForType(T)));
       ArgExprs.push_back(&OpaqueArgExprs.back());
@@ -4661,7 +4661,7 @@ ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
       continue;
 
     if (CheckCallReturnType(Call->getCallReturnType(),
-                            Call->getSourceRange().getBegin(),
+                            Call->getLocStart(),
                             Call, Call->getDirectCallee()))
       return ExprError();
   }

@@ -155,8 +155,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
 
   QualType ObjectType = ObjectTypePtr.get();
 
-  LookupResult R(*this, TName, Name.getSourceRange().getBegin(),
-                 LookupOrdinaryName);
+  LookupResult R(*this, TName, Name.getLocStart(), LookupOrdinaryName);
   LookupTemplateName(R, S, SS, ObjectType, EnteringContext,
                      MemberOfUnknownSpecialization);
   if (R.empty()) return TNK_Non_template;
@@ -684,7 +683,7 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   bool IsParameterPack = D.hasEllipsis();
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
-                                      D.getSourceRange().getBegin(),
+                                      D.getLocStart(),
                                       D.getIdentifierLoc(),
                                       Depth, Position, ParamName, T,
                                       IsParameterPack, TInfo);
@@ -2333,7 +2332,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
          cast<CXXRecordDecl>(LookupCtx)->hasAnyDependentBases())) {
       // This is a dependent template. Handle it below.
     } else if (TNK == TNK_Non_template) {
-      Diag(Name.getSourceRange().getBegin(),
+      Diag(Name.getLocStart(),
            diag::err_template_kw_refers_to_non_template)
         << GetNameFromUnqualifiedId(Name).getName()
         << Name.getSourceRange()
@@ -2367,7 +2366,7 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
     break;
   }
 
-  Diag(Name.getSourceRange().getBegin(),
+  Diag(Name.getLocStart(),
        diag::err_template_kw_refers_to_non_template)
     << GetNameFromUnqualifiedId(Name).getName()
     << Name.getSourceRange()
@@ -3472,7 +3471,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   bool ExtraParens = false;
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
     if (!Invalid && !ExtraParens) {
-      S.Diag(Arg->getSourceRange().getBegin(),
+      S.Diag(Arg->getLocStart(),
              S.getLangOptions().CPlusPlus0x ?
                diag::warn_cxx98_compat_template_arg_extra_parens :
                diag::ext_template_arg_extra_parens)
@@ -3522,7 +3521,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   }
 
   if (!isa<ValueDecl>(DRE->getDecl())) {
-    S.Diag(Arg->getSourceRange().getBegin(),
+    S.Diag(Arg->getLocStart(),
            diag::err_template_arg_not_object_or_func_form)
       << Arg->getSourceRange();
     S.Diag(Param->getLocation(), diag::note_template_param_here);
@@ -3533,7 +3532,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
 
   // Cannot refer to non-static data members
   if (FieldDecl *Field = dyn_cast<FieldDecl>(DRE->getDecl())) {
-    S.Diag(Arg->getSourceRange().getBegin(), diag::err_template_arg_field)
+    S.Diag(Arg->getLocStart(), diag::err_template_arg_field)
       << Field << Arg->getSourceRange();
     S.Diag(Param->getLocation(), diag::note_template_param_here);
     return true;
@@ -3542,7 +3541,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   // Cannot refer to non-static member functions
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(DRE->getDecl()))
     if (!Method->isStatic()) {
-      S.Diag(Arg->getSourceRange().getBegin(), diag::err_template_arg_method)
+      S.Diag(Arg->getLocStart(), diag::err_template_arg_method)
         << Method << Arg->getSourceRange();
       S.Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
@@ -3551,7 +3550,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   // Functions must have external linkage.
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(DRE->getDecl())) {
     if (!isExternalLinkage(Func->getLinkage())) {
-      S.Diag(Arg->getSourceRange().getBegin(),
+      S.Diag(Arg->getLocStart(),
              diag::err_template_arg_function_not_extern)
         << Func << Arg->getSourceRange();
       S.Diag(Func->getLocation(), diag::note_template_arg_internal_object)
@@ -3586,7 +3585,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     }
   } else if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
     if (!isExternalLinkage(Var->getLinkage())) {
-      S.Diag(Arg->getSourceRange().getBegin(),
+      S.Diag(Arg->getLocStart(),
              diag::err_template_arg_object_not_extern)
         << Var << Arg->getSourceRange();
       S.Diag(Var->getLocation(), diag::note_template_arg_internal_object)
@@ -3596,7 +3595,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
 
     // A value of reference type is not an object.
     if (Var->getType()->isReferenceType()) {
-      S.Diag(Arg->getSourceRange().getBegin(),
+      S.Diag(Arg->getLocStart(),
              diag::err_template_arg_reference_var)
         << Var->getType() << Arg->getSourceRange();
       S.Diag(Param->getLocation(), diag::note_template_param_here);
@@ -3653,7 +3652,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     }
   } else {
     // We found something else, but we don't know specifically what it is.
-    S.Diag(Arg->getSourceRange().getBegin(),
+    S.Diag(Arg->getLocStart(),
            diag::err_template_arg_not_object_or_func)
       << Arg->getSourceRange();
     S.Diag(DRE->getDecl()->getLocation(), diag::note_template_arg_refers_here);
@@ -3683,7 +3682,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
         unsigned ArgQuals = ArgType.getCVRQualifiers();
 
         if ((ParamQuals | ArgQuals) != ParamQuals) {
-          S.Diag(Arg->getSourceRange().getBegin(),
+          S.Diag(Arg->getLocStart(),
                  diag::err_template_arg_ref_bind_ignores_quals)
             << ParamType << Arg->getType()
             << Arg->getSourceRange();
@@ -3739,7 +3738,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
   bool ExtraParens = false;
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
     if (!Invalid && !ExtraParens) {
-      Diag(Arg->getSourceRange().getBegin(),
+      Diag(Arg->getLocStart(),
            getLangOptions().CPlusPlus0x ?
              diag::warn_cxx98_compat_template_arg_extra_parens :
              diag::ext_template_arg_extra_parens)
@@ -3782,7 +3781,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
   }
 
   if (!DRE)
-    return Diag(Arg->getSourceRange().getBegin(),
+    return Diag(Arg->getLocStart(),
                 diag::err_template_arg_not_pointer_to_member_form)
       << Arg->getSourceRange();
 
@@ -3801,7 +3800,7 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
   }
 
   // We found something else, but we don't know specifically what it is.
-  Diag(Arg->getSourceRange().getBegin(),
+  Diag(Arg->getLocStart(),
        diag::err_template_arg_not_pointer_to_member_form)
       << Arg->getSourceRange();
   Diag(DRE->getDecl()->getLocation(),
@@ -3821,7 +3820,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                        QualType InstantiatedParamType, Expr *Arg,
                                        TemplateArgument &Converted,
                                        CheckTemplateArgumentKind CTAK) {
-  SourceLocation StartLoc = Arg->getSourceRange().getBegin();
+  SourceLocation StartLoc = Arg->getLocStart();
 
   // If either the parameter has a dependent type or the argument is
   // type-dependent, there's nothing we can check now.
@@ -3918,7 +3917,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     SourceLocation NonConstantLoc;
     llvm::APSInt Value;
     if (!ArgType->isIntegralOrEnumerationType()) {
-      Diag(Arg->getSourceRange().getBegin(),
+      Diag(Arg->getLocStart(),
            diag::err_template_arg_not_integral_or_enumeral)
         << ArgType << Arg->getSourceRange();
       Diag(Param->getLocation(), diag::note_template_param_here);
@@ -3947,7 +3946,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Arg = ImpCastExprToType(Arg, ParamType, CK_IntegralCast).take();
     } else {
       // We can't perform this conversion.
-      Diag(Arg->getSourceRange().getBegin(),
+      Diag(Arg->getLocStart(),
            diag::err_template_arg_not_convertible)
         << Arg->getType() << InstantiatedParamType << Arg->getSourceRange();
       Diag(Param->getLocation(), diag::note_template_param_here);
@@ -3988,7 +3987,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       // Complain if an unsigned parameter received a negative value.
       if (IntegerType->isUnsignedIntegerOrEnumerationType()
                && (OldValue.isSigned() && OldValue.isNegative())) {
-        Diag(Arg->getSourceRange().getBegin(), diag::warn_template_arg_negative)
+        Diag(Arg->getLocStart(), diag::warn_template_arg_negative)
           << OldValue.toString(10) << Value.toString(10) << Param->getType()
           << Arg->getSourceRange();
         Diag(Param->getLocation(), diag::note_template_param_here);
@@ -4003,7 +4002,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       else
         RequiredBits = OldValue.getMinSignedBits();
       if (RequiredBits > AllowedBits) {
-        Diag(Arg->getSourceRange().getBegin(),
+        Diag(Arg->getLocStart(),
              diag::warn_template_arg_too_large)
           << OldValue.toString(10) << Value.toString(10) << Param->getType()
           << Arg->getSourceRange();
@@ -4066,7 +4065,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       if (FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Arg, ParamType,
                                                                 true,
                                                                 FoundResult)) {
-        if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
+        if (DiagnoseUseOfDecl(Fn, Arg->getLocStart()))
           return ExprError();
 
         Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
@@ -4091,7 +4090,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     } else if (!Context.hasSameUnqualifiedType(ArgType,
                                            ParamType.getNonReferenceType())) {
       // We can't perform this conversion.
-      Diag(Arg->getSourceRange().getBegin(),
+      Diag(Arg->getLocStart(),
            diag::err_template_arg_not_convertible)
         << Arg->getType() << InstantiatedParamType << Arg->getSourceRange();
       Diag(Param->getLocation(), diag::note_template_param_here);
@@ -4133,7 +4132,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                                  ParamRefType->getPointeeType(),
                                                                 true,
                                                                 FoundResult)) {
-        if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
+        if (DiagnoseUseOfDecl(Fn, Arg->getLocStart()))
           return ExprError();
 
         Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
@@ -4162,7 +4161,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                             Arg->getValueKind()).take();
   } else {
     // We can't perform this conversion.
-    Diag(Arg->getSourceRange().getBegin(),
+    Diag(Arg->getLocStart(),
          diag::err_template_arg_not_convertible)
       << Arg->getType() << InstantiatedParamType << Arg->getSourceRange();
     Diag(Param->getLocation(), diag::note_template_param_here);
@@ -6313,7 +6312,7 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   DeclarationName Name = NameInfo.getName();
   if (!Name) {
     if (!D.isInvalidType())
-      Diag(D.getDeclSpec().getSourceRange().getBegin(),
+      Diag(D.getDeclSpec().getLocStart(),
            diag::err_explicit_instantiation_requires_name)
         << D.getDeclSpec().getSourceRange()
         << D.getSourceRange();

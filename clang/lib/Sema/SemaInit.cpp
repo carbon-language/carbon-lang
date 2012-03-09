@@ -118,13 +118,13 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
   
     // [dcl.init.string]p2
     if (StrLength > CAT->getSize().getZExtValue())
-      S.Diag(Str->getSourceRange().getBegin(),
+      S.Diag(Str->getLocStart(),
              diag::err_initializer_string_for_char_array_too_long)
         << Str->getSourceRange();
   } else {
     // C99 6.7.8p14.
     if (StrLength-1 > CAT->getSize().getZExtValue())
-      S.Diag(Str->getSourceRange().getBegin(),
+      S.Diag(Str->getLocStart(),
              diag::warn_initializer_string_for_char_array_too_long)
         << Str->getSourceRange();
   }
@@ -289,7 +289,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
                                         const InitializedEntity &ParentEntity,
                                               InitListExpr *ILE,
                                               bool &RequiresSecondPass) {
-  SourceLocation Loc = ILE->getSourceRange().getBegin();
+  SourceLocation Loc = ILE->getLocStart();
   unsigned NumInits = ILE->getNumInits();
   InitializedEntity MemberEntity
     = InitializedEntity::InitializeMember(Field, &ParentEntity);
@@ -354,9 +354,9 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
                                             bool &RequiresSecondPass) {
   assert((ILE->getType() != SemaRef.Context.VoidTy) &&
          "Should not have void type");
-  SourceLocation Loc = ILE->getSourceRange().getBegin();
+  SourceLocation Loc = ILE->getLocStart();
   if (ILE->getSyntacticForm())
-    Loc = ILE->getSyntacticForm()->getSourceRange().getBegin();
+    Loc = ILE->getSyntacticForm()->getLocStart();
 
   if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
     if (RType->getDecl()->isUnion() &&
@@ -546,7 +546,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
   InitListExpr *StructuredSubobjectInitList
     = getStructuredSubobjectInit(ParentIList, Index, T, StructuredList,
                                  StructuredIndex,
-          SourceRange(ParentIList->getInit(Index)->getSourceRange().getBegin(),
+          SourceRange(ParentIList->getInit(Index)->getLocStart(),
                       ParentIList->getSourceRange().getEnd()));
   unsigned StructuredSubobjectInitIndex = 0;
 
@@ -931,7 +931,7 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
     return;
   } else if (isa<DesignatedInitExpr>(expr)) {
     if (!VerifyOnly)
-      SemaRef.Diag(expr->getSourceRange().getBegin(),
+      SemaRef.Diag(expr->getLocStart(),
                    diag::err_designator_for_scalar_init)
         << DeclType << expr->getSourceRange();
     hadError = true;
@@ -1136,7 +1136,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
   // OpenCL requires all elements to be initialized.
   if (numEltsInit != maxElements) {
     if (!VerifyOnly)
-      SemaRef.Diag(IList->getSourceRange().getBegin(),
+      SemaRef.Diag(IList->getLocStart(),
                    diag::err_vector_incorrect_num_initializers)
         << (numEltsInit < maxElements) << maxElements << numEltsInit;
     hadError = true;
@@ -1300,9 +1300,9 @@ bool InitListChecker::CheckFlexibleArrayInit(const InitializedEntity &Entity,
   }
 
   if (!VerifyOnly) {
-    SemaRef.Diag(InitExpr->getSourceRange().getBegin(),
+    SemaRef.Diag(InitExpr->getLocStart(),
                  FlexArrayDiag)
-      << InitExpr->getSourceRange().getBegin();
+      << InitExpr->getLocStart();
     SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
       << Field;
   }
@@ -1818,7 +1818,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           !isa<StringLiteral>(DIE->getInit())) {
         // The initializer is not an initializer list.
         if (!VerifyOnly) {
-          SemaRef.Diag(DIE->getInit()->getSourceRange().getBegin(),
+          SemaRef.Diag(DIE->getInit()->getLocStart(),
                         diag::err_flexible_array_init_needs_braces)
             << DIE->getInit()->getSourceRange();
           SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
@@ -1959,7 +1959,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     DesignatedEndIndex.setIsUnsigned(MaxElements.isUnsigned());
     if (DesignatedEndIndex >= MaxElements) {
       if (!VerifyOnly)
-        SemaRef.Diag(IndexExpr->getSourceRange().getBegin(),
+        SemaRef.Diag(IndexExpr->getLocStart(),
                       diag::err_array_designator_too_large)
           << DesignatedEndIndex.toString(10) << MaxElements.toString(10)
           << IndexExpr->getSourceRange();
@@ -2068,7 +2068,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     SemaRef.Diag(InitRange.getBegin(),
                  diag::warn_subobject_initializer_overrides)
       << InitRange;
-    SemaRef.Diag(ExistingInit->getSourceRange().getBegin(),
+    SemaRef.Diag(ExistingInit->getLocStart(),
                   diag::note_previous_initializer)
       << /*FIXME:has side effects=*/0
       << ExistingInit->getSourceRange();
@@ -2144,10 +2144,10 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
   if (Expr *PrevInit = StructuredList->updateInit(SemaRef.Context,
                                                   StructuredIndex, expr)) {
     // This initializer overwrites a previous initializer. Warn.
-    SemaRef.Diag(expr->getSourceRange().getBegin(),
+    SemaRef.Diag(expr->getLocStart(),
                   diag::warn_initializer_overrides)
       << expr->getSourceRange();
-    SemaRef.Diag(PrevInit->getSourceRange().getBegin(),
+    SemaRef.Diag(PrevInit->getLocStart(),
                   diag::note_previous_initializer)
       << /*FIXME:has side effects=*/0
       << PrevInit->getSourceRange();
@@ -2165,7 +2165,7 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
 /// value of the constant expression.
 static ExprResult
 CheckArrayDesignatorExpr(Sema &S, Expr *Index, llvm::APSInt &Value) {
-  SourceLocation Loc = Index->getSourceRange().getBegin();
+  SourceLocation Loc = Index->getLocStart();
 
   // Make sure this is an integer constant expression.
   ExprResult Result = S.VerifyIntegerConstantExpression(Index, &Value);

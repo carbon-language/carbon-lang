@@ -3052,11 +3052,11 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
     IsUserDefinedConversion(*this, From, ToType, ICS.UserDefined,
                             CandidateSet, false);
   if (OvResult == OR_Ambiguous)
-    Diag(From->getSourceRange().getBegin(),
+    Diag(From->getLocStart(),
          diag::err_typecheck_ambiguous_condition)
           << From->getType() << ToType << From->getSourceRange();
   else if (OvResult == OR_No_Viable_Function && !CandidateSet.empty())
-    Diag(From->getSourceRange().getBegin(),
+    Diag(From->getLocStart(),
          diag::err_typecheck_nonviable_condition)
     << From->getType() << ToType << From->getSourceRange();
   else
@@ -4603,7 +4603,7 @@ Sema::PerformObjectArgumentInitialization(Expr *From,
       Qualifiers ToQs = DestType.getQualifiers();
       unsigned CVR = FromQs.getCVRQualifiers() & ~ToQs.getCVRQualifiers();
       if (CVR) {
-        Diag(From->getSourceRange().getBegin(),
+        Diag(From->getLocStart(),
              diag::err_member_function_call_bad_cvr)
           << Method->getDeclName() << FromRecordType << (CVR - 1)
           << From->getSourceRange();
@@ -4613,7 +4613,7 @@ Sema::PerformObjectArgumentInitialization(Expr *From,
       }
     }
 
-    return Diag(From->getSourceRange().getBegin(),
+    return Diag(From->getLocStart(),
                 diag::err_implicit_object_parameter_init)
        << ImplicitParamRecordType << FromRecordType << From->getSourceRange();
   }
@@ -4657,7 +4657,7 @@ ExprResult Sema::PerformContextuallyConvertToBool(Expr *From) {
     return PerformImplicitConversion(From, Context.BoolTy, ICS, AA_Converting);
 
   if (!DiagnoseMultipleUserDefinedConversion(From, Context.BoolTy))
-    return Diag(From->getSourceRange().getBegin(),
+    return Diag(From->getLocStart(),
                 diag::err_typecheck_bool_condition)
                   << From->getType() << From->getSourceRange();
   return ExprError();
@@ -4745,7 +4745,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
     if (!CheckConvertedConstantConversions(*this, ICS.Standard))
-      return Diag(From->getSourceRange().getBegin(),
+      return Diag(From->getLocStart(),
                   diag::err_typecheck_converted_constant_expression_disallowed)
                << From->getType() << From->getSourceRange() << T;
     SCS = &ICS.Standard;
@@ -4754,7 +4754,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     // We are converting from class type to an integral or enumeration type, so
     // the Before sequence must be trivial.
     if (!CheckConvertedConstantConversions(*this, ICS.UserDefined.After))
-      return Diag(From->getSourceRange().getBegin(),
+      return Diag(From->getLocStart(),
                   diag::err_typecheck_converted_constant_expression_disallowed)
                << From->getType() << From->getSourceRange() << T;
     SCS = &ICS.UserDefined.After;
@@ -4762,7 +4762,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
   case ImplicitConversionSequence::AmbiguousConversion:
   case ImplicitConversionSequence::BadConversion:
     if (!DiagnoseMultipleUserDefinedConversion(From, T))
-      return Diag(From->getSourceRange().getBegin(),
+      return Diag(From->getLocStart(),
                   diag::err_typecheck_converted_constant_expression)
                     << From->getType() << From->getSourceRange() << T;
     return ExprError();
@@ -4786,14 +4786,14 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     break;
 
   case NK_Constant_Narrowing:
-    Diag(From->getSourceRange().getBegin(), diag::err_cce_narrowing)
+    Diag(From->getLocStart(), diag::err_cce_narrowing)
       << CCE << /*Constant*/1
       << PreNarrowingValue.getAsString(Context, QualType()) << T;
     Diagnosed = true;
     break;
 
   case NK_Type_Narrowing:
-    Diag(From->getSourceRange().getBegin(), diag::err_cce_narrowing)
+    Diag(From->getLocStart(), diag::err_cce_narrowing)
       << CCE << /*Constant*/0 << From->getType() << T;
     Diagnosed = true;
     break;
@@ -4826,7 +4826,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
       Notes[0].second.getDiagID() == diag::note_invalid_subexpr_in_const_expr)
     Diag(Notes[0].first, diag::err_expr_not_cce) << CCE;
   else {
-    Diag(From->getSourceRange().getBegin(), diag::err_expr_not_cce)
+    Diag(From->getLocStart(), diag::err_expr_not_cce)
       << CCE << From->getSourceRange();
     for (unsigned I = 0; I < Notes.size(); ++I)
       Diag(Notes[I].first, Notes[I].second);
@@ -9083,7 +9083,7 @@ bool Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
   ExprResult SingleFunctionExpression;
   if (FunctionDecl *fn = ResolveSingleFunctionTemplateSpecialization(
                            ovl.Expression, /*complain*/ false, &found)) {
-    if (DiagnoseUseOfDecl(fn, SrcExpr.get()->getSourceRange().getBegin())) {
+    if (DiagnoseUseOfDecl(fn, SrcExpr.get()->getLocStart())) {
       SrcExpr = ExprError();
       return true;
     }
@@ -9558,7 +9558,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     if (!Recovery.isInvalid())
       return Recovery;
 
-    Diag(Fn->getSourceRange().getBegin(),
+    Diag(Fn->getLocStart(),
          diag::err_ovl_no_viable_function_in_call)
       << ULE->getName() << Fn->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
@@ -9567,7 +9567,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   }
 
   case OR_Ambiguous:
-    Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
+    Diag(Fn->getLocStart(), diag::err_ovl_ambiguous_call)
       << ULE->getName() << Fn->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_ViableCandidates,
                                 llvm::makeArrayRef(Args, NumArgs));
@@ -9575,7 +9575,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
 
   case OR_Deleted:
     {
-      Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_deleted_call)
+      Diag(Fn->getLocStart(), diag::err_ovl_deleted_call)
         << Best->Function->isDeleted()
         << ULE->getName()
         << getDeletedOrUnavailableSuffix(Best->Function)
@@ -10307,7 +10307,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                         resultType, valueKind, RParenLoc);
 
     if (CheckCallReturnType(proto->getResultType(),
-                            op->getRHS()->getSourceRange().getBegin(),
+                            op->getRHS()->getLocStart(),
                             call, 0))
       return ExprError();
 
@@ -10601,11 +10601,11 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   case OR_No_Viable_Function:
     if (CandidateSet.empty())
-      Diag(Object.get()->getSourceRange().getBegin(), diag::err_ovl_no_oper)
+      Diag(Object.get()->getLocStart(), diag::err_ovl_no_oper)
         << Object.get()->getType() << /*call*/ 1
         << Object.get()->getSourceRange();
     else
-      Diag(Object.get()->getSourceRange().getBegin(),
+      Diag(Object.get()->getLocStart(),
            diag::err_ovl_no_viable_object_call)
         << Object.get()->getType() << Object.get()->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
@@ -10613,7 +10613,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
     break;
 
   case OR_Ambiguous:
-    Diag(Object.get()->getSourceRange().getBegin(),
+    Diag(Object.get()->getLocStart(),
          diag::err_ovl_ambiguous_object_call)
       << Object.get()->getType() << Object.get()->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_ViableCandidates,
@@ -10621,7 +10621,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
     break;
 
   case OR_Deleted:
-    Diag(Object.get()->getSourceRange().getBegin(),
+    Diag(Object.get()->getLocStart(),
          diag::err_ovl_deleted_object_call)
       << Best->Function->isDeleted()
       << Object.get()->getType() 

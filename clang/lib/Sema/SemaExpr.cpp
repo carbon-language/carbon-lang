@@ -3297,7 +3297,7 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       = InitializedEntity::InitializeParameter(Context, Param);
     InitializationKind Kind
       = InitializationKind::CreateCopy(Param->getLocation(),
-             /*FIXME:EqualLoc*/UninstExpr->getSourceRange().getBegin());
+             /*FIXME:EqualLoc*/UninstExpr->getLocStart());
     Expr *ResultE = Result.takeAs<Expr>();
 
     InitializationSequence InitSeq(*this, Entity, Kind, &ResultE, 1);
@@ -3418,7 +3418,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     CallType = VariadicBlock; // Block
   else if (isa<MemberExpr>(Fn))
     CallType = VariadicMethod;
-  Invalid = GatherArgumentsForCall(Call->getSourceRange().getBegin(), FDecl,
+  Invalid = GatherArgumentsForCall(Call->getLocStart(), FDecl,
                                    Proto, 0, Args, NumArgs, AllArgs, CallType);
   if (Invalid)
     return true;
@@ -3453,7 +3453,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
     if (ArgIx < NumArgs) {
       Arg = Args[ArgIx++];
 
-      if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+      if (RequireCompleteType(Arg->getLocStart(),
                               ProtoArgType,
                               PDiag(diag::err_call_incomplete_argument)
                               << Arg->getSourceRange()))
@@ -3840,7 +3840,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
 
   // Check for a valid return type
   if (CheckCallReturnType(FuncT->getResultType(),
-                          Fn->getSourceRange().getBegin(), TheCall,
+                          Fn->getLocStart(), TheCall,
                           FDecl))
     return ExprError();
 
@@ -3899,7 +3899,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
         Arg = ArgE.takeAs<Expr>();
       }
       
-      if (RequireCompleteType(Arg->getSourceRange().getBegin(),
+      if (RequireCompleteType(Arg->getLocStart(),
                               Arg->getType(),
                               PDiag(diag::err_call_incomplete_argument)
                                 << Arg->getSourceRange()))
@@ -8895,7 +8895,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   // Don't allow returning a objc interface by value.
   if (RetTy->isObjCObjectType()) {
-    Diag(ParamInfo.getSourceRange().getBegin(),
+    Diag(ParamInfo.getLocStart(),
          diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
     return;
   }
@@ -8930,7 +8930,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
            I = Fn->arg_type_begin(), E = Fn->arg_type_end(); I != E; ++I) {
       ParmVarDecl *Param =
         BuildParmVarDeclForTypedef(CurBlock->TheDecl,
-                                   ParamInfo.getSourceRange().getBegin(),
+                                   ParamInfo.getLocStart(),
                                    *I);
       Params.push_back(Param);
     }
@@ -9392,7 +9392,7 @@ ExprResult Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
                                                  PartialDiagnostic NotIceDiag,
                                                  bool AllowFold,
                                                  PartialDiagnostic FoldDiag) {
-  SourceLocation DiagLoc = E->getSourceRange().getBegin();
+  SourceLocation DiagLoc = E->getLocStart();
 
   if (getLangOptions().CPlusPlus0x) {
     // C++11 [expr.const]p5:
@@ -10641,7 +10641,7 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
 
   Diag(Loc, diagnostic) << E->getSourceRange();
 
-  SourceLocation Open = E->getSourceRange().getBegin();
+  SourceLocation Open = E->getLocStart();
   SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
   Diag(Loc, diag::note_condition_assign_silence)
         << FixItHint::CreateInsertion(Open, "(")
@@ -10675,9 +10675,10 @@ void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *ParenE) {
       SourceLocation Loc = opE->getOperatorLoc();
       
       Diag(Loc, diag::warn_equality_with_extra_parens) << E->getSourceRange();
+      SourceRange ParenERange = ParenE->getSourceRange();
       Diag(Loc, diag::note_equality_comparison_silence)
-        << FixItHint::CreateRemoval(ParenE->getSourceRange().getBegin())
-        << FixItHint::CreateRemoval(ParenE->getSourceRange().getEnd());
+        << FixItHint::CreateRemoval(ParenERange.getBegin())
+        << FixItHint::CreateRemoval(ParenERange.getEnd());
       Diag(Loc, diag::note_equality_comparison_to_assign)
         << FixItHint::CreateReplacement(Loc, "=");
     }

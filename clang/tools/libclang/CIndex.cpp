@@ -3702,7 +3702,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
                                             TSInfo->getTypeLoc().getBeginLoc());
       
       return cxloc::translateSourceLocation(getCursorContext(C),
-                                        BaseSpec->getSourceRange().getBegin());
+                                        BaseSpec->getLocStart());
     }
 
     case CXCursor_LabelRef: {
@@ -3908,10 +3908,10 @@ static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
     SourceLocation StartLoc;
     if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
-        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+        StartLoc = TI->getTypeLoc().getLocStart();
     } else if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(D)) {
       if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
-        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+        StartLoc = TI->getTypeLoc().getLocStart();
     }
 
     if (StartLoc.isValid() && R.getBegin().isValid() &&
@@ -4845,10 +4845,10 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     SourceLocation StartLoc;
     if (const DeclaratorDecl *DD = dyn_cast_or_null<DeclaratorDecl>(D)) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
-        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+        StartLoc = TI->getTypeLoc().getLocStart();
     } else if (TypedefDecl *Typedef = dyn_cast_or_null<TypedefDecl>(D)) {
       if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
-        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+        StartLoc = TI->getTypeLoc().getLocStart();
     }
 
     if (StartLoc.isValid() && L.isValid() &&
