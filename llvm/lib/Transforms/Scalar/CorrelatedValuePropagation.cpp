@@ -28,6 +28,7 @@ STATISTIC(NumPhis,      "Number of phis propagated");
 STATISTIC(NumSelects,   "Number of selects propagated");
 STATISTIC(NumMemAccess, "Number of memory access targets propagated");
 STATISTIC(NumCmps,      "Number of comparisons propagated");
+STATISTIC(NumDeadCases, "Number of switch cases removed");
 
 namespace {
   class CorrelatedValuePropagation : public FunctionPass {
@@ -111,7 +112,8 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
     Changed = true;
   }
 
-  ++NumPhis;
+  if (Changed)
+    ++NumPhis;
 
   return Changed;
 }
@@ -233,12 +235,14 @@ bool CorrelatedValuePropagation::processSwitch(SwitchInst *SI) {
       // This case never fires - remove it.
       CI.getCaseSuccessor()->removePredecessor(BB);
       SI->removeCase(CI); // Does not invalidate the iterator.
+      ++NumDeadCases;
       Changed = true;
     } else if (State == LazyValueInfo::True) {
       // This case always fires.  Arrange for the switch to be turned into an
       // unconditional branch by replacing the switch condition with the case
       // value.
       SI->setCondition(Case);
+      NumDeadCases += SI->getNumCases();
       Changed = true;
       break;
     }
