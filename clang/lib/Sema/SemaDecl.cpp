@@ -6209,6 +6209,18 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // Get the decls type and save a reference for later, since
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
+  
+  // Top-level message sends default to 'id' when we're in a debugger
+  // and we are assigning it to a variable of 'id' type.
+  if (getLangOptions().DebuggerCastResultToId && DclT->isObjCIdType())
+    if (Init->getType() == Context.UnknownAnyTy && isa<ObjCMessageExpr>(Init)) {
+      ExprResult Result = forceUnknownAnyToType(Init, Context.getObjCIdType());
+      if (Result.isInvalid()) {
+        VDecl->setInvalidDecl();
+        return;
+      }
+      Init = Result.take();
+    }
 
   // Perform the initialization.
   if (!VDecl->isInvalidDecl()) {

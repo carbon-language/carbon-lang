@@ -7,3 +7,11 @@ namespace test0 {
     [x foo];
   }
 }
+
+// rdar://10988847
+@class NSString; // expected-note {{forward declaration of class here}}
+namespace test1 {
+  void rdar10988847() {
+    id s = [NSString stringWithUTF8String:"foo"]; // expected-warning {{receiver 'NSString' is a forward class and corresponding @interface may not exist}}
+  }
+}
