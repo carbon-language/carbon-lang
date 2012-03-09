@@ -312,7 +312,9 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   llvm::Type *LPtrTy =
     LTy->getPointerTo(CGM.getContext().getTargetAddressSpace(D.getType()));
-  DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
+  llvm::Constant *CastedVal = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
+  DMEntry = CastedVal;
+  CGM.setStaticLocalDeclAddress(&D, CastedVal);
 
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();
