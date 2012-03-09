@@ -26,28 +26,28 @@ void MipsAnalyzeImmediate::AddInstr(InstSeqLs &SeqLs, const Inst &I) {
     Iter->push_back(I);
 }
 
-void MipsAnalyzeImmediate::GetInstSeqLsADDiu(int64_t Imm, unsigned RemSize,
+void MipsAnalyzeImmediate::GetInstSeqLsADDiu(uint64_t Imm, unsigned RemSize,
                                              InstSeqLs &SeqLs) {
-  GetInstSeqLs((Imm + 0x8000) & ~0xffff, RemSize, SeqLs);
-  AddInstr(SeqLs, Inst(ADDiu, Imm & 0xffff));
+  GetInstSeqLs((Imm + 0x8000ULL) & 0xffffffffffff0000ULL, RemSize, SeqLs);
+  AddInstr(SeqLs, Inst(ADDiu, Imm & 0xffffULL));
 }
 
-void MipsAnalyzeImmediate::GetInstSeqLsORi(int64_t Imm, unsigned RemSize,
+void MipsAnalyzeImmediate::GetInstSeqLsORi(uint64_t Imm, unsigned RemSize,
                                            InstSeqLs &SeqLs) {
-  GetInstSeqLs(Imm & ~0xffff, RemSize, SeqLs);
-  AddInstr(SeqLs, Inst(ORi, Imm & 0xffff));
+  GetInstSeqLs(Imm & 0xffffffffffff0000ULL, RemSize, SeqLs);
+  AddInstr(SeqLs, Inst(ORi, Imm & 0xffffULL));
 }
 
-void MipsAnalyzeImmediate::GetInstSeqLsSLL(int64_t Imm, unsigned RemSize,
+void MipsAnalyzeImmediate::GetInstSeqLsSLL(uint64_t Imm, unsigned RemSize,
                                            InstSeqLs &SeqLs) {
   unsigned Shamt = CountTrailingZeros_64(Imm);
   GetInstSeqLs(Imm >> Shamt, RemSize - Shamt, SeqLs);
   AddInstr(SeqLs, Inst(SLL, Shamt));
 }
 
-void MipsAnalyzeImmediate::GetInstSeqLs(int64_t Imm, unsigned RemSize,
+void MipsAnalyzeImmediate::GetInstSeqLs(uint64_t Imm, unsigned RemSize,
                                         InstSeqLs &SeqLs) {
-  int64_t MaskedImm = Imm & (((uint64_t)-1) >> (64 - Size));
+  uint64_t MaskedImm = Imm & (0xffffffffffffffffULL >> (64 - Size));
 
   // Do nothing if Imm is 0.
   if (!MaskedImm)
@@ -122,7 +122,7 @@ void MipsAnalyzeImmediate::GetShortestSeq(InstSeqLs &SeqLs, InstSeq &Insts) {
 }
 
 const MipsAnalyzeImmediate::InstSeq
-&MipsAnalyzeImmediate::Analyze(int64_t Imm, unsigned Size,
+&MipsAnalyzeImmediate::Analyze(uint64_t Imm, unsigned Size,
                                bool LastInstrIsADDiu) {
   this->Size = Size;
 

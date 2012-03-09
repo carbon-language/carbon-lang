@@ -25,7 +25,7 @@ namespace llvm {
     /// Analyze - Get an instrucion sequence to load immediate Imm. The last
     /// instruction in the sequence must be an ADDiu if LastInstrIsADDiu is
     /// true;
-    const InstSeq &Analyze(int64_t Imm, unsigned Size, bool LastInstrIsADDiu);
+    const InstSeq &Analyze(uint64_t Imm, unsigned Size, bool LastInstrIsADDiu);
   private:
     typedef SmallVector<InstSeq, 5> InstSeqLs;
 
@@ -34,18 +34,18 @@ namespace llvm {
 
     /// GetInstSeqLsADDiu - Get instrucion sequences which end with an ADDiu to
     /// load immediate Imm
-    void GetInstSeqLsADDiu(int64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
+    void GetInstSeqLsADDiu(uint64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
 
     /// GetInstSeqLsORi - Get instrucion sequences which end with an ORi to
     /// load immediate Imm
-    void GetInstSeqLsORi(int64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
+    void GetInstSeqLsORi(uint64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
 
     /// GetInstSeqLsSLL - Get instrucion sequences which end with a SLL to
     /// load immediate Imm
-    void GetInstSeqLsSLL(int64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
+    void GetInstSeqLsSLL(uint64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
 
     /// GetInstSeqLs - Get instrucion sequences to load immediate Imm.
-    void GetInstSeqLs(int64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
+    void GetInstSeqLs(uint64_t Imm, unsigned RemSize, InstSeqLs &SeqLs);
 
     /// ReplaceADDiuSLLWithLUi - Replace an ADDiu & SLL pair with a LUi.
     void ReplaceADDiuSLLWithLUi(InstSeq &Seq);
