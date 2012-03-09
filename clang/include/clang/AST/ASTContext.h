@@ -34,7 +34,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include <vector>
 
 namespace llvm {
@@ -1226,8 +1225,7 @@ public:
 
 private:
   CanQualType getFromTargetType(unsigned Type) const;
-  std::pair<uint64_t, unsigned>
-  getTypeInfoImpl(const Type *T) const LLVM_READONLY;
+  std::pair<uint64_t, unsigned> getTypeInfoImpl(const Type *T) const;
 
   //===--------------------------------------------------------------------===//
   //                         Type Predicates.
@@ -1261,8 +1259,8 @@ public:
 
   /// getTypeInfo - Get the size and alignment of the specified complete type in
   /// bits.
-  std::pair<uint64_t, unsigned> getTypeInfo(const Type *T) const LLVM_READONLY;
-  std::pair<uint64_t, unsigned> getTypeInfo(QualType T) const LLVM_READONLY {
+  std::pair<uint64_t, unsigned> getTypeInfo(const Type *T) const;
+  std::pair<uint64_t, unsigned> getTypeInfo(QualType T) const {
     return getTypeInfo(T.getTypePtr());
   }
 
@@ -1663,7 +1661,7 @@ public:
 
   // The width of an integer, as defined in C99 6.2.6.2. This is the number
   // of bits in an integer type excluding any padding bits.
-  unsigned getIntWidth(QualType T) const LLVM_READONLY;
+  unsigned getIntWidth(QualType T) const;
 
   // Per C99 6.2.5p6, for every signed integer type, there is a corresponding
   // unsigned integer type.  This method takes a signed type, and returns the
