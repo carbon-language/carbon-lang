@@ -11,6 +11,7 @@ from ctypes import c_char_p
 from ctypes import c_uint64
 from ctypes import c_void_p
 
+from .common import LLVMObject
 from .common import get_library
 from .core import MemoryBuffer
 
@@ -40,9 +41,14 @@ class ObjectFile(object):
 
         self._memory = contents
         self._obj = lib.LLVMCreateObjectFile(contents)
+        contents.release_ownership()
+        self._as_parameter_ = self._obj
 
     def __del__(self):
-        lib.LLVMDisposeObjectFile(self._obj)
+        lib.LLVMDisposeObjectFile(self)
+
+    def from_param(self):
+        return self._as_parameter_
 
     def get_sections(self):
         """Obtain the sections in this object file.
@@ -143,7 +149,6 @@ class Relocation(object):
     def value_string(self):
         pass
 
-ObjectFileRef = c_void_p
 SectionIteratorRef = c_void_p
 SymbolIteratorRef = c_void_p
 RelocationIteratorRef = c_void_p
@@ -153,16 +158,16 @@ def register_library(library):
 
     # Object.h functions
     library.LLVMCreateObjectFile.argtypes = [MemoryBuffer]
-    library.LLVMCreateObjectFile.restype = ObjectFileRef
+    library.LLVMCreateObjectFile.restype = LLVMObject
 
-    library.LLVMDisposeObjectFile.argtypes = [ObjectFileRef]
+    library.LLVMDisposeObjectFile.argtypes = [ObjectFile]
 
-    library.LLVMGetSections.argtypes = [ObjectFileRef]
+    library.LLVMGetSections.argtypes = [ObjectFile]
     library.LLVMGetSections.restype = SectionIteratorRef
 
     library.LLVMDisposeSectionIterator.argtypes = [SectionIteratorRef]
 
-    library.LLVMIsSectionIteratorAtEnd.argtypes = [ObjectFileRef,
+    library.LLVMIsSectionIteratorAtEnd.argtypes = [ObjectFile,
             SectionIteratorRef]
     library.LLVMIsSectionIteratorAtEnd.restype = bool
 
@@ -171,12 +176,12 @@ def register_library(library):
     library.LLVMMoveToContainingSection.argtypes = [SectionIteratorRef,
             SymbolIteratorRef]
 
-    library.LLVMGetSymbols.argtypes = [ObjectFileRef]
+    library.LLVMGetSymbols.argtypes = [ObjectFile]
     library.LLVMGetSymbols.restype = SymbolIteratorRef
 
     library.LLVMDisposeSymbolIterator.argtypes = [SymbolIteratorRef]
 
-    library.LLVMIsSymbolIteratorAtEnd.argtypes = [ObjectFileRef,
+    library.LLVMIsSymbolIteratorAtEnd.argtypes = [ObjectFile,
             SymbolIteratorRef]
     library.LLVMIsSymbolIteratorAtEnd.restype = bool
 

@@ -7,20 +7,24 @@
 #
 #===------------------------------------------------------------------------===#
 
+from ctypes import POINTER
+from ctypes import c_void_p
 from ctypes import cdll
 
 import ctypes.util
-import platform
 
 __all__ = [
-    "find_library",
-    "get_library",
+    'LLVMObject',
+    'find_library',
+    'get_library',
 ]
+
+LLVMObject = POINTER(c_void_p)
 
 def find_library():
     # FIXME should probably have build system define absolute path of shared
     # library at install time.
-    for lib in ["LLVM-3.1svn", "LLVM"]:
+    for lib in ['LLVM-3.1svn', 'LLVM']:
         result = ctypes.util.find_library(lib)
         if result:
             return result
@@ -32,6 +36,6 @@ def get_library():
     """Obtain a reference to the llvm library."""
     lib = find_library()
     if not lib:
-        raise Exception("LLVM shared library not found!")
+        raise Exception('LLVM shared library not found!')
 
     return cdll.LoadLibrary(lib)

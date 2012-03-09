@@ -7,6 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+from .common import LLVMObject
 from .common import get_library
 
 from ctypes import POINTER
@@ -33,7 +34,7 @@ class MemoryBuffer(object):
         if filename is None:
             raise Exception("filename argument must be defined")
 
-        memory = c_void_p(None)
+        memory = LLVMObject()
         out = c_char_p(None)
 
         result = lib.LLVMCreateMemoryBufferWithContentsOfFile(filename,
@@ -43,17 +44,23 @@ class MemoryBuffer(object):
             raise Exception("Could not create memory buffer: %s" % out.value)
 
         self._memory = memory
+        self._as_parameter_ = self._memory
+        self._owned = True
 
     def __del__(self):
-        lib.LLVMDisposeMemoryBuffer(self._memory)
+        if self._owned:
+            lib.LLVMDisposeMemoryBuffer(self._memory)
 
     def from_param(self):
-        return self._memory
+        return self._as_parameter_
+
+    def release_ownership(self):
+        self._owned = False
 
 
 def register_library(library):
     library.LLVMCreateMemoryBufferWithContentsOfFile.argtypes = [c_char_p,
-            POINTER(c_void_p), POINTER(c_char_p)]
+            POINTER(LLVMObject), POINTER(c_char_p)]
     library.LLVMCreateMemoryBufferWithContentsOfFile.restype = bool
 
     library.LLVMDisposeMemoryBuffer.argtypes = [c_void_p]
