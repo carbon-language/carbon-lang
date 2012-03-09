@@ -87,6 +87,7 @@
     <li><a href="#objc_instancetype">Related result types</a></li>
     <li><a href="#objc_arc">Automatic reference counting</a></li>
     <li><a href="#objc_fixed_enum">Enumerations with a fixed underlying type</a></li>
+    <li><a href="#objc_lambdas">Interoperability with C++11 lambdas</a></li>
   </ul>
 </li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
@@ -1020,6 +1021,62 @@ enumeration value, is <tt>unsigned char</tt>.</p>
 
 <p>Use <tt>__has_feature(objc_fixed_enum)</tt> to determine whether
 support for fixed underlying types is available in Objective-C.</p>
+
+<!-- ======================================================================= -->
+<h2 id="objc_lambdas">Interoperability with C++11 lambdas</h2>
+<!-- ======================================================================= -->
+
+<p>Clang provides interoperability between C++11 lambdas and
+blocks-based APIs, by permitting a lambda to be implicitly converted
+to a block pointer with the corresponding signature. For example,
+consider an API such as <code>NSArray</code>'s array-sorting
+method:</p>
+
+<pre> - (NSArray *)sortedArrayUsingComparator:(NSComparator)cmptr; </pre>
+
+<p><code>NSComparator</code> is simply a typedef for the block pointer
+<code>NSComparisonResult (^)(id, id)</code>, and parameters of this
+type are generally provided with block literals as arguments. However,
+one can also use a C++11 lambda so long as it provides the same
+signature (in this case, accepting two parameters of type
+<code>id</code> and returning an <code>NSComparisonResult</code>):</p>
+
+<pre>
+  NSArray *array = @[@"string 1", @"string 21", @"string 12", @"String 11",
+                     @"String 02"];
+  const NSStringCompareOptions comparisonOptions
+    = NSCaseInsensitiveSearch | NSNumericSearch |
+      NSWidthInsensitiveSearch | NSForcedOrderingSearch;
+  NSLocale *currentLocale = [NSLocale currentLocale];
+  NSArray *sorted 
+    = [array sortedArrayUsingComparator:<b>[=](id s1, id s2) -&gt; NSComparisonResult {
+               NSRange string1Range = NSMakeRange(0, [s1 length]);
+               return [s1 compare:s2 options:comparisonOptions 
+                          range:string1Range locale:currentLocale];
+       }</b>];
+  NSLog(@"sorted: %@", sorted);
+</pre>
+
+<p>This code relies on an implicit conversion from the type of the
+lambda expression (an unnamed, local class type called the <i>closure
+type</i>) to the corresponding block pointer type. The conversion
+itself is expressed by a conversion operator in that closure type
+that produces a block pointer with the same signature as the lambda
+itself, e.g.,</p>
+
+<pre>
+  operator NSComparisonResult (^)(id, id)() const;
+</pre>
+
+<p>This conversion function returns a new block that simply forwards
+the two parameters to the lambda object (which it captures by copy),
+then returns the result. The returned block is first copied (with
+<tt>Block_copy</tt>) and then autoreleased. As an optimization, if a
+lambda expression is immediately converted to a block pointer (as in
+the first example, above), then the block is not copied and
+autoreleased: rather, it is given the same lifetime as a block literal
+written at that point in the program, which avoids the overhead of
+copying a block to the heap in the common case.</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>
