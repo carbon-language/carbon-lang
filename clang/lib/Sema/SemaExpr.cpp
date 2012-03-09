@@ -10145,7 +10145,7 @@ static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
                                SourceLocation Loc) {
   // Keep track of used but undefined variables.
   // FIXME: We shouldn't suppress this warning for static data members.
-  if (Var->hasDefinition() == VarDecl::DeclarationOnly &&
+  if (Var->hasDefinition(SemaRef.Context) == VarDecl::DeclarationOnly &&
       Var->getLinkage() != ExternalLinkage &&
       !(Var->isStaticDataMember() && Var->hasInit())) {
     SourceLocation &old = SemaRef.UndefinedInternals[Var->getCanonicalDecl()];
@@ -10218,7 +10218,8 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
     assert(MSInfo && "Missing member specialization information?");
     bool AlreadyInstantiated = !MSInfo->getPointOfInstantiation().isInvalid();
     if (MSInfo->getTemplateSpecializationKind() == TSK_ImplicitInstantiation &&
-        (!AlreadyInstantiated || Var->isUsableInConstantExpressions())) {
+        (!AlreadyInstantiated ||
+         Var->isUsableInConstantExpressions(SemaRef.Context))) {
       if (!AlreadyInstantiated) {
         // This is a modification of an existing AST node. Notify listeners.
         if (ASTMutationListener *L = SemaRef.getASTMutationListener())
@@ -10226,7 +10227,7 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
         MSInfo->setPointOfInstantiation(Loc);
       }
       SourceLocation PointOfInstantiation = MSInfo->getPointOfInstantiation();
-      if (Var->isUsableInConstantExpressions())
+      if (Var->isUsableInConstantExpressions(SemaRef.Context))
         // Do not defer instantiations of variables which could be used in a
         // constant expression.
         SemaRef.InstantiateStaticDataMemberDefinition(PointOfInstantiation,Var);
@@ -10246,7 +10247,7 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
   // apply to references, since they are not objects.
   const VarDecl *DefVD;
   if (E && !isa<ParmVarDecl>(Var) && !Var->getType()->isReferenceType() &&
-      Var->isUsableInConstantExpressions() &&
+      Var->isUsableInConstantExpressions(SemaRef.Context) &&
       Var->getAnyInitializer(DefVD) && DefVD->checkInitIsICE())
     SemaRef.MaybeODRUseExprs.insert(E);
   else

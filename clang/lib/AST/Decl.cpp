@@ -1216,7 +1216,9 @@ VarDecl *VarDecl::getCanonicalDecl() {
   return getFirstDeclaration();
 }
 
-VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
+VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
+  ASTContext &C) const
+{
   // C++ [basic.def]p2:
   //   A declaration is a definition unless [...] it contains the 'extern'
   //   specifier or a linkage-specification and neither an initializer [...],
@@ -1258,7 +1260,7 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
   //   and without a storage class specifier or the scs 'static', constitutes
   //   a tentative definition.
   // No such thing in C++.
-  if (!getASTContext().getLangOptions().CPlusPlus && isFileVarDecl())
+  if (!C.getLangOptions().CPlusPlus && isFileVarDecl())
     return TentativeDefinition;
 
   // What's left is (in C, block-scope) declarations without initializers or
@@ -1296,23 +1298,23 @@ bool VarDecl::isTentativeDefinitionNow() const {
   return true;
 }
 
-VarDecl *VarDecl::getDefinition() {
+VarDecl *VarDecl::getDefinition(ASTContext &C) {
   VarDecl *First = getFirstDeclaration();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
        I != E; ++I) {
-    if ((*I)->isThisDeclarationADefinition() == Definition)
+    if ((*I)->isThisDeclarationADefinition(C) == Definition)
       return *I;
   }
   return 0;
 }
 
-VarDecl::DefinitionKind VarDecl::hasDefinition() const {
+VarDecl::DefinitionKind VarDecl::hasDefinition(ASTContext &C) const {
   DefinitionKind Kind = DeclarationOnly;
   
   const VarDecl *First = getFirstDeclaration();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
        I != E; ++I) {
-    Kind = std::max(Kind, (*I)->isThisDeclarationADefinition());
+    Kind = std::max(Kind, (*I)->isThisDeclarationADefinition(C));
     if (Kind == Definition)
       break;
   }
@@ -1370,8 +1372,8 @@ void VarDecl::setInit(Expr *I) {
   Init = I;
 }
 
-bool VarDecl::isUsableInConstantExpressions() const {
-  const LangOptions &Lang = getASTContext().getLangOptions();
+bool VarDecl::isUsableInConstantExpressions(ASTContext &C) const {
+  const LangOptions &Lang = C.getLangOptions();
 
   if (!Lang.CPlusPlus)
     return false;

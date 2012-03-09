@@ -951,11 +951,17 @@ public:
   /// \brief Check whether this declaration is a definition. If this could be
   /// a tentative definition (in C), don't check whether there's an overriding
   /// definition.
-  DefinitionKind isThisDeclarationADefinition() const;
+  DefinitionKind isThisDeclarationADefinition(ASTContext &) const;
+  DefinitionKind isThisDeclarationADefinition() const {
+    return isThisDeclarationADefinition(getASTContext());
+  }
 
   /// \brief Check whether this variable is defined in this
   /// translation unit.
-  DefinitionKind hasDefinition() const;
+  DefinitionKind hasDefinition(ASTContext &) const;
+  DefinitionKind hasDefinition() const {
+    return hasDefinition(getASTContext());
+  }
 
   /// \brief Get the tentative definition that acts as the real definition in
   /// a TU. Returns null if there is a proper definition available.
@@ -969,7 +975,13 @@ public:
   bool isTentativeDefinitionNow() const;
 
   /// \brief Get the real (not just tentative) definition for this declaration.
-  VarDecl *getDefinition();
+  VarDecl *getDefinition(ASTContext &);
+  const VarDecl *getDefinition(ASTContext &C) const {
+    return const_cast<VarDecl*>(this)->getDefinition(C);
+  }
+  VarDecl *getDefinition() {
+    return getDefinition(getASTContext());
+  }
   const VarDecl *getDefinition() const {
     return const_cast<VarDecl*>(this)->getDefinition();
   }
@@ -1068,7 +1080,7 @@ public:
   /// constant expression, according to the relevant language standard.
   /// This only checks properties of the declaration, and does not check
   /// whether the initializer is in fact a constant expression.
-  bool isUsableInConstantExpressions() const;
+  bool isUsableInConstantExpressions(ASTContext &C) const;
 
   EvaluatedStmt *ensureEvaluatedStmt() const;
 

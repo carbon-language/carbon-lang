@@ -217,7 +217,7 @@ public:
     VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
     if (!VD && !isa<EnumConstantDecl>(E->getDecl()))
       return EmitLoadOfLValue(E);
-    if (VD && !VD->isUsableInConstantExpressions())
+    if (VD && !VD->isUsableInConstantExpressions(CGF.getContext()))
       return EmitLoadOfLValue(E);
 
     // This is an enumerator or a variable which is usable in constant

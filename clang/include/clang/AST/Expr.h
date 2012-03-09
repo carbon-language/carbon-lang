@@ -804,7 +804,8 @@ class DeclRefExpr : public Expr {
     return const_cast<DeclRefExpr *>(this)->getInternalFoundDecl();
   }
 
-  DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
+  DeclRefExpr(ASTContext &Ctx,
+              NestedNameSpecifierLoc QualifierLoc,
               SourceLocation TemplateKWLoc,
               ValueDecl *D, const DeclarationNameInfo &NameInfo,
               NamedDecl *FoundD,
@@ -817,7 +818,7 @@ class DeclRefExpr : public Expr {
 
   /// \brief Computes the type- and value-dependence flags for this
   /// declaration reference expression.
-  void computeDependence();
+  void computeDependence(ASTContext &C);
 
 public:
   DeclRefExpr(ValueDecl *D, QualType T, ExprValueKind VK, SourceLocation L,
@@ -828,7 +829,7 @@ public:
     DeclRefExprBits.HasTemplateKWAndArgsInfo = 0;
     DeclRefExprBits.HasFoundDecl = 0;
     DeclRefExprBits.HadMultipleCandidates = 0;
-    computeDependence();
+    computeDependence(D->getASTContext());
   }
 
   static DeclRefExpr *Create(ASTContext &Context,

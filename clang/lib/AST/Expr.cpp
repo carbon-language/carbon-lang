@@ -134,7 +134,7 @@ SourceLocation Expr::getExprLoc() const {
 /// \brief Compute the type-, value-, and instantiation-dependence of a 
 /// declaration reference
 /// based on the declaration being referenced.
-static void computeDeclRefDependence(NamedDecl *D, QualType T,
+static void computeDeclRefDependence(ASTContext &Ctx, NamedDecl *D, QualType T,
                                      bool &TypeDependent,
                                      bool &ValueDependent,
                                      bool &InstantiationDependent) {
@@ -191,7 +191,7 @@ static void computeDeclRefDependence(NamedDecl *D, QualType T,
   //       -  an entity with reference type and is initialized with an
   //          expression that is value-dependent [C++11]
   if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if ((D->getASTContext().getLangOptions().CPlusPlus0x ?
+    if ((Ctx.getLangOptions().CPlusPlus0x ?
            Var->getType()->isLiteralType() :
            Var->getType()->isIntegralOrEnumerationType()) &&
         (Var->getType().getCVRQualifiers() == Qualifiers::Const ||
@@ -224,12 +224,12 @@ static void computeDeclRefDependence(NamedDecl *D, QualType T,
   }
 }
 
-void DeclRefExpr::computeDependence() {
+void DeclRefExpr::computeDependence(ASTContext &Ctx) {
   bool TypeDependent = false;
   bool ValueDependent = false;
   bool InstantiationDependent = false;
-  computeDeclRefDependence(getDecl(), getType(), TypeDependent, ValueDependent,
-                           InstantiationDependent);
+  computeDeclRefDependence(Ctx, getDecl(), getType(), TypeDependent,
+                           ValueDependent, InstantiationDependent);
   
   // (TD) C++ [temp.dep.expr]p3:
   //   An id-expression is type-dependent if it contains:
@@ -258,7 +258,8 @@ void DeclRefExpr::computeDependence() {
     ExprBits.ContainsUnexpandedParameterPack = true;
 }
 
-DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
+DeclRefExpr::DeclRefExpr(ASTContext &Ctx,
+                         NestedNameSpecifierLoc QualifierLoc,
                          SourceLocation TemplateKWLoc,
                          ValueDecl *D, const DeclarationNameInfo &NameInfo,
                          NamedDecl *FoundD,
@@ -289,7 +290,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
   }
   DeclRefExprBits.HadMultipleCandidates = 0;
 
-  computeDependence();
+  computeDependence(Ctx);
 }
 
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
@@ -330,8 +331,8 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
     Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
-  return new (Mem) DeclRefExpr(QualifierLoc, TemplateKWLoc, D, NameInfo,
-                               FoundD, TemplateArgs, T, VK);
+  return new (Mem) DeclRefExpr(Context, QualifierLoc, TemplateKWLoc, D,
+                               NameInfo, FoundD, TemplateArgs, T, VK);
 }
 
 DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context,
@@ -3642,8 +3643,8 @@ BlockDeclRefExpr::BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
   bool TypeDependent = false;
   bool ValueDependent = false;
   bool InstantiationDependent = false;
-  computeDeclRefDependence(D, getType(), TypeDependent, ValueDependent,
-                           InstantiationDependent);
+  computeDeclRefDependence(D->getASTContext(), D, getType(), TypeDependent,
+                           ValueDependent, InstantiationDependent);
   ExprBits.TypeDependent = TypeDependent;
   ExprBits.ValueDependent = ValueDependent;
   ExprBits.InstantiationDependent = InstantiationDependent;
