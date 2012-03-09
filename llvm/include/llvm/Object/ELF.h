@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ELF.h"
@@ -176,7 +177,72 @@ struct Elf_Sym_Impl : Elf_Sym_Base<target_endianness, is64Bits> {
   }
 };
 
-// Elf_Dyn: Entry in the dynamic table
+/// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section
+/// (.gnu.version). This structure is identical for ELF32 and ELF64.
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Versym_Impl {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  Elf_Half vs_index;   // Version index with flags (e.g. VERSYM_HIDDEN)
+};
+
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Verdaux_Impl;
+
+/// Elf_Verdef: This is the structure of entries in the SHT_GNU_verdef section
+/// (.gnu.version_d). This structure is identical for ELF32 and ELF64.
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Verdef_Impl {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  typedef Elf_Verdaux_Impl<target_endianness, is64Bits> Elf_Verdaux;
+  Elf_Half vd_version; // Version of this structure (e.g. VER_DEF_CURRENT)
+  Elf_Half vd_flags;   // Bitwise flags (VER_DEF_*)
+  Elf_Half vd_ndx;     // Version index, used in .gnu.version entries
+  Elf_Half vd_cnt;     // Number of Verdaux entries
+  Elf_Word vd_hash;    // Hash of name
+  Elf_Word vd_aux;     // Offset to the first Verdaux entry (in bytes)
+  Elf_Word vd_next;    // Offset to the next Verdef entry (in bytes)
+
+  /// Get the first Verdaux entry for this Verdef.
+  const Elf_Verdaux *getAux() const {
+    return reinterpret_cast<const Elf_Verdaux*>((const char*)this + vd_aux);
+  }
+};
+
+/// Elf_Verdaux: This is the structure of auxilary data in the SHT_GNU_verdef
+/// section (.gnu.version_d). This structure is identical for ELF32 and ELF64.
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Verdaux_Impl {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  Elf_Word vda_name; // Version name (offset in string table)
+  Elf_Word vda_next; // Offset to next Verdaux entry (in bytes)
+};
+
+/// Elf_Verneed: This is the structure of entries in the SHT_GNU_verneed
+/// section (.gnu.version_r). This structure is identical for ELF32 and ELF64.
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Verneed_Impl {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  Elf_Half vn_version; // Version of this structure (e.g. VER_NEED_CURRENT)
+  Elf_Half vn_cnt;     // Number of associated Vernaux entries
+  Elf_Word vn_file;    // Library name (string table offset)
+  Elf_Word vn_aux;     // Offset to first Vernaux entry (in bytes)
+  Elf_Word vn_next;    // Offset to next Verneed entry (in bytes)
+};
+
+/// Elf_Vernaux: This is the structure of auxiliary data in SHT_GNU_verneed
+/// section (.gnu.version_r). This structure is identical for ELF32 and ELF64.
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Vernaux_Impl {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  Elf_Word vna_hash;  // Hash of dependency name
+  Elf_Half vna_flags; // Bitwise Flags (VER_FLAG_*)
+  Elf_Half vna_other; // Version index, used in .gnu.version entries
+  Elf_Word vna_name;  // Dependency name
+  Elf_Word vna_next;  // Offset to next Vernaux entry (in bytes)
+};
+
+/// Elf_Dyn_Base: This structure matches the form of entries in the dynamic
+///               table section (.dynamic) look like.
 template<support::endianness target_endianness, bool is64Bits>
 struct Elf_Dyn_Base;
 
@@ -200,6 +266,7 @@ struct Elf_Dyn_Base<target_endianness, true> {
   } d_un;
 };
 
+/// Elf_Dyn_Impl: This inherits from Elf_Dyn_Base, adding getters and setters.
 template<support::endianness target_endianness, bool is64Bits>
 struct Elf_Dyn_Impl : Elf_Dyn_Base<target_endianness, is64Bits> {
   using Elf_Dyn_Base<target_endianness, is64Bits>::d_tag;
@@ -323,6 +390,11 @@ class ELFObjectFile : public ObjectFile {
   typedef Elf_Dyn_Impl<target_endianness, is64Bits> Elf_Dyn;
   typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
   typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
+  typedef Elf_Verdef_Impl<target_endianness, is64Bits> Elf_Verdef;
+  typedef Elf_Verdaux_Impl<target_endianness, is64Bits> Elf_Verdaux;
+  typedef Elf_Verneed_Impl<target_endianness, is64Bits> Elf_Verneed;
+  typedef Elf_Vernaux_Impl<target_endianness, is64Bits> Elf_Vernaux;
+  typedef Elf_Versym_Impl<target_endianness, is64Bits> Elf_Versym;
   typedef DynRefImpl<target_endianness, is64Bits> DynRef;
   typedef content_iterator<DynRef> dyn_iterator;
 
@@ -364,14 +436,47 @@ private:
   const Elf_Shdr *dot_shstrtab_sec; // Section header string table.
   const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
   const Elf_Shdr *dot_dynstr_sec;   // Dynamic symbol string table.
+
+  // SymbolTableSections[0] always points to the dynamic string table section
+  // header, or NULL if there is no dynamic string table.
   Sections_t SymbolTableSections;
   IndexMap_t SymbolTableSectionsIndexMap;
   DenseMap<const Elf_Sym*, ELF::Elf64_Word> ExtendedSymbolTable;
 
-  const Elf_Shdr *dot_dynamic_sec; // .dynamic
+  const Elf_Shdr *dot_dynamic_sec;       // .dynamic
+  const Elf_Shdr *dot_gnu_version_sec;   // .gnu.version
+  const Elf_Shdr *dot_gnu_version_r_sec; // .gnu.version_r
+  const Elf_Shdr *dot_gnu_version_d_sec; // .gnu.version_d
+
   // Pointer to SONAME entry in dynamic string table
   // This is set the first time getLoadName is called.
   mutable const char *dt_soname;
+
+  // Records for each version index the corresponding Verdef or Vernaux entry.
+  // This is filled the first time LoadVersionMap() is called.
+  class VersionMapEntry : public PointerIntPair<const void*, 1> {
+    public:
+    // If the integer is 0, this is an Elf_Verdef*.
+    // If the integer is 1, this is an Elf_Vernaux*.
+    VersionMapEntry() : PointerIntPair<const void*, 1>(NULL, 0) { }
+    VersionMapEntry(const Elf_Verdef *verdef)
+        : PointerIntPair<const void*, 1>(verdef, 0) { }
+    VersionMapEntry(const Elf_Vernaux *vernaux)
+        : PointerIntPair<const void*, 1>(vernaux, 1) { }
+    bool isNull() const { return getPointer() == NULL; }
+    bool isVerdef() const { return !isNull() && getInt() == 0; }
+    bool isVernaux() const { return !isNull() && getInt() == 1; }
+    const Elf_Verdef *getVerdef() const {
+      return isVerdef() ? (const Elf_Verdef*)getPointer() : NULL;
+    }
+    const Elf_Vernaux *getVernaux() const {
+      return isVernaux() ? (const Elf_Vernaux*)getPointer() : NULL;
+    }
+  };
+  mutable SmallVector<VersionMapEntry, 16> VersionMap;
+  void LoadVersionDefs(const Elf_Shdr *sec) const;
+  void LoadVersionNeeds(const Elf_Shdr *ec) const;
+  void LoadVersionMap() const;
 
   /// @brief Map sections to an array of relocation sections that reference
   ///        them sorted by section index.
@@ -396,6 +501,10 @@ private:
   error_code      getSymbolName(const Elf_Shdr *section,
                                 const Elf_Sym *Symb,
                                 StringRef &Res) const;
+  error_code      getSymbolVersion(const Elf_Shdr *section,
+                                   const Elf_Sym *Symb,
+                                   StringRef &Version,
+                                   bool &IsDefault) const;
   void VerifyStrTab(const Elf_Shdr *sh) const;
 
 protected:
@@ -404,7 +513,8 @@ protected:
 
 public:
   const Elf_Dyn  *getDyn(DataRefImpl DynData) const;
-
+  error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
+                              bool &IsDefault) const;
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
@@ -473,6 +583,7 @@ public:
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
+  virtual StringRef getObjectType() const { return "ELF"; }
   virtual unsigned getArch() const;
   virtual StringRef getLoadName() const;
 
@@ -489,6 +600,89 @@ public:
   }
   static inline bool classof(const ELFObjectFile *v) { return true; }
 };
+
+// Iterate through the version definitions, and place each Elf_Verdef
+// in the VersionMap according to its index.
+template<support::endianness target_endianness, bool is64Bits>
+void ELFObjectFile<target_endianness, is64Bits>::
+                  LoadVersionDefs(const Elf_Shdr *sec) const {
+  unsigned vd_size = sec->sh_size; // Size of section in bytes
+  unsigned vd_count = sec->sh_info; // Number of Verdef entries
+  const char *sec_start = (const char*)base() + sec->sh_offset;
+  const char *sec_end = sec_start + vd_size;
+  // The first Verdef entry is at the start of the section.
+  const char *p = sec_start;
+  for (unsigned i = 0; i < vd_count; i++) {
+    if (p + sizeof(Elf_Verdef) > sec_end)
+      report_fatal_error("Section ended unexpectedly while scanning "
+                         "version definitions.");
+    const Elf_Verdef *vd = reinterpret_cast<const Elf_Verdef *>(p);
+    if (vd->vd_version != ELF::VER_DEF_CURRENT)
+      report_fatal_error("Unexpected verdef version");
+    size_t index = vd->vd_ndx & ELF::VERSYM_VERSION;
+    if (index >= VersionMap.size())
+      VersionMap.resize(index+1);
+    VersionMap[index] = VersionMapEntry(vd);
+    p += vd->vd_next;
+  }
+}
+
+// Iterate through the versions needed section, and place each Elf_Vernaux
+// in the VersionMap according to its index.
+template<support::endianness target_endianness, bool is64Bits>
+void ELFObjectFile<target_endianness, is64Bits>::
+                  LoadVersionNeeds(const Elf_Shdr *sec) const {
+  unsigned vn_size = sec->sh_size; // Size of section in bytes
+  unsigned vn_count = sec->sh_info; // Number of Verneed entries
+  const char *sec_start = (const char*)base() + sec->sh_offset;
+  const char *sec_end = sec_start + vn_size;
+  // The first Verneed entry is at the start of the section.
+  const char *p = sec_start;
+  for (unsigned i = 0; i < vn_count; i++) {
+    if (p + sizeof(Elf_Verneed) > sec_end)
+      report_fatal_error("Section ended unexpectedly while scanning "
+                         "version needed records.");
+    const Elf_Verneed *vn = reinterpret_cast<const Elf_Verneed *>(p);
+    if (vn->vn_version != ELF::VER_NEED_CURRENT)
+      report_fatal_error("Unexpected verneed version");
+    // Iterate through the Vernaux entries
+    const char *paux = p + vn->vn_aux;
+    for (unsigned j = 0; j < vn->vn_cnt; j++) {
+      if (paux + sizeof(Elf_Vernaux) > sec_end)
+        report_fatal_error("Section ended unexpected while scanning auxiliary "
+                           "version needed records.");
+      const Elf_Vernaux *vna = reinterpret_cast<const Elf_Vernaux *>(paux);
+      size_t index = vna->vna_other & ELF::VERSYM_VERSION;
+      if (index >= VersionMap.size())
+        VersionMap.resize(index+1);
+      VersionMap[index] = VersionMapEntry(vna);
+      paux += vna->vna_next;
+    }
+    p += vn->vn_next;
+  }
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+void ELFObjectFile<target_endianness, is64Bits>::LoadVersionMap() const {
+  // If there is no dynamic symtab or version table, there is nothing to do.
+  if (SymbolTableSections[0] == NULL || dot_gnu_version_sec == NULL)
+    return;
+
+  // Has the VersionMap already been loaded?
+  if (VersionMap.size() > 0)
+    return;
+
+  // The first two version indexes are reserved.
+  // Index 0 is LOCAL, index 1 is GLOBAL.
+  VersionMap.push_back(VersionMapEntry());
+  VersionMap.push_back(VersionMapEntry());
+
+  if (dot_gnu_version_d_sec)
+    LoadVersionDefs(dot_gnu_version_d_sec);
+
+  if (dot_gnu_version_r_sec)
+    LoadVersionNeeds(dot_gnu_version_r_sec);
+}
 
 template<support::endianness target_endianness, bool is64Bits>
 void ELFObjectFile<target_endianness, is64Bits>
@@ -544,6 +738,18 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   validateSymbol(Symb);
   const Elf_Sym *symb = getSymbol(Symb);
   return getSymbolName(SymbolTableSections[Symb.d.b], symb, Result);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolVersion(SymbolRef SymRef,
+                                           StringRef &Version,
+                                           bool &IsDefault) const {
+  DataRefImpl Symb = SymRef.getRawDataRefImpl();
+  validateSymbol(Symb);
+  const Elf_Sym *symb = getSymbol(Symb);
+  return getSymbolVersion(SymbolTableSections[Symb.d.b], symb,
+                          Version, IsDefault);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -1266,7 +1472,11 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   , dot_strtab_sec(0)
   , dot_dynstr_sec(0)
   , dot_dynamic_sec(0)
-  , dt_soname(0) {
+  , dot_gnu_version_sec(0)
+  , dot_gnu_version_r_sec(0)
+  , dot_gnu_version_d_sec(0)
+  , dt_soname(0)
+ {
 
   const uint64_t FileSize = Data->getBufferSize();
 
@@ -1302,31 +1512,60 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   SymbolTableSections.push_back(NULL);
 
   for (uint64_t i = 0, e = getNumSections(); i != e; ++i) {
-    if (sh->sh_type == ELF::SHT_SYMTAB_SHNDX) {
+    switch (sh->sh_type) {
+    case ELF::SHT_SYMTAB_SHNDX: {
       if (SymbolTableSectionHeaderIndex)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .symtab_shndx!");
       SymbolTableSectionHeaderIndex = sh;
+      break;
     }
-    if (sh->sh_type == ELF::SHT_SYMTAB) {
+    case ELF::SHT_SYMTAB: {
       SymbolTableSectionsIndexMap[i] = SymbolTableSections.size();
       SymbolTableSections.push_back(sh);
+      break;
     }
-    if (sh->sh_type == ELF::SHT_DYNSYM) {
+    case ELF::SHT_DYNSYM: {
       if (SymbolTableSections[0] != NULL)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .dynsym!");
       SymbolTableSectionsIndexMap[i] = 0;
       SymbolTableSections[0] = sh;
+      break;
     }
-    if (sh->sh_type == ELF::SHT_REL || sh->sh_type == ELF::SHT_RELA) {
+    case ELF::SHT_REL:
+    case ELF::SHT_RELA: {
       SectionRelocMap[getSection(sh->sh_info)].push_back(i);
+      break;
     }
-    if (sh->sh_type == ELF::SHT_DYNAMIC) {
+    case ELF::SHT_DYNAMIC: {
       if (dot_dynamic_sec != NULL)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .dynamic!");
       dot_dynamic_sec = sh;
+      break;
+    }
+    case ELF::SHT_GNU_versym: {
+      if (dot_gnu_version_sec != NULL)
+        // FIXME: Proper error handling.
+        report_fatal_error("More than one .gnu.version section!");
+      dot_gnu_version_sec = sh;
+      break;
+    }
+    case ELF::SHT_GNU_verdef: {
+      if (dot_gnu_version_d_sec != NULL)
+        // FIXME: Proper error handling.
+        report_fatal_error("More than one .gnu.version_d section!");
+      dot_gnu_version_d_sec = sh;
+      break;
+    }
+    case ELF::SHT_GNU_verneed: {
+      if (dot_gnu_version_r_sec != NULL)
+        // FIXME: Proper error handling.
+        report_fatal_error("More than one .gnu.version_r section!");
+      dot_gnu_version_r_sec = sh;
+      break;
+    }
     }
     ++sh;
   }
@@ -1776,6 +2015,89 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolVersion(const Elf_Shdr *section,
+                                           const Elf_Sym *symb,
+                                           StringRef &Version,
+                                           bool &IsDefault) const {
+  // Handle non-dynamic symbols.
+  if (section != SymbolTableSections[0]) {
+    // Non-dynamic symbols can have versions in their names
+    // A name of the form 'foo@V1' indicates version 'V1', non-default.
+    // A name of the form 'foo@@V2' indicates version 'V2', default version.
+    StringRef Name;
+    error_code ec = getSymbolName(section, symb, Name);
+    if (ec != object_error::success)
+      return ec;
+    size_t atpos = Name.find('@');
+    if (atpos == StringRef::npos) {
+      Version = "";
+      IsDefault = false;
+      return object_error::success;
+    }
+    ++atpos;
+    if (atpos < Name.size() && Name[atpos] == '@') {
+      IsDefault = true;
+      ++atpos;
+    } else {
+      IsDefault = false;
+    }
+    Version = Name.substr(atpos);
+    return object_error::success;
+  }
+
+  // This is a dynamic symbol. Look in the GNU symbol version table.
+  if (dot_gnu_version_sec == NULL) {
+    // No version table.
+    Version = "";
+    IsDefault = false;
+    return object_error::success;
+  }
+
+  // Determine the position in the symbol table of this entry.
+  const char *sec_start = (const char*)base() + section->sh_offset;
+  size_t entry_index = ((const char*)symb - sec_start)/section->sh_entsize;
+
+  // Get the corresponding version index entry
+  const Elf_Versym *vs = getEntry<Elf_Versym>(dot_gnu_version_sec, entry_index);
+  size_t version_index = vs->vs_index & ELF::VERSYM_VERSION;
+
+  // Special markers for unversioned symbols.
+  if (version_index == ELF::VER_NDX_LOCAL ||
+      version_index == ELF::VER_NDX_GLOBAL) {
+    Version = "";
+    IsDefault = false;
+    return object_error::success;
+  }
+
+  // Lookup this symbol in the version table
+  LoadVersionMap();
+  if (version_index >= VersionMap.size() || VersionMap[version_index].isNull())
+    report_fatal_error("Symbol has version index without corresponding "
+                       "define or reference entry");
+  const VersionMapEntry &entry = VersionMap[version_index];
+
+  // Get the version name string
+  size_t name_offset;
+  if (entry.isVerdef()) {
+    // The first Verdaux entry holds the name.
+    name_offset = entry.getVerdef()->getAux()->vda_name;
+  } else {
+    name_offset = entry.getVernaux()->vna_name;
+  }
+  Version = getString(dot_dynstr_sec, name_offset);
+
+  // Set IsDefault
+  if (entry.isVerdef()) {
+    IsDefault = !(vs->vs_index & ELF::VERSYM_HIDDEN);
+  } else {
+    IsDefault = false;
+  }
+
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
 inline DynRefImpl<target_endianness, is64Bits>
                  ::DynRefImpl(DataRefImpl DynP, const OwningType *Owner)
   : DynPimpl(DynP)
@@ -1821,6 +2143,35 @@ template<support::endianness target_endianness, bool is64Bits>
 inline DataRefImpl DynRefImpl<target_endianness, is64Bits>
                              ::getRawDataRefImpl() const {
   return DynPimpl;
+}
+
+/// This is a generic interface for retrieving GNU symbol version
+/// information from an ELFObjectFile.
+static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
+                                             const SymbolRef &Sym,
+                                             StringRef &Version,
+                                             bool &IsDefault) {
+  // Little-endian 32-bit
+  if (const ELFObjectFile<support::little, false> *ELFObj =
+          dyn_cast<ELFObjectFile<support::little, false> >(Obj))
+    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
+
+  // Big-endian 32-bit
+  if (const ELFObjectFile<support::big, false> *ELFObj =
+          dyn_cast<ELFObjectFile<support::big, false> >(Obj))
+    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
+
+  // Little-endian 64-bit
+  if (const ELFObjectFile<support::little, true> *ELFObj =
+          dyn_cast<ELFObjectFile<support::little, true> >(Obj))
+    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
+
+  // Big-endian 64-bit
+  if (const ELFObjectFile<support::big, true> *ELFObj =
+          dyn_cast<ELFObjectFile<support::big, true> >(Obj))
+    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
+
+  llvm_unreachable("Object passed to GetELFSymbolVersion() is not ELF");
 }
 
 }
