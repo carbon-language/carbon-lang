@@ -95,7 +95,7 @@ config = {}
 # of the list type.  For example, "-A x86_64^i386" => archs=['x86_64', 'i386'] and
 # "-C gcc^clang" => compilers=['gcc', 'clang'].
 archs = ['x86_64', 'i386']
-compilers = None
+compilers = ['clang']
 
 # Delay startup in order for the debugger to attach.
 delay = False
@@ -1047,6 +1047,31 @@ if isinstance(archs, list) and len(archs) >= 1:
 
 if not compilers and "compilers" in config:
     compilers = config["compilers"]
+
+#
+# Add some intervention here to sanity check that the compilers requested are sane.
+# If found not to be an executable program, the invalid one is dropped from the list.
+for i in range(len(compilers)):
+    c = compilers[i]
+    if which(c):
+        continue
+    else:
+        if sys.platform.startswith("darwin"):
+            pipe = subprocess.Popen(['xcrun', '-find', c], stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+            cmd_output = pipe.stdout.read()
+            if cmd_output:
+                if "not found" in cmd_output:
+                    print "dropping %s from the compilers used" % c
+                    compilers.remove(i)
+                else:
+                    compilers[i] = cmd_output.split('\n')[0]
+                    print "'xcrun -find %s' returning %s" % (c, compilers[i])
+
+print "compilers=%s" % str(compilers)
+
+if not compilers or len(compilers) == 0:
+    print "No eligible compiler found, exiting."
+    sys.exit(1)
 
 if isinstance(compilers, list) and len(compilers) >= 1:
     iterCompilers = True
