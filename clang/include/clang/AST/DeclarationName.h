@@ -515,6 +515,13 @@ public:
     SourceLocation EndLoc = getEndLoc();
     return SourceRange(BeginLoc, EndLoc.isValid() ? EndLoc : BeginLoc);
   }
+  SourceLocation getLocStart() const {
+    return getBeginLoc();
+  }
+  SourceLocation getLocEnd() const {
+    SourceLocation EndLoc = getEndLoc();
+    return EndLoc.isValid() ? EndLoc : getLocStart();
+  }
 };
 
 /// Insertion operator for diagnostics.  This allows sending DeclarationName's
