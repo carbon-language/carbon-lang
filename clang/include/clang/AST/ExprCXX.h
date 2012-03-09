@@ -1553,6 +1553,11 @@ public:
     return hasInitializer() ? cast<Expr>(SubExprs[Array]) : 0;
   }
 
+  /// \brief Returns the CXXConstructExpr from this new-expression, or NULL.
+  const CXXConstructExpr* getConstructExpr() {
+    return dyn_cast_or_null<CXXConstructExpr>(getInitializer());
+  }
+
   /// Answers whether the usual array deallocation function for the
   /// allocated type expects the size of the allocation as a
   /// parameter.
