@@ -244,3 +244,12 @@ int no_unrestricted_unions();
 
 // CHECK-0X: has_unrestricted_unions
 // CHECK-NO-0X: no_unrestricted_unions
+
+#if __has_feature(cxx_user_literals)
+int has_user_literals();
+#else
+int no_user_literals();
+#endif
+
+// CHECK-0X: has_user_literals
+// CHECK-NO-0X: no_user_literals

@@ -640,7 +640,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("c_atomic", LangOpts.C11)
            .Case("c_generic_selections", LangOpts.C11)
            .Case("c_static_assert", LangOpts.C11)
-           // C++0x features
+           // C++11 features
            .Case("cxx_access_control_sfinae", LangOpts.CPlusPlus0x)
            .Case("cxx_alias_templates", LangOpts.CPlusPlus0x)
            .Case("cxx_alignas", LangOpts.CPlusPlus0x)
@@ -672,7 +672,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_trailing_return", LangOpts.CPlusPlus0x)
            .Case("cxx_unicode_literals", LangOpts.CPlusPlus0x)
            .Case("cxx_unrestricted_unions", LangOpts.CPlusPlus0x)
-         //.Case("cxx_user_literals", false)
+           .Case("cxx_user_literals", LangOpts.CPlusPlus0x)
            .Case("cxx_variadic_templates", LangOpts.CPlusPlus0x)
            // Type traits
            .Case("has_nothrow_assign", LangOpts.CPlusPlus)
