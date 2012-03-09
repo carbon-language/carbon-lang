@@ -570,8 +570,8 @@ void FPS::finishBlockStack() {
 
 namespace {
   struct TableEntry {
-    unsigned from;
-    unsigned to;
+    uint16_t from;
+    uint16_t to;
     bool operator<(const TableEntry &TE) const { return from < TE.from; }
     friend bool operator<(const TableEntry &TE, unsigned V) {
       return TE.from < V;

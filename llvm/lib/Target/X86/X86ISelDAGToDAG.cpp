@@ -1654,7 +1654,7 @@ enum AtomicSz {
   AtomicSzEnd
 };
 
-static const unsigned int AtomicOpcTbl[AtomicOpcEnd][AtomicSzEnd] = {
+static const uint16_t AtomicOpcTbl[AtomicOpcEnd][AtomicSzEnd] = {
   {
     X86::LOCK_OR8mi,
     X86::LOCK_OR8mr,
