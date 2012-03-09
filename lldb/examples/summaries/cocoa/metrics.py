@@ -6,7 +6,11 @@ class Counter:
 		self.list = []
 	def update(self,name):
 		self.count = self.count + 1
-		self.list.append(str(name))
+		# avoid getting the full dump of this ValueObject just to save its metrics
+		if isinstance(name,lldb.SBValue):
+			self.list.append(name.GetName())
+		else:
+			self.list.append(str(name))
 	def __str__(self):
 		return str(self.count) + " times, for items [" + str(self.list) + "]"
 

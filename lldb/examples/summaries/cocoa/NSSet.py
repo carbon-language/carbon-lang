@@ -189,7 +189,7 @@ def GetSummary_Impl(valobj):
 		wrapper = NSCountedSet_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSSetUnknown_SummaryProvider(valobj)
+		wrapper = NSSetUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 
