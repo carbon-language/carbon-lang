@@ -37,3 +37,4 @@ char operator "" _a(volatile wchar_t *, size_t); // expected-error {{parameter}}
 char operator "" _a(char16_t *, size_t); // expected-error {{parameter}}
 char operator "" _a(const char32_t *, size_t, bool = false); // expected-error {{parameter}}
 char operator "" _a(const char *, signed long); // expected-error {{parameter}}
+char operator "" _a(const char *, size_t = 0); // expected-error {{default argument}}

@@ -9389,6 +9389,19 @@ FinishedParams:
     return true;
   }
 
+  // A parameter-declaration-clause containing a default argument is not
+  // equivalent to any of the permitted forms.
+  for (FunctionDecl::param_iterator Param = FnDecl->param_begin(),
+                                    ParamEnd = FnDecl->param_end();
+       Param != ParamEnd; ++Param) {
+    if ((*Param)->hasDefaultArg()) {
+      Diag((*Param)->getDefaultArgRange().getBegin(),
+           diag::err_literal_operator_default_argument)
+        << (*Param)->getDefaultArgRange();
+      break;
+    }
+  }
+
   StringRef LiteralName
     = FnDecl->getDeclName().getCXXLiteralIdentifier()->getName();
   if (LiteralName[0] != '_') {

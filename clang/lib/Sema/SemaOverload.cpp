@@ -10911,13 +10911,6 @@ ExprResult Sema::BuildLiteralOperatorCall(LookupResult &R,
 
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
 
-  // FIXME: Reject default arguments in literal operator definitions. We're not
-  // supposed to treat this as ambiguous:
-  //
-  //   int operator"" _x(const char *p);
-  //   int operator"" _x(const char *p, size_t n = 0);
-  //   int k = 123_x;
-
   // Perform overload resolution. This will usually be trivial, but might need
   // to perform substitutions for a literal operator template.
   OverloadCandidateSet::iterator Best;
