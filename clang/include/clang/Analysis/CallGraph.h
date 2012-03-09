@@ -27,7 +27,7 @@ class CallGraphNode;
 
 class CallGraph {
   friend class CallGraphNode;
-  typedef llvm::DenseMap<Decl *, CallGraphNode *> FunctionMapTy;
+  typedef llvm::DenseMap<const Decl *, CallGraphNode *> FunctionMapTy;
 
   /// FunctionMap owns all CallGraphNodes.
   FunctionMapTy FunctionMap;
@@ -50,6 +50,9 @@ public:
 
   /// \brief Populate the call graph with the functions in the given DeclContext.
   void addToCallGraph(DeclContext *DC);
+
+  /// \brief Lookup the node for the given declaration.
+  CallGraphNode *getNode(const Decl *) const;
 
   /// \brief Lookup the node for the given declaration. If none found, insert
   /// one into the graph.
@@ -165,7 +168,7 @@ template <> struct GraphTraits<clang::CallGraph*>
   static NodeType *getEntryNode(clang::CallGraph *CGN) {
     return CGN->getRoot();  // Start at the external node!
   }
-  typedef std::pair<clang::Decl*, clang::CallGraphNode*> PairTy;
+  typedef std::pair<const clang::Decl*, clang::CallGraphNode*> PairTy;
   typedef std::pointer_to_unary_function<PairTy, clang::CallGraphNode&> DerefFun;
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef mapped_iterator<clang::CallGraph::iterator, DerefFun> nodes_iterator;
@@ -190,7 +193,7 @@ template <> struct GraphTraits<const clang::CallGraph*> :
   static NodeType *getEntryNode(const clang::CallGraph *CGN) {
     return CGN->getRoot();
   }
-  typedef std::pair<clang::Decl*, clang::CallGraphNode*> PairTy;
+  typedef std::pair<const clang::Decl*, clang::CallGraphNode*> PairTy;
   typedef std::pointer_to_unary_function<PairTy, clang::CallGraphNode&> DerefFun;
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef mapped_iterator<clang::CallGraph::const_iterator,

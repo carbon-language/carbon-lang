@@ -136,6 +136,10 @@ void CallGraph::addToCallGraph(DeclContext *DC) {
   }
 }
 
+CallGraphNode *CallGraph::getNode(const Decl *F) const {
+  return FunctionMap.find(F)->second;
+}
+
 CallGraphNode *CallGraph::getOrInsertFunction(Decl *F) {
   CallGraphNode *&Node = FunctionMap[F];
   if (Node)
