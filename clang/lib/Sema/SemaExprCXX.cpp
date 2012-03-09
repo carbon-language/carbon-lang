@@ -3566,8 +3566,7 @@ static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
           false).isInvalid())
       return 0;
     if (Value.isSigned() && Value.isNegative()) {
-      Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer),
-        DimExpr->getSourceRange();
+      Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer);
       return 0;
     }
     Dim = Value.getLimitedValue();
