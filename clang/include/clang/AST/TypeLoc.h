@@ -96,6 +96,8 @@ public:
   SourceRange getSourceRange() const {
     return SourceRange(getBeginLoc(), getEndLoc());
   }
+  SourceLocation getLocStart() const { return getBeginLoc(); }
+  SourceLocation getLocEnd() const { return getEndLoc(); }
 
   /// \brief Get the local source range.
   SourceRange getLocalSourceRange() const {

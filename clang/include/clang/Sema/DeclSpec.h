@@ -447,6 +447,9 @@ public:
   const CXXScopeSpec &getTypeSpecScope() const { return TypeScope; }
 
   const SourceRange &getSourceRange() const { return Range; }
+  SourceLocation getLocStart() const { return Range.getBegin(); }
+  SourceLocation getLocEnd() const { return Range.getEnd(); }
+
   SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
   SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
   SourceLocation getTypeSpecSignLoc() const { return TSSLoc; }
@@ -966,6 +969,8 @@ public:
   SourceRange getSourceRange() const { 
     return SourceRange(StartLocation, EndLocation); 
   }
+  SourceLocation getLocStart() const { return StartLocation; }
+  SourceLocation getLocEnd() const { return EndLocation; }
 };
   
 /// CachedTokens - A set of tokens that has been cached for later
@@ -1525,6 +1530,8 @@ public:
 
   /// getSourceRange - Get the source range that spans this declarator.
   const SourceRange &getSourceRange() const { return Range; }
+  SourceLocation getLocStart() const { return Range.getBegin(); }
+  SourceLocation getLocEnd() const { return Range.getEnd(); }
 
   void SetSourceRange(SourceRange R) { Range = R; }
   /// SetRangeBegin - Set the start of the source range to Loc, unless it's

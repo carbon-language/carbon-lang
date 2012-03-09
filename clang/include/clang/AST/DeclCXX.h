@@ -209,6 +209,8 @@ public:
   /// getSourceRange - Retrieves the source range that contains the
   /// entire base specifier.
   SourceRange getSourceRange() const { return Range; }
+  SourceLocation getLocStart() const { return Range.getBegin(); }
+  SourceLocation getLocEnd() const { return Range.getEnd(); }
 
   /// isVirtual - Determines whether the base class is a virtual base
   /// class (or not).
