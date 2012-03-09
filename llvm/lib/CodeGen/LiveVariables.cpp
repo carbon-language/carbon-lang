@@ -109,6 +109,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
   // Mark the variable known alive in this bb
   VRInfo.AliveBlocks.set(BBNum);
 
+  assert(MBB != &MF->front() && "Can't find reaching def for virtreg");
   WorkList.insert(WorkList.end(), MBB->pred_rbegin(), MBB->pred_rend());
 }
 
