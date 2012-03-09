@@ -144,10 +144,18 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     Scheduler->startBlock(MBB);
 
     // Break the block into scheduling regions [I, RegionEnd), and schedule each
-    // region as soon as it is discovered.
+    // region as soon as it is discovered. RegionEnd points the the scheduling
+    // boundary at the bottom of the region. The DAG does not include RegionEnd,
+    // but the region does (i.e. the next RegionEnd is above the previous
+    // RegionBegin). If the current block has no terminator then RegionEnd ==
+    // MBB->end() for the bottom region.
+    //
+    // The Scheduler may insert instructions during either schedule() or
+    // exitRegion(), even for empty regions. So the local iterators 'I' and
+    // 'RegionEnd' are invalid across these calls.
     unsigned RemainingCount = MBB->size();
     for(MachineBasicBlock::iterator RegionEnd = MBB->end();
-        RegionEnd != MBB->begin();) {
+        RegionEnd != MBB->begin(); RegionEnd = Scheduler->begin()) {
       // Avoid decrementing RegionEnd for blocks with no terminator.
       if (RegionEnd != MBB->end()
           || TII->isSchedulingBoundary(llvm::prior(RegionEnd), MBB, *MF)) {
@@ -170,8 +178,8 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
       if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
         // Close the current region. Bundle the terminator if needed.
+        // This invalidates 'RegionEnd' and 'I'.
         Scheduler->exitRegion();
-        RegionEnd = I;
         continue;
       }
       DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
@@ -181,6 +189,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
             dbgs() << " Remaining: " << RemainingCount << "\n");
 
       // Schedule a region: possibly reorder instructions.
+      // This invalidates 'RegionEnd' and 'I'.
       Scheduler->schedule();
 
       // Close the current region.
