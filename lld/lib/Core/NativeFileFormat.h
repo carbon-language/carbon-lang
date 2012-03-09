@@ -10,7 +10,7 @@
 #ifndef LLD_CORE_NATIVE_FILE_FORMAT_H_
 #define LLD_CORE_NATIVE_FILE_FORMAT_H_
 
-#include <stdint.h>
+#include "llvm/Support/DataTypes.h"
 
 namespace lld {
 

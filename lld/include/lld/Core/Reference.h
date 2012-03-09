@@ -10,7 +10,7 @@
 #ifndef LLD_CORE_REFERENCES_H_
 #define LLD_CORE_REFERENCES_H_
 
-#include <stdint.h>
+#include "llvm/Support/DataTypes.h"
 
 namespace lld {
 
