@@ -188,11 +188,11 @@ protected:
   class atom_collection_vector : public atom_collection<T> {
   public:
     virtual atom_iterator<T> begin() const { 
-      return atom_iterator<T>(*this, reinterpret_cast<const void*>(&_atoms[0]));
+      return atom_iterator<T>(*this, reinterpret_cast<const void*>(_atoms.data()));
     }
     virtual atom_iterator<T> end() const{ 
       return atom_iterator<T>(*this, reinterpret_cast<const void*>
-                              (&_atoms[_atoms.size()]));
+        (_atoms.data() + _atoms.size()));
     }
     virtual const T* deref(const void* it) const {
       return *reinterpret_cast<const T* const*>(it);

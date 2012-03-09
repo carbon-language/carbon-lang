@@ -64,13 +64,15 @@ endif()
 # lld now requires C++11 to build
 #
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++0x" SUPPORTS_CXX11_FLAG)
-if( SUPPORTS_CXX11_FLAG )
-  message(STATUS "Building with -std=c++0x")
-  set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
-else( SUPPORTS_CXX11_FLAG )
-  message(WARNING "-std=c++0x not supported.")
+if (NOT MSVC)
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag("-std=c++0x" SUPPORTS_CXX11_FLAG)
+  if( SUPPORTS_CXX11_FLAG )
+    message(STATUS "Building with -std=c++0x")
+    set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+  else( SUPPORTS_CXX11_FLAG )
+    message(WARNING "-std=c++0x not supported.")
+  endif()
 endif()
 
 

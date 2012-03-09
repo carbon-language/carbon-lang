@@ -19,10 +19,13 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
 #include <vector>
@@ -62,9 +65,10 @@ public:
         const Reference* ref = *rit;
         // create refname for any unnamed reference target
         if ( ref->target()->name().empty() ) {
-          char* buffer;
-          asprintf(&buffer, "L%03d", _unnamedCounter++);
-          _refNames[ref->target()] = buffer;
+          std::string Storage;
+          llvm::raw_string_ostream Buffer(Storage);
+          Buffer << llvm::format("L%03d", _unnamedCounter++);
+          _refNames[ref->target()] = Buffer.str();
         }
       }
     }
@@ -92,15 +96,16 @@ public:
     NameToAtom::iterator pos = _nameMap.find(atom.name());
     if ( pos != _nameMap.end() ) {
       // Found name collision, give each a unique ref-name.
-      char* buffer;
-      asprintf(&buffer, "%s.%03d", atom.name().data(), ++_collisionCount);
-      _refNames[&atom] = buffer;
+      std::string Storage;
+      llvm::raw_string_ostream Buffer(Storage);
+      Buffer << atom.name() << llvm::format(".%03d", ++_collisionCount);
+      _refNames[&atom] = Buffer.str();
       const Atom* prevAtom = pos->second;
       AtomToRefName::iterator pos2 = _refNames.find(prevAtom);
       if ( pos2 == _refNames.end() ) {
         // only create ref-name for previous if none already created
-        asprintf(&buffer, "%s.%03d", prevAtom->name().data(), ++_collisionCount);
-        _refNames[prevAtom] = buffer;
+        Buffer << prevAtom->name() << llvm::format(".%03d", ++_collisionCount);
+        _refNames[prevAtom] = Buffer.str();
       }
     }
     else {
@@ -113,21 +118,13 @@ public:
      return _refNames.count(atom);
   }
   
-  const char* refName(const Atom* atom) {
+  llvm::StringRef refName(const Atom* atom) {
      return _refNames.find(atom)->second;
   }
   
 private:
-  struct MyMappingInfo {
-    static llvm::StringRef getEmptyKey() { return llvm::StringRef(); }
-    static llvm::StringRef getTombstoneKey() { return llvm::StringRef(" ", 0); }
-    static unsigned getHashValue(llvm::StringRef const val) {
-                                               return llvm::HashString(val); }
-    static bool isEqual(llvm::StringRef const lhs, 
-                        llvm::StringRef const rhs) { return lhs.equals(rhs); }
-  };
-  typedef llvm::DenseMap<llvm::StringRef, const Atom*, MyMappingInfo> NameToAtom;
-  typedef llvm::DenseMap<const Atom*, const char*> AtomToRefName;
+  typedef llvm::StringMap<const Atom*> NameToAtom;
+  typedef llvm::DenseMap<const Atom*, std::string> AtomToRefName;
   
   unsigned int      _collisionCount;
   unsigned int      _unnamedCounter;

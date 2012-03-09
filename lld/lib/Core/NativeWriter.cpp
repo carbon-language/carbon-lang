@@ -335,8 +335,7 @@ private:
     }
     // first use of this library name
     uint32_t result = this->getNameOffset(name);
-    _sharedLibraryNames.push_back(
-                    std::make_pair<llvm::StringRef, uint32_t>(name, result));
+    _sharedLibraryNames.push_back(std::make_pair(name, result));
     return result;
   }
   
@@ -390,8 +389,7 @@ private:
     }
     // first use of this section name
     uint32_t result = this->getNameOffset(name);
-    _sectionNames.push_back(
-                    std::make_pair<llvm::StringRef, uint32_t>(name, result));
+    _sectionNames.push_back(std::make_pair(name, result));
     return result;
   }
   
