@@ -188,12 +188,12 @@ namespace llvm {
     MachineBasicBlock *BB;
 
     /// The beginning of the range to be scheduled.
-    MachineBasicBlock::iterator Begin;
+    MachineBasicBlock::iterator RegionBegin;
 
     /// The end of the range to be scheduled.
-    MachineBasicBlock::iterator End;
+    MachineBasicBlock::iterator RegionEnd;
 
-    /// The index in BB of End.
+    /// The index in BB of RegionEnd.
     unsigned EndIndex;
 
     /// After calling BuildSchedGraph, each machine instruction in the current
@@ -240,10 +240,10 @@ namespace llvm {
     virtual ~ScheduleDAGInstrs() {}
 
     /// begin - Return an iterator to the top of the current scheduling region.
-    MachineBasicBlock::iterator begin() const { return Begin; }
+    MachineBasicBlock::iterator begin() const { return RegionBegin; }
 
     /// end - Return an iterator to the bottom of the current scheduling region.
-    MachineBasicBlock::iterator end() const { return End; }
+    MachineBasicBlock::iterator end() const { return RegionEnd; }
 
     /// newSUnit - Creates a new SUnit and return a ptr to it.
     SUnit *newSUnit(MachineInstr *MI);

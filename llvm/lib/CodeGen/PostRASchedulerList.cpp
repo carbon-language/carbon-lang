@@ -365,8 +365,8 @@ void SchedulePostRATDList::schedule() {
 
   if (AntiDepBreak != NULL) {
     unsigned Broken =
-      AntiDepBreak->BreakAntiDependencies(SUnits, Begin, End, EndIndex,
-                                          DbgValues);
+      AntiDepBreak->BreakAntiDependencies(SUnits, RegionBegin, RegionEnd,
+                                          EndIndex, DbgValues);
 
     if (Broken != 0) {
       // We made changes. Update the dependency graph.
@@ -761,24 +761,24 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
 // EmitSchedule - Emit the machine code in scheduled order.
 void SchedulePostRATDList::EmitSchedule() {
-  Begin = End;
+  RegionBegin = RegionEnd;
 
   // If first instruction was a DBG_VALUE then put it back.
   if (FirstDbgValue)
-    BB->splice(End, BB, FirstDbgValue);
+    BB->splice(RegionEnd, BB, FirstDbgValue);
 
   // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
-      BB->splice(End, BB, SU->getInstr());
+      BB->splice(RegionEnd, BB, SU->getInstr());
     else
       // Null SUnit* is a noop.
-      TII->insertNoop(*BB, End);
+      TII->insertNoop(*BB, RegionEnd);
 
     // Update the Begin iterator, as the first instruction in the block
     // may have been scheduled later.
     if (i == 0)
-      Begin = prior(End);
+      RegionBegin = prior(RegionEnd);
   }
 
   // Reinsert any remaining debug_values.

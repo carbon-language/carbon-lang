@@ -275,7 +275,7 @@ void ScheduleTopDownLive::schedule() {
       releaseNode(&(*I));
   }
 
-  MachineBasicBlock::iterator InsertPos = Begin;
+  MachineBasicBlock::iterator InsertPos = RegionBegin;
   while (SUnit *SU = pickNode()) {
     DEBUG(dbgs() << "*** Scheduling Instruction:\n"; SU->dump(this));
 
@@ -286,8 +286,8 @@ void ScheduleTopDownLive::schedule() {
     else {
       BB->splice(InsertPos, BB, MI);
       LIS->handleMove(MI);
-      if (Begin == InsertPos)
-        Begin = MI;
+      if (RegionBegin == InsertPos)
+        RegionBegin = MI;
     }
 
     // Release dependent instructions for scheduling.
