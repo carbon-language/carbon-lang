@@ -5,6 +5,18 @@
 void erroneous(int);
 void erroneous(float);
 
+struct bar;
+struct zed {
+  bar g;
+};
+struct baz {
+  zed h;
+};
+
+struct S {
+  {
+;
+
 #else
 
 void foo(void) {
@@ -17,8 +29,8 @@ void foo(void) {
 // RUN: c-index-test -test-load-source local %s -include %t.h -Xclang -detailed-preprocessing-record | FileCheck -check-prefix=CHECK-PARSE %s
 // RUN: c-index-test -index-file %s -include %t.h -Xclang -detailed-preprocessing-record | FileCheck -check-prefix=CHECK-INDEX %s
 
-// CHECK-PARSE: pch-with-errors.c:10:6: FunctionDecl=foo:10:6 (Definition) Extent=[10:1 - 12:2]
-// CHECK-PARSE: pch-with-errors.c:11:3: CallExpr=erroneous:5:6 Extent=[11:3 - 11:15]
+// CHECK-PARSE: pch-with-errors.c:{{.*}}:6: FunctionDecl=foo
+// CHECK-PARSE: pch-with-errors.c:{{.*}}:3: CallExpr=erroneous
 
 // CHECK-INDEX: [indexDeclaration]: kind: function | name: foo
 // CHECK-INDEX: [indexEntityReference]: kind: function | name: erroneous

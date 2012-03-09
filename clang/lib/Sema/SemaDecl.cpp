@@ -2378,8 +2378,11 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       Tag = CTD->getTemplatedDecl();
   }
 
-  if (Tag)
+  if (Tag) {
     Tag->setFreeStanding();
+    if (Tag->isInvalidDecl())
+      return Tag;
+  }
 
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
     // Enforce C99 6.7.3p2: "Types other than pointer types derived from object
@@ -8601,6 +8604,13 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
   TagDecl *Tag = cast<TagDecl>(TagD);
   Tag->setRBraceLoc(RBraceLoc);
 
+  // Make sure we "complete" the definition even it is invalid.
+  if (Tag->isBeingDefined()) {
+    assert(Tag->isInvalidDecl() && "We should already have completed it");
+    if (RecordDecl *RD = dyn_cast<RecordDecl>(Tag))
+      RD->completeDefinition();
+  }
+
   if (isa<CXXRecordDecl>(Tag))
     FieldCollector->FinishClass();
 
@@ -8631,6 +8641,12 @@ void Sema::ActOnTagDefinitionError(Scope *S, Decl *TagD) {
   AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>(TagD);
   Tag->setInvalidDecl();
+
+  // Make sure we "complete" the definition even it is invalid.
+  if (Tag->isBeingDefined()) {
+    if (RecordDecl *RD = dyn_cast<RecordDecl>(Tag))
+      RD->completeDefinition();
+  }
 
   // We're undoing ActOnTagStartDefinition here, not
   // ActOnStartCXXMemberDeclarations, so we don't have to mess with
@@ -8840,11 +8856,19 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   QualType EltTy = Context.getBaseElementType(T);
-  if (!EltTy->isDependentType() &&
-      RequireCompleteType(Loc, EltTy, diag::err_field_incomplete)) {
-    // Fields of incomplete type force their record to be invalid.
-    Record->setInvalidDecl();
-    InvalidDecl = true;
+  if (!EltTy->isDependentType()) {
+    if (RequireCompleteType(Loc, EltTy, diag::err_field_incomplete)) {
+      // Fields of incomplete type force their record to be invalid.
+      Record->setInvalidDecl();
+      InvalidDecl = true;
+    } else {
+      NamedDecl *Def;
+      EltTy->isIncompleteType(&Def);
+      if (Def && Def->isInvalidDecl()) {
+        Record->setInvalidDecl();
+        InvalidDecl = true;
+      }
+    }
   }
 
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
