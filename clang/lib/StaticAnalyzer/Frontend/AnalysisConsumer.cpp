@@ -48,6 +48,7 @@ using llvm::SmallPtrSet;
 
 static ExplodedNode::Auditor* CreateUbiViz();
 
+STATISTIC(NumFunctionTopLevel, "The # of functions at top level.");
 STATISTIC(NumFunctionsAnalyzed, "The # of functions analysed (as top level).");
 
 //===----------------------------------------------------------------------===//
@@ -189,7 +190,9 @@ public:
   void HandleDeclContextDecl(ASTContext &C, Decl *D);
   void HandleDeclContextDeclFunction(ASTContext &C, Decl *D);
 
-  void HandleCode(Decl *D);
+  void HandleCode(Decl *D, SetOfDecls *VisitedCallees = 0);
+  void RunPathSensitiveChecks(Decl *D, SetOfDecls *VisitedCallees);
+  void ActionExprEngine(Decl *D, bool ObjCGCEnabled, SetOfDecls *VisitedCallees);
 };
 } // end anonymous namespace
 
@@ -219,15 +222,18 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
 
   // Find the top level nodes - children of root + the unreachable (parentless)
   // nodes.
-  llvm::SmallVector<CallGraphNode*, 24>  TopLevelFunctions;
+  llvm::SmallVector<CallGraphNode*, 24> TopLevelFunctions;
   CallGraphNode *Entry = CG.getRoot();
   for (CallGraphNode::iterator I = Entry->begin(),
-                               E = Entry->end(); I != E; ++I)
+                               E = Entry->end(); I != E; ++I) {
     TopLevelFunctions.push_back(*I);
-
+    NumFunctionTopLevel++;
+  }
   for (CallGraph::nodes_iterator TI = CG.parentless_begin(),
-                                 TE = CG.parentless_end(); TI != TE; ++TI)
+                                 TE = CG.parentless_end(); TI != TE; ++TI) {
     TopLevelFunctions.push_back(*TI);
+    NumFunctionTopLevel++;
+  }
 
   // TODO: Sort TopLevelFunctions.
 
@@ -241,12 +247,20 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
         DFI = llvm::df_ext_begin(*TI, Visited),
         E = llvm::df_ext_end(*TI, Visited);
         DFI != E; ++DFI) {
+      SetOfDecls VisitedCallees;
       Decl *D = (*DFI)->getDecl();
       assert(D);
-      HandleCode(D);
+      HandleCode(D, (Mgr->InliningMode == All ? 0 : &VisitedCallees));
+
+      // Add the visited callees to the global visited set.
+      for (SetOfDecls::const_iterator I = VisitedCallees.begin(),
+                                      E = VisitedCallees.end(); I != E; ++I) {
+        CallGraphNode *VN = CG.getNode(*I);
+        if (VN)
+          Visited.insert(VN);
+      }
     }
   }
-
 }
 
 void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
@@ -284,6 +298,9 @@ void AnalysisConsumer::HandleDeclContextDeclFunction(ASTContext &C, Decl *D) {
     case Decl::CXXMethod:
     case Decl::Function: {
       FunctionDecl *FD = cast<FunctionDecl>(D);
+      IdentifierInfo *II = FD->getIdentifier();
+      if (II && II->getName().startswith("__inline"))
+        break;
       // We skip function template definitions, as their semantics is
       // only determined when they are instantiated.
       if (FD->isThisDeclarationADefinition() &&
@@ -350,9 +367,6 @@ static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
       FindBlocks(DC, WL);
 }
 
-static void RunPathSensitiveChecks(AnalysisConsumer &C, AnalysisManager &mgr,
-                                   Decl *D);
-
 static std::string getFunctionName(const Decl *D) {
   if (const ObjCMethodDecl *ID = dyn_cast<ObjCMethodDecl>(D)) {
     return ID->getSelector().getAsString();
@@ -365,7 +379,7 @@ static std::string getFunctionName(const Decl *D) {
   return "";
 }
 
-void AnalysisConsumer::HandleCode(Decl *D) {
+void AnalysisConsumer::HandleCode(Decl *D, SetOfDecls *VisitedCallees) {
   if (!Opts.AnalyzeSpecificFunction.empty() &&
       getFunctionName(D) != Opts.AnalyzeSpecificFunction)
     return;
@@ -400,7 +414,7 @@ void AnalysisConsumer::HandleCode(Decl *D) {
     if ((*WI)->hasBody()) {
       checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
       if (checkerMgr->hasPathSensitiveCheckers())
-        RunPathSensitiveChecks(*this, *Mgr, *WI);
+        RunPathSensitiveChecks(*WI, VisitedCallees);
     }
   NumFunctionsAnalyzed++;
 }
@@ -409,52 +423,52 @@ void AnalysisConsumer::HandleCode(Decl *D) {
 // Path-sensitive checking.
 //===----------------------------------------------------------------------===//
 
-static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
-                             Decl *D, bool ObjCGCEnabled) {
+void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
+                                        SetOfDecls *VisitedCallees) {
   // Construct the analysis engine.  First check if the CFG is valid.
   // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
-  if (!mgr.getCFG(D))
+  if (!Mgr->getCFG(D))
     return;
-  ExprEngine Eng(mgr, ObjCGCEnabled);
+
+  ExprEngine Eng(*Mgr, ObjCGCEnabled, VisitedCallees);
 
   // Set the graph auditor.
   OwningPtr<ExplodedNode::Auditor> Auditor;
-  if (mgr.shouldVisualizeUbigraph()) {
+  if (Mgr->shouldVisualizeUbigraph()) {
     Auditor.reset(CreateUbiViz());
     ExplodedNode::SetAuditor(Auditor.get());
   }
 
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(mgr.getAnalysisDeclContextManager().getStackFrame(D, 0),
-                      mgr.getMaxNodes());
+  Eng.ExecuteWorkList(Mgr->getAnalysisDeclContextManager().getStackFrame(D, 0),
+                      Mgr->getMaxNodes());
 
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.
   ExplodedNode::SetAuditor(0);
 
   // Visualize the exploded graph.
-  if (mgr.shouldVisualizeGraphviz())
-    Eng.ViewGraph(mgr.shouldTrimGraph());
+  if (Mgr->shouldVisualizeGraphviz())
+    Eng.ViewGraph(Mgr->shouldTrimGraph());
 
   // Display warnings.
   Eng.getBugReporter().FlushReports();
 }
 
-static void RunPathSensitiveChecks(AnalysisConsumer &C, AnalysisManager &mgr,
-                                   Decl *D) {
+void AnalysisConsumer::RunPathSensitiveChecks(Decl *D, SetOfDecls *Visited) {
 
-  switch (mgr.getLangOptions().getGC()) {
+  switch (Mgr->getLangOptions().getGC()) {
   case LangOptions::NonGC:
-    ActionExprEngine(C, mgr, D, false);
+    ActionExprEngine(D, false, Visited);
     break;
   
   case LangOptions::GCOnly:
-    ActionExprEngine(C, mgr, D, true);
+    ActionExprEngine(D, true, Visited);
     break;
   
   case LangOptions::HybridGC:
-    ActionExprEngine(C, mgr, D, false);
-    ActionExprEngine(C, mgr, D, true);
+    ActionExprEngine(D, false, Visited);
+    ActionExprEngine(D, true, Visited);
     break;
   }
 }

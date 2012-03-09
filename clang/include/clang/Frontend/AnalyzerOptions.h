@@ -126,7 +126,7 @@ public:
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
     InlineMaxStackDepth = 5;
     InlineMaxFunctionSize = 200;
-    InliningMode = All;
+    InliningMode = NoRedundancy;
   }
 };
 

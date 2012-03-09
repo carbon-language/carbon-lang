@@ -214,9 +214,16 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
         assert (false && "BlockExit location never occur in forward analysis.");
         break;
 
-      case ProgramPoint::CallEnterKind:
-        SubEng.processCallEnter(cast<CallEnter>(Node->getLocation()), Node);
+      case ProgramPoint::CallEnterKind: {
+        CallEnter CEnter = cast<CallEnter>(Node->getLocation());
+        if (AnalyzedCallees)
+          if (const CallExpr* CE =
+              dyn_cast_or_null<CallExpr>(CEnter.getCallExpr()))
+            if (const Decl *CD = CE->getCalleeDecl())
+              AnalyzedCallees->insert(CD);
+        SubEng.processCallEnter(CEnter, Node);
         break;
+      }
 
       case ProgramPoint::CallExitKind:
         SubEng.processCallExit(Node);

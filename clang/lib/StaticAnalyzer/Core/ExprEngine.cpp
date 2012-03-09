@@ -57,10 +57,11 @@ static inline Selector GetNullarySelector(const char* name, ASTContext &Ctx) {
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
-ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled)
+ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
+                       SetOfDecls *VisitedCallees)
   : AMgr(mgr),
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
-    Engine(*this),
+    Engine(*this, VisitedCallees),
     G(Engine.getGraph()),
     StateMgr(getContext(), mgr.getStoreManagerCreator(),
              mgr.getConstraintManagerCreator(), G.getAllocator(),

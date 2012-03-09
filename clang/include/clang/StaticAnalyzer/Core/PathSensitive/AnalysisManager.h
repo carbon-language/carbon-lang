@@ -30,6 +30,8 @@ namespace idx {
 namespace ento {
   class CheckerManager;
 
+typedef llvm::SmallPtrSet<const Decl*,24> SetOfDecls;
+
 class AnalysisManager : public BugReporterData {
   virtual void anchor();
   AnalysisDeclContextManager AnaCtxMgr;

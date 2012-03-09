@@ -78,6 +78,10 @@ private:
   /// usually because it could not reason about something.
   BlocksAborted blocksAborted;
 
+  /// The functions which have been analyzed through inlining. This is owned by
+  /// AnalysisConsumer. It can be null.
+  SetOfDecls *AnalyzedCallees;
+
   void generateNode(const ProgramPoint &Loc,
                     ProgramStateRef State,
                     ExplodedNode *Pred);
@@ -102,17 +106,11 @@ private:
 public:
   /// Construct a CoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  CoreEngine(SubEngine& subengine)
+  CoreEngine(SubEngine& subengine, SetOfDecls *VisitedCallees)
     : SubEng(subengine), G(new ExplodedGraph()),
       WList(WorkList::makeBFS()),
-      BCounterFactory(G->getAllocator()) {}
-
-  /// Construct a CoreEngine object to analyze the provided CFG and to
-  ///  use the provided worklist object to execute the worklist algorithm.
-  ///  The CoreEngine object assumes ownership of 'wlist'.
-  CoreEngine(WorkList* wlist, SubEngine& subengine)
-    : SubEng(subengine), G(new ExplodedGraph()), WList(wlist),
-      BCounterFactory(G->getAllocator()) {}
+      BCounterFactory(G->getAllocator()),
+      AnalyzedCallees(VisitedCallees) {}
 
   ~CoreEngine() {
     delete WList;
