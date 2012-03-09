@@ -11,7 +11,6 @@ int main(void) {
   printf("%s\n", "\U"); // expected-error{{\u used with no following hex digits}}
   printf("%s\n", "\U00"); // expected-error{{incomplete universal character name}}
   printf("%s\n", "\U0001"); // expected-error{{incomplete universal character name}}
-  printf("%s\n", "\u0001"); // expected-error{{invalid universal character}}
+  printf("%s\n", "\u0001"); // expected-error{{universal character name refers to a control character}}
   return 0;
 }
-

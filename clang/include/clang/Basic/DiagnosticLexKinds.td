@@ -95,6 +95,16 @@ def err_hex_escape_no_digits : Error<"\\x used with no following hex digits">;
 def err_ucn_escape_no_digits : Error<"\\u used with no following hex digits">;
 def err_ucn_escape_invalid : Error<"invalid universal character">;
 def err_ucn_escape_incomplete : Error<"incomplete universal character name">;
+def err_ucn_escape_basic_scs : Error<
+  "character '%0' cannot be specified by a universal character name">;
+def err_ucn_control_character : Error<
+  "universal character name refers to a control character">;
+def warn_cxx98_compat_literal_ucn_escape_basic_scs : Warning<
+  "specifying character '%0' with a universal character name "
+  "is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_literal_ucn_control_character : Warning<
+  "universal character name referring to a control character "
+  "is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def err_invalid_decimal_digit : Error<"invalid digit '%0' in decimal constant">;
 def err_invalid_binary_digit : Error<"invalid digit '%0' in binary constant">;
 def err_invalid_octal_digit : Error<"invalid digit '%0' in octal constant">;

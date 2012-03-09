@@ -179,7 +179,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 
 /// ProcessUCNEscape - Read the Universal Character Name, check constraints and
 /// return the UTF32.
-static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
+static bool ProcessUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
+                             const char *ThisTokEnd,
                              uint32_t &UcnVal, unsigned short &UcnLen,
                              FullSourceLoc Loc, DiagnosticsEngine *Diags, 
                              const LangOptions &Features,
@@ -187,8 +188,7 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   if (!Features.CPlusPlus && !Features.C99 && Diags)
     Diags->Report(Loc, diag::warn_ucn_not_valid_in_c89);
 
-  // Save the beginning of the string (for error diagnostics).
-  const char *ThisTokBegin = ThisTokBuf;
+  const char *UcnBegin = ThisTokBuf;
 
   // Skip the '\u' char's.
   ThisTokBuf += 2;
@@ -210,31 +210,43 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   if (UcnLenSave) {
     if (Diags) {
       SourceLocation L =
-        Lexer::AdvanceToTokenCharacter(Loc, ThisTokBuf-ThisTokBegin,
+        Lexer::AdvanceToTokenCharacter(Loc, UcnBegin - ThisTokBegin,
                                        Loc.getManager(), Features);
-      Diags->Report(FullSourceLoc(L, Loc.getManager()),
-                    diag::err_ucn_escape_incomplete);
+      Diags->Report(L, diag::err_ucn_escape_incomplete);
     }
     return false;
   }
+
   // Check UCN constraints (C99 6.4.3p2) [C++11 lex.charset p2]
-  bool invalid_ucn = (0xD800<=UcnVal && UcnVal<=0xDFFF) // surrogate codepoints
-                       || 0x10FFFF < UcnVal; // maximum legal UTF32 value
-
-  // C++11 allows UCNs that refer to control characters and basic source
-  // characters inside character and string literals
-  if (!Features.CPlusPlus0x || !in_char_string_literal) {
-    if ((UcnVal < 0xa0 &&
-         (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60 ))) {  // $, @, `
-      invalid_ucn = true;
-    }
-  }
-
-  if (invalid_ucn) {
+  if ((0xD800 <= UcnVal && UcnVal <= 0xDFFF) || // surrogate codepoints
+      UcnVal > 0x10FFFF) {                      // maximum legal UTF32 value
     if (Diags)
       Diags->Report(Loc, diag::err_ucn_escape_invalid);
     return false;
   }
+
+  // C++11 allows UCNs that refer to control characters and basic source
+  // characters inside character and string literals
+  if (UcnVal < 0xa0 &&
+      (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60)) {  // $, @, `
+    bool IsError = (!Features.CPlusPlus0x || !in_char_string_literal);
+    if (Diags) {
+      SourceLocation UcnBeginLoc =
+        Lexer::AdvanceToTokenCharacter(Loc, UcnBegin - ThisTokBegin,
+                                       Loc.getManager(), Features);
+      char BasicSCSChar = UcnVal;
+      if (UcnVal >= 0x20 && UcnVal < 0x7f)
+        Diags->Report(UcnBeginLoc, IsError ? diag::err_ucn_escape_basic_scs :
+                      diag::warn_cxx98_compat_literal_ucn_escape_basic_scs)
+          << StringRef(&BasicSCSChar, 1);
+      else
+        Diags->Report(UcnBeginLoc, IsError ? diag::err_ucn_control_character :
+                      diag::warn_cxx98_compat_literal_ucn_control_character);
+    }
+    if (IsError)
+      return false;
+  }
+
   return true;
 }
 
@@ -242,7 +254,8 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 /// convert the UTF32 to UTF8 or UTF16. This is a subroutine of
 /// StringLiteralParser. When we decide to implement UCN's for identifiers,
 /// we will likely rework our support for UCN's.
-static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
+static void EncodeUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
+                            const char *ThisTokEnd,
                             char *&ResultBuf, bool &HadError,
                             FullSourceLoc Loc, unsigned CharByteWidth,
                             DiagnosticsEngine *Diags,
@@ -250,8 +263,8 @@ static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
   typedef uint32_t UTF32;
   UTF32 UcnVal = 0;
   unsigned short UcnLen = 0;
-  if (!ProcessUCNEscape(ThisTokBuf, ThisTokEnd, UcnVal, UcnLen, Loc, Diags,
-                        Features)) {
+  if (!ProcessUCNEscape(ThisTokBegin, ThisTokBuf, ThisTokEnd, UcnVal, UcnLen,
+                        Loc, Diags, Features, true)) {
     HadError = 1;
     return;
   }
@@ -787,6 +800,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
   Kind = kind;
 
+  const char *TokBegin = begin;
+
   // Skip over wide character determinant.
   if (Kind != tok::char_constant) {
     ++begin;
@@ -803,7 +818,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       --end;
     } while (end[-1] != '\'');
     UDSuffixBuf.assign(end, UDSuffixEnd);
-    UDSuffixOffset = end - begin + 1;
+    UDSuffixOffset = end - TokBegin;
   }
 
   // Trim the ending quote.
@@ -885,7 +900,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     // Is this a Universal Character Name excape?
     if (begin[1] == 'u' || begin[1] == 'U') {
       unsigned short UcnLen = 0;
-      if (!ProcessUCNEscape(begin, end, *buffer_begin, UcnLen,
+      if (!ProcessUCNEscape(TokBegin, begin, end, *buffer_begin, UcnLen,
                             FullSourceLoc(Loc, PP.getSourceManager()),
                             &PP.getDiagnostics(), PP.getLangOptions(),
                             true))
@@ -1113,6 +1128,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
       continue;
     }
 
+    const char *ThisTokBegin = ThisTokBuf;
     const char *ThisTokEnd = ThisTokBuf+ThisTokLen;
 
     // Remove an optional ud-suffix.
@@ -1208,8 +1224,9 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         }
         // Is this a Universal Character Name escape?
         if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
-          EncodeUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr,
-                          hadError, FullSourceLoc(StringToks[i].getLocation(),SM),
+          EncodeUCNEscape(ThisTokBegin, ThisTokBuf, ThisTokEnd,
+                          ResultPtr, hadError,
+                          FullSourceLoc(StringToks[i].getLocation(), SM),
                           CharByteWidth, Diags, Features);
           continue;
         }
