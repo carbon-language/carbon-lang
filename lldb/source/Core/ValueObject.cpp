@@ -204,23 +204,30 @@ ValueObject::UpdateValueIfNeeded (DynamicValueType use_dynamic, bool update_form
 
         ClearUserVisibleData();
         
-        const bool value_was_valid = GetValueIsValid();
-        SetValueDidChange (false);
-
-        m_error.Clear();
-
-        // Call the pure virtual function to update the value
-        bool success = UpdateValue ();
-        
-        SetValueIsValid (success);
-        
-        if (first_update)
-            SetValueDidChange (false);
-        else if (!m_value_did_change && success == false)
+        if (IsInScope())
         {
-            // The value wasn't gotten successfully, so we mark this
-            // as changed if the value used to be valid and now isn't
-            SetValueDidChange (value_was_valid);
+            const bool value_was_valid = GetValueIsValid();
+            SetValueDidChange (false);
+            
+            m_error.Clear();
+
+            // Call the pure virtual function to update the value
+            bool success = UpdateValue ();
+            
+            SetValueIsValid (success);
+            
+            if (first_update)
+                SetValueDidChange (false);
+            else if (!m_value_did_change && success == false)
+            {
+                // The value wasn't gotten successfully, so we mark this
+                // as changed if the value used to be valid and now isn't
+                SetValueDidChange (value_was_valid);
+            }
+        }
+        else
+        {
+            m_error.SetErrorString("out of scope");
         }
     }
     return m_error.Success();
