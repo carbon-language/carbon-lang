@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <vector>
+
 #include "asan_test_config.h"
 #include "asan_test_utils.h"
 #include "asan_interface.h"
@@ -359,4 +361,14 @@ TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
   char *array = Ident((char*)malloc(120));
   EXPECT_DEATH(ACCESS(array, 120), "size Z");
   __asan_set_error_report_callback(NULL);
+}
+
+TEST(AddressSanitizerInterface, DISABLED_GetOwnershipStressTest) {
+  std::vector<void *> v;
+  for (size_t i = 0; i < 3000; i++)
+    v.push_back(malloc(i * 1000));
+  for (size_t i = 0; i < 1000000; i++)
+    __asan_get_ownership(&v);
+  for (size_t i = 0, n = v.size(); i < n; i++)
+    free(v[i]);
 }
