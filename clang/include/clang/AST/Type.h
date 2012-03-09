@@ -4816,6 +4816,12 @@ inline bool Type::isNonOverloadPlaceholderType() const {
   return false;
 }
 
+inline bool Type::isVoidType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Void;
+  return false;
+}
+
 inline bool Type::isHalfType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Half;

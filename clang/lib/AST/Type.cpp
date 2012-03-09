@@ -309,13 +309,6 @@ const Type *Type::getUnqualifiedDesugaredType() const {
   }
 }
 
-/// isVoidType - Helper method to determine if this is the 'void' type.
-bool Type::isVoidType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::Void;
-  return false;
-}
-
 bool Type::isDerivedType() const {
   switch (CanonicalType->getTypeClass()) {
   case Pointer:
