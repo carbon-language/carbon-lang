@@ -876,8 +876,10 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
           SMLoc Loc = Parser.getTok().getLoc();
 
           int64_t ScaleVal;
-          if (getParser().ParseAbsoluteExpression(ScaleVal))
+          if (getParser().ParseAbsoluteExpression(ScaleVal)){
+            Error(Loc, "expected scale expression");
             return 0;
+	  }
 
           // Validate the scale amount.
           if (ScaleVal != 1 && ScaleVal != 2 && ScaleVal != 4 && ScaleVal != 8){

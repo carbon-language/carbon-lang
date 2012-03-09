@@ -20,3 +20,7 @@ movl 0(%rax), 0(%edx)  // error: invalid operand for instruction
 
 // 32: error: instruction requires a CPU feature not currently enabled
 sysexitq
+
+// rdar://10710167
+// 64: error: expected scale expression
+lea (%rsp, %rbp, $4), %rax
