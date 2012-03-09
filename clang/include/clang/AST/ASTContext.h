@@ -147,6 +147,11 @@ class ASTContext : public RefCountedBase<ASTContext> {
   mutable llvm::DenseMap<const ObjCContainerDecl*, const ASTRecordLayout*>
     ObjCLayouts;
 
+  /// TypeInfoMap - A cache from types to size and alignment information.
+  typedef llvm::DenseMap<const Type*,
+                         std::pair<uint64_t, unsigned> > TypeInfoMap;
+  mutable TypeInfoMap MemoizedTypeInfo;
+
   /// KeyFunctions - A cache mapping from CXXRecordDecls to key functions.
   llvm::DenseMap<const CXXRecordDecl*, const CXXMethodDecl*> KeyFunctions;
   
@@ -1220,6 +1225,7 @@ public:
 
 private:
   CanQualType getFromTargetType(unsigned Type) const;
+  std::pair<uint64_t, unsigned> getTypeInfoImpl(const Type *T) const;
 
   //===--------------------------------------------------------------------===//
   //                         Type Predicates.

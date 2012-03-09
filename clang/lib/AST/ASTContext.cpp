@@ -815,14 +815,24 @@ ASTContext::getTypeInfoInChars(QualType T) const {
   return getTypeInfoInChars(T.getTypePtr());
 }
 
-/// getTypeSize - Return the size of the specified type, in bits.  This method
-/// does not work on incomplete types.
+std::pair<uint64_t, unsigned> ASTContext::getTypeInfo(const Type *T) const {
+  TypeInfoMap::iterator it = MemoizedTypeInfo.find(T);
+  if (it != MemoizedTypeInfo.end())
+    return it->second;
+
+  std::pair<uint64_t, unsigned> Info = getTypeInfoImpl(T);
+  MemoizedTypeInfo.insert(std::make_pair(T, Info));
+  return Info;
+}
+
+/// getTypeInfoImpl - Return the size of the specified type, in bits.  This
+/// method does not work on incomplete types.
 ///
 /// FIXME: Pointers into different addr spaces could have different sizes and
 /// alignment requirements: getPointerInfo should take an AddrSpace, this
 /// should take a QualType, &c.
 std::pair<uint64_t, unsigned>
-ASTContext::getTypeInfo(const Type *T) const {
+ASTContext::getTypeInfoImpl(const Type *T) const {
   uint64_t Width=0;
   unsigned Align=8;
   switch (T->getTypeClass()) {
@@ -851,7 +861,8 @@ ASTContext::getTypeInfo(const Type *T) const {
 
     std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(CAT->getElementType());
     uint64_t Size = CAT->getSize().getZExtValue();
-    assert((Size == 0 || EltInfo.first <= (uint64_t)(-1)/Size) && "Overflow in array type bit size evaluation");
+    assert((Size == 0 || EltInfo.first <= (uint64_t)(-1)/Size) && 
+           "Overflow in array type bit size evaluation");
     Width = EltInfo.first*Size;
     Align = EltInfo.second;
     Width = llvm::RoundUpToAlignment(Width, Align);
