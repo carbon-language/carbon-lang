@@ -905,6 +905,24 @@ SourceRange CallExpr::getSourceRange() const {
     end = getArg(getNumArgs() - 1)->getLocEnd();
   return SourceRange(begin, end);
 }
+SourceLocation CallExpr::getLocStart() const {
+  if (isa<CXXOperatorCallExpr>(this))
+    return cast<CXXOperatorCallExpr>(this)->getSourceRange().getBegin();
+
+  SourceLocation begin = getCallee()->getLocStart();
+  if (begin.isInvalid() && getNumArgs() > 0)
+    begin = getArg(0)->getLocStart();
+  return begin;
+}
+SourceLocation CallExpr::getLocEnd() const {
+  if (isa<CXXOperatorCallExpr>(this))
+    return cast<CXXOperatorCallExpr>(this)->getSourceRange().getEnd();
+
+  SourceLocation end = getRParenLoc();
+  if (end.isInvalid() && getNumArgs() > 0)
+    end = getArg(getNumArgs() - 1)->getLocEnd();
+  return end;
+}
 
 OffsetOfExpr *OffsetOfExpr::Create(ASTContext &C, QualType type, 
                                    SourceLocation OperatorLoc,

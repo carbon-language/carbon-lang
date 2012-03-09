@@ -2127,6 +2127,8 @@ public:
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   SourceRange getSourceRange() const;
+  SourceLocation getLocStart() const;
+  SourceLocation getLocEnd() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstCallExprConstant &&

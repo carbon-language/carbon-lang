@@ -633,6 +633,9 @@ public:
   SourceLocation getOuterLocStart() const;
 
   virtual SourceRange getSourceRange() const;
+  SourceLocation getLocStart() const {
+    return getOuterLocStart();
+  }
 
   /// \brief Retrieve the nested-name-specifier that qualifies the name of this
   /// declaration, if it was present in the source.
