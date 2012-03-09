@@ -49,22 +49,22 @@
 #define LLVM_ATTRIBUTE_UNUSED
 #endif
 
-#ifdef __GNUC__ // aka 'ATTRIBUTE_CONST' but following LLVM Conventions.
-#define LLVM_ATTRIBUTE_READNONE __attribute__((__const__))
-#else
-#define LLVM_ATTRIBUTE_READNONE
-#endif
-
-#ifdef __GNUC__  // aka 'ATTRIBUTE_PURE' but following LLVM Conventions.
-#define LLVM_ATTRIBUTE_READONLY __attribute__((__pure__))
-#else
-#define LLVM_ATTRIBUTE_READONLY
-#endif
-
 #if (__GNUC__ >= 4) && !defined(__MINGW32__) && !defined(__CYGWIN__)
 #define LLVM_ATTRIBUTE_WEAK __attribute__((__weak__))
 #else
 #define LLVM_ATTRIBUTE_WEAK
+#endif
+
+#ifdef __GNUC__ // aka 'CONST' but following LLVM Conventions.
+#define LLVM_READNONE __attribute__((__const__))
+#else
+#define LLVM_READNONE
+#endif
+
+#ifdef __GNUC__  // aka 'PURE' but following LLVM Conventions.
+#define LLVM_READONLY __attribute__((__pure__))
+#else
+#define LLVM_READONLY
 #endif
 
 #if (__GNUC__ >= 4)
