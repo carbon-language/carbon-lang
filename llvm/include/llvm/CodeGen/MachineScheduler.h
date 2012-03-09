@@ -15,8 +15,12 @@
 //  return new CustomMachineScheduler(C);
 // }
 // static MachineSchedRegistry
-// SchedDefaultRegistry("custom", "Run my target's custom scheduler",
-//                      createCustomMachineSched);
+// SchedCustomRegistry("custom", "Run my target's custom scheduler",
+//                     createCustomMachineSched);
+//
+// Inside <Target>PassConfig:
+//   enablePass(MachineSchedulerID);
+//   MachineSchedRegistry::setDefault(createCustomMachineSched);
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,10 +43,11 @@ struct MachineSchedContext {
   MachineFunction *MF;
   const MachineLoopInfo *MLI;
   const MachineDominatorTree *MDT;
+  const TargetPassConfig *PassConfig;
   AliasAnalysis *AA;
   LiveIntervals *LIS;
 
-  MachineSchedContext(): MF(0), MLI(0), MDT(0), AA(0), LIS(0) {}
+  MachineSchedContext(): MF(0), MLI(0), MDT(0), PassConfig(0), AA(0), LIS(0) {}
 };
 
 /// MachineSchedRegistry provides a selection of available machine instruction

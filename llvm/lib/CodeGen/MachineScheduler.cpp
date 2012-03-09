@@ -82,7 +82,7 @@ void MachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredID(MachineDominatorsID);
   AU.addRequired<MachineLoopInfo>();
   AU.addRequired<AliasAnalysis>();
-  AU.addPreserved<AliasAnalysis>();
+  AU.addRequired<TargetPassConfig>();
   AU.addRequired<SlotIndexes>();
   AU.addPreserved<SlotIndexes>();
   AU.addRequired<LiveIntervals>();
@@ -92,31 +92,47 @@ void MachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
 
 MachinePassRegistry MachineSchedRegistry::Registry;
 
-static ScheduleDAGInstrs *createDefaultMachineSched(MachineSchedContext *C);
+/// A dummy default scheduler factory indicates whether the scheduler
+/// is overridden on the command line.
+static ScheduleDAGInstrs *useDefaultMachineSched(MachineSchedContext *C) {
+  return 0;
+}
 
 /// MachineSchedOpt allows command line selection of the scheduler.
 static cl::opt<MachineSchedRegistry::ScheduleDAGCtor, false,
                RegisterPassParser<MachineSchedRegistry> >
 MachineSchedOpt("misched",
-                cl::init(&createDefaultMachineSched), cl::Hidden,
+                cl::init(&useDefaultMachineSched), cl::Hidden,
                 cl::desc("Machine instruction scheduler to use"));
+
+static MachineSchedRegistry
+SchedDefaultRegistry("default", "Use the target's default scheduler choice.",
+                     useDefaultMachineSched);
+
+/// Forward declare the common machine scheduler. This will be used as the
+/// default scheduler if the target does not set a default.
+static ScheduleDAGInstrs *createCommonMachineSched(MachineSchedContext *C);
 
 bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   // Initialize the context of the pass.
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
   MDT = &getAnalysis<MachineDominatorTree>();
+  PassConfig = &getAnalysis<TargetPassConfig>();
   AA = &getAnalysis<AliasAnalysis>();
 
   LIS = &getAnalysis<LiveIntervals>();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   // Select the scheduler, or set the default.
-  MachineSchedRegistry::ScheduleDAGCtor Ctor =
-    MachineSchedRegistry::getDefault();
-  if (!Ctor) {
-    Ctor = MachineSchedOpt;
-    MachineSchedRegistry::setDefault(Ctor);
+  MachineSchedRegistry::ScheduleDAGCtor Ctor = MachineSchedOpt;
+  if (Ctor == useDefaultMachineSched) {
+    // Get the default scheduler set by the target.
+    Ctor = MachineSchedRegistry::getDefault();
+    if (!Ctor) {
+      Ctor = createCommonMachineSched;
+      MachineSchedRegistry::setDefault(Ctor);
+    }
   }
   // Instantiate the selected scheduler.
   OwningPtr<ScheduleDAGInstrs> Scheduler(Ctor(this));
@@ -283,10 +299,10 @@ void ScheduleTopDownLive::schedule() {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class DefaultMachineScheduler : public ScheduleDAGInstrs {
+class CommonMachineScheduler : public ScheduleDAGInstrs {
   AliasAnalysis *AA;
 public:
-  DefaultMachineScheduler(MachineSchedContext *C):
+  CommonMachineScheduler(MachineSchedContext *C):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
     AA(C->AA) {}
 
@@ -296,17 +312,18 @@ public:
 };
 } // namespace
 
-static ScheduleDAGInstrs *createDefaultMachineSched(MachineSchedContext *C) {
-  return new DefaultMachineScheduler(C);
+/// The common machine scheduler will be used as the default scheduler if the
+/// target does not set a default.
+static ScheduleDAGInstrs *createCommonMachineSched(MachineSchedContext *C) {
+  return new CommonMachineScheduler(C);
 }
 static MachineSchedRegistry
-SchedDefaultRegistry("default", "Activate the scheduler pass, "
-                     "but don't reorder instructions",
-                     createDefaultMachineSched);
+SchedCommonRegistry("common", "Use the target's default scheduler choice.",
+                     createCommonMachineSched);
 
 /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
 /// time to do some work.
-void DefaultMachineScheduler::schedule() {
+void CommonMachineScheduler::schedule() {
   buildSchedGraph(AA);
 
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
