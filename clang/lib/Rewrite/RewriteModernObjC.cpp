@@ -336,6 +336,8 @@ namespace {
     
     void RewriteObjCFieldDecl(FieldDecl *fieldDecl, std::string &Result);
     
+    bool RewriteObjCFieldDeclType(QualType &Type, std::string &Result);
+    
     void RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
                                   std::string &Result);
     
@@ -3168,14 +3170,15 @@ bool RewriteModernObjC::BufferContainsPPDirectives(const char *startBuf,
   return false;
 }
 
-/// RewriteObjCFieldDecl - This routine rewrites a field into the buffer.
+/// RewriteObjCFieldDeclType - This routine rewrites a type into the buffer.
 /// It handles elaborated types, as well as enum types in the process.
-void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl, 
-                                             std::string &Result) {
-  QualType Type = fieldDecl->getType();
-  std::string Name = fieldDecl->getNameAsString();
-
-  if (Type->isRecordType()) {
+bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type, 
+                                                 std::string &Result) {
+  if (Type->isArrayType()) {
+    QualType ElemTy = Context->getBaseElementType(Type);
+    return RewriteObjCFieldDeclType(ElemTy, Result);
+  }
+  else if (Type->isRecordType()) {
     RecordDecl *RD = Type->getAs<RecordType>()->getDecl();
     if (RD->isCompleteDefinition()) {
       if (RD->isStruct())
@@ -3184,23 +3187,22 @@ void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl,
         Result += "\n\tunion ";
       else
         assert(false && "class not allowed as an ivar type");
-  
+      
       Result += RD->getName();
       if (TagsDefinedInIvarDecls.count(RD)) {
         // This struct is already defined. Do not write its definition again.
-        Result += " "; Result += Name; Result += ";\n";
-        return;
+        Result += " ";
+        return true;
       }
       TagsDefinedInIvarDecls.insert(RD);
       Result += " {\n";
       for (RecordDecl::field_iterator i = RD->field_begin(), 
-          e = RD->field_end(); i != e; ++i) {
+           e = RD->field_end(); i != e; ++i) {
         FieldDecl *FD = *i;
         RewriteObjCFieldDecl(FD, Result);
       }
       Result += "\t} "; 
-      Result += Name; Result += ";\n";
-      return;
+      return true;
     }
   }
   else if (Type->isEnumeralType()) {
@@ -3210,8 +3212,8 @@ void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl,
       Result += ED->getName();
       if (TagsDefinedInIvarDecls.count(ED)) {
         // This enum is already defined. Do not write its definition again.
-        Result += " "; Result += Name; Result += ";\n";
-        return;
+        Result += " ";
+        return true;
       }
       TagsDefinedInIvarDecls.insert(ED);
       
@@ -3224,19 +3226,43 @@ void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl,
         Result += ",\n";
       }
       Result += "\t} "; 
-      Result += Name; Result += ";\n";
-      return;
+      return true;
     }
   }
   
   Result += "\t";
   convertObjCTypeToCStyleType(Type);
+  return false;
+}
+
+
+/// RewriteObjCFieldDecl - This routine rewrites a field into the buffer.
+/// It handles elaborated types, as well as enum types in the process.
+void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl, 
+                                             std::string &Result) {
+  QualType Type = fieldDecl->getType();
+  std::string Name = fieldDecl->getNameAsString();
   
-  Type.getAsStringInternal(Name, Context->getPrintingPolicy());
+  bool EleboratedType = RewriteObjCFieldDeclType(Type, Result); 
+  if (!EleboratedType)
+    Type.getAsStringInternal(Name, Context->getPrintingPolicy());
   Result += Name;
   if (fieldDecl->isBitField()) {
     Result += " : "; Result += utostr(fieldDecl->getBitWidthValue(*Context));
   }
+  else if (EleboratedType && Type->isArrayType()) {
+    CanQualType CType = Context->getCanonicalType(Type);
+    while (isa<ArrayType>(CType)) {
+      if (const ConstantArrayType *CAT = Context->getAsConstantArrayType(CType)) {
+        Result += "[";
+        llvm::APInt Dim = CAT->getSize();
+        Result += utostr(Dim.getZExtValue());
+        Result += "]";
+      }
+      CType = CType->getAs<ArrayType>()->getElementType();
+    }
+  }
+  
   Result += ";\n";
 }
 
