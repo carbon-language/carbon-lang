@@ -142,6 +142,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
+  setOperationAction(ISD::SETCC,              MVT::f32,   Custom);
+  setOperationAction(ISD::SETCC,              MVT::f64,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,   Custom);
@@ -246,7 +248,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setTargetDAGCombine(ISD::SUBE);
   setTargetDAGCombine(ISD::SDIVREM);
   setTargetDAGCombine(ISD::UDIVREM);
-  setTargetDAGCombine(ISD::SETCC);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::OR);
@@ -560,23 +561,6 @@ static SDValue CreateCMovFP(SelectionDAG& DAG, SDValue Cond, SDValue True,
                      True.getValueType(), True, False, Cond);
 }
 
-static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG& DAG,
-                                   TargetLowering::DAGCombinerInfo &DCI,
-                                   const MipsSubtarget* Subtarget) {
-  if (DCI.isBeforeLegalizeOps())
-    return SDValue();
-
-  SDValue Cond = CreateFPCmp(DAG, SDValue(N, 0));
-
-  if (Cond.getOpcode() != MipsISD::FPCmp)
-    return SDValue();
-
-  SDValue True  = DAG.getConstant(1, MVT::i32);
-  SDValue False = DAG.getConstant(0, MVT::i32);
-
-  return CreateCMovFP(DAG, Cond, True, False, N->getDebugLoc());
-}
-
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG& DAG,
                                     TargetLowering::DAGCombinerInfo &DCI,
                                     const MipsSubtarget* Subtarget) {
@@ -718,8 +702,6 @@ SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
   case ISD::SDIVREM:
   case ISD::UDIVREM:
     return PerformDivRemCombine(N, DAG, DCI, Subtarget);
-  case ISD::SETCC:
-    return PerformSETCCCombine(N, DAG, DCI, Subtarget);
   case ISD::SELECT:
     return PerformSELECTCombine(N, DAG, DCI, Subtarget);  
   case ISD::AND:
@@ -744,6 +726,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
     case ISD::SELECT:             return LowerSELECT(Op, DAG);
+    case ISD::SETCC:              return LowerSETCC(Op, DAG);
     case ISD::VASTART:            return LowerVASTART(Op, DAG);
     case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
     case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
@@ -1509,6 +1492,18 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG) const
 
   return CreateCMovFP(DAG, Cond, Op.getOperand(1), Op.getOperand(2),
                       Op.getDebugLoc());
+}
+
+SDValue MipsTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Cond = CreateFPCmp(DAG, Op);
+
+  assert(Cond.getOpcode() == MipsISD::FPCmp &&
+         "Floating point operand expected.");
+
+  SDValue True  = DAG.getConstant(1, MVT::i32);
+  SDValue False = DAG.getConstant(0, MVT::i32);
+
+  return CreateCMovFP(DAG, Cond, True, False, Op.getDebugLoc());
 }
 
 SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
