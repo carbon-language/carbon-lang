@@ -763,7 +763,9 @@ public:
 
   llvm::Constant *EmitArrayInitialization(InitListExpr *ILE) {
     unsigned NumInitElements = ILE->getNumInits();
-    if (NumInitElements == 1 && ILE->getType() == ILE->getInit(0)->getType() &&
+    if (NumInitElements == 1 &&
+        CGM.getContext().hasSameUnqualifiedType(ILE->getType(),
+                                                ILE->getInit(0)->getType()) &&
         (isa<StringLiteral>(ILE->getInit(0)) ||
          isa<ObjCEncodeExpr>(ILE->getInit(0))))
       return Visit(ILE->getInit(0));

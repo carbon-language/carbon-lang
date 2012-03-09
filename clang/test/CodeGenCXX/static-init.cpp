@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
 // CHECK: @_ZZ1hvE1i = internal global i32 0, align 4
+// CHECK: @base_req = global [4 x i8] c"foo\00", align 1
 
 // CHECK: @_ZZN5test1L6getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
 // CHECK: @_ZZ2h2vE1i = linkonce_odr global i32 0
@@ -59,3 +60,6 @@ namespace test1 {
 
   void test() { (void) getvar(2); }
 }
+
+// Make sure we emit the initializer correctly for the following:
+char base_req[] = { "foo" };
