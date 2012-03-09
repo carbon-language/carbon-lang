@@ -211,6 +211,7 @@ public:
     void
     SetByteSize (uint32_t size)
     {
+        m_calculated_size = size > 0;
         m_addr_range.SetByteSize(size);
     }
 

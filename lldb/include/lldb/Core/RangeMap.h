@@ -18,8 +18,9 @@
 
 namespace lldb_private {
 
+    
     //----------------------------------------------------------------------
-    // Templatized classes for dealing with generic ranges and also 
+    // Templatized classes for dealing with generic ranges and also
     // collections of ranges, or collections of ranges that have associated
     // data.
     //----------------------------------------------------------------------
@@ -334,6 +335,22 @@ namespace lldb_private {
             return m_entries[i];
         }
 
+        Entry *
+        Back()
+        {
+            if (m_entries.empty())
+                return NULL;
+            return &m_entries.back();
+        }
+
+        const Entry *
+        Back() const
+        {
+            if (m_entries.empty())
+                return NULL;
+            return &m_entries.back();
+        }
+
         static bool 
         BaseLessThan (const Entry& lhs, const Entry& rhs)
         {
@@ -601,7 +618,7 @@ namespace lldb_private {
             return m_entries[i];
         }
 
-        static bool 
+        static bool
         BaseLessThan (const Entry& lhs, const Entry& rhs)
         {
             return lhs.GetRangeBase() < rhs.GetRangeBase();
@@ -633,7 +650,37 @@ namespace lldb_private {
             }
             return UINT32_MAX;
         }
-        
+
+        Entry *
+        FindEntryThatContains (B addr)
+        {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
+            if ( !m_entries.empty() )
+            {
+                Entry entry;
+                entry.SetRangeBase(addr);
+                entry.SetByteSize(1);
+                typename Collection::iterator begin = m_entries.begin();
+                typename Collection::iterator end = m_entries.end();
+                typename Collection::iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                
+                if (pos != end && pos->Contains(addr))
+                {
+                    return &(*pos); 
+                }
+                else if (pos != begin)
+                {
+                    --pos;
+                    if (pos->Contains(addr))
+                    {
+                        return &(*pos); 
+                    }
+                }
+            }
+            return NULL;
+        }
         const Entry *
         FindEntryThatContains (B addr) const
         {
@@ -690,6 +737,193 @@ namespace lldb_private {
                     }
                 }
             }
+            return NULL;
+        }
+        
+        Entry *
+        Back()
+        {
+            if (!m_entries.empty())
+                return &m_entries.back();
+            return NULL;
+        }
+
+        const Entry *
+        Back() const
+        {
+            if (!m_entries.empty())
+                return &m_entries.back();
+            return NULL;
+        }
+
+    protected:
+        Collection m_entries;
+    };
+                
+                
+    //----------------------------------------------------------------------
+    // A simple range  with data class where you get to define the type of
+    // the range base "B", the type used for the range byte size "S", and
+    // the type for the associated data "T".
+    //----------------------------------------------------------------------
+    template <typename B, typename T>
+    struct AddressData
+    {
+        typedef B BaseType;
+        typedef T DataType;
+        
+        BaseType addr;
+        DataType data;
+        
+        AddressData () :
+            addr (),
+            data ()
+        {
+        }
+        
+        AddressData (B a, DataType d) :
+            addr (a),
+            data (d)
+        {
+        }
+        
+        bool
+        operator < (const AddressData &rhs) const
+        {
+            if (this->addr == rhs.addr)
+                return this->data < rhs.data;
+            return this->addr < rhs.addr;
+        }
+        
+        bool
+        operator == (const AddressData &rhs) const
+        {
+            return this->addr == rhs.addr &&
+                   this->data == rhs.data;
+        }
+        
+        bool
+        operator != (const AddressData &rhs) const
+        {
+            return this->addr != rhs.addr ||
+                   this->data == rhs.data;
+        }
+    };
+
+
+    template <typename B, typename T, unsigned N>
+    class AddressDataArray
+    {
+    public:
+        typedef AddressData<B,T> Entry;
+        //typedef std::vector<Entry> Collection;
+        typedef llvm::SmallVector<Entry, N> Collection;
+
+
+        AddressDataArray ()
+        {
+        }
+        
+        ~AddressDataArray()
+        {
+        }
+        
+        void
+        Append (const Entry &entry)
+        {
+            m_entries.push_back (entry);
+        }
+    
+        void
+        Sort ()
+        {
+            if (m_entries.size() > 1)
+                std::stable_sort (m_entries.begin(), m_entries.end());
+        }
+    
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+        bool
+        IsSorted () const
+        {
+            typename Collection::const_iterator pos, end, prev;
+            // First we determine if we can combine any of the Entry objects so we
+            // don't end up allocating and making a new collection for no reason
+            for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
+            {
+                if (prev != end && *pos < *prev)
+                    return false;
+            }
+            return true;
+        }
+#endif
+
+        void
+        Clear ()
+        {
+            m_entries.clear();
+        }
+        
+        bool
+        IsEmpty () const
+        {
+            return m_entries.empty();
+        }
+        
+        size_t
+        GetSize () const
+        {
+            return m_entries.size();
+        }
+        
+        const Entry *
+        GetEntryAtIndex (size_t i) const
+        {
+            if (i<m_entries.size())
+                return &m_entries[i];
+            return NULL;
+        }
+
+        // Clients must ensure that "i" is a valid index prior to calling this function
+        const Entry &
+        GetEntryRef (size_t i) const
+        {
+            return m_entries[i];
+        }
+
+        static bool 
+        BaseLessThan (const Entry& lhs, const Entry& rhs)
+        {
+            return lhs.addr < rhs.addr;
+        }
+        
+        Entry *
+        FindEntry (B addr, bool exact_match_only)
+        {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
+            if ( !m_entries.empty() )
+            {
+                Entry entry;
+                entry.addr = addr;
+                typename Collection::iterator begin = m_entries.begin();
+                typename Collection::iterator end = m_entries.end();
+                typename Collection::iterator pos = std::lower_bound (begin, end, entry, BaseLessThan);
+                
+                if (pos != end)
+                {
+                    if (pos->addr == addr || !exact_match_only)
+                        return &(*pos);
+                }
+           }
+            return NULL;
+        }
+        
+        const Entry *
+        FindNextEntry (const Entry *entry)
+        {
+            if (entry >= &*m_entries.begin() && entry + 1 < &*m_entries.end())
+                return entry + 1;
             return NULL;
         }
         
