@@ -16,6 +16,7 @@ class NSConcreteNotification_SummaryProvider:
 
 	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
 		if not (self.sys_params.types_cache.id):
 			self.sys_params.types_cache.id = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 		self.update();
@@ -26,7 +27,7 @@ class NSConcreteNotification_SummaryProvider:
 	# skip the ISA and go to the name pointer
 	def offset(self):
 		return self.sys_params.pointer_size
-\
+
 	def name(self):
 		string_ptr = self.valobj.CreateChildAtOffset("name",
 							self.offset(),
@@ -74,10 +75,10 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSConcreteNotification':
-		wrapper = NSConcreteNotification_SummaryProvider(valobj)
+		wrapper = NSConcreteNotification_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSNotificationUnknown_SummaryProvider(valobj)
+		wrapper = NSNotificationUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 
