@@ -2250,7 +2250,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // -fobjc-default-synthesize-properties=0 is default.
+  // -fobjc-default-synthesize-properties=1 is default. This only has an effect
+  // if the nonfragile objc abi is used.
   if (Args.hasFlag(options::OPT_fobjc_default_synthesize_properties,
                    options::OPT_fno_objc_default_synthesize_properties,
                    getToolChain().IsObjCDefaultSynthPropertiesDefault())) {
