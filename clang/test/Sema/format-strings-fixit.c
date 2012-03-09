@@ -35,7 +35,10 @@ void test() {
   printf("%0-f", 1.23); // - flag should stay
 
   // Positional arguments
+#pragma clang diagnostic push // Don't warn about using positional arguments.
+#pragma clang diagnostic ignored "-Wformat-non-iso"
   printf("%1$f:%2$.*3$f:%4$.*3$f\n", 1, 2, 3, 4);
+#pragma clang diagnostic pop
 
   // Precision
   printf("%10.5d", 1l); // (bug 7394)
@@ -46,7 +49,10 @@ void test() {
 
   // Bad length modifiers
   printf("%hhs", "foo");
+#pragma clang diagnostic push // Don't warn about using positional arguments.
+#pragma clang diagnostic ignored "-Wformat-non-iso"
   printf("%1$zp", (void *)0);
+#pragma clang diagnostic pop
 
   // Preserve the original formatting for unsigned integers.
   unsigned long val = 42;

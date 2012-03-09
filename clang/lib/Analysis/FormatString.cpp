@@ -156,6 +156,9 @@ clang::analyze_format_string::ParseArgPosition(FormatStringHandler &H,
   }
 
   if (Amt.getHowSpecified() == OptionalAmount::Constant && *(I++) == '$') {
+    // Warn that positional arguments are non-standard.
+    H.HandlePosition(Start, I - Start);
+
     // Special case: '%0$', since this is an easy mistake.
     if (Amt.getConstantAmount() == 0) {
       H.HandleZeroPosition(Start, I - Start);

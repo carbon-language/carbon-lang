@@ -1677,6 +1677,8 @@ public:
       const analyze_format_string::ConversionSpecifier &CS,
       const char *startSpecifier, unsigned specifierLen);
 
+  virtual void HandlePosition(const char *startPos, unsigned posLen);
+
   virtual void HandleInvalidPosition(const char *startSpecifier,
                                      unsigned specifierLen,
                                      analyze_format_string::PositionContext p);
@@ -1756,7 +1758,7 @@ void CheckFormatHandler::HandleNonStandardLengthModifier(
     const analyze_format_string::LengthModifier &LM,
     const char *startSpecifier, unsigned specifierLen) {
   EmitFormatDiagnostic(S.PDiag(diag::warn_format_non_standard) << LM.toString()
-                       << "length modifier",
+                       << 0,
                        getLocationOfByte(LM.getStart()),
                        /*IsStringLocation*/true,
                        getSpecifierRange(startSpecifier, specifierLen));
@@ -1766,7 +1768,7 @@ void CheckFormatHandler::HandleNonStandardConversionSpecifier(
     const analyze_format_string::ConversionSpecifier &CS,
     const char *startSpecifier, unsigned specifierLen) {
   EmitFormatDiagnostic(S.PDiag(diag::warn_format_non_standard) << CS.toString()
-                       << "conversion specifier",
+                       << 1,
                        getLocationOfByte(CS.getStart()),
                        /*IsStringLocation*/true,
                        getSpecifierRange(startSpecifier, specifierLen));
@@ -1781,6 +1783,14 @@ void CheckFormatHandler::HandleNonStandardConversionSpecification(
                        getLocationOfByte(LM.getStart()),
                        /*IsStringLocation*/true,
                        getSpecifierRange(startSpecifier, specifierLen));
+}
+
+void CheckFormatHandler::HandlePosition(const char *startPos,
+                                        unsigned posLen) {
+  EmitFormatDiagnostic(S.PDiag(diag::warn_format_non_standard_positional_arg),
+                               getLocationOfByte(startPos),
+                               /*IsStringLocation*/true,
+                               getSpecifierRange(startPos, posLen));
 }
 
 void

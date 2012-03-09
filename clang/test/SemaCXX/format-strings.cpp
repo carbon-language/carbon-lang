@@ -9,7 +9,7 @@ extern int vprintf(const char *restrict, va_list);
 }
 
 void f(char **sp, float *fp) {
-  scanf("%as", sp); // expected-warning{{'a' is a non-standard length modifier}}
+  scanf("%as", sp); // expected-warning{{'a' length modifier is not supported by ISO C}}
 
   // TODO: Warn that the 'a' conversion specifier is a C++11 feature.
   printf("%a", 1.0);

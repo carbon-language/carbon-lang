@@ -306,9 +306,9 @@ protected:
   LengthModifier LM;
   OptionalAmount FieldWidth;
   ConversionSpecifier CS;
-    /// Positional arguments, an IEEE extension:
-    ///  IEEE Std 1003.1, 2004 Edition
-    ///  http://www.opengroup.org/onlinepubs/009695399/functions/printf.html
+  /// Positional arguments, an IEEE extension:
+  ///  IEEE Std 1003.1, 2004 Edition
+  ///  http://www.opengroup.org/onlinepubs/009695399/functions/printf.html
   bool UsesPositionalArg;
   unsigned argIndex;
 public:
@@ -597,6 +597,8 @@ public:
   virtual ~FormatStringHandler();
 
   virtual void HandleNullChar(const char *nullCharacter) {}
+
+  virtual void HandlePosition(const char *startPos, unsigned posLen) {}
 
   virtual void HandleInvalidPosition(const char *startPos, unsigned posLen,
                                      PositionContext p) {}
