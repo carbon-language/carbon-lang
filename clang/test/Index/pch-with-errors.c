@@ -13,6 +13,8 @@ struct baz {
   zed h;
 };
 
+void errparm(zed e);
+
 struct S {
   {
 ;
