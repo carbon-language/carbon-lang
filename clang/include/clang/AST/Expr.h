@@ -868,6 +868,8 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
   SourceRange getSourceRange() const;
+  SourceLocation getLocStart() const;
+  SourceLocation getLocEnd() const;
 
   /// \brief Determine whether this declaration reference was preceded by a
   /// C++ nested-name-specifier, e.g., \c N::foo.
@@ -2392,6 +2394,8 @@ public:
   void setMemberLoc(SourceLocation L) { MemberLoc = L; }
 
   SourceRange getSourceRange() const;
+  SourceLocation getLocStart() const;
+  SourceLocation getLocEnd() const;
 
   SourceLocation getExprLoc() const { return MemberLoc; }
 
@@ -2625,6 +2629,12 @@ public:
 
   SourceRange getSourceRange() const {
     return getSubExpr()->getSourceRange();
+  }
+  SourceLocation getLocStart() const {
+    return getSubExpr()->getLocStart();
+  }
+  SourceLocation getLocEnd() const {
+    return getSubExpr()->getLocEnd();
   }
 
   static bool classof(const Stmt *T) {
