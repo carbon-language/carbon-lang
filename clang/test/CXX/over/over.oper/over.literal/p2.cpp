@@ -25,3 +25,9 @@ void f() {
 extern "C++" {
   void operator "" _g(const char *);
 }
+
+template<char...> void operator "" _h() {}
+
+template<> void operator "" _h<'a', 'b', 'c'>() {}
+
+template void operator "" _h<'a', 'b', 'c', 'd'>();

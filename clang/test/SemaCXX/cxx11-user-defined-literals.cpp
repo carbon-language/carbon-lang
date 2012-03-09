@@ -126,3 +126,12 @@ template<char...Cs> constexpr unsigned operator"" _hash() {
 }
 static_assert(0x1234_hash == 0x103eff5e, "");
 static_assert(hash<'0', 'x', '1', '2', '3', '4'>(0) == 0x103eff5e, "");
+
+// Functions and literal suffixes go in separate namespaces.
+namespace Namespace {
+  template<char...> int operator"" _x();
+  int k = _x(); // expected-error {{undeclared identifier '_x'}}
+
+  int _y(unsigned long long);
+  int k2 = 123_y; // expected-error {{no matching literal operator for call to 'operator "" _y'}}
+}
