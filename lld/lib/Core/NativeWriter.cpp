@@ -345,8 +345,8 @@ private:
     if ( name.empty() )
       return 0;
     uint32_t result = _stringPool.size();
-    _stringPool.insert(_stringPool.end(), name.size()+1, 0);
-    strcpy(&_stringPool[result], name.data());
+    _stringPool.insert(_stringPool.end(), name.begin(), name.end());
+    _stringPool.push_back(0);
     return result;
   }
 
