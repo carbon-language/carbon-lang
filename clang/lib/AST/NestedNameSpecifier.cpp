@@ -434,9 +434,6 @@ namespace {
   }
 }
 
-NestedNameSpecifierLocBuilder::NestedNameSpecifierLocBuilder()
-  : Representation(0), Buffer(0), BufferSize(0), BufferCapacity(0) { }
-
 NestedNameSpecifierLocBuilder::
 NestedNameSpecifierLocBuilder(const NestedNameSpecifierLocBuilder &Other) 
   : Representation(Other.Representation), Buffer(0),
@@ -497,11 +494,6 @@ operator=(const NestedNameSpecifierLocBuilder &Other) {
   Buffer = static_cast<char *>(malloc(BufferSize));
   memcpy(Buffer, Other.Buffer, BufferSize);
   return *this;
-}
-
-NestedNameSpecifierLocBuilder::~NestedNameSpecifierLocBuilder() {
-  if (BufferCapacity)
-    free(Buffer);
 }
 
 void NestedNameSpecifierLocBuilder::Extend(ASTContext &Context, 

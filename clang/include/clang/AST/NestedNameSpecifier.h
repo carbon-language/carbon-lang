@@ -339,14 +339,18 @@ class NestedNameSpecifierLocBuilder {
   unsigned BufferCapacity;
 
 public:
-  NestedNameSpecifierLocBuilder();
+  NestedNameSpecifierLocBuilder()
+    : Representation(0), Buffer(0), BufferSize(0), BufferCapacity(0) { }
 
   NestedNameSpecifierLocBuilder(const NestedNameSpecifierLocBuilder &Other);
 
   NestedNameSpecifierLocBuilder &
   operator=(const NestedNameSpecifierLocBuilder &Other);
 
-  ~NestedNameSpecifierLocBuilder();
+  ~NestedNameSpecifierLocBuilder() {
+    if (BufferCapacity)
+      free(Buffer);
+  }
 
   /// \brief Retrieve the representation of the nested-name-specifier.
   NestedNameSpecifier *getRepresentation() const { return Representation; }
