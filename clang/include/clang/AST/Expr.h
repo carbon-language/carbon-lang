@@ -595,50 +595,52 @@ public:
 
   /// IgnoreImpCasts - Skip past any implicit casts which might
   /// surround this expression.  Only skips ImplicitCastExprs.
-  Expr *IgnoreImpCasts();
+  Expr *IgnoreImpCasts() LLVM_READONLY;
 
   /// IgnoreImplicit - Skip past any implicit AST nodes which might
   /// surround this expression.
-  Expr *IgnoreImplicit() { return cast<Expr>(Stmt::IgnoreImplicit()); }
+  Expr *IgnoreImplicit() LLVM_READONLY {
+    return cast<Expr>(Stmt::IgnoreImplicit());
+  }
 
   /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
   ///  its subexpression.  If that subexpression is also a ParenExpr,
   ///  then this method recursively returns its subexpression, and so forth.
   ///  Otherwise, the method returns the current Expr.
-  Expr *IgnoreParens();
+  Expr *IgnoreParens() LLVM_READONLY;
 
   /// IgnoreParenCasts - Ignore parentheses and casts.  Strip off any ParenExpr
   /// or CastExprs, returning their operand.
-  Expr *IgnoreParenCasts();
+  Expr *IgnoreParenCasts() LLVM_READONLY;
 
   /// IgnoreParenImpCasts - Ignore parentheses and implicit casts.  Strip off
   /// any ParenExpr or ImplicitCastExprs, returning their operand.
-  Expr *IgnoreParenImpCasts();
+  Expr *IgnoreParenImpCasts() LLVM_READONLY;
 
   /// IgnoreConversionOperator - Ignore conversion operator. If this Expr is a
   /// call to a conversion operator, return the argument.
-  Expr *IgnoreConversionOperator();
+  Expr *IgnoreConversionOperator() LLVM_READONLY;
 
-  const Expr *IgnoreConversionOperator() const {
+  const Expr *IgnoreConversionOperator() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreConversionOperator();
   }
 
-  const Expr *IgnoreParenImpCasts() const {
+  const Expr *IgnoreParenImpCasts() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParenImpCasts();
   }
 
   /// Ignore parentheses and lvalue casts.  Strip off any ParenExpr and
   /// CastExprs that represent lvalue casts, returning their operand.
-  Expr *IgnoreParenLValueCasts();
+  Expr *IgnoreParenLValueCasts() LLVM_READONLY;
 
-  const Expr *IgnoreParenLValueCasts() const {
+  const Expr *IgnoreParenLValueCasts() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParenLValueCasts();
   }
 
   /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
   /// value (including ptr->int casts of the same size).  Strip off any
   /// ParenExpr or CastExprs, returning their operand.
-  Expr *IgnoreParenNoopCasts(ASTContext &Ctx);
+  Expr *IgnoreParenNoopCasts(ASTContext &Ctx) LLVM_READONLY;
 
   /// \brief Determine whether this expression is a default function argument.
   ///
@@ -656,16 +658,16 @@ public:
   /// \brief Whether this expression is an implicit reference to 'this' in C++.
   bool isImplicitCXXThis() const;
 
-  const Expr *IgnoreImpCasts() const {
+  const Expr *IgnoreImpCasts() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreImpCasts();
   }
-  const Expr *IgnoreParens() const {
+  const Expr *IgnoreParens() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
-  const Expr *IgnoreParenCasts() const {
+  const Expr *IgnoreParenCasts() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParenCasts();
   }
-  const Expr *IgnoreParenNoopCasts(ASTContext &Ctx) const {
+  const Expr *IgnoreParenNoopCasts(ASTContext &Ctx) const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParenNoopCasts(Ctx);
   }
 
