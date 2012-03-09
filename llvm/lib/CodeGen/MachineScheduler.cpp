@@ -173,9 +173,10 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
             else dbgs() << "End";
             dbgs() << " Remaining: " << RemainingCount << "\n");
 
-      // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
-      // to our schedule() method.
+      // Schedule a region: possibly reorder instructions.
       Scheduler->schedule();
+
+      // Close the current region.
       Scheduler->exitRegion();
 
       // Scheduling has invalidated the current iterator 'I'. Ask the
