@@ -123,8 +123,7 @@ __fundamental_type_info::can_catch(const __shim_type_info* thrown_type,
 }
 
 bool
-__array_type_info::can_catch(const __shim_type_info* thrown_type,
-                             void*&) const
+__array_type_info::can_catch(const __shim_type_info*, void*&) const
 {
     // We can get here if someone tries to catch an array by reference.
     //   However if someone tries to throw an array, it immediately gets
@@ -134,8 +133,7 @@ __array_type_info::can_catch(const __shim_type_info* thrown_type,
 }
 
 bool
-__function_type_info::can_catch(const __shim_type_info* thrown_type,
-                                void*&) const
+__function_type_info::can_catch(const __shim_type_info*, void*&) const
 {
     // We can get here if someone tries to catch a function by reference.
     //   However if someone tries to throw a function, it immediately gets

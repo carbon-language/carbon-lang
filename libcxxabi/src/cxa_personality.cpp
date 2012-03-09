@@ -527,6 +527,9 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     // Walk call-site table looking for range that 
     // includes current PC. 
     uint8_t callSiteEncoding = *lsda++;
+#if __arm__
+    (void)callSiteEncoding;  // On arm callSiteEncoding is never used
+#endif
     uint32_t callSiteTableLength = static_cast<uint32_t>(readULEB128(&lsda));
     const uint8_t* callSiteTableStart = lsda;
     const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;

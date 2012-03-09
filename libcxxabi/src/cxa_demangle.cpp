@@ -79,7 +79,7 @@ public:
         return get_demangled_name(buf);
     }
 
-    virtual bool ends_with_template(bool parsing = false) const
+    virtual bool ends_with_template(bool /*parsing*/ = false) const
     {
         return false;
     }
@@ -3883,7 +3883,7 @@ public:
         *buf++ = '>';
         return buf;
     }
-    virtual bool ends_with_template(bool parsing = false) const
+    virtual bool ends_with_template(bool /*parsing*/ = false) const
     {
         return true;
     }
@@ -5792,7 +5792,7 @@ public:
         return __left_->fix_forward_references(t_begin, t_end) &&
                __right_->fix_forward_references(t_begin, t_end);
     }
-    virtual __node* extract_cv(__node*& rt) const
+    virtual __node* extract_cv(__node*&) const
     {
         return __right_->extract_cv(const_cast<__node*&>(__right_));
     }
@@ -5860,7 +5860,7 @@ public:
             r = __left_->fix_forward_references(t_begin, t_end);
         return r && __right_->fix_forward_references(t_begin, t_end);
     }
-    virtual __node* extract_cv(__node*& rt) const
+    virtual __node* extract_cv(__node*&) const
     {
         return __right_->extract_cv(const_cast<__node*&>(__right_));
     }
@@ -6926,7 +6926,7 @@ __demangle_tree::__parse_ctor_dtor_name(const char* first, const char* last)
 }
 
 const char*
-__demangle_tree::__parse_unscoped_template_name(const char* first, const char* last)
+__demangle_tree::__parse_unscoped_template_name(const char* first, const char*)
 {
 //    assert(!"__parse_unscoped_template_name not implemented");
     __status_ = not_yet_implemented;
