@@ -16,6 +16,7 @@
 
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
   class Decl;
@@ -146,7 +147,7 @@ public:
     return const_cast<ASTLocation*>(this)->getReferencedDecl();
   }
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   void print(raw_ostream &OS) const;
 };

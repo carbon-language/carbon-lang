@@ -17,8 +17,9 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Specifiers.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/PrettyStackTrace.h"
 
 namespace clang {
 class DeclContext;
@@ -337,11 +338,15 @@ protected:
 public:
 
   /// \brief Source range that this declaration covers.
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getLocation(), getLocation());
   }
-  SourceLocation getLocStart() const { return getSourceRange().getBegin(); }
-  SourceLocation getLocEnd() const { return getSourceRange().getEnd(); }
+  SourceLocation getLocStart() const LLVM_READONLY {
+    return getSourceRange().getBegin();
+  }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return getSourceRange().getEnd();
+  }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -375,7 +380,7 @@ public:
 
   bool isInAnonymousNamespace() const;
 
-  ASTContext &getASTContext() const;
+  ASTContext &getASTContext() const LLVM_READONLY;
 
   void setAccess(AccessSpecifier AS) {
     Access = AS;

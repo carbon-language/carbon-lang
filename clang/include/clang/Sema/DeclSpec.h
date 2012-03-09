@@ -29,6 +29,7 @@
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
@@ -446,9 +447,9 @@ public:
   CXXScopeSpec &getTypeSpecScope() { return TypeScope; }
   const CXXScopeSpec &getTypeSpecScope() const { return TypeScope; }
 
-  const SourceRange &getSourceRange() const { return Range; }
-  SourceLocation getLocStart() const { return Range.getBegin(); }
-  SourceLocation getLocEnd() const { return Range.getEnd(); }
+  const SourceRange &getSourceRange() const LLVM_READONLY { return Range; }
+  SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
 
   SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
   SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
@@ -966,11 +967,11 @@ public:
   void setTemplateId(TemplateIdAnnotation *TemplateId);
 
   /// \brief Return the source range that covers this unqualified-id.
-  SourceRange getSourceRange() const { 
+  SourceRange getSourceRange() const LLVM_READONLY { 
     return SourceRange(StartLocation, EndLocation); 
   }
-  SourceLocation getLocStart() const { return StartLocation; }
-  SourceLocation getLocEnd() const { return EndLocation; }
+  SourceLocation getLocStart() const LLVM_READONLY { return StartLocation; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLocation; }
 };
   
 /// CachedTokens - A set of tokens that has been cached for later
@@ -1529,9 +1530,9 @@ public:
   }
 
   /// getSourceRange - Get the source range that spans this declarator.
-  const SourceRange &getSourceRange() const { return Range; }
-  SourceLocation getLocStart() const { return Range.getBegin(); }
-  SourceLocation getLocEnd() const { return Range.getEnd(); }
+  const SourceRange &getSourceRange() const LLVM_READONLY { return Range; }
+  SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
 
   void SetSourceRange(SourceRange R) { Range = R; }
   /// SetRangeBegin - Set the start of the source range to Loc, unless it's

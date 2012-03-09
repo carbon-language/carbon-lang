@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/SelectorLocationsKind.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
   class IdentifierInfo;
@@ -43,7 +44,7 @@ public:
   SourceLocation getAtLoc() const { return AtLoc; }
   void setAtLoc(SourceLocation L) { AtLoc = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, String->getLocEnd());
   }
 
@@ -72,7 +73,7 @@ public:
   bool getValue() const { return Value; }
   void setValue(bool V) { Value = V; }
     
-  SourceRange getSourceRange() const { return SourceRange(Loc); }
+  SourceRange getSourceRange() const LLVM_READONLY { return SourceRange(Loc); }
     
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -111,7 +112,7 @@ public:
     
   SourceLocation getAtLoc() const { return AtLoc; }
   
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, Number->getSourceRange().getEnd());
   }
 
@@ -148,7 +149,7 @@ public:
 
   static ObjCArrayLiteral *CreateEmpty(ASTContext &C, unsigned NumElements);
 
-  SourceRange getSourceRange() const { return Range; }
+  SourceRange getSourceRange() const LLVM_READONLY { return Range; }
 
   static bool classof(const Stmt *T) {
       return T->getStmtClass() == ObjCArrayLiteralClass;
@@ -311,7 +312,7 @@ public:
   ObjCMethodDecl *getDictWithObjectsMethod() const
     { return DictWithObjectsMethod; }
 
-  SourceRange getSourceRange() const { return Range; }
+  SourceRange getSourceRange() const LLVM_READONLY { return Range; }
   
   static bool classof(const Stmt *T) {
       return T->getStmtClass() == ObjCDictionaryLiteralClass;
@@ -362,7 +363,7 @@ public:
     EncodedType = EncType; 
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, RParenLoc);
   }
 
@@ -396,7 +397,7 @@ public:
   void setAtLoc(SourceLocation L) { AtLoc = L; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, RParenLoc);
   }
 
@@ -436,7 +437,7 @@ public:
   void setAtLoc(SourceLocation L) { AtLoc = L; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, RParenLoc);
   }
 
@@ -486,7 +487,7 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return isFreeIvar() ? SourceRange(Loc)
     : SourceRange(getBase()->getLocStart(), Loc);
   }
@@ -666,7 +667,7 @@ public:
   bool isSuperReceiver() const { return Receiver.is<const Type*>(); }
   bool isClassReceiver() const { return Receiver.is<ObjCInterfaceDecl*>(); }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange((isObjectReceiver() ? getBase()->getLocStart()
                                            : getReceiverLocation()), 
                        IdLoc);
@@ -753,7 +754,7 @@ public:
   
   SourceLocation getRBracket() const { return RBracket; }
   void setRBracket(SourceLocation RB) { RBracket = RB; }
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(SubExprs[BASE]->getLocStart(), RBracket);
   }
   
@@ -1290,7 +1291,7 @@ public:
     LBracLoc = R.getBegin();
     RBracLoc = R.getEnd();
   }
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(LBracLoc, RBracLoc);
   }
 
@@ -1353,7 +1354,7 @@ public:
   SourceLocation getIsaMemberLoc() const { return IsaMemberLoc; }
   void setIsaMemberLoc(SourceLocation L) { IsaMemberLoc = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getBase()->getLocStart(), IsaMemberLoc);
   }
 
@@ -1426,7 +1427,7 @@ public:
   child_range children() { return child_range(&Operand, &Operand+1); }  
 
   // Source locations are determined by the subexpression.
-  SourceRange getSourceRange() const { return Operand->getSourceRange(); }
+  SourceRange getSourceRange() const LLVM_READONLY { return Operand->getSourceRange(); }
   SourceLocation getExprLoc() const { return getSubExpr()->getExprLoc(); }
 
   static bool classof(const Stmt *s) {
@@ -1474,7 +1475,7 @@ public:
   /// \brief The location of the bridge keyword.
   SourceLocation getBridgeKeywordLoc() const { return BridgeKeywordLoc; }
   
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(LParenLoc, getSubExpr()->getLocEnd());
   }
   

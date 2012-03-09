@@ -22,6 +22,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 namespace ento {
@@ -110,7 +111,7 @@ public:
     return Msg->getSuperLoc();
   }  
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     if (PE)
       return PE->getSourceRange();
     return Msg->getSourceRange();

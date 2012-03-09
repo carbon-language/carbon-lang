@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_STMTCXX_H
 
 #include "clang/AST/Stmt.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 
@@ -37,7 +38,7 @@ public:
   CXXCatchStmt(EmptyShell Empty)
   : Stmt(CXXCatchStmtClass), ExceptionDecl(0), HandlerBlock(0) {}
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(CatchLoc, HandlerBlock->getLocEnd());
   }
 
@@ -83,7 +84,7 @@ public:
   static CXXTryStmt *Create(ASTContext &C, EmptyShell Empty,
                             unsigned numHandlers);
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getTryLoc(), getEndLoc());
   }
 
@@ -189,7 +190,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd());
   }
   static bool classof(const Stmt *T) {
@@ -274,7 +275,7 @@ public:
     return reinterpret_cast<CompoundStmt *>(SubStmt);
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(KeywordLoc, SubStmt->getLocEnd());
   }
 

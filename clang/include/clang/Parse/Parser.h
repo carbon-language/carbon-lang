@@ -20,9 +20,10 @@
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/DeclSpec.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include <stack>
 
 namespace clang {
@@ -1115,7 +1116,7 @@ private:
     /// \brief Whether the last template parameter list was empty.
     bool LastParameterListWasEmpty;
 
-    SourceRange getSourceRange() const;
+    SourceRange getSourceRange() const LLVM_READONLY;
   };
 
   /// \brief Contains a late templated function.

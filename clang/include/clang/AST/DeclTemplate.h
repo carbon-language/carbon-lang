@@ -18,6 +18,7 @@
 #include "clang/AST/Redeclarable.h"
 #include "clang/AST/TemplateBase.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/Compiler.h"
 #include <limits>
 
 namespace clang {
@@ -105,7 +106,7 @@ public:
   SourceLocation getLAngleLoc() const { return LAngleLoc; }
   SourceLocation getRAngleLoc() const { return RAngleLoc; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(TemplateLoc, RAngleLoc);
   }
 };
@@ -239,7 +240,7 @@ public:
     return K >= firstTemplate && K <= lastTemplate;
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(TemplateParams->getTemplateLoc(),
                        TemplatedDecl->getSourceRange().getEnd());
   }
@@ -917,7 +918,7 @@ public:
   /// \brief Returns whether this is a parameter pack.
   bool isParameterPack() const;
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -995,7 +996,7 @@ public:
   using TemplateParmPosition::setPosition;
   using TemplateParmPosition::getIndex;
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
@@ -1181,7 +1182,7 @@ public:
     DefaultArgumentWasInherited = false;
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     SourceLocation End = getLocation();
     if (hasDefaultArgument() && !defaultArgumentWasInherited())
       End = getDefaultArgument().getSourceRange().getEnd();
@@ -1437,7 +1438,7 @@ public:
     return ExplicitInfo ? ExplicitInfo->TemplateKeywordLoc : SourceLocation();
   }
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, TemplateArgs->data(), TemplateArgs->size(), getASTContext());

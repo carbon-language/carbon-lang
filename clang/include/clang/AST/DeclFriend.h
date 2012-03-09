@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_DECLFRIEND_H
 
 #include "clang/AST/DeclCXX.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 
@@ -100,7 +101,7 @@ public:
   }
 
   /// Retrieves the source range for the friend declaration.
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     /* FIXME: consider the case of templates wrt start of range. */
     if (NamedDecl *ND = getFriendDecl())
       return SourceRange(getFriendLoc(), ND->getLocEnd());

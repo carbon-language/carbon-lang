@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   template <typename T> struct DenseMapInfo;
@@ -510,15 +511,15 @@ public:
   /// getEndLoc - Retrieve the location of the last token.
   SourceLocation getEndLoc() const;
   /// getSourceRange - The range of the declaration name.
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     SourceLocation BeginLoc = getBeginLoc();
     SourceLocation EndLoc = getEndLoc();
     return SourceRange(BeginLoc, EndLoc.isValid() ? EndLoc : BeginLoc);
   }
-  SourceLocation getLocStart() const {
+  SourceLocation getLocStart() const LLVM_READONLY {
     return getBeginLoc();
   }
-  SourceLocation getLocEnd() const {
+  SourceLocation getLocEnd() const LLVM_READONLY {
     SourceLocation EndLoc = getEndLoc();
     return EndLoc.isValid() ? EndLoc : getLocStart();
   }

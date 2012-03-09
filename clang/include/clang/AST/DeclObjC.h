@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/SelectorLocationsKind.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 class Expr;
@@ -281,10 +282,10 @@ public:
   void setAsRedeclaration(const ObjCMethodDecl *PrevMethod);
 
   // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getLocation(); }
-  SourceLocation getLocEnd() const { return EndLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return getLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
   void setEndLoc(SourceLocation Loc) { EndLoc = Loc; }
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getLocation(), EndLoc);
   }
 
@@ -507,7 +508,7 @@ public:
     AtEnd = atEnd;
   }
 
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtStart, getAtEndRange().getEnd());
   }
 
@@ -637,7 +638,7 @@ public:
 
   static ObjCInterfaceDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     if (isThisDeclarationADefinition())
       return ObjCContainerDecl::getSourceRange();
     
@@ -1217,7 +1218,7 @@ public:
   /// \brief Starts the definition of this Objective-C protocol.
   void startDefinition();
 
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     if (isThisDeclarationADefinition())
       return ObjCContainerDecl::getSourceRange();
    
@@ -1868,7 +1869,7 @@ public:
     return PropertyIvarDecl;
   }
 
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, getLocation());
   }
 
@@ -1936,9 +1937,9 @@ public:
 
   static ObjCPropertyImplDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
 
-  SourceLocation getLocStart() const { return AtLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return AtLoc; }
   void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }
 
   ObjCPropertyDecl *getPropertyDecl() const {

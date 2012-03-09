@@ -23,6 +23,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 
@@ -130,7 +131,7 @@ public:
   /// setColonLoc - Sets the location of the colon.
   void setColonLoc(SourceLocation CLoc) { ColonLoc = CLoc; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getAccessSpecifierLoc(), getColonLoc());
   }
 
@@ -208,9 +209,9 @@ public:
 
   /// getSourceRange - Retrieves the source range that contains the
   /// entire base specifier.
-  SourceRange getSourceRange() const { return Range; }
-  SourceLocation getLocStart() const { return Range.getBegin(); }
-  SourceLocation getLocEnd() const { return Range.getEnd(); }
+  SourceRange getSourceRange() const LLVM_READONLY { return Range; }
+  SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
 
   /// isVirtual - Determines whether the base class is a virtual base
   /// class (or not).
@@ -1851,7 +1852,7 @@ public:
   SourceLocation getSourceLocation() const;
 
   /// \brief Determine the source range covering the entire initializer.
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   /// isWritten - Returns true if this initializer is explicitly written
   /// in the source code.
@@ -2334,7 +2335,7 @@ public:
   void setExternLoc(SourceLocation L) { ExternLoc = L; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
 
-  SourceLocation getLocEnd() const {
+  SourceLocation getLocEnd() const LLVM_READONLY {
     if (hasBraces())
       return getRBraceLoc();
     // No braces: get the end location of the (only) declaration in context
@@ -2342,7 +2343,7 @@ public:
     return decls_empty() ? getLocation() : decls_begin()->getLocEnd();
   }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(ExternLoc, getLocEnd());
   }
 
@@ -2446,7 +2447,7 @@ public:
                                     DeclContext *CommonAncestor);
   static UsingDirectiveDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(UsingLoc, getLocation());
   }
 
@@ -2538,7 +2539,7 @@ public:
 
   static NamespaceAliasDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(NamespaceLoc, IdentLoc);
   }
 
@@ -2733,7 +2734,7 @@ public:
 
   static UsingDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(UsingLocation, getNameInfo().getEndLoc());
   }
 
@@ -2804,7 +2805,7 @@ public:
   static UnresolvedUsingValueDecl *
   CreateDeserialized(ASTContext &C, unsigned ID);
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(UsingLocation, getNameInfo().getEndLoc());
   }
 
@@ -2906,7 +2907,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getLocation(), getRParenLoc());
   }
 

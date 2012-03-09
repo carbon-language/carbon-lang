@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_STMTOBJC_H
 
 #include "clang/AST/Stmt.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 
@@ -55,7 +56,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd());
   }
   static bool classof(const Stmt *T) {
@@ -103,7 +104,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtCatchLoc, Body->getLocEnd());
   }
 
@@ -133,7 +134,7 @@ public:
   Stmt *getFinallyBody() { return AtFinallyStmt; }
   void setFinallyBody(Stmt *S) { AtFinallyStmt = S; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd());
   }
 
@@ -240,7 +241,7 @@ public:
     getStmts()[1 + NumCatchStmts] = S; 
   }
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtTryStmtClass;
@@ -294,7 +295,7 @@ public:
   }
   void setSynchExpr(Stmt *S) { SubStmts[SYNC_EXPR] = S; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtSynchronizedLoc, getSynchBody()->getLocEnd());
   }
 
@@ -327,7 +328,7 @@ public:
   SourceLocation getThrowLoc() { return AtThrowLoc; }
   void setThrowLoc(SourceLocation Loc) { AtThrowLoc = Loc; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     if (Throw)
       return SourceRange(AtThrowLoc, Throw->getLocEnd());
     else
@@ -360,7 +361,7 @@ public:
   Stmt *getSubStmt() { return SubStmt; }
   void setSubStmt(Stmt *S) { SubStmt = S; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(AtLoc, SubStmt->getLocEnd());
   }
 

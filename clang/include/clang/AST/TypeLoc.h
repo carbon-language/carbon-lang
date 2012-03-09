@@ -18,6 +18,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Basic/Specifiers.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
   class ASTContext;
@@ -93,11 +94,11 @@ public:
   SourceLocation getEndLoc() const;
 
   /// \brief Get the full source range.
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getBeginLoc(), getEndLoc());
   }
-  SourceLocation getLocStart() const { return getBeginLoc(); }
-  SourceLocation getLocEnd() const { return getEndLoc(); }
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
 
   /// \brief Get the local source range.
   SourceRange getLocalSourceRange() const {

@@ -17,6 +17,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 
@@ -248,7 +249,7 @@ public:
   /// For example, if this instance refers to a nested-name-specifier
   /// \c ::std::vector<int>::, the returned source range would cover
   /// from the initial '::' to the last '::'.
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   /// \brief Retrieve the source range covering just the last part of
   /// this nested-name-specifier, not including the prefix.
@@ -430,7 +431,7 @@ public:
   void Adopt(NestedNameSpecifierLoc Other);
 
   /// \brief Retrieve the source range covered by this nested-name-specifier.
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return NestedNameSpecifierLoc(Representation, Buffer).getSourceRange();
   }
 

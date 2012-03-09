@@ -22,6 +22,7 @@
 #include "clang/Basic/Linkage.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/Support/Compiler.h"
 
 namespace clang {
 class CXXTemporary;
@@ -379,7 +380,7 @@ public:
   bool isGnuLocal() const { return LocStart != getLocation(); }
   void setLocStart(SourceLocation L) { LocStart = L; }
 
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(LocStart, getLocation());
   }
 
@@ -500,11 +501,11 @@ public:
     return getOriginalNamespace();
   }
   
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(LocStart, RBraceLoc);
   }
 
-  SourceLocation getLocStart() const { return LocStart; }
+  SourceLocation getLocStart() const LLVM_READONLY { return LocStart; }
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setLocStart(SourceLocation L) { LocStart = L; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
@@ -632,8 +633,8 @@ public:
   /// range taking into account any outer template declarations.
   SourceLocation getOuterLocStart() const;
 
-  virtual SourceRange getSourceRange() const;
-  SourceLocation getLocStart() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
+  SourceLocation getLocStart() const LLVM_READONLY {
     return getOuterLocStart();
   }
 
@@ -850,7 +851,7 @@ public:
 
   static VarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
 
   StorageClass getStorageClass() const {
     return (StorageClass) VarDeclBits.SClass;
@@ -1264,7 +1265,7 @@ public:
 
   static ParmVarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
 
   void setObjCMethodScopeInfo(unsigned parameterIndex) {
     ParmVarDeclBits.IsObjCMethodParam = true;
@@ -1622,7 +1623,7 @@ public:
 
   void setRangeEnd(SourceLocation E) { EndRangeLoc = E; }
 
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
 
   /// \brief Returns true if the function has a body (definition). The
   /// function body might be in any of the (re-)declarations of this
@@ -2198,7 +2199,7 @@ public:
     return cast<RecordDecl>(getDeclContext());
   }
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2234,7 +2235,7 @@ public:
   void setInitExpr(Expr *E) { Init = (Stmt*) E; }
   void setInitVal(const llvm::APSInt &V) { Val = V; }
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2315,9 +2316,9 @@ public:
   const Type *getTypeForDecl() const { return TypeForDecl; }
   void setTypeForDecl(const Type *TD) { TypeForDecl = TD; }
 
-  SourceLocation getLocStart() const { return LocStart; }
+  SourceLocation getLocStart() const LLVM_READONLY { return LocStart; }
   void setLocStart(SourceLocation L) { LocStart = L; }
-  virtual SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const LLVM_READONLY {
     if (LocStart.isValid())
       return SourceRange(LocStart, getLocation());
     else
@@ -2401,7 +2402,7 @@ public:
                              IdentifierInfo *Id, TypeSourceInfo *TInfo);
   static TypedefDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2422,7 +2423,7 @@ public:
                                IdentifierInfo *Id, TypeSourceInfo *TInfo);
   static TypeAliasDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
-  SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2545,7 +2546,7 @@ public:
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
   SourceLocation getOuterLocStart() const;
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
 
   virtual TagDecl* getCanonicalDecl();
   const TagDecl* getCanonicalDecl() const {
@@ -3023,7 +3024,7 @@ public:
   SourceLocation getAsmLoc() const { return getLocation(); }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
-  SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getAsmLoc(), getRParenLoc());
   }
 
@@ -3174,7 +3175,7 @@ public:
                    const Capture *end,
                    bool capturesCXXThis);
 
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -3249,7 +3250,7 @@ public:
   /// identifiers aren't available.
   ArrayRef<SourceLocation> getIdentifierLocs() const;
   
-  virtual SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const LLVM_READONLY;
   
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ImportDecl *D) { return true; }
