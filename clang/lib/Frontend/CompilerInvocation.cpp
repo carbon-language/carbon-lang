@@ -2000,7 +2000,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   // inlining enabled.
   //
   // FIXME: This is affected by other options (-fno-inline).
-  Opts.NoInline = !Opt;
+  Opts.NoInlineDefine = !Opt;
 
   Opts.FastMath = Args.hasArg(OPT_ffast_math);
 

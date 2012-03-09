@@ -518,7 +518,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   else
     Builder.defineMacro("__GNUC_STDC_INLINE__");
 
-  if (LangOpts.NoInline)
+  if (LangOpts.NoInlineDefine)
     Builder.defineMacro("__NO_INLINE__");
 
   if (unsigned PICLevel = LangOpts.PICLevel) {
