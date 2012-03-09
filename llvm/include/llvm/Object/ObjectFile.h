@@ -372,8 +372,7 @@ public:
   static ObjectFile *createObjectFile(MemoryBuffer *Object);
 
   static inline bool classof(const Binary *v) {
-    return v->getType() >= isObject &&
-           v->getType() < lastObject;
+    return v->isObject();
   }
   static inline bool classof(const ObjectFile *v) { return true; }
 

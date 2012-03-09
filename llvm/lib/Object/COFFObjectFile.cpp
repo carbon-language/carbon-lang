@@ -421,7 +421,7 @@ relocation_iterator COFFObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
 }
 
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
-  : ObjectFile(Binary::isCOFF, Object, ec)
+  : ObjectFile(Binary::ID_COFF, Object, ec)
   , Header(0)
   , SectionTable(0)
   , SymbolTable(0)

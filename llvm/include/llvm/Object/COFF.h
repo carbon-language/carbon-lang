@@ -179,7 +179,7 @@ public:
   error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
 
   static inline bool classof(const Binary *v) {
-    return v->getType() == isCOFF;
+    return v->isCOFF();
   }
   static inline bool classof(const COFFObjectFile *v) { return true; }
 };

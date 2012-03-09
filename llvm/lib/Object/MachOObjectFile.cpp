@@ -30,7 +30,7 @@ namespace object {
 
 MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
                                  error_code &ec)
-    : ObjectFile(Binary::isMachO, Object, ec),
+    : ObjectFile(Binary::ID_MachO, Object, ec),
       MachOObj(MOO),
       RegisteredStringTable(std::numeric_limits<uint32_t>::max()) {
   DataRefImpl DRI;

@@ -47,7 +47,7 @@ public:
   MachOObject *getObject() { return MachOObj; }
 
   static inline bool classof(const Binary *v) {
-    return v->getType() == isMachO;
+    return v->isMachO();
   }
   static inline bool classof(const MachOObjectFile *v) { return true; }
 

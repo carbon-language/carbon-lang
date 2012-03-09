@@ -174,7 +174,7 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
 }
 
 Archive::Archive(MemoryBuffer *source, error_code &ec)
-  : Binary(Binary::isArchive, source) {
+  : Binary(Binary::ID_Archive, source) {
   // Check for sufficient magic.
   if (!source || source->getBufferSize()
                  < (8 + sizeof(ArchiveMemberHeader) + 2) // Smallest archive.

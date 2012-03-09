@@ -484,7 +484,8 @@ public:
   // Methods for type inquiry through isa, cast, and dyn_cast
   bool isDyldType() const { return isDyldELFObject; }
   static inline bool classof(const Binary *v) {
-    return v->getType() == Binary::isELF;
+    return v->getType() == getELFType(target_endianness == support::little,
+                                      is64Bits);
   }
   static inline bool classof(const ELFObjectFile *v) { return true; }
 };
@@ -1257,7 +1258,8 @@ void ELFObjectFile<target_endianness, is64Bits>
 template<support::endianness target_endianness, bool is64Bits>
 ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
                                                           , error_code &ec)
-  : ObjectFile(Binary::isELF, Object, ec)
+  : ObjectFile(getELFType(target_endianness == support::little, is64Bits),
+               Object, ec)
   , isDyldELFObject(false)
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)

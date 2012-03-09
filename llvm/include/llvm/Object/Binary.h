@@ -37,15 +37,24 @@ protected:
   Binary(unsigned int Type, MemoryBuffer *Source);
 
   enum {
-    isArchive,
-
+    ID_Archive,
     // Object and children.
-    isObject,
-    isCOFF,
-    isELF,
-    isMachO,
-    lastObject
+    ID_StartObjects,
+    ID_COFF,
+    ID_ELF32L, // ELF 32-bit, little endian
+    ID_ELF32B, // ELF 32-bit, big endian
+    ID_ELF64L, // ELF 64-bit, little endian
+    ID_ELF64B, // ELF 64-bit, big endian
+    ID_MachO,
+    ID_EndObjects
   };
+
+  static inline unsigned int getELFType(bool isLittleEndian, bool is64Bits) {
+    if (isLittleEndian)
+      return is64Bits ? ID_ELF64L : ID_ELF32L;
+    else
+      return is64Bits ? ID_ELF64B : ID_ELF32B;
+  }
 
 public:
   virtual ~Binary();
@@ -56,6 +65,27 @@ public:
   // Cast methods.
   unsigned int getType() const { return TypeID; }
   static inline bool classof(const Binary *v) { return true; }
+
+  // Convenience methods
+  bool isObject() const {
+    return TypeID > ID_StartObjects && TypeID < ID_EndObjects;
+  }
+
+  bool isArchive() const {
+    return TypeID == ID_Archive;
+  }
+
+  bool isELF() const {
+    return TypeID >= ID_ELF32L && TypeID <= ID_ELF64B;
+  }
+
+  bool isMachO() const {
+    return TypeID == ID_MachO;
+  }
+
+  bool isCOFF() const {
+    return TypeID == ID_COFF;
+  }
 };
 
 error_code createBinary(MemoryBuffer *Source, OwningPtr<Binary> &Result);
