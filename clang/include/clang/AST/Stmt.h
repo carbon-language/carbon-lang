@@ -348,8 +348,8 @@ public:
   /// clients will have a pointer to the respective SourceManager.
   SourceRange getSourceRange() const;
 
-  SourceLocation getLocStart() const { return getSourceRange().getBegin(); }
-  SourceLocation getLocEnd() const { return getSourceRange().getEnd(); }
+  SourceLocation getLocStart() const;
+  SourceLocation getLocEnd() const;
 
   // global temp stats (until we have a per-module visitor)
   static void addStmtClass(const StmtClass s);

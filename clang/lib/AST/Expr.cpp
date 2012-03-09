@@ -94,6 +94,8 @@ bool Expr::isKnownToHaveBooleanValue() const {
 
 // Amusing macro metaprogramming hack: check whether a class provides
 // a more specific implementation of getExprLoc().
+//
+// See also Stmt.cpp:{getLocStart(),getLocEnd()}.
 namespace {
   /// This implementation is used when a class provides a custom
   /// implementation of getExprLoc.
@@ -110,7 +112,7 @@ namespace {
   template <class E>
   SourceLocation getExprLocImpl(const Expr *expr,
                                 SourceLocation (Expr::*v)() const) {
-    return static_cast<const E*>(expr)->getSourceRange().getBegin();
+    return static_cast<const E*>(expr)->getLocStart();
   }
 }
 
