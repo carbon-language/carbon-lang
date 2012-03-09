@@ -18,6 +18,8 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanTracer.h"
 #include "lldb/Target/StopInfo.h"
@@ -223,8 +225,11 @@ public:
     ///   A const char * pointer to the thread plan's name.
     //------------------------------------------------------------------
     const char *
-    GetName () const;
-
+    GetName () const
+    {
+        return m_name.c_str();
+    }
+    
     //------------------------------------------------------------------
     /// Returns the Thread that is using this thread plan.
     ///
@@ -232,10 +237,28 @@ public:
     ///   A  pointer to the thread plan's owning thread.
     //------------------------------------------------------------------
     Thread &
-    GetThread();
+    GetThread()
+    {
+        return m_thread;
+    }
 
     const Thread &
-    GetThread() const;
+    GetThread() const
+    {
+        return m_thread;
+    }
+    
+    Target &
+    GetTarget()
+    {
+        return m_thread.GetProcess()->GetTarget();
+    }
+
+    const Target &
+    GetTarget() const
+    {
+        return m_thread.GetProcess()->GetTarget();
+    }
 
     //------------------------------------------------------------------
     /// Print a description of this thread to the stream \a s.
@@ -332,10 +355,16 @@ public:
     MischiefManaged ();
 
     bool
-    GetPrivate ();
+    GetPrivate ()
+    {
+        return m_plan_private;
+    }
 
     void
-    SetPrivate (bool input);
+    SetPrivate (bool input)
+    {
+        m_plan_private = input;
+    }
 
     virtual void
     DidPush();
@@ -345,7 +374,10 @@ public:
 
     // This pushes \a plan onto the plan stack of the current plan's thread.
     void
-    PushPlan (lldb::ThreadPlanSP &thread_plan_sp);
+    PushPlan (lldb::ThreadPlanSP &thread_plan_sp)
+    {
+        m_thread.PushPlan (thread_plan_sp);
+    }
     
     ThreadPlanKind GetKind() const
     {
@@ -403,7 +435,10 @@ protected:
     // GetPreviousPlan protected, but only friend ThreadPlan to thread.
 
     ThreadPlan *
-    GetPreviousPlan ();
+    GetPreviousPlan ()
+    {
+        return m_thread.GetPreviousPlan (this);
+    }
     
     // This forwards the private Thread::GetPrivateStopReason which is generally what
     // ThreadPlan's need to know.

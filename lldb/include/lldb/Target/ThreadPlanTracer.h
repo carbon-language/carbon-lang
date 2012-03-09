@@ -90,6 +90,8 @@ protected:
     Stream *
     GetLogStream ();
     
+    
+    
     virtual void Log();
     
 private:

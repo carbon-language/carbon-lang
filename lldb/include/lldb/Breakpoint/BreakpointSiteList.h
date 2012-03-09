@@ -112,6 +112,23 @@ public:
     //------------------------------------------------------------------
     lldb::break_id_t
     FindIDByAddress (lldb::addr_t addr);
+    
+    //------------------------------------------------------------------
+    /// Returns whether the breakpoint site \a bp_site_id has \a bp_id
+    //  as one of its owners.
+    ///
+    /// @param[in] bp_site_id
+    ///   The breakpoint site id to query.
+    ///
+    /// @param[in] bp_id
+    ///   The breakpoint id to look for in \a bp_site_id.
+    ///
+    /// @result
+    ///   True if \a bp_site_id exists in the site list AND \a bp_id is one of the
+    ///   owners of that site.
+    //------------------------------------------------------------------
+    bool
+    BreakpointSiteContainsBreakpoint (lldb::break_id_t bp_site_id, lldb::break_id_t bp_id);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint site with index \a i.

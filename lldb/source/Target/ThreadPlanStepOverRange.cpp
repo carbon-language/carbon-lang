@@ -63,31 +63,6 @@ ThreadPlanStepOverRange::GetDescription (Stream *s, lldb::DescriptionLevel level
 }
 
 bool
-ThreadPlanStepOverRange::PlanExplainsStop ()
-{
-    // We don't explain signals or breakpoints (breakpoints that handle stepping in or
-    // out will be handled by a child plan.
-    StopInfoSP stop_info_sp = GetPrivateStopReason();
-    if (stop_info_sp)
-    {
-        StopReason reason = stop_info_sp->GetStopReason();
-
-        switch (reason)
-        {
-        case eStopReasonBreakpoint:
-        case eStopReasonWatchpoint:
-        case eStopReasonSignal:
-        case eStopReasonException:
-            return false;
-        default:
-            return true;
-        }
-    }
-    return true;
-}
-
-
-bool
 ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -100,10 +75,6 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         log->Printf("ThreadPlanStepOverRange reached %s.", s.GetData());
     }
     
-    // If we're still in the range, keep going.
-    if (InRange())
-        return false;
-
     // If we're out of the range but in the same frame or in our caller's frame
     // then we should stop.
     // When stepping out we only step if we are forcing running one thread.
@@ -158,15 +129,29 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             }
         }
     }
-    else if (!InSymbol())
+    else
     {
-        // This one is a little tricky.  Sometimes we may be in a stub or something similar,
-        // in which case we need to get out of there.  But if we are in a stub then it's 
-        // likely going to be hard to get out from here.  It is probably easiest to step into the
-        // stub, and then it will be straight-forward to step out.        
-        new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+        // If we're still in the range, keep going.
+        if (InRange())
+        {
+            SetNextBranchBreakpoint();
+            return false;
+        }
+
+
+        if (!InSymbol())
+        {
+            // This one is a little tricky.  Sometimes we may be in a stub or something similar,
+            // in which case we need to get out of there.  But if we are in a stub then it's 
+            // likely going to be hard to get out from here.  It is probably easiest to step into the
+            // stub, and then it will be straight-forward to step out.        
+            new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+        }
     }
 
+    // If we get to this point, we're not going to use a previously set "next branch" breakpoint, so delete it:
+    ClearNextBranchBreakpoint();
+    
     if (new_plan == NULL)
         m_no_more_plans = true;
     else

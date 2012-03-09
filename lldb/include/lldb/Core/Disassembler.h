@@ -163,6 +163,12 @@ public:
 
     lldb::InstructionSP
     GetInstructionAtIndex (uint32_t idx) const;
+    
+    uint32_t
+    GetIndexOfNextBranchInstruction(uint32_t start) const;
+    
+    uint32_t
+    GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Target &target);
 
     void
     Clear();

@@ -68,37 +68,6 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
 }
 
 bool
-ThreadPlanStepInRange::PlanExplainsStop ()
-{
-    // We always explain a stop.  Either we've just done a single step, in which
-    // case we'll do our ordinary processing, or we stopped for some
-    // reason that isn't handled by our sub-plans, in which case we want to just stop right
-    // away.
-    
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    StopInfoSP stop_info_sp = GetPrivateStopReason();
-    if (stop_info_sp)
-    {
-        StopReason reason = stop_info_sp->GetStopReason();
-
-        switch (reason)
-        {
-        case eStopReasonBreakpoint:
-        case eStopReasonWatchpoint:
-        case eStopReasonSignal:
-        case eStopReasonException:
-            if (log)
-                log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
-            SetPlanComplete();
-            break;
-        default:
-            break;
-        }
-    }
-    return true;
-}
-
-bool
 ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -115,10 +84,6 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     if (IsPlanComplete())
         return true;
         
-    // If we're still in the range, keep going.
-    if (InRange())
-        return false;
-
     ThreadPlan* new_plan = NULL;
 
     // Stepping through should be done stopping other threads in general, since we're setting a breakpoint and
@@ -148,7 +113,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         }
 
     }
-    else if (frame_order != eFrameCompareYounger && InSymbol())
+    else if (frame_order == eFrameCompareEqual && InSymbol())
     {
         // If we are not in a place we should step through, we're done.
         // One tricky bit here is that some stubs don't push a frame, so we have to check
@@ -156,10 +121,21 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         // However, if the frame is the same, and we are still in the symbol we started
         // in, the we don't need to do this.  This first check isn't strictly necessary,
         // but it is more efficient.
+        
+        // If we're still in the range, keep going, either by running to the next branch breakpoint, or by
+        // stepping.
+        if (InRange())
+        {
+            SetNextBranchBreakpoint();
+            return false;
+        }
     
         SetPlanComplete();
         return true;
     }
+    
+    // If we get to this point, we're not going to use a previously set "next branch" breakpoint, so delete it:
+    ClearNextBranchBreakpoint();
     
     // We may have set the plan up above in the FrameIsOlder section:
     

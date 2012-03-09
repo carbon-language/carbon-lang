@@ -42,6 +42,9 @@ public:
     virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
+    virtual bool PlanExplainsStop ();
+    virtual void DidPush ();
+
 
     void AddRange(const AddressRange &new_range);
 
@@ -52,15 +55,35 @@ protected:
     bool InSymbol();
     void DumpRanges (Stream *s);
     
-    SymbolContext m_addr_context;
+    Disassembler *
+    GetDisassembler ();
+
+    InstructionList *
+    GetInstructionsForAddress(lldb::addr_t addr, size_t &range_index, size_t &insn_offset);
+    
+    // Pushes a plan to proceed through the next section of instructions in the range - usually just a RunToAddress
+    // plan to run to the next branch.  Returns true if it pushed such a plan.  If there was no available 'quick run'
+    // plan, then just single step.
+    bool
+    SetNextBranchBreakpoint ();
+    
+    void
+    ClearNextBranchBreakpoint();
+    
+    bool
+    NextRangeBreakpointExplainsStop (lldb::StopInfoSP stop_info_sp);
+    
+    SymbolContext             m_addr_context;
     std::vector<AddressRange> m_address_ranges;
-    lldb::RunMode m_stop_others;
-    StackID m_stack_id;    // Use the stack ID so we can tell step out from step in.
-    bool m_no_more_plans;  // Need this one so we can tell if we stepped into a call, but can't continue,
-                           // in which case we are done.
-    bool m_first_run_event;  // We want to broadcast only one running event, our first.
+    lldb::RunMode             m_stop_others;
+    StackID                   m_stack_id;        // Use the stack ID so we can tell step out from step in.
+    bool                      m_no_more_plans;   // Need this one so we can tell if we stepped into a call,
+                                                 // but can't continue, in which case we are done.
+    bool                      m_first_run_event; // We want to broadcast only one running event, our first.
+    lldb::BreakpointSP        m_next_branch_bp_sp;
 
 private:
+    std::vector<lldb::DisassemblerSP> m_instruction_ranges;
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepRange);
 
 };

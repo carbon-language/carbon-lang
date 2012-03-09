@@ -902,6 +902,40 @@ InstructionList::Append (lldb::InstructionSP &inst_sp)
         m_instructions.push_back(inst_sp);
 }
 
+uint32_t
+InstructionList::GetIndexOfNextBranchInstruction(uint32_t start) const
+{
+    size_t num_instructions = m_instructions.size();
+    
+    uint32_t next_branch = UINT32_MAX;
+    for (size_t i = start; i < num_instructions; i++)
+    {
+        if (m_instructions[i]->DoesBranch())
+        {
+            next_branch = i;
+            break;
+        }
+    }
+    return next_branch;
+}
+
+uint32_t
+InstructionList::GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Target &target)
+{
+    Address address;
+    address.SetLoadAddress(load_addr, &target);
+    uint32_t num_instructions = m_instructions.size();
+    uint32_t index = UINT32_MAX;
+    for (int i = 0; i < num_instructions; i++)
+    {
+        if (m_instructions[i]->GetAddress() == address)
+        {
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
 
 size_t
 Disassembler::ParseInstructions

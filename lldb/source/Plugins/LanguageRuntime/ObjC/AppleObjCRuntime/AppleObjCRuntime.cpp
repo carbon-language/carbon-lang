@@ -328,29 +328,8 @@ AppleObjCRuntime::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
         return false;
     
     uint64_t break_site_id = stop_reason->GetValue();
-    lldb::BreakpointSiteSP bp_site_sp = m_process->GetBreakpointSiteList().FindByID(break_site_id);
-    
-    if (!bp_site_sp)
-        return false;
-    
-    uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
-    
-    break_id_t  objc_exception_bid;
-    
-    if (!m_objc_exception_bp_sp)
-        return false;
-
-    objc_exception_bid = m_objc_exception_bp_sp->GetID();
-    
-    for (uint32_t i = 0; i < num_owners; i++)
-    {
-        break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
-        
-        if (bid == objc_exception_bid)
-            return true;
-    }
-    
-    return false;
+    return m_process->GetBreakpointSiteList().BreakpointSiteContainsBreakpoint (break_site_id,
+                                                                                m_objc_exception_bp_sp->GetID());
 }
 
 bool

@@ -164,6 +164,16 @@ BreakpointSiteList::FindByAddress (lldb::addr_t addr)
     return found_sp;
 }
 
+bool
+BreakpointSiteList::BreakpointSiteContainsBreakpoint (lldb::break_id_t bp_site_id, lldb::break_id_t bp_id)
+{
+    collection::const_iterator pos = GetIDConstIterator(bp_site_id);
+    if (pos != m_bp_site_list.end())
+        pos->second->IsBreakpointAtThisSite (bp_id);
+
+    return false;
+}
+
 void
 BreakpointSiteList::Dump (Stream *s) const
 {

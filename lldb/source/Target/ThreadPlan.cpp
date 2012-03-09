@@ -48,25 +48,6 @@ ThreadPlan::~ThreadPlan()
 {
 }
 
-const char *
-ThreadPlan::GetName () const
-{
-    return m_name.c_str();
-}
-
-Thread &
-ThreadPlan::GetThread()
-{
-    return m_thread;
-}
-
-
-const Thread &
-ThreadPlan::GetThread() const
-{
-    return m_thread;
-}
-
 bool
 ThreadPlan::IsPlanComplete ()
 {
@@ -185,30 +166,6 @@ ThreadPlan::DidPush()
 void
 ThreadPlan::WillPop()
 {
-}
-
-void
-ThreadPlan::PushPlan (ThreadPlanSP &thread_plan_sp)
-{
-    m_thread.PushPlan (thread_plan_sp);
-}
-
-ThreadPlan *
-ThreadPlan::GetPreviousPlan ()
-{
-    return m_thread.GetPreviousPlan (this);
-}
-
-void
-ThreadPlan::SetPrivate (bool input)
-{
-    m_plan_private = input;
-}
-
-bool
-ThreadPlan::GetPrivate (void)
-{
-    return m_plan_private;
 }
 
 bool

@@ -99,6 +99,7 @@ class   InlineFunctionInfo;
 class   InputReader;
 class   InstanceSettings;
 class   Instruction;
+class   InstructionList;
 class   LanguageRuntime;
 class   LineTable;
 class   Listener;
