@@ -1972,6 +1972,9 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   bool UsualArrayDeleteWantsSize = false;
 
   if (!Ex.get()->isTypeDependent()) {
+    // Perform lvalue-to-rvalue cast, if needed.
+    Ex = DefaultLvalueConversion(Ex.take());
+
     QualType Type = Ex.get()->getType();
 
     if (const RecordType *Record = Type->getAs<RecordType>()) {
@@ -2052,9 +2055,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
           PointeeRD = cast<CXXRecordDecl>(RT->getDecl());
       }
     }
-
-    // Perform lvalue-to-rvalue cast, if needed.
-    Ex = DefaultLvalueConversion(Ex.take());
 
     // C++ [expr.delete]p2:
     //   [Note: a pointer to a const type can be the operand of a
