@@ -80,3 +80,102 @@ Impossible:
 LessThanOrEqualToTwo:
   ret i32 0
 }
+
+define i32 @switch1(i32 %s) {
+; CHECK: @switch1
+entry:
+  %cmp = icmp slt i32 %s, 0
+  br i1 %cmp, label %negative, label %out
+
+negative:
+  switch i32 %s, label %out [
+; CHECK: switch i32 %s, label %out
+    i32 0, label %out
+; CHECK-NOT: i32 0
+    i32 1, label %out
+; CHECK-NOT: i32 1
+    i32 -1, label %next
+; CHECK: i32 -1, label %next
+    i32 -2, label %next
+; CHECK: i32 -2, label %next
+    i32 2, label %out
+; CHECK-NOT: i32 2
+    i32 3, label %out
+; CHECK-NOT: i32 3
+  ]
+
+out:
+  %p = phi i32 [ 1, %entry ], [ -1, %negative ], [ -1, %negative ], [ -1, %negative ], [ -1, %negative ]
+  ret i32 %p
+
+next:
+  %q = phi i32 [ 0, %negative ], [ 0, %negative ]
+  ret i32 %q
+}
+
+define i32 @switch2(i32 %s) {
+; CHECK: @switch2
+entry:
+  %cmp = icmp sgt i32 %s, 0
+  br i1 %cmp, label %positive, label %out
+
+positive:
+  switch i32 %s, label %out [
+    i32 0, label %out
+    i32 -1, label %next
+    i32 -2, label %next
+  ]
+; CHECK: br label %out
+
+out:
+  %p = phi i32 [ -1, %entry ], [ 1, %positive ], [ 1, %positive ]
+  ret i32 %p
+
+next:
+  %q = phi i32 [ 0, %positive ], [ 0, %positive ]
+  ret i32 %q
+}
+
+define i32 @switch3(i32 %s) {
+; CHECK: @switch3
+entry:
+  %cmp = icmp sgt i32 %s, 0
+  br i1 %cmp, label %positive, label %out
+
+positive:
+  switch i32 %s, label %out [
+    i32 -1, label %out
+    i32 -2, label %next
+    i32 -3, label %next
+  ]
+; CHECK: br label %out
+
+out:
+  %p = phi i32 [ -1, %entry ], [ 1, %positive ], [ 1, %positive ]
+  ret i32 %p
+
+next:
+  %q = phi i32 [ 0, %positive ], [ 0, %positive ]
+  ret i32 %q
+}
+
+define void @switch4(i32 %s) {
+; CHECK: @switch4
+entry:
+  %cmp = icmp eq i32 %s, 0
+  br i1 %cmp, label %zero, label %out
+
+zero:
+  switch i32 %s, label %out [
+    i32 0, label %next
+    i32 1, label %out
+    i32 -1, label %out
+  ]
+; CHECK: br label %next
+
+out:
+  ret void
+
+next:
+  ret void
+}
