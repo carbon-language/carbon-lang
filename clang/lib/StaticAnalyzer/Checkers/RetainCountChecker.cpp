@@ -1192,6 +1192,36 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
     return;
 
   RetainSummaryTemplate Template(Summ, DefaultSummary, *this);
+  
+  // Check the method family, and apply any default annotations.
+  switch (MD->getMethodFamily()) {
+    case OMF_None:
+      break;
+    case OMF_init:
+      Template->setRetEffect(ObjCInitRetE);
+      Template->setReceiverEffect(DecRefMsg);
+      break;
+    case OMF_alloc:
+    case OMF_new:
+    case OMF_copy:
+    case OMF_mutableCopy:
+      Template->setRetEffect(ObjCAllocRetE);
+      break;
+    case OMF_autorelease:
+      Template->setReceiverEffect(Autorelease);
+    case OMF_retain:
+      Template->setReceiverEffect(IncRefMsg);
+      break;
+    case OMF_release:
+      Template->setReceiverEffect(DecRefMsg);
+      break;
+    case OMF_self:
+    case OMF_performSelector:
+    case OMF_retainCount:
+    case OMF_dealloc:
+    case OMF_finalize:
+      break;
+  }
 
   bool isTrackedLoc = false;
 

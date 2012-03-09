@@ -1647,6 +1647,26 @@ void rdar9658496() {
   xpc_release(xpc);
 }
 
+// Support annotations with method families.
+@interface RDar10824732 : NSObject
+- (id)initWithObj:(id CF_CONSUMED)obj;
+@end
+
+@implementation RDar10824732
+- (id)initWithObj:(id)obj {
+  [obj release];
+  return [super init];
+}
+@end
+
+void rdar_10824732() {
+  @autoreleasepool {
+    NSString *obj = @"test";
+    RDar10824732 *foo = [[RDar10824732 alloc] initWithObj:obj]; // no-warning
+    [foo release];
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // ObjC literals support.
 //===----------------------------------------------------------------------===//
