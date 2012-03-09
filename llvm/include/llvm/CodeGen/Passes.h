@@ -101,7 +101,10 @@ public:
   /// point where StadardID is expected, add TargetID in its place.
   void substitutePass(char &StandardID, char &TargetID);
 
-  /// Allow the target to disable a specific standard pass.
+  /// Allow the target to enable a specific standard pass by default.
+  void enablePass(char &ID) { substitutePass(ID, ID); }
+
+  /// Allow the target to disable a specific standard pass by default.
   void disablePass(char &ID) { substitutePass(ID, NoPassID); }
 
   /// Return the pass ssubtituted for StandardID by the target.
