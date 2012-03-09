@@ -128,13 +128,13 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     // Break the block into scheduling regions [I, RegionEnd), and schedule each
     // region as soon as it is discovered.
     unsigned RemainingCount = MBB->size();
-    for(MachineBasicBlock::iterator RegionEnd = MBB->end();
-        RegionEnd != MBB->begin();) {
+    for(MachineBasicBlock::iterator RegionEnd = MBB->end(),
+          RegionStart = MBB->begin(); RegionEnd != RegionStart;) {
       Scheduler->startBlock(MBB);
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
-      for(;I != MBB->begin(); --I, --RemainingCount) {
+      for(;I != RegionStart; --I, --RemainingCount) {
         if (TII->isSchedulingBoundary(llvm::prior(I), MBB, *MF))
           break;
       }
