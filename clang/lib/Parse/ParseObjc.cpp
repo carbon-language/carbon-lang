@@ -2042,8 +2042,6 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
-    if (Tok.hasUDSuffix())
-      return ExprError(Diag(Tok, diag::err_invalid_string_udl));
     return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
 
   case tok::char_constant:

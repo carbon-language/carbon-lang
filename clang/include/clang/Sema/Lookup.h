@@ -550,6 +550,11 @@ public:
       return *I++;
     }
 
+    /// Restart the iteration.
+    void restart() {
+      I = Results.begin();
+    }
+
     /// Erase the last element returned from this iterator.
     void erase() {
       Results.Decls.erase(--I);

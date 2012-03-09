@@ -77,21 +77,21 @@ const char *p =
   erk
   flux
   )x" "eep\x1f"\
-_no_such_suffix // expected-error {{'_no_such_suffix'}}
+_no_such_suffix // expected-error {{'operator "" _no_such_suffix'}}
 "and a bit more"
 "and another suffix"_no_such_suffix;
 
 char c =
   '\x14'\
-_no_such_suffix; // expected-error {{'_no_such_suffix'}}
+_no_such_suffix; // expected-error {{'operator "" _no_such_suffix'}}
 
 int &r =
 1234567\
-_no_such_suffix; // expected-error {{'_no_such_suffix'}}
+_no_such_suffix; // expected-error {{'operator "" _no_such_suffix'}}
 
 int k =
 1234567.89\
-_no_such_suffix; // expected-error {{'_no_such_suffix'}}
+_no_such_suffix; // expected-error {{'operator "" _no_such_suffix'}}
 
 // Make sure we handle more interesting ways of writing a string literal which
 // is "" in translation phase 7.

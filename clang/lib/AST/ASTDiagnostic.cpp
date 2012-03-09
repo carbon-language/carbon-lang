@@ -164,6 +164,8 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   for (unsigned I = 0, E = QualTypeVals.size(); I != E; ++I) {
     QualType CompareTy =
         QualType::getFromOpaquePtr(reinterpret_cast<void*>(QualTypeVals[I]));
+    if (CompareTy.isNull())
+      continue;
     if (CompareTy == Ty)
       continue;  // Same types
     QualType CompareCanTy = CompareTy.getCanonicalType();

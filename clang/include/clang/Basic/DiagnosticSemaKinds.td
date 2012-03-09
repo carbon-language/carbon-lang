@@ -2195,7 +2195,13 @@ def err_addr_ovl_not_func_ptrref : Error<
   "address of overloaded function %0 cannot be converted to type %1">;
 def err_addr_ovl_no_qualifier : Error<
   "can't form member pointer of type %0 without '&' and class name">;
-  
+
+// C++11 Literal Operators
+def err_ovl_no_viable_literal_operator : Error<
+  "no matching literal operator for call to %0"
+  "%select{| with argument of type %2| with arguments of types %2 and %3}1"
+  "%select{| or 'const char *', and no matching literal operator template}4">;
+
 // C++ Template Declarations
 def err_template_param_shadow : Error<
   "declaration of %0 shadows template parameter">;

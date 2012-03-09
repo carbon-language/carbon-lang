@@ -2525,6 +2525,105 @@ CXXDestructorDecl *Sema::LookupDestructor(CXXRecordDecl *Class) {
                                                      false, false)->getMethod());
 }
 
+/// LookupLiteralOperator - Determine which literal operator should be used for
+/// a user-defined literal, per C++11 [lex.ext].
+///
+/// Normal overload resolution is not used to select which literal operator to
+/// call for a user-defined literal. Look up the provided literal operator name,
+/// and filter the results to the appropriate set for the given argument types.
+Sema::LiteralOperatorLookupResult
+Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
+                            ArrayRef<QualType> ArgTys,
+                            bool AllowRawAndTemplate) {
+  LookupName(R, S);
+  assert(R.getResultKind() != LookupResult::Ambiguous &&
+         "literal operator lookup can't be ambiguous");
+
+  // Filter the lookup results appropriately.
+  LookupResult::Filter F = R.makeFilter();
+
+  bool FoundTemplate = false;
+  bool FoundRaw = false;
+  bool FoundExactMatch = false;
+
+  while (F.hasNext()) {
+    Decl *D = F.next();
+    if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D))
+      D = USD->getTargetDecl();
+
+    bool IsTemplate = isa<FunctionTemplateDecl>(D);
+    bool IsRaw = false;
+    bool IsExactMatch = false;
+
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      if (FD->getNumParams() == 1 &&
+          FD->getParamDecl(0)->getType()->getAs<PointerType>())
+        IsRaw = true;
+      else {
+        IsExactMatch = true;
+        for (unsigned ArgIdx = 0; ArgIdx != ArgTys.size(); ++ArgIdx) {
+          QualType ParamTy = FD->getParamDecl(ArgIdx)->getType();
+          if (!Context.hasSameUnqualifiedType(ArgTys[ArgIdx], ParamTy)) {
+            IsExactMatch = false;
+            break;
+          }
+        }
+      }
+    }
+
+    if (IsExactMatch) {
+      FoundExactMatch = true;
+      AllowRawAndTemplate = false;
+      if (FoundRaw || FoundTemplate) {
+        // Go through again and remove the raw and template decls we've
+        // already found.
+        F.restart();
+        FoundRaw = FoundTemplate = false;
+      }
+    } else if (AllowRawAndTemplate && (IsTemplate || IsRaw)) {
+      FoundTemplate |= IsTemplate;
+      FoundRaw |= IsRaw;
+    } else {
+      F.erase();
+    }
+  }
+
+  F.done();
+
+  // C++11 [lex.ext]p3, p4: If S contains a literal operator with a matching
+  // parameter type, that is used in preference to a raw literal operator
+  // or literal operator template.
+  if (FoundExactMatch)
+    return LOLR_Cooked;
+
+  // C++11 [lex.ext]p3, p4: S shall contain a raw literal operator or a literal
+  // operator template, but not both.
+  if (FoundRaw && FoundTemplate) {
+    Diag(R.getNameLoc(), diag::err_ovl_ambiguous_call) << R.getLookupName();
+    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
+      Decl *D = *I;
+      if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D))
+        D = USD->getTargetDecl();
+      if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
+        D = FunTmpl->getTemplatedDecl();
+      NoteOverloadCandidate(cast<FunctionDecl>(D));
+    }
+    return LOLR_Error;
+  }
+
+  if (FoundRaw)
+    return LOLR_Raw;
+
+  if (FoundTemplate)
+    return LOLR_Template;
+
+  // Didn't find anything we could use.
+  Diag(R.getNameLoc(), diag::err_ovl_no_viable_literal_operator)
+    << R.getLookupName() << (int)ArgTys.size() << ArgTys[0]
+    << (ArgTys.size() == 2 ? ArgTys[1] : QualType()) << AllowRawAndTemplate;
+  return LOLR_Error;
+}
+
 void ADLResult::insert(NamedDecl *New) {
   NamedDecl *&Old = Decls[cast<NamedDecl>(New->getCanonicalDecl())];
 
