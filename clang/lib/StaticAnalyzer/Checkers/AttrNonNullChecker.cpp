@@ -109,7 +109,7 @@ void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
         const Expr *arg = *I;
         R->addRange(arg->getSourceRange());
         R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(errorNode,
-                                                                   arg));
+                                                                   arg, R));
         // Emit the bug report.
         C.EmitReport(R);
       }

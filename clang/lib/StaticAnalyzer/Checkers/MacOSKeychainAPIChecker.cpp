@@ -121,6 +121,12 @@ private:
                                    SValBuilder &Builder) const {
     return definitelyReturnedError(RetSym, State, Builder, true);
   }
+                                                 
+  /// Mark an AllocationPair interesting for diagnostic reporting.
+  void markInteresting(BugReport *R, const AllocationPair &AP) const {
+    R->markInteresting(AP.first);
+    R->markInteresting(AP.second->Region);
+  }
 
   /// The bug visitor which allows us to print extra diagnostics along the
   /// BugReport path. For example, showing the allocation site of the leaked
@@ -282,6 +288,7 @@ void MacOSKeychainAPIChecker::
   BugReport *Report = new BugReport(*BT, os.str(), N);
   Report->addVisitor(new SecKeychainBugVisitor(AP.first));
   Report->addRange(ArgExpr->getSourceRange());
+  markInteresting(Report, AP);
   C.EmitReport(Report);
 }
 
@@ -318,6 +325,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
           BugReport *Report = new BugReport(*BT, os.str(), N);
           Report->addVisitor(new SecKeychainBugVisitor(V));
           Report->addRange(ArgExpr->getSourceRange());
+          Report->markInteresting(AS->Region);
           C.EmitReport(Report);
         }
       }
@@ -369,6 +377,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     BugReport *Report = new BugReport(*BT,
         "Trying to free data which has not been allocated.", N);
     Report->addRange(ArgExpr->getSourceRange());
+    if (AS)
+      Report->markInteresting(AS->Region);
     C.EmitReport(Report);
     return;
   }
@@ -432,6 +442,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
         "Only call free if a valid (non-NULL) buffer was returned.", N);
     Report->addVisitor(new SecKeychainBugVisitor(ArgSM));
     Report->addRange(ArgExpr->getSourceRange());
+    Report->markInteresting(AS->Region);
     C.EmitReport(Report);
     return;
   }
@@ -550,6 +561,7 @@ BugReport *MacOSKeychainAPIChecker::
 
   BugReport *Report = new BugReport(*BT, os.str(), N, LocUsedForUniqueing);
   Report->addVisitor(new SecKeychainBugVisitor(AP.first));
+  markInteresting(Report, AP);
   return Report;
 }
 

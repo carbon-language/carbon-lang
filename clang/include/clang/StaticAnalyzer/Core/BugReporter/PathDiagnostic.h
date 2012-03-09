@@ -19,6 +19,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/Optional.h"
 #include <deque>
 #include <iterator>
 #include <string>
@@ -357,17 +358,27 @@ public:
 };
 
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
-  bool IsPrunable;
+  llvm::Optional<bool> IsPrunable;
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
                            StringRef s, bool addPosRange = true)
-    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange),
-      IsPrunable(false) {}
+    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange) {}
 
   ~PathDiagnosticEventPiece();
 
-  void setPrunable(bool isPrunable) { IsPrunable = isPrunable; }
-  bool isPrunable() const { return IsPrunable; }
+  /// Mark the diagnostic piece as being potentially prunable.  This
+  /// flag may have been previously set, at which point it will not
+  /// be reset unless one specifies to do so.
+  void setPrunable(bool isPrunable, bool override = false) {
+    if (IsPrunable.hasValue() && !override)
+     return;
+    IsPrunable = isPrunable;
+  }
+
+  /// Return true if the diagnostic piece is prunable.
+  bool isPrunable() const {
+    return IsPrunable.hasValue() ? IsPrunable.getValue() : false;
+  }
   
   static inline bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Event;

@@ -224,7 +224,8 @@ bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
   BugReport *report = new BugReport(*BT_mallocZero, os.str(), N);
 
   report->addRange(arg->getSourceRange());
-  report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, arg));
+  report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, arg,
+                                                                  report));
   C.EmitReport(report);
 
   return true;

@@ -43,8 +43,7 @@ void DivZeroChecker::reportBug(const char *Msg,
       new BugReport(*BT, Msg, N);
 
     R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                 bugreporter::GetDenomExpr(N)));
-
+                                 bugreporter::GetDenomExpr(N), R));
     C.EmitReport(R);
   }
 }

@@ -43,7 +43,8 @@ UndefinedArraySubscriptChecker::checkPreStmt(const ArraySubscriptExpr *A,
       BugReport *R = new BugReport(*BT, BT->getName(), N);
       R->addRange(A->getIdx()->getSourceRange());
       R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                                                 A->getIdx()));
+                                                                 A->getIdx(),
+                                                                 R));
       C.EmitReport(R);
     }
   }

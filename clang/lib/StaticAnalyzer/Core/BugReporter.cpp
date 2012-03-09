@@ -148,8 +148,9 @@ static bool RemoveUneededCalls(PathPieces &pieces) {
         PathDiagnosticEventPiece *event = cast<PathDiagnosticEventPiece>(piece);
         // We never throw away an event, but we do throw it away wholesale
         // as part of a path if we throw the entire path away.
-        if (!event->isPrunable())
-          containsSomethingInteresting = true;
+        if (event->isPrunable())
+          continue;
+        containsSomethingInteresting = true;
         break;
       }
       case PathDiagnosticPiece::ControlFlow:
@@ -375,190 +376,6 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 
   return PathDiagnosticLocation(S, SMgr, LC);
 }
-
-//===----------------------------------------------------------------------===//
-// ScanNotableSymbols: closure-like callback for scanning Store bindings.
-//===----------------------------------------------------------------------===//
-
-static const VarDecl* GetMostRecentVarDeclBinding(const ExplodedNode *N,
-                                                  ProgramStateManager& VMgr,
-                                                  SVal X) {
-
-  for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
-
-    ProgramPoint P = N->getLocation();
-
-    if (!isa<PostStmt>(P))
-      continue;
-
-    const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
-
-    if (!DR)
-      continue;
-
-    SVal Y = N->getState()->getSVal(DR, N->getLocationContext());
-
-    if (X != Y)
-      continue;
-
-    const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
-
-    if (!VD)
-      continue;
-
-    return VD;
-  }
-
-  return 0;
-}
-
-namespace {
-class NotableSymbolHandler
-: public StoreManager::BindingsHandler {
-
-  SymbolRef Sym;
-  ProgramStateRef PrevSt;
-  const Stmt *S;
-  ProgramStateManager& VMgr;
-  const ExplodedNode *Pred;
-  PathDiagnostic& PD;
-  BugReporter& BR;
-
-public:
-
-  NotableSymbolHandler(SymbolRef sym,
-                       ProgramStateRef prevst,
-                       const Stmt *s,
-                       ProgramStateManager& vmgr,
-                       const ExplodedNode *pred,
-                       PathDiagnostic& pd,
-                       BugReporter& br)
-  : Sym(sym),
-    PrevSt(prevst),
-    S(s),
-    VMgr(vmgr),
-    Pred(pred),
-    PD(pd),
-    BR(br) {}
-
-  bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
-                     SVal V) {
-
-    SymbolRef ScanSym = V.getAsSymbol();
-
-    if (ScanSym != Sym)
-      return true;
-
-    // Check if the previous state has this binding.
-    SVal X = PrevSt->getSVal(loc::MemRegionVal(R));
-
-    if (X == V) // Same binding?
-      return true;
-
-    // Different binding.  Only handle assignments for now.  We don't pull
-    // this check out of the loop because we will eventually handle other
-    // cases.
-
-    VarDecl *VD = 0;
-
-    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
-      if (!B->isAssignmentOp())
-        return true;
-
-      // What variable did we assign to?
-      DeclRefExpr *DR = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParenCasts());
-
-      if (!DR)
-        return true;
-
-      VD = dyn_cast<VarDecl>(DR->getDecl());
-    }
-    else if (const DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
-      // FIXME: Eventually CFGs won't have DeclStmts.  Right now we
-      //  assume that each DeclStmt has a single Decl.  This invariant
-      //  holds by construction in the CFG.
-      VD = dyn_cast<VarDecl>(*DS->decl_begin());
-    }
-
-    if (!VD)
-      return true;
-
-    // What is the most recently referenced variable with this binding?
-    const VarDecl *MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
-
-    if (!MostRecent)
-      return true;
-
-    // Create the diagnostic.
-    if (Loc::isLocType(VD->getType())) {
-      SmallString<64> buf;
-      llvm::raw_svector_ostream os(buf);
-      os << '\'' << *VD << "' now aliases '" << *MostRecent << '\'';
-      PathDiagnosticLocation L =
-        PathDiagnosticLocation::createBegin(S, BR.getSourceManager(),
-                                                   Pred->getLocationContext());
-      PD.getActivePath().push_front(new PathDiagnosticEventPiece(L, os.str()));
-    }
-
-    return true;
-  }
-};
-}
-
-static void HandleNotableSymbol(const ExplodedNode *N,
-                                const Stmt *S,
-                                SymbolRef Sym, BugReporter& BR,
-                                PathDiagnostic& PD) {
-
-  const ExplodedNode *Pred = N->pred_empty() ? 0 : *N->pred_begin();
-  ProgramStateRef PrevSt = Pred ? Pred->getState() : 0;
-
-  if (!PrevSt)
-    return;
-
-  // Look at the region bindings of the current state that map to the
-  // specified symbol.  Are any of them not in the previous state?
-  ProgramStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
-  NotableSymbolHandler H(Sym, PrevSt, S, VMgr, Pred, PD, BR);
-  cast<GRBugReporter>(BR).getStateManager().iterBindings(N->getState(), H);
-}
-
-namespace {
-class ScanNotableSymbols
-: public StoreManager::BindingsHandler {
-
-  llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
-  const ExplodedNode *N;
-  const Stmt *S;
-  GRBugReporter& BR;
-  PathDiagnostic& PD;
-
-public:
-  ScanNotableSymbols(const ExplodedNode *n, const Stmt *s,
-                     GRBugReporter& br, PathDiagnostic& pd)
-  : N(n), S(s), BR(br), PD(pd) {}
-
-  bool HandleBinding(StoreManager& SMgr, Store store,
-                     const MemRegion* R, SVal V) {
-
-    SymbolRef ScanSym = V.getAsSymbol();
-
-    if (!ScanSym)
-      return true;
-
-    if (!BR.isNotable(ScanSym))
-      return true;
-
-    if (AlreadyProcessed.count(ScanSym))
-      return true;
-
-    AlreadyProcessed.insert(ScanSym);
-
-    HandleNotableSymbol(N, S, ScanSym, BR, PD);
-    return true;
-  }
-};
-} // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // "Minimal" path diagnostic generation algorithm.
@@ -865,13 +682,6 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R))
           PD.getActivePath().push_front(p);
       }
-    }
-
-    if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
-      // Scan the region bindings, and see if a "notable" symbol has a new
-      // lval binding.
-      ScanNotableSymbols SNS(N, PS->getStmt(), PDB.getBugReporter(), PD);
-      PDB.getStateManager().iterBindings(N->getState(), SNS);
     }
   }
 
@@ -1399,6 +1209,50 @@ void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
     hash.AddInteger(range.getEnd().getRawEncoding());
   }
 }
+
+void BugReport::markInteresting(SymbolRef sym) {
+  if (!sym)
+    return;
+  interestingSymbols.insert(sym);  
+}
+
+void BugReport::markInteresting(const MemRegion *R) {
+  if (!R)
+    return;
+  R = R->getBaseRegion();
+  interestingRegions.insert(R);
+  
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
+    interestingSymbols.insert(SR->getSymbol());
+}
+
+void BugReport::markInteresting(SVal V) {
+  markInteresting(V.getAsRegion());
+  markInteresting(V.getAsSymbol());
+}
+
+bool BugReport::isInteresting(SVal V) const {
+  return isInteresting(V.getAsRegion()) || isInteresting(V.getAsSymbol());
+}
+
+bool BugReport::isInteresting(SymbolRef sym) const {
+  if (!sym)
+    return false;
+  return interestingSymbols.count(sym);
+}
+
+bool BugReport::isInteresting(const MemRegion *R) const {
+  if (!R)
+    return false;
+  R = R->getBaseRegion();
+  bool b = interestingRegions.count(R);
+  if (b)
+    return true;
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
+    return interestingSymbols.count(SR->getSymbol());
+  return false;
+}
+  
 
 const Stmt *BugReport::getStmt() const {
   if (!ErrorNode)

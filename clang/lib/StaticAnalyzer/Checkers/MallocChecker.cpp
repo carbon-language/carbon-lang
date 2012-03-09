@@ -535,6 +535,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
       BugReport *R = new BugReport(*BT_DoubleFree, 
                         "Attempt to free released memory", N);
       R->addRange(ArgExpr->getSourceRange());
+      R->markInteresting(Sym);
       R->addVisitor(new MallocBugVisitor(Sym));
       C.EmitReport(R);
     }
@@ -667,6 +668,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
     }
     
     BugReport *R = new BugReport(*BT_BadFree, os.str(), N);
+    R->markInteresting(MR);
     R->addRange(range);
     C.EmitReport(R);
   }
@@ -820,6 +822,7 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
 
   BugReport *R = new BugReport(*BT_Leak,
     "Memory is never released; potential memory leak", N, LocUsedForUniqueing);
+  R->markInteresting(Sym);
   R->addVisitor(new MallocBugVisitor(Sym));
   C.EmitReport(R);
 }
@@ -964,6 +967,7 @@ bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                                    "Use of memory after it is freed",N);
       if (S)
         R->addRange(S->getSourceRange());
+      R->markInteresting(Sym);
       R->addVisitor(new MallocBugVisitor(Sym));
       C.EmitReport(R);
       return true;

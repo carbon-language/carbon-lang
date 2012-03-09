@@ -2165,9 +2165,7 @@ PathDiagnosticPiece*
 CFRefReportVisitor::getEndPath(BugReporterContext &BRC,
                                const ExplodedNode *EndN,
                                BugReport &BR) {
-  // Tell the BugReporterContext to report cases when the tracked symbol is
-  // assigned to different variables, etc.
-  BRC.addNotableSymbol(Sym);
+  BR.markInteresting(Sym);
   return BugReporterVisitor::getDefaultEndPath(BRC, EndN, BR);
 }
 
@@ -2178,7 +2176,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
 
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
-  BRC.addNotableSymbol(Sym);
+  BR.markInteresting(Sym);
 
   // We are reporting a leak.  Walk up the graph to get to the first node where
   // the symbol appeared, and also get the first VarDecl that tracked object

@@ -147,40 +147,49 @@ public:
                                        const ExplodedNode *N,
                                        const CFGBlock *srcBlk,
                                        const CFGBlock *dstBlk,
+                                       BugReport &R,
                                        BugReporterContext &BRC);
 
   PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
                                      bool tookTrue,
                                      BugReporterContext &BRC,
-                                     const LocationContext *LC);
+                                     BugReport &R,
+                                     const ExplodedNode *N);
 
   PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
                                      const DeclRefExpr *DR,
                                      const bool tookTrue,
                                      BugReporterContext &BRC,
-                                     const LocationContext *LC);
+                                     BugReport &R,
+                                     const ExplodedNode *N);
 
   PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
                                      const BinaryOperator *BExpr,
                                      const bool tookTrue,
                                      BugReporterContext &BRC,
-                                     const LocationContext *LC);
+                                     BugReport &R,
+                                     const ExplodedNode *N);
   
   PathDiagnosticPiece *VisitConditionVariable(StringRef LhsString,
                                               const Expr *CondVarExpr,
                                               const bool tookTrue,
                                               BugReporterContext &BRC,
-                                              const LocationContext *LC);
+                                              BugReport &R,
+                                              const ExplodedNode *N);
 
   bool patternMatch(const Expr *Ex,
                     llvm::raw_ostream &Out,
-                    BugReporterContext &BRC);
+                    BugReporterContext &BRC,
+                    BugReport &R,
+                    const ExplodedNode *N,
+                    llvm::Optional<bool> &prunable);
 };
   
 namespace bugreporter {
 
 BugReporterVisitor *getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
-                                                    const Stmt *S);
+                                                    const Stmt *S,
+                                                    BugReport *R);
 
 const Stmt *GetDerefExpr(const ExplodedNode *N);
 const Stmt *GetDenomExpr(const ExplodedNode *N);

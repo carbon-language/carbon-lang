@@ -72,7 +72,7 @@ void CallAndMessageChecker::EmitBadCall(BugType *BT, CheckerContext &C,
 
   BugReport *R = new BugReport(*BT, BT->getName(), N);
   R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                               bugreporter::GetCalleeExpr(N)));
+                               bugreporter::GetCalleeExpr(N), R));
   C.EmitReport(R);
 }
 
@@ -111,7 +111,8 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
       BugReport *R = new BugReport(*BT, BT->getName(), N);
       R->addRange(argRange);
       if (argEx)
-        R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, argEx));
+        R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, argEx,
+                                                                   R));
       C.EmitReport(R);
     }
     return true;
@@ -262,7 +263,8 @@ void CallAndMessageChecker::checkPreObjCMessage(ObjCMessage msg,
           new BugReport(*BT, BT->getName(), N);
         R->addRange(receiver->getSourceRange());
         R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                                                   receiver));
+                                                                   receiver,
+                                                                   R));
         C.EmitReport(R);
       }
       return;
@@ -308,7 +310,8 @@ void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,
   if (const Expr *receiver = msg.getInstanceReceiver()) {
     report->addRange(receiver->getSourceRange());
     report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
-                                                                    receiver));
+                                                                    receiver,
+                                                                    report));
   }
   C.EmitReport(report);
 }

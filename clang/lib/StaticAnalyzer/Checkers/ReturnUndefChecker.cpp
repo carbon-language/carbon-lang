@@ -54,7 +54,8 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
     new BugReport(*BT, BT->getDescription(), N);
 
   report->addRange(RetE->getSourceRange());
-  report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, RetE));
+  report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, RetE,
+                                                                  report));
 
   C.EmitReport(report);
 }

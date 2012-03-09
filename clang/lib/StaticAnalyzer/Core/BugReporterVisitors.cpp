@@ -287,7 +287,8 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
 
 BugReporterVisitor *
 bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
-                                             const Stmt *S) {
+                                             const Stmt *S,
+                                             BugReport *report) {
   if (!S || !N)
     return 0;
 
@@ -309,17 +310,19 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
   
   ProgramStateRef state = N->getState();
 
-  // Walk through lvalue-to-rvalue conversions.  
-  if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S)) {
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-      const VarRegion *R =
-        StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
+  // Walk through lvalue-to-rvalue conversions.
+  const Expr *Ex = dyn_cast<Expr>(S);
+  if (Ex) {
+    Ex = Ex->IgnoreParenLValueCasts();
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex)) {
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        const VarRegion *R =
+          StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
 
-      // What did we load?
-      SVal V = state->getSVal(loc::MemRegionVal(R));
-
-      if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)
-          || V.isUndef()) {
+        // What did we load?
+        SVal V = state->getSVal(loc::MemRegionVal(R));
+        report->markInteresting(R);
+        report->markInteresting(V);
         return new FindLastStoreBRVisitor(V, R);
       }
     }
@@ -339,7 +342,7 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
     }
 
     if (R) {
-      assert(isa<SymbolicRegion>(R));
+      report->markInteresting(R);
       return new TrackConstraintBRVisitor(loc::MemRegionVal(R), false);
     }
   }
@@ -386,7 +389,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   // The receiver was nil, and hence the method was skipped.
   // Register a BugReporterVisitor to issue a message telling us how
   // the receiver was null.
-  BR.addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Receiver));
+  BR.addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Receiver, &BR));
   // Issue a message saying that the method was skipped.
   PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
                                      N->getLocationContext());
@@ -439,7 +442,7 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
   PathDiagnosticPiece *piece = VisitNodeImpl(N, Prev, BRC, BR);
   if (PathDiagnosticEventPiece *ev =
       dyn_cast_or_null<PathDiagnosticEventPiece>(piece))
-    ev->setPrunable(true);
+    ev->setPrunable(true, /* override */ false);
   return piece;
 }
 
@@ -465,7 +468,7 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNodeImpl(const ExplodedNode *N,
   if (const BlockEdge *BE = dyn_cast<BlockEdge>(&progPoint)) {
     const CFGBlock *srcBlk = BE->getSrc();    
     if (const Stmt *term = srcBlk->getTerminator())
-      return VisitTerminator(term, N, srcBlk, BE->getDst(), BRC);
+      return VisitTerminator(term, N, srcBlk, BE->getDst(), BR, BRC);
     return 0;
   }
   
@@ -479,10 +482,10 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNodeImpl(const ExplodedNode *N,
     const ProgramPointTag *tag = PS->getTag();
     if (tag == tags.first)
       return VisitTrueTest(cast<Expr>(PS->getStmt()), true,
-                           BRC, N->getLocationContext());
+                           BRC, BR, N);
     if (tag == tags.second)
       return VisitTrueTest(cast<Expr>(PS->getStmt()), false,
-                           BRC, N->getLocationContext());
+                           BRC, BR, N);
                            
     return 0;
   }
@@ -495,6 +498,7 @@ ConditionBRVisitor::VisitTerminator(const Stmt *Term,
                                     const ExplodedNode *N,
                                     const CFGBlock *srcBlk,
                                     const CFGBlock *dstBlk,
+                                    BugReport &R,
                                     BugReporterContext &BRC) {
   const Expr *Cond = 0;
   
@@ -513,14 +517,15 @@ ConditionBRVisitor::VisitTerminator(const Stmt *Term,
   assert(srcBlk->succ_size() == 2);
   const bool tookTrue = *(srcBlk->succ_begin()) == dstBlk;
   return VisitTrueTest(Cond->IgnoreParenNoopCasts(BRC.getASTContext()),
-                       tookTrue, BRC, N->getLocationContext());
+                       tookTrue, BRC, R, N);
 }
 
 PathDiagnosticPiece *
 ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   bool tookTrue,
                                   BugReporterContext &BRC,
-                                  const LocationContext *LC) {
+                                  BugReport &R,
+                                  const ExplodedNode *N) {
   
   const Expr *Ex = Cond;
   
@@ -530,9 +535,11 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
       default:
         return 0;
       case Stmt::BinaryOperatorClass:
-        return VisitTrueTest(Cond, cast<BinaryOperator>(Ex), tookTrue, BRC, LC);
+        return VisitTrueTest(Cond, cast<BinaryOperator>(Ex), tookTrue, BRC,
+                             R, N);
       case Stmt::DeclRefExprClass:
-        return VisitTrueTest(Cond, cast<DeclRefExpr>(Ex), tookTrue, BRC, LC);
+        return VisitTrueTest(Cond, cast<DeclRefExpr>(Ex), tookTrue, BRC,
+                             R, N);
       case Stmt::UnaryOperatorClass: {
         const UnaryOperator *UO = cast<UnaryOperator>(Ex);
         if (UO->getOpcode() == UO_LNot) {
@@ -547,14 +554,31 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
 }
 
 bool ConditionBRVisitor::patternMatch(const Expr *Ex, llvm::raw_ostream &Out,
-                                      BugReporterContext &BRC) {
+                                      BugReporterContext &BRC,
+                                      BugReport &report,
+                                      const ExplodedNode *N,
+                                      llvm::Optional<bool> &prunable) {
   const Expr *OriginalExpr = Ex;
   Ex = Ex->IgnoreParenCasts();
 
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex)) {
     const bool quotes = isa<VarDecl>(DR->getDecl());
-    if (quotes)
+    if (quotes) {
       Out << '\'';
+      const LocationContext *LCtx = N->getLocationContext();
+      const ProgramState *state = N->getState().getPtr();
+      if (const MemRegion *R = state->getLValue(cast<VarDecl>(DR->getDecl()),
+                                                LCtx).getAsRegion()) {
+        if (report.isInteresting(R))
+          prunable = false;
+        else {
+          const ProgramState *state = N->getState().getPtr();
+          SVal V = state->getSVal(R);
+          if (report.isInteresting(V))
+            prunable = false;
+        }
+      }
+    }
     Out << DR->getDecl()->getDeclName().getAsString();
     if (quotes)
       Out << '\'';
@@ -588,15 +612,19 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   const BinaryOperator *BExpr,
                                   const bool tookTrue,
                                   BugReporterContext &BRC,
-                                  const LocationContext *LC) {
+                                  BugReport &R,
+                                  const ExplodedNode *N) {
   
   bool shouldInvert = false;
+  llvm::Optional<bool> shouldPrune;
   
   SmallString<128> LhsString, RhsString;
   {
-    llvm::raw_svector_ostream OutLHS(LhsString), OutRHS(RhsString);  
-    const bool isVarLHS = patternMatch(BExpr->getLHS(), OutLHS, BRC);
-    const bool isVarRHS = patternMatch(BExpr->getRHS(), OutRHS, BRC);
+    llvm::raw_svector_ostream OutLHS(LhsString), OutRHS(RhsString);
+    const bool isVarLHS = patternMatch(BExpr->getLHS(), OutLHS, BRC, R, N,
+                                       shouldPrune);
+    const bool isVarRHS = patternMatch(BExpr->getRHS(), OutRHS, BRC, R, N,
+                                       shouldPrune);
     
     shouldInvert = !isVarLHS && isVarRHS;    
   }
@@ -607,7 +635,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
     // For assignment operators, all that we care about is that the LHS
     // evaluates to "true" or "false".
     return VisitConditionVariable(LhsString, BExpr->getLHS(), tookTrue,
-                                  BRC, LC);
+                                  BRC, R, N);
   }
 
   // For non-assignment operations, we require that we can understand
@@ -655,9 +683,13 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   }
   
   Out << (shouldInvert ? LhsString : RhsString);
-
-  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LC);
-  return new PathDiagnosticEventPiece(Loc, Out.str());
+  const LocationContext *LCtx = N->getLocationContext();
+  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LCtx);
+  PathDiagnosticEventPiece *event =
+    new PathDiagnosticEventPiece(Loc, Out.str());
+  if (shouldPrune.hasValue())
+    event->setPrunable(shouldPrune.getValue());
+  return event;
 }
 
 PathDiagnosticPiece *
@@ -665,7 +697,8 @@ ConditionBRVisitor::VisitConditionVariable(StringRef LhsString,
                                            const Expr *CondVarExpr,
                                            const bool tookTrue,
                                            BugReporterContext &BRC,
-                                           const LocationContext *LC) {
+                                           BugReport &report,
+                                           const ExplodedNode *N) {
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
   Out << "Assuming " << LhsString << " is ";
@@ -683,8 +716,22 @@ ConditionBRVisitor::VisitConditionVariable(StringRef LhsString,
   else
     return 0;
 
-  PathDiagnosticLocation Loc(CondVarExpr, BRC.getSourceManager(), LC);
-  return new PathDiagnosticEventPiece(Loc, Out.str());
+  const LocationContext *LCtx = N->getLocationContext();
+  PathDiagnosticLocation Loc(CondVarExpr, BRC.getSourceManager(), LCtx);
+  PathDiagnosticEventPiece *event =
+    new PathDiagnosticEventPiece(Loc, Out.str());
+
+  if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(CondVarExpr)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+      const ProgramState *state = N->getState().getPtr();
+      if (const MemRegion *R = state->getLValue(VD, LCtx).getAsRegion()) {
+        if (report.isInteresting(R))
+          event->setPrunable(false);
+      }
+    }
+  }
+  
+  return event;
 }
   
 PathDiagnosticPiece *
@@ -692,7 +739,8 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   const DeclRefExpr *DR,
                                   const bool tookTrue,
                                   BugReporterContext &BRC,
-                                  const LocationContext *LC) {
+                                  BugReport &report,
+                                  const ExplodedNode *N) {
 
   const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
   if (!VD)
@@ -716,7 +764,21 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   else
     return 0;
   
-  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LC);
-  return new PathDiagnosticEventPiece(Loc, Out.str());
+  const LocationContext *LCtx = N->getLocationContext();
+  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LCtx);
+  PathDiagnosticEventPiece *event =
+    new PathDiagnosticEventPiece(Loc, Out.str());
+  
+  const ProgramState *state = N->getState().getPtr();
+  if (const MemRegion *R = state->getLValue(VD, LCtx).getAsRegion()) {
+    if (report.isInteresting(R))
+      event->setPrunable(false);
+    else {
+      SVal V = state->getSVal(R);
+      if (report.isInteresting(V))
+        event->setPrunable(false);
+    }
+  }
+  return event;
 }
 
