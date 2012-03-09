@@ -260,12 +260,21 @@ AppleObjCRuntime::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others
 enum ObjCRuntimeVersions
 AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
 {
-    ModuleList &images = process->GetTarget().GetImages();
+    if (!process)
+        return eObjC_VersionUnknown;
+        
+    Target &target = process->GetTarget();
+    ModuleList &images = target.GetImages();
     size_t num_images = images.GetSize();
     for (size_t i = 0; i < num_images; i++)
     {
         ModuleSP module_sp = images.GetModuleAtIndex(i);
-        if (AppleIsModuleObjCLibrary (module_sp))
+        // One tricky bit here is that we might get called as part of the initial module loading, but
+        // before all the pre-run libraries get winnowed from the module list.  So there might actually
+        // be an old and incorrect ObjC library sitting around in the list, and we don't want to look at that.
+        // That's why we call IsLoadedInTarget.
+        
+        if (AppleIsModuleObjCLibrary (module_sp) && module_sp->IsLoadedInTarget(&target))
         {
             objc_module_sp = module_sp;
             ObjectFile *ofile = module_sp->GetObjectFile();
