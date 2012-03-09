@@ -446,7 +446,8 @@ private:
   void writeTargetTable(llvm::raw_ostream& out) {
     // Build table of target indexes  
     uint32_t maxTargetIndex = _targetsTableIndex.size();
-    uint32_t targetIndexes[maxTargetIndex];
+    assert(maxTargetIndex > 0);
+    std::vector<uint32_t> targetIndexes(maxTargetIndex);
     for (TargetToIndex::iterator it = _targetsTableIndex.begin(); 
                                  it != _targetsTableIndex.end(); ++it) {
       const Atom* atom = it->first;
@@ -501,7 +502,7 @@ private:
   void writeAddendTable(llvm::raw_ostream& out) {
     // Build table of addends  
     uint32_t maxAddendIndex = _addendsTableIndex.size();
-    Reference::Addend addends[maxAddendIndex];
+    std::vector<Reference::Addend> addends(maxAddendIndex);
     for (AddendToIndex::iterator it = _addendsTableIndex.begin(); 
                                  it != _addendsTableIndex.end(); ++it) {
       Reference::Addend addend = it->first;

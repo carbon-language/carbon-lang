@@ -54,19 +54,19 @@ public:
   
   /// definedAtom - like dynamic_cast, if atom is definitionRegular
   /// returns atom cast to DefinedAtom*, else returns nullptr;
-  virtual const DefinedAtom* definedAtom() const { return NULL; }
+  virtual const DefinedAtom* definedAtom() const { return nullptr; }
 
   /// undefinedAtom - like dynamic_cast, if atom is definitionUndefined
-  /// returns atom cast to UndefinedAtom*, else returns NULL;
-  virtual const UndefinedAtom* undefinedAtom() const { return NULL; }
+  /// returns atom cast to UndefinedAtom*, else returns nullptr;
+  virtual const UndefinedAtom* undefinedAtom() const { return nullptr; }
   
   /// sharedLibraryAtom - like dynamic_cast, if atom is definitionSharedLibrary
   /// returns atom cast to SharedLibraryAtom*, else returns nullptr;
-  virtual const SharedLibraryAtom* sharedLibraryAtom() const { return NULL; }
+  virtual const SharedLibraryAtom* sharedLibraryAtom() const { return nullptr; }
   
   /// absoluteAtom - like dynamic_cast, if atom is definitionAbsolute
   /// returns atom cast to AbsoluteAtom*, else returns nullptr;
-  virtual const AbsoluteAtom* absoluteAtom() const { return NULL; }
+  virtual const AbsoluteAtom* absoluteAtom() const { return nullptr; }
   
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
