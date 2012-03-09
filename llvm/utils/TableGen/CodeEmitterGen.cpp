@@ -163,7 +163,7 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
       --bit;
     }
      
-    uint64_t opMask = ~0U >> (64-N);
+    uint64_t opMask = ~(uint64_t)0 >> (64-N);
     int opShift = beginVarBit - N + 1;
     opMask <<= opShift;
     opShift = beginInstBit - beginVarBit;
