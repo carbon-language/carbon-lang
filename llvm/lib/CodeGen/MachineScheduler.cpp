@@ -141,12 +141,21 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   for (MachineFunction::iterator MBB = MF->begin(), MBBEnd = MF->end();
        MBB != MBBEnd; ++MBB) {
 
+    Scheduler->startBlock(MBB);
+
     // Break the block into scheduling regions [I, RegionEnd), and schedule each
     // region as soon as it is discovered.
     unsigned RemainingCount = MBB->size();
     for(MachineBasicBlock::iterator RegionEnd = MBB->end();
         RegionEnd != MBB->begin();) {
-      Scheduler->startBlock(MBB);
+      // Avoid decrementing RegionEnd for blocks with no terminator.
+      if (RegionEnd != MBB->end()
+          || TII->isSchedulingBoundary(llvm::prior(RegionEnd), MBB, *MF)) {
+        --RegionEnd;
+        // Count the boundary instruction.
+        --RemainingCount;
+      }
+
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
@@ -160,11 +169,9 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
       if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
-        RegionEnd = llvm::prior(RegionEnd);
-        if (I != RegionEnd)
-          --RemainingCount;
         // Close the current region. Bundle the terminator if needed.
         Scheduler->exitRegion();
+        RegionEnd = I;
         continue;
       }
       DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
