@@ -135,3 +135,15 @@ define <4 x i32> @test15(<2 x i32>%x) nounwind readnone {
   ret <4 x i32>%x1
 }
 
+; rdar://10974078
+define <8 x float> @test16(float* nocapture %f) nounwind uwtable readonly ssp {
+entry:
+  %0 = bitcast float* %f to <4 x float>*
+  %1 = load <4 x float>* %0, align 8
+; CHECK: test16
+; CHECK: vmovups
+; CHECK-NOT: vxorps
+; CHECK-NOT: vinsertf128
+  %shuffle.i = shufflevector <4 x float> %1, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 4>
+  ret <8 x float> %shuffle.i
+}

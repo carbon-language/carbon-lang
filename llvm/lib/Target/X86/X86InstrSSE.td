@@ -4820,8 +4820,10 @@ let Predicates = [HasSSE2], AddedComplexity = 20 in {
 }
 
 let Predicates = [HasAVX] in {
-def : Pat<(v4i64 (X86vzload addr:$src)),
+def : Pat<(v4i64 (alignedX86vzload addr:$src)),
           (SUBREG_TO_REG (i32 0), (VMOVAPSrm addr:$src), sub_xmm)>;
+def : Pat<(v4i64 (X86vzload addr:$src)),
+          (SUBREG_TO_REG (i32 0), (VMOVUPSrm addr:$src), sub_xmm)>;
 }
 
 //===---------------------------------------------------------------------===//
