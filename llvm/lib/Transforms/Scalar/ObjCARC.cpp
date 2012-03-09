@@ -2929,11 +2929,17 @@ ComputePostOrders(Function &F,
   Visited.clear();
 
   // Compute the exits, which are the starting points for reverse-CFG DFS.
+  // This includes blocks where all the successors are backedges that
+  // we're skipping.
   SmallVector<BasicBlock *, 4> Exits;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *BB = I;
-    if (cast<TerminatorInst>(&BB->back())->getNumSuccessors() == 0)
-      Exits.push_back(BB);
+    TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
+    for (succ_iterator SI(TI), SE(TI, true); SI != SE; ++SI)
+      if (!Backedges.count(std::make_pair(BB, *SI)))
+        goto HasNonBackedgeSucc;
+    Exits.push_back(BB);
+  HasNonBackedgeSucc:;
   }
 
   // Do reverse-CFG DFS, computing the reverse-CFG PostOrder.

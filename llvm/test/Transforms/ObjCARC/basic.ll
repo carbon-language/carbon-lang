@@ -1721,6 +1721,82 @@ define void @test61() {
   ret void
 }
 
+; Delete a retain matched by releases when one is inside the loop and the
+; other is outside the loop.
+
+; CHECK: define void @test62(
+; CHECK-NOT: @objc_
+; CHECK: }
+define void @test62(i8* %x, i1* %p) nounwind {
+entry:
+  br label %loop
+
+loop:
+  call i8* @objc_retain(i8* %x)
+  %q = load i1* %p
+  br i1 %q, label %loop.more, label %exit
+
+loop.more:
+  call void @objc_release(i8* %x)
+  br label %loop
+
+exit:
+  call void @objc_release(i8* %x)
+  ret void
+}
+
+; Like test62 but with no release in exit.
+; Don't delete anything!
+
+; CHECK: define void @test63(
+; CHECK: loop:
+; CHECK:   tail call i8* @objc_retain(i8* %x)
+; CHECK: loop.more:
+; CHECK:   call void @objc_release(i8* %x)
+; CHECK: }
+define void @test63(i8* %x, i1* %p) nounwind {
+entry:
+  br label %loop
+
+loop:
+  call i8* @objc_retain(i8* %x)
+  %q = load i1* %p
+  br i1 %q, label %loop.more, label %exit
+
+loop.more:
+  call void @objc_release(i8* %x)
+  br label %loop
+
+exit:
+  ret void
+}
+
+; Like test62 but with no release in loop.more.
+; Don't delete anything!
+
+; CHECK: define void @test64(
+; CHECK: loop:
+; CHECK:   tail call i8* @objc_retain(i8* %x)
+; CHECK: exit:
+; CHECK:   call void @objc_release(i8* %x)
+; CHECK: }
+define void @test64(i8* %x, i1* %p) nounwind {
+entry:
+  br label %loop
+
+loop:
+  call i8* @objc_retain(i8* %x)
+  %q = load i1* %p
+  br i1 %q, label %loop.more, label %exit
+
+loop.more:
+  br label %loop
+
+exit:
+  call void @objc_release(i8* %x)
+  ret void
+}
+
 declare void @bar(i32 ()*)
 
 ; A few real-world testcases.
