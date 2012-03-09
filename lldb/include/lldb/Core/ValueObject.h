@@ -993,6 +993,73 @@ public:
     
 protected:
     typedef ClusterManager<ValueObject> ValueObjectManager;
+    
+    class ChildrenManager
+    {
+    public:
+        ChildrenManager() :
+        m_mutex(Mutex::eMutexTypeRecursive),
+        m_children(),
+        m_children_count(0)
+        {}
+        
+        bool
+        HasChildAtIndex (uint32_t idx)
+        {
+            Mutex::Locker(m_mutex);
+            ChildrenIterator iter = m_children.find(idx);
+            ChildrenIterator end = m_children.end();
+            return (iter != end);
+        }
+        
+        ValueObject*
+        GetChildAtIndex (uint32_t idx)
+        {
+            Mutex::Locker(m_mutex);
+            ChildrenIterator iter = m_children.find(idx);
+            ChildrenIterator end = m_children.end();
+            if (iter == end)
+                return NULL;
+            else
+                return iter->second;
+        }
+        
+        void
+        SetChildAtIndex (uint32_t idx, ValueObject* valobj)
+        {
+            ChildrenPair pair(idx,valobj); // we do not need to be mutex-protected to make a pair
+            Mutex::Locker(m_mutex);
+            m_children.insert(pair);
+        }
+        
+        void
+        SetChildrenCount (uint32_t count)
+        {
+            m_children_count = count;
+        }
+        
+        uint32_t
+        GetChildrenCount ()
+        {
+            return m_children_count;
+        }
+        
+        void
+        Clear()
+        {
+            m_children_count = 0;
+            Mutex::Locker(m_mutex);
+            m_children.clear();
+        }
+        
+    private:
+        typedef std::map<uint32_t, ValueObject*> ChildrenMap;
+        typedef ChildrenMap::iterator ChildrenIterator;
+        typedef ChildrenMap::value_type ChildrenPair;
+        Mutex m_mutex;
+        ChildrenMap m_children;
+        uint32_t m_children_count;
+    };
 
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
@@ -1020,7 +1087,7 @@ protected:
                                         // as a shared pointer to any of them has been handed out.  Shared pointers to
                                         // value objects must always be made with the GetSP method.
 
-    std::vector<ValueObject *>           m_children;
+    ChildrenManager                      m_children;
     std::map<ConstString, ValueObject *> m_synthetic_children;
     
     ValueObject*                         m_dynamic_value;

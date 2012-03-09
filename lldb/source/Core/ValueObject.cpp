@@ -493,15 +493,16 @@ ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
     if (idx < GetNumChildren())
     {
         // Check if we have already made the child value object?
-        if (can_create && m_children[idx] == NULL)
+        if (can_create && !m_children.HasChildAtIndex(idx))
         {
             // No we haven't created the child at this index, so lets have our
             // subclass do it and cache the result for quick future access.
-            m_children[idx] = CreateChildAtIndex (idx, false, 0);
+            m_children.SetChildAtIndex(idx,CreateChildAtIndex (idx, false, 0));
         }
         
-        if (m_children[idx] != NULL)
-            return m_children[idx]->GetSP();
+        ValueObject* child = m_children.GetChildAtIndex(idx);
+        if (child != NULL)
+            return child->GetSP();
     }
     return child_sp;
 }
@@ -568,13 +569,13 @@ ValueObject::GetNumChildren ()
     {
         SetNumChildren (CalculateNumChildren());
     }
-    return m_children.size();
+    return m_children.GetChildrenCount();
 }
 void
 ValueObject::SetNumChildren (uint32_t num_children)
 {
     m_children_count_valid = true;
-    m_children.resize(num_children);
+    m_children.SetChildrenCount(num_children);
 }
 
 void

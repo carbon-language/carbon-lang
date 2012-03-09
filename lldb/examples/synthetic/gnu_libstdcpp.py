@@ -12,7 +12,36 @@ class StdListSynthProvider:
 		self.valobj = valobj
 		self.update()
 
+	def next_node(self,node):
+		return node.GetChildMemberWithName('_M_next')
+
+	def is_valid(self,node):
+		return self.value(self.next_node(node)) != self.node_address
+
+	def value(self,node):
+		return node.GetValueAsUnsigned()
+
+	# Floyd's cyle-finding algorithm
+	# try to detect if this list has a loop
+	def has_loop(self):
+		slow = self.next
+		fast1 = self.next
+		fast2 = self.next
+		while self.is_valid(slow):
+			slow_value = self.value(slow)
+			fast1 = self.next_node(fast2)
+			fast2 = self.next_node(fast1)
+			if self.value(fast1) == slow_value or self.value(fast2) == slow_value:
+				return True
+			slow = self.next_node(slow)
+		return False
+
 	def num_children(self):
+		if self.count == None:
+			self.count = self.num_children_impl()
+		return self.count
+
+	def num_children_impl(self):
 		try:
 			next_val = self.next.GetValueAsUnsigned(0)
 			prev_val = self.prev.GetValueAsUnsigned(0)
@@ -23,6 +52,8 @@ class StdListSynthProvider:
 				return 0
 			if next_val == prev_val:
 				return 1
+			if self.has_loop():
+				return 0
 			size = 2
 			current = self.next
 			while current.GetChildMemberWithName('_M_next').GetValueAsUnsigned(0) != self.node_address:
@@ -70,6 +101,7 @@ class StdListSynthProvider:
 			self.prev = node.GetChildMemberWithName('_M_prev')
 			self.data_type = self.extract_type()
 			self.data_size = self.data_type.GetByteSize()
+			self.count = None
 		except:
 			pass
 
@@ -80,6 +112,16 @@ class StdVectorSynthProvider:
 		self.update()
 
 	def num_children(self):
+		if self.count == None:
+			self.count = self.num_children_impl()
+		return self.count
+
+	def is_valid_pointer(ptr,process):
+		error = lldb.SBError()
+		process.ReadMemory(ptr,1,error)
+		return False if error.Fail() else True
+
+	def num_children_impl(self):
 		try:
 			start_val = self.start.GetValueAsUnsigned(0)
 			finish_val = self.finish.GetValueAsUnsigned(0)
@@ -101,7 +143,14 @@ class StdVectorSynthProvider:
 			if finish_val > end_val:
 				return 0
 
-			num_children = (finish_val-start_val)/self.data_size
+			# if we have a struct (or other data type that the compiler pads to native word size)
+			# this check might fail, unless the sizeof() we get is itself incremented to take the
+			# padding bytes into account - on current clang it looks like this is the case
+			num_children = (finish_val-start_val)
+			if (num_children % self.data_size) != 0:
+				return 0
+			else:
+				num_children = num_children/self.data_size
 			return num_children
 		except:
 			return 0;
@@ -131,6 +180,11 @@ class StdVectorSynthProvider:
 			self.end = impl.GetChildMemberWithName('_M_end_of_storage')
 			self.data_type = self.start.GetType().GetPointeeType()
 			self.data_size = self.data_type.GetByteSize()
+			# if any of these objects is invalid, it means there is no point in trying to fetch anything
+			if self.start.IsValid() and self.finish.IsValid() and self.end.IsValid() and self.data_type.IsValid():
+				self.count = None
+			else:
+				self.count = 0
 		except:
 			pass
 

@@ -204,7 +204,7 @@ ValueObjectRegisterSet::UpdateValue ()
     {
         SetValueIsValid (false);
         m_error.SetErrorToGenericError ();
-        m_children.clear();
+        m_children.Clear();
     }
     return m_error.Success();
 }
