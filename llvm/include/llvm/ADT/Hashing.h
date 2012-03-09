@@ -457,7 +457,7 @@ hash_code hash_combine_range_impl(InputIteratorT first, InputIteratorT last) {
 /// and directly reads from the underlying memory.
 template <typename ValueT>
 typename enable_if<is_hashable_data<ValueT>, hash_code>::type
-hash_combine_range_impl(const ValueT *first, const ValueT *last) {
+hash_combine_range_impl(ValueT *first, ValueT *last) {
   const size_t seed = get_execution_seed();
   const char *s_begin = reinterpret_cast<const char *>(first);
   const char *s_end = reinterpret_cast<const char *>(last);
