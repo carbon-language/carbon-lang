@@ -1020,24 +1020,15 @@ static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
   return false;
 }
 
-bool UseOptimizedSetter(CodeGenModule &CGM) {
+static bool UseOptimizedSetter(CodeGenModule &CGM) {
   if (CGM.getLangOptions().getGC() != LangOptions::NonGC)
     return false;
   const TargetInfo &Target = CGM.getContext().getTargetInfo();
-  StringRef TargetPlatform = Target.getPlatformName();
-  if (TargetPlatform.empty())
+
+  if (Target.getPlatformName() != "macosx")
     return false;
-  VersionTuple TargetMinVersion = Target.getPlatformMinVersion();
-  
-  if (TargetPlatform.compare("macosx") ||
-      TargetMinVersion.getMajor() <= 9)
-    return false;
-  
-  unsigned minor = 0;
-  if (llvm::Optional<unsigned> Minor = TargetMinVersion.getMinor())
-    minor = *Minor;
-  
-  return (minor >= 8);
+
+  return Target.getPlatformMinVersion() >= VersionTuple(10, 8);
 }
 
 void
