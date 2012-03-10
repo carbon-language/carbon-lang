@@ -1014,8 +1014,18 @@ void MachineVerifier::visitMachineFunctionAfter() {
   }
 
   // Now check liveness info if available
-  if (LiveVars || LiveInts)
-    calcRegsRequired();
+  calcRegsRequired();
+
+  if (MRI->isSSA() && !MF->empty()) {
+    BBInfo &MInfo = MBBInfoMap[&MF->front()];
+    for (RegSet::iterator
+         I = MInfo.vregsRequired.begin(), E = MInfo.vregsRequired.end(); I != E;
+         ++I) {
+      report("Virtual register def doesn't dominate all uses.", MF);
+      *OS << "- register:\t" << PrintReg(*I) << '\n';
+    }
+  }
+
   if (LiveVars)
     verifyLiveVariables();
   if (LiveInts)
