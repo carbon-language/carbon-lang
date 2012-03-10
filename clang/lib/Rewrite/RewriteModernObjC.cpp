@@ -5682,13 +5682,20 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   
   if (metadata && !CDecl->getSuperClass()) {
     // Need to handle a case of use of forward declaration.
-    Result += "\nextern struct _class_t OBJC_CLASS_$_";
+    Result += "\n";
+    if (CDecl->getImplementation())
+      Result += "__declspec(dllexport) ";
+    Result += "extern struct _class_t OBJC_CLASS_$_";
     Result += CDecl->getNameAsString();
     Result += ";\n";
   }
   // Also, for possibility of 'super' metadata class not having been defined yet.
   if (CDecl->getSuperClass()) {
-    Result += "\nextern struct _class_t "; Result += VarName;
+    Result += "\n";
+    if (CDecl->getSuperClass()->getImplementation())
+      Result += "__declspec(dllexport) ";
+    Result += "extern struct _class_t "; 
+    Result += VarName;
     Result += CDecl->getSuperClass()->getNameAsString();
     Result += ";\n";
   }
