@@ -1421,19 +1421,23 @@ void CXXMethodDecl::addOverriddenMethod(const CXXMethodDecl *MD) {
   assert(MD->isCanonicalDecl() && "Method is not canonical!");
   assert(!MD->getParent()->isDependentContext() &&
          "Can't add an overridden method to a class template!");
+  assert(MD->isVirtual() && "Method is not virtual!");
 
   getASTContext().addOverriddenMethod(this, MD);
 }
 
 CXXMethodDecl::method_iterator CXXMethodDecl::begin_overridden_methods() const {
+  if (isa<CXXConstructorDecl>(this)) return 0;
   return getASTContext().overridden_methods_begin(this);
 }
 
 CXXMethodDecl::method_iterator CXXMethodDecl::end_overridden_methods() const {
+  if (isa<CXXConstructorDecl>(this)) return 0;
   return getASTContext().overridden_methods_end(this);
 }
 
 unsigned CXXMethodDecl::size_overridden_methods() const {
+  if (isa<CXXConstructorDecl>(this)) return 0;
   return getASTContext().overridden_methods_size(this);
 }
 
@@ -1712,8 +1716,8 @@ bool CXXConstructorDecl::isSpecializationCopyingObject() const {
 
 const CXXConstructorDecl *CXXConstructorDecl::getInheritedConstructor() const {
   // Hack: we store the inherited constructor in the overridden method table
-  method_iterator It = begin_overridden_methods();
-  if (It == end_overridden_methods())
+  method_iterator It = getASTContext().overridden_methods_begin(this);
+  if (It == getASTContext().overridden_methods_end(this))
     return 0;
 
   return cast<CXXConstructorDecl>(*It);
@@ -1722,8 +1726,9 @@ const CXXConstructorDecl *CXXConstructorDecl::getInheritedConstructor() const {
 void
 CXXConstructorDecl::setInheritedConstructor(const CXXConstructorDecl *BaseCtor){
   // Hack: we store the inherited constructor in the overridden method table
-  assert(size_overridden_methods() == 0 && "Base ctor already set.");
-  addOverriddenMethod(BaseCtor);
+  assert(getASTContext().overridden_methods_size(this) == 0 &&
+         "Base ctor already set.");
+  getASTContext().addOverriddenMethod(this, BaseCtor);
 }
 
 void CXXDestructorDecl::anchor() { }
