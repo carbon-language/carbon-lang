@@ -766,9 +766,6 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     ElaboratedTypeKeyword Keyword
       = ElaboratedType::getKeywordForTypeSpec(DS.getTypeSpecType());
     Result = S.getElaboratedType(Keyword, DS.getTypeSpecScope(), Result);
-
-    if (D->isInvalidDecl())
-      declarator.setInvalidType(true);
     break;
   }
   case DeclSpec::TST_typename: {
