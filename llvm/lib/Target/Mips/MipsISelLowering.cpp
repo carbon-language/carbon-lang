@@ -130,15 +130,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   // Mips Custom Operations
   setOperationAction(ISD::GlobalAddress,      MVT::i32,   Custom);
-  setOperationAction(ISD::GlobalAddress,      MVT::i64,   Custom);
   setOperationAction(ISD::BlockAddress,       MVT::i32,   Custom);
-  setOperationAction(ISD::BlockAddress,       MVT::i64,   Custom);
   setOperationAction(ISD::GlobalTLSAddress,   MVT::i32,   Custom);
-  setOperationAction(ISD::GlobalTLSAddress,   MVT::i64,   Custom);
   setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
-  setOperationAction(ISD::JumpTable,          MVT::i64,   Custom);
   setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
-  setOperationAction(ISD::ConstantPool,       MVT::i64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
@@ -146,8 +141,21 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SETCC,              MVT::f64,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,   Custom);
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
+  setOperationAction(ISD::FCOPYSIGN,          MVT::f32,   Custom);
+  setOperationAction(ISD::FCOPYSIGN,          MVT::f64,   Custom);
+  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
+  setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
+
+  if (HasMips64) {
+    setOperationAction(ISD::GlobalAddress,      MVT::i64,   Custom);
+    setOperationAction(ISD::BlockAddress,       MVT::i64,   Custom);
+    setOperationAction(ISD::GlobalTLSAddress,   MVT::i64,   Custom);
+    setOperationAction(ISD::JumpTable,          MVT::i64,   Custom);
+    setOperationAction(ISD::ConstantPool,       MVT::i64,   Custom);
+    setOperationAction(ISD::SELECT,             MVT::i64,   Custom);
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,   Custom);
+  }
 
   setOperationAction(ISD::SDIV, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i32, Expand);
@@ -187,8 +195,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
-  setOperationAction(ISD::FCOPYSIGN,         MVT::f32,   Custom);
-  setOperationAction(ISD::FCOPYSIGN,         MVT::f64,   Custom);
   setOperationAction(ISD::FSIN,              MVT::f32,   Expand);
   setOperationAction(ISD::FSIN,              MVT::f64,   Expand);
   setOperationAction(ISD::FCOS,              MVT::f32,   Expand);
@@ -215,9 +221,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   // Use the default for now
   setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
-
-  setOperationAction(ISD::MEMBARRIER,        MVT::Other, Custom);
-  setOperationAction(ISD::ATOMIC_FENCE,      MVT::Other, Custom);
 
   setOperationAction(ISD::ATOMIC_LOAD,       MVT::i32,    Expand);
   setOperationAction(ISD::ATOMIC_LOAD,       MVT::i64,    Expand);
