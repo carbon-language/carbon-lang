@@ -2399,7 +2399,8 @@ public:
     // Build a reference to the __builtin_shufflevector builtin
     FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
     ExprResult Callee
-      = SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Builtin, Builtin->getType(),
+      = SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Builtin, false,
+                                                        Builtin->getType(),
                                                         VK_LValue, BuiltinLoc));
     Callee = SemaRef.UsualUnaryConversions(Callee.take());
     if (Callee.isInvalid())
@@ -8766,29 +8767,6 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
 
   return SemaRef.ActOnBlockStmtExpr(E->getCaretLocation(), body.get(),
                                     /*Scope=*/0);
-}
-
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
-  ValueDecl *ND
-  = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getLocation(),
-                                                       E->getDecl()));
-  if (!ND)
-    return ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      ND == E->getDecl()) {
-    // Mark it referenced in the new context regardless.
-    // FIXME: this is a bit instantiation-specific.
-    SemaRef.MarkBlockDeclRefReferenced(E);
-    
-    return SemaRef.Owned(E);
-  }
-  
-  DeclarationNameInfo NameInfo(E->getDecl()->getDeclName(), E->getLocation());
-  return getDerived().RebuildDeclRefExpr(NestedNameSpecifierLoc(), 
-                                         ND, NameInfo, 0);
 }
 
 template<typename Derived>

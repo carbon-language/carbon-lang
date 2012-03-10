@@ -3947,6 +3947,7 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
                                          Importer.Import(E->getQualifierLoc()),
                                    Importer.Import(E->getTemplateKeywordLoc()),
                                          ToD,
+                                         E->refersToEnclosingLocal(),
                                          Importer.Import(E->getLocation()),
                                          T, E->getValueKind(),
                                          FoundD,

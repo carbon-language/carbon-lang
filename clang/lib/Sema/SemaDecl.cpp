@@ -6721,7 +6721,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
 
     if (type->isStructureOrClassType()) {
       SourceLocation poi = var->getLocation();
-      Expr *varRef = new (Context) DeclRefExpr(var, type, VK_LValue, poi);
+      Expr *varRef =new (Context) DeclRefExpr(var, false, type, VK_LValue, poi);
       ExprResult result =
         PerformCopyInitialization(
                         InitializedEntity::InitializeBlock(poi, type, false),

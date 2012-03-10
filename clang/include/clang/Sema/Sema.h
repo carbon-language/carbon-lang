@@ -2419,7 +2419,6 @@ public:
   void MarkAnyDeclReferenced(SourceLocation Loc, Decl *D);
   void MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func);
   void MarkVariableReferenced(SourceLocation Loc, VarDecl *Var);
-  void MarkBlockDeclRefReferenced(BlockDeclRefExpr *E);
   void MarkDeclRefReferenced(DeclRefExpr *E);
   void MarkMemberReferenced(MemberExpr *E);
 

@@ -362,18 +362,14 @@ public:
           flag = 1;
           BEVals.push_back(VD, BC);
         }
+      } else if (DR->refersToEnclosingLocal()) {
+        unsigned &flag = Visited[VD];
+        if (!flag) {
+          flag = 1;
+          if (IsTrackedDecl(VD))
+            BEVals.push_back(VD, BC);
+        }
       }
-  }
-
-  void VisitBlockDeclRefExpr(BlockDeclRefExpr *DR) {
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-      unsigned &flag = Visited[VD];
-      if (!flag) {
-        flag = 1;
-        if (IsTrackedDecl(VD))
-          BEVals.push_back(VD, BC);
-      }
-    }
   }
 
   void VisitBlockExpr(BlockExpr *BR) {

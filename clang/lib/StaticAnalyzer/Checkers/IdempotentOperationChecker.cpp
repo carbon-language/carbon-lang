@@ -650,7 +650,6 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
   case Stmt::InitListExprClass:
   case Stmt::DesignatedInitExprClass:
   case Stmt::BlockExprClass:
-  case Stmt::BlockDeclRefExprClass:
     return false;
 
   // Cases requiring custom logic

@@ -119,9 +119,9 @@ namespace {
     // Block expressions.
     SmallVector<BlockExpr *, 32> Blocks;
     SmallVector<int, 32> InnerDeclRefsCount;
-    SmallVector<BlockDeclRefExpr *, 32> InnerDeclRefs;
+    SmallVector<DeclRefExpr *, 32> InnerDeclRefs;
     
-    SmallVector<BlockDeclRefExpr *, 32> BlockDeclRefs;
+    SmallVector<DeclRefExpr *, 32> BlockDeclRefs;
 
     // Block related declarations.
     SmallVector<ValueDecl *, 8> BlockByCopyDecls;
@@ -320,7 +320,7 @@ namespace {
     // Block specific rewrite rules.
     void RewriteBlockPointerDecl(NamedDecl *VD);
     void RewriteByRefVar(VarDecl *VD);
-    Stmt *RewriteBlockDeclRefExpr(Expr *VD);
+    Stmt *RewriteBlockDeclRefExpr(DeclRefExpr *VD);
     Stmt *RewriteLocalVariableExternalStorage(DeclRefExpr *DRE);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
     
@@ -388,7 +388,7 @@ namespace {
                                  StringRef FunName);
     FunctionDecl *SynthBlockInitFunctionDecl(StringRef name);
     Stmt *SynthBlockInitExpr(BlockExpr *Exp,
-            const SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs);
+            const SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs);
 
     // Misc. helper routines.
     QualType getProtocolType();
@@ -402,7 +402,7 @@ namespace {
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
     void GetBlockDeclRefExprs(Stmt *S);
     void GetInnerBlockDeclRefExprs(Stmt *S, 
-                SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
+                SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs,
                 llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts);
 
     // We avoid calling Type::isBlockPointerType(), since it operates on the
@@ -2045,8 +2045,8 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   QualType msgSendType = FD->getType();
 
   // Create a reference to the objc_msgSend() declaration.
-  DeclRefExpr *DRE =
-    new (Context) DeclRefExpr(FD, msgSendType, VK_LValue, SourceLocation());
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(FD, false, msgSendType,
+                                               VK_LValue, SourceLocation());
 
   // Now, we cast the reference to a pointer to the objc_msgSend type.
   QualType pToFunc = Context->getPointerType(msgSendType);
@@ -2559,7 +2559,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   VarDecl *NewVD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
                                    SourceLocation(), &Context->Idents.get(S),
                                    strType, 0, SC_Static, SC_None);
-  DeclRefExpr *DRE = new (Context) DeclRefExpr(NewVD, strType, VK_LValue,
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(NewVD, false, strType, VK_LValue,
                                                SourceLocation());
   Expr *Unop = new (Context) UnaryOperator(DRE, UO_AddrOf,
                                  Context->getPointerType(DRE->getType()),
@@ -2687,6 +2687,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
                                CK_BitCast,
                    new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
+                                             false,
                                              Context->getObjCIdType(),
                                              VK_RValue,
                                              SourceLocation()))
@@ -2728,7 +2729,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       SynthSuperContructorFunctionDecl();
       // Simulate a contructor call...
       DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
-                                                   superType, VK_LValue,
+                                                   false, superType, VK_LValue,
                                                    SourceLocation());
       SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
                                         InitExprs.size(),
@@ -2798,6 +2799,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
                                CK_BitCast,
                    new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
+                                             false,
                                              Context->getObjCIdType(),
                                              VK_RValue, SourceLocation()))
                         ); // set the 'receiver'.
@@ -2837,7 +2839,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       SynthSuperContructorFunctionDecl();
       // Simulate a contructor call...
       DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
-                                                   superType, VK_LValue,
+                                                   false, superType, VK_LValue,
                                                    SourceLocation());
       SuperRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0],
                                         InitExprs.size(),
@@ -2989,7 +2991,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   QualType msgSendType = MsgSendFlavor->getType();
 
   // Create a reference to the objc_msgSend() declaration.
-  DeclRefExpr *DRE = new (Context) DeclRefExpr(MsgSendFlavor, msgSendType,
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(MsgSendFlavor, false, msgSendType,
                                                VK_LValue, SourceLocation());
 
   // Need to cast objc_msgSend to "void *" (to workaround a GCC bandaid).
@@ -3025,7 +3027,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // method's return type.
 
     // Create a reference to the objc_msgSend_stret() declaration.
-    DeclRefExpr *STDRE = new (Context) DeclRefExpr(MsgSendStretFlavor, msgSendType,
+    DeclRefExpr *STDRE = new (Context) DeclRefExpr(MsgSendStretFlavor,
+                                                   false, msgSendType,
                                                    VK_LValue, SourceLocation());
     // Need to cast objc_msgSend_stret to "void *" (see above comment).
     cast = NoTypeInfoCStyleCastExpr(Context,
@@ -3113,8 +3116,8 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   VarDecl *VD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
                                 SourceLocation(), ID, getProtocolType(), 0,
                                 SC_Extern, SC_None);
-  DeclRefExpr *DRE = new (Context) DeclRefExpr(VD, getProtocolType(), VK_LValue,
-                                               SourceLocation());
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(VD, false, getProtocolType(),
+                                               VK_LValue, SourceLocation());
   Expr *DerefExpr = new (Context) UnaryOperator(DRE, UO_AddrOf,
                              Context->getPointerType(DRE->getType()),
                              VK_RValue, OK_Ordinary, SourceLocation());
@@ -3630,20 +3633,20 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     // Need to copy-in the inner copied-in variables not actually used in this
     // block.
     for (int j = 0; j < InnerDeclRefsCount[i]; j++) {
-      BlockDeclRefExpr *Exp = InnerDeclRefs[count++];
+      DeclRefExpr *Exp = InnerDeclRefs[count++];
       ValueDecl *VD = Exp->getDecl();
       BlockDeclRefs.push_back(Exp);
-      if (!Exp->isByRef() && !BlockByCopyDeclsPtrSet.count(VD)) {
+      if (!VD->hasAttr<BlocksAttr>() && !BlockByCopyDeclsPtrSet.count(VD)) {
         BlockByCopyDeclsPtrSet.insert(VD);
         BlockByCopyDecls.push_back(VD);
       }
-      if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
+      if (VD->hasAttr<BlocksAttr>() && !BlockByRefDeclsPtrSet.count(VD)) {
         BlockByRefDeclsPtrSet.insert(VD);
         BlockByRefDecls.push_back(VD);
       }
       // imported objects in the inner blocks not used in the outer
       // blocks must be copied/disposed in the outer block as well.
-      if (Exp->isByRef() ||
+      if (VD->hasAttr<BlocksAttr>() ||
           VD->getType()->isObjCObjectPointerType() || 
           VD->getType()->isBlockPointerType())
         ImportedBlockDecls.insert(VD);
@@ -3732,25 +3735,21 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
         GetBlockDeclRefExprs(*CI);
     }
   // Handle specific things.
-  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S)) {
-    // FIXME: Handle enums.
-    if (!isa<FunctionDecl>(CDRE->getDecl()))
-      BlockDeclRefs.push_back(CDRE);
-  }
-  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S))
-    if (HasLocalVariableExternalStorage(DRE->getDecl())) {
-        BlockDeclRefExpr *BDRE = 
-          new (Context)BlockDeclRefExpr(cast<VarDecl>(DRE->getDecl()),
-                                        DRE->getType(), 
-                                        VK_LValue, DRE->getLocation(), false);
-        BlockDeclRefs.push_back(BDRE);
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
+    if (DRE->refersToEnclosingLocal()) {
+      // FIXME: Handle enums.
+      if (!isa<FunctionDecl>(DRE->getDecl()))
+        BlockDeclRefs.push_back(DRE);
+      if (HasLocalVariableExternalStorage(DRE->getDecl()))
+        BlockDeclRefs.push_back(DRE);
     }
+  }
   
   return;
 }
 
 void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S, 
-                SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
+                SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs,
                 llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts) {
   for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
@@ -3767,15 +3766,15 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
 
     }
   // Handle specific things.
-  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S)) {
-    if (!isa<FunctionDecl>(CDRE->getDecl()) &&
-        !InnerContexts.count(CDRE->getDecl()->getDeclContext()))
-      InnerBlockDeclRefs.push_back(CDRE);
-  }
-  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
-    if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl()))
-      if (Var->isFunctionOrMethodVarDecl())
-        ImportedLocalExternalDecls.insert(Var);
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
+    if (DRE->refersToEnclosingLocal()) {
+      if (!isa<FunctionDecl>(DRE->getDecl()) &&
+          !InnerContexts.count(DRE->getDecl()->getDeclContext()))
+        InnerBlockDeclRefs.push_back(DRE);
+      if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl()))
+        if (Var->isFunctionOrMethodVarDecl())
+          ImportedLocalExternalDecls.insert(Var);
+    }
   }
   
   return;
@@ -3818,9 +3817,6 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
 
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BlockExp)) {
     CPT = DRE->getType()->getAs<BlockPointerType>();
-  } else if (const BlockDeclRefExpr *CDRE = 
-              dyn_cast<BlockDeclRefExpr>(BlockExp)) {
-    CPT = CDRE->getType()->getAs<BlockPointerType>();
   } else if (const MemberExpr *MExpr = dyn_cast<MemberExpr>(BlockExp)) {
     CPT = MExpr->getType()->getAs<BlockPointerType>();
   } 
@@ -3933,17 +3929,11 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
 //        i = 77;
 //    };
 //}
-Stmt *RewriteObjC::RewriteBlockDeclRefExpr(Expr *DeclRefExp) {
+Stmt *RewriteObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
   // Rewrite the byref variable into BYREFVAR->__forwarding->BYREFVAR 
   // for each DeclRefExp where BYREFVAR is name of the variable.
-  ValueDecl *VD;
-  bool isArrow = true;
-  if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(DeclRefExp))
-    VD = BDRE->getDecl();
-  else {
-    VD = cast<DeclRefExpr>(DeclRefExp)->getDecl();
-    isArrow = false;
-  }
+  ValueDecl *VD = DeclRefExp->getDecl();
+  bool isArrow = DeclRefExp->refersToEnclosingLocal();
   
   FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
                                     SourceLocation(),
@@ -4437,7 +4427,7 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
   if (BlockDeclRefs.size()) {
     // Unique all "by copy" declarations.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (!BlockDeclRefs[i]->isByRef()) {
+      if (!BlockDeclRefs[i]->getDecl()->hasAttr<BlocksAttr>()) {
         if (!BlockByCopyDeclsPtrSet.count(BlockDeclRefs[i]->getDecl())) {
           BlockByCopyDeclsPtrSet.insert(BlockDeclRefs[i]->getDecl());
           BlockByCopyDecls.push_back(BlockDeclRefs[i]->getDecl());
@@ -4445,7 +4435,7 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
       }
     // Unique all "by ref" declarations.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (BlockDeclRefs[i]->isByRef()) {
+      if (BlockDeclRefs[i]->getDecl()->hasAttr<BlocksAttr>()) {
         if (!BlockByRefDeclsPtrSet.count(BlockDeclRefs[i]->getDecl())) {
           BlockByRefDeclsPtrSet.insert(BlockDeclRefs[i]->getDecl());
           BlockByRefDecls.push_back(BlockDeclRefs[i]->getDecl());
@@ -4453,7 +4443,7 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
       }
     // Find any imported blocks...they will need special attention.
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
-      if (BlockDeclRefs[i]->isByRef() ||
+      if (BlockDeclRefs[i]->getDecl()->hasAttr<BlocksAttr>() ||
           BlockDeclRefs[i]->getType()->isObjCObjectPointerType() || 
           BlockDeclRefs[i]->getType()->isBlockPointerType())
         ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
@@ -4469,7 +4459,7 @@ FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(StringRef name) {
 }
 
 Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
-          const SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs) {
+          const SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs) {
   const BlockDecl *block = Exp->getBlockDecl();
   Blocks.push_back(Exp);
 
@@ -4479,9 +4469,9 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
  int countOfInnerDecls = 0;
   if (!InnerBlockDeclRefs.empty()) {
     for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++) {
-      BlockDeclRefExpr *Exp = InnerBlockDeclRefs[i];
+      DeclRefExpr *Exp = InnerBlockDeclRefs[i];
       ValueDecl *VD = Exp->getDecl();
-      if (!Exp->isByRef() && !BlockByCopyDeclsPtrSet.count(VD)) {
+      if (!VD->hasAttr<BlocksAttr>() && !BlockByCopyDeclsPtrSet.count(VD)) {
       // We need to save the copied-in variables in nested
       // blocks because it is needed at the end for some of the API generations.
       // See SynthesizeBlockLiterals routine.
@@ -4490,7 +4480,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
         BlockByCopyDeclsPtrSet.insert(VD);
         BlockByCopyDecls.push_back(VD);
       }
-      if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
+      if (VD->hasAttr<BlocksAttr>() && !BlockByRefDeclsPtrSet.count(VD)) {
         InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
         BlockDeclRefs.push_back(Exp);
         BlockByRefDeclsPtrSet.insert(VD);
@@ -4499,7 +4489,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
     }
     // Find any imported blocks...they will need special attention.
     for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++)
-      if (InnerBlockDeclRefs[i]->isByRef() ||
+      if (InnerBlockDeclRefs[i]->getDecl()->hasAttr<BlocksAttr>() ||
           InnerBlockDeclRefs[i]->getType()->isObjCObjectPointerType() || 
           InnerBlockDeclRefs[i]->getType()->isBlockPointerType())
         ImportedBlockDecls.insert(InnerBlockDeclRefs[i]->getDecl());
@@ -4529,15 +4519,15 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
 
   // Simulate a contructor call...
   FD = SynthBlockInitFunctionDecl(Tag);
-  DeclRefExpr *DRE = new (Context) DeclRefExpr(FD, FType, VK_RValue,
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(FD, false, FType, VK_RValue,
                                                SourceLocation());
 
   SmallVector<Expr*, 4> InitExprs;
 
   // Initialize the block function.
   FD = SynthBlockInitFunctionDecl(Func);
-  DeclRefExpr *Arg = new (Context) DeclRefExpr(FD, FD->getType(), VK_LValue,
-                                               SourceLocation());
+  DeclRefExpr *Arg = new (Context) DeclRefExpr(FD, false, FD->getType(),
+                                               VK_LValue, SourceLocation());
   CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, Context->VoidPtrTy,
                                                 CK_BitCast, Arg);
   InitExprs.push_back(castExpr);
@@ -4551,7 +4541,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
                                    Context->VoidPtrTy, 0,
                                    SC_Static, SC_None);
   UnaryOperator *DescRefExpr =
-    new (Context) UnaryOperator(new (Context) DeclRefExpr(NewVD,
+    new (Context) UnaryOperator(new (Context) DeclRefExpr(NewVD, false,
                                                           Context->VoidPtrTy,
                                                           VK_LValue,
                                                           SourceLocation()), 
@@ -4570,7 +4560,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       if (isObjCType((*I)->getType())) {
         // FIXME: Conform to ABI ([[obj retain] autorelease]).
         FD = SynthBlockInitFunctionDecl((*I)->getName());
-        Exp = new (Context) DeclRefExpr(FD, FD->getType(), VK_LValue,
+        Exp = new (Context) DeclRefExpr(FD, false, FD->getType(), VK_LValue,
                                         SourceLocation());
         if (HasLocalVariableExternalStorage(*I)) {
           QualType QT = (*I)->getType();
@@ -4580,13 +4570,13 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
         }
       } else if (isTopLevelBlockPointerType((*I)->getType())) {
         FD = SynthBlockInitFunctionDecl((*I)->getName());
-        Arg = new (Context) DeclRefExpr(FD, FD->getType(), VK_LValue,
+        Arg = new (Context) DeclRefExpr(FD, false, FD->getType(), VK_LValue,
                                         SourceLocation());
         Exp = NoTypeInfoCStyleCastExpr(Context, Context->VoidPtrTy,
                                        CK_BitCast, Arg);
       } else {
         FD = SynthBlockInitFunctionDecl((*I)->getName());
-        Exp = new (Context) DeclRefExpr(FD, FD->getType(), VK_LValue,
+        Exp = new (Context) DeclRefExpr(FD, false, FD->getType(), VK_LValue,
                                         SourceLocation());
         if (HasLocalVariableExternalStorage(*I)) {
           QualType QT = (*I)->getType();
@@ -4614,7 +4604,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       
       FD = SynthBlockInitFunctionDecl((*I)->getName());
-      Exp = new (Context) DeclRefExpr(FD, FD->getType(), VK_LValue,
+      Exp = new (Context) DeclRefExpr(FD, false, FD->getType(), VK_LValue,
                                       SourceLocation());
       bool isNestedCapturedVar = false;
       if (block)
@@ -4708,7 +4698,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     }
 
   if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
-    SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
+    SmallVector<DeclRefExpr *, 8> InnerBlockDeclRefs;
     llvm::SmallPtrSet<const DeclContext *, 8> InnerContexts;
     InnerContexts.insert(BE->getBlockDecl());
     ImportedLocalExternalDecls.clear();
@@ -4853,10 +4843,6 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     Stmts.pop_back();
   }
   // Handle blocks rewriting.
-  if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(S)) {
-    if (BDRE->isByRef())
-      return RewriteBlockDeclRefExpr(BDRE);
-  }
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
     ValueDecl *VD = DRE->getDecl(); 
     if (VD->hasAttr<BlocksAttr>())

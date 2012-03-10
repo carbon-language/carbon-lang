@@ -2284,11 +2284,6 @@ public:
       return true;
     return false;
   }
-  bool VisitBlockDeclRefExpr (const BlockDeclRefExpr *E) {
-    if (Ctx.getCanonicalType(E->getType()).isVolatileQualified())
-      return true;
-    return false;
-  }
 
   // We don't want to evaluate BlockExprs multiple times, as they generate
   // a ton of code.
@@ -6278,7 +6273,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::ObjCIsaExprClass:
   case Expr::ShuffleVectorExprClass:
   case Expr::BlockExprClass:
-  case Expr::BlockDeclRefExprClass:
   case Expr::NoStmtClass:
   case Expr::OpaqueValueExprClass:
   case Expr::PackExpansionExprClass:

@@ -48,8 +48,8 @@ class RootBlockObjCVarRewriter :
     BlockVarChecker(VarDecl *var) : Var(var) { }
   
     bool TraverseImplicitCastExpr(ImplicitCastExpr *castE) {
-      if (BlockDeclRefExpr *
-            ref = dyn_cast<BlockDeclRefExpr>(castE->getSubExpr())) {
+      if (DeclRefExpr *
+            ref = dyn_cast<DeclRefExpr>(castE->getSubExpr())) {
         if (ref->getDecl() == Var) {
           if (castE->getCastKind() == CK_LValueToRValue)
             return true; // Using the value of the variable.
@@ -62,7 +62,7 @@ class RootBlockObjCVarRewriter :
       return base::TraverseImplicitCastExpr(castE);
     }
 
-    bool VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+    bool VisitDeclRefExpr(DeclRefExpr *E) {
       if (E->getDecl() == Var)
         return false; // The reference of the variable, and not just its value,
                       //  is needed.

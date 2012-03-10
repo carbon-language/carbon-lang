@@ -931,7 +931,7 @@ static void emitStructSetterCall(CodeGenFunction &CGF, ObjCMethodDecl *OMD,
 
   // The second argument is the address of the parameter variable.
   ParmVarDecl *argVar = *OMD->param_begin();
-  DeclRefExpr argRef(argVar, argVar->getType().getNonReferenceType(), 
+  DeclRefExpr argRef(argVar, false, argVar->getType().getNonReferenceType(), 
                      VK_LValue, SourceLocation());
   llvm::Value *argAddr = CGF.EmitLValue(&argRef).getAddress();
   argAddr = CGF.Builder.CreateBitCast(argAddr, CGF.Int8PtrTy);
@@ -976,7 +976,7 @@ static void emitCPPObjectAtomicSetterCall(CodeGenFunction &CGF,
   
   // The second argument is the address of the parameter variable.
   ParmVarDecl *argVar = *OMD->param_begin();
-  DeclRefExpr argRef(argVar, argVar->getType().getNonReferenceType(), 
+  DeclRefExpr argRef(argVar, false, argVar->getType().getNonReferenceType(), 
                      VK_LValue, SourceLocation());
   llvm::Value *argAddr = CGF.EmitLValue(&argRef).getAddress();
   argAddr = CGF.Builder.CreateBitCast(argAddr, CGF.Int8PtrTy);
@@ -1163,7 +1163,8 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 
   // Otherwise, fake up some ASTs and emit a normal assignment.
   ValueDecl *selfDecl = setterMethod->getSelfDecl();
-  DeclRefExpr self(selfDecl, selfDecl->getType(), VK_LValue, SourceLocation());
+  DeclRefExpr self(selfDecl, false, selfDecl->getType(),
+                   VK_LValue, SourceLocation());
   ImplicitCastExpr selfLoad(ImplicitCastExpr::OnStack,
                             selfDecl->getType(), CK_LValueToRValue, &self,
                             VK_RValue);
@@ -1172,7 +1173,7 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 
   ParmVarDecl *argDecl = *setterMethod->param_begin();
   QualType argType = argDecl->getType().getNonReferenceType();
-  DeclRefExpr arg(argDecl, argType, VK_LValue, SourceLocation());
+  DeclRefExpr arg(argDecl, false, argType, VK_LValue, SourceLocation());
   ImplicitCastExpr argLoad(ImplicitCastExpr::OnStack,
                            argType.getUnqualifiedType(), CK_LValueToRValue,
                            &arg, VK_RValue);
@@ -1525,7 +1526,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     EmitAutoVarInit(variable);
 
     const VarDecl* D = cast<VarDecl>(SD->getSingleDecl());
-    DeclRefExpr tempDRE(const_cast<VarDecl*>(D), D->getType(),
+    DeclRefExpr tempDRE(const_cast<VarDecl*>(D), false, D->getType(),
                         VK_LValue, SourceLocation());
     elementLValue = EmitLValue(&tempDRE);
     elementType = D->getType();
@@ -2817,28 +2818,23 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
   
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
   
-  DeclRefExpr *DstExpr = 
-    new (C) DeclRefExpr(&dstDecl, DestTy,
-                              VK_RValue, SourceLocation());
+  DeclRefExpr DstExpr(&dstDecl, false, DestTy,
+                      VK_RValue, SourceLocation());
+  UnaryOperator DST(&DstExpr, UO_Deref, DestTy->getPointeeType(),
+                    VK_LValue, OK_Ordinary, SourceLocation());
   
-  Expr* DST = new (C) UnaryOperator(DstExpr, UO_Deref, DestTy->getPointeeType(),
-                                    VK_LValue, OK_Ordinary, SourceLocation());
+  DeclRefExpr SrcExpr(&srcDecl, false, SrcTy,
+                      VK_RValue, SourceLocation());
+  UnaryOperator SRC(&SrcExpr, UO_Deref, SrcTy->getPointeeType(),
+                    VK_LValue, OK_Ordinary, SourceLocation());
   
-  DeclRefExpr *SrcExpr = 
-    new (C) DeclRefExpr(&srcDecl, SrcTy,
-                        VK_RValue, SourceLocation());
-  
-  Expr* SRC = new (C) UnaryOperator(SrcExpr, UO_Deref, SrcTy->getPointeeType(),
-                                    VK_LValue, OK_Ordinary, SourceLocation());
-  
-  Expr *Args[2] = { DST, SRC };
+  Expr *Args[2] = { &DST, &SRC };
   CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
-  CXXOperatorCallExpr *TheCall =
-    new (C) CXXOperatorCallExpr(C, OO_Equal, CalleeExp->getCallee(),
-                                Args, 2, DestTy->getPointeeType(), 
-                                VK_LValue, SourceLocation());
-
-  EmitStmt(TheCall);
+  CXXOperatorCallExpr TheCall(C, OO_Equal, CalleeExp->getCallee(),
+                              Args, 2, DestTy->getPointeeType(), 
+                              VK_LValue, SourceLocation());
+  
+  EmitStmt(&TheCall);
 
   FinishFunction();
   HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
@@ -2907,18 +2903,17 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
   
-  DeclRefExpr *SrcExpr = 
-  new (C) DeclRefExpr(&srcDecl, SrcTy,
+  DeclRefExpr SrcExpr(&srcDecl, false, SrcTy,
                       VK_RValue, SourceLocation());
   
-  Expr* SRC = new (C) UnaryOperator(SrcExpr, UO_Deref, SrcTy->getPointeeType(),
-                                    VK_LValue, OK_Ordinary, SourceLocation());
+  UnaryOperator SRC(&SrcExpr, UO_Deref, SrcTy->getPointeeType(),
+                    VK_LValue, OK_Ordinary, SourceLocation());
   
   CXXConstructExpr *CXXConstExpr = 
     cast<CXXConstructExpr>(PID->getGetterCXXConstructor());
   
   SmallVector<Expr*, 4> ConstructorArgs;
-  ConstructorArgs.push_back(SRC);
+  ConstructorArgs.push_back(&SRC);
   CXXConstructExpr::arg_iterator A = CXXConstExpr->arg_begin();
   ++A;
   
@@ -2936,11 +2931,10 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                              CXXConstExpr->requiresZeroInitialization(),
                              CXXConstExpr->getConstructionKind(), SourceRange());
   
-  DeclRefExpr *DstExpr = 
-    new (C) DeclRefExpr(&dstDecl, DestTy,
-                        VK_RValue, SourceLocation());
+  DeclRefExpr DstExpr(&dstDecl, false, DestTy,
+                      VK_RValue, SourceLocation());
   
-  RValue DV = EmitAnyExpr(DstExpr);
+  RValue DV = EmitAnyExpr(&DstExpr);
   CharUnits Alignment = getContext().getTypeAlignInChars(TheCXXConstructExpr->getType());
   EmitAggExpr(TheCXXConstructExpr, 
               AggValueSlot::forAddr(DV.getScalarVal(), Alignment, Qualifiers(),

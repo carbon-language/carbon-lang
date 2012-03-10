@@ -2415,7 +2415,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 
     Expr *CopyCtorArg = 
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
-                          SourceLocation(), Param,
+                          SourceLocation(), Param, false,
                           Constructor->getLocation(), ParamType,
                           VK_LValue, 0);
 
@@ -2491,7 +2491,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
         
     Expr *MemberExprBase = 
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
-                          SourceLocation(), Param,
+                          SourceLocation(), Param, false,
                           Loc, ParamType, VK_LValue, 0);
 
     SemaRef.MarkDeclRefReferenced(cast<DeclRefExpr>(MemberExprBase));

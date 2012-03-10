@@ -333,6 +333,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   E->DeclRefExprBits.HasFoundDecl = Record[Idx++];
   E->DeclRefExprBits.HasTemplateKWAndArgsInfo = Record[Idx++];
   E->DeclRefExprBits.HadMultipleCandidates = Record[Idx++];
+  E->DeclRefExprBits.RefersToEnclosingLocal = Record[Idx++];
   unsigned NumTemplateArgs = 0;
   if (E->hasTemplateKWAndArgsInfo())
     NumTemplateArgs = Record[Idx++];
@@ -750,14 +751,6 @@ void ASTStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 void ASTStmtReader::VisitBlockExpr(BlockExpr *E) {
   VisitExpr(E);
   E->setBlockDecl(ReadDeclAs<BlockDecl>(Record, Idx));
-}
-
-void ASTStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-  VisitExpr(E);
-  E->setDecl(ReadDeclAs<VarDecl>(Record, Idx));
-  E->setLocation(ReadSourceLocation(Record, Idx));
-  E->setByRef(Record[Idx++]);
-  E->setConstQualAdded(Record[Idx++]);
 }
 
 void ASTStmtReader::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
@@ -1703,7 +1696,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
         /*HasFoundDecl=*/Record[ASTStmtReader::NumExprFields + 1],
         /*HasTemplateKWAndArgsInfo=*/Record[ASTStmtReader::NumExprFields + 2],
         /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 2] ?
-          Record[ASTStmtReader::NumExprFields + 4] : 0);
+          Record[ASTStmtReader::NumExprFields + 5] : 0);
       break;
 
     case EXPR_INTEGER_LITERAL:
@@ -1880,10 +1873,6 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_BLOCK:
       S = new (Context) BlockExpr(Empty);
-      break;
-
-    case EXPR_BLOCK_DECL_REF:
-      S = new (Context) BlockDeclRefExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

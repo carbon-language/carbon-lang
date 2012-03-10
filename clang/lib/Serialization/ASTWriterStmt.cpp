@@ -266,6 +266,7 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   Record.push_back(E->getDecl() != E->getFoundDecl());
   Record.push_back(E->hasTemplateKWAndArgsInfo());
   Record.push_back(E->hadMultipleCandidates());
+  Record.push_back(E->refersToEnclosingLocal());
 
   if (E->hasTemplateKWAndArgsInfo()) {
     unsigned NumTemplateArgs = E->getNumTemplateArgs();
@@ -710,15 +711,6 @@ void ASTStmtWriter::VisitBlockExpr(BlockExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getBlockDecl(), Record);
   Code = serialization::EXPR_BLOCK;
-}
-
-void ASTStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-  VisitExpr(E);
-  Writer.AddDeclRef(E->getDecl(), Record);
-  Writer.AddSourceLocation(E->getLocation(), Record);
-  Record.push_back(E->isByRef());
-  Record.push_back(E->isConstQualAdded());
-  Code = serialization::EXPR_BLOCK_DECL_REF;
 }
 
 void ASTStmtWriter::VisitGenericSelectionExpr(GenericSelectionExpr *E) {

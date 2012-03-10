@@ -213,20 +213,13 @@ public:
   }
 
   // l-values.
-  Value *emitDeclRef(ValueDecl *VD, Expr *refExpr) {
-    if (CodeGenFunction::ConstantEmission result
-          = CGF.tryEmitAsConstant(VD, refExpr)) {
+  Value *VisitDeclRefExpr(DeclRefExpr *E) {
+    if (CodeGenFunction::ConstantEmission result = CGF.tryEmitAsConstant(E)) {
       if (result.isReference())
-        return EmitLoadOfLValue(result.getReferenceLValue(CGF, refExpr));
+        return EmitLoadOfLValue(result.getReferenceLValue(CGF, E));
       return result.getValue();
     }
-    return EmitLoadOfLValue(refExpr);
-  }
-  Value *VisitDeclRefExpr(DeclRefExpr *E) {
-    return emitDeclRef(E->getDecl(), E);
-  }
-  Value *VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-    return emitDeclRef(E->getDecl(), E);
+    return EmitLoadOfLValue(E);
   }
 
   Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E) {

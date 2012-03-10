@@ -1359,10 +1359,7 @@ public:
   }
 
   void AllocateBlockCXXThisPointer(const CXXThisExpr *E);
-  void AllocateBlockDecl(const BlockDeclRefExpr *E);
-  llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
-    return GetAddrOfBlockDecl(E->getDecl(), E->isByRef());
-  }
+  void AllocateBlockDecl(const DeclRefExpr *E);
   llvm::Value *GetAddrOfBlockDecl(const VarDecl *var, bool ByRef);
   llvm::Type *BuildByRefType(const VarDecl *var);
 
@@ -2135,7 +2132,7 @@ public:
     }
   };
 
-  ConstantEmission tryEmitAsConstant(ValueDecl *VD, Expr *refExpr);
+  ConstantEmission tryEmitAsConstant(DeclRefExpr *refExpr);
 
   RValue EmitPseudoObjectRValue(const PseudoObjectExpr *e,
                                 AggValueSlot slot = AggValueSlot::ignored());
@@ -2162,8 +2159,6 @@ public:
 
   LValue EmitLValueForBitfield(llvm::Value* Base, const FieldDecl* Field,
                                 unsigned CVRQualifiers);
-
-  LValue EmitBlockDeclRefLValue(const BlockDeclRefExpr *E);
 
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);

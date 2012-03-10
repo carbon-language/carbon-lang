@@ -983,6 +983,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
       DRE->getQualifierLoc(),
       SourceLocation(),
       NewBuiltinDecl,
+      /*enclosing*/ false,
       DRE->getLocation(),
       NewBuiltinDecl->getType(),
       DRE->getValueKind());
@@ -4674,12 +4675,6 @@ static bool findRetainCycleOwner(Sema &S, Expr *e, RetainCycleOwner &owner) {
       return considerVariable(var, ref, owner);
     }
 
-    if (BlockDeclRefExpr *ref = dyn_cast<BlockDeclRefExpr>(e)) {
-      owner.Variable = ref->getDecl();
-      owner.setLocsFrom(ref);
-      return true;
-    }
-
     if (MemberExpr *member = dyn_cast<MemberExpr>(e)) {
       if (member->isArrow()) return false;
 
@@ -4732,11 +4727,6 @@ namespace {
     Expr *Capturer;
 
     void VisitDeclRefExpr(DeclRefExpr *ref) {
-      if (ref->getDecl() == Variable && !Capturer)
-        Capturer = ref;
-    }
-
-    void VisitBlockDeclRefExpr(BlockDeclRefExpr *ref) {
       if (ref->getDecl() == Variable && !Capturer)
         Capturer = ref;
     }

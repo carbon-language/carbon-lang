@@ -40,7 +40,7 @@ static ExprResult
 CreateFunctionRefExpr(Sema &S, FunctionDecl *Fn, bool HadMultipleCandidates,
                       SourceLocation Loc = SourceLocation(), 
                       const DeclarationNameLoc &LocInfo = DeclarationNameLoc()){
-  DeclRefExpr *DRE = new (S.Context) DeclRefExpr(Fn, Fn->getType(),
+  DeclRefExpr *DRE = new (S.Context) DeclRefExpr(Fn, false, Fn->getType(),
                                                  VK_LValue, Loc, LocInfo);
   if (HadMultipleCandidates)
     DRE->setHadMultipleCandidates(true);
@@ -5580,7 +5580,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // lvalues/rvalues and the type. Fortunately, we can allocate this
   // call on the stack and we don't need its arguments to be
   // well-formed.
-  DeclRefExpr ConversionRef(Conversion, Conversion->getType(),
+  DeclRefExpr ConversionRef(Conversion, false, Conversion->getType(),
                             VK_LValue, From->getLocStart());
   ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
                                 Context.getPointerType(Conversion->getType()),
@@ -11053,6 +11053,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                            ULE->getQualifierLoc(),
                                            ULE->getTemplateKeywordLoc(),
                                            Fn,
+                                           /*enclosing*/ false, // FIXME?
                                            ULE->getNameLoc(),
                                            Fn->getType(),
                                            VK_LValue,
@@ -11080,6 +11081,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                                MemExpr->getQualifierLoc(),
                                                MemExpr->getTemplateKeywordLoc(),
                                                Fn,
+                                               /*enclosing*/ false,
                                                MemExpr->getMemberLoc(),
                                                Fn->getType(),
                                                VK_LValue,

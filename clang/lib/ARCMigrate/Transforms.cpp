@@ -194,7 +194,6 @@ class ReferenceClear : public RecursiveASTVisitor<ReferenceClear> {
 public:
   ReferenceClear(ExprSet &refs) : Refs(refs) { }
   bool VisitDeclRefExpr(DeclRefExpr *E) { Refs.erase(E); return true; }
-  bool VisitBlockDeclRefExpr(BlockDeclRefExpr *E) { Refs.erase(E); return true; }
 };
 
 class ReferenceCollector : public RecursiveASTVisitor<ReferenceCollector> {
@@ -206,12 +205,6 @@ public:
     : Dcl(D), Refs(refs) { }
 
   bool VisitDeclRefExpr(DeclRefExpr *E) {
-    if (E->getDecl() == Dcl)
-      Refs.insert(E);
-    return true;
-  }
-
-  bool VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
     if (E->getDecl() == Dcl)
       Refs.insert(E);
     return true;

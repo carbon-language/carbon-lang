@@ -670,14 +670,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
 
-    case Stmt::BlockDeclRefExprClass: {
-      Bldr.takeNodes(Pred);
-      const BlockDeclRefExpr *BE = cast<BlockDeclRefExpr>(S);
-      VisitCommonDeclRefExpr(BE, BE->getDecl(), Pred, Dst);
-      Bldr.addNodes(Dst);
-      break;
-    }
-
     case Stmt::BlockExprClass:
       Bldr.takeNodes(Pred);
       VisitBlockExpr(cast<BlockExpr>(S), Pred, Dst);

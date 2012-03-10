@@ -1266,11 +1266,16 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
         }
       }
 
+  bool refersToEnclosingScope =
+    (CurContext != D->getDeclContext() &&
+     D->getDeclContext()->isFunctionOrMethod());
+
   DeclRefExpr *E = DeclRefExpr::Create(Context,
                                        SS ? SS->getWithLocInContext(Context)
                                               : NestedNameSpecifierLoc(),
-                                           SourceLocation(),
-                                           D, NameInfo, Ty, VK);
+                                       SourceLocation(),
+                                       D, refersToEnclosingScope,
+                                       NameInfo, Ty, VK);
 
   MarkDeclRefReferenced(E);
 
@@ -2146,42 +2151,6 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   return Owned(ULE);
 }
 
-static bool shouldBuildBlockDeclRef(ValueDecl *D, Sema &S) {
-  // Check for a variable with local storage not from the current scope;
-  // we need to create BlockDeclRefExprs for these.
-  // FIXME: BlockDeclRefExpr shouldn't exist!
-  VarDecl *var = dyn_cast<VarDecl>(D);
-  if (!var)
-    return false;
-  if (var->getDeclContext() == S.CurContext)
-    return false;
-  if (!var->hasLocalStorage())
-    return false;
-  return S.getCurBlock() != 0;
-}
-
-static ExprResult BuildBlockDeclRefExpr(Sema &S, ValueDecl *VD,
-                                        const DeclarationNameInfo &NameInfo) {
-  VarDecl *var = cast<VarDecl>(VD);
-  QualType exprType = var->getType().getNonReferenceType();
-
-  bool HasBlockAttr = var->hasAttr<BlocksAttr>();
-  bool ConstAdded = false;
-  if (!HasBlockAttr) {
-    ConstAdded = !exprType.isConstQualified();
-    exprType.addConst();
-  }
-
-  BlockDeclRefExpr *BDRE =
-      new (S.Context) BlockDeclRefExpr(var, exprType, VK_LValue,
-                                       NameInfo.getLoc(), HasBlockAttr,
-                                       ConstAdded);
-
-  S.MarkBlockDeclRefReferenced(BDRE);
-
-  return S.Owned(BDRE);
-}
-
 /// \brief Complete semantic analysis for a reference to the given declaration.
 ExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
@@ -2303,9 +2272,6 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       // These are always l-values.
       valueKind = VK_LValue;
       type = type.getNonReferenceType();
-
-      if (shouldBuildBlockDeclRef(VD, *this))
-        return BuildBlockDeclRefExpr(*this, VD, NameInfo);
 
       // FIXME: Does the addition of const really only apply in
       // potentially-evaluated contexts? Since the variable isn't actually
@@ -3721,7 +3687,7 @@ Sema::ActOnCUDAExecConfigExpr(Scope *S, SourceLocation LLLLoc,
   QualType ConfigQTy = ConfigDecl->getType();
 
   DeclRefExpr *ConfigDR = new (Context) DeclRefExpr(
-      ConfigDecl, ConfigQTy, VK_LValue, LLLLoc);
+      ConfigDecl, false, ConfigQTy, VK_LValue, LLLLoc);
   MarkFunctionReferenced(LLLLoc, ConfigDecl);
 
   return ActOnCallExpr(S, ConfigDR, LLLLoc, ExecConfig, GGGLoc, 0,
@@ -9863,7 +9829,8 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // C++ [expr.prim.labda]p12:
   //   An entity captured by a lambda-expression is odr-used (3.2) in
   //   the scope containing the lambda-expression.
-  Expr *Ref = new (S.Context) DeclRefExpr(Var, DeclRefType, VK_LValue, Loc);
+  Expr *Ref = new (S.Context) DeclRefExpr(Var, false, DeclRefType,
+                                          VK_LValue, Loc);
   Var->setReferenced(true);
   Var->setUsed(true);
 
@@ -10109,7 +10076,7 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
             // According to the blocks spec, the capture of a variable from
             // the stack requires a const copy constructor.  This is not true
             // of the copy/move done to move a __block variable to the heap.
-            Expr *DeclRef = new (Context) DeclRefExpr(Var, 
+            Expr *DeclRef = new (Context) DeclRefExpr(Var, false,
                                                       DeclRefType.withConst(), 
                                                       VK_LValue, Loc);
             ExprResult Result
@@ -10278,10 +10245,7 @@ void Sema::CleanupVarDeclMarking() {
        i != e; ++i) {
     VarDecl *Var;
     SourceLocation Loc;
-    if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(*i)) {
-      Var = BDRE->getDecl();
-      Loc = BDRE->getLocation();
-    } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(*i)) {
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(*i)) {
       Var = cast<VarDecl>(DRE->getDecl());
       Loc = DRE->getLocation();
     } else if (MemberExpr *ME = dyn_cast<MemberExpr>(*i)) {
@@ -10364,12 +10328,6 @@ static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
 
   SemaRef.MarkAnyDeclReferenced(Loc, D);
 } 
-
-/// \brief Perform reference-marking and odr-use handling for a
-/// BlockDeclRefExpr.
-void Sema::MarkBlockDeclRefReferenced(BlockDeclRefExpr *E) {
-  MarkExprReferenced(*this, E->getLocation(), E->getDecl(), E);
-}
 
 /// \brief Perform reference-marking and odr-use handling for a DeclRefExpr.
 void Sema::MarkDeclRefReferenced(DeclRefExpr *E) {
@@ -10495,14 +10453,6 @@ namespace {
     void VisitCXXConstructExpr(CXXConstructExpr *E) {
       S.MarkFunctionReferenced(E->getLocStart(), E->getConstructor());
       Inherited::VisitCXXConstructExpr(E);
-    }
-    
-    void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-      // If we were asked not to visit local variables, don't.
-      if (SkipLocalVariables && E->getDecl()->hasLocalStorage())
-          return;
-
-      S.MarkBlockDeclRefReferenced(E);
     }
     
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {

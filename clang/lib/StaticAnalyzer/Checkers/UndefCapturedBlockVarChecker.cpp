@@ -33,16 +33,16 @@ public:
 };
 } // end anonymous namespace
 
-static const BlockDeclRefExpr *FindBlockDeclRefExpr(const Stmt *S,
-                                                    const VarDecl *VD){
-  if (const BlockDeclRefExpr *BR = dyn_cast<BlockDeclRefExpr>(S))
+static const DeclRefExpr *FindBlockDeclRefExpr(const Stmt *S,
+                                               const VarDecl *VD) {
+  if (const DeclRefExpr *BR = dyn_cast<DeclRefExpr>(S))
     if (BR->getDecl() == VD)
       return BR;
 
   for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
        I!=E; ++I)
     if (const Stmt *child = *I) {
-      const BlockDeclRefExpr *BR = FindBlockDeclRefExpr(child, VD);
+      const DeclRefExpr *BR = FindBlockDeclRefExpr(child, VD);
       if (BR)
         return BR;
     }

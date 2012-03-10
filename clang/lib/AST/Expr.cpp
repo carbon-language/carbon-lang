@@ -263,7 +263,8 @@ void DeclRefExpr::computeDependence(ASTContext &Ctx) {
 DeclRefExpr::DeclRefExpr(ASTContext &Ctx,
                          NestedNameSpecifierLoc QualifierLoc,
                          SourceLocation TemplateKWLoc,
-                         ValueDecl *D, const DeclarationNameInfo &NameInfo,
+                         ValueDecl *D, bool RefersToEnclosingLocal,
+                         const DeclarationNameInfo &NameInfo,
                          NamedDecl *FoundD,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
@@ -277,6 +278,7 @@ DeclRefExpr::DeclRefExpr(ASTContext &Ctx,
     getInternalFoundDecl() = FoundD;
   DeclRefExprBits.HasTemplateKWAndArgsInfo
     = (TemplateArgs || TemplateKWLoc.isValid()) ? 1 : 0;
+  DeclRefExprBits.RefersToEnclosingLocal = RefersToEnclosingLocal;
   if (TemplateArgs) {
     bool Dependent = false;
     bool InstantiationDependent = false;
@@ -299,12 +301,14 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  NestedNameSpecifierLoc QualifierLoc,
                                  SourceLocation TemplateKWLoc,
                                  ValueDecl *D,
+                                 bool RefersToEnclosingLocal,
                                  SourceLocation NameLoc,
                                  QualType T,
                                  ExprValueKind VK,
                                  NamedDecl *FoundD,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   return Create(Context, QualifierLoc, TemplateKWLoc, D,
+                RefersToEnclosingLocal,
                 DeclarationNameInfo(D->getDeclName(), NameLoc),
                 T, VK, FoundD, TemplateArgs);
 }
@@ -313,6 +317,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  NestedNameSpecifierLoc QualifierLoc,
                                  SourceLocation TemplateKWLoc,
                                  ValueDecl *D,
+                                 bool RefersToEnclosingLocal,
                                  const DeclarationNameInfo &NameInfo,
                                  QualType T,
                                  ExprValueKind VK,
@@ -334,6 +339,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(Context, QualifierLoc, TemplateKWLoc, D,
+                               RefersToEnclosingLocal,
                                NameInfo, FoundD, TemplateArgs, T, VK);
 }
 
@@ -1867,14 +1873,8 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
                                                       ->isOBJCGCCandidate(Ctx);
   case CStyleCastExprClass:
     return cast<CStyleCastExpr>(E)->getSubExpr()->isOBJCGCCandidate(Ctx);
-  case BlockDeclRefExprClass:
   case DeclRefExprClass: {
-    
-    const Decl *D;
-    if (const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E))
-        D = BDRE->getDecl();
-    else 
-        D = cast<DeclRefExpr>(E)->getDecl();
+    const Decl *D = cast<DeclRefExpr>(E)->getDecl();
         
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (VD->hasGlobalStorage())
@@ -2194,7 +2194,6 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case AsTypeExprClass:
   case BinaryConditionalOperatorClass:
   case BlockExprClass:
-  case BlockDeclRefExprClass:
   case CUDAKernelCallExprClass:
   case DeclRefExprClass:
   case ObjCBridgedCastExprClass:
@@ -3662,24 +3661,6 @@ Stmt::child_range ObjCMessageExpr::children() {
     begin = reinterpret_cast<Stmt **>(getArgs());
   return child_range(begin,
                      reinterpret_cast<Stmt **>(getArgs() + getNumArgs()));
-}
-
-// Blocks
-BlockDeclRefExpr::BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
-                                   SourceLocation l, bool ByRef, 
-                                   bool constAdded)
-  : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary, false, false, false,
-         d->isParameterPack()),
-    D(d), Loc(l), IsByRef(ByRef), ConstQualAdded(constAdded)
-{
-  bool TypeDependent = false;
-  bool ValueDependent = false;
-  bool InstantiationDependent = false;
-  computeDeclRefDependence(D->getASTContext(), D, getType(), TypeDependent,
-                           ValueDependent, InstantiationDependent);
-  ExprBits.TypeDependent = TypeDependent;
-  ExprBits.ValueDependent = ValueDependent;
-  ExprBits.InstantiationDependent = InstantiationDependent;
 }
 
 ObjCArrayLiteral::ObjCArrayLiteral(llvm::ArrayRef<Expr *> Elements, 

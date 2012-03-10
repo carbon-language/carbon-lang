@@ -1040,7 +1040,7 @@ void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
       addLock(Mutex, LockData(ExpLocation, LK));
       if (isScopedVar) {
         // For scoped lockable vars, map this var to its underlying mutex.
-        DeclRefExpr DRE(VD, VD->getType(), VK_LValue, VD->getLocation());
+        DeclRefExpr DRE(VD, false, VD->getType(), VK_LValue, VD->getLocation());
         MutexID SMutex(&DRE, 0, 0);
         addLock(SMutex, LockData(VD->getLocation(), LK, Mutex));
       }
@@ -1656,7 +1656,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
 
           // Create a dummy expression,
           VarDecl *VD = const_cast<VarDecl*>(AD->getVarDecl());
-          DeclRefExpr DRE(VD, VD->getType(), VK_LValue,
+          DeclRefExpr DRE(VD, false, VD->getType(), VK_LValue,
                           AD->getTriggerStmt()->getLocEnd());
           LocksetBuilder.handleCall(&DRE, DD);
           break;

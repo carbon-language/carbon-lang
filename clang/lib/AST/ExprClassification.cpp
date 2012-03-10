@@ -189,9 +189,6 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
       return isa<FunctionDecl>(cast<DeclRefExpr>(E)->getDecl())
                ? Cl::CL_PRValue : Cl::CL_LValue;
     return ClassifyDecl(Ctx, cast<DeclRefExpr>(E)->getDecl());
-    // We deal with names referenced from blocks the same way.
-  case Expr::BlockDeclRefExprClass:
-    return ClassifyDecl(Ctx, cast<BlockDeclRefExpr>(E)->getDecl());
 
     // Member access is complex.
   case Expr::MemberExprClass:
@@ -565,8 +562,11 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
   // it is not marked __block, e.g.
   //   void takeclosure(void (^C)(void));
   //   void func() { int x = 1; takeclosure(^{ x = 7; }); }
-  if (const BlockDeclRefExpr *BDR = dyn_cast<BlockDeclRefExpr>(E)) {
-    if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (DRE->refersToEnclosingLocal() &&
+        isa<VarDecl>(DRE->getDecl()) &&
+        cast<VarDecl>(DRE->getDecl())->hasLocalStorage() &&
+        !DRE->getDecl()->hasAttr<BlocksAttr>())
       return Cl::CM_NotBlockQualified;
   }
 

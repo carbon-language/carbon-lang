@@ -753,16 +753,12 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
       // We use one of these or the other depending on whether the
       // reference is nested.
-      DeclRefExpr notNested(const_cast<VarDecl*>(variable), type, VK_LValue,
-                            SourceLocation());
-      BlockDeclRefExpr nested(const_cast<VarDecl*>(variable), type,
-                              VK_LValue, SourceLocation(), /*byref*/ false);
-
-      Expr *declRef = 
-        (ci->isNested() ? static_cast<Expr*>(&nested) : &notNested);
+      DeclRefExpr declRef(const_cast<VarDecl*>(variable),
+                          /*refersToEnclosing*/ ci->isNested(), type,
+                          VK_LValue, SourceLocation());
 
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
-                           declRef, VK_RValue);
+                           &declRef, VK_RValue);
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
                      MakeAddrLValue(blockField, type,
                                     getContext().getDeclAlign(variable)),
@@ -1107,7 +1103,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
     LocalDeclMap[variable] = alloca;
   }
 
-  // Save a spot to insert the debug information for all the BlockDeclRefDecls.
+  // Save a spot to insert the debug information for all the DeclRefExprs.
   llvm::BasicBlock *entry = Builder.GetInsertBlock();
   llvm::BasicBlock::iterator entry_ptr = Builder.GetInsertPoint();
   --entry_ptr;
@@ -1124,7 +1120,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   ++entry_ptr;
   Builder.SetInsertPoint(entry, entry_ptr);
 
-  // Emit debug information for all the BlockDeclRefDecls.
+  // Emit debug information for all the DeclRefExprs.
   // FIXME: also for 'this'
   if (CGDebugInfo *DI = getDebugInfo()) {
     for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),

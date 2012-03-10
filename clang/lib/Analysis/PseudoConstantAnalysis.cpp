@@ -68,8 +68,6 @@ bool PseudoConstantAnalysis::wasReferenced(const VarDecl *VD) {
 const Decl *PseudoConstantAnalysis::getDecl(const Expr *E) {
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
     return DR->getDecl();
-  else if (const BlockDeclRefExpr *BDR = dyn_cast<BlockDeclRefExpr>(E))
-    return BDR->getDecl();
   else
     return 0;
 }
@@ -198,18 +196,7 @@ void PseudoConstantAnalysis::RunAnalysis() {
       break;
     }
 
-    // Case 4: Block variable references
-    case Stmt::BlockDeclRefExprClass: {
-      const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(Head);
-      if (const VarDecl *VD = dyn_cast<VarDecl>(BDR->getDecl())) {
-        // Add the Decl to the used list
-        UsedVars->insert(VD);
-        continue;
-      }
-      break;
-    }
-
-    // Case 5: Variable references
+    // Case 4: Variable references
     case Stmt::DeclRefExprClass: {
       const DeclRefExpr *DR = cast<DeclRefExpr>(Head);
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
@@ -220,7 +207,7 @@ void PseudoConstantAnalysis::RunAnalysis() {
       break;
     }
 
-    // Case 6: Block expressions
+    // Case 5: Block expressions
     case Stmt::BlockExprClass: {
       const BlockExpr *B = cast<BlockExpr>(Head);
       // Add the body of the block to the list

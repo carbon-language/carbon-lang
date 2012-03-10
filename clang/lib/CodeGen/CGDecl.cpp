@@ -394,8 +394,8 @@ namespace {
     void Emit(CodeGenFunction &CGF, Flags flags) {
       // Compute the address of the local variable, in case it's a
       // byref or something.
-      DeclRefExpr DRE(const_cast<VarDecl*>(&Var), Var.getType(), VK_LValue,
-                      SourceLocation());
+      DeclRefExpr DRE(const_cast<VarDecl*>(&Var), false,
+                      Var.getType(), VK_LValue, SourceLocation());
       llvm::Value *value = CGF.EmitLoadOfScalar(CGF.EmitDeclRefLValue(&DRE));
       CGF.EmitExtendGCLifetime(value);
     }
@@ -411,8 +411,8 @@ namespace {
       : CleanupFn(CleanupFn), FnInfo(*Info), Var(*Var) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
-      DeclRefExpr DRE(const_cast<VarDecl*>(&Var), Var.getType(), VK_LValue,
-                      SourceLocation());
+      DeclRefExpr DRE(const_cast<VarDecl*>(&Var), false,
+                      Var.getType(), VK_LValue, SourceLocation());
       // Compute the address of the local variable, in case it's a byref
       // or something.
       llvm::Value *Addr = CGF.EmitDeclRefLValue(&DRE).getAddress();

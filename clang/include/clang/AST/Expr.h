@@ -766,6 +766,9 @@ public:
 ///   DeclRefExprBits.HasTemplateKWAndArgsInfo:
 ///       Specifies when this declaration reference expression has an explicit
 ///       C++ template keyword and/or template argument list.
+///   DeclRefExprBits.RefersToEnclosingLocal
+///       Specifies when this declaration reference expression (validly)
+///       refers to a local variable from a different function.
 class DeclRefExpr : public Expr {
   /// \brief The declaration that we are referencing.
   ValueDecl *D;
@@ -810,7 +813,8 @@ class DeclRefExpr : public Expr {
   DeclRefExpr(ASTContext &Ctx,
               NestedNameSpecifierLoc QualifierLoc,
               SourceLocation TemplateKWLoc,
-              ValueDecl *D, const DeclarationNameInfo &NameInfo,
+              ValueDecl *D, bool refersToEnclosingLocal,
+              const DeclarationNameInfo &NameInfo,
               NamedDecl *FoundD,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T, ExprValueKind VK);
@@ -824,7 +828,8 @@ class DeclRefExpr : public Expr {
   void computeDependence(ASTContext &C);
 
 public:
-  DeclRefExpr(ValueDecl *D, QualType T, ExprValueKind VK, SourceLocation L,
+  DeclRefExpr(ValueDecl *D, bool refersToEnclosingLocal, QualType T,
+              ExprValueKind VK, SourceLocation L,
               const DeclarationNameLoc &LocInfo = DeclarationNameLoc())
     : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
       D(D), Loc(L), DNLoc(LocInfo) {
@@ -832,6 +837,7 @@ public:
     DeclRefExprBits.HasTemplateKWAndArgsInfo = 0;
     DeclRefExprBits.HasFoundDecl = 0;
     DeclRefExprBits.HadMultipleCandidates = 0;
+    DeclRefExprBits.RefersToEnclosingLocal = refersToEnclosingLocal;
     computeDependence(D->getASTContext());
   }
 
@@ -839,6 +845,7 @@ public:
                              NestedNameSpecifierLoc QualifierLoc,
                              SourceLocation TemplateKWLoc,
                              ValueDecl *D,
+                             bool isEnclosingLocal,
                              SourceLocation NameLoc,
                              QualType T, ExprValueKind VK,
                              NamedDecl *FoundD = 0,
@@ -848,6 +855,7 @@ public:
                              NestedNameSpecifierLoc QualifierLoc,
                              SourceLocation TemplateKWLoc,
                              ValueDecl *D,
+                             bool isEnclosingLocal,
                              const DeclarationNameInfo &NameInfo,
                              QualType T, ExprValueKind VK,
                              NamedDecl *FoundD = 0,
@@ -1021,6 +1029,12 @@ public:
   /// greater than 1.
   void setHadMultipleCandidates(bool V = true) {
     DeclRefExprBits.HadMultipleCandidates = V;
+  }
+
+  /// Does this DeclRefExpr refer to a local declaration from an
+  /// enclosing function scope?
+  bool refersToEnclosingLocal() const {
+    return DeclRefExprBits.RefersToEnclosingLocal;
   }
 
   static bool classof(const Stmt *T) {
@@ -4270,46 +4284,6 @@ public:
     return T->getStmtClass() == BlockExprClass;
   }
   static bool classof(const BlockExpr *) { return true; }
-
-  // Iterators
-  child_range children() { return child_range(); }
-};
-
-/// BlockDeclRefExpr - A reference to a local variable declared in an
-/// enclosing scope.
-class BlockDeclRefExpr : public Expr {
-  VarDecl *D;
-  SourceLocation Loc;
-  bool IsByRef : 1;
-  bool ConstQualAdded : 1;
-public:
-  BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
-                   SourceLocation l, bool ByRef, bool constAdded = false);
-
-  // \brief Build an empty reference to a declared variable in a
-  // block.
-  explicit BlockDeclRefExpr(EmptyShell Empty)
-    : Expr(BlockDeclRefExprClass, Empty) { }
-
-  VarDecl *getDecl() { return D; }
-  const VarDecl *getDecl() const { return D; }
-  void setDecl(VarDecl *VD) { D = VD; }
-
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
-
-  SourceRange getSourceRange() const LLVM_READONLY { return SourceRange(Loc); }
-
-  bool isByRef() const { return IsByRef; }
-  void setByRef(bool BR) { IsByRef = BR; }
-
-  bool isConstQualAdded() const { return ConstQualAdded; }
-  void setConstQualAdded(bool C) { ConstQualAdded = C; }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == BlockDeclRefExprClass;
-  }
-  static bool classof(const BlockDeclRefExpr *) { return true; }
 
   // Iterators
   child_range children() { return child_range(); }

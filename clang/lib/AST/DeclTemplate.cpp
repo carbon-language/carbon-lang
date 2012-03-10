@@ -173,7 +173,7 @@ static void GenerateInjectedTemplateArgs(ASTContext &Context,
       Arg = TemplateArgument(ArgType);
     } else if (NonTypeTemplateParmDecl *NTTP =
                dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-      Expr *E = new (Context) DeclRefExpr(NTTP,
+      Expr *E = new (Context) DeclRefExpr(NTTP, /*enclosing*/ false,
                                   NTTP->getType().getNonLValueExprType(Context),
                                   Expr::getValueKindForType(NTTP->getType()),
                                           NTTP->getLocation());

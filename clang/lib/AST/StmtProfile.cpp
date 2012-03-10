@@ -460,13 +460,6 @@ void StmtProfiler::VisitBlockExpr(const BlockExpr *S) {
   VisitDecl(S->getBlockDecl());
 }
 
-void StmtProfiler::VisitBlockDeclRefExpr(const BlockDeclRefExpr *S) {
-  VisitExpr(S);
-  VisitDecl(S->getDecl());
-  ID.AddBoolean(S->isByRef());
-  ID.AddBoolean(S->isConstQualAdded());
-}
-
 void StmtProfiler::VisitGenericSelectionExpr(const GenericSelectionExpr *S) {
   VisitExpr(S);
   for (unsigned i = 0; i != S->getNumAssocs(); ++i) {

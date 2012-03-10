@@ -3872,16 +3872,11 @@ static InvalidICRKind isInvalidICRSource(ASTContext &C, Expr *e,
     }
 
   // If we have a declaration reference, it had better be a local variable.
-  } else if (isa<DeclRefExpr>(e) || isa<BlockDeclRefExpr>(e)) {
+  } else if (isa<DeclRefExpr>(e)) {
     if (!isAddressOf) return IIK_nonlocal;
 
-    VarDecl *var;
-    if (isa<DeclRefExpr>(e)) {
-      var = dyn_cast<VarDecl>(cast<DeclRefExpr>(e)->getDecl());
-      if (!var) return IIK_nonlocal;
-    } else {
-      var = cast<BlockDeclRefExpr>(e)->getDecl();
-    }
+    VarDecl *var = dyn_cast<VarDecl>(cast<DeclRefExpr>(e)->getDecl());
+    if (!var) return IIK_nonlocal;
 
     return (var->hasLocalStorage() ? IIK_okay : IIK_nonlocal);
 

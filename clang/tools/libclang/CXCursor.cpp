@@ -420,7 +420,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
     K = CXCursor_SizeOfPackExpr;
     break;
 
-  case Stmt::BlockDeclRefExprClass:
   case Stmt::DeclRefExprClass:           
   case Stmt::DependentScopeDeclRefExprClass:
   case Stmt::SubstNonTypeTemplateParmExprClass:

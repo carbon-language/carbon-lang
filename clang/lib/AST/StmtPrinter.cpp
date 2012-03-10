@@ -1816,10 +1816,6 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
   }
 }
 
-void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
-  OS << *Node->getDecl();
-}
-
 void StmtPrinter::VisitOpaqueValueExpr(OpaqueValueExpr *Node) { 
   PrintExpr(Node->getSourceExpr());
 }

@@ -263,10 +263,6 @@ private:
       return checkRef(E->getLocation(), E->getDecl()->getLocation());
     }
 
-    bool VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-      return checkRef(E->getLocation(), E->getDecl()->getLocation());
-    }
-
     bool VisitTypedefTypeLoc(TypedefTypeLoc TL) {
       return checkRef(TL.getBeginLoc(), TL.getTypedefNameDecl()->getLocation());
     }

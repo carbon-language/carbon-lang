@@ -2187,6 +2187,7 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
     Owned(DeclRefExpr::Create(Context, NestedNameSpecifierLoc(),
                               SourceLocation(),
                               ConditionVar,
+                              /*enclosing*/ false,
                               ConditionVar->getLocation(),
                               ConditionVar->getType().getNonReferenceType(),
                               VK_LValue));
