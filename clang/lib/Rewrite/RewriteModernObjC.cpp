@@ -5703,7 +5703,7 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
     Result += ";\n";
   }
   
-  Result += "\nstruct _class_t "; Result += VarName; Result += CDecl->getNameAsString();
+  Result += "\n__declspec(dllexport) struct _class_t "; Result += VarName; Result += CDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__DATA,__objc_data\"))) = {\n";
   Result += "\t";
   if (metadata) {
@@ -5849,7 +5849,7 @@ static void Write_IvarOffsetVar(std::string &Result,
   Result += "\n";
   for (unsigned i =0, e = Ivars.size(); i < e; i++) {
     ObjCIvarDecl *IvarDecl = Ivars[i];
-    Result += "unsigned long int "; Result += VarName;
+    Result += "__declspec(dllexport) unsigned long int "; Result += VarName;
     Result += ClassName; Result += "_";
     Result += IvarDecl->getName(); 
     Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
