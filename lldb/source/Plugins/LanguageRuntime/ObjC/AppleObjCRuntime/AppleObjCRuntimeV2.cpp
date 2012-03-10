@@ -58,6 +58,7 @@ extern \"C\"                                                                    
     extern void *gdb_class_getClass (void *objc_class);                                           \n\
     extern void *class_getName(void *objc_class);                                                 \n\
     extern int printf(const char *format, ...);                                                   \n\
+    extern unsigned char class_isMetaClass (void *objc_class);                                    \n\
 }                                                                                                 \n\
                                                                                                   \n\
 struct __lldb_objc_object {                                                                       \n\
@@ -77,7 +78,17 @@ extern \"C\" void *__lldb_apple_objc_v2_find_class_name (                       
     {                                                                                             \n\
         void *actual_class = (void *) [(id) object_ptr class];                                    \n\
         if (actual_class != 0)                                                                    \n\
-            name = class_getName((void *) actual_class);                                          \n\
+        {                                                                                         \n\
+            if (class_isMetaClass(actual_class) == 1)                                             \n\
+            {                                                                                     \n\
+                if (debug)                                                                        \n\
+                    printf (\"\\n*** Found metaclass.\\n\");                                      \n\
+            }                                                                                     \n\
+            else                                                                                  \n\
+            {                                                                                     \n\
+                name = class_getName((void *) actual_class);                                      \n\
+            }                                                                                     \n\
+        }                                                                                         \n\
         if (debug)                                                                                \n\
             printf (\"\\n*** Found name: %s\\n\", name ? name : \"<NOT FOUND>\");                 \n\
     }                                                                                             \n\
@@ -298,6 +309,11 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                     {
                         if (sc.symbol->GetType() == eSymbolTypeObjCClass)
                             class_name = sc.symbol->GetName().GetCString();
+                        else if (sc.symbol->GetType() == eSymbolTypeObjCMetaClass)
+                        {
+                            // FIXME: Meta-classes can't have dynamic types...
+                            return false;
+                        }
                     }
                 }
             }
