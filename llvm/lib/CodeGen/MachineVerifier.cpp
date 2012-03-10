@@ -900,7 +900,7 @@ MachineVerifier::visitMachineBasicBlockAfter(const MachineBasicBlock *MBB) {
 void MachineVerifier::calcRegsPassed() {
   // First push live-out regs to successors' vregsPassed. Remember the MBBs that
   // have any vregsPassed.
-  DenseSet<const MachineBasicBlock*> todo;
+  SmallPtrSet<const MachineBasicBlock*, 8> todo;
   for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
        MFI != MFE; ++MFI) {
     const MachineBasicBlock &MBB(*MFI);
@@ -937,7 +937,7 @@ void MachineVerifier::calcRegsPassed() {
 // similar to calcRegsPassed, only backwards.
 void MachineVerifier::calcRegsRequired() {
   // First push live-in regs to predecessors' vregsRequired.
-  DenseSet<const MachineBasicBlock*> todo;
+  SmallPtrSet<const MachineBasicBlock*, 8> todo;
   for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
        MFI != MFE; ++MFI) {
     const MachineBasicBlock &MBB(*MFI);
@@ -970,9 +970,10 @@ void MachineVerifier::calcRegsRequired() {
 // Check PHI instructions at the beginning of MBB. It is assumed that
 // calcRegsPassed has been run so BBInfo::isLiveOut is valid.
 void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
+  SmallPtrSet<const MachineBasicBlock*, 8> seen;
   for (MachineBasicBlock::const_iterator BBI = MBB->begin(), BBE = MBB->end();
        BBI != BBE && BBI->isPHI(); ++BBI) {
-    DenseSet<const MachineBasicBlock*> seen;
+    seen.clear();
 
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
       unsigned Reg = BBI->getOperand(i).getReg();
