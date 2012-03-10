@@ -80,7 +80,7 @@ namespace {
     // visit, we pop off the order stack until we find an item that is
     // also in the contents set. All operations are O(log N).
     SmallPtrSet<SDNode*, 64> WorkListContents;
-    std::vector<SDNode*> WorkListOrder;
+    SmallVector<SDNode*, 64> WorkListOrder;
 
     // AA - Used for DAG load/store alias analysis.
     AliasAnalysis &AA;
@@ -1005,8 +1005,7 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     // worklist *should* contain, and check the node we want to visit is should
     // actually be visited.
     do {
-      N = WorkListOrder.back();
-      WorkListOrder.pop_back();
+      N = WorkListOrder.pop_back_val();
     } while (!WorkListContents.erase(N));
 
     // If N has no uses, it is dead.  Make sure to revisit all N's operands once
