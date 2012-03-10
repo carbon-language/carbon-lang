@@ -8029,6 +8029,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   } else if (S->isFunctionPrototypeScope()) {
     // If this is an enum declaration in function prototype scope, set its
     // initial context to the translation unit.
+    // FIXME: [citation needed]
     SearchDC = Context.getTranslationUnitDecl();
   }
 
