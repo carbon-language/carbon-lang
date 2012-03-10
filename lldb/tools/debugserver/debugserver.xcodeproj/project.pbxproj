@@ -567,6 +567,7 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
+					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -579,6 +580,8 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
@@ -614,6 +617,7 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
+					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -626,6 +630,8 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
@@ -660,6 +666,7 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
+					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -672,6 +679,8 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					ARMDisassembler,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
