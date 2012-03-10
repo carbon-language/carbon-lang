@@ -1020,10 +1020,9 @@ void MachineVerifier::visitMachineFunctionAfter() {
     BBInfo &MInfo = MBBInfoMap[&MF->front()];
     for (RegSet::iterator
          I = MInfo.vregsRequired.begin(), E = MInfo.vregsRequired.end(); I != E;
-         ++I) {
-      report("Virtual register def doesn't dominate all uses.", MF);
-      *OS << "- register:\t" << PrintReg(*I) << '\n';
-    }
+         ++I)
+      report("Virtual register def doesn't dominate all uses.",
+             MRI->getVRegDef(*I));
   }
 
   if (LiveVars)
