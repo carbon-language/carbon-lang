@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine | FileCheck %s
+; RUN: opt < %s -S -instcombine | FileCheck %s
 
 ; Derived from gcc.c-torture/execute/frame-address.c
 
