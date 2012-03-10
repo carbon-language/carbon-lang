@@ -849,7 +849,7 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
         // to save time.
         // Also, I'm assuming there can be only one libobjc dylib loaded...
         
-        ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime();
+        ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime(true);
         if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
         {
             size_t num_modules = loaded_module_list.GetSize();

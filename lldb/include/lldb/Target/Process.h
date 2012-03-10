@@ -3033,14 +3033,14 @@ public:
     
 
     virtual LanguageRuntime *
-    GetLanguageRuntime (lldb::LanguageType language);
+    GetLanguageRuntime (lldb::LanguageType language, bool retry_if_null = true);
 
     virtual CPPLanguageRuntime *
-    GetCPPLanguageRuntime ();
+    GetCPPLanguageRuntime (bool retry_if_null = true);
 
     virtual ObjCLanguageRuntime *
-    GetObjCLanguageRuntime ();
-
+    GetObjCLanguageRuntime (bool retry_if_null = true);
+    
     bool
     IsRunning () const;
     

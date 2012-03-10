@@ -1462,35 +1462,34 @@ Process::GetABI()
 }
 
 LanguageRuntime *
-Process::GetLanguageRuntime(lldb::LanguageType language)
+Process::GetLanguageRuntime(lldb::LanguageType language, bool retry_if_null)
 {
     LanguageRuntimeCollection::iterator pos;
     pos = m_language_runtimes.find (language);
-    if (pos == m_language_runtimes.end())
+    if (pos == m_language_runtimes.end() || (retry_if_null && !(*pos).second))
     {
-        lldb::LanguageRuntimeSP runtime(LanguageRuntime::FindPlugin(this, language));
+        lldb::LanguageRuntimeSP runtime_sp(LanguageRuntime::FindPlugin(this, language));
         
-        m_language_runtimes[language] 
-            = runtime;
-        return runtime.get();
+        m_language_runtimes[language] = runtime_sp;
+        return runtime_sp.get();
     }
     else
         return (*pos).second.get();
 }
 
 CPPLanguageRuntime *
-Process::GetCPPLanguageRuntime ()
+Process::GetCPPLanguageRuntime (bool retry_if_null)
 {
-    LanguageRuntime *runtime = GetLanguageRuntime(eLanguageTypeC_plus_plus);
+    LanguageRuntime *runtime = GetLanguageRuntime(eLanguageTypeC_plus_plus, retry_if_null);
     if (runtime != NULL && runtime->GetLanguageType() == eLanguageTypeC_plus_plus)
         return static_cast<CPPLanguageRuntime *> (runtime);
     return NULL;
 }
 
 ObjCLanguageRuntime *
-Process::GetObjCLanguageRuntime ()
+Process::GetObjCLanguageRuntime (bool retry_if_null)
 {
-    LanguageRuntime *runtime = GetLanguageRuntime(eLanguageTypeObjC);
+    LanguageRuntime *runtime = GetLanguageRuntime(eLanguageTypeObjC, retry_if_null);
     if (runtime != NULL && runtime->GetLanguageType() == eLanguageTypeObjC)
         return static_cast<ObjCLanguageRuntime *> (runtime);
     return NULL;
