@@ -92,19 +92,19 @@ int main()
 
     {
         Fnf f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
     {
         Fnt f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
     {
         Fwf f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
     {
         Fwt f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
 
     {
@@ -126,18 +126,18 @@ int main()
 
     {
         Fnf f(LOCALE_zh_CN_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
     {
         Fnt f(LOCALE_zh_CN_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
     {
         Fwf f(LOCALE_zh_CN_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
     {
         Fwt f(LOCALE_zh_CN_UTF_8, 1);
-        assert(f.grouping() == "\3\3");
+        assert(f.grouping() == "\3");
     }
 }

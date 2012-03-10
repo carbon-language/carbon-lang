@@ -63,7 +63,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,00 ");
+        assert(ex == "0,00");
     }
     {   // negative one
         long double v = -1;
@@ -71,7 +71,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,01 -");
+        assert(ex == "-0,01");
     }
     {   // positive
         long double v = 123456789;
@@ -79,7 +79,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 ");
+        assert(ex == "1 234 567,89");
     }
     {   // negative
         long double v = -123456789;
@@ -87,7 +87,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 -");
+        assert(ex == "-1 234 567,89");
     }
     {   // zero, showbase
         long double v = 0;
@@ -96,7 +96,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,00 Eu");
+        assert(ex == "0,00 \u20ac");
     }
     {   // negative one, showbase
         long double v = -1;
@@ -105,7 +105,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,01 Eu-");
+        assert(ex == "-0,01 \u20ac");
     }
     {   // positive, showbase
         long double v = 123456789;
@@ -114,7 +114,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 Eu");
+        assert(ex == "1 234 567,89 \u20ac");
     }
     {   // negative, showbase
         long double v = -123456789;
@@ -123,7 +123,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 Eu-");
+        assert(ex == "-1 234 567,89 \u20ac");
     }
     {   // negative, showbase, left
         long double v = -123456789;
@@ -134,7 +134,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 Eu-    ");
+        assert(ex == "-1 234 567,89 \u20ac   ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, internal
@@ -146,7 +146,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89     Eu-");
+        assert(ex == "-1 234 567,89    \u20ac");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, right
@@ -158,7 +158,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             false, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "    1 234 567,89 Eu-");
+        assert(ex == "   -1 234 567,89 \u20ac");
         assert(ios.width() == 0);
     }
 
@@ -171,7 +171,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,00 ");
+        assert(ex == "0,00");
     }
     {   // negative one
         long double v = -1;
@@ -179,7 +179,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,01 -");
+        assert(ex == "-0,01");
     }
     {   // positive
         long double v = 123456789;
@@ -187,7 +187,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 ");
+        assert(ex == "1 234 567,89");
     }
     {   // negative
         long double v = -123456789;
@@ -195,7 +195,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 -");
+        assert(ex == "-1 234 567,89");
     }
     {   // zero, showbase
         long double v = 0;
@@ -204,7 +204,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,00 EUR ");
+        assert(ex == "0,00 EUR");
     }
     {   // negative one, showbase
         long double v = -1;
@@ -213,7 +213,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,01 EUR -");
+        assert(ex == "-0,01 EUR");
     }
     {   // positive, showbase
         long double v = 123456789;
@@ -222,7 +222,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 EUR ");
+        assert(ex == "1 234 567,89 EUR");
     }
     {   // negative, showbase
         long double v = -123456789;
@@ -231,7 +231,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 EUR -");
+        assert(ex == "-1 234 567,89 EUR");
     }
     {   // negative, showbase, left
         long double v = -123456789;
@@ -242,7 +242,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 EUR -  ");
+        assert(ex == "-1 234 567,89 EUR   ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, internal
@@ -254,7 +254,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89   EUR -");
+        assert(ex == "-1 234 567,89    EUR");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, right
@@ -266,7 +266,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "  1 234 567,89 EUR -");
+        assert(ex == "   -1 234 567,89 EUR");
         assert(ios.width() == 0);
     }
 }
@@ -281,7 +281,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,00 ");
+        assert(ex == L"0,00");
     }
     {   // negative one
         long double v = -1;
@@ -289,7 +289,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,01 -");
+        assert(ex == L"-0,01");
     }
     {   // positive
         long double v = 123456789;
@@ -297,7 +297,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 ");
+        assert(ex == L"1 234 567,89");
     }
     {   // negative
         long double v = -123456789;
@@ -305,7 +305,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 -");
+        assert(ex == L"-1 234 567,89");
     }
     {   // zero, showbase
         long double v = 0;
@@ -314,7 +314,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,00 Eu");
+        assert(ex == L"0,00 \u20ac");
     }
     {   // negative one, showbase
         long double v = -1;
@@ -323,7 +323,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,01 Eu-");
+        assert(ex == L"-0,01 \u20ac");
     }
     {   // positive, showbase
         long double v = 123456789;
@@ -332,7 +332,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 Eu");
+        assert(ex == L"1 234 567,89 \u20ac");
     }
     {   // negative, showbase
         long double v = -123456789;
@@ -341,7 +341,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 Eu-");
+        assert(ex == L"-1 234 567,89 \u20ac");
     }
     {   // negative, showbase, left
         long double v = -123456789;
@@ -352,7 +352,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 Eu-    ");
+        assert(ex == L"-1 234 567,89 \u20ac     ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, internal
@@ -364,7 +364,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89     Eu-");
+        assert(ex == L"-1 234 567,89      \u20ac");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, right
@@ -376,7 +376,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             false, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"    1 234 567,89 Eu-");
+        assert(ex == L"     -1 234 567,89 \u20ac");
         assert(ios.width() == 0);
     }
 
@@ -389,7 +389,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,00 ");
+        assert(ex == L"0,00");
     }
     {   // negative one
         long double v = -1;
@@ -397,7 +397,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,01 -");
+        assert(ex == L"-0,01");
     }
     {   // positive
         long double v = 123456789;
@@ -405,7 +405,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 ");
+        assert(ex == L"1 234 567,89");
     }
     {   // negative
         long double v = -123456789;
@@ -413,7 +413,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 -");
+        assert(ex == L"-1 234 567,89");
     }
     {   // zero, showbase
         long double v = 0;
@@ -422,7 +422,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,00 EUR ");
+        assert(ex == L"0,00 EUR");
     }
     {   // negative one, showbase
         long double v = -1;
@@ -431,7 +431,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,01 EUR -");
+        assert(ex == L"-0,01 EUR");
     }
     {   // positive, showbase
         long double v = 123456789;
@@ -440,7 +440,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 EUR ");
+        assert(ex == L"1 234 567,89 EUR");
     }
     {   // negative, showbase
         long double v = -123456789;
@@ -449,7 +449,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 EUR -");
+        assert(ex == L"-1 234 567,89 EUR");
     }
     {   // negative, showbase, left
         long double v = -123456789;
@@ -460,7 +460,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 EUR -  ");
+        assert(ex == L"-1 234 567,89 EUR   ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, internal
@@ -472,7 +472,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89   EUR -");
+        assert(ex == L"-1 234 567,89    EUR");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, right
@@ -484,7 +484,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"  1 234 567,89 EUR -");
+        assert(ex == L"   -1 234 567,89 EUR");
         assert(ios.width() == 0);
     }
 }

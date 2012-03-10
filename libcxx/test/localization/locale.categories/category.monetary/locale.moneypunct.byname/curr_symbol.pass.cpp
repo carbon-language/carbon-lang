@@ -89,36 +89,36 @@ int main()
 
     {
         Fnf f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.curr_symbol() == "Eu");
+        assert(f.curr_symbol() == " \u20ac");
     }
     {
         Fnt f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.curr_symbol() == "EUR ");
+        assert(f.curr_symbol() == " EUR");
     }
     {
         Fwf f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.curr_symbol() == L"Eu");
+        assert(f.curr_symbol() == L" \u20ac");
     }
     {
         Fwt f(LOCALE_fr_FR_UTF_8, 1);
-        assert(f.curr_symbol() == L"EUR ");
+        assert(f.curr_symbol() == L" EUR");
     }
 
     {
         Fnf f(LOCALE_ru_RU_UTF_8, 1);
-        assert(f.curr_symbol() == "\xD1\x80\xD1\x83\xD0\xB1"".");
+        assert(f.curr_symbol() == " \xD1\x80\xD1\x83\xD0\xB1");
     }
     {
         Fnt f(LOCALE_ru_RU_UTF_8, 1);
-        assert(f.curr_symbol() == "RUB ");
+        assert(f.curr_symbol() == " RUB");
     }
     {
         Fwf f(LOCALE_ru_RU_UTF_8, 1);
-        assert(f.curr_symbol() == L"\x440\x443\x431"".");
+        assert(f.curr_symbol() == L" \x440\x443\x431");
     }
     {
         Fwt f(LOCALE_ru_RU_UTF_8, 1);
-        assert(f.curr_symbol() == L"RUB ");
+        assert(f.curr_symbol() == L" RUB");
     }
 
     {

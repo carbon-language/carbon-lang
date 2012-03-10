@@ -124,7 +124,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
     {
@@ -132,7 +132,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
     {
@@ -140,7 +140,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
     {
@@ -148,7 +148,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
 
@@ -157,7 +157,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
     {
@@ -165,7 +165,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
     {
@@ -173,7 +173,7 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
     {
@@ -181,15 +181,15 @@ int main()
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
+        assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::symbol);
     }
 
     {
         Fnf f(LOCALE_zh_CN_UTF_8, 1);
         std::money_base::pattern p = f.pos_format();
-        assert(p.field[0] == std::money_base::sign);
-        assert(p.field[1] == std::money_base::symbol);
+        assert(p.field[0] == std::money_base::symbol);
+        assert(p.field[1] == std::money_base::sign);
         assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::value);
     }
@@ -204,8 +204,8 @@ int main()
     {
         Fwf f(LOCALE_zh_CN_UTF_8, 1);
         std::money_base::pattern p = f.pos_format();
-        assert(p.field[0] == std::money_base::sign);
-        assert(p.field[1] == std::money_base::symbol);
+        assert(p.field[0] == std::money_base::symbol);
+        assert(p.field[1] == std::money_base::sign);
         assert(p.field[2] == std::money_base::none);
         assert(p.field[3] == std::money_base::value);
     }

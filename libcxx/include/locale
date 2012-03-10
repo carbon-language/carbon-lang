@@ -3060,6 +3060,9 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
     string_type __sym;
     string_type __psn;
     string_type __nsn;
+    // Capture the spaces read into money_base::{space,none} so they
+    // can be compared to initial spaces in __sym.
+    string_type __spaces;
     int __fd;
     __money_get<_CharT>::__gather_info(__intl, __loc, __pat, __dp, __ts, __grp,
                                        __sym, __psn, __nsn, __fd);
@@ -3073,7 +3076,7 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
             if (__p != 3)
             {
                 if (__ct.is(ctype_base::space, *__b))
-                    ++__b;
+                    __spaces.push_back(*__b++);
                 else
                 {
                     __err |= ios_base::failbit;
@@ -3085,7 +3088,7 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
             if (__p != 3)
             {
                 while (__b != __e && __ct.is(ctype_base::space, *__b))
-                    ++__b;
+                    __spaces.push_back(*__b++);
             }
             break;
         case money_base::sign:
@@ -3144,9 +3147,31 @@ money_get<_CharT, _InputIterator>::__do_get(iter_type& __b, iter_type __e,
             if (__sb || __more_needed)
             {
                 ios_base::iostate __et = ios_base::goodbit;
-                string_type* __k = __scan_keyword(__b, __e, &__sym, &__sym+1,
-                                                  __ct, __et);
-                if (__sb && __k != &__sym)
+                typename string_type::const_iterator __sym_space_end = __sym.begin();
+                if (__p > 0 && (__pat.field[__p - 1] == money_base::none ||
+                                __pat.field[__p - 1] == money_base::space)) {
+                    // Match spaces we've already read against spaces at
+                    // the beginning of __sym.
+                    while (__sym_space_end != __sym.end() &&
+                           __ct.is(ctype_base::space, *__sym_space_end))
+                        ++__sym_space_end;
+                    const size_t __num_spaces = __sym_space_end - __sym.begin();
+                    if (__num_spaces > __spaces.size() ||
+                        !equal(__spaces.end() - __num_spaces, __spaces.end(),
+                               __sym.begin())) {
+                        // No match. Put __sym_space_end back at the
+                        // beginning of __sym, which will prevent a
+                        // match in the next loop.
+                        __sym_space_end = __sym.begin();
+                    }
+                }
+                typename string_type::const_iterator __sym_curr_char = __sym_space_end;
+                while (__sym_curr_char != __sym.end() && __b != __e &&
+                       *__b == *__sym_curr_char) {
+                    ++__b;
+                    ++__sym_curr_char;
+                }
+                if (__sb && __sym_curr_char != __sym.end())
                 {
                     __err |= ios_base::failbit;
                     return false;

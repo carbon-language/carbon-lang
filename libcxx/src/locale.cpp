@@ -5275,116 +5275,200 @@ __time_put::__do_put(wchar_t* __wb, wchar_t*& __we, const tm* __tm,
 
 // moneypunct_byname
 
+template <class charT>
 static
 void
-__init_pat(money_base::pattern& pat, char cs_precedes, char sep_by_space, char sign_posn)
+__init_pat(money_base::pattern& pat, basic_string<charT>& __curr_symbol_,
+           bool intl, char cs_precedes, char sep_by_space, char sign_posn,
+           charT space_char)
 {
     const char sign = static_cast<char>(money_base::sign);
     const char space = static_cast<char>(money_base::space);
     const char none = static_cast<char>(money_base::none);
     const char symbol = static_cast<char>(money_base::symbol);
     const char value = static_cast<char>(money_base::value);
+    const bool symbol_contains_sep = intl && __curr_symbol_.size() == 4;
+
+    // Comments on case branches reflect 'C11 7.11.2.1 The localeconv
+    // function'. "Space between sign and symbol or value" means that
+    // if the sign is adjacent to the symbol, there's a space between
+    // them, and otherwise there's a space between the sign and value.
+    //
+    // C11's localeconv specifies that the fourth character of an
+    // international curr_symbol is used to separate the sign and
+    // value when sep_by_space says to do so. C++ can't represent
+    // that, so we just use a space.  When sep_by_space says to
+    // separate the symbol and value-or-sign with a space, we rearrange the
+    // curr_symbol to put its spacing character on the correct side of
+    // the symbol.
+    //
+    // We also need to avoid adding an extra space between the sign
+    // and value when the currency symbol is suppressed (by not
+    // setting showbase).  We match glibc's strfmon by interpreting
+    // sep_by_space==1 as "omit the space when the currency symbol is
+    // absent".
+    //
+    // Users who want to get this right should use ICU instead.
+
     switch (cs_precedes)
     {
-    case 0:
+    case 0:  // value before curr_symbol
+        if (symbol_contains_sep) {
+            // Move the separator to before the symbol, to place it
+            // between the value and symbol.
+            rotate(__curr_symbol_.begin(), __curr_symbol_.begin() + 3,
+                   __curr_symbol_.end());
+        }
         switch (sign_posn)
         {
-        case 0:
+        case 0:  // Parentheses surround the quantity and currency symbol.
             pat.field[0] = sign;
             pat.field[1] = value;
+            pat.field[2] = none;  // Any space appears in the symbol.
             pat.field[3] = symbol;
             switch (sep_by_space)
             {
-            case 0:
-                pat.field[2] = none;
+            case 0:  // No space separates the currency symbol and value.
+                // This case may have changed between C99 and C11;
+                // assume the currency symbol matches the intention.
+            case 2:  // Space between sign and currency or value.
+                // The "sign" is two parentheses, so no space here either.
                 return;
-            case 1:
-            case 2:
-                pat.field[2] = space;
+            case 1:  // Space between currency-and-sign or currency and value.
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[2]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.insert(0, 1, space_char);
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 1:
+        case 1:  // The sign string precedes the quantity and currency symbol.
             pat.field[0] = sign;
             pat.field[3] = symbol;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = value;
                 pat.field[2] = none;
                 return;
-            case 1:
+            case 1:  // Space between currency-and-sign or currency and value.
                 pat.field[1] = value;
-                pat.field[2] = space;
+                pat.field[2] = none;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[2]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.insert(0, 1, space_char);
+                }
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = space;
                 pat.field[2] = value;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // has already appeared after the sign.
+                    __curr_symbol_.erase(__curr_symbol_.begin());
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 2:
+        case 2:  // The sign string succeeds the quantity and currency symbol.
             pat.field[0] = value;
             pat.field[3] = sign;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = none;
                 pat.field[2] = symbol;
                 return;
-            case 1:
-                pat.field[1] = space;
+            case 1:  // Space between currency-and-sign or currency and value.
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[1]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.insert(0, 1, space_char);
+                }
+                pat.field[1] = none;
                 pat.field[2] = symbol;
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = symbol;
                 pat.field[2] = space;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // should not be removed if showbase is absent.
+                    __curr_symbol_.erase(__curr_symbol_.begin());
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 3:
+        case 3:  // The sign string immediately precedes the currency symbol.
             pat.field[0] = value;
             pat.field[3] = symbol;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = none;
                 pat.field[2] = sign;
                 return;
-            case 1:
+            case 1:  // Space between currency-and-sign or currency and value.
                 pat.field[1] = space;
                 pat.field[2] = sign;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // has already appeared before the sign.
+                    __curr_symbol_.erase(__curr_symbol_.begin());
+                }
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = sign;
-                pat.field[2] = space;
+                pat.field[2] = none;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[2]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.insert(0, 1, space_char);
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 4:
+        case 4:  // The sign string immediately succeeds the currency symbol.
             pat.field[0] = value;
             pat.field[3] = sign;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = none;
                 pat.field[2] = symbol;
                 return;
-            case 1:
-                pat.field[1] = space;
+            case 1:  // Space between currency-and-sign or currency and value.
+                pat.field[1] = none;
                 pat.field[2] = symbol;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[1]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.insert(0, 1, space_char);
+                }
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = symbol;
                 pat.field[2] = space;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // should not disappear when showbase is absent.
+                    __curr_symbol_.erase(__curr_symbol_.begin());
+                }
                 return;
             default:
                 break;
@@ -5394,105 +5478,157 @@ __init_pat(money_base::pattern& pat, char cs_precedes, char sep_by_space, char s
             break;
         }
         break;
-    case 1:
+    case 1:  // curr_symbol before value
         switch (sign_posn)
         {
-        case 0:
+        case 0:  // Parentheses surround the quantity and currency symbol.
             pat.field[0] = sign;
             pat.field[1] = symbol;
+            pat.field[2] = none;  // Any space appears in the symbol.
             pat.field[3] = value;
             switch (sep_by_space)
             {
-            case 0:
-                pat.field[2] = none;
+            case 0:  // No space separates the currency symbol and value.
+                // This case may have changed between C99 and C11;
+                // assume the currency symbol matches the intention.
+            case 2:  // Space between sign and currency or value.
+                // The "sign" is two parentheses, so no space here either.
                 return;
-            case 1:
-            case 2:
-                pat.field[2] = space;
+            case 1:  // Space between currency-and-sign or currency and value.
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[2]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.insert(0, 1, space_char);
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 1:
+        case 1:  // The sign string precedes the quantity and currency symbol.
             pat.field[0] = sign;
             pat.field[3] = value;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = symbol;
                 pat.field[2] = none;
                 return;
-            case 1:
+            case 1:  // Space between currency-and-sign or currency and value.
                 pat.field[1] = symbol;
-                pat.field[2] = space;
+                pat.field[2] = none;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[2]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.push_back(space_char);
+                }
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = space;
                 pat.field[2] = symbol;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // has already appeared after the sign.
+                    __curr_symbol_.pop_back();
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 2:
+        case 2:  // The sign string succeeds the quantity and currency symbol.
             pat.field[0] = symbol;
             pat.field[3] = sign;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = none;
                 pat.field[2] = value;
                 return;
-            case 1:
-                pat.field[1] = space;
+            case 1:  // Space between currency-and-sign or currency and value.
+                pat.field[1] = none;
                 pat.field[2] = value;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[1]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.push_back(space_char);
+                }
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = value;
                 pat.field[2] = space;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // will appear before the sign.
+                    __curr_symbol_.pop_back();
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 3:
+        case 3:  // The sign string immediately precedes the currency symbol.
             pat.field[0] = sign;
             pat.field[3] = value;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = symbol;
                 pat.field[2] = none;
                 return;
-            case 1:
+            case 1:  // Space between currency-and-sign or currency and value.
                 pat.field[1] = symbol;
-                pat.field[2] = space;
+                pat.field[2] = none;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[2]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.push_back(space_char);
+                }
                 return;
-            case 2:
+            case 2:  // Space between sign and currency or value.
                 pat.field[1] = space;
                 pat.field[2] = symbol;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // has already appeared after the sign.
+                    __curr_symbol_.pop_back();
+                }
                 return;
             default:
                 break;
             }
             break;
-        case 4:
+        case 4:  // The sign string immediately succeeds the currency symbol.
             pat.field[0] = symbol;
             pat.field[3] = value;
             switch (sep_by_space)
             {
-            case 0:
+            case 0:  // No space separates the currency symbol and value.
                 pat.field[1] = sign;
                 pat.field[2] = none;
                 return;
-            case 1:
+            case 1:  // Space between currency-and-sign or currency and value.
                 pat.field[1] = sign;
                 pat.field[2] = space;
+                if (symbol_contains_sep) {
+                    // Remove the separator from the symbol, since it
+                    // should not disappear when showbase is absent.
+                    __curr_symbol_.pop_back();
+                }
                 return;
-            case 2:
-                pat.field[1] = space;
+            case 2:  // Space between sign and currency or value.
+                pat.field[1] = none;
                 pat.field[2] = sign;
+                if (!symbol_contains_sep) {
+                    // We insert the space into the symbol instead of
+                    // setting pat.field[1]=space so that when
+                    // showbase is not set, the space goes away too.
+                    __curr_symbol_.push_back(space_char);
+                }
                 return;
            default:
                 break;
@@ -5549,8 +5685,14 @@ moneypunct_byname<char, false>::init(const char* nm)
         __negative_sign_ = "()";
     else
         __negative_sign_ = lc->negative_sign;
-    __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
-    __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+    // Assume the positive and negative formats will want spaces in
+    // the same places in curr_symbol since there's no way to
+    // represent anything else.
+    string_type __dummy_curr_symbol = __curr_symbol_;
+    __init_pat(__pos_format_, __dummy_curr_symbol, false,
+               lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn, ' ');
+    __init_pat(__neg_format_, __curr_symbol_, false,
+               lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn, ' ');
 }
 
 template<>
@@ -5599,12 +5741,22 @@ moneypunct_byname<char, true>::init(const char* nm)
         __negative_sign_ = "()";
     else
         __negative_sign_ = lc->negative_sign;
+    // Assume the positive and negative formats will want spaces in
+    // the same places in curr_symbol since there's no way to
+    // represent anything else.
+    string_type __dummy_curr_symbol = __curr_symbol_;
 #if _WIN32
-    __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
-    __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+    __init_pat(__pos_format_, __dummy_curr_symbol, true,
+               lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn, ' ');
+    __init_pat(__neg_format_, __curr_symbol_, true,
+               lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn, ' ');
 #else
-    __init_pat(__pos_format_, lc->int_p_cs_precedes, lc->int_p_sep_by_space, lc->int_p_sign_posn);
-    __init_pat(__neg_format_, lc->int_n_cs_precedes, lc->int_n_sep_by_space, lc->int_n_sign_posn);
+    __init_pat(__pos_format_, __dummy_curr_symbol, true,
+               lc->int_p_cs_precedes, lc->int_p_sep_by_space,
+               lc->int_p_sign_posn, ' ');
+    __init_pat(__neg_format_, __curr_symbol_, true,
+               lc->int_n_cs_precedes, lc->int_n_sep_by_space,
+               lc->int_n_sign_posn, ' ');
 #endif // _WIN32
 }
 
@@ -5681,8 +5833,14 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
         wbe = wbuf + j;
         __negative_sign_.assign(wbuf, wbe);
     }
-    __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
-    __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+    // Assume the positive and negative formats will want spaces in
+    // the same places in curr_symbol since there's no way to
+    // represent anything else.
+    string_type __dummy_curr_symbol = __curr_symbol_;
+    __init_pat(__pos_format_, __dummy_curr_symbol, false,
+               lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn, L' ');
+    __init_pat(__neg_format_, __curr_symbol_, false,
+               lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn, L' ');
 }
 
 template<>
@@ -5766,12 +5924,22 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         wbe = wbuf + j;
         __negative_sign_.assign(wbuf, wbe);
     }
+    // Assume the positive and negative formats will want spaces in
+    // the same places in curr_symbol since there's no way to
+    // represent anything else.
+    string_type __dummy_curr_symbol = __curr_symbol_;
 #if _WIN32
-    __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
-    __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+    __init_pat(__pos_format_, __dummy_curr_symbol, true,
+               lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn, L' ');
+    __init_pat(__neg_format_, __curr_symbol_, true,
+               lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn, L' ');
 #else // _WIN32
-    __init_pat(__pos_format_, lc->int_p_cs_precedes, lc->int_p_sep_by_space, lc->int_p_sign_posn);
-    __init_pat(__neg_format_, lc->int_n_cs_precedes, lc->int_n_sep_by_space, lc->int_n_sign_posn);
+    __init_pat(__pos_format_, __dummy_curr_symbol, true,
+               lc->int_p_cs_precedes, lc->int_p_sep_by_space,
+               lc->int_p_sign_posn, L' ');
+    __init_pat(__neg_format_, __curr_symbol_, true,
+               lc->int_n_cs_precedes, lc->int_n_sep_by_space,
+               lc->int_n_sign_posn, L' ');
 #endif // _WIN32
 }
 
