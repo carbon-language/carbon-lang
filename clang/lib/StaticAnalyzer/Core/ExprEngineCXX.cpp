@@ -16,6 +16,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/StmtCXX.h"
 
 using namespace clang;
 using namespace ento;
@@ -338,6 +339,20 @@ void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE,
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   ProgramStateRef state = Pred->getState();
   Bldr.generateNode(CDE, Pred, state);
+}
+
+void ExprEngine::VisitCXXCatchStmt(const CXXCatchStmt *CS,
+                                   ExplodedNode *Pred,
+                                   ExplodedNodeSet &Dst) {
+  const VarDecl *VD = CS->getExceptionDecl();
+  const LocationContext *LCtx = Pred->getLocationContext();
+  SVal V = svalBuilder.getConjuredSymbolVal(CS, LCtx, VD->getType(),
+                                 currentBuilderContext->getCurrentBlockCount());
+  ProgramStateRef state = Pred->getState();
+  state = state->bindLoc(state->getLValue(VD, LCtx), V);
+
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  Bldr.generateNode(CS, Pred, state);
 }
 
 void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,

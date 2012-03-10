@@ -2620,9 +2620,18 @@ CFGBlock *CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt *CS) {
   CFGBlock *CatchBlock = Block;
   if (!CatchBlock)
     CatchBlock = createBlock();
+  
+  // CXXCatchStmt is more than just a label.  They have semantic meaning
+  // as well, as they implicitly "initialize" the catch variable.  Add
+  // it to the CFG as a CFGElement so that the control-flow of these
+  // semantics gets captured.
+  appendStmt(CatchBlock, CS);
 
+  // Also add the CXXCatchStmt as a label, to mirror handling of regular
+  // labels.
   CatchBlock->setLabel(CS);
 
+  // Bail out if the CFG is bad.
   if (badCFG)
     return 0;
 

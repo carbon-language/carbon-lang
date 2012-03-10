@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -analyze -analyzer-checker=debug.DumpCFG -cfg-add-implicit-dtors %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -analyze -analyzer-checker=debug.DumpCFG -cfg-add-implicit-dtors %s > %t 2>&1
+// RUN: FileCheck --input-file=%t %s
 // XPASS: *
 
 class A {
@@ -321,6 +322,15 @@ void test_catch_copy() {
 // CHECK:    T: if [B4.12]
 // CHECK:    Preds (1): B5
 // CHECK:    Succs (2): B3 B2
+// CHECK:  [B0 (EXIT)]
+// CHECK:    Preds (1): B1
+// CHECK:  [B2 (ENTRY)]
+// CHECK:    Succs (1): B1
+// CHECK:  [B1]
+// CHECK:    1: 1
+// CHECK:    2: return [B1.1];
+// CHECK:    Preds (1): B2
+// CHECK:    Succs (1): B0
 // CHECK:  [B0 (EXIT)]
 // CHECK:    Preds (1): B1
 // CHECK:  [B9 (ENTRY)]
@@ -824,6 +834,8 @@ void test_catch_copy() {
 // CHECK:    Succs (2): B2 B0
 // CHECK:  [B2]
 // CHECK:   catch (const A &e):
+// CHECK:    1: catch (const A &e) {
+// CHECK: }
 // CHECK:    Preds (1): B1
 // CHECK:    Succs (1): B0
 // CHECK:  [B0 (EXIT)]
@@ -835,10 +847,10 @@ void test_catch_copy() {
 // CHECK:    Succs (2): B2 B0
 // CHECK:  [B2]
 // CHECK:   catch (A e):
-// CHECK:    1: .~A() (Implicit destructor)
+// CHECK:    1: catch (A e) {
+// CHECK: }
+// CHECK:    2: [B2.1].~A() (Implicit destructor)
 // CHECK:    Preds (1): B1
 // CHECK:    Succs (1): B0
 // CHECK:  [B0 (EXIT)]
 // CHECK:    Preds (3): B2 B1 B3
-
-

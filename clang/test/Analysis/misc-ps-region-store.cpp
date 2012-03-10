@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
 
 // Test basic handling of references.
 char &test1_aux();
@@ -504,5 +504,28 @@ void TestNullThis::test() {
   if (p)
     return;
   field = 2; // no-warning
+}
+
+// Test handling of 'catch' exception variables, and not warning
+// about uninitialized values.
+enum MyEnum { MyEnumValue };
+MyEnum rdar10892489() {
+  try {
+      throw MyEnumValue;
+  } catch (MyEnum e) {
+      return e; // no-warning
+  }
+  return MyEnumValue;
+}
+
+MyEnum rdar10892489_positive() {
+  try {
+    throw MyEnumValue;
+  } catch (MyEnum e) {
+    int *p = 0;
+    *p = 0xDEADBEEF; // expected-warning {{null}}
+    return e;
+  }
+  return MyEnumValue;
 }
 

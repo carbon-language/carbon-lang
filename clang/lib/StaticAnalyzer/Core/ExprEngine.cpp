@@ -23,6 +23,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtCXX.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
@@ -481,10 +482,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   switch (S->getStmtClass()) {
     // C++ and ARC stuff we don't support yet.
     case Expr::ObjCIndirectCopyRestoreExprClass:
-    case Stmt::CXXCatchStmtClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
-    case Stmt::CXXThrowExprClass:
     case Stmt::CXXTryStmtClass:
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXUuidofExprClass:
@@ -505,7 +504,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::SEHExceptStmtClass:
     case Stmt::LambdaExprClass:
     case Stmt::SEHFinallyStmtClass: {
-      const ExplodedNode *node = Bldr.generateNode(S, Pred, Pred->getState());
+      const ExplodedNode *node = Bldr.generateNode(S, Pred, Pred->getState(),
+                                                   /* sink */ true);
       Engine.addAbortedBlock(node, currentBuilderContext->getBlock());
       break;
     }
@@ -600,8 +600,13 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OpaqueValueExprClass:
     case Stmt::AsTypeExprClass:
     case Stmt::AtomicExprClass:
-        // Fall through.
+      // Fall through.
 
+    // Currently all handling of 'throw' just falls to the CFG.  We
+    // can consider doing more if necessary.
+    case Stmt::CXXThrowExprClass:
+      // Fall through.
+      
     // Cases we intentionally don't evaluate, since they don't need
     // to be explicitly evaluated.
     case Stmt::AddrLabelExprClass:
@@ -717,6 +722,13 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::UserDefinedLiteralClass: {
       Bldr.takeNodes(Pred);
       VisitCallExpr(cast<CallExpr>(S), Pred, Dst);
+      Bldr.addNodes(Dst);
+      break;
+    }
+    
+    case Stmt::CXXCatchStmtClass: {
+      Bldr.takeNodes(Pred);
+      VisitCXXCatchStmt(cast<CXXCatchStmt>(S), Pred, Dst);
       Bldr.addNodes(Dst);
       break;
     }

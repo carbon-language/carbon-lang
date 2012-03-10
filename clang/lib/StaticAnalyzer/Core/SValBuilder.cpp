@@ -106,19 +106,21 @@ SValBuilder::getRegionValueSymbolVal(const TypedValueRegion* region) {
   return nonloc::SymbolVal(sym);
 }
 
-DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
-                                                       const Expr *expr,
-						       const LocationContext *LCtx,
-                                                       unsigned count) {
+DefinedOrUnknownSVal
+SValBuilder::getConjuredSymbolVal(const void *symbolTag,
+                                  const Expr *expr,
+                                  const LocationContext *LCtx,
+                                  unsigned count) {
   QualType T = expr->getType();
   return getConjuredSymbolVal(symbolTag, expr, LCtx, T, count);
 }
 
-DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
-                                                       const Expr *expr,
-						       const LocationContext *LCtx,
-                                                       QualType type,
-                                                       unsigned count) {
+DefinedOrUnknownSVal
+SValBuilder::getConjuredSymbolVal(const void *symbolTag,
+                                  const Expr *expr,
+                                  const LocationContext *LCtx,
+                                  QualType type,
+                                  unsigned count) {
   if (!SymbolManager::canSymbolicate(type))
     return UnknownVal();
 
@@ -127,6 +129,23 @@ DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
   if (Loc::isLocType(type))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
+  return nonloc::SymbolVal(sym);
+}
+
+
+DefinedOrUnknownSVal
+SValBuilder::getConjuredSymbolVal(const Stmt *stmt,
+                                  const LocationContext *LCtx,
+                                  QualType type,
+                                  unsigned visitCount) {
+  if (!SymbolManager::canSymbolicate(type))
+    return UnknownVal();
+
+  SymbolRef sym = SymMgr.getConjuredSymbol(stmt, LCtx, type, visitCount);
+  
+  if (Loc::isLocType(type))
+    return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
+  
   return nonloc::SymbolVal(sym);
 }
 
