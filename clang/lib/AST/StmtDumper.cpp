@@ -507,8 +507,10 @@ void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
 void StmtDumper::VisitBlockExpr(BlockExpr *Node) {
   DumpExpr(Node);
 
-  IndentLevel++;
   BlockDecl *block = Node->getBlockDecl();
+  OS << " decl=" << block;
+
+  IndentLevel++;
   if (block->capturesCXXThis()) {
     OS << '\n'; Indent(); OS << "(capture this)";
   }
@@ -526,6 +528,7 @@ void StmtDumper::VisitBlockExpr(BlockExpr *Node) {
   }
   IndentLevel--;
 
+  OS << '\n';
   DumpSubTree(block->getBody());
 }
 
