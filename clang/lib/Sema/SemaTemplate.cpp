@@ -44,11 +44,16 @@ clang::getTemplateParamsRange(TemplateParameterList const * const *Ps,
 /// of a template and, if so, return that template declaration. Otherwise,
 /// returns NULL.
 static NamedDecl *isAcceptableTemplateName(ASTContext &Context,
-                                           NamedDecl *Orig) {
+                                           NamedDecl *Orig,
+                                           bool AllowFunctionTemplates) {
   NamedDecl *D = Orig->getUnderlyingDecl();
 
-  if (isa<TemplateDecl>(D))
+  if (isa<TemplateDecl>(D)) {
+    if (!AllowFunctionTemplates && isa<FunctionTemplateDecl>(D))
+      return 0;
+    
     return Orig;
+  }
 
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
     // C++ [temp.local]p1:
@@ -78,13 +83,15 @@ static NamedDecl *isAcceptableTemplateName(ASTContext &Context,
   return 0;
 }
 
-void Sema::FilterAcceptableTemplateNames(LookupResult &R) {
+void Sema::FilterAcceptableTemplateNames(LookupResult &R, 
+                                         bool AllowFunctionTemplates) {
   // The set of class templates we've already seen.
   llvm::SmallPtrSet<ClassTemplateDecl *, 8> ClassTemplates;
   LookupResult::Filter filter = R.makeFilter();
   while (filter.hasNext()) {
     NamedDecl *Orig = filter.next();
-    NamedDecl *Repl = isAcceptableTemplateName(Context, Orig);
+    NamedDecl *Repl = isAcceptableTemplateName(Context, Orig, 
+                                               AllowFunctionTemplates);
     if (!Repl)
       filter.erase();
     else if (Repl != Orig) {
@@ -114,9 +121,10 @@ void Sema::FilterAcceptableTemplateNames(LookupResult &R) {
   filter.done();
 }
 
-bool Sema::hasAnyAcceptableTemplateNames(LookupResult &R) {
+bool Sema::hasAnyAcceptableTemplateNames(LookupResult &R,
+                                         bool AllowFunctionTemplates) {
   for (LookupResult::iterator I = R.begin(), IEnd = R.end(); I != IEnd; ++I)
-    if (isAcceptableTemplateName(Context, *I))
+    if (isAcceptableTemplateName(Context, *I, AllowFunctionTemplates))
       return true;
   
   return false;
@@ -268,13 +276,13 @@ void Sema::LookupTemplateName(LookupResult &Found,
   }
 
   bool ObjectTypeSearchedInScope = false;
+  bool AllowFunctionTemplatesInLookup = true;
   if (LookupCtx) {
     // Perform "qualified" name lookup into the declaration context we
     // computed, which is either the type of the base of a member access
     // expression or the declaration context associated with a prior
     // nested-name-specifier.
     LookupQualifiedName(Found, LookupCtx);
-
     if (!ObjectType.isNull() && Found.empty()) {
       // C++ [basic.lookup.classref]p1:
       //   In a class member access expression (5.2.5), if the . or -> token is
@@ -287,6 +295,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
       //   or function template.
       if (S) LookupName(Found, S);
       ObjectTypeSearchedInScope = true;
+      AllowFunctionTemplatesInLookup = false;
     }
   } else if (isDependent && (!S || ObjectType.isNull())) {
     // We cannot look into a dependent object type or nested nme
@@ -296,6 +305,9 @@ void Sema::LookupTemplateName(LookupResult &Found,
   } else {
     // Perform unqualified name lookup in the current scope.
     LookupName(Found, S);
+    
+    if (!ObjectType.isNull())
+      AllowFunctionTemplatesInLookup = false;
   }
 
   if (Found.empty() && !isDependent) {
@@ -335,7 +347,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     }
   }
 
-  FilterAcceptableTemplateNames(Found);
+  FilterAcceptableTemplateNames(Found, AllowFunctionTemplatesInLookup);
   if (Found.empty()) {
     if (isDependent)
       MemberOfUnknownSpecialization = true;
@@ -351,7 +363,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     LookupResult FoundOuter(*this, Found.getLookupName(), Found.getNameLoc(),
                             LookupOrdinaryName);
     LookupName(FoundOuter, S);
-    FilterAcceptableTemplateNames(FoundOuter);
+    FilterAcceptableTemplateNames(FoundOuter, /*AllowFunctionTemplates=*/false);
 
     if (FoundOuter.empty()) {
       //   - if the name is not found, the name found in the class of the
