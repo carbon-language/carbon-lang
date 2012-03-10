@@ -1078,6 +1078,10 @@ autoreleased: rather, it is given the same lifetime as a block literal
 written at that point in the program, which avoids the overhead of
 copying a block to the heap in the common case.</p>
 
+<p>The conversion from a lambda to a block pointer is only available
+in Objective-C++, and not in C++ with blocks, due to its use of
+Objective-C memory management (autorelease).</p>
+
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>
 <!-- ======================================================================= -->
