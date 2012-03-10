@@ -184,3 +184,8 @@ namespace PR12106 {
   enum eCOLORS { Last };
   Enum<eCOLORS> e;
 }
+
+namespace test7 {
+  enum class E { e = (struct S*)0 == (struct S*)0 };
+  S *p;
+}
