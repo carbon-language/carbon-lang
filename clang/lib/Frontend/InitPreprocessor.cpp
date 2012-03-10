@@ -319,11 +319,14 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
                       + getClangFullRepositoryVersion() + ")\"");
 #undef TOSTR
 #undef TOSTR2
-  // Currently claim to be compatible with GCC 4.2.1-5621.
-  Builder.defineMacro("__GNUC_MINOR__", "2");
-  Builder.defineMacro("__GNUC_PATCHLEVEL__", "1");
-  Builder.defineMacro("__GNUC__", "4");
-  Builder.defineMacro("__GXX_ABI_VERSION", "1002");
+  if (!LangOpts.MicrosoftMode) {
+    // Currently claim to be compatible with GCC 4.2.1-5621, but only if we're
+    // not compiling for MSVC compatibility
+    Builder.defineMacro("__GNUC_MINOR__", "2");
+    Builder.defineMacro("__GNUC_PATCHLEVEL__", "1");
+    Builder.defineMacro("__GNUC__", "4");
+    Builder.defineMacro("__GXX_ABI_VERSION", "1002");
+  }
 
   // Define macros for the C11 / C++11 memory orderings
   Builder.defineMacro("__ATOMIC_RELAXED", "0");

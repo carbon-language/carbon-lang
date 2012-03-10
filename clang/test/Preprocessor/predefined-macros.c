@@ -8,6 +8,7 @@
 // CHECK-MS: #define _M_IX86 600
 // CHECK-MS: #define _M_IX86_FP
 // CHECK-MS: #define _WIN32 1
+// CHECK-MS-NOT: #define __GNUC__
 //
 // RUN: %clang_cc1 %s -E -dM -ffast-math -o - \
 // RUN:   | FileCheck %s --check-prefix=CHECK-FAST-MATH
