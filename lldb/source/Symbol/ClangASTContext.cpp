@@ -5980,6 +5980,8 @@ ClangASTContext::IsObjCObjectPointerType (lldb::clang_type_t clang_type, clang_t
                     !qual_type->isObjCIdType())
                 {
                     const ObjCObjectPointerType *obj_pointer_type = dyn_cast<ObjCObjectPointerType>(qual_type);
+                    if (!obj_pointer_type)
+                        *class_type = NULL;
                     *class_type = QualType(obj_pointer_type->getInterfaceType(), 0).getAsOpaquePtr();
                 }
             }
