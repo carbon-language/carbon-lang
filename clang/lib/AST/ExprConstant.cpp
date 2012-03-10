@@ -1518,7 +1518,7 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
     // This object might be initialized later.
     return false;
 
-  const APValue *O = &Obj;
+  APValue *O = &Obj;
   // Walk the designator's path to find the subobject.
   for (unsigned I = 0, N = Sub.Entries.size(); I != N; ++I) {
     if (ObjType->isArrayType()) {
@@ -1616,7 +1616,13 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
     }
   }
 
-  Obj = APValue(*O);
+  // This may look super-stupid, but it serves an important purpose: if we just
+  // swapped Obj and *O, we'd create an object which had itself as a subobject.
+  // To avoid the leak, we ensure that Tmp ends up owning the original complete
+  // object, which is destroyed by Tmp's destructor.
+  APValue Tmp;
+  O->swap(Tmp);
+  Obj.swap(Tmp);
   return true;
 }
 

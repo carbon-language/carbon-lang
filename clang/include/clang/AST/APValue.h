@@ -135,9 +135,7 @@ public:
   APValue(const APFloat &R, const APFloat &I) : Kind(Uninitialized) {
     MakeComplexFloat(); setComplexFloat(R, I);
   }
-  APValue(const APValue &RHS) : Kind(Uninitialized) {
-    *this = RHS;
-  }
+  APValue(const APValue &RHS);
   APValue(LValueBase B, const CharUnits &O, NoLValuePath N, unsigned CallIndex)
       : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O, N, CallIndex);
@@ -169,6 +167,9 @@ public:
   ~APValue() {
     MakeUninit();
   }
+
+  /// \brief Swaps the contents of this and the given APValue.
+  void swap(APValue &RHS);
 
   ValueKind getKind() const { return Kind; }
   bool isUninit() const { return Kind == Uninitialized; }
@@ -382,7 +383,11 @@ public:
     ((AddrLabelDiffData*)(char*)Data)->RHSExpr = RHSExpr;
   }
 
-  const APValue &operator=(const APValue &RHS);
+  /// Assign by swapping from a copy of the RHS.
+  APValue &operator=(APValue RHS) {
+    swap(RHS);
+    return *this;
+  }
 
 private:
   void DestroyDataAndMakeUninit();
