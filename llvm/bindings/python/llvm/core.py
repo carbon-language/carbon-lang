@@ -8,21 +8,21 @@
 #===------------------------------------------------------------------------===#
 
 from .common import LLVMObject
+from .common import c_object_p
 from .common import get_library
 
 from ctypes import POINTER
 from ctypes import byref
 from ctypes import c_char_p
-from ctypes import c_void_p
 
 __all__ = [
     "lib",
-    "MemoryBufferRef",
+    "MemoryBuffer",
 ]
 
 lib = get_library()
 
-class MemoryBuffer(object):
+class MemoryBuffer(LLVMObject):
     """Represents an opaque memory buffer."""
 
     def __init__(self, filename=None):
@@ -34,7 +34,7 @@ class MemoryBuffer(object):
         if filename is None:
             raise Exception("filename argument must be defined")
 
-        memory = LLVMObject()
+        memory = c_object_p()
         out = c_char_p(None)
 
         result = lib.LLVMCreateMemoryBufferWithContentsOfFile(filename,
@@ -43,26 +43,13 @@ class MemoryBuffer(object):
         if result:
             raise Exception("Could not create memory buffer: %s" % out.value)
 
-        self._memory = memory
-        self._as_parameter_ = self._memory
-        self._owned = True
-
-    def __del__(self):
-        if self._owned:
-            lib.LLVMDisposeMemoryBuffer(self._memory)
-
-    def from_param(self):
-        return self._as_parameter_
-
-    def release_ownership(self):
-        self._owned = False
-
+        LLVMObject.__init__(self, memory, disposer=lib.LLVMDisposeMemoryBuffer)
 
 def register_library(library):
     library.LLVMCreateMemoryBufferWithContentsOfFile.argtypes = [c_char_p,
-            POINTER(LLVMObject), POINTER(c_char_p)]
+            POINTER(c_object_p), POINTER(c_char_p)]
     library.LLVMCreateMemoryBufferWithContentsOfFile.restype = bool
 
-    library.LLVMDisposeMemoryBuffer.argtypes = [c_void_p]
+    library.LLVMDisposeMemoryBuffer.argtypes = [MemoryBuffer]
 
 register_library(lib)
