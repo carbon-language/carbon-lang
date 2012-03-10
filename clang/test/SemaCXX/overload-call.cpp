@@ -563,3 +563,8 @@ namespace IncompleteArg {
   Consumer c;
   int n = sizeof(c(make<int()>()));
 }
+
+namespace PR12142 {
+  void fun(int (*x)[10]); // expected-note{{candidate function not viable: 1st argument ('const int (*)[10]') would lose const qualifier}}
+  void g() { fun((const int(*)[10])0); } // expected-error{{no matching function for call to 'fun'}}
+}

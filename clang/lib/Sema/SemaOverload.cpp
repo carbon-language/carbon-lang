@@ -7847,12 +7847,6 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
 
   if (CToTy.getUnqualifiedType() == CFromTy.getUnqualifiedType() &&
       !CToTy.isAtLeastAsQualifiedAs(CFromTy)) {
-    // It is dumb that we have to do this here.
-    while (isa<ArrayType>(CFromTy))
-      CFromTy = CFromTy->getAs<ArrayType>()->getElementType();
-    while (isa<ArrayType>(CToTy))
-      CToTy = CFromTy->getAs<ArrayType>()->getElementType();
-
     Qualifiers FromQs = CFromTy.getQualifiers();
     Qualifiers ToQs = CToTy.getQualifiers();
 
