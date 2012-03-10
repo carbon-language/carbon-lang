@@ -1219,7 +1219,12 @@ DWARFExpression::Evaluate
         else
         {
             frame = exe_ctx->GetFramePtr();
-            pc = frame->GetRegisterContext()->GetPC();
+            if (!frame)
+                return false;
+            RegisterContextSP reg_ctx_sp = frame->GetRegisterContext();
+            if (!reg_ctx_sp)
+                return false;
+            pc = reg_ctx_sp->GetPC();
         }
 
         if (loclist_base_load_addr != LLDB_INVALID_ADDRESS)
