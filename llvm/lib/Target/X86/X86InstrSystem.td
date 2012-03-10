@@ -45,17 +45,17 @@ def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
 
 
 def SYSCALL  : I<0x05, RawFrm, (outs), (ins), "syscall", []>, TB;
-def SYSRETL  : I<0x07, RawFrm, (outs), (ins), "sysretl", []>, TB;
-def SYSRETQ  :RI<0x07, RawFrm, (outs), (ins), "sysretq", []>, TB,
+def SYSRET   : I<0x07, RawFrm, (outs), (ins), "sysret{l}", []>, TB;
+def SYSRET64 :RI<0x07, RawFrm, (outs), (ins), "sysret{q}", []>, TB,
                Requires<[In64BitMode]>;
 
 def SYSENTER : I<0x34, RawFrm, (outs), (ins), "sysenter", []>, TB;
                  
-def SYSEXIT   : I<0x35, RawFrm, (outs), (ins), "sysexitl", []>, TB;
-def SYSEXIT64 :RI<0x35, RawFrm, (outs), (ins), "sysexitq", []>, TB,
+def SYSEXIT   : I<0x35, RawFrm, (outs), (ins), "sysexit{l}", []>, TB;
+def SYSEXIT64 :RI<0x35, RawFrm, (outs), (ins), "sysexit{q}", []>, TB,
                 Requires<[In64BitMode]>;
 
-def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iretw", []>, OpSize;
+def IRET16 : I<0xcf, RawFrm, (outs), (ins), "iret{w}", []>, OpSize;
 def IRET32 : I<0xcf, RawFrm, (outs), (ins), "iret{l|d}", []>;
 def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", []>,
              Requires<[In64BitMode]>;
