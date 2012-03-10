@@ -1,6 +1,6 @@
 // This test verifies that the correct macros are predefined.
 //
-// RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-extensions \
+// RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-extensions -fms-compatibility \
 // RUN:     -fmsc-version=1300 -o - | FileCheck %s --check-prefix=CHECK-MS
 // CHECK-MS: #define _INTEGRAL_MAX_BITS 64
 // CHECK-MS: #define _MSC_EXTENSIONS 1
