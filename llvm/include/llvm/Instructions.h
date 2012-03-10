@@ -2468,7 +2468,8 @@ protected:
   virtual SwitchInst *clone_impl() const;
 public:
   
-  static const unsigned DefaultPseudoIndex = ~0L-1; // -2 
+  // -2
+  static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
   
   template <class SwitchInstTy, class ConstantIntTy, class BasicBlockTy> 
   class CaseIteratorT {
