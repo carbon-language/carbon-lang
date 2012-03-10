@@ -2136,7 +2136,8 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
       uint64_t VTableIndex = I->first;
       const std::string &MethodName = I->second;
 
-      Out << llvm::format(" %4"PRIu64" | ", VTableIndex) << MethodName << '\n';
+      Out << llvm::format(" %4" PRIu64 " | ", VTableIndex) << MethodName
+          << '\n';
     }
   }
 
