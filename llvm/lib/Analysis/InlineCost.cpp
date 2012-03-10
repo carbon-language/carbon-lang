@@ -272,9 +272,9 @@ static unsigned countCodeReductionForAllocaICmp(const CodeMetrics &Metrics,
 /// The reduction for this instruction is added to the SROAReduction output
 /// parameter. Returns false if this instruction is expected to defeat SROA in
 /// general.
-bool countCodeReductionForSROAInst(Instruction *I,
-                                   SmallVectorImpl<Value *> &Worklist,
-                                   unsigned &SROAReduction) {
+static bool countCodeReductionForSROAInst(Instruction *I,
+                                          SmallVectorImpl<Value *> &Worklist,
+                                          unsigned &SROAReduction) {
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!LI->isSimple())
       return false;
