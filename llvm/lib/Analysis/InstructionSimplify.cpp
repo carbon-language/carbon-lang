@@ -1610,30 +1610,30 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       // If both sides are different identified objects, they aren't equal
       // unless they're null.
       if (LHSPtr != RHSPtr && llvm::isIdentifiedObject(RHSPtr) &&
-          (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::FCMP_UEQ))
+          Pred == CmpInst::ICMP_EQ)
         return ConstantInt::get(ITy, false);
 
       // A local identified object (alloca or noalias call) can't equal any
       // incoming argument, unless they're both null.
       if (isa<Instruction>(LHSPtr) && isa<Argument>(RHSPtr) &&
-          (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::FCMP_UEQ))
+          Pred == CmpInst::ICMP_EQ)
         return ConstantInt::get(ITy, false);
     }
 
     // Assume that the constant null is on the right.
     if (llvm::isKnownNonNull(LHSPtr) && isa<ConstantPointerNull>(RHSPtr)) {
-      if (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::FCMP_UEQ)
+      if (Pred == CmpInst::ICMP_EQ)
         return ConstantInt::get(ITy, false);
-      else if (Pred == CmpInst::ICMP_NE || Pred == CmpInst::FCMP_ONE)
+      else if (Pred == CmpInst::ICMP_NE)
         return ConstantInt::get(ITy, true);
     }
   } else if (isa<Argument>(LHSPtr)) {
     RHSPtr = RHSPtr->stripInBoundsOffsets();
     // An alloca can't be equal to an argument.
     if (isa<AllocaInst>(RHSPtr)) {
-      if (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::FCMP_UEQ)
+      if (Pred == CmpInst::ICMP_EQ)
         return ConstantInt::get(ITy, false);
-      else if (Pred == CmpInst::ICMP_NE || Pred == CmpInst::FCMP_ONE)
+      else if (Pred == CmpInst::ICMP_NE)
         return ConstantInt::get(ITy, true);
     }
   }
