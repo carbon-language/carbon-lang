@@ -5849,7 +5849,12 @@ static void Write_IvarOffsetVar(std::string &Result,
   Result += "\n";
   for (unsigned i =0, e = Ivars.size(); i < e; i++) {
     ObjCIvarDecl *IvarDecl = Ivars[i];
-    Result += "__declspec(dllexport) unsigned long int "; Result += VarName;
+    if (IvarDecl->getAccessControl() == ObjCIvarDecl::Private)
+      Result += "unsigned long int "; 
+    else
+      Result += "__declspec(dllexport) unsigned long int ";
+    
+    Result += VarName;
     Result += ClassName; Result += "_";
     Result += IvarDecl->getName(); 
     Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
