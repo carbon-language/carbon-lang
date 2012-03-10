@@ -111,8 +111,24 @@ public:
   }
 
   // l-values.
-  ComplexPairTy VisitDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }
-  ComplexPairTy VisitBlockDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy emitDeclRef(ValueDecl *VD, Expr *refExpr) {
+    if (CodeGenFunction::ConstantEmission result
+          = CGF.tryEmitAsConstant(VD, refExpr)) {
+      if (result.isReference())
+        return EmitLoadOfLValue(result.getReferenceLValue(CGF, refExpr));
+
+      llvm::ConstantStruct *pair =
+        cast<llvm::ConstantStruct>(result.getValue());
+      return ComplexPairTy(pair->getOperand(0), pair->getOperand(1));
+    }
+    return EmitLoadOfLValue(refExpr);
+  }
+  ComplexPairTy VisitDeclRefExpr(DeclRefExpr *E) {
+    return emitDeclRef(E->getDecl(), E);
+  }
+  ComplexPairTy VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+    return emitDeclRef(E->getDecl(), E);
+  }
   ComplexPairTy VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
     return EmitLoadOfLValue(E);
   }

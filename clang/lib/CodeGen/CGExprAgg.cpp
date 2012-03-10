@@ -109,15 +109,33 @@ public:
   }
 
   // l-values.
-  void VisitDeclRefExpr(DeclRefExpr *DRE) { EmitAggLoadOfLValue(DRE); }
+  void emitDeclRef(ValueDecl *VD, Expr *refExpr) {
+    // For aggregates, we should always be able to emit the variable
+    // as an l-value unless it's a reference.  This is due to the fact
+    // that we can't actually ever see a normal l2r conversion on an
+    // aggregate in C++, and in C there's no language standard
+    // actively preventing us from listing variables in the captures
+    // list of a block.
+    if (VD->getType()->isReferenceType()) {
+      if (CodeGenFunction::ConstantEmission result
+            = CGF.tryEmitAsConstant(VD, refExpr)) {
+        EmitFinalDestCopy(refExpr, result.getReferenceLValue(CGF, refExpr));
+        return;
+      }
+    }
+
+    EmitAggLoadOfLValue(refExpr);
+  }
+  void VisitDeclRefExpr(DeclRefExpr *E) { emitDeclRef(E->getDecl(), E); }
+  void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+    emitDeclRef(E->getDecl(), E);
+  }
+
   void VisitMemberExpr(MemberExpr *ME) { EmitAggLoadOfLValue(ME); }
   void VisitUnaryDeref(UnaryOperator *E) { EmitAggLoadOfLValue(E); }
   void VisitStringLiteral(StringLiteral *E) { EmitAggLoadOfLValue(E); }
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
-    EmitAggLoadOfLValue(E);
-  }
-  void VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
     EmitAggLoadOfLValue(E);
   }
   void VisitPredefinedExpr(const PredefinedExpr *E) {

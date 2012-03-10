@@ -2107,6 +2107,36 @@ public:
   LValue EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *E);
   LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
 
+  class ConstantEmission {
+    llvm::PointerIntPair<llvm::Constant*, 1, bool> ValueAndIsReference;
+    ConstantEmission(llvm::Constant *C, bool isReference)
+      : ValueAndIsReference(C, isReference) {}
+  public:
+    ConstantEmission() {}
+    static ConstantEmission forReference(llvm::Constant *C) {
+      return ConstantEmission(C, true);
+    }
+    static ConstantEmission forValue(llvm::Constant *C) {
+      return ConstantEmission(C, false);
+    }
+
+    operator bool() const { return ValueAndIsReference.getOpaqueValue() != 0; }
+
+    bool isReference() const { return ValueAndIsReference.getInt(); }
+    LValue getReferenceLValue(CodeGenFunction &CGF, Expr *refExpr) const {
+      assert(isReference());
+      return CGF.MakeNaturalAlignAddrLValue(ValueAndIsReference.getPointer(),
+                                            refExpr->getType());
+    }
+
+    llvm::Constant *getValue() const {
+      assert(!isReference());
+      return ValueAndIsReference.getPointer();
+    }
+  };
+
+  ConstantEmission tryEmitAsConstant(ValueDecl *VD, Expr *refExpr);
+
   RValue EmitPseudoObjectRValue(const PseudoObjectExpr *e,
                                 AggValueSlot slot = AggValueSlot::ignored());
   LValue EmitPseudoObjectLValue(const PseudoObjectExpr *e);
