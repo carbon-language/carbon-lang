@@ -5146,6 +5146,10 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
 void RewriteModernObjC::Initialize(ASTContext &context) {
   InitializeCommon(context);
   
+  Preamble += "#ifndef __OBJC2__\n";
+  Preamble += "#define __OBJC2__\n";
+  Preamble += "#endif\n";
+
   // declaring objc_selector outside the parameter list removes a silly
   // scope related warning...
   if (IsHeader)
