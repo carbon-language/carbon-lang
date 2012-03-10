@@ -109,9 +109,9 @@ void DumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
     // format() can't handle StringRefs
     outs() << format("  %-32s", FullName.c_str())
            << format("  %-4s", GetTypeStr(Type))
-           << format("  %16"PRIx64, Address)
-           << format("  %16"PRIx64, Size)
-           << format("  %16"PRIx64, FileOffset)
+           << format("  %16" PRIx64, Address)
+           << format("  %16" PRIx64, Size)
+           << format("  %16" PRIx64, FileOffset)
            << "  " << GetFlagStr(Flags)
            << "\n";
 }

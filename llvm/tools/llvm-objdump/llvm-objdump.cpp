@@ -300,7 +300,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
                                    DebugOut, nulls())) {
-          outs() << format("%8"PRIx64":\t", SectionAddr + Index);
+          outs() << format("%8" PRIx64 ":\t", SectionAddr + Index);
           DumpBytes(StringRef(Bytes.data() + Index, Size));
           IP->printInst(&Inst, outs(), "");
           outs() << "\n";
@@ -327,8 +327,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
           if (error(rel_cur->getValueString(val))) goto skip_print_rel;
 
-          outs() << format("\t\t\t%8"PRIx64": ", SectionAddr + addr) << name << "\t"
-                 << val << "\n";
+          outs() << format("\t\t\t%8" PRIx64 ": ", SectionAddr + addr) << name
+                 << "\t" << val << "\n";
 
         skip_print_rel:
           ++rel_cur;
@@ -388,8 +388,8 @@ static void PrintSectionHeaders(const ObjectFile *o) {
     if (error(si->isBSS(BSS))) return;
     std::string Type = (std::string(Text ? "TEXT " : "") +
                         (Data ? "DATA " : "") + (BSS ? "BSS" : ""));
-    outs() << format("%3d %-13s %09"PRIx64" %017"PRIx64" %s\n", i, Name.str().c_str(), Size,
-                     Address, Type.c_str());
+    outs() << format("%3d %-13s %09" PRIx64 " %017" PRIx64 " %s\n",
+                     i, Name.str().c_str(), Size, Address, Type.c_str());
     ++i;
   }
 }
@@ -411,7 +411,7 @@ static void PrintSectionContents(const ObjectFile *o) {
 
     // Dump out the content as hex and printable ascii characters.
     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
-      outs() << format(" %04"PRIx64" ", BaseAddr + addr);
+      outs() << format(" %04" PRIx64 " ", BaseAddr + addr);
       // Dump line of hex.
       for (std::size_t i = 0; i < 16; ++i) {
         if (i != 0 && i % 4 == 0)
@@ -519,7 +519,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Type == SymbolRef::ST_Function)
         FileFunc = 'F';
 
-      outs() << format("%08"PRIx64, Address) << " "
+      outs() << format("%08" PRIx64, Address) << " "
              << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
              << (Weak ? 'w' : ' ') // Weak?
              << ' ' // Constructor. Not supported yet.
@@ -539,7 +539,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
         outs() << SectionName;
       }
       outs() << '\t'
-             << format("%08"PRIx64" ", Size)
+             << format("%08" PRIx64 " ", Size)
              << Name
              << '\n';
     }
