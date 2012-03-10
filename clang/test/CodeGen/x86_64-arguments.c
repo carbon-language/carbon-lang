@@ -345,3 +345,12 @@ void test45() { f45(x45); }
 typedef float v46 __attribute((vector_size(8)));
 void f46(v46,v46,v46,v46,v46,v46,v46,v46,v46,v46);
 void test46() { v46 x = {1,2}; f46(x,x,x,x,x,x,x,x,x,x); }
+
+// Check that we pass the struct below without using byval, which helps out
+// codegen.
+//
+// CHECK: @test47
+// CHECK: call void @f47(i32 {{.*}}, i32 {{.*}}, i32 {{.*}}, i32 {{.*}}, i32 {{.*}}, i32 {{.*}}, i32 {{.*}})
+struct s47 { unsigned a; };
+void f47(int,int,int,int,int,int,struct s47);
+void test47(int a, struct s47 b) { f47(a, a, a, a, a, a, b); }

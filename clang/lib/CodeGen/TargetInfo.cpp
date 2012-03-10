@@ -924,11 +924,15 @@ class X86_64ABIInfo : public ABIInfo {
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
-  ABIArgInfo getIndirectResult(QualType Ty) const;
+  ///
+  /// \param freeIntRegs - The number of free integer registers remaining
+  /// available.
+  ABIArgInfo getIndirectResult(QualType Ty, unsigned freeIntRegs) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
 
   ABIArgInfo classifyArgumentType(QualType Ty,
+                                  unsigned freeIntRegs,
                                   unsigned &neededInt,
                                   unsigned &neededSSE) const;
 
@@ -951,7 +955,8 @@ public:
 
   bool isPassedUsingAVXType(QualType type) const {
     unsigned neededInt, neededSSE;
-    ABIArgInfo info = classifyArgumentType(type, neededInt, neededSSE);
+    // The freeIntRegs argument doesn't matter here.
+    ABIArgInfo info = classifyArgumentType(type, 0, neededInt, neededSSE);
     if (info.isDirect()) {
       llvm::Type *ty = info.getCoerceToType();
       if (llvm::VectorType *vectorTy = dyn_cast_or_null<llvm::VectorType>(ty))
@@ -1441,9 +1446,16 @@ bool X86_64ABIInfo::IsIllegalVectorType(QualType Ty) const {
   return false;
 }
 
-ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
+ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
+                                            unsigned freeIntRegs) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
+  //
+  // This assumption is optimistic, as there could be free registers available
+  // when we need to pass this argument in memory, and LLVM could try to pass
+  // the argument in the free register. This does not seem to happen currently,
+  // but this code would be much safer if we could mark the argument with
+  // 'onstack'. See PR12193.
   if (!isAggregateTypeForABI(Ty) && !IsIllegalVectorType(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
@@ -1459,6 +1471,38 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   // Compute the byval alignment. We specify the alignment of the byval in all
   // cases so that the mid-level optimizer knows the alignment of the byval.
   unsigned Align = std::max(getContext().getTypeAlign(Ty) / 8, 8U);
+
+  // Attempt to avoid passing indirect results using byval when possible. This
+  // is important for good codegen.
+  //
+  // We do this by coercing the value into a scalar type which the backend can
+  // handle naturally (i.e., without using byval).
+  //
+  // For simplicity, we currently only do this when we have exhausted all of the
+  // free integer registers. Doing this when there are free integer registers
+  // would require more care, as we would have to ensure that the coerced value
+  // did not claim the unused register. That would require either reording the
+  // arguments to the function (so that any subsequent inreg values came first),
+  // or only doing this optimization when there were no following arguments that
+  // might be inreg.
+  //
+  // We currently expect it to be rare (particularly in well written code) for
+  // arguments to be passed on the stack when there are still free integer
+  // registers available (this would typically imply large structs being passed
+  // by value), so this seems like a fair tradeoff for now.
+  //
+  // We can revisit this if the backend grows support for 'onstack' parameter
+  // attributes. See PR12193.
+  if (freeIntRegs == 0) {
+    uint64_t Size = getContext().getTypeSize(Ty);
+
+    // If this type fits in an eightbyte, coerce it into the matching integral
+    // type, which will end up on the stack (with alignment 8).
+    if (Align == 8 && Size <= 64)
+      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
+                                                          Size));
+  }
+
   return ABIArgInfo::getIndirect(Align);
 }
 
@@ -1874,8 +1918,10 @@ classifyReturnType(QualType RetTy) const {
   return ABIArgInfo::getDirect(ResType);
 }
 
-ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
-                                               unsigned &neededSSE) const {
+ABIArgInfo X86_64ABIInfo::classifyArgumentType(
+  QualType Ty, unsigned freeIntRegs, unsigned &neededInt, unsigned &neededSSE)
+  const
+{
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, 0, Lo, Hi);
 
@@ -1907,7 +1953,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case ComplexX87:
     if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
       ++neededInt;
-    return getIndirectResult(Ty);
+    return getIndirectResult(Ty, freeIntRegs);
 
   case SSEUp:
   case X87Up:
@@ -2015,7 +2061,8 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
     unsigned neededInt, neededSSE;
-    it->info = classifyArgumentType(it->type, neededInt, neededSSE);
+    it->info = classifyArgumentType(it->type, freeIntRegs, neededInt,
+                                    neededSSE);
 
     // AMD64-ABI 3.2.3p3: If there are no registers available for any
     // eightbyte of an argument, the whole argument is passed on the
@@ -2025,7 +2072,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
       freeIntRegs -= neededInt;
       freeSSERegs -= neededSSE;
     } else {
-      it->info = getIndirectResult(it->type);
+      it->info = getIndirectResult(it->type, freeIntRegs);
     }
   }
 }
@@ -2091,7 +2138,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   unsigned neededInt, neededSSE;
 
   Ty = CGF.getContext().getCanonicalType(Ty);
-  ABIArgInfo AI = classifyArgumentType(Ty, neededInt, neededSSE);
+  ABIArgInfo AI = classifyArgumentType(Ty, 0, neededInt, neededSSE);
 
   // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
   // in the registers. If not go to step 7.
