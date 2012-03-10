@@ -26,6 +26,10 @@
 #include "asan_procmaps.h"
 #include "asan_thread.h"
 
+// Should not add dependency on libstdc++,
+// since most of the stuff here is inlinable.
+#include <algorithm>
+
 namespace __asan {
 
 // ---------------------- Memory management ---------------- {{{1
@@ -265,6 +269,10 @@ void Exit(int exitcode) {
 
 int Atexit(void (*function)(void)) {
   return atexit(function);
+}
+
+void SortArray(uintptr_t *array, size_t size) {
+  std::sort(array, array + size);
 }
 
 }  // namespace __asan

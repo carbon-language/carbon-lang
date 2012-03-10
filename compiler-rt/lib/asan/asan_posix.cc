@@ -30,6 +30,10 @@
 #include <sys/atomics.h>
 #endif
 
+// Should not add dependency on libstdc++,
+// since most of the stuff here is inlinable.
+#include <algorithm>
+
 namespace __asan {
 
 static void MaybeInstallSigaction(int signum,
@@ -110,6 +114,10 @@ int AtomicInc(int *a) {
 #else
   return __sync_add_and_fetch(a, 1);
 #endif
+}
+
+void SortArray(uintptr_t *array, size_t size) {
+  std::sort(array, array + size);
 }
 
 // ---------------------- TSD ---------------- {{{1

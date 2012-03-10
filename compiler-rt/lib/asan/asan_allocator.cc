@@ -362,9 +362,6 @@ class MallocInfo {
     return FindChunkByAddr(addr);
   }
 
-  // TODO(glider): AllocationSize() may become very slow if the size of
-  // page_groups_ grows. This can be fixed by increasing kMinMmapSize,
-  // but a better solution is to speed up the search somehow.
   size_t AllocationSize(uintptr_t ptr) {
     if (!ptr) return 0;
     ScopedLock lock(&mu_);
@@ -413,12 +410,32 @@ class MallocInfo {
 
  private:
   PageGroup *FindPageGroupUnlocked(uintptr_t addr) {
-    for (int i = 0; i < n_page_groups_; i++) {
-      PageGroup *g = page_groups_[i];
-      if (g->InRange(addr)) {
-        return g;
+    int n = n_page_groups_;
+    // If the page groups are not sorted yet, sort them.
+    if (n_sorterd_page_groups < n) {
+      SortArray((uintptr_t*)page_groups_, n);
+      n_sorterd_page_groups = n;
+    }
+    // Binray search over the page groups.
+    int beg = 0, end = n;
+    while (beg < end) {
+      int med = (beg + end) / 2;
+      uintptr_t g = (uintptr_t)page_groups_[med];
+      if (addr > g) {
+        // 'g' points to the end of the group, so 'addr'
+        // may not belong to page_groups_[med] or any previous group.
+        beg = med + 1;
+      } else {
+        // 'addr' may belong to page_groups_[med] or a previous group.
+        end = med;
       }
     }
+    if (beg >= n)
+      return NULL;
+    PageGroup *g = page_groups_[beg];
+    CHECK(g);
+    if (g->InRange(addr))
+      return g;
     return NULL;
   }
 
@@ -546,6 +563,7 @@ class MallocInfo {
 
   PageGroup *page_groups_[kMaxAvailableRam / kMinMmapSize];
   int n_page_groups_;  // atomic
+  int n_sorterd_page_groups;
 };
 
 static MallocInfo malloc_info(LINKER_INITIALIZED);

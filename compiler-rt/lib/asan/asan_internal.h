@@ -205,6 +205,8 @@ void Report(const char *format, ...);
 template<class T> T Min(T a, T b) { return a < b ? a : b; }
 template<class T> T Max(T a, T b) { return a > b ? a : b; }
 
+void SortArray(uintptr_t *array, size_t size);
+
 // asan_poisoning.cc
 // Poisons the shadow memory for "size" bytes starting from "addr".
 void PoisonShadow(uintptr_t addr, size_t size, uint8_t value);
