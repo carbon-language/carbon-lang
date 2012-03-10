@@ -1522,28 +1522,6 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
   return 0;
 }
 
-/// stripPointerAdjustments - This is like Value::stripPointerCasts, but also
-/// removes inbounds gep operations, regardless of their indices.
-static Value *stripPointerAdjustmentsImpl(Value *V,
-                                    SmallPtrSet<GEPOperator*, 8> &VisitedGEPs) {
-  GEPOperator *GEP = dyn_cast<GEPOperator>(V);
-  if (GEP == 0 || !GEP->isInBounds())
-    return V;
-
-  // If we've already seen this GEP, we will end up infinitely looping.  This
-  // can happen in unreachable code.
-  if (!VisitedGEPs.insert(GEP))
-    return V;
-  
-  return stripPointerAdjustmentsImpl(GEP->getOperand(0)->stripPointerCasts(),
-                                     VisitedGEPs);
-}
-
-static Value *stripPointerAdjustments(Value *V) {
-  SmallPtrSet<GEPOperator*, 8> VisitedGEPs;
-  return stripPointerAdjustmentsImpl(V, VisitedGEPs);
-}
-
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
@@ -1625,9 +1603,9 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // Be more aggressive about stripping pointer adjustments when checking a
   // comparison of an alloca address to another object.  We can rip off all
   // inbounds GEP operations, even if they are variable.
-  LHSPtr = stripPointerAdjustments(LHSPtr);
+  LHSPtr = LHSPtr->stripInBoundsOffsets();
   if (llvm::isIdentifiedObject(LHSPtr)) {
-    RHSPtr = stripPointerAdjustments(RHSPtr);
+    RHSPtr = RHSPtr->stripInBoundsOffsets();
     if (llvm::isKnownNonNull(LHSPtr) || llvm::isKnownNonNull(RHSPtr)) {
       // If both sides are different identified objects, they aren't equal
       // unless they're null.
@@ -1644,7 +1622,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     if (llvm::isKnownNonNull(LHSPtr) && isa<ConstantPointerNull>(RHSPtr))
       return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
   } else if (isa<Argument>(LHSPtr)) {
-    RHSPtr = stripPointerAdjustments(RHSPtr);
+    RHSPtr = RHSPtr->stripInBoundsOffsets();
     // An alloca can't be equal to an argument.
     if (isa<AllocaInst>(RHSPtr))
       return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));

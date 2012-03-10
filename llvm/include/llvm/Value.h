@@ -263,12 +263,30 @@ public:
     return true; // Values are always values.
   }
 
-  /// stripPointerCasts - This method strips off any unneeded pointer
-  /// casts from the specified value, returning the original uncasted value.
-  /// Note that the returned value has pointer type if the specified value does.
+  /// stripPointerCasts - This method strips off any unneeded pointer casts and
+  /// all-zero GEPs from the specified value, returning the original uncasted
+  /// value. If this is called on a non-pointer value, it returns 'this'.
   Value *stripPointerCasts();
   const Value *stripPointerCasts() const {
     return const_cast<Value*>(this)->stripPointerCasts();
+  }
+
+  /// stripConstantOffsets - This method strips off unneeded pointer casts and
+  /// all-constant GEPs from the specified value, returning the original
+  /// pointer value. If this is called on a non-pointer value, it returns
+  /// 'this'.
+  Value *stripConstantOffsets();
+  const Value *stripConstantOffsets() const {
+    return const_cast<Value*>(this)->stripConstantOffsets();
+  }
+
+  /// stripInBoundsOffsets - This method strips off unneeded pointer casts and
+  /// any in-bounds Offsets from the specified value, returning the original
+  /// pointer value. If this is called on a non-pointer value, it returns
+  /// 'this'.
+  Value *stripInBoundsOffsets();
+  const Value *stripInBoundsOffsets() const {
+    return const_cast<Value*>(this)->stripInBoundsOffsets();
   }
 
   /// isDereferenceablePointer - Test if this value is always a pointer to
