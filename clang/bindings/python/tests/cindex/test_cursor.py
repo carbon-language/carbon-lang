@@ -83,3 +83,10 @@ def test_enum_type():
     assert enum.kind == CursorKind.ENUM_DECL
     enum_type = enum.enum_type
     assert enum_type.kind == TypeKind.UINT
+
+def test_objc_type_encoding():
+    tu = get_tu('int i;', lang='objc')
+    i = get_cursor(tu, 'i')
+
+    assert i is not None
+    assert i.objc_type_encoding == 'i'

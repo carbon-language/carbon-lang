@@ -1008,6 +1008,14 @@ class Cursor(Structure):
         return self._enum_type
 
     @property
+    def objc_type_encoding(self):
+        """Return the Objective-C type encoding as a str."""
+        if not hasattr(self, '_objc_type_encoding'):
+            self._objc_type_encoding = Cursor_objc_type_encoding(self)
+
+        return self._objc_type_encoding
+
+    @property
     def hash(self):
         """Returns a hash of the cursor as an int."""
         if not hasattr(self, '_hash'):
@@ -1919,6 +1927,11 @@ Cursor_enum_type = lib.clang_getEnumDeclIntegerType
 Cursor_enum_type.argtypes = [Cursor]
 Cursor_enum_type.restype = Type
 Cursor_enum_type.errcheck = Type.from_result
+
+Cursor_objc_type_encoding = lib.clang_getDeclObjCTypeEncoding
+Cursor_objc_type_encoding.argtypes = [Cursor]
+Cursor_objc_type_encoding.restype = _CXString
+Cursor_objc_type_encoding.errcheck = _CXString.from_result
 
 Cursor_visit_callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 Cursor_visit = lib.clang_visitChildren
