@@ -3852,8 +3852,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddAllArgs(CmdArgs, options::OPT_init);
 
   // Add the deployment target.
-  unsigned TargetVersion[3];
-  DarwinTC.getTargetVersion(TargetVersion);
+  VersionTuple TargetVersion = DarwinTC.getTargetVersion();
 
   // If we had an explicit -mios-simulator-version-min argument, honor that,
   // otherwise use the traditional deployment targets. We can't just check the
@@ -3868,9 +3867,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
     CmdArgs.push_back("-iphoneos_version_min");
   else
     CmdArgs.push_back("-macosx_version_min");
-  CmdArgs.push_back(Args.MakeArgString(Twine(TargetVersion[0]) + "." +
-                                       Twine(TargetVersion[1]) + "." +
-                                       Twine(TargetVersion[2])));
+  CmdArgs.push_back(Args.MakeArgString(TargetVersion.getAsString()));
 
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
   Args.AddLastArg(CmdArgs, options::OPT_multi__module);
