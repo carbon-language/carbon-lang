@@ -20,6 +20,14 @@ namespace test25 {
   // CHECK-HIDDEN: @_ZN6test251aE = hidden global
 }
 
+namespace test28 {
+  class DEFAULT foo {
+  };
+  foo myvec;
+  // CHECK: @_ZN6test285myvecE = global
+  // CHECK-HIDDEN: @_ZN6test285myvecE = hidden global
+}
+
 // CHECK: @_ZN5Test425VariableInHiddenNamespaceE = hidden global i32 10
 // CHECK: @_ZN5Test71aE = hidden global
 // CHECK: @_ZN5Test71bE = global
