@@ -2306,7 +2306,7 @@ let Defs = [EFLAGS] in {
                                   "comisd", SSEPackedDouble>, TB, OpSize;
 } // Defs = [EFLAGS]
 
-// sse12_cmp_packed - sse 1 & 2 compared packed instructions
+// sse12_cmp_packed - sse 1 & 2 compare packed instructions
 multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
                             Intrinsic Int, string asm, string asm_alt,
                             Domain d> {
