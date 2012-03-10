@@ -58,6 +58,9 @@ class LLVMObject(object):
         return self._as_parameter_
 
     def __del__(self):
+        if not hasattr(self, '_self_owned') or not hasattr(self, '_disposer'):
+            return
+
         if self._self_owned and self._disposer:
             self._disposer(self)
 
