@@ -9309,10 +9309,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
 /// of this literal operator function is well-formed. If so, returns
 /// false; otherwise, emits appropriate diagnostics and returns true.
 bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
-  DeclContext *DC = FnDecl->getDeclContext();
-  Decl::Kind Kind = DC->getDeclKind();
-  if (Kind != Decl::TranslationUnit && Kind != Decl::Namespace &&
-      Kind != Decl::LinkageSpec) {
+  if (isa<CXXMethodDecl>(FnDecl)) {
     Diag(FnDecl->getLocation(), diag::err_literal_operator_outside_namespace)
       << FnDecl->getDeclName();
     return true;

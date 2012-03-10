@@ -13,7 +13,7 @@ namespace ns { void operator "" _ns_good (const char *); }
 extern "C++" void operator "" _extern_good (const char *);
 extern "C++" { void operator "" _extern_good (const char *); }
 
-void fn () { void operator "" _fn_bad (const char *); } // expected-error {{literal operator 'operator "" _fn_bad' must be in a namespace or global scope}}
+void fn () { void operator "" _fn_good (const char *); }
 
 // One-param declarations (const char * was already checked)
 void operator "" _good (char);
