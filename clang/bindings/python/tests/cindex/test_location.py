@@ -1,4 +1,9 @@
-from clang.cindex import Index, File, SourceLocation, SourceRange, Cursor
+from clang.cindex import Cursor
+from clang.cindex import File
+from clang.cindex import SourceLocation
+from clang.cindex import SourceRange
+from .util import get_cursor
+from .util import get_tu
 
 baseInput="int one;\nint two;\n"
 
@@ -8,44 +13,46 @@ def assert_location(loc, line, column, offset):
     assert loc.offset == offset
 
 def test_location():
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files = [('t.c',baseInput)])
+    tu = get_tu(baseInput)
+    one = get_cursor(tu, 'one')
+    two = get_cursor(tu, 'two')
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'one':
-            assert_location(n.location,line=1,column=5,offset=4)
-        if n.spelling == 'two':
-            assert_location(n.location,line=2,column=5,offset=13)
+    assert one is not None
+    assert two is not None
+
+    assert_location(one.location,line=1,column=5,offset=4)
+    assert_location(two.location,line=2,column=5,offset=13)
 
     # adding a linebreak at top should keep columns same
-    tu = index.parse('t.c', unsaved_files = [('t.c',"\n"+baseInput)])
+    tu = get_tu('\n' + baseInput)
+    one = get_cursor(tu, 'one')
+    two = get_cursor(tu, 'two')
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'one':
-            assert_location(n.location,line=2,column=5,offset=5)
-        if n.spelling == 'two':
-            assert_location(n.location,line=3,column=5,offset=14)
+    assert one is not None
+    assert two is not None
+
+    assert_location(one.location,line=2,column=5,offset=5)
+    assert_location(two.location,line=3,column=5,offset=14)
 
     # adding a space should affect column on first line only
-    tu = index.parse('t.c', unsaved_files = [('t.c'," "+baseInput)])
+    tu = get_tu(' ' + baseInput)
+    one = get_cursor(tu, 'one')
+    two = get_cursor(tu, 'two')
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'one':
-            assert_location(n.location,line=1,column=6,offset=5)
-        if n.spelling == 'two':
-            assert_location(n.location,line=2,column=5,offset=14)
+    assert_location(one.location,line=1,column=6,offset=5)
+    assert_location(two.location,line=2,column=5,offset=14)
 
     # define the expected location ourselves and see if it matches
     # the returned location
-    tu = index.parse('t.c', unsaved_files = [('t.c',baseInput)])
+    tu = get_tu(baseInput)
 
     file = File.from_name(tu, 't.c')
     location = SourceLocation.from_position(tu, file, 1, 5)
     cursor = Cursor.from_location(tu, location)
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'one':
-            assert n == cursor
+    one = get_cursor(tu, 'one')
+    assert one is not None
+    assert one == cursor
 
     # Ensure locations referring to the same entity are equivalent.
     location2 = SourceLocation.from_position(tu, file, 1, 5)
@@ -54,18 +61,17 @@ def test_location():
     assert location2 != location3
 
 def test_extent():
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files = [('t.c',baseInput)])
+    tu = get_tu(baseInput)
+    one = get_cursor(tu, 'one')
+    two = get_cursor(tu, 'two')
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'one':
-            assert_location(n.extent.start,line=1,column=1,offset=0)
-            assert_location(n.extent.end,line=1,column=8,offset=7)
-            assert baseInput[n.extent.start.offset:n.extent.end.offset] == "int one"
-        if n.spelling == 'two':
-            assert_location(n.extent.start,line=2,column=1,offset=9)
-            assert_location(n.extent.end,line=2,column=8,offset=16)
-            assert baseInput[n.extent.start.offset:n.extent.end.offset] == "int two"
+    assert_location(one.extent.start,line=1,column=1,offset=0)
+    assert_location(one.extent.end,line=1,column=8,offset=7)
+    assert baseInput[one.extent.start.offset:one.extent.end.offset] == "int one"
+
+    assert_location(two.extent.start,line=2,column=1,offset=9)
+    assert_location(two.extent.end,line=2,column=8,offset=16)
+    assert baseInput[two.extent.start.offset:two.extent.end.offset] == "int two"
 
     file = File.from_name(tu, 't.c')
     location1 = SourceLocation.from_position(tu, file, 1, 1)

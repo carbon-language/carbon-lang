@@ -1,8 +1,9 @@
-from clang.cindex import Cursor
 from clang.cindex import CursorKind
 from clang.cindex import Index
 from clang.cindex import TypeKind
 from nose.tools import raises
+from .util import get_cursor
+from .util import get_tu
 
 kInput = """\
 
@@ -20,35 +21,6 @@ struct teststruct {
 };
 
 """
-
-def get_tu(source=kInput, lang='c'):
-    name = 't.c'
-    if lang == 'cpp':
-        name = 't.cpp'
-
-    index = Index.create()
-    tu = index.parse(name, unsaved_files=[(name, source)])
-    assert tu is not None
-    return tu
-
-def get_cursor(source, spelling):
-    children = []
-    if isinstance(source, Cursor):
-        children = source.get_children()
-    else:
-        # Assume TU
-        children = source.cursor.get_children()
-
-    for cursor in children:
-        if cursor.spelling == spelling:
-            return cursor
-
-        # Recurse into children.
-        result = get_cursor(cursor, spelling)
-        if result is not None:
-            return result
-
-    return None
 
 def test_a_struct():
     tu = get_tu(kInput)
