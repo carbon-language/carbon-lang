@@ -53,3 +53,25 @@ void f() {
 }
 
 }
+
+namespace PR12139 {
+  struct A {
+    A() : value(1) { }
+    A(A const &, int value = 2) : value(value) { }
+    int value;
+
+    static A makeA() { A a; a.value = 2; return a; }
+  };
+
+  // CHECK: define i32 @_ZN7PR121394testEv
+  int test() {
+    // CHECK: call void @_ZN7PR121391A5makeAEv
+    // CHECK-NEXT: call void @_ZN7PR121391AC1ERKS0_i
+    A a(A::makeA(), 3);
+    // CHECK-NEXT: getelementptr inbounds
+    // CHECK-NEXT: load
+    // CHECK-NEXT: ret i32
+    return a.value;
+  }
+}
+
