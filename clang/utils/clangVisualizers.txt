@@ -43,25 +43,25 @@ clang::Token{
 	preview((clang::tok::TokenKind)(int)$e.Kind)
 }
 
-PointerIntPair<*,*,*,*>{
+llvm::PointerIntPair<*,*,*,*>{
 	preview (
 		#(
-			($T1*)($e.Value & PointerBitMask),
+			($T1*)($e.Value & $e.PointerBitMask),
 			" [",
-			($T3)(($e.Value >> IntShift) & IntMask),
+			($T3)(($e.Value >> $e.IntShift) & $e.IntMask),
 			"]"
 		)
 	)
 	
 	children (
 		#(
-			#([ptr] : ($T1*)($e.Value & PointerBitMask)),
-			#([int] : ($T3)($e.Value >> IntShift) & IntMask)
+			#([ptr] : ($T1*)($e.Value & $e.PointerBitMask)),
+			#([int] : ($T3)($e.Value >> $e.IntShift) & $e.IntMask)
 		)
 	)
 }
 
-PointerUnion<*,*>{
+llvm::PointerUnion<*,*>{
 	preview (
 		#if ((($e.Val.Value >> $e.Val.IntShift) & $e.Val.IntMask) == 0) (
 			"PT1"
@@ -81,7 +81,7 @@ PointerUnion<*,*>{
 	)
 }
 
-PointerUnion3<*,*,*>{
+llvm::PointerUnion3<*,*,*>{
 	preview (
 		#if (($e.Val.Val.Value & 0x2) == 2) (
 			"PT2"
@@ -105,7 +105,7 @@ PointerUnion3<*,*,*>{
 	)
 }
 
-PointerUnion4<*,*,*,*>{
+llvm::PointerUnion4<*,*,*,*>{
 	preview (
 		#if (($e.Val.Val.Value & 0x3) == 3) (
 			"PT4"
