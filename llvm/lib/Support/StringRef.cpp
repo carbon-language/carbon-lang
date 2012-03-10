@@ -285,8 +285,8 @@ static unsigned GetAutoSenseRadix(StringRef &Str) {
 
 /// GetAsUnsignedInteger - Workhorse method that converts a integer character
 /// sequence of radix up to 36 to an unsigned long long value.
-static bool GetAsUnsignedInteger(StringRef Str, unsigned Radix,
-                                 unsigned long long &Result) {
+bool llvm::getAsUnsignedInteger(StringRef Str, unsigned Radix,
+                                unsigned long long &Result) {
   // Autosense radix if not specified.
   if (Radix == 0)
     Radix = GetAutoSenseRadix(Str);
@@ -326,17 +326,13 @@ static bool GetAsUnsignedInteger(StringRef Str, unsigned Radix,
   return false;
 }
 
-bool StringRef::getAsInteger(unsigned Radix, unsigned long long &Result) const {
-  return GetAsUnsignedInteger(*this, Radix, Result);
-}
-
-
-bool StringRef::getAsInteger(unsigned Radix, long long &Result) const {
+bool llvm::getAsSignedInteger(StringRef Str, unsigned Radix,
+                              long long &Result) {
   unsigned long long ULLVal;
 
   // Handle positive strings first.
-  if (empty() || front() != '-') {
-    if (GetAsUnsignedInteger(*this, Radix, ULLVal) ||
+  if (Str.empty() || Str.front() != '-') {
+    if (getAsUnsignedInteger(Str, Radix, ULLVal) ||
         // Check for value so large it overflows a signed value.
         (long long)ULLVal < 0)
       return true;
@@ -345,7 +341,7 @@ bool StringRef::getAsInteger(unsigned Radix, long long &Result) const {
   }
 
   // Get the positive part of the value.
-  if (GetAsUnsignedInteger(substr(1), Radix, ULLVal) ||
+  if (getAsUnsignedInteger(Str.substr(1), Radix, ULLVal) ||
       // Reject values so large they'd overflow as negative signed, but allow
       // "-0".  This negates the unsigned so that the negative isn't undefined
       // on signed overflow.
@@ -353,24 +349,6 @@ bool StringRef::getAsInteger(unsigned Radix, long long &Result) const {
     return true;
 
   Result = -ULLVal;
-  return false;
-}
-
-bool StringRef::getAsInteger(unsigned Radix, int &Result) const {
-  long long Val;
-  if (getAsInteger(Radix, Val) ||
-      (int)Val != Val)
-    return true;
-  Result = Val;
-  return false;
-}
-
-bool StringRef::getAsInteger(unsigned Radix, unsigned &Result) const {
-  unsigned long long Val;
-  if (getAsInteger(Radix, Val) ||
-      (unsigned)Val != Val)
-    return true;
-  Result = Val;
   return false;
 }
 
