@@ -59,8 +59,13 @@ size_t AsanWrite(int fd, const void *buf, size_t count) {
   if (fd != 2)
     UNIMPLEMENTED();
 
-  // FIXME: use WriteFile instead?
-  return fwrite(buf, 1, count, stderr);
+  HANDLE err = GetStdHandle(STD_ERROR_HANDLE);
+  if (err == NULL)
+    return 0;  // FIXME: this might not work on some apps.
+  DWORD ret;
+  if (!WriteFile(err, buf, count, &ret, NULL))
+    return 0;
+  return ret;
 }
 
 // FIXME: Looks like these functions are not needed and are linked in by the
