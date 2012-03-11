@@ -279,7 +279,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   // though.
   bool retainSelf =
     (!isDelegateInit &&
-     CGM.getLangOptions().ObjCAutoRefCount &&
+     CGM.getLangOpts().ObjCAutoRefCount &&
      method &&
      method->hasAttr<NSConsumesSelfAttr>());
 
@@ -333,7 +333,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   // In ARC, we sometimes want to "extend the lifetime"
   // (i.e. retain+autorelease) of receivers of returns-inner-pointer
   // messages.
-  if (getLangOptions().ObjCAutoRefCount && method &&
+  if (getLangOpts().ObjCAutoRefCount && method &&
       method->hasAttr<ObjCReturnsInnerPointerAttr>() &&
       shouldExtendReceiverForInnerPointerMessage(E))
     Receiver = EmitARCRetainAutorelease(ReceiverType, Receiver);
@@ -352,7 +352,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   // be an undefined read and write of an object in unordered
   // expressions.
   if (isDelegateInit) {
-    assert(getLangOptions().ObjCAutoRefCount &&
+    assert(getLangOpts().ObjCAutoRefCount &&
            "delegate init calls should only be marked in ARC");
 
     // Do an unsafe store of null into self.
@@ -458,7 +458,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
   StartFunction(OMD, OMD->getResultType(), Fn, FI, args, StartLoc);
 
   // In ARC, certain methods get an extra cleanup.
-  if (CGM.getLangOptions().ObjCAutoRefCount &&
+  if (CGM.getLangOpts().ObjCAutoRefCount &&
       OMD->isInstanceMethod() &&
       OMD->getSelector().isUnarySelector()) {
     const IdentifierInfo *ident = 
@@ -604,13 +604,13 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   // Handle retain.
   if (setterKind == ObjCPropertyDecl::Retain) {
     // In GC-only, there's nothing special that needs to be done.
-    if (CGM.getLangOptions().getGC() == LangOptions::GCOnly) {
+    if (CGM.getLangOpts().getGC() == LangOptions::GCOnly) {
       // fallthrough
 
     // In ARC, if the property is non-atomic, use expression emission,
     // which translates to objc_storeStrong.  This isn't required, but
     // it's slightly nicer.
-    } else if (CGM.getLangOptions().ObjCAutoRefCount && !IsAtomic) {
+    } else if (CGM.getLangOpts().ObjCAutoRefCount && !IsAtomic) {
       Kind = Expression;
       return;
 
@@ -645,14 +645,14 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   // expressions.  This actually works out to being atomic anyway,
   // except for ARC __strong, but that should trigger the above code.
   if (ivarType.hasNonTrivialObjCLifetime() ||
-      (CGM.getLangOptions().getGC() &&
+      (CGM.getLangOpts().getGC() &&
        CGM.getContext().getObjCGCAttrKind(ivarType))) {
     Kind = Expression;
     return;
   }
 
   // Compute whether the ivar has strong members.
-  if (CGM.getLangOptions().getGC())
+  if (CGM.getLangOpts().getGC())
     if (const RecordType *recordType = ivarType->getAs<RecordType>())
       HasStrong = recordType->getDecl()->hasObjectMember();
 
@@ -1021,7 +1021,7 @@ static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
 }
 
 static bool UseOptimizedSetter(CodeGenModule &CGM) {
-  if (CGM.getLangOptions().getGC() != LangOptions::NonGC)
+  if (CGM.getLangOpts().getGC() != LangOptions::NonGC)
     return false;
   const TargetInfo &Target = CGM.getContext().getTargetInfo();
 
@@ -1334,7 +1334,7 @@ bool CodeGenFunction::IndirectObjCSetterArg(const CGFunctionInfo &FI) {
 }
 
 bool CodeGenFunction::IvarTypeWithAggrGCObjects(QualType Ty) {
-  if (CGM.getLangOptions().getGC() == LangOptions::NonGC)
+  if (CGM.getLangOpts().getGC() == LangOptions::NonGC)
     return false;
   if (const RecordType *FDTTy = Ty.getTypePtr()->getAs<RecordType>())
     return FDTTy->getDecl()->hasObjectMember();
@@ -1399,7 +1399,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Emit the collection pointer.  In ARC, we do a retain.
   llvm::Value *Collection;
-  if (getLangOptions().ObjCAutoRefCount) {
+  if (getLangOpts().ObjCAutoRefCount) {
     Collection = EmitARCRetainScalarExpr(S.getCollection());
 
     // Enter a cleanup to do the release.
@@ -1624,7 +1624,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 
   // Leave the cleanup we entered in ARC.
-  if (getLangOptions().ObjCAutoRefCount)
+  if (getLangOpts().ObjCAutoRefCount)
     PopCleanupBlock();
 
   EmitBlock(LoopEnd.getBlock());
@@ -2241,7 +2241,7 @@ namespace {
 }
 
 void CodeGenFunction::EmitObjCAutoreleasePoolCleanup(llvm::Value *Ptr) {
-  if (CGM.getLangOptions().ObjCAutoRefCount)
+  if (CGM.getLangOpts().ObjCAutoRefCount)
     EHStack.pushCleanup<CallObjCAutoreleasePoolObject>(NormalCleanup, Ptr);
   else
     EHStack.pushCleanup<CallObjCMRRAutoreleasePoolObject>(NormalCleanup, Ptr);
@@ -2292,7 +2292,7 @@ static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,
   // As a very special optimization, in ARC++, if the l-value is the
   // result of a non-volatile assignment, do a simple retain of the
   // result of the call to objc_storeWeak instead of reloading.
-  if (CGF.getLangOptions().CPlusPlus &&
+  if (CGF.getLangOpts().CPlusPlus &&
       !type.isVolatileQualified() &&
       type.getObjCLifetime() == Qualifiers::OCL_Weak &&
       isa<BinaryOperator>(e) &&
@@ -2637,7 +2637,7 @@ llvm::Value *CodeGenFunction::EmitARCExtendBlockObject(const Expr *e) {
 
 llvm::Value *CodeGenFunction::EmitObjCThrowOperand(const Expr *expr) {
   // In ARC, retain and autorelease the expression.
-  if (getLangOptions().ObjCAutoRefCount) {
+  if (getLangOpts().ObjCAutoRefCount) {
     // Do so before running any cleanups for the full-expression.
     // tryEmitARCRetainScalarExpr does make an effort to do things
     // inside cleanups, but there are crazy cases like
@@ -2754,7 +2754,7 @@ llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                                         const ObjCPropertyImplDecl *PID) {
   // FIXME. This api is for NeXt runtime only for now.
-  if (!getLangOptions().CPlusPlus || !getLangOptions().NeXTRuntime)
+  if (!getLangOpts().CPlusPlus || !getLangOpts().NeXTRuntime)
     return 0;
   QualType Ty = PID->getPropertyIvarDecl()->getType();
   if (!Ty->isRecordType())
@@ -2837,7 +2837,7 @@ llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                                             const ObjCPropertyImplDecl *PID) {
   // FIXME. This api is for NeXt runtime only for now.
-  if (!getLangOptions().CPlusPlus || !getLangOptions().NeXTRuntime)
+  if (!getLangOpts().CPlusPlus || !getLangOpts().NeXTRuntime)
     return 0;
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   QualType Ty = PD->getType();

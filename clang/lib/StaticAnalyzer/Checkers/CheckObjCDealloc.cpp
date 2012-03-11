@@ -278,9 +278,9 @@ class ObjCDeallocChecker : public Checker<
 public:
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,
                     BugReporter &BR) const {
-    if (mgr.getLangOptions().getGC() == LangOptions::GCOnly)
+    if (mgr.getLangOpts().getGC() == LangOptions::GCOnly)
       return;
-    checkObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOptions(), BR);
+    checkObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOpts(), BR);
   }
 };
 }

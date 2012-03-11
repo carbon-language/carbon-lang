@@ -116,7 +116,7 @@ Retry:
       IdentifierInfo *Name = Tok.getIdentifierInfo();
       SourceLocation NameLoc = Tok.getLocation();
 
-      if (getLang().CPlusPlus)
+      if (getLangOpts().CPlusPlus)
         CheckForTemplateAndDigraph(Next, ParsedType(),
                                    /*EnteringContext=*/false, *Name, SS);
 
@@ -207,7 +207,7 @@ Retry:
   }
 
   default: {
-    if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
+    if ((getLangOpts().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
       DeclGroupPtrTy Decl = ParseDeclaration(Stmts, Declarator::BlockContext,
                                              DeclEnd, attrs);
@@ -399,14 +399,14 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
 
   ParseScope ExpectScope(this, Scope::DeclScope | Scope::ControlScope);
 
-  if (getLang().Borland) {
+  if (getLangOpts().Borland) {
     Ident__exception_info->setIsPoisoned(false);
     Ident___exception_info->setIsPoisoned(false);
     Ident_GetExceptionInfo->setIsPoisoned(false);
   }
   ExprResult FilterExpr(ParseExpression());
 
-  if (getLang().Borland) {
+  if (getLangOpts().Borland) {
     Ident__exception_info->setIsPoisoned(true);
     Ident___exception_info->setIsPoisoned(true);
     Ident_GetExceptionInfo->setIsPoisoned(true);
@@ -770,7 +770,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       continue;
     }
 
-    if (getLang().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
+    if (getLangOpts().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
         Tok.is(tok::kw___if_not_exists))) {
       ParseMicrosoftIfExistsStatement(Stmts);
       continue;
@@ -855,7 +855,7 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
   BalancedDelimiterTracker T(*this, tok::l_paren);
   T.consumeOpen();
 
-  if (getLang().CPlusPlus)
+  if (getLangOpts().CPlusPlus)
     ParseCXXCondition(ExprResult, DeclResult, Loc, ConvertToBoolean);
   else {
     ExprResult = ParseExpression();
@@ -904,7 +904,7 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs,
     return StmtError();
   }
 
-  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+  bool C99orCXX = getLangOpts().C99 || getLangOpts().CPlusPlus;
 
   // C99 6.8.4p3 - In C99, the if statement is a block.  This is not
   // the case for C90.
@@ -1038,7 +1038,7 @@ StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs,
     return StmtError();
   }
 
-  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+  bool C99orCXX = getLangOpts().C99 || getLangOpts().CPlusPlus;
 
   // C99 6.8.4p3 - In C99, the switch statement is a block.  This is
   // not the case for C90.  Start the switch scope.
@@ -1130,7 +1130,7 @@ StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs,
     return StmtError();
   }
 
-  bool C99orCXX = getLang().C99 || getLang().CPlusPlus;
+  bool C99orCXX = getLangOpts().C99 || getLangOpts().CPlusPlus;
 
   // C99 6.8.5p5 - In C99, the while statement is a block.  This is not
   // the case for C90.  Start the loop scope.
@@ -1200,7 +1200,7 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
   // C99 6.8.5p5 - In C99, the do statement is a block.  This is not
   // the case for C90.  Start the loop scope.
   unsigned ScopeFlags;
-  if (getLang().C99)
+  if (getLangOpts().C99)
     ScopeFlags = Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope;
   else
     ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
@@ -1216,7 +1216,7 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
   // which is entered and exited each time through the loop.
   //
   ParseScope InnerScope(this, Scope::DeclScope,
-                        (getLang().C99 || getLang().CPlusPlus) &&
+                        (getLangOpts().C99 || getLangOpts().CPlusPlus) &&
                         Tok.isNot(tok::l_brace));
 
   // Read the body statement.
@@ -1287,7 +1287,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
     return StmtError();
   }
 
-  bool C99orCXXorObjC = getLang().C99 || getLang().CPlusPlus || getLang().ObjC1;
+  bool C99orCXXorObjC = getLangOpts().C99 || getLangOpts().CPlusPlus || getLangOpts().ObjC1;
 
   // C99 6.8.5p5 - In C99, the for statement is a block.  This is not
   // the case for C90.  Start the loop scope.
@@ -1348,7 +1348,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
     MaybeParseCXX0XAttributes(attrs);
 
     // In C++0x, "for (T NS:a" might not be a typo for ::
-    bool MightBeForRangeStmt = getLang().CPlusPlus;
+    bool MightBeForRangeStmt = getLangOpts().CPlusPlus;
     ColonProtectionRAIIObject ColonProtection(*this, MightBeForRangeStmt);
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
@@ -1360,7 +1360,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
     if (ForRangeInit.ParsedForRangeDecl()) {
-      Diag(ForRangeInit.ColonLoc, getLang().CPlusPlus0x ?
+      Diag(ForRangeInit.ColonLoc, getLangOpts().CPlusPlus0x ?
            diag::warn_cxx98_compat_for_range : diag::ext_for_range);
 
       ForRange = true;
@@ -1404,7 +1404,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
         return StmtError();
       }
       Collection = ParseExpression();
-    } else if (getLang().CPlusPlus0x && Tok.is(tok::colon) && FirstPart.get()) {
+    } else if (getLangOpts().CPlusPlus0x && Tok.is(tok::colon) && FirstPart.get()) {
       // User tried to write the reasonable, but ill-formed, for-range-statement
       //   for (expr : expr) { ... }
       Diag(Tok, diag::err_for_range_expected_decl)
@@ -1431,7 +1431,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
       // missing both semicolons.
     } else {
       ExprResult Second;
-      if (getLang().CPlusPlus)
+      if (getLangOpts().CPlusPlus)
         ParseCXXCondition(Second, SecondVar, ForLoc, true);
       else {
         Second = ParseExpression();
@@ -1605,10 +1605,10 @@ StmtResult Parser::ParseReturnStatement(ParsedAttributes &attrs) {
       return StmtError();
     }
 
-    if (Tok.is(tok::l_brace) && getLang().CPlusPlus) {
+    if (Tok.is(tok::l_brace) && getLangOpts().CPlusPlus) {
       R = ParseInitializer();
       if (R.isUsable())
-        Diag(R.get()->getLocStart(), getLang().CPlusPlus0x ?
+        Diag(R.get()->getLocStart(), getLangOpts().CPlusPlus0x ?
              diag::warn_cxx98_compat_generalized_initializer_lists :
              diag::ext_generalized_initializer_lists)
           << R.get()->getSourceRange();
@@ -1771,7 +1771,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   SourceLocation AsmLoc = ConsumeToken();
 
-  if (getLang().MicrosoftExt && Tok.isNot(tok::l_paren) && !isTypeQualifier()) {
+  if (getLangOpts().MicrosoftExt && Tok.isNot(tok::l_paren) && !isTypeQualifier()) {
     msAsm = true;
     return ParseMicrosoftAsmStatement(AsmLoc);
   }

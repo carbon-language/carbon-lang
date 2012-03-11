@@ -364,7 +364,7 @@ void DumpRawTokensAction::ExecuteAction() {
 
   // Start lexing the specified input file.
   const llvm::MemoryBuffer *FromFile = SM.getBuffer(SM.getMainFileID());
-  Lexer RawLex(SM.getMainFileID(), FromFile, SM, PP.getLangOptions());
+  Lexer RawLex(SM.getMainFileID(), FromFile, SM, PP.getLangOpts());
   RawLex.SetKeepWhitespaceMode(true);
 
   Token RawTok;

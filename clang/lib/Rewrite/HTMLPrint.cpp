@@ -55,7 +55,7 @@ ASTConsumer* clang::CreateHTMLPrinter(raw_ostream *OS,
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {
-  R.setSourceMgr(context.getSourceManager(), context.getLangOptions());
+  R.setSourceMgr(context.getSourceManager(), context.getLangOpts());
 }
 
 void HTMLPrinter::HandleTranslationUnit(ASTContext &Ctx) {

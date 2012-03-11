@@ -67,7 +67,7 @@ static bool isClassInWeakBlacklist(ObjCInterfaceDecl *cls) {
 
 bool trans::canApplyWeak(ASTContext &Ctx, QualType type,
                          bool AllowOnUnknownClass) {
-  if (!Ctx.getLangOptions().ObjCRuntimeHasWeak)
+  if (!Ctx.getLangOpts().ObjCRuntimeHasWeak)
     return false;
 
   QualType T = type;
@@ -111,10 +111,10 @@ SourceLocation trans::findSemiAfterLocation(SourceLocation loc,
                                             ASTContext &Ctx) {
   SourceManager &SM = Ctx.getSourceManager();
   if (loc.isMacroID()) {
-    if (!Lexer::isAtEndOfMacroExpansion(loc, SM, Ctx.getLangOptions(), &loc))
+    if (!Lexer::isAtEndOfMacroExpansion(loc, SM, Ctx.getLangOpts(), &loc))
       return SourceLocation();
   }
-  loc = Lexer::getLocForEndOfToken(loc, /*Offset=*/0, SM, Ctx.getLangOptions());
+  loc = Lexer::getLocForEndOfToken(loc, /*Offset=*/0, SM, Ctx.getLangOpts());
 
   // Break down the source location.
   std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(loc);
@@ -129,7 +129,7 @@ SourceLocation trans::findSemiAfterLocation(SourceLocation loc,
 
   // Lex from the start of the given location.
   Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
-              Ctx.getLangOptions(),
+              Ctx.getLangOpts(),
               file.begin(), tokenBegin, file.end());
   Token tok;
   lexer.LexFromRawLexer(tok);
@@ -375,7 +375,7 @@ bool MigrationContext::rewritePropertyAttribute(StringRef fromAttr,
 
   // Lex from the start of the given location.
   Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
-              Pass.Ctx.getLangOptions(),
+              Pass.Ctx.getLangOpts(),
               file.begin(), tokenBegin, file.end());
   Token tok;
   lexer.LexFromRawLexer(tok);
@@ -458,7 +458,7 @@ bool MigrationContext::addPropertyAttribute(StringRef attr,
 
   // Lex from the start of the given location.
   Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
-              Pass.Ctx.getLangOptions(),
+              Pass.Ctx.getLangOpts(),
               file.begin(), tokenBegin, file.end());
   Token tok;
   lexer.LexFromRawLexer(tok);
@@ -520,7 +520,7 @@ static void GCRewriteFinalize(MigrationPass &pass) {
                   "#if !__has_feature(objc_arc)\n");
         CharSourceRange::getTokenRange(FinalizeM->getSourceRange());
         const SourceManager &SM = pass.Ctx.getSourceManager();
-        const LangOptions &LangOpts = pass.Ctx.getLangOptions();
+        const LangOptions &LangOpts = pass.Ctx.getLangOpts();
         bool Invalid;
         std::string str = "\n#endif\n";
         str += Lexer::getSourceText(

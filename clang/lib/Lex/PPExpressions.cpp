@@ -220,8 +220,8 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       PP.Diag(PeekTok, diag::err_pp_invalid_udl) << /*integer*/1;
 
     // long long is a C99 feature.
-    if (!PP.getLangOptions().C99 && Literal.isLongLong)
-      PP.Diag(PeekTok, PP.getLangOptions().CPlusPlus0x ?
+    if (!PP.getLangOpts().C99 && Literal.isLongLong)
+      PP.Diag(PeekTok, PP.getLangOpts().CPlusPlus0x ?
               diag::warn_cxx98_compat_longlong : diag::ext_longlong);
 
     // Parse the integer literal into Result.
@@ -290,7 +290,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     Val = Literal.getValue();
     // Set the signedness. UTF-16 and UTF-32 are always unsigned
     if (!Literal.isUTF16() && !Literal.isUTF32())
-      Val.setIsUnsigned(!PP.getLangOptions().CharIsSigned);
+      Val.setIsUnsigned(!PP.getLangOpts().CharIsSigned);
 
     if (Result.Val.getBitWidth() > Val.getBitWidth()) {
       Result.Val = Val.extend(Result.Val.getBitWidth());
@@ -654,7 +654,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     case tok::comma:
       // Comma is invalid in pp expressions in c89/c++ mode, but is valid in C99
       // if not being evaluated.
-      if (!PP.getLangOptions().C99 || ValueLive)
+      if (!PP.getLangOpts().C99 || ValueLive)
         PP.Diag(OpLoc, diag::ext_pp_comma_expr)
           << LHS.getRange() << RHS.getRange();
       Res = RHS.Val; // LHS = LHS,RHS -> RHS.

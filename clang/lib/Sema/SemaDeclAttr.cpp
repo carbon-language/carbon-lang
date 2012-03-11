@@ -2286,7 +2286,7 @@ static FormatAttrKind getFormatAttrKind(StringRef Format) {
 /// http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Attributes.html
 static void handleInitPriorityAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  if (!S.getLangOptions().CPlusPlus) {
+  if (!S.getLangOpts().CPlusPlus) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
     return;
   }
@@ -3259,7 +3259,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
     returnType = MD->getResultType();
   else if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
     returnType = PD->getType();
-  else if (S.getLangOptions().ObjCAutoRefCount && hasDeclarator(D) &&
+  else if (S.getLangOpts().ObjCAutoRefCount && hasDeclarator(D) &&
            (Attr.getKind() == AttributeList::AT_ns_returns_retained))
     return; // ignore: was handled as a type attribute
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
@@ -3398,7 +3398,7 @@ static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
   // In Objective-C, verify that the type names an Objective-C type.
   // We don't want to check this outside of ObjC because people sometimes
   // do crazy C declarations of Objective-C types.
-  if (ParmName && S.getLangOptions().ObjC1) {
+  if (ParmName && S.getLangOpts().ObjC1) {
     // Check for an existing type with this name.
     LookupResult R(S, DeclarationName(ParmName), Attr.getParameterLoc(),
                    Sema::LookupOrdinaryName);
@@ -4004,7 +4004,7 @@ static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
                         "this system declaration uses an unsupported type"));
     return;
   }
-  if (S.getLangOptions().ObjCAutoRefCount)
+  if (S.getLangOpts().ObjCAutoRefCount)
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(decl)) {
       // FIXME. we may want to supress diagnostics for all
       // kind of forbidden type messages on unavailable functions. 

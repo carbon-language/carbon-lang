@@ -76,8 +76,8 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
 StringRef CheckerContext::getMacroNameOrSpelling(SourceLocation &Loc) {
   if (Loc.isMacroID())
     return Lexer::getImmediateMacroName(Loc, getSourceManager(),
-                                             getLangOptions());
+                                             getLangOpts());
   SmallVector<char, 16> buf;
-  return Lexer::getSpelling(Loc, buf, getSourceManager(), getLangOptions());
+  return Lexer::getSpelling(Loc, buf, getSourceManager(), getLangOpts());
 }
 

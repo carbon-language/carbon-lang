@@ -761,12 +761,12 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), S, 0,
                                                Validator)) {
-      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
+      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
       ParameterPack = Corrected.getCorrectionDecl();
       Diag(NameLoc, diag::err_sizeof_pack_no_pack_name_suggest)
         << &Name << CorrectedQuotedStr
         << FixItHint::CreateReplacement(
-            NameLoc, Corrected.getAsString(getLangOptions()));
+            NameLoc, Corrected.getAsString(getLangOpts()));
       Diag(ParameterPack->getLocation(), diag::note_parameter_pack_here)
         << CorrectedQuotedStr;
     }

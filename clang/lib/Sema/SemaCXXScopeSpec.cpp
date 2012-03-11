@@ -186,7 +186,7 @@ bool Sema::isUnknownSpecialization(const CXXScopeSpec &SS) {
 ///
 /// \param NNS a dependent nested name specifier.
 CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
-  assert(getLangOptions().CPlusPlus && "Only callable in C++");
+  assert(getLangOpts().CPlusPlus && "Only callable in C++");
   assert(NNS->isDependent() && "Only dependent nested-name-specifier allowed");
 
   if (!NNS->getAsType())
@@ -274,11 +274,11 @@ bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
     return true;
   else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
     if (TD->getUnderlyingType()->isRecordType() ||
-        (Context.getLangOptions().CPlusPlus0x &&
+        (Context.getLangOpts().CPlusPlus0x &&
          TD->getUnderlyingType()->isEnumeralType()))
       return true;
   } else if (isa<RecordDecl>(SD) ||
-             (Context.getLangOptions().CPlusPlus0x && isa<EnumDecl>(SD)))
+             (Context.getLangOpts().CPlusPlus0x && isa<EnumDecl>(SD)))
     return true;
 
   return false;
@@ -502,8 +502,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     if ((Corrected = CorrectTypo(Found.getLookupNameInfo(),
                                  Found.getLookupKind(), S, &SS, Validator,
                                  LookupCtx, EnteringContext))) {
-      std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
-      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
+      std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
+      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
       if (LookupCtx)
         Diag(Found.getNameLoc(), diag::err_no_member_suggest)
           << Name << LookupCtx << CorrectedQuotedStr << SS.getRange()
@@ -652,7 +652,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   // public:
   //   void foo() { D::foo2(); }
   // };
-  if (getLangOptions().MicrosoftExt) {
+  if (getLangOpts().MicrosoftExt) {
     DeclContext *DC = LookupCtx ? LookupCtx : CurContext;
     if (DC->isDependentContext() && DC->isFunctionOrMethod()) {
       SS.Extend(Context, &Identifier, IdentifierLoc, CCLoc);
@@ -705,7 +705,7 @@ bool Sema::ActOnCXXNestedNameSpecifierDecltype(CXXScopeSpec &SS,
   QualType T = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
   if (!T->isDependentType() && !T->getAs<TagType>()) {
     Diag(DS.getTypeSpecTypeLoc(), diag::err_expected_class) 
-      << T << getLangOptions().CPlusPlus;
+      << T << getLangOpts().CPlusPlus;
     return true;
   }
 

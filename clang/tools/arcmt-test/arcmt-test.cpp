@@ -318,7 +318,7 @@ static void printSourceLocation(SourceLocation loc, ASTContext &Ctx,
 static void printSourceRange(CharSourceRange range, ASTContext &Ctx,
                              raw_ostream &OS) {
   SourceManager &SM = Ctx.getSourceManager();
-  const LangOptions &langOpts = Ctx.getLangOptions();
+  const LangOptions &langOpts = Ctx.getLangOpts();
 
   PresumedLoc PL = SM.getPresumedLoc(range.getBegin());
 

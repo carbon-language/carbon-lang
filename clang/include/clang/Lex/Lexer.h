@@ -51,7 +51,7 @@ class Lexer : public PreprocessorLexer {
   const char *BufferStart;       // Start of the buffer.
   const char *BufferEnd;         // End of the buffer.
   SourceLocation FileLoc;        // Location for start of file.
-  LangOptions Features;          // Features enabled by this language (cache).
+  LangOptions LangOpts;          // LangOpts enabled by this language (cache).
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
   
   //===--------------------------------------------------------------------===//
@@ -99,14 +99,14 @@ public:
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
   /// range will outlive it, so it doesn't take ownership of it.
-  Lexer(SourceLocation FileLoc, const LangOptions &Features,
+  Lexer(SourceLocation FileLoc, const LangOptions &LangOpts,
         const char *BufStart, const char *BufPtr, const char *BufEnd);
 
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
   /// range will outlive it, so it doesn't take ownership of it.
   Lexer(FileID FID, const llvm::MemoryBuffer *InputBuffer,
-        const SourceManager &SM, const LangOptions &Features);
+        const SourceManager &SM, const LangOptions &LangOpts);
 
   /// Create_PragmaLexer: Lexer constructor - Create a new lexer object for
   /// _Pragma expansion.  This has a variety of magic semantics that this method
@@ -117,9 +117,9 @@ public:
                                    unsigned TokLen, Preprocessor &PP);
 
 
-  /// getFeatures - Return the language features currently enabled.  NOTE: this
-  /// lexer modifies features as a file is parsed!
-  const LangOptions &getFeatures() const { return Features; }
+  /// getLangOpts - Return the language features currently enabled.
+  /// NOTE: this lexer modifies features as a file is parsed!
+  const LangOptions &getLangOpts() const { return LangOpts; }
 
   /// getFileLoc - Return the File Location for the file we are lexing out of.
   /// The physical location encodes the location where the characters come from,
@@ -240,7 +240,7 @@ public:
   /// if an internal buffer is returned.
   static unsigned getSpelling(const Token &Tok, const char *&Buffer, 
                               const SourceManager &SourceMgr,
-                              const LangOptions &Features,
+                              const LangOptions &LangOpts,
                               bool *Invalid = 0);
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
@@ -250,7 +250,7 @@ public:
   /// UCNs, etc.
   static std::string getSpelling(const Token &Tok,
                                  const SourceManager &SourceMgr,
-                                 const LangOptions &Features, 
+                                 const LangOptions &LangOpts, 
                                  bool *Invalid = 0);
 
   /// getSpelling - This method is used to get the spelling of the
@@ -264,7 +264,7 @@ public:
   static StringRef getSpelling(SourceLocation loc,
                                      SmallVectorImpl<char> &buffer,
                                      const SourceManager &SourceMgr,
-                                     const LangOptions &Features,
+                                     const LangOptions &LangOpts,
                                      bool *invalid = 0);
   
   /// MeasureTokenLength - Relex the token at the specified location and return
@@ -290,7 +290,7 @@ public:
   static SourceLocation AdvanceToTokenCharacter(SourceLocation TokStart,
                                                 unsigned Character,
                                                 const SourceManager &SM,
-                                                const LangOptions &Features);
+                                                const LangOptions &LangOpts);
   
   /// \brief Computes the source location just past the end of the
   /// token at this source location.
@@ -309,7 +309,7 @@ public:
   /// a source location pointing to the last character in the token, etc.
   static SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
                                             const SourceManager &SM,
-                                            const LangOptions &Features);
+                                            const LangOptions &LangOpts);
 
   /// \brief Returns true if the given MacroID location points at the first
   /// token of the macro expansion.
@@ -372,7 +372,7 @@ public:
   /// of the file begins along with a boolean value indicating whether 
   /// the preamble ends at the beginning of a new line.
   static std::pair<unsigned, bool>
-  ComputePreamble(const llvm::MemoryBuffer *Buffer, const LangOptions &Features,
+  ComputePreamble(const llvm::MemoryBuffer *Buffer, const LangOptions &LangOpts,
                   unsigned MaxLines = 0);
                                         
   //===--------------------------------------------------------------------===//
@@ -486,7 +486,7 @@ public:
   /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
   /// emit a warning.
   static inline char getCharAndSizeNoWarn(const char *Ptr, unsigned &Size,
-                                          const LangOptions &Features) {
+                                          const LangOptions &LangOpts) {
     // If this is not a trigraph and not a UCN or escaped newline, return
     // quickly.
     if (isObviouslySimpleCharacter(Ptr[0])) {
@@ -495,7 +495,7 @@ public:
     }
 
     Size = 0;
-    return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
+    return getCharAndSizeSlowNoWarn(Ptr, Size, LangOpts);
   }
 
   /// getEscapedNewLineSize - Return the size of the specified escaped newline,
@@ -524,7 +524,7 @@ private:
   /// getCharAndSizeSlowNoWarn - Same as getCharAndSizeSlow, but never emits a
   /// diagnostic.
   static char getCharAndSizeSlowNoWarn(const char *Ptr, unsigned &Size,
-                                       const LangOptions &Features);
+                                       const LangOptions &LangOpts);
 
   //===--------------------------------------------------------------------===//
   // Other lexer functions.

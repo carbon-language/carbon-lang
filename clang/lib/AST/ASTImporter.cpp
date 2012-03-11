@@ -1359,7 +1359,7 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     // The context we're importing from has an unsigned 'char'. If we're 
     // importing into a context with a signed 'char', translate to 
     // 'unsigned char' instead.
-    if (Importer.getToContext().getLangOptions().CharIsSigned)
+    if (Importer.getToContext().getLangOpts().CharIsSigned)
       return Importer.getToContext().UnsignedCharTy;
     
     return Importer.getToContext().CharTy;
@@ -1368,7 +1368,7 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     // The context we're importing from has an unsigned 'char'. If we're 
     // importing into a context with a signed 'char', translate to 
     // 'unsigned char' instead.
-    if (!Importer.getToContext().getLangOptions().CharIsSigned)
+    if (!Importer.getToContext().getLangOpts().CharIsSigned)
       return Importer.getToContext().SignedCharTy;
     
     return Importer.getToContext().CharTy;
@@ -2243,7 +2243,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   if (!SearchName && D->getTypedefNameForAnonDecl()) {
     SearchName = Importer.Import(D->getTypedefNameForAnonDecl()->getDeclName());
     IDNS = Decl::IDNS_Ordinary;
-  } else if (Importer.getToContext().getLangOptions().CPlusPlus)
+  } else if (Importer.getToContext().getLangOpts().CPlusPlus)
     IDNS |= Decl::IDNS_Ordinary;
   
   // We may already have an enum of the same name; try to find and match it.
@@ -2328,7 +2328,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   if (!SearchName && D->getTypedefNameForAnonDecl()) {
     SearchName = Importer.Import(D->getTypedefNameForAnonDecl()->getDeclName());
     IDNS = Decl::IDNS_Ordinary;
-  } else if (Importer.getToContext().getLangOptions().CPlusPlus)
+  } else if (Importer.getToContext().getLangOpts().CPlusPlus)
     IDNS |= Decl::IDNS_Ordinary;
 
   // We may already have a record of the same name; try to find and match it.
@@ -2485,7 +2485,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
           // Sema::IsOverload out to the AST library.
           
           // Function overloading is okay in C++.
-          if (Importer.getToContext().getLangOptions().CPlusPlus)
+          if (Importer.getToContext().getLangOpts().CPlusPlus)
             continue;
           
           // Complain about inconsistent function types.

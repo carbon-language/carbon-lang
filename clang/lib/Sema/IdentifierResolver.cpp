@@ -97,7 +97,7 @@ IdentifierResolver::IdDeclInfo::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
 //===----------------------------------------------------------------------===//
 
 IdentifierResolver::IdentifierResolver(Preprocessor &PP)
-  : LangOpt(PP.getLangOptions()), PP(PP),
+  : LangOpt(PP.getLangOpts()), PP(PP),
     IdDeclInfos(new IdDeclInfoMap) {
 }
 

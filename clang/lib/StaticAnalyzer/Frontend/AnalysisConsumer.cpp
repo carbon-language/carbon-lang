@@ -165,10 +165,10 @@ public:
 
   virtual void Initialize(ASTContext &Context) {
     Ctx = &Context;
-    checkerMgr.reset(createCheckerManager(Opts, PP.getLangOptions(), Plugins,
+    checkerMgr.reset(createCheckerManager(Opts, PP.getLangOpts(), Plugins,
                                           PP.getDiagnostics()));
     Mgr.reset(new AnalysisManager(*Ctx, PP.getDiagnostics(),
-                                  PP.getLangOptions(), PD,
+                                  PP.getLangOpts(), PD,
                                   CreateStoreMgr, CreateConstraintMgr,
                                   checkerMgr.get(),
                                   /* Indexer */ 0, 
@@ -457,7 +457,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
 
 void AnalysisConsumer::RunPathSensitiveChecks(Decl *D, SetOfDecls *Visited) {
 
-  switch (Mgr->getLangOptions().getGC()) {
+  switch (Mgr->getLangOpts().getGC()) {
   case LangOptions::NonGC:
     ActionExprEngine(D, false, Visited);
     break;

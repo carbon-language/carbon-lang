@@ -38,7 +38,7 @@ class AnalysisManager : public BugReporterData {
 
   ASTContext &Ctx;
   DiagnosticsEngine &Diags;
-  const LangOptions &LangInfo;
+  const LangOptions &LangOpts;
 
   OwningPtr<PathDiagnosticConsumer> PD;
 
@@ -148,8 +148,8 @@ public:
     return Diags;
   }
 
-  const LangOptions &getLangOptions() const {
-    return LangInfo;
+  const LangOptions &getLangOpts() const {
+    return LangOpts;
   }
 
   virtual PathDiagnosticConsumer *getPathDiagnosticConsumer() {

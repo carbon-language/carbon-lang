@@ -2586,7 +2586,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
       for (ASTUnit::stored_diag_iterator D = Unit->stored_diag_begin(), 
                                       DEnd = Unit->stored_diag_end();
            D != DEnd; ++D) {
-        CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOptions());
+        CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOpts());
         CXString Msg = clang_formatDiagnostic(&Diag,
                                     clang_defaultDiagnosticDisplayOptions());
         fprintf(stderr, "%s\n", clang_getCString(Msg));
@@ -3782,7 +3782,7 @@ CXCursor cxcursor::getCursor(CXTranslationUnit TU, SourceLocation SLoc) {
   // Translate the given source location to make it point at the beginning of
   // the token under the cursor.
   SLoc = Lexer::GetBeginningOfToken(SLoc, CXXUnit->getSourceManager(),
-                                    CXXUnit->getASTContext().getLangOptions());
+                                    CXXUnit->getASTContext().getLangOpts());
   
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
@@ -4487,7 +4487,7 @@ static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
     return;
   
   Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
-            CXXUnit->getASTContext().getLangOptions(),
+            CXXUnit->getASTContext().getLangOpts(),
             Buffer.begin(), Buffer.data() + BeginLocInfo.second, Buffer.end());
   Lex.SetCommentRetentionState(true);
 
@@ -5020,7 +5020,7 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
     return;
 
   Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
-            CXXUnit->getASTContext().getLangOptions(),
+            CXXUnit->getASTContext().getLangOpts(),
             Buffer.begin(), Buffer.data() + BeginLocInfo.second,
             Buffer.end());
   Lex.SetCommentRetentionState(true);

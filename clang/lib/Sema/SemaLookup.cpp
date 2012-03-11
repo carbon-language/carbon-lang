@@ -281,7 +281,7 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
 }
 
 void LookupResult::configure() {
-  IDNS = getIDNS(LookupKind, SemaRef.getLangOptions().CPlusPlus,
+  IDNS = getIDNS(LookupKind, SemaRef.getLangOpts().CPlusPlus,
                  isForRedeclaration());
 
   // If we're looking for one of the allocation or deallocation
@@ -497,7 +497,7 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
       if (unsigned BuiltinID = II->getBuiltinID()) {
         // In C++, we don't have any predefined library functions like
         // 'malloc'. Instead, we'll just error.
-        if (S.getLangOptions().CPlusPlus &&
+        if (S.getLangOpts().CPlusPlus &&
             S.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
           return false;
 
@@ -555,7 +555,7 @@ void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
   if (!Class->hasDeclaredCopyAssignment())
     DeclareImplicitCopyAssignment(Class);
 
-  if (getLangOptions().CPlusPlus0x) {
+  if (getLangOpts().CPlusPlus0x) {
     // If the move constructor has not yet been declared, do so now.
     if (Class->needsImplicitMoveConstructor())
       DeclareImplicitMoveConstructor(Class); // might not actually do it
@@ -606,7 +606,7 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
           S.DeclareImplicitDefaultConstructor(Class);
         if (!Record->hasDeclaredCopyConstructor())
           S.DeclareImplicitCopyConstructor(Class);
-        if (S.getLangOptions().CPlusPlus0x &&
+        if (S.getLangOpts().CPlusPlus0x &&
             Record->needsImplicitMoveConstructor())
           S.DeclareImplicitMoveConstructor(Class);
       }
@@ -629,7 +629,7 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
         CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(Record);
         if (!Record->hasDeclaredCopyAssignment())
           S.DeclareImplicitCopyAssignment(Class);
-        if (S.getLangOptions().CPlusPlus0x &&
+        if (S.getLangOpts().CPlusPlus0x &&
             Record->needsImplicitMoveAssignment())
           S.DeclareImplicitMoveAssignment(Class);
       }
@@ -647,7 +647,7 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
   bool Found = false;
 
   // Lazily declare C++ special member functions.
-  if (S.getLangOptions().CPlusPlus)
+  if (S.getLangOpts().CPlusPlus)
     DeclareImplicitMemberFunctionsWithName(S, R.getLookupName(), DC);
 
   // Perform lookup into this declaration context.
@@ -835,7 +835,7 @@ static std::pair<DeclContext *, bool> findOuterContext(Scope *S) {
 }
 
 bool Sema::CppLookupName(LookupResult &R, Scope *S) {
-  assert(getLangOptions().CPlusPlus && "Can perform only C++ lookup");
+  assert(getLangOpts().CPlusPlus && "Can perform only C++ lookup");
 
   DeclarationName Name = R.getLookupName();
 
@@ -1112,7 +1112,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 
   LookupNameKind NameKind = R.getLookupKind();
 
-  if (!getLangOptions().CPlusPlus) {
+  if (!getLangOpts().CPlusPlus) {
     // Unqualified name lookup in C/Objective-C is purely lexical, so
     // search in the declarations attached to the name.
     if (NameKind == Sema::LookupRedeclarationWithLinkage) {
@@ -2295,13 +2295,13 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
       Name = Context.DeclarationNames.getCXXConstructorName(CanTy);
       if (!RD->hasDeclaredCopyConstructor())
         DeclareImplicitCopyConstructor(RD);
-      if (getLangOptions().CPlusPlus0x && RD->needsImplicitMoveConstructor())
+      if (getLangOpts().CPlusPlus0x && RD->needsImplicitMoveConstructor())
         DeclareImplicitMoveConstructor(RD);
     } else {
       Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
       if (!RD->hasDeclaredCopyAssignment())
         DeclareImplicitCopyAssignment(RD);
-      if (getLangOptions().CPlusPlus0x && RD->needsImplicitMoveAssignment())
+      if (getLangOpts().CPlusPlus0x && RD->needsImplicitMoveAssignment())
         DeclareImplicitMoveAssignment(RD);
     }
 
@@ -2465,7 +2465,7 @@ DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
       DeclareImplicitDefaultConstructor(Class);
     if (!Class->hasDeclaredCopyConstructor())
       DeclareImplicitCopyConstructor(Class);
-    if (getLangOptions().CPlusPlus0x && Class->needsImplicitMoveConstructor())
+    if (getLangOpts().CPlusPlus0x && Class->needsImplicitMoveConstructor())
       DeclareImplicitMoveConstructor(Class);
   }
 
@@ -3097,7 +3097,7 @@ void Sema::LookupVisibleDecls(Scope *S, LookupNameKind Kind,
   // unqualified name lookup.
   Scope *Initial = S;
   UnqualUsingDirectiveSet UDirs;
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     // Find the first namespace or translation-unit scope.
     while (S && !isNamespaceOrTranslationUnitScope(S))
       S = S->getParent();
@@ -3287,8 +3287,8 @@ void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
       // FIXME: The following should be rolled up into an operator< on
       // TypoCorrection with a more principled definition.
       CurrentCorrection.isKeyword() < Correction.isKeyword() ||
-      Correction.getAsString(SemaRef.getLangOptions()) <
-      CurrentCorrection.getAsString(SemaRef.getLangOptions()))
+      Correction.getAsString(SemaRef.getLangOpts()) <
+      CurrentCorrection.getAsString(SemaRef.getLangOpts()))
     CurrentCorrection = Correction;
 
   while (BestResults.size() > MaxTypoDistanceResultSets) {
@@ -3566,19 +3566,19 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
     for (unsigned I = 0; I != NumCTypeSpecs; ++I)
       Consumer.addKeywordResult(CTypeSpecs[I]);
 
-    if (SemaRef.getLangOptions().C99)
+    if (SemaRef.getLangOpts().C99)
       Consumer.addKeywordResult("restrict");
-    if (SemaRef.getLangOptions().Bool || SemaRef.getLangOptions().CPlusPlus)
+    if (SemaRef.getLangOpts().Bool || SemaRef.getLangOpts().CPlusPlus)
       Consumer.addKeywordResult("bool");
-    else if (SemaRef.getLangOptions().C99)
+    else if (SemaRef.getLangOpts().C99)
       Consumer.addKeywordResult("_Bool");
     
-    if (SemaRef.getLangOptions().CPlusPlus) {
+    if (SemaRef.getLangOpts().CPlusPlus) {
       Consumer.addKeywordResult("class");
       Consumer.addKeywordResult("typename");
       Consumer.addKeywordResult("wchar_t");
 
-      if (SemaRef.getLangOptions().CPlusPlus0x) {
+      if (SemaRef.getLangOpts().CPlusPlus0x) {
         Consumer.addKeywordResult("char16_t");
         Consumer.addKeywordResult("char32_t");
         Consumer.addKeywordResult("constexpr");
@@ -3587,11 +3587,11 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       }
     }
 
-    if (SemaRef.getLangOptions().GNUMode)
+    if (SemaRef.getLangOpts().GNUMode)
       Consumer.addKeywordResult("typeof");
   }
 
-  if (CCC.WantCXXNamedCasts && SemaRef.getLangOptions().CPlusPlus) {
+  if (CCC.WantCXXNamedCasts && SemaRef.getLangOpts().CPlusPlus) {
     Consumer.addKeywordResult("const_cast");
     Consumer.addKeywordResult("dynamic_cast");
     Consumer.addKeywordResult("reinterpret_cast");
@@ -3600,12 +3600,12 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
 
   if (CCC.WantExpressionKeywords) {
     Consumer.addKeywordResult("sizeof");
-    if (SemaRef.getLangOptions().Bool || SemaRef.getLangOptions().CPlusPlus) {
+    if (SemaRef.getLangOpts().Bool || SemaRef.getLangOpts().CPlusPlus) {
       Consumer.addKeywordResult("false");
       Consumer.addKeywordResult("true");
     }
 
-    if (SemaRef.getLangOptions().CPlusPlus) {
+    if (SemaRef.getLangOpts().CPlusPlus) {
       const char *CXXExprs[] = {
         "delete", "new", "operator", "throw", "typeid"
       };
@@ -3617,7 +3617,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
           cast<CXXMethodDecl>(SemaRef.CurContext)->isInstance())
         Consumer.addKeywordResult("this");
 
-      if (SemaRef.getLangOptions().CPlusPlus0x) {
+      if (SemaRef.getLangOpts().CPlusPlus0x) {
         Consumer.addKeywordResult("alignof");
         Consumer.addKeywordResult("nullptr");
       }
@@ -3633,7 +3633,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       for (unsigned I = 0; I != NumCStmts; ++I)
         Consumer.addKeywordResult(CStmts[I]);
 
-      if (SemaRef.getLangOptions().CPlusPlus) {
+      if (SemaRef.getLangOpts().CPlusPlus) {
         Consumer.addKeywordResult("catch");
         Consumer.addKeywordResult("try");
       }
@@ -3649,7 +3649,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
         Consumer.addKeywordResult("default");
       }
     } else {
-      if (SemaRef.getLangOptions().CPlusPlus) {
+      if (SemaRef.getLangOpts().CPlusPlus) {
         Consumer.addKeywordResult("namespace");
         Consumer.addKeywordResult("template");
       }
@@ -3665,10 +3665,10 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       }
     }
 
-    if (SemaRef.getLangOptions().CPlusPlus) {
+    if (SemaRef.getLangOpts().CPlusPlus) {
       Consumer.addKeywordResult("using");
 
-      if (SemaRef.getLangOptions().CPlusPlus0x)
+      if (SemaRef.getLangOpts().CPlusPlus0x)
         Consumer.addKeywordResult("static_assert");
     }
   }
@@ -3718,13 +3718,13 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
                                  DeclContext *MemberContext,
                                  bool EnteringContext,
                                  const ObjCObjectPointerType *OPT) {
-  if (Diags.hasFatalErrorOccurred() || !getLangOptions().SpellChecking)
+  if (Diags.hasFatalErrorOccurred() || !getLangOpts().SpellChecking)
     return TypoCorrection();
 
   // In Microsoft mode, don't perform typo correction in a template member
   // function dependent context because it interferes with the "lookup into
   // dependent bases of class templates" feature.
-  if (getLangOptions().MicrosoftMode && CurContext->isDependentContext() &&
+  if (getLangOpts().MicrosoftMode && CurContext->isDependentContext() &&
       isa<CXXMethodDecl>(CurContext))
     return TypoCorrection();
 
@@ -3852,7 +3852,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   }
 
   // Build the NestedNameSpecifiers for the KnownNamespaces
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     // Load any externally-known namespaces.
     if (ExternalSource && !LoadedExternalKnownNamespaces) {
       SmallVector<NamespaceDecl *, 4> ExternalKnownNamespaces;
@@ -3942,12 +3942,12 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
     if (DI->second->empty())
       Consumer.erase(DI);
-    else if (!getLangOptions().CPlusPlus || QualifiedResults.empty() || !ED)
+    else if (!getLangOpts().CPlusPlus || QualifiedResults.empty() || !ED)
       // If there are results in the closest possible bucket, stop
       break;
 
     // Only perform the qualified lookups for C++
-    if (getLangOptions().CPlusPlus) {
+    if (getLangOpts().CPlusPlus) {
       TmpRes.suppressDiagnostics();
       for (llvm::SmallVector<TypoCorrection,
                              16>::iterator QRI = QualifiedResults.begin(),

@@ -139,7 +139,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
     return IMA_Static;
 
   bool IsCXX11UnevaluatedField = false;
-  if (SemaRef.getLangOptions().CPlusPlus0x && isField) {
+  if (SemaRef.getLangOpts().CPlusPlus0x && isField) {
     // C++11 [expr.prim.general]p12:
     //   An id-expression that denotes a non-static data member or non-static
     //   member function of a class can only be used:
@@ -433,7 +433,7 @@ Sema::ActOnDependentMemberExpr(Expr *BaseExpr, QualType BaseType,
   // allows this, while still reporting an error if T is a struct pointer.
   if (!IsArrow) {
     const PointerType *PT = BaseType->getAs<PointerType>();
-    if (PT && (!getLangOptions().ObjC1 ||
+    if (PT && (!getLangOpts().ObjC1 ||
                PT->getPointeeType()->isRecordType())) {
       assert(BaseExpr && "cannot happen with implicit member accesses");
       Diag(NameInfo.getLoc(), diag::err_typecheck_member_reference_struct_union)
@@ -597,9 +597,9 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   R.clear();
   if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
     std::string CorrectedStr(
-        Corrected.getAsString(SemaRef.getLangOptions()));
+        Corrected.getAsString(SemaRef.getLangOpts()));
     std::string CorrectedQuotedStr(
-        Corrected.getQuoted(SemaRef.getLangOptions()));
+        Corrected.getQuoted(SemaRef.getLangOpts()));
     R.setLookupName(Corrected.getCorrection());
     R.addDecl(ND);
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
@@ -1104,7 +1104,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     //   - an interface
     ObjCInterfaceDecl *IDecl = OTy->getInterface();
     if (!IDecl) {
-      if (getLangOptions().ObjCAutoRefCount &&
+      if (getLangOpts().ObjCAutoRefCount &&
           (OTy->isObjCId() || OTy->isObjCClass()))
         goto fail;
       // There's an implicit 'isa' ivar on all objects.
@@ -1189,7 +1189,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                    dyn_cast<ObjCCategoryImplDecl>(ObjCImpDecl))
           ClassOfMethodDecl = CatImplClass->getClassInterface();
       }
-      if (!getLangOptions().DebuggerSupport) {
+      if (!getLangOpts().DebuggerSupport) {
         if (IV->getAccessControl() == ObjCIvarDecl::Private) {
           if (!declaresSameEntity(ClassDeclared, IDecl) ||
               !declaresSameEntity(ClassOfMethodDecl, ClassDeclared))
@@ -1201,7 +1201,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
             << IV->getDeclName();
       }
     }
-    if (getLangOptions().ObjCAutoRefCount) {
+    if (getLangOpts().ObjCAutoRefCount) {
       Expr *BaseExp = BaseExpr.get()->IgnoreParenImpCasts();
       if (UnaryOperator *UO = dyn_cast<UnaryOperator>(BaseExp))
         if (UO->getOpcode() == UO_Deref)
@@ -1439,7 +1439,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
     return ExprError();
 
   // Warn about the explicit constructor calls Microsoft extension.
-  if (getLangOptions().MicrosoftExt &&
+  if (getLangOpts().MicrosoftExt &&
       Id.getKind() == UnqualifiedId::IK_ConstructorName)
     Diag(Id.getSourceRange().getBegin(),
          diag::ext_ms_explicit_constructor_call);

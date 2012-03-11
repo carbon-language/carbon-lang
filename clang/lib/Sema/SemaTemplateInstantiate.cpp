@@ -404,15 +404,15 @@ bool Sema::InstantiatingTemplate::CheckInstantiationDepth(
                                    SemaRef.ActiveTemplateInstantiations.size());
   if ((SemaRef.ActiveTemplateInstantiations.size() - 
           SemaRef.NonInstantiationEntries)
-        <= SemaRef.getLangOptions().InstantiationDepth)
+        <= SemaRef.getLangOpts().InstantiationDepth)
     return false;
 
   SemaRef.Diag(PointOfInstantiation,
                diag::err_template_recursion_depth_exceeded)
-    << SemaRef.getLangOptions().InstantiationDepth
+    << SemaRef.getLangOpts().InstantiationDepth
     << InstantiationRange;
   SemaRef.Diag(PointOfInstantiation, diag::note_template_recursion_depth)
-    << SemaRef.getLangOptions().InstantiationDepth;
+    << SemaRef.getLangOpts().InstantiationDepth;
   return true;
 }
 

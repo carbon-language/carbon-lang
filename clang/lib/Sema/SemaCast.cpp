@@ -118,7 +118,7 @@ namespace {
     }
 
     void checkObjCARCConversion(Sema::CheckedConversionKind CCK) {
-      assert(Self.getLangOptions().ObjCAutoRefCount);
+      assert(Self.getLangOpts().ObjCAutoRefCount);
 
       Expr *src = SrcExpr.get();
       if (Self.CheckObjCARCConversion(OpRange, DestType, src, CCK) ==
@@ -222,7 +222,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   if (D.isInvalidType())
     return ExprError();
 
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     // Check that there are no default arguments (C++ only).
     CheckExtraCXXDefaultArguments(D);
   }
@@ -462,7 +462,7 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType,
   // If the only checking we care about is for Objective-C lifetime qualifiers,
   // and we're not in ARC mode, there's nothing to check.
   if (!CheckCVR && CheckObjCLifetime && 
-      !Self.Context.getLangOptions().ObjCAutoRefCount)
+      !Self.Context.getLangOpts().ObjCAutoRefCount)
     return false;
     
   // Casting away constness is defined in C++ 5.2.11p8 with reference to
@@ -710,7 +710,7 @@ void CastOperation::CheckReinterpretCast() {
       diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr.get(),
                       DestType, /*listInitialization=*/false);
     }
-  } else if (tcr == TC_Success && Self.getLangOptions().ObjCAutoRefCount) {
+  } else if (tcr == TC_Success && Self.getLangOpts().ObjCAutoRefCount) {
     checkObjCARCConversion(Sema::CCK_OtherCast);
   }
 }
@@ -772,7 +772,7 @@ void CastOperation::CheckStaticCast() {
   } else if (tcr == TC_Success) {
     if (Kind == CK_BitCast)
       checkCastAlign();
-    if (Self.getLangOptions().ObjCAutoRefCount)
+    if (Self.getLangOpts().ObjCAutoRefCount)
       checkObjCARCConversion(Sema::CCK_OtherCast);
   } else if (Kind == CK_BitCast) {
     checkCastAlign();
@@ -1664,7 +1664,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     //   integral type size doesn't matter.
     if ((Self.Context.getTypeSize(SrcType) >
          Self.Context.getTypeSize(DestType)) &&
-         !Self.getLangOptions().MicrosoftExt) {
+         !Self.getLangOpts().MicrosoftExt) {
       msg = diag::err_bad_reinterpret_cast_small_int;
       return TC_Failed;
     }
@@ -1738,7 +1738,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     // FIXME: Conditionally-supported behavior should be configurable in the
     // TargetInfo or similar.
     Self.Diag(OpRange.getBegin(),
-              Self.getLangOptions().CPlusPlus0x ?
+              Self.getLangOpts().CPlusPlus0x ?
                 diag::warn_cxx98_compat_cast_fn_obj : diag::ext_cast_fn_obj)
       << OpRange;
     return TC_Success;
@@ -1747,7 +1747,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   if (DestType->isFunctionPointerType()) {
     // See above.
     Self.Diag(OpRange.getBegin(),
-              Self.getLangOptions().CPlusPlus0x ?
+              Self.getLangOpts().CPlusPlus0x ?
                 diag::warn_cxx98_compat_cast_fn_obj : diag::ext_cast_fn_obj)
       << OpRange;
     return TC_Success;
@@ -1858,7 +1858,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
     }
   }
 
-  if (Self.getLangOptions().ObjCAutoRefCount && tcr == TC_Success)
+  if (Self.getLangOpts().ObjCAutoRefCount && tcr == TC_Success)
     checkObjCARCConversion(CCK);
 
   if (tcr != TC_Success && msg != 0) {
@@ -1887,7 +1887,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
 
 /// Check the semantics of a C-style cast operation, in C.
 void CastOperation::CheckCStyleCast() {
-  assert(!Self.getLangOptions().CPlusPlus);
+  assert(!Self.getLangOpts().CPlusPlus);
 
   // C-style casts can resolve __unknown_any types.
   if (claimPlaceholder(BuiltinType::UnknownAny)) {
@@ -2033,7 +2033,7 @@ void CastOperation::CheckCStyleCast() {
   }
 
   // ARC imposes extra restrictions on casts.
-  if (Self.getLangOptions().ObjCAutoRefCount) {
+  if (Self.getLangOpts().ObjCAutoRefCount) {
     checkObjCARCConversion(Sema::CCK_CStyleCast);
     if (SrcExpr.isInvalid())
       return;
@@ -2078,7 +2078,7 @@ ExprResult Sema::BuildCStyleCastExpr(SourceLocation LPLoc,
   Op.DestRange = CastTypeInfo->getTypeLoc().getSourceRange();
   Op.OpRange = SourceRange(LPLoc, CastExpr->getLocEnd());
 
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     Op.CheckCXXCStyleCast(/*FunctionalStyle=*/ false,
                           isa<InitListExpr>(CastExpr));
   } else {

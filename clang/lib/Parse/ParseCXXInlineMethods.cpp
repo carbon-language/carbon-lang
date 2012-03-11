@@ -74,7 +74,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     bool Delete = false;
     SourceLocation KWLoc;
     if (Tok.is(tok::kw_delete)) {
-      Diag(Tok, getLang().CPlusPlus0x ?
+      Diag(Tok, getLangOpts().CPlusPlus0x ?
            diag::warn_cxx98_compat_deleted_function :
            diag::ext_deleted_function);
 
@@ -82,7 +82,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
       Actions.SetDeclDeleted(FnD, KWLoc);
       Delete = true;
     } else if (Tok.is(tok::kw_default)) {
-      Diag(Tok, getLang().CPlusPlus0x ?
+      Diag(Tok, getLangOpts().CPlusPlus0x ?
            diag::warn_cxx98_compat_defaulted_function :
            diag::ext_defaulted_function);
 
@@ -107,7 +107,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   // In delayed template parsing mode, if we are within a class template
   // or if we are about to parse function member template then consume
   // the tokens and store them for parsing at the end of the translation unit.
-  if (getLang().DelayedTemplateParsing && 
+  if (getLangOpts().DelayedTemplateParsing && 
       ((Actions.CurContext->isDependentContext() ||
         TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) && 
         !Actions.IsInsideALocalClassWithinATemplateFunction())) {
@@ -632,7 +632,7 @@ bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
         ConsumeBrace();
         // In C++03, this has to be the start of the function body, which
         // means the initializer is malformed; we'll diagnose it later.
-        if (!getLang().CPlusPlus0x)
+        if (!getLangOpts().CPlusPlus0x)
           return false;
       }
 

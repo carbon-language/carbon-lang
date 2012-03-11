@@ -934,7 +934,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
     break;
   case tok::kw_inline:
     // Could be the start of an inline namespace. Allowed as an ext in C++03.
-    if (getLang().CPlusPlus && NextToken().is(tok::kw_namespace)) {
+    if (getLangOpts().CPlusPlus && NextToken().is(tok::kw_namespace)) {
       ProhibitAttributes(attrs);
       SourceLocation InlineLoc = ConsumeToken();
       SingleDecl = ParseNamespace(Context, DeclEnd, InlineLoc);
@@ -1023,14 +1023,14 @@ bool Parser::MightBeDeclarator(unsigned Context) {
 
   case tok::amp:
   case tok::ampamp:
-    return getLang().CPlusPlus;
+    return getLangOpts().CPlusPlus;
 
   case tok::l_square: // Might be an attribute on an unnamed bit-field.
-    return Context == Declarator::MemberContext && getLang().CPlusPlus0x &&
+    return Context == Declarator::MemberContext && getLangOpts().CPlusPlus0x &&
            NextToken().is(tok::l_square);
 
   case tok::colon: // Might be a typo for '::' or an unnamed bit-field.
-    return Context == Declarator::MemberContext || getLang().CPlusPlus;
+    return Context == Declarator::MemberContext || getLangOpts().CPlusPlus;
 
   case tok::identifier:
     switch (NextToken().getKind()) {
@@ -1057,10 +1057,10 @@ bool Parser::MightBeDeclarator(unsigned Context) {
       // and in block scope it's probably a label. Inside a class definition,
       // this is a bit-field.
       return Context == Declarator::MemberContext ||
-             (getLang().CPlusPlus && Context == Declarator::FileContext);
+             (getLangOpts().CPlusPlus && Context == Declarator::FileContext);
 
     case tok::identifier: // Possible virt-specifier.
-      return getLang().CPlusPlus0x && isCXX0XVirtSpecifier(NextToken());
+      return getLangOpts().CPlusPlus0x && isCXX0XVirtSpecifier(NextToken());
 
     default:
       return false;
@@ -1324,7 +1324,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       else
         Diag(ConsumeToken(), diag::err_default_special_members);
     } else {
-      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+      if (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         EnterScope(0);
         Actions.ActOnCXXEnterDeclInitializer(getCurScope(), ThisDecl);
       }
@@ -1337,7 +1337,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       
       ExprResult Init(ParseInitializer());
 
-      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+      if (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
@@ -1357,7 +1357,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     ExprVector Exprs(Actions);
     CommaLocsTy CommaLocs;
 
-    if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+    if (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()) {
       EnterScope(0);
       Actions.ActOnCXXEnterDeclInitializer(getCurScope(), ThisDecl);
     }
@@ -1365,7 +1365,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     if (ParseExpressionList(Exprs, CommaLocs)) {
       SkipUntil(tok::r_paren);
 
-      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+      if (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
@@ -1376,7 +1376,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
              "Unexpected number of commas!");
 
-      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+      if (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
@@ -1387,7 +1387,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       Actions.AddInitializerToDecl(ThisDecl, Initializer.take(),
                                    /*DirectInit=*/true, TypeContainsAuto);
     }
-  } else if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
+  } else if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
     // Parse C++0x braced-init-list.
     Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
 
@@ -1544,7 +1544,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
     if (TagName) {
       Diag(Loc, diag::err_use_of_tag_name_without_tag)
-        << Tok.getIdentifierInfo() << TagName << getLang().CPlusPlus
+        << Tok.getIdentifierInfo() << TagName << getLangOpts().CPlusPlus
         << FixItHint::CreateInsertion(Tok.getLocation(),FixitTagName);
 
       // Parse this as a tag as if the missing tag were present.
@@ -1632,7 +1632,7 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
   } else
     ER = ParseConstantExpression();
 
-  if (getLang().CPlusPlus0x && Tok.is(tok::ellipsis))
+  if (getLangOpts().CPlusPlus0x && Tok.is(tok::ellipsis))
     EllipsisLoc = ConsumeToken();
 
   return ER;
@@ -1930,7 +1930,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
       // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
       // Objective-C interface. 
-      if (Tok.is(tok::less) && getLang().ObjC1)
+      if (Tok.is(tok::less) && getLangOpts().ObjC1)
         ParseObjCProtocolQualifiers(DS);
       
       continue;
@@ -1959,7 +1959,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::identifier: {
       // In C++, check to see if this is a scope specifier like foo::bar::, if
       // so handle it as such.  This is important for ctor parsing.
-      if (getLang().CPlusPlus) {
+      if (getLangOpts().CPlusPlus) {
         if (TryAnnotateCXXScopeToken(true)) {
           if (!DS.hasTypeSpecifier())
             DS.SetTypeSpecError();
@@ -1993,7 +1993,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // If we're in a context where the identifier could be a class name,
       // check whether this is a constructor declaration.
-      if (getLang().CPlusPlus && DSContext == DSC_class &&
+      if (getLangOpts().CPlusPlus && DSContext == DSC_class &&
           Actions.isCurrentClassName(*Tok.getIdentifierInfo(), getCurScope()) &&
           isConstructorDeclarator())
         goto DoneWithDeclSpec;
@@ -2009,7 +2009,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
       // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
       // Objective-C interface. 
-      if (Tok.is(tok::less) && getLang().ObjC1)
+      if (Tok.is(tok::less) && getLangOpts().ObjC1)
         ParseObjCProtocolQualifiers(DS);
       
       // Need to support trailing type qualifiers (e.g. "id<p> const").
@@ -2029,7 +2029,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If we're in a context where the template-id could be a
       // constructor name or specialization, check whether this is a
       // constructor declaration.
-      if (getLang().CPlusPlus && DSContext == DSC_class &&
+      if (getLangOpts().CPlusPlus && DSContext == DSC_class &&
           Actions.isCurrentClassName(*TemplateId->Name, getCurScope()) &&
           isConstructorDeclarator())
         goto DoneWithDeclSpec;
@@ -2098,7 +2098,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          PrevSpec, DiagID);
       break;
     case tok::kw_auto:
-      if (getLang().CPlusPlus0x) {
+      if (getLangOpts().CPlusPlus0x) {
         if (isKnownToBeTypeSpecifier(GetLookAheadToken(1))) {
           isInvalid = DS.SetStorageClassSpec(Actions, DeclSpec::SCS_auto, Loc,
                                              PrevSpec, DiagID);
@@ -2137,7 +2137,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // alignment-specifier
     case tok::kw__Alignas:
-      if (!getLang().C11)
+      if (!getLangOpts().C11)
         Diag(Tok, diag::ext_c11_alignas);
       ParseAlignmentSpecifier(DS.getAttributes());
       continue;
@@ -2289,15 +2289,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     // cv-qualifier:
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const, Loc, PrevSpec, DiagID,
-                                 getLang());
+                                 getLangOpts());
       break;
     case tok::kw_volatile:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec, DiagID,
-                                 getLang());
+                                 getLangOpts());
       break;
     case tok::kw_restrict:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
-                                 getLang());
+                                 getLangOpts());
       break;
 
     // C++ typename-specifier:
@@ -2329,7 +2329,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // OpenCL qualifiers:
     case tok::kw_private: 
-      if (!getLang().OpenCL)
+      if (!getLangOpts().OpenCL)
         goto DoneWithDeclSpec;
     case tok::kw___private:
     case tok::kw___global:
@@ -2345,7 +2345,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // GCC ObjC supports types like "<SomeProtocol>" as a synonym for
       // "id<SomeProtocol>".  This is hopelessly old fashioned and dangerous,
       // but we support it.
-      if (DS.hasTypeSpecifier() || !getLang().ObjC1)
+      if (DS.hasTypeSpecifier() || !getLangOpts().ObjC1)
         goto DoneWithDeclSpec;
 
       if (!ParseObjCProtocolQualifiers(DS))
@@ -2476,7 +2476,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
     // Objective-C interface.  If we don't have Objective-C or a '<', this is
     // just a normal reference to a typedef name.
-    if (Tok.is(tok::less) && getLang().ObjC1)
+    if (Tok.is(tok::less) && getLangOpts().ObjC1)
       ParseObjCProtocolQualifiers(DS);
     
     return true;
@@ -2583,15 +2583,15 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   // cv-qualifier:
   case tok::kw_const:
     isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
-                               DiagID, getLang());
+                               DiagID, getLangOpts());
     break;
   case tok::kw_volatile:
     isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
-                               DiagID, getLang());
+                               DiagID, getLangOpts());
     break;
   case tok::kw_restrict:
     isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
-                               DiagID, getLang());
+                               DiagID, getLangOpts());
     break;
 
   // GNU typeof support.
@@ -2615,7 +2615,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
   // OpenCL qualifiers:
   case tok::kw_private: 
-    if (!getLang().OpenCL)
+    if (!getLangOpts().OpenCL)
       return false;
   case tok::kw___private:
   case tok::kw___global:
@@ -2633,7 +2633,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     // illegal, so we can assume an auto type specifier was intended even in
     // C++98. In C++98 mode, DeclSpec::Finish will produce an appropriate
     // extension diagnostic.
-    if (!getLang().CPlusPlus)
+    if (!getLangOpts().CPlusPlus)
       return false;
 
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec, DiagID);
@@ -2779,7 +2779,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
   // C++.
-  if (Tok.is(tok::r_brace) && !getLang().CPlusPlus) {
+  if (Tok.is(tok::r_brace) && !getLangOpts().CPlusPlus) {
     Diag(Tok, diag::ext_empty_struct_union) << (TagType == TST_union);
     Diag(Tok, diag::warn_empty_struct_union_compat) << (TagType == TST_union);
   }
@@ -2916,7 +2916,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   SourceLocation ScopedEnumKWLoc;
   bool IsScopedUsingClassTag = false;
 
-  if (getLang().CPlusPlus0x &&
+  if (getLangOpts().CPlusPlus0x &&
       (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
     Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
@@ -2932,10 +2932,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     ParseMicrosoftDeclSpec(attrs);
 
   bool AllowFixedUnderlyingType 
-    = getLang().CPlusPlus0x || getLang().MicrosoftExt || getLang().ObjC2;
+    = getLangOpts().CPlusPlus0x || getLangOpts().MicrosoftExt || getLangOpts().ObjC2;
 
   CXXScopeSpec &SS = DS.getTypeSpecScope();
-  if (getLang().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     // "enum foo : bar;" is not a potential typo for "enum foo::bar;"
     // if a fixed underlying type is allowed.
     ColonProtectionRAIIObject X(*this, AllowFixedUnderlyingType);
@@ -3022,9 +3022,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
         // underlying type.
         // FIXME: The standard is not entirely clear on how to disambiguate in
         // this case.
-        if ((getLang().CPlusPlus &&
+        if ((getLangOpts().CPlusPlus &&
              isCXXDeclarationSpecifier(TPResult::True()) != TPResult::True()) ||
-            (!getLang().CPlusPlus && !isDeclarationSpecifier(true))) {
+            (!getLangOpts().CPlusPlus && !isDeclarationSpecifier(true))) {
           // We'll parse this as a bitfield later.
           PossibleBitfield = true;
           TPA.Revert();
@@ -3042,10 +3042,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       SourceRange Range;
       BaseType = ParseTypeName(&Range);
       
-      if (!getLang().CPlusPlus0x && !getLang().ObjC2)
+      if (!getLangOpts().CPlusPlus0x && !getLangOpts().ObjC2)
         Diag(StartLoc, diag::ext_ms_enum_fixed_underlying_type)
           << Range;
-      if (getLang().CPlusPlus0x)
+      if (getLangOpts().CPlusPlus0x)
         Diag(StartLoc, diag::warn_cxx98_compat_enum_fixed_underlying_type);
     }
   }
@@ -3169,7 +3169,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   T.consumeOpen();
 
   // C does not allow an empty enumerator-list, C++ does [dcl.enum].
-  if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
+  if (Tok.is(tok::r_brace) && !getLangOpts().CPlusPlus)
     Diag(Tok, diag::error_empty_enum);
 
   SmallVector<Decl *, 32> EnumConstantDecls;
@@ -3220,11 +3220,11 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     SourceLocation CommaLoc = ConsumeToken();
 
     if (Tok.isNot(tok::identifier)) {
-      if (!getLang().C99 && !getLang().CPlusPlus0x)
+      if (!getLangOpts().C99 && !getLangOpts().CPlusPlus0x)
         Diag(CommaLoc, diag::ext_enumerator_list_comma)
-          << getLang().CPlusPlus
+          << getLangOpts().CPlusPlus
           << FixItHint::CreateRemoval(CommaLoc);
-      else if (getLang().CPlusPlus0x)
+      else if (getLangOpts().CPlusPlus0x)
         Diag(CommaLoc, diag::warn_cxx98_compat_enumerator_list_comma)
           << FixItHint::CreateRemoval(CommaLoc);
     }
@@ -3255,7 +3255,7 @@ bool Parser::isTypeQualifier() const {
 
     // type-qualifier only in OpenCL
   case tok::kw_private:
-    return getLang().OpenCL;
+    return getLangOpts().OpenCL;
 
     // type-qualifier
   case tok::kw_const:
@@ -3390,7 +3390,7 @@ bool Parser::isTypeSpecifierQualifier() {
 
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
-    return getLang().ObjC1;
+    return getLangOpts().ObjC1;
 
   case tok::kw___cdecl:
   case tok::kw___stdcall:
@@ -3413,7 +3413,7 @@ bool Parser::isTypeSpecifierQualifier() {
     return true;
 
   case tok::kw_private:
-    return getLang().OpenCL;
+    return getLangOpts().OpenCL;
 
   // C11 _Atomic()
   case tok::kw__Atomic:
@@ -3431,11 +3431,11 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   default: return false;
 
   case tok::kw_private:
-    return getLang().OpenCL;
+    return getLangOpts().OpenCL;
 
   case tok::identifier:   // foo::bar
     // Unfortunate hack to support "Class.factoryMethod" notation.
-    if (getLang().ObjC1 && NextToken().is(tok::period))
+    if (getLangOpts().ObjC1 && NextToken().is(tok::period))
       return false;
     if (TryAltiVecVectorToken())
       return true;
@@ -3545,7 +3545,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
 
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
-    return getLang().ObjC1;
+    return getLangOpts().ObjC1;
 
     // typedef-name
   case tok::annot_typename:
@@ -3642,7 +3642,7 @@ bool Parser::isConstructorDeclarator() {
 void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
                                        bool VendorAttributesAllowed,
                                        bool CXX0XAttributesAllowed) {
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+  if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
     SourceLocation Loc = Tok.getLocation();
     ParsedAttributesWithRange attrs(AttrFactory);
     ParseCXX0XAttributes(attrs);
@@ -3667,20 +3667,20 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
         
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec, DiagID,
-                                 getLang());
+                                 getLangOpts());
       break;
     case tok::kw_volatile:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec, DiagID,
-                                 getLang());
+                                 getLangOpts());
       break;
     case tok::kw_restrict:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
-                                 getLang());
+                                 getLangOpts());
       break;
 
     // OpenCL qualifiers:
     case tok::kw_private: 
-      if (!getLang().OpenCL)
+      if (!getLangOpts().OpenCL)
         goto DoneWithTypeQuals;
     case tok::kw___private:
     case tok::kw___global:
@@ -3777,7 +3777,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   // C++ member pointers start with a '::' or a nested-name.
   // Member pointers get special handling, since there's no place for the
   // scope spec in the generic path below.
-  if (getLang().CPlusPlus &&
+  if (getLangOpts().CPlusPlus &&
       (Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
        Tok.is(tok::annot_cxxscope))) {
     bool EnteringContext = D.getContext() == Declarator::FileContext ||
@@ -3816,9 +3816,9 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
   if (Kind != tok::star && Kind != tok::caret &&
-      (Kind != tok::amp || !getLang().CPlusPlus) &&
+      (Kind != tok::amp || !getLangOpts().CPlusPlus) &&
       // We parse rvalue refs in C++03, because otherwise the errors are scary.
-      (Kind != tok::ampamp || !getLang().CPlusPlus)) {
+      (Kind != tok::ampamp || !getLangOpts().CPlusPlus)) {
     if (DirectDeclParser)
       (this->*DirectDeclParser)(D);
     return;
@@ -3859,7 +3859,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     // Complain about rvalue references in C++03, but then go on and build
     // the declarator.
     if (Kind == tok::ampamp)
-      Diag(Loc, getLang().CPlusPlus0x ?
+      Diag(Loc, getLangOpts().CPlusPlus0x ?
            diag::warn_cxx98_compat_rvalue_reference :
            diag::ext_rvalue_reference);
 
@@ -3946,7 +3946,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 void Parser::ParseDirectDeclarator(Declarator &D) {
   DeclaratorScopeObj DeclScopeObj(*this, D.getCXXScopeSpec());
 
-  if (getLang().CPlusPlus && D.mayHaveIdentifier()) {
+  if (getLangOpts().CPlusPlus && D.mayHaveIdentifier()) {
     // ParseDeclaratorInternal might already have parsed the scope.
     if (D.getCXXScopeSpec().isEmpty()) {
       bool EnteringContext = D.getContext() == Declarator::FileContext ||
@@ -4013,7 +4013,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       goto PastIdentifier;
     }
   } else if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
-    assert(!getLang().CPlusPlus &&
+    assert(!getLangOpts().CPlusPlus &&
            "There's a C++-specific check for tok::identifier above");
     assert(Tok.getIdentifierInfo() && "Not an identifier?");
     D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
@@ -4047,8 +4047,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (D.getContext() == Declarator::MemberContext)
       Diag(Tok, diag::err_expected_member_name_or_semi)
         << D.getDeclSpec().getSourceRange();
-    else if (getLang().CPlusPlus)
-      Diag(Tok, diag::err_expected_unqualified_id) << getLang().CPlusPlus;
+    else if (getLangOpts().CPlusPlus)
+      Diag(Tok, diag::err_expected_unqualified_id) << getLangOpts().CPlusPlus;
     else
       Diag(Tok, diag::err_expected_ident_lparen);
     D.SetIdentifier(0, Tok.getLocation());
@@ -4072,7 +4072,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       // The paren may be part of a C++ direct initializer, eg. "int x(1);".
       // In such a case, check if we actually have a function declarator; if it
       // is not, the declarator has been fully parsed.
-      if (getLang().CPlusPlus && D.mayBeFollowedByCXXDirectInit()) {
+      if (getLangOpts().CPlusPlus && D.mayBeFollowedByCXXDirectInit()) {
         // When not in file scope, warn for ambiguous function declarators, just
         // in case the author intended it as a variable definition.
         bool warnIfAmbiguous = D.getContext() != Declarator::FileContext;
@@ -4152,7 +4152,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // paren, because we haven't seen the identifier yet.
     isGrouping = true;
   } else if (Tok.is(tok::r_paren) ||           // 'int()' is a function.
-             (getLang().CPlusPlus && Tok.is(tok::ellipsis)) || // C++ int(...)
+             (getLangOpts().CPlusPlus && Tok.is(tok::ellipsis)) || // C++ int(...)
              isDeclarationSpecifier()) {       // 'int(int)' is a function.
     // This handles C99 6.7.5.3p11: in "typedef int X; void foo(X)", X is
     // considered to be a type, not a K&R identifier-list.
@@ -4258,13 +4258,13 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
     else if (RequiresArg)
       Diag(Tok, diag::err_argument_required_after_attribute);
 
-    HasProto = ParamInfo.size() || getLang().CPlusPlus;
+    HasProto = ParamInfo.size() || getLangOpts().CPlusPlus;
 
     // If we have the closing ')', eat it.
     Tracker.consumeClose();
     EndLoc = Tracker.getCloseLocation();
 
-    if (getLang().CPlusPlus) {
+    if (getLangOpts().CPlusPlus) {
       MaybeParseCXX0XAttributes(attrs);
 
       // Parse cv-qualifier-seq[opt].
@@ -4277,7 +4277,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
       // Parse ref-qualifier[opt].
       if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
-        Diag(Tok, getLang().CPlusPlus0x ?
+        Diag(Tok, getLangOpts().CPlusPlus0x ?
              diag::warn_cxx98_compat_ref_qualifier :
              diag::ext_ref_qualifier);
         
@@ -4295,7 +4295,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
         EndLoc = ESpecRange.getEnd();
 
       // Parse trailing-return-type[opt].
-      if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
+      if (getLangOpts().CPlusPlus0x && Tok.is(tok::arrow)) {
         Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
         SourceRange Range;
         TrailingReturnType = ParseTrailingReturnType(Range).get();
@@ -4335,7 +4335,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 /// Note that identifier-lists are only allowed for normal declarators, not for
 /// abstract-declarators.
 bool Parser::isFunctionDeclaratorIdentifierList() {
-  return !getLang().CPlusPlus
+  return !getLangOpts().CPlusPlus
          && Tok.is(tok::identifier)
          && !TryAltiVecVectorToken()
          // K&R identifier lists can't have typedefs as identifiers, per C99
@@ -4460,7 +4460,7 @@ void Parser::ParseParameterDeclarationClause(
     DeclSpec DS(AttrFactory);
 
     // Skip any Microsoft attributes before a param.
-    if (getLang().MicrosoftExt && Tok.is(tok::l_square))
+    if (getLangOpts().MicrosoftExt && Tok.is(tok::l_square))
       ParseMicrosoftAttributes(DS.getAttributes());
 
     SourceLocation DSStart = Tok.getLocation();
@@ -4570,7 +4570,7 @@ void Parser::ParseParameterDeclarationClause(
       if (Tok.is(tok::ellipsis)) {
         EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
         
-        if (!getLang().CPlusPlus) {
+        if (!getLangOpts().CPlusPlus) {
           // We have ellipsis without a preceding ',', which is ill-formed
           // in C. Complain and provide the fix.
           Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
@@ -4668,7 +4668,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 
     // Parse the constant-expression or assignment-expression now (depending
     // on dialect).
-    if (getLang().CPlusPlus) {
+    if (getLangOpts().CPlusPlus) {
       NumElements = ParseConstantExpression();
     } else {
       EnterExpressionEvaluationContext Unevaluated(Actions,

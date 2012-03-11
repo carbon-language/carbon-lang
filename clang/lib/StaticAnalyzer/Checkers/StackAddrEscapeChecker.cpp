@@ -137,7 +137,7 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
     return;
 
   // Automatic reference counting automatically copies blocks.
-  if (C.getASTContext().getLangOptions().ObjCAutoRefCount &&
+  if (C.getASTContext().getLangOpts().ObjCAutoRefCount &&
       isa<BlockDataRegion>(R))
     return;
 
@@ -173,7 +173,7 @@ void StackAddrEscapeChecker::checkEndPath(CheckerContext &Ctx) const {
         
       // Under automated retain release, it is okay to assign a block
       // directly to a global variable.
-      if (Ctx.getASTContext().getLangOptions().ObjCAutoRefCount &&
+      if (Ctx.getASTContext().getLangOpts().ObjCAutoRefCount &&
           isa<BlockDataRegion>(vR))
         return true;
 

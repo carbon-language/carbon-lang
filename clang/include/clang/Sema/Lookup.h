@@ -592,7 +592,7 @@ private:
   void diagnose() {
     if (isAmbiguous())
       SemaRef.DiagnoseAmbiguousLookup(*this);
-    else if (isClassLookup() && SemaRef.getLangOptions().AccessControl)
+    else if (isClassLookup() && SemaRef.getLangOpts().AccessControl)
       SemaRef.CheckLookupAccess(*this);
   }
 

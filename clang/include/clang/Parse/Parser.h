@@ -202,7 +202,7 @@ public:
   Parser(Preprocessor &PP, Sema &Actions);
   ~Parser();
 
-  const LangOptions &getLang() const { return PP.getLangOptions(); }
+  const LangOptions &getLangOpts() const { return PP.getLangOpts(); }
   const TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
   Preprocessor &getPreprocessor() const { return PP; }
   Sema &getActions() const { return Actions; }
@@ -544,7 +544,7 @@ private:
   bool TryAltiVecToken(DeclSpec &DS, SourceLocation Loc,
                        const char *&PrevSpec, unsigned &DiagID,
                        bool &isInvalid) {
-    if (!getLang().AltiVec ||
+    if (!getLangOpts().AltiVec ||
         (Tok.getIdentifierInfo() != Ident_vector &&
          Tok.getIdentifierInfo() != Ident_pixel))
       return false;
@@ -556,7 +556,7 @@ private:
   /// identifier token, replacing it with the non-context-sensitive __vector.
   /// This returns true if the token was replaced.
   bool TryAltiVecVectorToken() {
-    if (!getLang().AltiVec ||
+    if (!getLangOpts().AltiVec ||
         Tok.getIdentifierInfo() != Ident_vector) return false;
     return TryAltiVecVectorTokenOutOfLine();
   }
@@ -1712,7 +1712,7 @@ private:
   /// expression statement, when parsing function bodies.
   /// Returns true for declaration, false for expression.
   bool isDeclarationStatement() {
-    if (getLang().CPlusPlus)
+    if (getLangOpts().CPlusPlus)
       return isCXXDeclarationStatement();
     return isDeclarationSpecifier(true);
   }
@@ -1722,7 +1722,7 @@ private:
   // 'for-init-statement' part of a 'for' statement.
   /// Returns true for declaration, false for expression.
   bool isForInitDeclaration() {
-    if (getLang().CPlusPlus)
+    if (getLangOpts().CPlusPlus)
       return isCXXSimpleDeclaration(/*AllowForRangeDecl=*/true);
     return isDeclarationSpecifier(true);
   }
@@ -1748,7 +1748,7 @@ private:
   /// whether the parens contain an expression or a type-id.
   /// Returns true for a type-id and false for an expression.
   bool isTypeIdInParens(bool &isAmbiguous) {
-    if (getLang().CPlusPlus)
+    if (getLangOpts().CPlusPlus)
       return isCXXTypeId(TypeIdInParens, isAmbiguous);
     isAmbiguous = false;
     return isTypeSpecifierQualifier();
@@ -1890,7 +1890,7 @@ private:
                              SourceLocation *EndLoc);
 
   void MaybeParseCXX0XAttributes(Declarator &D) {
-    if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+    if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
       ParseCXX0XAttributes(attrs, &endLoc);
@@ -1899,7 +1899,7 @@ private:
   }
   void MaybeParseCXX0XAttributes(ParsedAttributes &attrs,
                                  SourceLocation *endLoc = 0) {
-    if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+    if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
       ParseCXX0XAttributes(attrsWithRange, endLoc);
       attrs.takeAllFrom(attrsWithRange);
@@ -1907,7 +1907,7 @@ private:
   }
   void MaybeParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
                                  SourceLocation *endLoc = 0) {
-    if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
+    if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier())
       ParseCXX0XAttributes(attrs, endLoc);
   }
 
@@ -1918,7 +1918,7 @@ private:
 
   void MaybeParseMicrosoftAttributes(ParsedAttributes &attrs,
                                      SourceLocation *endLoc = 0) {
-    if (getLang().MicrosoftExt && Tok.is(tok::l_square))
+    if (getLangOpts().MicrosoftExt && Tok.is(tok::l_square))
       ParseMicrosoftAttributes(attrs, endLoc);
   }
   void ParseMicrosoftAttributes(ParsedAttributes &attrs,

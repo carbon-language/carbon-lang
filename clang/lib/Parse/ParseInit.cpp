@@ -33,7 +33,7 @@ bool Parser::MayBeDesignationStart() {
     return true;
       
   case tok::l_square: {  // designator: array-designator
-    if (!PP.getLangOptions().CPlusPlus0x)
+    if (!PP.getLangOpts().CPlusPlus0x)
       return true;
     
     // C++11 lambda expressions and C99 designators can be ambiguous all the
@@ -223,7 +223,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     // send) or send to 'super', parse this as a message send
     // expression.  We handle C++ and C separately, since C++ requires
     // much more complicated parsing.
-    if  (getLang().ObjC1 && getLang().CPlusPlus) {
+    if  (getLangOpts().ObjC1 && getLangOpts().CPlusPlus) {
       // Send to 'super'.
       if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
           NextToken().isNot(tok::period) && 
@@ -258,7 +258,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // adopt the expression for further analysis below.
       // FIXME: potentially-potentially evaluated expression above?
       Idx = ExprResult(static_cast<Expr*>(TypeOrExpr));
-    } else if (getLang().ObjC1 && Tok.is(tok::identifier)) {
+    } else if (getLangOpts().ObjC1 && Tok.is(tok::identifier)) {
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IILoc = Tok.getLocation();
       ParsedType ReceiverType;
@@ -316,7 +316,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     // tokens are '...' or ']' or an objc message send.  If this is an objc
     // message send, handle it now.  An objc-message send is the start of
     // an assignment-expression production.
-    if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) &&
+    if (getLangOpts().ObjC1 && Tok.isNot(tok::ellipsis) &&
         Tok.isNot(tok::r_square)) {
       CheckArrayDesignatorSyntax(*this, Tok.getLocation(), Desig);
       return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
@@ -404,7 +404,7 @@ ExprResult Parser::ParseBraceInitializer() {
 
   if (Tok.is(tok::r_brace)) {
     // Empty initializers are a C++ feature and a GNU extension to C.
-    if (!getLang().CPlusPlus)
+    if (!getLangOpts().CPlusPlus)
       Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
     return Actions.ActOnInitList(LBraceLoc, MultiExprArg(Actions),
@@ -415,7 +415,7 @@ ExprResult Parser::ParseBraceInitializer() {
 
   while (1) {
     // Handle Microsoft __if_exists/if_not_exists if necessary.
-    if (getLang().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
+    if (getLangOpts().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
         Tok.is(tok::kw___if_not_exists))) {
       if (ParseMicrosoftIfExistsBraceInitializer(InitExprs, InitExprsOk)) {
         if (Tok.isNot(tok::comma)) break;

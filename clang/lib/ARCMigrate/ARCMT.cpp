@@ -211,7 +211,7 @@ static void emitPremigrationErrors(const CapturedDiagList &arcDiags,
       new DiagnosticsEngine(DiagID, &printer, /*ShouldOwnClient=*/false));
   Diags->setSourceManager(&PP.getSourceManager());
   
-  printer.BeginSourceFile(PP.getLangOptions(), &PP);
+  printer.BeginSourceFile(PP.getLangOpts(), &PP);
   arcDiags.reportDiagnostics(*Diags);
   printer.EndSourceFile();
 }
@@ -264,7 +264,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
   if (Diags->hasFatalErrorOccurred()) {
     Diags->Reset();
-    DiagClient->BeginSourceFile(Ctx.getLangOptions(), &Unit->getPreprocessor());
+    DiagClient->BeginSourceFile(Ctx.getLangOpts(), &Unit->getPreprocessor());
     capturedDiags.reportDiagnostics(*Diags);
     DiagClient->EndSourceFile();
     return true;
@@ -279,7 +279,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
            I = capturedDiags.begin(), E = capturedDiags.end(); I != E; ++I)
       arcDiags.push_back(*I);
     writeARCDiagsToPlist(plistOut, arcDiags,
-                         Ctx.getSourceManager(), Ctx.getLangOptions());
+                         Ctx.getSourceManager(), Ctx.getLangOpts());
   }
 
   // After parsing of source files ended, we want to reuse the
@@ -287,7 +287,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   // We call BeginSourceFile because DiagnosticConsumer requires that 
   // diagnostics with source range information are emitted only in between
   // BeginSourceFile() and EndSourceFile().
-  DiagClient->BeginSourceFile(Ctx.getLangOptions(), &Unit->getPreprocessor());
+  DiagClient->BeginSourceFile(Ctx.getLangOpts(), &Unit->getPreprocessor());
 
   // No macros will be added since we are just checking and we won't modify
   // source code.
@@ -573,7 +573,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
 
   if (Diags->hasFatalErrorOccurred()) {
     Diags->Reset();
-    DiagClient->BeginSourceFile(Ctx.getLangOptions(), &Unit->getPreprocessor());
+    DiagClient->BeginSourceFile(Ctx.getLangOpts(), &Unit->getPreprocessor());
     capturedDiags.reportDiagnostics(*Diags);
     DiagClient->EndSourceFile();
     return true;
@@ -584,9 +584,9 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   // We call BeginSourceFile because DiagnosticConsumer requires that 
   // diagnostics with source range information are emitted only in between
   // BeginSourceFile() and EndSourceFile().
-  DiagClient->BeginSourceFile(Ctx.getLangOptions(), &Unit->getPreprocessor());
+  DiagClient->BeginSourceFile(Ctx.getLangOpts(), &Unit->getPreprocessor());
 
-  Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOptions());
+  Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
   TransformActions TA(*Diags, capturedDiags, Ctx, Unit->getPreprocessor());
   MigrationPass pass(Ctx, OrigCI.getLangOpts()->getGC(),
                      Unit->getSema(), TA, ARCMTMacroLocs);

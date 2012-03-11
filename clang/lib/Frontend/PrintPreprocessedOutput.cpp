@@ -108,7 +108,7 @@ public:
     Initialized = false;
 
     // If we're in microsoft mode, use normal #line instead of line markers.
-    UseLineDirective = PP.getLangOptions().MicrosoftExt;
+    UseLineDirective = PP.getLangOpts().MicrosoftExt;
   }
 
   void SetEmittedTokensOnThisLine() { EmittedTokensOnThisLine = true; }

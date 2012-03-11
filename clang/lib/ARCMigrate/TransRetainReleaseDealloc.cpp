@@ -173,7 +173,7 @@ private:
       return;
     SourceManager &SM = Pass.Ctx.getSourceManager();
     StringRef MacroName = Lexer::getImmediateMacroName(Loc, SM,
-                                                     Pass.Ctx.getLangOptions());
+                                                     Pass.Ctx.getLangOpts());
     bool isGCDOrXPC = llvm::StringSwitch<bool>(MacroName)
         .Case("dispatch_retain", true)
         .Case("dispatch_release", true)

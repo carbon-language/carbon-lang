@@ -805,7 +805,7 @@ bool ItaniumCXXABI::NeedsArrayCookie(const CXXNewExpr *expr) {
   // Automatic Reference Counting:
   //   We need an array cookie for pointers with strong or weak lifetime.
   QualType AllocatedType = expr->getAllocatedType();
-  if (getContext().getLangOptions().ObjCAutoRefCount &&
+  if (getContext().getLangOpts().ObjCAutoRefCount &&
       AllocatedType->isObjCLifetimeType()) {
     switch (AllocatedType.getObjCLifetime()) {
     case Qualifiers::OCL_None:
@@ -1071,7 +1071,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   // We only need to use thread-safe statics for local variables;
   // global initialization is always single-threaded.
   bool threadsafe =
-    (getContext().getLangOptions().ThreadsafeStatics && D.isLocalVarDecl());
+    (getContext().getLangOpts().ThreadsafeStatics && D.isLocalVarDecl());
 
   llvm::IntegerType *GuardTy;
 

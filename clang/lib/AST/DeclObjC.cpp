@@ -628,7 +628,7 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
   bool selfIsPseudoStrong = false;
   bool selfIsConsumed = false;
   
-  if (Context.getLangOptions().ObjCAutoRefCount) {
+  if (Context.getLangOpts().ObjCAutoRefCount) {
     if (isInstanceMethod()) {
       selfIsConsumed = hasAttr<NSConsumesSelfAttr>();
 

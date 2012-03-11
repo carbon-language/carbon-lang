@@ -97,7 +97,7 @@ public:
     bool Invalid = false;
     StringRef Spell = Lexer::getSpelling(
                                   SM.getSpellingLoc(TL.getAttrEnumOperandLoc()),
-                                  Buf, SM, Ctx.getLangOptions(), &Invalid);
+                                  Buf, SM, Ctx.getLangOpts(), &Invalid);
     if (Invalid)
       return false;
     MigrationContext::GCAttrOccurrence::AttrKind Kind;

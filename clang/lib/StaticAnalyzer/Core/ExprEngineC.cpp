@@ -366,7 +366,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       
       // We bound the temp obj region to the CXXConstructExpr. Now recover
       // the lazy compound value when the variable is not a reference.
-      if (AMgr.getLangOptions().CPlusPlus && VD->getType()->isRecordType() && 
+      if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() && 
           !VD->getType()->isReferenceType() && isa<loc::MemRegionVal>(InitVal)){
         InitVal = state->getSVal(cast<loc::MemRegionVal>(InitVal).getRegion());
         assert(isa<nonloc::LazyCompoundVal>(InitVal));

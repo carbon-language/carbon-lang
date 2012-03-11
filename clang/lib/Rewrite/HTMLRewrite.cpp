@@ -360,7 +360,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
 
   const SourceManager &SM = PP.getSourceManager();
   const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
-  Lexer L(FID, FromFile, SM, PP.getLangOptions());
+  Lexer L(FID, FromFile, SM, PP.getLangOpts());
   const char *BufferStart = L.getBufferStart();
 
   // Inform the preprocessor that we want to retain comments as tokens, so we
@@ -450,7 +450,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
   std::vector<Token> TokenStream;
 
   const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
-  Lexer L(FID, FromFile, SM, PP.getLangOptions());
+  Lexer L(FID, FromFile, SM, PP.getLangOpts());
 
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.

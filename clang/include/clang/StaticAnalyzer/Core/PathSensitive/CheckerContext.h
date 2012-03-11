@@ -78,8 +78,8 @@ public:
     return Eng.getContext();
   }
 
-  const LangOptions &getLangOptions() const {
-    return Eng.getContext().getLangOptions();
+  const LangOptions &getLangOpts() const {
+    return Eng.getContext().getLangOpts();
   }
 
   const LocationContext *getLocationContext() const {

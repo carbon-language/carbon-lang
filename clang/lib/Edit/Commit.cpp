@@ -36,7 +36,7 @@ CharSourceRange Commit::Edit::getInsertFromRange(SourceManager &SM) const {
 }
 
 Commit::Commit(EditedSource &Editor)
-  : SourceMgr(Editor.getSourceManager()), LangOpts(Editor.getLangOptions()),
+  : SourceMgr(Editor.getSourceManager()), LangOpts(Editor.getLangOpts()),
     PPRec(Editor.getPreprocessingRecord()),
     Editor(&Editor), IsCommitable(true) { }
 

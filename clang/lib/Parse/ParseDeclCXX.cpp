@@ -150,7 +150,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
 
   // If we're still good, complain about inline namespaces in non-C++0x now.
   if (InlineLoc.isValid())
-    Diag(InlineLoc, getLang().CPlusPlus0x ?
+    Diag(InlineLoc, getLangOpts().CPlusPlus0x ?
          diag::warn_cxx98_compat_inline_namespace : diag::ext_inline_namespace);
 
   // Enter a scope for the namespace.
@@ -490,7 +490,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     // Where can GNU attributes appear?
     ConsumeToken();
 
-    Diag(Tok.getLocation(), getLang().CPlusPlus0x ?
+    Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
          diag::warn_cxx98_compat_alias_declaration :
          diag::ext_alias_declaration);
 
@@ -593,7 +593,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   assert((Tok.is(tok::kw_static_assert) || Tok.is(tok::kw__Static_assert)) &&
          "Not a static_assert declaration");
 
-  if (Tok.is(tok::kw__Static_assert) && !getLang().C11)
+  if (Tok.is(tok::kw__Static_assert) && !getLangOpts().C11)
     Diag(Tok, diag::ext_c11_static_assert);
   if (Tok.is(tok::kw_static_assert))
     Diag(Tok, diag::warn_cxx98_compat_static_assert);
@@ -1020,7 +1020,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec &SS = DS.getTypeSpecScope();
-  if (getLang().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     // "FOO : BAR" is not a potential typo for "FOO::BAR".
     ColonProtectionRAIIObject X(*this);
 
@@ -1041,7 +1041,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     Name = Tok.getIdentifierInfo();
     NameLoc = ConsumeToken();
 
-    if (Tok.is(tok::less) && getLang().CPlusPlus) {
+    if (Tok.is(tok::less) && getLangOpts().CPlusPlus) {
       // The name was supposed to refer to a template, but didn't.
       // Eat the template argument list and try to continue parsing this as
       // a class (or template thereof).
@@ -1130,7 +1130,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (SuppressDeclarations)
     TUK = Sema::TUK_Reference;
   else if (Tok.is(tok::l_brace) || 
-           (getLang().CPlusPlus && Tok.is(tok::colon)) ||
+           (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
            isCXX0XFinalKeyword()) {
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
@@ -1313,9 +1313,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // If there is a body, parse it and inform the actions module.
   if (TUK == Sema::TUK_Definition) {
     assert(Tok.is(tok::l_brace) ||
-           (getLang().CPlusPlus && Tok.is(tok::colon)) ||
+           (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
            isCXX0XFinalKeyword());
-    if (getLang().CPlusPlus)
+    if (getLangOpts().CPlusPlus)
       ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempResult.get());
     else
       ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
@@ -1397,7 +1397,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
     case tok::r_brace:  // struct bar { struct foo {...} }
       // Missing ';' at end of struct is accepted as an extension in C mode.
-      if (!getLang().CPlusPlus)
+      if (!getLangOpts().CPlusPlus)
         ExpectedSemi = false;
       break;
     }
@@ -1576,7 +1576,7 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///         override
 ///         final
 VirtSpecifiers::Specifier Parser::isCXX0XVirtSpecifier(const Token &Tok) const {
-  if (!getLang().CPlusPlus)
+  if (!getLangOpts().CPlusPlus)
     return VirtSpecifiers::VS_None;
 
   if (Tok.is(tok::identifier)) {
@@ -1617,7 +1617,7 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
 
-    Diag(Tok.getLocation(), getLang().CPlusPlus0x ?
+    Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
          diag::warn_cxx98_compat_override_control_keyword :
          diag::ext_override_control_keyword)
       << VirtSpecifiers::getSpecifierName(Specifier);
@@ -1628,7 +1628,7 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
 /// isCXX0XFinalKeyword - Determine whether the next token is a C++0x
 /// contextual 'final' keyword.
 bool Parser::isCXX0XFinalKeyword() const {
-  if (!getLang().CPlusPlus)
+  if (!getLangOpts().CPlusPlus)
     return false;
 
   if (!Tok.is(tok::identifier))
@@ -1683,7 +1683,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                        const ParsedTemplateInfo &TemplateInfo,
                                        ParsingDeclRAIIObject *TemplateDiags) {
   if (Tok.is(tok::at)) {
-    if (getLang().ObjC1 && NextToken().isObjCAtKeyword(tok::objc_defs))
+    if (getLangOpts().ObjC1 && NextToken().isObjCAtKeyword(tok::objc_defs))
       Diag(Tok, diag::err_at_defs_cxx);
     else
       Diag(Tok, diag::err_at_in_class);
@@ -1842,7 +1842,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // MSVC permits pure specifier on inline functions declared at class scope.
     // Hence check for =0 before checking for function definition.
-    if (getLang().MicrosoftExt && Tok.is(tok::equal) &&
+    if (getLangOpts().MicrosoftExt && Tok.is(tok::equal) &&
         DeclaratorInfo.isFunctionDeclarator() && 
         NextToken().is(tok::numeric_constant)) {
       EqualLoc = ConsumeToken();
@@ -1859,7 +1859,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // In C++11, a non-function declarator followed by an open brace is a
     // braced-init-list for an in-class member initialization, not an
     // erroneous function definition.
-    if (Tok.is(tok::l_brace) && !getLang().CPlusPlus0x) {
+    if (Tok.is(tok::l_brace) && !getLangOpts().CPlusPlus0x) {
       DefinitionKind = FDK_Definition;
     } else if (DeclaratorInfo.isFunctionDeclarator()) {
       if (Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) {
@@ -2006,7 +2006,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // Handle the initializer.
     if (HasDeferredInitializer) {
       // The initializer was deferred; parse it and cache the tokens.
-      Diag(Tok, getLang().CPlusPlus0x ?
+      Diag(Tok, getLangOpts().CPlusPlus0x ?
            diag::warn_cxx98_compat_nonstatic_member_init :
            diag::ext_nonstatic_member_init);
 
@@ -2212,11 +2212,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   SourceLocation FinalLoc;
 
   // Parse the optional 'final' keyword.
-  if (getLang().CPlusPlus && Tok.is(tok::identifier)) {
+  if (getLangOpts().CPlusPlus && Tok.is(tok::identifier)) {
     assert(isCXX0XFinalKeyword() && "not a class definition");
     FinalLoc = ConsumeToken();
 
-    Diag(FinalLoc, getLang().CPlusPlus0x ?
+    Diag(FinalLoc, getLangOpts().CPlusPlus0x ?
          diag::warn_cxx98_compat_override_control_keyword :
          diag::ext_override_control_keyword) << "final";
   }
@@ -2256,7 +2256,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
       // Each iteration of this loop reads one member-declaration.
 
-      if (getLang().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
+      if (getLangOpts().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
           Tok.is(tok::kw___if_not_exists))) {
         ParseMicrosoftIfExistsClassDeclaration((DeclSpec::TST)TagType, CurAS);
         continue;
@@ -2483,7 +2483,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
 
   // Parse the '('.
-  if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
+  if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
 
     ExprResult InitList = ParseBraceInitializer();
@@ -2522,7 +2522,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
                                        EllipsisLoc);
   }
 
-  Diag(Tok, getLang().CPlusPlus0x ? diag::err_expected_lparen_or_lbrace
+  Diag(Tok, getLangOpts().CPlusPlus0x ? diag::err_expected_lparen_or_lbrace
                                   : diag::err_expected_lparen);
   return true;
 }
@@ -2630,7 +2630,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
   // can throw anything".
   if (Tok.is(tok::ellipsis)) {
     SourceLocation EllipsisLoc = ConsumeToken();
-    if (!getLang().MicrosoftExt)
+    if (!getLangOpts().MicrosoftExt)
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
     T.consumeClose();
     SpecificationRange.setEnd(T.getCloseLocation());

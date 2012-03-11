@@ -50,7 +50,7 @@ public:
       StrAlloc(/*size=*/512) { }
 
   const SourceManager &getSourceManager() const { return SourceMgr; }
-  const LangOptions &getLangOptions() const { return LangOpts; }
+  const LangOptions &getLangOpts() const { return LangOpts; }
   const PreprocessingRecord *getPreprocessingRecord() const { return PPRec; }
 
   bool canInsertInOffset(SourceLocation OrigLoc, FileOffset Offs);

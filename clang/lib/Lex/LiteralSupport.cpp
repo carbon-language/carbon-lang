@@ -482,7 +482,7 @@ NumericLiteralParser(const char *begin, const char *end,
       continue;  // Success.
     case 'i':
     case 'I':
-      if (PP.getLangOptions().MicrosoftExt) {
+      if (PP.getLangOpts().MicrosoftExt) {
         if (isFPConstant || isLong || isLongLong) break;
 
         // Allow i8, i16, i32, i64, and i128.
@@ -542,7 +542,7 @@ NumericLiteralParser(const char *begin, const char *end,
   }
 
   if (s != ThisTokEnd) {
-    if (PP.getLangOptions().CPlusPlus0x && s == SuffixBegin && *s == '_') {
+    if (PP.getLangOpts().CPlusPlus0x && s == SuffixBegin && *s == '_') {
       // We have a ud-suffix! By C++11 [lex.ext]p10, ud-suffixes not starting
       // with an '_' are ill-formed.
       saw_ud_suffix = true;
@@ -608,7 +608,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       }
       s = first_non_digit;
 
-      if (!PP.getLangOptions().HexFloats)
+      if (!PP.getLangOpts().HexFloats)
         PP.Diag(TokLoc, diag::ext_hexconstant_invalid);
     } else if (saw_period) {
       PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
@@ -902,7 +902,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       unsigned short UcnLen = 0;
       if (!ProcessUCNEscape(TokBegin, begin, end, *buffer_begin, UcnLen,
                             FullSourceLoc(Loc, PP.getSourceManager()),
-                            &PP.getDiagnostics(), PP.getLangOptions(),
+                            &PP.getDiagnostics(), PP.getLangOpts(),
                             true))
       {
         HadError = true;
@@ -967,7 +967,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   // character constants are not sign extended in the this implementation:
   // '\xFF\xFF' = 65536 and '\x0\xFF' = 255, which matches GCC.
   if (isAscii() && NumCharsSoFar == 1 && (Value & 128) &&
-      PP.getLangOptions().CharIsSigned)
+      PP.getLangOpts().CharIsSigned)
     Value = (signed char)Value;
 }
 
@@ -1027,7 +1027,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                     Preprocessor &PP, bool Complain)
-  : SM(PP.getSourceManager()), Features(PP.getLangOptions()),
+  : SM(PP.getSourceManager()), Features(PP.getLangOpts()),
     Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() : 0),
     MaxTokenLength(0), SizeBound(0), CharByteWidth(0), Kind(tok::unknown),
     ResultPtr(ResultBuf.data()), hadError(false), Pascal(false) {

@@ -527,7 +527,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       // Make a lexer to lex this string from.  Lex just this one token.
       // Make a lexer object so that we lex and expand the paste result.
       Lexer TL(SourceMgr.getLocForStartOfFile(LocFileID),
-               PP.getLangOptions(), ScratchBufStart,
+               PP.getLangOpts(), ScratchBufStart,
                ResultTokStrPtr, ResultTokStrPtr+LHSLen+RHSLen);
 
       // Lex a token in raw mode.  This way it won't look up identifiers
@@ -546,14 +546,14 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       if (isInvalid) {
         // Test for the Microsoft extension of /##/ turning into // here on the
         // error path.
-        if (PP.getLangOptions().MicrosoftExt && Tok.is(tok::slash) &&
+        if (PP.getLangOpts().MicrosoftExt && Tok.is(tok::slash) &&
             RHS.is(tok::slash)) {
           HandleMicrosoftCommentPaste(Tok);
           return true;
         }
 
         // Do not emit the error when preprocessing assembler code.
-        if (!PP.getLangOptions().AsmPreprocessor) {
+        if (!PP.getLangOpts().AsmPreprocessor) {
           // Explicitly convert the token location to have proper expansion
           // information so that the user knows where it came from.
           SourceManager &SM = PP.getSourceManager();
@@ -563,7 +563,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           // error to a warning that defaults to an error.  This allows
           // disabling it.
           PP.Diag(Loc,
-                  PP.getLangOptions().MicrosoftExt ? diag::err_pp_bad_paste_ms 
+                  PP.getLangOpts().MicrosoftExt ? diag::err_pp_bad_paste_ms 
                                                    : diag::err_pp_bad_paste)
             << Buffer.str();
         }

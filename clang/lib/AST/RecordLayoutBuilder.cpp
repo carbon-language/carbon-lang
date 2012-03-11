@@ -1396,7 +1396,7 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
   IsMsStruct = D->hasAttr<MsStructAttr>();
 
   // Honor the default struct packing maximum alignment flag.
-  if (unsigned DefaultMaxFieldAlignment = Context.getLangOptions().PackStruct) {
+  if (unsigned DefaultMaxFieldAlignment = Context.getLangOpts().PackStruct) {
     MaxFieldAlignment = CharUnits::fromQuantity(DefaultMaxFieldAlignment);
   }
 
@@ -1658,7 +1658,7 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
                                              uint64_t TypeSize,
                                              bool FieldPacked,
                                              const FieldDecl *D) {
-  assert(Context.getLangOptions().CPlusPlus &&
+  assert(Context.getLangOpts().CPlusPlus &&
          "Can only have wide bit-fields in C++!");
 
   // Itanium C++ ABI 2.4:
@@ -1900,7 +1900,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       ZeroLengthBitfield = 0;
     }
 
-    if (Context.getLangOptions().MSBitfields || IsMsStruct) {
+    if (Context.getLangOpts().MSBitfields || IsMsStruct) {
       // If MS bitfield layout is required, figure out what type is being
       // laid out and align the field to the width of that type.
       
@@ -1987,7 +1987,7 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   }
   
   // In C++, records cannot be of size 0.
-  if (Context.getLangOptions().CPlusPlus && getSizeInBits() == 0) {
+  if (Context.getLangOpts().CPlusPlus && getSizeInBits() == 0) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
       // Compatibility with gcc requires a class (pod or non-pod)
       // which is not empty but of size 0; such as having fields of
@@ -2263,9 +2263,9 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
   ASTRecordLayouts[D] = NewEntry;
 
-  if (getLangOptions().DumpRecordLayouts) {
+  if (getLangOpts().DumpRecordLayouts) {
     llvm::errs() << "\n*** Dumping AST Record Layout\n";
-    DumpRecordLayout(D, llvm::errs(), getLangOptions().DumpRecordLayoutsSimple);
+    DumpRecordLayout(D, llvm::errs(), getLangOpts().DumpRecordLayoutsSimple);
   }
 
   return *NewEntry;

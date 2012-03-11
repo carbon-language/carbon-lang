@@ -100,7 +100,7 @@ llvm::Constant *CodeGenFunction::getUnwindResumeFn() {
   llvm::FunctionType *FTy =
     llvm::FunctionType::get(VoidTy, Int8PtrTy, /*IsVarArgs=*/false);
 
-  if (CGM.getLangOptions().SjLjExceptions)
+  if (CGM.getLangOpts().SjLjExceptions)
     return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
   return CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume");
 }
@@ -109,7 +109,7 @@ llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
   llvm::FunctionType *FTy =
     llvm::FunctionType::get(VoidTy, Int8PtrTy, /*IsVarArgs=*/false);
 
-  if (CGM.getLangOptions().SjLjExceptions)
+  if (CGM.getLangOpts().SjLjExceptions)
     return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume_or_Rethrow");
   return CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume_or_Rethrow");
 }
@@ -123,9 +123,9 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
   StringRef name;
 
   // In C++, use std::terminate().
-  if (CGF.getLangOptions().CPlusPlus)
+  if (CGF.getLangOpts().CPlusPlus)
     name = "_ZSt9terminatev"; // FIXME: mangling!
-  else if (CGF.getLangOptions().ObjC1 &&
+  else if (CGF.getLangOpts().ObjC1 &&
            CGF.CGM.getCodeGenOpts().ObjCRuntimeHasTerminate)
     name = "objc_terminate";
   else
@@ -300,11 +300,11 @@ void CodeGenModule::SimplifyPersonality() {
     return;
 
   // If we're not in ObjC++ -fexceptions, there's nothing to do.
-  if (!Features.CPlusPlus || !Features.ObjC1 || !Features.Exceptions)
+  if (!LangOpts.CPlusPlus || !LangOpts.ObjC1 || !LangOpts.Exceptions)
     return;
 
-  const EHPersonality &ObjCXX = EHPersonality::get(Features);
-  const EHPersonality &CXX = getCXXPersonality(Features);
+  const EHPersonality &ObjCXX = EHPersonality::get(LangOpts);
+  const EHPersonality &CXX = getCXXPersonality(LangOpts);
   if (&ObjCXX == &CXX)
     return;
 
@@ -470,7 +470,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 }
 
 void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
-  if (!CGM.getLangOptions().CXXExceptions)
+  if (!CGM.getLangOpts().CXXExceptions)
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
@@ -538,7 +538,7 @@ static void emitFilterDispatchBlock(CodeGenFunction &CGF,
 }
 
 void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
-  if (!CGM.getLangOptions().CXXExceptions)
+  if (!CGM.getLangOpts().CXXExceptions)
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
@@ -661,7 +661,7 @@ llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   assert(EHStack.requiresLandingPad());
   assert(!EHStack.empty());
 
-  if (!CGM.getLangOptions().Exceptions)
+  if (!CGM.getLangOpts().Exceptions)
     return 0;
 
   // Check the innermost scope for a cached landing pad.  If this is
@@ -751,7 +751,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // Save the current IR generation state.
   CGBuilderTy::InsertPoint savedIP = Builder.saveAndClearIP();
 
-  const EHPersonality &personality = EHPersonality::get(getLangOptions());
+  const EHPersonality &personality = EHPersonality::get(getLangOpts());
 
   // Create and configure the landing pad.
   llvm::BasicBlock *lpad = createBasicBlock("lpad");
@@ -1494,7 +1494,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   Builder.SetInsertPoint(TerminateLandingPad);
 
   // Tell the backend that this is a landing pad.
-  const EHPersonality &Personality = EHPersonality::get(CGM.getLangOptions());
+  const EHPersonality &Personality = EHPersonality::get(CGM.getLangOpts());
   llvm::LandingPadInst *LPadInst =
     Builder.CreateLandingPad(llvm::StructType::get(Int8PtrTy, Int32Ty, NULL),
                              getOpaquePersonalityFn(CGM, Personality), 0);
@@ -1541,7 +1541,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
   EHResumeBlock = createBasicBlock("eh.resume");
   Builder.SetInsertPoint(EHResumeBlock);
 
-  const EHPersonality &Personality = EHPersonality::get(CGM.getLangOptions());
+  const EHPersonality &Personality = EHPersonality::get(CGM.getLangOpts());
 
   // This can always be a call because we necessarily didn't find
   // anything on the EH stack which needs our help.

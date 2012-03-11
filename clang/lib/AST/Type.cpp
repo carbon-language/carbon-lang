@@ -580,7 +580,7 @@ bool Type::isIntegralType(ASTContext &Ctx) const {
     return BT->getKind() >= BuiltinType::Bool &&
     BT->getKind() <= BuiltinType::Int128;
   
-  if (!Ctx.getLangOptions().CPlusPlus)
+  if (!Ctx.getLangOpts().CPlusPlus)
     if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
       return ET->getDecl()->isComplete(); // Complete enum types are integral in C.
   
@@ -907,7 +907,7 @@ bool QualType::isPODType(ASTContext &Context) const {
   if ((*this)->isIncompleteType())
     return false;
 
-  if (Context.getLangOptions().ObjCAutoRefCount) {
+  if (Context.getLangOpts().ObjCAutoRefCount) {
     switch (getObjCLifetime()) {
     case Qualifiers::OCL_ExplicitNone:
       return true;
@@ -969,7 +969,7 @@ bool QualType::isTrivialType(ASTContext &Context) const {
   if ((*this)->isIncompleteType())
     return false;
   
-  if (Context.getLangOptions().ObjCAutoRefCount) {
+  if (Context.getLangOpts().ObjCAutoRefCount) {
     switch (getObjCLifetime()) {
     case Qualifiers::OCL_ExplicitNone:
       return true;
@@ -1019,7 +1019,7 @@ bool QualType::isTriviallyCopyableType(ASTContext &Context) const {
   if ((*this)->isArrayType())
     return Context.getBaseElementType(*this).isTrivialType(Context);
 
-  if (Context.getLangOptions().ObjCAutoRefCount) {
+  if (Context.getLangOpts().ObjCAutoRefCount) {
     switch (getObjCLifetime()) {
     case Qualifiers::OCL_ExplicitNone:
       return true;
@@ -1164,7 +1164,7 @@ bool QualType::isCXX11PODType(ASTContext &Context) const {
   if (ty->isDependentType())
     return false;
 
-  if (Context.getLangOptions().ObjCAutoRefCount) {
+  if (Context.getLangOpts().ObjCAutoRefCount) {
     switch (getObjCLifetime()) {
     case Qualifiers::OCL_ExplicitNone:
       return true;
@@ -1467,7 +1467,7 @@ QualType QualType::getNonLValueExprType(ASTContext &Context) const {
   //   have cv-unqualified types.
   //
   // See also C99 6.3.2.1p2.
-  if (!Context.getLangOptions().CPlusPlus ||
+  if (!Context.getLangOpts().CPlusPlus ||
       (!getTypePtr()->isDependentType() && !getTypePtr()->isRecordType()))
     return getUnqualifiedType();
   
@@ -2234,7 +2234,7 @@ bool QualType::hasTrivialAssignment(ASTContext &Context, bool Copying) const {
   case Qualifiers::OCL_Autoreleasing:
   case Qualifiers::OCL_Strong:
   case Qualifiers::OCL_Weak:
-    return !Context.getLangOptions().ObjCAutoRefCount;
+    return !Context.getLangOpts().ObjCAutoRefCount;
   }
   
   if (const CXXRecordDecl *Record 

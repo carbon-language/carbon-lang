@@ -378,7 +378,7 @@ void Sema::ActOnPragmaFPContract(tok::OnOffSwitch OOS) {
     FPFeatures.fp_contract = 0; 
     break;
   case tok::OOS_DEFAULT:
-    FPFeatures.fp_contract = getLangOptions().DefaultFPContract;
+    FPFeatures.fp_contract = getLangOpts().DefaultFPContract;
     break;
   }
 }

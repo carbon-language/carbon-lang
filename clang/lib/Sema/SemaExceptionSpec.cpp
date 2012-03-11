@@ -102,7 +102,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
   unsigned DiagID = diag::err_mismatched_exception_spec;
-  if (getLangOptions().MicrosoftExt)
+  if (getLangOpts().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
   
   if (!CheckEquivalentExceptionSpec(PDiag(DiagID),
@@ -171,7 +171,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
     // If exceptions are disabled, suppress the warning about missing
     // exception specifications for new and delete operators.
-    if (!getLangOptions().CXXExceptions) {
+    if (!getLangOpts().CXXExceptions) {
       switch (New->getDeclName().getCXXOverloadedOperator()) {
       case OO_New:
       case OO_Array_New:
@@ -265,7 +265,7 @@ bool Sema::CheckEquivalentExceptionSpec(
     const FunctionProtoType *Old, SourceLocation OldLoc,
     const FunctionProtoType *New, SourceLocation NewLoc) {
   unsigned DiagID = diag::err_mismatched_exception_spec;
-  if (getLangOptions().MicrosoftExt)
+  if (getLangOpts().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
   return CheckEquivalentExceptionSpec(
                                       PDiag(DiagID),
@@ -286,7 +286,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
                                         bool AllowNoexceptAllMatchWithNoSpec,
                                         bool IsOperatorNew) {
   // Just completely ignore this under -fno-exceptions.
-  if (!getLangOptions().CXXExceptions)
+  if (!getLangOpts().CXXExceptions)
     return false;
 
   if (MissingExceptionSpecification)
@@ -380,7 +380,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   // As a special compatibility feature, under C++0x we accept no spec and
   // throw(std::bad_alloc) as equivalent for operator new and operator new[].
   // This is because the implicit declaration changed, but old code would break.
-  if (getLangOptions().CPlusPlus0x && IsOperatorNew) {
+  if (getLangOpts().CPlusPlus0x && IsOperatorNew) {
     const FunctionProtoType *WithExceptions = 0;
     if (OldEST == EST_None && NewEST == EST_Dynamic)
       WithExceptions = New;
@@ -474,7 +474,7 @@ bool Sema::CheckExceptionSpecSubset(
     const FunctionProtoType *Subset, SourceLocation SubLoc) {
 
   // Just auto-succeed under -fno-exceptions.
-  if (!getLangOptions().CXXExceptions)
+  if (!getLangOpts().CXXExceptions)
     return false;
 
   // FIXME: As usual, we could be more specific in our error messages, but
@@ -702,7 +702,7 @@ bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType)
 
 bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                                 const CXXMethodDecl *Old) {
-  if (getLangOptions().CPlusPlus0x && isa<CXXDestructorDecl>(New)) {
+  if (getLangOpts().CPlusPlus0x && isa<CXXDestructorDecl>(New)) {
     // Don't check uninstantiated template destructors at all. We can only
     // synthesize correct specs after the template is instantiated.
     if (New->getParent()->isDependentType())
@@ -716,7 +716,7 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
     }
   }
   unsigned DiagID = diag::err_override_exception_spec;
-  if (getLangOptions().MicrosoftExt)
+  if (getLangOpts().MicrosoftExt)
     DiagID = diag::warn_override_exception_spec;
   return CheckExceptionSpecSubset(PDiag(DiagID),
                                   PDiag(diag::note_overridden_virtual_function),

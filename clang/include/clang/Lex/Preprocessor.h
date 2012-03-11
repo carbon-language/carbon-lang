@@ -62,7 +62,7 @@ class ModuleLoader;
 ///
 class Preprocessor : public RefCountedBase<Preprocessor> {
   DiagnosticsEngine        *Diags;
-  LangOptions       &Features;
+  LangOptions       &LangOpts;
   const TargetInfo  *Target;
   FileManager       &FileMgr;
   SourceManager     &SourceMgr;
@@ -357,7 +357,7 @@ public:
   DiagnosticsEngine &getDiagnostics() const { return *Diags; }
   void setDiagnostics(DiagnosticsEngine &D) { Diags = &D; }
 
-  const LangOptions &getLangOptions() const { return Features; }
+  const LangOptions &getLangOpts() const { return LangOpts; }
   const TargetInfo &getTargetInfo() const { return *Target; }
   FileManager &getFileManager() const { return FileMgr; }
   SourceManager &getSourceManager() const { return SourceMgr; }
@@ -782,7 +782,7 @@ public:
   StringRef getSpelling(SourceLocation loc,
                               SmallVectorImpl<char> &buffer,
                               bool *invalid = 0) const {
-    return Lexer::getSpelling(loc, buffer, SourceMgr, Features, invalid);
+    return Lexer::getSpelling(loc, buffer, SourceMgr, LangOpts, invalid);
   }
 
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
@@ -793,7 +793,7 @@ public:
   ///
   /// \param Invalid If non-null, will be set \c true if an error occurs.
   std::string getSpelling(const Token &Tok, bool *Invalid = 0) const {
-    return Lexer::getSpelling(Tok, SourceMgr, Features, Invalid);
+    return Lexer::getSpelling(Tok, SourceMgr, LangOpts, Invalid);
   }
 
   /// getSpelling - This method is used to get the spelling of a token into a
@@ -808,7 +808,7 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer,
                        bool *Invalid = 0) const {
-    return Lexer::getSpelling(Tok, Buffer, SourceMgr, Features, Invalid);
+    return Lexer::getSpelling(Tok, Buffer, SourceMgr, LangOpts, Invalid);
   }
 
   /// getSpelling - This method is used to get the spelling of a token into a
@@ -843,7 +843,7 @@ public:
   /// refers to the SourceManager-owned buffer of the source where that macro
   /// name is spelled. Thus, the result shouldn't out-live the SourceManager.
   StringRef getImmediateMacroName(SourceLocation Loc) {
-    return Lexer::getImmediateMacroName(Loc, SourceMgr, getLangOptions());
+    return Lexer::getImmediateMacroName(Loc, SourceMgr, getLangOpts());
   }
 
   /// CreateString - Plop the specified string into a scratch buffer and set the
@@ -869,7 +869,7 @@ public:
   /// location pointing just past the end of the token; an offset of 1 produces
   /// a source location pointing to the last character in the token, etc.
   SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset = 0) {
-    return Lexer::getLocForEndOfToken(Loc, Offset, SourceMgr, Features);
+    return Lexer::getLocForEndOfToken(Loc, Offset, SourceMgr, LangOpts);
   }
 
   /// \brief Returns true if the given MacroID location points at the first
@@ -879,7 +879,7 @@ public:
   /// begin location of the macro.
   bool isAtStartOfMacroExpansion(SourceLocation loc,
                                  SourceLocation *MacroBegin = 0) const {
-    return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, Features,
+    return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, LangOpts,
                                             MacroBegin);
   }
 
@@ -890,7 +890,7 @@ public:
   /// end location of the macro.
   bool isAtEndOfMacroExpansion(SourceLocation loc,
                                SourceLocation *MacroEnd = 0) const {
-    return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, Features, MacroEnd);
+    return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, LangOpts, MacroEnd);
   }
 
   /// DumpToken - Print the token to stderr, used for debugging.
@@ -903,7 +903,7 @@ public:
   /// token, return a new location that specifies a character within the token.
   SourceLocation AdvanceToTokenCharacter(SourceLocation TokStart,
                                          unsigned Char) const {
-    return Lexer::AdvanceToTokenCharacter(TokStart, Char, SourceMgr, Features);
+    return Lexer::AdvanceToTokenCharacter(TokStart, Char, SourceMgr, LangOpts);
   }
 
   /// IncrementPasteCounter - Increment the counters for the number of token

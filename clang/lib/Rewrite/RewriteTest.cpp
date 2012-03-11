@@ -18,7 +18,7 @@
 
 void clang::DoRewriteTest(Preprocessor &PP, raw_ostream* OS) {
   SourceManager &SM = PP.getSourceManager();
-  const LangOptions &LangOpts = PP.getLangOptions();
+  const LangOptions &LangOpts = PP.getLangOpts();
 
   TokenRewriter Rewriter(SM.getMainFileID(), SM, LangOpts);
 

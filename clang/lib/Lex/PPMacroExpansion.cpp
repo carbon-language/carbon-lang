@@ -101,7 +101,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_warning      = RegisterBuiltinMacro(*this, "__has_warning");
 
   // Microsoft Extensions.
-  if (Features.MicrosoftExt) 
+  if (LangOpts.MicrosoftExt) 
     Ident__pragma = RegisterBuiltinMacro(*this, "__pragma");
   else
     Ident__pragma = 0;
@@ -433,8 +433,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 
     // Empty arguments are standard in C99 and C++0x, and are supported as an extension in
     // other modes.
-    if (ArgTokens.size() == ArgTokenStart && !Features.C99)
-      Diag(Tok, Features.CPlusPlus0x ?
+    if (ArgTokens.size() == ArgTokenStart && !LangOpts.C99)
+      Diag(Tok, LangOpts.CPlusPlus0x ?
            diag::warn_cxx98_compat_empty_fnmacro_arg :
            diag::ext_empty_fnmacro_arg);
 
@@ -588,7 +588,7 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
 /// HasFeature - Return true if we recognize and implement the feature
 /// specified by the identifier as a standard language feature.
 static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
-  const LangOptions &LangOpts = PP.getLangOptions();
+  const LangOptions &LangOpts = PP.getLangOpts();
   StringRef Feature = II->getName();
 
   // Normalize the feature name, __foo__ becomes foo.
@@ -732,7 +732,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
       DiagnosticsEngine::Ext_Error)
     return false;
 
-  const LangOptions &LangOpts = PP.getLangOptions();
+  const LangOptions &LangOpts = PP.getLangOpts();
   StringRef Extension = II->getName();
 
   // Normalize the extension name, __foo__ becomes foo.

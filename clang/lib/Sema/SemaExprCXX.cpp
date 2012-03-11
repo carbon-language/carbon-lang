@@ -541,7 +541,7 @@ Sema::ActOnCXXThrow(Scope *S, SourceLocation OpLoc, Expr *Ex) {
 ExprResult Sema::BuildCXXThrow(SourceLocation OpLoc, Expr *Ex, 
                                bool IsThrownVarInScope) {
   // Don't report an error if 'throw' is used in system headers.
-  if (!getLangOptions().CXXExceptions &&
+  if (!getLangOpts().CXXExceptions &&
       !getSourceManager().isInSystemHeader(OpLoc))
     Diag(OpLoc, diag::err_exceptions_disabled) << "throw";
   
@@ -1102,7 +1102,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   }
 
   // In ARC, infer 'retaining' for the allocated 
-  if (getLangOptions().ObjCAutoRefCount &&
+  if (getLangOpts().ObjCAutoRefCount &&
       AllocType.getObjCLifetime() == Qualifiers::OCL_None &&
       AllocType->isObjCLifetimeType()) {
     AllocType = Context.getLifetimeQualifiedType(AllocType,
@@ -1119,14 +1119,14 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (ArraySize && !ArraySize->isTypeDependent()) {
     ExprResult ConvertedSize = ConvertToIntegralOrEnumerationType(
       StartLoc, ArraySize,
-      PDiag(diag::err_array_size_not_integral) << getLangOptions().CPlusPlus0x,
+      PDiag(diag::err_array_size_not_integral) << getLangOpts().CPlusPlus0x,
       PDiag(diag::err_array_size_incomplete_type)
         << ArraySize->getSourceRange(),
       PDiag(diag::err_array_size_explicit_conversion),
       PDiag(diag::note_array_size_conversion),
       PDiag(diag::err_array_size_ambiguous_conversion),
       PDiag(diag::note_array_size_conversion),
-      PDiag(getLangOptions().CPlusPlus0x ?
+      PDiag(getLangOpts().CPlusPlus0x ?
               diag::warn_cxx98_compat_array_size_conversion :
               diag::ext_array_size_conversion),
       /*AllowScopedEnumerations*/ false);
@@ -1156,7 +1156,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
         if (Value < llvm::APSInt(
                         llvm::APInt::getNullValue(Value.getBitWidth()),
                                  Value.isUnsigned())) {
-          if (getLangOptions().CPlusPlus0x)
+          if (getLangOpts().CPlusPlus0x)
             Diag(ArraySize->getLocStart(),
                  diag::warn_typecheck_negative_array_new_size)
               << ArraySize->getSourceRange();
@@ -1168,7 +1168,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
           unsigned ActiveSizeBits =
             ConstantArrayType::getNumAddressingBits(Context, AllocType, Value);
           if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
-            if (getLangOptions().CPlusPlus0x)
+            if (getLangOpts().CPlusPlus0x)
               Diag(ArraySize->getLocStart(),
                    diag::warn_array_new_too_large)
                 << Value.toString(10)
@@ -1192,7 +1192,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
 
     // ARC: warn about ABI issues.
-    if (getLangOptions().ObjCAutoRefCount) {
+    if (getLangOpts().ObjCAutoRefCount) {
       QualType BaseAllocType = Context.getBaseElementType(AllocType);
       if (BaseAllocType.hasStrongOrWeakObjCLifetime())
         Diag(StartLoc, diag::warn_err_new_delete_object_array)
@@ -1381,7 +1381,7 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
   else if (unsigned AddressSpace = AllocType.getAddressSpace())
     return Diag(Loc, diag::err_address_space_qualified_new)
       << AllocType.getUnqualifiedType() << AddressSpace;
-  else if (getLangOptions().ObjCAutoRefCount) {
+  else if (getLangOpts().ObjCAutoRefCount) {
     if (const ArrayType *AT = Context.getAsArrayType(AllocType)) {
       QualType BaseAllocType = Context.getBaseElementType(AT);
       if (BaseAllocType.getObjCLifetime() == Qualifiers::OCL_None &&
@@ -1469,7 +1469,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 
   // We don't need an operator delete if we're running under
   // -fno-exceptions.
-  if (!getLangOptions().Exceptions) {
+  if (!getLangOpts().Exceptions) {
     OperatorDelete = 0;
     return false;
   }
@@ -1587,7 +1587,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
     //   as a placement deallocation function, would have been
     //   selected as a match for the allocation function, the program
     //   is ill-formed.
-    if (NumPlaceArgs && getLangOptions().CPlusPlus0x &&
+    if (NumPlaceArgs && getLangOpts().CPlusPlus0x &&
         isNonPlacementDeallocationFunction(OperatorDelete)) {
       Diag(StartLoc, diag::err_placement_new_non_placement_delete)
         << SourceRange(PlaceArgs[0]->getLocStart(),
@@ -1763,7 +1763,7 @@ void Sema::DeclareGlobalNewDelete() {
   // lookup.
   // Note that the C++0x versions of operator delete are deallocation functions,
   // and thus are implicitly noexcept.
-  if (!StdBadAlloc && !getLangOptions().CPlusPlus0x) {
+  if (!StdBadAlloc && !getLangOpts().CPlusPlus0x) {
     // The "std::bad_alloc" class has not yet been declared, so build it
     // implicitly.
     StdBadAlloc = CXXRecordDecl::Create(Context, TTK_Class,
@@ -1778,7 +1778,7 @@ void Sema::DeclareGlobalNewDelete() {
 
   QualType VoidPtr = Context.getPointerType(Context.VoidTy);
   QualType SizeT = Context.getSizeType();
-  bool AssumeSaneOperatorNew = getLangOptions().AssumeSaneOperatorNew;
+  bool AssumeSaneOperatorNew = getLangOpts().AssumeSaneOperatorNew;
 
   DeclareGlobalAllocationFunction(
       Context.DeclarationNames.getCXXOperatorName(OO_New),
@@ -1826,20 +1826,20 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   bool HasBadAllocExceptionSpec
     = (Name.getCXXOverloadedOperator() == OO_New ||
        Name.getCXXOverloadedOperator() == OO_Array_New);
-  if (HasBadAllocExceptionSpec && !getLangOptions().CPlusPlus0x) {
+  if (HasBadAllocExceptionSpec && !getLangOpts().CPlusPlus0x) {
     assert(StdBadAlloc && "Must have std::bad_alloc declared");
     BadAllocType = Context.getTypeDeclType(getStdBadAlloc());
   }
 
   FunctionProtoType::ExtProtoInfo EPI;
   if (HasBadAllocExceptionSpec) {
-    if (!getLangOptions().CPlusPlus0x) {
+    if (!getLangOpts().CPlusPlus0x) {
       EPI.ExceptionSpecType = EST_Dynamic;
       EPI.NumExceptions = 1;
       EPI.Exceptions = &BadAllocType;
     }
   } else {
-    EPI.ExceptionSpecType = getLangOptions().CPlusPlus0x ?
+    EPI.ExceptionSpecType = getLangOpts().CPlusPlus0x ?
                                 EST_BasicNoexcept : EST_DynamicNone;
   }
 
@@ -2130,7 +2130,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         }
       }
 
-    } else if (getLangOptions().ObjCAutoRefCount &&
+    } else if (getLangOpts().ObjCAutoRefCount &&
                PointeeElem->isObjCLifetimeType() &&
                (PointeeElem.getObjCLifetime() == Qualifiers::OCL_Strong ||
                 PointeeElem.getObjCLifetime() == Qualifiers::OCL_Weak) &&
@@ -2580,7 +2580,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
           ToType->isObjCObjectPointerType())
         EmitRelatedResultTypeNote(From);
     } 
-    else if (getLangOptions().ObjCAutoRefCount &&
+    else if (getLangOpts().ObjCAutoRefCount &&
              !CheckObjCARCUnavailableWeakConversion(ToType, 
                                                     From->getType())) {
       if (Action == AA_Initializing)
@@ -2754,7 +2754,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                              CK_NoOp, VK, /*BasePath=*/0, CCK).take();
 
     if (SCS.DeprecatedStringLiteralToCharPtr &&
-        !getLangOptions().WritableStrings)
+        !getLangOpts().WritableStrings)
       Diag(From->getLocStart(), diag::warn_deprecated_string_literal_conversion)
         << ToType.getNonReferenceType();
 
@@ -3505,7 +3505,7 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
   QualType RhsT = RhsTSInfo->getType();
 
   if (BTT == BTT_TypeCompatible) {
-    if (getLangOptions().CPlusPlus) {
+    if (getLangOpts().CPlusPlus) {
       Diag(KWLoc, diag::err_types_compatible_p_in_cplusplus)
         << SourceRange(KWLoc, RParen);
       return ExprError();
@@ -4215,7 +4215,7 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
   if (NonStandardCompositeType)
     *NonStandardCompositeType = false;
 
-  assert(getLangOptions().CPlusPlus && "This function assumes C++");
+  assert(getLangOpts().CPlusPlus && "This function assumes C++");
   QualType T1 = E1->getType(), T2 = E2->getType();
 
   if (!T1->isAnyPointerType() && !T1->isMemberPointerType() &&
@@ -4425,7 +4425,7 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
 
   // In ARC, calls that return a retainable type can return retained,
   // in which case we have to insert a consuming cast.
-  if (getLangOptions().ObjCAutoRefCount &&
+  if (getLangOpts().ObjCAutoRefCount &&
       E->getType()->isObjCRetainableType()) {
 
     bool ReturnsRetained;
@@ -4504,7 +4504,7 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
                                           VK_RValue));
   }
 
-  if (!getLangOptions().CPlusPlus)
+  if (!getLangOpts().CPlusPlus)
     return Owned(E);
 
   // Search for the base element type (cf. ASTContext::getBaseElementType) with
@@ -4855,7 +4855,7 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
     return ExprError();
 
   if (!ObjectType->isDependentType() && !ObjectType->isScalarType()) {
-    if (getLangOptions().MicrosoftMode && ObjectType->isVoidType())
+    if (getLangOpts().MicrosoftMode && ObjectType->isVoidType())
       Diag(OpLoc, diag::ext_pseudo_dtor_on_void) << Base->getSourceRange();
     else
       Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
@@ -5186,14 +5186,14 @@ ExprResult Sema::IgnoredValueConversions(Expr *E) {
     // are r-values, but we still want to do function-to-pointer decay
     // on them.  This is both technically correct and convenient for
     // some clients.
-    if (!getLangOptions().CPlusPlus && E->getType()->isFunctionType())
+    if (!getLangOpts().CPlusPlus && E->getType()->isFunctionType())
       return DefaultFunctionArrayConversion(E);
 
     return Owned(E);
   }
 
   // Otherwise, this rule does not apply in C++, at least not for the moment.
-  if (getLangOptions().CPlusPlus) return Owned(E);
+  if (getLangOpts().CPlusPlus) return Owned(E);
 
   // GCC seems to also exclude expressions of incomplete enum type.
   if (const EnumType *T = E->getType()->getAs<EnumType>()) {
@@ -5225,7 +5225,7 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE) {
     return ExprError();
 
   // Top-level message sends default to 'id' when we're in a debugger.
-  if (getLangOptions().DebuggerCastResultToId &&
+  if (getLangOpts().DebuggerCastResultToId &&
       FullExpr.get()->getType() == Context.UnknownAnyTy &&
       isa<ObjCMessageExpr>(FullExpr.get())) {
     FullExpr = forceUnknownAnyToType(FullExpr.take(), Context.getObjCIdType());

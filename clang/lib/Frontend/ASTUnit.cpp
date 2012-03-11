@@ -364,7 +364,7 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema,
                                                     *CachedCompletionAllocator);
       CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
-                                                        Ctx->getLangOptions(),
+                                                        Ctx->getLangOpts(),
                                                         IsNestedNameSpecifier);
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
@@ -397,7 +397,7 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedCompletionResults.push_back(CachedResult);
       
       /// Handle nested-name-specifiers in C++.
-      if (TheSema->Context.getLangOptions().CPlusPlus && 
+      if (TheSema->Context.getLangOpts().CPlusPlus && 
           IsNestedNameSpecifier && !Results[I].StartsNestedNameSpecifier) {
         // The contexts in which a nested-name-specifier can appear in C++.
         unsigned NNSContexts
@@ -2033,7 +2033,7 @@ namespace {
         | (1LL << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
         | (1LL << (CodeCompletionContext::CCC_Recovery - 1));
 
-      if (AST.getASTContext().getLangOptions().CPlusPlus)
+      if (AST.getASTContext().getLangOpts().CPlusPlus)
         NormalContexts |= (1LL << (CodeCompletionContext::CCC_EnumTag - 1))
                    | (1LL << (CodeCompletionContext::CCC_UnionTag - 1))
                    | (1LL << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
@@ -2124,7 +2124,7 @@ static void CalculateHiddenNames(const CodeCompletionContext &Context,
       unsigned HiddenIDNS = (Decl::IDNS_Type | Decl::IDNS_Member | 
                              Decl::IDNS_Namespace | Decl::IDNS_Ordinary |
                              Decl::IDNS_NonMemberOperator);
-      if (Ctx.getLangOptions().CPlusPlus)
+      if (Ctx.getLangOpts().CPlusPlus)
         HiddenIDNS |= Decl::IDNS_Tag;
       Hiding = (IDNS & HiddenIDNS);
     }
@@ -2184,7 +2184,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
     if (!Context.getPreferredType().isNull()) {
       if (C->Kind == CXCursor_MacroDefinition) {
         Priority = getMacroUsagePriority(C->Completion->getTypedText(),
-                                         S.getLangOptions(),
+                                         S.getLangOpts(),
                                Context.getPreferredType()->isAnyPointerType());        
       } else if (C->Type) {
         CanQualType Expected

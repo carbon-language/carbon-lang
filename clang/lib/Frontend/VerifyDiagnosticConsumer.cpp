@@ -348,7 +348,7 @@ static void FindExpectedDiags(Preprocessor &PP, ExpectedData &ED, FileID FID) {
   SourceManager& SM = PP.getSourceManager();
   // Create a lexer to lex all the tokens of the main file in raw mode.
   const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
-  Lexer RawLex(FID, FromFile, SM, PP.getLangOptions());
+  Lexer RawLex(FID, FromFile, SM, PP.getLangOpts());
 
   // Return comments as tokens, this is how we find expected diagnostics.
   RawLex.SetCommentRetentionState(true);

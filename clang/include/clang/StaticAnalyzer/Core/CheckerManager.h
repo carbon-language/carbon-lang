@@ -128,7 +128,7 @@ public:
 
   void finishedCheckerRegistration();
 
-  const LangOptions &getLangOptions() const { return LangOpts; }
+  const LangOptions &getLangOpts() const { return LangOpts; }
 
   typedef CheckerBase *CheckerRef;
   typedef const void *CheckerTag;

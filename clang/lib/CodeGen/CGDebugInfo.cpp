@@ -183,7 +183,7 @@ CGDebugInfo::getClassName(const RecordDecl *RD) {
     NumArgs = TemplateArgs.size();
   }
   Buffer = RD->getIdentifier()->getNameStart();
-  PrintingPolicy Policy(CGM.getLangOptions());
+  PrintingPolicy Policy(CGM.getLangOpts());
   Buffer += TemplateSpecializationType::PrintTemplateArgumentList(Args,
                                                                   NumArgs,
                                                                   Policy);
@@ -288,7 +288,7 @@ void CGDebugInfo::CreateCompileUnit() {
   StringRef Filename(FilenamePtr, MainFileName.length());
   
   unsigned LangTag;
-  const LangOptions &LO = CGM.getLangOptions();
+  const LangOptions &LO = CGM.getLangOpts();
   if (LO.CPlusPlus) {
     if (LO.ObjC1)
       LangTag = llvm::dwarf::DW_LANG_ObjC_plus_plus;
@@ -332,7 +332,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     llvm_unreachable("Unexpected builtin type");
   case BuiltinType::NullPtr:
     return DBuilder.
-      createNullPtrType(BT->getName(CGM.getContext().getLangOptions()));
+      createNullPtrType(BT->getName(CGM.getContext().getLangOpts()));
   case BuiltinType::Void:
     return llvm::DIType();
   case BuiltinType::ObjCClass:
@@ -403,7 +403,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::ULong:     BTName = "long unsigned int"; break;
   case BuiltinType::ULongLong: BTName = "long long unsigned int"; break;
   default:
-    BTName = BT->getName(CGM.getContext().getLangOptions());
+    BTName = BT->getName(CGM.getContext().getLangOpts());
     break;
   }
   // Bit size, align and offset of the type.
@@ -953,7 +953,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                           MethodTy, /*isLocalToUnit=*/false, 
                           /* isDefinition=*/ false,
                           Virtuality, VIndex, ContainingType,
-                          Flags, CGM.getLangOptions().Optimize);
+                          Flags, CGM.getLangOpts().Optimize);
   
   SPCache[Method->getCanonicalDecl()] = llvm::WeakVH(SP);
 
@@ -1345,7 +1345,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     // the non-fragile abi and the debugger should ignore the value anyways.
     // Call it the FieldNo+1 due to how debuggers use the information,
     // e.g. negating the value when it needs a lookup in the dynamic table.
-    uint64_t FieldOffset = CGM.getLangOptions().ObjCNonFragileABI ? FieldNo+1
+    uint64_t FieldOffset = CGM.getLangOpts().ObjCNonFragileABI ? FieldNo+1
       : RL.getFieldOffset(FieldNo);
 
     unsigned Flags = 0;
@@ -1996,7 +1996,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     DBuilder.createFunction(FDContext, Name, LinkageName, Unit,
                             LineNo, getOrCreateFunctionType(D, FnType, Unit),
                             Fn->hasInternalLinkage(), true/*definition*/,
-                            Flags, CGM.getLangOptions().Optimize, Fn,
+                            Flags, CGM.getLangOpts().Optimize, Fn,
                             TParamsArray, SPDecl);
 
   // Push function on region stack.
@@ -2227,7 +2227,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     llvm::DIVariable D =
       DBuilder.createLocalVariable(Tag, llvm::DIDescriptor(Scope), 
                                    Name, Unit, Line, Ty, 
-                                   CGM.getLangOptions().Optimize, Flags, ArgNo);
+                                   CGM.getLangOpts().Optimize, Flags, ArgNo);
     
     // Insert an llvm.dbg.declare into the current block.
     llvm::Instruction *Call =
@@ -2256,7 +2256,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         llvm::DIVariable D =
           DBuilder.createLocalVariable(Tag, llvm::DIDescriptor(Scope),
                                        FieldName, Unit, Line, FieldTy, 
-                                       CGM.getLangOptions().Optimize, Flags,
+                                       CGM.getLangOpts().Optimize, Flags,
                                        ArgNo);
           
         // Insert an llvm.dbg.declare into the current block.
@@ -2484,7 +2484,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     DBuilder.createLocalVariable(llvm::dwarf::DW_TAG_arg_variable,
                                  llvm::DIDescriptor(scope), 
                                  name, tunit, line, type, 
-                                 CGM.getLangOptions().Optimize, flags,
+                                 CGM.getLangOpts().Optimize, flags,
                                  cast<llvm::Argument>(addr)->getArgNo() + 1);
     
   // Insert an llvm.dbg.value into the current block.

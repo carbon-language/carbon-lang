@@ -392,7 +392,7 @@ static bool getLiteralInfo(SourceRange literalRange,
     return false;
   StringRef text = Lexer::getSourceText(
                                   CharSourceRange::getTokenRange(literalRange),
-                                  Ctx.getSourceManager(), Ctx.getLangOptions());
+                                  Ctx.getSourceManager(), Ctx.getLangOpts());
   if (text.empty())
     return false;
 

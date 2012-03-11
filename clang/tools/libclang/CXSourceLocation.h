@@ -41,7 +41,7 @@ translateSourceLocation(const SourceManager &SM, const LangOptions &LangOpts,
 static inline CXSourceLocation translateSourceLocation(ASTContext &Context,
                                                        SourceLocation Loc) {
   return translateSourceLocation(Context.getSourceManager(),
-                                 Context.getLangOptions(),
+                                 Context.getLangOpts(),
                                  Loc);
 }
 
@@ -59,7 +59,7 @@ CXSourceRange translateSourceRange(const SourceManager &SM,
 static inline CXSourceRange translateSourceRange(ASTContext &Context,
                                                  SourceRange R) {
   return translateSourceRange(Context.getSourceManager(),
-                              Context.getLangOptions(),
+                              Context.getLangOpts(),
                               CharSourceRange::getTokenRange(R));
 }
 

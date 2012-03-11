@@ -74,7 +74,7 @@ public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
     if (CFG *cfg = mgr.getCFG(D)) {
-      cfg->viewCFG(mgr.getLangOptions());
+      cfg->viewCFG(mgr.getLangOpts());
     }
   }
 };
@@ -94,7 +94,7 @@ public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
     if (CFG *cfg = mgr.getCFG(D)) {
-      cfg->dump(mgr.getLangOptions(),
+      cfg->dump(mgr.getLangOpts(),
                 llvm::sys::Process::StandardErrHasColors());
     }
   }

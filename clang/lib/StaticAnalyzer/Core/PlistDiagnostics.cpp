@@ -60,7 +60,7 @@ PlistDiagnostics::PlistDiagnostics(const std::string& output,
 PathDiagnosticConsumer*
 ento::createPlistDiagnosticConsumer(const std::string& s, const Preprocessor &PP,
                                   PathDiagnosticConsumer *subPD) {
-  return new PlistDiagnostics(s, PP.getLangOptions(), subPD);
+  return new PlistDiagnostics(s, PP.getLangOpts(), subPD);
 }
 
 PathDiagnosticConsumer::PathGenerationScheme

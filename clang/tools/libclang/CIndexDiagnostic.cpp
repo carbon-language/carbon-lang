@@ -180,7 +180,7 @@ CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
     TU->Diagnostics = Set;
     DiagnosticOptions DOpts;
     CXDiagnosticRenderer Renderer(AU->getSourceManager(),
-                                  AU->getASTContext().getLangOptions(),
+                                  AU->getASTContext().getLangOpts(),
                                   DOpts, Set);
     
     for (ASTUnit::stored_diag_iterator it = AU->stored_diag_begin(),

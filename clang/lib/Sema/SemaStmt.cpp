@@ -78,7 +78,7 @@ void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
   // In ARC, we don't need to retain the iteration variable of a fast
   // enumeration loop.  Rather than actually trying to catch that
   // during declaration processing, we remove the consequences here.
-  if (getLangOptions().ObjCAutoRefCount) {
+  if (getLangOpts().ObjCAutoRefCount) {
     QualType type = var->getType();
 
     // Only do this if we inferred the lifetime.  Inferred lifetime
@@ -190,7 +190,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       }
     }
   } else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
-    if (getLangOptions().ObjCAutoRefCount && ME->isDelegateInitCall()) {
+    if (getLangOpts().ObjCAutoRefCount && ME->isDelegateInitCall()) {
       Diag(Loc, diag::err_arc_unused_init_message) << R1;
       return;
     }
@@ -248,7 +248,7 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
   Stmt **Elts = reinterpret_cast<Stmt**>(elts.release());
   // If we're in C89 mode, check that we don't have any decls after stmts.  If
   // so, emit an extension diagnostic.
-  if (!getLangOptions().C99 && !getLangOptions().CPlusPlus) {
+  if (!getLangOpts().C99 && !getLangOpts().CPlusPlus) {
     // Note that __extension__ can be around a decl.
     unsigned i = 0;
     // Skip over all declarations.
@@ -296,7 +296,7 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
     return StmtError();
   }
 
-  if (!getLangOptions().CPlusPlus0x) {
+  if (!getLangOpts().CPlusPlus0x) {
     // C99 6.8.4.2p3: The expression shall be an integer constant.
     // However, GCC allows any evaluatable integer expression.
     if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent()) {
@@ -645,7 +645,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       llvm::APSInt LoVal;
 
-      if (getLangOptions().CPlusPlus0x) {
+      if (getLangOpts().CPlusPlus0x) {
         // C++11 [stmt.switch]p2: the constant-expression shall be a converted
         // constant expression of the promoted type of the switch condition.
         ExprResult ConvLo =
@@ -743,7 +743,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         Expr *Hi = CR->getRHS();
         llvm::APSInt HiVal;
 
-        if (getLangOptions().CPlusPlus0x) {
+        if (getLangOpts().CPlusPlus0x) {
           // C++11 [stmt.switch]p2: the constant-expression shall be a converted
           // constant expression of the promoted type of the switch condition.
           ExprResult ConvHi =
@@ -1033,7 +1033,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
                    Stmt *First, FullExprArg second, Decl *secondVar,
                    FullExprArg third,
                    SourceLocation RParenLoc, Stmt *Body) {
-  if (!getLangOptions().CPlusPlus) {
+  if (!getLangOpts().CPlusPlus) {
     if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
       // declare identifiers for objects having storage class 'auto' or
@@ -1115,7 +1115,7 @@ Sema::ActOnObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
   // Under ARC, it is an error not to have a forward-declared class.
   if (iface && 
       RequireCompleteType(forLoc, QualType(objectType, 0),
-                          getLangOptions().ObjCAutoRefCount
+                          getLangOpts().ObjCAutoRefCount
                             ? PDiag(diag::err_arc_collection_forward)
                                 << collection->getSourceRange()
                           : PDiag(0))) {
@@ -1235,7 +1235,7 @@ static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
   // In ARC, infer lifetime.
   // FIXME: ARC may want to turn this into 'const __unsafe_unretained' if
   // we're doing the equivalent of fast iteration.
-  if (SemaRef.getLangOptions().ObjCAutoRefCount && 
+  if (SemaRef.getLangOpts().ObjCAutoRefCount && 
       SemaRef.inferObjCARCLifetime(Decl))
     Decl->setInvalidDecl();
 
@@ -1883,7 +1883,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     // types we can conclusively prove aren't void.
   } else if (FnRetType->isVoidType()) {
     if (RetValExp && !isa<InitListExpr>(RetValExp) &&
-        !(getLangOptions().CPlusPlus &&
+        !(getLangOpts().CPlusPlus &&
           (RetValExp->isTypeDependent() ||
            RetValExp->getType()->isVoidType()))) {
       Diag(ReturnLoc, diag::err_return_block_has_expr);
@@ -1923,7 +1923,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
-  if (getLangOptions().CPlusPlus && FnRetType->isRecordType() && 
+  if (getLangOpts().CPlusPlus && FnRetType->isRecordType() && 
       !CurContext->isDependentContext())
     FunctionScopes.back()->Returns.push_back(Result);
 
@@ -2001,7 +2001,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
         // return (some void expression); is legal in C++.
         if (D != diag::ext_return_has_void_expr ||
-            !getLangOptions().CPlusPlus) {
+            !getLangOpts().CPlusPlus) {
           NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
 
           int FunctionKind = 0;
@@ -2028,7 +2028,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   } else if (!RetValExp && !FnRetType->isDependentType()) {
     unsigned DiagID = diag::warn_return_missing_expr;  // C90 6.6.6.4p4
     // C99 6.8.6.4p1 (ext_ since GCC warns)
-    if (getLangOptions().C99) DiagID = diag::ext_return_missing_expr;
+    if (getLangOpts().C99) DiagID = diag::ext_return_missing_expr;
 
     if (FunctionDecl *FD = getCurFunctionDecl())
       Diag(ReturnLoc, DiagID) << FD->getIdentifier() << 0/*fn*/;
@@ -2082,7 +2082,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
-  if (getLangOptions().CPlusPlus && FnRetType->isRecordType() &&
+  if (getLangOpts().CPlusPlus && FnRetType->isRecordType() &&
       !CurContext->isDependentContext())
     FunctionScopes.back()->Returns.push_back(Result);
   
@@ -2108,7 +2108,7 @@ static bool CheckAsmLValue(const Expr *E, Sema &S) {
   // are supposed to allow.
   const Expr *E2 = E->IgnoreParenNoopCasts(S.Context);
   if (E != E2 && E2->isLValue()) {
-    if (!S.getLangOptions().HeinousExtensions)
+    if (!S.getLangOpts().HeinousExtensions)
       S.Diag(E2->getLocStart(), diag::err_invalid_asm_cast_lvalue)
         << E->getSourceRange();
     else
@@ -2386,7 +2386,7 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, Stmt *Body) {
 StmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
                          MultiStmtArg CatchStmts, Stmt *Finally) {
-  if (!getLangOptions().ObjCExceptions)
+  if (!getLangOpts().ObjCExceptions)
     Diag(AtLoc, diag::err_objc_exceptions_disabled) << "@try";
 
   getCurFunction()->setHasBranchProtectedScope();
@@ -2423,7 +2423,7 @@ StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
 StmtResult
 Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
                            Scope *CurScope) {
-  if (!getLangOptions().ObjCExceptions)
+  if (!getLangOpts().ObjCExceptions)
     Diag(AtLoc, diag::err_objc_exceptions_disabled) << "@throw";
 
   if (!Throw) {
@@ -2523,7 +2523,7 @@ StmtResult
 Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
                        MultiStmtArg RawHandlers) {
   // Don't report an error if 'try' is used in system headers.
-  if (!getLangOptions().CXXExceptions &&
+  if (!getLangOpts().CXXExceptions &&
       !getSourceManager().isInSystemHeader(TryLoc))
       Diag(TryLoc, diag::err_exceptions_disabled) << "try";
 

@@ -292,7 +292,7 @@ NarrowingKind
 StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
                                              const Expr *Converted,
                                              APValue &ConstantValue) const {
-  assert(Ctx.getLangOptions().CPlusPlus && "narrowing check outside C++");
+  assert(Ctx.getLangOpts().CPlusPlus && "narrowing check outside C++");
 
   // C++11 [dcl.init.list]p7:
   //   A narrowing conversion is an implicit conversion ...
@@ -1107,7 +1107,7 @@ TryImplicitConversion(Sema &S, Expr *From, QualType ToType,
     return ICS;
   }
 
-  if (!S.getLangOptions().CPlusPlus) {
+  if (!S.getLangOpts().CPlusPlus) {
     ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
     return ICS;
   }
@@ -1180,7 +1180,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   // Objective-C ARC: Determine whether we will allow the writeback conversion.
   bool AllowObjCWritebackConversion
-    = getLangOptions().ObjCAutoRefCount && 
+    = getLangOpts().ObjCAutoRefCount && 
       (Action == AA_Passing || Action == AA_Sending);
 
   ICS = clang::TryImplicitConversion(*this, From, ToType,
@@ -1276,7 +1276,7 @@ static bool IsVectorConversion(ASTContext &Context, QualType FromType,
   //   same size
   if (ToType->isVectorType() && FromType->isVectorType()) {
     if (Context.areCompatibleVectorTypes(FromType, ToType) ||
-        (Context.getLangOptions().LaxVectorConversions &&
+        (Context.getLangOpts().LaxVectorConversions &&
          (Context.getTypeSize(FromType) == Context.getTypeSize(ToType)))) {
       ICK = ICK_Vector_Conversion;
       return true;
@@ -1311,7 +1311,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   // There are no standard conversions for class types in C++, so
   // abort early. When overloading in C, however, we do permit
   if (FromType->isRecordType() || ToType->isRecordType()) {
-    if (S.getLangOptions().CPlusPlus)
+    if (S.getLangOpts().CPlusPlus)
       return false;
 
     // When we're overloading in C, we allow, as standard conversions,
@@ -1499,7 +1499,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   } else if (IsVectorConversion(S.Context, FromType, ToType, SecondICK)) {
     SCS.Second = SecondICK;
     FromType = ToType.getUnqualifiedType();
-  } else if (!S.getLangOptions().CPlusPlus &&
+  } else if (!S.getLangOpts().CPlusPlus &&
              S.Context.typesAreCompatible(ToType, FromType)) {
     // Compatible conversions (Clang extension for C function overloading)
     SCS.Second = ICK_Compatible_Conversion;
@@ -1732,7 +1732,7 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType) {
       // C99 6.3.1.5p1:
       //   When a float is promoted to double or long double, or a
       //   double is promoted to long double [...].
-      if (!getLangOptions().CPlusPlus &&
+      if (!getLangOpts().CPlusPlus &&
           (FromBuiltin->getKind() == BuiltinType::Float ||
            FromBuiltin->getKind() == BuiltinType::Double) &&
           (ToBuiltin->getKind() == BuiltinType::LongDouble))
@@ -1898,7 +1898,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // , including objective-c pointers.
   QualType ToPointeeType = ToTypePtr->getPointeeType();
   if (FromType->isObjCObjectPointerType() && ToPointeeType->isVoidType() &&
-      !getLangOptions().ObjCAutoRefCount) {
+      !getLangOpts().ObjCAutoRefCount) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(
                                       FromType->getAs<ObjCObjectPointerType>(),
                                                        ToPointeeType,
@@ -1929,7 +1929,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   }
 
   // MSVC allows implicit function to void* type conversion.
-  if (getLangOptions().MicrosoftExt && FromPointeeType->isFunctionType() &&
+  if (getLangOpts().MicrosoftExt && FromPointeeType->isFunctionType() &&
       ToPointeeType->isVoidType()) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
                                                        ToPointeeType,
@@ -1939,7 +1939,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
 
   // When we're overloading in C, we allow a special kind of pointer
   // conversion for compatible-but-not-identical pointee types.
-  if (!getLangOptions().CPlusPlus &&
+  if (!getLangOpts().CPlusPlus &&
       Context.typesAreCompatible(FromPointeeType, ToPointeeType)) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
                                                        ToPointeeType,
@@ -1960,7 +1960,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   //
   // Note that we do not check for ambiguity or inaccessibility
   // here. That is handled by CheckPointerConversion.
-  if (getLangOptions().CPlusPlus &&
+  if (getLangOpts().CPlusPlus &&
       FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
       !Context.hasSameUnqualifiedType(FromPointeeType, ToPointeeType) &&
       !RequireCompleteType(From->getLocStart(), FromPointeeType, PDiag()) &&
@@ -2002,7 +2002,7 @@ static QualType AdoptQualifiers(ASTContext &Context, QualType T, Qualifiers Qs){
 bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
                                    QualType& ConvertedType,
                                    bool &IncompatibleObjC) {
-  if (!getLangOptions().ObjC1)
+  if (!getLangOpts().ObjC1)
     return false;
 
   // The set of qualifiers on the type we're converting from.
@@ -2041,7 +2041,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     if (Context.canAssignObjCInterfaces(ToObjCPtr, FromObjCPtr)) {
       const ObjCInterfaceType* LHS = ToObjCPtr->getInterfaceType();
       const ObjCInterfaceType* RHS = FromObjCPtr->getInterfaceType();
-      if (getLangOptions().CPlusPlus && LHS && RHS &&
+      if (getLangOpts().CPlusPlus && LHS && RHS &&
           !ToObjCPtr->getPointeeType().isAtLeastAsQualifiedAs(
                                                 FromObjCPtr->getPointeeType()))
         return false;
@@ -2197,7 +2197,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 /// this conversion.
 bool Sema::isObjCWritebackConversion(QualType FromType, QualType ToType,
                                      QualType &ConvertedType) {
-  if (!getLangOptions().ObjCAutoRefCount || 
+  if (!getLangOpts().ObjCAutoRefCount || 
       Context.hasSameUnqualifiedType(FromType, ToType))
     return false;
   
@@ -2301,7 +2301,7 @@ bool Sema::IsBlockPointerConversion(QualType FromType, QualType ToType,
   } else {
     QualType RHS = FromFunctionType->getResultType();
     QualType LHS = ToFunctionType->getResultType();
-    if ((!getLangOptions().CPlusPlus || !RHS->isRecordType()) &&
+    if ((!getLangOpts().CPlusPlus || !RHS->isRecordType()) &&
         !RHS.hasQualifiers() && LHS.hasQualifiers())
        LHS = LHS.getUnqualifiedType();
 
@@ -2450,7 +2450,7 @@ void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
 bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
                                     const FunctionProtoType *NewType,
                                     unsigned *ArgPos) {
-  if (!getLangOptions().ObjC1) {
+  if (!getLangOpts().ObjC1) {
     for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
          N = NewType->arg_type_begin(),
          E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
@@ -3072,7 +3072,7 @@ static ImplicitConversionSequence::CompareKind
 compareConversionFunctions(Sema &S,
                            FunctionDecl *Function1,
                            FunctionDecl *Function2) {
-  if (!S.getLangOptions().ObjC1 || !S.getLangOptions().CPlusPlus0x)
+  if (!S.getLangOpts().ObjC1 || !S.getLangOpts().CPlusPlus0x)
     return ImplicitConversionSequence::Indistinguishable;
   
   // Objective-C++:
@@ -3422,7 +3422,7 @@ CompareStandardConversionSequences(Sema &S,
   // }
   // Here, MSVC will call f(int) instead of generating a compile error
   // as clang will do in standard mode.
-  if (S.getLangOptions().MicrosoftMode &&
+  if (S.getLangOpts().MicrosoftMode &&
       SCS1.Second == ICK_Integral_Conversion &&
       SCS2.Second == ICK_Floating_Integral && 
       S.Context.getTypeSize(SCS1.getFromType()) ==
@@ -4089,7 +4089,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     // allow the use of rvalue references in C++98/03 for the benefit of
     // standard library implementors; therefore, we need the xvalue check here.
     ICS.Standard.DirectBinding =
-      S.getLangOptions().CPlusPlus0x ||
+      S.getLangOpts().CPlusPlus0x ||
       (InitCategory.isPRValue() && !T2->isRecordType());
     ICS.Standard.IsLvalueReference = !isRValRef;
     ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
@@ -4970,7 +4970,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   // If we don't have a class type in C++, there's no way we can get an
   // expression of integral or enumeration type.
   const RecordType *RecordTy = T->getAs<RecordType>();
-  if (!RecordTy || !getLangOptions().CPlusPlus) {
+  if (!RecordTy || !getLangOpts().CPlusPlus) {
     if (NotIntDiag.getDiagID())
       Diag(Loc, NotIntDiag) << T << From->getSourceRange();
     return Owned(From);
@@ -5193,7 +5193,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   }
 
   // (CUDA B.1): Check for invalid calls between targets.
-  if (getLangOptions().CUDA)
+  if (getLangOpts().CUDA)
     if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext))
       if (CheckCUDATarget(Caller, Function)) {
         Candidate.Viable = false;
@@ -5215,7 +5215,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                                 SuppressUserConversions,
                                 /*InOverloadResolution=*/true,
                                 /*AllowObjCWritebackConversion=*/
-                                  getLangOptions().ObjCAutoRefCount,
+                                  getLangOpts().ObjCAutoRefCount,
                                 AllowExplicit);
       if (Candidate.Conversions[ArgIdx].isBad()) {
         Candidate.Viable = false;
@@ -5388,7 +5388,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
                                 SuppressUserConversions,
                                 /*InOverloadResolution=*/true,
                                 /*AllowObjCWritebackConversion=*/
-                                  getLangOptions().ObjCAutoRefCount);
+                                  getLangOpts().ObjCAutoRefCount);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
         Candidate.FailureKind = ovl_fail_bad_conversion;
@@ -5775,7 +5775,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
                                 /*SuppressUserConversions=*/false,
                                 /*InOverloadResolution=*/false,
                                 /*AllowObjCWritebackConversion=*/
-                                  getLangOptions().ObjCAutoRefCount);
+                                  getLangOpts().ObjCAutoRefCount);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
         Candidate.FailureKind = ovl_fail_bad_conversion;
@@ -5893,7 +5893,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
                                 ArgIdx == 0 && IsAssignmentOperator,
                                 /*InOverloadResolution=*/false,
                                 /*AllowObjCWritebackConversion=*/
-                                  getLangOptions().ObjCAutoRefCount);
+                                  getLangOpts().ObjCAutoRefCount);
     }
     if (Candidate.Conversions[ArgIdx].isBad()) {
       Candidate.Viable = false;
@@ -7238,7 +7238,7 @@ public:
         S.AddBuiltinCandidate(*MemPtr, ParamTypes, Args, 2, CandidateSet);
       }
 
-      if (S.getLangOptions().CPlusPlus0x) {
+      if (S.getLangOpts().CPlusPlus0x) {
         for (BuiltinCandidateTypeSet::iterator
                   Enum = CandidateTypes[ArgIdx].enumeration_begin(),
                EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
@@ -8520,7 +8520,7 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
                                 SuppressUserConversions,
                                 /*InOverloadResolution*/ true,
                                 /*AllowObjCWritebackConversion=*/
-                                  S.getLangOptions().ObjCAutoRefCount);
+                                  S.getLangOpts().ObjCAutoRefCount);
     return;
   }
 
@@ -8533,7 +8533,7 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
                                 SuppressUserConversions,
                                 /*InOverloadResolution=*/true,
                                 /*AllowObjCWritebackConversion=*/
-                                  S.getLangOptions().ObjCAutoRefCount);
+                                  S.getLangOpts().ObjCAutoRefCount);
       // Store the FixIt in the candidate if it exists.
       if (!Unfixable && Cand->Conversions[ConvIdx].isBad())
         Unfixable = !Cand->TryToFixBadConversion(ConvIdx, S);
@@ -8779,7 +8779,7 @@ private:
       return false;
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(Fn)) {
-      if (S.getLangOptions().CUDA)
+      if (S.getLangOpts().CUDA)
         if (FunctionDecl *Caller = dyn_cast<FunctionDecl>(S.CurContext))
           if (S.CheckCUDATarget(Caller, FunDecl))
             return false;
@@ -9344,7 +9344,7 @@ class RecoveryCallCCC : public CorrectionCandidateCallback {
  public:
   RecoveryCallCCC(Sema &SemaRef, unsigned NumArgs, bool HasExplicitTemplateArgs)
       : NumArgs(NumArgs), HasExplicitTemplateArgs(HasExplicitTemplateArgs) {
-    WantTypeSpecifiers = SemaRef.getLangOptions().CPlusPlus;
+    WantTypeSpecifiers = SemaRef.getLangOpts().CPlusPlus;
     WantRemainingKeywords = false;
   }
 
@@ -9488,7 +9488,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
       llvm_unreachable("performing ADL for builtin");
 
     // We don't perform ADL in C.
-    assert(getLangOptions().CPlusPlus && "ADL enabled in C");
+    assert(getLangOpts().CPlusPlus && "ADL enabled in C");
   } else
     assert(!ULE->isStdAssociatedNamespace() &&
            "std is associated namespace but not doing ADL");
@@ -9513,7 +9513,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     // create a type dependent CallExpr. The goal is to postpone name lookup
     // to instantiation time to be able to search into type dependent base
     // classes.
-    if (getLangOptions().MicrosoftMode && CurContext->isDependentContext() && 
+    if (getLangOpts().MicrosoftMode && CurContext->isDependentContext() && 
         (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
       CallExpr *CE = new (Context) CallExpr(Context, Fn, Args, NumArgs,
                                           Context.DependentTy, VK_RValue,
@@ -10354,7 +10354,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
 
       // Microsoft supports direct constructor calls.
-      if (getLangOptions().MicrosoftExt && isa<CXXConstructorDecl>(Func)) {
+      if (getLangOpts().MicrosoftExt && isa<CXXConstructorDecl>(Func)) {
         AddOverloadCandidate(cast<CXXConstructorDecl>(Func), I.getPair(),
                              llvm::makeArrayRef(Args, NumArgs), CandidateSet);
       } else if ((Method = dyn_cast<CXXMethodDecl>(Func))) {

@@ -254,7 +254,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
 
     std::string Name = VD->getNameAsString();
     VD->getType().getAsStringInternal(Name,
-                          PrintingPolicy(VD->getASTContext().getLangOptions()));
+                          PrintingPolicy(VD->getASTContext().getLangOpts()));
     OS << Name;
 
     // If this is a vardecl with an initializer, emit it.
@@ -287,7 +287,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     const char *tn = UD->isTypeName() ? "typename " : "";
     OS << '"' << UD->getDeclKindName() << tn;
     UD->getQualifier()->print(OS,
-                        PrintingPolicy(UD->getASTContext().getLangOptions()));
+                        PrintingPolicy(UD->getASTContext().getLangOpts()));
     OS << ";\"";
   } else if (LabelDecl *LD = dyn_cast<LabelDecl>(D)) {
     OS << "label " << *LD;

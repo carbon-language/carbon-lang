@@ -636,7 +636,7 @@ NotASpecialMember:;
     // C++0x [dcl.init.aggr]p1:
     //   An aggregate is an array or a class with no user-provided
     //   constructors [...].
-    if (!getASTContext().getLangOptions().CPlusPlus0x || UserProvided)
+    if (!getASTContext().getLangOpts().CPlusPlus0x || UserProvided)
       data().Aggregate = false;
 
     // C++ [class]p4:
@@ -798,7 +798,7 @@ NotASpecialMember:;
     ASTContext &Context = getASTContext();
     QualType T = Context.getBaseElementType(Field->getType());
     if (T->isObjCRetainableType() || T.isObjCGCStrong()) {
-      if (!Context.getLangOptions().ObjCAutoRefCount ||
+      if (!Context.getLangOpts().ObjCAutoRefCount ||
           T.getObjCLifetime() != Qualifiers::OCL_ExplicitNone)
         setHasObjectMember(true);
     } else if (!T.isPODType(Context))
@@ -1243,7 +1243,7 @@ void CXXRecordDecl::completeDefinition() {
 void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
   RecordDecl::completeDefinition();
   
-  if (hasObjectMember() && getASTContext().getLangOptions().ObjCAutoRefCount) {
+  if (hasObjectMember() && getASTContext().getLangOpts().ObjCAutoRefCount) {
     // Objective-C Automatic Reference Counting:
     //   If a class has a non-static data member of Objective-C pointer
     //   type (or array thereof), it is a non-POD type and its

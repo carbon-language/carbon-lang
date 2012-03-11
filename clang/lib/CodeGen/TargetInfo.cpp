@@ -2882,7 +2882,7 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  const LangOptions &LangOpts = getContext().getLangOptions();
+  const LangOptions &LangOpts = getContext().getLangOpts();
   if (LangOpts.OpenCL || LangOpts.CUDA) {
     // If we are in OpenCL or CUDA mode, then default to device functions
     DefaultCC = llvm::CallingConv::PTX_Device;
@@ -2913,7 +2913,7 @@ void PTXTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
   llvm::Function *F = cast<llvm::Function>(GV);
 
   // Perform special handling in OpenCL mode
-  if (M.getLangOptions().OpenCL) {
+  if (M.getLangOpts().OpenCL) {
     // Use OpenCL function attributes to set proper calling conventions
     // By default, all functions are device functions
     if (FD->hasAttr<OpenCLKernelAttr>()) {
@@ -2925,7 +2925,7 @@ void PTXTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
   }
 
   // Perform special handling in CUDA mode.
-  if (M.getLangOptions().CUDA) {
+  if (M.getLangOpts().CUDA) {
     // CUDA __global__ functions get a kernel calling convention.  Since
     // __global__ functions cannot be called from the device, we do not
     // need to set the noinline attribute.
@@ -3420,7 +3420,7 @@ void TCETargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 
   llvm::Function *F = cast<llvm::Function>(GV);
   
-  if (M.getLangOptions().OpenCL) {
+  if (M.getLangOpts().OpenCL) {
     if (FD->hasAttr<OpenCLKernelAttr>()) {
       // OpenCL C Kernel functions are not subject to inlining
       F->addFnAttr(llvm::Attribute::NoInline);

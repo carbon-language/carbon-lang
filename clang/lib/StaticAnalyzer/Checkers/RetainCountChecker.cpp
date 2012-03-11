@@ -2448,7 +2448,7 @@ public:
                                           bool GCEnabled) const {
     // FIXME: We don't support ARC being turned on and off during one analysis.
     // (nor, for that matter, do we support changing ASTContexts)
-    bool ARCEnabled = (bool)Ctx.getLangOptions().ObjCAutoRefCount;
+    bool ARCEnabled = (bool)Ctx.getLangOpts().ObjCAutoRefCount;
     if (GCEnabled) {
       if (!SummariesGC)
         SummariesGC.reset(new RetainSummaryManager(Ctx, true, ARCEnabled));
@@ -2911,7 +2911,7 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
   // In ARC mode they shouldn't exist at all, but we just ignore them.
   bool IgnoreRetainMsg = C.isObjCGCEnabled();
   if (!IgnoreRetainMsg)
-    IgnoreRetainMsg = (bool)C.getASTContext().getLangOptions().ObjCAutoRefCount;
+    IgnoreRetainMsg = (bool)C.getASTContext().getLangOpts().ObjCAutoRefCount;
 
   switch (E) {
     default: break;
@@ -3076,7 +3076,7 @@ void RetainCountChecker::processNonLeakError(ProgramStateRef St,
   }
 
   assert(BT);
-  CFRefReport *report = new CFRefReport(*BT, C.getASTContext().getLangOptions(),
+  CFRefReport *report = new CFRefReport(*BT, C.getASTContext().getLangOpts(),
                                         C.isObjCGCEnabled(), SummaryLog,
                                         N, Sym);
   report->addRange(ErrorRange);
@@ -3308,7 +3308,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
                ReturnOwnLeakTag("RetainCountChecker : ReturnsOwnLeak");
         ExplodedNode *N = C.addTransition(state, Pred, &ReturnOwnLeakTag);
         if (N) {
-          const LangOptions &LOpts = C.getASTContext().getLangOptions();
+          const LangOptions &LOpts = C.getASTContext().getLangOpts();
           bool GCEnabled = C.isObjCGCEnabled();
           CFRefReport *report =
             new CFRefLeakReport(*getLeakAtReturnBug(LOpts, GCEnabled),
@@ -3333,7 +3333,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
 
         CFRefReport *report =
             new CFRefReport(*returnNotOwnedForOwned,
-                            C.getASTContext().getLangOptions(), 
+                            C.getASTContext().getLangOpts(), 
                             C.isObjCGCEnabled(), SummaryLog, N, Sym);
         C.EmitReport(report);
       }
@@ -3499,7 +3499,7 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
     if (!overAutorelease)
       overAutorelease.reset(new OverAutorelease());
 
-    const LangOptions &LOpts = Ctx.getASTContext().getLangOptions();
+    const LangOptions &LOpts = Ctx.getASTContext().getLangOpts();
     CFRefReport *report =
       new CFRefReport(*overAutorelease, LOpts, /* GCEnabled = */ false,
                       SummaryLog, N, Sym, os.str());
@@ -3542,7 +3542,7 @@ RetainCountChecker::processLeaks(ProgramStateRef state,
     for (SmallVectorImpl<SymbolRef>::iterator
          I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
 
-      const LangOptions &LOpts = Ctx.getASTContext().getLangOptions();
+      const LangOptions &LOpts = Ctx.getASTContext().getLangOpts();
       bool GCEnabled = Ctx.isObjCGCEnabled();
       CFRefBug *BT = Pred ? getLeakWithinFunctionBug(LOpts, GCEnabled)
                           : getLeakAtReturnBug(LOpts, GCEnabled);

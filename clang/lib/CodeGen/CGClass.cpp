@@ -405,7 +405,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
 
   CGF.EmitAggExpr(BaseInit->getInit(), AggSlot);
   
-  if (CGF.CGM.getLangOptions().Exceptions && 
+  if (CGF.CGM.getLangOpts().Exceptions && 
       !BaseClassDecl->hasTrivialDestructor())
     CGF.EHStack.pushCleanup<CallBaseDtor>(EHCleanup, BaseClassDecl,
                                           isBaseVirtual);
@@ -642,7 +642,7 @@ void CodeGenFunction::EmitInitializerForField(FieldDecl *Field,
     EmitAggMemberInitializer(*this, LHS, Init, ArrayIndexVar, FieldType,
                              ArrayIndexes, 0);
     
-    if (!CGM.getLangOptions().Exceptions)
+    if (!CGM.getLangOpts().Exceptions)
       return;
 
     // FIXME: If we have an array of classes w/ non-trivial destructors, 
@@ -935,7 +935,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     }
     // -fapple-kext must inline any call to this dtor into
     // the caller's body.
-    if (getContext().getLangOptions().AppleKext)
+    if (getContext().getLangOpts().AppleKext)
       CurFn->addFnAttr(llvm::Attribute::AlwaysInline);
     break;
   }
@@ -1172,7 +1172,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
 
     // Evaluate the constructor and its arguments in a regular
     // partial-destroy cleanup.
-    if (getLangOptions().Exceptions &&
+    if (getLangOpts().Exceptions &&
         !ctor->getParent()->hasTrivialDestructor()) {
       Destroyer *destroyer = destroyCXXObject;
       pushRegularPartialArrayCleanup(arrayBegin, cur, type, *destroyer);
@@ -1376,7 +1376,7 @@ CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor
   EmitAggExpr(Ctor->init_begin()[0]->getInit(), AggSlot);
 
   const CXXRecordDecl *ClassDecl = Ctor->getParent();
-  if (CGM.getLangOptions().Exceptions && !ClassDecl->hasTrivialDestructor()) {
+  if (CGM.getLangOpts().Exceptions && !ClassDecl->hasTrivialDestructor()) {
     CXXDtorType Type =
       CurGD.getCtorType() == Ctor_Complete ? Dtor_Complete : Dtor_Base;
 
@@ -1393,7 +1393,7 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(DD, Type), 
                                      ForVirtualBase);
   llvm::Value *Callee = 0;
-  if (getContext().getLangOptions().AppleKext)
+  if (getContext().getLangOpts().AppleKext)
     Callee = BuildAppleKextVirtualDestructorCall(DD, Type, 
                                                  DD->getParent());
     
@@ -1711,7 +1711,7 @@ static bool UseVirtualCall(ASTContext &Context,
   
   // When building with -fapple-kext, all calls must go through the vtable since
   // the kernel linker can do runtime patching of vtables.
-  if (Context.getLangOptions().AppleKext)
+  if (Context.getLangOpts().AppleKext)
     return true;
 
   return !canDevirtualizeMemberFunctionCall(CE->getArg(0), MD);

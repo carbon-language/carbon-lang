@@ -1534,7 +1534,7 @@ template<typename T>
 void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D, 
                                       RedeclarableResult &Redecl) {
   // If modules are not available, there is no reason to perform this merge.
-  if (!Reader.getContext().getLangOptions().Modules)
+  if (!Reader.getContext().getLangOpts().Modules)
     return;
   
   if (FindExistingResult ExistingRes = findExisting(static_cast<T*>(D))) {

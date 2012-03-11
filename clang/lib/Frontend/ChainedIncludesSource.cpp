@@ -116,7 +116,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     if (firstInclude) {
       Preprocessor &PP = Clang->getPreprocessor();
       PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
-                                             PP.getLangOptions());
+                                             PP.getLangOpts());
     } else {
       assert(!serialBufs.empty());
       SmallVector<llvm::MemoryBuffer *, 4> bufs;

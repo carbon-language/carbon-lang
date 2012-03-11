@@ -106,7 +106,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
   // We have an array of character type with known size.  However,
   // the size may be smaller or larger than the string we are initializing.
   // FIXME: Avoid truncation for 64-bit length strings.
-  if (S.getLangOptions().CPlusPlus) {
+  if (S.getLangOpts().CPlusPlus) {
     if (StringLiteral *SL = dyn_cast<StringLiteral>(Str)) {
       // For Pascal strings it's OK to strip off the terminating null character,
       // so the example below is valid:
@@ -616,8 +616,8 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
   if (Index < IList->getNumInits()) {
     // We have leftover initializers
     if (VerifyOnly) {
-      if (SemaRef.getLangOptions().CPlusPlus ||
-          (SemaRef.getLangOptions().OpenCL &&
+      if (SemaRef.getLangOpts().CPlusPlus ||
+          (SemaRef.getLangOpts().OpenCL &&
            IList->getType()->isVectorType())) {
         hadError = true;
       }
@@ -627,7 +627,7 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
     if (StructuredIndex == 1 &&
         IsStringInit(StructuredList->getInit(0), T, SemaRef.Context)) {
       unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
-      if (SemaRef.getLangOptions().CPlusPlus) {
+      if (SemaRef.getLangOpts().CPlusPlus) {
         DK = diag::err_excess_initializers_in_char_array_initializer;
         hadError = true;
       }
@@ -646,11 +646,11 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
         4;
 
       unsigned DK = diag::warn_excess_initializers;
-      if (SemaRef.getLangOptions().CPlusPlus) {
+      if (SemaRef.getLangOpts().CPlusPlus) {
         DK = diag::err_excess_initializers;
         hadError = true;
       }
-      if (SemaRef.getLangOptions().OpenCL && initKind == 1) {
+      if (SemaRef.getLangOpts().OpenCL && initKind == 1) {
         DK = diag::err_excess_initializers;
         hadError = true;
       }
@@ -782,7 +782,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
 
     // Fall through for subaggregate initialization.
 
-  } else if (SemaRef.getLangOptions().CPlusPlus) {
+  } else if (SemaRef.getLangOpts().CPlusPlus) {
     // C++ [dcl.init.aggr]p12:
     //   All implicit type conversions (clause 4) are considered when
     //   initializing the aggregate member with an initializer from
@@ -845,7 +845,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
   //   subaggregate, brace elision is assumed and the initializer is
   //   considered for the initialization of the first member of
   //   the subaggregate.
-  if (!SemaRef.getLangOptions().OpenCL && 
+  if (!SemaRef.getLangOpts().OpenCL && 
       (ElemType->isAggregateType() || ElemType->isVectorType())) {
     CheckImplicitInitList(Entity, IList, ElemType, Index, StructuredList,
                           StructuredIndex);
@@ -884,7 +884,7 @@ void InitListChecker::CheckComplexType(const InitializedEntity &Entity,
 
   // This is an extension in C.  (The builtin _Complex type does not exist
   // in the C++ standard.)
-  if (!SemaRef.getLangOptions().CPlusPlus && !VerifyOnly)
+  if (!SemaRef.getLangOpts().CPlusPlus && !VerifyOnly)
     SemaRef.Diag(IList->getLocStart(), diag::ext_complex_component_init)
       << IList->getSourceRange();
 
@@ -909,11 +909,11 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
   if (Index >= IList->getNumInits()) {
     if (!VerifyOnly)
       SemaRef.Diag(IList->getLocStart(),
-                   SemaRef.getLangOptions().CPlusPlus0x ?
+                   SemaRef.getLangOpts().CPlusPlus0x ?
                      diag::warn_cxx98_compat_empty_scalar_initializer :
                      diag::err_empty_scalar_initializer)
         << IList->getSourceRange();
-    hadError = !SemaRef.getLangOptions().CPlusPlus0x;
+    hadError = !SemaRef.getLangOpts().CPlusPlus0x;
     ++Index;
     ++StructuredIndex;
     return;
@@ -993,7 +993,7 @@ void InitListChecker::CheckReferenceType(const InitializedEntity &Entity,
   }
 
   Expr *expr = IList->getInit(Index);
-  if (isa<InitListExpr>(expr) && !SemaRef.getLangOptions().CPlusPlus0x) {
+  if (isa<InitListExpr>(expr) && !SemaRef.getLangOpts().CPlusPlus0x) {
     if (!VerifyOnly)
       SemaRef.Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
         << DeclType << IList->getSourceRange();
@@ -1046,7 +1046,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
     return;
   }
 
-  if (!SemaRef.getLangOptions().OpenCL) {
+  if (!SemaRef.getLangOpts().OpenCL) {
     // If the initializing element is a vector, try to copy-initialize
     // instead of breaking it apart (which is doomed to failure anyway).
     Expr *Init = IList->getInit(Index);
@@ -1281,7 +1281,7 @@ bool InitListChecker::CheckFlexibleArrayInit(const InitializedEntity &Entity,
       cast<InitListExpr>(InitExpr)->getNumInits() == 0) {
     // Empty flexible array init always allowed as an extension
     FlexArrayDiag = diag::ext_flexible_array_init;
-  } else if (SemaRef.getLangOptions().CPlusPlus) {
+  } else if (SemaRef.getLangOpts().CPlusPlus) {
     // Disallow flexible array init in C++; it is not required for gcc
     // compatibility, and it needs work to IRGen correctly in general.
     FlexArrayDiag = diag::err_flexible_array_init;
@@ -1657,7 +1657,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         Loc = D->getFieldLoc();
       if (!VerifyOnly)
         SemaRef.Diag(Loc, diag::err_field_designator_non_aggr)
-          << SemaRef.getLangOptions().CPlusPlus << CurrentObjectType;
+          << SemaRef.getLangOpts().CPlusPlus << CurrentObjectType;
       ++Index;
       return true;
     }
@@ -1719,9 +1719,9 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
             RT->getDecl());
         if (Corrected) {
           std::string CorrectedStr(
-              Corrected.getAsString(SemaRef.getLangOptions()));
+              Corrected.getAsString(SemaRef.getLangOpts()));
           std::string CorrectedQuotedStr(
-              Corrected.getQuoted(SemaRef.getLangOptions()));
+              Corrected.getQuoted(SemaRef.getLangOpts()));
           ReplacementField = Corrected.getCorrectionDeclAs<FieldDecl>();
           SemaRef.Diag(D->getFieldLoc(),
                        diag::err_field_designator_unknown_suggest)
@@ -2272,7 +2272,7 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
                                  InitExpressions.data(), InitExpressions.size(),
                                  Loc, GNUSyntax, Init.takeAs<Expr>());
 
-  if (!getLangOptions().C99)
+  if (!getLangOpts().C99)
     Diag(DIE->getLocStart(), diag::ext_designated_init)
       << DIE->getSourceRange();
 
@@ -2683,7 +2683,7 @@ void InitializationSequence::SetOverloadFailure(FailureKind Failure,
 static void MaybeProduceObjCObject(Sema &S,
                                    InitializationSequence &Sequence,
                                    const InitializedEntity &Entity) {
-  if (!S.getLangOptions().ObjCAutoRefCount) return;
+  if (!S.getLangOpts().ObjCAutoRefCount) return;
 
   /// When initializing a parameter, produce the value if it's marked
   /// __attribute__((ns_consumed)).
@@ -3023,7 +3023,7 @@ static void TryReferenceListInitialization(Sema &S,
                                            InitializationSequence &Sequence)
 {
   // First, catch C++03 where this isn't possible.
-  if (!S.getLangOptions().CPlusPlus0x) {
+  if (!S.getLangOpts().CPlusPlus0x) {
     Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
     return;
   }
@@ -3089,7 +3089,7 @@ static void TryListInitialization(Sema &S,
 
   // C++ doesn't allow scalar initialization with more than one argument.
   // But C99 complex numbers are scalars and it makes sense there.
-  if (S.getLangOptions().CPlusPlus && DestType->isScalarType() &&
+  if (S.getLangOpts().CPlusPlus && DestType->isScalarType() &&
       !DestType->isAnyComplexType() && InitList->getNumInits() > 1) {
     Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
     return;
@@ -3105,7 +3105,7 @@ static void TryListInitialization(Sema &S,
     }
 
     if (!DestType->isAggregateType()) {
-      if (S.getLangOptions().CPlusPlus0x) {
+      if (S.getLangOpts().CPlusPlus0x) {
         Expr *Arg = InitList;
         // A direct-initializer is not list-syntax, i.e. there's no special
         // treatment of "A a({1, 2});".
@@ -3122,7 +3122,7 @@ static void TryListInitialization(Sema &S,
   InitListChecker CheckInitList(S, Entity, InitList,
           DestType, /*VerifyOnly=*/true,
           Kind.getKind() != InitializationKind::IK_DirectList ||
-            !S.getLangOptions().CPlusPlus0x);
+            !S.getLangOpts().CPlusPlus0x);
   if (CheckInitList.HadError()) {
     Sequence.SetFailed(InitializationSequence::FK_ListInitializationFailed);
     return;
@@ -3479,9 +3479,9 @@ static void TryReferenceInitializationCore(Sema &S,
       //
       //   The constructor that would be used to make the copy shall
       //   be callable whether or not the copy is actually done.
-      if (!S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt)
+      if (!S.getLangOpts().CPlusPlus0x && !S.getLangOpts().MicrosoftExt)
         Sequence.AddExtraneousCopyToTemporary(cv2T2);
-      else if (S.getLangOptions().CPlusPlus0x)
+      else if (S.getLangOpts().CPlusPlus0x)
         CheckCXX98CompatAccessibleCopy(S, Entity, Initializer);
     }
 
@@ -3612,7 +3612,7 @@ static void TryValueInitialization(Sema &S,
       //    constructor (12.1), then the default constructor for T is
       //    called (and the initialization is ill-formed if T has no
       //    accessible default constructor);
-      if (!S.getLangOptions().CPlusPlus0x) {
+      if (!S.getLangOpts().CPlusPlus0x) {
         if (ClassDecl->hasUserDeclaredConstructor())
           // FIXME: we really want to refer to a single subobject of the array,
           // but Entity doesn't have a way to capture that (yet).
@@ -3659,7 +3659,7 @@ static void TryDefaultInitialization(Sema &S,
   //     - if T is a (possibly cv-qualified) class type (Clause 9), the default
   //       constructor for T is called (and the initialization is ill-formed if
   //       T has no accessible default constructor);
-  if (DestType->isRecordType() && S.getLangOptions().CPlusPlus) {
+  if (DestType->isRecordType() && S.getLangOpts().CPlusPlus) {
     TryConstructorInitialization(S, Entity, Kind, 0, 0, DestType, Sequence);
     return;
   }
@@ -3669,7 +3669,7 @@ static void TryDefaultInitialization(Sema &S,
   //   If a program calls for the default initialization of an object of
   //   a const-qualified type T, T shall be a class type with a user-provided
   //   default constructor.
-  if (DestType.isConstQualified() && S.getLangOptions().CPlusPlus) {
+  if (DestType.isConstQualified() && S.getLangOpts().CPlusPlus) {
     Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
     return;
   }
@@ -4079,7 +4079,7 @@ InitializationSequence::InitializationSequence(Sema &S,
     // Note: as an GNU C extension, we allow initialization of an
     // array from a compound literal that creates an array of the same
     // type, so long as the initializer has no side effects.
-    if (!S.getLangOptions().CPlusPlus && Initializer &&
+    if (!S.getLangOpts().CPlusPlus && Initializer &&
         isa<CompoundLiteralExpr>(Initializer->IgnoreParens()) &&
         Initializer->getType()->isArrayType()) {
       const ArrayType *SourceAT
@@ -4094,7 +4094,7 @@ InitializationSequence::InitializationSequence(Sema &S,
     }
     // Note: as a GNU C++ extension, we allow initialization of a
     // class member from a parenthesized initializer list.
-    else if (S.getLangOptions().CPlusPlus &&
+    else if (S.getLangOpts().CPlusPlus &&
              Entity.getKind() == InitializedEntity::EK_Member &&
              Initializer && isa<InitListExpr>(Initializer)) {
       TryListInitialization(S, Entity, Kind, cast<InitListExpr>(Initializer),
@@ -4110,12 +4110,12 @@ InitializationSequence::InitializationSequence(Sema &S,
 
   // Determine whether we should consider writeback conversions for 
   // Objective-C ARC.
-  bool allowObjCWritebackConversion = S.getLangOptions().ObjCAutoRefCount &&
+  bool allowObjCWritebackConversion = S.getLangOpts().ObjCAutoRefCount &&
     Entity.getKind() == InitializedEntity::EK_Parameter;
 
   // We're at the end of the line for C: it's either a write-back conversion
   // or it's a C assignment. There's no need to check anything else.
-  if (!S.getLangOptions().CPlusPlus) {
+  if (!S.getLangOpts().CPlusPlus) {
     // If allowed, check whether this is an Objective-C writeback conversion.
     if (allowObjCWritebackConversion &&
         tryObjCWritebackConversion(S, *this, Entity, Initializer)) {
@@ -4128,7 +4128,7 @@ InitializationSequence::InitializationSequence(Sema &S,
     return;
   }
 
-  assert(S.getLangOptions().CPlusPlus);
+  assert(S.getLangOpts().CPlusPlus);
       
   //     - If the destination type is a (possibly cv-qualified) class type:
   if (DestType->isRecordType()) {
@@ -4549,7 +4549,7 @@ static ExprResult CopyObject(Sema &S,
 static void CheckCXX98CompatAccessibleCopy(Sema &S,
                                            const InitializedEntity &Entity,
                                            Expr *CurInitExpr) {
-  assert(S.getLangOptions().CPlusPlus0x);
+  assert(S.getLangOpts().CPlusPlus0x);
 
   const RecordType *Record = CurInitExpr->getType()->getAs<RecordType>();
   if (!Record)
@@ -4959,7 +4959,7 @@ InitializationSequence::Perform(Sema &S,
 
       // If we're binding to an Objective-C object that has lifetime, we
       // need cleanups.
-      if (S.getLangOptions().ObjCAutoRefCount &&
+      if (S.getLangOpts().ObjCAutoRefCount &&
           CurInit.get()->getType()->isObjCLifetimeType())
         S.ExprNeedsCleanups = true;
             
@@ -5114,7 +5114,7 @@ InitializationSequence::Perform(Sema &S,
       InitListChecker PerformInitList(S, IsTemporary ? TempEntity : Entity,
           InitList, Ty, /*VerifyOnly=*/false,
           Kind.getKind() != InitializationKind::IK_DirectList ||
-            !S.getLangOptions().CPlusPlus0x);
+            !S.getLangOpts().CPlusPlus0x);
       if (PerformInitList.HadError())
         return ExprError();
 
@@ -5195,7 +5195,7 @@ InitializationSequence::Perform(Sema &S,
         // the call to the object's constructor within the next step.
         ConstructorInitRequiresZeroInit = true;
       } else if (Kind.getKind() == InitializationKind::IK_Value &&
-                 S.getLangOptions().CPlusPlus &&
+                 S.getLangOpts().CPlusPlus &&
                  !Kind.isImplicitValueInit()) {
         TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
         if (!TSInfo)
@@ -5716,7 +5716,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     InitListChecker DiagnoseInitList(S, Entity, InitList,
             DestType, /*VerifyOnly=*/false,
             Kind.getKind() != InitializationKind::IK_DirectList ||
-              !S.getLangOptions().CPlusPlus0x);
+              !S.getLangOpts().CPlusPlus0x);
     assert(DiagnoseInitList.HadError() &&
            "Inconsistent init list check result.");
     break;
@@ -6055,7 +6055,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
     // narrowing conversion even if the value is a constant and can be
     // represented exactly as an integer.
     S.Diag(PostInit->getLocStart(),
-           S.getLangOptions().MicrosoftExt || !S.getLangOptions().CPlusPlus0x? 
+           S.getLangOpts().MicrosoftExt || !S.getLangOpts().CPlusPlus0x? 
              diag::warn_init_list_type_narrowing
            : S.isSFINAEContext()?
              diag::err_init_list_type_narrowing_sfinae
@@ -6068,7 +6068,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
   case NK_Constant_Narrowing:
     // A constant value was narrowed.
     S.Diag(PostInit->getLocStart(),
-           S.getLangOptions().MicrosoftExt || !S.getLangOptions().CPlusPlus0x? 
+           S.getLangOpts().MicrosoftExt || !S.getLangOpts().CPlusPlus0x? 
              diag::warn_init_list_constant_narrowing
            : S.isSFINAEContext()?
              diag::err_init_list_constant_narrowing_sfinae
@@ -6081,7 +6081,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
   case NK_Variable_Narrowing:
     // A variable's value may have been narrowed.
     S.Diag(PostInit->getLocStart(),
-           S.getLangOptions().MicrosoftExt || !S.getLangOptions().CPlusPlus0x? 
+           S.getLangOpts().MicrosoftExt || !S.getLangOpts().CPlusPlus0x? 
              diag::warn_init_list_variable_narrowing
            : S.isSFINAEContext()?
              diag::err_init_list_variable_narrowing_sfinae
@@ -6103,7 +6103,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
     // getQualifiedNameAsString() includes non-machine-parsable components.
     OS << *TT->getDecl();
   } else if (const BuiltinType *BT = EntityType->getAs<BuiltinType>())
-    OS << BT->getName(S.getLangOptions());
+    OS << BT->getName(S.getLangOpts());
   else {
     // Oops, we didn't find the actual type of the variable.  Don't emit a fixit
     // with a broken cast.

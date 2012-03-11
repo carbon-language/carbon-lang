@@ -215,7 +215,7 @@ class CodeGenModule : public CodeGenTypeCache {
   typedef std::vector<std::pair<llvm::Constant*, int> > CtorList;
 
   ASTContext &Context;
-  const LangOptions &Features;
+  const LangOptions &LangOpts;
   const CodeGenOptions &CodeGenOpts;
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
@@ -388,7 +388,7 @@ public:
   CGCXXABI &getCXXABI() { return ABI; }
 
   ARCEntrypoints &getARCEntrypoints() const {
-    assert(getLangOptions().ObjCAutoRefCount && ARCData != 0);
+    assert(getLangOpts().ObjCAutoRefCount && ARCData != 0);
     return *ARCData;
   }
 
@@ -433,7 +433,7 @@ public:
 
   ASTContext &getContext() const { return Context; }
   const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }
-  const LangOptions &getLangOptions() const { return Features; }
+  const LangOptions &getLangOpts() const { return LangOpts; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   CodeGenVTables &getVTables() { return VTables; }

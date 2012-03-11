@@ -613,7 +613,7 @@ void RewriteModernObjC::InitializeCommon(ASTContext &context) {
   MainFileStart = MainBuf->getBufferStart();
   MainFileEnd = MainBuf->getBufferEnd();
 
-  Rewrite.setSourceMgr(Context->getSourceManager(), Context->getLangOptions());
+  Rewrite.setSourceMgr(Context->getSourceManager(), Context->getLangOpts());
 }
 
 //===----------------------------------------------------------------------===//

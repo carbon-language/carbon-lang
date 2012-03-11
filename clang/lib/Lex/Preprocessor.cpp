@@ -55,7 +55,7 @@ Preprocessor::Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
                            IdentifierInfoLookup* IILookup,
                            bool OwnsHeaders,
                            bool DelayInitialization)
-  : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
+  : Diags(&diags), LangOpts(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), TheModuleLoader(TheModuleLoader),
     ExternalSource(0), 
     Identifiers(opts, IILookup), CodeComplete(0),
@@ -153,7 +153,7 @@ void Preprocessor::Initialize(const TargetInfo &Target) {
   // Initialize builtin macros like __LINE__ and friends.
   RegisterBuiltinMacros();
   
-  if(Features.Borland) {
+  if(LangOpts.Borland) {
     Ident__exception_info        = getIdentifierInfo("_exception_info");
     Ident___exception_info       = getIdentifierInfo("__exception_info");
     Ident_GetExceptionInfo       = getIdentifierInfo("GetExceptionInformation");
@@ -382,10 +382,10 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
 }
 
 Module *Preprocessor::getCurrentModule() {
-  if (getLangOptions().CurrentModule.empty())
+  if (getLangOpts().CurrentModule.empty())
     return 0;
   
-  return getHeaderSearchInfo().lookupModule(getLangOptions().CurrentModule);
+  return getHeaderSearchInfo().lookupModule(getLangOpts().CurrentModule);
 }
 
 //===----------------------------------------------------------------------===//
@@ -572,7 +572,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // keyword when we're in a caching lexer, because caching lexers only get
   // used in contexts where import declarations are disallowed.
   if (II.isModulesImport() && !InMacroArgs && !DisableMacroExpansion &&
-      getLangOptions().Modules && CurLexerKind != CLK_CachingLexer) {
+      getLangOpts().Modules && CurLexerKind != CLK_CachingLexer) {
     ModuleImportLoc = Identifier.getLocation();
     ModuleImportPath.clear();
     ModuleImportExpectsIdentifier = true;

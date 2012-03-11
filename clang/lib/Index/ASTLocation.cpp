@@ -89,7 +89,7 @@ void ASTLocation::print(raw_ostream &OS) const {
 
   case N_Stmt:
     OS << "[Stmt: " << AsStmt()->getStmtClassName() << " ";
-    AsStmt()->printPretty(OS, Ctx, 0, PrintingPolicy(Ctx.getLangOptions()));
+    AsStmt()->printPretty(OS, Ctx, 0, PrintingPolicy(Ctx.getLangOpts()));
     break;
     
   case N_NamedRef:

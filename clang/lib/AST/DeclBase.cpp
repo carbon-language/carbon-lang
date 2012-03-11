@@ -423,7 +423,7 @@ bool Decl::canBeWeakImported(bool &IsDefinition) const {
     }
   } else if (isa<ObjCPropertyDecl>(this) || isa<ObjCMethodDecl>(this))
     return false;
-  else if (!(getASTContext().getLangOptions().ObjCNonFragileABI &&
+  else if (!(getASTContext().getLangOpts().ObjCNonFragileABI &&
              isa<ObjCInterfaceDecl>(this)))
     return false;
 

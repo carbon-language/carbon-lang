@@ -175,7 +175,7 @@ public:
   /// \brief Create the initialization entity for a parameter.
   static InitializedEntity InitializeParameter(ASTContext &Context,
                                                ParmVarDecl *Parm) {
-    bool Consumed = (Context.getLangOptions().ObjCAutoRefCount &&
+    bool Consumed = (Context.getLangOpts().ObjCAutoRefCount &&
                      Parm->hasAttr<NSConsumedAttr>());
 
     InitializedEntity Entity;

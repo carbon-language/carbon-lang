@@ -149,7 +149,7 @@ Parser::TPResult Parser::TryParseSimpleDeclaration(bool AllowForRangeDecl) {
   else {
     ConsumeToken();
     
-    if (getLang().ObjC1 && Tok.is(tok::less))
+    if (getLangOpts().ObjC1 && Tok.is(tok::less))
       TryParseProtocolQualifiers();
   }
   
@@ -258,7 +258,7 @@ bool Parser::isCXXConditionDeclaration() {
   else {
     ConsumeToken();
     
-    if (getLang().ObjC1 && Tok.is(tok::less))
+    if (getLangOpts().ObjC1 && Tok.is(tok::less))
       TryParseProtocolQualifiers();
   }
   assert(Tok.is(tok::l_paren) && "Expected '('");
@@ -276,7 +276,7 @@ bool Parser::isCXXConditionDeclaration() {
     if (Tok.is(tok::equal)  ||
         Tok.is(tok::kw_asm) || Tok.is(tok::kw___attribute))
       TPR = TPResult::True();
-    else if (getLang().CPlusPlus0x && Tok.is(tok::l_brace))
+    else if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace))
       TPR = TPResult::True();
     else
       TPR = TPResult::False();
@@ -335,7 +335,7 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
   else {
     ConsumeToken();
     
-    if (getLang().ObjC1 && Tok.is(tok::less))
+    if (getLangOpts().ObjC1 && Tok.is(tok::less))
       TryParseProtocolQualifiers();
   }
   
@@ -360,7 +360,7 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
     // ',', this is a type-id. Otherwise, it's an expression.
     } else if (Context == TypeIdAsTemplateArgument &&
                (Tok.is(tok::greater) || Tok.is(tok::comma) ||
-                (getLang().CPlusPlus0x && Tok.is(tok::greatergreater)))) {
+                (getLangOpts().CPlusPlus0x && Tok.is(tok::greatergreater)))) {
       TPR = TPResult::True();
       isAmbiguous = true;
 
@@ -430,7 +430,7 @@ bool Parser::isCXX0XAttributeSpecifier (bool CheckClosing,
     return false;
   
   // No tentative parsing if we don't need to look for ]]
-  if (!CheckClosing && !getLang().ObjC1)
+  if (!CheckClosing && !getLangOpts().ObjC1)
     return true;
   
   struct TentativeReverter {
@@ -1005,7 +1005,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
   case tok::annot_typename:
   case_typename:
     // In Objective-C, we might have a protocol-qualified type.
-    if (getLang().ObjC1 && NextToken().is(tok::less)) {
+    if (getLangOpts().ObjC1 && NextToken().is(tok::less)) {
       // Tentatively parse the 
       TentativeParsingAction PA(*this);
       ConsumeToken(); // The type token
@@ -1022,7 +1022,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
       if (isFollowedByParen)
         return TPResult::Ambiguous();
 
-      if (getLang().CPlusPlus0x && isFollowedByBrace)
+      if (getLangOpts().CPlusPlus0x && isFollowedByBrace)
         return BracedCastResult;
       
       return TPResult::True();
@@ -1053,7 +1053,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
     //     enum E : int { a = 4 }; // enum
     //     enum E : int { 4 };     // bit-field
     //   };
-    if (getLang().CPlusPlus0x && NextToken().is(tok::l_brace))
+    if (getLangOpts().CPlusPlus0x && NextToken().is(tok::l_brace))
       return BracedCastResult;
 
     if (isStartOfObjCClassMessageMissingOpenBracket())
@@ -1080,7 +1080,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
     if (isFollowedByParen)
       return TPResult::Ambiguous();
 
-    if (getLang().CPlusPlus0x && isFollowedByBrace)
+    if (getLangOpts().CPlusPlus0x && isFollowedByBrace)
       return BracedCastResult;
 
     return TPResult::True();
@@ -1150,7 +1150,7 @@ Parser::TPResult Parser::TryParseDeclarationSpecifier() {
   else {
     ConsumeToken();
     
-    if (getLang().ObjC1 && Tok.is(tok::less))
+    if (getLangOpts().ObjC1 && Tok.is(tok::less))
       TryParseProtocolQualifiers();
   }
 

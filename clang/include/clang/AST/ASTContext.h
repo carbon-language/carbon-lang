@@ -411,7 +411,7 @@ public:
 
   const TargetInfo &getTargetInfo() const { return *Target; }
   
-  const LangOptions& getLangOptions() const { return LangOpts; }
+  const LangOptions& getLangOpts() const { return LangOpts; }
 
   DiagnosticsEngine &getDiagnostics() const;
 
@@ -1058,7 +1058,7 @@ public:
 
   /// \brief The result type of logical operations, '<', '>', '!=', etc.
   QualType getLogicalOperationType() const {
-    return getLangOptions().CPlusPlus ? BoolTy : IntTy;
+    return getLangOpts().CPlusPlus ? BoolTy : IntTy;
   }
 
   /// getObjCEncodingForType - Emit the ObjC type encoding for the

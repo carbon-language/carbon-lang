@@ -594,9 +594,9 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
   // Use assignment constraints when possible; they give us better
   // diagnostics.  "When possible" basically means anything except a
   // C++ class type.
-  if (!S.getLangOptions().CPlusPlus || !op->getType()->isRecordType()) {
+  if (!S.getLangOpts().CPlusPlus || !op->getType()->isRecordType()) {
     QualType paramType = (*Setter->param_begin())->getType();
-    if (!S.getLangOptions().CPlusPlus || !paramType->isRecordType()) {
+    if (!S.getLangOpts().CPlusPlus || !paramType->isRecordType()) {
       ExprResult opResult = op;
       Sema::AssignConvertType assignResult
         = S.CheckSingleAssignmentConstraints(paramType, opResult);
@@ -675,7 +675,7 @@ ExprResult ObjCPropertyOpBuilder::buildRValueOperation(Expr *op) {
 ///   succeeded
 bool ObjCPropertyOpBuilder::tryBuildGetOfReference(Expr *op,
                                                    ExprResult &result) {
-  if (!S.getLangOptions().CPlusPlus) return false;
+  if (!S.getLangOpts().CPlusPlus) return false;
 
   findGetter();
   assert(Getter && "property has no setter and no getter!");
@@ -727,7 +727,7 @@ ObjCPropertyOpBuilder::buildAssignmentOperation(Scope *Sc,
   if (result.isInvalid()) return ExprError();
 
   // Various warnings about property assignments in ARC.
-  if (S.getLangOptions().ObjCAutoRefCount && InstanceReceiver) {
+  if (S.getLangOpts().ObjCAutoRefCount && InstanceReceiver) {
     S.checkRetainCycles(InstanceReceiver->getSourceExpr(), RHS);
     S.checkUnsafeExprAssigns(opcLoc, LHS, RHS);
   }
@@ -806,7 +806,7 @@ ObjCSubscriptOpBuilder::buildAssignmentOperation(Scope *Sc,
   if (result.isInvalid()) return ExprError();
   
   // Various warnings about objc Index'ed assignments in ARC.
-  if (S.getLangOptions().ObjCAutoRefCount && InstanceBase) {
+  if (S.getLangOpts().ObjCAutoRefCount && InstanceBase) {
     S.checkRetainCycles(InstanceBase->getSourceExpr(), RHS);
     S.checkUnsafeExprAssigns(opcLoc, LHS, RHS);
   }
@@ -846,7 +846,7 @@ Sema::ObjCSubscriptKind
     // All other scalar cases are assumed to be dictionary indexing which
     // caller handles, with diagnostics if needed.
     return OS_Dictionary;
-  if (!getLangOptions().CPlusPlus || RecordTy->isIncompleteType()) {
+  if (!getLangOpts().CPlusPlus || RecordTy->isIncompleteType()) {
     // No indexing can be done. Issue diagnostics and quit.
     Diag(FromE->getExprLoc(), diag::err_objc_subscript_type_conversion)
     << FromE->getType();
@@ -952,7 +952,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
   bool receiverIdType = (BaseT->isObjCIdType() ||
                          BaseT->isObjCQualifiedIdType());
   
-  if (!AtIndexGetter && S.getLangOptions().DebuggerObjCLiteral) {
+  if (!AtIndexGetter && S.getLangOpts().DebuggerObjCLiteral) {
     AtIndexGetter = ObjCMethodDecl::Create(S.Context, SourceLocation(), 
                            SourceLocation(), AtIndexGetterSelector,
                            S.Context.getObjCIdType() /*ReturnType*/,
@@ -1062,7 +1062,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
   bool receiverIdType = (BaseT->isObjCIdType() ||
                          BaseT->isObjCQualifiedIdType());
 
-  if (!AtIndexSetter && S.getLangOptions().DebuggerObjCLiteral) {
+  if (!AtIndexSetter && S.getLangOpts().DebuggerObjCLiteral) {
     TypeSourceInfo *ResultTInfo = 0;
     QualType ReturnType = S.Context.VoidTy;
     AtIndexSetter = ObjCMethodDecl::Create(S.Context, SourceLocation(),

@@ -64,7 +64,7 @@ ASTReaderListener::~ASTReaderListener() {}
 
 bool
 PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
-  const LangOptions &PPLangOpts = PP.getLangOptions();
+  const LangOptions &PPLangOpts = PP.getLangOpts();
   
 #define LANGOPT(Name, Bits, Default, Description)         \
   if (PPLangOpts.Name != LangOpts.Name) {                 \
@@ -1615,7 +1615,7 @@ namespace {
 
 void ASTReader::updateOutOfDateIdentifier(IdentifierInfo &II) {
   unsigned PriorGeneration = 0;
-  if (getContext().getLangOptions().Modules)
+  if (getContext().getLangOpts().Modules)
     PriorGeneration = IdentifierGeneration[&II];
   
   IdentifierLookupVisitor Visitor(II.getName(), PriorGeneration);
@@ -1630,7 +1630,7 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
   II->setOutOfDate(false);
 
   // Update the generation for this identifier.
-  if (getContext().getLangOptions().Modules)
+  if (getContext().getLangOpts().Modules)
     IdentifierGeneration[II] = CurrentGeneration;
 }
 
@@ -3321,7 +3321,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
 
       CurrentModule->addRequirement(StringRef(BlobStart, BlobLen), 
-                                    Context.getLangOptions(),
+                                    Context.getLangOpts(),
                                     Context.getTargetInfo());
       break;
     }

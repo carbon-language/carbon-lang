@@ -1210,7 +1210,7 @@ public:
     return CGM.getCodeGenOpts().OptimizationLevel == 0;
   }
 
-  const LangOptions &getLangOptions() const { return CGM.getLangOptions(); }
+  const LangOptions &getLangOpts() const { return CGM.getLangOpts(); }
 
   /// Returns a pointer to the function's exception object and selector slot,
   /// which is assigned in every landing pad.
@@ -1278,9 +1278,9 @@ public:
       return false;
     case QualType::DK_cxx_destructor:
     case QualType::DK_objc_weak_lifetime:
-      return getLangOptions().Exceptions;
+      return getLangOpts().Exceptions;
     case QualType::DK_objc_strong_lifetime:
-      return getLangOptions().Exceptions &&
+      return getLangOpts().Exceptions &&
              CGM.getCodeGenOpts().ObjCAutoRefCountExceptions;
     }
     llvm_unreachable("bad destruction kind");

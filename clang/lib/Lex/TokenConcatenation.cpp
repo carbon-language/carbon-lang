@@ -45,7 +45,7 @@ static bool IsStringPrefix(StringRef Str, bool CPlusPlus0x) {
 /// IsIdentifierStringPrefix - Return true if the spelling of the token
 /// is literally 'L', 'u', 'U', or 'u8'. Including raw versions.
 bool TokenConcatenation::IsIdentifierStringPrefix(const Token &Tok) const {
-  const LangOptions &LangOpts = PP.getLangOptions();
+  const LangOptions &LangOpts = PP.getLangOpts();
 
   if (!Tok.needsCleaning()) {
     if (Tok.getLength() < 1 || Tok.getLength() > 3)
@@ -86,7 +86,7 @@ TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
   TokenInfo[tok::arrow           ] |= aci_custom_firstchar;
 
   // These tokens have custom code in C++11 mode.
-  if (PP.getLangOptions().CPlusPlus0x) {
+  if (PP.getLangOpts().CPlusPlus0x) {
     TokenInfo[tok::string_literal      ] |= aci_custom;
     TokenInfo[tok::wide_string_literal ] |= aci_custom;
     TokenInfo[tok::utf8_string_literal ] |= aci_custom;
@@ -205,7 +205,7 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
   case tok::wide_char_constant:
   case tok::utf16_char_constant:
   case tok::utf32_char_constant:
-    if (!PP.getLangOptions().CPlusPlus0x)
+    if (!PP.getLangOpts().CPlusPlus0x)
       return false;
 
     // In C++11, a string or character literal followed by an identifier is a
@@ -240,11 +240,11 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
   case tok::numeric_constant:
     return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
            FirstChar == '+' || FirstChar == '-' || FirstChar == '.' ||
-           (PP.getLangOptions().CPlusPlus0x && FirstChar == '_');
+           (PP.getLangOpts().CPlusPlus0x && FirstChar == '_');
   case tok::period:          // ..., .*, .1234
     return (FirstChar == '.' && PrevPrevTok.is(tok::period)) ||
     isdigit(FirstChar) ||
-    (PP.getLangOptions().CPlusPlus && FirstChar == '*');
+    (PP.getLangOpts().CPlusPlus && FirstChar == '*');
   case tok::amp:             // &&
     return FirstChar == '&';
   case tok::plus:            // ++
@@ -263,10 +263,10 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     return FirstChar == '>' || FirstChar == ':';
   case tok::colon:           // ::, :>
     return FirstChar == '>' ||
-    (PP.getLangOptions().CPlusPlus && FirstChar == ':');
+    (PP.getLangOpts().CPlusPlus && FirstChar == ':');
   case tok::hash:            // ##, #@, %:%:
     return FirstChar == '#' || FirstChar == '@' || FirstChar == '%';
   case tok::arrow:           // ->*
-    return PP.getLangOptions().CPlusPlus && FirstChar == '*';
+    return PP.getLangOpts().CPlusPlus && FirstChar == '*';
   }
 }

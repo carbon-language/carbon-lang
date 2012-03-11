@@ -294,7 +294,7 @@ void clang::FormatASTNodeDiagnosticArgument(
       
       if (DC->isTranslationUnit()) {
         // FIXME: Get these strings from some localized place
-        if (Context.getLangOptions().CPlusPlus)
+        if (Context.getLangOpts().CPlusPlus)
           S = "the global namespace";
         else
           S = "the global scope";

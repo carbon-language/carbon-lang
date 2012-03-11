@@ -164,7 +164,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   assert(!FID.isInvalid());
 
   // Create a new rewriter to generate HTML.
-  Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOptions());
+  Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOpts());
 
   // Process the path.
   unsigned n = path.size();
@@ -442,7 +442,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
       assert(L.isFileID());
       StringRef BufferInfo = L.getBufferData();
       const char* MacroName = L.getDecomposedLoc().second + BufferInfo.data();
-      Lexer rawLexer(L, PP.getLangOptions(), BufferInfo.begin(),
+      Lexer rawLexer(L, PP.getLangOpts(), BufferInfo.begin(),
                      MacroName, BufferInfo.end());
 
       Token TheTok;

@@ -88,9 +88,9 @@ ExprResult Sema::BuildObjCStringLiteral(SourceLocation AtLoc, StringLiteral *S){
   QualType Ty = Context.getObjCConstantStringInterface();
   if (!Ty.isNull()) {
     Ty = Context.getObjCObjectPointerType(Ty);
-  } else if (getLangOptions().NoConstantCFStrings) {
+  } else if (getLangOpts().NoConstantCFStrings) {
     IdentifierInfo *NSIdent=0;
-    std::string StringClass(getLangOptions().ObjCConstantStringClass);
+    std::string StringClass(getLangOpts().ObjCConstantStringClass);
     
     if (StringClass.empty())
       NSIdent = &Context.Idents.get("NSConstantString");
@@ -163,7 +163,7 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
   
   // Look for the appropriate method within NSNumber.
   ObjCMethodDecl *Method = S.NSNumberDecl->lookupClassMethod(Sel);;
-  if (!Method && S.getLangOptions().DebuggerObjCLiteral) {
+  if (!Method && S.getLangOpts().DebuggerObjCLiteral) {
     TypeSourceInfo *ResultTInfo = 0;
     Method = ObjCMethodDecl::Create(S.Context, SourceLocation(), SourceLocation(), Sel,
                            ReturnType,
@@ -213,7 +213,7 @@ ExprResult Sema::BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number) {
                                 AtLoc, LookupOrdinaryName);
     NSNumberDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
     
-    if (!NSNumberDecl && getLangOptions().DebuggerObjCLiteral)
+    if (!NSNumberDecl && getLangOpts().DebuggerObjCLiteral)
       NSNumberDecl =  ObjCInterfaceDecl::Create (Context,
                         Context.getTranslationUnitDecl(),
                         SourceLocation(), 
@@ -278,7 +278,7 @@ ExprResult Sema::ActOnObjCBoolLiteral(SourceLocation AtLoc,
                                       SourceLocation ValueLoc,
                                       bool Value) {
   ExprResult Inner;
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOpts().CPlusPlus) {
     Inner = ActOnCXXBoolLiteral(ValueLoc, Value? tok::kw_true : tok::kw_false);
   } else {
     // C doesn't actually have a way to represent literal values of type 
@@ -306,7 +306,7 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
 
   // In C++, check for an implicit conversion to an Objective-C object pointer 
   // type.
-  if (S.getLangOptions().CPlusPlus && Element->getType()->isRecordType()) {
+  if (S.getLangOpts().CPlusPlus && Element->getType()->isRecordType()) {
     InitializedEntity Entity
       = InitializedEntity::InitializeParameter(S.Context, T, /*Consumed=*/false);
     InitializationKind Kind
@@ -422,7 +422,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                                  SR.getBegin(),
                                  LookupOrdinaryName);
     NSArrayDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
-    if (!NSArrayDecl && getLangOptions().DebuggerObjCLiteral)
+    if (!NSArrayDecl && getLangOpts().DebuggerObjCLiteral)
       NSArrayDecl =  ObjCInterfaceDecl::Create (Context,
                             Context.getTranslationUnitDecl(),
                             SourceLocation(),
@@ -441,7 +441,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
     Selector
       Sel = NSAPIObj->getNSArraySelector(NSAPI::NSArr_arrayWithObjectsCount);
     ArrayWithObjectsMethod = NSArrayDecl->lookupClassMethod(Sel);
-    if (!ArrayWithObjectsMethod && getLangOptions().DebuggerObjCLiteral) {
+    if (!ArrayWithObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
       TypeSourceInfo *ResultTInfo = 0;
       ArrayWithObjectsMethod =
                          ObjCMethodDecl::Create(Context,
@@ -555,7 +555,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                             NSAPIObj->getNSClassId(NSAPI::ClassId_NSDictionary),
                             SR.getBegin(), LookupOrdinaryName);
     NSDictionaryDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
-    if (!NSDictionaryDecl && getLangOptions().DebuggerObjCLiteral)
+    if (!NSDictionaryDecl && getLangOpts().DebuggerObjCLiteral)
       NSDictionaryDecl =  ObjCInterfaceDecl::Create (Context,
                             Context.getTranslationUnitDecl(),
                             SourceLocation(),
@@ -575,7 +575,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
     Selector Sel = NSAPIObj->getNSDictionarySelector(
                                     NSAPI::NSDict_dictionaryWithObjectsForKeysCount);
     DictionaryWithObjectsMethod = NSDictionaryDecl->lookupClassMethod(Sel);
-    if (!DictionaryWithObjectsMethod && getLangOptions().DebuggerObjCLiteral) {
+    if (!DictionaryWithObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
       DictionaryWithObjectsMethod = 
                          ObjCMethodDecl::Create(Context,  
                            SourceLocation(), SourceLocation(), Sel,
@@ -768,7 +768,7 @@ ExprResult Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
     // which is an array type.
     StrTy = Context.CharTy;
     // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
-    if (getLangOptions().CPlusPlus || getLangOptions().ConstStrings)
+    if (getLangOpts().CPlusPlus || getLangOpts().ConstStrings)
       StrTy.addConst();
     StrTy = Context.getConstantArrayType(StrTy, llvm::APInt(32, Str.size()+1),
                                          ArrayType::Normal, 0);
@@ -815,7 +815,7 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
 
   // In ARC, forbid the user from using @selector for 
   // retain/release/autorelease/dealloc/retainCount.
-  if (getLangOptions().ObjCAutoRefCount) {
+  if (getLangOpts().ObjCAutoRefCount) {
     switch (Sel.getMethodFamily()) {
     case OMF_retain:
     case OMF_release:
@@ -968,18 +968,18 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     }
 
     unsigned DiagID;
-    if (getLangOptions().ObjCAutoRefCount)
+    if (getLangOpts().ObjCAutoRefCount)
       DiagID = diag::err_arc_method_not_found;
     else
       DiagID = isClassMessage ? diag::warn_class_method_not_found
                               : diag::warn_inst_method_not_found;
-    if (!getLangOptions().DebuggerSupport)
+    if (!getLangOpts().DebuggerSupport)
       Diag(lbrac, DiagID)
         << Sel << isClassMessage << SourceRange(lbrac, rbrac);
 
     // In debuggers, we want to use __unknown_anytype for these
     // results so that clients can cast them.
-    if (getLangOptions().DebuggerSupport) {
+    if (getLangOpts().DebuggerSupport) {
       ReturnType = Context.UnknownAnyTy;
     } else {
       ReturnType = Context.getObjCIdType();
@@ -1755,7 +1755,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   }
   assert(Class && "We don't know which class we're messaging?");
   // objc++ diagnoses during typename annotation.
-  if (!getLangOptions().CPlusPlus)
+  if (!getLangOpts().CPlusPlus)
     (void)DiagnoseUseOfDecl(Class, Loc);
   // Find the method we are messaging.
   if (!Method) {
@@ -1763,14 +1763,14 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
       = SuperLoc.isValid()? SourceRange(SuperLoc)
                           : ReceiverTypeInfo->getTypeLoc().getSourceRange();
     if (RequireCompleteType(Loc, Context.getObjCInterfaceType(Class), 
-                            (getLangOptions().ObjCAutoRefCount
+                            (getLangOpts().ObjCAutoRefCount
                                ? PDiag(diag::err_arc_receiver_forward_class)
                                : PDiag(diag::warn_receiver_forward_class))
                                    << TypeRange)) {
       // A forward class used in messaging is treated as a 'Class'
       Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                SourceRange(LBracLoc, RBracLoc));
-      if (Method && !getLangOptions().ObjCAutoRefCount)
+      if (Method && !getLangOpts().ObjCAutoRefCount)
         Diag(Method->getLocation(), diag::note_method_sent_forward_class)
           << Method->getDeclName();
     }
@@ -2024,14 +2024,14 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         // we don't try to recover.
         const ObjCInterfaceDecl *forwardClass = 0;
         if (RequireCompleteType(Loc, OCIType->getPointeeType(),
-              getLangOptions().ObjCAutoRefCount
+              getLangOpts().ObjCAutoRefCount
                 ? PDiag(diag::err_arc_receiver_forward_instance)
                     << (Receiver ? Receiver->getSourceRange() 
                                  : SourceRange(SuperLoc))
                 : PDiag(diag::warn_receiver_forward_instance)
                     << (Receiver ? Receiver->getSourceRange() 
                                  : SourceRange(SuperLoc)))) {
-          if (getLangOptions().ObjCAutoRefCount)
+          if (getLangOpts().ObjCAutoRefCount)
             return ExprError();
           
           forwardClass = OCIType->getInterfaceDecl();
@@ -2050,7 +2050,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           // If we have implementations in scope, check "private" methods.
           Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
 
-          if (!Method && getLangOptions().ObjCAutoRefCount) {
+          if (!Method && getLangOpts().ObjCAutoRefCount) {
             Diag(Loc, diag::err_arc_may_not_respond)
               << OCIType->getPointeeType() << Sel;
             return ExprError();
@@ -2071,7 +2071,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         }
         if (Method && DiagnoseUseOfDecl(Method, Loc, forwardClass))
           return ExprError();
-      } else if (!getLangOptions().ObjCAutoRefCount &&
+      } else if (!getLangOpts().ObjCAutoRefCount &&
                  !Context.getObjCIdType().isNull() &&
                  (ReceiverType->isPointerType() || 
                   ReceiverType->isIntegerType())) {
@@ -2093,7 +2093,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         ReceiverType = Receiver->getType();
       } else {
         ExprResult ReceiverRes;
-        if (getLangOptions().CPlusPlus)
+        if (getLangOpts().CPlusPlus)
           ReceiverRes = PerformContextuallyConvertToObjCPointer(Receiver);
         if (ReceiverRes.isUsable()) {
           Receiver = ReceiverRes.take();
@@ -2137,7 +2137,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
 
   // In ARC, forbid the user from sending messages to 
   // retain/release/autorelease/dealloc/retainCount explicitly.
-  if (getLangOptions().ObjCAutoRefCount) {
+  if (getLangOpts().ObjCAutoRefCount) {
     ObjCMethodFamily family =
       (Method ? Method->getMethodFamily() : Sel.getMethodFamily());
     switch (family) {
@@ -2231,7 +2231,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       checkCocoaAPI(*this, Result);
   }
 
-  if (getLangOptions().ObjCAutoRefCount) {
+  if (getLangOpts().ObjCAutoRefCount) {
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&
         (SuperLoc.isValid() || isSelfExpr(Receiver))) {

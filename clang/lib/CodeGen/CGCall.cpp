@@ -254,7 +254,7 @@ CodeGenTypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
   FunctionType::ExtInfo einfo;
   einfo = einfo.withCallingConv(getCallingConventionForDecl(MD));
 
-  if (getContext().getLangOptions().ObjCAutoRefCount &&
+  if (getContext().getLangOpts().ObjCAutoRefCount &&
       MD->hasAttr<NSReturnsRetainedAttr>())
     einfo = einfo.withProducesResult(true);
 
@@ -1467,7 +1467,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
     // In ARC, end functions that return a retainable type with a call
     // to objc_autoreleaseReturnValue.
     if (AutoreleaseResult) {
-      assert(getLangOptions().ObjCAutoRefCount &&
+      assert(getLangOpts().ObjCAutoRefCount &&
              !FI.isReturnsRetained() &&
              RetTy->isObjCRetainableType());
       RV = emitAutoreleaseOfResult(*this, RV);
@@ -1662,7 +1662,7 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
                                   QualType type) {
   if (const ObjCIndirectCopyRestoreExpr *CRE
         = dyn_cast<ObjCIndirectCopyRestoreExpr>(E)) {
-    assert(getContext().getLangOptions().ObjCAutoRefCount);
+    assert(getContext().getLangOpts().ObjCAutoRefCount);
     assert(getContext().hasSameType(E->getType(), type));
     return emitWritebackArg(*this, args, CRE);
   }
@@ -1717,7 +1717,7 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
 
   // In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
   // optimizer it can aggressively ignore unwind edges.
-  if (CGM.getLangOptions().ObjCAutoRefCount)
+  if (CGM.getLangOpts().ObjCAutoRefCount)
     AddObjCARCExceptionMetadata(Inst);
 
   return Inst;
@@ -2031,7 +2031,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   // In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
   // optimizer it can aggressively ignore unwind edges.
-  if (CGM.getLangOptions().ObjCAutoRefCount)
+  if (CGM.getLangOpts().ObjCAutoRefCount)
     AddObjCARCExceptionMetadata(CS.getInstruction());
 
   // If the call doesn't return, finish the basic block and clear the

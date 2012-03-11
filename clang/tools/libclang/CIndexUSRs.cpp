@@ -194,7 +194,7 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   D->printName(Out);
 
   ASTContext &Ctx = *Context;
-  if (!Ctx.getLangOptions().CPlusPlus || D->isExternC())
+  if (!Ctx.getLangOpts().CPlusPlus || D->isExternC())
     return;
 
   if (const TemplateArgumentList *

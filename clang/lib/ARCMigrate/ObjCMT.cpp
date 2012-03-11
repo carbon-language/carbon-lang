@@ -58,7 +58,7 @@ protected:
   virtual void Initialize(ASTContext &Context) {
     NSAPIObj.reset(new NSAPI(Context));
     Editor.reset(new edit::EditedSource(Context.getSourceManager(),
-                                        Context.getLangOptions(),
+                                        Context.getLangOpts(),
                                         PPRec));
   }
 
@@ -180,7 +180,7 @@ public:
 }
 
 void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
-  Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOptions());
+  Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
   RewritesReceiver Rec(rewriter);
   Editor->applyRewrites(Rec);
 

@@ -79,7 +79,7 @@ namespace {
       
       // In C++, we may have member functions that need to be emitted at this 
       // point.
-      if (Ctx->getLangOptions().CPlusPlus && !D->isDependentContext()) {
+      if (Ctx->getLangOpts().CPlusPlus && !D->isDependentContext()) {
         for (DeclContext::decl_iterator M = D->decls_begin(), 
                                      MEnd = D->decls_end();
              M != MEnd; ++M)

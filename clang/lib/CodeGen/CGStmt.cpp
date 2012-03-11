@@ -1370,7 +1370,7 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
   StringRef StrVal = Str->getString();
   if (!StrVal.empty()) {
     const SourceManager &SM = CGF.CGM.getContext().getSourceManager();
-    const LangOptions &LangOpts = CGF.CGM.getLangOptions();
+    const LangOptions &LangOpts = CGF.CGM.getLangOpts();
     
     // Add the location of the start of each subsequent line of the asm to the
     // MDNode.

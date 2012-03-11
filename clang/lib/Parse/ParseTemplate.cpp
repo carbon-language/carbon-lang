@@ -478,7 +478,7 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     EllipsisLoc = ConsumeToken();
 
     Diag(EllipsisLoc,
-         getLang().CPlusPlus0x
+         getLangOpts().CPlusPlus0x
            ? diag::warn_cxx98_compat_variadic_templates
            : diag::ext_variadic_templates);
   }
@@ -553,7 +553,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     EllipsisLoc = ConsumeToken();
     
     Diag(EllipsisLoc,
-         getLang().CPlusPlus0x
+         getLangOpts().CPlusPlus0x
            ? diag::warn_cxx98_compat_variadic_templates
            : diag::ext_variadic_templates);
   }
@@ -716,7 +716,7 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
     if (NextToken().is(tok::greater) || NextToken().is(tok::greatergreater))
       ReplaceStr = "> > ";
 
-    Diag(Tok.getLocation(), getLang().CPlusPlus0x ?
+    Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
          diag::warn_cxx98_compat_two_right_angle_brackets :
          diag::err_two_right_angle_brackets_need_space)
       << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
@@ -776,7 +776,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                      SourceLocation TemplateKWLoc,
                                      UnqualifiedId &TemplateName,
                                      bool AllowTypeAnnotation) {
-  assert(getLang().CPlusPlus && "Can only annotate template-ids in C++");
+  assert(getLangOpts().CPlusPlus && "Can only annotate template-ids in C++");
   assert(Template && Tok.is(tok::less) &&
          "Parser isn't at the beginning of a template-id");
 

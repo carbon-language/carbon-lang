@@ -34,7 +34,7 @@ bool ASTMergeAction::BeginSourceFileAction(CompilerInstance &CI,
 void ASTMergeAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   CI.getDiagnostics().getClient()->BeginSourceFile(
-                                         CI.getASTContext().getLangOptions());
+                                         CI.getASTContext().getLangOpts());
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
   IntrusiveRefCntPtr<DiagnosticIDs>
