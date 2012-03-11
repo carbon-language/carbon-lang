@@ -723,14 +723,7 @@ unsigned APInt::countLeadingZerosSlowCase() const {
 }
 
 static unsigned countLeadingOnes_64(uint64_t V, unsigned skip) {
-  unsigned Count = 0;
-  if (skip)
-    V <<= skip;
-  while (V && (V & (1ULL << 63))) {
-    Count++;
-    V <<= 1;
-  }
-  return Count;
+  return CountLeadingOnes_64(V << skip);
 }
 
 unsigned APInt::countLeadingOnes() const {
