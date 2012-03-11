@@ -1216,7 +1216,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
   if (isVarArg) {
     // FIXME: we should be able to query the argument registers from
     //        tablegen generated code.
-    static const unsigned ArgRegs[] = {
+    static const uint16_t ArgRegs[] = {
       SPU::R3,  SPU::R4,  SPU::R5,  SPU::R6,  SPU::R7,  SPU::R8,  SPU::R9,
       SPU::R10, SPU::R11, SPU::R12, SPU::R13, SPU::R14, SPU::R15, SPU::R16,
       SPU::R17, SPU::R18, SPU::R19, SPU::R20, SPU::R21, SPU::R22, SPU::R23,
@@ -1230,7 +1230,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       SPU::R73, SPU::R74, SPU::R75, SPU::R76, SPU::R77, SPU::R78, SPU::R79
     };
     // size of ArgRegs array
-    unsigned NumArgRegs = 77;
+    const unsigned NumArgRegs = 77;
 
     // We will spill (79-3)+1 registers to the stack
     SmallVector<SDValue, 79-3+1> MemOps;

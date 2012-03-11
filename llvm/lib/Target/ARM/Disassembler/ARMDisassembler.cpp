@@ -849,7 +849,7 @@ extern "C" void LLVMInitializeARMDisassembler() {
                                          createThumbDisassembler);
 }
 
-static const unsigned GPRDecoderTable[] = {
+static const uint16_t GPRDecoderTable[] = {
   ARM::R0, ARM::R1, ARM::R2, ARM::R3,
   ARM::R4, ARM::R5, ARM::R6, ARM::R7,
   ARM::R8, ARM::R9, ARM::R10, ARM::R11,
@@ -916,7 +916,7 @@ static DecodeStatus DecoderGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
-static const unsigned SPRDecoderTable[] = {
+static const uint16_t SPRDecoderTable[] = {
      ARM::S0,  ARM::S1,  ARM::S2,  ARM::S3,
      ARM::S4,  ARM::S5,  ARM::S6,  ARM::S7,
      ARM::S8,  ARM::S9, ARM::S10, ARM::S11,
@@ -937,7 +937,7 @@ static DecodeStatus DecodeSPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return MCDisassembler::Success;
 }
 
-static const unsigned DPRDecoderTable[] = {
+static const uint16_t DPRDecoderTable[] = {
      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
      ARM::D8,  ARM::D9, ARM::D10, ARM::D11,
@@ -973,7 +973,7 @@ DecodeDPR_VFP2RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return DecodeDPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
-static const unsigned QPRDecoderTable[] = {
+static const uint16_t QPRDecoderTable[] = {
      ARM::Q0,  ARM::Q1,  ARM::Q2,  ARM::Q3,
      ARM::Q4,  ARM::Q5,  ARM::Q6,  ARM::Q7,
      ARM::Q8,  ARM::Q9, ARM::Q10, ARM::Q11,
@@ -992,7 +992,7 @@ static DecodeStatus DecodeQPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return MCDisassembler::Success;
 }
 
-static const unsigned DPairDecoderTable[] = {
+static const uint16_t DPairDecoderTable[] = {
   ARM::Q0,  ARM::D1_D2,   ARM::Q1,  ARM::D3_D4,   ARM::Q2,  ARM::D5_D6,
   ARM::Q3,  ARM::D7_D8,   ARM::Q4,  ARM::D9_D10,  ARM::Q5,  ARM::D11_D12,
   ARM::Q6,  ARM::D13_D14, ARM::Q7,  ARM::D15_D16, ARM::Q8,  ARM::D17_D18,
@@ -1011,7 +1011,7 @@ static DecodeStatus DecodeDPairRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return MCDisassembler::Success;
 }
 
-static const unsigned DPairSpacedDecoderTable[] = {
+static const uint16_t DPairSpacedDecoderTable[] = {
   ARM::D0_D2,   ARM::D1_D3,   ARM::D2_D4,   ARM::D3_D5,
   ARM::D4_D6,   ARM::D5_D7,   ARM::D6_D8,   ARM::D7_D9,
   ARM::D8_D10,  ARM::D9_D11,  ARM::D10_D12, ARM::D11_D13,

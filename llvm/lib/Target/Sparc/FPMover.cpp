@@ -59,19 +59,19 @@ FunctionPass *llvm::createSparcFPMoverPass(TargetMachine &tm) {
 /// registers that correspond to it.
 static void getDoubleRegPair(unsigned DoubleReg, unsigned &EvenReg,
                              unsigned &OddReg) {
-  static const unsigned EvenHalvesOfPairs[] = {
+  static const uint16_t EvenHalvesOfPairs[] = {
     SP::F0, SP::F2, SP::F4, SP::F6, SP::F8, SP::F10, SP::F12, SP::F14,
     SP::F16, SP::F18, SP::F20, SP::F22, SP::F24, SP::F26, SP::F28, SP::F30
   };
-  static const unsigned OddHalvesOfPairs[] = {
+  static const uint16_t OddHalvesOfPairs[] = {
     SP::F1, SP::F3, SP::F5, SP::F7, SP::F9, SP::F11, SP::F13, SP::F15,
     SP::F17, SP::F19, SP::F21, SP::F23, SP::F25, SP::F27, SP::F29, SP::F31
   };
-  static const unsigned DoubleRegsInOrder[] = {
+  static const uint16_t DoubleRegsInOrder[] = {
     SP::D0, SP::D1, SP::D2, SP::D3, SP::D4, SP::D5, SP::D6, SP::D7, SP::D8,
     SP::D9, SP::D10, SP::D11, SP::D12, SP::D13, SP::D14, SP::D15
   };
-  for (unsigned i = 0; i < sizeof(DoubleRegsInOrder)/sizeof(unsigned); ++i)
+  for (unsigned i = 0; i < array_lengthof(DoubleRegsInOrder); ++i)
     if (DoubleRegsInOrder[i] == DoubleReg) {
       EvenReg = EvenHalvesOfPairs[i];
       OddReg = OddHalvesOfPairs[i];

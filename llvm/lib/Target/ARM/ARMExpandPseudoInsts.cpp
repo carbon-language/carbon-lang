@@ -99,8 +99,8 @@ namespace {
   // Entries for NEON load/store information table.  The table is sorted by
   // PseudoOpc for fast binary-search lookups.
   struct NEONLdStTableEntry {
-    unsigned PseudoOpc;
-    unsigned RealOpc;
+    uint16_t PseudoOpc;
+    uint16_t RealOpc;
     bool IsLoad;
     bool isUpdating;
     bool hasWritebackOperand;
@@ -325,7 +325,7 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 /// LookupNEONLdSt - Search the NEONLdStTable for information about a NEON
 /// load or store pseudo instruction.
 static const NEONLdStTableEntry *LookupNEONLdSt(unsigned Opcode) {
-  unsigned NumEntries = array_lengthof(NEONLdStTable);
+  const unsigned NumEntries = array_lengthof(NEONLdStTable);
 
 #ifndef NDEBUG
   // Make sure the table is sorted.

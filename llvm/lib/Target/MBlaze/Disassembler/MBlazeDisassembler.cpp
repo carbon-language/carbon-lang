@@ -34,9 +34,9 @@ extern const MCInstrDesc MBlazeInsts[];
 
 using namespace llvm;
 
-const unsigned UNSUPPORTED = -1;
+const uint16_t UNSUPPORTED = -1;
 
-static const unsigned mblazeBinary2Opcode[] = {
+static const uint16_t mblazeBinary2Opcode[] = {
   MBlaze::ADD,   MBlaze::RSUB,   MBlaze::ADDC,   MBlaze::RSUBC,   //00,01,02,03
   MBlaze::ADDK,  MBlaze::RSUBK,  MBlaze::ADDKC,  MBlaze::RSUBKC,  //04,05,06,07
   MBlaze::ADDI,  MBlaze::RSUBI,  MBlaze::ADDIC,  MBlaze::RSUBIC,  //08,09,0A,0B

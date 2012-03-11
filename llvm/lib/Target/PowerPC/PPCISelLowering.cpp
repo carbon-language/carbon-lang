@@ -1598,8 +1598,8 @@ static bool CC_PPC_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
 
 /// GetFPR - Get the set of FP registers that should be allocated for arguments,
 /// on Darwin.
-static const unsigned *GetFPR() {
-  static const unsigned FPR[] = {
+static const uint16_t *GetFPR() {
+  static const uint16_t FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
     PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
   };
@@ -1879,18 +1879,18 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
-  static const unsigned GPR_32[] = {           // 32-bit registers.
+  static const uint16_t GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
   };
-  static const unsigned GPR_64[] = {           // 64-bit registers.
+  static const uint16_t GPR_64[] = {           // 64-bit registers.
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
 
-  static const unsigned *FPR = GetFPR();
+  static const uint16_t *FPR = GetFPR();
 
-  static const unsigned VR[] = {
+  static const uint16_t VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
@@ -1901,7 +1901,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
 
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
-  const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
+  const uint16_t *GPR = isPPC64 ? GPR_64 : GPR_32;
 
   // In 32-bit non-varargs functions, the stack space for vectors is after the
   // stack space for non-vectors.  We do not use this space unless we have
@@ -3147,17 +3147,17 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   unsigned ArgOffset = PPCFrameLowering::getLinkageSize(isPPC64, true);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
-  static const unsigned GPR_32[] = {           // 32-bit registers.
+  static const uint16_t GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
   };
-  static const unsigned GPR_64[] = {           // 64-bit registers.
+  static const uint16_t GPR_64[] = {           // 64-bit registers.
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const unsigned *FPR = GetFPR();
+  static const uint16_t *FPR = GetFPR();
 
-  static const unsigned VR[] = {
+  static const uint16_t VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
@@ -3165,7 +3165,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   const unsigned NumFPRs = 13;
   const unsigned NumVRs  = array_lengthof(VR);
 
-  const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
+  const uint16_t *GPR = isPPC64 ? GPR_64 : GPR_32;
 
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
   SmallVector<TailCallArgumentInfo, 8> TailCallArguments;
