@@ -5158,6 +5158,14 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "struct __rw_objc_super { struct objc_object *object; ";
   Preamble += "struct objc_object *superClass; ";
   if (LangOpts.MicrosoftExt) {
+    // Define all sections using syntax that makes sense.
+    Preamble += "\n#pragma section(\".datacoal_nt$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".cat_cls_meth$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_classlist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_catlist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".cls_meth$B\", long, read, write)\n";
+
     // Add a constructor for creating temporary objects.
     Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) "
     ": ";
@@ -6013,7 +6021,10 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
                                  PDecl->getNameAsString());
   
   // Writer out root metadata for current protocol: struct _protocol_t
-  Result += "\nstatic struct _protocol_t _OBJC_PROTOCOL_";
+  Result += "\n";
+  if (LangOpts.MicrosoftExt)
+    Result += "__declspec(allocate(\".datacoal_nt$B\")) ";
+  Result += "static struct _protocol_t _OBJC_PROTOCOL_";
   Result += PDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__DATA,__datacoal_nt,coalesced\"))) = {\n";
   Result += "\t0,\n"; // id is; is null
@@ -6092,7 +6103,10 @@ void RewriteModernObjC::RewriteObjCProtocolListMetaData(
    struct _objc_protocol *class_protocols[];
    }
    */
-  Result += "\nstatic struct {\n";
+  Result += "\n";
+  if (LangOpts.MicrosoftExt)
+    Result += "__declspec(allocate(\".cat_cls_meth$B\")) ";
+  Result += "static struct {\n";
   Result += "\tstruct _objc_protocol_list *next;\n";
   Result += "\tint    protocol_count;\n";
   Result += "\tstruct _objc_protocol *class_protocols[";
@@ -6312,6 +6326,8 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
     RewriteObjCCategoryImplDecl(CategoryImplementation[i], Result);
   
   if (ClsDefCount > 0) {
+    if (LangOpts.MicrosoftExt)
+      Result += "__declspec(allocate(\".objc_classlist$B\")) ";
     Result += "static struct _class_t *L_OBJC_LABEL_CLASS_$ [";
     Result += llvm::utostr(ClsDefCount); Result += "]";
     Result += 
@@ -6326,6 +6342,8 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   }
   
   if (CatDefCount > 0) {
+    if (LangOpts.MicrosoftExt)
+      Result += "__declspec(allocate(\".objc_catlist$B\")) ";
     Result += "static struct _category_t *L_OBJC_LABEL_CATEGORY_$ [";
     Result += llvm::utostr(CatDefCount); Result += "]";
     Result += 
@@ -6470,7 +6488,14 @@ void RewriteModernObjC::RewriteObjCMethodsMetaData(MethodIterator MethodBegin,
    }
    */
   unsigned NumMethods = std::distance(MethodBegin, MethodEnd);
-  Result += "\nstatic struct {\n";
+  Result += "\n";
+  if (LangOpts.MicrosoftExt) {
+    if (IsInstanceMethod)
+      Result += "__declspec(allocate(\".inst_meth$B\")) ";
+    else
+      Result += "__declspec(allocate(\".cls_meth$B\")) ";
+  }
+  Result += "static struct {\n";
   Result += "\tstruct _objc_method_list *next_method;\n";
   Result += "\tint method_count;\n";
   Result += "\tstruct _objc_method method_list[";
