@@ -113,7 +113,7 @@ namespace {
 ///
 /// The C90/C99/CPP/CPP0x flags are set to 3 if the token is a keyword in a
 /// future language standard, set to 2 if the token should be enabled in the
-/// specified langauge, set to 1 if it is an extension in the specified
+/// specified language, set to 1 if it is an extension in the specified
 /// language, and set to 0 if disabled in the specified language.
 static void AddKeyword(StringRef Keyword,
                        tok::TokenKind TokenCode, unsigned Flags,

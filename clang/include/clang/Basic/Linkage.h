@@ -29,7 +29,7 @@ enum Linkage {
   InternalLinkage,
 
   /// \brief External linkage within a unique namespace. From the
-  /// langauge perspective, these entities have external
+  /// language perspective, these entities have external
   /// linkage. However, since they reside in an anonymous namespace,
   /// their names are unique to this translation unit, which is
   /// equivalent to having internal linkage from the code-generation
