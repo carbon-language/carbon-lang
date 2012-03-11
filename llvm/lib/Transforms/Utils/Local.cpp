@@ -110,7 +110,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
     BasicBlock *DefaultDest = TheOnlyDest;
 
     // Figure out which case it goes to.
-    for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       // Found case matching a constant operand?
       if (i.getCaseValue() == CI) {
@@ -168,7 +168,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
     if (SI->getNumCases() == 1) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
-      SwitchInst::CaseIt FirstCase = SI->caseBegin();
+      SwitchInst::CaseIt FirstCase = SI->case_begin();
       Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
           FirstCase.getCaseValue(), "cond");
 

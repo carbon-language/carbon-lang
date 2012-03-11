@@ -1731,7 +1731,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ", ";
     writeOperand(SI.getDefaultDest(), true);
     Out << " [";
-    for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd();
+    for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
          i != e; ++i) {
       Out << "\n    ";
       writeOperand(i.getCaseValue(), true);

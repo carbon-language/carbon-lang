@@ -1090,7 +1090,7 @@ void CppWriter::printInstruction(const Instruction *I,
         << getOpName(SI->getDefaultDest()) << ", "
         << SI->getNumCases() << ", " << bbname << ");";
     nl(Out);
-    for (SwitchInst::ConstCaseIt i = SI->caseBegin(), e = SI->caseEnd();
+    for (SwitchInst::ConstCaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       const ConstantInt* CaseVal = i.getCaseValue();
       const BasicBlock *BB = i.getCaseSuccessor();

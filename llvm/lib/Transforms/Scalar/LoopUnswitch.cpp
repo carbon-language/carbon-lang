@@ -445,7 +445,7 @@ bool LoopUnswitch::processCurrentLoop() {
         // Do not process same value again and again.
         // At this point we have some cases already unswitched and
         // some not yet unswitched. Let's find the first not yet unswitched one.
-        for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+        for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
              i != e; ++i) {
           Constant* UnswitchValCandidate = i.getCaseValue();
           if (!BranchesInfo.isUnswitched(SI, UnswitchValCandidate)) {
@@ -575,7 +575,7 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     // this. 
     // Note that we can't trivially unswitch on the default case or
     // on already unswitched cases.
-    for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       BasicBlock* LoopExitCandidate;
       if ((LoopExitCandidate = isTrivialLoopExitBlock(currentLoop, 
@@ -1121,7 +1121,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     
     SwitchInst::CaseIt DeadCase = SI->findCaseValue(cast<ConstantInt>(Val));
     // Default case is live for multiple values.
-    if (DeadCase == SI->caseDefault()) continue;
+    if (DeadCase == SI->case_default()) continue;
     
     // Found a dead case value.  Don't remove PHI nodes in the 
     // successor if they become single-entry, those PHI nodes may

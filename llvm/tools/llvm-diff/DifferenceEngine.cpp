@@ -320,11 +320,11 @@ class FunctionDifferenceEngine {
 
       DenseMap<ConstantInt*,BasicBlock*> LCases;
       
-      for (SwitchInst::CaseIt I = LI->caseBegin(), E = LI->caseEnd();
+      for (SwitchInst::CaseIt I = LI->case_begin(), E = LI->case_end();
            I != E; ++I)
         LCases[I.getCaseValue()] = I.getCaseSuccessor();
         
-      for (SwitchInst::CaseIt I = RI->caseBegin(), E = RI->caseEnd();
+      for (SwitchInst::CaseIt I = RI->case_begin(), E = RI->case_end();
            I != E; ++I) {
         ConstantInt *CaseValue = I.getCaseValue();
         BasicBlock *LCase = LCases[CaseValue];

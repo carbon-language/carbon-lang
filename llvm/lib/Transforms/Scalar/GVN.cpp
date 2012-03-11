@@ -2158,7 +2158,7 @@ bool GVN::processInstruction(Instruction *I) {
     Value *SwitchCond = SI->getCondition();
     BasicBlock *Parent = SI->getParent();
     bool Changed = false;
-    for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
       BasicBlock *Dst = i.getCaseSuccessor();
       if (isOnlyReachableViaThisEdge(Parent, Dst, DT))

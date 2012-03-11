@@ -2411,7 +2411,7 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
 
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
   // Start with "simple" cases
-  for (SwitchInst::ConstCaseIt i = SI.caseBegin(), e = SI.caseEnd();
+  for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
        i != e; ++i) {
     const BasicBlock *SuccBB = i.getCaseSuccessor();
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[SuccBB];

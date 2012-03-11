@@ -650,7 +650,7 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
 
   // Check to see if any of the cases match...
   BasicBlock *Dest = 0;
-  for (SwitchInst::CaseIt i = I.caseBegin(), e = I.caseEnd(); i != e; ++i) {
+  for (SwitchInst::CaseIt i = I.case_begin(), e = I.case_end(); i != e; ++i) {
     GenericValue CaseVal = getOperandValue(i.getCaseValue(), SF);
     if (executeICMP_EQ(CondVal, CaseVal, ElTy).IntVal != 0) {
       Dest = cast<BasicBlock>(i.getCaseSuccessor());

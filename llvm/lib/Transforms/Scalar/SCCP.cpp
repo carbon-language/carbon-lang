@@ -1488,12 +1488,12 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       // If the input to SCCP is actually switch on undef, fix the undef to
       // the first constant.
       if (isa<UndefValue>(SI->getCondition())) {
-        SI->setCondition(SI->caseBegin().getCaseValue());
-        markEdgeExecutable(BB, SI->caseBegin().getCaseSuccessor());
+        SI->setCondition(SI->case_begin().getCaseValue());
+        markEdgeExecutable(BB, SI->case_begin().getCaseSuccessor());
         return true;
       }
 
-      markForcedConstant(SI->getCondition(), SI->caseBegin().getCaseValue());
+      markForcedConstant(SI->getCondition(), SI->case_begin().getCaseValue());
       return true;
     }
   }

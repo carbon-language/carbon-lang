@@ -1246,7 +1246,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
       if (ConstantInt *AddRHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
         // change 'switch (X+4) case 1:' into 'switch (X) case -3'
         // Skip the first item since that's the default case.
-        for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd();
+        for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
              i != e; ++i) {
           ConstantInt* CaseVal = i.getCaseValue();
           Constant* NewCaseVal = ConstantExpr::getSub(cast<Constant>(CaseVal),
@@ -1873,7 +1873,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
       if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
         // See if this is an explicit destination.
-        for (SwitchInst::CaseIt i = SI->caseBegin(), e = SI->caseEnd();
+        for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
              i != e; ++i)
           if (i.getCaseValue() == Cond) {
             BasicBlock *ReachableBB = i.getCaseSuccessor();

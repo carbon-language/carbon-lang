@@ -2616,32 +2616,34 @@ public:
 
   /// Returns a read/write iterator that points to the first
   /// case in SwitchInst.
-  CaseIt caseBegin() {
+  CaseIt case_begin() {
     return CaseIt(this, 0);
   }
   /// Returns a read-only iterator that points to the first
   /// case in the SwitchInst.
-  ConstCaseIt caseBegin() const {
+  ConstCaseIt case_begin() const {
     return ConstCaseIt(this, 0);
   }
   
   /// Returns a read/write iterator that points one past the last
   /// in the SwitchInst.
-  CaseIt caseEnd() {
+  CaseIt case_end() {
     return CaseIt(this, getNumCases());
   }
   /// Returns a read-only iterator that points one past the last
   /// in the SwitchInst.
-  ConstCaseIt caseEnd() const {
+  ConstCaseIt case_end() const {
     return ConstCaseIt(this, getNumCases());
   }
-  /// Returns an iterator that points to default case.
+  /// Returns an iterator that points to the default case.
   /// Note: this iterator allows to resolve successor only. Attempt
   /// to resolve case value causes an assertion.
-  CaseIt caseDefault() {
+  /// Also note, that increment and decrement also causes an assertion and
+  /// makes iterator invalid. 
+  CaseIt case_default() {
     return CaseIt(this, DefaultPseudoIndex);
   }
-  ConstCaseIt caseDefault() const {
+  ConstCaseIt case_default() const {
     return ConstCaseIt(this, DefaultPseudoIndex);
   }
   
@@ -2650,16 +2652,16 @@ public:
   /// return default case iterator to indicate
   /// that it is handled by the default handler.
   CaseIt findCaseValue(const ConstantInt *C) {
-    for (CaseIt i = caseBegin(), e = caseEnd(); i != e; ++i)
+    for (CaseIt i = case_begin(), e = case_end(); i != e; ++i)
       if (i.getCaseValue() == C)
         return i;
-    return caseDefault();
+    return case_default();
   }
   ConstCaseIt findCaseValue(const ConstantInt *C) const {
-    for (ConstCaseIt i = caseBegin(), e = caseEnd(); i != e; ++i)
+    for (ConstCaseIt i = case_begin(), e = case_end(); i != e; ++i)
       if (i.getCaseValue() == C)
         return i;
-    return caseDefault();
+    return case_default();
   }    
   
   /// findCaseDest - Finds the unique case value for a given successor. Returns
@@ -2668,7 +2670,7 @@ public:
     if (BB == getDefaultDest()) return NULL;
 
     ConstantInt *CI = NULL;
-    for (CaseIt i = caseBegin(), e = caseEnd(); i != e; ++i) {
+    for (CaseIt i = case_begin(), e = case_end(); i != e; ++i) {
       if (i.getCaseSuccessor() == BB) {
         if (CI) return NULL;   // Multiple cases lead to BB.
         else CI = i.getCaseValue();
@@ -2684,6 +2686,7 @@ public:
   /// removeCase - This method removes the specified case and its successor
   /// from the switch instruction. Note that this operation may reorder the
   /// remaining cases at index idx and above.
+  /// Also note, that iterator becomes invalid after this operation.
   ///
   void removeCase(CaseIt i);
 

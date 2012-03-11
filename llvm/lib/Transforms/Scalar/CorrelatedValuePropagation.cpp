@@ -199,7 +199,7 @@ bool CorrelatedValuePropagation::processSwitch(SwitchInst *SI) {
   // Analyse each switch case in turn.  This is done in reverse order so that
   // removing a case doesn't cause trouble for the iteration.
   bool Changed = false;
-  for (SwitchInst::CaseIt CI = SI->caseEnd(), CE = SI->caseBegin(); CI-- != CE;
+  for (SwitchInst::CaseIt CI = SI->case_end(), CE = SI->case_begin(); CI-- != CE;
        ) {
     ConstantInt *Case = CI.getCaseValue();
 

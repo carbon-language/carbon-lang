@@ -2393,7 +2393,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
   Out << ";\n";
 
   // Skip the first item since that's the default case.
-  for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd(); i != e; ++i) {
+  for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end(); i != e; ++i) {
     ConstantInt* CaseVal = i.getCaseValue();
     BasicBlock* Succ = i.getCaseSuccessor();
     Out << "  case ";

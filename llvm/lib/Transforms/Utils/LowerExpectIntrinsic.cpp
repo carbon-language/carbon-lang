@@ -79,7 +79,7 @@ bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
   Vec.resize(n + 1 + 1); // +1 for MDString and +1 for default case
 
   Vec[0] = MDString::get(Context, "branch_weights");
-  Vec[1] = ConstantInt::get(Int32Ty, Case == SI->caseDefault() ?
+  Vec[1] = ConstantInt::get(Int32Ty, Case == SI->case_default() ?
                             LikelyBranchWeight : UnlikelyBranchWeight);
   for (unsigned i = 0; i < n; ++i) {
     Vec[i + 1 + 1] = ConstantInt::get(Int32Ty, i == Case.getCaseIndex() ?

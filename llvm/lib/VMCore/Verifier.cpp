@@ -813,7 +813,7 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
   // have the same type as the switched-on value.
   Type *SwitchTy = SI.getCondition()->getType();
   SmallPtrSet<ConstantInt*, 32> Constants;
-  for (SwitchInst::CaseIt i = SI.caseBegin(), e = SI.caseEnd(); i != e; ++i) {
+  for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end(); i != e; ++i) {
     Assert1(i.getCaseValue()->getType() == SwitchTy,
             "Switch constants must all be same type as switch value!", &SI);
     Assert2(Constants.insert(i.getCaseValue()),
