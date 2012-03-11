@@ -58,17 +58,17 @@ public:
   /// if the operand is a register.  If isLookupPtrRegClass is set, then this is
   /// an index that is passed to TargetRegisterInfo::getPointerRegClass(x) to
   /// get a dynamic register class.
-  short RegClass;
+  int16_t RegClass;
 
   /// Flags - These are flags from the MCOI::OperandFlags enum.
-  unsigned short Flags;
+  uint8_t Flags;
+
+  /// OperandType - Information about the type of the operand.
+  uint8_t OperandType;
 
   /// Lower 16 bits are used to specify which constraints are set. The higher 16
   /// bits are used to specify the value of constraints (4 bits each).
-  unsigned Constraints;
-
-  /// OperandType - Information about the type of the operand.
-  MCOI::OperandType OperandType;
+  uint32_t Constraints;
   /// Currently no other information.
 
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it

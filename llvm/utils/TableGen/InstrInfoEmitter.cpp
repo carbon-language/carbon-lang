@@ -107,6 +107,11 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       if (Inst.Operands[i].Rec->isSubClassOf("OptionalDefOperand"))
         Res += "|(1<<MCOI::OptionalDef)";
 
+      // Fill in operand type.
+      Res += ", MCOI::";
+      assert(!Inst.Operands[i].OperandType.empty() && "Invalid operand type.");
+      Res += Inst.Operands[i].OperandType;
+
       // Fill in constraint info.
       Res += ", ";
 
@@ -121,11 +126,6 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         Res += "((" + utostr(Constraint.getTiedOperand()) +
                     " << 16) | (1 << MCOI::TIED_TO))";
       }
-
-      // Fill in operand type.
-      Res += ", MCOI::";
-      assert(!Inst.Operands[i].OperandType.empty() && "Invalid operand type.");
-      Res += Inst.Operands[i].OperandType;
 
       Result.push_back(Res);
     }
