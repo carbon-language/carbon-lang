@@ -10,3 +10,11 @@ namespace PR8598 {
   
   void g() { (f)(&X::f, 0); }
 }
+
+namespace PR12132 {
+  template<typename S> void fun(const int* const S::* member) {}
+  struct A { int* x; };
+  void foo() {
+    fun(&A::x);
+  }
+}

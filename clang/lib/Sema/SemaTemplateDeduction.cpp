@@ -962,14 +962,6 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
     }
   }
 
-  // If the parameter type is not dependent, there is nothing to deduce.
-  if (!Param->isDependentType()) {
-    if (!(TDF & TDF_SkipNonDependent) && Param != Arg)
-      return Sema::TDK_NonDeducedMismatch;
-
-    return Sema::TDK_Success;
-  }
-
   // C++ [temp.deduct.type]p9:
   //   A template type argument T, a template template argument TT or a
   //   template non-type argument i can be deduced if P and A have one of
@@ -1083,6 +1075,17 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
       if (Param.getCVRQualifiers() != Arg.getCVRQualifiers())
         return Sema::TDK_NonDeducedMismatch;
     }
+    
+    // If the parameter type is not dependent, there is nothing to deduce.
+    if (!Param->isDependentType()) {
+      if (!(TDF & TDF_SkipNonDependent) && Param != Arg)
+        return Sema::TDK_NonDeducedMismatch;
+      
+      return Sema::TDK_Success;
+    }
+  } else if (!Param->isDependentType() &&
+             Param.getUnqualifiedType() == Arg.getUnqualifiedType()) {
+    return Sema::TDK_Success;
   }
 
   switch (Param->getTypeClass()) {
@@ -1095,9 +1098,9 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
     case Type::TemplateTypeParm:
     case Type::SubstTemplateTypeParmPack:
       llvm_unreachable("Type nodes handled above");
-      
-    // These types cannot be used in templates or cannot be dependent, so
-    // deduction always fails.
+
+    // These types cannot be dependent, so simply check whether the types are
+    // the same.
     case Type::Builtin:
     case Type::VariableArray:
     case Type::Vector:
@@ -1106,9 +1109,18 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
     case Type::Enum:
     case Type::ObjCObject:
     case Type::ObjCInterface:
-    case Type::ObjCObjectPointer:
-      return Sema::TDK_NonDeducedMismatch;
-
+    case Type::ObjCObjectPointer: {
+      if (TDF & TDF_SkipNonDependent)
+        return Sema::TDK_Success;
+      
+      if (TDF & TDF_IgnoreQualifiers) {
+        Param = Param.getUnqualifiedType();
+        Arg = Arg.getUnqualifiedType();
+      }
+            
+      return Param == Arg? Sema::TDK_Success : Sema::TDK_NonDeducedMismatch;
+    }
+      
     //     _Complex T   [placeholder extension]  
     case Type::Complex:
       if (const ComplexType *ComplexArg = Arg->getAs<ComplexType>())
@@ -1411,7 +1423,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
       return DeduceTemplateArgumentsByTypeMatch(S, TemplateParams,
                                            QualType(MemPtrParam->getClass(), 0),
                                            QualType(MemPtrArg->getClass(), 0),
-                                           Info, Deduced, 0);
+                                           Info, Deduced, 
+                                           TDF & TDF_IgnoreQualifiers);
     }
 
     //     (clang extension)
