@@ -536,7 +536,7 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
 /// version-arg:
 ///   'introduced' '=' version
 ///   'deprecated' '=' version
-///   'removed' = version
+///   'obsoleted' = version
 ///   'unavailable'
 /// opt-message:
 ///   'message' '=' <string>

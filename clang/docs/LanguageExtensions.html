@@ -30,6 +30,7 @@
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
 <li><a href="#deprecated">Messages on <tt>deprecated</tt> and <tt>unavailable</tt> attributes</a></li>
 <li><a href="#attributes-on-enumerators">Attributes on enumerators</a></li>
+<li><a href="#availability">Availability attribute</a></li>
 <li><a href="#checking_language_features">Checks for Standard Language Features</a>
   <ul>
   <li><a href="#cxx_exceptions">C++ exceptions</a></li>
@@ -620,6 +621,49 @@ initializer, like so:</p>
 individual enumerators.</p>
 
 <p>Query for this feature with <tt>__has_extension(enumerator_attributes)</tt>.</p>
+
+<!-- ======================================================================= -->
+<h2 id="availability">Availability attribute</h2
+<!-- ======================================================================= -->
+
+<p>Clang introduces the <code>availability</code> attribute, which can
+be placed on declarations to describe the lifecycle of that
+declaration relative to operating system versions. Consider the function declaration for a hypothetical function <code>f</code>:</p>
+
+<pre>
+void f(void) __attribute__((availability(macosx,introduced=10.4,deprecated=10.6,obsoleted=10.7)));
+</pre>
+
+<p>The availability attribute states that <code>f</code> was introduced in Mac OS X 10.4, deprecated in Mac OS X 10.6, and obsoleted in Mac OS X 10.7. This information is used by Clang to determine when it is safe to use <code>f</code>: for example, if Clang is instructed to compile code for Mac OS X 10.5, a call to <code>f()</code> succeeds. If Clang is instructed to compile code for Mac OS X 10.6, the call succeeds but Clang emits a warning specifying that the function is deprecated. Finally, if Clang is instructed to compile code for Mac OS X 10.7, the call fails because <code>f()</code> is no longer available.</p>
+
+<p>The availablility attribute is a comma-separated list starting with the platform name and then including clauses specifying important milestones in the declaration's lifetime (in any order) along with additional information. Those clauses can be:</p>
+
+<dl>
+  <dt>introduced=<i>version</i></dt>
+  <dd>The first version in which this declaration was introduced.</dd>
+
+  <dt>deprecated=<i>version</i></dt>
+  <dd>The first version in which this declaration was deprecated, meaning that users should migrate away from this API.</dd>
+
+  <dt>obsoleted=<i>version</i></dt>
+  <dd>The first version in which this declaration was obsoleted, meaning that it was removed completely and can no longer be used.</dd>
+
+  <dt>unavailable</dt>
+  <dd>This declaration is never available on this platform.</dd>
+
+  <dt>message=<i>string-literal</i></dt>
+  <dd>Additional message text that Clang will provide when emitting a warning or error about use of a deprecated or obsoleted declaration. Useful to direct users to replacement APIs.</dd>
+</dl>
+
+<p>Multiple availability attributes can be placed on a declaration, which may correspond to different platforms. Only the availability attribute with the platform corresponding to the target platform will be used; any others will be ignored. If no availability attribute specifies availability for the current target platform, the availability attributes are ignored. Supported platforms are:</p>
+
+<dl>
+  <dt>ios</dt>
+  <dd>Apple's iOS operating system. The minimum deployment target is specified by the <code>-mios-version-min=<i>version</i></code> or <code>-miphoneos-version-min=<i>version</i></code> command-line arguments.</dd>
+
+  <dt>macosx</dt>
+  <dd>Apple's Mac OS X operating system. The minimum deployment target is specified by the <code>-mmacosx-version-min=<i>version</i></code> command-line argument.</dd>
+</dl>
 
 <!-- ======================================================================= -->
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>
