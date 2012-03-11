@@ -266,7 +266,7 @@ namespace llvm {
         ::llvm::PointerUnionTypeSelector<PT1, T, IsInnerUnion,
           ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3 >
                                                                    >::Return Ty;
-      return Ty(Val).is<T>();
+      return Ty(Val).template is<T>();
     }
     
     /// get<T>() - Return the value of the specified pointer type. If the
@@ -279,7 +279,7 @@ namespace llvm {
         ::llvm::PointerUnionTypeSelector<PT1, T, IsInnerUnion,
           ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3 >
                                                                    >::Return Ty;
-      return Ty(Val).get<T>();
+      return Ty(Val).template get<T>();
     }
     
     /// dyn_cast<T>() - If the current value is of the specified pointer type,

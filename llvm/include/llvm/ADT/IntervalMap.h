@@ -1977,7 +1977,7 @@ iterator::overflow(unsigned Level) {
     CurSize[Nodes] = CurSize[NewNode];
     Node[Nodes] = Node[NewNode];
     CurSize[NewNode] = 0;
-    Node[NewNode] = this->map->newNode<NodeT>();
+    Node[NewNode] = this->map->template newNode<NodeT>();
     ++Nodes;
   }
 
