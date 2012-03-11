@@ -1547,7 +1547,7 @@ static bool CC_PPC_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
                                             CCValAssign::LocInfo &LocInfo,
                                             ISD::ArgFlagsTy &ArgFlags,
                                             CCState &State) {
-  static const unsigned ArgRegs[] = {
+  static const uint16_t ArgRegs[] = {
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
   };
@@ -1574,7 +1574,7 @@ static bool CC_PPC_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
                                               CCValAssign::LocInfo &LocInfo,
                                               ISD::ArgFlagsTy &ArgFlags,
                                               CCState &State) {
-  static const unsigned ArgRegs[] = {
+  static const uint16_t ArgRegs[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
     PPC::F8
   };
@@ -1780,13 +1780,13 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
-    static const unsigned GPArgRegs[] = {
+    static const uint16_t GPArgRegs[] = {
       PPC::R3, PPC::R4, PPC::R5, PPC::R6,
       PPC::R7, PPC::R8, PPC::R9, PPC::R10,
     };
     const unsigned NumGPArgRegs = array_lengthof(GPArgRegs);
 
-    static const unsigned FPArgRegs[] = {
+    static const uint16_t FPArgRegs[] = {
       PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
       PPC::F8
     };

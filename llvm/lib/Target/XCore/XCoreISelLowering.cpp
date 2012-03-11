@@ -1152,7 +1152,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
   if (isVarArg) {
     /* Argument registers */
-    static const unsigned ArgRegs[] = {
+    static const uint16_t ArgRegs[] = {
       XCore::R0, XCore::R1, XCore::R2, XCore::R3
     };
     XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();

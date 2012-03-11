@@ -657,7 +657,7 @@ static bool CC_MBlaze_AssignReg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                 CCValAssign::LocInfo &LocInfo,
                                 ISD::ArgFlagsTy &ArgFlags,
                                 CCState &State) {
-  static const unsigned ArgRegs[] = {
+  static const uint16_t ArgRegs[] = {
     MBlaze::R5, MBlaze::R6, MBlaze::R7,
     MBlaze::R8, MBlaze::R9, MBlaze::R10
   };

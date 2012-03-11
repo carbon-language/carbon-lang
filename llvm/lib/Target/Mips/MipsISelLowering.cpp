@@ -1875,13 +1875,13 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
 
   static const unsigned IntRegsSize=4, FloatRegsSize=2;
 
-  static const unsigned IntRegs[] = {
+  static const uint16_t IntRegs[] = {
       Mips::A0, Mips::A1, Mips::A2, Mips::A3
   };
-  static const unsigned F32Regs[] = {
+  static const uint16_t F32Regs[] = {
       Mips::F12, Mips::F14
   };
-  static const unsigned F64Regs[] = {
+  static const uint16_t F64Regs[] = {
       Mips::D6, Mips::D7
   };
 
@@ -1960,10 +1960,10 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
   return false; // CC must always match
 }
 
-static const unsigned Mips64IntRegs[8] =
+static const uint16_t Mips64IntRegs[8] =
   {Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64,
    Mips::T0_64, Mips::T1_64, Mips::T2_64, Mips::T3_64};
-static const unsigned Mips64DPRegs[8] =
+static const uint16_t Mips64DPRegs[8] =
   {Mips::D12_64, Mips::D13_64, Mips::D14_64, Mips::D15_64,
    Mips::D16_64, Mips::D17_64, Mips::D18_64, Mips::D19_64};
 
@@ -2030,7 +2030,7 @@ AnalyzeMips64CallOperands(CCState &CCInfo,
 
 static const unsigned O32IntRegsSize = 4;
 
-static const unsigned O32IntRegs[] = {
+static const uint16_t O32IntRegs[] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
 };
 
@@ -2149,9 +2149,9 @@ PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
   if (!IsRegLoc)
     LocMemOffset = VA.getLocMemOffset();
   else {
-    const unsigned *Reg = std::find(Mips64IntRegs, Mips64IntRegs + 8,
+    const uint16_t *Reg = std::find(Mips64IntRegs, Mips64IntRegs + 8,
                                     VA.getLocReg());
-    const unsigned *RegEnd = Mips64IntRegs + 8;
+    const uint16_t *RegEnd = Mips64IntRegs + 8;
 
     // Copy double words to registers.
     for (; (Reg != RegEnd) && (ByValSize >= Offset + 8); ++Reg, Offset += 8) {
@@ -2574,7 +2574,7 @@ CopyMips64ByValRegs(MachineFunction &MF, SDValue Chain, DebugLoc dl,
                     MachineFrameInfo *MFI, bool IsRegLoc,
                     SmallVectorImpl<SDValue> &InVals, MipsFunctionInfo *MipsFI,
                     EVT PtrTy) {
-  const unsigned *Reg = Mips64IntRegs + 8;
+  const uint16_t *Reg = Mips64IntRegs + 8;
   int FOOffset; // Frame object offset from virtual frame pointer.
 
   if (IsRegLoc) {
@@ -2743,7 +2743,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   if (isVarArg) {
     unsigned NumOfRegs = IsO32 ? 4 : 8;
-    const unsigned *ArgRegs = IsO32 ? O32IntRegs : Mips64IntRegs;
+    const uint16_t *ArgRegs = IsO32 ? O32IntRegs : Mips64IntRegs;
     unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumOfRegs);
     int FirstRegSlotOffset = IsO32 ? 0 : -64 ; // offset of $a0's slot.
     const TargetRegisterClass *RC

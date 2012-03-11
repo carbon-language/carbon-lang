@@ -96,7 +96,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(";
         O << getQualifiedName(RegList->getElementAsRecord(0)) << ")) {\n";
       } else {
-        O << IndentStr << "static const unsigned RegList" << ++Counter
+        O << IndentStr << "static const uint16_t RegList" << ++Counter
           << "[] = {\n";
         O << IndentStr << "  ";
         for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
@@ -127,7 +127,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         unsigned RegListNumber = ++Counter;
         unsigned ShadowRegListNumber = ++Counter;
 
-        O << IndentStr << "static const unsigned RegList" << RegListNumber
+        O << IndentStr << "static const uint16_t RegList" << RegListNumber
           << "[] = {\n";
         O << IndentStr << "  ";
         for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
@@ -136,7 +136,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         }
         O << "\n" << IndentStr << "};\n";
 
-        O << IndentStr << "static const unsigned RegList"
+        O << IndentStr << "static const uint16_t RegList"
           << ShadowRegListNumber << "[] = {\n";
         O << IndentStr << "  ";
         for (unsigned i = 0, e = ShadowRegList->getSize(); i != e; ++i) {

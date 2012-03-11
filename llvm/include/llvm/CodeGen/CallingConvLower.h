@@ -229,7 +229,7 @@ public:
 
   /// getFirstUnallocated - Return the first unallocated register in the set, or
   /// NumRegs if they are all allocated.
-  unsigned getFirstUnallocated(const unsigned *Regs, unsigned NumRegs) const {
+  unsigned getFirstUnallocated(const uint16_t *Regs, unsigned NumRegs) const {
     for (unsigned i = 0; i != NumRegs; ++i)
       if (!isAllocated(Regs[i]))
         return i;
@@ -256,7 +256,7 @@ public:
   /// AllocateReg - Attempt to allocate one of the specified registers.  If none
   /// are available, return zero.  Otherwise, return the first one available,
   /// marking it and any aliases as allocated.
-  unsigned AllocateReg(const unsigned *Regs, unsigned NumRegs) {
+  unsigned AllocateReg(const uint16_t *Regs, unsigned NumRegs) {
     unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
     if (FirstUnalloc == NumRegs)
       return 0;    // Didn't find the reg.
@@ -268,7 +268,7 @@ public:
   }
 
   /// Version of AllocateReg with list of registers to be shadowed.
-  unsigned AllocateReg(const unsigned *Regs, const unsigned *ShadowRegs,
+  unsigned AllocateReg(const uint16_t *Regs, const uint16_t *ShadowRegs,
                        unsigned NumRegs) {
     unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
     if (FirstUnalloc == NumRegs)
@@ -306,12 +306,12 @@ public:
 
   // First GPR that carries part of a byval aggregate that's split
   // between registers and memory.
-  unsigned getFirstByValReg() { return FirstByValRegValid ? FirstByValReg : 0; }
+  unsigned getFirstByValReg() const { return FirstByValRegValid ? FirstByValReg : 0; }
   void setFirstByValReg(unsigned r) { FirstByValReg = r; FirstByValRegValid = true; }
   void clearFirstByValReg() { FirstByValReg = 0; FirstByValRegValid = false; }
-  bool isFirstByValRegValid() { return FirstByValRegValid; }
+  bool isFirstByValRegValid() const { return FirstByValRegValid; }
 
-  ParmContext getCallOrPrologue() { return CallOrPrologue; }
+  ParmContext getCallOrPrologue() const { return CallOrPrologue; }
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

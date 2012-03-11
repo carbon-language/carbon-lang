@@ -1779,7 +1779,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   if (Subtarget->is64Bit() && isVarArg && !Subtarget->isTargetWin64()) {
     // Count the number of XMM registers allocated.
-    static const unsigned XMMArgRegs[] = {
+    static const uint16_t XMMArgRegs[] = {
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };

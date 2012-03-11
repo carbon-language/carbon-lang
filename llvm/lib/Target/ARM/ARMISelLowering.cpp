@@ -87,7 +87,7 @@ namespace {
 }
 
 // The APCS parameter registers.
-static const unsigned GPRArgRegs[] = {
+static const uint16_t GPRArgRegs[] = {
   ARM::R0, ARM::R1, ARM::R2, ARM::R3
 };
 

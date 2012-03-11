@@ -29,7 +29,7 @@ namespace llvm {
 static bool f64AssignAPCS(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                           CCValAssign::LocInfo &LocInfo,
                           CCState &State, bool CanFail) {
-  static const unsigned RegList[] = { ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
+  static const uint16_t RegList[] = { ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
 
   // Try to get the first register.
   if (unsigned Reg = State.AllocateReg(RegList, 4))
@@ -72,9 +72,9 @@ static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 static bool f64AssignAAPCS(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                            CCValAssign::LocInfo &LocInfo,
                            CCState &State, bool CanFail) {
-  static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
-  static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
-  static const unsigned ShadowRegList[] = { ARM::R0, ARM::R1 };
+  static const uint16_t HiRegList[] = { ARM::R0, ARM::R2 };
+  static const uint16_t LoRegList[] = { ARM::R1, ARM::R3 };
+  static const uint16_t ShadowRegList[] = { ARM::R0, ARM::R1 };
 
   unsigned Reg = State.AllocateReg(HiRegList, ShadowRegList, 2);
   if (Reg == 0) {
@@ -118,8 +118,8 @@ static bool CC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 
 static bool f64RetAssign(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                          CCValAssign::LocInfo &LocInfo, CCState &State) {
-  static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
-  static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
+  static const uint16_t HiRegList[] = { ARM::R0, ARM::R2 };
+  static const uint16_t LoRegList[] = { ARM::R1, ARM::R3 };
 
   unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2);
   if (Reg == 0)
