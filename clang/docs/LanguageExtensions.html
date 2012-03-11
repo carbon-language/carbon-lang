@@ -665,6 +665,12 @@ void f(void) __attribute__((availability(macosx,introduced=10.4,deprecated=10.6,
   <dd>Apple's Mac OS X operating system. The minimum deployment target is specified by the <code>-mmacosx-version-min=<i>version</i></code> command-line argument.</dd>
 </dl>
 
+<p>A declaration can be used even when deploying back to a platform
+version prior to when the declaration was introduced. When this
+happens, the declaration is <a
+ href="https://developer.apple.com/library/mac/#documentation/MacOSX/Conceptual/BPFrameworks/Concepts/WeakLinking.html">weakly
+linked</a>, as if the <code>weak_import</code> attribute were added to the declaration. A weakly-linked declaration may or may not be present a run-time, and a program can determine whether the declaration is present by checking whether the address of that declaration is non-NULL.</p>
+
 <!-- ======================================================================= -->
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>
 <!-- ======================================================================= -->
