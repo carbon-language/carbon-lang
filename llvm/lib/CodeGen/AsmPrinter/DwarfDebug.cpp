@@ -523,20 +523,19 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
     DirName = "";
 
   unsigned SrcId = SourceIdMap.size()+1;
-  std::pair<std::string, std::string> SourceName =
-      std::make_pair(FileName, DirName);
-  std::pair<std::pair<std::string, std::string>, unsigned> Entry =
-      make_pair(SourceName, SrcId);
 
-  std::map<std::pair<std::string, std::string>, unsigned>::iterator I;
-  bool NewlyInserted;
-  llvm::tie(I, NewlyInserted) = SourceIdMap.insert(Entry);
-  if (!NewlyInserted)
-    return I->second;
+  // We look up the file/dir pair by concatenating them with a zero byte.
+  SmallString<128> NamePair;
+  NamePair += DirName;
+  NamePair += '\0'; // Zero bytes are not allowed in paths.
+  NamePair += FileName;
+
+  StringMapEntry<unsigned> &Ent = SourceIdMap.GetOrCreateValue(NamePair, SrcId);
+  if (Ent.getValue() != SrcId)
+    return Ent.getValue();
 
   // Print out a .file directive to specify files for .loc directives.
-  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, Entry.first.second,
-                                          Entry.first.first);
+  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, DirName, FileName);
 
   return SrcId;
 }
