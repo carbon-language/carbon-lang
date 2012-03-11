@@ -20,6 +20,6 @@ LINK_COMPONENTS := support mc
 USEDLIBS = clang.a clangIndex.a clangARCMigrate.a clangRewrite.a \
 	   clangFrontend.a clangDriver.a \
 	   clangSerialization.a clangParse.a clangSema.a \
-	   clangAnalysis.a clangAST.a clangLex.a clangBasic.a
+	   clangAnalysis.a clangEdit.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
