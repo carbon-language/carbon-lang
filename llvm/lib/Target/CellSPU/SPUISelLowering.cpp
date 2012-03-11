@@ -31,14 +31,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include <map>
 
 using namespace llvm;
 
-// Used in getTargetNodeName() below
 namespace {
-  std::map<unsigned, const char *> node_names;
-
   // Byte offset of the preferred slot (counted from the MSB)
   int prefslotOffset(EVT VT) {
     int retval=0;
@@ -481,40 +477,34 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setSchedulingPreference(Sched::RegPressure);
 }
 
-const char *
-SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
-{
-  if (node_names.empty()) {
-    node_names[(unsigned) SPUISD::RET_FLAG] = "SPUISD::RET_FLAG";
-    node_names[(unsigned) SPUISD::Hi] = "SPUISD::Hi";
-    node_names[(unsigned) SPUISD::Lo] = "SPUISD::Lo";
-    node_names[(unsigned) SPUISD::PCRelAddr] = "SPUISD::PCRelAddr";
-    node_names[(unsigned) SPUISD::AFormAddr] = "SPUISD::AFormAddr";
-    node_names[(unsigned) SPUISD::IndirectAddr] = "SPUISD::IndirectAddr";
-    node_names[(unsigned) SPUISD::LDRESULT] = "SPUISD::LDRESULT";
-    node_names[(unsigned) SPUISD::CALL] = "SPUISD::CALL";
-    node_names[(unsigned) SPUISD::SHUFB] = "SPUISD::SHUFB";
-    node_names[(unsigned) SPUISD::SHUFFLE_MASK] = "SPUISD::SHUFFLE_MASK";
-    node_names[(unsigned) SPUISD::CNTB] = "SPUISD::CNTB";
-    node_names[(unsigned) SPUISD::PREFSLOT2VEC] = "SPUISD::PREFSLOT2VEC";
-    node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
-    node_names[(unsigned) SPUISD::SHL_BITS] = "SPUISD::SHL_BITS";
-    node_names[(unsigned) SPUISD::SHL_BYTES] = "SPUISD::SHL_BYTES";
-    node_names[(unsigned) SPUISD::VEC_ROTL] = "SPUISD::VEC_ROTL";
-    node_names[(unsigned) SPUISD::VEC_ROTR] = "SPUISD::VEC_ROTR";
-    node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
-    node_names[(unsigned) SPUISD::ROTBYTES_LEFT_BITS] =
-            "SPUISD::ROTBYTES_LEFT_BITS";
-    node_names[(unsigned) SPUISD::SELECT_MASK] = "SPUISD::SELECT_MASK";
-    node_names[(unsigned) SPUISD::SELB] = "SPUISD::SELB";
-    node_names[(unsigned) SPUISD::ADD64_MARKER] = "SPUISD::ADD64_MARKER";
-    node_names[(unsigned) SPUISD::SUB64_MARKER] = "SPUISD::SUB64_MARKER";
-    node_names[(unsigned) SPUISD::MUL64_MARKER] = "SPUISD::MUL64_MARKER";
+const char *SPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return 0;
+  case SPUISD::RET_FLAG: return "SPUISD::RET_FLAG";
+  case SPUISD::Hi: return "SPUISD::Hi";
+  case SPUISD::Lo: return "SPUISD::Lo";
+  case SPUISD::PCRelAddr: return "SPUISD::PCRelAddr";
+  case SPUISD::AFormAddr: return "SPUISD::AFormAddr";
+  case SPUISD::IndirectAddr: return "SPUISD::IndirectAddr";
+  case SPUISD::LDRESULT: return "SPUISD::LDRESULT";
+  case SPUISD::CALL: return "SPUISD::CALL";
+  case SPUISD::SHUFB: return "SPUISD::SHUFB";
+  case SPUISD::SHUFFLE_MASK: return "SPUISD::SHUFFLE_MASK";
+  case SPUISD::CNTB: return "SPUISD::CNTB";
+  case SPUISD::PREFSLOT2VEC: return "SPUISD::PREFSLOT2VEC";
+  case SPUISD::VEC2PREFSLOT: return "SPUISD::VEC2PREFSLOT";
+  case SPUISD::SHL_BITS: return "SPUISD::SHL_BITS";
+  case SPUISD::SHL_BYTES: return "SPUISD::SHL_BYTES";
+  case SPUISD::VEC_ROTL: return "SPUISD::VEC_ROTL";
+  case SPUISD::VEC_ROTR: return "SPUISD::VEC_ROTR";
+  case SPUISD::ROTBYTES_LEFT: return "SPUISD::ROTBYTES_LEFT";
+  case SPUISD::ROTBYTES_LEFT_BITS: return "SPUISD::ROTBYTES_LEFT_BITS";
+  case SPUISD::SELECT_MASK: return "SPUISD::SELECT_MASK";
+  case SPUISD::SELB: return "SPUISD::SELB";
+  case SPUISD::ADD64_MARKER: return "SPUISD::ADD64_MARKER";
+  case SPUISD::SUB64_MARKER: return "SPUISD::SUB64_MARKER";
+  case SPUISD::MUL64_MARKER: return "SPUISD::MUL64_MARKER";
   }
-
-  std::map<unsigned, const char *>::iterator i = node_names.find(Opcode);
-
-  return ((i != node_names.end()) ? i->second : 0);
 }
 
 //===----------------------------------------------------------------------===//
