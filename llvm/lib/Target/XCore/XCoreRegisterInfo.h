@@ -62,15 +62,6 @@ public:
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;
 
-  //! Return the array of argument passing registers
-  /*!
-    \note The size of this array is returned by getArgRegsSize().
-    */
-  static const unsigned *getArgRegs(const MachineFunction *MF = 0);
-
-  //! Return the size of the argument passing register array
-  static unsigned getNumArgRegs(const MachineFunction *MF = 0);
-  
   //! Return whether to emit frame moves
   static bool needsFrameMoves(const MachineFunction &MF);
 };

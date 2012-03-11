@@ -54,20 +54,6 @@ static inline bool isImmU16(unsigned val) {
   return val < (1 << 16);
 }
 
-static const unsigned XCore_ArgRegs[] = {
-  XCore::R0, XCore::R1, XCore::R2, XCore::R3
-};
-
-const unsigned * XCoreRegisterInfo::getArgRegs(const MachineFunction *MF)
-{
-  return XCore_ArgRegs;
-}
-
-unsigned XCoreRegisterInfo::getNumArgRegs(const MachineFunction *MF)
-{
-  return array_lengthof(XCore_ArgRegs);
-}
-
 bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF) {
   return MF.getMMI().hasDebugInfo() ||
     MF.getFunction()->needsUnwindTableEntry();
