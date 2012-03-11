@@ -208,18 +208,9 @@ unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
   return InvalidIdx;
 }
 
-static SymbolRef getSymbolForRegion(CheckerContext &C,
-                                   const MemRegion *R) {
-  // Implicit casts (ex: void* -> char*) can turn Symbolic region into element
-  // region, if that is the case, get the underlining region.
-  R = R->StripCasts();
-  if (!isa<SymbolicRegion>(R)) {
-      return 0;
-  }
-  return cast<SymbolicRegion>(R)->getSymbol();
-}
-
 static bool isBadDeallocationArgument(const MemRegion *Arg) {
+  if (!Arg)
+    return false;
   if (isa<AllocaRegion>(Arg) ||
       isa<BlockDataRegion>(Arg) ||
       isa<TypedRegion>(Arg)) {
@@ -227,6 +218,7 @@ static bool isBadDeallocationArgument(const MemRegion *Arg) {
   }
   return false;
 }
+
 /// Given the address expression, retrieve the value it's pointing to. Assume
 /// that value is itself an address, and return the corresponding symbol.
 static SymbolRef getAsPointeeSymbol(const Expr *Expr,
@@ -236,9 +228,9 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
 
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
     StoreManager& SM = C.getStoreManager();
-    const MemRegion *V = SM.getBinding(State->getStore(), *X).getAsRegion();
-    if (V)
-      return getSymbolForRegion(C, V);
+    SymbolRef sym = SM.getBinding(State->getStore(), *X).getAsLocSymbol();
+    if (sym)
+      return sym;
   }
   return 0;
 }
@@ -345,16 +337,16 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   if (ArgSVal.isUndef())
     return;
 
-  const MemRegion *Arg = ArgSVal.getAsRegion();
-  if (!Arg)
-    return;
+  SymbolRef ArgSM = ArgSVal.getAsLocSymbol();
 
-  SymbolRef ArgSM = getSymbolForRegion(C, Arg);
-  bool RegionArgIsBad = ArgSM ? false : isBadDeallocationArgument(Arg);
   // If the argument is coming from the heap, globals, or unknown, do not
   // report it.
-  if (!ArgSM && !RegionArgIsBad)
-    return;
+  bool RegionArgIsBad = false;
+  if (!ArgSM) {
+    if (!isBadDeallocationArgument(ArgSVal.getAsRegion()))
+      return;
+    RegionArgIsBad = true;
+  }
 
   // Is the argument to the call being tracked?
   const AllocationState *AS = State->get<AllocatedData>(ArgSM);
@@ -499,16 +491,16 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
     return;
 
   // If inside inlined call, skip it.
-  if (C.getLocationContext()->getParent() != 0)
+  const LocationContext *LC = C.getLocationContext();
+  if (LC->getParent() != 0)
     return;
 
   // Check  if the value is escaping through the return.
   ProgramStateRef state = C.getState();
-  const MemRegion *V =
-    state->getSVal(retExpr, C.getLocationContext()).getAsRegion();
-  if (!V)
+  SymbolRef sym = state->getSVal(retExpr, LC).getAsLocSymbol();
+  if (!sym)
     return;
-  state = state->remove<AllocatedData>(getSymbolForRegion(C, V));
+  state = state->remove<AllocatedData>(sym);
 
   // Proceed from the new state.
   C.addTransition(state);
