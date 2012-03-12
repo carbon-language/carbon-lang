@@ -1191,7 +1191,7 @@ printOptionNoValue(const Option &O, size_t GlobalWidth) const {
 static int OptNameCompare(const void *LHS, const void *RHS) {
   typedef std::pair<const char *, Option*> pair_ty;
 
-  return strcmp(((pair_ty*)LHS)->first, ((pair_ty*)RHS)->first);
+  return strcmp(((const pair_ty*)LHS)->first, ((const pair_ty*)RHS)->first);
 }
 
 // Copy Options into a vector so we can sort them as we like.
