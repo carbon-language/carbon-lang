@@ -44,6 +44,11 @@ void *calloc(size_t nmemb, size_t size) {
   return asan_calloc(nmemb, size, &stack);
 }
 
+void *_calloc_impl(size_t nmemb, size_t size, int *errno_tmp) {
+  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  return asan_calloc(nmemb, size, &stack);
+}
+
 void *realloc(void *ptr, size_t size) {
   GET_STACK_TRACE_HERE_FOR_MALLOC;
   return asan_realloc(ptr, size, &stack);
@@ -65,9 +70,10 @@ const int PAGE_EXECUTE_READWRITE = 0x40;
 
 namespace __asan {
 void ReplaceSystemMalloc() {
-#ifdef _WIN64
-# error ReplaceSystemMalloc was not tested on x64
-#endif
+#if defined(_DLL)
+# ifdef _WIN64
+#  error ReplaceSystemMalloc was not tested on x64
+# endif
   char *crt_malloc;
   if (GetRealFunctionAddress("malloc", (void**)&crt_malloc)) {
     // Replace malloc in the CRT dll with a jump to our malloc.
@@ -75,7 +81,7 @@ void ReplaceSystemMalloc() {
     CHECK(VirtualProtect(crt_malloc, 16, PAGE_EXECUTE_READWRITE, &old_prot));
     REAL(memset)(crt_malloc, 0xCC /* int 3 */, 16);  // just in case.
 
-    uintptr_t jmp_offset = (intptr_t)malloc - (intptr_t)crt_malloc - 5;
+    ptrdiff_t jmp_offset = (char*)malloc - (char*)crt_malloc - 5;
     crt_malloc[0] = 0xE9;  // jmp, should be followed by an offset.
     REAL(memcpy)(crt_malloc + 1, &jmp_offset, sizeof(jmp_offset));
 
@@ -85,6 +91,7 @@ void ReplaceSystemMalloc() {
   }
 
   // FIXME: investigate whether anything else is needed.
+#endif
 }
 }  // namespace __asan
 

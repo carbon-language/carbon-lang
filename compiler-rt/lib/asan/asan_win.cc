@@ -224,8 +224,8 @@ void AsanTSDSet(void *tsd) {
 
 // ---------------------- Various stuff ---------------- {{{1
 void *AsanDoesNotSupportStaticLinkage() {
-#if !defined(_DLL) || defined(_DEBUG)
-#error Please build the runtime with /MD
+#if defined(_DEBUG)
+#error Please build the runtime with a non-debug CRT: /MD or /MT
 #endif
   return NULL;
 }

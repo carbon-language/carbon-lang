@@ -34,6 +34,31 @@
 #include <strings.h>
 #endif  // __APPLE__
 
+#if defined(_WIN32) && !defined(_DLL)
+// FIXME: We might want to use these on Mac too.
+extern "C" {
+int memcmp(const void *b1, const void *b2, size_t sz);
+void memmove(void *d, const void *s, size_t sz);
+void memcpy(void *d, const void *s, size_t sz);
+void memset(void *b, int c, size_t sz);
+
+char* strchr(const char *s, char c);
+char* strcat(char *d, const char* s);  // NOLINT
+char* strncat(char *d, const char* s, size_t sz);
+char* strcpy(char *d, const char* s);  // NOLINT
+char* strncpy(char *d, const char* s, size_t sz);
+int strcmp(const char *s1, const char* s2);
+int strncmp(const char *s1, const char* s2, size_t sz);
+size_t strnlen(const char *s1, size_t sz);
+
+void longjmp(void* env, int value);
+
+__declspec(dllimport)
+void* __stdcall CreateThread(void *sec, size_t st, void* start,
+                             void *arg, DWORD fl, DWORD *id);
+}  // extern "C"
+#endif
+
 namespace __asan {
 
 // Instruments read/write access to a single byte in memory.

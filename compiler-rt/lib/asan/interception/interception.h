@@ -76,10 +76,15 @@
 # define WRAPPER_NAME(x) "wrap_"#x
 # define INTERCEPTOR_ATTRIBUTE
 #elif defined(_WIN32)
-// TODO(timurrrr): we're likely to use something else later on Windows.
-# define WRAP(x) x
-# define WRAPPER_NAME(x) #x
-# define INTERCEPTOR_ATTRIBUTE
+# if defined(_DLL)  // DLL CRT
+#  define WRAP(x) x
+#  define WRAPPER_NAME(x) #x
+#  define INTERCEPTOR_ATTRIBUTE
+# else  // Static CRT
+#  define WRAP(x) wrap_##x
+#  define WRAPPER_NAME(x) "wrap_"#x
+#  define INTERCEPTOR_ATTRIBUTE
+# endif
 #else
 # define WRAP(x) x
 # define WRAPPER_NAME(x) #x
