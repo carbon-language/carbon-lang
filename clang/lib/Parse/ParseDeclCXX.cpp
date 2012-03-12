@@ -1136,7 +1136,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   else if (Tok.is(tok::l_brace) ||
            (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
            (isCXX0XFinalKeyword() &&
-            NextToken().is(tok::l_brace) || NextToken().is(tok::colon))) {
+            (NextToken().is(tok::l_brace) || NextToken().is(tok::colon)))) {
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
       //   A class shall not be defined in a friend declaration.

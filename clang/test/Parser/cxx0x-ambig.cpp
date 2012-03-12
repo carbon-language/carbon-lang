@@ -23,6 +23,7 @@ namespace final {
     };
     // This too.
     struct T final : S {}; // expected-error {{base 'S' is marked 'final'}}
+    struct T bar : S {}; // expected-error {{expected ';' after top level declarator}} expected-error {{expected unqualified-id}}
   }
 }
 
