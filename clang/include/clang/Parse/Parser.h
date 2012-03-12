@@ -1621,6 +1621,7 @@ private:
   enum DeclSpecContext {
     DSC_normal, // normal context
     DSC_class,  // class context, enables 'friend'
+    DSC_type_specifier, // C++ type-specifier-seq
     DSC_top_level // top-level/namespace declaration context
   };
 
@@ -1663,27 +1664,23 @@ private:
 
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         const ParsedTemplateInfo &TemplateInfo,
-                        AccessSpecifier AS);
+                        AccessSpecifier AS, DeclSpecContext DSC);
   DeclSpecContext getDeclSpecContextFromDeclaratorContext(unsigned Context);
   void ParseDeclarationSpecifiers(DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                   AccessSpecifier AS = AS_none,
                                   DeclSpecContext DSC = DSC_normal,
                                   LateParsedAttrList *LateAttrs = 0);
-  bool ParseOptionalTypeSpecifier(DeclSpec &DS, bool &isInvalid,
-                                  const char *&PrevSpec,
-                                  unsigned &DiagID,
-               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
-                                  bool SuppressDeclarations = false);
 
-  void ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS = AS_none);
+  void ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS = AS_none,
+                                   DeclSpecContext DSC = DSC_normal);
 
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS,
                                   Declarator::TheContext Context);
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
-                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
-                AccessSpecifier AS = AS_none);
+                          const ParsedTemplateInfo &TemplateInfo,
+                          AccessSpecifier AS, DeclSpecContext DSC);
   void ParseEnumBody(SourceLocation StartLoc, Decl *TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             Decl *TagDecl);
@@ -2060,11 +2057,9 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
   void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
-                           DeclSpec &DS,
-                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
-                           AccessSpecifier AS = AS_none,
-                           bool EnteringContext = false,
-                           bool SuppressDeclarations = false);
+                           DeclSpec &DS, const ParsedTemplateInfo &TemplateInfo,
+                           AccessSpecifier AS, bool EnteringContext,
+                           DeclSpecContext DSC);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    Decl *TagDecl);
   ExprResult ParseCXXMemberInitializer(Decl *D, bool IsFunction,

@@ -903,7 +903,7 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
 /// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
 /// elaborated-type-specifier [C++ dcl.type.elab]; we can't tell which
 /// until we reach the start of a definition or see a token that
-/// cannot start a definition. If SuppressDeclarations is true, we do know.
+/// cannot start a definition.
 ///
 ///       class-specifier: [C++ class]
 ///         class-head '{' member-specification[opt] '}'
@@ -944,8 +944,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  SourceLocation StartLoc, DeclSpec &DS,
                                  const ParsedTemplateInfo &TemplateInfo,
                                  AccessSpecifier AS, 
-                                 bool EnteringContext,
-                                 bool SuppressDeclarations){
+                                 bool EnteringContext, DeclSpecContext DSC) {
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
     TagType = DeclSpec::TST_struct;
@@ -1120,18 +1119,17 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // have to be treated differently.  If we have 'struct foo {...',
   // 'struct foo :...' or 'struct foo final[opt]' then this is a
   // definition. Otherwise we have something like 'struct foo xyz', a reference.
-  // However, in some contexts, things look like declarations but are just
-  // references, e.g.
-  // new struct s;
+  // However, in type-specifier-seq's, things look like declarations but are
+  // just references, e.g.
+  //   new struct s;
   // or
-  // &T::operator struct s;
-  // For these, SuppressDeclarations is true.
+  //   &T::operator struct s;
+  // For these, DSC is DSC_type_specifier.
   Sema::TagUseKind TUK;
-  if (SuppressDeclarations)
-    TUK = Sema::TUK_Reference;
-  else if (Tok.is(tok::l_brace) || 
-           (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
-           isCXX0XFinalKeyword()) {
+  if (Tok.is(tok::l_brace) ||
+      (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
+      // FIXME: 'final' must be followed by ':' or '{' to mark a definition.
+      isCXX0XFinalKeyword()) {
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
       //   A class shall not be defined in a friend declaration.
@@ -1146,7 +1144,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Okay, this is a class definition.
       TUK = Sema::TUK_Definition;
     }
-  } else if (Tok.is(tok::semi))
+  } else if (Tok.is(tok::semi) && DSC != DSC_type_specifier)
     TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
   else
     TUK = Sema::TUK_Reference;

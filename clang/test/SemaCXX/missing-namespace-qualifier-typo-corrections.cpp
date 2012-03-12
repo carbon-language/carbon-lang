@@ -4,7 +4,7 @@ namespace fizbin { class Foobar {}; } // expected-note 2 {{'fizbin::Foobar' decl
                                       // expected-note {{'Foobar' declared here}}
 Foobar *my_bar  // expected-error{{unknown type name 'Foobar'; did you mean 'fizbin::Foobar'?}}
     = new Foobar; // expected-error{{unknown type name 'Foobar'; did you mean 'fizbin::Foobar'?}}
-fizbin::Foobar *my_foo = new fizbin::FooBar; // expected-error{{unknown type name 'FooBar'; did you mean 'Foobar'?}}
+fizbin::Foobar *my_foo = new fizbin::FooBar; // expected-error{{no type named 'FooBar' in namespace 'fizbin'; did you mean 'Foobar'?}}
 
 namespace barstool { int toFoobar() { return 1; } } // expected-note 3 {{'barstool::toFoobar' declared here}}
 int Double(int x) { return x + x; }
@@ -64,14 +64,13 @@ void f() {
 
 // Test case from http://llvm.org/bugs/show_bug.cgi?id=10318
 namespace llvm {
- template <typename T> class GraphWriter {}; // expected-note {{'llvm::GraphWriter' declared here}} \
-                                             // expected-note {{'GraphWriter' declared here}}
+ template <typename T> class GraphWriter {}; // expected-note 3{{declared here}}
 }
 
 struct S {};
 void bar() {
  GraphWriter<S> x; //expected-error{{no template named 'GraphWriter'; did you mean 'llvm::GraphWriter'?}}
- (void)new llvm::GraphWriter; // expected-error {{expected a type}}
+ (void)new llvm::GraphWriter; // expected-error {{use of class template llvm::GraphWriter requires template arguments}}
  (void)new llvm::Graphwriter<S>; // expected-error {{no template named 'Graphwriter' in namespace 'llvm'; did you mean 'GraphWriter'?}}
 }
 

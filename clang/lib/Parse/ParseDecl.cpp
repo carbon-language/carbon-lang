@@ -1424,17 +1424,24 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
 ///          type-qualifier specifier-qualifier-list[opt]
 /// [GNU]    attributes     specifier-qualifier-list[opt]
 ///
-void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS) {
+void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS,
+                                         DeclSpecContext DSC) {
   /// specifier-qualifier-list is a subset of declaration-specifiers.  Just
   /// parse declaration-specifiers and complain about extra stuff.
   /// TODO: diagnose attribute-specifiers and alignment-specifiers.
-  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
+  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS, DSC);
 
   // Validate declspec for type-name.
   unsigned Specs = DS.getParsedSpecifiers();
-  if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers() &&
-      !DS.hasAttributes())
+  if (DSC == DSC_type_specifier && !DS.hasTypeSpecifier()) {
+    Diag(Tok, diag::err_expected_type);
+    DS.SetTypeSpecError();
+  } else if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers() &&
+             !DS.hasAttributes()) {
     Diag(Tok, diag::err_typename_requires_specqual);
+    if (!DS.hasTypeSpecifier())
+      DS.SetTypeSpecError();
+  }
 
   // Issue diagnostic and remove storage class if present.
   if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
@@ -1454,6 +1461,12 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS) {
     if (DS.isExplicitSpecified())
       Diag(DS.getExplicitSpecLoc(), diag::err_typename_invalid_functionspec);
     DS.ClearFunctionSpecs();
+  }
+
+  // Issue diagnostic and remove constexpr specfier if present.
+  if (DS.isConstexprSpecified()) {
+    Diag(DS.getConstexprSpecLoc(), diag::err_typename_invalid_constexpr);
+    DS.ClearConstexprSpec();
   }
 }
 
@@ -1493,7 +1506,7 @@ static bool isValidAfterIdentifierInDeclarator(const Token &T) {
 ///
 bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                               const ParsedTemplateInfo &TemplateInfo,
-                              AccessSpecifier AS) {
+                              AccessSpecifier AS, DeclSpecContext DSC) {
   assert(Tok.is(tok::identifier) && "should have identifier");
 
   SourceLocation Loc = Tok.getLocation();
@@ -1512,8 +1525,13 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   assert(!DS.hasTypeSpecifier() && "Type specifier checked above");
 
   // Since we know that this either implicit int (which is rare) or an
-  // error, we'd do lookahead to try to do better recovery.
-  if (isValidAfterIdentifierInDeclarator(NextToken())) {
+  // error, do lookahead to try to do better recovery. This never applies within
+  // a type specifier.
+  // FIXME: Don't bail out here in languages with no implicit int (like
+  // C++ with no -fms-extensions). This is much more likely to be an undeclared
+  // type or typo than a use of implicit int.
+  if (DSC != DSC_type_specifier &&
+      isValidAfterIdentifierInDeclarator(NextToken())) {
     // If this token is valid for implicit int, e.g. "static x = 4", then
     // we just avoid eating the identifier, so it will be parsed as the
     // identifier in the declarator.
@@ -1549,9 +1567,10 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
       // Parse this as a tag as if the missing tag were present.
       if (TagKind == tok::kw_enum)
-        ParseEnumSpecifier(Loc, DS, TemplateInfo, AS);
+        ParseEnumSpecifier(Loc, DS, TemplateInfo, AS, DSC_normal);
       else
-        ParseClassSpecifier(TagKind, Loc, DS, TemplateInfo, AS);
+        ParseClassSpecifier(TagKind, Loc, DS, TemplateInfo, AS,
+                            /*EnteringContext*/ false, DSC_normal);
       return true;
     }
   }
@@ -1585,9 +1604,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   }
 
   // Mark this as an error.
-  const char *PrevSpec;
-  unsigned DiagID;
-  DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec, DiagID);
+  DS.SetTypeSpecError();
   DS.SetRangeEnd(Tok.getLocation());
   ConsumeToken();
 
@@ -1895,7 +1912,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // typename.
       if (TypeRep == 0) {
         ConsumeToken();   // Eat the scope spec so the identifier is current.
-        if (ParseImplicitInt(DS, &SS, TemplateInfo, AS)) continue;
+        if (ParseImplicitInt(DS, &SS, TemplateInfo, AS, DSContext)) continue;
         goto DoneWithDeclSpec;
       }
 
@@ -1979,7 +1996,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
         break;
 
-      // It has to be available as a typedef too!
       ParsedType TypeRep =
         Actions.getTypeName(*Tok.getIdentifierInfo(),
                             Tok.getLocation(), getCurScope());
@@ -1987,7 +2003,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
       if (!TypeRep) {
-        if (ParseImplicitInt(DS, 0, TemplateInfo, AS)) continue;
+        if (ParseImplicitInt(DS, 0, TemplateInfo, AS, DSContext)) continue;
         goto DoneWithDeclSpec;
       }
 
@@ -2276,14 +2292,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_union: {
       tok::TokenKind Kind = Tok.getKind();
       ConsumeToken();
-      ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS, EnteringContext);
+      ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS,
+                          EnteringContext, DSContext);
       continue;
     }
 
     // enum-specifier:
     case tok::kw_enum:
       ConsumeToken();
-      ParseEnumSpecifier(Loc, DS, TemplateInfo, AS);
+      ParseEnumSpecifier(Loc, DS, TemplateInfo, AS, DSContext);
       continue;
 
     // cv-qualifier:
@@ -2373,301 +2390,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     if (DiagID != diag::err_bool_redeclaration)
       ConsumeToken();
   }
-}
-
-/// ParseOptionalTypeSpecifier - Try to parse a single type-specifier. We
-/// primarily follow the C++ grammar with additions for C99 and GNU,
-/// which together subsume the C grammar. Note that the C++
-/// type-specifier also includes the C type-qualifier (for const,
-/// volatile, and C99 restrict). Returns true if a type-specifier was
-/// found (and parsed), false otherwise.
-///
-///       type-specifier: [C++ 7.1.5]
-///         simple-type-specifier
-///         class-specifier
-///         enum-specifier
-///         elaborated-type-specifier  [TODO]
-///         cv-qualifier
-///
-///       cv-qualifier: [C++ 7.1.5.1]
-///         'const'
-///         'volatile'
-/// [C99]   'restrict'
-///
-///       simple-type-specifier: [ C++ 7.1.5.2]
-///         '::'[opt] nested-name-specifier[opt] type-name [TODO]
-///         '::'[opt] nested-name-specifier 'template' template-id [TODO]
-///         'char'
-///         'wchar_t'
-///         'bool'
-///         'short'
-///         'int'
-///         'long'
-///         'signed'
-///         'unsigned'
-///         'float'
-///         'double'
-///         'void'
-/// [C99]   '_Bool'
-/// [C99]   '_Complex'
-/// [C99]   '_Imaginary'  // Removed in TC2?
-/// [GNU]   '_Decimal32'
-/// [GNU]   '_Decimal64'
-/// [GNU]   '_Decimal128'
-/// [GNU]   typeof-specifier
-/// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
-/// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
-/// [C++0x] 'decltype' ( expression )
-/// [AltiVec] '__vector'
-bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
-                                        const char *&PrevSpec,
-                                        unsigned &DiagID,
-                                        const ParsedTemplateInfo &TemplateInfo,
-                                        bool SuppressDeclarations) {
-  SourceLocation Loc = Tok.getLocation();
-
-  switch (Tok.getKind()) {
-  case tok::identifier:   // foo::bar
-    // If we already have a type specifier, this identifier is not a type.
-    if (DS.getTypeSpecType() != DeclSpec::TST_unspecified ||
-        DS.getTypeSpecWidth() != DeclSpec::TSW_unspecified ||
-        DS.getTypeSpecSign() != DeclSpec::TSS_unspecified)
-      return false;
-    // Check for need to substitute AltiVec keyword tokens.
-    if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
-      break;
-    // Fall through.
-  case tok::kw_decltype:
-  case tok::kw_typename:  // typename foo::bar
-    // Annotate typenames and C++ scope specifiers.  If we get one, just
-    // recurse to handle whatever we get.
-    if (TryAnnotateTypeOrScopeToken(/*EnteringContext=*/false,
-                                    /*NeedType=*/true))
-      return true;
-    if (Tok.is(tok::identifier))
-      return false;
-    return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
-                                      TemplateInfo, SuppressDeclarations);
-  case tok::coloncolon:   // ::foo::bar
-    if (NextToken().is(tok::kw_new) ||    // ::new
-        NextToken().is(tok::kw_delete))   // ::delete
-      return false;
-
-    // Annotate typenames and C++ scope specifiers.  If we get one, just
-    // recurse to handle whatever we get.
-    if (TryAnnotateTypeOrScopeToken(/*EnteringContext=*/false,
-                                    /*NeedType=*/true))
-      return true;
-    return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
-                                      TemplateInfo, SuppressDeclarations);
-
-  // simple-type-specifier:
-  case tok::annot_typename: {
-    if (ParsedType T = getTypeAnnotation(Tok)) {
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename,
-                                     Tok.getAnnotationEndLoc(), PrevSpec,
-                                     DiagID, T);
-    } else
-      DS.SetTypeSpecError();
-    DS.SetRangeEnd(Tok.getAnnotationEndLoc());
-    ConsumeToken(); // The typename
-
-    // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
-    // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
-    // Objective-C interface.  If we don't have Objective-C or a '<', this is
-    // just a normal reference to a typedef name.
-    if (Tok.is(tok::less) && getLangOpts().ObjC1)
-      ParseObjCProtocolQualifiers(DS);
-    
-    return true;
-  }
-
-  case tok::kw_short:
-    isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_long:
-    if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
-      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec,
-                                      DiagID);
-    else
-      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, Loc, PrevSpec,
-                                      DiagID);
-    break;
-  case tok::kw___int64:
-      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, Loc, PrevSpec,
-                                      DiagID);
-    break;
-  case tok::kw_signed:
-    isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_unsigned:
-    isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec,
-                                   DiagID);
-    break;
-  case tok::kw__Complex:
-    isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, Loc, PrevSpec,
-                                      DiagID);
-    break;
-  case tok::kw__Imaginary:
-    isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, Loc, PrevSpec,
-                                      DiagID);
-    break;
-  case tok::kw_void:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_char:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_int:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_half:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_half, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_float:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_double:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_wchar_t:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_char16_t:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char16, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_char32_t:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char32, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw_bool:
-  case tok::kw__Bool:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw__Decimal32:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, Loc, PrevSpec,
-                                   DiagID);
-    break;
-  case tok::kw__Decimal64:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, Loc, PrevSpec,
-                                   DiagID);
-    break;
-  case tok::kw__Decimal128:
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec,
-                                   DiagID);
-    break;
-  case tok::kw___vector:
-    isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
-    break;
-  case tok::kw___pixel:
-    isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
-    break;
-  
-  // class-specifier:
-  case tok::kw_class:
-  case tok::kw_struct:
-  case tok::kw_union: {
-    tok::TokenKind Kind = Tok.getKind();
-    ConsumeToken();
-    ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS_none,
-                        /*EnteringContext=*/false,
-                        SuppressDeclarations);
-    return true;
-  }
-
-  // enum-specifier:
-  case tok::kw_enum:
-    ConsumeToken();
-    ParseEnumSpecifier(Loc, DS, TemplateInfo, AS_none);
-    return true;
-
-  // cv-qualifier:
-  case tok::kw_const:
-    isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
-                               DiagID, getLangOpts());
-    break;
-  case tok::kw_volatile:
-    isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
-                               DiagID, getLangOpts());
-    break;
-  case tok::kw_restrict:
-    isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
-                               DiagID, getLangOpts());
-    break;
-
-  // GNU typeof support.
-  case tok::kw_typeof:
-    ParseTypeofSpecifier(DS);
-    return true;
-
-  // C++0x decltype support.
-  case tok::annot_decltype:
-    ParseDecltypeSpecifier(DS);
-    return true;
-
-  // C++0x type traits support.
-  case tok::kw___underlying_type:
-    ParseUnderlyingTypeSpecifier(DS);
-    return true;
-
-  case tok::kw__Atomic:
-    ParseAtomicSpecifier(DS);
-    return true;
-
-  // OpenCL qualifiers:
-  case tok::kw_private: 
-    if (!getLangOpts().OpenCL)
-      return false;
-  case tok::kw___private:
-  case tok::kw___global:
-  case tok::kw___local:
-  case tok::kw___constant:
-  case tok::kw___read_only:
-  case tok::kw___write_only:
-  case tok::kw___read_write:
-    ParseOpenCLQualifiers(DS);
-    break;
-
-  // C++0x auto support.
-  case tok::kw_auto:
-    // This is only called in situations where a storage-class specifier is
-    // illegal, so we can assume an auto type specifier was intended even in
-    // C++98. In C++98 mode, DeclSpec::Finish will produce an appropriate
-    // extension diagnostic.
-    if (!getLangOpts().CPlusPlus)
-      return false;
-
-    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec, DiagID);
-    break;
-
-  case tok::kw___ptr64:
-  case tok::kw___ptr32:
-  case tok::kw___w64:
-  case tok::kw___cdecl:
-  case tok::kw___stdcall:
-  case tok::kw___fastcall:
-  case tok::kw___thiscall:
-  case tok::kw___unaligned:
-    ParseMicrosoftTypeAttributes(DS.getAttributes());
-    return true;
-
-  case tok::kw___pascal:
-    ParseBorlandTypeAttributes(DS.getAttributes());
-    return true;
-
-  default:
-    // Not a type-specifier; do nothing.
-    return false;
-  }
-
-  // If the specifier combination wasn't legal, issue a diagnostic.
-  if (isInvalid) {
-    assert(PrevSpec && "Method did not return previous specifier!");
-    // Pick between error or extwarn.
-    Diag(Tok, DiagID) << PrevSpec;
-  }
-  DS.SetRangeEnd(Tok.getLocation());
-  ConsumeToken(); // whatever we parsed above.
-  return true;
 }
 
 /// ParseStructDeclaration - Parse a struct declaration without the terminating
@@ -2905,7 +2627,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 ///
 void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
                                 const ParsedTemplateInfo &TemplateInfo,
-                                AccessSpecifier AS) {
+                                AccessSpecifier AS, DeclSpecContext DSC) {
   // Parse the tag portion of this.
   if (Tok.is(tok::code_completion)) {
     // Code completion for an enum name.
@@ -3065,7 +2787,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TUK = Sema::TUK_Friend;
   else if (Tok.is(tok::l_brace))
     TUK = Sema::TUK_Definition;
-  else if (Tok.is(tok::semi))
+  else if (Tok.is(tok::semi) && DSC != DSC_type_specifier)
     TUK = Sema::TUK_Declaration;
   else
     TUK = Sema::TUK_Reference;

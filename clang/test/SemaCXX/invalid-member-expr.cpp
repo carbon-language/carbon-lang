@@ -8,7 +8,7 @@ void test() {
   x.int; // expected-error{{expected unqualified-id}}
   x.~int(); // expected-error{{expected a class name}}
   x.operator; // expected-error{{expected a type}}
-  x.operator typedef; // expected-error{{expected a type}}
+  x.operator typedef; // expected-error{{expected a type}} expected-error{{type name does not allow storage class}}
 }
 
 void test2() {
@@ -17,7 +17,7 @@ void test2() {
   x->int; // expected-error{{expected unqualified-id}}
   x->~int(); // expected-error{{expected a class name}}
   x->operator; // expected-error{{expected a type}}
-  x->operator typedef; // expected-error{{expected a type}}
+  x->operator typedef; // expected-error{{expected a type}} expected-error{{type name does not allow storage class}}
 }
 
 // PR6327

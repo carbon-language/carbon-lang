@@ -44,8 +44,7 @@ typedef signed char BOOL;
 }
 
 @property (readonly) int; // expected-warning {{declaration does not declare anything}}
-@property (readonly) ; // expected-error {{type name requires a specifier or qualifier}} \
-                          expected-warning {{declaration does not declare anything}}
+@property (readonly) ; // expected-error {{type name requires a specifier or qualifier}}
 @property (readonly) int : 4; // expected-error {{property requires fields to be named}}
 
 

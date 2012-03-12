@@ -1551,22 +1551,7 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
 ///     type-specifier type-specifier-seq[opt]
 ///
 bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
-  DS.SetRangeStart(Tok.getLocation());
-  const char *PrevSpec = 0;
-  unsigned DiagID;
-  bool isInvalid = 0;
-
-  // Parse one or more of the type specifiers.
-  if (!ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
-      ParsedTemplateInfo(), /*SuppressDeclarations*/true)) {
-    Diag(Tok, diag::err_expected_type);
-    return true;
-  }
-
-  while (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
-         ParsedTemplateInfo(), /*SuppressDeclarations*/true))
-  {}
-
+  ParseSpecifierQualifierList(DS, AS_none, DSC_type_specifier);
   DS.Finish(Diags, PP);
   return false;
 }

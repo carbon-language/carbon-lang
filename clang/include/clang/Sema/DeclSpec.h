@@ -614,6 +614,11 @@ public:
   bool isConstexprSpecified() const { return Constexpr_specified; }
   SourceLocation getConstexprSpecLoc() const { return ConstexprLoc; }
 
+  void ClearConstexprSpec() {
+    Constexpr_specified = false;
+    ConstexprLoc = SourceLocation();
+  }
+
   AttributePool &getAttributePool() const {
     return Attrs.getPool();
   }

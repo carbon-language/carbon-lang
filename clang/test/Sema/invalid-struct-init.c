@@ -3,8 +3,6 @@
 typedef struct _zend_module_entry zend_module_entry;
 struct _zend_module_entry {
   _efree((p)); // expected-error{{type name requires a specifier or qualifier}} \
-                  expected-error{{field '_efree' declared as a function}} \
-                  expected-warning {{type specifier missing, defaults to 'int'}} \
                   expected-warning {{type specifier missing, defaults to 'int'}}
   
 };

@@ -387,7 +387,7 @@ namespace PairedDelete {
 
 namespace PR7702 {
   void test1() {
-    new DoesNotExist; // expected-error {{expected a type}}
+    new DoesNotExist; // expected-error {{unknown type name 'DoesNotExist'}}
   }
 }
 

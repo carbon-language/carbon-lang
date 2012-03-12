@@ -14,9 +14,10 @@ namespace IllegalTypeIds {
   template<typename U> using E = void(int n) throw(); // expected-error {{exception specifications are not allowed in type aliases}}
   template<typename U> using F = void(*)(int n) &&; // expected-error {{pointer to function type cannot have '&&' qualifier}}
   template<typename U> using G = __thread void(int n); // expected-error {{type name does not allow storage class to be specified}}
+  template<typename U> using H = constexpr int; // expected-error {{type name does not allow constexpr specifier}}
 
-  template<typename U> using H = void(int n); // ok
-  template<typename U> using I = void(int n) &&; // ok
+  template<typename U> using Y = void(int n); // ok
+  template<typename U> using Z = void(int n) &&; // ok
 }
 
 namespace IllegalSyntax {
