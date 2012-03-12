@@ -722,13 +722,9 @@ unsigned APInt::countLeadingZerosSlowCase() const {
   return Count;
 }
 
-static unsigned countLeadingOnes_64(uint64_t V, unsigned skip) {
-  return CountLeadingOnes_64(V << skip);
-}
-
 unsigned APInt::countLeadingOnes() const {
   if (isSingleWord())
-    return countLeadingOnes_64(VAL, APINT_BITS_PER_WORD - BitWidth);
+    return CountLeadingOnes_64(VAL << (APINT_BITS_PER_WORD - BitWidth));
 
   unsigned highWordBits = BitWidth % APINT_BITS_PER_WORD;
   unsigned shift;
@@ -739,13 +735,13 @@ unsigned APInt::countLeadingOnes() const {
     shift = APINT_BITS_PER_WORD - highWordBits;
   }
   int i = getNumWords() - 1;
-  unsigned Count = countLeadingOnes_64(pVal[i], shift);
+  unsigned Count = CountLeadingOnes_64(pVal[i] << shift);
   if (Count == highWordBits) {
     for (i--; i >= 0; --i) {
       if (pVal[i] == -1ULL)
         Count += APINT_BITS_PER_WORD;
       else {
-        Count += countLeadingOnes_64(pVal[i], 0);
+        Count += CountLeadingOnes_64(pVal[i]);
         break;
       }
     }
