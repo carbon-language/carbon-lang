@@ -36,9 +36,13 @@ TypeResult Parser::ParseTypeName(SourceRange *Range,
                                  Declarator::TheContext Context,
                                  AccessSpecifier AS,
                                  Decl **OwnedType) {
+  DeclSpecContext DSC = DSC_normal;
+  if (Context == Declarator::TrailingReturnContext)
+    DSC = DSC_trailing;
+
   // Parse the common declaration-specifiers piece.
   DeclSpec DS(AttrFactory);
-  ParseSpecifierQualifierList(DS, AS);
+  ParseSpecifierQualifierList(DS, AS, DSC);
   if (OwnedType)
     *OwnedType = DS.isTypeSpecOwned() ? DS.getRepAsDecl() : 0;
 
@@ -2653,8 +2657,12 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   while (Tok.is(tok::kw___declspec))
     ParseMicrosoftDeclSpec(attrs);
 
-  bool AllowFixedUnderlyingType 
-    = getLangOpts().CPlusPlus0x || getLangOpts().MicrosoftExt || getLangOpts().ObjC2;
+  // Enum definitions should not be parsed in a trailing-return-type.
+  bool AllowDeclaration = DSC != DSC_trailing;
+
+  bool AllowFixedUnderlyingType = AllowDeclaration &&
+    (getLangOpts().CPlusPlus0x || getLangOpts().MicrosoftExt ||
+     getLangOpts().ObjC2);
 
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLangOpts().CPlusPlus) {
@@ -2679,7 +2687,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 
   // Must have either 'enum name' or 'enum {...}'.
   if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace) &&
-      (AllowFixedUnderlyingType && Tok.isNot(tok::colon))) {
+      !(AllowFixedUnderlyingType && Tok.is(tok::colon))) {
     Diag(Tok, diag::err_expected_ident_lbrace);
 
     // Skip the rest of this declarator, up until the comma or semicolon.
@@ -2785,6 +2793,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   Sema::TagUseKind TUK;
   if (DS.isFriendSpecified())
     TUK = Sema::TUK_Friend;
+  else if (!AllowDeclaration)
+    TUK = Sema::TUK_Reference;
   else if (Tok.is(tok::l_brace))
     TUK = Sema::TUK_Definition;
   else if (Tok.is(tok::semi) && DSC != DSC_type_specifier)
@@ -2850,7 +2860,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (!TagDecl) {
     // The action failed to produce an enumeration tag. If this is a 
     // definition, consume the entire definition.
-    if (Tok.is(tok::l_brace)) {
+    if (Tok.is(tok::l_brace) && TUK != Sema::TUK_Reference) {
       ConsumeBrace();
       SkipUntil(tok::r_brace);
     }
@@ -2859,7 +2869,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     return;
   }
 
-  if (Tok.is(tok::l_brace)) {
+  if (Tok.is(tok::l_brace) && TUK != Sema::TUK_Reference) {
     if (TUK == Sema::TUK_Friend)
       Diag(Tok, diag::err_friend_decl_defines_type)
         << SourceRange(DS.getFriendSpecLoc());

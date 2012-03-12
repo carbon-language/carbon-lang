@@ -1832,6 +1832,9 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case Declarator::AliasTemplateContext:
       Error = 9; // Type alias
       break;
+    case Declarator::TrailingReturnContext:
+      Error = 10; // Function return type
+      break;
     case Declarator::TypeNameContext:
       Error = 11; // Generic
       break;
@@ -1885,6 +1888,11 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     // Check the contexts where C++ forbids the declaration of a new class
     // or enumeration in a type-specifier-seq.
     switch (D.getContext()) {
+    case Declarator::TrailingReturnContext:
+      // Class and enumeration definitions are syntactically not allowed in
+      // trailing return types.
+      llvm_unreachable("parser should not have allowed this");
+      break;
     case Declarator::FileContext:
     case Declarator::MemberContext:
     case Declarator::BlockContext:
@@ -2606,6 +2614,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case Declarator::ObjCCatchContext:
     case Declarator::BlockLiteralContext:
     case Declarator::LambdaExprContext:
+    case Declarator::TrailingReturnContext:
     case Declarator::TemplateTypeArgContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
       // in the future.

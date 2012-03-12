@@ -44,6 +44,6 @@ struct F : auto(*)()->int {}; // expected-error{{expected class name}}
 template<typename T = auto(*)()->int> struct G { };
 
 int g();
-auto (*h)() -> auto = &g; // expected-error{{'auto' not allowed here}}
+auto (*h)() -> auto = &g; // expected-error{{'auto' not allowed in function return type}}
 auto (*i)() = &g; // ok; auto deduced as int.
 auto (*k)() -> int = i; // ok; no deduction.

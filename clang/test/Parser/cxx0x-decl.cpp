@@ -6,3 +6,13 @@ namespace Commas {
   b [[ ]],
   c alignas(double);
 }
+
+struct S {};
+enum E { e };
+
+auto f() -> struct S {
+  return S();
+}
+auto g() -> enum E {
+  return E();
+}

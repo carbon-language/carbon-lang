@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Wno-unused-value -verify -std=c++11 %s
 
+enum E { e };
+
 class C {
 
   int f() {
@@ -19,6 +21,8 @@ class C {
     [=,&foo] () {}; 
     [&,foo] () {}; 
     [this] () {}; 
+    [] () -> class C { return C(); };
+    [] () -> enum E { return e; };
 
     [] -> int { return 0; }; // expected-error{{lambda requires '()' before return type}}
     [] mutable -> int { return 0; }; // expected-error{{lambda requires '()' before 'mutable'}}
@@ -37,4 +41,3 @@ class C {
     int a6[1] = {[this] = 1 }; // expected-error{{integral constant expression must have integral or unscoped enumeration type, not 'C *'}}
   }
 };
-

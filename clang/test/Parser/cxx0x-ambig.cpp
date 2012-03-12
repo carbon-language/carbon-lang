@@ -5,15 +5,24 @@
 // final 'context sensitive' mess.
 namespace final {
   struct S { int n; };
+  struct T { int n; };
   namespace N {
     int n;
+    // These declare variables named final..
+    extern struct S final;
+    extern struct S final [[]];
+    extern struct S final, foo;
+    struct S final = S();
+
     // This defines a class, not a variable, even though it would successfully
     // parse as a variable but not as a class. DR1318's wording suggests that
     // this disambiguation is only performed on an ambiguity, but that was not
     // the intent.
-    struct S final {
+    struct S final { // expected-note {{here}}
       int(n) // expected-error {{expected ';'}}
     };
+    // This too.
+    struct T final : S {}; // expected-error {{base 'S' is marked 'final'}}
   }
 }
 

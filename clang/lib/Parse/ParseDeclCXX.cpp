@@ -1114,11 +1114,16 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (SuppressingAccessChecks)
     Actions.ActOnStopSuppressingAccessChecks();
 
-  // There are four options here.  If we have 'struct foo;', then this
-  // is either a forward declaration or a friend declaration, which
-  // have to be treated differently.  If we have 'struct foo {...',
-  // 'struct foo :...' or 'struct foo final[opt]' then this is a
-  // definition. Otherwise we have something like 'struct foo xyz', a reference.
+  // There are four options here.
+  //  - If we are in a trailing return type, this is always just a reference,
+  //    and we must not try to parse a definition. For instance,
+  //      [] () -> struct S { };
+  //    does not define a type.
+  //  - If we have 'struct foo {...', 'struct foo :...',
+  //    'struct foo final :' or 'struct foo final {', then this is a definition.
+  //  - If we have 'struct foo;', then this is either a forward declaration
+  //    or a friend declaration, which have to be treated differently.
+  //  - Otherwise we have something like 'struct foo xyz', a reference.
   // However, in type-specifier-seq's, things look like declarations but are
   // just references, e.g.
   //   new struct s;
@@ -1126,10 +1131,12 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   //   &T::operator struct s;
   // For these, DSC is DSC_type_specifier.
   Sema::TagUseKind TUK;
-  if (Tok.is(tok::l_brace) ||
-      (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
-      // FIXME: 'final' must be followed by ':' or '{' to mark a definition.
-      isCXX0XFinalKeyword()) {
+  if (DSC == DSC_trailing)
+    TUK = Sema::TUK_Reference;
+  else if (Tok.is(tok::l_brace) ||
+           (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
+           (isCXX0XFinalKeyword() &&
+            NextToken().is(tok::l_brace) || NextToken().is(tok::colon))) {
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
       //   A class shall not be defined in a friend declaration.
@@ -2673,14 +2680,7 @@ TypeResult Parser::ParseTrailingReturnType(SourceRange &Range) {
 
   ConsumeToken();
 
-  // FIXME: Need to suppress declarations when parsing this typename.
-  // Otherwise in this function definition:
-  //
-  //   auto f() -> struct X {}
-  //
-  // struct X is parsed as class definition because of the trailing
-  // brace.
-  return ParseTypeName(&Range);
+  return ParseTypeName(&Range, Declarator::TrailingReturnContext);
 }
 
 /// \brief We have just started parsing the definition of a new class,

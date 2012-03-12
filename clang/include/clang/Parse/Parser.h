@@ -1622,6 +1622,7 @@ private:
     DSC_normal, // normal context
     DSC_class,  // class context, enables 'friend'
     DSC_type_specifier, // C++ type-specifier-seq
+    DSC_trailing, // C++11 trailing-type-specifier in a trailing return type
     DSC_top_level // top-level/namespace declaration context
   };
 

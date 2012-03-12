@@ -1428,9 +1428,10 @@ public:
     ObjCCatchContext,    // Objective-C catch exception-declaration
     BlockLiteralContext,  // Block literal declarator.
     LambdaExprContext,   // Lambda-expression declarator.
+    TrailingReturnContext, // C++11 trailing-type-specifier.
     TemplateTypeArgContext, // Template type argument.
-    AliasDeclContext,    // C++0x alias-declaration.
-    AliasTemplateContext // C++0x alias-declaration template.
+    AliasDeclContext,    // C++11 alias-declaration.
+    AliasTemplateContext // C++11 alias-declaration template.
   };
 
 private:
@@ -1604,6 +1605,7 @@ public:
     case BlockLiteralContext:
     case LambdaExprContext:
     case TemplateTypeArgContext:
+    case TrailingReturnContext:
       return true;
     }
     llvm_unreachable("unknown context kind!");
@@ -1635,6 +1637,7 @@ public:
     case BlockLiteralContext:
     case LambdaExprContext:
     case TemplateTypeArgContext:
+    case TrailingReturnContext:
       return false;
     }
     llvm_unreachable("unknown context kind!");
@@ -1679,6 +1682,7 @@ public:
     case BlockLiteralContext:
     case LambdaExprContext:
     case TemplateTypeArgContext:
+    case TrailingReturnContext:
       return false;
     }
     llvm_unreachable("unknown context kind!");
