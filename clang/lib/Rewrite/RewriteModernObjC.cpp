@@ -870,6 +870,9 @@ static void RewriteOneForwardClassDecl(ObjCInterfaceDecl *ForwardDecl,
   typedefString += "\n";
   typedefString += "typedef struct objc_object ";
   typedefString += ForwardDecl->getNameAsString();
+  // typedef struct { } _objc_exc_Classname;
+  typedefString += ";\ntypedef struct {} _objc_exc_";
+  typedefString += ForwardDecl->getNameAsString();
   typedefString += ";\n#endif\n";
 }
 
@@ -1232,16 +1235,7 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   std::string ResultStr;
   if (!ObjCWrittenInterfaces.count(ClassDecl->getCanonicalDecl())) {
     // we haven't seen a forward decl - generate a typedef.
-    ResultStr = "#ifndef _REWRITER_typedef_";
-    ResultStr += ClassDecl->getNameAsString();
-    ResultStr += "\n";
-    ResultStr += "#define _REWRITER_typedef_";
-    ResultStr += ClassDecl->getNameAsString();
-    ResultStr += "\n";
-    ResultStr += "typedef struct objc_object ";
-    ResultStr += ClassDecl->getNameAsString();
-    ResultStr += ";\n#endif\n";
-    
+    RewriteOneForwardClassDecl(ClassDecl, ResultStr);
     RewriteIvarOffsetSymbols(ClassDecl, ResultStr);
     
     RewriteObjCInternalStruct(ClassDecl, ResultStr);
@@ -1833,162 +1827,19 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   const char *startBuf = SM->getCharacterData(startLoc);
 
   assert((*startBuf == '@') && "bogus @try location");
+  // @try -> try
+  ReplaceText(startLoc, 1, "");
 
-  std::string buf;
-  // declare a new scope with two variables, _stack and _rethrow.
-  buf = "/* @try scope begin */ { struct _objc_exception_data {\n";
-  buf += "int buf[18/*32-bit i386*/];\n";
-  buf += "char *pointers[4];} _stack;\n";
-  buf += "id volatile _rethrow = 0;\n";
-  buf += "objc_exception_try_enter(&_stack);\n";
-  buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
-
-  ReplaceText(startLoc, 4, buf);
-
-  startLoc = S->getTryBody()->getLocEnd();
-  startBuf = SM->getCharacterData(startLoc);
-
-  assert((*startBuf == '}') && "bogus @try block");
-
-  SourceLocation lastCurlyLoc = startLoc;
-  if (S->getNumCatchStmts()) {
-    startLoc = startLoc.getLocWithOffset(1);
-    buf = " /* @catch begin */ else {\n";
-    buf += " id _caught = objc_exception_extract(&_stack);\n";
-    buf += " objc_exception_try_enter (&_stack);\n";
-    buf += " if (_setjmp(_stack.buf))\n";
-    buf += "   _rethrow = objc_exception_extract(&_stack);\n";
-    buf += " else { /* @catch continue */";
-
-    InsertText(startLoc, buf);
-  } else { /* no catch list */
-    buf = "}\nelse {\n";
-    buf += "  _rethrow = objc_exception_extract(&_stack);\n";
-    buf += "}";
-    ReplaceText(lastCurlyLoc, 1, buf);
-  }
-  Stmt *lastCatchBody = 0;
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
-    VarDecl *catchDecl = Catch->getCatchParamDecl();
-
-    if (I == 0)
-      buf = "if ("; // we are generating code for the first catch clause
-    else
-      buf = "else if (";
+    
     startLoc = Catch->getLocStart();
     startBuf = SM->getCharacterData(startLoc);
-
     assert((*startBuf == '@') && "bogus @catch location");
-
-    const char *lParenLoc = strchr(startBuf, '(');
-
-    if (Catch->hasEllipsis()) {
-      // Now rewrite the body...
-      lastCatchBody = Catch->getCatchBody();
-      SourceLocation bodyLoc = lastCatchBody->getLocStart();
-      const char *bodyBuf = SM->getCharacterData(bodyLoc);
-      assert(*SM->getCharacterData(Catch->getRParenLoc()) == ')' &&
-             "bogus @catch paren location");
-      assert((*bodyBuf == '{') && "bogus @catch body location");
-
-      buf += "1) { id _tmp = _caught;";
-      Rewrite.ReplaceText(startLoc, bodyBuf-startBuf+1, buf);
-    } else if (catchDecl) {
-      QualType t = catchDecl->getType();
-      if (t == Context->getObjCIdType()) {
-        buf += "1) { ";
-        ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
-      } else if (const ObjCObjectPointerType *Ptr =
-                   t->getAs<ObjCObjectPointerType>()) {
-        // Should be a pointer to a class.
-        ObjCInterfaceDecl *IDecl = Ptr->getObjectType()->getInterface();
-        if (IDecl) {
-          buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
-          buf += IDecl->getNameAsString();
-          buf += "\"), (struct objc_object *)_caught)) { ";
-          ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
-        }
-      }
-      // Now rewrite the body...
-      lastCatchBody = Catch->getCatchBody();
-      SourceLocation rParenLoc = Catch->getRParenLoc();
-      SourceLocation bodyLoc = lastCatchBody->getLocStart();
-      const char *bodyBuf = SM->getCharacterData(bodyLoc);
-      const char *rParenBuf = SM->getCharacterData(rParenLoc);
-      assert((*rParenBuf == ')') && "bogus @catch paren location");
-      assert((*bodyBuf == '{') && "bogus @catch body location");
-
-      // Here we replace ") {" with "= _caught;" (which initializes and
-      // declares the @catch parameter).
-      ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, " = _caught;");
-    } else {
-      llvm_unreachable("@catch rewrite bug");
-    }
+    // @catch -> catch
+    ReplaceText(startLoc, 1, "");
+      
   }
-  // Complete the catch list...
-  if (lastCatchBody) {
-    SourceLocation bodyLoc = lastCatchBody->getLocEnd();
-    assert(*SM->getCharacterData(bodyLoc) == '}' &&
-           "bogus @catch body location");
-
-    // Insert the last (implicit) else clause *before* the right curly brace.
-    bodyLoc = bodyLoc.getLocWithOffset(-1);
-    buf = "} /* last catch end */\n";
-    buf += "else {\n";
-    buf += " _rethrow = _caught;\n";
-    buf += " objc_exception_try_exit(&_stack);\n";
-    buf += "} } /* @catch end */\n";
-    if (!S->getFinallyStmt())
-      buf += "}\n";
-    InsertText(bodyLoc, buf);
-
-    // Set lastCurlyLoc
-    lastCurlyLoc = lastCatchBody->getLocEnd();
-  }
-  if (ObjCAtFinallyStmt *finalStmt = S->getFinallyStmt()) {
-    startLoc = finalStmt->getLocStart();
-    startBuf = SM->getCharacterData(startLoc);
-    assert((*startBuf == '@') && "bogus @finally start");
-
-    ReplaceText(startLoc, 8, "/* @finally */");
-
-    Stmt *body = finalStmt->getFinallyBody();
-    SourceLocation startLoc = body->getLocStart();
-    SourceLocation endLoc = body->getLocEnd();
-    assert(*SM->getCharacterData(startLoc) == '{' &&
-           "bogus @finally body location");
-    assert(*SM->getCharacterData(endLoc) == '}' &&
-           "bogus @finally body location");
-
-    startLoc = startLoc.getLocWithOffset(1);
-    InsertText(startLoc, " if (!_rethrow) objc_exception_try_exit(&_stack);\n");
-    endLoc = endLoc.getLocWithOffset(-1);
-    InsertText(endLoc, " if (_rethrow) objc_exception_throw(_rethrow);\n");
-
-    // Set lastCurlyLoc
-    lastCurlyLoc = body->getLocEnd();
-
-    // Now check for any return/continue/go statements within the @try.
-    WarnAboutReturnGotoStmts(S->getTryBody());
-  } else { /* no finally clause - make sure we synthesize an implicit one */
-    buf = "{ /* implicit finally clause */\n";
-    buf += " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
-    buf += " if (_rethrow) objc_exception_throw(_rethrow);\n";
-    buf += "}";
-    ReplaceText(lastCurlyLoc, 1, buf);
-    
-    // Now check for any return/continue/go statements within the @try.
-    // The implicit finally clause won't called if the @try contains any
-    // jump statements.
-    bool hasReturns = false;
-    HasReturnStmts(S->getTryBody(), hasReturns);
-    if (hasReturns)
-      RewriteTryReturnStmts(S->getTryBody());
-  }
-  // Now emit the final closing curly brace...
-  lastCurlyLoc = lastCurlyLoc.getLocWithOffset(1);
-  InsertText(lastCurlyLoc, " } /* @try scope end */\n");
   return 0;
 }
 
