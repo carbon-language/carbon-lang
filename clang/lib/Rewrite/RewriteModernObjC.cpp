@@ -3330,7 +3330,17 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
   for (llvm::SmallPtrSet<ObjCIvarDecl *, 8>::iterator i = Ivars.begin(),
        e = Ivars.end(); i != e; i++) {
     ObjCIvarDecl *IvarDecl = (*i);
-    Result += "\nextern unsigned long OBJC_IVAR_$_";
+    Result += "\n";
+    if (LangOpts.MicrosoftExt)
+      Result += "__declspec(allocate(\".objc_ivar$B\")) ";
+    if (LangOpts.MicrosoftExt && 
+        IvarDecl->getAccessControl() != ObjCIvarDecl::Private &&
+        IvarDecl->getAccessControl() != ObjCIvarDecl::Package) {
+      const ObjCInterfaceDecl *CDecl = IvarDecl->getContainingInterface();
+      if (CDecl->getImplementation())
+        Result += "__declspec(dllexport) ";
+    }
+    Result += "extern unsigned long OBJC_IVAR_$_";
     Result += CDecl->getName(); Result += "_";
     Result += IvarDecl->getName(); Result += ";";
   }
@@ -5165,6 +5175,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#pragma section(\".objc_catlist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cls_meth$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_ivar$B\", long, read, write)\n";
 
     // Add a constructor for creating temporary objects.
     Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) "
@@ -5836,7 +5847,8 @@ static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj
   }
 }
 
-static void Write_IvarOffsetVar(std::string &Result, 
+static void Write_IvarOffsetVar(ASTContext *Context,
+                                std::string &Result, 
                                 ArrayRef<ObjCIvarDecl *> Ivars, 
                                 StringRef VarName, 
                                 StringRef ClassName) {
@@ -5854,7 +5866,11 @@ static void Write_IvarOffsetVar(std::string &Result,
   Result += "\n";
   for (unsigned i =0, e = Ivars.size(); i < e; i++) {
     ObjCIvarDecl *IvarDecl = Ivars[i];
-    if (IvarDecl->getAccessControl() == ObjCIvarDecl::Private ||
+    if (Context->getLangOpts().MicrosoftExt)
+      Result += "__declspec(allocate(\".objc_ivar$B\")) ";
+    
+    if (!Context->getLangOpts().MicrosoftExt ||
+        IvarDecl->getAccessControl() == ObjCIvarDecl::Private ||
         IvarDecl->getAccessControl() == ObjCIvarDecl::Package)
       Result += "unsigned long int "; 
     else
@@ -5885,7 +5901,7 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
                                            StringRef VarName,
                                            StringRef ClassName) {
   if (Ivars.size() > 0) {
-    Write_IvarOffsetVar(Result, Ivars, "OBJC_IVAR_$_", ClassName);
+    Write_IvarOffsetVar(Context, Result, Ivars, "OBJC_IVAR_$_", ClassName);
     
     Result += "\nstatic ";
     Write__ivar_list_t_TypeDecl(Result, Ivars.size());
