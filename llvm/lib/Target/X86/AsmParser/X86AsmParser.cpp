@@ -838,6 +838,7 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
   // If we reached here, then we just ate the ( of the memory operand.  Process
   // the rest of the memory operand.
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
+  SMLoc IndexLoc;
 
   if (getLexer().is(AsmToken::Percent)) {
     SMLoc StartLoc, EndLoc;
@@ -851,6 +852,7 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 
   if (getLexer().is(AsmToken::Comma)) {
     Parser.Lex(); // Eat the comma.
+    IndexLoc = Parser.getTok().getLoc();
 
     // Following the comma we should have either an index register, or a scale
     // value. We don't support the later form, but we want to parse it
@@ -911,6 +913,23 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
   }
   SMLoc MemEnd = Parser.getTok().getLoc();
   Parser.Lex(); // Eat the ')'.
+
+  // If we have both a base register and an index register make sure they are
+  // both 64-bit or 32-bit registers.
+  if (BaseReg != 0 && IndexReg != 0) {
+    if (X86MCRegisterClasses[X86::GR64RegClassID].contains(BaseReg) &&
+        !X86MCRegisterClasses[X86::GR64RegClassID].contains(IndexReg) &&
+        IndexReg != X86::RIZ) {
+      Error(IndexLoc, "index register is 32-bit, but base register is 64-bit");
+      return 0;
+    }
+    if (X86MCRegisterClasses[X86::GR32RegClassID].contains(BaseReg) &&
+        !X86MCRegisterClasses[X86::GR32RegClassID].contains(IndexReg) &&
+        IndexReg != X86::EIZ){
+      Error(IndexLoc, "index register is 64-bit, but base register is 32-bit");
+      return 0;
+    }
+  }
 
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
                                MemStart, MemEnd);
