@@ -764,12 +764,9 @@ void YAMLAtomState::setRefName(const char *n) {
 }
 
 void YAMLAtomState::setAlign2(const char *s) {
-  llvm::StringRef str(s);
-  uint32_t res;
-  str.getAsInteger(10, res);
-  _alignment.powerOf2 = static_cast<uint16_t>(res);
+  if (llvm::StringRef(s).getAsInteger(10, _alignment.powerOf2))
+    _alignment.powerOf2 = 1;
 }
-
 
 void YAMLAtomState::setFixupKind(const char *s) {
   _ref._kind = _platform.kindFromString(llvm::StringRef(s));
@@ -915,7 +912,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
         } 
         else if (strcmp(entry->key, KeyValues::sizeKeyword) == 0) {
           llvm::StringRef val = entry->value;
-          if ( val.getAsInteger(0, atomState._size) )
+          if (val.getAsInteger(0, atomState._size))
             return make_error_code(yaml_reader_error::illegal_value);
           haveAtom = true;
         } 
@@ -956,9 +953,9 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveFixup = true;
         } 
         else if (strcmp(entry->key, KeyValues::fixupsOffsetKeyword) == 0) {
-          llvm::APInt Val;
-          llvm::StringRef(entry->value).getAsInteger(0, Val);
-          atomState._ref._offsetInAtom = Val.getZExtValue();
+          if (llvm::StringRef(entry->value).getAsInteger(0,
+               atomState._ref._offsetInAtom))
+            return make_error_code(yaml_reader_error::illegal_value);
           haveFixup = true;
         } 
         else if (strcmp(entry->key, KeyValues::fixupsTargetKeyword) == 0) {
@@ -966,19 +963,9 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveFixup = true;
         }
         else if (strcmp(entry->key, KeyValues::fixupsAddendKeyword) == 0) {
-          llvm::APInt Val;
-          // HACK: getAsInteger for APInt doesn't handle negative values
-          //       the same as other getAsInteger functions. And getAsInteger
-          //       doesn't work on all platforms for {,u}int64_t. So manually
-          //       handle this until getAsInteger is fixed.
-          bool IsNeg = false;
           llvm::StringRef Addend(entry->value);
-          if (Addend.find('-') == 0) {
-            IsNeg = true;
-            Addend = Addend.substr(1);
-          }
-          Addend.getAsInteger(0, Val);
-          atomState._ref._addend = Val.getSExtValue() * (IsNeg ? -1 : 1);
+          if (Addend.getAsInteger(0, atomState._ref._addend))
+            return make_error_code(yaml_reader_error::illegal_value);
           haveFixup = true;
         }
       }

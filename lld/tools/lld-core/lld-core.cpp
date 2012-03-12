@@ -269,7 +269,8 @@ public:
         return p->value;
     }
     int k;
-    kindName.getAsInteger(0, k);
+    if (kindName.getAsInteger(0, k))
+      k = 0;
     return k;
   }
   
