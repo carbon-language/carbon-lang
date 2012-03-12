@@ -133,3 +133,9 @@ namespace NullPtr {
     } ();
   }
 }
+
+void PR12248()
+{
+  unsigned int result = 0;
+  auto l = [&]() { ++result; };
+}

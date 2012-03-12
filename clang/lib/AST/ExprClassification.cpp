@@ -558,18 +558,6 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
   if (Ctx.getLangOpts().CPlusPlus && E->getType()->isFunctionType())
     return Cl::CM_Function;
 
-  // You cannot assign to a variable outside a block from within the block if
-  // it is not marked __block, e.g.
-  //   void takeclosure(void (^C)(void));
-  //   void func() { int x = 1; takeclosure(^{ x = 7; }); }
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
-    if (DRE->refersToEnclosingLocal() &&
-        isa<VarDecl>(DRE->getDecl()) &&
-        cast<VarDecl>(DRE->getDecl())->hasLocalStorage() &&
-        !DRE->getDecl()->hasAttr<BlocksAttr>())
-      return Cl::CM_NotBlockQualified;
-  }
-
   // Assignment to a property in ObjC is an implicit setter access. But a
   // setter might not exist.
   if (const ObjCPropertyRefExpr *Expr = dyn_cast<ObjCPropertyRefExpr>(E)) {
@@ -579,8 +567,19 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
 
   CanQualType CT = Ctx.getCanonicalType(E->getType());
   // Const stuff is obviously not modifiable.
-  if (CT.isConstQualified())
+  if (CT.isConstQualified()) {
+    // Special-case variables captured by blocks to get an improved
+    // diagnostic.
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+      if (DRE->refersToEnclosingLocal() &&
+          isa<VarDecl>(DRE->getDecl()) &&
+          cast<VarDecl>(DRE->getDecl())->hasLocalStorage() &&
+          !DRE->getDecl()->hasAttr<BlocksAttr>())
+        return Cl::CM_NotBlockQualified;
+    }
     return Cl::CM_ConstQualified;
+  }
+
   // Arrays are not modifiable, only their elements are.
   if (CT->isArrayType())
     return Cl::CM_ArrayType;
