@@ -766,6 +766,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
                                      ClassLoc, CategoryLoc, CategoryName,IDecl);
     CDecl->setInvalidDecl();
+    CurContext->addDecl(CDecl);
         
     if (!IDecl)
       Diag(ClassLoc, diag::err_undef_interface) << ClassName;
@@ -2018,6 +2019,10 @@ void Sema::ReadMethodPool(Selector Sel) {
 
 void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
                                  bool instance) {
+  // Ignore methods of invalid containers.
+  if (cast<Decl>(Method->getDeclContext())->isInvalidDecl())
+    return;
+
   if (ExternalSource)
     ReadMethodPool(Method->getSelector());
   
