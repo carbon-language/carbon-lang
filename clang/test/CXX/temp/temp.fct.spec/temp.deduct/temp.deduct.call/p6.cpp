@@ -50,7 +50,7 @@ namespace test0 {
 
 namespace test1 {
   template<class T> void invoke(void (*f)(T)) { f(T()); } // expected-note 6 {{couldn't infer template argument}} \
-  // expected-note {{failed template argument deduction}}
+  // expected-note {{candidate template ignored: couldn't infer template argument 'T'}}
 
   template<class T> void temp(T);
   void test0() {
@@ -109,5 +109,20 @@ namespace rdar8360106 {
     f1(&g, 1); // expected-error{{no matching function for call to 'f1'}}
     f2(g, 1); // expected-error{{no matching function for call to 'f2'}}
     f2(&g, 1);
+  }
+}
+
+namespace PR11713 {
+  template<typename T>
+  int f(int, int, int);
+
+  template<typename T>
+  float f(float, float);
+
+  template<typename R, typename B1, typename B2, typename A1, typename A2>
+  R& g(R (*)(B1, B2), A1, A2);
+
+  void h() {
+    float &fr = g(f<int>, 1, 2);
   }
 }

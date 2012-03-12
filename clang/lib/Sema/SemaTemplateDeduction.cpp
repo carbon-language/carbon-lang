@@ -2709,36 +2709,48 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
   if (R.IsAddressOfOperand)
     TDF |= TDF_IgnoreQualifiers;
 
-  // If there were explicit template arguments, we can only find
-  // something via C++ [temp.arg.explicit]p3, i.e. if the arguments
-  // unambiguously name a full specialization.
-  if (Ovl->hasExplicitTemplateArgs()) {
-    // But we can still look for an explicit specialization.
-    if (FunctionDecl *ExplicitSpec
-          = S.ResolveSingleFunctionTemplateSpecialization(Ovl))
-      return GetTypeOfFunction(S.Context, R, ExplicitSpec);
-    return QualType();
-  }
-
   // C++0x [temp.deduct.call]p6:
   //   When P is a function type, pointer to function type, or pointer
   //   to member function type:
 
   if (!ParamType->isFunctionType() &&
       !ParamType->isFunctionPointerType() &&
-      !ParamType->isMemberFunctionPointerType())
-    return QualType();
+      !ParamType->isMemberFunctionPointerType()) {
+    if (Ovl->hasExplicitTemplateArgs()) {
+      // But we can still look for an explicit specialization.
+      if (FunctionDecl *ExplicitSpec
+            = S.ResolveSingleFunctionTemplateSpecialization(Ovl))
+        return GetTypeOfFunction(S.Context, R, ExplicitSpec);
+    }
 
+    return QualType();
+  }
+  
+  // Gather the explicit template arguments, if any.
+  TemplateArgumentListInfo ExplicitTemplateArgs;
+  if (Ovl->hasExplicitTemplateArgs())
+    Ovl->getExplicitTemplateArgs().copyInto(ExplicitTemplateArgs);
   QualType Match;
   for (UnresolvedSetIterator I = Ovl->decls_begin(),
          E = Ovl->decls_end(); I != E; ++I) {
     NamedDecl *D = (*I)->getUnderlyingDecl();
 
-    //   - If the argument is an overload set containing one or more
-    //     function templates, the parameter is treated as a
-    //     non-deduced context.
-    if (isa<FunctionTemplateDecl>(D))
-      return QualType();
+    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D)) {
+      //   - If the argument is an overload set containing one or more
+      //     function templates, the parameter is treated as a
+      //     non-deduced context.
+      if (!Ovl->hasExplicitTemplateArgs())
+        return QualType();
+      
+      // Otherwise, see if we can resolve a function type 
+      FunctionDecl *Specialization = 0;
+      TemplateDeductionInfo Info(S.Context, Ovl->getNameLoc());
+      if (S.DeduceTemplateArguments(FunTmpl, &ExplicitTemplateArgs,
+                                    Specialization, Info))
+        continue;
+      
+      D = Specialization;
+    }
 
     FunctionDecl *Fn = cast<FunctionDecl>(D);
     QualType ArgType = GetTypeOfFunction(S.Context, R, Fn);
