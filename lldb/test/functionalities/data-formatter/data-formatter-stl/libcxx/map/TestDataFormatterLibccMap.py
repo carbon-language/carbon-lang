@@ -7,9 +7,9 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class StdMapDataFormatterTestCase(TestBase):
+class LibcxxMapDataFormatterTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "map")
+    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libstdcpp", "map")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

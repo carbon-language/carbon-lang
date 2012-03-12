@@ -9,7 +9,7 @@ from lldbtest import *
 
 class StdVectorDataFormatterTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "vector")
+    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libstdcpp", "vector")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

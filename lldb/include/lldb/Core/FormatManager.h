@@ -670,6 +670,7 @@ private:
     ConstString m_default_category_name;
     ConstString m_system_category_name;
     ConstString m_gnu_cpp_category_name;
+    ConstString m_libcxx_category_name;
     ConstString m_objc_category_name;
     ConstString m_corefoundation_category_name;
     ConstString m_coregraphics_category_name;
@@ -689,6 +690,9 @@ private:
     // storage
     void
     LoadSTLFormatters();
+    
+    void
+    LoadLibcxxFormatters();
     
     void
     LoadSystemFormatters();

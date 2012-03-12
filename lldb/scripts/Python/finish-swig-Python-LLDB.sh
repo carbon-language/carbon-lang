@@ -184,6 +184,20 @@ else
     fi
 fi
 
+if [ -f "${SRC_ROOT}/examples/synthetic/libcxx.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying libcxx.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/synthetic/libcxx.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/synthetic/libcxx.py"
+    fi
+fi
+
 # Copy the ObjC formatters over to the framework Python directory
 if [ -f "${SRC_ROOT}/examples/summaries/objc.py" ]
 then

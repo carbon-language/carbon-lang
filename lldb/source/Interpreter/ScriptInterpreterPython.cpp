@@ -279,7 +279,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     int old_count = Debugger::TestDebuggerRefCount();
     
 
-    run_string.Printf ("run_one_line (%s, 'import copy, os, re, sys, uuid, lldb, gnu_libstdcpp, objc')", m_dictionary_name.c_str());
+    run_string.Printf ("run_one_line (%s, 'import copy, os, re, sys, uuid, lldb, gnu_libstdcpp, libcxx, objc')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
 
     // WARNING: temporary code that loads Cocoa formatters - this should be done on a per-platform basis rather than loading the whole set

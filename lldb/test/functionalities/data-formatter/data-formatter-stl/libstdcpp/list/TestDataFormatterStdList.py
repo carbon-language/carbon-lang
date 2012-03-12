@@ -9,7 +9,7 @@ from lldbtest import *
 
 class StdListDataFormatterTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "list")
+    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libstdcpp", "list")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
