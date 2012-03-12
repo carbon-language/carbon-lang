@@ -8294,7 +8294,7 @@ TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformObjCBoolLiteralExpr(ObjCBoolLiteralExpr *E) {
-  return SemaRef.MaybeBindToTemporary(E);
+  return SemaRef.Owned(E);
 }
 
 template<typename Derived>

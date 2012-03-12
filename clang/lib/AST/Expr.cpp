@@ -2131,7 +2131,6 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     // potentially throwing unless we decide to close off that
     // possibility.
   case ObjCArrayLiteralClass:
-  case ObjCBoolLiteralExprClass:
   case ObjCDictionaryLiteralClass:
   case ObjCNumericLiteralClass:
     return CT_Can;
@@ -2231,6 +2230,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case IntegerLiteralClass:
   case ObjCEncodeExprClass:
   case ObjCStringLiteralClass:
+  case ObjCBoolLiteralExprClass:
   case OpaqueValueExprClass:
   case PredefinedExprClass:
   case SizeOfPackExprClass:
