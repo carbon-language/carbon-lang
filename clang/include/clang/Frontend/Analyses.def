@@ -30,6 +30,7 @@ ANALYSIS_CONSTRAINTS(RangeConstraints, "range", "Use constraint tracking of conc
 
 ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   createHTMLDiagnosticConsumer, false)
 ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", createPlistDiagnosticConsumer, true)
+ANALYSIS_DIAGNOSTICS(PLIST_MULTI_FILE, "plist-multi-file", "Output analysis results using Plists (allowing for mult-file bugs)", createPlistMultiFileDiagnosticConsumer, true)
 ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", createPlistHTMLDiagnosticConsumer, true)
 ANALYSIS_DIAGNOSTICS(TEXT, "text", "Text output of analysis results", createTextPathDiagnosticConsumer, true)
 

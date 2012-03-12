@@ -32,6 +32,10 @@ createPlistDiagnosticConsumer(const std::string& prefix, const Preprocessor &PP,
                               PathDiagnosticConsumer *SubPD = 0);
 
 PathDiagnosticConsumer*
+createPlistMultiFileDiagnosticConsumer(const std::string& prefix,
+                                       const Preprocessor &PP);
+
+PathDiagnosticConsumer*
 createTextPathDiagnosticConsumer(const std::string& prefix,
                                  const Preprocessor &PP);
 

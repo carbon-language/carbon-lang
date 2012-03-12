@@ -32,8 +32,10 @@ namespace {
     const LangOptions &LangOpts;
     OwningPtr<PathDiagnosticConsumer> SubPD;
     bool flushed;
+    const bool SupportsCrossFileDiagnostics;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
+                     bool supportsMultipleFiles,
                      PathDiagnosticConsumer *subPD);
 
     virtual ~PlistDiagnostics() {}
@@ -49,18 +51,29 @@ namespace {
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
     virtual bool useVerboseDescription() const { return false; }
+    virtual bool supportsCrossFileDiagnostics() const {
+      return SupportsCrossFileDiagnostics;
+    }
   };
 } // end anonymous namespace
 
 PlistDiagnostics::PlistDiagnostics(const std::string& output,
                                    const LangOptions &LO,
+                                   bool supportsMultipleFiles,
                                    PathDiagnosticConsumer *subPD)
-  : OutputFile(output), LangOpts(LO), SubPD(subPD), flushed(false) {}
+  : OutputFile(output), LangOpts(LO), SubPD(subPD), flushed(false),
+    SupportsCrossFileDiagnostics(supportsMultipleFiles) {}
 
 PathDiagnosticConsumer*
 ento::createPlistDiagnosticConsumer(const std::string& s, const Preprocessor &PP,
                                   PathDiagnosticConsumer *subPD) {
-  return new PlistDiagnostics(s, PP.getLangOpts(), subPD);
+  return new PlistDiagnostics(s, PP.getLangOpts(), false, subPD);
+}
+
+PathDiagnosticConsumer*
+ento::createPlistMultiFileDiagnosticConsumer(const std::string &s,
+                                              const Preprocessor &PP) {
+  return new PlistDiagnostics(s, PP.getLangOpts(), true, 0);
 }
 
 PathDiagnosticConsumer::PathGenerationScheme
