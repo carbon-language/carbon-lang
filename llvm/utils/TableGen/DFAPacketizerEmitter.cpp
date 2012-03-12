@@ -15,8 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/TableGen/Record.h"
 #include "CodeGenTarget.h"
 #include "DFAPacketizerEmitter.h"

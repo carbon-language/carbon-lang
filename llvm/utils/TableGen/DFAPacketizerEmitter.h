@@ -16,8 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <map>
 #include <string>
