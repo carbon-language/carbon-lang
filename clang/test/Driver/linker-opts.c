@@ -1,2 +1,2 @@
-// RUN: env LIBRARY_PATH=%T/test1 %clang -x c %s -### -o foo 2> %t.log
-// RUN: grep '".*ld.*" .*"-L" "%T/test1"' %t.log
+// RUN: env LIBRARY_PATH=%T/test1 %clang -x c %s -### 2>&1 | FileCheck %s
+// CHECK: "-L" "{{.*}}/test1"
