@@ -247,7 +247,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
   // FIXME: Handle environment options which affect driver behavior, somewhere
-  // (client?). GCC_EXEC_PREFIX, LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS.
+  // (client?). GCC_EXEC_PREFIX, LPATH, CC_PRINT_OPTIONS.
 
   if (char *env = ::getenv("COMPILER_PATH")) {
     StringRef CompilerPath = env;
