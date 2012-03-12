@@ -21,7 +21,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -140,19 +139,14 @@ void SjLjEHPass::insertCallSiteStore(Instruction *I, int Number) {
   Builder.CreateStore(CallSiteNoC, CallSite, true/*volatile*/);
 }
 
-/// markBlocksLiveIn - Insert BB and all of its predescessors into LiveBBs until
+/// MarkBlocksLiveIn - Insert BB and all of its predescessors into LiveBBs until
 /// we reach blocks we've already seen.
-static void markBlocksLiveIn(BasicBlock *BB, Instruction *Inst,
-                             SmallPtrSet<BasicBlock*, 64> &LiveBBs,
-                             SmallPtrSet<BasicBlock*, 4> &InvokesCrossed) {
+static void MarkBlocksLiveIn(BasicBlock *BB,
+                             SmallPtrSet<BasicBlock*, 64> &LiveBBs) {
   if (!LiveBBs.insert(BB)) return; // already been here.
 
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-    BasicBlock *Pred = *PI;
-    if (BB->isLandingPad() && BB != Inst->getParent())
-      InvokesCrossed.insert(Pred);
-    markBlocksLiveIn(Pred, Inst, LiveBBs, InvokesCrossed);
-  }
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    MarkBlocksLiveIn(*PI, LiveBBs);
 }
 
 /// substituteLPadValues - Substitute the values returned by the landingpad
@@ -303,9 +297,6 @@ void SjLjEHPass::lowerIncomingArguments(Function &F) {
 /// edge and spill them.
 void SjLjEHPass::lowerAcrossUnwindEdges(Function &F,
                                         ArrayRef<InvokeInst*> Invokes) {
-  SmallVector<std::pair<Instruction*, Instruction*>, 32> ReloadUsers;
-  DenseMap<std::pair<Instruction*, Instruction*>, AllocaInst*> AllocaMap;
-
   // Finally, scan the code looking for instructions with bad live ranges.
   for (Function::iterator
          BB = F.begin(), BBE = F.end(); BB != BBE; ++BB) {
@@ -336,81 +327,44 @@ void SjLjEHPass::lowerAcrossUnwindEdges(Function &F,
       }
 
       // Find all of the blocks that this value is live in.
-      std::map<Instruction*, SmallPtrSet<BasicBlock*, 4> > InvokesCrossed;
-      std::map<Instruction*, SmallPtrSet<BasicBlock*, 64> > LiveBBs;
+      SmallPtrSet<BasicBlock*, 64> LiveBBs;
+      LiveBBs.insert(Inst->getParent());
       while (!Users.empty()) {
-        Instruction *U = Users.pop_back_val();
-        LiveBBs[U].insert(Inst->getParent());
+        Instruction *U = Users.back();
+        Users.pop_back();
 
-        if (PHINode *PN = dyn_cast<PHINode>(U)) {
+        if (!isa<PHINode>(U)) {
+          MarkBlocksLiveIn(U->getParent(), LiveBBs);
+        } else {
           // Uses for a PHI node occur in their predecessor block.
+          PHINode *PN = cast<PHINode>(U);
           for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
             if (PN->getIncomingValue(i) == Inst)
-              markBlocksLiveIn(PN->getIncomingBlock(i), Inst, LiveBBs[U],
-                               InvokesCrossed[U]);
-        } else {
-          markBlocksLiveIn(U->getParent(), Inst, LiveBBs[U], InvokesCrossed[U]);
+              MarkBlocksLiveIn(PN->getIncomingBlock(i), LiveBBs);
         }
       }
 
-      // Go through the invokes the value crosses and insert a spill right
-      // before the invoke.
-      for (std::map<Instruction*, SmallPtrSet<BasicBlock*, 4> >::iterator
-             MI = InvokesCrossed.begin(), ME = InvokesCrossed.end();
-           MI != ME; ++MI) {
-        Instruction *User = MI->first;
-        SmallPtrSet<BasicBlock*, 4> &Crossings = MI->second;
-        if (Crossings.empty()) continue;
-
-        ReloadUsers.push_back(std::make_pair(Inst, User));
-
-        AllocaInst *&Slot = AllocaMap[std::make_pair(Inst, User)];
-        if (!Slot)
-          Slot = new AllocaInst(Inst->getType(), 0,
-                                Inst->getName() + ".reg2mem",
-                                F.getEntryBlock().begin());
-
-        for (SmallPtrSet<BasicBlock*, 4>::iterator
-               CI = Crossings.begin(), CE = Crossings.end(); CI != CE; ++CI) {
-          new StoreInst(Inst, Slot, (*CI)->getTerminator());
-          ++NumSpilled;
+      // Now that we know all of the blocks that this thing is live in, see if
+      // it includes any of the unwind locations.
+      bool NeedsSpill = false;
+      for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
+        BasicBlock *UnwindBlock = Invokes[i]->getUnwindDest();
+        if (UnwindBlock != BB && LiveBBs.count(UnwindBlock)) {
+          DEBUG(dbgs() << "SJLJ Spill: " << *Inst << " around "
+                << UnwindBlock->getName() << "\n");
+          NeedsSpill = true;
+          break;
         }
       }
-    }
-  }
 
-  // Now go through the instructions which were spilled and replace their uses
-  // after a crossed invoke with a reload instruction.
-  for (SmallVectorImpl<std::pair<Instruction*, Instruction*> >::iterator
-         I = ReloadUsers.begin(), E = ReloadUsers.end(); I != E; ++I) {
-    Instruction *User = I->second;
-    AllocaInst *Slot = AllocaMap[*I];
-    assert(Slot && "A spill slot hasn't been allocated yet!");
-
-    if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      // If this is a PHI node, we can't insert a load of the value before the
-      // use. Instead insert the load in the predecessor block corresponding to
-      // the incoming value.
-      //
-      // Note that if there are multiple edges from a basic block to this PHI
-      // node that we cannot have multiple loads. The problem is that the
-      // resulting PHI node will have multiple values (from each load) coming in
-      // from the same block, which is illegal SSA form. For this reason, we
-      // keep track of and reuse loads we insert.
-      DenseMap<BasicBlock*, Value*> Loads;
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (PN->getIncomingValue(i) == I->first) {
-          Value *&V = Loads[PN->getIncomingBlock(i)];
-          if (V == 0)
-            // Insert the load into the predecessor block
-            V = new LoadInst(Slot, I->first->getName() + ".reload", true,
-                             PN->getIncomingBlock(i)->getTerminator());
-
-          PN->setIncomingValue(i, V);
-        }
-    } else {
-      LoadInst *Reload = new LoadInst(Slot, Slot->getName() + ".reload", User);
-      User->replaceUsesOfWith(I->first, Reload);
+      // If we decided we need a spill, do it.
+      // FIXME: Spilling this way is overkill, as it forces all uses of
+      // the value to be reloaded from the stack slot, even those that aren't
+      // in the unwind blocks. We should be more selective.
+      if (NeedsSpill) {
+        DemoteRegToStack(*Inst, true);
+        ++NumSpilled;
+      }
     }
   }
 
@@ -567,9 +521,5 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
 
 bool SjLjEHPass::runOnFunction(Function &F) {
   bool Res = setupEntryBlockAndCallSites(F);
-  DEBUG({
-      if (verifyFunction(F))
-        report_fatal_error("verifyFunction failed!");
-    });
   return Res;
 }
