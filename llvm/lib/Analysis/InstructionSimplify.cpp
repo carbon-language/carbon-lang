@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "instsimplify"
+#include "llvm/GlobalAlias.h"
 #include "llvm/Operator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -26,6 +27,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/ConstantRange.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetData.h"
@@ -665,6 +667,112 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   return ::SimplifyAddInst(Op0, Op1, isNSW, isNUW, TD, TLI, DT, RecursionLimit);
 }
 
+/// \brief Compute the constant integer offset a GEP represents.
+///
+/// Given a getelementptr instruction/constantexpr, form a constant expression
+/// which computes the offset from the base pointer (without adding in the base
+/// pointer).
+static Constant *computeGEPOffset(const TargetData &TD, GEPOperator *GEP) {
+  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
+  Constant *Result = Constant::getNullValue(IntPtrTy);
+
+  // If the GEP is inbounds, we know that none of the addressing operations will
+  // overflow in an unsigned sense.
+  bool IsInBounds = GEP->isInBounds();
+
+  // Build a mask for high order bits.
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
+
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end(); I != E;
+       ++I, ++GTI) {
+    ConstantInt *OpC = dyn_cast<ConstantInt>(*I);
+    if (!OpC) return 0;
+    if (OpC->isZero()) continue;
+
+    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
+
+    // Handle a struct index, which adds its field offset to the pointer.
+    if (StructType *STy = dyn_cast<StructType>(*GTI)) {
+      Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+
+      if (Size)
+        Result = ConstantExpr::getAdd(Result, ConstantInt::get(IntPtrTy, Size));
+      continue;
+    }
+
+    Constant *Scale = ConstantInt::get(IntPtrTy, Size);
+    Constant *OC = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
+    Scale = ConstantExpr::getMul(OC, Scale, IsInBounds/*NUW*/);
+    Result = ConstantExpr::getAdd(Result, Scale);
+  }
+  return Result;
+}
+
+/// \brief Compute the base pointer and cumulative constant offsets for V.
+///
+/// This strips all constant offsets off of V, leaving it the base pointer, and
+/// accumulates the total constant offset applied in the returned constant. It
+/// returns 0 if V is not a pointer, and returns the constant '0' if there are
+/// no constant offsets applied.
+static Constant *stripAndComputeConstantOffsets(const TargetData &TD,
+                                                Value *&V) {
+  if (!V->getType()->isPointerTy())
+    return 0;
+
+  Type *IntPtrTy = TD.getIntPtrType(V->getContext());
+  Constant *Result = Constant::getNullValue(IntPtrTy);
+
+  // Even though we don't look through PHI nodes, we could be called on an
+  // instruction in an unreachable block, which may be on a cycle.
+  SmallPtrSet<Value *, 4> Visited;
+  Visited.insert(V);
+  do {
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+      Constant *Offset = computeGEPOffset(TD, GEP);
+      if (!Offset)
+        break;
+      Result = ConstantExpr::getAdd(Result, Offset);
+      V = GEP->getPointerOperand();
+    } else if (Operator::getOpcode(V) == Instruction::BitCast) {
+      V = cast<Operator>(V)->getOperand(0);
+    } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+      if (GA->mayBeOverridden())
+        break;
+      V = GA->getAliasee();
+    } else {
+      break;
+    }
+    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
+  } while (Visited.insert(V));
+
+  return Result;
+}
+
+/// \brief Compute the constant difference between two pointer values.
+/// If the difference is not a constant, returns zero.
+static Constant *computePointerDifference(const TargetData &TD,
+                                          Value *LHS, Value *RHS) {
+  Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
+  if (!LHSOffset)
+    return 0;
+  Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
+  if (!RHSOffset)
+    return 0;
+
+  // If LHS and RHS are not related via constant offsets to the same base
+  // value, there is nothing we can do here.
+  if (LHS != RHS)
+    return 0;
+
+  // Otherwise, the difference of LHS - RHS can be computed as:
+  //    LHS - RHS
+  //  = (LHSOffset + Base) - (RHSOffset + Base)
+  //  = LHSOffset - RHSOffset
+  return ConstantExpr::getSub(LHSOffset, RHSOffset);
+}
+
 /// SimplifySubInst - Given operands for a Sub, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
@@ -698,6 +806,20 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   if (match(Op0, m_Mul(m_Specific(Op1), m_ConstantInt<2>())) ||
       match(Op0, m_Shl(m_Specific(Op1), m_One())))
     return Op1;
+
+  if (TD) {
+    Value *LHSOp, *RHSOp;
+    if (match(Op0, m_PtrToInt(m_Value(LHSOp))) &&
+        match(Op1, m_PtrToInt(m_Value(RHSOp))))
+      if (Constant *Result = computePointerDifference(*TD, LHSOp, RHSOp))
+        return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
+
+    // trunc(p)-trunc(q) -> trunc(p-q)
+    if (match(Op0, m_Trunc(m_PtrToInt(m_Value(LHSOp)))) &&
+        match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
+      if (Constant *Result = computePointerDifference(*TD, LHSOp, RHSOp))
+        return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
+  }
 
   // (X + Y) - Z -> X + (Y - Z) or Y + (X - Z) if everything simplifies.
   // For example, (X + Y) - Y -> X; (Y + X) - Y -> X
