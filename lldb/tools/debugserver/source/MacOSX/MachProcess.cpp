@@ -1709,46 +1709,40 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             }
         }
 
-		// if no_stdio, then do open file actions, opening /dev/null.
-        if (no_stdio)
-        {
-            err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDIN_FILENO, "/dev/null", 
-                                                              O_RDONLY | O_NOCTTY, 0), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
-                err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDIN_FILENO, path=/dev/null)");
-            
-            err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDOUT_FILENO, "/dev/null", 
-                                                              O_WRONLY | O_NOCTTY, 0), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
-                err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDOUT_FILENO, path=/dev/null)");
-            
-            err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDERR_FILENO, "/dev/null", 
-                                                              O_WRONLY | O_NOCTTY, 0), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
-                err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDERR_FILENO, path=/dev/null)");
-        }
-        else
-        {
-            if ( stdin_path == NULL)  stdin_path = "/dev/null";
-            if (stdout_path == NULL) stdout_path = "/dev/null";
-            if (stderr_path == NULL) stderr_path = "/dev/null";
-            
-            const int slave_fd_in  = open (stdin_path , O_NOCTTY | O_RDONLY);
-            const int slave_fd_out = open (stdout_path, O_NOCTTY | O_CREAT | O_WRONLY , 0640);
-            const int slave_fd_err = open (stderr_path, O_NOCTTY | O_CREAT | O_WRONLY , 0640);
+		// if no_stdio or std paths not supplied, then route to "/dev/null".
+        if (no_stdio || stdin_path == NULL || stdin_path[0] == '\0')
+            stdin_path = "/dev/null";
+        if (no_stdio || stdout_path == NULL || stdout_path[0] == '\0')
+            stdout_path = "/dev/null";
+        if (no_stdio || stderr_path == NULL || stderr_path[0] == '\0')
+            stderr_path = "/dev/null";
 
-            err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_err, STDERR_FILENO), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d (\"%s\"), newfiledes = STDERR_FILENO )", slave_fd_err, stderr_path);
-
-            err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_in, STDIN_FILENO), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d (\"%s\"), newfiledes = STDIN_FILENO )", slave_fd_in, stdin_path);
-
-            err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_out, STDOUT_FILENO), DNBError::POSIX);
-            if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d (\"%s\"), newfiledes = STDOUT_FILENO )", slave_fd_out, stdout_path);
-        }
+        err.SetError( ::posix_spawn_file_actions_addopen (&file_actions,
+                                                          STDIN_FILENO,
+                                                          stdin_path,
+                                                          O_RDONLY | O_NOCTTY,
+                                                          0),
+                     DNBError::POSIX);
+        if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
+            err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDIN_FILENO, path='%s')", stdin_path);
+        
+        err.SetError( ::posix_spawn_file_actions_addopen (&file_actions,
+                                                          STDOUT_FILENO,
+                                                          stdout_path,
+                                                          O_WRONLY | O_NOCTTY | O_CREAT,
+                                                          0640),
+                     DNBError::POSIX);
+        if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
+            err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDOUT_FILENO, path='%s')", stdout_path);
+        
+        err.SetError( ::posix_spawn_file_actions_addopen (&file_actions,
+                                                          STDERR_FILENO,
+                                                          stderr_path,
+                                                          O_WRONLY | O_NOCTTY | O_CREAT,
+                                                          0640),
+                     DNBError::POSIX);
+        if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
+            err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDERR_FILENO, path='%s')", stderr_path);
 
         // TODO: Verify if we can set the working directory back immediately
         // after the posix_spawnp call without creating a race condition???
