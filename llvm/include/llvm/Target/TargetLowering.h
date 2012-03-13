@@ -41,6 +41,7 @@ namespace llvm {
   class FastISel;
   class FunctionLoweringInfo;
   class ImmutableCallSite;
+  class IntrinsicInst;
   class MachineBasicBlock;
   class MachineFunction;
   class MachineInstr;
@@ -1538,6 +1539,17 @@ public:
     int64_t      Scale;
     AddrMode() : BaseGV(0), BaseOffs(0), HasBaseReg(false), Scale(0) {}
   };
+
+  /// GetAddrModeArguments - CodeGenPrepare sinks address calculations into the
+  /// same BB as Load/Store instructions reading the address.  This allows as
+  /// much computation as possible to be done in the address mode for that
+  /// operand.  This hook lets targets also pass back when this should be done
+  /// on intrinsics which load/store.
+  virtual bool GetAddrModeArguments(IntrinsicInst *I,
+                                    SmallVectorImpl<Value*> &Ops,
+                                    Type *&AccessTy) const {
+    return false;
+  }
 
   /// isLegalAddressingMode - Return true if the addressing mode represented by
   /// AM is legal for this target, for a load/store of the specified type.

@@ -579,6 +579,15 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     return true;
   }
 
+  if (II && TLI) {
+    SmallVector<Value*, 2> PtrOps;
+    Type *AccessTy;
+    if (TLI->GetAddrModeArguments(II, PtrOps, AccessTy))
+      while (!PtrOps.empty())
+        if (OptimizeMemoryInst(II, PtrOps.pop_back_val(), AccessTy))
+          return true;
+  }
+
   // From here on out we're working with named functions.
   if (CI->getCalledFunction() == 0) return false;
 
