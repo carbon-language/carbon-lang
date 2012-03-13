@@ -21,6 +21,7 @@ class TestingConfig:
 
             if sys.platform == 'win32':
                 environment.update({
+                        'INCLUDE' : os.environ.get('INCLUDE',''),
                         'PATHEXT' : os.environ.get('PATHEXT',''),
                         'PYTHONUNBUFFERED' : '1',
                         'TEMP' : os.environ.get('TEMP',''),
