@@ -141,11 +141,13 @@ namespace llvm {
   /// the result.  If not, this returns null.
   Value *SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
                             const TargetData *TD = 0,
+                            const TargetLibraryInfo *TLI = 0,
                             const DominatorTree *DT = 0);
 
   /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const TargetData *TD = 0,
+                         const TargetLibraryInfo *TLI = 0,
                          const DominatorTree *DT = 0);
 
   /// SimplifyInsertValueInst - Given operands for an InsertValueInst, see if we
@@ -153,6 +155,7 @@ namespace llvm {
   Value *SimplifyInsertValueInst(Value *Agg, Value *Val,
                                  ArrayRef<unsigned> Idxs,
                                  const TargetData *TD = 0,
+                                 const TargetLibraryInfo *TLI = 0,
                                  const DominatorTree *DT = 0);
 
   //=== Helper functions for higher up the class hierarchy.
