@@ -925,6 +925,8 @@ Decl *Sema::ActOnStartClassImplementation(
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
     } else {
       SDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+      if (SDecl && !SDecl->hasDefinition())
+        SDecl = 0;
       if (!SDecl)
         Diag(SuperClassLoc, diag::err_undef_superclass)
           << SuperClassname << ClassName;

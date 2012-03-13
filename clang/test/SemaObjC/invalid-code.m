@@ -42,3 +42,9 @@ void foo() {
 @end
 
 @end // expected-error {{'@end' must appear in an Objective-C context}}
+
+@class ForwardBase;
+@implementation SomeI : ForwardBase // expected-error {{cannot find interface declaration for 'ForwardBase', superclass of 'SomeI'}} \
+                                    // expected-warning {{cannot find interface declaration for 'SomeI'}}
+-(void)meth {}
+@end

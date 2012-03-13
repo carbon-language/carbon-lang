@@ -69,7 +69,7 @@
 @end
 
 // Forward-declared interface
-@class I12, I10;
+@class I10; @interface I12 @end
 @interface I11
 @end
 
