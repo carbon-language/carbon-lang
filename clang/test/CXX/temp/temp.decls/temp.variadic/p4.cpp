@@ -20,6 +20,52 @@ struct is_same<T, T> {
 
 // FIXME: Several more bullets to go
 
+// In a function parameter pack, the pattern is the parameter-declaration
+// without the ellipsis.
+namespace PR11850 {
+  template<typename ...T> struct S {
+    int f(T...a, int b) { return b; }
+  };
+  S<> s;
+  S<int*, char, const double&> t;
+  int k = s.f(0);
+  int l = t.f(&k, 'x', 5.9, 4);
+
+  template<typename ...As> struct A {
+    template<typename ...Bs> struct B {
+      template<typename ...Cs> struct C {
+        C(As..., Bs..., int &k, Cs...);
+      };
+    };
+  };
+  A<>::B<>::C<> c000(k);
+  A<int>::B<>::C<int> c101(1, k, 3);
+  A<>::B<int>::C<int> c011(1, k, 3);
+  A<int>::B<int>::C<> c110(1, 2, k);
+  A<int, int>::B<int, int>::C<int, int> c222(1, 2, 3, 4, k, 5, 6);
+  A<int, int, int>::B<>::C<> c300(1, 2, 3, k);
+
+  int &f();
+  char &f(void*);
+  template<typename ...A> struct U {
+    template<typename ...B> struct V {
+      auto g(A...a, B...b) -> decltype(f(a...));
+    };
+  };
+  U<>::V<int*> v0;
+  U<int*>::V<> v1;
+  int &v0f = v0.g(0);
+  char &v1f = v1.g(0);
+}
+namespace PR12096 {
+  void Foo(int) {}
+  void Foo(int, int) = delete;
+  template<typename ...Args> struct Var {
+    Var(const Args &...args, int *) { Foo(args...); }
+  };
+  Var<int> var(1, 0);
+}
+
 // In an initializer-list (8.5); the pattern is an initializer-clause.
 // Note: this also covers expression-lists, since expression-list is
 // just defined as initializer-list.

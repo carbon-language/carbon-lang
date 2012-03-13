@@ -2115,6 +2115,8 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
            OldIdx != NumOldParams; ++OldIdx) {
         ParmVarDecl *OldParam = OldProtoLoc->getArg(OldIdx);
         if (!OldParam->isParameterPack() ||
+            // FIXME: Is this right? OldParam could expand to an empty parameter
+            // pack and the next parameter could be an unexpanded parameter pack
             (NewIdx < NumNewParams &&
              NewProtoLoc->getArg(NewIdx)->isParameterPack())) {
           // Simple case: normal parameter, or a parameter pack that's
@@ -2458,6 +2460,13 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   LocalInstantiationScope Scope(*this, MergeWithParentScope);
 
+  // Enter the scope of this instantiation. We don't use
+  // PushDeclContext because we don't have a scope.
+  Sema::ContextRAII savedContext(*this, Function);
+
+  MultiLevelTemplateArgumentList TemplateArgs =
+    getTemplateInstantiationArgs(Function, 0, false, PatternDecl);
+
   // Introduce the instantiated function parameters into the local
   // instantiation scope, and set the parameter names to those used
   // in the template.
@@ -2467,7 +2476,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     if (!PatternParam->isParameterPack()) {
       // Simple case: not a parameter pack.
       assert(FParamIdx < Function->getNumParams());
-      ParmVarDecl *FunctionParam = Function->getParamDecl(I);
+      ParmVarDecl *FunctionParam = Function->getParamDecl(FParamIdx);
       FunctionParam->setDeclName(PatternParam->getDeclName());
       Scope.InstantiatedLocal(PatternParam, FunctionParam);
       ++FParamIdx;
@@ -2476,21 +2485,15 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
     // Expand the parameter pack.
     Scope.MakeInstantiatedLocalArgPack(PatternParam);
-    for (unsigned NumFParams = Function->getNumParams();
-         FParamIdx < NumFParams;
-         ++FParamIdx) {
+    unsigned NumArgumentsInExpansion
+      = getNumArgumentsInExpansion(PatternParam->getType(), TemplateArgs);
+    for (unsigned Arg = 0; Arg < NumArgumentsInExpansion; ++Arg) {
       ParmVarDecl *FunctionParam = Function->getParamDecl(FParamIdx);
       FunctionParam->setDeclName(PatternParam->getDeclName());
       Scope.InstantiatedLocalPackArg(PatternParam, FunctionParam);
+      ++FParamIdx;
     }
   }
-
-  // Enter the scope of this instantiation. We don't use
-  // PushDeclContext because we don't have a scope.
-  Sema::ContextRAII savedContext(*this, Function);
-
-  MultiLevelTemplateArgumentList TemplateArgs =
-    getTemplateInstantiationArgs(Function, 0, false, PatternDecl);
 
   if (PatternDecl->isDefaulted()) {
     ActOnFinishFunctionBody(Function, 0, /*IsInstantiation=*/true);
