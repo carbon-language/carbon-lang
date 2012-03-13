@@ -37,6 +37,7 @@
 			isa = PBXAggregateTarget;
 			buildConfigurationList = 26CEF3BD14FD596A007286B2 /* Build configuration list for PBXAggregateTarget "ios" */;
 			buildPhases = (
+				AFF87C85150FF5CC000E1742 /* CopyFiles */,
 			);
 			dependencies = (
 				26CEF3C214FD5973007286B2 /* PBXTargetDependency */,
@@ -501,6 +502,9 @@
 		9AC70390117675270086C050 /* SBInstructionList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC7038F117675270086C050 /* SBInstructionList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703AE117675410086C050 /* SBInstruction.cpp */; };
 		9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703B0117675490086C050 /* SBInstructionList.cpp */; };
+		AFF87C87150FF669000E1742 /* com.apple.debugserver.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */; };
+		AFF87C89150FF672000E1742 /* com.apple.debugserver-secure.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */; };
+		AFF87C8F150FF688000E1742 /* com.apple.debugserver.applist.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */; };
 		B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B207C4921429607D00F36E4E /* CommandObjectWatchpoint.cpp */; };
 		B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */; };
 		B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
@@ -615,6 +619,21 @@
 			remoteInfo = "lldb-core";
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AFF87C85150FF5CC000E1742 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /Developer/Library/Lockdown/ServiceAgents/;
+			dstSubfolderSpec = 0;
+			files = (
+				AFF87C87150FF669000E1742 /* com.apple.debugserver.plist in CopyFiles */,
+				AFF87C89150FF672000E1742 /* com.apple.debugserver-secure.plist in CopyFiles */,
+				AFF87C8F150FF688000E1742 /* com.apple.debugserver.applist.plist in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		260223E7115F06D500A601A2 /* SBCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommunication.h; path = include/lldb/API/SBCommunication.h; sourceTree = "<group>"; };
@@ -1491,6 +1510,11 @@
 		AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindLLDB.cpp; path = Utility/UnwindLLDB.cpp; sourceTree = "<group>"; };
 		AF68D3301255A110002FF25B /* UnwindLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLLDB.h; path = Utility/UnwindLLDB.h; sourceTree = "<group>"; };
 		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
+		AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.plist; path = tools/debugserver/source/com.apple.debugserver.plist; sourceTree = "<group>"; };
+		AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "com.apple.debugserver-secure.plist"; path = "tools/debugserver/source/com.apple.debugserver-secure.plist"; sourceTree = "<group>"; };
+		AFF87C8A150FF677000E1742 /* com.apple.debugserver.applist.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.applist.plist; path = tools/debugserver/source/com.apple.debugserver.applist.plist; sourceTree = "<group>"; };
+		AFF87C8C150FF680000E1742 /* com.apple.debugserver.applist.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.applist.plist; path = tools/debugserver/source/com.apple.debugserver.applist.plist; sourceTree = "<group>"; };
+		AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.applist.plist; path = tools/debugserver/source/com.apple.debugserver.applist.plist; sourceTree = "<group>"; };
 		B207C4921429607D00F36E4E /* CommandObjectWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectWatchpoint.cpp; path = source/Commands/CommandObjectWatchpoint.cpp; sourceTree = "<group>"; };
 		B207C4941429609C00F36E4E /* CommandObjectWatchpoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectWatchpoint.h; path = source/Commands/CommandObjectWatchpoint.h; sourceTree = "<group>"; };
 		B23DD24F12EDFAC1000C3894 /* ARMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMUtils.h; path = Utility/ARMUtils.h; sourceTree = "<group>"; };
@@ -1587,6 +1611,11 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
+				AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */,
+				AFF87C8C150FF680000E1742 /* com.apple.debugserver.applist.plist */,
+				AFF87C8A150FF677000E1742 /* com.apple.debugserver.applist.plist */,
+				AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */,
+				AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				26F5C22410F3D950009D5894 /* Tools */,

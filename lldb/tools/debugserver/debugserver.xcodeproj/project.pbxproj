@@ -566,7 +566,7 @@
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /usr/bin;
-				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin/;
+				"INSTALL_PATH[sdk=iphoneos*]" = /Developer/usr/bin/;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
 				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
