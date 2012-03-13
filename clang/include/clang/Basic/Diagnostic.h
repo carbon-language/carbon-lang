@@ -766,6 +766,9 @@ class DiagnosticBuilder {
 protected:
   void FlushCounts();
 
+  /// \brief Clear out the current diagnostic.
+  void Clear() { DiagObj = 0; }
+
   /// isActive - Determine whether this diagnostic is still active.
   bool isActive() const { return DiagObj != 0; }
 
@@ -781,6 +784,15 @@ protected:
   ///
   /// \pre \c isActive()
   SourceLocation getLocation() const { return DiagObj->CurDiagLoc; }
+
+  /// \brief Force the diagnostic builder to emit the diagnostic now.
+  ///
+  /// Once this function has been called, the DiagnosticBuilder object
+  /// should not be used again before it is destroyed.
+  ///
+  /// \returns true if a diagnostic was emitted, false if the
+  /// diagnostic was suppressed.
+  bool Emit();
   
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -793,15 +805,6 @@ public:
     NumFixits = D.NumFixits;
   }
 
-  /// \brief Force the diagnostic builder to emit the diagnostic now.
-  ///
-  /// Once this function has been called, the DiagnosticBuilder object
-  /// should not be used again before it is destroyed.
-  ///
-  /// \returns true if a diagnostic was emitted, false if the
-  /// diagnostic was suppressed.
-  bool Emit();
-
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
   ~DiagnosticBuilder() {
@@ -809,44 +812,39 @@ public:
       Emit();
   }
   
-  /// \brief Clear out the current diagnostic.
-  void Clear() { DiagObj = 0; }
-  
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns
   /// true.  This allows is to be used in boolean error contexts like:
   /// return Diag(...);
   operator bool() const { return true; }
 
   void AddString(StringRef S) const {
+    assert(isActive() && "Clients must not add to cleared diagnostic!");
     assert(NumArgs < DiagnosticsEngine::MaxArguments &&
            "Too many arguments to diagnostic!");
-    if (DiagObj) {
-      DiagObj->DiagArgumentsKind[NumArgs] = DiagnosticsEngine::ak_std_string;
-      DiagObj->DiagArgumentsStr[NumArgs++] = S;
-    }
+    DiagObj->DiagArgumentsKind[NumArgs] = DiagnosticsEngine::ak_std_string;
+    DiagObj->DiagArgumentsStr[NumArgs++] = S;
   }
 
   void AddTaggedVal(intptr_t V, DiagnosticsEngine::ArgumentKind Kind) const {
+    assert(isActive() && "Clients must not add to cleared diagnostic!");
     assert(NumArgs < DiagnosticsEngine::MaxArguments &&
            "Too many arguments to diagnostic!");
-    if (DiagObj) {
-      DiagObj->DiagArgumentsKind[NumArgs] = Kind;
-      DiagObj->DiagArgumentsVal[NumArgs++] = V;
-    }
+    DiagObj->DiagArgumentsKind[NumArgs] = Kind;
+    DiagObj->DiagArgumentsVal[NumArgs++] = V;
   }
 
   void AddSourceRange(const CharSourceRange &R) const {
+    assert(isActive() && "Clients must not add to cleared diagnostic!");
     assert(NumRanges < DiagnosticsEngine::MaxRanges &&
            "Too many arguments to diagnostic!");
-    if (DiagObj)
-      DiagObj->DiagRanges[NumRanges++] = R;
+    DiagObj->DiagRanges[NumRanges++] = R;
   }
 
   void AddFixItHint(const FixItHint &Hint) const {
+    assert(isActive() && "Clients must not add to cleared diagnostic!");
     assert(NumFixits < DiagnosticsEngine::MaxFixItHints &&
            "Too many arguments to diagnostic!");
-    if (DiagObj)
-      DiagObj->DiagFixItHints[NumFixits++] = Hint;
+    DiagObj->DiagFixItHints[NumFixits++] = Hint;
   }
 };
 
