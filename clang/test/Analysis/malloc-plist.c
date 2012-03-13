@@ -821,9 +821,9 @@ void test_wrapper() {
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Entered call to &apos;wrapper&apos;</string>
+// CHECK:      <string>Entered call from &apos;test_wrapper&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Entered call to &apos;wrapper&apos;</string>
+// CHECK: <string>Entered call from &apos;test_wrapper&apos;</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1075,9 +1075,9 @@ void test_wrapper() {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Returning to &apos;test_wrapper&apos;</string>
+// CHECK:      <string>Returning from &apos;wrapper&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Returning to &apos;test_wrapper&apos;</string>
+// CHECK: <string>Returning from &apos;wrapper&apos;</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>

@@ -97,9 +97,9 @@ void test_bug_2() {
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Entered call to &apos;bug&apos;</string>
+// CHECK:      <string>Entered call
 // CHECK:      <key>message</key>
-// CHECK: <string>Entered call to &apos;bug&apos;</string>
+// CHECK: <string>Entered call
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>

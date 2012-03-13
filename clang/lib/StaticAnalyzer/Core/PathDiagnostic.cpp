@@ -549,14 +549,12 @@ PathDiagnosticCallPiece::getCallEnterEvent() const {
 
 IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
-  if (!Callee)
-    return 0;
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  if (isa<BlockDecl>(Callee))
-    Out << "Entered call to block";
-  else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Callee))
-    Out << "Entered call to '" << *ND << "'";
+  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Caller))
+    Out << "Entered call from '" << *ND << "'";
+  else
+    Out << "Entered call";
   StringRef msg = Out.str();
   if (msg.empty())
     return 0;
@@ -569,8 +567,8 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
     return 0;
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Caller))
-    Out << "Returning to '" << *ND << "'";
+  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Callee))
+    Out << "Returning from '" << *ND << "'";
   else
     Out << "Returning to caller";
   return new PathDiagnosticEventPiece(callReturn, Out.str());
