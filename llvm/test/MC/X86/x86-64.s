@@ -1053,6 +1053,9 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	movsl
 	movsl	%ds:(%rsi), %es:(%rdi)
 	movsl	(%rsi), %es:(%rdi)
+// rdar://10883092
+// CHECK: movsd
+	movsl	(%rsi), (%rdi)
 
 // CHECK: movsq # encoding: [0x48,0xa5]
 // CHECK: movsq

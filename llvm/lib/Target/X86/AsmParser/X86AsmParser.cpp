@@ -67,11 +67,11 @@ private:
                                MCStreamer &Out);
 
   /// isSrcOp - Returns true if operand is either (%rsi) or %ds:%(rsi)
-  /// in 64bit mode or (%edi) or %es:(%edi) in 32bit mode.
+  /// in 64bit mode or (%esi) or %es:(%esi) in 32bit mode.
   bool isSrcOp(X86Operand &Op);
 
-  /// isDstOp - Returns true if operand is either %es:(%rdi) in 64bit mode
-  /// or %es:(%edi) in 32bit mode.
+  /// isDstOp - Returns true if operand is either (%rdi) or %es:(%rdi)
+  /// in 64bit mode or (%edi) or %es:(%edi) in 32bit mode.
   bool isDstOp(X86Operand &Op);
 
   bool is64BitMode() const {
@@ -468,7 +468,8 @@ bool X86AsmParser::isSrcOp(X86Operand &Op) {
 bool X86AsmParser::isDstOp(X86Operand &Op) {
   unsigned basereg = is64BitMode() ? X86::RDI : X86::EDI;
 
-  return Op.isMem() && Op.Mem.SegReg == X86::ES &&
+  return Op.isMem() && 
+    (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::ES) &&
     isa<MCConstantExpr>(Op.Mem.Disp) &&
     cast<MCConstantExpr>(Op.Mem.Disp)->getValue() == 0 &&
     Op.Mem.BaseReg == basereg && Op.Mem.IndexReg == 0;
