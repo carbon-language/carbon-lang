@@ -47,7 +47,7 @@ namespace llvm {
     /// CrossClass - True when both regs are virtual, and newRC is constrained.
     bool CrossClass;
 
-    /// Flipped - True when DstReg and SrcReg are reversed from the oriignal
+    /// Flipped - True when DstReg and SrcReg are reversed from the original
     /// copy instruction.
     bool Flipped;
 
