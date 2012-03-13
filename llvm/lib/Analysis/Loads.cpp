@@ -17,6 +17,7 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
 using namespace llvm;
 
@@ -160,10 +161,15 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
 /// MaxInstsToScan specifies the maximum instructions to scan in the block.  If
 /// it is set to 0, it will scan the whole block. You can also optionally
 /// specify an alias analysis implementation, which makes this more precise.
+///
+/// If TBAATag is non-null and a load or store is found, the TBAA tag from the
+/// load or store is recorded there.  If there is no TBAA tag or if no access
+/// is found, it is left unmodified.
 Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                       BasicBlock::iterator &ScanFrom,
                                       unsigned MaxInstsToScan,
-                                      AliasAnalysis *AA) {
+                                      AliasAnalysis *AA,
+                                      MDNode **TBAATag) {
   if (MaxInstsToScan == 0) MaxInstsToScan = ~0U;
 
   // If we're using alias analysis to disambiguate get the size of *Ptr.
@@ -191,15 +197,19 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     // (This is true even if the load is volatile or atomic, although
     // those cases are unlikely.)
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-      if (AreEquivalentAddressValues(LI->getOperand(0), Ptr))
+      if (AreEquivalentAddressValues(LI->getOperand(0), Ptr)) {
+        if (TBAATag) *TBAATag = LI->getMetadata(LLVMContext::MD_tbaa);
         return LI;
+      }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // If this is a store through Ptr, the value is available!
       // (This is true even if the store is volatile or atomic, although
       // those cases are unlikely.)
-      if (AreEquivalentAddressValues(SI->getOperand(1), Ptr))
+      if (AreEquivalentAddressValues(SI->getOperand(1), Ptr)) {
+        if (TBAATag) *TBAATag = SI->getMetadata(LLVMContext::MD_tbaa);
         return SI->getOperand(0);
+      }
       
       // If Ptr is an alloca and this is a store to a different alloca, ignore
       // the store.  This is a trivial form of alias analysis that is important

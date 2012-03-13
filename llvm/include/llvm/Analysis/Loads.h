@@ -20,6 +20,7 @@ namespace llvm {
 
 class AliasAnalysis;
 class TargetData;
+class MDNode;
 
 /// isSafeToLoadUnconditionally - Return true if we know that executing a load
 /// from this value cannot trap.  If it is not obviously safe to load from the
@@ -41,10 +42,15 @@ bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
 /// MaxInstsToScan specifies the maximum instructions to scan in the block.
 /// If it is set to 0, it will scan the whole block. You can also optionally
 /// specify an alias analysis implementation, which makes this more precise.
+///
+/// If TBAATag is non-null and a load or store is found, the TBAA tag from the
+/// load or store is recorded there.  If there is no TBAA tag or if no access
+/// is found, it is left unmodified.
 Value *FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                 BasicBlock::iterator &ScanFrom,
                                 unsigned MaxInstsToScan = 6,
-                                AliasAnalysis *AA = 0);
+                                AliasAnalysis *AA = 0,
+                                MDNode **TBAATag = 0);
 
 }
 

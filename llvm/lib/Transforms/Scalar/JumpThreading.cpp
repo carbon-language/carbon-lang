@@ -857,6 +857,9 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   if (BBIt != LoadBB->begin())
     return false;
 
+  // If all of the loads and stores that feed the value have the same TBAA tag,
+  // then we can propagate it onto any newly inserted loads.
+  MDNode *TBAATag = LI->getMetadata(LLVMContext::MD_tbaa); 
 
   SmallPtrSet<BasicBlock*, 8> PredsScanned;
   typedef SmallVector<std::pair<BasicBlock*, Value*>, 8> AvailablePredsTy;
@@ -875,11 +878,16 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 
     // Scan the predecessor to see if the value is available in the pred.
     BBIt = PredBB->end();
-    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt, 6);
+    MDNode *ThisTBAATag = 0;
+    Value *PredAvailable = FindAvailableLoadedValue(LoadedPtr, PredBB, BBIt, 6,
+                                                    0, &ThisTBAATag);
     if (!PredAvailable) {
       OneUnavailablePred = PredBB;
       continue;
     }
+    
+    // If tbaa tags disagree or are not present, forget about them.
+    if (TBAATag != ThisTBAATag) TBAATag = 0;
 
     // If so, this load is partially redundant.  Remember this info so that we
     // can create a PHI node.
@@ -939,6 +947,9 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
                                  LI->getAlignment(),
                                  UnavailablePred->getTerminator());
     NewVal->setDebugLoc(LI->getDebugLoc());
+    if (TBAATag)
+      NewVal->setMetadata(LLVMContext::MD_tbaa, TBAATag);
+    
     AvailablePreds.push_back(std::make_pair(UnavailablePred, NewVal));
   }
 
