@@ -4301,11 +4301,12 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(LibPath + "values-Xa.o"));
       CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtbegin.o"));
     } else {
-      CmdArgs.push_back(Args.MakeArgString(LibPath + "cxa_finalize.o"));
       CmdArgs.push_back(Args.MakeArgString(LibPath + "crti.o"));
       CmdArgs.push_back(Args.MakeArgString(LibPath + "values-Xa.o"));
       CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtbegin.o"));
     }
+    if (getToolChain().getDriver().CCCIsCXX)
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "cxa_finalize.o"));
   }
 
   CmdArgs.push_back(Args.MakeArgString("-L" + GCCLibPath));
