@@ -202,6 +202,11 @@ public:
 llvm::Timer* AnalysisConsumer::TUTotalTimer = 0;
 
 void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
+  // Don't run the actions if an error has occurred with parsing the file.
+  DiagnosticsEngine &Diags = PP.getDiagnostics();
+  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
+    return;
+
   for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
        I != E; ++I) {
     HandleDeclContextDecl(C, *I);
@@ -385,11 +390,6 @@ void AnalysisConsumer::HandleCode(Decl *D, SetOfDecls *VisitedCallees) {
     return;
 
   DisplayFunction(D);
-
-  // Don't run the actions if an error has occurred with parsing the file.
-  DiagnosticsEngine &Diags = PP.getDiagnostics();
-  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
-    return;
 
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
