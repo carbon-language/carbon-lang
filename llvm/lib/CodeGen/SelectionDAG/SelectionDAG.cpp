@@ -70,7 +70,7 @@ static const fltSemantics *EVTToAPFloatSemantics(EVT VT) {
   }
 }
 
-SelectionDAG::DAGUpdateListener::~DAGUpdateListener() {}
+SelectionDAG::DAGUpdateListener::anchor() {}
 
 //===----------------------------------------------------------------------===//
 //                              ConstantFPSDNode Class
