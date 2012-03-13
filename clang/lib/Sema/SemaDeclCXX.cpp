@@ -372,7 +372,8 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
 // function, once we already know that they have the same
 // type. Subroutine of MergeFunctionDecl. Returns true if there was an
 // error, false otherwise.
-bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
+bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
+                                Scope *S) {
   bool Invalid = false;
 
   // C++ [dcl.fct.default]p4:
@@ -397,7 +398,16 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     ParmVarDecl *OldParam = Old->getParamDecl(p);
     ParmVarDecl *NewParam = New->getParamDecl(p);
 
-    if (OldParam->hasDefaultArg() && NewParam->hasDefaultArg()) {
+    bool OldParamHasDfl = OldParam->hasDefaultArg();
+    bool NewParamHasDfl = NewParam->hasDefaultArg();
+
+    NamedDecl *ND = Old;
+    if (S && !isDeclInScope(ND, New->getDeclContext(), S))
+      // Ignore default parameters of old decl if they are not in
+      // the same scope.
+      OldParamHasDfl = false;
+
+    if (OldParamHasDfl && NewParamHasDfl) {
 
       unsigned DiagDefaultParamID =
         diag::err_param_default_argument_redefinition;
@@ -443,7 +453,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       
       Diag(OldParam->getLocation(), diag::note_previous_definition)
         << OldParam->getDefaultArgRange();
-    } else if (OldParam->hasDefaultArg()) {
+    } else if (OldParamHasDfl) {
       // Merge the old default argument into the new parameter.
       // It's important to use getInit() here;  getDefaultArg()
       // strips off any top-level ExprWithCleanups.
@@ -453,7 +463,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
                                       OldParam->getUninstantiatedDefaultArg());
       else
         NewParam->setDefaultArg(OldParam->getInit());
-    } else if (NewParam->hasDefaultArg()) {
+    } else if (NewParamHasDfl) {
       if (New->getDescribedFunctionTemplate()) {
         // Paragraph 4, quoted above, only applies to non-template functions.
         Diag(NewParam->getLocation(),

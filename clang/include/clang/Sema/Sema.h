@@ -1392,13 +1392,14 @@ public:
   bool isIncompatibleTypedef(TypeDecl *Old, TypedefNameDecl *New);
   void mergeDeclAttributes(Decl *New, Decl *Old, bool MergeDeprecation = true);
   void MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls);
-  bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
-  bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
+  bool MergeFunctionDecl(FunctionDecl *New, Decl *Old, Scope *S);
+  bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
+                                    Scope *S);
   void mergeObjCMethodDecls(ObjCMethodDecl *New, ObjCMethodDecl *Old);
   void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
   void MergeVarDeclTypes(VarDecl *New, VarDecl *Old);
   void MergeVarDeclExceptionSpecs(VarDecl *New, VarDecl *Old);
-  bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
+  bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old, Scope *S);
 
   // AssignmentAction - This is used by all the assignment diagnostic functions
   // to represent what is actually causing the operation

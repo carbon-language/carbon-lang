@@ -1720,7 +1720,7 @@ static bool canRedefineFunction(const FunctionDecl *FD,
 /// merged with.
 ///
 /// Returns true if there was an error, false otherwise.
-bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
+bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
   // Verify the old decl was also a function.
   FunctionDecl *Old = 0;
   if (FunctionTemplateDecl *OldFunctionTemplate
@@ -1950,7 +1950,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     }
 
     if (OldQTypeForComparison == NewQType)
-      return MergeCompatibleFunctionDecls(New, Old);
+      return MergeCompatibleFunctionDecls(New, Old, S);
 
     // Fall through for conflicting redeclarations and redefinitions.
   }
@@ -1995,7 +1995,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       New->setParams(Params);
     }
 
-    return MergeCompatibleFunctionDecls(New, Old);
+    return MergeCompatibleFunctionDecls(New, Old, S);
   }
 
   // GNU C permits a K&R definition to follow a prototype declaration
@@ -2056,7 +2056,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       New->setType(Context.getFunctionType(MergedReturn, &ArgTypes[0],
                                            ArgTypes.size(),
                                            OldProto->getExtProtoInfo()));
-      return MergeCompatibleFunctionDecls(New, Old);
+      return MergeCompatibleFunctionDecls(New, Old, S);
     }
 
     // Fall through to diagnose conflicting types.
@@ -2097,7 +2097,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// redeclaration of Old.
 ///
 /// \returns false
-bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
+bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
+                                        Scope *S) {
   // Merge the attributes
   mergeDeclAttributes(New, Old);
 
@@ -2118,7 +2119,7 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
                                Context);
 
   if (getLangOpts().CPlusPlus)
-    return MergeCXXFunctionDecl(New, Old);
+    return MergeCXXFunctionDecl(New, Old, S);
 
   return false;
 }
@@ -5698,7 +5699,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     if (Redeclaration) {
       // NewFD and OldDecl represent declarations that need to be
       // merged.
-      if (MergeFunctionDecl(NewFD, OldDecl)) {
+      if (MergeFunctionDecl(NewFD, OldDecl, S)) {
         NewFD->setInvalidDecl();
         return Redeclaration;
       }
