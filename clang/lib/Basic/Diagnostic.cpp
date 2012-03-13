@@ -357,7 +357,7 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   NumDiagArgs = 0;
 
   NumDiagRanges = storedDiag.range_size();
-  assert(NumDiagRanges < sizeof(DiagRanges)/sizeof(DiagRanges[0]) &&
+  assert(NumDiagRanges < DiagnosticsEngine::MaxRanges &&
          "Too many arguments to diagnostic!");
   unsigned i = 0;
   for (StoredDiagnostic::range_iterator
@@ -365,11 +365,13 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
          RE = storedDiag.range_end(); RI != RE; ++RI)
     DiagRanges[i++] = *RI;
 
-  FixItHints.clear();
+  assert(NumDiagRanges < DiagnosticsEngine::MaxFixItHints &&
+         "Too many arguments to diagnostic!");
+  NumDiagFixItHints = 0;
   for (StoredDiagnostic::fixit_iterator
          FI = storedDiag.fixit_begin(),
          FE = storedDiag.fixit_end(); FI != FE; ++FI)
-    FixItHints.push_back(*FI);
+    DiagFixItHints[NumDiagFixItHints++] = *FI;
 
   assert(Client && "DiagnosticConsumer not set!");
   Level DiagLevel = storedDiag.getLevel();
@@ -386,6 +388,7 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
 void DiagnosticBuilder::FlushCounts() {
   DiagObj->NumDiagArgs = NumArgs;
   DiagObj->NumDiagRanges = NumRanges;
+  DiagObj->NumDiagFixItHints = NumFixits;
 }
 
 bool DiagnosticBuilder::Emit() {
