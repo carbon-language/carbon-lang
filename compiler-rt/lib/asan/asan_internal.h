@@ -47,7 +47,7 @@ extern "C" void* _ReturnAddress(void);
 # define ALIAS(x) __attribute__((alias(x)))
 # define ALIGNED(x) __attribute__((aligned(x)))
 # define NOINLINE __attribute__((noinline))
-# define NORETURN __attribute__((noreturn))
+# define NORETURN  // FIXME: should be __attribute__((noreturn)), revisit later.
 
 # define ASAN_INTERFACE_ATTRIBUTE __attribute__((visibility("default")))
 #endif  // defined(_WIN32)
