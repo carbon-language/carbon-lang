@@ -43,6 +43,8 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 
+#include <queue>
+
 using namespace clang;
 using namespace ento;
 using llvm::SmallPtrSet;
@@ -282,31 +284,45 @@ void AnalysisConsumer::HandleDeclsGallGraph(TranslationUnitDecl *TU) {
     NumFunctionTopLevel++;
   }
 
-  // TODO: Sort TopLevelFunctions.
-
-  // DFS over all of the top level nodes. Use external Visited set, which is
-  // also modified when we inline a function.
-  SmallPtrSet<CallGraphNode*,24> Visited;
+  std::queue<CallGraphNode*> BFSQueue;
   for (llvm::SmallVector<CallGraphNode*, 24>::iterator
          TI = TopLevelFunctions.begin(), TE = TopLevelFunctions.end();
-         TI != TE; ++TI) {
-    for (llvm::df_ext_iterator<CallGraphNode*, SmallPtrSet<CallGraphNode*,24> >
-        DFI = llvm::df_ext_begin(*TI, Visited),
-        E = llvm::df_ext_end(*TI, Visited);
-        DFI != E; ++DFI) {
-      SetOfDecls VisitedCallees;
-      Decl *D = (*DFI)->getDecl();
-      assert(D);
-      HandleCode(D, ANALYSIS_PATH,
-                 (Mgr->InliningMode == All ? 0 : &VisitedCallees));
+         TI != TE; ++TI)
+    BFSQueue.push(*TI);
 
-      // Add the visited callees to the global visited set.
-      for (SetOfDecls::const_iterator I = VisitedCallees.begin(),
-                                      E = VisitedCallees.end(); I != E; ++I) {
-        CallGraphNode *VN = CG.getNode(*I);
-        if (VN)
-          Visited.insert(VN);
-      }
+  // BFS over all of the functions, while skipping the ones inlined into
+  // the previously processed functions. Use external Visited set, which is
+  // also modified when we inline a function.
+  SmallPtrSet<CallGraphNode*,24> Visited;
+  while(!BFSQueue.empty()) {
+    CallGraphNode *N = BFSQueue.front();
+    BFSQueue.pop();
+
+    // Skip the functions which have been processed already or previously
+    // inlined.
+    if (Visited.count(N))
+      continue;
+
+    // Analyze the function.
+    SetOfDecls VisitedCallees;
+    Decl *D = N->getDecl();
+    assert(D);
+    HandleCode(D, ANALYSIS_PATH,
+               (Mgr->InliningMode == All ? 0 : &VisitedCallees));
+
+    // Add the visited callees to the global visited set.
+    for (SetOfDecls::const_iterator I = VisitedCallees.begin(),
+                                    E = VisitedCallees.end(); I != E; ++I) {
+      CallGraphNode *VN = CG.getNode(*I);
+      if (VN)
+        Visited.insert(VN);
+    }
+    Visited.insert(N);
+
+    // Push the children into the queue.
+    for (CallGraphNode::const_iterator CI = N->begin(),
+                                       CE = N->end(); CI != CE; ++CI) {
+      BFSQueue.push(*CI);
     }
   }
 }
