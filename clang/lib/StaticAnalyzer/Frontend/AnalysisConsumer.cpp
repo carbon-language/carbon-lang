@@ -272,21 +272,25 @@ void AnalysisConsumer::HandleDeclsGallGraph(TranslationUnitDecl *TU) {
   // Find the top level nodes - children of root + the unreachable (parentless)
   // nodes.
   llvm::SmallVector<CallGraphNode*, 24> TopLevelFunctions;
+  for (CallGraph::nodes_iterator TI = CG.parentless_begin(),
+                                 TE = CG.parentless_end(); TI != TE; ++TI) {
+    TopLevelFunctions.push_back(*TI);
+    NumFunctionTopLevel++;
+  }
   CallGraphNode *Entry = CG.getRoot();
   for (CallGraphNode::iterator I = Entry->begin(),
                                E = Entry->end(); I != E; ++I) {
     TopLevelFunctions.push_back(*I);
     NumFunctionTopLevel++;
   }
-  for (CallGraph::nodes_iterator TI = CG.parentless_begin(),
-                                 TE = CG.parentless_end(); TI != TE; ++TI) {
-    TopLevelFunctions.push_back(*TI);
-    NumFunctionTopLevel++;
-  }
 
+  // Make sure the nodes are sorted in order reverse of their definition in the 
+  // translation unit. This step is very important for performance. It ensures 
+  // that we analyze the root functions before the externally available 
+  // subroutines.
   std::queue<CallGraphNode*> BFSQueue;
-  for (llvm::SmallVector<CallGraphNode*, 24>::iterator
-         TI = TopLevelFunctions.begin(), TE = TopLevelFunctions.end();
+  for (llvm::SmallVector<CallGraphNode*, 24>::reverse_iterator
+         TI = TopLevelFunctions.rbegin(), TE = TopLevelFunctions.rend();
          TI != TE; ++TI)
     BFSQueue.push(*TI);
 
