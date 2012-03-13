@@ -694,7 +694,7 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
       
     case DiagnosticIDs::SFINAE_AccessControl: {
       // Per C++ Core Issue 1170, access control is part of SFINAE.
-      // Additionally, the AccessCheckingSFINAE flag can be used to temporary
+      // Additionally, the AccessCheckingSFINAE flag can be used to temporarily
       // make access control a part of SFINAE for the purposes of checking
       // type traits.
       if (!SemaRef.AccessCheckingSFINAE &&
