@@ -85,10 +85,6 @@ Aligned("enable-polly-aligned",
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
-typedef struct {
-  Value *Result;
-  IRBuilder<> *Builder;
-}IslPwAffUserInfo;
 
 // Create a new loop.
 //
