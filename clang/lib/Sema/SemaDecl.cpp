@@ -5266,21 +5266,22 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   ProcessDeclAttributes(S, NewFD, D,
                         /*NonInheritable=*/true, /*Inheritable=*/false);
 
+  // Functions returning a variably modified type violate C99 6.7.5.2p2
+  // because all functions have linkage.
+  if (!NewFD->isInvalidDecl() &&
+      NewFD->getResultType()->isVariablyModifiedType()) {
+    Diag(NewFD->getLocation(), diag::err_vm_func_decl);
+    NewFD->setInvalidDecl();
+  }
+
   if (!getLangOpts().CPlusPlus) {
     // Perform semantic checking on the function declaration.
     bool isExplicitSpecialization=false;
     if (!NewFD->isInvalidDecl()) {
-      if (NewFD->getResultType()->isVariablyModifiedType()) {
-        // Functions returning a variably modified type violate C99 6.7.5.2p2
-        // because all functions have linkage.
-        Diag(NewFD->getLocation(), diag::err_vm_func_decl);
-        NewFD->setInvalidDecl();
-      } else {
-        if (NewFD->isMain()) 
-          CheckMain(NewFD, D.getDeclSpec());
-        D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
-                                                    isExplicitSpecialization));
-      }
+      if (NewFD->isMain())
+        CheckMain(NewFD, D.getDeclSpec());
+      D.setRedeclaration(CheckFunctionDeclaration(S, NewFD, Previous,
+                                                  isExplicitSpecialization));
     }
     assert((NewFD->isInvalidDecl() || !D.isRedeclaration() ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
