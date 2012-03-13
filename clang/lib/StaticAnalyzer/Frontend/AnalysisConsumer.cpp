@@ -191,6 +191,7 @@ public:
   void HandleDeclContextDeclFunction(ASTContext &C, Decl *D);
 
   void HandleCode(Decl *D, SetOfDecls *VisitedCallees = 0);
+  bool skipFunction(Decl *D);
   void RunPathSensitiveChecks(Decl *D, SetOfDecls *VisitedCallees);
   void ActionExprEngine(Decl *D, bool ObjCGCEnabled, SetOfDecls *VisitedCallees);
 };
@@ -384,19 +385,27 @@ static std::string getFunctionName(const Decl *D) {
   return "";
 }
 
-void AnalysisConsumer::HandleCode(Decl *D, SetOfDecls *VisitedCallees) {
+bool AnalysisConsumer::skipFunction(Decl *D) {
   if (!Opts.AnalyzeSpecificFunction.empty() &&
       getFunctionName(D) != Opts.AnalyzeSpecificFunction)
-    return;
-
-  DisplayFunction(D);
+    return true;
 
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
   SourceManager &SM = Ctx->getSourceManager();
   SourceLocation SL = SM.getExpansionLoc(D->getLocation());
   if (!Opts.AnalyzeAll && !SM.isFromMainFile(SL))
+    return true;
+
+  return false;
+}
+
+void AnalysisConsumer::HandleCode(Decl *D, SetOfDecls *VisitedCallees) {
+
+  if (skipFunction(D))
     return;
+
+  DisplayFunction(D);
 
   // Clear the AnalysisManager of old AnalysisDeclContexts.
   Mgr->ClearContexts();
