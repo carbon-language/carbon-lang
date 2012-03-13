@@ -3359,8 +3359,7 @@ RNBRemote::HandlePacket_C (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_D (const char *p)
 {
-    // We are not supposed to send a response for deatch.
-    //SendPacket ("OK");
+    SendPacket ("OK");
     if (m_ctx.HasValidProcessID())
         DNBProcessDetach(m_ctx.ProcessID());
     return rnb_success;
