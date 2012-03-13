@@ -700,6 +700,9 @@ private:
     return Diags->ProcessDiag(*this);
   }
 
+  /// \brief Emit the current diagnostic and clear the diagnostic state.
+  bool EmitCurrentDiagnostic();
+
   friend class ASTReader;
   friend class ASTWriter;
 };
@@ -764,7 +767,11 @@ class DiagnosticBuilder {
   friend class PartialDiagnostic;
 
 protected:
-  void FlushCounts();
+  void FlushCounts() {
+    DiagObj->NumDiagArgs = NumArgs;
+    DiagObj->NumDiagRanges = NumRanges;
+    DiagObj->NumDiagFixItHints = NumFixits;
+  }
 
   /// \brief Clear out the current diagnostic.
   void Clear() { DiagObj = 0; }
@@ -792,7 +799,24 @@ protected:
   ///
   /// \returns true if a diagnostic was emitted, false if the
   /// diagnostic was suppressed.
-  bool Emit();
+  bool Emit() {
+    // If DiagObj is null, then its soul was stolen by the copy ctor
+    // or the user called Emit().
+    if (DiagObj == 0) return false;
+
+    // When emitting diagnostics, we set the final argument count into
+    // the DiagnosticsEngine object.
+    FlushCounts();
+
+    // Process the diagnostic.
+    bool Result = DiagObj->EmitCurrentDiagnostic();
+
+    // This diagnostic is dead.
+    DiagObj = 0;
+
+    return Result;
+  }
+
   
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -808,8 +832,7 @@ public:
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
   ~DiagnosticBuilder() {
-    if (DiagObj)
-      Emit();
+    Emit();
   }
   
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns

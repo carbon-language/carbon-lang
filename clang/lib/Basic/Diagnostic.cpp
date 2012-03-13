@@ -385,35 +385,18 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   CurDiagID = ~0U;
 }
 
-void DiagnosticBuilder::FlushCounts() {
-  DiagObj->NumDiagArgs = NumArgs;
-  DiagObj->NumDiagRanges = NumRanges;
-  DiagObj->NumDiagFixItHints = NumFixits;
-}
-
-bool DiagnosticBuilder::Emit() {
-  // If DiagObj is null, then its soul was stolen by the copy ctor
-  // or the user called Emit().
-  if (DiagObj == 0) return false;
-
-  // When emitting diagnostics, we set the final argument count into
-  // the DiagnosticsEngine object.
-  FlushCounts();
-
+bool DiagnosticsEngine::EmitCurrentDiagnostic() {
   // Process the diagnostic, sending the accumulated information to the
   // DiagnosticConsumer.
-  bool Emitted = DiagObj->ProcessDiag();
+  bool Emitted = ProcessDiag();
 
   // Clear out the current diagnostic object.
-  unsigned DiagID = DiagObj->CurDiagID;
-  DiagObj->Clear();
+  unsigned DiagID = CurDiagID;
+  Clear();
 
   // If there was a delayed diagnostic, emit it now.
-  if (DiagObj->DelayedDiagID && DiagObj->DelayedDiagID != DiagID)
-    DiagObj->ReportDelayed();
-
-  // This diagnostic is dead.
-  DiagObj = 0;
+  if (DelayedDiagID && DelayedDiagID != DiagID)
+    ReportDelayed();
 
   return Emitted;
 }
