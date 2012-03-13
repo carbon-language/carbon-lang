@@ -48,8 +48,9 @@ public:
   /// \brief Add the given declaration to the call graph.
   void addToCallGraph(Decl *D, bool IsGlobal);
 
-  /// \brief Populate the call graph with the functions in the given DeclContext.
-  void addToCallGraph(DeclContext *DC);
+  /// \brief Populate the call graph with the functions in the given translation
+  /// unit.
+  void addToCallGraph(TranslationUnitDecl *TU);
 
   /// \brief Lookup the node for the given declaration.
   CallGraphNode *getNode(const Decl *) const;

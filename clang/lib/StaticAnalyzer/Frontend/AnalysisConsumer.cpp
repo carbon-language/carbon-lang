@@ -206,9 +206,9 @@ public:
 
   virtual void HandleTranslationUnit(ASTContext &C);
 
-  /// \brief Build the call graph for the context and use it to define the order
+  /// \brief Build the call graph for the TU and use it to define the order
   /// in which the functions should be visited.
-  void HandleDeclContextGallGraph(ASTContext &C, DeclContext *dc);
+  void HandleDeclsGallGraph(TranslationUnitDecl *TU);
 
   /// \brief Run analyzes(syntax or path sensitive) on the given function.
   /// \param Mode - determines if we are requesting syntax only or path
@@ -261,12 +261,11 @@ public:
 //===----------------------------------------------------------------------===//
 llvm::Timer* AnalysisConsumer::TUTotalTimer = 0;
 
-void AnalysisConsumer::HandleDeclContextGallGraph(ASTContext &C,
-                                                  DeclContext *dc) {
+void AnalysisConsumer::HandleDeclsGallGraph(TranslationUnitDecl *TU) {
   // Otherwise, use the Callgraph to derive the order.
   // Build the Call Graph.
   CallGraph CG;
-  CG.addToCallGraph(dc);
+  CG.addToCallGraph(TU);
 
   // Find the top level nodes - children of root + the unreachable (parentless)
   // nodes.
@@ -334,7 +333,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     TraverseDecl(TU);
 
     if (Mgr->shouldInlineCall())
-      HandleDeclContextGallGraph(C, TU);
+      HandleDeclsGallGraph(TU);
 
     // After all decls handled, run checkers on the entire TranslationUnit.
     checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);

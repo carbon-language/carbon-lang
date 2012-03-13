@@ -14,6 +14,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 
 #include "llvm/Support/GraphWriter.h"
@@ -71,6 +72,35 @@ public:
         static_cast<CGBuilder*>(this)->Visit(*I);
   }
 };
+
+/// A helper class which walks the AST declarations.
+// TODO: We might want to specialize the visitor to shrink the call graph.
+// For example, we might not want to include the inline methods from header
+// files.
+class CGDeclVisitor : public RecursiveASTVisitor<CGDeclVisitor> {
+  CallGraph *CG;
+
+public:
+  CGDeclVisitor(CallGraph * InCG) : CG(InCG) {}
+
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    // We skip function template definitions, as their semantics is
+    // only determined when they are instantiated.
+    if (includeInGraph(FD))
+      // If this function has external linkage, anything could call it.
+      // Note, we are not precise here. For example, the function could have
+      // its address taken.
+      CG->addToCallGraph(FD, FD->isGlobal());
+    return true;
+  }
+
+  bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
+    if (includeInGraph(MD))
+      CG->addToCallGraph(MD, true);
+    return true;
+  }
+};
+
 } // end anonymous namespace
 
 CallGraph::CallGraph() {
@@ -98,42 +128,8 @@ void CallGraph::addToCallGraph(Decl* D, bool IsGlobal) {
   builder.Visit(D->getBody());
 }
 
-void CallGraph::addToCallGraph(DeclContext *DC) {
-  for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
-       I != E; ++I) {
-    Decl *D = *I;
-    switch (D->getKind()) {
-    case Decl::CXXConstructor:
-    case Decl::CXXDestructor:
-    case Decl::CXXConversion:
-    case Decl::CXXMethod:
-    case Decl::Function: {
-      FunctionDecl *FD = cast<FunctionDecl>(D);
-      // We skip function template definitions, as their semantics is
-      // only determined when they are instantiated.
-      if (includeInGraph(FD))
-        // If this function has external linkage, anything could call it.
-        // Note, we are not precise here. For example, the function could have
-        // its address taken.
-        addToCallGraph(FD, FD->isGlobal());
-      break;
-    }
-
-    case Decl::ObjCCategoryImpl:
-    case Decl::ObjCImplementation: {
-      ObjCImplDecl *ID = cast<ObjCImplDecl>(D);
-      for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(),
-          ME = ID->meth_end(); MI != ME; ++MI) {
-        if (includeInGraph(*MI))
-          addToCallGraph(*MI, true);
-      }
-      break;
-    }
-
-    default:
-      break;
-    }
-  }
+void CallGraph::addToCallGraph(TranslationUnitDecl *TU) {
+  CGDeclVisitor(this).TraverseDecl(TU);
 }
 
 CallGraphNode *CallGraph::getNode(const Decl *F) const {
