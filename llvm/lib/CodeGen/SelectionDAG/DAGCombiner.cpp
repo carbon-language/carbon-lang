@@ -7204,7 +7204,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
     // If the result of load has to be truncated, then it's not necessarily
     // profitable.
-    if (NVT.bitsLT(LVT))
+    if (NVT.bitsLT(LVT) && !TLI.isTruncateFree(LVT, NVT))
       return SDValue();
 
     if (InVec.getOpcode() == ISD::BITCAST) {
@@ -7308,6 +7308,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     // use of the load; that's okay because we don't want to perform this
     // transformation in other cases anyway.
     SDValue Load;
+    SDValue Chain;
     if (NVT.bitsGT(LVT)) {
       // If the result type of vextract is wider than the load, then issue an
       // extending load instead.
@@ -7316,14 +7317,21 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       Load = DAG.getExtLoad(ExtType, N->getDebugLoc(), NVT, LN0->getChain(),
                             NewPtr, LN0->getPointerInfo().getWithOffset(PtrOff),
                             LVT, LN0->isVolatile(), LN0->isNonTemporal(),Align);
-    } else
+      Chain = Load.getValue(1);
+    } else {
       Load = DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
                          LN0->getPointerInfo().getWithOffset(PtrOff),
                          LN0->isVolatile(), LN0->isNonTemporal(), 
                          LN0->isInvariant(), Align);
+      Chain = Load.getValue(1);
+      if (NVT.bitsLT(LVT))
+        Load = DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), NVT, Load);
+      else
+        Load = DAG.getNode(ISD::BITCAST, N->getDebugLoc(), NVT, Load);
+    }
     WorkListRemover DeadNodes(*this);
     SDValue From[] = { SDValue(N, 0), SDValue(LN0,1) };
-    SDValue To[] = { Load.getValue(0), Load.getValue(1) };
+    SDValue To[] = { Load, Chain };
     DAG.ReplaceAllUsesOfValuesWith(From, To, 2, &DeadNodes);
     // Since we're explcitly calling ReplaceAllUses, add the new node to the
     // worklist explicitly as well.
