@@ -615,6 +615,12 @@
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 
+/* Define if we have the Intel JIT API runtime support library */
+#undef LLVM_USE_INTEL_JITEVENTS
+
+/* Define if we have the oprofile JIT-support library */
+#undef LLVM_USE_OPROFILE
+
 /* Major version of the LLVM API */
 #undef LLVM_VERSION_MAJOR
 
@@ -674,9 +680,6 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
-
-/* Define if we have the oprofile JIT-support library */
-#undef USE_OPROFILE
 
 /* Define if use udis86 library */
 #undef USE_UDIS86

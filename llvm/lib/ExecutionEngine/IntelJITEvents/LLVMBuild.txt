@@ -1,4 +1,4 @@
-;===- ./lib/ExecutionEngine/LLVMBuild.txt ----------------------*- Conf -*--===;
+;===- ./lib/ExecutionEngine/JITProfileAmplifier/LLVMBuild.txt --*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,10 +16,8 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = Interpreter JIT MCJIT RuntimeDyld IntelJITEvents OProfileJIT
 
 [component_0]
 type = Library
-name = ExecutionEngine
-parent = Libraries
-required_libraries = Core MC Support Target
+name = IntelJITEvents
+parent = ExecutionEngine

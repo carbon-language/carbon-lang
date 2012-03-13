@@ -1183,28 +1183,82 @@ AC_ARG_WITH(oprofile,
         *) llvm_cv_oppath="${withval}/lib/oprofile"
            CPPFLAGS="-I${withval}/include";;
       esac
-      if test -n "$llvm_cv_oppath" ; then
-        LIBS="$LIBS -L${llvm_cv_oppath} -Wl,-rpath,${llvm_cv_oppath}"
-        dnl Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=537744:
-        dnl libbfd is not included properly in libopagent in some Debian
-        dnl versions.  If libbfd isn't found at all, we assume opagent works
-        dnl anyway.
-        AC_SEARCH_LIBS(bfd_init, bfd, [], [])
-        AC_SEARCH_LIBS(op_open_agent, opagent, [], [
-          echo "Error! You need to have libopagent around."
-          exit -1
-        ])
-        AC_CHECK_HEADER([opagent.h], [], [
-          echo "Error! You need to have opagent.h around."
-          exit -1
-          ])
-      fi
+      case $llvm_cv_os_type in
+        Linux)
+          if test -n "$llvm_cv_oppath" ; then
+            LIBS="$LIBS -lopagent -L${llvm_cv_oppath} -Wl,-rpath,${llvm_cv_oppath}"
+            dnl Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=537744:
+            dnl libbfd is not included properly in libopagent in some Debian
+            dnl versions.  If libbfd isn't found at all, we assume opagent works
+            dnl anyway.
+            AC_SEARCH_LIBS(bfd_init, bfd, [], [])
+            AC_SEARCH_LIBS(op_open_agent, opagent, [], [
+              echo "Error! You need to have libopagent around."
+              exit -1
+            ])
+            AC_CHECK_HEADER([opagent.h], [], [
+              echo "Error! You need to have opagent.h around."
+              exit -1
+              ])
+          fi ;;
+        *)
+          AC_MSG_ERROR([OProfile support is available on Linux only.]) ;;
+      esac 
     ],
     [
       AC_SUBST(USE_OPROFILE, [0])
     ])
-AC_DEFINE_UNQUOTED([USE_OPROFILE],$USE_OPROFILE,
+AC_DEFINE_UNQUOTED([LLVM_USE_OPROFILE],$USE_OPROFILE,
                    [Define if we have the oprofile JIT-support library])
+
+dnl Enable support for Intel JIT Events API.
+AC_ARG_WITH(intel-jitevents,
+  AS_HELP_STRING([--with-intel-jitevents=<vtune-amplifier-dir>],
+    [Specify location of run-time support library for Intel JIT API (default=/opt/intel/vtune_amplifier_xe_2011)]),
+    [
+      case $llvm_cv_os_type in
+        Linux|Win32|Cygwin|MingW) ;;
+        *)
+          AC_MSG_ERROR([
+            Intel JIT API support is available on Linux and Windows only."]) ;;
+      esac
+
+      AC_SUBST(USE_INTEL_JITEVENTS, [1])
+      case "$llvm_cv_target_arch" in
+        x86)    llvm_intel_jitevents_archdir="lib32";;
+        x86_64) llvm_intel_jitevents_archdir="lib64";;
+        *)      echo "Target architecture $llvm_cv_target_arch does not support Intel JIT Events API"
+                exit -1;;
+      esac
+      INTEL_JITEVENTS_INCDIR="/opt/intel/vtune_amplifier_xe_2011/include"
+      INTEL_JITEVENTS_LIBDIR="/opt/intel/vtune_amplifier_xe_2011/$llvm_intel_jitevents_archdir"
+      case "$withval" in
+        /* | [[A-Za-z]]:[[\\/]]*) INTEL_JITEVENTS_INCDIR=$withval/include
+                                  INTEL_JITEVENTS_LIBDIR=$withval/$llvm_intel_jitevents_archdir ;;
+        *) ;;
+      esac
+
+      AC_SUBST(INTEL_JITEVENTS_INCDIR)
+      AC_SUBST(INTEL_JITEVENTS_LIBDIR)
+
+      LIBS="$LIBS -L${INTEL_JITEVENTS_LIBDIR}"
+      CPPFLAGS="$CPPFLAGS -I$INTEL_JITEVENTS_INCDIR"
+
+      AC_SEARCH_LIBS(iJIT_IsProfilingActive, jitprofiling, [], [
+        echo "Error! Cannot find libjitprofiling.a. Please check path specified in flag --with-intel-jitevents"
+        exit -1
+      ])
+      AC_CHECK_HEADER([jitprofiling.h], [], [
+        echo "Error! Cannot find jitprofiling.h. Please check path specified in flag --with-intel-jitevents"
+        exit -1
+      ])
+
+    ],
+    [
+      AC_SUBST(USE_INTEL_JITEVENTS, [0])
+    ])
+AC_DEFINE_UNQUOTED([LLVM_USE_INTEL_JITEVENTS],$USE_INTEL_JITEVENTS,
+                   [Define if we have the Intel JIT API runtime support library])
 
 dnl===-----------------------------------------------------------------------===
 dnl===

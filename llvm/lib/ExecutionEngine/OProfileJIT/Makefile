@@ -1,4 +1,4 @@
-##===- lib/ExecutionEngine/Makefile ------------------------*- Makefile -*-===##
+##===- lib/ExecutionEngine/OProfileJIT/Makefile ------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,19 +6,13 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
-LIBRARYNAME = LLVMExecutionEngine
+LEVEL = ../../..
+LIBRARYNAME = LLVMOProfileJIT
 
 include $(LEVEL)/Makefile.config
 
-PARALLEL_DIRS = Interpreter JIT MCJIT RuntimeDyld
-
-ifeq ($(USE_INTEL_JITEVENTS), 1)
-PARALLEL_DIRS += IntelJITEvents
-endif
-
-ifeq ($(USE_OPROFILE), 1)
-PARALLEL_DIRS += OProfileJIT
-endif
+SOURCES += OProfileJITEventListener.cpp \
+  OProfileWrapper.cpp
+CPPFLAGS += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

@@ -83,12 +83,36 @@ add_llvm_unittest(Analysis
   Analysis/ScalarEvolutionTest.cpp
   )
 
+if( LLVM_USE_INTEL_JITEVENTS )
+  include_directories( ${LLVM_INTEL_JITEVENTS_INCDIR} )
+  link_directories( ${LLVM_INTEL_JITEVENTS_LIBDIR} )
+  set(ProfileTestSources
+    ExecutionEngine/IntelJITEventListenerTest.cpp
+    )
+  set(LLVM_LINK_COMPONENTS
+    ${LLVM_LINK_COMPONENTS}
+    IntelJITEvents
+    ) 
+endif( LLVM_USE_INTEL_JITEVENTS )
+
+if( LLVM_USE_OPROFILE )
+  set(ProfileTestSources
+    ${ProfileTestSources}
+    ExecutionEngine/OProfileJITEventListenerTest.cpp
+    )
+  set(LLVM_LINK_COMPONENTS
+    ${LLVM_LINK_COMPONENTS}
+    OProfileJIT
+    )
+endif( LLVM_USE_OPROFILE )
+
 add_llvm_unittest(ExecutionEngine
   ExecutionEngine/ExecutionEngineTest.cpp
+  ExecutionEngine/JITEventListenerTest.cpp
+  ${ProfileTestSources}
   )
 
 set(JITTestsSources
-  ExecutionEngine/JIT/JITEventListenerTest.cpp
   ExecutionEngine/JIT/JITMemoryManagerTest.cpp
   ExecutionEngine/JIT/JITTest.cpp
   ExecutionEngine/JIT/MultiJITTest.cpp

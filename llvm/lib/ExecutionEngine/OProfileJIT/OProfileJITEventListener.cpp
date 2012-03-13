@@ -7,51 +7,55 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a JITEventListener object that calls into OProfile to tell
-// it about JITted functions.  For now, we only record function names and sizes,
-// but eventually we'll also record line number information.
-//
-// See http://oprofile.sourceforge.net/doc/devel/jit-interface.html for the
-// definition of the interface we're using.
+// This file defines a JITEventListener object that uses OProfileWrapper to tell
+// oprofile about JITted functions, including source line information.
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Config/config.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
+
 #define DEBUG_TYPE "oprofile-jit-event-listener"
 #include "llvm/Function.h"
-#include "llvm/Metadata.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/ExecutionEngine/JITEventListener.h"
+#include "llvm/ExecutionEngine/OProfileWrapper.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Errno.h"
-#include "llvm/Config/config.h"
-#include <stddef.h>
+#include "EventListenerCommon.h"
+
+#include <dirent.h>
+#include <fcntl.h>
+
 using namespace llvm;
-
-#if USE_OPROFILE
-
-#include <opagent.h>
+using namespace llvm::jitprofiling;
 
 namespace {
 
 class OProfileJITEventListener : public JITEventListener {
-  op_agent_t Agent;
+  OProfileWrapper& Wrapper;
+
+  void initialize();
+
 public:
-  OProfileJITEventListener();
+  OProfileJITEventListener(OProfileWrapper& LibraryWrapper)
+  : Wrapper(LibraryWrapper) {
+    initialize();
+  }
+
   ~OProfileJITEventListener();
 
   virtual void NotifyFunctionEmitted(const Function &F,
-                                     void *FnStart, size_t FnSize,
-                                     const EmittedFunctionDetails &Details);
+                                void *FnStart, size_t FnSize,
+                                const JITEvent_EmittedFunctionDetails &Details);
+
   virtual void NotifyFreeingMachineCode(void *OldPtr);
 };
 
-OProfileJITEventListener::OProfileJITEventListener()
-    : Agent(op_open_agent()) {
-  if (Agent == NULL) {
+void OProfileJITEventListener::initialize() {
+  if (!Wrapper.op_open_agent()) {
     const std::string err_str = sys::StrError();
     DEBUG(dbgs() << "Failed to connect to OProfile agent: " << err_str << "\n");
   } else {
@@ -60,8 +64,8 @@ OProfileJITEventListener::OProfileJITEventListener()
 }
 
 OProfileJITEventListener::~OProfileJITEventListener() {
-  if (Agent != NULL) {
-    if (op_close_agent(Agent) == -1) {
+  if (Wrapper.isAgentAvailable()) {
+    if (Wrapper.op_close_agent() == -1) {
       const std::string err_str = sys::StrError();
       DEBUG(dbgs() << "Failed to disconnect from OProfile agent: "
                    << err_str << "\n");
@@ -70,22 +74,6 @@ OProfileJITEventListener::~OProfileJITEventListener() {
     }
   }
 }
-
-class FilenameCache {
-  // Holds the filename of each Scope, so that we can pass a null-terminated
-  // string into oprofile.  Use an AssertingVH rather than a ValueMap because we
-  // shouldn't be modifying any MDNodes while this map is alive.
-  DenseMap<AssertingVH<MDNode>, std::string> Filenames;
-
- public:
-  const char *getFilename(MDNode *Scope) {
-    std::string &Filename = Filenames[Scope];
-    if (Filename.empty()) {
-      Filename = DIScope(Scope).getFilename();
-    }
-    return Filename.c_str();
-  }
-};
 
 static debug_line_info LineStartToOProfileFormat(
     const MachineFunction &MF, FilenameCache &Filenames,
@@ -103,9 +91,9 @@ static debug_line_info LineStartToOProfileFormat(
 // Adds the just-emitted function to the symbol table.
 void OProfileJITEventListener::NotifyFunctionEmitted(
     const Function &F, void *FnStart, size_t FnSize,
-    const EmittedFunctionDetails &Details) {
+    const JITEvent_EmittedFunctionDetails &Details) {
   assert(F.hasName() && FnStart != 0 && "Bad symbol to add");
-  if (op_write_native_code(Agent, F.getName().data(),
+  if (Wrapper.op_write_native_code(F.getName().data(),
                            reinterpret_cast<uint64_t>(FnStart),
                            FnStart, FnSize) == -1) {
     DEBUG(dbgs() << "Failed to tell OProfile about native function "
@@ -151,8 +139,8 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
     // line info's address to include the start of the function.
     LineInfo[0].vma = reinterpret_cast<uintptr_t>(FnStart);
 
-    if (op_write_debug_line_info(Agent, FnStart,
-                                 LineInfo.size(), &*LineInfo.begin()) == -1) {
+    if (Wrapper.op_write_debug_line_info(FnStart, LineInfo.size(),
+                                      &*LineInfo.begin()) == -1) {
       DEBUG(dbgs()
             << "Failed to tell OProfile about line numbers for native function "
             << F.getName() << " at ["
@@ -164,7 +152,7 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
 // Removes the being-deleted function from the symbol table.
 void OProfileJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
   assert(FnStart && "Invalid function pointer");
-  if (op_unload_native_code(Agent, reinterpret_cast<uint64_t>(FnStart)) == -1) {
+  if (Wrapper.op_unload_native_code(reinterpret_cast<uint64_t>(FnStart)) == -1) {
     DEBUG(dbgs()
           << "Failed to tell OProfile about unload of native function at "
           << FnStart << "\n");
@@ -174,19 +162,16 @@ void OProfileJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
 }  // anonymous namespace.
 
 namespace llvm {
-JITEventListener *createOProfileJITEventListener() {
-  return new OProfileJITEventListener;
-}
+JITEventListener *JITEventListener::createOProfileJITEventListener() {
+  static OwningPtr<OProfileWrapper> JITProfilingWrapper(new OProfileWrapper);
+  return new OProfileJITEventListener(*JITProfilingWrapper);
 }
 
-#else  // USE_OPROFILE
-
-namespace llvm {
-// By defining this to return NULL, we can let clients call it unconditionally,
-// even if they haven't configured with the OProfile libraries.
-JITEventListener *createOProfileJITEventListener() {
-  return NULL;
+// for testing
+JITEventListener *JITEventListener::createOProfileJITEventListener(
+                                      OProfileWrapper* TestImpl) {
+  return new OProfileJITEventListener(*TestImpl);
 }
-}  // namespace llvm
 
-#endif  // USE_OPROFILE
+} // namespace llvm
+

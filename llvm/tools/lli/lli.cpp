@@ -238,7 +238,12 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
-  EE->RegisterJITEventListener(createOProfileJITEventListener());
+  // The following functions have no effect if their respective profiling
+  // support wasn't enabled in the build configuration.
+  EE->RegisterJITEventListener(
+                JITEventListener::createOProfileJITEventListener());
+  EE->RegisterJITEventListener(
+                JITEventListener::createIntelJITEventListener());
 
   EE->DisableLazyCompilation(NoLazyCompilation);
 

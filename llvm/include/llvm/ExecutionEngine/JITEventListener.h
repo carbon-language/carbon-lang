@@ -15,6 +15,7 @@
 #ifndef LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
 #define LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
 
+#include "llvm/Config/config.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
 
@@ -23,6 +24,8 @@
 namespace llvm {
 class Function;
 class MachineFunction;
+class OProfileWrapper;
+class IntelJITEventsWrapper;
 
 /// JITEvent_EmittedFunctionDetails - Helper struct for containing information
 /// about a generated machine code function.
@@ -72,11 +75,42 @@ public:
   /// to NotifyFunctionEmitted may have been destroyed by the time of the
   /// matching NotifyFreeingMachineCode call.
   virtual void NotifyFreeingMachineCode(void *) {}
-};
 
-// This returns NULL if support isn't available.
-JITEventListener *createOProfileJITEventListener();
+#if LLVM_USE_INTEL_JITEVENTS
+  // Construct an IntelJITEventListener
+  static JITEventListener *createIntelJITEventListener();
+
+  // Construct an IntelJITEventListener with a test Intel JIT API implementation
+  static JITEventListener *createIntelJITEventListener(
+                                      IntelJITEventsWrapper* AlternativeImpl);
+#else
+  static JITEventListener *createIntelJITEventListener() { return 0; }
+
+  static JITEventListener *createIntelJITEventListener(
+                                      IntelJITEventsWrapper* AlternativeImpl) {
+    return 0;
+  }
+#endif // USE_INTEL_JITEVENTS
+
+#if LLVM_USE_OPROFILE
+  // Construct an OProfileJITEventListener
+  static JITEventListener *createOProfileJITEventListener();
+
+  // Construct an OProfileJITEventListener with a test opagent implementation
+  static JITEventListener *createOProfileJITEventListener(
+                                      OProfileWrapper* AlternativeImpl);
+#else
+
+  static JITEventListener *createOProfileJITEventListener() { return 0; }
+
+  static JITEventListener *createOProfileJITEventListener(
+                                      OProfileWrapper* AlternativeImpl) {
+    return 0;
+  }
+#endif // USE_OPROFILE
+
+};
 
 } // end namespace llvm.
 
-#endif
+#endif // defined LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H

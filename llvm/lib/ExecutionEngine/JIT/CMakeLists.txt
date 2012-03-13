@@ -7,5 +7,4 @@ add_llvm_library(LLVMJIT
   JITDwarfEmitter.cpp
   JITEmitter.cpp
   JITMemoryManager.cpp
-  OProfileJITEventListener.cpp
   )

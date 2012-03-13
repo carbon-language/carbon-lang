@@ -677,9 +677,6 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
-/* Define if we have the oprofile JIT-support library */
-#undef USE_OPROFILE
-
 /* Define if use udis86 library */
 #undef USE_UDIS86
 
@@ -715,5 +712,11 @@
 
 /* Added by Kevin -- Maximum path length */
 #cmakedefine MAXPATHLEN ${MAXPATHLEN}
+
+/* Support for Intel JIT Events API is enabled */
+#cmakedefine LLVM_USE_INTEL_JITEVENTS 1
+
+/* Support for OProfile JIT API is enabled */
+#cmakedefine LLVM_USE_OPROFILE 1
 
 #endif
