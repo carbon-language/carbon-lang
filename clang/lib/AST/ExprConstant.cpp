@@ -3743,7 +3743,7 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
       llvm::APSInt sInt(32);
       if (CountInits < NumInits) {
         if (!EvaluateInteger(E->getInit(CountInits), sInt, Info))
-          return Error(E);
+          return false;
       } else // trailing integer zero.
         sInt = Info.Ctx.MakeIntValue(0, EltTy);
       Elements.push_back(APValue(sInt));
@@ -3752,7 +3752,7 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
       llvm::APFloat f(0.0);
       if (CountInits < NumInits) {
         if (!EvaluateFloat(E->getInit(CountInits), f, Info))
-          return Error(E);
+          return false;
       } else // trailing float zero.
         f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
       Elements.push_back(APValue(f));

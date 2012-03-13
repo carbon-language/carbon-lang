@@ -1230,3 +1230,17 @@ namespace CompoundLiteral {
   // in C++, and in C we model compound literals as lvalues.
   constexpr int *p = (int*)(int[1]){0}; // expected-warning {{C99}} expected-error {{constant expression}} expected-note 2{{temporary}}
 }
+
+namespace Vector {
+  typedef int __attribute__((vector_size(16))) VI4;
+  constexpr VI4 f(int n) {
+    return VI4 { n * 3, n + 4, n - 5, n / 6 };
+  }
+  constexpr auto v1 = f(10);
+
+  typedef double __attribute__((vector_size(32))) VD4;
+  constexpr VD4 g(int n) {
+    return (VD4) { n / 2.0, n + 1.5, n - 5.4, n * 0.9 }; // expected-warning {{C99}}
+  }
+  constexpr auto v2 = g(4);
+}
