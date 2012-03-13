@@ -2411,8 +2411,10 @@ CXSaveError ASTUnit::Save(StringRef File) {
 
   serialize(Out);
   Out.close();
-  if (Out.has_error())
+  if (Out.has_error()) {
+    Out.clear_error();
     return CXSaveError_Unknown;
+  }
 
   if (llvm::sys::fs::rename(TempPath.str(), File)) {
     bool exists;
