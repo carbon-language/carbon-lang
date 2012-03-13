@@ -668,6 +668,7 @@ FormatManager::LoadLibcxxFormatters()
     .SetShowMembersOneLiner(false)
     .SetHideItemNames(false);
     
+#ifndef LLDB_DISABLE_PYTHON
     std::string code("     libcxx.stdstring_SummaryProvider(valobj,dict)");
     lldb::TypeSummaryImplSP std_string_summary_sp(new ScriptSummaryFormat(stl_summary_flags, "libcxx.stdstring_SummaryProvider",code.c_str()));
     
@@ -677,10 +678,7 @@ FormatManager::LoadLibcxxFormatters()
                                                    std_string_summary_sp);
     libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::basic_string<char, class std::__1::char_traits<char>, class std::__1::allocator<char> >"),
                                                    std_string_summary_sp);
-    
-    
-#ifndef LLDB_DISABLE_PYTHON
-    
+
     SyntheticChildren::Flags stl_synth_flags;
     stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
     
