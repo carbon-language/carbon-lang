@@ -57,6 +57,9 @@ ThreadPlanStepOut::ThreadPlanStepOut
     StackFrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
     StackFrameSP immediate_return_from_sp (m_thread.GetStackFrameAtIndex (frame_idx));
     
+    if (!return_frame_sp || !immediate_return_from_sp)
+        return; // we can't do anything here.  ValidatePlan() will return false.
+    
     m_step_out_to_id = return_frame_sp->GetStackID();
     m_immediate_step_from_id = immediate_return_from_sp->GetStackID();
     
