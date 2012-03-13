@@ -148,7 +148,7 @@ struct AsanStackTrace;
 
 // asan_rtl.cc
 void NORETURN CheckFailed(const char *cond, const char *file, int line);
-void ShowStatsAndAbort();
+void NORETURN ShowStatsAndAbort();
 
 // asan_globals.cc
 bool DescribeAddrIfGlobal(uintptr_t addr);
@@ -245,9 +245,9 @@ extern bool asan_init_is_running;
 
 enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 
-void AsanDie();
+void NORETURN AsanDie();
 void SleepForSeconds(int seconds);
-void Exit(int exitcode);
+void NORETURN Exit(int exitcode);
 int Atexit(void (*function)(void));
 
 #define CHECK(cond) do { if (!(cond)) { \

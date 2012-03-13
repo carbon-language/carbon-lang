@@ -101,7 +101,7 @@ void SleepForSeconds(int seconds) {
 }
 
 void Exit(int exitcode) {
-  return _exit(exitcode);
+  _exit(exitcode);
 }
 
 int Atexit(void (*function)(void)) {
