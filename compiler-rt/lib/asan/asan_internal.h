@@ -38,6 +38,7 @@ extern "C" void* _ReturnAddress(void);
 # define ALIAS(x)   // TODO(timurrrr): do we need this on Windows?
 # define ALIGNED(x) __declspec(align(x))
 # define NOINLINE __declspec(noinline)
+# define NORETURN __declspec(noreturn)
 
 # define ASAN_INTERFACE_ATTRIBUTE  // TODO(timurrrr): do we need this on Win?
 #else  // defined(_WIN32)
@@ -46,6 +47,7 @@ extern "C" void* _ReturnAddress(void);
 # define ALIAS(x) __attribute__((alias(x)))
 # define ALIGNED(x) __attribute__((aligned(x)))
 # define NOINLINE __attribute__((noinline))
+# define NORETURN __attribute__((noreturn))
 
 # define ASAN_INTERFACE_ATTRIBUTE __attribute__((visibility("default")))
 #endif  // defined(_WIN32)
@@ -145,7 +147,7 @@ class AsanThread;
 struct AsanStackTrace;
 
 // asan_rtl.cc
-void CheckFailed(const char *cond, const char *file, int line);
+void NORETURN CheckFailed(const char *cond, const char *file, int line);
 void ShowStatsAndAbort();
 
 // asan_globals.cc

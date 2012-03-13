@@ -15,7 +15,6 @@
 #include <windows.h>
 
 #include <dbghelp.h>
-#include <stdio.h>  // FIXME: get rid of this.
 #include <stdlib.h>
 
 #include <new>  // FIXME: temporarily needed for placement new in AsanLock.
@@ -72,17 +71,14 @@ size_t AsanWrite(int fd, const void *buf, size_t count) {
 // code unreachable on Windows. We should clean this up.
 int AsanOpenReadonly(const char* filename) {
   UNIMPLEMENTED();
-  return -1;
 }
 
 size_t AsanRead(int fd, void *buf, size_t count) {
   UNIMPLEMENTED();
-  return -1;
 }
 
 int AsanClose(int fd) {
   UNIMPLEMENTED();
-  return -1;
 }
 
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1
@@ -204,7 +200,6 @@ void AsanLock::Unlock() {
 // ---------------------- TSD ---------------- {{{1
 static bool tsd_key_inited = false;
 
-// FIXME: is __declspec enough?
 static __declspec(thread) void *fake_tsd = NULL;
 
 void AsanTSDInit(void (*destructor)(void *tsd)) {
@@ -240,7 +235,18 @@ int AtomicInc(int *a) {
 }
 
 const char* AsanGetEnv(const char* name) {
-  // FIXME: implement.
+  static char env_buffer[32767] = {};
+
+  // Note: this implementation stores the result in a static buffer so we only
+  // allow it to be called just once.
+  static bool called_once = false;
+  if (called_once)
+    UNIMPLEMENTED();
+  called_once = true;
+
+  DWORD rv = GetEnvironmentVariableA(name, env_buffer, sizeof(env_buffer));
+  if (rv > 0 && rv < sizeof(env_buffer))
+    return env_buffer;
   return NULL;
 }
 
