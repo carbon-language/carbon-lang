@@ -797,7 +797,10 @@ public:
 
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
-  ~DiagnosticBuilder() { Emit(); }
+  ~DiagnosticBuilder() {
+    if (DiagObj)
+      Emit();
+  }
 
   /// isActive - Determine whether this diagnostic is still active.
   bool isActive() const { return DiagObj != 0; }
