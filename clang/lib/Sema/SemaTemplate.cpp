@@ -643,8 +643,12 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
       T->isNullPtrType() ||
       // If T is a dependent type, we can't do the check now, so we
       // assume that it is well-formed.
-      T->isDependentType())
-    return T;
+      T->isDependentType()) {
+    // C++ [temp.param]p5: The top-level cv-qualifiers on the template-parameter
+    // are ignored when determining its type.
+    return T.getUnqualifiedType();
+  }
+
   // C++ [temp.param]p8:
   //
   //   A non-type template-parameter of type "array of T" or
