@@ -486,8 +486,7 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
     return false;
   NSAPI::NSNumberLiteralMethodKind MK = *MKOpt;
 
-  bool CallIsInteger = false, CallIsUnsigned = false;
-  bool CallIsLong = false, CallIsLongLong = false; 
+  bool CallIsUnsigned = false, CallIsLong = false, CallIsLongLong = false;
   bool CallIsFloating = false, CallIsDouble = false;
 
   switch (MK) {
@@ -504,19 +503,18 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
     CallIsUnsigned = true;
   case NSAPI::NSNumberWithInt:
   case NSAPI::NSNumberWithInteger:
-    CallIsInteger = true;
     break;
 
   case NSAPI::NSNumberWithUnsignedLong:
     CallIsUnsigned = true;
   case NSAPI::NSNumberWithLong:
-    CallIsInteger = true; CallIsLong = true;
+    CallIsLong = true;
     break;
 
   case NSAPI::NSNumberWithUnsignedLongLong:
     CallIsUnsigned = true;
   case NSAPI::NSNumberWithLongLong:
-    CallIsInteger = true; CallIsLongLong = true;
+    CallIsLongLong = true;
     break;
 
   case NSAPI::NSNumberWithDouble:
