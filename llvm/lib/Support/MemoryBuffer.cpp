@@ -336,7 +336,11 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
       // Error while reading.
       return error_code(errno, posix_category());
     }
-    assert(NumRead != 0 && "fstat reported an invalid file size.");
+    if (NumRead == 0) {
+      assert(0 && "We got inaccurate FileSize value or fstat reported an "
+                   "invalid file size.");
+      break;
+    }
     BytesLeft -= NumRead;
     BufPtr += NumRead;
   }
