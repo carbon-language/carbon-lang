@@ -334,10 +334,9 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
-    const ObjCList<ObjCProtocolDecl> &Protocols =
-      ClassDecl->getReferencedProtocols();
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-         E = Protocols.end(); I != E; ++I)
+    for (ObjCInterfaceDecl::protocol_iterator I = ClassDecl->protocol_begin(),
+                                              E = ClassDecl->protocol_end();
+           I != E; ++I)
       if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
         return MethodDecl;
     if (!noCategoryLookup) {
@@ -850,11 +849,8 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   
   ObjCInterfaceDecl *IDecl = this;
   // 1st, look up the class.
-  const ObjCList<ObjCProtocolDecl> &Protocols =
-  IDecl->getReferencedProtocols();
-
-  for (ObjCList<ObjCProtocolDecl>::iterator PI = Protocols.begin(),
-       E = Protocols.end(); PI != E; ++PI) {
+  for (ObjCInterfaceDecl::protocol_iterator
+        PI = IDecl->protocol_begin(), E = IDecl->protocol_end(); PI != E; ++PI){
     if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
       return true;
     // This is dubious and is added to be compatible with gcc.  In gcc, it is

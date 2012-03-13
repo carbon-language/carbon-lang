@@ -4708,9 +4708,8 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     return;
   
   // Add methods in protocols.
-  const ObjCList<ObjCProtocolDecl> &Protocols= IFace->getReferencedProtocols();
-  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-                                            E = Protocols.end(); 
+  for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
+                                            E = IFace->protocol_end();
        I != E; ++I)
     AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
                    CurContext, Selectors, AllowSameLength, Results, false);

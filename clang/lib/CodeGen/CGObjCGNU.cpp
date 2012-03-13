@@ -2070,9 +2070,9 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   }
   // Collect the names of referenced protocols
   SmallVector<std::string, 16> Protocols;
-  const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
-  for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
-       E = Protos.end(); I != E; ++I)
+  for (ObjCInterfaceDecl::protocol_iterator
+         I = ClassDecl->protocol_begin(),
+         E = ClassDecl->protocol_end(); I != E; ++I)
     Protocols.push_back((*I)->getNameAsString());
 
 
