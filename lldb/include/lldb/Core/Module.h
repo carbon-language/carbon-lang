@@ -984,6 +984,16 @@ public:
     bool
     SetModified (bool b);
 
+    //------------------------------------------------------------------
+    // SymbolVendor, SymbolFile and ObjectFile member objects should
+    // lock the module mutex to avoid deadlocks.
+    //------------------------------------------------------------------
+    Mutex &
+    GetMutex () const
+    {
+        return m_mutex;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Member Variables

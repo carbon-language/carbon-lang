@@ -12,7 +12,6 @@
 
 #include <vector>
 
-#include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"
 
 class ObjectFilePECOFF : 
@@ -228,7 +227,6 @@ protected:
 	typedef SectionHeaderColl::iterator			SectionHeaderCollIter;
 	typedef SectionHeaderColl::const_iterator	SectionHeaderCollConstIter;
 private:
-    mutable lldb_private::Mutex m_mutex;
     mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
     mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
 	dos_header_t		m_dos_header;

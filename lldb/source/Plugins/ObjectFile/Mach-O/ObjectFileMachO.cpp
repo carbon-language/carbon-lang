@@ -464,7 +464,6 @@ ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp,
 
 ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length) :
     ObjectFile(module_sp, file, offset, length, data_sp),
-    m_mutex (Mutex::eMutexTypeRecursive),
     m_sections_ap(),
     m_symtab_ap(),
     m_mach_segments(),
@@ -482,7 +481,6 @@ ObjectFileMachO::ObjectFileMachO (const lldb::ModuleSP &module_sp,
                                   const lldb::ProcessSP &process_sp,
                                   lldb::addr_t header_addr) :
     ObjectFile(module_sp, process_sp, header_addr, header_data_sp),
-    m_mutex (Mutex::eMutexTypeRecursive),
     m_sections_ap(),
     m_symtab_ap(),
     m_mach_segments(),
@@ -503,75 +501,79 @@ ObjectFileMachO::~ObjectFileMachO()
 bool
 ObjectFileMachO::ParseHeader ()
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    bool can_parse = false;
-    uint32_t offset = 0;
-    m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
-    // Leave magic in the original byte order
-    m_header.magic = m_data.GetU32(&offset);
-    switch (m_header.magic)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-    case HeaderMagic32:
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        bool can_parse = false;
+        uint32_t offset = 0;
         m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
-        m_data.SetAddressByteSize(4);
-        can_parse = true;
-        break;
-
-    case HeaderMagic64:
-        m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
-        m_data.SetAddressByteSize(8);
-        can_parse = true;
-        break;
-
-    case HeaderMagic32Swapped:
-        m_data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
-        m_data.SetAddressByteSize(4);
-        can_parse = true;
-        break;
-
-    case HeaderMagic64Swapped:
-        m_data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
-        m_data.SetAddressByteSize(8);
-        can_parse = true;
-        break;
-
-    default:
-        break;
-    }
-
-    if (can_parse)
-    {
-        m_data.GetU32(&offset, &m_header.cputype, 6);
-
-        ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
-        
-        if (SetModulesArchitecture (mach_arch))
+        // Leave magic in the original byte order
+        m_header.magic = m_data.GetU32(&offset);
+        switch (m_header.magic)
         {
-            const size_t header_and_lc_size = m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic);
-            if (m_data.GetByteSize() < header_and_lc_size)
-            {
-                DataBufferSP data_sp;
-                ProcessSP process_sp (m_process_wp.lock());
-                if (process_sp)
-                {
-                    data_sp = ReadMemory (process_sp, m_offset, header_and_lc_size);
-                }
-                else
-                {
-                    // Read in all only the load command data from the file on disk
-                    data_sp = m_file.ReadFileContents(m_offset, header_and_lc_size);
-                    if (data_sp->GetByteSize() != header_and_lc_size)
-                        return false;
-                }
-                if (data_sp)
-                    m_data.SetData (data_sp);
-            }
+        case HeaderMagic32:
+            m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
+            m_data.SetAddressByteSize(4);
+            can_parse = true;
+            break;
+
+        case HeaderMagic64:
+            m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
+            m_data.SetAddressByteSize(8);
+            can_parse = true;
+            break;
+
+        case HeaderMagic32Swapped:
+            m_data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
+            m_data.SetAddressByteSize(4);
+            can_parse = true;
+            break;
+
+        case HeaderMagic64Swapped:
+            m_data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
+            m_data.SetAddressByteSize(8);
+            can_parse = true;
+            break;
+
+        default:
+            break;
         }
-        return true;
-    }
-    else
-    {
-        memset(&m_header, 0, sizeof(struct mach_header));
+
+        if (can_parse)
+        {
+            m_data.GetU32(&offset, &m_header.cputype, 6);
+
+            ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+            
+            if (SetModulesArchitecture (mach_arch))
+            {
+                const size_t header_and_lc_size = m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic);
+                if (m_data.GetByteSize() < header_and_lc_size)
+                {
+                    DataBufferSP data_sp;
+                    ProcessSP process_sp (m_process_wp.lock());
+                    if (process_sp)
+                    {
+                        data_sp = ReadMemory (process_sp, m_offset, header_and_lc_size);
+                    }
+                    else
+                    {
+                        // Read in all only the load command data from the file on disk
+                        data_sp = m_file.ReadFileContents(m_offset, header_and_lc_size);
+                        if (data_sp->GetByteSize() != header_and_lc_size)
+                            return false;
+                    }
+                    if (data_sp)
+                        m_data.SetData (data_sp);
+                }
+            }
+            return true;
+        }
+        else
+        {
+            memset(&m_header, 0, sizeof(struct mach_header));
+        }
     }
     return false;
 }
@@ -580,7 +582,6 @@ ObjectFileMachO::ParseHeader ()
 ByteOrder
 ObjectFileMachO::GetByteOrder () const
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
     return m_data.GetByteOrder ();
 }
 
@@ -593,7 +594,6 @@ ObjectFileMachO::IsExecutable() const
 size_t
 ObjectFileMachO::GetAddressByteSize () const
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
     return m_data.GetAddressByteSize ();
 }
 
@@ -710,13 +710,17 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
 Symtab *
 ObjectFileMachO::GetSymtab()
 {
-    lldb_private::Mutex::Locker symfile_locker(m_mutex);
-    if (m_symtab_ap.get() == NULL)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        m_symtab_ap.reset(new Symtab(this));
-        Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
-        ParseSymtab (true);
-        m_symtab_ap->Finalize ();
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_symtab_ap.get() == NULL)
+        {
+            m_symtab_ap.reset(new Symtab(this));
+            Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
+            ParseSymtab (true);
+            m_symtab_ap->Finalize ();
+        }
     }
     return m_symtab_ap.get();
 }
@@ -725,11 +729,15 @@ ObjectFileMachO::GetSymtab()
 SectionList *
 ObjectFileMachO::GetSectionList()
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    if (m_sections_ap.get() == NULL)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        m_sections_ap.reset(new SectionList());
-        ParseSections();
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_sections_ap.get() == NULL)
+        {
+            m_sections_ap.reset(new SectionList());
+            ParseSections();
+        }
     }
     return m_sections_ap.get();
 }
@@ -2172,50 +2180,58 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 void
 ObjectFileMachO::Dump (Stream *s)
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    s->Printf("%p: ", this);
-    s->Indent();
-    if (m_header.magic == HeaderMagic64 || m_header.magic == HeaderMagic64Swapped)
-        s->PutCString("ObjectFileMachO64");
-    else
-        s->PutCString("ObjectFileMachO32");
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
+    {
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        s->Printf("%p: ", this);
+        s->Indent();
+        if (m_header.magic == HeaderMagic64 || m_header.magic == HeaderMagic64Swapped)
+            s->PutCString("ObjectFileMachO64");
+        else
+            s->PutCString("ObjectFileMachO32");
 
-    ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+        ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
 
-    *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
+        *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
 
-    if (m_sections_ap.get())
-        m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
+        if (m_sections_ap.get())
+            m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
 
-    if (m_symtab_ap.get())
-        m_symtab_ap->Dump(s, NULL, eSortOrderNone);
+        if (m_symtab_ap.get())
+            m_symtab_ap->Dump(s, NULL, eSortOrderNone);
+    }
 }
 
 
 bool
 ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    struct uuid_command load_cmd;
-    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
-    uint32_t i;
-    for (i=0; i<m_header.ncmds; ++i)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        const uint32_t cmd_offset = offset;
-        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
-            break;
-
-        if (load_cmd.cmd == LoadCommandUUID)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        struct uuid_command load_cmd;
+        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        uint32_t i;
+        for (i=0; i<m_header.ncmds; ++i)
         {
-            const uint8_t *uuid_bytes = m_data.PeekData(offset, 16);
-            if (uuid_bytes)
+            const uint32_t cmd_offset = offset;
+            if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+                break;
+
+            if (load_cmd.cmd == LoadCommandUUID)
             {
-                uuid->SetBytes (uuid_bytes);
-                return true;
+                const uint8_t *uuid_bytes = m_data.PeekData(offset, 16);
+                if (uuid_bytes)
+                {
+                    uuid->SetBytes (uuid_bytes);
+                    return true;
+                }
+                return false;
             }
-            return false;
+            offset = cmd_offset + load_cmd.cmdsize;
         }
-        offset = cmd_offset + load_cmd.cmdsize;
     }
     return false;
 }
@@ -2224,45 +2240,49 @@ ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
 uint32_t
 ObjectFileMachO::GetDependentModules (FileSpecList& files)
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    struct load_command load_cmd;
-    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t count = 0;
-    const bool resolve_path = false; // Don't resolve the dependend file paths since they may not reside on this system
-    uint32_t i;
-    for (i=0; i<m_header.ncmds; ++i)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        const uint32_t cmd_offset = offset;
-        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
-            break;
-
-        switch (load_cmd.cmd)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        struct load_command load_cmd;
+        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        const bool resolve_path = false; // Don't resolve the dependend file paths since they may not reside on this system
+        uint32_t i;
+        for (i=0; i<m_header.ncmds; ++i)
         {
-        case LoadCommandDylibLoad:
-        case LoadCommandDylibLoadWeak:
-        case LoadCommandDylibReexport:
-        case LoadCommandDynamicLinkerLoad:
-        case LoadCommandFixedVMShlibLoad:
-        case LoadCommandDylibLoadUpward:
-            {
-                uint32_t name_offset = cmd_offset + m_data.GetU32(&offset);
-                const char *path = m_data.PeekCStr(name_offset);
-                // Skip any path that starts with '@' since these are usually:
-                // @executable_path/.../file
-                // @rpath/.../file
-                if (path && path[0] != '@')
-                {
-                    FileSpec file_spec(path, resolve_path);
-                    if (files.AppendIfUnique(file_spec))
-                        count++;
-                }
-            }
-            break;
+            const uint32_t cmd_offset = offset;
+            if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+                break;
 
-        default:
-            break;
+            switch (load_cmd.cmd)
+            {
+            case LoadCommandDylibLoad:
+            case LoadCommandDylibLoadWeak:
+            case LoadCommandDylibReexport:
+            case LoadCommandDynamicLinkerLoad:
+            case LoadCommandFixedVMShlibLoad:
+            case LoadCommandDylibLoadUpward:
+                {
+                    uint32_t name_offset = cmd_offset + m_data.GetU32(&offset);
+                    const char *path = m_data.PeekCStr(name_offset);
+                    // Skip any path that starts with '@' since these are usually:
+                    // @executable_path/.../file
+                    // @rpath/.../file
+                    if (path && path[0] != '@')
+                    {
+                        FileSpec file_spec(path, resolve_path);
+                        if (files.AppendIfUnique(file_spec))
+                            count++;
+                    }
+                }
+                break;
+
+            default:
+                break;
+            }
+            offset = cmd_offset + load_cmd.cmdsize;
         }
-        offset = cmd_offset + load_cmd.cmdsize;
     }
     return count;
 }
@@ -2294,116 +2314,120 @@ ObjectFileMachO::GetEntryPointAddress ()
     //
     //
 
-    lldb_private::Mutex::Locker locker(m_mutex);
-    struct load_command load_cmd;
-    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
-    uint32_t i;
-    lldb::addr_t start_address = LLDB_INVALID_ADDRESS;
-    bool done = false;
-    
-    for (i=0; i<m_header.ncmds; ++i)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        const uint32_t cmd_offset = offset;
-        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
-            break;
-
-        switch (load_cmd.cmd)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        struct load_command load_cmd;
+        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        uint32_t i;
+        lldb::addr_t start_address = LLDB_INVALID_ADDRESS;
+        bool done = false;
+        
+        for (i=0; i<m_header.ncmds; ++i)
         {
-        case LoadCommandUnixThread:
-        case LoadCommandThread:
+            const uint32_t cmd_offset = offset;
+            if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+                break;
+
+            switch (load_cmd.cmd)
             {
-                while (offset < cmd_offset + load_cmd.cmdsize)
+            case LoadCommandUnixThread:
+            case LoadCommandThread:
                 {
-                    uint32_t flavor = m_data.GetU32(&offset);
-                    uint32_t count = m_data.GetU32(&offset);
-                    if (count == 0)
+                    while (offset < cmd_offset + load_cmd.cmdsize)
                     {
-                        // We've gotten off somehow, log and exit;
-                        return m_entry_point_address;
-                    }
-                    
-                    switch (m_header.cputype)
-                    {
-                    case llvm::MachO::CPUTypeARM:
-                       if (flavor == 1) // ARM_THREAD_STATE from mach/arm/thread_status.h
-                       {
-                           offset += 60;  // This is the offset of pc in the GPR thread state data structure.
-                           start_address = m_data.GetU32(&offset);
-                           done = true;
+                        uint32_t flavor = m_data.GetU32(&offset);
+                        uint32_t count = m_data.GetU32(&offset);
+                        if (count == 0)
+                        {
+                            // We've gotten off somehow, log and exit;
+                            return m_entry_point_address;
                         }
-                    break;
-                    case llvm::MachO::CPUTypeI386:
-                       if (flavor == 1) // x86_THREAD_STATE32 from mach/i386/thread_status.h
-                       {
-                           offset += 40;  // This is the offset of eip in the GPR thread state data structure.
-                           start_address = m_data.GetU32(&offset);
-                           done = true;
-                        }
-                    break;
-                    case llvm::MachO::CPUTypeX86_64:
-                       if (flavor == 4) // x86_THREAD_STATE64 from mach/i386/thread_status.h
-                       {
-                           offset += 16 * 8;  // This is the offset of rip in the GPR thread state data structure.
-                           start_address = m_data.GetU64(&offset);
-                           done = true;
-                        }
-                    break;
-                    default:
-                        return m_entry_point_address;
-                    }
-                    // Haven't found the GPR flavor yet, skip over the data for this flavor:
-                    if (done)
+                        
+                        switch (m_header.cputype)
+                        {
+                        case llvm::MachO::CPUTypeARM:
+                           if (flavor == 1) // ARM_THREAD_STATE from mach/arm/thread_status.h
+                           {
+                               offset += 60;  // This is the offset of pc in the GPR thread state data structure.
+                               start_address = m_data.GetU32(&offset);
+                               done = true;
+                            }
                         break;
-                    offset += count * 4;
+                        case llvm::MachO::CPUTypeI386:
+                           if (flavor == 1) // x86_THREAD_STATE32 from mach/i386/thread_status.h
+                           {
+                               offset += 40;  // This is the offset of eip in the GPR thread state data structure.
+                               start_address = m_data.GetU32(&offset);
+                               done = true;
+                            }
+                        break;
+                        case llvm::MachO::CPUTypeX86_64:
+                           if (flavor == 4) // x86_THREAD_STATE64 from mach/i386/thread_status.h
+                           {
+                               offset += 16 * 8;  // This is the offset of rip in the GPR thread state data structure.
+                               start_address = m_data.GetU64(&offset);
+                               done = true;
+                            }
+                        break;
+                        default:
+                            return m_entry_point_address;
+                        }
+                        // Haven't found the GPR flavor yet, skip over the data for this flavor:
+                        if (done)
+                            break;
+                        offset += count * 4;
+                    }
                 }
-            }
-            break;
-        case LoadCommandMain:
-            {
-                ConstString text_segment_name ("__TEXT");
-                uint64_t entryoffset = m_data.GetU64(&offset);
-                SectionSP text_segment_sp = GetSectionList()->FindSectionByName(text_segment_name);
-                if (text_segment_sp)
+                break;
+            case LoadCommandMain:
                 {
-                    done = true;
-                    start_address = text_segment_sp->GetFileAddress() + entryoffset;
+                    ConstString text_segment_name ("__TEXT");
+                    uint64_t entryoffset = m_data.GetU64(&offset);
+                    SectionSP text_segment_sp = GetSectionList()->FindSectionByName(text_segment_name);
+                    if (text_segment_sp)
+                    {
+                        done = true;
+                        start_address = text_segment_sp->GetFileAddress() + entryoffset;
+                    }
                 }
+
+            default:
+                break;
             }
+            if (done)
+                break;
 
-        default:
-            break;
+            // Go to the next load command:
+            offset = cmd_offset + load_cmd.cmdsize;
         }
-        if (done)
-            break;
-
-        // Go to the next load command:
-        offset = cmd_offset + load_cmd.cmdsize;
-    }
-    
-    if (start_address != LLDB_INVALID_ADDRESS)
-    {
-        // We got the start address from the load commands, so now resolve that address in the sections 
-        // of this ObjectFile:
-        if (!m_entry_point_address.ResolveAddressUsingFileSections (start_address, GetSectionList()))
-        {
-            m_entry_point_address.Clear();
-        }
-    }
-    else
-    {
-        // We couldn't read the UnixThread load command - maybe it wasn't there.  As a fallback look for the
-        // "start" symbol in the main executable.
         
-        ModuleSP module_sp (GetModule());
-        
-        if (module_sp)
+        if (start_address != LLDB_INVALID_ADDRESS)
         {
-            SymbolContextList contexts;
-            SymbolContext context;
-            if (module_sp->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
+            // We got the start address from the load commands, so now resolve that address in the sections 
+            // of this ObjectFile:
+            if (!m_entry_point_address.ResolveAddressUsingFileSections (start_address, GetSectionList()))
             {
-                if (contexts.GetContextAtIndex(0, context))
-                    m_entry_point_address = context.symbol->GetAddress();
+                m_entry_point_address.Clear();
+            }
+        }
+        else
+        {
+            // We couldn't read the UnixThread load command - maybe it wasn't there.  As a fallback look for the
+            // "start" symbol in the main executable.
+            
+            ModuleSP module_sp (GetModule());
+            
+            if (module_sp)
+            {
+                SymbolContextList contexts;
+                SymbolContext context;
+                if (module_sp->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
+                {
+                    if (contexts.GetContextAtIndex(0, context))
+                        m_entry_point_address = context.symbol->GetAddress();
+                }
             }
         }
     }
@@ -2432,26 +2456,30 @@ ObjectFileMachO::GetHeaderAddress ()
 uint32_t
 ObjectFileMachO::GetNumThreadContexts ()
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    if (!m_thread_context_offsets_valid)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        m_thread_context_offsets_valid = true;
-        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
-        FileRangeArray::Entry file_range;
-        thread_command thread_cmd;
-        for (uint32_t i=0; i<m_header.ncmds; ++i)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (!m_thread_context_offsets_valid)
         {
-            const uint32_t cmd_offset = offset;
-            if (m_data.GetU32(&offset, &thread_cmd, 2) == NULL)
-                break;
-            
-            if (thread_cmd.cmd == LoadCommandThread)
+            m_thread_context_offsets_valid = true;
+            uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+            FileRangeArray::Entry file_range;
+            thread_command thread_cmd;
+            for (uint32_t i=0; i<m_header.ncmds; ++i)
             {
-                file_range.SetRangeBase (offset);
-                file_range.SetByteSize (thread_cmd.cmdsize - 8);
-                m_thread_context_offsets.Append (file_range);
+                const uint32_t cmd_offset = offset;
+                if (m_data.GetU32(&offset, &thread_cmd, 2) == NULL)
+                    break;
+                
+                if (thread_cmd.cmd == LoadCommandThread)
+                {
+                    file_range.SetRangeBase (offset);
+                    file_range.SetByteSize (thread_cmd.cmdsize - 8);
+                    m_thread_context_offsets.Append (file_range);
+                }
+                offset = cmd_offset + thread_cmd.cmdsize;
             }
-            offset = cmd_offset + thread_cmd.cmdsize;
         }
     }
     return m_thread_context_offsets.GetSize();
@@ -2460,30 +2488,35 @@ ObjectFileMachO::GetNumThreadContexts ()
 lldb::RegisterContextSP
 ObjectFileMachO::GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &thread)
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    if (!m_thread_context_offsets_valid)
-        GetNumThreadContexts ();
-
     lldb::RegisterContextSP reg_ctx_sp;
-    const FileRangeArray::Entry *thread_context_file_range = m_thread_context_offsets.GetEntryAtIndex (idx);
-    
-    DataExtractor data (m_data, 
-                        thread_context_file_range->GetRangeBase(), 
-                        thread_context_file_range->GetByteSize());
 
-    switch (m_header.cputype)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        case llvm::MachO::CPUTypeARM:
-            reg_ctx_sp.reset (new RegisterContextDarwin_arm_Mach (thread, data));
-            break;
-            
-        case llvm::MachO::CPUTypeI386:
-            reg_ctx_sp.reset (new RegisterContextDarwin_i386_Mach (thread, data));
-            break;
-            
-        case llvm::MachO::CPUTypeX86_64:
-            reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
-            break;
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (!m_thread_context_offsets_valid)
+            GetNumThreadContexts ();
+
+        const FileRangeArray::Entry *thread_context_file_range = m_thread_context_offsets.GetEntryAtIndex (idx);
+        
+        DataExtractor data (m_data, 
+                            thread_context_file_range->GetRangeBase(), 
+                            thread_context_file_range->GetByteSize());
+
+        switch (m_header.cputype)
+        {
+            case llvm::MachO::CPUTypeARM:
+                reg_ctx_sp.reset (new RegisterContextDarwin_arm_Mach (thread, data));
+                break;
+                
+            case llvm::MachO::CPUTypeI386:
+                reg_ctx_sp.reset (new RegisterContextDarwin_i386_Mach (thread, data));
+                break;
+                
+            case llvm::MachO::CPUTypeX86_64:
+                reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
+                break;
+        }
     }
     return reg_ctx_sp;
 }
@@ -2588,50 +2621,54 @@ ObjectFileMachO::CalculateStrata()
 uint32_t
 ObjectFileMachO::GetVersion (uint32_t *versions, uint32_t num_versions)
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    struct dylib_command load_cmd;
-    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
-    uint32_t version_cmd = 0;
-    uint64_t version = 0;
-    uint32_t i;
-    for (i=0; i<m_header.ncmds; ++i)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        const uint32_t cmd_offset = offset;
-        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
-            break;
-        
-        if (load_cmd.cmd == LoadCommandDylibIdent)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        struct dylib_command load_cmd;
+        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        uint32_t version_cmd = 0;
+        uint64_t version = 0;
+        uint32_t i;
+        for (i=0; i<m_header.ncmds; ++i)
         {
-            if (version_cmd == 0)
+            const uint32_t cmd_offset = offset;
+            if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+                break;
+            
+            if (load_cmd.cmd == LoadCommandDylibIdent)
             {
-                version_cmd = load_cmd.cmd;
-                if (m_data.GetU32(&offset, &load_cmd.dylib, 4) == NULL)
-                    break;
-                version = load_cmd.dylib.current_version;
+                if (version_cmd == 0)
+                {
+                    version_cmd = load_cmd.cmd;
+                    if (m_data.GetU32(&offset, &load_cmd.dylib, 4) == NULL)
+                        break;
+                    version = load_cmd.dylib.current_version;
+                }
+                break; // Break for now unless there is another more complete version 
+                       // number load command in the future.
             }
-            break; // Break for now unless there is another more complete version 
-                   // number load command in the future.
+            offset = cmd_offset + load_cmd.cmdsize;
         }
-        offset = cmd_offset + load_cmd.cmdsize;
-    }
-    
-    if (version_cmd == LoadCommandDylibIdent)
-    {
-        if (versions != NULL && num_versions > 0)
+        
+        if (version_cmd == LoadCommandDylibIdent)
         {
-            if (num_versions > 0)
-                versions[0] = (version & 0xFFFF0000ull) >> 16;
-            if (num_versions > 1)
-                versions[1] = (version & 0x0000FF00ull) >> 8;
-            if (num_versions > 2)
-                versions[2] = (version & 0x000000FFull);
-            // Fill in an remaining version numbers with invalid values
-            for (i=3; i<num_versions; ++i)
-                versions[i] = UINT32_MAX;
+            if (versions != NULL && num_versions > 0)
+            {
+                if (num_versions > 0)
+                    versions[0] = (version & 0xFFFF0000ull) >> 16;
+                if (num_versions > 1)
+                    versions[1] = (version & 0x0000FF00ull) >> 8;
+                if (num_versions > 2)
+                    versions[2] = (version & 0x000000FFull);
+                // Fill in an remaining version numbers with invalid values
+                for (i=3; i<num_versions; ++i)
+                    versions[i] = UINT32_MAX;
+            }
+            // The LC_ID_DYLIB load command has a version with 3 version numbers
+            // in it, so always return 3
+            return 3;
         }
-        // The LC_ID_DYLIB load command has a version with 3 version numbers
-        // in it, so always return 3
-        return 3;
     }
     return false;
 }
@@ -2639,18 +2676,22 @@ ObjectFileMachO::GetVersion (uint32_t *versions, uint32_t num_versions)
 bool
 ObjectFileMachO::GetArchitecture (ArchSpec &arch)
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
-    arch.SetArchitecture (eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
-    
-    // Files with type MH_PRELOAD are currently used in cases where the image
-    // debugs at the addresses in the file itself. Below we set the OS to 
-    // unknown to make sure we use the DynamicLoaderStatic()...
-    if (m_header.filetype == HeaderFileTypePreloadedExecutable)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        arch.GetTriple().setOS (llvm::Triple::UnknownOS);
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        arch.SetArchitecture (eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+    
+        // Files with type MH_PRELOAD are currently used in cases where the image
+        // debugs at the addresses in the file itself. Below we set the OS to 
+        // unknown to make sure we use the DynamicLoaderStatic()...
+        if (m_header.filetype == HeaderFileTypePreloadedExecutable)
+        {
+            arch.GetTriple().setOS (llvm::Triple::UnknownOS);
+        }
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 

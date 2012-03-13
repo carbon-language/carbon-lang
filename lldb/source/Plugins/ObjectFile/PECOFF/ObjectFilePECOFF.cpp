@@ -181,7 +181,6 @@ ObjectFilePECOFF::ObjectFilePECOFF (const lldb::ModuleSP &module_sp,
                                     addr_t offset, 
                                     addr_t length) :
     ObjectFile (module_sp, file, offset, length, dataSP),
-    m_mutex (Mutex::eMutexTypeRecursive),
     m_dos_header (),
     m_coff_header (),
     m_coff_header_opt (),
@@ -201,26 +200,30 @@ ObjectFilePECOFF::~ObjectFilePECOFF()
 bool
 ObjectFilePECOFF::ParseHeader ()
 {
-    Mutex::Locker locker(m_mutex);
-    m_sect_headers.clear();
-    m_data.SetByteOrder (eByteOrderLittle);
-    uint32_t offset = 0;
-    
-    if (ParseDOSHeader())
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        offset = m_dos_header.e_lfanew;
-        uint32_t pe_signature = m_data.GetU32 (&offset);
-        if (pe_signature != IMAGE_NT_SIGNATURE)
-            return false;
-        if (ParseCOFFHeader(&offset))
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        m_sect_headers.clear();
+        m_data.SetByteOrder (eByteOrderLittle);
+        uint32_t offset = 0;
+        
+        if (ParseDOSHeader())
         {
-            if (m_coff_header.hdrsize > 0)
-                ParseCOFFOptionalHeader(&offset);
-            ParseSectionHeaders (offset);
+            offset = m_dos_header.e_lfanew;
+            uint32_t pe_signature = m_data.GetU32 (&offset);
+            if (pe_signature != IMAGE_NT_SIGNATURE)
+                return false;
+            if (ParseCOFFHeader(&offset))
+            {
+                if (m_coff_header.hdrsize > 0)
+                    ParseCOFFOptionalHeader(&offset);
+                ParseSectionHeaders (offset);
+            }
+            StreamFile s(stdout, false);// REMOVE THIS LINE!!!
+            Dump(&s);// REMOVE THIS LINE!!!
+            return true;
         }
-        StreamFile s(stdout, false);// REMOVE THIS LINE!!!
-        Dump(&s);// REMOVE THIS LINE!!!
-        return true;
     }
     return false;
 }
@@ -482,69 +485,73 @@ ObjectFilePECOFF::GetSectionName(std::string& sect_name, const section_header_t&
 Symtab *
 ObjectFilePECOFF::GetSymtab()
 {
-    Mutex::Locker symfile_locker(m_mutex);
-    if (m_symtab_ap.get() == NULL)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        SectionList *sect_list = GetSectionList();
-        m_symtab_ap.reset(new Symtab(this));
-        Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
-        
-        const uint32_t num_syms = m_coff_header.nsyms;
-
-        if (num_syms > 0 && m_coff_header.symoff > 0)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_symtab_ap.get() == NULL)
         {
-            const uint32_t symbol_size = sizeof(section_header_t);
-            const uint32_t addr_byte_size = GetAddressByteSize ();
-            const size_t symbol_data_size = num_syms * symbol_size; 
-            // Include the 4 bytes string table size at the end of the symbols
-            DataBufferSP symtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff, symbol_data_size + 4));
-            DataExtractor symtab_data (symtab_data_sp, GetByteOrder(), addr_byte_size);
-            uint32_t offset = symbol_data_size;
-            const uint32_t strtab_size = symtab_data.GetU32 (&offset);
-            DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff + symbol_data_size + 4, strtab_size));
-            DataExtractor strtab_data (strtab_data_sp, GetByteOrder(), addr_byte_size);
-
-            offset = 0;
-            std::string symbol_name;
-            Symbol *symbols = m_symtab_ap->Resize (num_syms);
-            for (uint32_t i=0; i<num_syms; ++i)
-            {
-                coff_symbol_t symbol;
-                const uint32_t symbol_offset = offset;
-                const char *symbol_name_cstr = NULL;
-                // If the first 4 bytes of the symbol string are zero, then we
-                // it is followed by a 4 byte string table offset. Else these
-                // 8 bytes contain the symbol name
-                if (symtab_data.GetU32 (&offset) == 0)
-                {
-                    // Long string that doesn't fit into the symbol table name,
-                    // so now we must read the 4 byte string table offset
-                    uint32_t strtab_offset = symtab_data.GetU32 (&offset);
-                    symbol_name_cstr = strtab_data.PeekCStr (strtab_offset);
-                    symbol_name.assign (symbol_name_cstr);
-                }
-                else
-                {
-                    // Short string that fits into the symbol table name which is 8 bytes
-                    offset += sizeof(symbol.name) - 4; // Skip remaining 
-                    symbol_name_cstr = symtab_data.PeekCStr (symbol_offset);
-                    if (symbol_name_cstr == NULL)
-                        break;
-                    symbol_name.assign (symbol_name_cstr, sizeof(symbol.name));
-                }
-                symbol.value    = symtab_data.GetU32 (&offset);
-                symbol.sect     = symtab_data.GetU16 (&offset);
-                symbol.type     = symtab_data.GetU16 (&offset);
-                symbol.storage  = symtab_data.GetU8  (&offset);
-                symbol.naux     = symtab_data.GetU8  (&offset);		
-                Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
-                symbols[i].GetMangled ().SetValue (symbol_name.c_str(), symbol_name[0]=='_' && symbol_name[1] == 'Z');
-                symbols[i].GetAddress() = symbol_addr;
-
-                if (symbol.naux > 0)
-                    i += symbol.naux;
-            }
+            SectionList *sect_list = GetSectionList();
+            m_symtab_ap.reset(new Symtab(this));
+            Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
             
+            const uint32_t num_syms = m_coff_header.nsyms;
+
+            if (num_syms > 0 && m_coff_header.symoff > 0)
+            {
+                const uint32_t symbol_size = sizeof(section_header_t);
+                const uint32_t addr_byte_size = GetAddressByteSize ();
+                const size_t symbol_data_size = num_syms * symbol_size; 
+                // Include the 4 bytes string table size at the end of the symbols
+                DataBufferSP symtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff, symbol_data_size + 4));
+                DataExtractor symtab_data (symtab_data_sp, GetByteOrder(), addr_byte_size);
+                uint32_t offset = symbol_data_size;
+                const uint32_t strtab_size = symtab_data.GetU32 (&offset);
+                DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff + symbol_data_size + 4, strtab_size));
+                DataExtractor strtab_data (strtab_data_sp, GetByteOrder(), addr_byte_size);
+
+                offset = 0;
+                std::string symbol_name;
+                Symbol *symbols = m_symtab_ap->Resize (num_syms);
+                for (uint32_t i=0; i<num_syms; ++i)
+                {
+                    coff_symbol_t symbol;
+                    const uint32_t symbol_offset = offset;
+                    const char *symbol_name_cstr = NULL;
+                    // If the first 4 bytes of the symbol string are zero, then we
+                    // it is followed by a 4 byte string table offset. Else these
+                    // 8 bytes contain the symbol name
+                    if (symtab_data.GetU32 (&offset) == 0)
+                    {
+                        // Long string that doesn't fit into the symbol table name,
+                        // so now we must read the 4 byte string table offset
+                        uint32_t strtab_offset = symtab_data.GetU32 (&offset);
+                        symbol_name_cstr = strtab_data.PeekCStr (strtab_offset);
+                        symbol_name.assign (symbol_name_cstr);
+                    }
+                    else
+                    {
+                        // Short string that fits into the symbol table name which is 8 bytes
+                        offset += sizeof(symbol.name) - 4; // Skip remaining 
+                        symbol_name_cstr = symtab_data.PeekCStr (symbol_offset);
+                        if (symbol_name_cstr == NULL)
+                            break;
+                        symbol_name.assign (symbol_name_cstr, sizeof(symbol.name));
+                    }
+                    symbol.value    = symtab_data.GetU32 (&offset);
+                    symbol.sect     = symtab_data.GetU16 (&offset);
+                    symbol.type     = symtab_data.GetU16 (&offset);
+                    symbol.storage  = symtab_data.GetU8  (&offset);
+                    symbol.naux     = symtab_data.GetU8  (&offset);		
+                    Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
+                    symbols[i].GetMangled ().SetValue (symbol_name.c_str(), symbol_name[0]=='_' && symbol_name[1] == 'Z');
+                    symbols[i].GetAddress() = symbol_addr;
+
+                    if (symbol.naux > 0)
+                        i += symbol.naux;
+                }
+                
+            }
         }
     }
     return m_symtab_ap.get();
@@ -554,89 +561,93 @@ ObjectFilePECOFF::GetSymtab()
 SectionList *
 ObjectFilePECOFF::GetSectionList()
 {
-    Mutex::Locker symfile_locker(m_mutex);
-    if (m_sections_ap.get() == NULL)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        m_sections_ap.reset(new SectionList());
-        const uint32_t nsects = m_sect_headers.size();
-        ModuleSP module_sp (GetModule());
-        for (uint32_t idx = 0; idx<nsects; ++idx)
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_sections_ap.get() == NULL)
         {
-            std::string sect_name;
-            GetSectionName (sect_name, m_sect_headers[idx]);
-            ConstString const_sect_name (sect_name.c_str());
-            static ConstString g_code_sect_name (".code");
-            static ConstString g_CODE_sect_name ("CODE");
-            static ConstString g_data_sect_name (".data");
-            static ConstString g_DATA_sect_name ("DATA");
-            static ConstString g_bss_sect_name (".bss");
-            static ConstString g_BSS_sect_name ("BSS");
-            static ConstString g_debug_sect_name (".debug");
-            static ConstString g_reloc_sect_name (".reloc");
-            static ConstString g_stab_sect_name (".stab");
-            static ConstString g_stabstr_sect_name (".stabstr");
-            SectionType section_type = eSectionTypeOther;
-            if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE && 
-                ((const_sect_name == g_code_sect_name) || (const_sect_name == g_CODE_sect_name)))
+            m_sections_ap.reset(new SectionList());
+            const uint32_t nsects = m_sect_headers.size();
+            ModuleSP module_sp (GetModule());
+            for (uint32_t idx = 0; idx<nsects; ++idx)
             {
-                section_type = eSectionTypeCode;
-            }
-            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_INITIALIZED_DATA && 
-                     ((const_sect_name == g_data_sect_name) || (const_sect_name == g_DATA_sect_name)))
-            {
-                section_type = eSectionTypeData;
-            }
-            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA && 
-                     ((const_sect_name == g_bss_sect_name) || (const_sect_name == g_BSS_sect_name)))
-            {
-                if (m_sect_headers[idx].size == 0)
-                    section_type = eSectionTypeZeroFill;
-                else
+                std::string sect_name;
+                GetSectionName (sect_name, m_sect_headers[idx]);
+                ConstString const_sect_name (sect_name.c_str());
+                static ConstString g_code_sect_name (".code");
+                static ConstString g_CODE_sect_name ("CODE");
+                static ConstString g_data_sect_name (".data");
+                static ConstString g_DATA_sect_name ("DATA");
+                static ConstString g_bss_sect_name (".bss");
+                static ConstString g_BSS_sect_name ("BSS");
+                static ConstString g_debug_sect_name (".debug");
+                static ConstString g_reloc_sect_name (".reloc");
+                static ConstString g_stab_sect_name (".stab");
+                static ConstString g_stabstr_sect_name (".stabstr");
+                SectionType section_type = eSectionTypeOther;
+                if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE && 
+                    ((const_sect_name == g_code_sect_name) || (const_sect_name == g_CODE_sect_name)))
+                {
+                    section_type = eSectionTypeCode;
+                }
+                else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_INITIALIZED_DATA && 
+                         ((const_sect_name == g_data_sect_name) || (const_sect_name == g_DATA_sect_name)))
+                {
                     section_type = eSectionTypeData;
-            }
-            else if (const_sect_name == g_debug_sect_name)
-            {
-                section_type = eSectionTypeDebug;
-            }
-            else if (const_sect_name == g_stabstr_sect_name)
-            {
-                section_type = eSectionTypeDataCString;
-            }
-            else if (const_sect_name == g_reloc_sect_name)
-            {
-                section_type = eSectionTypeOther;
-            }
-            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE)
-            {
-                section_type = eSectionTypeCode;
-            }
-            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_INITIALIZED_DATA)
-            {
-                section_type = eSectionTypeData;
-            }
-            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-            {
-                if (m_sect_headers[idx].size == 0)
-                    section_type = eSectionTypeZeroFill;
-                else
+                }
+                else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA && 
+                         ((const_sect_name == g_bss_sect_name) || (const_sect_name == g_BSS_sect_name)))
+                {
+                    if (m_sect_headers[idx].size == 0)
+                        section_type = eSectionTypeZeroFill;
+                    else
+                        section_type = eSectionTypeData;
+                }
+                else if (const_sect_name == g_debug_sect_name)
+                {
+                    section_type = eSectionTypeDebug;
+                }
+                else if (const_sect_name == g_stabstr_sect_name)
+                {
+                    section_type = eSectionTypeDataCString;
+                }
+                else if (const_sect_name == g_reloc_sect_name)
+                {
+                    section_type = eSectionTypeOther;
+                }
+                else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE)
+                {
+                    section_type = eSectionTypeCode;
+                }
+                else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_INITIALIZED_DATA)
+                {
                     section_type = eSectionTypeData;
+                }
+                else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+                {
+                    if (m_sect_headers[idx].size == 0)
+                        section_type = eSectionTypeZeroFill;
+                    else
+                        section_type = eSectionTypeData;
+                }
+
+                // Use a segment ID of the segment index shifted left by 8 so they
+                // never conflict with any of the sections.
+                SectionSP section_sp (new Section (module_sp,                    // Module to which this section belongs
+                                                   idx + 1,                      // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
+                                                   const_sect_name,              // Name of this section
+                                                   section_type,                    // This section is a container of other sections.
+                                                   m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
+                                                   m_sect_headers[idx].vmsize,   // VM size in bytes of this section
+                                                   m_sect_headers[idx].offset,   // Offset to the data for this section in the file
+                                                   m_sect_headers[idx].size,     // Size in bytes of this section as found in the the file
+                                                   m_sect_headers[idx].flags));  // Flags for this section
+
+                //section_sp->SetIsEncrypted (segment_is_encrypted);
+
+                m_sections_ap->AddSection(section_sp);
             }
-
-            // Use a segment ID of the segment index shifted left by 8 so they
-            // never conflict with any of the sections.
-            SectionSP section_sp (new Section (module_sp,                    // Module to which this section belongs
-                                               idx + 1,                      // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
-                                               const_sect_name,              // Name of this section
-                                               section_type,                    // This section is a container of other sections.
-                                               m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
-                                               m_sect_headers[idx].vmsize,   // VM size in bytes of this section
-                                               m_sect_headers[idx].offset,   // Offset to the data for this section in the file
-                                               m_sect_headers[idx].size,     // Size in bytes of this section as found in the the file
-                                               m_sect_headers[idx].flags));  // Flags for this section
-
-            //section_sp->SetIsEncrypted (segment_is_encrypted);
-
-            m_sections_ap->AddSection(section_sp);
         }
     }
     return m_sections_ap.get();
@@ -664,33 +675,37 @@ ObjectFilePECOFF::GetDependentModules (FileSpecList& files)
 void 
 ObjectFilePECOFF::Dump(Stream *s)
 {
-    Mutex::Locker locker(m_mutex);
-    s->Printf("%p: ", this);
-    s->Indent();
-    s->PutCString("ObjectFilePECOFF");
-    
-    ArchSpec header_arch;
-    GetArchitecture (header_arch);
-    
-    *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
-    
-    if (m_sections_ap.get())
-        m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
-    
-    if (m_symtab_ap.get())
-        m_symtab_ap->Dump(s, NULL, eSortOrderNone);
-
-    if (m_dos_header.e_magic)
-        DumpDOSHeader (s, m_dos_header);
-    if (m_coff_header.machine)
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
     {
-        DumpCOFFHeader (s, m_coff_header);
-        if (m_coff_header.hdrsize)
-            DumpOptCOFFHeader (s, m_coff_header_opt);
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        s->Printf("%p: ", this);
+        s->Indent();
+        s->PutCString("ObjectFilePECOFF");
+        
+        ArchSpec header_arch;
+        GetArchitecture (header_arch);
+        
+        *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
+        
+        if (m_sections_ap.get())
+            m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
+        
+        if (m_symtab_ap.get())
+            m_symtab_ap->Dump(s, NULL, eSortOrderNone);
+
+        if (m_dos_header.e_magic)
+            DumpDOSHeader (s, m_dos_header);
+        if (m_coff_header.machine)
+        {
+            DumpCOFFHeader (s, m_coff_header);
+            if (m_coff_header.hdrsize)
+                DumpOptCOFFHeader (s, m_coff_header_opt);
+        }
+        s->EOL();
+        DumpSectionHeaders(s);
+        s->EOL();
     }
-    s->EOL();
-    DumpSectionHeaders(s);
-    s->EOL();    
 }
 
 //----------------------------------------------------------------------

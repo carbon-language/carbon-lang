@@ -15,7 +15,6 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/PluginInterface.h"
-#include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/TypeList.h"
 
@@ -185,7 +184,6 @@ protected:
     typedef CompileUnits::iterator CompileUnitIter;
     typedef CompileUnits::const_iterator CompileUnitConstIter;
 
-    mutable Mutex m_mutex;
     TypeList m_type_list; // Uniqued types for all parsers owned by this module
     CompileUnits m_compile_units; // The current compile units
     lldb::ObjectFileSP m_objfile_sp;    // Keep a reference to the object file in case it isn't the same as the module object file (debug symbols in a separate file)

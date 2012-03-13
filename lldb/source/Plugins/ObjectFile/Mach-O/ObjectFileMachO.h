@@ -143,7 +143,6 @@ public:
     GetVersion (uint32_t *versions, uint32_t num_versions);
 
 protected:
-    mutable lldb_private::Mutex m_mutex;
     llvm::MachO::mach_header m_header;
     mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
     mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;

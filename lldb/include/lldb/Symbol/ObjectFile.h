@@ -562,6 +562,7 @@ public:
     {
         return m_memory_addr != LLDB_INVALID_ADDRESS;
     }
+    
 protected:
     //------------------------------------------------------------------
     // Member variables.
