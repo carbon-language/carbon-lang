@@ -318,10 +318,26 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))
     return;
 
+#ifdef _MSC_VER
+  // Honor %INCLUDE%. It should know essential search paths with vcvarsall.bat.
+  if (const char *cl_include_dir = getenv("INCLUDE")) {
+    SmallVector<StringRef, 8> Dirs;
+    StringRef(cl_include_dir).split(Dirs, ";");
+    int n = 0;
+    for (SmallVectorImpl<StringRef>::iterator I = Dirs.begin(), E = Dirs.end();
+         I != E; ++I) {
+      StringRef d = *I;
+      if (d.size() == 0)
+        continue;
+      ++n;
+      addSystemInclude(DriverArgs, CC1Args, d);
+    }
+    if (n) return;
+  }
+
   std::string VSDir;
   std::string WindowsSDKDir;
 
-#ifdef _MSC_VER
   // When built with access to the proper Windows APIs, try to actually find
   // the correct include paths first.
   if (getVisualStudioDir(VSDir)) {
