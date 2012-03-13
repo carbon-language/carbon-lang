@@ -144,7 +144,7 @@ namespace ModifyingCapture {
   void test() {
     int n = 0;
     [=] {
-      n = 1; // expected-error {{variable is not assignable (captured by copy)}}
+      n = 1; // expected-error {{cannot assign to a variable captured by copy in a non-mutable lambda}}
     };
   }
 }
