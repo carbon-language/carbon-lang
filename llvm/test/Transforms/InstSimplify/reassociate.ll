@@ -184,3 +184,12 @@ define i32 @udiv5(i32 %x, i32 %y) {
 ; CHECK: ret i32 %x
 }
 
+define i16 @trunc1(i32 %x) {
+; CHECK: @trunc1
+  %y = add i32 %x, 1
+  %tx = trunc i32 %x to i16
+  %ty = trunc i32 %y to i16
+  %d = sub i16 %ty, %tx
+  ret i16 %d
+; CHECK: ret i16 1
+}

@@ -20,13 +20,14 @@
 #define LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 
 namespace llvm {
-  class DominatorTree;
-  class Instruction;
-  class Value;
-  class TargetData;
-  class TargetLibraryInfo;
   template<typename T>
   class ArrayRef;
+  class DominatorTree;
+  class Instruction;
+  class TargetData;
+  class TargetLibraryInfo;
+  class Type;
+  class Value;
 
   /// SimplifyAddInst - Given operands for an Add, see if we can
   /// fold the result.  If not, this returns null.
@@ -157,6 +158,12 @@ namespace llvm {
                                  const TargetData *TD = 0,
                                  const TargetLibraryInfo *TLI = 0,
                                  const DominatorTree *DT = 0);
+
+  /// SimplifyTruncInst - Given operands for an TruncInst, see if we can fold
+  /// the result.  If not, this returns null.
+  Value *SimplifyTruncInst(Value *Op, Type *Ty, const TargetData *TD = 0,
+                           const TargetLibraryInfo *TLI = 0,
+                           const DominatorTree *DT = 0);
 
   //=== Helper functions for higher up the class hierarchy.
 

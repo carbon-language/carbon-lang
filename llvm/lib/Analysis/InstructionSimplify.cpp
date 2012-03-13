@@ -56,6 +56,7 @@ static Value *SimplifyCmpInst(unsigned, Value *, Value *, const Query &,
                               unsigned);
 static Value *SimplifyOrInst(Value *, Value *, const Query &, unsigned);
 static Value *SimplifyXorInst(Value *, Value *, const Query &, unsigned);
+static Value *SimplifyTruncInst(Value *, Type *, const Query &, unsigned);
 
 /// getFalse - For a boolean type, or a vector of boolean type, return false, or
 /// a vector with every element false, as appropriate for the type.
@@ -777,20 +778,6 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       match(Op0, m_Shl(m_Specific(Op1), m_One())))
     return Op1;
 
-  if (Q.TD) {
-    Value *LHSOp, *RHSOp;
-    if (match(Op0, m_PtrToInt(m_Value(LHSOp))) &&
-        match(Op1, m_PtrToInt(m_Value(RHSOp))))
-      if (Constant *Result = computePointerDifference(*Q.TD, LHSOp, RHSOp))
-        return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
-
-    // trunc(p)-trunc(q) -> trunc(p-q)
-    if (match(Op0, m_Trunc(m_PtrToInt(m_Value(LHSOp)))) &&
-        match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
-      if (Constant *Result = computePointerDifference(*Q.TD, LHSOp, RHSOp))
-        return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
-  }
-
   // (X + Y) - Z -> X + (Y - Z) or Y + (X - Z) if everything simplifies.
   // For example, (X + Y) - Y -> X; (Y + X) - Y -> X
   Value *Y = 0, *Z = Op1;
@@ -847,6 +834,23 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
         ++NumReassoc;
         return W;
       }
+
+  // trunc(X) - trunc(Y) -> trunc(X - Y) if everything simplifies.
+  if (MaxRecurse && match(Op0, m_Trunc(m_Value(X))) &&
+      match(Op1, m_Trunc(m_Value(Y))))
+    if (X->getType() == Y->getType())
+      // See if "V === X - Y" simplifies.
+      if (Value *V = SimplifyBinOp(Instruction::Sub, X, Y, Q, MaxRecurse-1))
+        // It does!  Now see if "trunc V" simplifies.
+        if (Value *W = SimplifyTruncInst(V, Op0->getType(), Q, MaxRecurse-1))
+          // It does, return the simplified "trunc V".
+          return W;
+
+  // Variations on GEP(base, I, ...) - GEP(base, i, ...) -> GEP(null, I-i, ...).
+  if (Q.TD && match(Op0, m_PtrToInt(m_Value(X))) &&
+      match(Op1, m_PtrToInt(m_Value(Y))))
+    if (Constant *Result = computePointerDifference(*Q.TD, X, Y))
+      return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
 
   // Mul distributes over Sub.  Try some generic simplifications based on this.
   if (Value *V = FactorizeBinOp(Instruction::Sub, Op0, Op1, Instruction::Mul,
@@ -2598,6 +2602,19 @@ static Value *SimplifyPHINode(PHINode *PN, const Query &Q) {
   return CommonValue;
 }
 
+static Value *SimplifyTruncInst(Value *Op, Type *Ty, const Query &Q, unsigned) {
+  if (Constant *C = dyn_cast<Constant>(Op))
+    return ConstantFoldInstOperands(Instruction::Trunc, Ty, C, Q.TD, Q.TLI);
+
+  return 0;
+}
+
+Value *llvm::SimplifyTruncInst(Value *Op, Type *Ty, const TargetData *TD,
+                               const TargetLibraryInfo *TLI,
+                               const DominatorTree *DT) {
+  return ::SimplifyTruncInst(Op, Ty, Query (TD, TLI, DT), RecursionLimit);
+}
+
 //=== Helper functions for higher up the class hierarchy.
 
 /// SimplifyBinOp - Given operands for a BinaryOperator, see if we can
@@ -2785,6 +2802,9 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::Call:
     Result = SimplifyCallInst(cast<CallInst>(I), Query (TD, TLI, DT));
+    break;
+  case Instruction::Trunc:
+    Result = SimplifyTruncInst(I->getOperand(0), I->getType(), TD, TLI, DT);
     break;
   }
 
