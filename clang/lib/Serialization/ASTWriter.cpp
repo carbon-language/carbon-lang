@@ -2792,10 +2792,6 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (DC->isTranslationUnit() && !Context.getLangOpts().CPlusPlus)
     return 0;
 
-  // Force the DeclContext to build a its name-lookup table.
-  if (!DC->hasExternalVisibleStorage())
-    DC->lookup(DeclarationName());
-
   // Serialize the contents of the mapping used for lookup. Note that,
   // although we have two very different code paths, the serialized
   // representation is the same for both cases: a declaration name,

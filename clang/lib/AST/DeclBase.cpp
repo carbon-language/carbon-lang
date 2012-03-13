@@ -1084,6 +1084,9 @@ void DeclContext::addDeclInternal(Decl *D) {
 
 DeclContext::lookup_result
 DeclContext::lookup(DeclarationName Name) {
+  assert(DeclKind != Decl::LinkageSpec &&
+         "Should not perform lookups into linkage specs!");
+
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Name);
