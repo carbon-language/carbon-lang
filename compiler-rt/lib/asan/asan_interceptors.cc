@@ -38,9 +38,9 @@
 // FIXME: We might want to use these on Mac too.
 extern "C" {
 int memcmp(const void *b1, const void *b2, size_t sz);
-void memmove(void *d, const void *s, size_t sz);
-void memcpy(void *d, const void *s, size_t sz);
-void memset(void *b, int c, size_t sz);
+void* memmove(void *d, const void *s, size_t sz);
+void* memcpy(void *d, const void *s, size_t sz);
+void* memset(void *b, int c, size_t sz);
 
 char* strchr(const char *s, char c);
 char* strcat(char *d, const char* s);  // NOLINT
