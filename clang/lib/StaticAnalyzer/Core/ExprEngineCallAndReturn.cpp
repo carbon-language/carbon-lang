@@ -127,13 +127,29 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
   return count;  
 }
 
+// Determine if we should inline the call.
+static bool shouldInline(const FunctionDecl *FD, ExplodedNode *Pred,
+                         AnalysisManager &AMgr) {
+  AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
+  const CFG *CalleeCFG = CalleeADC->getCFG();
+
+  if (getNumberStackFrames(Pred->getLocationContext())
+        == AMgr.InlineMaxStackDepth)
+    return false;
+
+  if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
+    return false;
+
+  return true;
+}
+
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
                             const CallExpr *CE, 
                             ExplodedNode *Pred) {
   ProgramStateRef state = Pred->getState();
   const Expr *Callee = CE->getCallee();
   const FunctionDecl *FD =
-  state->getSVal(Callee, Pred->getLocationContext()).getAsFunctionDecl();
+    state->getSVal(Callee, Pred->getLocationContext()).getAsFunctionDecl();
   if (!FD || !FD->hasBody(FD))
     return false;
   
@@ -142,16 +158,11 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
       // FIXME: Handle C++.
       break;
     case Stmt::CallExprClass: {
-      if (getNumberStackFrames(Pred->getLocationContext())
-            == AMgr.InlineMaxStackDepth)
-        return false;
-
-      AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
-      const CFG *CalleeCFG = CalleeADC->getCFG();
-      if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
+      if (!shouldInline(FD, Pred, AMgr))
         return false;
 
       // Construct a new stack frame for the callee.
+      AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
       const StackFrameContext *CallerSFC =
       Pred->getLocationContext()->getCurrentStackFrame();
       const StackFrameContext *CalleeSFC =
