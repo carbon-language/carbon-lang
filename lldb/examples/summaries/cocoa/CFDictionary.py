@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NSDictionary
 import lldb
 import ctypes
@@ -135,27 +142,16 @@ class NSDictionaryUnknown_SummaryProvider:
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)[" + stream.GetData() + " count]");
-		return num_children_vo.GetValueAsUnsigned(0)
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return '<variable is not NSDictionary>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == '__NSCFDictionary':
@@ -175,31 +171,39 @@ def GetSummary_Impl(valobj):
 def CFDictionary_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.num_children();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid dictionary here'
-	    return str(summary) + (" key/value pairs" if summary > 1 else " key/value pair")
-	return ''
-
-def CFDictionary_SummaryProvider2 (valobj,dict):
-	provider = GetSummary_Impl(valobj);
-	if provider != None:
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
 		try:
 			summary = provider.num_children();
 		except:
 			summary = None
 		if summary == None:
-			summary = 'no valid dictionary here'
+			return '<variable is not NSDictionary>'
+		if isinstance(summary,basestring):
+			return summary
+		return str(summary) + (" key/value pairs" if summary != 1 else " key/value pair")
+	return 'Summary Unavailable'
+
+def CFDictionary_SummaryProvider2 (valobj,dict):
+	provider = GetSummary_Impl(valobj);
+	if provider != None:
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.num_children();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not CFDictionary>'
+		if isinstance(summary,basestring):
+			return summary
 		else:
 		# needed on OSX Mountain Lion
 			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x0f1f000000000000
-			summary = '@"' + str(summary) + (' entries"' if summary > 1 else ' entry"')
+			summary = '@"' + str(summary) + (' entries"' if summary != 1 else ' entry"')
 		return summary
-	return ''
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F CFDictionary.CFDictionary_SummaryProvider NSDictionary")

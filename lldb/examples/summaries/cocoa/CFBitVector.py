@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for CF(Mutable)BitVector
 import lldb
 import ctypes
@@ -101,41 +108,31 @@ class CFBitVectorUnknown_SummaryProvider:
 		self.adjust_for_architecture();
 
 	def contents(self):
-		return '*** unknown class *** very bad thing *** find out my name ***'
+		return '<unable to summarize this CFBitVector>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 
 	name_string = class_data.class_name()
-	if name_string == '__NSCFType':
+	actual_name = name_string
+	if class_data.is_cftype():
 		# CFBitVectorRef does not expose an actual NSWrapper type, so we have to check that this is
 		# an NSCFType and then check we are a pointer-to CFBitVectorRef
 		valobj_type = valobj.GetType()
 		if valobj_type.IsValid() and valobj_type.IsPointerType():
-			pointee_type = valobj_type.GetPointeeType()
-			if pointee_type.GetName() == '__CFBitVector' or pointee_type.GetName() == '__CFMutableBitVector':
-				wrapper = CFBitVectorKnown_SummaryProvider(valobj, class_data.sys_params)
-				statistics.metric_hit('code_notrun',valobj)
-			else:
-				wrapper = CFBitVectorUnknown_SummaryProvider(valobj)
-				print pointee_type.GetName()
+			valobj_type = valobj_type.GetPointeeType()
+			if valobj_type.IsValid():
+				actual_name = valobj_type.GetName()
+		if actual_name == '__CFBitVector' or actual_name == '__CFMutableBitVector':
+			wrapper = CFBitVectorKnown_SummaryProvider(valobj, class_data.sys_params)
+			statistics.metric_hit('code_notrun',valobj)
+		else:
+			wrapper = CFBitVectorUnknown_SummaryProvider(valobj, class_data.sys_params)
+			print actual_name
 	else:
 		wrapper = CFBitVectorUnknown_SummaryProvider(valobj, class_data.sys_params)
 		print name_string
@@ -145,14 +142,16 @@ def GetSummary_Impl(valobj):
 def CFBitVector_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    #try:
-	    summary = provider.contents();
-	    #except:
-	    #    summary = None
-	    if summary == None or summary == '':
-	        summary = 'no valid bitvector here'
-	    return summary
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.contents();
+		except:
+			summary = None
+		if summary == None or summary == '':
+			summary = '<variable is not CFBitVector>'
+		return summary
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F CFBitVector.CFBitVector_SummaryProvider CFBitVectorRef CFMutableBitVectorRef")

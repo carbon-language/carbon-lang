@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for class NSNotification
 import objc_runtime
 import metrics
@@ -50,28 +57,17 @@ class NSNotificationUnknown_SummaryProvider:
 	def name(self):
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
-		name_vo = self.valobj.CreateValueFromExpression("name","(NSString*)[" + stream.GetData() + " name]");
-		return CFString.CFString_SummaryProvider(name_vo,None)
+		name_vo = self.valobj.CreateValueFromExpression("name","(NSString*)[" + stream.GetData() + " name]")
+		if name_vo.IsValid():
+			return CFString.CFString_SummaryProvider(name_vo,None)
+		return '<variable is not NSNotification>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSConcreteNotification':
@@ -85,14 +81,16 @@ def GetSummary_Impl(valobj):
 def NSNotification_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.name();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid notification here'
-	    return str(summary)
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.name();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSNotification>'
+		return str(summary)
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSNotification.NSNotification_SummaryProvider NSNotification")

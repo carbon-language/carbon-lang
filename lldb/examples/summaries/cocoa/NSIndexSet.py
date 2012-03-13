@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NS(Mutable)IndexSet
 import lldb
 import ctypes
@@ -78,28 +85,17 @@ class NSIndexSetUnknown_SummaryProvider:
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		expr = "(int)[" + stream.GetData() + " count]"
-		num_children_vo = self.valobj.CreateValueFromExpression("count",expr);
-		return num_children_vo.GetValueAsUnsigned(0)
+		num_children_vo = self.valobj.CreateValueFromExpression("count",expr)
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return '<variable is not NSIndexSet>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSIndexSet' or name_string == 'NSMutableIndexSet':
@@ -114,16 +110,20 @@ def GetSummary_Impl(valobj):
 def NSIndexSet_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
 		try:
 			summary = provider.count();
 		except:
 			summary = None
 		if summary == None:
-			summary = 'no valid set here'
+			summary = '<variable is not NSIndexSet>'
+		if isinstance(summary, basestring):
+			return summary
 		else:
-			summary = str(summary) + (' objects' if summary > 1 else ' object')
+			summary = str(summary) + (' objects' if summary != 1 else ' object')
 		return summary
-	return ''
+	return 'Summary Unavailable'
 
 
 def __lldb_init_module(debugger,dict):

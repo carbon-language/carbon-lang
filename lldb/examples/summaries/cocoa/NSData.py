@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NSData
 import lldb
 import ctypes
@@ -61,27 +68,16 @@ class NSDataUnknown_SummaryProvider:
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)[" + stream.GetData() + " length]");
-		return num_children_vo.GetValueAsUnsigned(0)
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return '<variable is not NSData>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSConcreteData' or \
@@ -97,36 +93,42 @@ def GetSummary_Impl(valobj):
 def NSData_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.length();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid data here'
-	    else:
-	        if summary == 1:
-	           summary = '1 byte'
-	        else:
-	           summary = str(summary) + ' bytes'
-	    return summary
-	return ''
+		try:
+			summary = provider.length();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSData>'
+		elif isinstance(summary,basestring):
+			pass
+		else:
+			if summary == 1:
+				summary = '1 byte'
+			else:
+				summary = str(summary) + ' bytes'
+		return summary
+	return 'Summary Unavailable'
 
 def NSData_SummaryProvider2 (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.length();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid data here'
-	    else:
-	        if summary == 1:
-	           summary = '@"1 byte"'
-	        else:
-	           summary = '@"' + str(summary) + ' bytes"'
-	    return summary
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.length();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not CFData>'
+		elif isinstance(summary,basestring):
+			pass
+		else:
+			if summary == 1:
+				summary = '@"1 byte"'
+			else:
+				summary = '@"' + str(summary) + ' bytes"'
+		return summary
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSData.NSData_SummaryProvider NSData")

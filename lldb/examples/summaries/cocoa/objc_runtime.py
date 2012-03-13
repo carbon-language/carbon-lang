@@ -74,6 +74,30 @@ class Utilities:
 			return None
 		return (ver[0] < 900)
 
+	# a utility method that factors out code common to almost all the formatters
+	# takes in an SBValue and a metrics object
+	# returns a class_data and a wrapper (or None, if the runtime alone can't decide on a wrapper)
+	@staticmethod
+	def prepare_class_detection(valobj,statistics):
+		class_data = ObjCRuntime(valobj)
+		if class_data.is_valid() == False:
+			statistics.metric_hit('invalid_pointer',valobj)
+			wrapper = InvalidPointer_Description(valobj.GetValueAsUnsigned(0) == 0)
+			return class_data,wrapper
+		class_data = class_data.read_class_data()
+		if class_data.is_valid() == False:
+			statistics.metric_hit('invalid_isa',valobj)
+			wrapper = InvalidISA_Description()
+			return class_data,wrapper
+		if class_data.is_kvo():
+			class_data = class_data.get_superclass()
+		if class_data.is_valid() == False:
+			statistics.metric_hit('invalid_isa',valobj)
+			wrapper = InvalidISA_Description()
+			return class_data,wrapper
+		return class_data,None
+
+
 class RoT_Data:
 	def __init__(self,rot_pointer,params):
 		if (Utilities.is_valid_pointer(rot_pointer.GetValueAsUnsigned(),params.pointer_size, allow_tagged=False)):
@@ -227,7 +251,7 @@ class Class_Data_V2:
 	#                      just to be on the safe side)
 	def is_cftype(self):
 		if self.is_valid():
-			return self.name == '__NSCFType' or self.name == 'NSCFType'
+			return self.class_name() == '__NSCFType' or self.class_name() == 'NSCFType'
 
 	def get_superclass(self):
 		if self.is_valid():
@@ -314,7 +338,7 @@ class Class_Data_V1:
 	#                      just to be on the safe side)
 	def is_cftype(self):
 		if self.is_valid():
-			return self.name == '__NSCFType' or self.name == 'NSCFType'
+			return self.class_name() == '__NSCFType' or self.class_name() == 'NSCFType'
 
 	def get_superclass(self):
 		if self.is_valid():
@@ -593,6 +617,9 @@ class ObjCRuntime:
 			return False
 		return Utilities.is_valid_pointer(self.unsigned_value,self.sys_params.pointer_size, allow_tagged=True)
 
+	def is_nil(self):
+		return self.unsigned_value == 0
+
 	def read_isa(self):
 		if self.isa_value != None:
 			return self.isa_value
@@ -638,4 +665,28 @@ class ObjCRuntime:
 		if data.is_valid():
 			self.sys_params.isa_cache.add_item(isa_value,data,ok_to_replace=True)
 		return data
+
+# these classes below can be used by the data formatters to provide a consistent message that describes a given runtime-generated situation
+class SpecialSituation_Description:
+	def message(self):
+		return ''
+
+class InvalidPointer_Description(SpecialSituation_Description):
+
+	def __init__(self,nil):
+		self.is_nil = nil
+
+	def message(self):
+		if self.is_nil:
+			return '@"<nil>"'
+		else:
+			return '<invalid pointer>'
+
+class InvalidISA_Description(SpecialSituation_Description):
+
+	def __init__(self):
+		pass
+
+	def message(self):
+		return '<not an Objective-C object>'
 

@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NSURL
 import lldb
 import ctypes
@@ -74,28 +81,17 @@ class NSURLUnknown_SummaryProvider:
 	def url_text(self):
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
-		url_text_vo = self.valobj.CreateValueFromExpression("url","(NSString*)[" + stream.GetData() + " description]");
-		return CFString.CFString_SummaryProvider(url_text_vo,None)
+		url_text_vo = self.valobj.CreateValueFromExpression("url","(NSString*)[" + stream.GetData() + " description]")
+		if url_text_vo.IsValid():
+			return CFString.CFString_SummaryProvider(url_text_vo,None)
+		return '<variable is not NSURL>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSURL':
@@ -109,14 +105,16 @@ def GetSummary_Impl(valobj):
 def NSURL_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.url_text();
-	    except:
-	        summary = None
-	    if summary == None or summary == '':
-	        summary = 'no valid NSURL here'
-	    return summary
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.url_text();
+		except:
+			summary = None
+		if summary == None or summary == '':
+			summary = '<variable is not NSURL>'
+		return summary
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSURL.NSURL_SummaryProvider NSURL CFURLRef")

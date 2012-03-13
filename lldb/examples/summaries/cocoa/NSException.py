@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for class NSException
 import objc_runtime
 import metrics
@@ -55,27 +62,16 @@ class NSUnknownException_SummaryProvider:
 		self.valobj.GetExpressionPath(stream)
 		name_vo = self.valobj.CreateValueFromExpression("name","(NSString*)[" + stream.GetData() + " name]");
 		reason_vo = self.valobj.CreateValueFromExpression("reason","(NSString*)[" + stream.GetData() + " reason]");
-		return CFString.CFString_SummaryProvider(name_vo,None) + ' ' + CFString.CFString_SummaryProvider(reason_vo,None)
+		if name_vo.IsValid() and reason_vo.IsValid():
+			return CFString.CFString_SummaryProvider(name_vo,None) + ' ' + CFString.CFString_SummaryProvider(reason_vo,None)
+		return '<variable is not NSException>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSException':
@@ -89,14 +85,16 @@ def GetSummary_Impl(valobj):
 def NSException_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.description();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid exception here'
-	    return str(summary)
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.description();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSException>'
+		return str(summary)
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSException.NSException_SummaryProvider NSException")

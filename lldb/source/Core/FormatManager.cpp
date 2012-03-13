@@ -914,6 +914,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "NSNotification.NSNotification_SummaryProvider", ConstString("NSNotification"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSNumber"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFBoolean"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFNumber"), appkit_flags);
 
     AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("NSSet"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFSetRef"), appkit_flags);

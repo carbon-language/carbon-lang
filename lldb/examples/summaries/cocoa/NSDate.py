@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NSDate
 import lldb
 import ctypes
@@ -153,26 +160,15 @@ class NSUnknownDate_SummaryProvider:
 		self.valobj.GetExpressionPath(stream)
 		expr = "(NSString*)[" + stream.GetData() + " description]"
 		num_children_vo = self.valobj.CreateValueFromExpression("str",expr);
-		return num_children_vo.GetSummary()
+		if num_children_vo.IsValid():
+			return num_children_vo.GetSummary()
+		return '<variable is not NSDate>'
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSDate' or name_string == '__NSDate' or name_string == '__NSTaggedDate':
@@ -197,26 +193,30 @@ def GetSummary_Impl(valobj):
 def NSDate_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    #try:
-	    summary = provider.value();
-	    #except:
-	    #    summary = None
-	    if summary == None:
-	        summary = 'no valid date here'
-	    return str(summary)
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.value();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSDate>'
+		return str(summary)
+	return 'Summary Unavailable'
 
 def NSTimeZone_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.timezone();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid timezone here'
-	    return str(summary)
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.timezone();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSTimeZone>'
+		return str(summary)
+	return 'Summary Unavailable'
 
 
 def CFAbsoluteTime_SummaryProvider (valobj,dict):
@@ -224,7 +224,7 @@ def CFAbsoluteTime_SummaryProvider (valobj,dict):
 		value_double = struct.unpack('d', struct.pack('Q', valobj.GetValueAsUnsigned(0)))[0]
 		return xcode_format_count(osx_to_python_time(value_double))
 	except:
-		return 'unable to provide a summary'
+		return 'Summary Unavailable'
 
 
 def __lldb_init_module(debugger,dict):

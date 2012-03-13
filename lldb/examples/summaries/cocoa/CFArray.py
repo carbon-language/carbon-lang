@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # synthetic children provider for NSArray
 import lldb
 import ctypes
@@ -29,7 +36,9 @@ class NSArrayKVC_SynthProvider:
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)[" + stream.GetData() + " count]");
-		return num_children_vo.GetValueAsUnsigned(0)
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return "<variable is not NSArray>"
 
 # much less functional than the other two cases below
 # just runs code to get to the count and then returns
@@ -107,7 +116,8 @@ class NSArray_SynthProvider:
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
 		self.adjust_for_architecture()
-		self.wrapper = self.make_wrapper(valobj,dict)
+		self.error = False
+		self.wrapper = self.make_wrapper()
 		self.invalid = (self.wrapper == None)
 
 	def num_children(self):
@@ -122,54 +132,50 @@ class NSArray_SynthProvider:
 
 	# this code acts as our defense against NULL and unitialized
 	# NSArray pointers, which makes it much longer than it would be otherwise
-	def make_wrapper(self,valobj,dict):
-		global statistics
-		class_data = objc_runtime.ObjCRuntime(valobj)
-		if class_data.is_valid() == False:
-			statistics.metric_hit('invalid_pointer',valobj)
-			wrapper = None
-			return
-		class_data = class_data.read_class_data()
-		if class_data.is_valid() == False:
-			statistics.metric_hit('invalid_isa',valobj)
-			wrapper = None
-			return
-		if class_data.is_kvo():
-			class_data = class_data.get_superclass()
-		if class_data.is_valid() == False:
-			statistics.metric_hit('invalid_isa',valobj)
-			wrapper = None
-			return
+	def make_wrapper(self):
+		if self.valobj.GetValueAsUnsigned() == 0:
+			self.error = True
+			return objc_runtime.InvalidPointer_Description(True)
+		else:
+			global statistics
+			class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(self.valobj,statistics)
+			if wrapper:
+				self.error = True
+				return wrapper
 		
 		name_string = class_data.class_name()
 		if name_string == '__NSArrayI':
-			wrapper = NSArrayI_SynthProvider(valobj, dict, class_data.sys_params)
-			statistics.metric_hit('code_notrun',valobj)
+			wrapper = NSArrayI_SynthProvider(self.valobj, dict, class_data.sys_params)
+			statistics.metric_hit('code_notrun',self.valobj)
 		elif name_string == '__NSArrayM':
-			wrapper = NSArrayM_SynthProvider(valobj, dict, class_data.sys_params)
-			statistics.metric_hit('code_notrun',valobj)
+			wrapper = NSArrayM_SynthProvider(self.valobj, dict, class_data.sys_params)
+			statistics.metric_hit('code_notrun',self.valobj)
 		elif name_string == '__NSCFArray':
-			wrapper = NSArrayCF_SynthProvider(valobj, dict, class_data.sys_params)
-			statistics.metric_hit('code_notrun',valobj)
+			wrapper = NSArrayCF_SynthProvider(self.valobj, dict, class_data.sys_params)
+			statistics.metric_hit('code_notrun',self.valobj)
 		else:
-			wrapper = NSArrayKVC_SynthProvider(valobj, dict, class_data.sys_params)
-			statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
+			wrapper = NSArrayKVC_SynthProvider(self.valobj, dict, class_data.sys_params)
+			statistics.metric_hit('unknown_class',str(self.valobj) + " seen as " + name_string)
 		return wrapper;
 
 def CFArray_SummaryProvider (valobj,dict):
 	provider = NSArray_SynthProvider(valobj,dict);
 	if provider.invalid == False:
-	    try:
-	        summary = int(provider.num_children());
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid array here'
-	    else:
-	        # we format it like it were a CFString to make it look the same as the summary from Xcode
-	        summary = '@"' + str(summary) + (" objects" if summary > 1 else " object") + '"'
-	    return summary
-	return ''
+		if provider.error == True:
+			return provider.wrapper.message()
+		try:
+			summary = int(provider.num_children());
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSArray>'
+		elif isinstance(summary,basestring):
+			pass
+		else:
+			# we format it like it were a CFString to make it look the same as the summary from Xcode
+			summary = '@"' + str(summary) + (" objects" if summary != 1 else " object") + '"'
+		return summary
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F CFArray.CFArray_SummaryProvider NSArray CFArrayRef CFMutableArrayRef")

@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # synthetic children and summary provider for CFString
 # (and related NSString class)
 import lldb
@@ -6,19 +13,19 @@ import objc_runtime
 def CFString_SummaryProvider (valobj,dict):
 	provider = CFStringSynthProvider(valobj,dict);
 	if provider.invalid == False:
-	    try:
-	        summary = provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid string here'
-	    return '@'+summary
+		try:
+			summary = provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSString>'
+		return '@'+summary
 	return ''
 
 def CFAttributedString_SummaryProvider (valobj,dict):
 	offset = valobj.GetTarget().GetProcess().GetAddressByteSize()
 	pointee = valobj.GetValueAsUnsigned(0)
-	summary = 'no valid string here'
+	summary = '<variable is not NSAttributedString>'
 	if pointee != None and pointee != 0:
 		pointee = pointee + offset
 		child_ptr = valobj.CreateValueFromAddress("string_ptr",pointee,valobj.GetType())
@@ -28,9 +35,9 @@ def CFAttributedString_SummaryProvider (valobj,dict):
 			try:
 				summary = provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
 			except:
-				summary = 'no valid string here'
+				summary = '<variable is not NSAttributedString>'
 	if summary == None:
-		summary = 'no valid string here'
+		summary = '<variable is not NSAttributedString>'
 	return '@'+summary
 
 

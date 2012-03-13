@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NSNumber
 import lldb
 import ctypes
@@ -162,27 +169,16 @@ class NSUnknownNumber_SummaryProvider:
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		expr = "(NSString*)[" + stream.GetData() + " stringValue]"
-		num_children_vo = self.valobj.CreateValueFromExpression("str",expr);
-		return num_children_vo.GetSummary()
+		num_children_vo = self.valobj.CreateValueFromExpression("str",expr)
+		if num_children_vo.IsValid():
+			return num_children_vo.GetSummary()
+		return '<variable is not NSNumber>'
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSNumber' or name_string == '__NSCFNumber':
@@ -202,16 +198,20 @@ def GetSummary_Impl(valobj):
 def NSNumber_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    #try:
-	    summary = provider.value();
-	    #except:
-	    #    summary = None
-	    if summary == None:
-	        summary = 'no valid number here'
-	    return str(summary)
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.value();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSNumber>'
+		return str(summary)
+	return 'Summary Unavailable'
 
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSNumber.NSNumber_SummaryProvider NSNumber")
+	debugger.HandleCommand("type summary add -F NSNumber.NSNumber_SummaryProvider __NSCFBoolean")
+	debugger.HandleCommand("type summary add -F NSNumber.NSNumber_SummaryProvider __NSCFNumber")
 

@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for CFBinaryHeap
 import lldb
 import ctypes
@@ -59,39 +66,31 @@ class CFBinaryHeapUnknown_SummaryProvider:
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)CFBinaryHeapGetCount(" + stream.GetData() + " )");
-		return num_children_vo.GetValueAsUnsigned(0)
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return '<variable is not CFBinaryHeap>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
-	if name_string == '__NSCFType':
+	actual_name = class_data.class_name()
+	if class_data.is_cftype():
 		# CFBinaryHeap does not expose an actual NSWrapper type, so we have to check that this is
 		# an NSCFType and then check we are a pointer-to CFBinaryHeap
 		valobj_type = valobj.GetType()
 		if valobj_type.IsValid() and valobj_type.IsPointerType():
-			pointee_type = valobj_type.GetPointeeType()
-			if pointee_type.GetName() == '__CFBinaryHeap':
-				wrapper = CFBinaryHeapRef_SummaryProvider(valobj, class_data.sys_params)
-				statistics.metric_hit('code_notrun',valobj)
-				return wrapper
+			valobj_type = valobj_type.GetPointeeType()
+			if valobj_type.IsValid():
+				actual_name = valobj_type.GetName()
+		if actual_name == '__CFBinaryHeap':
+			wrapper = CFBinaryHeapRef_SummaryProvider(valobj, class_data.sys_params)
+			statistics.metric_hit('code_notrun',valobj)
+			return wrapper
 	wrapper = CFBinaryHeapUnknown_SummaryProvider(valobj, class_data.sys_params)
 	statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
@@ -99,6 +98,8 @@ def GetSummary_Impl(valobj):
 def CFBinaryHeap_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
 		try:
 			summary = provider.length();
 		except:
@@ -109,7 +110,9 @@ def CFBinaryHeap_SummaryProvider (valobj,dict):
 		# (if counts start looking weird, then most probably
 		#  the mask needs to be changed)
 		if summary == None:
-			summary = 'no valid set here'
+			summary = '<variable is not CFBinaryHeap>'
+		elif isinstance(summary,basestring):
+			pass
 		else:
 			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x1fff000000000000
@@ -118,7 +121,7 @@ def CFBinaryHeap_SummaryProvider (valobj,dict):
 			else:
 				summary = '@"' + str(summary) + ' items"'
 		return summary
-	return ''
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F CFBinaryHeap.CFBinaryHeap_SummaryProvider CFBinaryHeapRef")

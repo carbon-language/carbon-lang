@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for NSData
 import lldb
 import ctypes
@@ -61,28 +68,17 @@ class NSMachPortUnknown_SummaryProvider:
 	def port(self):
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
-		num_children_vo = self.valobj.CreateValueFromExpression("port","(int)[" + stream.GetData() + " machPort]");
-		return num_children_vo.GetValueAsUnsigned(0)
+		num_children_vo = self.valobj.CreateValueFromExpression("port","(int)[" + stream.GetData() + " machPort]")
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return '<variable is not NSMachPort>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSMachPort':
@@ -96,14 +92,18 @@ def GetSummary_Impl(valobj):
 def NSMachPort_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-	    try:
-	        summary = provider.port();
-	    except:
-	        summary = None
-	    if summary == None:
-	        summary = 'no valid mach port here'
-	    return 'mach port: ' + str(summary)
-	return ''
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
+		try:
+			summary = provider.port();
+		except:
+			summary = None
+		if summary == None:
+			summary = '<variable is not NSMachPort>'
+		if isinstance(summary, basestring):
+			return summay
+		return 'mach port: ' + str(summary)
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSMachPort.NSMachPort_SummaryProvider NSMachPort")

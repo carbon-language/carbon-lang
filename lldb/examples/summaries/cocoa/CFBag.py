@@ -1,3 +1,10 @@
+"""
+LLDB AppKit formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 # summary provider for CFBag
 import lldb
 import ctypes
@@ -61,43 +68,33 @@ class CFBagUnknown_SummaryProvider:
 	def length(self):
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
-		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)CFBagGetCount(" + stream.GetData() + " )");
-		return num_children_vo.GetValueAsUnsigned(0)
+		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)CFBagGetCount(" + stream.GetData() + " )")
+		if num_children_vo.IsValid():
+			return num_children_vo.GetValueAsUnsigned(0)
+		return "<variable is not CFBag>"
 
 
 def GetSummary_Impl(valobj):
 	global statistics
-	class_data = objc_runtime.ObjCRuntime(valobj)
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_pointer',valobj)
-		wrapper = None
-		return
-	class_data = class_data.read_class_data()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
-	if class_data.is_kvo():
-		class_data = class_data.get_superclass()
-	if class_data.is_valid() == False:
-		statistics.metric_hit('invalid_isa',valobj)
-		wrapper = None
-		return
+	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	if wrapper:
+		return wrapper
 	
 	name_string = class_data.class_name()
 	actual_name = name_string
-	if name_string == '__NSCFType':
+	if class_data.is_cftype():
 		# CFBag does not expose an actual NSWrapper type, so we have to check that this is
 		# an NSCFType and then check we are a pointer-to __CFBag
 		valobj_type = valobj.GetType()
 		if valobj_type.IsValid() and valobj_type.IsPointerType():
-			pointee_type = valobj_type.GetPointeeType()
-			actual_name = pointee_type.GetName()
-			if actual_name == '__CFBag' or \
-			   actual_name == 'const struct __CFBag':
-				wrapper = CFBagRef_SummaryProvider(valobj, class_data.sys_params)
-				statistics.metric_hit('code_notrun',valobj)
-				return wrapper
+			valobj_type = valobj_type.GetPointeeType()
+			if valobj_type.IsValid():
+				actual_name = valobj_type.GetName()
+		if actual_name == '__CFBag' or \
+		   actual_name == 'const struct __CFBag':
+			wrapper = CFBagRef_SummaryProvider(valobj, class_data.sys_params)
+			statistics.metric_hit('code_notrun',valobj)
+			return wrapper
 	wrapper = CFBagUnknown_SummaryProvider(valobj, class_data.sys_params)
 	statistics.metric_hit('unknown_class',str(valobj) + " seen as " + actual_name)
 	return wrapper;
@@ -105,6 +102,8 @@ def GetSummary_Impl(valobj):
 def CFBag_SummaryProvider (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
+		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+			return provider.message()
 		try:
 			summary = provider.length();
 		except:
@@ -115,7 +114,9 @@ def CFBag_SummaryProvider (valobj,dict):
 		# (if counts start looking weird, then most probably
 		#  the mask needs to be changed)
 		if summary == None:
-			summary = 'no valid set here'
+			summary = '<variable is not CFBag>'
+		elif isinstance(summary,basestring):
+			pass
 		else:
 			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x1fff000000000000
@@ -124,7 +125,7 @@ def CFBag_SummaryProvider (valobj,dict):
 			else:
 				summary = '@"' + str(summary) + ' values"'
 		return summary
-	return ''
+	return 'Summary Unavailable'
 
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F CFBag.CFBag_SummaryProvider CFBagRef CFMutableBagRef")
