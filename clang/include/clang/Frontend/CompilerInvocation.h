@@ -33,6 +33,17 @@ namespace clang {
 
 class CompilerInvocation;
 class DiagnosticsEngine;
+
+namespace driver {
+class ArgList;
+}
+
+/// CompilerInvocation - Fill out Opts based on the options given in Args.
+/// Args must have been created from the OptTable returned by
+/// createCC1OptTable(). When errors are encountered, return false and,
+/// if Diags is non-null, report the error(s).
+bool ParseDiagnosticArgs(DiagnosticOptions &Opts, driver::ArgList &Args,
+                         DiagnosticsEngine *Diags = 0);
   
 class CompilerInvocationBase : public RefCountedBase<CompilerInvocation> {
 protected:

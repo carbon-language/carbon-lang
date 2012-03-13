@@ -1277,8 +1277,8 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.DOTOutputFile = Args.getLastArgValue(OPT_dependency_dot);
 }
 
-static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
-                                DiagnosticsEngine &Diags) {
+bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
+                                DiagnosticsEngine *Diags) {
   using namespace cc1options;
   bool Success = true;
 
@@ -1312,10 +1312,11 @@ static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   else if (ShowOverloads == "all")
     Opts.ShowOverloads = DiagnosticsEngine::Ovl_All;
   else {
-    Diags.Report(diag::err_drv_invalid_value)
+    Success = false;
+    if (Diags)
+      Diags->Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fshow_overloads_EQ)->getAsString(Args)
       << ShowOverloads;
-    Success = false;
   }
 
   StringRef ShowCategory =
@@ -1327,10 +1328,11 @@ static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   else if (ShowCategory == "name")
     Opts.ShowCategories = 2;
   else {
-    Diags.Report(diag::err_drv_invalid_value)
+    Success = false;
+    if (Diags)
+      Diags->Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fdiagnostics_show_category)->getAsString(Args)
       << ShowCategory;
-    Success = false;
   }
 
   StringRef Format =
@@ -1342,10 +1344,11 @@ static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   else if (Format == "vi")
     Opts.Format = DiagnosticOptions::Vi;
   else {
-    Diags.Report(diag::err_drv_invalid_value)
+    Success = false;
+    if (Diags)
+      Diags->Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fdiagnostics_format)->getAsString(Args)
       << Format;
-    Success = false;
   }
   
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
@@ -1366,13 +1369,23 @@ static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.TabStop = Args.getLastArgIntValue(OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);
   if (Opts.TabStop == 0 || Opts.TabStop > DiagnosticOptions::MaxTabStop) {
-    Diags.Report(diag::warn_ignoring_ftabstop_value)
-      << Opts.TabStop << DiagnosticOptions::DefaultTabStop;
     Opts.TabStop = DiagnosticOptions::DefaultTabStop;
+    if (Diags)
+      Diags->Report(diag::warn_ignoring_ftabstop_value)
+      << Opts.TabStop << DiagnosticOptions::DefaultTabStop;
   }
   Opts.MessageLength = Args.getLastArgIntValue(OPT_fmessage_length, 0, Diags);
   Opts.DumpBuildInformation = Args.getLastArgValue(OPT_dump_build_information);
-  Opts.Warnings = Args.getAllArgValues(OPT_W);
+
+  for (arg_iterator it = Args.filtered_begin(OPT_W),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    StringRef V = (*it)->getValue(Args);
+    // "-Wl," and such are not warnings options.
+    if (V.startswith("l,") || V.startswith("a,") || V.startswith("p,"))
+      continue;
+
+    Opts.Warnings.push_back(V);
+  }
 
   return Success;
 }
@@ -2174,7 +2187,7 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   Success = ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags) && Success;
   Success = ParseMigratorArgs(Res.getMigratorOpts(), *Args) && Success;
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
-  Success = ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags)
+  Success = ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, &Diags)
             && Success;
   ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
   // FIXME: We shouldn't have to pass the DashX option around here

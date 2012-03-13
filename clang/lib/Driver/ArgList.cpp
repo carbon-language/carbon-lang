@@ -154,13 +154,15 @@ StringRef ArgList::getLastArgValue(OptSpecifier Id,
 }
 
 int ArgList::getLastArgIntValue(OptSpecifier Id, int Default,
-                                clang::DiagnosticsEngine &Diags) const {
+                                clang::DiagnosticsEngine *Diags) const {
   int Res = Default;
 
   if (Arg *A = getLastArg(Id)) {
-    if (StringRef(A->getValue(*this)).getAsInteger(10, Res))
-      Diags.Report(diag::err_drv_invalid_int_value)
-        << A->getAsString(*this) << A->getValue(*this);
+    if (StringRef(A->getValue(*this)).getAsInteger(10, Res)) {
+      if (Diags)
+        Diags->Report(diag::err_drv_invalid_int_value)
+          << A->getAsString(*this) << A->getValue(*this);
+    }
   }
 
   return Res;
