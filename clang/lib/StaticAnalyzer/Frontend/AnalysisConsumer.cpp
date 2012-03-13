@@ -19,6 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CallGraph.h"
 #include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
@@ -69,7 +70,19 @@ createPlistHTMLDiagnosticConsumer(const std::string& prefix,
 
 namespace {
 
-class AnalysisConsumer : public ASTConsumer {
+class AnalysisConsumer : public ASTConsumer,
+                         public RecursiveASTVisitor<AnalysisConsumer> {
+  enum AnalysisMode {
+    ANALYSIS_SYNTAX,
+    ANALYSIS_PATH,
+    ANALYSIS_ALL
+  };
+
+  /// Mode of the analyzes while recursively visiting Decls.
+  AnalysisMode RecVisitorMode;
+  /// Bug Reporter to use while recursively visiting Decls.
+  BugReporter *RecVisitorBR;
+
 public:
   ASTContext *Ctx;
   const Preprocessor &PP;
@@ -93,7 +106,8 @@ public:
                    const std::string& outdir,
                    const AnalyzerOptions& opts,
                    ArrayRef<std::string> plugins)
-    : Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins), PD(0) {
+    : RecVisitorMode(ANALYSIS_ALL), RecVisitorBR(0),
+      Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins), PD(0) {
     DigestAnalyzerOptions();
     if (Opts.PrintStats) {
       llvm::EnableStatistics();
@@ -139,15 +153,20 @@ public:
     }
   }
 
-  void DisplayFunction(const Decl *D) {
+  void DisplayFunction(const Decl *D, AnalysisMode Mode) {
     if (!Opts.AnalyzerDisplayProgress)
       return;
 
     SourceManager &SM = Mgr->getASTContext().getSourceManager();
     PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
     if (Loc.isValid()) {
-      llvm::errs() << "ANALYZE: " << Loc.getFilename();
-
+      llvm::errs() << "ANALYZE";
+      switch (Mode) {
+        case ANALYSIS_SYNTAX: llvm::errs() << "(Syntax)"; break;
+        case ANALYSIS_PATH: llvm::errs() << "(Path Sensitive)"; break;
+        case ANALYSIS_ALL: break;
+      };
+      llvm::errs() << ": " << Loc.getFilename();
       if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
         const NamedDecl *ND = cast<NamedDecl>(D);
         llvm::errs() << ' ' << *ND << '\n';
@@ -186,41 +205,64 @@ public:
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);
-  void HandleDeclContext(ASTContext &C, DeclContext *dc);
-  void HandleDeclContextDecl(ASTContext &C, Decl *D);
-  void HandleDeclContextDeclFunction(ASTContext &C, Decl *D);
 
-  void HandleCode(Decl *D, SetOfDecls *VisitedCallees = 0);
+  /// \brief Build the call graph for the context and use it to define the order
+  /// in which the functions should be visited.
+  void HandleDeclContextGallGraph(ASTContext &C, DeclContext *dc);
+
+  /// \brief Run analyzes(syntax or path sensitive) on the given function.
+  /// \param Mode - determines if we are requesting syntax only or path
+  /// sensitive only analysis.
+  /// \param VisitedCallees - The output parameter, which is populated with the
+  /// set of functions which should be considered analyzed after analyzing the
+  /// given root function.
+  void HandleCode(Decl *D, AnalysisMode Mode, SetOfDecls *VisitedCallees = 0);
+
+  /// \brief Check if we should skip (not analyze) the given function.
   bool skipFunction(Decl *D);
+
   void RunPathSensitiveChecks(Decl *D, SetOfDecls *VisitedCallees);
   void ActionExprEngine(Decl *D, bool ObjCGCEnabled, SetOfDecls *VisitedCallees);
+
+  /// Visitors for the RecursiveASTVisitor.
+
+  /// Handle callbacks for arbitrary Decls.
+  bool VisitDecl(Decl *D) {
+    checkerMgr->runCheckersOnASTDecl(D, *Mgr, *RecVisitorBR);
+    return true;
+  }
+
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    IdentifierInfo *II = FD->getIdentifier();
+    if (II && II->getName().startswith("__inline"))
+      return true;
+
+    // We skip function template definitions, as their semantics is
+    // only determined when they are instantiated.
+    if (FD->isThisDeclarationADefinition() &&
+        !FD->isDependentContext()) {
+      HandleCode(FD, RecVisitorMode);
+    }
+    return true;
+  }
+
+  bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
+    checkerMgr->runCheckersOnASTDecl(MD, *Mgr, *RecVisitorBR);
+    if (MD->isThisDeclarationADefinition())
+      HandleCode(MD, RecVisitorMode);
+    return true;
+  }
 };
 } // end anonymous namespace
+
 
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer implementation.
 //===----------------------------------------------------------------------===//
 llvm::Timer* AnalysisConsumer::TUTotalTimer = 0;
 
-void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
-  // Don't run the actions if an error has occurred with parsing the file.
-  DiagnosticsEngine &Diags = PP.getDiagnostics();
-  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
-    return;
-
-  for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
-       I != E; ++I) {
-    HandleDeclContextDecl(C, *I);
-  }
-
-  // If inlining is not turned on, use the simplest function order.
-  if (!Mgr->shouldInlineCall()) {
-    for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
-         I != E; ++I)
-      HandleDeclContextDeclFunction(C, *I);
-    return;
-  }
-
+void AnalysisConsumer::HandleDeclContextGallGraph(ASTContext &C,
+                                                  DeclContext *dc) {
   // Otherwise, use the Callgraph to derive the order.
   // Build the Call Graph.
   CallGraph CG;
@@ -256,7 +298,8 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
       SetOfDecls VisitedCallees;
       Decl *D = (*DFI)->getDecl();
       assert(D);
-      HandleCode(D, (Mgr->InliningMode == All ? 0 : &VisitedCallees));
+      HandleCode(D, ANALYSIS_PATH,
+                 (Mgr->InliningMode == All ? 0 : &VisitedCallees));
 
       // Add the visited callees to the global visited set.
       for (SetOfDecls::const_iterator I = VisitedCallees.begin(),
@@ -269,78 +312,12 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
   }
 }
 
-void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
-  { // Handle callbacks for arbitrary decls.
-    BugReporter BR(*Mgr);
-    checkerMgr->runCheckersOnASTDecl(D, *Mgr, BR);
-  }
-
-  switch (D->getKind()) {
-    case Decl::Namespace: {
-      HandleDeclContext(C, cast<NamespaceDecl>(D));
-      break;
-    }
-    case Decl::ObjCCategoryImpl:
-    case Decl::ObjCImplementation: {
-      ObjCImplDecl *ID = cast<ObjCImplDecl>(D);
-      for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(),
-           ME = ID->meth_end(); MI != ME; ++MI) {
-        BugReporter BR(*Mgr);
-        checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
-      }
-      break;
-    }
-
-    default:
-      break;
-  }
-}
-
-void AnalysisConsumer::HandleDeclContextDeclFunction(ASTContext &C, Decl *D) {
-  switch (D->getKind()) {
-    case Decl::CXXConstructor:
-    case Decl::CXXDestructor:
-    case Decl::CXXConversion:
-    case Decl::CXXMethod:
-    case Decl::Function: {
-      FunctionDecl *FD = cast<FunctionDecl>(D);
-      IdentifierInfo *II = FD->getIdentifier();
-      if (II && II->getName().startswith("__inline"))
-        break;
-      // We skip function template definitions, as their semantics is
-      // only determined when they are instantiated.
-      if (FD->isThisDeclarationADefinition() &&
-          !FD->isDependentContext()) {
-        if (!Opts.AnalyzeSpecificFunction.empty() &&
-            FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
-          break;
-        HandleCode(FD);
-      }
-      break;
-    }
-     
-    case Decl::ObjCCategoryImpl:
-    case Decl::ObjCImplementation: {
-      ObjCImplDecl *ID = cast<ObjCImplDecl>(D);
-      for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(), 
-           ME = ID->meth_end(); MI != ME; ++MI) {
-        if ((*MI)->isThisDeclarationADefinition()) {
-          if (!Opts.AnalyzeSpecificFunction.empty() &&
-              Opts.AnalyzeSpecificFunction != 
-                (*MI)->getSelector().getAsString())
-            continue;
-          HandleCode(*MI);
-        }
-      }
-      break;
-    }
-      
-    default:
-      break;
-  }
-}
-
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
+  // Don't run the actions if an error has occurred with parsing the file.
+  DiagnosticsEngine &Diags = PP.getDiagnostics();
+  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
+    return;
+
   {
     if (TUTotalTimer) TUTotalTimer->startTimer();
 
@@ -348,10 +325,21 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     BugReporter BR(*Mgr);
     TranslationUnitDecl *TU = C.getTranslationUnitDecl();
     checkerMgr->runCheckersOnASTDecl(TU, *Mgr, BR);
-    HandleDeclContext(C, TU);
+
+    // Run the AST-only checks using the order in which functions are defined.
+    // If inlining is not turned on, use the simplest function order for path
+    // sensitive analyzes as well.
+    RecVisitorMode = (Mgr->shouldInlineCall() ? ANALYSIS_SYNTAX : ANALYSIS_ALL);
+    RecVisitorBR = &BR;
+    TraverseDecl(TU);
+
+    if (Mgr->shouldInlineCall())
+      HandleDeclContextGallGraph(C, TU);
 
     // After all decls handled, run checkers on the entire TranslationUnit.
     checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);
+
+    RecVisitorBR = 0;
   }
 
   // Explicitly destroy the PathDiagnosticConsumer.  This will flush its output.
@@ -400,12 +388,12 @@ bool AnalysisConsumer::skipFunction(Decl *D) {
   return false;
 }
 
-void AnalysisConsumer::HandleCode(Decl *D, SetOfDecls *VisitedCallees) {
-
+void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
+                                  SetOfDecls *VisitedCallees) {
   if (skipFunction(D))
     return;
 
-  DisplayFunction(D);
+  DisplayFunction(D, Mode);
 
   // Clear the AnalysisManager of old AnalysisDeclContexts.
   Mgr->ClearContexts();
@@ -421,8 +409,9 @@ void AnalysisConsumer::HandleCode(Decl *D, SetOfDecls *VisitedCallees) {
   for (SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
        WI != WE; ++WI)
     if ((*WI)->hasBody()) {
-      checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
-      if (checkerMgr->hasPathSensitiveCheckers())
+      if (Mode != ANALYSIS_PATH)
+        checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
+      if (Mode != ANALYSIS_SYNTAX && checkerMgr->hasPathSensitiveCheckers())
         RunPathSensitiveChecks(*WI, VisitedCallees);
     }
   NumFunctionsAnalyzed++;

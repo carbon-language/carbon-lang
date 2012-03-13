@@ -156,6 +156,23 @@ void test_catch_copy() {
   }
 }
 
+// CHECK:  [B1 (ENTRY)]
+// CHECK:    Succs (1): B0
+// CHECK:  [B0 (EXIT)]
+// CHECK:    Preds (1): B1
+// CHECK:  [B1 (ENTRY)]
+// CHECK:    Succs (1): B0
+// CHECK:  [B0 (EXIT)]
+// CHECK:    Preds (1): B1
+// CHECK:  [B2 (ENTRY)]
+// CHECK:    Succs (1): B1
+// CHECK:  [B1]
+// CHECK:    1: 1
+// CHECK:    2: return [B1.1];
+// CHECK:    Preds (1): B2
+// CHECK:    Succs (1): B0
+// CHECK:  [B0 (EXIT)]
+// CHECK:    Preds (1): B1
 // CHECK:  [B2 (ENTRY)]
 // CHECK:    Succs (1): B1
 // CHECK:  [B1]
@@ -322,15 +339,6 @@ void test_catch_copy() {
 // CHECK:    T: if [B4.12]
 // CHECK:    Preds (1): B5
 // CHECK:    Succs (2): B3 B2
-// CHECK:  [B0 (EXIT)]
-// CHECK:    Preds (1): B1
-// CHECK:  [B2 (ENTRY)]
-// CHECK:    Succs (1): B1
-// CHECK:  [B1]
-// CHECK:    1: 1
-// CHECK:    2: return [B1.1];
-// CHECK:    Preds (1): B2
-// CHECK:    Succs (1): B0
 // CHECK:  [B0 (EXIT)]
 // CHECK:    Preds (1): B1
 // CHECK:  [B9 (ENTRY)]
