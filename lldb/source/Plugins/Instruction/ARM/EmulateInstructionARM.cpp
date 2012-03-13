@@ -407,7 +407,7 @@ EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding enc
         if (BitIsSet (registers, 15))
         {
             GetRegisterInfo (eRegisterKindDWARF, dwarf_pc, reg_info);
-            context.SetRegisterPlusOffset (reg_info, addr - sp);
+            context.SetRegisterToRegisterPlusOffset (reg_info, sp_reg, addr - sp);
             const uint32_t pc = ReadCoreReg(PC_REG, &success);
             if (!success)
                 return false;
