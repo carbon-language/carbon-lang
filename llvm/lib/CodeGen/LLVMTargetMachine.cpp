@@ -90,7 +90,7 @@ static void addPassesToHandleExceptions(TargetMachine *TM,
     // removed from the parent invoke(s). This could happen when a landing
     // pad is shared by multiple invokes and is also a target of a normal
     // edge from elsewhere.
-    PM.add(createSjLjEHPass(TM->getTargetLowering()));
+    PM.add(createSjLjEHPreparePass(TM->getTargetLowering()));
     // FALLTHROUGH
   case ExceptionHandling::DwarfCFI:
   case ExceptionHandling::ARM:
