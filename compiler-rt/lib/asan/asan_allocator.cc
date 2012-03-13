@@ -412,11 +412,11 @@ class MallocInfo {
   PageGroup *FindPageGroupUnlocked(uintptr_t addr) {
     int n = n_page_groups_;
     // If the page groups are not sorted yet, sort them.
-    if (n_sorterd_page_groups < n) {
+    if (n_sorted_page_groups_ < n) {
       SortArray((uintptr_t*)page_groups_, n);
-      n_sorterd_page_groups = n;
+      n_sorted_page_groups_ = n;
     }
-    // Binray search over the page groups.
+    // Binary search over the page groups.
     int beg = 0, end = n;
     while (beg < end) {
       int med = (beg + end) / 2;
@@ -563,7 +563,7 @@ class MallocInfo {
 
   PageGroup *page_groups_[kMaxAvailableRam / kMinMmapSize];
   int n_page_groups_;  // atomic
-  int n_sorterd_page_groups;
+  int n_sorted_page_groups_;
 };
 
 static MallocInfo malloc_info(LINKER_INITIALIZED);
