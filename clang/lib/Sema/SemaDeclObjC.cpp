@@ -1026,7 +1026,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     // Add ivar's to class's DeclContext.
     for (unsigned i = 0, e = numIvars; i != e; ++i) {
       ivars[i]->setLexicalDeclContext(ImpDecl);
-      IDecl->makeDeclVisibleInContext(ivars[i], false);
+      IDecl->makeDeclVisibleInContext(ivars[i]);
       ImpDecl->addDecl(ivars[i]);
     }
     
@@ -1050,7 +1050,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
       }
       // Instance ivar to Implementation's DeclContext.
       ImplIvar->setLexicalDeclContext(ImpDecl);
-      IDecl->makeDeclVisibleInContext(ImplIvar, false);
+      IDecl->makeDeclVisibleInContext(ImplIvar);
       ImpDecl->addDecl(ImplIvar);
     }
     return;

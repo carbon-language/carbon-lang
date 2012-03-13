@@ -1432,11 +1432,7 @@ public:
   /// visible from this context, as determined by
   /// NamedDecl::declarationReplaces, the previous declaration will be
   /// replaced with D.
-  ///
-  /// @param Recoverable true if it's okay to not add this decl to
-  /// the lookup tables because it can be easily recovered by walking
-  /// the declaration chains.
-  void makeDeclVisibleInContext(NamedDecl *D, bool Recoverable = true);
+  void makeDeclVisibleInContext(NamedDecl *D);
 
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
@@ -1509,15 +1505,12 @@ private:
   ///
   /// Analogous to makeDeclVisibleInContext, but for the exclusive
   /// use of addDeclInternal().
-  void makeDeclVisibleInContextInternal(NamedDecl *D,
-                                        bool Recoverable = true);
+  void makeDeclVisibleInContextInternal(NamedDecl *D);
 
   friend class DependentDiagnostic;
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
 
-  void buildLookup(DeclContext *DCtx);
-  void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal,
-                                         bool Recoverable);
+  void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal);
   void makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal);
 };
 

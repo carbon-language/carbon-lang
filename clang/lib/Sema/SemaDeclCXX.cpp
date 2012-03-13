@@ -5829,14 +5829,15 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
 }
 
 void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
-  // If scope has associated entity, then using directive is at namespace
-  // or translation unit scope. We add UsingDirectiveDecls, into
-  // it's lookup structure.
-  if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity()))
+  // If the scope has an associated entity and the using directive is at
+  // namespace or translation unit scope, add the UsingDirectiveDecl into
+  // its lookup structure so qualified name lookup can find it.
+  DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+  if (Ctx && !Ctx->isFunctionOrMethod())
     Ctx->addDecl(UDir);
   else
-    // Otherwise it is block-sope. using-directives will affect lookup
-    // only to the end of scope.
+    // Otherwise, it is at block sope. The using-directives will affect lookup
+    // only to the end of the scope.
     S->PushUsingDirective(UDir);
 }
 
@@ -10195,7 +10196,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
   // lookup context is in lexical scope.
   if (!CurContext->isDependentContext()) {
     DC = DC->getRedeclContext();
-    DC->makeDeclVisibleInContext(ND, /* Recoverable=*/ false);
+    DC->makeDeclVisibleInContext(ND);
     if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
       PushOnScopeChains(ND, EnclosingScope, /*AddToContext=*/ false);
   }

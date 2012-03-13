@@ -740,7 +740,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   ObjCIvarDecl::Private,
                                   (Expr *)0, true);
       ClassImpDecl->addDecl(Ivar);
-      IDecl->makeDeclVisibleInContext(Ivar, false);
+      IDecl->makeDeclVisibleInContext(Ivar);
       property->setPropertyIvarDecl(Ivar);
 
       if (!getLangOpts().ObjCNonFragileABI)

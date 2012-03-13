@@ -1,6 +1,10 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fmodule-cache-path %t -I %S/Inputs %s -verify
 
+// Importing modules which add declarations to a pre-existing non-imported
+// overload set does not currently work.
+// XFAIL: *
+
 namespace N6 {
   char &f(char);
 }

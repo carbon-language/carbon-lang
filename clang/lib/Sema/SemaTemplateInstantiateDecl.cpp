@@ -817,7 +817,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   // Finish handling of friends.
   if (isFriend) {
-    DC->makeDeclVisibleInContext(Inst, /*Recoverable*/ false);
+    DC->makeDeclVisibleInContext(Inst);
     Inst->setLexicalDeclContext(Owner);
     RecordInst->setLexicalDeclContext(Owner);
     return Inst;
@@ -1189,7 +1189,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       PrevDecl = Function->getPreviousDecl();
 
     PrincipalDecl->setObjectOfFriendDecl(PrevDecl != 0);
-    DC->makeDeclVisibleInContext(PrincipalDecl, /*Recoverable=*/ false);
+    DC->makeDeclVisibleInContext(PrincipalDecl);
 
     bool queuedInstantiation = false;
 

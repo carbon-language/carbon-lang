@@ -106,7 +106,8 @@ namespace {
       assert(InnermostFileDC && InnermostFileDC->isFileContext());
 
       for (; S; S = S->getParent()) {
-        if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
+        DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
+        if (Ctx && !Ctx->isFunctionOrMethod()) {
           DeclContext *EffectiveDC = (Ctx->isFileContext() ? Ctx : InnermostFileDC);
           visit(Ctx, EffectiveDC);
         } else {

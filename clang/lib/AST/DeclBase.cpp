@@ -1082,64 +1082,28 @@ void DeclContext::addDeclInternal(Decl *D) {
     ND->getDeclContext()->makeDeclVisibleInContextInternal(ND);
 }
 
-/// buildLookup - Build the lookup data structure with all of the
-/// declarations in DCtx (and any other contexts linked to it or
-/// transparent contexts nested within it).
-void DeclContext::buildLookup(DeclContext *DCtx) {
-  llvm::SmallVector<DeclContext *, 2> Contexts;
-  DCtx->collectAllContexts(Contexts);
-  for (unsigned I = 0, N = Contexts.size(); I != N; ++I) {
-    for (decl_iterator D = Contexts[I]->decls_begin(),
-                    DEnd = Contexts[I]->decls_end();
-         D != DEnd; ++D) {
-      // Insert this declaration into the lookup structure, but only
-      // if it's semantically in its decl context.  During non-lazy
-      // lookup building, this is implicitly enforced by addDecl.
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        if (D->getDeclContext() == Contexts[I])
-          makeDeclVisibleInContextImpl(ND, false);
-
-      // If this declaration is itself a transparent declaration context or
-      // inline namespace, add its members (recursively).
-      if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D))
-        if (InnerCtx->isTransparentContext() || InnerCtx->isInlineNamespace())
-          buildLookup(InnerCtx->getPrimaryContext());
-    }
-  }
-}
-
 DeclContext::lookup_result
 DeclContext::lookup(DeclarationName Name) {
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Name);
 
-  if (hasExternalVisibleStorage()) {
-    // Check to see if we've already cached the lookup results.
-    if (LookupPtr) {
-      StoredDeclsMap::iterator I = LookupPtr->find(Name);
-      if (I != LookupPtr->end())
-        return I->second.getLookupResult();
-    }
+  if (LookupPtr) {
+    StoredDeclsMap::iterator I = LookupPtr->find(Name);
+    if (I != LookupPtr->end())
+      return I->second.getLookupResult();
+  }
 
+  // If a PCH has a result for this name, and we have a local declaration, we
+  // will have imported the PCH result when adding the local declaration.
+  // FIXME: For modules, we could have had more declarations added by module
+  // imoprts since we saw the declaration of the local name.
+  if (hasExternalVisibleStorage()) {
     ExternalASTSource *Source = getParentASTContext().getExternalSource();
     return Source->FindExternalVisibleDeclsByName(this, Name);
   }
 
-  /// If there is no lookup data structure, build one now by walking
-  /// all of the linked DeclContexts (in declaration order!) and
-  /// inserting their values.
-  if (!LookupPtr) {
-    buildLookup(this);
-
-    if (!LookupPtr)
-      return lookup_result(lookup_iterator(0), lookup_iterator(0));
-  }
-
-  StoredDeclsMap::iterator Pos = LookupPtr->find(Name);
-  if (Pos == LookupPtr->end())
-    return lookup_result(lookup_iterator(0), lookup_iterator(0));
-  return Pos->second.getLookupResult();
+  return lookup_result(lookup_iterator(0), lookup_iterator(0));
 }
 
 DeclContext::lookup_const_result
@@ -1213,52 +1177,18 @@ bool DeclContext::InEnclosingNamespaceSetOf(const DeclContext *O) const {
   return false;
 }
 
-void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable)
+void DeclContext::makeDeclVisibleInContext(NamedDecl *D)
 {
-    makeDeclVisibleInContextWithFlags(D, false, Recoverable);
+    makeDeclVisibleInContextWithFlags(D, false);
 }
 
-void DeclContext::makeDeclVisibleInContextInternal(NamedDecl *D, bool Recoverable)
+void DeclContext::makeDeclVisibleInContextInternal(NamedDecl *D)
 {
-    makeDeclVisibleInContextWithFlags(D, true, Recoverable);
+    makeDeclVisibleInContextWithFlags(D, true);
 }
 
-void DeclContext::makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal, bool Recoverable) {
-  // FIXME: This feels like a hack. Should DeclarationName support
-  // template-ids, or is there a better way to keep specializations
-  // from being visible?
-  if (isa<ClassTemplateSpecializationDecl>(D) || D->isTemplateParameter())
-    return;
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    if (FD->isFunctionTemplateSpecialization())
-      return;
-
-  DeclContext *PrimaryContext = getPrimaryContext();
-  if (PrimaryContext != this) {
-    PrimaryContext->makeDeclVisibleInContextWithFlags(D, Internal, Recoverable);
-    return;
-  }
-
-  // If we already have a lookup data structure, perform the insertion
-  // into it. If we haven't deserialized externally stored decls, deserialize
-  // them so we can add the decl. Otherwise, be lazy and don't build that
-  // structure until someone asks for it.
-  if (LookupPtr || !Recoverable || hasExternalVisibleStorage())
-    makeDeclVisibleInContextImpl(D, Internal);
-
-  // If we are a transparent context or inline namespace, insert into our
-  // parent context, too. This operation is recursive.
-  if (isTransparentContext() || isInlineNamespace())
-    getParent()->makeDeclVisibleInContextWithFlags(D, Internal, Recoverable);
-
-  Decl *DCAsDecl = cast<Decl>(this);
-  // Notify that a decl was made visible unless it's a Tag being defined. 
-  if (!(isa<TagDecl>(DCAsDecl) && cast<TagDecl>(DCAsDecl)->isBeingDefined()))
-    if (ASTMutationListener *L = DCAsDecl->getASTMutationListener())
-      L->AddedVisibleDecl(this, D);
-}
-
-void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
+void DeclContext::makeDeclVisibleInContextWithFlags(NamedDecl *D,
+                                                    bool Internal) {
   // Skip unnamed declarations.
   if (!D->getDeclName())
     return;
@@ -1267,6 +1197,33 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
   // context.
   if ((D->getIdentifierNamespace() == 0 && !isa<UsingDirectiveDecl>(D)) ||
       D->isTemplateParameter())
+    return;
+
+  // Skip template specializations.
+  // FIXME: This feels like a hack. Should DeclarationName support
+  // template-ids, or is there a better way to keep specializations
+  // from being visible?
+  if (isa<ClassTemplateSpecializationDecl>(D))
+    return;
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (FD->isFunctionTemplateSpecialization())
+      return;
+
+  // Add the declaration into our lookup table (and those of containing
+  // contexts).
+  getPrimaryContext()->makeDeclVisibleInContextImpl(D, Internal);
+}
+
+void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
+  // Skip declarations within functions.
+  // FIXME: We shouldn't need to build lookup tables for function declarations
+  // ever, and we can't do so correctly because we can't model the nesting of
+  // scopes which occurs within functions. We use "qualified" lookup into
+  // function declarations when handling friend declarations inside nested
+  // classes, and consequently accept the following invalid code:
+  //
+  //   void f() { void g(); { int g; struct S { friend void g(); }; } }
+  if (isFunctionOrMethod() && !isa<FunctionDecl>(D))
     return;
 
   ASTContext *C = 0;
@@ -1289,23 +1246,32 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
   StoredDeclsList &DeclNameEntries = (*LookupPtr)[D->getDeclName()];
   if (DeclNameEntries.isNull()) {
     DeclNameEntries.setOnlyValue(D);
-    return;
+  } else if (DeclNameEntries.HandleRedeclaration(D)) {
+    // This declaration has replaced an existing one for which
+    // declarationReplaces returns true.
+  } else {
+    // Put this declaration into the appropriate slot.
+    DeclNameEntries.AddSubsequentDecl(D);
   }
 
-  // If it is possible that this is a redeclaration, check to see if there is
-  // already a decl for which declarationReplaces returns true.  If there is
-  // one, just replace it and return.
-  if (DeclNameEntries.HandleRedeclaration(D))
-    return;
+  // If we are a transparent context or inline namespace, insert into our
+  // parent context, too. This operation is recursive.
+  if (isTransparentContext() || isInlineNamespace())
+    getParent()->getPrimaryContext()->makeDeclVisibleInContextImpl(D, Internal);
 
-  // Put this declaration into the appropriate slot.
-  DeclNameEntries.AddSubsequentDecl(D);
+  Decl *DCAsDecl = cast<Decl>(this);
+  // Notify that a decl was made visible unless we are a Tag being defined.
+  if (!(isa<TagDecl>(DCAsDecl) && cast<TagDecl>(DCAsDecl)->isBeingDefined()))
+    if (ASTMutationListener *L = DCAsDecl->getASTMutationListener())
+      L->AddedVisibleDecl(this, D);
 }
 
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
 /// this context.
 DeclContext::udir_iterator_range
 DeclContext::getUsingDirectives() const {
+  // FIXME: Use something more efficient than normal lookup for using
+  // directives. In C++, using directives are looked up more than anything else.
   lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
   return udir_iterator_range(reinterpret_cast<udir_iterator>(Result.first),
                              reinterpret_cast<udir_iterator>(Result.second));

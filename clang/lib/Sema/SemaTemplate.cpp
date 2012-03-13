@@ -1088,7 +1088,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // Friend templates are visible in fairly strange ways.
     if (!CurContext->isDependentContext()) {
       DeclContext *DC = SemanticContext->getRedeclContext();
-      DC->makeDeclVisibleInContext(NewTemplate, /* Recoverable = */ false);
+      DC->makeDeclVisibleInContext(NewTemplate);
       if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
         PushOnScopeChains(NewTemplate, EnclosingScope,
                           /* AddToContext = */ false);
