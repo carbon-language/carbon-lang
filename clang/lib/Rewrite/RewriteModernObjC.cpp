@@ -5297,7 +5297,8 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "\tunsigned int const flags;\n";
   Result += "\tunsigned int instanceStart;\n";
   Result += "\tunsigned int const instanceSize;\n";
-  Result += "\tunsigned int const reserved;  // only when building for 64bit targets\n";
+  // FIXME, Add 'reserved' field in 64bit abi mode!
+  // Result += "\tunsigned int const reserved;
   Result += "\tconst unsigned char * const ivarLayout;\n";
   Result += "\tconst char *const name;\n";
   Result += "\tconst struct _method_list_t * const baseMethods;\n";
@@ -5499,8 +5500,9 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
   Result += InstanceStart; Result += ", ";
   Result += InstanceSize; Result += ", \n";
   Result += "\t";
+  // FIXME. Initizlize 'reserved' field in 64bit abi mode!
   // uint32_t const reserved; // only when building for 64bit targets
-  Result += "(unsigned int)0, \n\t";
+  // Result += "(unsigned int)0, \n\t";
   // const uint8_t * const ivarLayout;
   Result += "0, \n\t";
   Result += "\""; Result += ClassName; Result += "\",\n\t";
