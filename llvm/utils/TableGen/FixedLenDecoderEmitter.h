@@ -57,8 +57,7 @@ public:
                          std::string ROK      = "MCDisassembler::Success",
                          std::string RFail    = "MCDisassembler::Fail",
                          std::string L        = "") :
-    Records(R), Target(R),
-    NumberedInstructions(Target.getInstructionsByEnumValue()),
+    Target(R),
     PredicateNamespace(PredicateNamespace),
     GuardPrefix(GPrefix), GuardPostfix(GPostfix),
     ReturnOK(ROK), ReturnFail(RFail), Locals(L) {}
@@ -67,9 +66,7 @@ public:
   void run(raw_ostream &o);
 
 private:
-  RecordKeeper &Records;
   CodeGenTarget Target;
-  std::vector<const CodeGenInstruction*> NumberedInstructions;
 public:
   std::string PredicateNamespace;
   std::string GuardPrefix, GuardPostfix;

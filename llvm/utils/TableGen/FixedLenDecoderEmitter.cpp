@@ -1527,7 +1527,8 @@ void FixedLenDecoderEmitter::run(raw_ostream &o)
   o << "namespace llvm {\n\n";
 
   // Parameterize the decoders based on namespace and instruction width.
-  NumberedInstructions = Target.getInstructionsByEnumValue();
+  std::vector<const CodeGenInstruction*> NumberedInstructions =
+    Target.getInstructionsByEnumValue();
   std::map<std::pair<std::string, unsigned>,
            std::vector<unsigned> > OpcMap;
   std::map<unsigned, std::vector<OperandInfo> > Operands;
