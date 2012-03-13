@@ -225,7 +225,7 @@ def NSSet_SummaryProvider2 (valobj,dict):
 		else:
 			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x1fff000000000000
-		 	summary = str(summary) + (' objects' if summary > 1 else ' object')
+		 	summary = '@"' + str(summary) + (' values"' if summary > 1 else ' value"')
 		return summary
 	return ''
 

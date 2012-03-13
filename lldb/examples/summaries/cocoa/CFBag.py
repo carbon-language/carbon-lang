@@ -120,9 +120,9 @@ def CFBag_SummaryProvider (valobj,dict):
 			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x1fff000000000000
 			if summary == 1:
-				summary = '1 item'
+				summary = '@"1 value"'
 			else:
-				summary = str(summary) + ' items'
+				summary = '@"' + str(summary) + ' values"'
 		return summary
 	return ''
 

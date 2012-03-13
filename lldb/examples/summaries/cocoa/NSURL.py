@@ -47,8 +47,15 @@ class NSURLKnown_SummaryProvider:
 							self.offset_base(),
 							self.sys_params.types_cache.NSURL)
 		my_string = CFString.CFString_SummaryProvider(text,None)
-		if base.GetValueAsUnsigned(0) != 0:
-			my_string = my_string + " (base path: " + NSURL_SummaryProvider(base,None) + ")"
+		if len(my_string) > 0 and base.GetValueAsUnsigned(0) != 0:
+			# remove final " from myself
+			my_string = my_string[0:len(my_string)-1]
+			my_string = my_string + ' -- '
+			my_base_string = NSURL_SummaryProvider(base,None)
+			if len(my_base_string) > 2:
+				# remove @" marker from base URL string
+				my_base_string = my_base_string[2:]
+			my_string = my_string + my_base_string
 		return my_string
 
 

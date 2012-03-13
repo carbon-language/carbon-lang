@@ -197,7 +197,7 @@ def CFDictionary_SummaryProvider2 (valobj,dict):
 		# needed on OSX Mountain Lion
 			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x0f1f000000000000
-			summary = str(summary) + (" key/value pairs" if summary > 1 else " key/value pair")
+			summary = '@"' + str(summary) + (' entries"' if summary > 1 else ' entry"')
 		return summary
 	return ''
 

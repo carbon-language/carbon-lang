@@ -36,7 +36,7 @@ class NSKnownException_SummaryProvider:
 		reason_ptr = self.valobj.CreateChildAtOffset("reason",
 							self.offset_reason(),
 							self.sys_params.types_cache.id)
-		return CFString.CFString_SummaryProvider(name_ptr,None) + " " + CFString.CFString_SummaryProvider(reason_ptr,None)
+		return 'name:' + CFString.CFString_SummaryProvider(name_ptr,None) + ' reason:' + CFString.CFString_SummaryProvider(reason_ptr,None)
 
 class NSUnknownException_SummaryProvider:
 	def adjust_for_architecture(self):

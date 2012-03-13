@@ -111,5 +111,23 @@ def NSData_SummaryProvider (valobj,dict):
 	    return summary
 	return ''
 
+def NSData_SummaryProvider2 (valobj,dict):
+	provider = GetSummary_Impl(valobj);
+	if provider != None:
+	    try:
+	        summary = provider.length();
+	    except:
+	        summary = None
+	    if summary == None:
+	        summary = 'no valid data here'
+	    else:
+	        if summary == 1:
+	           summary = '@"1 byte"'
+	        else:
+	           summary = '@"' + str(summary) + ' bytes"'
+	    return summary
+	return ''
+
 def __lldb_init_module(debugger,dict):
-	debugger.HandleCommand("type summary add -F NSData.NSData_SummaryProvider NSData CFDataRef CFMutableDataRef")
+	debugger.HandleCommand("type summary add -F NSData.NSData_SummaryProvider NSData")
+	debugger.HandleCommand("type summary add -F NSData.NSData_SummaryProvider2 CFDataRef CFMutableDataRef")

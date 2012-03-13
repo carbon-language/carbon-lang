@@ -906,8 +906,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSData"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("CFDataRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("CFMutableDataRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider2", ConstString("CFDataRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider2", ConstString("CFMutableDataRef"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSException.NSException_SummaryProvider", ConstString("NSException"), appkit_flags);
 

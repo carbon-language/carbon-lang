@@ -218,13 +218,13 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSString *) str12 = ',' @"Process Name:  a.out Process Id:'])
 
         self.expect('frame variable newArray newDictionary newMutableDictionary cfdict_ref mutable_dict_ref cfarray_ref mutable_array_ref',
-                    substrs = ['(NSArray *) newArray = ',' 50 objects',
+                    substrs = ['(NSArray *) newArray = ','@"50 objects"',
                     '(NSDictionary *) newDictionary = ',' 12 key/value pairs',
                     '(NSDictionary *) newMutableDictionary = ',' 21 key/value pairs',
-                    '(CFDictionaryRef) cfdict_ref = ',' 3 key/value pairs',
-                    '(CFMutableDictionaryRef) mutable_dict_ref = ',' 12 key/value pairs',
-                    '(CFArrayRef) cfarray_ref = ',' 3 objects',
-                    '(CFMutableArrayRef) mutable_array_ref = ',' 11 objects'])
+                    '(CFDictionaryRef) cfdict_ref = ','@"3 entries"',
+                    '(CFMutableDictionaryRef) mutable_dict_ref = ','@"12 entries"',
+                    '(CFArrayRef) cfarray_ref = ','@"3 objects"',
+                    '(CFMutableArrayRef) mutable_array_ref = ','@"11 objects"'])
 
         self.expect('frame variable attrString mutableAttrString mutableGetConst',
                     substrs = ['(NSAttributedString *) attrString = ',' @"hello world from foo"',
@@ -234,24 +234,24 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable immutableData mutableData data_ref mutable_data_ref mutable_string_ref',
                     substrs = ['(NSData *) immutableData = ',' 4 bytes',
                     '(NSData *) mutableData = ',' 14 bytes',
-                    '(CFDataRef) data_ref = ',' 5 bytes',
-                    '(CFMutableDataRef) mutable_data_ref = ',' 5 bytes',
+                    '(CFDataRef) data_ref = ','@"5 bytes"',
+                    '(CFMutableDataRef) mutable_data_ref = ','@"5 bytes"',
                     '(CFMutableStringRef) mutable_string_ref = ',' @"Wish ya knew"'])
 
         self.expect('frame variable mutable_bag_ref cfbag_ref binheap_ref',
-                    substrs = ['(CFMutableBagRef) mutable_bag_ref = ',' 17 items',
-                    '(CFBagRef) cfbag_ref = ',' 15 items',
-                    '(CFBinaryHeapRef) binheap_ref = ',' 21 items'])
+                    substrs = ['(CFMutableBagRef) mutable_bag_ref = ','@"17 values"',
+                    '(CFBagRef) cfbag_ref = ','@"15 values"',
+                    '(CFBinaryHeapRef) binheap_ref = ','@"21 items"'])
 
         self.expect('frame variable cfurl_ref cfchildurl_ref cfgchildurl_ref',
-                    substrs = ['(CFURLRef) cfurl_ref = ',' @"http://www.foo.bar/"',
-                    'cfchildurl_ref = ',' @"page.html" (base path: @"http://www.foo.bar/")',
-                    '(CFURLRef) cfgchildurl_ref = ',' @"?whatever" (base path: @"http://www.foo.bar/page.html")'])
+                    substrs = ['(CFURLRef) cfurl_ref = ','@"http://www.foo.bar',
+                    'cfchildurl_ref = ','@"page.html -- http://www.foo.bar',
+                    '(CFURLRef) cfgchildurl_ref = ','@"?whatever -- http://www.foo.bar/page.html"'])
 
         self.expect('frame variable nsurl nsurl2 nsurl3',
-                    substrs = ['(NSURL *) nsurl = ',' @"http://www.foo.bar"',
-                    '(NSURL *) nsurl2 =',' @"page.html" (base path: @"http://www.foo.bar")',
-                    '(NSURL *) nsurl3 = ',' @"?whatever" (base path: @"http://www.foo.bar/page.html")'])
+                    substrs = ['(NSURL *) nsurl = ','@"http://www.foo.bar',
+                    '(NSURL *) nsurl2 =','@"page.html -- http://www.foo.bar',
+                    '(NSURL *) nsurl3 = ','@"?whatever -- http://www.foo.bar/page.html"'])
 
         self.expect('frame variable bundle_string bundle_url main_bundle',
                     substrs = ['(NSBundle *) bundle_string = ',' @"/System/Library/Frameworks/Accelerate.framework"',
@@ -259,16 +259,16 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSBundle *) main_bundle = ','test/functionalities/data-formatter/data-formatter-objc'])
 
         self.expect('frame variable except0 except1 except2 except3',
-                    substrs = ['(NSException *) except0 = ',' @"TheGuyWhoHasNoName" @"cuz it\'s funny"',
-                    '(NSException *) except1 = ',' @"TheGuyWhoHasNoName~1" @"cuz it\'s funny"',
-                    '(NSException *) except2 = ',' @"TheGuyWhoHasNoName`2" @"cuz it\'s funny"',
-                    '(NSException *) except3 = ',' @"TheGuyWhoHasNoName/3" @"cuz it\'s funny"'])
+                    substrs = ['(NSException *) except0 = ','name:@"TheGuyWhoHasNoName" reason:@"cuz it\'s funny"',
+                    '(NSException *) except1 = ','name:@"TheGuyWhoHasNoName~1" reason:@"cuz it\'s funny"',
+                    '(NSException *) except2 = ','name:@"TheGuyWhoHasNoName`2" reason:@"cuz it\'s funny"',
+                    '(NSException *) except3 = ','name:@"TheGuyWhoHasNoName/3" reason:@"cuz it\'s funny"'])
 
         self.expect('frame variable port',
                     substrs = ['(NSMachPort *) port = ',' mach port: '])
 
         self.expect('frame variable date1 date2',
-                    substrs = ['10','1985','1','2011'])
+                    substrs = ['1985-04','2011-01'])
 
         # this test might fail if we hit the breakpoint late on December 31st of some given year
         # and midnight comes between hitting the breakpoint and running this line of code
@@ -279,7 +279,7 @@ class ObjCDataFormatterTestCase(TestBase):
                     substrs = [now_year,'1970'])
 
         self.expect('frame variable date1_abs date2_abs',
-                    substrs = ['10','1985','1','2011'])
+                    substrs = ['1985-04','2011-01'])
 
         self.expect('frame variable date3_abs date4_abs',
                     substrs = [now_year,'1970'])
@@ -417,7 +417,7 @@ class ObjCDataFormatterTestCase(TestBase):
              '(Point *) point_ptr = (v=7, h=12)',
              '(HIPoint) hi_point = (x=7, y=12)',
              '(HIRect) hi_rect = origin=(x=3, y=5) size=(width=4, height=6)',
-             '@"TheGuyWhoHasNoName" @"cuz it\'s funny"',
+             'name:@"TheGuyWhoHasNoName" reason:@"cuz it\'s funny"',
              '1985',
              'foo_selector_impl'])
         self.runCmd('log timers dump')

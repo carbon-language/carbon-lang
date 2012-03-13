@@ -31,6 +31,13 @@ def osx_to_python_time(osx):
 	else:
 		return osx - osx_epoch
 
+# represent a struct_time as a string in the format used by Xcode
+def xcode_format_time(X):
+	return time.strftime('%Y-%m-%d %H:%M:%S %Z',X)
+
+# represent a count-since-epoch as a string in the format used by Xcode
+def xcode_format_count(X):
+	return xcode_format_time(time.localtime(X))
 
 # despite the similary to synthetic children providers, these classes are not
 # trying to provide anything but the summary for NSDate, so they need not
@@ -56,7 +63,7 @@ class NSTaggedDate_SummaryProvider:
 		# while all Python knows about is the "epoch", which is a platform-dependent
 		# year (1970 of *nix) whose Jan 1 at midnight is taken as reference
 		value_double = struct.unpack('d', struct.pack('Q', self.data))[0]
-		return time.ctime(osx_to_python_time(value_double))
+		return xcode_format_count(osx_to_python_time(value_double))
 
 
 class NSUntaggedDate_SummaryProvider:
@@ -81,7 +88,7 @@ class NSUntaggedDate_SummaryProvider:
 							self.offset(),
 							self.sys_params.types_cache.double)
 		value_double = struct.unpack('d', struct.pack('Q', value.GetValueAsUnsigned(0)))[0]
-		return time.ctime(osx_to_python_time(value_double))
+		return xcode_format_count(osx_to_python_time(value_double))
 
 class NSCalendarDate_SummaryProvider:
 	def adjust_for_architecture(self):
@@ -105,7 +112,7 @@ class NSCalendarDate_SummaryProvider:
 							self.offset(),
 							self.sys_params.types_cache.double)
 		value_double = struct.unpack('d', struct.pack('Q', value.GetValueAsUnsigned(0)))[0]
-		return time.ctime(osx_to_python_time(value_double))
+		return xcode_format_count(osx_to_python_time(value_double))
 
 class NSTimeZoneClass_SummaryProvider:
 	def adjust_for_architecture(self):
@@ -215,7 +222,7 @@ def NSTimeZone_SummaryProvider (valobj,dict):
 def CFAbsoluteTime_SummaryProvider (valobj,dict):
 	try:
 		value_double = struct.unpack('d', struct.pack('Q', valobj.GetValueAsUnsigned(0)))[0]
-		return time.ctime(osx_to_python_time(value_double))
+		return xcode_format_count(osx_to_python_time(value_double))
 	except:
 		return 'unable to provide a summary'
 

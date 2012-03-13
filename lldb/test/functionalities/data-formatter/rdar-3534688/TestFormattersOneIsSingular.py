@@ -63,11 +63,11 @@ class DataFormatterOneIsSingularTestCase(TestBase):
         # Now enable AppKit and check we are displaying Cocoa classes correctly
         self.runCmd("type category enable AppKit")
         self.expect('frame variable key',
-                    substrs = ['1 object'])
+                    substrs = ['@"1 object"'])
         self.expect('frame variable key', matching=False,
                     substrs = ['1 objects'])
         self.expect('frame variable value',
-                    substrs = ['1 object'])
+                    substrs = ['@"1 object"'])
         self.expect('frame variable value', matching=False,
                     substrs = ['1 objects'])
         self.expect('frame variable dict',
@@ -75,9 +75,9 @@ class DataFormatterOneIsSingularTestCase(TestBase):
         self.expect('frame variable dict', matching=False,
                     substrs = ['1 key/value pairs'])
         self.expect('frame variable mutable_bag_ref',
-                    substrs = ['1 item'])
+                    substrs = ['@"1 value"'])
         self.expect('frame variable mutable_bag_ref', matching=False,
-                    substrs = ['1 items'])
+                    substrs = ['1 values'])
         self.expect('frame variable nscounted_set',
                     substrs = ['1 object'])
         self.expect('frame variable nscounted_set', matching=False,
@@ -87,7 +87,7 @@ class DataFormatterOneIsSingularTestCase(TestBase):
         self.expect('frame variable imset', matching=False,
                     substrs = ['1 objects'])
         self.expect('frame variable binheap_ref',
-                    substrs = ['1 item'])
+                    substrs = ['@"1 item"'])
         self.expect('frame variable binheap_ref', matching=False,
                     substrs = ['1 items'])
         self.expect('frame variable nsset',

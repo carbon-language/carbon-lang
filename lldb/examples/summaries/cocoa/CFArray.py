@@ -166,7 +166,8 @@ def CFArray_SummaryProvider (valobj,dict):
 	    if summary == None:
 	        summary = 'no valid array here'
 	    else:
-	        summary = str(summary) + (" objects" if summary > 1 else " object")
+	        # we format it like it were a CFString to make it look the same as the summary from Xcode
+	        summary = '@"' + str(summary) + (" objects" if summary > 1 else " object") + '"'
 	    return summary
 	return ''
 
