@@ -1950,6 +1950,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fno_limit_debug_info);
   Args.AddLastArg(CmdArgs, options::OPT_fno_operator_names);
   Args.AddLastArg(CmdArgs, options::OPT_faltivec);
+
+  // Report and error for -faltivec on anything other then PowerPC.
+  if (const Arg *A = Args.getLastArg(options::OPT_faltivec))
+    if (!(getToolChain().getTriple().getArch() == llvm::Triple::ppc ||
+          getToolChain().getTriple().getArch() == llvm::Triple::ppc64))
+      D.Diag(diag::err_drv_argument_only_allowed_with)
+        << A->getAsString(Args) << "ppc/ppc64";
+
   if (getToolChain().SupportsProfiling())
     Args.AddLastArg(CmdArgs, options::OPT_pg);
 
