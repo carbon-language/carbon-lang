@@ -765,6 +765,22 @@ class DiagnosticBuilder {
 
 protected:
   void FlushCounts();
+
+  /// isActive - Determine whether this diagnostic is still active.
+  bool isActive() const { return DiagObj != 0; }
+
+  /// \brief Retrieve the active diagnostic ID.
+  ///
+  /// \pre \c isActive()
+  unsigned getDiagID() const {
+    assert(isActive() && "DiagnosticsEngine is inactive");
+    return DiagObj->CurDiagID;
+  }
+
+  /// \brief Retrieve the active diagnostic's location.
+  ///
+  /// \pre \c isActive()
+  SourceLocation getLocation() const { return DiagObj->CurDiagLoc; }
   
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -801,22 +817,6 @@ public:
     if (DiagObj)
       Emit();
   }
-
-  /// isActive - Determine whether this diagnostic is still active.
-  bool isActive() const { return DiagObj != 0; }
-
-  /// \brief Retrieve the active diagnostic ID.
-  ///
-  /// \pre \c isActive()
-  unsigned getDiagID() const {
-    assert(isActive() && "DiagnosticsEngine is inactive");
-    return DiagObj->CurDiagID;
-  }
-
-  /// \brief Retrieve the active diagnostic's location.
-  ///
-  /// \pre \c isActive()
-  SourceLocation getLocation() const { return DiagObj->CurDiagLoc; }
   
   /// \brief Clear out the current diagnostic.
   void Clear() { DiagObj = 0; }
