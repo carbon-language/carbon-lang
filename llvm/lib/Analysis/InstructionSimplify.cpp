@@ -667,47 +667,39 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   return ::SimplifyAddInst(Op0, Op1, isNSW, isNUW, TD, TLI, DT, RecursionLimit);
 }
 
-/// \brief Compute the constant integer offset a GEP represents.
+/// \brief Accumulate the constant integer offset a GEP represents.
 ///
-/// Given a getelementptr instruction/constantexpr, form a constant expression
-/// which computes the offset from the base pointer (without adding in the base
-/// pointer).
-static Constant *computeGEPOffset(const TargetData &TD, GEPOperator *GEP) {
-  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
-  Constant *Result = Constant::getNullValue(IntPtrTy);
-
-  // If the GEP is inbounds, we know that none of the addressing operations will
-  // overflow in an unsigned sense.
-  bool IsInBounds = GEP->isInBounds();
-
-  // Build a mask for high order bits.
+/// Given a getelementptr instruction/constantexpr, accumulate the constant
+/// offset from the base pointer into the provided APInt 'Offset'. Returns true
+/// if the GEP has all-constant indices. Returns false if any non-constant
+/// index is encountered leaving the 'Offset' in an undefined state. The
+/// 'Offset' APInt must be the bitwidth of the target's pointer size.
+static bool accumulateGEPOffset(const TargetData &TD, GEPOperator *GEP,
+                                APInt &Offset) {
   unsigned IntPtrWidth = TD.getPointerSizeInBits();
-  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
+  assert(IntPtrWidth == Offset.getBitWidth());
 
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end(); I != E;
        ++I, ++GTI) {
     ConstantInt *OpC = dyn_cast<ConstantInt>(*I);
-    if (!OpC) return 0;
+    if (!OpC) return false;
     if (OpC->isZero()) continue;
-
-    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
 
     // Handle a struct index, which adds its field offset to the pointer.
     if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-      Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
-
-      if (Size)
-        Result = ConstantExpr::getAdd(Result, ConstantInt::get(IntPtrTy, Size));
+      unsigned ElementIdx = OpC->getZExtValue();
+      const StructLayout *SL = TD.getStructLayout(STy);
+      Offset += APInt(IntPtrWidth, SL->getElementOffset(ElementIdx),
+                      /*isSigned=*/true);
       continue;
     }
 
-    Constant *Scale = ConstantInt::get(IntPtrTy, Size);
-    Constant *OC = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-    Scale = ConstantExpr::getMul(OC, Scale, IsInBounds/*NUW*/);
-    Result = ConstantExpr::getAdd(Result, Scale);
+    APInt TypeSize(IntPtrWidth, TD.getTypeAllocSize(GTI.getIndexedType()),
+                   /*isSigned=*/true);
+    Offset += OpC->getValue().sextOrTrunc(IntPtrWidth) * TypeSize;
   }
-  return Result;
+  return true;
 }
 
 /// \brief Compute the base pointer and cumulative constant offsets for V.
@@ -721,8 +713,8 @@ static Constant *stripAndComputeConstantOffsets(const TargetData &TD,
   if (!V->getType()->isPointerTy())
     return 0;
 
-  Type *IntPtrTy = TD.getIntPtrType(V->getContext());
-  Constant *Result = Constant::getNullValue(IntPtrTy);
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  APInt Offset = APInt::getNullValue(IntPtrWidth);
 
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
@@ -730,10 +722,8 @@ static Constant *stripAndComputeConstantOffsets(const TargetData &TD,
   Visited.insert(V);
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      Constant *Offset = computeGEPOffset(TD, GEP);
-      if (!Offset)
+      if (!accumulateGEPOffset(TD, GEP, Offset))
         break;
-      Result = ConstantExpr::getAdd(Result, Offset);
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
       V = cast<Operator>(V)->getOperand(0);
@@ -747,7 +737,8 @@ static Constant *stripAndComputeConstantOffsets(const TargetData &TD,
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   } while (Visited.insert(V));
 
-  return Result;
+  Type *IntPtrTy = TD.getIntPtrType(V->getContext());
+  return ConstantInt::get(IntPtrTy, Offset);
 }
 
 /// \brief Compute the constant difference between two pointer values.
