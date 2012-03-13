@@ -236,7 +236,6 @@ public:
     MLV_IncompleteType,
     MLV_ConstQualified,
     MLV_ArrayType,
-    MLV_NotBlockQualified,
     MLV_ReadonlyProperty,
     MLV_NoSetterProperty,
     MLV_MemberFunction,
@@ -272,7 +271,6 @@ public:
       CM_RValue, // Not modifiable because it's an rvalue
       CM_Function, // Not modifiable because it's a function; C++ only
       CM_LValueCast, // Same as CM_RValue, but indicates GCC cast-as-lvalue ext
-      CM_NotBlockQualified, // Not captured in the closure
       CM_NoSetterProperty,// Implicit assignment to ObjC property without setter
       CM_ConstQualified,
       CM_ArrayType,

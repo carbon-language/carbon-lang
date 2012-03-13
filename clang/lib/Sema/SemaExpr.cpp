@@ -7127,6 +7127,32 @@ static bool IsReadonlyMessage(Expr *E, Sema &S) {
   return Base->getMethodDecl() != 0;
 }
 
+/// Is the given expression (which must be 'const') a reference to a
+/// variable which was originally non-const, but which has become
+/// 'const' due to being captured within a block?
+enum NonConstCaptureKind { NCCK_None, NCCK_Block, NCCK_Lambda };
+static NonConstCaptureKind isReferenceToNonConstCapture(Sema &S, Expr *E) {
+  assert(E->isLValue() && E->getType().isConstQualified());
+  E = E->IgnoreParens();
+
+  // Must be a reference to a declaration from an enclosing scope.
+  DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
+  if (!DRE) return NCCK_None;
+  if (!DRE->refersToEnclosingLocal()) return NCCK_None;
+
+  // The declaration must be a variable which is not declared 'const'.
+  VarDecl *var = dyn_cast<VarDecl>(DRE->getDecl());
+  if (!var) return NCCK_None;
+  if (var->getType().isConstQualified()) return NCCK_None;
+  assert(var->hasLocalStorage() && "capture added 'const' to non-local?");
+
+  // Decide whether the first capture was for a block or a lambda.
+  DeclContext *DC = S.CurContext;
+  while (DC->getParent() != var->getDeclContext())
+    DC = DC->getParent();
+  return (isa<BlockDecl>(DC) ? NCCK_Block : NCCK_Lambda);
+}
+
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
 /// emit an error and return true.  If so, return false.
 static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
@@ -7147,6 +7173,16 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   switch (IsLV) { // C99 6.5.16p2
   case Expr::MLV_ConstQualified:
     Diag = diag::err_typecheck_assign_const;
+
+    // Use a specialized diagnostic when we're assigning to an object
+    // from an enclosing function or block.
+    if (NonConstCaptureKind NCCK = isReferenceToNonConstCapture(S, E)) {
+      if (NCCK == NCCK_Block)
+        Diag = diag::err_block_decl_ref_not_modifiable_lvalue;
+      else
+        Diag = diag::err_lambda_decl_ref_not_modifiable_lvalue;
+      break;
+    }
 
     // In ARC, use some specialized diagnostics for occasions where we
     // infer 'const'.  These are always pseudo-strong variables.
@@ -7209,9 +7245,6 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
                   << E->getSourceRange());
   case Expr::MLV_DuplicateVectorComponents:
     Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
-    break;
-  case Expr::MLV_NotBlockQualified:
-    Diag = diag::err_block_decl_ref_not_modifiable_lvalue;
     break;
   case Expr::MLV_ReadonlyProperty:
   case Expr::MLV_NoSetterProperty:

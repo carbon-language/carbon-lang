@@ -139,3 +139,12 @@ void PR12248()
   unsigned int result = 0;
   auto l = [&]() { ++result; };
 }
+
+namespace ModifyingCapture {
+  void test() {
+    int n = 0;
+    [=] {
+      n = 1; // expected-error {{variable is not assignable (captured by copy)}}
+    };
+  }
+}

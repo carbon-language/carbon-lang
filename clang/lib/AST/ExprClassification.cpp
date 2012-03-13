@@ -567,18 +567,8 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
 
   CanQualType CT = Ctx.getCanonicalType(E->getType());
   // Const stuff is obviously not modifiable.
-  if (CT.isConstQualified()) {
-    // Special-case variables captured by blocks to get an improved
-    // diagnostic.
-    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
-      if (DRE->refersToEnclosingLocal() &&
-          isa<VarDecl>(DRE->getDecl()) &&
-          cast<VarDecl>(DRE->getDecl())->hasLocalStorage() &&
-          !DRE->getDecl()->hasAttr<BlocksAttr>())
-        return Cl::CM_NotBlockQualified;
-    }
+  if (CT.isConstQualified())
     return Cl::CM_ConstQualified;
-  }
 
   // Arrays are not modifiable, only their elements are.
   if (CT->isArrayType())
@@ -645,7 +635,6 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   case Cl::CM_Function: return MLV_NotObjectType;
   case Cl::CM_LValueCast:
     llvm_unreachable("CM_LValueCast and CL_LValue don't match");
-  case Cl::CM_NotBlockQualified: return MLV_NotBlockQualified;
   case Cl::CM_NoSetterProperty: return MLV_NoSetterProperty;
   case Cl::CM_ConstQualified: return MLV_ConstQualified;
   case Cl::CM_ArrayType: return MLV_ArrayType;

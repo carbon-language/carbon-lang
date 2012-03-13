@@ -4387,6 +4387,8 @@ def err_typecheck_duplicate_vector_components_not_mlvalue : Error<
   "vector is not assignable (contains duplicate components)">;
 def err_block_decl_ref_not_modifiable_lvalue : Error<
   "variable is not assignable (missing __block type specifier)">;
+def err_lambda_decl_ref_not_modifiable_lvalue : Error<
+  "variable is not assignable (captured by copy)">;
 def err_typecheck_call_not_function : Error<
   "called object type %0 is not a function or function pointer">;
 def err_call_incomplete_return : Error<
