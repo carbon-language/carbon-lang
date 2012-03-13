@@ -793,15 +793,6 @@ public:
     NumFixits = D.NumFixits;
   }
 
-  /// \brief Simple enumeration value used to give a name to the
-  /// suppress-diagnostic constructor.
-  enum SuppressKind { Suppress };
-
-  /// \brief Create an empty DiagnosticBuilder object that represents
-  /// no actual diagnostic.
-  explicit DiagnosticBuilder(SuppressKind)
-    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixits(0) { }
-
   /// \brief Force the diagnostic builder to emit the diagnostic now.
   ///
   /// Once this function has been called, the DiagnosticBuilder object

@@ -776,9 +776,6 @@ public:
     SemaDiagnosticBuilder(DiagnosticBuilder &DB, Sema &SemaRef, unsigned DiagID)
       : DiagnosticBuilder(DB), SemaRef(SemaRef), DiagID(DiagID) { }
 
-    explicit SemaDiagnosticBuilder(Sema &SemaRef)
-      : DiagnosticBuilder(DiagnosticBuilder::Suppress), SemaRef(SemaRef) { }
-
     ~SemaDiagnosticBuilder();
   };
 
