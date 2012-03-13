@@ -7202,6 +7202,11 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     EVT ExtVT = VT.getVectorElementType();
     EVT LVT = ExtVT;
 
+    // If the result of load has to be truncated, then it's not necessarily
+    // profitable.
+    if (NVT.bitsLT(LVT))
+      return SDValue();
+
     if (InVec.getOpcode() == ISD::BITCAST) {
       // Don't duplicate a load with other uses.
       if (!InVec.hasOneUse())
@@ -7302,10 +7307,20 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     // Note that this replacement assumes that the extractvalue is the only
     // use of the load; that's okay because we don't want to perform this
     // transformation in other cases anyway.
-    SDValue Load = DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
-                               LN0->getPointerInfo().getWithOffset(PtrOff),
-                               LN0->isVolatile(), LN0->isNonTemporal(), 
-                               LN0->isInvariant(), Align);
+    SDValue Load;
+    if (NVT.bitsGT(LVT)) {
+      // If the result type of vextract is wider than the load, then issue an
+      // extending load instead.
+      ISD::LoadExtType ExtType = TLI.isLoadExtLegal(ISD::ZEXTLOAD, LVT)
+        ? ISD::ZEXTLOAD : ISD::EXTLOAD;
+      Load = DAG.getExtLoad(ExtType, N->getDebugLoc(), NVT, LN0->getChain(),
+                            NewPtr, LN0->getPointerInfo().getWithOffset(PtrOff),
+                            LVT, LN0->isVolatile(), LN0->isNonTemporal(),Align);
+    } else
+      Load = DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
+                         LN0->getPointerInfo().getWithOffset(PtrOff),
+                         LN0->isVolatile(), LN0->isNonTemporal(), 
+                         LN0->isInvariant(), Align);
     WorkListRemover DeadNodes(*this);
     SDValue From[] = { SDValue(N, 0), SDValue(LN0,1) };
     SDValue To[] = { Load.getValue(0), Load.getValue(1) };
