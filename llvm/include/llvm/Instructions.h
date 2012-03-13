@@ -2680,14 +2680,17 @@ public:
   }
 
   /// addCase - Add an entry to the switch instruction...
-  ///
+  /// Note:
+  /// This action invalidates case_end(). Old case_end() iterator will
+  /// point to the added case.
   void addCase(ConstantInt *OnVal, BasicBlock *Dest);
 
   /// removeCase - This method removes the specified case and its successor
   /// from the switch instruction. Note that this operation may reorder the
   /// remaining cases at index idx and above.
-  /// Also note, that iterator becomes invalid after this operation.
-  ///
+  /// Note:
+  /// This action invalidates iterators for all cases following the one removed,
+  /// including the case_end() iterator.
   void removeCase(CaseIt i);
 
   unsigned getNumSuccessors() const { return getNumOperands()/2; }
