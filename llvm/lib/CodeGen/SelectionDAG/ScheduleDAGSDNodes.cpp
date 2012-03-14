@@ -855,16 +855,17 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
     }
     // Add trailing DbgValue's before the terminator. FIXME: May want to add
     // some of them before one or more conditional branches?
+    SmallVector<MachineInstr*, 8> DbgMIs;
     while (DI != DE) {
-      MachineBasicBlock *InsertBB = Emitter.getBlock();
-      MachineBasicBlock::iterator Pos= Emitter.getBlock()->getFirstTerminator();
-      if (!(*DI)->isInvalidated()) {
-        MachineInstr *DbgMI= Emitter.EmitDbgValue(*DI, VRBaseMap);
-        if (DbgMI)
-          InsertBB->insert(Pos, DbgMI);
-      }
+      if (!(*DI)->isInvalidated())
+        if (MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap))
+          DbgMIs.push_back(DbgMI);
       ++DI;
     }
+
+    MachineBasicBlock *InsertBB = Emitter.getBlock();
+    MachineBasicBlock::iterator Pos = InsertBB->getFirstTerminator();
+    InsertBB->insert(Pos, DbgMIs.begin(), DbgMIs.end());
   }
 
   InsertPos = Emitter.getInsertPos();
