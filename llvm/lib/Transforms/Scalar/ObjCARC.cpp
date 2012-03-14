@@ -3041,7 +3041,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
       // but our releases will never depend on it, because they must be
       // paired with retains from before the invoke.
       InsertPts[0] = II->getNormalDest()->getFirstInsertionPt();
-      InsertPts[1] = II->getUnwindDest()->getFirstInsertionPt();
+      if (!II->getMetadata(NoObjCARCExceptionsMDKind))
+        InsertPts[1] = II->getUnwindDest()->getFirstInsertionPt();
     } else {
       // Insert code immediately after the last use.
       InsertPts[0] = llvm::next(BasicBlock::iterator(LastUse));

@@ -2,6 +2,7 @@
 
 declare i8* @objc_retain(i8*)
 declare void @objc_release(i8*)
+declare i8* @objc_retainAutoreleasedReturnValue(i8*)
 declare i8* @objc_msgSend(i8*, i8*, ...)
 declare void @use_pointer(i8*)
 declare void @callee()
@@ -68,6 +69,41 @@ done:
   ret void
 }
 
+; The optimizer should ignore invoke unwind paths consistently.
+; PR12265
+
+; CHECK: define void @test2() {
+; CHECK: invoke.cont:
+; CHECK-NEXT: call i8* @objc_retain
+; CHEK-NOT: @objc
+; CHECK: finally.cont:
+; CHECK-NEXT: call void @objc_release
+; CHEK-NOT: @objc
+; CHECK: finally.rethrow:
+; CHEK-NOT: @objc
+; CHECK: }
+define void @test2() {
+entry:
+  %call = invoke i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* ()*)()
+          to label %invoke.cont unwind label %finally.rethrow, !clang.arc.no_objc_arc_exceptions !0
+
+invoke.cont:                                      ; preds = %entry
+  %tmp1 = tail call i8* @objc_retainAutoreleasedReturnValue(i8* %call) nounwind
+  call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void ()*)(), !clang.arc.no_objc_arc_exceptions !0
+  invoke void @use_pointer(i8* %call)
+          to label %finally.cont unwind label %finally.rethrow, !clang.arc.no_objc_arc_exceptions !0
+
+finally.cont:                                     ; preds = %invoke.cont
+  tail call void @objc_release(i8* %call) nounwind, !clang.imprecise_release !0
+  ret void
+
+finally.rethrow:                                  ; preds = %invoke.cont, %entry
+  %tmp2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+          catch i8* null
+  unreachable
+}
+
 declare i32 @__gxx_personality_v0(...)
+declare i32 @__objc_personality_v0(...)
 
 !0 = metadata !{}
