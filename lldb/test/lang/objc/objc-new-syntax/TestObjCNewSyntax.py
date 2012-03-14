@@ -58,8 +58,6 @@ class ObjCNewSyntaxTestCase(TestBase):
         if not self.applies():
             return
 
-        print "Hello!"
-
         self.common_setup()
 
         self.expect("expr -o -- immutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
