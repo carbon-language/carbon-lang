@@ -382,6 +382,7 @@ namespace {
     virtual void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                           std::string &Result);
     virtual void RewriteMetaDataIntoBuffer(std::string &Result);
+    virtual void WriteImageInfo(std::string &Result);
     virtual void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
                                              std::string &Result);
     
@@ -5001,6 +5002,12 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
     // Emit metadata.
     *OutFile << ResultStr;
   }
+  // Emit ImageInfo;
+  {
+    std::string ResultStr;
+    WriteImageInfo(ResultStr);
+    *OutFile << ResultStr;
+  }
   OutFile->flush();
 }
 
@@ -5020,10 +5027,25 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "struct objc_object *superClass; ";
   if (LangOpts.MicrosoftExt) {
     // Define all sections using syntax that makes sense.
-    Preamble += "\n#pragma section(\".datacoal_nt$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".cat_cls_meth$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".objc_classlist$B\", long, read, write)\n";
+    // These are currently generated.
+    Preamble += "\n#pragma section(\".objc_classlist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_catlist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_protolist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_imageinfo$B\", long, read, write)\n";
+    
+    // These need be generated. But they are not,using API calls instead.
+    Preamble += "#pragma section(\".objc_selrefs$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_classrefs$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_superrefs$B\", long, read, write)\n";
+    
+    Preamble += "#pragma section(\".objc_nlclslist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_nlcatlist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_protorefs$B\", long, read, write)\n";
+    
+    
+    // These are generated but not necessary for functionality.
+    Preamble += "#pragma section(\".datacoal_nt$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".cat_cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_ivar$B\", long, read, write)\n";
@@ -5951,6 +5973,16 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   }
   else
     Result += "\t0\n};\n";
+  
+  // Use this protocol meta-data to build protocol list table in section
+  // .objc_protolist$B
+  // Unspecified visibility means 'private extern'.
+  if (LangOpts.MicrosoftExt)
+    Result += "__declspec(allocate(\".objc_protolist$B\")) ";
+  Result += "struct _protocol_t *";
+  Result += "_OBJC_LABEL_PROTOCOL_$_"; Result += PDecl->getNameAsString();
+  Result += " = &_OBJC_PROTOCOL_"; Result += PDecl->getNameAsString();
+  Result += ";\n";
     
   // Mark this protocol as having been generated.
   if (!ObjCSynthesizedProtocols.insert(PDecl->getCanonicalDecl()))
@@ -6230,6 +6262,15 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
     }
     Result += "};\n";
   }
+}
+
+void RewriteModernObjC::WriteImageInfo(std::string &Result) {
+  if (LangOpts.MicrosoftExt)
+    Result += "__declspec(allocate(\".objc_imageinfo$B\")) \n";
+  
+  Result += "static struct IMAGE_INFO { unsigned version; unsigned flag; } ";
+  // version 0, ObjCABI is 2
+  Result += "_OBJC_IMAGE_INFO = { 0, 2 };\n";
 }
 
 /// RewriteObjCCategoryImplDecl - Rewrite metadata for each category
