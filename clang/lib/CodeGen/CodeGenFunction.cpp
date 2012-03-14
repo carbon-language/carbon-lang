@@ -266,13 +266,14 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   // Pass inline keyword to optimizer if it appears explicitly on any
   // declaration.
-  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
-    for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
-           RE = FD->redecls_end(); RI != RE; ++RI)
-      if (RI->isInlineSpecified()) {
-        Fn->addFnAttr(llvm::Attribute::InlineHint);
-        break;
-      }
+  if (!CGM.getCodeGenOpts().NoInline) 
+    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+      for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
+             RE = FD->redecls_end(); RI != RE; ++RI)
+        if (RI->isInlineSpecified()) {
+          Fn->addFnAttr(llvm::Attribute::InlineHint);
+          break;
+        }
 
   if (getContext().getLangOpts().OpenCL) {
     // Add metadata for a kernel function.
