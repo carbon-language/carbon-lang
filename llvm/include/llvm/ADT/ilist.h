@@ -652,10 +652,6 @@ struct ilist : public iplist<NodeTy> {
   void push_front(const NodeTy &val) { insert(this->begin(), val); }
   void push_back(const NodeTy &val) { insert(this->end(), val); }
 
-  // Special forms of insert...
-  template<class InIt> void insert(iterator where, InIt first, InIt last) {
-    for (; first != last; ++first) insert(where, *first);
-  }
   void insert(iterator where, size_type count, const NodeTy &val) {
     for (; count != 0; --count) insert(where, val);
   }
