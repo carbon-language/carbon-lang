@@ -457,16 +457,6 @@ APInt APInt::XorSlowCase(const APInt& RHS) const {
   return APInt(val, getBitWidth()).clearUnusedBits();
 }
 
-bool APInt::operator !() const {
-  if (isSingleWord())
-    return !VAL;
-
-  for (unsigned i = 0; i < getNumWords(); ++i)
-    if (pVal[i])
-      return false;
-  return true;
-}
-
 APInt APInt::operator*(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())

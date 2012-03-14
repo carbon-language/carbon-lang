@@ -561,7 +561,15 @@ public:
   /// Performs logical negation operation on this APInt.
   /// @returns true if *this is zero, false otherwise.
   /// @brief Logical negation operator.
-  bool operator!() const;
+  bool operator!() const {
+    if (isSingleWord())
+      return !VAL;
+
+    for (unsigned i = 0; i != getNumWords(); ++i)
+      if (pVal[i])
+        return false;
+    return true;
+  }
 
   /// @}
   /// @name Assignment Operators
