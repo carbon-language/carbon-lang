@@ -165,18 +165,24 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
 unsigned InlineCostAnalyzer::FunctionInfo::countCodeReductionForConstant(
     const CodeMetrics &Metrics, Value *V) {
   unsigned Reduction = 0;
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    User *U = *UI;
-    if (isa<BranchInst>(U) || isa<SwitchInst>(U)) {
-      // We will be able to eliminate all but one of the successors.
-      const TerminatorInst &TI = cast<TerminatorInst>(*U);
-      const unsigned NumSucc = TI.getNumSuccessors();
-      unsigned Instrs = 0;
-      for (unsigned I = 0; I != NumSucc; ++I)
-        Instrs += Metrics.NumBBInsts.lookup(TI.getSuccessor(I));
-      // We don't know which blocks will be eliminated, so use the average size.
-      Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
-    } else {
+  SmallVector<Value *, 4> Worklist;
+  Worklist.push_back(V);
+  do {
+    Value *V = Worklist.pop_back_val();
+    for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+      User *U = *UI;
+      if (isa<BranchInst>(U) || isa<SwitchInst>(U)) {
+        // We will be able to eliminate all but one of the successors.
+        const TerminatorInst &TI = cast<TerminatorInst>(*U);
+        const unsigned NumSucc = TI.getNumSuccessors();
+        unsigned Instrs = 0;
+        for (unsigned I = 0; I != NumSucc; ++I)
+          Instrs += Metrics.NumBBInsts.lookup(TI.getSuccessor(I));
+        // We don't know which blocks will be eliminated, so use the average size.
+        Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
+        continue;
+      }
+
       // Figure out if this instruction will be removed due to simple constant
       // propagation.
       Instruction &Inst = cast<Instruction>(*U);
@@ -198,17 +204,17 @@ unsigned InlineCostAnalyzer::FunctionInfo::countCodeReductionForConstant(
           AllOperandsConstant = false;
           break;
         }
+      if (!AllOperandsConstant)
+        continue;
 
-      if (AllOperandsConstant) {
-        // We will get to remove this instruction...
-        Reduction += InlineConstants::InstrCost;
+      // We will get to remove this instruction...
+      Reduction += InlineConstants::InstrCost;
 
-        // And any other instructions that use it which become constants
-        // themselves.
-        Reduction += countCodeReductionForConstant(Metrics, &Inst);
-      }
+      // And any other instructions that use it which become constants
+      // themselves.
+      Worklist.push_back(&Inst);
     }
-  }
+  } while (!Worklist.empty());
   return Reduction;
 }
 
