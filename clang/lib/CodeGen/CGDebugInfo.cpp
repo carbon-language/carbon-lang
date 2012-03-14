@@ -117,11 +117,24 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context) {
 StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   assert (FD && "Invalid FunctionDecl!");
   IdentifierInfo *FII = FD->getIdentifier();
-  if (FII)
+  FunctionTemplateSpecializationInfo *Info
+    = FD->getTemplateSpecializationInfo();
+  if (!Info && FII)
     return FII->getName();
 
   // Otherwise construct human readable name for debug info.
   std::string NS = FD->getNameAsString();
+
+  // Add any template specialization args.
+  if (Info) {
+    const TemplateArgumentList *TArgs = Info->TemplateArguments;
+    const TemplateArgument *Args = TArgs->data();
+    unsigned NumArgs = TArgs->size();
+    PrintingPolicy Policy(CGM.getLangOpts());
+    NS += TemplateSpecializationType::PrintTemplateArgumentList(Args,
+                                                                NumArgs,
+                                                                Policy);
+  }
 
   // Copy this name on the side and use its reference.
   char *StrPtr = DebugInfoNames.Allocate<char>(NS.length());
