@@ -21,77 +21,6 @@
 using namespace clang;
 using namespace ento;
 
-namespace {
-class CallExprWLItem {
-public:
-  CallExpr::const_arg_iterator I;
-  ExplodedNode *N;
-
-  CallExprWLItem(const CallExpr::const_arg_iterator &i, ExplodedNode *n)
-    : I(i), N(n) {}
-};
-}
-
-void ExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
-                                 const FunctionProtoType *FnType, 
-                                 ExplodedNode *Pred, ExplodedNodeSet &Dst,
-                                 bool FstArgAsLValue) {
-
-
-  SmallVector<CallExprWLItem, 20> WorkList;
-  WorkList.reserve(AE - AI);
-  WorkList.push_back(CallExprWLItem(AI, Pred));
-
-  while (!WorkList.empty()) {
-    CallExprWLItem Item = WorkList.back();
-    WorkList.pop_back();
-
-    if (Item.I == AE) {
-      Dst.insert(Item.N);
-      continue;
-    }
-
-    // Evaluate the argument.
-    ExplodedNodeSet Tmp;
-    if (FstArgAsLValue) {
-      FstArgAsLValue = false;
-    }
-
-    Visit(*Item.I, Item.N, Tmp);
-    ++(Item.I);
-    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI != NE; ++NI)
-      WorkList.push_back(CallExprWLItem(Item.I, *NI));
-  }
-}
-
-void ExprEngine::evalCallee(const CallExpr *callExpr,
-                            const ExplodedNodeSet &src,
-                            ExplodedNodeSet &dest) {
-  
-  const Expr *callee = 0;
-  
-  switch (callExpr->getStmtClass()) {
-    case Stmt::CXXMemberCallExprClass: {
-      // Evaluate the implicit object argument that is the recipient of the
-      // call.
-      callee = cast<CXXMemberCallExpr>(callExpr)->getImplicitObjectArgument();
-      
-      // FIXME: handle member pointers.
-      if (!callee)
-        return;
-
-      break;      
-    }
-    default: {
-      callee = callExpr->getCallee()->IgnoreParens();
-      break;
-    }
-  }
-
-  for (ExplodedNodeSet::iterator i = src.begin(), e = src.end(); i != e; ++i)
-    Visit(callee, *i, dest);
-}
-
 const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
   const Type *T = D->getTypeForDecl();
@@ -144,11 +73,6 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
     return;
 #endif
   
-  // Evaluate other arguments.
-  ExplodedNodeSet argsEvaluated;
-  const FunctionProtoType *FnType = CD->getType()->getAs<FunctionProtoType>();
-  evalArguments(E->arg_begin(), E->arg_end(), FnType, Pred, argsEvaluated);
-
 #if 0
   // Is the constructor elidable?
   if (E->isElidable()) {
@@ -161,9 +85,10 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 #endif
   
   // Perform the previsit of the constructor.
-  ExplodedNodeSet destPreVisit;
-  getCheckerManager().runCheckersForPreStmt(destPreVisit, argsEvaluated, E, 
-                                            *this);
+  ExplodedNodeSet SrcNodes;
+  SrcNodes.Add(Pred);
+  ExplodedNodeSet TmpNodes;
+  getCheckerManager().runCheckersForPreStmt(TmpNodes, SrcNodes, E, *this);
   
   // Evaluate the constructor.  Currently we don't now allow checker-specific
   // implementations of specific constructors (as we do with ordinary
@@ -191,9 +116,9 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 
     CallEnter Loc(E, SFC, Pred->getLocationContext());
 
-    StmtNodeBuilder Bldr(argsEvaluated, destNodes, *currentBuilderContext);
-    for (ExplodedNodeSet::iterator NI = argsEvaluated.begin(),
-                                  NE = argsEvaluated.end(); NI != NE; ++NI) {
+    StmtNodeBuilder Bldr(SrcNodes, TmpNodes, *currentBuilderContext);
+    for (ExplodedNodeSet::iterator NI = SrcNodes.begin(),
+                                   NE = SrcNodes.end(); NI != NE; ++NI) {
       ProgramStateRef state = (*NI)->getState();
       // Setup 'this' region, so that the ctor is evaluated on the object pointed
       // by 'Dest'.
@@ -206,10 +131,9 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   // Default semantics: invalidate all regions passed as arguments.
   ExplodedNodeSet destCall;
   {
-    StmtNodeBuilder Bldr(destPreVisit, destCall, *currentBuilderContext);
-    for (ExplodedNodeSet::iterator
-        i = destPreVisit.begin(), e = destPreVisit.end();
-        i != e; ++i)
+    StmtNodeBuilder Bldr(TmpNodes, destCall, *currentBuilderContext);
+    for (ExplodedNodeSet::iterator i = TmpNodes.begin(), e = TmpNodes.end();
+         i != e; ++i)
     {
       ExplodedNode *Pred = *i;
       const LocationContext *LC = Pred->getLocationContext();

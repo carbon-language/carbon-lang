@@ -377,17 +377,7 @@ public:
 
   const CXXThisRegion *getCXXThisRegion(const CXXMethodDecl *decl,
                                         const StackFrameContext *frameCtx);
-
-  /// Evaluate arguments with a work list algorithm.
-  void evalArguments(ConstExprIterator AI, ConstExprIterator AE,
-                     const FunctionProtoType *FnType, 
-                     ExplodedNode *Pred, ExplodedNodeSet &Dst,
-                     bool FstArgAsLValue = false);
   
-  /// Evaluate callee expression (for a function call).
-  void evalCallee(const CallExpr *callExpr, const ExplodedNodeSet &src,
-                  ExplodedNodeSet &dest);
-
   /// evalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
   ///  with those assumptions.
