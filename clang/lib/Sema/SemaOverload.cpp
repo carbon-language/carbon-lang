@@ -9244,6 +9244,9 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
     return false;
 
   for (DeclContext *DC = SemaRef.CurContext; DC; DC = DC->getParent()) {
+    if (DC->isTransparentContext())
+      continue;
+
     SemaRef.LookupQualifiedName(R, DC);
 
     if (!R.empty()) {

@@ -30,3 +30,22 @@ void b(Foo f1, Foo f2) {
 }
 #undef NOP
 }
+
+namespace test2 {
+  extern "C" {
+    namespace std {
+      template<typename T> struct basic_string {
+        struct X {};
+        void method() const {
+         X* x;
+         &x[0];  // expected-warning {{expression result unused}}
+        }  
+      };
+      typedef basic_string<char> string;
+      void func(const std::string& str) { 
+        str.method();  // expected-note {{in instantiation of member function}}
+      }
+    } 
+  }
+}
+
