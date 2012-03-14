@@ -28,7 +28,7 @@ namespace __cxxabiv1
 namespace
 {
 
-#if LIBCXXABI_ARMEABI
+#if __arm__
 
 // A 32-bit, 4-byte-aligned static data value. The least significant 2 bits must
 // be statically initialized to 0.
@@ -62,7 +62,7 @@ void set_initialized(guard_type* guard_object) {
 pthread_mutex_t guard_mut = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  guard_cv  = PTHREAD_COND_INITIALIZER;
 
-#if __APPLE__
+#if defined(__APPLE__) && !defined(__arm_)
 
 typedef uint32_t lock_type;
 
@@ -100,7 +100,7 @@ set_lock(uint64_t& x, lock_type y)
 
 #endif  // __LITTLE_ENDIAN__
 
-#else  // __APPLE__
+#else  // !__APPLE__ || __arm__
 
 typedef bool lock_type;
 
@@ -169,7 +169,7 @@ int __cxa_guard_acquire(guard_type* guard_object)
     int result = *initialized == 0;
     if (result)
     {
-#if __APPLE__
+#if defined(__APPLE__) && !defined(__arm_)
         const lock_type id = pthread_mach_thread_np(pthread_self());
         lock_type lock = get_lock(*guard_object);
         if (lock)
@@ -189,14 +189,14 @@ int __cxa_guard_acquire(guard_type* guard_object)
         }
         else
             set_lock(*guard_object, id);
-#else  // __APPLE__
+#else  // !__APPLE__ || __arm__
         while (get_lock(*guard_object))
             if (pthread_cond_wait(&guard_cv, &guard_mut))
                 abort_message("__cxa_guard_acquire condition variable wait failed");
         result = *initialized == 0;
         if (result)
             set_lock(*guard_object, true);
-#endif  // __APPLE__
+#endif  // !__APPLE__ || __arm__
     }
     if (pthread_mutex_unlock(&guard_mut))
         abort_message("__cxa_guard_acquire failed to release mutex");
