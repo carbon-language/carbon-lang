@@ -244,13 +244,20 @@ bool Inliner::shouldInline(CallSite CS) {
     return false;
   }
   
-  // Try to detect the case where the current inlining candidate caller
-  // (call it B) is a static function and is an inlining candidate elsewhere,
-  // and the current candidate callee (call it C) is large enough that
-  // inlining it into B would make B too big to inline later.  In these
-  // circumstances it may be best not to inline C into B, but to inline B
-  // into its callers.
-  if (Caller->hasLocalLinkage()) {
+  // Try to detect the case where the current inlining candidate caller (call
+  // it B) is a static or linkonce-ODR function and is an inlining candidate
+  // elsewhere, and the current candidate callee (call it C) is large enough
+  // that inlining it into B would make B too big to inline later. In these
+  // circumstances it may be best not to inline C into B, but to inline B into
+  // its callers.
+  //
+  // This only applies to static and linkonce-ODR functions because those are
+  // expected to be available for inlining in the translation units where they
+  // are used. Thus we will always have the opportunity to make local inlining
+  // decisions. Importantly the linkonce-ODR linkage covers inline functions
+  // and templates in C++.
+  if (Caller->hasLocalLinkage() ||
+      Caller->getLinkage() == GlobalValue::LinkOnceODRLinkage) {
     int TotalSecondaryCost = 0;
     bool outerCallsFound = false;
     // This bool tracks what happens if we do NOT inline C into B.
