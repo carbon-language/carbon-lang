@@ -484,12 +484,6 @@ APInt APInt::operator-(const APInt& RHS) const {
   return Result.clearUnusedBits();
 }
 
-bool APInt::operator[](unsigned bitPosition) const {
-  assert(bitPosition < getBitWidth() && "Bit position out of bounds!");
-  return (maskBit(bitPosition) &
-          (isSingleWord() ?  VAL : pVal[whichWord(bitPosition)])) != 0;
-}
-
 bool APInt::EqualSlowCase(const APInt& RHS) const {
   // Get some facts about the number of bits used in the two operands.
   unsigned n1 = getActiveBits();
