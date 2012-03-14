@@ -167,7 +167,7 @@ SBTypeCategory::GetFilterForType (SBTypeNameSpecifier spec)
     if (!children_sp)
         return lldb::SBTypeFilter();
     
-    TypeFilterImplSP filter_sp = std::tr1::static_pointer_cast<TypeFilterImpl>(children_sp);
+    TypeFilterImplSP filter_sp = STD_STATIC_POINTER_CAST(TypeFilterImpl,children_sp);
     
     return lldb::SBTypeFilter(filter_sp);
 
@@ -231,7 +231,7 @@ SBTypeCategory::GetSyntheticForType (SBTypeNameSpecifier spec)
     if (!children_sp)
         return lldb::SBTypeSynthetic();
     
-    TypeSyntheticImplSP synth_sp = std::tr1::static_pointer_cast<TypeSyntheticImpl>(children_sp);
+    TypeSyntheticImplSP synth_sp = STD_STATIC_POINTER_CAST(TypeSyntheticImpl,children_sp);
     
     return lldb::SBTypeSynthetic(synth_sp);
 }
@@ -248,7 +248,7 @@ SBTypeCategory::GetFilterAtIndex (uint32_t index)
     if (!children_sp.get())
         return lldb::SBTypeFilter();
     
-    TypeFilterImplSP filter_sp = std::tr1::static_pointer_cast<TypeFilterImpl>(children_sp);
+    TypeFilterImplSP filter_sp = STD_STATIC_POINTER_CAST(TypeFilterImpl,children_sp);
     
     return lldb::SBTypeFilter(filter_sp);
 }
@@ -283,7 +283,7 @@ SBTypeCategory::GetSyntheticAtIndex (uint32_t index)
     if (!children_sp.get())
         return lldb::SBTypeSynthetic();
     
-    TypeSyntheticImplSP synth_sp = std::tr1::static_pointer_cast<TypeSyntheticImpl>(children_sp);
+    TypeSyntheticImplSP synth_sp = STD_STATIC_POINTER_CAST(TypeSyntheticImpl,children_sp);
     
     return lldb::SBTypeSynthetic(synth_sp);
 }

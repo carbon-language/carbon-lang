@@ -141,7 +141,7 @@ protected:
         lldb_private::SymbolVendor *oso_symbol_vendor;
         std::vector<uint32_t> function_indexes;
         std::vector<uint32_t> static_indexes;
-        SHARED_PTR(lldb_private::SectionList) debug_map_sections_sp;
+        STD_SHARED_PTR(lldb_private::SectionList) debug_map_sections_sp;
 
         CompileUnitInfo() :
             so_file (),

@@ -118,7 +118,7 @@ protected:
     class Archive
     {
     public:
-        typedef SHARED_PTR(Archive) shared_ptr;
+        typedef STD_SHARED_PTR(Archive) shared_ptr;
         typedef std::multimap<lldb_private::FileSpec, shared_ptr> Map;
 
         static Map &

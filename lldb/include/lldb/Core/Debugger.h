@@ -252,7 +252,7 @@ private:
 
 
 class Debugger :
-    public std::tr1::enable_shared_from_this<Debugger>,
+    public STD_ENABLE_SHARED_FROM_THIS(Debugger),
     public UserID,
     public DebuggerInstanceSettings,
     public BroadcasterManager

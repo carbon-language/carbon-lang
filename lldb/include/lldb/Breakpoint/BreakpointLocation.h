@@ -47,7 +47,7 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 
 class BreakpointLocation : 
-    public std::tr1::enable_shared_from_this<BreakpointLocation>,
+    public STD_ENABLE_SHARED_FROM_THIS(BreakpointLocation),
     public StoppointLocation
 {
 public:

@@ -50,7 +50,7 @@ namespace lldb_private {
 /// this abstract class.
 //----------------------------------------------------------------------
 class ObjectFile:
-    public std::tr1::enable_shared_from_this<ObjectFile>,
+    public STD_ENABLE_SHARED_FROM_THIS(ObjectFile),
     public PluginInterface,
     public ModuleChild
 {

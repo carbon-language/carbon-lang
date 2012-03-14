@@ -21,7 +21,7 @@ typedef std::multimap<const char*, dw_offset_t, CStringCompareFunctionObject> CS
 typedef CStringToDIEMap::iterator CStringToDIEMapIter;
 typedef CStringToDIEMap::const_iterator CStringToDIEMapConstIter;
 
-typedef SHARED_PTR(DWARFCompileUnit) DWARFCompileUnitSP;
+typedef STD_SHARED_PTR(DWARFCompileUnit) DWARFCompileUnitSP;
 
 class DWARFDebugInfo
 {

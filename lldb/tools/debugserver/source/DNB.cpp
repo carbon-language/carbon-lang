@@ -32,7 +32,7 @@
 #include "DNBThreadResumeActions.h"
 #include "DNBTimer.h"
 
-typedef std::tr1::shared_ptr<MachProcess> MachProcessSP;
+typedef STD_SHARED_PTR(MachProcess) MachProcessSP;
 typedef std::map<nub_process_t, MachProcessSP> ProcessMap;
 typedef ProcessMap::iterator ProcessMapIter;
 typedef ProcessMap::const_iterator ProcessMapConstIter;

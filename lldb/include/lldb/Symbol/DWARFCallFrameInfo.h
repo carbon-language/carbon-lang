@@ -78,7 +78,7 @@ private:
                                   inst_length (0), ptr_encoding (0), initial_row() {}
     };
 
-    typedef SHARED_PTR(CIE) CIESP;
+    typedef STD_SHARED_PTR(CIE) CIESP;
 
     struct FDEEntry
     {

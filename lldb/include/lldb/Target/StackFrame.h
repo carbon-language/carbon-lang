@@ -27,7 +27,7 @@
 namespace lldb_private {
 
 class StackFrame :
-    public std::tr1::enable_shared_from_this<StackFrame>,
+    public STD_ENABLE_SHARED_FROM_THIS(StackFrame),
     public ExecutionContextScope
 {
 public:

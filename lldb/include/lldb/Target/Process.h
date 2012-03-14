@@ -1260,7 +1260,7 @@ protected:
 /// @brief A plug-in interface definition class for debugging a process.
 //----------------------------------------------------------------------
 class Process :
-    public std::tr1::enable_shared_from_this<Process>,
+    public STD_ENABLE_SHARED_FROM_THIS(Process),
     public UserID,
     public Broadcaster,
     public ExecutionContextScope,

@@ -16,7 +16,6 @@
 
 #include <string>
 #include <vector>
-#include <tr1/memory> // for std::tr1::shared_ptr
 
 #include <libproc.h>
 #include <mach/mach.h>
@@ -137,6 +136,6 @@ private:
     void HardwareWatchpointStateChanged(); // Provide a chance to update the global view of the hardware watchpoint state
 };
 
-typedef std::tr1::shared_ptr<MachThread> MachThreadSP;
+typedef STD_SHARED_PTR(MachThread) MachThreadSP;
 
 #endif

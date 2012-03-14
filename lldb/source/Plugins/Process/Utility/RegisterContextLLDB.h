@@ -25,7 +25,7 @@ class UnwindLLDB;
 class RegisterContextLLDB : public lldb_private::RegisterContext
 {
 public:
-    typedef SHARED_PTR(RegisterContextLLDB) SharedPtr;
+    typedef STD_SHARED_PTR(RegisterContextLLDB) SharedPtr;
 
     RegisterContextLLDB (lldb_private::Thread &thread,
                          const SharedPtr& next_frame,

@@ -50,7 +50,7 @@ typedef struct
 } UserSettingDefinition;
 
 class UserSettingsController : 
-    public std::tr1::enable_shared_from_this<UserSettingsController>
+    public STD_ENABLE_SHARED_FROM_THIS(UserSettingsController)
 {
 public:
 

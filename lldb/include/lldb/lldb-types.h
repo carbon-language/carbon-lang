@@ -66,7 +66,6 @@ const lldb::thread_t lldb_invalid_host_thread_const = { NULL, 0 } ;
 
 #endif
 
-#define SHARED_PTR(T)   std::tr1::shared_ptr<T>
 #define LLDB_INVALID_HOST_TIME           { 0, 0 }
 
 namespace lldb 

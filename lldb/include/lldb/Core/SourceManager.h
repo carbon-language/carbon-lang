@@ -79,7 +79,7 @@ public:
 
 #endif // SWIG
 
-    typedef std::tr1::shared_ptr<File> FileSP;
+    typedef STD_SHARED_PTR(File) FileSP;
 
 #ifndef SWIG
 

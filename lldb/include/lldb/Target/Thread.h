@@ -85,7 +85,7 @@ private:
 };
 
 class Thread :
-    public std::tr1::enable_shared_from_this<Thread>,
+    public STD_ENABLE_SHARED_FROM_THIS(Thread),
     public UserID,
     public ExecutionContextScope,
     public ThreadInstanceSettings

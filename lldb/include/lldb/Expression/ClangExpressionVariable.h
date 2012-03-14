@@ -217,7 +217,7 @@ public:
     void
     TransferAddress (bool force = false);
 
-    typedef SHARED_PTR(ValueObjectConstResult) ValueObjectConstResultSP;
+    typedef STD_SHARED_PTR(ValueObjectConstResult) ValueObjectConstResultSP;
 
     //----------------------------------------------------------------------
     /// Members

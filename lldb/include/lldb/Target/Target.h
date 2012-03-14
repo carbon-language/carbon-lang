@@ -260,7 +260,7 @@ protected:
 // Target
 //----------------------------------------------------------------------
 class Target :
-    public std::tr1::enable_shared_from_this<Target>,
+    public STD_ENABLE_SHARED_FROM_THIS(Target),
     public Broadcaster,
     public ExecutionContextScope,
     public TargetInstanceSettings
@@ -997,7 +997,7 @@ public:
         StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid);
         friend class Target;
     };
-    typedef SHARED_PTR(StopHook) StopHookSP;
+    typedef STD_SHARED_PTR(StopHook) StopHookSP;
     
     // Add an empty stop hook to the Target's stop hook list, and returns a shared pointer to it in new_hook.  
     // Returns the id of the new hook.        

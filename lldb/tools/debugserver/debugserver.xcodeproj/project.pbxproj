@@ -87,7 +87,7 @@
 		26C637DA0C71334A0024798E /* DNBBreakpoint.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNBBreakpoint.h; sourceTree = "<group>"; };
 		26C637DB0C71334A0024798E /* DNBDataRef.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DNBDataRef.cpp; sourceTree = "<group>"; };
 		26C637DC0C71334A0024798E /* DNBDataRef.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNBDataRef.h; sourceTree = "<group>"; };
-		26C637DD0C71334A0024798E /* DNBDefs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNBDefs.h; sourceTree = "<group>"; };
+		26C637DD0C71334A0024798E /* DNBDefs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = DNBDefs.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		26C637DE0C71334A0024798E /* DNBError.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DNBError.cpp; sourceTree = "<group>"; };
 		26C637DF0C71334A0024798E /* DNBError.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNBError.h; sourceTree = "<group>"; };
 		26C637E00C71334A0024798E /* DNBLog.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DNBLog.cpp; sourceTree = "<group>"; };

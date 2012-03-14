@@ -47,7 +47,7 @@ namespace lldb_private
 class ClangUserExpression : public ClangExpression
 {
 public:
-    typedef SHARED_PTR(ClangUserExpression) ClangUserExpressionSP;
+    typedef STD_SHARED_PTR(ClangUserExpression) ClangUserExpressionSP;
     
     //------------------------------------------------------------------
     /// Constructor

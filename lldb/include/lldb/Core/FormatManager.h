@@ -218,7 +218,7 @@ public:
                 const char** matching_category = NULL,
                 FormatCategoryItems* matching_type = NULL);
     
-    typedef SHARED_PTR(TypeCategoryImpl) SharedPointer;
+    typedef STD_SHARED_PTR(TypeCategoryImpl) SharedPointer;
     
 private:
     SummaryNavigator::SharedPointer m_summary_nav;

@@ -59,7 +59,7 @@ public:
     {
     }
     
-    typedef SHARED_PTR(ScriptAddOptions) SharedPointer;
+    typedef STD_SHARED_PTR(ScriptAddOptions) SharedPointer;
     
 };
 
@@ -92,7 +92,7 @@ public:
     {
     }
     
-    typedef SHARED_PTR(SynthAddOptions) SharedPointer;
+    typedef STD_SHARED_PTR(SynthAddOptions) SharedPointer;
     
 };
 

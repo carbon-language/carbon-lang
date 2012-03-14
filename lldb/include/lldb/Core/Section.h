@@ -92,7 +92,7 @@ protected:
 
 
 class Section :
-    public std::tr1::enable_shared_from_this<Section>,
+    public STD_ENABLE_SHARED_FROM_THIS(Section),
     public ModuleChild,
     public UserID,
     public Flags

@@ -281,7 +281,7 @@ protected:
 };
 
 class Module :
-    public std::tr1::enable_shared_from_this<Module>,
+    public STD_ENABLE_SHARED_FROM_THIS(Module),
     public SymbolContextScope
 {
 public:
