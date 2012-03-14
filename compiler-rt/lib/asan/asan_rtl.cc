@@ -244,16 +244,16 @@ ASAN_REPORT_ERROR(store, true, 16)
 static NOINLINE void force_interface_symbols() {
   volatile int fake_condition = 0;  // prevent dead condition elimination.
   if (fake_condition) {
-    __asan_report_load1(NULL);
-    __asan_report_load2(NULL);
-    __asan_report_load4(NULL);
-    __asan_report_load8(NULL);
-    __asan_report_load16(NULL);
-    __asan_report_store1(NULL);
-    __asan_report_store2(NULL);
-    __asan_report_store4(NULL);
-    __asan_report_store8(NULL);
-    __asan_report_store16(NULL);
+    __asan_report_load1(0);
+    __asan_report_load2(0);
+    __asan_report_load4(0);
+    __asan_report_load8(0);
+    __asan_report_load16(0);
+    __asan_report_store1(0);
+    __asan_report_store2(0);
+    __asan_report_store4(0);
+    __asan_report_store8(0);
+    __asan_report_store16(0);
     __asan_register_global(0, 0, NULL);
     __asan_register_globals(NULL, 0);
     __asan_unregister_globals(NULL, 0);
