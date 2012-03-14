@@ -446,7 +446,7 @@ public:
   virtual void initialize(ScheduleDAGMI *dag) {
     DAG = dag;
 
-    assert(!ForceTopDown || !ForceBottomUp &&
+    assert((!ForceTopDown || !ForceBottomUp) &&
            "-misched-topdown incompatible with -misched-bottomup");
   }
 
@@ -488,7 +488,7 @@ public:
 /// Create the standard converging machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
 static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
-  assert(!ForceTopDown || !ForceBottomUp &&
+  assert((!ForceTopDown || !ForceBottomUp) &&
          "-misched-topdown incompatible with -misched-bottomup");
   return new ScheduleDAGMI(C, new ConvergingScheduler());
 }
@@ -574,7 +574,7 @@ public:
 static ScheduleDAGInstrs *createInstructionShuffler(MachineSchedContext *C) {
   bool Alternate = !ForceTopDown && !ForceBottomUp;
   bool TopDown = !ForceBottomUp;
-  assert(TopDown || !ForceTopDown &&
+  assert((TopDown || !ForceTopDown) &&
          "-misched-topdown incompatible with -misched-bottomup");
   return new ScheduleDAGMI(C, new InstructionShuffler(Alternate, TopDown));
 }
