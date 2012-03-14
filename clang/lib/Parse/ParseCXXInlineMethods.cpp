@@ -319,7 +319,11 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
                                             Sema::PotentiallyEvaluatedIfUsed,
                                             LM.DefaultArgs[I].Param);
 
-      ExprResult DefArgResult(ParseAssignmentExpression());
+      ExprResult DefArgResult;
+      if (Tok.is(tok::l_brace))
+        DefArgResult = ParseBraceInitializer();
+      else
+        DefArgResult = ParseAssignmentExpression();
       if (DefArgResult.isInvalid())
         Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param);
       else {

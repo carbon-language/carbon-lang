@@ -96,6 +96,13 @@ namespace integral {
     (void) int({0}); // expected-error {{functional-style cast}}
     new int({0});  // expected-error {{cannot initialize}}
   }
+
+  void default_argument(int i = {}) {
+  }
+  struct DefaultArgument {
+    void default_argument(int i = {}) {
+    }
+  };
 }
 
 namespace PR12118 {
