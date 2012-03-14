@@ -35,17 +35,14 @@ enum AttributeDeclKind {
   ExpectedVariableOrFunction,
   ExpectedFunctionOrMethod,
   ExpectedParameter,
-  ExpectedParameterOrMethod,
   ExpectedFunctionMethodOrBlock,
-  ExpectedClassOrVirtualMethod,
   ExpectedFunctionMethodOrParameter,
   ExpectedClass,
-  ExpectedVirtualMethod,
-  ExpectedClassMember,
   ExpectedVariable,
   ExpectedMethod,
   ExpectedVariableFunctionOrLabel,
-  ExpectedFieldOrGlobalVar
+  ExpectedFieldOrGlobalVar,
+  ExpectedStruct
 };
 
 //===----------------------------------------------------------------------===//
@@ -787,7 +784,7 @@ static bool checkIBOutletCommon(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   else if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D)) {
     if (!PD->getType()->getAs<ObjCObjectPointerType>()) {
-      S.Diag(Attr.getLoc(), diag::warn_iboutlet_object_type) 
+      S.Diag(Attr.getLoc(), diag::warn_iboutlet_object_type)
         << Attr.getName() << PD->getType() << 1;
       return false;
     }
@@ -796,7 +793,7 @@ static bool checkIBOutletCommon(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_iboutlet) << Attr.getName();
     return false;
   }
-  
+
   return true;
 }
 
@@ -3329,7 +3326,7 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
 
   if (!isa<ObjCMethodDecl>(method)) {
     S.Diag(method->getLocStart(), diag::err_attribute_wrong_decl_type)
-      << SourceRange(loc, loc) << attr.getName() << 13 /* methods */;
+      << SourceRange(loc, loc) << attr.getName() << ExpectedMethod;
     return;
   }
 
@@ -3354,7 +3351,7 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
 static void handleCFTransferAttr(Sema &S, Decl *D, const AttributeList &A) {
   if (!isa<FunctionDecl>(D)) {
     S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
-      << A.getRange() << A.getName() << 0 /*function*/;
+      << A.getRange() << A.getName() << ExpectedFunction;
     return;
   }
 
@@ -3390,7 +3387,7 @@ static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
   RecordDecl *RD = dyn_cast<RecordDecl>(D);
   if (!RD || RD->isUnion()) {
     S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
-      << Attr.getRange() << Attr.getName() << 14 /*struct */;
+      << Attr.getRange() << Attr.getName() << ExpectedStruct;
   }
 
   IdentifierInfo *ParmName = Attr.getParameterName();
@@ -3420,14 +3417,14 @@ static void handleObjCOwnershipAttr(Sema &S, Decl *D,
   if (hasDeclarator(D)) return;
 
   S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
-    << Attr.getRange() << Attr.getName() << 12 /* variable */;
+    << Attr.getRange() << Attr.getName() << ExpectedVariable;
 }
 
 static void handleObjCPreciseLifetimeAttr(Sema &S, Decl *D,
                                           const AttributeList &Attr) {
   if (!isa<VarDecl>(D) && !isa<FieldDecl>(D)) {
     S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
-      << Attr.getRange() << Attr.getName() << 12 /* variable */;
+      << Attr.getRange() << Attr.getName() << ExpectedVariable;
     return;
   }
 
@@ -3507,7 +3504,7 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
     bool IsCurly = StrRef.size() > 1 && StrRef.front() == '{' &&
                    StrRef.back() == '}';
-    
+
     // Validate GUID length.
     if (IsCurly && StrRef.size() != 38) {
       S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
@@ -3518,7 +3515,7 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       return;
     }
 
-    // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or 
+    // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or
     // "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
     StringRef::iterator I = StrRef.begin();
     if (IsCurly) // Skip the optional '{'

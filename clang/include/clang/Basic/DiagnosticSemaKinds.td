@@ -1569,16 +1569,15 @@ def err_alias_not_supported_on_darwin : Error <
 def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
-  "parameters and methods|functions, methods and blocks|"
-  "classes and virtual methods|functions, methods, and parameters|"
-  "classes|virtual methods|class members|variables|methods|"
-  "variables, functions and labels|fields and global variables}1">;
+  "functions, methods and blocks|functions, methods, and parameters|"
+  "classes|variables|methods|variables, functions and labels|"
+  "fields and global variables|structs}1">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
-  "parameters and methods|functions, methods and blocks|"
-  "classes and virtual methods|functions, methods, and parameters|"
-  "classes|virtual methods|class members|variables|methods|structs}1">;
+  "functions, methods and blocks|functions, methods, and parameters|"
+  "classes|variables|methods|variables, functions and labels|"
+  "fields and global variables|structs}1">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">;
 def warn_pointer_attribute_wrong_type : Warning<
@@ -3032,7 +3031,7 @@ def err_anon_bitfield_width_exceeds_type_size : Error<
   "size of anonymous bit-field (%0 bits) exceeds size of its type (%1 bits)">;
 def err_incorrect_number_of_vector_initializers : Error<
   "number of elements must be either one or match the size of the vector">;
-  
+
 // Used by C++ which allows bit-fields that are wider than the type.
 def warn_bitfield_width_exceeds_type_size: Warning<
   "size of bit-field %0 (%1 bits) exceeds the size of its type; value will be "
@@ -5096,7 +5095,7 @@ def warn_unreachable_default : Warning<
   "default label in switch which covers all enumeration values">,
   InGroup<CoveredSwitchDefault>, DefaultIgnore;
 def warn_not_in_enum : Warning<"case value not in enumerated type %0">,
-  InGroup<Switch>; 
+  InGroup<Switch>;
 def err_typecheck_statement_requires_scalar : Error<
   "statement requires expression of scalar type (%0 invalid)">;
 def err_typecheck_statement_requires_integer : Error<
