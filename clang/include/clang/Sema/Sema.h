@@ -1343,6 +1343,9 @@ public:
                                       SourceLocation IdLoc,
                                       IdentifierInfo *Id,
                                       Expr *val);
+  bool CheckEnumUnderlyingType(TypeSourceInfo *TI);
+  bool CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
+                              QualType EnumUnderlyingTy, const EnumDecl *Prev);
 
   Decl *ActOnEnumConstant(Scope *S, Decl *EnumDecl, Decl *LastEnumConstant,
                           SourceLocation IdLoc, IdentifierInfo *Id,
@@ -5488,6 +5491,11 @@ public:
                    const MultiLevelTemplateArgumentList &TemplateArgs,
                    TemplateSpecializationKind TSK,
                    bool Complain = true);
+
+  bool InstantiateEnum(SourceLocation PointOfInstantiation,
+                       EnumDecl *Instantiation, EnumDecl *Pattern,
+                       const MultiLevelTemplateArgumentList &TemplateArgs,
+                       TemplateSpecializationKind TSK);
 
   struct LateInstantiatedAttribute {
     const Attr *TmplAttr;

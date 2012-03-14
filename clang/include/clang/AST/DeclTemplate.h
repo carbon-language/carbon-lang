@@ -355,8 +355,8 @@ public:
 };
 
 /// \brief Provides information a specialization of a member of a class
-/// template, which may be a member function, static data member, or
-/// member class.
+/// template, which may be a member function, static data member,
+/// member class or member enumeration.
 class MemberSpecializationInfo {
   // The member declaration from which this member was instantiated, and the
   // manner in which the instantiation occurred (in the lower two bits).

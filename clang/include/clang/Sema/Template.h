@@ -484,6 +484,7 @@ namespace clang {
     InstantiateClassTemplatePartialSpecialization(
                                               ClassTemplateDecl *ClassTemplate,
                            ClassTemplatePartialSpecializationDecl *PartialSpec);
+    void InstantiateEnumDefinition(EnumDecl *Enum, EnumDecl *Pattern);
   };  
 }
 

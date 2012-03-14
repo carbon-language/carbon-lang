@@ -230,7 +230,13 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
   Record.push_back(D->isScoped());
   Record.push_back(D->isScopedUsingClassTag());
   Record.push_back(D->isFixed());
-  Writer.AddDeclRef(D->getInstantiatedFromMemberEnum(), Record);
+  if (MemberSpecializationInfo *MemberInfo = D->getMemberSpecializationInfo()) {
+    Writer.AddDeclRef(MemberInfo->getInstantiatedFrom(), Record);
+    Record.push_back(MemberInfo->getTemplateSpecializationKind());
+    Writer.AddSourceLocation(MemberInfo->getPointOfInstantiation(), Record);
+  } else {
+    Writer.AddDeclRef(0, Record);
+  }
 
   if (!D->hasAttrs() &&
       !D->isImplicit() &&

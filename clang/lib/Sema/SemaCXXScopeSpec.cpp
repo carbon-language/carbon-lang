@@ -13,6 +13,7 @@
 
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Template.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
@@ -209,43 +210,52 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
                                       DeclContext *DC) {
   assert(DC != 0 && "given null context");
 
-  if (TagDecl *tag = dyn_cast<TagDecl>(DC)) {
-    // If this is a dependent type, then we consider it complete.
-    if (tag->isDependentContext())
-      return false;
+  TagDecl *tag = dyn_cast<TagDecl>(DC);
 
-    // If we're currently defining this type, then lookup into the
-    // type is okay: don't complain that it isn't complete yet.
-    QualType type = Context.getTypeDeclType(tag);
-    const TagType *tagType = type->getAs<TagType>();
-    if (tagType && tagType->isBeingDefined())
-      return false;
+  // If this is a dependent type, then we consider it complete.
+  if (!tag || tag->isDependentContext())
+    return false;
 
-    SourceLocation loc = SS.getLastQualifierNameLoc();
-    if (loc.isInvalid()) loc = SS.getRange().getBegin();
+  // If we're currently defining this type, then lookup into the
+  // type is okay: don't complain that it isn't complete yet.
+  QualType type = Context.getTypeDeclType(tag);
+  const TagType *tagType = type->getAs<TagType>();
+  if (tagType && tagType->isBeingDefined())
+    return false;
 
-    // The type must be complete.
-    if (RequireCompleteType(loc, type,
-                            PDiag(diag::err_incomplete_nested_name_spec)
-                              << SS.getRange())) {
-      SS.SetInvalid(SS.getRange());
-      return true;
-    }
+  SourceLocation loc = SS.getLastQualifierNameLoc();
+  if (loc.isInvalid()) loc = SS.getRange().getBegin();
 
-    // Fixed enum types are complete, but they aren't valid as scopes
-    // until we see a definition, so awkwardly pull out this special
-    // case.
-    if (const EnumType *enumType = dyn_cast_or_null<EnumType>(tagType)) {
-      if (!enumType->getDecl()->isCompleteDefinition()) {
-        Diag(loc, diag::err_incomplete_nested_name_spec)
-          << type << SS.getRange();
-        SS.SetInvalid(SS.getRange());
-        return true;
-      }
-    }
+  // The type must be complete.
+  if (RequireCompleteType(loc, type,
+                          PDiag(diag::err_incomplete_nested_name_spec)
+                            << SS.getRange())) {
+    SS.SetInvalid(SS.getRange());
+    return true;
   }
 
-  return false;
+  // Fixed enum types are complete, but they aren't valid as scopes
+  // until we see a definition, so awkwardly pull out this special
+  // case.
+  const EnumType *enumType = dyn_cast_or_null<EnumType>(tagType);
+  if (!enumType || enumType->getDecl()->isCompleteDefinition())
+    return false;
+
+  // Try to instantiate the definition, if this is a specialization of an
+  // enumeration temploid.
+  EnumDecl *ED = enumType->getDecl();
+  if (EnumDecl *Pattern = ED->getInstantiatedFromMemberEnum()) {
+    MemberSpecializationInfo *MSI = ED->getMemberSpecializationInfo();
+    if (MSI->getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
+      return InstantiateEnum(loc, ED, Pattern,
+                             getTemplateInstantiationArgs(ED),
+                             TSK_ImplicitInstantiation);
+  }
+
+  Diag(loc, diag::err_incomplete_nested_name_spec)
+    << type << SS.getRange();
+  SS.SetInvalid(SS.getRange());
+  return true;
 }
 
 bool Sema::ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc,

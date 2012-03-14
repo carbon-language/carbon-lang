@@ -2674,6 +2674,19 @@ void EnumDecl::completeDefinition(QualType NewType,
   TagDecl::completeDefinition();
 }
 
+EnumDecl *EnumDecl::getInstantiatedFromMemberEnum() const {
+  if (SpecializationInfo)
+    return cast<EnumDecl>(SpecializationInfo->getInstantiatedFrom());
+
+  return 0;
+}
+
+void EnumDecl::setInstantiationOfMemberEnum(ASTContext &C, EnumDecl *ED,
+                                            TemplateSpecializationKind TSK) {
+  assert(!SpecializationInfo && "Member enum is already a specialization");
+  SpecializationInfo = new (C) MemberSpecializationInfo(ED, TSK);
+}
+
 //===----------------------------------------------------------------------===//
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//

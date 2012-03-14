@@ -453,7 +453,13 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   ED->IsScoped = Record[Idx++];
   ED->IsScopedUsingClassTag = Record[Idx++];
   ED->IsFixed = Record[Idx++];
-  ED->setInstantiationOfMemberEnum(ReadDeclAs<EnumDecl>(Record, Idx));
+
+  if (EnumDecl *InstED = ReadDeclAs<EnumDecl>(Record, Idx)) {
+    TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
+    SourceLocation POI = ReadSourceLocation(Record, Idx);
+    ED->setInstantiationOfMemberEnum(Reader.getContext(), InstED, TSK);
+    ED->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
+  }
 }
 
 void ASTDeclReader::VisitRecordDecl(RecordDecl *RD) {

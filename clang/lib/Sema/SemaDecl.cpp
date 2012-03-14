@@ -7738,6 +7738,50 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 }
 
 
+/// \brief Check that this is a valid underlying type for an enum declaration.
+bool Sema::CheckEnumUnderlyingType(TypeSourceInfo *TI) {
+  SourceLocation UnderlyingLoc = TI->getTypeLoc().getBeginLoc();
+  QualType T = TI->getType();
+
+  if (T->isDependentType() || T->isIntegralType(Context))
+    return false;
+
+  Diag(UnderlyingLoc, diag::err_enum_invalid_underlying) << T;
+  return true;
+}
+
+/// Check whether this is a valid redeclaration of a previous enumeration.
+/// \return true if the redeclaration was invalid.
+bool Sema::CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
+                                  QualType EnumUnderlyingTy,
+                                  const EnumDecl *Prev) {
+  bool IsFixed = !EnumUnderlyingTy.isNull();
+
+  if (IsScoped != Prev->isScoped()) {
+    Diag(EnumLoc, diag::err_enum_redeclare_scoped_mismatch)
+      << Prev->isScoped();
+    Diag(Prev->getLocation(), diag::note_previous_use);
+    return true;
+  }
+
+  if (IsFixed && Prev->isFixed()) {
+    if (!Context.hasSameUnqualifiedType(EnumUnderlyingTy,
+                                        Prev->getIntegerType())) {
+      Diag(EnumLoc, diag::err_enum_redeclare_type_mismatch)
+        << EnumUnderlyingTy << Prev->getIntegerType();
+      Diag(Prev->getLocation(), diag::note_previous_use);
+      return true;
+    }
+  } else if (IsFixed != Prev->isFixed()) {
+    Diag(EnumLoc, diag::err_enum_redeclare_fixed_mismatch)
+      << Prev->isFixed();
+    Diag(Prev->getLocation(), diag::note_previous_use);
+    return true;
+  }
+
+  return false;
+}
+
 /// \brief Determine whether a tag with a given kind is acceptable
 /// as a redeclaration of the given tag declaration.
 ///
@@ -7913,16 +7957,11 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       QualType T = GetTypeFromParser(UnderlyingType.get(), &TI);
       EnumUnderlying = TI;
 
-      SourceLocation UnderlyingLoc = TI->getTypeLoc().getBeginLoc();
-
-      if (!T->isDependentType() && !T->isIntegralType(Context)) {
-        Diag(UnderlyingLoc, diag::err_enum_invalid_underlying)
-          << T;
+      if (CheckEnumUnderlyingType(TI))
         // Recover by falling back to int.
         EnumUnderlying = Context.IntTy.getTypePtr();
-      }
 
-      if (DiagnoseUnexpandedParameterPack(UnderlyingLoc, TI, 
+      if (DiagnoseUnexpandedParameterPack(TI->getTypeLoc().getBeginLoc(), TI,
                                           UPPC_FixedUnderlyingType))
         EnumUnderlying = Context.IntTy.getTypePtr();
 
@@ -8196,37 +8235,17 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             return PrevTagDecl;
           }
 
+          QualType EnumUnderlyingTy;
+          if (TypeSourceInfo *TI = EnumUnderlying.dyn_cast<TypeSourceInfo*>())
+            EnumUnderlyingTy = TI->getType();
+          else if (const Type *T = EnumUnderlying.dyn_cast<const Type*>())
+            EnumUnderlyingTy = QualType(T, 0);
+
           // All conflicts with previous declarations are recovered by
           // returning the previous declaration.
-          if (ScopedEnum != PrevEnum->isScoped()) {
-            Diag(KWLoc, diag::err_enum_redeclare_scoped_mismatch)
-              << PrevEnum->isScoped();
-            Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
+          if (CheckEnumRedeclaration(NameLoc.isValid() ? NameLoc : KWLoc,
+                                     ScopedEnum, EnumUnderlyingTy, PrevEnum))
             return PrevTagDecl;
-          }
-          else if (EnumUnderlying && PrevEnum->isFixed()) {
-            QualType T;
-            if (TypeSourceInfo *TI = EnumUnderlying.dyn_cast<TypeSourceInfo*>())
-                T = TI->getType();
-            else
-                T = QualType(EnumUnderlying.get<const Type*>(), 0);
-
-            if (!Context.hasSameUnqualifiedType(T, 
-                                                PrevEnum->getIntegerType())) {
-              Diag(NameLoc.isValid() ? NameLoc : KWLoc, 
-                   diag::err_enum_redeclare_type_mismatch)
-                << T
-                << PrevEnum->getIntegerType();
-              Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
-              return PrevTagDecl;
-            }
-          }
-          else if (!EnumUnderlying.isNull() != PrevEnum->isFixed()) {
-            Diag(KWLoc, diag::err_enum_redeclare_fixed_mismatch)
-              << PrevEnum->isFixed();
-            Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
-            return PrevTagDecl;
-          }
         }
 
         if (!Invalid) {

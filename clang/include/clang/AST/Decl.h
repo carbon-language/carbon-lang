@@ -2458,7 +2458,7 @@ private:
   /// in the syntax of a declarator.
   bool IsEmbeddedInDeclarator : 1;
 
-  /// /brief True if this tag is free standing, e.g. "struct foo;".
+  /// \brief True if this tag is free standing, e.g. "struct foo;".
   bool IsFreeStanding : 1;
 
 protected:
@@ -2467,7 +2467,7 @@ protected:
   unsigned NumNegativeBits : 8;
 
   /// IsScoped - True if this tag declaration is a scoped enumeration. Only
-  /// possible in C++0x mode.
+  /// possible in C++11 mode.
   bool IsScoped : 1;
   /// IsScopedUsingClassTag - If this tag declaration is a scoped enum,
   /// then this is true if the scoped enum was declared using the class
@@ -2476,7 +2476,7 @@ protected:
   bool IsScopedUsingClassTag : 1;
 
   /// IsFixed - True if this is an enumeration with fixed underlying type. Only
-  /// possible in C++0x mode.
+  /// possible in C++11 or Microsoft extensions mode.
   bool IsFixed : 1;
 
 private:
@@ -2671,8 +2671,9 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
-/// enums.
+/// EnumDecl - Represents an enum.  In C++11, enums can be forward-declared
+/// with a fixed underlying type, and in C we allow them to be forward-declared
+/// with no underlying type as an extension.
 class EnumDecl : public TagDecl {
   virtual void anchor();
   /// IntegerType - This represent the integer type that the enum corresponds
@@ -2698,10 +2699,10 @@ class EnumDecl : public TagDecl {
   /// in C++) are of the enum type instead.
   QualType PromotionType;
 
-  /// \brief If the enumeration was instantiated from an enumeration
-  /// within a class or function template, this pointer refers to the
-  /// enumeration declared within the template.
-  EnumDecl *InstantiatedFrom;
+  /// \brief If this enumeration is an instantiation of a member enumeration
+  /// of a class template specialization, this is the member specialization
+  /// information.
+  MemberSpecializationInfo *SpecializationInfo;
 
   // The number of positive and negative bits required by the
   // enumerators are stored in the SubclassBits field.
@@ -2714,7 +2715,7 @@ class EnumDecl : public TagDecl {
            IdentifierInfo *Id, EnumDecl *PrevDecl,
            bool Scoped, bool ScopedUsingClassTag, bool Fixed)
     : TagDecl(Enum, TTK_Enum, DC, IdLoc, Id, PrevDecl, StartLoc),
-      InstantiatedFrom(0) {
+      SpecializationInfo(0) {
     assert(Scoped || !ScopedUsingClassTag);
     IntegerType = (const Type*)0;
     NumNegativeBits = 0;
@@ -2723,6 +2724,9 @@ class EnumDecl : public TagDecl {
     IsScopedUsingClassTag = ScopedUsingClassTag;
     IsFixed = Fixed;
   }
+
+  void setInstantiationOfMemberEnum(ASTContext &C, EnumDecl *ED,
+                                    TemplateSpecializationKind TSK);
 public:
   EnumDecl *getCanonicalDecl() {
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
@@ -2743,6 +2747,10 @@ public:
   }
   EnumDecl *getMostRecentDecl() {
     return cast<EnumDecl>(TagDecl::getMostRecentDecl());
+  }
+
+  EnumDecl *getDefinition() const {
+    return cast_or_null<EnumDecl>(TagDecl::getDefinition());
   }
 
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
@@ -2767,14 +2775,14 @@ public:
   typedef specific_decl_iterator<EnumConstantDecl> enumerator_iterator;
 
   enumerator_iterator enumerator_begin() const {
-    const EnumDecl *E = cast_or_null<EnumDecl>(getDefinition());
+    const EnumDecl *E = getDefinition();
     if (!E)
       E = this;
     return enumerator_iterator(E->decls_begin());
   }
 
   enumerator_iterator enumerator_end() const {
-    const EnumDecl *E = cast_or_null<EnumDecl>(getDefinition());
+    const EnumDecl *E = getDefinition();
     if (!E)
       E = this;
     return enumerator_iterator(E->decls_end());
@@ -2859,11 +2867,21 @@ public:
   /// \brief Returns the enumeration (declared within the template)
   /// from which this enumeration type was instantiated, or NULL if
   /// this enumeration was not instantiated from any template.
-  EnumDecl *getInstantiatedFromMemberEnum() const {
-    return InstantiatedFrom;
+  EnumDecl *getInstantiatedFromMemberEnum() const;
+
+  /// \brief If this enumeration is an instantiation of a member enumeration of
+  /// a class template specialization, retrieves the member specialization
+  /// information.
+  MemberSpecializationInfo *getMemberSpecializationInfo() const {
+    return SpecializationInfo;
   }
 
-  void setInstantiationOfMemberEnum(EnumDecl *IF) { InstantiatedFrom = IF; }
+  /// \brief Specify that this enumeration is an instantiation of the
+  /// member enumeration ED.
+  void setInstantiationOfMemberEnum(EnumDecl *ED,
+                                    TemplateSpecializationKind TSK) {
+    setInstantiationOfMemberEnum(getASTContext(), ED, TSK);
+  }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const EnumDecl *D) { return true; }

@@ -2529,6 +2529,8 @@ def note_function_template_spec_here : Note<
   "in instantiation of function template specialization %q0 requested here">;
 def note_template_static_data_member_def_here : Note<
   "in instantiation of static data member %q0 requested here">;
+def note_template_enum_def_here : Note<
+  "in instantiation of enumeration %q0 requested here">;
 def note_template_type_alias_instantiation_here : Note<
   "in instantiation of template type alias %0 requested here">;
   

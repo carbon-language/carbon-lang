@@ -563,20 +563,18 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
                                     /*PrevDecl=*/0, D->isScoped(),
                                     D->isScopedUsingClassTag(), D->isFixed());
   if (D->isFixed()) {
-    if (TypeSourceInfo* TI = D->getIntegerTypeSourceInfo()) {
+    if (TypeSourceInfo *TI = D->getIntegerTypeSourceInfo()) {
       // If we have type source information for the underlying type, it means it
       // has been explicitly set by the user. Perform substitution on it before
       // moving on.
       SourceLocation UnderlyingLoc = TI->getTypeLoc().getBeginLoc();
-      Enum->setIntegerTypeSourceInfo(SemaRef.SubstType(TI,
-                                                       TemplateArgs,
-                                                       UnderlyingLoc,
-                                                       DeclarationName()));
-
-      if (!Enum->getIntegerTypeSourceInfo())
+      TypeSourceInfo *NewTI = SemaRef.SubstType(TI, TemplateArgs, UnderlyingLoc,
+                                                DeclarationName());
+      if (!NewTI || SemaRef.CheckEnumUnderlyingType(NewTI))
         Enum->setIntegerType(SemaRef.Context.IntTy);
-    }
-    else {
+      else
+        Enum->setIntegerTypeSourceInfo(NewTI);
+    } else {
       assert(!D->getIntegerType()->isDependentType()
              && "Dependent type without type source info");
       Enum->setIntegerType(D->getIntegerType());
@@ -585,20 +583,38 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 
   SemaRef.InstantiateAttrs(TemplateArgs, D, Enum);
 
-  Enum->setInstantiationOfMemberEnum(D);
+  Enum->setInstantiationOfMemberEnum(D, TSK_ImplicitInstantiation);
   Enum->setAccess(D->getAccess());
   if (SubstQualifier(D, Enum)) return 0;
   Owner->addDecl(Enum);
-  Enum->startDefinition();
+
+  // FIXME: If this is a redeclaration:
+  // CheckEnumRedeclaration(Enum->getLocation(), Enum->isScoped(),
+  //                        Enum->getIntegerType(), Prev);
 
   if (D->getDeclContext()->isFunctionOrMethod())
     SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Enum);
 
+  // C++11 [temp.inst]p1: The implicit instantiation of a class template
+  // specialization causes the implicit instantiation of the declarations, but
+  // not the definitions of scoped member enumerations.
+  // FIXME: There appears to be no wording for what happens for an enum defined
+  // within a block scope, but we treat that like a member of a class template.
+  if (!Enum->isScoped())
+    InstantiateEnumDefinition(Enum, D);
+
+  return Enum;
+}
+
+void TemplateDeclInstantiator::InstantiateEnumDefinition(
+    EnumDecl *Enum, EnumDecl *Pattern) {
+  Enum->startDefinition();
+
   SmallVector<Decl*, 4> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
-  for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(),
-         ECEnd = D->enumerator_end();
+  for (EnumDecl::enumerator_iterator EC = Pattern->enumerator_begin(),
+         ECEnd = Pattern->enumerator_end();
        EC != ECEnd; ++EC) {
     // The specified value for the enumerator.
     ExprResult Value = SemaRef.Owned((Expr *)0);
@@ -636,7 +652,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
       Enumerators.push_back(EnumConst);
       LastEnumConst = EnumConst;
 
-      if (D->getDeclContext()->isFunctionOrMethod()) {
+      if (Pattern->getDeclContext()->isFunctionOrMethod() &&
+          !Enum->isScoped()) {
         // If the enumeration is within a function or method, record the enum
         // constant as a local.
         SemaRef.CurrentInstantiationScope->InstantiatedLocal(*EC, EnumConst);
@@ -644,14 +661,11 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     }
   }
 
-  // FIXME: Fixup LBraceLoc and RBraceLoc
-  // FIXME: Empty Scope and AttributeList (required to handle attribute packed).
-  SemaRef.ActOnEnumBody(Enum->getLocation(), SourceLocation(), SourceLocation(),
-                        Enum,
+  // FIXME: Fixup LBraceLoc
+  SemaRef.ActOnEnumBody(Enum->getLocation(), SourceLocation(),
+                        Enum->getRBraceLoc(), Enum,
                         Enumerators.data(), Enumerators.size(),
                         0, 0);
-
-  return Enum;
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
