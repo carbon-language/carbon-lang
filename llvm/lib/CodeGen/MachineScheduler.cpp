@@ -113,6 +113,21 @@ SchedDefaultRegistry("default", "Use the target's default scheduler choice.",
 /// default scheduler if the target does not set a default.
 static ScheduleDAGInstrs *createCommonMachineSched(MachineSchedContext *C);
 
+/// Top-level MachineScheduler pass driver.
+///
+/// Visit blocks in function order. Divide each block into scheduling regions
+/// and visit them bottom-up. This is consistent with the DAG builder, which
+/// traverses scheduling regions bottom-up, but not essential.
+///
+/// This design avoids exposing scheduling boundaries to the DAG builder,
+/// simplifying the DAG builder's support for "special" target instructions,
+/// while at the same time allowing target schedulers to operate across
+/// scheduling boundaries, for example to bundle the boudary instructions
+/// without reordering them. This creates complexity, because the target
+/// scheduler must update the RegionBegin and RegionEnd positions cached by
+/// ScheduleDAGInstrs whenever adding or removing instructions. A much simpler
+/// design would be to split blocks at scheduling boundaries, but LLVM has a
+/// general bias against block splitting purely for implementation simplicity.
 bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   // Initialize the context of the pass.
   MF = &mf;
