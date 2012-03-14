@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <type_traits>
 
-void f();
+void f() {}
 
 int main()
 {
