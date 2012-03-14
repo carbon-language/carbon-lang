@@ -133,7 +133,9 @@ void CallGraph::addToCallGraph(TranslationUnitDecl *TU) {
 }
 
 CallGraphNode *CallGraph::getNode(const Decl *F) const {
-  return FunctionMap.find(F)->second;
+  FunctionMapTy::const_iterator I = FunctionMap.find(F);
+  if (I == FunctionMap.end()) return 0;
+  return I->second;
 }
 
 CallGraphNode *CallGraph::getOrInsertFunction(Decl *F) {
