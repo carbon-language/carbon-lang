@@ -1,6 +1,7 @@
 add_llvm_library(LLVMInstrumentation
   AddressSanitizer.cpp
   EdgeProfiling.cpp
+  FunctionBlackList.cpp
   GCOVProfiling.cpp
   Instrumentation.cpp
   OptimalEdgeProfiling.cpp

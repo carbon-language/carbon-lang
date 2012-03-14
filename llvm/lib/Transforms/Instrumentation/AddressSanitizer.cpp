@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "asan"
 
+#include "FunctionBlackList.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallSet.h"
@@ -29,8 +30,6 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetData.h"
@@ -126,21 +125,6 @@ static cl::opt<int> ClDebugMax("asan-debug-max", cl::desc("Debug man inst"),
 
 namespace {
 
-// Blacklisted functions are not instrumented.
-// The blacklist file contains one or more lines like this:
-// ---
-// fun:FunctionWildCard
-// ---
-// This is similar to the "ignore" feature of ThreadSanitizer.
-// http://code.google.com/p/data-race-test/wiki/ThreadSanitizerIgnores
-class BlackList {
- public:
-  BlackList(const std::string &Path);
-  bool isIn(const Function &F);
- private:
-  Regex *Functions;
-};
-
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public ModulePass {
   AddressSanitizer();
@@ -195,7 +179,7 @@ struct AddressSanitizer : public ModulePass {
   Function *AsanCtorFunction;
   Function *AsanInitFunction;
   Instruction *CtorInsertBefore;
-  OwningPtr<BlackList> BL;
+  OwningPtr<FunctionBlackList> BL;
 };
 }  // namespace
 
@@ -551,7 +535,7 @@ bool AddressSanitizer::runOnModule(Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
   if (!TD)
     return false;
-  BL.reset(new BlackList(ClBlackListFile));
+  BL.reset(new FunctionBlackList(ClBlackListFile));
 
   CurrentModule = &M;
   C = &(M.getContext());
@@ -945,55 +929,4 @@ bool AddressSanitizer::poisonStackInFunction(Module &M, Function &F) {
   }
 
   return true;
-}
-
-BlackList::BlackList(const std::string &Path) {
-  Functions = NULL;
-  const char *kFunPrefix = "fun:";
-  if (!ClBlackListFile.size()) return;
-  std::string Fun;
-
-  OwningPtr<MemoryBuffer> File;
-  if (error_code EC = MemoryBuffer::getFile(ClBlackListFile.c_str(), File)) {
-    report_fatal_error("Can't open blacklist file " + ClBlackListFile + ": " +
-                       EC.message());
-  }
-  MemoryBuffer *Buff = File.take();
-  const char *Data = Buff->getBufferStart();
-  size_t DataLen = Buff->getBufferSize();
-  SmallVector<StringRef, 16> Lines;
-  SplitString(StringRef(Data, DataLen), Lines, "\n\r");
-  for (size_t i = 0, numLines = Lines.size(); i < numLines; i++) {
-    if (Lines[i].startswith(kFunPrefix)) {
-      std::string ThisFunc = Lines[i].substr(strlen(kFunPrefix));
-      std::string ThisFuncRE;
-      // add ThisFunc replacing * with .*
-      for (size_t j = 0, n = ThisFunc.size(); j < n; j++) {
-        if (ThisFunc[j] == '*')
-          ThisFuncRE += '.';
-        ThisFuncRE += ThisFunc[j];
-      }
-      // Check that the regexp is valid.
-      Regex CheckRE(ThisFuncRE);
-      std::string Error;
-      if (!CheckRE.isValid(Error))
-        report_fatal_error("malformed blacklist regex: " + ThisFunc +
-                           ": " + Error);
-      // Append to the final regexp.
-      if (Fun.size())
-        Fun += "|";
-      Fun += ThisFuncRE;
-    }
-  }
-  if (Fun.size()) {
-    Functions = new Regex(Fun);
-  }
-}
-
-bool BlackList::isIn(const Function &F) {
-  if (Functions) {
-    bool Res = Functions->match(F.getName());
-    return Res;
-  }
-  return false;
 }
