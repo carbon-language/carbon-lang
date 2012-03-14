@@ -18,16 +18,6 @@
 #   if defined(__has_include) && __has_include(<CrashReporterClient.h>)
 #       define HAVE_CRASHREPORTERCLIENT_H 1
 #       include <CrashReporterClient.h>
-
-        //  If any clients of llvm try to link to libCrashReporterClient.a themselves,
-        //  only one crash info struct will be used.
-        extern "C" {
-        CRASH_REPORTER_CLIENT_HIDDEN 
-        struct crashreporter_annotations_t gCRAnnotations 
-                __attribute__((section("__DATA," CRASHREPORTER_ANNOTATIONS_SECTION))) 
-                = { CRASHREPORTER_ANNOTATIONS_VERSION, 0, 0, 0, 0, 0, 0 };
-        }
-
 #   endif
 #endif
 

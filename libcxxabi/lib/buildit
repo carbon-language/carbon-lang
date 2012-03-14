@@ -53,6 +53,10 @@ case $TRIPLE in
         -compatibility_version 1 \
         -install_name /usr/lib/libc++abi.dylib \
         -lSystem"
+	if [ -f "${SDKROOT}/usr/local/lib/libCrashReporterClient.a" ]
+	then
+		LDSHARED_FLAGS+=" -lCrashReporterClient"
+	fi
     ;;
   *-*-mingw*)
     # FIXME: removing libgcc and libsupc++ dependencies means porting libcxxrt and LLVM/compiler-rt
