@@ -110,6 +110,12 @@ namespace {
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCWrittenInterfaces;
     llvm::SmallPtrSet<TagDecl*, 8> TagsDefinedInIvarDecls;
     SmallVector<ObjCInterfaceDecl*, 32> ObjCInterfacesSeen;
+    /// DefinedNonLazyClasses - List of defined "non-lazy" classes.
+    SmallVector<ObjCInterfaceDecl*, 8> DefinedNonLazyClasses;
+    
+    /// DefinedNonLazyCategories - List of defined "non-lazy" categories.
+    llvm::SmallVector<ObjCCategoryDecl*, 8> DefinedNonLazyCategories;
+    
     SmallVector<Stmt *, 32> Stmts;
     SmallVector<int, 8> ObjCBcLabelNo;
     // Remember all the @protocol(<expr>) expressions.
@@ -516,6 +522,12 @@ namespace {
       TypeSourceInfo *TInfo = Ctx->getTrivialTypeSourceInfo(Ty, SourceLocation());
       return CStyleCastExpr::Create(*Ctx, Ty, VK_RValue, Kind, E, 0, TInfo,
                                     SourceLocation(), SourceLocation());
+    }
+    
+    bool ImplementationIsNonLazy(const ObjCImplDecl *OD) const {
+      IdentifierInfo* II = &Context->Idents.get("load");
+      Selector LoadSel = Context->Selectors.getSelector(0, &II);
+      return OD->getClassMethod(LoadSel) != 0;
     }
   };
   
@@ -5032,14 +5044,14 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#pragma section(\".objc_catlist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_protolist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_imageinfo$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_nlclslist$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_nlcatlist$B\", long, read, write)\n";
     
     // These need be generated. But they are not,using API calls instead.
     Preamble += "#pragma section(\".objc_selrefs$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_classrefs$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_superrefs$B\", long, read, write)\n";
     
-    Preamble += "#pragma section(\".objc_nlclslist$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".objc_nlcatlist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_protorefs$B\", long, read, write)\n";
     
     
@@ -5641,14 +5653,20 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
 static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context, 
                              std::string &Result,
                              StringRef CatName,
-                             StringRef ClassName,
+                             ObjCInterfaceDecl *ClassDecl,
                              ArrayRef<ObjCMethodDecl *> InstanceMethods,
                              ArrayRef<ObjCMethodDecl *> ClassMethods,
                              ArrayRef<ObjCProtocolDecl *> RefedProtocols,
                              ArrayRef<ObjCPropertyDecl *> ClassProperties) {
+  
+  StringRef ClassName = ClassDecl->getNameAsString();
   // must declare an extern class object in case this class is not implemented 
   // in this TU.
-  Result += "\nextern struct _class_t ";
+  Result += "\n";
+  if (ClassDecl->getImplementation())
+    Result += "__declspec(dllexport) ";
+  
+  Result += "extern struct _class_t ";
   Result += "OBJC_CLASS_$_"; Result += ClassName;
   Result += ";\n";
   
@@ -6213,6 +6231,9 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   Write_class_t(Context, Result,
                 "OBJC_CLASS_$_",
                 CDecl, /*metaclass*/false);
+  
+  if (ImplementationIsNonLazy(IDecl))
+    DefinedNonLazyClasses.push_back(CDecl);
                 
 }
 
@@ -6242,6 +6263,17 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
       Result += ",\n";
     }
     Result += "};\n";
+    
+    if (!DefinedNonLazyClasses.empty()) {
+      if (LangOpts.MicrosoftExt)
+        Result += "__declspec(allocate(\".objc_nlclslist$B\")) \n";
+      Result += "static struct _class_t *_OBJC_LABEL_NONLAZY_CLASS_$[] = {\n\t";
+      for (unsigned i = 0, e = DefinedNonLazyClasses.size(); i < e; i++) {
+        Result += "\t&OBJC_CLASS_$_"; Result += DefinedNonLazyClasses[i]->getNameAsString();
+        Result += ",\n";
+      }
+      Result += "};\n";
+    }
   }
   
   if (CatDefCount > 0) {
@@ -6262,6 +6294,21 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
     }
     Result += "};\n";
   }
+  
+  if (!DefinedNonLazyCategories.empty()) {
+    if (LangOpts.MicrosoftExt)
+      Result += "__declspec(allocate(\".objc_nlcatlist$B\")) \n";
+    Result += "static struct _category_t *_OBJC_LABEL_NONLAZY_CATEGORY_$[] = {\n\t";
+    for (unsigned i = 0, e = DefinedNonLazyCategories.size(); i < e; i++) {
+      Result += "\t&_OBJC_$_CATEGORY_";
+      Result += 
+        DefinedNonLazyCategories[i]->getClassInterface()->getNameAsString(); 
+      Result += "_$_";
+      Result += DefinedNonLazyCategories[i]->getNameAsString();
+      Result += ",\n";
+    }
+    Result += "};\n";
+  }
 }
 
 void RewriteModernObjC::WriteImageInfo(std::string &Result) {
@@ -6270,7 +6317,7 @@ void RewriteModernObjC::WriteImageInfo(std::string &Result) {
   
   Result += "static struct IMAGE_INFO { unsigned version; unsigned flag; } ";
   // version 0, ObjCABI is 2
-  Result += "_OBJC_IMAGE_INFO = { 0, 2 };\n";
+  Result += "L_OBJC_IMAGE_INFO = { 0, 2 };\n";
 }
 
 /// RewriteObjCCategoryImplDecl - Rewrite metadata for each category
@@ -6356,11 +6403,15 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   
   Write_category_t(*this, Context, Result,
                    CDecl->getNameAsString(),
-                   ClassDecl->getNameAsString(),
+                   ClassDecl,
                    InstanceMethods,
                    ClassMethods,
                    RefedProtocols,
                    ClassProperties);
+  
+  // Determine if this category is also "non-lazy".
+  if (ImplementationIsNonLazy(IDecl))
+    DefinedNonLazyCategories.push_back(CDecl);
   
 }
 
