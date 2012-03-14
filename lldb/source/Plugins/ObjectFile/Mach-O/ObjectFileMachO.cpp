@@ -1311,7 +1311,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         else
             eh_frame_section_sp = section_list->FindSectionByName (g_section_name_eh_frame);
 
-        
+        const bool is_arm = (m_header.cputype == llvm::MachO::CPUTypeARM);
         if (text_section_sp && function_starts_data.GetByteSize())
         {
             FunctionStarts::Entry function_start_entry;
@@ -1945,19 +1945,48 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     const addr_t section_file_addr = symbol_section->GetFileAddress();
                     if (symbol_byte_size == 0 && function_starts_count > 0)
                     {
-                        FunctionStarts::Entry *func_start_entry = function_starts.FindEntry(nlist.n_value, true);
+                        addr_t symbol_lookup_file_addr = nlist.n_value;
+                        // Do an exact address match for non-ARM addresses, else get the closest since
+                        // the symbol might be a thumb symbol which has an address with bit zero set
+                        FunctionStarts::Entry *func_start_entry = function_starts.FindEntry (symbol_lookup_file_addr, !is_arm);
+                        if (is_arm && func_start_entry)
+                        {
+                            // Verify that the function start address is the symbol address (ARM)
+                            // or the symbol address + 1 (thumb)
+                            if (func_start_entry->addr != symbol_lookup_file_addr &&
+                                func_start_entry->addr != (symbol_lookup_file_addr + 1))
+                            {
+                                // Not the right entry, NULL it out...
+                                func_start_entry = NULL;
+                            }
+                        }
                         if (func_start_entry)
                         {
                             func_start_entry->data = true;
+                            
+                            addr_t symbol_file_addr = func_start_entry->addr;
+                            uint32_t symbol_flags = 0;
+                            if (is_arm)
+                            {
+                                if (symbol_file_addr & 1)
+                                    symbol_flags = MACHO_NLIST_ARM_SYMBOL_IS_THUMB;
+                                symbol_file_addr &= 0xfffffffffffffffeull;
+                            }
+
                             const FunctionStarts::Entry *next_func_start_entry = function_starts.FindNextEntry (func_start_entry);
                             const addr_t section_end_file_addr = section_file_addr + symbol_section->GetByteSize();
                             if (next_func_start_entry)
                             {
-                                symbol_byte_size = std::min<lldb::addr_t>(next_func_start_entry->addr - func_start_entry->addr, section_end_file_addr - func_start_entry->addr);
+                                addr_t next_symbol_file_addr = next_func_start_entry->addr;
+                                // Be sure the clear the Thumb address bit when we calculate the size
+                                // from the current and next address
+                                if (is_arm)
+                                    next_symbol_file_addr &= 0xfffffffffffffffeull;
+                                symbol_byte_size = std::min<lldb::addr_t>(next_symbol_file_addr - symbol_file_addr, section_end_file_addr - symbol_file_addr);
                             }
                             else
                             {
-                                symbol_byte_size = section_end_file_addr - func_start_entry->addr;
+                                symbol_byte_size = section_end_file_addr - symbol_file_addr;
                             }
                         }
                     }
@@ -2039,8 +2068,16 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     const FunctionStarts::Entry *func_start_entry = function_starts.GetEntryAtIndex (i);
                     if (func_start_entry->data == false)
                     {
+                        addr_t symbol_file_addr = func_start_entry->addr;
+                        uint32_t symbol_flags = 0;
+                        if (is_arm)
+                        {
+                            if (symbol_file_addr & 1)
+                                symbol_flags = MACHO_NLIST_ARM_SYMBOL_IS_THUMB;
+                            symbol_file_addr &= 0xfffffffffffffffeull;
+                        }
                         Address symbol_addr;
-                        if (module_sp->ResolveFileAddress (func_start_entry->addr, symbol_addr))
+                        if (module_sp->ResolveFileAddress (symbol_file_addr, symbol_addr))
                         {
                             SectionSP symbol_section (symbol_addr.GetSection());
                             uint32_t symbol_byte_size = 0;
@@ -2051,11 +2088,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 const addr_t section_end_file_addr = section_file_addr + symbol_section->GetByteSize();
                                 if (next_func_start_entry)
                                 {
-                                    symbol_byte_size = std::min<lldb::addr_t>(next_func_start_entry->addr - func_start_entry->addr, section_end_file_addr - func_start_entry->addr);
+                                    addr_t next_symbol_file_addr = next_func_start_entry->addr;
+                                    if (is_arm)
+                                        next_symbol_file_addr &= 0xfffffffffffffffeull;
+                                    symbol_byte_size = std::min<lldb::addr_t>(next_symbol_file_addr - symbol_file_addr, section_end_file_addr - symbol_file_addr);
                                 }
                                 else
                                 {
-                                    symbol_byte_size = section_end_file_addr - func_start_entry->addr;
+                                    symbol_byte_size = section_end_file_addr - symbol_file_addr;
                                 }
                                 snprintf (synthetic_function_symbol,
                                           sizeof(synthetic_function_symbol),
@@ -2067,6 +2107,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 sym[sym_idx].SetType (eSymbolTypeCode);
                                 sym[sym_idx].SetIsSynthetic (true);
                                 sym[sym_idx].GetAddress() = symbol_addr;
+                                if (symbol_flags)
+                                    sym[sym_idx].SetFlags (symbol_flags);
                                 if (symbol_byte_size)
                                     sym[sym_idx].SetByteSize (symbol_byte_size);
                                 ++sym_idx;
