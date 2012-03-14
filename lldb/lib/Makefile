@@ -55,6 +55,7 @@ USEDLIBS = lldbAPI.a \
 	clangCodeGen.a \
 	clangFrontend.a \
 	clangDriver.a \
+	clangEdit.a \
 	clangIndex.a \
 	clangLex.a \
 	clangRewrite.a \
