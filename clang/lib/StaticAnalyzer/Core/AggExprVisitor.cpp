@@ -50,6 +50,8 @@ void AggExprVisitor::VisitCastExpr(CastExpr *E) {
   case CK_NoOp:
   case CK_ConstructorConversion:
   case CK_UserDefinedConversion:
+    // FIXME: The CFG is fully linearised, so a recursive visit is probably not
+    // needed anymore.
     Visit(E->getSubExpr());
     break;
   }
@@ -60,6 +62,8 @@ void AggExprVisitor::VisitCXXConstructExpr(CXXConstructExpr *E) {
 }
 
 void AggExprVisitor::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+  // FIXME: The CFG is fully linearised, so a recursive visit is probably not
+  // needed anymore.
   Eng.Visit(E, Pred, DstSet);
 }
 

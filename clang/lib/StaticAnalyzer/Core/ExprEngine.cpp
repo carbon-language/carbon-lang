@@ -363,29 +363,22 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
   SVal thisVal = Pred->getState()->getSVal(thisReg);
 
   if (BMI->isAnyMemberInitializer()) {
-    ExplodedNodeSet AfterEval;
-
     // Evaluate the initializer.
-    Visit(BMI->getInit(), Pred, AfterEval);
 
-    StmtNodeBuilder Bldr(AfterEval, Dst, *currentBuilderContext);
-    for (ExplodedNodeSet::iterator I = AfterEval.begin(),
-                                   E = AfterEval.end(); I != E; ++I){
-      ExplodedNode *P = *I;
-      ProgramStateRef state = P->getState();
+    StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+    ProgramStateRef state = Pred->getState();
 
-      const FieldDecl *FD = BMI->getAnyMember();
+    const FieldDecl *FD = BMI->getAnyMember();
 
-      SVal FieldLoc = state->getLValue(FD, thisVal);
-      SVal InitVal = state->getSVal(BMI->getInit(), Pred->getLocationContext());
-      state = state->bindLoc(FieldLoc, InitVal);
+    SVal FieldLoc = state->getLValue(FD, thisVal);
+    SVal InitVal = state->getSVal(BMI->getInit(), Pred->getLocationContext());
+    state = state->bindLoc(FieldLoc, InitVal);
 
-      // Use a custom node building process.
-      PostInitializer PP(BMI, stackFrame);
-      // Builder automatically add the generated node to the deferred set,
-      // which are processed in the builder's dtor.
-      Bldr.generateNode(PP, P, state);
-    }
+    // Use a custom node building process.
+    PostInitializer PP(BMI, stackFrame);
+    // Builder automatically add the generated node to the deferred set,
+    // which are processed in the builder's dtor.
+    Bldr.generateNode(PP, Pred, state);
   } else {
     assert(BMI->isBaseInitializer());
 
@@ -574,9 +567,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     }
       
     case Stmt::ExprWithCleanupsClass:
-      Bldr.takeNodes(Pred);
-      Visit(cast<ExprWithCleanups>(S)->getSubExpr(), Pred, Dst);
-      Bldr.addNodes(Dst);
+      // Handled due to fully linearised CFG.
       break;
 
     // Cases not handled yet; but will handle some day.
@@ -835,10 +826,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.takeNodes(Pred);
       const MaterializeTemporaryExpr *Materialize
                                             = cast<MaterializeTemporaryExpr>(S);
-      if (!Materialize->getType()->isRecordType())
-        CreateCXXTemporaryObject(Materialize, Pred, Dst);
+      if (Materialize->getType()->isRecordType())
+        Dst.Add(Pred);
       else
-        Visit(Materialize->GetTemporaryExpr(), Pred, Dst);
+        CreateCXXTemporaryObject(Materialize, Pred, Dst);
       Bldr.addNodes(Dst);
       break;
     }

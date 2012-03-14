@@ -59,3 +59,25 @@ void zoo2() {
       :"0"(*b) // expected-warning{{Dereference of null pointer}}
       );
 }
+
+int exprWithCleanups() {
+  struct S {
+    S(int a):a(a){}
+    ~S() {}
+
+    int a;
+  };
+
+  int *x = 0;
+  return S(*x).a; // expected-warning{{Dereference of null pointer}}
+}
+
+int materializeTempExpr() {
+  int *n = 0;
+  struct S {
+    int a;
+    S(int i): a(i) {}
+  };
+  const S &s = S(*n); // expected-warning{{Dereference of null pointer}}
+  return s.a;
+}
