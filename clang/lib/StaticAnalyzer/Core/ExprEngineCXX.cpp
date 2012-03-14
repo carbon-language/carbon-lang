@@ -64,8 +64,10 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
                                        ExplodedNode *Pred,
                                        ExplodedNodeSet &destNodes) {
 
+#if 0
   const CXXConstructorDecl *CD = E->getConstructor();
   assert(CD);
+#endif
   
 #if 0
   if (!(CD->doesThisDeclarationHaveABody() && AMgr.shouldInlineCall()))
