@@ -700,8 +700,23 @@ private:
     return Diags->ProcessDiag(*this);
   }
 
+  /// @name Diagnostic Emission
+  /// @{
+protected:
+  // Sema requires access to the following functions because the current design
+  // of SFINAE requires it to use its own SemaDiagnosticBuilder, which needs to
+  // access us directly to ensure we minimize the emitted code for the common
+  // Sema::Diag() patterns.
+  friend class Sema;
+
   /// \brief Emit the current diagnostic and clear the diagnostic state.
   bool EmitCurrentDiagnostic();
+
+  unsigned getCurrentDiagID() const { return CurDiagID; }
+
+  SourceLocation getCurrentDiagLoc() const { return CurDiagLoc; }
+
+  /// @}
 
   friend class ASTReader;
   friend class ASTWriter;
@@ -779,19 +794,6 @@ protected:
   /// isActive - Determine whether this diagnostic is still active.
   bool isActive() const { return DiagObj != 0; }
 
-  /// \brief Retrieve the active diagnostic ID.
-  ///
-  /// \pre \c isActive()
-  unsigned getDiagID() const {
-    assert(isActive() && "DiagnosticsEngine is inactive");
-    return DiagObj->CurDiagID;
-  }
-
-  /// \brief Retrieve the active diagnostic's location.
-  ///
-  /// \pre \c isActive()
-  SourceLocation getLocation() const { return DiagObj->CurDiagLoc; }
-
   /// \brief Force the diagnostic builder to emit the diagnostic now.
   ///
   /// Once this function has been called, the DiagnosticBuilder object
@@ -816,7 +818,6 @@ protected:
 
     return Result;
   }
-
   
 public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
@@ -829,8 +830,7 @@ public:
     NumFixits = D.NumFixits;
   }
 
-  /// Destructor - The dtor emits the diagnostic if it hasn't already
-  /// been emitted.
+  /// Destructor - The dtor emits the diagnostic.
   ~DiagnosticBuilder() {
     Emit();
   }

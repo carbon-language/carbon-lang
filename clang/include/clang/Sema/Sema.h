@@ -735,6 +735,12 @@ public:
 
   /// Private Helper predicate to check for 'self'.
   bool isSelfExpr(Expr *RExpr);
+
+  /// \brief Cause the active diagnostic on the DiagosticsEngine to be
+  /// emitted. This is closely coupled to the SemaDiagnosticBuilder class and
+  /// should not be used elsewhere.
+  void EmitCurrentDiagnostic(unsigned DiagID);
+
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
        TranslationUnitKind TUKind = TU_Complete,
@@ -776,11 +782,32 @@ public:
     SemaDiagnosticBuilder(DiagnosticBuilder &DB, Sema &SemaRef, unsigned DiagID)
       : DiagnosticBuilder(DB), SemaRef(SemaRef), DiagID(DiagID) { }
 
-    ~SemaDiagnosticBuilder();
+    ~SemaDiagnosticBuilder() {
+      // If we aren't active, there is nothing to do.
+      if (!isActive()) return;
+
+      // Otherwise, we need to emit the diagnostic. First flush the underlying
+      // DiagnosticBuilder data, and clear the diagnostic builder itself so it
+      // won't emit the diagnostic in its own destructor.
+      //
+      // This seems wasteful, in that as written the DiagnosticBuilder dtor will
+      // do its own needless checks to see if the diagnostic needs to be
+      // emitted. However, because we take care to ensure that the builder
+      // objects never escape, a sufficiently smart compiler will be able to
+      // eliminate that code.
+      FlushCounts();
+      Clear();
+
+      // Dispatch to Sema to emit the diagnostic.
+      SemaRef.EmitCurrentDiagnostic(DiagID);
+    }
   };
 
   /// \brief Emit a diagnostic.
-  SemaDiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
+  SemaDiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    DiagnosticBuilder DB = Diags.Report(Loc, DiagID);
+    return SemaDiagnosticBuilder(DB, *this, DiagID);
+  }
 
   /// \brief Emit a partial diagnostic.
   SemaDiagnosticBuilder Diag(SourceLocation Loc, const PartialDiagnostic& PD);
