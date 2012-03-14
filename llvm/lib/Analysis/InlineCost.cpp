@@ -381,6 +381,67 @@ unsigned InlineCostAnalyzer::FunctionInfo::countCodeReductionForAlloca(
   return Reduction + (CanSROAAlloca ? SROAReduction : 0);
 }
 
+void InlineCostAnalyzer::FunctionInfo::countCodeReductionForPointerPair(
+    const CodeMetrics &Metrics, DenseMap<Value *, unsigned> &PointerArgs,
+    Value *V, unsigned ArgIdx) {
+  SmallVector<Value *, 4> Worklist;
+  Worklist.push_back(V);
+  do {
+    Value *V = Worklist.pop_back_val();
+    for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
+         UI != E; ++UI){
+      Instruction *I = cast<Instruction>(*UI);
+
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
+        // If the GEP has variable indices, we won't be able to do much with it.
+        if (!GEP->hasAllConstantIndices())
+          continue;
+        // Unless the GEP is in-bounds, some comparisons will be non-constant.
+        // Fortunately, the real-world cases where this occurs uses in-bounds
+        // GEPs, and so we restrict the optimization to them here.
+        if (!GEP->isInBounds())
+          continue;
+
+        // Constant indices just change the constant offset. Add the resulting
+        // value both to our worklist for this argument, and to the set of
+        // viable paired values with future arguments.
+        PointerArgs[GEP] = ArgIdx;
+        Worklist.push_back(GEP);
+        continue;
+      }
+
+      // Track pointer through casts. Even when the result is not a pointer, it
+      // remains a constant relative to constants derived from other constant
+      // pointers.
+      if (CastInst *CI = dyn_cast<CastInst>(I)) {
+        PointerArgs[CI] = ArgIdx;
+        Worklist.push_back(CI);
+        continue;
+      }
+
+      // There are two instructions which produce a strict constant value when
+      // applied to two related pointer values. Ignore everything else.
+      if (!isa<ICmpInst>(I) && I->getOpcode() != Instruction::Sub)
+        continue;
+      assert(I->getNumOperands() == 2);
+
+      // Ensure that the two operands are in our set of potentially paired
+      // pointers (or are derived from them).
+      Value *OtherArg = I->getOperand(0);
+      if (OtherArg == V)
+        OtherArg = I->getOperand(1);
+      DenseMap<Value *, unsigned>::const_iterator ArgIt
+        = PointerArgs.find(OtherArg);
+      if (ArgIt == PointerArgs.end())
+        continue;
+      assert(ArgIt->second < ArgIdx);
+
+      PointerArgPairWeights[std::make_pair(ArgIt->second, ArgIdx)]
+        += countCodeReductionForConstant(Metrics, I);
+    }
+  } while (!Worklist.empty());
+}
+
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
 void CodeMetrics::analyzeFunction(Function *F, const TargetData *TD) {
@@ -409,12 +470,25 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F,
   if (Metrics.NumRets==1)
     --Metrics.NumInsts;
 
-  // Check out all of the arguments to the function, figuring out how much
-  // code can be eliminated if one of the arguments is a constant.
   ArgumentWeights.reserve(F->arg_size());
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  DenseMap<Value *, unsigned> PointerArgs;
+  unsigned ArgIdx = 0;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
+       ++I, ++ArgIdx) {
+    // Count how much code can be eliminated if one of the arguments is
+    // a constant or an alloca.
     ArgumentWeights.push_back(ArgInfo(countCodeReductionForConstant(Metrics, I),
                                       countCodeReductionForAlloca(Metrics, I)));
+
+    // If the argument is a pointer, also check for pairs of pointers where
+    // knowing a fixed offset between them allows simplification. This pattern
+    // arises mostly due to STL algorithm patterns where pointers are used as
+    // random access iterators.
+    if (!I->getType()->isPointerTy())
+      continue;
+    PointerArgs[I] = ArgIdx;
+    countCodeReductionForPointerPair(Metrics, PointerArgs, I, ArgIdx);
+  }
 }
 
 /// NeverInline - returns true if the function should never be inlined into
@@ -562,6 +636,15 @@ int InlineCostAnalyzer::getInlineSize(CallSite CS, Function *Callee) {
     else if (isa<Constant>(I))
       InlineCost -= CalleeFI->ArgumentWeights[ArgNo].ConstantWeight;
   }
+
+  const DenseMap<std::pair<unsigned, unsigned>, unsigned> &ArgPairWeights
+    = CalleeFI->PointerArgPairWeights;
+  for (DenseMap<std::pair<unsigned, unsigned>, unsigned>::const_iterator I
+         = ArgPairWeights.begin(), E = ArgPairWeights.end();
+       I != E; ++I)
+    if (CS.getArgument(I->first.first)->stripInBoundsConstantOffsets() ==
+        CS.getArgument(I->first.second)->stripInBoundsConstantOffsets())
+      InlineCost -= I->second;
 
   // Each argument passed in has a cost at both the caller and the callee
   // sides.  Measurements show that each argument costs about the same as an

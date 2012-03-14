@@ -321,9 +321,8 @@ namespace {
 // Various metrics for how much to strip off of pointers.
 enum PointerStripKind {
   PSK_ZeroIndices,
-  PSK_ConstantIndices,
-  PSK_InBounds,
-  PSK_All
+  PSK_InBoundsConstantIndices,
+  PSK_InBounds
 };
 
 template <PointerStripKind StripKind>
@@ -343,15 +342,13 @@ static Value *stripPointerCastsAndOffsets(Value *V) {
         if (!GEP->hasAllZeroIndices())
           return V;
         break;
-      case PSK_ConstantIndices:
+      case PSK_InBoundsConstantIndices:
         if (!GEP->hasAllConstantIndices())
           return V;
-        break;
+        // fallthrough
       case PSK_InBounds:
         if (!GEP->isInBounds())
           return V;
-        break;
-      case PSK_All:
         break;
       }
       V = GEP->getPointerOperand();
@@ -375,8 +372,8 @@ Value *Value::stripPointerCasts() {
   return stripPointerCastsAndOffsets<PSK_ZeroIndices>(this);
 }
 
-Value *Value::stripConstantOffsets() {
-  return stripPointerCastsAndOffsets<PSK_ConstantIndices>(this);
+Value *Value::stripInBoundsConstantOffsets() {
+  return stripPointerCastsAndOffsets<PSK_InBoundsConstantIndices>(this);
 }
 
 Value *Value::stripInBoundsOffsets() {

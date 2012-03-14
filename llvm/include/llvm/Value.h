@@ -271,13 +271,13 @@ public:
     return const_cast<Value*>(this)->stripPointerCasts();
   }
 
-  /// stripConstantOffsets - This method strips off unneeded pointer casts and
+  /// stripInBoundsConstantOffsets - This method strips off unneeded pointer casts and
   /// all-constant GEPs from the specified value, returning the original
   /// pointer value. If this is called on a non-pointer value, it returns
   /// 'this'.
-  Value *stripConstantOffsets();
-  const Value *stripConstantOffsets() const {
-    return const_cast<Value*>(this)->stripConstantOffsets();
+  Value *stripInBoundsConstantOffsets();
+  const Value *stripInBoundsConstantOffsets() const {
+    return const_cast<Value*>(this)->stripInBoundsConstantOffsets();
   }
 
   /// stripInBoundsOffsets - This method strips off unneeded pointer casts and

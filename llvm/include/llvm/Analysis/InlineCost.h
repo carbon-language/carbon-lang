@@ -110,6 +110,10 @@ namespace llvm {
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
 
+      /// PointerArgPairWeights - Weights to use when giving an inline bonus to
+      /// a call site due to correlated pairs of pointers.
+      DenseMap<std::pair<unsigned, unsigned>, unsigned> PointerArgPairWeights;
+
       /// countCodeReductionForConstant - Figure out an approximation for how
       /// many instructions will be constant folded if the specified value is
       /// constant.
@@ -121,6 +125,18 @@ namespace llvm {
       /// argument becomes an alloca.
       unsigned countCodeReductionForAlloca(const CodeMetrics &Metrics,
                                            Value *V);
+
+      /// countCodeReductionForPointerPair - Count the bonus to apply to an
+      /// inline call site where a pair of arguments are pointers and one
+      /// argument is a constant offset from the other. The idea is to
+      /// recognize a common C++ idiom where a begin and end iterator are
+      /// actually pointers, and many operations on the pair of them will be
+      /// constants if the function is called with arguments that have
+      /// a constant offset.
+      void countCodeReductionForPointerPair(
+          const CodeMetrics &Metrics,
+          DenseMap<Value *, unsigned> &PointerArgs,
+          Value *V, unsigned ArgIdx);
 
       /// analyzeFunction - Add information about the specified function
       /// to the current structure.
