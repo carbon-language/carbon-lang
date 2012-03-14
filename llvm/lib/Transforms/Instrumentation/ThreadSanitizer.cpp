@@ -21,12 +21,14 @@
 
 #define DEBUG_TYPE "tsan"
 
+#include "FunctionBlackList.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
@@ -36,6 +38,9 @@
 #include "llvm/Type.h"
 
 using namespace llvm;
+
+static cl::opt<std::string>  ClBlackListFile("tsan-blacklist",
+       cl::desc("Blacklist file"), cl::Hidden);
 
 namespace {
 /// ThreadSanitizer: instrument the code in module to find races.
@@ -48,6 +53,7 @@ struct ThreadSanitizer : public FunctionPass {
 
  private:
   TargetData *TD;
+  OwningPtr<FunctionBlackList> BL;
   // Callbacks to run-time library are computed in doInitialization.
   Value *TsanFuncEntry;
   Value *TsanFuncExit;
@@ -76,6 +82,8 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
   if (!TD)
     return false;
+  BL.reset(new FunctionBlackList(ClBlackListFile));
+
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());
   Value *TsanInit = M.getOrInsertFunction("__tsan_init",
@@ -102,6 +110,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
 
 bool ThreadSanitizer::runOnFunction(Function &F) {
   if (!TD) return false;
+  if (BL->isIn(F)) return false;
   SmallVector<Instruction*, 8> RetVec;
   SmallVector<Instruction*, 8> LoadsAndStores;
   bool Res = false;
