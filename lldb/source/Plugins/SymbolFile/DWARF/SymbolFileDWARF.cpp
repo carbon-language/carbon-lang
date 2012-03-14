@@ -1519,18 +1519,17 @@ SymbolFileDWARF::ParseChildMembers
                                 break;
 
                             case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
-                            case DW_AT_artificial: is_artificial = form_value.Unsigned() != 0; break;
-                            case DW_AT_declaration:
-                            case DW_AT_description:
-                            case DW_AT_mutable:
-                            case DW_AT_visibility:
-                            
+                            case DW_AT_artificial: is_artificial = form_value.Unsigned() != 0; break;                            
                             case DW_AT_APPLE_property_name:      prop_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_getter:    prop_getter_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_setter:    prop_setter_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_attribute: prop_attributes = form_value.Unsigned(); break;
 
                             default:
+                            case DW_AT_declaration:
+                            case DW_AT_description:
+                            case DW_AT_mutable:
+                            case DW_AT_visibility:
                             case DW_AT_sibling:
                                 break;
                             }
