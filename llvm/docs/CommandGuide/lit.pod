@@ -283,7 +283,7 @@ builds this is the directory that will be scanned for tests.
 
 B<test_exec_root> For out-of-dir builds, the path to the test suite root inside
 the object directory. This is where tests will be run and temporary output files
-places.
+placed.
 
 B<environment> A dictionary representing the environment to use when executing
 tests in the suite.
