@@ -490,43 +490,43 @@
 
 <div>
 
-<p>LLVM programs are composed of "Module"s, each of which is a translation unit
-   of the input programs.  Each module consists of functions, global variables,
-   and symbol table entries.  Modules may be combined together with the LLVM
-   linker, which merges function (and global variable) definitions, resolves
-   forward declarations, and merges symbol table entries. Here is an example of
-   the "hello world" module:</p>
+<p>LLVM programs are composed of <tt>Module</tt>s, each of which is a
+   translation unit of the input programs.  Each module consists of functions,
+   global variables, and symbol table entries.  Modules may be combined together
+   with the LLVM linker, which merges function (and global variable)
+   definitions, resolves forward declarations, and merges symbol table
+   entries. Here is an example of the "hello world" module:</p>
 
 <pre class="doc_code">
 <i>; Declare the string constant as a global constant.</i>&nbsp;
-<a href="#identifiers">@.LC0</a> = <a href="#linkage_internal">internal</a>&nbsp;<a href="#globalvars">constant</a>&nbsp;<a href="#t_array">[13 x i8]</a> c"hello world\0A\00"      <i>; [13 x i8]*</i>&nbsp;
+<a href="#identifiers">@.str</a> = <a href="#linkage_private">private</a>&nbsp;<a href="#globalvars">unnamed_addr</a>&nbsp;<a href="#globalvars">constant</a>&nbsp;<a href="#t_array">[13 x i8]</a> c"hello world\0A\00"&nbsp;
 
 <i>; External declaration of the puts function</i>&nbsp;
-<a href="#functionstructure">declare</a> i32 @puts(i8*)                                      <i>; i32 (i8*)* </i>&nbsp;
+<a href="#functionstructure">declare</a> i32 @puts(i8* <a href="#nocapture">nocapture</a>) <a href="#fnattrs">nounwind</a>&nbsp;
 
 <i>; Definition of main function</i>
 define i32 @main() {   <i>; i32()* </i>&nbsp;
   <i>; Convert [13 x i8]* to i8  *...</i>&nbsp;
-  %cast210 = <a href="#i_getelementptr">getelementptr</a> [13 x i8]* @.LC0, i64 0, i64 0   <i>; i8*</i>&nbsp;
+  %cast210 = <a href="#i_getelementptr">getelementptr</a> [13 x i8]* @.str, i64 0, i64 0
 
   <i>; Call puts function to write out the string to stdout.</i>&nbsp;
-  <a href="#i_call">call</a> i32 @puts(i8* %cast210)           <i>; i32</i>&nbsp;
+  <a href="#i_call">call</a> i32 @puts(i8* %cast210)
   <a href="#i_ret">ret</a> i32 0&nbsp;
 }
 
 <i>; Named metadata</i>
-!1 = metadata !{i32 41}
+!1 = metadata !{i32 42}
 !foo = !{!1, null}
 </pre>
 
 <p>This example is made up of a <a href="#globalvars">global variable</a> named
-   "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>" function,
+   "<tt>.str</tt>", an external declaration of the "<tt>puts</tt>" function,
    a <a href="#functionstructure">function definition</a> for
    "<tt>main</tt>" and <a href="#namedmetadatastructure">named metadata</a> 
-   "<tt>foo"</tt>.</p>
+   "<tt>foo</tt>".</p>
 
-<p>In general, a module is made up of a list of global values, where both
-   functions and global variables are global values.  Global values are
+<p>In general, a module is made up of a list of global values (where both
+   functions and global variables are global values). Global values are
    represented by a pointer to a memory location (in this case, a pointer to an
    array of char, and a pointer to a function), and have one of the
    following <a href="#linkage">linkage types</a>.</p>
