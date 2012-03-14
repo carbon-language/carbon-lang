@@ -28,6 +28,7 @@ def Availability : DiagGroup<"availability">;
 def AutoImport : DiagGroup<"auto-import">;
 def BoolConversions : DiagGroup<"bool-conversions">;
 def IntConversions : DiagGroup<"int-conversions">;
+def NullConversion : DiagGroup<"null-conversion">;
 def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
 def CXXCompat: DiagGroup<"c++-compat">;
 def CastAlign : DiagGroup<"cast-align">;
@@ -282,6 +283,7 @@ def Parentheses : DiagGroup<"parentheses",
 //   - conversion warnings with constant sources are on by default
 //   - conversion warnings for literals are on by default
 //   - bool-to-pointer conversion warnings are on by default
+//   - __null-to-integer conversion warnings are on by default
 def Conversion : DiagGroup<"conversion",
                            [DiagGroup<"shorten-64-to-32">,
                             DiagGroup<"constant-conversion">,
@@ -289,6 +291,7 @@ def Conversion : DiagGroup<"conversion",
                             DiagGroup<"string-conversion">,
                             DiagGroup<"sign-conversion">,
                             BoolConversions,
+                            NullConversion,
                             IntConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 
@@ -357,6 +360,9 @@ def : DiagGroup<"all", [Most, Parentheses, Switch]>;
 def : DiagGroup<"", [Extra]>;                   // -W = -Wextra
 def : DiagGroup<"endif-labels", [ExtraTokens]>; // -Wendif-labels=-Wendif-tokens
 def : DiagGroup<"comments", [Comment]>;         // -Wcomments = -Wcomment
+def : DiagGroup<"conversion-null",
+                [NullConversion]>; // -Wconversion-null = -Wnull-conversion
+             
 
 // A warning group for warnings that we want to have on by default in clang,
 // but which aren't on by default in GCC.
