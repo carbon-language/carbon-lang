@@ -391,11 +391,17 @@ class PathDiagnosticCallPiece : public PathDiagnosticPiece {
     : PathDiagnosticPiece(Call), Caller(callerD),
       Callee(0), callReturn(callReturnPos) {}
 
-  PathDiagnosticCallPiece(PathPieces &oldPath)
-    : PathDiagnosticPiece(Call), Caller(0), Callee(0), path(oldPath) {}
+  PathDiagnosticCallPiece(PathPieces &oldPath, const Decl *caller)
+    : PathDiagnosticPiece(Call), Caller(caller), Callee(0),
+      NoExit(true), path(oldPath) {}
   
   const Decl *Caller;
   const Decl *Callee;
+
+  // Flag signifying that this diagnostic has only call enter and no matching
+  // call exit.
+  bool NoExit;
+
 public:
   PathDiagnosticLocation callEnter;
   PathDiagnosticLocation callEnterWithin;
@@ -429,7 +435,8 @@ public:
                                             const CallExit &CE,
                                             const SourceManager &SM);
   
-  static PathDiagnosticCallPiece *construct(PathPieces &pieces);
+  static PathDiagnosticCallPiece *construct(PathPieces &pieces,
+                                            const Decl *caller);
   
   virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 

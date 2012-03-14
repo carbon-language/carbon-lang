@@ -515,8 +515,9 @@ PathDiagnosticCallPiece::construct(const ExplodedNode *N,
 }
 
 PathDiagnosticCallPiece *
-PathDiagnosticCallPiece::construct(PathPieces &path) {
-  PathDiagnosticCallPiece *C = new PathDiagnosticCallPiece(path);
+PathDiagnosticCallPiece::construct(PathPieces &path,
+                                   const Decl *caller) {
+  PathDiagnosticCallPiece *C = new PathDiagnosticCallPiece(path, caller);
   path.clear();
   path.push_front(C);
   return C;
@@ -563,7 +564,7 @@ PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
 
 IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallExitEvent() const {
-  if (!Caller)
+  if (NoExit)
     return 0;
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);

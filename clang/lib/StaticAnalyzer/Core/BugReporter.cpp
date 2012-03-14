@@ -418,8 +418,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       assert(!PD.getActivePath().empty());
       PathDiagnosticCallPiece *C = 
         dyn_cast<PathDiagnosticCallPiece>(PD.getActivePath().front());
-      if (!C)
-        C = PathDiagnosticCallPiece::construct(PD.getActivePath());
+      if (!C) {
+        const Decl *Caller = CE->getLocationContext()->getDecl();
+        C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
+      }
       C->setCallee(*CE, SMgr);
       continue;
     }
@@ -1064,8 +1066,10 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         // a new PathDiagnosticCallPiece.
         PathDiagnosticCallPiece *C =
           dyn_cast<PathDiagnosticCallPiece>(PD.getActivePath().front());
-        if (!C)
-          C = PathDiagnosticCallPiece::construct(PD.getActivePath());
+        if (!C) {
+          const Decl * Caller = CE->getLocationContext()->getDecl();
+          C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
+        }
         C->setCallee(*CE, SM);
         EB.addContext(CE->getCallExpr());
         break;
