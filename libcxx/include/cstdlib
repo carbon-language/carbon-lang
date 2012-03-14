@@ -131,6 +131,10 @@ using ::mbtowc;
 using ::wctomb;
 using ::mbstowcs;
 using ::wcstombs;
+#ifdef _LIBCPP_HAS_QUICK_EXIT
+using ::at_quick_exit;
+using ::quick_exit;
+#endif
 
 // MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
 #if !defined(_MSC_VER) && !defined(__sun__)
