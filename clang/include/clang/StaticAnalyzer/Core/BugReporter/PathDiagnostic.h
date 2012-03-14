@@ -388,8 +388,8 @@ public:
 class PathDiagnosticCallPiece : public PathDiagnosticPiece {
   PathDiagnosticCallPiece(const Decl *callerD,
                           const PathDiagnosticLocation &callReturnPos)
-    : PathDiagnosticPiece(Call), Caller(callerD),
-      Callee(0), callReturn(callReturnPos) {}
+    : PathDiagnosticPiece(Call), Caller(callerD), Callee(0),
+      NoExit(false), callReturn(callReturnPos) {}
 
   PathDiagnosticCallPiece(PathPieces &oldPath, const Decl *caller)
     : PathDiagnosticPiece(Call), Caller(caller), Callee(0),
