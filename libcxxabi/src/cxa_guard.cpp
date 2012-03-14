@@ -62,7 +62,7 @@ void set_initialized(guard_type* guard_object) {
 pthread_mutex_t guard_mut = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  guard_cv  = PTHREAD_COND_INITIALIZER;
 
-#if defined(__APPLE__) && !defined(__arm_)
+#if defined(__APPLE__) && !defined(__arm__)
 
 typedef uint32_t lock_type;
 
@@ -169,7 +169,7 @@ int __cxa_guard_acquire(guard_type* guard_object)
     int result = *initialized == 0;
     if (result)
     {
-#if defined(__APPLE__) && !defined(__arm_)
+#if defined(__APPLE__) && !defined(__arm__)
         const lock_type id = pthread_mach_thread_np(pthread_self());
         lock_type lock = get_lock(*guard_object);
         if (lock)
