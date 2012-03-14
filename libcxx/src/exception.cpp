@@ -114,13 +114,17 @@ exception::~exception() _NOEXCEPT
 {
 }
 
-bad_exception::~bad_exception() _NOEXCEPT
-{
-}
-
 const char* exception::what() const _NOEXCEPT
 {
   return "std::exception";
+}
+
+#endif  // _LIBCPPABI_VERSION
+#endif //LIBCXXRT
+#ifndef _LIBCPPABI_VERSION
+
+bad_exception::~bad_exception() _NOEXCEPT
+{
 }
 
 const char* bad_exception::what() const _NOEXCEPT
@@ -128,8 +132,8 @@ const char* bad_exception::what() const _NOEXCEPT
   return "std::bad_exception";
 }
 
-#endif  // _LIBCPPABI_VERSION
-#endif //LIBCXXRT
+#endif
+
 
 exception_ptr::~exception_ptr() _NOEXCEPT
 {
