@@ -163,6 +163,7 @@ void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
   RegionBegin = begin;
   RegionEnd = end;
   EndIndex = endcount;
+  MISUnitMap.clear();
 
   // Check to see if the scheduler cares about latencies.
   UnitLatencies = forceUnitLatencies();
@@ -469,9 +470,12 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 ///
 /// Map each real instruction to its SUnit.
 ///
-/// After initSUnits, the SUnits vector is cannot be resized and the scheduler
-/// may hang onto SUnit pointers. We may relax this in the future by using SUnit
-/// IDs instead of pointers.
+/// After initSUnits, the SUnits vector cannot be resized and the scheduler may
+/// hang onto SUnit pointers. We may relax this in the future by using SUnit IDs
+/// instead of pointers.
+///
+/// MachineScheduler relies on initSUnits numbering the nodes by their order in
+/// the original instruction list.
 void ScheduleDAGInstrs::initSUnits() {
   // We'll be allocating one SUnit for each real instruction in the region,
   // which is contained within a basic block.
@@ -726,7 +730,6 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA) {
   Uses.clear();
   VRegDefs.clear();
   PendingLoads.clear();
-  MISUnitMap.clear();
 }
 
 void ScheduleDAGInstrs::computeLatency(SUnit *SU) {

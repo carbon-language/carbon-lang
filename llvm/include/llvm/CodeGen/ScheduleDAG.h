@@ -410,6 +410,13 @@ namespace llvm {
       return false;
     }
 
+    bool isTopReady() const {
+      return NumPredsLeft == 0;
+    }
+    bool isBottomReady() const {
+      return NumSuccsLeft == 0;
+    }
+
     void dump(const ScheduleDAG *G) const;
     void dumpAll(const ScheduleDAG *G) const;
     void print(raw_ostream &O, const ScheduleDAG *G) const;

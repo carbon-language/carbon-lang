@@ -25,10 +25,16 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/PriorityQueue.h"
 
 #include <queue>
 
 using namespace llvm;
+
+static cl::opt<bool> ForceTopDown("misched-topdown", cl::Hidden,
+                                  cl::desc("Force top-down list scheduling"));
+static cl::opt<bool> ForceBottomUp("misched-bottomup", cl::Hidden,
+                                  cl::desc("Force bottom-up list scheduling"));
 
 #ifndef NDEBUG
 static cl::opt<bool> ViewMISchedDAGs("view-misched-dags", cl::Hidden,
@@ -106,22 +112,23 @@ MachineSchedOpt("misched",
                 cl::desc("Machine instruction scheduler to use"));
 
 static MachineSchedRegistry
-SchedDefaultRegistry("default", "Use the target's default scheduler choice.",
+DefaultSchedRegistry("default", "Use the target's default scheduler choice.",
                      useDefaultMachineSched);
 
-/// Forward declare the common machine scheduler. This will be used as the
+/// Forward declare the standard machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
-static ScheduleDAGInstrs *createCommonMachineSched(MachineSchedContext *C);
+static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C);
 
 /// Top-level MachineScheduler pass driver.
 ///
 /// Visit blocks in function order. Divide each block into scheduling regions
-/// and visit them bottom-up. This is consistent with the DAG builder, which
-/// traverses scheduling regions bottom-up, but not essential.
+/// and visit them bottom-up. Visiting regions bottom-up is not required, but is
+/// consistent with the DAG builder, which traverses the interior of the
+/// scheduling regions bottom-up.
 ///
 /// This design avoids exposing scheduling boundaries to the DAG builder,
-/// simplifying the DAG builder's support for "special" target instructions,
-/// while at the same time allowing target schedulers to operate across
+/// simplifying the DAG builder's support for "special" target instructions.
+/// At the same time the design allows target schedulers to operate across
 /// scheduling boundaries, for example to bundle the boudary instructions
 /// without reordering them. This creates complexity, because the target
 /// scheduler must update the RegionBegin and RegionEnd positions cached by
@@ -145,7 +152,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     // Get the default scheduler set by the target.
     Ctor = MachineSchedRegistry::getDefault();
     if (!Ctor) {
-      Ctor = createCommonMachineSched;
+      Ctor = createConvergingSched;
       MachineSchedRegistry::setDefault(Ctor);
     }
   }
@@ -225,41 +232,83 @@ void MachineScheduler::print(raw_ostream &O, const Module* m) const {
 }
 
 //===----------------------------------------------------------------------===//
-// ScheduleTopeDownLive - Base class for basic top-down scheduling with
-// LiveIntervals preservation.
-// ===----------------------------------------------------------------------===//
+// MachineSchedStrategy - Interface to a machine scheduling algorithm.
+//===----------------------------------------------------------------------===//
 
 namespace {
-/// ScheduleTopDownLive is an implementation of ScheduleDAGInstrs that schedules
-/// machine instructions while updating LiveIntervals.
-class ScheduleTopDownLive : public ScheduleDAGInstrs {
-  AliasAnalysis *AA;
-public:
-  ScheduleTopDownLive(MachineSchedContext *C):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA) {}
+class ScheduleDAGMI;
 
-  /// ScheduleDAGInstrs interface.
+/// MachineSchedStrategy - Interface used by ScheduleDAGMI to drive the selected
+/// scheduling algorithm.
+///
+/// If this works well and targets wish to reuse ScheduleDAGMI, we may expose it
+/// in ScheduleDAGInstrs.h
+class MachineSchedStrategy {
+public:
+  virtual ~MachineSchedStrategy() {}
+
+  /// Initialize the strategy after building the DAG for a new region.
+  virtual void initialize(ScheduleDAGMI *DAG) = 0;
+
+  /// Pick the next node to schedule, or return NULL. Set IsTopNode to true to
+  /// schedule the node at the top of the unscheduled region. Otherwise it will
+  /// be scheduled at the bottom.
+  virtual SUnit *pickNode(bool &IsTopNode) = 0;
+
+  /// When all predecessor dependencies have been resolved, free this node for
+  /// top-down scheduling.
+  virtual void releaseTopNode(SUnit *SU) = 0;
+  /// When all successor dependencies have been resolved, free this node for
+  /// bottom-up scheduling.
+  virtual void releaseBottomNode(SUnit *SU) = 0;
+};
+} // namespace
+
+//===----------------------------------------------------------------------===//
+// ScheduleDAGMI - Base class for MachineInstr scheduling with LiveIntervals
+// preservation.
+//===----------------------------------------------------------------------===//
+
+namespace {
+/// ScheduleDAGMI is an implementation of ScheduleDAGInstrs that schedules
+/// machine instructions while updating LiveIntervals.
+class ScheduleDAGMI : public ScheduleDAGInstrs {
+  AliasAnalysis *AA;
+  MachineSchedStrategy *SchedImpl;
+
+  /// The top of the unscheduled zone.
+  MachineBasicBlock::iterator CurrentTop;
+
+  /// The bottom of the unscheduled zone.
+  MachineBasicBlock::iterator CurrentBottom;
+public:
+  ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
+    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
+    AA(C->AA), SchedImpl(S), CurrentTop(), CurrentBottom() {}
+
+  ~ScheduleDAGMI() {
+    delete SchedImpl;
+  }
+
+  MachineBasicBlock::iterator top() const { return CurrentTop; }
+  MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
+
+  /// Implement ScheduleDAGInstrs interface.
   void schedule();
 
-  /// Interface implemented by the selected top-down liveinterval scheduler.
-  ///
-  /// Pick the next node to schedule, or return NULL.
-  virtual SUnit *pickNode() = 0;
-
-  /// When all preceeding dependencies have been resolved, free this node for
-  /// scheduling.
-  virtual void releaseNode(SUnit *SU) = 0;
-
 protected:
+  void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
+
   void releaseSucc(SUnit *SU, SDep *SuccEdge);
   void releaseSuccessors(SUnit *SU);
+  void releasePred(SUnit *SU, SDep *PredEdge);
+  void releasePredecessors(SUnit *SU);
 };
 } // namespace
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
 /// NumPredsLeft reaches zero, release the successor node.
-void ScheduleTopDownLive::releaseSucc(SUnit *SU, SDep *SuccEdge) {
+void ScheduleDAGMI::releaseSucc(SUnit *SU, SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
 
 #ifndef NDEBUG
@@ -272,20 +321,54 @@ void ScheduleTopDownLive::releaseSucc(SUnit *SU, SDep *SuccEdge) {
 #endif
   --SuccSU->NumPredsLeft;
   if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
-    releaseNode(SuccSU);
+    SchedImpl->releaseTopNode(SuccSU);
 }
 
 /// releaseSuccessors - Call releaseSucc on each of SU's successors.
-void ScheduleTopDownLive::releaseSuccessors(SUnit *SU) {
+void ScheduleDAGMI::releaseSuccessors(SUnit *SU) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     releaseSucc(SU, &*I);
   }
 }
 
-/// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-/// time to do some work.
-void ScheduleTopDownLive::schedule() {
+/// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. When
+/// NumSuccsLeft reaches zero, release the predecessor node.
+void ScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
+  SUnit *PredSU = PredEdge->getSUnit();
+
+#ifndef NDEBUG
+  if (PredSU->NumSuccsLeft == 0) {
+    dbgs() << "*** Scheduling failed! ***\n";
+    PredSU->dump(this);
+    dbgs() << " has been released too many times!\n";
+    llvm_unreachable(0);
+  }
+#endif
+  --PredSU->NumSuccsLeft;
+  if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU)
+    SchedImpl->releaseBottomNode(PredSU);
+}
+
+/// releasePredecessors - Call releasePred on each of SU's predecessors.
+void ScheduleDAGMI::releasePredecessors(SUnit *SU) {
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    releasePred(SU, &*I);
+  }
+}
+
+void ScheduleDAGMI::moveInstruction(MachineInstr *MI,
+                                    MachineBasicBlock::iterator InsertPos) {
+  BB->splice(InsertPos, BB, MI);
+  LIS->handleMove(MI);
+  if (RegionBegin == InsertPos)
+    RegionBegin = MI;
+}
+
+/// schedule - Called back from MachineScheduler::runOnMachineFunction
+/// after setting up the current scheduling region.
+void ScheduleDAGMI::schedule() {
   buildSchedGraph(AA);
 
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
@@ -294,79 +377,124 @@ void ScheduleTopDownLive::schedule() {
 
   if (ViewMISchedDAGs) viewGraph();
 
-  // Release any successors of the special Entry node. It is currently unused,
-  // but we keep up appearances.
+  SchedImpl->initialize(this);
+
+  // Release edges from the special Entry node or to the special Exit node.
   releaseSuccessors(&EntrySU);
+  releasePredecessors(&ExitSU);
 
   // Release all DAG roots for scheduling.
   for (std::vector<SUnit>::iterator I = SUnits.begin(), E = SUnits.end();
        I != E; ++I) {
-    // A SUnit is ready to schedule if it has no predecessors.
+    // A SUnit is ready to top schedule if it has no predecessors.
     if (I->Preds.empty())
-      releaseNode(&(*I));
+      SchedImpl->releaseTopNode(&(*I));
+    // A SUnit is ready to bottom schedule if it has no successors.
+    if (I->Succs.empty())
+      SchedImpl->releaseBottomNode(&(*I));
   }
 
-  MachineBasicBlock::iterator InsertPos = RegionBegin;
-  while (SUnit *SU = pickNode()) {
-    DEBUG(dbgs() << "*** Scheduling Instruction:\n"; SU->dump(this));
+  CurrentTop = RegionBegin;
+  CurrentBottom = RegionEnd;
+  bool IsTopNode = false;
+  while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
+    DEBUG(dbgs() << "*** " << (IsTopNode ? "Top" : "Bottom")
+          << " Scheduling Instruction:\n"; SU->dump(this));
 
     // Move the instruction to its new location in the instruction stream.
     MachineInstr *MI = SU->getInstr();
-    if (&*InsertPos == MI)
-      ++InsertPos;
-    else {
-      BB->splice(InsertPos, BB, MI);
-      LIS->handleMove(MI);
-      if (RegionBegin == InsertPos)
-        RegionBegin = MI;
-    }
 
-    // Release dependent instructions for scheduling.
-    releaseSuccessors(SU);
+    if (IsTopNode) {
+      assert(SU->isTopReady() && "node still has unscheduled dependencies");
+      if (&*CurrentTop == MI)
+        ++CurrentTop;
+      else
+        moveInstruction(MI, CurrentTop);
+      // Release dependent instructions for scheduling.
+      releaseSuccessors(SU);
+    }
+    else {
+      assert(SU->isBottomReady() && "node still has unscheduled dependencies");
+      if (&*llvm::prior(CurrentBottom) == MI)
+        --CurrentBottom;
+      else {
+        moveInstruction(MI, CurrentBottom);
+        CurrentBottom = MI;
+      }
+      // Release dependent instructions for scheduling.
+      releasePredecessors(SU);
+    }
+    SU->isScheduled = true;
   }
+  assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 }
 
 //===----------------------------------------------------------------------===//
-// Placeholder for the default machine instruction scheduler.
+// ConvergingScheduler - Implementation of the standard MachineSchedStrategy.
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CommonMachineScheduler : public ScheduleDAGInstrs {
-  AliasAnalysis *AA;
-public:
-  CommonMachineScheduler(MachineSchedContext *C):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA) {}
+/// ConvergingScheduler shrinks the unscheduled zone using heuristics to balance
+/// the schedule.
+class ConvergingScheduler : public MachineSchedStrategy {
+  ScheduleDAGMI *DAG;
 
-  /// schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-  /// time to do some work.
-  void schedule();
+  unsigned NumTopReady;
+  unsigned NumBottomReady;
+
+public:
+  virtual void initialize(ScheduleDAGMI *dag) {
+    DAG = dag;
+
+    assert(!ForceTopDown || !ForceBottomUp &&
+           "-misched-topdown incompatible with -misched-bottomup");
+  }
+
+  virtual SUnit *pickNode(bool &IsTopNode) {
+    if (DAG->top() == DAG->bottom())
+      return NULL;
+
+    // As an initial placeholder heuristic, schedule in the direction that has
+    // the fewest choices.
+    SUnit *SU;
+    if (ForceTopDown || (!ForceBottomUp && NumTopReady <= NumBottomReady)) {
+      SU = DAG->getSUnit(DAG->top());
+      IsTopNode = true;
+    }
+    else {
+      SU = DAG->getSUnit(llvm::prior(DAG->bottom()));
+      IsTopNode = false;
+    }
+    if (SU->isTopReady()) {
+      assert(NumTopReady > 0 && "bad ready count");
+      --NumTopReady;
+    }
+    if (SU->isBottomReady()) {
+      assert(NumBottomReady > 0 && "bad ready count");
+      --NumBottomReady;
+    }
+    return SU;
+  }
+
+  virtual void releaseTopNode(SUnit *SU) {
+    ++NumTopReady;
+  }
+  virtual void releaseBottomNode(SUnit *SU) {
+    ++NumBottomReady;
+  }
 };
 } // namespace
 
-/// The common machine scheduler will be used as the default scheduler if the
-/// target does not set a default.
-static ScheduleDAGInstrs *createCommonMachineSched(MachineSchedContext *C) {
-  return new CommonMachineScheduler(C);
+/// Create the standard converging machine scheduler. This will be used as the
+/// default scheduler if the target does not set a default.
+static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
+  assert(!ForceTopDown || !ForceBottomUp &&
+         "-misched-topdown incompatible with -misched-bottomup");
+  return new ScheduleDAGMI(C, new ConvergingScheduler());
 }
 static MachineSchedRegistry
-SchedCommonRegistry("common", "Use the target's default scheduler choice.",
-                     createCommonMachineSched);
-
-/// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-/// time to do some work.
-void CommonMachineScheduler::schedule() {
-  buildSchedGraph(AA);
-
-  DEBUG(dbgs() << "********** MI Scheduling **********\n");
-  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(this));
-
-  // TODO: Put interesting things here.
-  //
-  // When this is fully implemented, it will become a subclass of
-  // ScheduleTopDownLive. So this driver will disappear.
-}
+ConvergingSchedRegistry("converge", "Standard converging scheduler.",
+                        createConvergingSched);
 
 //===----------------------------------------------------------------------===//
 // Machine Instruction Shuffler for Correctness Testing
@@ -374,43 +502,83 @@ void CommonMachineScheduler::schedule() {
 
 #ifndef NDEBUG
 namespace {
-// Nodes with a higher number have higher priority. This way we attempt to
-// schedule the latest instructions earliest.
-//
-// TODO: Relies on the property of the BuildSchedGraph that results in SUnits
-// being ordered in sequence top-down.
-struct ShuffleSUnitOrder {
+/// Apply a less-than relation on the node order, which corresponds to the
+/// instruction order prior to scheduling. IsReverse implements greater-than.
+template<bool IsReverse>
+struct SUnitOrder {
   bool operator()(SUnit *A, SUnit *B) const {
-    return A->NodeNum < B->NodeNum;
+    if (IsReverse)
+      return A->NodeNum > B->NodeNum;
+    else
+      return A->NodeNum < B->NodeNum;
   }
 };
 
 /// Reorder instructions as much as possible.
-class InstructionShuffler : public ScheduleTopDownLive {
-  std::priority_queue<SUnit*, std::vector<SUnit*>, ShuffleSUnitOrder> Queue;
+class InstructionShuffler : public MachineSchedStrategy {
+  bool IsAlternating;
+  bool IsTopDown;
+
+  // Using a less-than relation (SUnitOrder<false>) for the TopQ priority
+  // gives nodes with a higher number higher priority causing the latest
+  // instructions to be scheduled first.
+  PriorityQueue<SUnit*, std::vector<SUnit*>, SUnitOrder<false> >
+    TopQ;
+  // When scheduling bottom-up, use greater-than as the queue priority.
+  PriorityQueue<SUnit*, std::vector<SUnit*>, SUnitOrder<true> >
+    BottomQ;
 public:
-  InstructionShuffler(MachineSchedContext *C):
-    ScheduleTopDownLive(C) {}
+  InstructionShuffler(bool alternate, bool topdown)
+    : IsAlternating(alternate), IsTopDown(topdown) {}
 
-  /// ScheduleTopDownLive Interface
+  virtual void initialize(ScheduleDAGMI *) {
+    TopQ.clear();
+    BottomQ.clear();
+  }
 
-  virtual SUnit *pickNode() {
-    if (Queue.empty()) return NULL;
-    SUnit *SU = Queue.top();
-    Queue.pop();
+  /// Implement MachineSchedStrategy interface.
+  /// -----------------------------------------
+
+  virtual SUnit *pickNode(bool &IsTopNode) {
+    SUnit *SU;
+    if (IsTopDown) {
+      do {
+        if (TopQ.empty()) return NULL;
+        SU = TopQ.top();
+        TopQ.pop();
+      } while (SU->isScheduled);
+      IsTopNode = true;
+    }
+    else {
+      do {
+        if (BottomQ.empty()) return NULL;
+        SU = BottomQ.top();
+        BottomQ.pop();
+      } while (SU->isScheduled);
+      IsTopNode = false;
+    }
+    if (IsAlternating)
+      IsTopDown = !IsTopDown;
     return SU;
   }
 
-  virtual void releaseNode(SUnit *SU) {
-    Queue.push(SU);
+  virtual void releaseTopNode(SUnit *SU) {
+    TopQ.push(SU);
+  }
+  virtual void releaseBottomNode(SUnit *SU) {
+    BottomQ.push(SU);
   }
 };
 } // namespace
 
 static ScheduleDAGInstrs *createInstructionShuffler(MachineSchedContext *C) {
-  return new InstructionShuffler(C);
+  bool Alternate = !ForceTopDown && !ForceBottomUp;
+  bool TopDown = !ForceBottomUp;
+  assert(TopDown || !ForceTopDown &&
+         "-misched-topdown incompatible with -misched-bottomup");
+  return new ScheduleDAGMI(C, new InstructionShuffler(Alternate, TopDown));
 }
-static MachineSchedRegistry ShufflerRegistry("shuffle",
-                                             "Shuffle machine instructions",
-                                             createInstructionShuffler);
+static MachineSchedRegistry ShufflerRegistry(
+  "shuffle", "Shuffle machine instructions alternating directions",
+  createInstructionShuffler);
 #endif // !NDEBUG

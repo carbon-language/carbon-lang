@@ -564,7 +564,8 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   addPass(RegisterCoalescerID);
 
   // PreRA instruction scheduling.
-  addPass(MachineSchedulerID);
+  if (addPass(MachineSchedulerID) != &NoPassID)
+    printAndVerify("After Machine Scheduling");
 
   // Add the selected register allocation pass.
   PM.add(RegAllocPass);
