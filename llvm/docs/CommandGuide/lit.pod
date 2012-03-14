@@ -159,8 +159,8 @@ other results are not collated in any reasonable fashion.
 =head1 EXIT STATUS
 
 B<lit> will exit with an exit code of 1 if there are any FAIL or XPASS
-results. Otherwise, it will exit with the status 0. Other exit codes used for
-non-test related failures (for example a user error or an internal program
+results. Otherwise, it will exit with the status 0. Other exit codes are used
+for non-test related failures (for example a user error or an internal program
 error).
 
 =head1 TEST DISCOVERY
@@ -289,7 +289,7 @@ B<environment> A dictionary representing the environment to use when executing
 tests in the suite.
 
 B<suffixes> For B<lit> test formats which scan directories for tests, this
-variable as a list of suffixes to identify test files. Used by: I<ShTest>,
+variable is a list of suffixes to identify test files. Used by: I<ShTest>,
 I<TclTest>.
 
 B<substitutions> For B<lit> test formats which substitute variables into a test
@@ -315,7 +315,7 @@ directory being scanned.
 
 Once test suites are located, B<lit> recursively traverses the source directory
 (following I<test_src_root>) looking for tests. When B<lit> enters a
-sub-directory, it first checks to see if a nest test suite is defined in that
+sub-directory, it first checks to see if a nested test suite is defined in that
 directory. If so, it loads that test suite recursively, otherwise it
 instantiates a local test config for the directory (see L<"LOCAL CONFIGURATION
 FILES">).
