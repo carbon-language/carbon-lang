@@ -5027,7 +5027,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_ivar$B\", long, read, write)\n";
-
+    
     // Add a constructor for creating temporary objects.
     Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) "
     ": ";
@@ -5253,7 +5253,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 ///   SEL name;
 /// };
 
-static void WriteModernMetadataDeclarations(std::string &Result) {
+static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Result) {
   static bool meta_data_declared = false;
   if (meta_data_declared)
     return;
@@ -5297,8 +5297,9 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "\tunsigned int const flags;\n";
   Result += "\tunsigned int instanceStart;\n";
   Result += "\tunsigned int const instanceSize;\n";
-  // FIXME, Add 'reserved' field in 64bit abi mode!
-  // Result += "\tunsigned int const reserved;
+  const llvm::Triple &Triple(Context->getTargetInfo().getTriple());
+  if (Triple.getArch() == llvm::Triple::x86_64)
+    Result += "\tunsigned int const reserved;\n";
   Result += "\tconst unsigned char * const ivarLayout;\n";
   Result += "\tconst char *const name;\n";
   Result += "\tconst struct _method_list_t * const baseMethods;\n";
@@ -5500,9 +5501,10 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
   Result += InstanceStart; Result += ", ";
   Result += InstanceSize; Result += ", \n";
   Result += "\t";
-  // FIXME. Initizlize 'reserved' field in 64bit abi mode!
-  // uint32_t const reserved; // only when building for 64bit targets
-  // Result += "(unsigned int)0, \n\t";
+  const llvm::Triple &Triple(Context->getTargetInfo().getTriple());
+  if (Triple.getArch() == llvm::Triple::x86_64)
+    // uint32_t const reserved; // only when building for 64bit targets
+    Result += "(unsigned int)0, \n\t";
   // const uint8_t * const ivarLayout;
   Result += "0, \n\t";
   Result += "\""; Result += ClassName; Result += "\",\n\t";
@@ -5804,7 +5806,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   // Do not synthesize the protocol more than once.
   if (ObjCSynthesizedProtocols.count(PDecl->getCanonicalDecl()))
     return;
-  WriteModernMetadataDeclarations(Result);
+  WriteModernMetadataDeclarations(Context, Result);
   
   if (ObjCProtocolDecl *Def = PDecl->getDefinition())
     PDecl = Def;
@@ -6022,7 +6024,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     assert(false && 
            "Legacy implicit interface rewriting not supported in moder abi");
   
-  WriteModernMetadataDeclarations(Result);
+  WriteModernMetadataDeclarations(Context, Result);
   SmallVector<ObjCIvarDecl *, 8> IVars;
   
   for (ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
@@ -6234,7 +6236,7 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
 /// implementation.
 void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
                                               std::string &Result) {
-  WriteModernMetadataDeclarations(Result);
+  WriteModernMetadataDeclarations(Context, Result);
   ObjCInterfaceDecl *ClassDecl = IDecl->getClassInterface();
   // Find category declaration for this implementation.
   ObjCCategoryDecl *CDecl=0;
