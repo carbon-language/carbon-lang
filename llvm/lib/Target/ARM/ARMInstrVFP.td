@@ -1198,7 +1198,7 @@ class MovFromVFP<bits<4> opc19_16, dag oops, dag iops, string opc, string asm,
 // to APSR.
 let Defs = [CPSR], Uses = [FPSCR_NZCV], Rt = 0b1111 /* apsr_nzcv */ in
 def FMSTAT : MovFromVFP<0b0001 /* fpscr */, (outs), (ins),
-                        "vmrs", "\tapsr_nzcv, fpscr", [(arm_fmstat)]>;
+                        "vmrs", "\tAPSR_nzcv, fpscr", [(arm_fmstat)]>;
 
 // Application level FPSCR -> GPR
 let hasSideEffects = 1, Uses = [FPSCR] in

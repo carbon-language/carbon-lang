@@ -5,7 +5,7 @@ define i32 @f7(float %a, float %b) {
 entry:
 ; CHECK: f7:
 ; CHECK: vcmpe.f32
-; CHECK: vmrs apsr_nzcv, fpscr
+; CHECK: vmrs APSR_nzcv, fpscr
 ; CHECK: movweq
 ; CHECK-NOT: vmrs
 ; CHECK: movwvs

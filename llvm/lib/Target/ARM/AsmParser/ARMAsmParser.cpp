@@ -3258,7 +3258,8 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (isMClass()) {
     // See ARMv6-M 10.1.1
-    unsigned FlagsVal = StringSwitch<unsigned>(Mask)
+    std::string Name = Mask.lower();
+    unsigned FlagsVal = StringSwitch<unsigned>(Name)
       .Case("apsr", 0)
       .Case("iapsr", 1)
       .Case("eapsr", 2)
@@ -4432,10 +4433,11 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     else if (Res == -1) // irrecoverable error
       return true;
     // If this is VMRS, check for the apsr_nzcv operand.
-    if (Mnemonic == "vmrs" && Parser.getTok().getString() == "apsr_nzcv") {
+    if (Mnemonic == "vmrs" &&
+        Parser.getTok().getString().equals_lower("apsr_nzcv")) {
       S = Parser.getTok().getLoc();
       Parser.Lex();
-      Operands.push_back(ARMOperand::CreateToken("apsr_nzcv", S));
+      Operands.push_back(ARMOperand::CreateToken("APSR_nzcv", S));
       return false;
     }
 

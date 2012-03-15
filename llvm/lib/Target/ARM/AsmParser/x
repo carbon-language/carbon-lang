@@ -1,0 +1,23 @@
+diff --git a/lib/Target/ARM/AsmParser/ARMAsmParser.cpp b/lib/Target/ARM/AsmParser/ARMAsmParser.cpp
+index af973e8..cbdae2a 100644
+--- a/lib/Target/ARM/AsmParser/ARMAsmParser.cpp
++++ b/lib/Target/ARM/AsmParser/ARMAsmParser.cpp
+@@ -3254,7 +3254,8 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+   SMLoc S = Parser.getTok().getLoc();
+   const AsmToken &Tok = Parser.getTok();
+   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+-  StringRef Mask = Tok.getString();
++  std::string MaskStr = Tok.getString().lower();
++  StringRef Mask = MaskStr; // convenience for slice() and such.
+ 
+   if (isMClass()) {
+     // See ARMv6-M 10.1.1
+@@ -3290,7 +3291,7 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+   // Split spec_reg from flag, example: CPSR_sxf => "CPSR" and "sxf"
+   size_t Start = 0, Next = Mask.find('_');
+   StringRef Flags = "";
+-  std::string SpecReg = Mask.slice(Start, Next).lower();
++  StringRef SpecReg = Mask.slice(Start, Next);
+   if (Next != StringRef::npos)
+     Flags = Mask.slice(Next+1, Mask.size());
+ 

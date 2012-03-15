@@ -9,7 +9,7 @@ entry:
 ; CHECK: vldr [[S0:s[0-9]+]],
 ; CHECK: vldr [[S1:s[0-9]+]],
 ; CHECK: vcmpe.f32 [[S1]], [[S0]]
-; CHECK: vmrs apsr_nzcv, fpscr
+; CHECK: vmrs APSR_nzcv, fpscr
 ; CHECK: beq
   %0 = load float* %a
   %1 = load float* %b
