@@ -226,7 +226,7 @@ public:
                  LiveInterval *LI, const VNInfo *VNI,
                  SmallVectorImpl<SlotIndex> *Kills,
                  LiveIntervals &LIS, MachineDominatorTree &MDT,
-		 UserValueScopes &UVS);
+                 UserValueScopes &UVS);
 
   /// addDefsFromCopies - The value in LI/LocNo may be copies to other
   /// registers. Determine if any of the copies are available at the kill
@@ -486,7 +486,7 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
                           LiveInterval *LI, const VNInfo *VNI,
                           SmallVectorImpl<SlotIndex> *Kills,
                           LiveIntervals &LIS, MachineDominatorTree &MDT,
-			  UserValueScopes &UVS) {
+                          UserValueScopes &UVS) {
   SmallVector<SlotIndex, 16> Todo;
   Todo.push_back(Idx);
   do {
@@ -620,7 +620,7 @@ void
 UserValue::computeIntervals(MachineRegisterInfo &MRI,
                             LiveIntervals &LIS,
                             MachineDominatorTree &MDT,
-			    UserValueScopes &UVS) {
+                            UserValueScopes &UVS) {
   SmallVector<std::pair<SlotIndex, unsigned>, 16> Defs;
 
   // Collect all defs to be extended (Skipping undefs).
