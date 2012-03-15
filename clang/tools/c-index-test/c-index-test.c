@@ -1784,10 +1784,12 @@ static void index_diagnostic(CXClientData client_data,
 static CXIdxClientFile index_enteredMainFile(CXClientData client_data,
                                        CXFile file, void *reserved) {
   IndexData *index_data;
+  CXString filename;
+
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  CXString filename = clang_getFileName(file);
+  filename = clang_getFileName(file);
   index_data->main_filename = clang_getCString(filename);
   clang_disposeString(filename);
 
