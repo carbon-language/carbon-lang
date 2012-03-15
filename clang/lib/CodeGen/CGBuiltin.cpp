@@ -1630,10 +1630,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
         Int = Intrinsic::arm_neon_vld2; 
         break;
       case ARM::BI__builtin_neon_vld3_dup_v:
-        Int = Intrinsic::arm_neon_vld2; 
+        Int = Intrinsic::arm_neon_vld3; 
         break;
       case ARM::BI__builtin_neon_vld4_dup_v:
-        Int = Intrinsic::arm_neon_vld2; 
+        Int = Intrinsic::arm_neon_vld4; 
         break;
       default: llvm_unreachable("unknown vld_dup intrinsic?");
       }
@@ -1649,10 +1649,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       Int = Intrinsic::arm_neon_vld2lane; 
       break;
     case ARM::BI__builtin_neon_vld3_dup_v:
-      Int = Intrinsic::arm_neon_vld2lane; 
+      Int = Intrinsic::arm_neon_vld3lane; 
       break;
     case ARM::BI__builtin_neon_vld4_dup_v:
-      Int = Intrinsic::arm_neon_vld2lane; 
+      Int = Intrinsic::arm_neon_vld4lane; 
       break;
     default: llvm_unreachable("unknown vld_dup intrinsic?");
     }
