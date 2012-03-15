@@ -1,7 +1,7 @@
 // Make sure -fno-inline-functions is behaving correctly.
 // rdar://10972766
 
-// RUN: %clang_cc1 -O3 -fno-inline-functions -emit-llvm %s -o - | FileCheck -check-prefix=NOINLINE %s
+// RUN: %clang_cc1 -O3 -fno-inline -fno-inline-functions -emit-llvm %s -o - | FileCheck -check-prefix=NOINLINE %s
 
 inline int dont_inline_me(int a, int b) { return(a+b); }
 

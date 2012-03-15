@@ -1165,9 +1165,9 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
     : CodeGenOptions::OnlyAlwaysInlining;
   // -fno-inline-functions overrides OptimizationLevel > 1.
-  Opts.NoInline = Args.hasArg(OPT_fno_inline_functions);
-  Opts.Inlining = Opts.NoInline ? CodeGenOptions::OnlyAlwaysInlining :
-    Opts.Inlining;
+  Opts.NoInline = Args.hasArg(OPT_fno_inline);
+  Opts.Inlining = Args.hasArg(OPT_fno_inline_functions) ? 
+    CodeGenOptions::OnlyAlwaysInlining : Opts.Inlining;
 
   Opts.DebugInfo = Args.hasArg(OPT_g);
   Opts.LimitDebugInfo = !Args.hasArg(OPT_fno_limit_debug_info)
@@ -2012,9 +2012,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   // This is the __NO_INLINE__ define, which just depends on things like the
   // optimization level and -fno-inline, not actually whether the backend has
   // inlining enabled.
-  //
-  // FIXME: This is affected by other options (-fno-inline).
-  Opts.NoInlineDefine = !Opt;
+  Opts.NoInlineDefine = !Opt || Args.hasArg(OPT_fno_inline);
 
   Opts.FastMath = Args.hasArg(OPT_ffast_math);
 

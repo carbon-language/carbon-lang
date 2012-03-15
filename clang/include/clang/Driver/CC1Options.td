@@ -516,6 +516,8 @@ def fgnu_keywords : Flag<"-fgnu-keywords">,
   HelpText<"Allow GNU-extension keywords regardless of language standard">;
 def fgnu89_inline : Flag<"-fgnu89-inline">,
   HelpText<"Use the gnu89 inline semantics">;
+def fno_inline : Flag<"-fno-inline">,
+  HelpText<"Disable use of inline keyword">;
 def fno_inline_functions : Flag<"-fno-inline-functions">,
   HelpText<"Disable automatic function inlining">;
 def fno_gnu_keywords : Flag<"-fno-gnu-keywords">,

@@ -78,8 +78,8 @@ public:
   unsigned NoGlobalMerge     : 1; /// Set when -mno-global-merge is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
   unsigned NoInfsFPMath      : 1; /// Assume FP arguments, results not +-Inf.
-  unsigned NoInline          : 1; /// Set when -fno-inline-functions is enabled.
-                                  /// Disables use of inline keyword.
+  unsigned NoInline          : 1; /// Set when -fno-inline is enabled. Disables
+                                  /// use of the inline keyword.
   unsigned NoNaNsFPMath      : 1; /// Assume FP arguments, results not NaN.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
