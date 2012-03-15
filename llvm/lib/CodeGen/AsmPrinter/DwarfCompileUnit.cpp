@@ -156,13 +156,12 @@ void CompileUnit::addSourceLine(DIE *Die, DISubprogram SP) {
   // Verify subprogram.
   if (!SP.Verify())
     return;
+
   // If the line number is 0, don't add it.
-  if (SP.getLineNumber() == 0)
+  unsigned Line = SP.getLineNumber();
+  if (Line == 0)
     return;
 
-  unsigned Line = SP.getLineNumber();
-  if (!SP.getContext().Verify())
-    return;
   unsigned FileID = DD->GetOrCreateSourceID(SP.getFilename(),
                                             SP.getDirectory());
   assert(FileID && "Invalid file id");
@@ -178,7 +177,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
     return;
 
   unsigned Line = Ty.getLineNumber();
-  if (Line == 0 || !Ty.getContext().Verify())
+  if (Line == 0)
     return;
   unsigned FileID = DD->GetOrCreateSourceID(Ty.getFilename(),
                                             Ty.getDirectory());
