@@ -1836,11 +1836,15 @@ void RewriteModernObjC::RewriteSyncReturnStmts(Stmt *S, std::string syncExitBuf)
 
 Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   ObjCAtFinallyStmt *finalStmt = S->getFinallyStmt();
-  // bool noCatch = S->getNumCatchStmts() == 0;
+  bool noCatch = S->getNumCatchStmts() == 0;
   std::string buf;
   
   if (finalStmt) {
-    buf = "{ id volatile _rethrow = 0;\n";
+    if (noCatch)
+      buf = "{ id volatile _rethrow = 0;\n";
+    else {
+      buf = "{ id volatile _rethrow = 0;\ntry {\n";
+    }
   }
   // Get the start location and compute the semi location.
   SourceLocation startLoc = S->getLocStart();
@@ -1853,24 +1857,6 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     // @try -> try
     ReplaceText(startLoc, 1, "");
   
-  if (finalStmt) {
-    buf.clear();
-    buf = "catch (id e) {_rethrow = e;}\n";
-    SourceLocation startFinalLoc = finalStmt->getLocStart();
-    ReplaceText(startFinalLoc, 8, buf);
-    Stmt *body = finalStmt->getFinallyBody();
-    SourceLocation startFinalBodyLoc = body->getLocStart();
-    buf.clear();
-    buf = "{ struct _FIN { _FIN(id reth) : rethrow(reth) {}\n";
-    buf += "\t~_FIN() { if (rethrow) objc_exception_throw(rethrow); }\n";
-    buf += "\tid rethrow;\n";
-    buf += "\t} _fin_force_rethow(_rethrow);";
-    ReplaceText(startFinalBodyLoc, 1, buf);
-    
-    SourceLocation endFinalBodyLoc = body->getLocEnd();
-    ReplaceText(endFinalBodyLoc, 1, "}\n}");
-  }
-
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
     VarDecl *catchDecl = Catch->getCatchParamDecl();
@@ -1914,6 +1900,28 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       ReplaceText(startLoc, 1, "");
       
   }
+  if (finalStmt) {
+    buf.clear();
+    if (noCatch)
+      buf = "catch (id e) {_rethrow = e;}\n";
+    else 
+      buf = "}\ncatch (id e) {_rethrow = e;}\n";
+
+    SourceLocation startFinalLoc = finalStmt->getLocStart();
+    ReplaceText(startFinalLoc, 8, buf);
+    Stmt *body = finalStmt->getFinallyBody();
+    SourceLocation startFinalBodyLoc = body->getLocStart();
+    buf.clear();
+    buf = "{ struct _FIN { _FIN(id reth) : rethrow(reth) {}\n";
+    buf += "\t~_FIN() { if (rethrow) objc_exception_throw(rethrow); }\n";
+    buf += "\tid rethrow;\n";
+    buf += "\t} _fin_force_rethow(_rethrow);";
+    ReplaceText(startFinalBodyLoc, 1, buf);
+    
+    SourceLocation endFinalBodyLoc = body->getLocEnd();
+    ReplaceText(endFinalBodyLoc, 1, "}\n}");
+  }
+
   return 0;
 }
 
