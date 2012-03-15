@@ -497,43 +497,6 @@ bool InlineCostAnalyzer::FunctionInfo::NeverInline() {
   return (Metrics.exposesReturnsTwice || Metrics.isRecursive ||
           Metrics.containsIndirectBr);
 }
-// getSpecializationBonus - The heuristic used to determine the per-call
-// performance boost for using a specialization of Callee with argument
-// specializedArgNo replaced by a constant.
-int InlineCostAnalyzer::getSpecializationBonus(Function *Callee,
-         SmallVectorImpl<unsigned> &SpecializedArgNos)
-{
-  if (Callee->mayBeOverridden())
-    return 0;
-
-  int Bonus = 0;
-  // If this function uses the coldcc calling convention, prefer not to
-  // specialize it.
-  if (Callee->getCallingConv() == CallingConv::Cold)
-    Bonus -= InlineConstants::ColdccPenalty;
-
-  // Get information about the callee.
-  FunctionInfo *CalleeFI = &CachedFunctionInfo[Callee];
-
-  // If we haven't calculated this information yet, do so now.
-  if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee, TD);
-
-  unsigned ArgNo = 0;
-  unsigned i = 0;
-  for (Function::arg_iterator I = Callee->arg_begin(), E = Callee->arg_end();
-       I != E; ++I, ++ArgNo)
-    if (ArgNo == SpecializedArgNos[i]) {
-      ++i;
-      Bonus += CountBonusForConstant(I);
-    }
-
-  // Calls usually take a long time, so they make the specialization gain
-  // smaller.
-  Bonus -= CalleeFI->Metrics.NumCalls * InlineConstants::CallPenalty;
-
-  return Bonus;
-}
 
 // ConstantFunctionBonus - Figure out how much of a bonus we can get for
 // possibly devirtualizing a function. We'll subtract the size of the function
@@ -777,38 +740,6 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   //
   int InlineCost = getInlineSize(CS, Callee) + getInlineBonuses(CS, Callee);
   return llvm::InlineCost::get(InlineCost);
-}
-
-// getSpecializationCost - The heuristic used to determine the code-size
-// impact of creating a specialized version of Callee with argument
-// SpecializedArgNo replaced by a constant.
-InlineCost InlineCostAnalyzer::getSpecializationCost(Function *Callee,
-                               SmallVectorImpl<unsigned> &SpecializedArgNos)
-{
-  // Don't specialize functions which can be redefined at link-time to mean
-  // something else.
-  if (Callee->mayBeOverridden())
-    return llvm::InlineCost::getNever();
-
-  // Get information about the callee.
-  FunctionInfo *CalleeFI = &CachedFunctionInfo[Callee];
-
-  // If we haven't calculated this information yet, do so now.
-  if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee, TD);
-
-  int Cost = 0;
-
-  // Look at the original size of the callee.  Each instruction counts as 5.
-  Cost += CalleeFI->Metrics.NumInsts * InlineConstants::InstrCost;
-
-  // Offset that with the amount of code that can be constant-folded
-  // away with the given arguments replaced by constants.
-  for (SmallVectorImpl<unsigned>::iterator an = SpecializedArgNos.begin(),
-       ae = SpecializedArgNos.end(); an != ae; ++an)
-    Cost -= CalleeFI->ArgumentWeights[*an].ConstantWeight;
-
-  return llvm::InlineCost::get(Cost);
 }
 
 // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
