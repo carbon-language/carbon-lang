@@ -104,3 +104,15 @@ ret <8 x i32> %res
 }
 declare <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32>, <4 x i32>, i8) nounwind readnone
 
+; rdar://10643481
+; CHECK: vinsertf128_combine
+define <8 x float> @vinsertf128_combine(float* nocapture %f) nounwind uwtable readonly ssp {
+; CHECK-NOT: vmovaps
+; CHECK: vinsertf128
+entry:
+  %add.ptr = getelementptr inbounds float* %f, i64 4
+  %0 = bitcast float* %add.ptr to <4 x float>*
+  %1 = load <4 x float>* %0, align 16
+  %2 = tail call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> undef, <4 x float> %1, i8 1)
+  ret <8 x float> %2
+}
