@@ -1835,13 +1835,41 @@ void RewriteModernObjC::RewriteSyncReturnStmts(Stmt *S, std::string syncExitBuf)
 }
 
 Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
+  ObjCAtFinallyStmt *finalStmt = S->getFinallyStmt();
+  // bool noCatch = S->getNumCatchStmts() == 0;
+  std::string buf;
+  
+  if (finalStmt) {
+    buf = "{ id volatile _rethrow = 0;\n";
+  }
   // Get the start location and compute the semi location.
   SourceLocation startLoc = S->getLocStart();
   const char *startBuf = SM->getCharacterData(startLoc);
 
   assert((*startBuf == '@') && "bogus @try location");
-  // @try -> try
-  ReplaceText(startLoc, 1, "");
+  if (finalStmt)
+    ReplaceText(startLoc, 1, buf);
+  else
+    // @try -> try
+    ReplaceText(startLoc, 1, "");
+  
+  if (finalStmt) {
+    buf.clear();
+    buf = "catch (id e) {_rethrow = e;}\n";
+    SourceLocation startFinalLoc = finalStmt->getLocStart();
+    ReplaceText(startFinalLoc, 8, buf);
+    Stmt *body = finalStmt->getFinallyBody();
+    SourceLocation startFinalBodyLoc = body->getLocStart();
+    buf.clear();
+    buf = "{ struct _FIN { _FIN(id reth) : rethrow(reth) {}\n";
+    buf += "\t~_FIN() { if (rethrow) objc_exception_throw(rethrow); }\n";
+    buf += "\tid rethrow;\n";
+    buf += "\t} _fin_force_rethow(_rethrow);";
+    ReplaceText(startFinalBodyLoc, 1, buf);
+    
+    SourceLocation endFinalBodyLoc = body->getLocEnd();
+    ReplaceText(endFinalBodyLoc, 1, "}\n}");
+  }
 
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
@@ -5144,7 +5172,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "(struct objc_class *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getMetaClass";
   Preamble += "(const char *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw(id);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_enter(void *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_exit(void *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_exception_extract(void *);\n";
