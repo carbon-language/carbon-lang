@@ -2023,7 +2023,7 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the static custom operand parsing table;
   OS << "namespace {\n";
   OS << "  struct OperandMatchEntry {\n";
-  OS << "    static const char *MnemonicTable;\n";
+  OS << "    static const char *const MnemonicTable;\n";
   OS << "    unsigned OperandMask;\n";
   OS << "    unsigned Mnemonic;\n";
   OS << "    " << getMinimalTypeForRange(Info.Classes.size())
@@ -2097,7 +2097,7 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "};\n\n";
 
-  OS << "const char *OperandMatchEntry::MnemonicTable =\n";
+  OS << "const char *const OperandMatchEntry::MnemonicTable =\n";
   StringTable.EmitString(OS);
   OS << ";\n\n";
 
@@ -2320,7 +2320,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // following the mnemonic.
   OS << "namespace {\n";
   OS << "  struct MatchEntry {\n";
-  OS << "    static const char *MnemonicTable;\n";
+  OS << "    static const char *const MnemonicTable;\n";
   OS << "    uint16_t Opcode;\n";
   OS << "    unsigned Mnemonic;\n";
   OS << "    " << getMinimalTypeForRange(Info.Matchables.size())
@@ -2390,7 +2390,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "};\n\n";
 
-  OS << "const char *MatchEntry::MnemonicTable =\n";
+  OS << "const char *const MatchEntry::MnemonicTable =\n";
   StringTable.EmitString(OS);
   OS << ";\n\n";
 
