@@ -93,7 +93,7 @@ bool AsanShadowRangeIsAvailable() {
   uintptr_t start, end;
   bool available = true;
   while (procmaps.Next(&start, &end,
-                       /*offset*/NULL, /*filename*/NULL, /*size*/NULL)) {
+                       /*offset*/NULL, /*filename*/NULL, /*filename_size*/0)) {
     if (!IntervalsAreSeparate(start, end,
                               kLowShadowBeg - kMmapGranularity,
                               kHighShadowEnd)) {
