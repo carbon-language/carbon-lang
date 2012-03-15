@@ -1384,16 +1384,15 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
         SrcVT == MVT::i1) {
       const APInt &CIVal = ConstInt->getValue();
       Imm = (isZExt) ? (int)CIVal.getZExtValue() : (int)CIVal.getSExtValue();
-      // We can't encode LONG_MIN (i.e., 0x80000000) as an immediate because
-      // there is no way to represent 2147483648 as a signed 32-bit int.
-      if (Imm != (int)0x80000000) {
-        if (Imm < 0) {
-          isNegativeImm = true;
-          Imm = -Imm;
-        }
-        UseImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
-          (ARM_AM::getSOImmVal(Imm) != -1);
+      // For INT_MIN/LONG_MIN (i.e., 0x80000000) we need to use a cmp, rather
+      // then a cmn, because there is no way to represent 2147483648 as a 
+      // signed 32-bit int.
+      if (Imm < 0 && Imm != (int)0x80000000) {
+        isNegativeImm = true;
+        Imm = -Imm;
       }
+      UseImm = isThumb2 ? (ARM_AM::getT2SOImmVal(Imm) != -1) :
+        (ARM_AM::getSOImmVal(Imm) != -1);
     }
   } else if (const ConstantFP *ConstFP = dyn_cast<ConstantFP>(Src2Value)) {
     if (SrcVT == MVT::f32 || SrcVT == MVT::f64)
