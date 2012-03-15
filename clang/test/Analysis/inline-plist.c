@@ -283,7 +283,7 @@ void test_has_bug() {
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Entered call from &apos;test_has_bug&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Entered call
+// CHECK: <string>Entered call from &apos;test_has_bug&apos;</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
