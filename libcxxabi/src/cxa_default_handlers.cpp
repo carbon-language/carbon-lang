@@ -103,7 +103,7 @@ set_unexpected(unexpected_handler func) _NOEXCEPT
 {
 	if (func == 0)
 		func = default_unexpected_handler;
-	return __sync_lock_test_and_set(&__cxxabiapple::__cxa_unexpected_handler, func);
+	return __sync_swap(&__cxxabiapple::__cxa_unexpected_handler, func);
 }
 
 terminate_handler
@@ -111,7 +111,7 @@ set_terminate(terminate_handler func) _NOEXCEPT
 {
 	if (func == 0)
 		func = default_terminate_handler;
-	return __sync_lock_test_and_set(&__cxxabiapple::__cxa_terminate_handler, func);
+	return __sync_swap(&__cxxabiapple::__cxa_terminate_handler, func);
 }
 
 };

@@ -28,7 +28,7 @@ namespace std
 unexpected_handler
 get_unexpected() _NOEXCEPT
 {
-    return __sync_fetch_and_add(&__cxxabiapple::__cxa_unexpected_handler, (unexpected_handler)0);
+    return __cxxabiapple::__cxa_unexpected_handler;
 }
 
 __attribute__((visibility("hidden"), noreturn))
@@ -50,7 +50,7 @@ unexpected()
 terminate_handler
 get_terminate() _NOEXCEPT
 {
-    return __sync_fetch_and_add(&__cxxabiapple::__cxa_terminate_handler, (terminate_handler)0);
+    return __cxxabiapple::__cxa_terminate_handler;
 }
 
 __attribute__((visibility("hidden"), noreturn))
@@ -101,13 +101,13 @@ terminate() _NOEXCEPT
 new_handler
 set_new_handler(new_handler handler) _NOEXCEPT
 {
-    return __sync_lock_test_and_set(&__cxxabiapple::__cxa_new_handler, handler);
+    return __sync_swap(&__cxxabiapple::__cxa_new_handler, handler);
 }
 
 new_handler
 get_new_handler() _NOEXCEPT
 {
-    return __sync_fetch_and_add(&__cxxabiapple::__cxa_new_handler, (new_handler)0);
+    return __cxxabiapple::__cxa_new_handler;
 }
 
 }  // std
