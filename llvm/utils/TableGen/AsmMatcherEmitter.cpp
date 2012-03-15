@@ -2025,7 +2025,7 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  struct OperandMatchEntry {\n";
   OS << "    static const char *MnemonicTable;\n";
   OS << "    unsigned OperandMask;\n";
-  OS << "    uint16_t Mnemonic;\n";
+  OS << "    unsigned Mnemonic;\n";
   OS << "    " << getMinimalTypeForRange(Info.Classes.size())
                << " Class;\n";
   OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
@@ -2322,7 +2322,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  struct MatchEntry {\n";
   OS << "    static const char *MnemonicTable;\n";
   OS << "    uint16_t Opcode;\n";
-  OS << "    uint16_t Mnemonic;\n";
+  OS << "    unsigned Mnemonic;\n";
   OS << "    " << getMinimalTypeForRange(Info.Matchables.size())
                << " ConvertFn;\n";
   OS << "    " << getMinimalTypeForRange(Info.Classes.size())
