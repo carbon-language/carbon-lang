@@ -1249,6 +1249,7 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
 
   const Stmt *S = 0;
   const char *Msg = 0;
+  const char *StackMsg = 0;
 
   // Retrieve the associated statement.
   ProgramPoint ProgLoc = N->getLocation();
@@ -1264,14 +1265,18 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
     return 0;
 
   // Find out if this is an interesting point and what is the kind.
+  // TODO: Replace 'callee' by the function name.
   if (Mode == Normal) {
-    if (isAllocated(RS, RSPrev, S))
+    if (isAllocated(RS, RSPrev, S)) {
       Msg = "Memory is allocated";
-    else if (isReleased(RS, RSPrev, S))
+      StackMsg = ", which allocated memory";
+    } else if (isReleased(RS, RSPrev, S)) {
       Msg = "Memory is released";
-    else if (isReallocFailedCheck(RS, RSPrev, S)) {
+      StackMsg = ", which released memory";
+    } else if (isReallocFailedCheck(RS, RSPrev, S)) {
       Mode = ReallocationFailed;
       Msg = "Reallocation failed";
+      StackMsg = ", where reallocation failed";
     }
 
   // We are in a special mode if a reallocation failed later in the path.
@@ -1291,16 +1296,18 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
     if (!(FunName.equals("realloc") || FunName.equals("reallocf")))
       return 0;
     Msg = "Attempt to reallocate memory";
+    StackMsg = ", which attempted to reallocate memory";
     Mode = Normal;
   }
 
   if (!Msg)
     return 0;
+  assert(StackMsg);
 
   // Generate the extra diagnostic.
   PathDiagnosticLocation Pos(S, BRC.getSourceManager(),
                              N->getLocationContext());
-  return new PathDiagnosticEventPiece(Pos, Msg);
+  return new PathDiagnosticEventPiece(Pos, Msg, true, StackMsg);
 }
 
 

@@ -572,6 +572,8 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
     Out << "Returning from '" << *ND << "'";
   else
     Out << "Returning to caller";
+  if (!CallStackMessage.empty())
+    Out << CallStackMessage;
   return new PathDiagnosticEventPiece(callReturn, Out.str());
 }
 

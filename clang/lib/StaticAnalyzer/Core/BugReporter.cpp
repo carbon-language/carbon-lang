@@ -380,6 +380,24 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 //===----------------------------------------------------------------------===//
 // "Minimal" path diagnostic generation algorithm.
 //===----------------------------------------------------------------------===//
+static void updateStackPiecesWithMessage(PathDiagnosticPiece *P,
+                   llvm::SmallVector<PathDiagnosticCallPiece*, 6> &CallStack) {
+  // If the piece contains a special message, add it to all the call
+  // pieces on the active stack.
+  if (PathDiagnosticEventPiece *ep =
+        dyn_cast<PathDiagnosticEventPiece>(P)) {
+    StringRef stackMsg = ep->getCallStackMessage();
+
+    if (!stackMsg.empty())
+      for (llvm::SmallVector<PathDiagnosticCallPiece*, 6>::iterator
+             I = CallStack.begin(), E = CallStack.end(); I != E; ++I)
+        // The last message on the path to final bug is the most important
+        // one. Since we traverse the path backwards, do not add the message
+        // if one has been previously added.
+        if  (!(*I)->hasCallStackMessage())
+          (*I)->setCallStackMessage(stackMsg);
+  }
+}
 
 static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM);
 
@@ -391,6 +409,9 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
   const LocationContext *LC = PDB.LC;
   const ExplodedNode *NextNode = N->pred_empty()
                                         ? NULL : *(N->pred_begin());
+
+  llvm::SmallVector<PathDiagnosticCallPiece*, 6> CallStack;
+
   while (NextNode) {
     N = NextNode;
     PDB.LC = N->getLocationContext();
@@ -403,6 +424,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         PathDiagnosticCallPiece::construct(N, *CE, SMgr);
       PD.getActivePath().push_front(C);
       PD.pushActivePath(&C->path);
+      CallStack.push_back(C);
       continue;      
     }
     
@@ -423,6 +445,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
       }
       C->setCallee(*CE, SMgr);
+      if (!CallStack.empty()) {
+        assert(CallStack.back() == C);
+        CallStack.pop_back();
+      }
       continue;
     }
 
@@ -681,8 +707,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       BugReport *R = PDB.getBugReport();
       for (BugReport::visitor_iterator I = R->visitor_begin(),
            E = R->visitor_end(); I!=E; ++I) {
-        if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R))
+        if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R)) {
           PD.getActivePath().push_front(p);
+          updateStackPiecesWithMessage(p, CallStack);
+        }
       }
     }
   }
@@ -1019,6 +1047,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             const ExplodedNode *N) {
   EdgeBuilder EB(PD, PDB);
   const SourceManager& SM = PDB.getSourceManager();
+  llvm::SmallVector<PathDiagnosticCallPiece*, 6> CallStack;
 
   const ExplodedNode *NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
   while (NextNode) {
@@ -1039,6 +1068,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           PathDiagnosticCallPiece::construct(N, *CE, SM);
         PD.getActivePath().push_front(C);
         PD.pushActivePath(&C->path);
+        CallStack.push_back(C);
         break;
       }
       
@@ -1072,6 +1102,11 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         }
         C->setCallee(*CE, SM);
         EB.addContext(CE->getCallExpr());
+
+        if (!CallStack.empty()) {
+          assert(CallStack.back() == C);
+          CallStack.pop_back();
+        }
         break;
       }
       
@@ -1147,6 +1182,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         const PathDiagnosticLocation &Loc = p->getLocation();
         EB.addEdge(Loc, true);
         PD.getActivePath().push_front(p);
+        updateStackPiecesWithMessage(p, CallStack);
+
         if (const Stmt *S = Loc.asStmt())
           EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
       }

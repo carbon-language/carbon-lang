@@ -359,10 +359,21 @@ public:
 
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
   llvm::Optional<bool> IsPrunable;
+
+  /// If the event occurs in a different frame than the final diagnostic,
+  /// supply a message that will be used to construct an extra hint on the
+  /// returns from all the calls on the stack from this event to the final
+  /// diagnostic.
+  /// TODO: This should be a callback that constructs a string given the
+  /// ExplodedNode, which would allow the checkers to refer to the expression.
+  std::string CallStackMessage;
+
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
-                           StringRef s, bool addPosRange = true)
-    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange) {}
+                           StringRef s, bool addPosRange = true,
+                           StringRef callStackMsg = "")
+    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange),
+      CallStackMessage(callStackMsg) {}
 
   ~PathDiagnosticEventPiece();
 
@@ -380,6 +391,13 @@ public:
     return IsPrunable.hasValue() ? IsPrunable.getValue() : false;
   }
   
+  StringRef getCallStackMessage() {
+    if (!CallStackMessage.empty())
+      return CallStackMessage;
+    else
+      return StringRef();
+  }
+
   static inline bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Event;
   }
@@ -402,6 +420,10 @@ class PathDiagnosticCallPiece : public PathDiagnosticPiece {
   // call exit.
   bool NoExit;
 
+  // The custom string, which should appear after the call Return Diagnostic.
+  // TODO: Should we allow multiple diagnostics?
+  std::string CallStackMessage;
+
 public:
   PathDiagnosticLocation callEnter;
   PathDiagnosticLocation callEnterWithin;
@@ -415,6 +437,11 @@ public:
   const Decl *getCallee() const { return Callee; }
   void setCallee(const CallEnter &CE, const SourceManager &SM);
   
+  bool hasCallStackMessage() { return !CallStackMessage.empty(); }
+  void setCallStackMessage(StringRef st) {
+    CallStackMessage = st;
+  }
+
   virtual PathDiagnosticLocation getLocation() const {
     return callEnter;
   }
