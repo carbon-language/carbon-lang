@@ -15,6 +15,20 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_262">checker-262</h4>
+
+<p><b>built: </b>March 15, 2012</br>
+   <b>download:</b> <a href="http://bit.ly/xETQF0">checker-262.tar.bz2</a></p>
+<p><b>highlights:</b></p>
+
+<ul>
+  <li>Enables experimental interprocedural analysis (within a file), which greatly amplifies the analyzer's ability to find issues.</li>
+  <li>Many bug fixes to the malloc/free checker.</li>
+  <li>Support for new Objective-C NSArray/NSDictionary/NSNumber literals syntax, and Objective-C container subscripting.</li>
+</ul>
+
+<p>NOTE: This build contains new interprocedural analysis that allows the analyzer to find more complicated bugs that span function boundaries.  It may have problems, performance issues, etc.  We'd like to <a href="/filing_bugs.html">hear about them</a>.
+
 <h4 id="checker_261">checker-261</h4>
 
 <p><b>built: </b>February 22, 2012<br>
