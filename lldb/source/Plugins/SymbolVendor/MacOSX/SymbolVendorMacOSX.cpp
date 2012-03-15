@@ -120,6 +120,9 @@ SymbolVendorMacOSX::GetPluginDescriptionStatic()
 SymbolVendor*
 SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
 {
+    if (!module_sp)
+        return NULL;
+
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolVendorMacOSX::CreateInstance (module = %s/%s)",
                         module_sp->GetFileSpec().GetDirectory().AsCString(),
@@ -154,6 +157,10 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
                     ModuleSpec module_spec(file_spec, module_sp->GetArchitecture());
                     module_spec.GetUUID() = module_sp->GetUUID();
                     dsym_fspec = Symbols::LocateExecutableSymbolFile (module_spec);
+                    if (module_spec.GetSourceMappingList().GetSize())
+                    {
+                        module_sp->GetSourceMappingList().Append (module_spec.GetSourceMappingList (), true);
+                    }
                 }
             }
             

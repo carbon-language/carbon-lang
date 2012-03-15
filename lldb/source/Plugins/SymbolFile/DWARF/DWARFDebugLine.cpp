@@ -14,6 +14,7 @@
 
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 
@@ -467,7 +468,11 @@ DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t*
 }
 
 bool
-DWARFDebugLine::ParseSupportFiles(const DataExtractor& debug_line_data, const char *cu_comp_dir, dw_offset_t stmt_list, FileSpecList &support_files)
+DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
+                                   const DataExtractor& debug_line_data,
+                                   const char *cu_comp_dir,
+                                   dw_offset_t stmt_list,
+                                   FileSpecList &support_files)
 {
     uint32_t offset = stmt_list + 4;    // Skip the total length
     const char * s;
@@ -537,7 +542,12 @@ DWARFDebugLine::ParseSupportFiles(const DataExtractor& debug_line_data, const ch
             
             // We don't need to realpath files in the debug_line tables.
             FileSpec file_spec(fullpath.c_str(), false);
-            support_files.Append(file_spec);
+            
+            FileSpec remapped_file_spec;
+            if (module_sp->FindSourceFile(file_spec, remapped_file_spec))
+                support_files.Append(remapped_file_spec);
+            else
+                support_files.Append(file_spec);
         }
     }
 

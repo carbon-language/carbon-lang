@@ -347,6 +347,9 @@ public:
                TypeList& types);
     
     bool
+    FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const;
+    
+    bool
     Remove (const lldb::ModuleSP &module_sp);
 
     size_t

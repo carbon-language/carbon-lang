@@ -372,6 +372,21 @@ ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool ap
     return total_matches;
 }
 
+bool
+ModuleList::FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const
+{
+    Mutex::Locker locker(m_modules_mutex);
+    collection::const_iterator pos, end = m_modules.end();
+    for (pos = m_modules.begin(); pos != end; ++pos)
+    {
+        if ((*pos)->FindSourceFile (orig_spec, new_spec))
+            return true;
+    }
+    return false;
+}
+
+
+
 ModuleSP
 ModuleList::FindFirstModule (const ModuleSpec &module_spec)
 {

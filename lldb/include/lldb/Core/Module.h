@@ -21,26 +21,9 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Symtab.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Target/PathMappingList.h"
 
-//----------------------------------------------------------------------
-/// @class Module Module.h "lldb/Core/Module.h"
-/// @brief A class that describes an executable image and its associated
-///        object and symbol files.
-///
-/// The module is designed to be able to select a single slice of an
-/// executable image as it would appear on disk and during program
-/// execution.
-///
-/// Modules control when and if information is parsed according to which
-/// accessors are called. For example the object file (ObjectFile)
-/// representation will only be parsed if the object file is requested
-/// using the Module::GetObjectFile() is called. The debug symbols
-/// will only be parsed if the symbol vendor (SymbolVendor) is
-/// requested using the Module::GetSymbolVendor() is called.
-///
-/// The module will parse more detailed information as more queries are
-/// made.
-//----------------------------------------------------------------------
+
 namespace lldb_private {
 
 class ModuleSpec
@@ -53,7 +36,8 @@ public:
         m_arch (),
         m_uuid (),
         m_object_name (),
-        m_object_offset (0)
+        m_object_offset (0),
+        m_source_mappings ()
     {
     }
 
@@ -64,7 +48,8 @@ public:
         m_arch (),
         m_uuid (),
         m_object_name (),
-        m_object_offset (0)
+        m_object_offset (0),
+        m_source_mappings ()
     {
     }
 
@@ -75,7 +60,8 @@ public:
         m_arch (arch),
         m_uuid (),
         m_object_name (),
-        m_object_offset (0)
+        m_object_offset (0),
+        m_source_mappings ()
     {
     }
     
@@ -86,7 +72,8 @@ public:
         m_arch (rhs.m_arch),
         m_uuid (rhs.m_uuid),
         m_object_name (rhs.m_object_name),
-        m_object_offset (rhs.m_object_offset)
+        m_object_offset (rhs.m_object_offset),
+        m_source_mappings (rhs.m_source_mappings)
     {
     }
 
@@ -102,6 +89,7 @@ public:
             m_uuid = rhs.m_uuid;
             m_object_name = rhs.m_object_name;
             m_object_offset = rhs.m_object_offset;
+            m_source_mappings = rhs.m_source_mappings;
         }
         return *this;
     }
@@ -270,6 +258,12 @@ public:
         m_object_offset = object_offset;
     }
 
+    PathMappingList &
+    GetSourceMappingList () const
+    {
+        return m_source_mappings;
+    }
+
 protected:
     FileSpec m_file;
     FileSpec m_platform_file;
@@ -278,8 +272,28 @@ protected:
     UUID m_uuid;
     ConstString m_object_name;
     uint64_t m_object_offset;
+    mutable PathMappingList m_source_mappings;
 };
 
+//----------------------------------------------------------------------
+/// @class Module Module.h "lldb/Core/Module.h"
+/// @brief A class that describes an executable image and its associated
+///        object and symbol files.
+///
+/// The module is designed to be able to select a single slice of an
+/// executable image as it would appear on disk and during program
+/// execution.
+///
+/// Modules control when and if information is parsed according to which
+/// accessors are called. For example the object file (ObjectFile)
+/// representation will only be parsed if the object file is requested
+/// using the Module::GetObjectFile() is called. The debug symbols
+/// will only be parsed if the symbol vendor (SymbolVendor) is
+/// requested using the Module::GetSymbolVendor() is called.
+///
+/// The module will parse more detailed information as more queries are
+/// made.
+//----------------------------------------------------------------------
 class Module :
     public STD_ENABLE_SHARED_FROM_THIS(Module),
     public SymbolContextScope
@@ -994,6 +1008,21 @@ public:
         return m_mutex;
     }
 
+    PathMappingList &
+    GetSourceMappingList ()
+    {
+        return m_source_mappings;
+    }
+    
+    const PathMappingList &
+    GetSourceMappingList () const
+    {
+        return m_source_mappings;
+    }
+    
+    bool
+    FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const;
+    
 protected:
     //------------------------------------------------------------------
     // Member Variables
@@ -1010,6 +1039,8 @@ protected:
     lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile
     std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.
+    PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
+
     bool                        m_did_load_objfile:1,
                                 m_did_load_symbol_vendor:1,
                                 m_did_parse_uuid:1,

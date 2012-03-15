@@ -196,7 +196,7 @@ public:
 
     static bool DumpOpcodes(lldb_private::Log *log, SymbolFileDWARF* dwarf2Data, dw_offset_t line_offset = DW_INVALID_OFFSET, uint32_t dump_flags = 0);   // If line_offset is invalid, dump everything
     static bool DumpLineTableRows(lldb_private::Log *log, SymbolFileDWARF* dwarf2Data, dw_offset_t line_offset = DW_INVALID_OFFSET);  // If line_offset is invalid, dump everything
-    static bool ParseSupportFiles(const lldb_private::DataExtractor& debug_line_data, const char *cu_comp_dir, dw_offset_t stmt_list, lldb_private::FileSpecList &support_files);
+    static bool ParseSupportFiles(const lldb::ModuleSP &module_sp, const lldb_private::DataExtractor& debug_line_data, const char *cu_comp_dir, dw_offset_t stmt_list, lldb_private::FileSpecList &support_files);
     static bool ParsePrologue(const lldb_private::DataExtractor& debug_line_data, dw_offset_t* offset_ptr, Prologue* prologue);
     static bool ParseStatementTable(const lldb_private::DataExtractor& debug_line_data, dw_offset_t* offset_ptr, State::Callback callback, void* userData);
     static dw_offset_t DumpStatementTable(lldb_private::Log *log, const lldb_private::DataExtractor& debug_line_data, const dw_offset_t line_offset);

@@ -31,6 +31,8 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
+    PathMappingList ();
+
     PathMappingList (ChangedCallback callback,
                      void *callback_baton);
 
@@ -46,6 +48,9 @@ public:
     Append (const ConstString &path, const ConstString &replacement, bool notify);
 
     void
+    Append (const PathMappingList &rhs, bool notify);
+
+    void
     Clear (bool notify);
 
     // By default, dump all pairs.
@@ -53,7 +58,10 @@ public:
     Dump (Stream *s, int pair_index=-1);
 
     size_t
-    GetSize ();
+    GetSize () const
+    {
+        return m_pairs.size();
+    }
 
     bool
     GetPathsAtIndex (uint32_t idx, ConstString &path, ConstString &new_path) const;
@@ -76,7 +84,10 @@ public:
              bool notify);
     
     bool
-    RemapPath (const ConstString &path, ConstString &new_path);
+    RemapPath (const ConstString &path, ConstString &new_path) const;
+
+    bool
+    FindFile (const FileSpec &orig_spec, FileSpec &new_spec) const;
 
     uint32_t
     FindIndexForPath (const ConstString &path) const;

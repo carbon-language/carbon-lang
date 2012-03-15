@@ -127,6 +127,7 @@ Module::Module (const ModuleSpec &module_spec) :
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (),
+    m_source_mappings (),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
@@ -168,6 +169,7 @@ Module::Module(const FileSpec& file_spec,
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (),
+    m_source_mappings (),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
@@ -1154,5 +1156,12 @@ Module::MatchesModuleSpec (const ModuleSpec &module_ref)
             return false;
     }
     return true;
+}
+
+bool
+Module::FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const
+{
+    Mutex::Locker locker (m_mutex);
+    return m_source_mappings.FindFile (orig_spec, new_spec);
 }
 

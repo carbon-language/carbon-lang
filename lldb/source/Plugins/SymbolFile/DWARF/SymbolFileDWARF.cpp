@@ -711,6 +711,10 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* curr_cu, CompUnitSP& compil
 {
     if (curr_cu != NULL)
     {
+        ModuleSP module_sp (m_obj_file->GetModule());
+        if (!module_sp)
+            return false;
+
         const DWARFDebugInfoEntry * cu_die = curr_cu->GetCompileUnitDIEOnly ();
         if (cu_die)
         {
@@ -736,8 +740,12 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* curr_cu, CompUnitSP& compil
                     cu_file_spec.SetFile (fullpath.c_str(), false);
                 }
 
-                compile_unit_sp.reset(new CompileUnit (m_obj_file->GetModule(), 
-                                                       curr_cu, 
+                FileSpec remapped_file_spec;
+                if (module_sp->FindSourceFile(cu_file_spec, remapped_file_spec))
+                    cu_file_spec = remapped_file_spec;
+
+                compile_unit_sp.reset(new CompileUnit (module_sp,
+                                                       curr_cu,
                                                        cu_file_spec, 
                                                        MakeUserID(curr_cu->GetOffset()),
                                                        cu_language));
@@ -926,7 +934,7 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
         // supposed to be the compile unit itself.
         support_files.Append (*sc.comp_unit);
 
-        return DWARFDebugLine::ParseSupportFiles(get_debug_line_data(), cu_comp_dir, stmt_list, support_files);
+        return DWARFDebugLine::ParseSupportFiles(sc.comp_unit->GetModule(), get_debug_line_data(), cu_comp_dir, stmt_list, support_files);
     }
     return false;
 }

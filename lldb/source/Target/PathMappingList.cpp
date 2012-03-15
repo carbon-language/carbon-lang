@@ -8,13 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
+#include <string.h>
+
 // C++ Includes
 // Other libraries and framework includes
+// Project includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
-// Project includes
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Target/PathMappingList.h"
-#include <string.h>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -22,6 +24,13 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // PathMappingList constructor
 //----------------------------------------------------------------------
+PathMappingList::PathMappingList () :
+    m_pairs (),
+    m_callback (NULL),
+    m_callback_baton (NULL)
+{
+}
+
 PathMappingList::PathMappingList 
 (
     ChangedCallback callback,
@@ -70,6 +79,19 @@ PathMappingList::Append (const ConstString &path,
     m_pairs.push_back(pair(path, replacement));
     if (notify && m_callback)
         m_callback (*this, m_callback_baton);
+}
+
+void
+PathMappingList::Append (const PathMappingList &rhs, bool notify)
+{
+    if (!rhs.m_pairs.empty())
+    {
+        const_iterator pos, end = rhs.m_pairs.end();
+        for (pos = rhs.m_pairs.begin(); pos != end; ++pos)
+            m_pairs.push_back(*pos);
+        if (notify && m_callback)
+            m_callback (*this, m_callback_baton);
+    }
 }
 
 void
@@ -131,14 +153,8 @@ PathMappingList::Clear (bool notify)
         m_callback (*this, m_callback_baton);
 }
 
-size_t
-PathMappingList::GetSize ()
-{
-    return m_pairs.size();
-}
-
 bool
-PathMappingList::RemapPath (const ConstString &path, ConstString &new_path)
+PathMappingList::RemapPath (const ConstString &path, ConstString &new_path) const
 {
     const_iterator pos, end = m_pairs.end();
     for (pos = m_pairs.begin(); pos != end; ++pos)
@@ -153,6 +169,41 @@ PathMappingList::RemapPath (const ConstString &path, ConstString &new_path)
             return true;
         }
     }
+    return false;
+}
+
+bool
+PathMappingList::FindFile (const FileSpec &orig_spec, FileSpec &new_spec) const
+{
+    if (!m_pairs.empty())
+    {
+        char orig_path[PATH_MAX];
+        char new_path[PATH_MAX];
+        const size_t orig_path_len = orig_spec.GetPath (orig_path, sizeof(orig_path));
+        if (orig_path_len > 0)
+        {
+            const_iterator pos, end = m_pairs.end();
+            for (pos = m_pairs.begin(); pos != end; ++pos)
+            {
+                const size_t prefix_len = pos->first.GetLength();
+                
+                if (orig_path_len >= prefix_len)
+                {
+                    if (::strncmp (pos->first.GetCString(), orig_path, prefix_len) == 0)
+                    {
+                        const size_t new_path_len = snprintf(new_path, sizeof(new_path), "%s/%s", pos->second.GetCString(), orig_path + prefix_len);
+                        if (new_path_len < sizeof(new_path))
+                        {
+                            new_spec.SetFile (new_path, true);
+                            if (new_spec.Exists())
+                                return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    new_spec.Clear();
     return false;
 }
 
