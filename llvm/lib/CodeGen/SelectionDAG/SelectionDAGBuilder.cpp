@@ -4561,8 +4561,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     MDNode *Variable = DI.getVariable();
     const Value *Address = DI.getAddress();
-    if (!Address || !DIVariable(Variable).Verify())
+    if (!Address || !DIVariable(Variable).Verify()) {
+      DEBUG(dbgs() << "Dropping debug info for " << DI << "\n");
       return 0;
+    }
 
     // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
     // but do not always have a corresponding SDNode built.  The SDNodeOrder
