@@ -4024,36 +4024,40 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         Use &U = UI.getUse();
         unsigned OperandNo = UI.getOperandNo();
         ++UI; // Increment UI now, because we may unlink its element.
-        if (Instruction *UserInst = dyn_cast<Instruction>(U.getUser()))
-          if (Inst != UserInst && DT->dominates(Inst, UserInst)) {
-            Changed = true;
-            Instruction *Replacement = Inst;
-            Type *UseTy = U.get()->getType();
-            if (PHINode *PHI = dyn_cast<PHINode>(UserInst)) {
-              // For PHI nodes, insert the bitcast in the predecessor block.
-              unsigned ValNo =
-                PHINode::getIncomingValueNumForOperand(OperandNo);
-              BasicBlock *BB =
-                PHI->getIncomingBlock(ValNo);
-              if (Replacement->getType() != UseTy)
-                Replacement = new BitCastInst(Replacement, UseTy, "",
-                                              &BB->back());
-              for (unsigned i = 0, e = PHI->getNumIncomingValues();
-                   i != e; ++i)
-                if (PHI->getIncomingBlock(i) == BB) {
-                  // Keep the UI iterator valid.
-                  if (&PHI->getOperandUse(
-                        PHINode::getOperandNumForIncomingValue(i)) ==
-                        &UI.getUse())
-                    ++UI;
-                  PHI->setIncomingValue(i, Replacement);
-                }
-            } else {
-              if (Replacement->getType() != UseTy)
-                Replacement = new BitCastInst(Replacement, UseTy, "", UserInst);
-              U.set(Replacement);
-            }
+        Instruction *UserInst = dyn_cast<Instruction>(U.getUser());
+        if (!UserInst)
+          continue;
+        // FIXME: dominates should return true for unreachable UserInst.
+        if (!DT->isReachableFromEntry(UserInst->getParent()) ||
+            DT->dominates(Inst, UserInst)) {
+          Changed = true;
+          Instruction *Replacement = Inst;
+          Type *UseTy = U.get()->getType();
+          if (PHINode *PHI = dyn_cast<PHINode>(UserInst)) {
+            // For PHI nodes, insert the bitcast in the predecessor block.
+            unsigned ValNo =
+              PHINode::getIncomingValueNumForOperand(OperandNo);
+            BasicBlock *BB =
+              PHI->getIncomingBlock(ValNo);
+            if (Replacement->getType() != UseTy)
+              Replacement = new BitCastInst(Replacement, UseTy, "",
+                                            &BB->back());
+            for (unsigned i = 0, e = PHI->getNumIncomingValues();
+                 i != e; ++i)
+              if (PHI->getIncomingBlock(i) == BB) {
+                // Keep the UI iterator valid.
+                if (&PHI->getOperandUse(
+                      PHINode::getOperandNumForIncomingValue(i)) ==
+                    &UI.getUse())
+                  ++UI;
+                PHI->setIncomingValue(i, Replacement);
+              }
+          } else {
+            if (Replacement->getType() != UseTy)
+              Replacement = new BitCastInst(Replacement, UseTy, "", UserInst);
+            U.set(Replacement);
           }
+        }
       }
 
       // If Arg is a no-op casted pointer, strip one level of casts and
