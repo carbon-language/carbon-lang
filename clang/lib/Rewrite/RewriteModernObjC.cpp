@@ -1845,12 +1845,45 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
 
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
+    VarDecl *catchDecl = Catch->getCatchParamDecl();
     
     startLoc = Catch->getLocStart();
-    startBuf = SM->getCharacterData(startLoc);
-    assert((*startBuf == '@') && "bogus @catch location");
-    // @catch -> catch
-    ReplaceText(startLoc, 1, "");
+    bool AtRemoved = false;
+    if (catchDecl) {
+      QualType t = catchDecl->getType();
+      if (const ObjCObjectPointerType *Ptr = t->getAs<ObjCObjectPointerType>()) {
+        // Should be a pointer to a class.
+        ObjCInterfaceDecl *IDecl = Ptr->getObjectType()->getInterface();
+        if (IDecl) {
+          std::string Result;
+          startBuf = SM->getCharacterData(startLoc);
+          assert((*startBuf == '@') && "bogus @catch location");
+          SourceLocation rParenLoc = Catch->getRParenLoc();
+          const char *rParenBuf = SM->getCharacterData(rParenLoc);
+          
+          // _objc_exc_Foo *_e as argument to catch.
+          Result = "catch (_objc_exc_"; Result += IDecl->getNameAsString();
+          Result += " *_"; Result += catchDecl->getNameAsString();
+          Result += ")";
+          ReplaceText(startLoc, rParenBuf-startBuf+1, Result);
+          // Foo *e = (Foo *)_e;
+          Result.clear();
+          Result = "{ ";
+          Result += IDecl->getNameAsString();
+          Result += " *"; Result += catchDecl->getNameAsString();
+          Result += " = ("; Result += IDecl->getNameAsString(); Result += "*)";
+          Result += "_"; Result += catchDecl->getNameAsString();
+          
+          Result += "; ";
+          SourceLocation lBraceLoc = Catch->getCatchBody()->getLocStart();
+          ReplaceText(lBraceLoc, 1, Result);
+          AtRemoved = true;
+        }
+      }
+    }
+    if (!AtRemoved)
+      // @catch -> catch
+      ReplaceText(startLoc, 1, "");
       
   }
   return 0;
