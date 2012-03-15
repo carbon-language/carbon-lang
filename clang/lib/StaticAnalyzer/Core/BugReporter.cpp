@@ -1255,6 +1255,9 @@ void BugReport::markInteresting(SymbolRef sym) {
   if (!sym)
     return;
   interestingSymbols.insert(sym);  
+
+  if (const SymbolMetadata *meta = dyn_cast<SymbolMetadata>(sym))
+    interestingRegions.insert(meta->getRegion());
 }
 
 void BugReport::markInteresting(const MemRegion *R) {
@@ -1262,7 +1265,7 @@ void BugReport::markInteresting(const MemRegion *R) {
     return;
   R = R->getBaseRegion();
   interestingRegions.insert(R);
-  
+
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
     interestingSymbols.insert(SR->getSymbol());
 }
@@ -1279,6 +1282,8 @@ bool BugReport::isInteresting(SVal V) const {
 bool BugReport::isInteresting(SymbolRef sym) const {
   if (!sym)
     return false;
+  // We don't currently consider metadata symbols to be interesting
+  // even if we know their region is interesting. Is that correct behavior?
   return interestingSymbols.count(sym);
 }
 
