@@ -36,9 +36,7 @@ TypeResult Parser::ParseTypeName(SourceRange *Range,
                                  Declarator::TheContext Context,
                                  AccessSpecifier AS,
                                  Decl **OwnedType) {
-  DeclSpecContext DSC = DSC_normal;
-  if (Context == Declarator::TrailingReturnContext)
-    DSC = DSC_trailing;
+  DeclSpecContext DSC = getDeclSpecContextFromDeclaratorContext(Context);
 
   // Parse the common declaration-specifiers piece.
   DeclSpec DS(AttrFactory);
@@ -1629,6 +1627,8 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
     return DSC_class;
   if (Context == Declarator::FileContext)
     return DSC_top_level;
+  if (Context == Declarator::TrailingReturnContext)
+    return DSC_trailing;
   return DSC_normal;
 }
 
