@@ -20,17 +20,10 @@
 #include "cxa_default_handlers.hpp"
 #include "private_typeinfo.h"
 
+std::new_handler __cxa_new_handler = 0;
+
 namespace std
 {
-
-
-unexpected_handler
-set_unexpected(unexpected_handler func) _NOEXCEPT
-{
-    if (func == 0)
-        func = default_unexpected_handler;
-    return __sync_lock_test_and_set(&__cxxabiapple::__cxa_unexpected_handler, func);
-}
 
 unexpected_handler
 get_unexpected() _NOEXCEPT
@@ -52,14 +45,6 @@ void
 unexpected()
 {
     __unexpected(get_unexpected());
-}
-
-terminate_handler
-set_terminate(terminate_handler func) _NOEXCEPT
-{
-    if (func == 0)
-        func = default_terminate_handler;
-    return __sync_lock_test_and_set(&__cxxabiapple::__cxa_terminate_handler, func);
 }
 
 terminate_handler
