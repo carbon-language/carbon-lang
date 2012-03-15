@@ -583,7 +583,7 @@ bool FastISel::SelectCall(const User *I) {
     }
 
     const Value *Address = DI->getAddress();
-    if (!Address || isa<UndefValue>(Address) || isa<AllocaInst>(Address)) {
+    if (!Address || isa<UndefValue>(Address)) {
       DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
       return true;
     }
