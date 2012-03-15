@@ -434,9 +434,11 @@ void InlineCostAnalyzer::FunctionInfo::countCodeReductionForPointerPair(
         = PointerArgs.find(OtherArg);
       if (ArgIt == PointerArgs.end())
         continue;
-      assert(ArgIt->second < ArgIdx);
+      std::pair<unsigned, unsigned> ArgPair(ArgIt->second, ArgIdx);
+      if (ArgIt->second > ArgIdx)
+        std::swap(ArgPair.first, ArgPair.second);
 
-      PointerArgPairWeights[std::make_pair(ArgIt->second, ArgIdx)]
+      PointerArgPairWeights[ArgPair]
         += countCodeReductionForConstant(Metrics, I);
     }
   } while (!Worklist.empty());
