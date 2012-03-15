@@ -985,7 +985,6 @@ class ClastStmtCodeGen {
   DominatorTree *DT;
   ScopDetection *SD;
   Dependences *DP;
-  TargetData *TD;
   Pass *P;
 
   // The Builder specifies the current location to code generate at.
@@ -1091,6 +1090,8 @@ public:
 
   void addParameters(const CloogNames *names);
 
+  IntegerType *getIntPtrTy();
+
   public:
   void codegen(const clast_root *r);
 
@@ -1100,20 +1101,23 @@ public:
 };
 }
 
+IntegerType *ClastStmtCodeGen::getIntPtrTy() {
+  return P->getAnalysis<TargetData>().getIntPtrType(Builder.getContext());
+}
+
 const std::vector<std::string> &ClastStmtCodeGen::getParallelLoops() {
   return parallelLoops;
 }
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a) {
-  Value *V= ExpGen.codegen(a->RHS, TD->getIntPtrType(Builder.getContext()));
+  Value *V= ExpGen.codegen(a->RHS, getIntPtrTy());
   (*clastVars)[a->LHS] = V;
 }
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a, ScopStmt *Statement,
                                unsigned Dimension, int vectorDim,
                                std::vector<ValueMapT> *VectorVMap) {
-  Value *RHS = ExpGen.codegen(a->RHS,
-                              TD->getIntPtrType(Builder.getContext()));
+  Value *RHS = ExpGen.codegen(a->RHS, getIntPtrTy());
 
   assert(!a->LHS && "Statement assignments do not have left hand side");
   const PHINode *PN;
@@ -1180,12 +1184,9 @@ void ClastStmtCodeGen::codegen(const clast_block *b) {
 void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
                                             Value *LowerBound,
                                             Value *UpperBound) {
-  APInt Stride;
   BasicBlock *AfterBB;
-  Type *IntPtrTy;
-
-  Stride = APInt_from_MPZ(f->stride);
-  IntPtrTy = TD->getIntPtrType(Builder.getContext());
+  Type *IntPtrTy = getIntPtrTy();
+  APInt Stride = APInt_from_MPZ(f->stride);
 
   // The value of lowerbound and upperbound will be supplied, if this
   // function is called while generating OpenMP code. Otherwise get
@@ -1290,9 +1291,9 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
                                                 const clast_for *f,
                                                 Value *structData,
                                                 SetVector<Value*> OMPDataVals) {
+  Type *IntPtrTy = getIntPtrTy();
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
   LLVMContext &Context = FN->getContext();
-  IntegerType *intPtrTy = TD->getIntPtrType(Context);
 
   // Store the previous basic block.
   BasicBlock::iterator PrevInsertPoint = Builder.GetInsertPoint();
@@ -1312,10 +1313,8 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
 
   // Fill up basic block HeaderBB.
   Builder.SetInsertPoint(HeaderBB);
-  Value *lowerBoundPtr = Builder.CreateAlloca(intPtrTy, 0,
-                                              "omp.lowerBoundPtr");
-  Value *upperBoundPtr = Builder.CreateAlloca(intPtrTy, 0,
-                                              "omp.upperBoundPtr");
+  Value *lowerBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.lowerBoundPtr");
+  Value *upperBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.upperBoundPtr");
   Value *userContext = Builder.CreateBitCast(FN->arg_begin(),
                                              structData->getType(),
                                              "omp.userContext");
@@ -1341,7 +1340,7 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
 
   // Subtract one as the upper bound provided by openmp is a < comparison
   // whereas the codegenForSequential function creates a <= comparison.
-  upperBound = Builder.CreateSub(upperBound, ConstantInt::get(intPtrTy, 1),
+  upperBound = Builder.CreateSub(upperBound, ConstantInt::get(IntPtrTy, 1),
                                  "omp.upperBoundAdjusted");
 
   // Use clastVarsOMP during code generation of the OpenMP subfunction.
@@ -1369,7 +1368,7 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
 
 void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  IntegerType *IntPtrTy = TD->getIntPtrType(Builder.getContext());
+  IntegerType *IntPtrTy = getIntPtrTy();
 
   Function *SubFunction = addOpenMPSubfunction(M);
   SetVector<Value*> OMPDataVals = createOpenMPStructValues();
@@ -1459,8 +1458,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *f) {
   DEBUG(dbgs() << "Vectorizing loop '" << f->iterator << "'\n";);
   int vectorWidth = getNumberOfIterations(f);
 
-  Value *LB = ExpGen.codegen(f->LB,
-                             TD->getIntPtrType(Builder.getContext()));
+  Value *LB = ExpGen.codegen(f->LB, getIntPtrTy());
 
   APInt Stride = APInt_from_MPZ(f->stride);
   IntegerType *LoopIVType = dyn_cast<IntegerType>(LB->getType());
@@ -1513,10 +1511,8 @@ void ClastStmtCodeGen::codegen(const clast_for *f) {
 }
 
 Value *ClastStmtCodeGen::codegen(const clast_equation *eq) {
-  Value *LHS = ExpGen.codegen(eq->LHS,
-                              TD->getIntPtrType(Builder.getContext()));
-  Value *RHS = ExpGen.codegen(eq->RHS,
-                              TD->getIntPtrType(Builder.getContext()));
+  Value *LHS = ExpGen.codegen(eq->LHS, getIntPtrTy());
+  Value *RHS = ExpGen.codegen(eq->RHS, getIntPtrTy());
   CmpInst::Predicate P;
 
   if (eq->sign == 0)
@@ -1619,7 +1615,7 @@ ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, ScalarEvolution &se,
                                    DominatorTree *dt, ScopDetection *sd,
                                    Dependences *dp, TargetData *td,
                                   IRBuilder<> &B, Pass *P) :
-    S(scop), SE(se), DT(dt), SD(sd), DP(dp), TD(td), P(P), Builder(B),
+    S(scop), SE(se), DT(dt), SD(sd), DP(dp), P(P), Builder(B),
     ExpGen(Builder, NULL) {}
 
 namespace {
