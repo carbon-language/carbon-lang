@@ -1287,7 +1287,6 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
     {
         CFDictionaryRef dict = NULL;
         OSStatus osStatus;
-        const char *rightName = "com.apple.lldb.LaunchUsingXPC";
         
         AuthorizationFlags authorizationFlags = kAuthorizationFlagDefaults;
         if (!authorizationRef)
@@ -1296,17 +1295,15 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
             if (osStatus != errAuthorizationSuccess)
             {
                 error.SetError(1, eErrorTypeGeneric);
+                error.SetErrorString("Can't create authorizationRef.");
                 if (log)
                 {
-                    error.PutToLog(log.get(), "Can't create authorizationRef.");
-                }
-                else {
-                    error.SetErrorString("Can't create authorizationRef.");
+                    error.PutToLog(log.get(), "%s", error.AsCString());
                 }
                 return error;
             }
-
-            osStatus = AuthorizationRightGet(rightName, &dict);
+            
+            osStatus = AuthorizationRightGet(LaunchUsingXPCRightName, &dict);
             if (dict) CFRelease(dict);
             if (osStatus != errAuthorizationSuccess)
             {
@@ -1317,16 +1314,16 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
                 CFTypeRef values[] = { prompt };
                 CFDictionaryRef promptDict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys, (const void **)values, 1, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
                 
-                CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),                       CFSTR("default-prompt"), CFSTR("shared") };
-                CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR("com.apple.lldb.LaunchUsingXPC"), promptDict,              kCFBooleanFalse };
+                CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),               CFSTR("default-prompt"), CFSTR("shared") };
+                CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR(LaunchUsingXPCRightName), promptDict,              kCFBooleanFalse };
                 dict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys1, (const void **)values1, 5, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-                osStatus = AuthorizationRightSet(authorizationRef, rightName, dict, NULL, NULL, NULL);
+                osStatus = AuthorizationRightSet(authorizationRef, LaunchUsingXPCRightName, dict, NULL, NULL, NULL);
                 CFRelease(promptDict);
                 CFRelease(dict);
             }
         }
   
-        AuthorizationItem item1 = { rightName, 0, NULL, 0 };
+        AuthorizationItem item1 = { LaunchUsingXPCRightName, 0, NULL, 0 };
         AuthorizationItem items[] = {item1};
         AuthorizationRights requestedRights = {1, items };
         authorizationFlags = kAuthorizationFlagInteractionAllowed | kAuthorizationFlagExtendRights;
@@ -1337,13 +1334,10 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
             // logged in in the current audit session, we will need the trick in gdb where
             // we ask the user to type in the root passwd in the terminal.
             error.SetError(2, eErrorTypeGeneric);
+            error.SetErrorStringWithFormat("Launching as root needs root authorization.");
             if (log)
             {
-                error.PutToLog(log.get(), "Launching as root needs root authorization.");
-            }
-            else
-            {
-                error.SetErrorStringWithFormat("Launching as root needs root authorization.");
+                error.PutToLog(log.get(), "%s", error.AsCString());
             }
         }
     }
@@ -1364,24 +1358,37 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         
     uid_t requested_uid = launch_info.GetUserID();
     const char *xpc_service  = nil;
+    bool send_auth = false;
+    AuthorizationExternalForm extForm;
     if ((requested_uid == UINT32_MAX) || (requested_uid == Host::GetEffectiveUserID()))
     {
         xpc_service = "com.apple.lldb.launcherXPCService";
     }
     else if (requested_uid == 0)
     {
+        if (AuthorizationMakeExternalForm(authorizationRef, &extForm) == errAuthorizationSuccess)
+        {
+            send_auth = true;
+        }
+        else
+        {
+            error.SetError(2, eErrorTypeGeneric);
+            error.SetErrorStringWithFormat("Launching root via XPC needs to externalize authorization reference.");
+            if (log)
+            {
+                error.PutToLog(log.get(), "%s", error.AsCString());
+            }
+            return error;
+        }
         xpc_service = "com.apple.lldb.launcherRootXPCService";
     }
     else
     {
-        error.SetError(2, eErrorTypeGeneric);
+        error.SetError(3, eErrorTypeGeneric);
+        error.SetErrorStringWithFormat("Launching via XPC is only currently available for either the login user or root.");
         if (log)
         {
-            error.PutToLog(log.get(), "Launching via XPC is only currently available for either the login user or root.");
-        }
-        else
-        {
-            error.SetErrorStringWithFormat("Launching via XPC is only currently available for either the login user or root.");
+            error.PutToLog(log.get(), "%s", error.AsCString());
         }
         return error;
     }
@@ -1415,6 +1422,11 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
 	xpc_connection_resume (conn);
     xpc_object_t message = xpc_dictionary_create (nil, nil, 0);
     
+    if (send_auth)
+    {
+        xpc_dictionary_set_data(message, LauncherXPCServiceAuthKey, extForm.bytes, sizeof(AuthorizationExternalForm));
+    }
+    
     PackageXPCArguments(message, LauncherXPCServiceArgPrefxKey, launch_info.GetArguments());
     PackageXPCArguments(message, LauncherXPCServiceEnvPrefxKey, launch_info.GetEnvironmentEntries());
     
@@ -1431,12 +1443,10 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         int errorCode = xpc_dictionary_get_int64(reply, LauncherXPCServiceCodeTypeKey);
         
         error.SetError(errorCode, eErrorTypeGeneric);
+        error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
         if (log)
         {
-            error.PutToLog(log.get(), "Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
-        }
-        else {
-            error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
+            error.PutToLog(log.get(), "%s", error.AsCString());
         }
     }
     
