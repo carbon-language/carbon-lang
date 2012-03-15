@@ -2313,6 +2313,8 @@ const ASTRecordLayout &
 ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
                           const ObjCImplementationDecl *Impl) const {
   // Retrieve the definition
+  if (D->hasExternalLexicalStorage() && !D->getDefinition())
+    getExternalSource()->CompleteType(const_cast<ObjCInterfaceDecl*>(D));
   D = D->getDefinition();
   assert(D && D->isThisDeclarationADefinition() && "Invalid interface decl!");
 
