@@ -53,14 +53,10 @@ namespace test2 {
   };
 }
 
-// This file tests -Wnull-conversion, a subcategory of -Wconversion
-// which is on by default.
-
 void test3() {
   int a = NULL; // expected-warning {{implicit conversion of NULL constant to integer}}
   int b;
   b = NULL; // expected-warning {{implicit conversion of NULL constant to integer}}
-  long l = NULL; // FIXME: this should also warn, but currently does not if sizeof(NULL)==sizeof(inttype)
   int c = ((((NULL)))); // expected-warning {{implicit conversion of NULL constant to integer}}
   int d;
   d = ((((NULL)))); // expected-warning {{implicit conversion of NULL constant to integer}}
