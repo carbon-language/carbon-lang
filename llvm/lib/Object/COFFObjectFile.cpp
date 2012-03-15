@@ -311,7 +311,8 @@ error_code COFFObjectFile::getSectionName(DataRefImpl Sec,
   // Check for string table entry. First byte is '/'.
   if (name[0] == '/') {
     uint32_t Offset;
-    name.substr(1).getAsInteger(10, Offset);
+    if (name.substr(1).getAsInteger(10, Offset))
+      return object_error::parse_failed;
     if (error_code ec = getString(Offset, name))
       return ec;
   }
