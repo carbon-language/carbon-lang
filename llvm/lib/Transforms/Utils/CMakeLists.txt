@@ -1,7 +1,6 @@
 add_llvm_library(LLVMTransformUtils
   AddrModeMatcher.cpp
   BasicBlockUtils.cpp
-  BasicInliner.cpp
   BreakCriticalEdges.cpp
   BuildLibCalls.cpp
   CloneFunction.cpp
