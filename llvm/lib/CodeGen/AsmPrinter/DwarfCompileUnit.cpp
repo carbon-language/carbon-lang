@@ -1007,6 +1007,14 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
 
+  // Unfortunately this code needs to stay here to work around
+  // a bug in older gdbs that requires the linkage name to resolve
+  // multiple template functions.
+  StringRef LinkageName = SP.getLinkageName();
+  if (!LinkageName.empty())
+    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
+              getRealLinkageName(LinkageName));
+
   // If this DIE is going to refer declaration info using AT_specification
   // then there is no need to add other attributes.
   if (DeclDie) {
@@ -1016,11 +1024,6 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
     return SPDie;
   }
-
-  StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty())
-    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-              getRealLinkageName(LinkageName));
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
