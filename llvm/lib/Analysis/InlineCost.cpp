@@ -435,7 +435,7 @@ void InlineCostAnalyzer::FunctionInfo::countCodeReductionForPointerPair(
       if (ArgIt == PointerArgs.end())
         continue;
       std::pair<unsigned, unsigned> ArgPair(ArgIt->second, ArgIdx);
-      if (ArgIt->second > ArgIdx)
+      if (ArgPair.first > ArgPair.second)
         std::swap(ArgPair.first, ArgPair.second);
 
       PointerArgPairWeights[ArgPair]
