@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -Wformat-nonliteral -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -Wformat-nonliteral -fsyntax-only -fblocks -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -176,3 +176,13 @@ void test_toll_free_bridging(CFStringRef x) {
 }
 
 @end
+
+
+// Test that it is okay to use %p with the address of a block.
+void rdar11049844_aux();
+int rdar11049844() {
+  typedef void (^MyBlock)(void);
+  MyBlock x = ^void() { rdar11049844_aux(); };
+  printf("%p", x);  // no-warning
+}
+
