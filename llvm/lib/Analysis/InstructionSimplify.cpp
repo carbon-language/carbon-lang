@@ -673,13 +673,11 @@ static bool accumulateGEPOffset(const TargetData &TD, GEPOperator *GEP,
     if (StructType *STy = dyn_cast<StructType>(*GTI)) {
       unsigned ElementIdx = OpC->getZExtValue();
       const StructLayout *SL = TD.getStructLayout(STy);
-      Offset += APInt(IntPtrWidth, SL->getElementOffset(ElementIdx),
-                      /*isSigned=*/true);
+      Offset += APInt(IntPtrWidth, SL->getElementOffset(ElementIdx));
       continue;
     }
 
-    APInt TypeSize(IntPtrWidth, TD.getTypeAllocSize(GTI.getIndexedType()),
-                   /*isSigned=*/true);
+    APInt TypeSize(IntPtrWidth, TD.getTypeAllocSize(GTI.getIndexedType()));
     Offset += OpC->getValue().sextOrTrunc(IntPtrWidth) * TypeSize;
   }
   return true;
