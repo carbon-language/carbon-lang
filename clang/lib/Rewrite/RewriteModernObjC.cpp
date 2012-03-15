@@ -2991,7 +2991,8 @@ QualType RewriteModernObjC::getProtocolType() {
 /// The forward references (and metadata) are generated in
 /// RewriteModernObjC::HandleTranslationUnit().
 Stmt *RewriteModernObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
-  std::string Name = "_OBJC_PROTOCOL_" + Exp->getProtocol()->getNameAsString();
+  std::string Name = "_OBJC_PROTOCOL_REFERENCE_$_" + 
+                      Exp->getProtocol()->getNameAsString();
   IdentifierInfo *ID = &Context->Idents.get(Name);
   VarDecl *VD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
                                 SourceLocation(), ID, getProtocolType(), 0,
@@ -4971,6 +4972,23 @@ void RewriteModernObjC::HandleDeclInMainFile(Decl *D) {
   // Nothing yet.
 }
 
+/// Write_ProtocolExprReferencedMetadata - This routine writer out the
+/// protocol reference symbols in the for of:
+/// struct _protocol_t *PROTOCOL_REF = &PROTOCOL_METADATA.
+static void Write_ProtocolExprReferencedMetadata(ASTContext *Context, 
+                                                 ObjCProtocolDecl *PDecl,
+                                                 std::string &Result) {
+  // Also output .objc_protorefs$B section and its meta-data.
+  if (Context->getLangOpts().MicrosoftExt)
+    Result += "__declspec(allocate(\".objc_protorefs$B\")) ";
+  Result += "struct _protocol_t *";
+  Result += "_OBJC_PROTOCOL_REFERENCE_$_";
+  Result += PDecl->getNameAsString();
+  Result += " = &";
+  Result += "_OBJC_PROTOCOL_"; Result += PDecl->getNameAsString();
+  Result += ";\n";
+}
+
 void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
   if (Diags.hasErrorOccurred())
     return;
@@ -4980,8 +4998,10 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
   // Here's a great place to add any extra declarations that may be needed.
   // Write out meta data for each @protocol(<expr>).
   for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
-       E = ProtocolExprDecls.end(); I != E; ++I)
+       E = ProtocolExprDecls.end(); I != E; ++I) {
     RewriteObjCProtocolMetaData(*I, Preamble);
+    Write_ProtocolExprReferencedMetadata(Context, (*I), Preamble);
+  }
 
   InsertText(SM->getLocForStartOfFile(MainFileID), Preamble, false);
   for (unsigned i = 0, e = ObjCInterfacesSeen.size(); i < e; i++) {
@@ -5046,21 +5066,19 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#pragma section(\".objc_imageinfo$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_nlclslist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_nlcatlist$B\", long, read, write)\n";
-    
-    // These need be generated. But they are not,using API calls instead.
-    Preamble += "#pragma section(\".objc_selrefs$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".objc_classrefs$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".objc_superrefs$B\", long, read, write)\n";
-    
     Preamble += "#pragma section(\".objc_protorefs$B\", long, read, write)\n";
-    
-    
     // These are generated but not necessary for functionality.
     Preamble += "#pragma section(\".datacoal_nt$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cat_cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_ivar$B\", long, read, write)\n";
+    
+    // These need be generated for performance. Currently they are not,
+    // using API calls instead.
+    Preamble += "#pragma section(\".objc_selrefs$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_classrefs$B\", long, read, write)\n";
+    Preamble += "#pragma section(\".objc_superrefs$B\", long, read, write)\n";
     
     // Add a constructor for creating temporary objects.
     Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) "
@@ -5935,7 +5953,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   Result += "\n";
   if (LangOpts.MicrosoftExt)
     Result += "__declspec(allocate(\".datacoal_nt$B\")) ";
-  Result += "static struct _protocol_t _OBJC_PROTOCOL_";
+  Result += "struct _protocol_t _OBJC_PROTOCOL_";
   Result += PDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__DATA,__datacoal_nt,coalesced\"))) = {\n";
   Result += "\t0,\n"; // id is; is null
@@ -6317,7 +6335,7 @@ void RewriteModernObjC::WriteImageInfo(std::string &Result) {
   
   Result += "static struct IMAGE_INFO { unsigned version; unsigned flag; } ";
   // version 0, ObjCABI is 2
-  Result += "L_OBJC_IMAGE_INFO = { 0, 2 };\n";
+  Result += "_OBJC_IMAGE_INFO = { 0, 2 };\n";
 }
 
 /// RewriteObjCCategoryImplDecl - Rewrite metadata for each category
