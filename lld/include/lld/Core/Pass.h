@@ -60,6 +60,20 @@ public:
 };
 
 
+///
+/// Pass for adding GOT entries for pointers to functions/data
+/// outside the linkage unit.
+///
+class GOTPass : public Pass {
+public:
+  GOTPass(File& f, Platform& p) : Pass(f, p) {}
+
+  /// Scans all Atoms looking for pointer to SharedLibraryAtoms
+  /// and transfroms them to a pointer to a GOT entry.
+  virtual void perform();
+};
+
+
 } // namespace lld
 
 #endif // LLD_CORE_PASS_H_

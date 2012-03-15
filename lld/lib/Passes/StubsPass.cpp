@@ -8,15 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 //
-// This linker pass is 
-//
-//
-//
+// This linker pass updates call sites which have references to shared library
+// atoms to instead have a reference to a stub (PLT entry) for the specified
+// symbol.  The platform object does the work of creating the platform-specific
+// StubAtom.
 //
 
 
 #include "llvm/ADT/DenseMap.h"
 
+#include "lld/Core/DefinedAtom.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
@@ -26,12 +27,12 @@
 namespace lld {
 
 void StubsPass::perform() {
-  // Skip this pass if output format does not need stubs.
-  if ( !_platform.outputUsesStubs() )
+  // Skip this pass if output format uses text relocations instead of stubs.
+  if ( !_platform.noTextRelocs() )
     return;
   
-  // Use map so all call sites to same shlib symbol use same stub
-  llvm::DenseMap<const SharedLibraryAtom*, const Atom*> shlibToStub;
+  // Use map so all call sites to same shlib symbol use same stub.
+  llvm::DenseMap<const Atom*, const DefinedAtom*> targetToStub;
   
   // Scan all references in all atoms.
   for(auto ait=_file.definedAtomsBegin(), aend=_file.definedAtomsEnd(); 
@@ -40,26 +41,40 @@ void StubsPass::perform() {
     for (auto rit=atom->referencesBegin(), rend=atom->referencesEnd(); 
                                                       rit != rend; ++rit) {
       const Reference* ref = *rit;
-      const Atom* target = ref->target();
-      assert(target != NULL);
-      // If the target of this reference is in a shared library
-      if ( const SharedLibraryAtom* shlbTarget = target->sharedLibraryAtom() ) {
-        // and this is a call to that shared library symbol.
-        if ( _platform.isBranch(ref) ) {
-          const Atom* stub;
-          // Replace the target with a reference to a stub
-          auto pos = shlibToStub.find(shlbTarget);
-          if ( pos == shlibToStub.end() ) {
+      // Look at call-sites.
+      if ( _platform.isCallSite(ref->kind()) ) {
+        const Atom* target = ref->target();
+        assert(target != NULL);
+        bool replaceCalleeWithStub = false;
+        if ( target->definition() == Atom::definitionSharedLibrary ) {
+          // Calls to shared libraries go through stubs.
+          replaceCalleeWithStub = true;
+        }
+        else if ( const DefinedAtom* defTarget = target->definedAtom() ) {
+          if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
+            // Calls to interposable functions in same linkage unit 
+            // must also go through a stub.
+            assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
+            replaceCalleeWithStub = true;
+          }
+        }
+        if ( replaceCalleeWithStub ) {
+          // Replace the reference's target with a stub.
+          const DefinedAtom* stub;
+          auto pos = targetToStub.find(target);
+          if ( pos == targetToStub.end() ) {
             // This is no existing stub.  Create a new one.
-            stub = _platform.makeStub(*shlbTarget, _file);
-            shlibToStub[shlbTarget] = stub;
+            stub = _platform.makeStub(*target, _file);
+            assert(stub != NULL);
+            assert(stub->contentType() == DefinedAtom::typeStub);
+            targetToStub[target] = stub;
           }
           else {
-            // Reuse and existing stub
+            // Reuse an existing stub.
             stub = pos->second;
+            assert(stub != NULL);
           }
-          assert(stub != NULL);
-          // Switch call site in atom to refrence stub instead of shlib atom.
+          // Switch call site to reference stub atom.
           (const_cast<Reference*>(ref))->setTarget(stub);
         }
       }
@@ -67,7 +82,7 @@ void StubsPass::perform() {
   }
   
   // add all created stubs to file
-  for (auto it=shlibToStub.begin(), end=shlibToStub.end(); it != end; ++it) {
+  for (auto it=targetToStub.begin(), end=targetToStub.end(); it != end; ++it) {
     _file.addAtom(*it->second);
   }
   

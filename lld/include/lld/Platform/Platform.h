@@ -102,9 +102,6 @@ public:
   /// @brief last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *>& all) = 0;
   
-  /// If the output being generated uses needs stubs for external calls
-  virtual bool outputUsesStubs() = 0;
-  
   /// Converts a reference kind string to a in-memory numeric value. 
   /// For use with parsing YAML encoded object files.
   virtual Reference::Kind kindFromString(llvm::StringRef) = 0;
@@ -113,13 +110,34 @@ public:
   /// For use with writing YAML encoded object files.
   virtual llvm::StringRef kindToString(Reference::Kind) = 0;
   
-  /// If Reference is a branch instruction that might need to be changed
-  /// to target a stub (PLT entry). 
-  virtual bool isBranch(const Reference*) = 0;
+  /// If true, the linker will use stubs and GOT entries for
+  /// references to shared library symbols. If false, the linker
+  /// will generate relocations on the text segment which the
+  /// runtime loader will use to patch the program at runtime.
+  virtual bool noTextRelocs() = 0;
+  
+  /// Returns if the Reference kind is for a call site.  The "stubs" Pass uses
+  /// this to find calls that need to be indirected through a stub.
+  virtual bool isCallSite(Reference::Kind) = 0;
+
+  /// Returns if the Reference kind is a pre-instantiated GOT access.
+  /// The "got" Pass uses this to figure out what GOT entries to instantiate.
+  virtual bool isGOTAccess(Reference::Kind, bool& canBypassGOT) = 0;
+  
+  /// The platform needs to alter the reference kind from a pre-instantiated 
+  /// GOT access to an actual access.  If targetIsNowGOT is true, the "got" 
+  /// Pass has instantiated a GOT atom and altered the reference's target
+  /// to point to that atom.  If targetIsNowGOT is false, the "got" Pass 
+  /// determined a GOT entry is not needed because the reference site can 
+  /// directly access the target.
+  virtual void updateReferenceToGOT(const Reference*, bool targetIsNowGOT) = 0;
   
   /// Create a platform specific atom which contains a stub/PLT entry 
   /// targeting the specified shared library atom.
-  virtual const Atom* makeStub(const SharedLibraryAtom&, File&) = 0;
+  virtual const DefinedAtom* makeStub(const Atom&, File&) = 0;
+
+  /// Create a platform specific GOT atom. 
+  virtual const DefinedAtom* makeGOTEntry(const Atom&, File&) = 0;
 
 };
 

@@ -150,6 +150,7 @@ static const ContentTypeMapping typeMappings[] = {
   { "data",           DefinedAtom::typeData },
   { "zero-fill",      DefinedAtom::typeZeroFill },
   { "cf-string",      DefinedAtom::typeCFString },
+  { "got",            DefinedAtom::typeGOT },
   { "initializer-ptr",DefinedAtom::typeInitializerPtr },
   { "terminator-ptr", DefinedAtom::typeTerminatorPtr },
   { "c-string-ptr",   DefinedAtom::typeCStringPtr },

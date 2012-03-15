@@ -305,6 +305,9 @@ public:
       for (unsigned int i=0; i < arr.size(); ++i) {
         if ( needComma )
           out  << ", ";
+        if ( ((i % 12) == 0) && (i != 0) ) {
+          out << "\n                           ";
+        }
         out  << hexdigit(arr[i] >> 4);
         out  << hexdigit(arr[i] & 0x0F);
         needComma = true;

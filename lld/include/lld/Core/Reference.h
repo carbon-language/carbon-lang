@@ -39,6 +39,10 @@ public:
   /// What sort of reference this is. 
   virtual Kind kind() const = 0;
   
+  /// During linking, some optimizations may change the code gen and
+  /// hence the reference kind.
+  virtual void setKind(Kind) = 0;
+  
   /// If the reference is a fixup in the Atom, then this returns the 
   /// byte offset into the Atom's content to do the fix up.
   virtual uint64_t offsetInAtom() const = 0;

@@ -54,11 +54,11 @@ namespace {
 
 
 //
-// Simple atoms created by the stubs pass.
+// Simple atom created by the stubs pass.
 //
 class TestingStubAtom : public DefinedAtom {
 public:
-        TestingStubAtom(const File& f, const SharedLibraryAtom& shlib) :
+        TestingStubAtom(const File& f, const Atom& shlib) :
                         _file(f), _shlib(shlib) {
           static uint32_t lastOrdinal = 0;
           _ordinal = lastOrdinal++; 
@@ -145,10 +145,108 @@ public:
   
 private:
   const File&               _file;
-  const SharedLibraryAtom&  _shlib;
+  const Atom&               _shlib;
   uint32_t                  _ordinal;
 };
 
+
+
+
+//
+// Simple atom created by the GOT pass.
+//
+class TestingGOTAtom : public DefinedAtom {
+public:
+        TestingGOTAtom(const File& f, const Atom& shlib) :
+                        _file(f), _shlib(shlib) {
+          static uint32_t lastOrdinal = 0;
+          _ordinal = lastOrdinal++; 
+        }
+
+  virtual const File& file() const {
+    return _file;
+  }
+
+  virtual llvm::StringRef name() const {
+    return llvm::StringRef();
+  }
+  
+  virtual uint64_t ordinal() const {
+    return _ordinal;
+  }
+
+  virtual uint64_t size() const {
+    return 0;
+  }
+
+  virtual Scope scope() const {
+    return DefinedAtom::scopeLinkageUnit;
+  }
+  
+  virtual Interposable interposable() const {
+    return DefinedAtom::interposeNo;
+  }
+  
+  virtual Merge merge() const {
+    return DefinedAtom::mergeNo;
+  }
+  
+  virtual ContentType contentType() const  {
+    return DefinedAtom::typeGOT;
+  }
+
+  virtual Alignment alignment() const {
+    return Alignment(3,0);
+  }
+  
+  virtual SectionChoice sectionChoice() const {
+    return DefinedAtom::sectionBasedOnContent;
+  }
+    
+  virtual llvm::StringRef customSectionName() const {
+    return llvm::StringRef();
+  }
+  virtual DeadStripKind deadStrip() const {
+    return DefinedAtom::deadStripNormal;
+  }
+    
+  virtual ContentPermissions permissions() const  {
+    return DefinedAtom::permRW_;
+  }
+  
+  virtual bool isThumb() const {
+    return false;
+  }
+    
+  virtual bool isAlias() const {
+    return false;
+  }
+  
+  virtual llvm::ArrayRef<uint8_t> rawContent() const {
+    return llvm::ArrayRef<uint8_t>();
+  }
+  
+  virtual reference_iterator referencesBegin() const {
+    return reference_iterator(*this, NULL);
+  }
+  
+  virtual reference_iterator referencesEnd() const {
+    return reference_iterator(*this, NULL);
+  }
+  
+  virtual const Reference* derefIterator(const void* iter) const {
+    return NULL;
+  }
+  
+  virtual void incrementIterator(const void*& iter) const {
+  
+  }
+  
+private:
+  const File&               _file;
+  const Atom&               _shlib;
+  uint32_t                  _ordinal;
+};
 
 //
 // A simple platform for testing.
@@ -251,14 +349,14 @@ public:
 
   // last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *> &all) {}
-
-  virtual bool outputUsesStubs() { return true; };
   
 
   struct KindMapping {
     const char*           string;
     Reference::Kind       value;
     bool                  isBranch;
+    bool                  isGotLoad;
+    bool                  isGotUse;
   };
 
   static const KindMapping _s_kindMappings[]; 
@@ -282,19 +380,45 @@ public:
     return llvm::StringRef("???");
   }
 
-
-  virtual bool isBranch(const Reference* ref) { 
-    Reference::Kind value = ref->kind();
+  virtual bool noTextRelocs() {
+    return true;
+  }
+  
+  virtual bool isCallSite(Reference::Kind kind) {
     for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
-      if ( value == p->value )
+      if ( kind == p->value )
         return p->isBranch;
     }
     return false;
   }
+
+  virtual bool isGOTAccess(Reference::Kind kind, bool& canBypassGOT) {
+    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+      if ( kind == p->value ) {
+        canBypassGOT = p->isGotLoad;
+        return p->isGotUse;
+      }
+    }
+    return false;
+  }
   
-  virtual const Atom* makeStub(const SharedLibraryAtom& shlibAtom, File& file) {
+  virtual void updateReferenceToGOT(const Reference* ref, bool targetIsNowGOT) {
+    if ( targetIsNowGOT )
+      (const_cast<Reference*>(ref))->setKind(kindFromString("pcrel32"));
+    else
+      (const_cast<Reference*>(ref))->setKind(kindFromString("lea32wasGot"));
+  }
+
+
+
+  virtual const DefinedAtom* makeStub(const Atom& shlibAtom, File& file) {
     return new TestingStubAtom(file, shlibAtom);
   }
+  
+  virtual const DefinedAtom* makeGOTEntry(const Atom& shlibAtom, File& file) {
+    return new TestingGOTAtom(file, shlibAtom);
+  }
+
 };
 
 
@@ -302,11 +426,14 @@ public:
 // Table of fixup kinds in YAML documents used for testing
 //
 const TestingPlatform::KindMapping TestingPlatform::_s_kindMappings[] = {
-    { "call32",         1,    true },
-    { "pcrel32",        2,    false },
-    { "gotLoad32",      3,    false },
-    { NULL,             0,    false }
+    { "call32",         1,    true,  false, false},
+    { "pcrel32",        2,    false, false, false },
+    { "gotLoad32",      3,    false, true,  true },
+    { "gotUse32",       4,    false, false, true },
+    { "lea32wasGot",    5,    false, false, false },
+    { NULL,             0,    false, false, false }
   };
+
 
 
 //
@@ -372,6 +499,9 @@ llvm::cl::opt<bool>
 gDoStubsPass("stubs_pass", 
           llvm::cl::desc("Run pass to create stub atoms"));
 
+llvm::cl::opt<bool> 
+gDoGotPass("got_pass", 
+          llvm::cl::desc("Run pass to create GOT atoms"));
 
 int main(int argc, char *argv[]) {
   // Print a stack trace if we signal out.
@@ -400,10 +530,15 @@ int main(int argc, char *argv[]) {
   resolver.resolve();
 
   // run passes
+  if ( gDoGotPass ) {
+    GOTPass  addGot(resolver.resultFile(), testingPlatform);
+    addGot.perform();
+  }
   if ( gDoStubsPass ) {
     StubsPass  addStubs(resolver.resultFile(), testingPlatform);
     addStubs.perform();
   }
+
   
   // write new atom graph out as YAML doc
   std::string errorInfo;

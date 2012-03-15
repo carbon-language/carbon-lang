@@ -200,11 +200,22 @@ public:
     return _ivarData->kind;
   }
   
+  virtual void setKind(Kind);
   virtual const Atom* target() const;
   virtual Addend addend() const;
   virtual void setTarget(const Atom* newAtom);
-   
+
 private:
+  // Used in rare cases when Reference is modified, 
+  // since ivar data is mapped read-only.
+  void cloneIvarData() {
+    // TODO: do nothing on second call
+   NativeReferenceIvarsV1* niv = reinterpret_cast<NativeReferenceIvarsV1*>
+                                (operator new(sizeof(NativeReferenceIvarsV1), 
+                                                                std::nothrow));
+    memcpy(niv, _ivarData, sizeof(NativeReferenceIvarsV1));
+  }
+
   const NativeFile*                 _file;
   const NativeReferenceIvarsV1*     _ivarData;
 };
@@ -783,6 +794,11 @@ inline const Atom* NativeReferenceV1::target() const {
 
 inline Reference::Addend NativeReferenceV1::addend() const {
   return _file->addend(_ivarData->addendIndex);
+}
+
+inline void NativeReferenceV1::setKind(Kind k) {
+  this->cloneIvarData();
+  const_cast<NativeReferenceIvarsV1*>(_ivarData)->kind = k;
 }
 
 inline void NativeReferenceV1::setTarget(const Atom* newAtom) {

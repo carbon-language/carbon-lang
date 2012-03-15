@@ -271,6 +271,10 @@ public:
     return _kind;
   }
   
+  virtual void setKind(Kind k) {
+    _kind = k;
+  }
+
   virtual const Atom* target() const {
     return _target;
   }
