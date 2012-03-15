@@ -1465,8 +1465,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   for (int i = 1; i < VectorWidth; i++)
     IVS[i] = Builder.CreateAdd(IVS[i-1], StrideValue, "p_vector_iv");
 
-  isl_set *ScatteringDomain =
-    isl_set_copy(isl_set_from_cloog_domain(F->domain));
+  isl_set *Domain = isl_set_from_cloog_domain(F->domain);
 
   // Add loop iv to symbols.
   (*clastVars)[F->iterator] = LB;
@@ -1474,12 +1473,13 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   const clast_stmt *Stmt = F->body;
 
   while (Stmt) {
-    codegen((const clast_user_stmt *)Stmt, &IVS, F->iterator, ScatteringDomain);
+    codegen((const clast_user_stmt *)Stmt, &IVS, F->iterator,
+            isl_set_copy(Domain));
     Stmt = Stmt->next;
   }
 
   // Loop is finished, so remove its iv from the live symbols.
-  isl_set_free(ScatteringDomain);
+  isl_set_free(Domain);
   clastVars->erase(F->iterator);
 }
 
