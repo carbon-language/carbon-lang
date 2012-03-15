@@ -18,6 +18,12 @@ class CommandLineCompletionTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f child_send.txt"])
         system(["/bin/sh", "-c", "rm -f child_read.txt"])
 
+    # <rdar://problem/11052829>
+    def test_infinite_loop_while_completing(self):
+        """Test that 'process print hello\' completes to itself and does not infinite loop."""
+        self.complete_from_to('process print hello\\', 'process print hello\\',
+                              turn_off_re_match=True)
+
     def test_watchpoint_set_variable_dash_w(self):
         """Test that 'watchpoint set variable -w' completes to 'watchpoint set variable -w '."""
         self.complete_from_to('watchpoint set variable -w', 'watchpoint set variable -w ')
@@ -121,7 +127,7 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'target va' completes to 'target variable '."""
         self.complete_from_to('target va', 'target variable ')
 
-    def complete_from_to(self, str_input, patterns):
+    def complete_from_to(self, str_input, patterns, turn_off_re_match=False):
         """Test that the completion mechanism completes str_input to patterns,
         where patterns could be a pattern-string or a list of pattern-strings"""
         # Patterns should not be None in order to proceed.
@@ -167,11 +173,16 @@ class CommandLineCompletionTestCase(TestBase):
                 print "\n\nContents of child_read.txt:"
                 print from_child
 
-            # Test that str_input completes to our patterns.
-            # If each pattern matches from_child, the completion mechanism works!
+            # The matching could be verbatim or using generic re pattern.
             for p in patterns:
-                self.expect(from_child, msg=COMPLETIOND_MSG(str_input, p), exe=False,
-                    patterns = [p])
+                # Test that str_input completes to our patterns or substrings.
+                # If each pattern/substring matches from_child, the completion mechanism works!
+                if turn_off_re_match:
+                    self.expect(from_child, msg=COMPLETION_MSG(str_input, p), exe=False,
+                        substrs = [p])
+                else:
+                    self.expect(from_child, msg=COMPLETION_MSG(str_input, p), exe=False,
+                        patterns = [p])
 
 
 if __name__ == '__main__':
