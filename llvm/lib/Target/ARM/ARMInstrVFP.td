@@ -1335,6 +1335,11 @@ def : VFP2MnemonicAlias<"fcmpd", "vcmp.f64">;
 def : VFP2MnemonicAlias<"fdivs", "vdiv.f32">;
 def : VFP2MnemonicAlias<"fdivd", "vdiv.f64">;
 
+// Be friendly and accept the old form of zero-compare
+def : VFP2InstAlias<"fcmpzd${p} $val", (VCMPZD DPR:$val, pred:$p)>;
+def : VFP2InstAlias<"fcmpzs${p} $val", (VCMPZS SPR:$val, pred:$p)>;
+
+
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 def : VFP2InstAlias<"fadds${p} $Sd, $Sn, $Sm",
                     (VADDS SPR:$Sd, SPR:$Sn, SPR:$Sm, pred:$p)>;
