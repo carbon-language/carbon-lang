@@ -302,15 +302,40 @@
 
 
 @ VCVT (between floating-point and fixed-point)
-	vcvt.f32.u32 s0, s0, #20
+        vcvt.f32.u32 s0, s0, #20
         vcvt.f64.s32 d0, d0, #32
         vcvt.f32.u16 s0, s0, #1
         vcvt.f64.s16 d0, d0, #16
+        vcvt.f32.s32 s1, s1, #20
+        vcvt.f64.u32 d20, d20, #32
+        vcvt.f32.s16 s17, s17, #1
+        vcvt.f64.u16 d23, d23, #16
+        vcvt.u32.f32 s12, s12, #20 
+        vcvt.s32.f64 d2, d2, #32
+        vcvt.u16.f32 s28, s28, #1
+        vcvt.s16.f64 d15, d15, #16
+        vcvt.s32.f32 s1, s1, #20
+        vcvt.u32.f64 d20, d20, #32
+        vcvt.s16.f32 s17, s17, #1
+        vcvt.u16.f64 d23, d23, #16
 
 @ CHECK: vcvt.f32.u32	s0, s0, #20     @ encoding: [0xc6,0x0a,0xbb,0xee]
 @ CHECK: vcvt.f64.s32	d0, d0, #32     @ encoding: [0xc0,0x0b,0xba,0xee]
 @ CHECK: vcvt.f32.u16	s0, s0, #1      @ encoding: [0x67,0x0a,0xbb,0xee]
 @ CHECK: vcvt.f64.s16	d0, d0, #16     @ encoding: [0x40,0x0b,0xba,0xee]
+@ CHECK: vcvt.f32.s32	s1, s1, #20     @ encoding: [0xc6,0x0a,0xfa,0xee]
+@ CHECK: vcvt.f64.u32	d20, d20, #32   @ encoding: [0xc0,0x4b,0xfb,0xee]
+@ CHECK: vcvt.f32.s16	s17, s17, #1    @ encoding: [0x67,0x8a,0xfa,0xee]
+@ CHECK: vcvt.f64.u16	d23, d23, #16   @ encoding: [0x40,0x7b,0xfb,0xee]
+
+@ CHECK: vcvt.u32.f32	s12, s12, #20   @ encoding: [0xc6,0x6a,0xbf,0xee]
+@ CHECK: vcvt.s32.f64	d2, d2, #32     @ encoding: [0xc0,0x2b,0xbe,0xee]
+@ CHECK: vcvt.u16.f32	s28, s28, #1    @ encoding: [0x67,0xea,0xbf,0xee]
+@ CHECK: vcvt.s16.f64	d15, d15, #16   @ encoding: [0x40,0xfb,0xbe,0xee]
+@ CHECK: vcvt.s32.f32	s1, s1, #20     @ encoding: [0xc6,0x0a,0xfe,0xee]
+@ CHECK: vcvt.u32.f64	d20, d20, #32   @ encoding: [0xc0,0x4b,0xff,0xee]
+@ CHECK: vcvt.s16.f32	s17, s17, #1    @ encoding: [0x67,0x8a,0xfe,0xee]
+@ CHECK: vcvt.u16.f64	d23, d23, #16   @ encoding: [0x40,0x7b,0xff,0xee]
 
 
 @ Use NEON to load some f32 immediates that don't fit the f8 representation.
