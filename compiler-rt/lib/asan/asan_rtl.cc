@@ -221,7 +221,7 @@ static NOINLINE void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
 NOINLINE ASAN_INTERFACE_ATTRIBUTE                                   \
 extern "C" void __asan_report_ ## type ## size(uintptr_t addr);     \
 extern "C" void __asan_report_ ## type ## size(uintptr_t addr) {    \
-  GET_BP_PC_SP;                                                     \
+  GET_CALLER_PC_BP_SP;                                              \
   __asan_report_error(pc, bp, sp, addr, is_write, size);            \
 }
 

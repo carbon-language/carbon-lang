@@ -57,6 +57,22 @@ struct AsanStackTrace {
 
 }  // namespace __asan
 
+// Use this macro if you want to print stack trace with the caller
+// of the current function in the top frame.
+#define GET_CALLER_PC_BP_SP \
+  uintptr_t bp = GET_CURRENT_FRAME();              \
+  uintptr_t pc = GET_CALLER_PC();                  \
+  uintptr_t local_stack;                           \
+  uintptr_t sp = (uintptr_t)&local_stack;
+
+// Use this macro if you want to print stack trace with the current
+// function in the top frame.
+#define GET_CURRENT_PC_BP_SP \
+  uintptr_t bp = GET_CURRENT_FRAME();              \
+  uintptr_t pc = AsanStackTrace::GetCurrentPc();   \
+  uintptr_t local_stack;                           \
+  uintptr_t sp = (uintptr_t)&local_stack;
+
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.

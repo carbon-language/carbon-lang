@@ -296,12 +296,6 @@ bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
 
 typedef thread_return_t (THREAD_CALLING_CONV *thread_callback_t)(void* arg);
 
-#define GET_BP_PC_SP \
-  uintptr_t bp = GET_CURRENT_FRAME();              \
-  uintptr_t pc = GET_CALLER_PC();                  \
-  uintptr_t local_stack;                           \
-  uintptr_t sp = (uintptr_t)&local_stack;
-
 // These magic values are written to shadow for better error reporting.
 const int kAsanHeapLeftRedzoneMagic = 0xfa;
 const int kAsanHeapRightRedzoneMagic = 0xfb;
