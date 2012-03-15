@@ -456,6 +456,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT, Expand);
   }
 
+  setOperationAction(ISD::ConstantFP, MVT::f32, Custom);
+
   if (Subtarget->hasNEON()) {
     addDRTypeForNEON(MVT::v2f32);
     addDRTypeForNEON(MVT::v8i8);
@@ -3673,6 +3675,27 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
   return Result;
 }
 
+SDValue ARMTargetLowering::LowerConstantFP(SDValue Op, SelectionDAG &DAG,
+                                           const ARMSubtarget *ST) const {
+  if (!ST->useNEONForSinglePrecisionFP() || !ST->hasVFP3() || ST->hasD16())
+    return SDValue();
+
+  ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Op);
+  assert(Op.getValueType() == MVT::f32 &&
+         "ConstantFP custom lowering should only occur for f32.");
+
+  APFloat FPVal = CFP->getValueAPF();
+  int ImmVal = ARM_AM::getFP32Imm(FPVal);
+  if (ImmVal == -1)
+    return SDValue();
+
+  DebugLoc DL = Op.getDebugLoc();
+  SDValue NewVal = DAG.getTargetConstant(ImmVal, MVT::i32);
+  SDValue VecConstant = DAG.getNode(ARMISD::VMOVFPIMM, DL, MVT::v2f32, NewVal);
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, VecConstant,
+                     DAG.getConstant(0, MVT::i32));
+}
+
 /// isNEONModifiedImm - Check if the specified splat value corresponds to a
 /// valid vector constant for a NEON instruction with a "modified immediate"
 /// operand (e.g., VMOV).  If so, return the encoded value.
@@ -5109,6 +5132,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SRA_PARTS:     return LowerShiftRightParts(Op, DAG);
   case ISD::CTTZ:          return LowerCTTZ(Op.getNode(), DAG, Subtarget);
   case ISD::SETCC:         return LowerVSETCC(Op, DAG);
+  case ISD::ConstantFP:    return LowerConstantFP(Op, DAG, Subtarget);
   case ISD::BUILD_VECTOR:  return LowerBUILD_VECTOR(Op, DAG, Subtarget);
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::INSERT_VECTOR_ELT: return LowerINSERT_VECTOR_ELT(Op, DAG);
