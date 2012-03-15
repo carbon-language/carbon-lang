@@ -574,8 +574,9 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
     // transform it into a store of the expanded constant value.
     if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
       assert(MSI->getRawDest() == Ptr && "Consistency error!");
-      unsigned NumBytes = cast<ConstantInt>(MSI->getLength())->getZExtValue();
-      if (NumBytes != 0) {
+      signed SNumBytes = cast<ConstantInt>(MSI->getLength())->getSExtValue();
+      if (SNumBytes > 0) {
+        unsigned NumBytes = static_cast<unsigned>(SNumBytes);
         unsigned Val = cast<ConstantInt>(MSI->getValue())->getZExtValue();
 
         // Compute the value replicated the right number of times.
@@ -1517,6 +1518,9 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       if (Length == 0)
         return MarkUnsafe(Info, User);
+      if (Length->isNegative())
+        return MarkUnsafe(Info, User);
+
       isSafeMemAccess(Offset, Length->getZExtValue(), 0,
                       UI.getOperandNo() == 0, Info, MI,
                       true /*AllowWholeAccess*/);
