@@ -1448,40 +1448,39 @@ int ClastStmtCodeGen::getNumberOfIterations(const clast_for *f) {
   return (numberIterations) / isl_int_get_si(f->stride) + 1;
 }
 
-void ClastStmtCodeGen::codegenForVector(const clast_for *f) {
-  DEBUG(dbgs() << "Vectorizing loop '" << f->iterator << "'\n";);
-  int vectorWidth = getNumberOfIterations(f);
+void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
+  DEBUG(dbgs() << "Vectorizing loop '" << F->iterator << "'\n";);
+  int VectorWidth = getNumberOfIterations(F);
 
-  Value *LB = ExpGen.codegen(f->LB, getIntPtrTy());
+  Value *LB = ExpGen.codegen(F->LB, getIntPtrTy());
 
-  APInt Stride = APInt_from_MPZ(f->stride);
+  APInt Stride = APInt_from_MPZ(F->stride);
   IntegerType *LoopIVType = dyn_cast<IntegerType>(LB->getType());
   Stride =  Stride.zext(LoopIVType->getBitWidth());
   Value *StrideValue = ConstantInt::get(LoopIVType, Stride);
 
-  std::vector<Value*> IVS(vectorWidth);
+  std::vector<Value*> IVS(VectorWidth);
   IVS[0] = LB;
 
-  for (int i = 1; i < vectorWidth; i++)
+  for (int i = 1; i < VectorWidth; i++)
     IVS[i] = Builder.CreateAdd(IVS[i-1], StrideValue, "p_vector_iv");
 
-  isl_set *scatteringDomain =
-    isl_set_copy(isl_set_from_cloog_domain(f->domain));
+  isl_set *ScatteringDomain =
+    isl_set_copy(isl_set_from_cloog_domain(F->domain));
 
   // Add loop iv to symbols.
-  (*clastVars)[f->iterator] = LB;
+  (*clastVars)[F->iterator] = LB;
 
-  const clast_stmt *stmt = f->body;
+  const clast_stmt *Stmt = F->body;
 
-  while (stmt) {
-    codegen((const clast_user_stmt *)stmt, &IVS, f->iterator,
-            scatteringDomain);
-    stmt = stmt->next;
+  while (Stmt) {
+    codegen((const clast_user_stmt *)Stmt, &IVS, F->iterator, ScatteringDomain);
+    Stmt = Stmt->next;
   }
 
   // Loop is finished, so remove its iv from the live symbols.
-  isl_set_free(scatteringDomain);
-  clastVars->erase(f->iterator);
+  isl_set_free(ScatteringDomain);
+  clastVars->erase(F->iterator);
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
