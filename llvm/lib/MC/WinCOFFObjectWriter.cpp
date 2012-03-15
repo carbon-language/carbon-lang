@@ -783,8 +783,21 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     }
 
     if (Sec->Relocations.size() > 0) {
-      Sec->Header.NumberOfRelocations = Sec->Relocations.size();
+      bool RelocationsOverflow = Sec->Relocations.size() >= 0xffff;
+
+      if (RelocationsOverflow) {
+        // Signal overflow by setting NumberOfSections to max value. Actual
+        // size is found in reloc #0. Microsoft tools understand this.
+        Sec->Header.NumberOfRelocations = 0xffff;
+      } else {
+        Sec->Header.NumberOfRelocations = Sec->Relocations.size();
+      }
       Sec->Header.PointerToRelocations = offset;
+
+      if (RelocationsOverflow) {
+        // Reloc #0 will contain actual count, so make room for it.
+        offset += COFF::RelocationSize;
+      }
 
       offset += COFF::RelocationSize * Sec->Relocations.size();
 
@@ -820,8 +833,12 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     MCAssembler::const_iterator j, je;
 
     for (i = Sections.begin(), ie = Sections.end(); i != ie; i++)
-      if ((*i)->Number != -1)
+      if ((*i)->Number != -1) {
+        if ((*i)->Relocations.size() >= 0xffff) {
+          (*i)->Header.Characteristics |= COFF::IMAGE_SCN_LNK_NRELOC_OVFL;
+        }
         WriteSectionHeader((*i)->Header);
+      }
 
     for (i = Sections.begin(), ie = Sections.end(),
          j = Asm.begin(), je = Asm.end();
@@ -840,6 +857,16 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
       if ((*i)->Relocations.size() > 0) {
         assert(OS.tell() == (*i)->Header.PointerToRelocations &&
                "Section::PointerToRelocations is insane!");
+
+        if ((*i)->Relocations.size() >= 0xffff) {
+          // In case of overflow, write actual relocation count as first
+          // relocation. Including the synthetic reloc itself (+ 1).
+          COFF::relocation r;
+          r.VirtualAddress = (*i)->Relocations.size() + 1;
+          r.SymbolTableIndex = 0;
+          r.Type = 0;
+          WriteRelocation(r);
+        }
 
         for (relocations::const_iterator k = (*i)->Relocations.begin(),
                                                ke = (*i)->Relocations.end();
