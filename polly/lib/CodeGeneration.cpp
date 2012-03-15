@@ -94,8 +94,8 @@ typedef std::vector<ValueMapT> VectorValueMapT;
 // @param Stride  The number by which the loop iv is incremented after every
 //                iteration.
 static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
-                         APInt Stride, DominatorTree *DT, Pass *P,
-                         BasicBlock **AfterBlock) {
+                         APInt Stride, Pass *P, BasicBlock **AfterBlock) {
+  DominatorTree &DT = P->getAnalysis<DominatorTree>();
   Function *F = Builder->GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
@@ -106,7 +106,7 @@ static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
   AfterBB->setName("polly.loop_after");
 
   PreheaderBB->getTerminator()->setSuccessor(0, HeaderBB);
-  DT->addNewBlock(HeaderBB, PreheaderBB);
+  DT.addNewBlock(HeaderBB, PreheaderBB);
 
   Builder->SetInsertPoint(HeaderBB);
 
@@ -137,12 +137,12 @@ static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
   }
 
   Builder->CreateCondBr(CMP, BodyBB, AfterBB);
-  DT->addNewBlock(BodyBB, HeaderBB);
+  DT.addNewBlock(BodyBB, HeaderBB);
 
   Builder->SetInsertPoint(BodyBB);
   Builder->CreateBr(HeaderBB);
   IV->addIncoming(IncrementedIV, BodyBB);
-  DT->changeImmediateDominator(AfterBB, HeaderBB);
+  DT.changeImmediateDominator(AfterBB, HeaderBB);
 
   Builder->SetInsertPoint(BodyBB->begin());
   *AfterBlock = AfterBB;
@@ -981,10 +981,6 @@ void ClastExpCodeGen::setIVS(CharMapT *IVSNew) {
 class ClastStmtCodeGen {
   // The Scop we code generate.
   Scop *S;
-  ScalarEvolution &SE;
-  DominatorTree *DT;
-  ScopDetection *SD;
-  Dependences *DP;
   Pass *P;
 
   // The Builder specifies the current location to code generate at.
@@ -1095,9 +1091,7 @@ public:
   public:
   void codegen(const clast_root *r);
 
-  ClastStmtCodeGen(Scop *scop, ScalarEvolution &se, DominatorTree *dt,
-                   ScopDetection *sd, Dependences *dp, TargetData *td,
-                   IRBuilder<> &B, Pass *P);
+  ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P);
 };
 }
 
@@ -1198,8 +1192,7 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
     UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
   }
 
-  Value *IV = createLoop(&Builder, LowerBound, UpperBound, Stride, DT, P,
-                         &AfterBB);
+  Value *IV = createLoop(&Builder, LowerBound, UpperBound, Stride, P, &AfterBB);
 
   // Add loop iv to symbols.
   (*clastVars)[f->iterator] = IV;
@@ -1219,7 +1212,7 @@ Function *ClastStmtCodeGen::addOpenMPSubfunction(Module *M) {
   Function *FN = Function::Create(FT, Function::InternalLinkage,
                                   F->getName() + ".omp_subfn", M);
   // Do not run any polly pass on the new function.
-  SD->markFunctionAsInvalid(FN);
+  P->getAnalysis<ScopDetection>().markFunctionAsInvalid(FN);
 
   Function::arg_iterator AI = FN->arg_begin();
   AI->setName("omp.userContext");
@@ -1306,10 +1299,11 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
   BasicBlock *loadIVBoundsBB = BasicBlock::Create(Context, "omp.loadIVBounds",
                                                   FN);
 
-  DT->addNewBlock(HeaderBB, PrevBB);
-  DT->addNewBlock(ExitBB, HeaderBB);
-  DT->addNewBlock(checkNextBB, HeaderBB);
-  DT->addNewBlock(loadIVBoundsBB, HeaderBB);
+  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DT.addNewBlock(HeaderBB, PrevBB);
+  DT.addNewBlock(ExitBB, HeaderBB);
+  DT.addNewBlock(checkNextBB, HeaderBB);
+  DT.addNewBlock(loadIVBoundsBB, HeaderBB);
 
   // Fill up basic block HeaderBB.
   Builder.SetInsertPoint(HeaderBB);
@@ -1491,7 +1485,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *f) {
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
-  if ((Vector || OpenMP) && DP->isParallelFor(f)) {
+  if ((Vector || OpenMP) && P->getAnalysis<Dependences>().isParallelFor(f)) {
     if (Vector && isInnermostLoop(f) && (-1 != getNumberOfIterations(f))
         && (getNumberOfIterations(f) <= 16)) {
       codegenForVector(f);
@@ -1536,8 +1530,9 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
   MergeBB->setName("polly.merge");
   BasicBlock *ThenBB = BasicBlock::Create(Context, "polly.then", F);
 
-  DT->addNewBlock(ThenBB, CondBB);
-  DT->changeImmediateDominator(MergeBB, CondBB);
+  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DT.addNewBlock(ThenBB, CondBB);
+  DT.changeImmediateDominator(MergeBB, CondBB);
 
   CondBB->getTerminator()->eraseFromParent();
 
@@ -1579,7 +1574,7 @@ void ClastStmtCodeGen::codegen(const clast_stmt *stmt) {
 }
 
 void ClastStmtCodeGen::addParameters(const CloogNames *names) {
-  SCEVExpander Rewriter(SE, "polly");
+  SCEVExpander Rewriter(P->getAnalysis<ScalarEvolution>(), "polly");
 
   int i = 0;
   for (Scop::param_iterator PI = S->param_begin(), PE = S->param_end();
@@ -1611,21 +1606,14 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
   delete clastVars;
 }
 
-ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, ScalarEvolution &se,
-                                   DominatorTree *dt, ScopDetection *sd,
-                                   Dependences *dp, TargetData *td,
-                                  IRBuilder<> &B, Pass *P) :
-    S(scop), SE(se), DT(dt), SD(sd), DP(dp), P(P), Builder(B),
-    ExpGen(Builder, NULL) {}
+ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P) :
+    S(scop), P(P), Builder(B), ExpGen(Builder, NULL) {}
 
 namespace {
 class CodeGeneration : public ScopPass {
   Region *region;
   Scop *S;
   DominatorTree *DT;
-  ScalarEvolution *SE;
-  ScopDetection *SD;
-  TargetData *TD;
   RegionInfo *RI;
 
   std::vector<std::string> parallelLoops;
@@ -1640,7 +1628,7 @@ class CodeGeneration : public ScopPass {
   void addOpenMPDeclarations(Module *M)
   {
     IRBuilder<> Builder(M->getContext());
-    IntegerType *LongTy = TD->getIntPtrType(M->getContext());
+    Type *LongTy = getAnalysis<TargetData>().getIntPtrType(M->getContext());
 
     llvm::GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
 
@@ -1770,10 +1758,6 @@ class CodeGeneration : public ScopPass {
     S = &scop;
     region = &S->getRegion();
     DT = &getAnalysis<DominatorTree>();
-    Dependences *DP = &getAnalysis<Dependences>();
-    SE = &getAnalysis<ScalarEvolution>();
-    SD = &getAnalysis<ScopDetection>();
-    TD = &getAnalysis<TargetData>();
     RI = &getAnalysis<RegionInfo>();
 
     parallelLoops.clear();
@@ -1821,7 +1805,7 @@ class CodeGeneration : public ScopPass {
     mergeControlFlow(splitBlock, &builder);
     builder.SetInsertPoint(StartBlock->begin());
 
-    ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, builder, this);
+    ClastStmtCodeGen CodeGen(S, builder, this);
     CloogInfo &C = getAnalysis<CloogInfo>();
     CodeGen.codegen(C.getClast());
 
