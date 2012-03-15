@@ -18,14 +18,13 @@
   <li><a href="#org">LLVM testing infrastructure organization</a>
     <ul>
       <li><a href="#regressiontests">Regression tests</a></li>
-      <li><a href="#testsuite">Test suite</a></li>
+      <li><a href="#testsuite"><tt>test-suite</tt></a></li>
       <li><a href="#debuginfotests">Debugging Information tests</a></li>
     </ul>
   </li>
   <li><a href="#quick">Quick start</a>
     <ul>
       <li><a href="#quickregressiontests">Regression tests</a></li>
-      <li><a href="#quicktestsuite">Test suite</a></li>
       <li><a href="#quickdebuginfotests">Debugging Information tests</a></li>
    </ul>
   </li>
@@ -37,13 +36,10 @@
       <li><a href="#rtfeatures">Other features</a></li>
    </ul>
   </li>
-  <li><a href="#testsuitestructure">Test suite structure</a></li>
-  <li><a href="#testsuiterun">Running the test suite</a>
+  <li><a href="#testsuiteoverview"><tt>test-suite</tt> Overview</a>
     <ul>
-      <li><a href="#testsuiteexternal">Configuring External Tests</a></li>
-      <li><a href="#testsuitetests">Running different tests</a></li>
-      <li><a href="#testsuiteoutput">Generating test output</a></li>
-      <li><a href="#testsuitecustom">Writing custom tests for test-suite</a></li>
+      <li><a href="#testsuitequickstart"><tt>test-suite</tt> Quickstart</a></li>
+      <li><a href="#testsuitemakefiles"><tt>test-suite</tt> Makefiles</a></li>
    </ul>
   </li>
 </ol>
@@ -85,10 +81,13 @@ as <a href="http://python.org">Python</a> 2.4 or later.</p>
 <p>The LLVM testing infrastructure contains two major categories of tests:
 regression tests and whole programs. The regression tests are contained inside
 the LLVM repository itself under <tt>llvm/test</tt> and are expected to always
-pass -- they should be run before every commit. The whole programs tests are
-referred to as the "LLVM test suite" and are in the <tt>test-suite</tt> module
-in subversion.
-</p>
+pass -- they should be run before every commit.</p>
+
+<p>The whole programs tests are referred to as the "LLVM test suite" (or
+"test-suite") and are in the <tt>test-suite</tt> module in subversion. For
+historical reasons, these tests are also referred to as the "nightly tests" in
+places, which is less ambiguous than "test-suite" and remains in use although we
+run them much more often than nightly.</p>
 
 <!-- _______________________________________________________________________ -->
 <h3><a name="regressiontests">Regression tests</a></h3>
@@ -118,20 +117,19 @@ application or benchmark.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<h3><a name="testsuite">Test suite</a></h3>
+<h3><a name="testsuite"><tt>test-suite</tt></a></h3>
 <!-- _______________________________________________________________________ -->
 
 <div>
 
-<p>The test suite contains whole programs, which are pieces of
-code which can be compiled and linked into a stand-alone program that can be
-executed.  These programs are generally written in high level languages such as
-C or C++, but sometimes they are written straight in LLVM assembly.</p>
+<p>The test suite contains whole programs, which are pieces of code which can be
+compiled and linked into a stand-alone program that can be executed.  These
+programs are generally written in high level languages such as C or C++.</p>
 
-<p>These programs are compiled and then executed using several different
-methods (native compiler, LLVM C backend, LLVM JIT, LLVM native code generation,
-etc).  The output of these programs is compared to ensure that LLVM is compiling
-the program correctly.</p>
+<p>These programs are compiled using a user specified compiler and set of flags,
+and then executed to capture the program output and timing information.  The
+output of these programs is compared to a reference output to ensure that the
+program is being compiled correctly.</p>
 
 <p>In addition to compiling and executing programs, whole program tests serve as
 a way of benchmarking LLVM performance, both in terms of the efficiency of the
@@ -168,15 +166,14 @@ test suite for more information . This test suite is located in the
 
   <p>The tests are located in two separate Subversion modules. The regressions
   tests are in the main "llvm" module under the directory
-  <tt>llvm/test</tt> (so you get these tests for free with the main llvm tree).
-  The more comprehensive test suite that includes whole 
-programs in C and C++ is in the <tt>test-suite</tt> module. This module should
-be checked out to the <tt>llvm/projects</tt> directory (don't use another name
-than the default "test-suite", for then the test suite will be run every time
-you run <tt>make</tt> in the main <tt>llvm</tt> directory).
-When you <tt>configure</tt> the <tt>llvm</tt> module, 
-the <tt>test-suite</tt> directory will be automatically configured. 
-Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
+  <tt>llvm/test</tt> (so you get these tests for free with the main llvm
+  tree). Use "make check-all" to run the regression tests after building
+  LLVM.</p>
+
+  <p>The more comprehensive test suite that includes whole programs in C and C++
+  is in the <tt>test-suite</tt>
+  module. See <a href="#testsuitequickstart"><tt>test-suite</tt> Quickstart</a>
+  for more information on running these tests.</p>
 
 <!-- _______________________________________________________________________ -->
 <h3><a name="quickregressiontests">Regression tests</a></h3>
@@ -239,55 +236,6 @@ script which is built as part of LLVM. For example, to run the
 
 <p>For more information on using the 'lit' tool, see 'llvm-lit --help' or the
 'lit' man page.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<h3><a name="quicktestsuite">Test suite</a></h3>
-<!-- _______________________________________________________________________ -->
-
-<div>
-
-<p>To run the comprehensive test suite (tests that compile and execute whole 
-programs), first checkout and setup the <tt>test-suite</tt> module:</p>
-
-<div class="doc_code">
-<pre>
-% cd ~/llvm/projects
-% svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
-% cd ..
-</pre>
-</div>
-
-<p>and then configure and build normally as you would from the
-<a href="http://llvm.org/docs/GettingStarted.html#quickstart">Getting Started
-Guide</a>. This will autodetect first the built clang if you are building
-clang, then <tt>clang</tt> in your path and finally look for <tt>llvm-gcc</tt>
-in your path.
-
-<p>Then, run the entire test suite by running make in the <tt>test-suite</tt>
-subdirectory of your build directory:</p>
-
-<div class="doc_code">
-<pre>
-% cd <i>where-you-built-llvm</i>/projects/test-suite
-% gmake
-</pre>
-</div>
-
-<p>Usually, running the "simple" set of tests is a good idea, and you can also
-let it generate a report by running:</p>
-
-<div class="doc_code">
-<pre>
-% cd <i>where-you-built-llvm</i>/projects/test-suite
-% gmake TEST=simple report report.html
-</pre>
-</div>
-
-<p>Any of the above commands can also be run in a subdirectory of
-<tt>projects/test-suite</tt> to run the specified test only on the programs in
-that subdirectory.</p>
 
 </div>
 
@@ -875,30 +823,15 @@ define two separate CHECK lines that match on the same line.
 </div>
 
 <!--=========================================================================-->
-<h2><a name="testsuitestructure">Test suite Structure</a></h2>
+<h2><a name="testsuiteoverview"><tt>test-suite</tt> Overview</a></h2>
 <!--=========================================================================-->
 
 <div>
 
-<p>The <tt>test-suite</tt> module contains a number of programs that can be compiled 
-with LLVM and executed. These programs are compiled using the native compiler
-and various LLVM backends. The output from the program compiled with the 
-native compiler is assumed correct; the results from the other programs are
-compared to the native program output and pass if they match.</p>
-
-<p>When executing tests, it is usually a good idea to start out with a subset of
-the available tests or programs. This makes test run times smaller at first and
-later on this is useful to investigate individual test failures. To run some
-test only on a subset of programs, simply change directory to the programs you
-want tested and run <tt>gmake</tt> there. Alternatively, you can run a different
-test using the <tt>TEST</tt> variable to change what tests or run on the
-selected programs (see below for more info).</p>
-
-<p>In addition for testing correctness, the <tt>test-suite</tt> directory also
-performs timing tests of various LLVM optimizations.  It also records
-compilation times for the compilers and the JIT.  This information can be
-used to compare the effectiveness of LLVM's optimizations and code
-generation.</p>
+<p>The <tt>test-suite</tt> module contains a number of programs that can be
+compiled and executed. The <tt>test-suite</tt> includes reference outputs for
+all of the programs, so that the output of the executed program can be checked
+for correctness.</p>
 
 <p><tt>test-suite</tt> tests are divided into three types of tests: MultiSource,
 SingleSource, and External.</p> 
@@ -920,246 +853,40 @@ go here.</p></li>
 to (i.e., not distributed with) LLVM.  The most prominent members of this
 directory are the SPEC 95 and SPEC 2000 benchmark suites. The <tt>External</tt>
 directory does not contain these actual tests, but only the Makefiles that know
-how to properly compile these programs from somewhere else. The presence and
-location of these external programs is configured by the test-suite
-<tt>configure</tt> script.</p></li>
+how to properly compile these programs from somewhere else. When
+using <tt>LNT</tt>, use the <tt>--test-externals</tt> option to include these
+tests in the results.</p></li>
 </ul>
-
-<p>Each tree is then subdivided into several categories, including applications,
-benchmarks, regression tests, code that is strange grammatically, etc.  These
-organizations should be relatively self explanatory.</p>
-
-<p>Some tests are known to fail.  Some are bugs that we have not fixed yet;
-others are features that we haven't added yet (or may never add).  In the
-regression tests, the result for such tests will be XFAIL (eXpected FAILure).
-In this way, you can tell the difference between an expected and unexpected
-failure.</p>
-
-<p>The tests in the test suite have no such feature at this time. If the
-test passes, only warnings and other miscellaneous output will be generated.  If
-a test fails, a large &lt;program&gt; FAILED message will be displayed.  This
-will help you separate benign warnings from actual test failures.</p>
-
 </div>
 
 <!--=========================================================================-->
-<h2><a name="testsuiterun">Running the test suite</a></h2>
+<h2><a name="testsuitequickstart"><tt>test-suite</tt> Quickstart</a></h2>
 <!--=========================================================================-->
 
 <div>
+<p>The modern way of running the <tt>test-suite</tt> is focused on testing and
+benchmarking complete compilers using
+the <a href="http://llvm.org/docs/lnt">LNT</a> testing infrastructure.</p>
 
-<p>First, all tests are executed within the LLVM object directory tree.  They
-<i>are not</i> executed inside of the LLVM source tree. This is because the
-test suite creates temporary files during execution.</p>
-
-<p>To run the test suite, you need to use the following steps:</p>
-
-<ol>
-  <li><tt>cd</tt> into the <tt>llvm/projects</tt> directory in your source tree.
-  </li>
-
-  <li><p>Check out the <tt>test-suite</tt> module with:</p>
-
-<div class="doc_code">
-<pre>
-% svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
-</pre>
+<p>For more information on using LNT to execute the <tt>test-suite</tt>, please
+see the <a href="http://llvm.org/docs/lnt/quickstart.html">LNT Quickstart</a>
+documentation.</p>
 </div>
-    <p>This will get the test suite into <tt>llvm/projects/test-suite</tt>.</p>
-  </li>
-  <li><p>Configure and build <tt>llvm</tt>.</p></li>
-  <li><p>Configure and build <tt>llvm-gcc</tt>.</p></li>
-  <li><p>Install <tt>llvm-gcc</tt> somewhere.</p></li>
-  <li><p><em>Re-configure</em> <tt>llvm</tt> from the top level of
-      each build tree (LLVM object directory tree) in which you want
-      to run the test suite, just as you do before building LLVM.</p>
-    <p>During the <em>re-configuration</em>, you must either: (1)
-      have <tt>llvm-gcc</tt> you just built in your path, or (2)
-      specify the directory where your just-built <tt>llvm-gcc</tt> is
-      installed using <tt>--with-llvmgccdir=$LLVM_GCC_DIR</tt>.</p>
-    <p>You must also tell the configure machinery that the test suite
-      is available so it can be configured for your build tree:</p>
-<div class="doc_code">
-<pre>
-% cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure [--with-llvmgccdir=$LLVM_GCC_DIR]
-</pre>
-</div>
-    <p>[Remember that <tt>$LLVM_GCC_DIR</tt> is the directory where you
-    <em>installed</em> llvm-gcc, not its src or obj directory.]</p>
-  </li>
 
-  <li><p>You can now run the test suite from your build tree as follows:</p>
-<div class="doc_code">
-<pre>
-% cd $LLVM_OBJ_ROOT/projects/test-suite
-% make
-</pre>
-</div>
-  </li>
-</ol>
-<p>Note that the second and third steps only need to be done once. After you
-have the suite checked out and configured, you don't need to do it again (unless
-the test code or configure script changes).</p>
-
-<!-- _______________________________________________________________________ -->
-<h3>
-  <a name="testsuiteexternal">Configuring External Tests</a>
-</h3>
-<!-- _______________________________________________________________________ -->
+<!--=========================================================================-->
+<h2><a name="testsuitemakefiles"><tt>test-suite</tt> Makefiles</a></h2>
+<!--=========================================================================-->
 
 <div>
-<p>In order to run the External tests in the <tt>test-suite</tt>
-  module, you must specify <i>--with-externals</i>.  This
-  must be done during the <em>re-configuration</em> step (see above),
-  and the <tt>llvm</tt> re-configuration must recognize the
-  previously-built <tt>llvm-gcc</tt>.  If any of these is missing or
-  neglected, the External tests won't work.</p>
-<dl>
-<dt><i>--with-externals</i></dt>
-<dt><i>--with-externals=&lt;<tt>directory</tt>&gt;</i></dt>
-</dl>
-  This tells LLVM where to find any external tests.  They are expected to be
-  in specifically named subdirectories of &lt;<tt>directory</tt>&gt;.
-  If <tt>directory</tt> is left unspecified,
-  <tt>configure</tt> uses the default value
-  <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
-  Subdirectory names known to LLVM include:
-  <dl>
-  <dt>spec95</dt>
-  <dt>speccpu2000</dt>
-  <dt>speccpu2006</dt>
-  <dt>povray31</dt>
-  </dl>
-  Others are added from time to time, and can be determined from 
-  <tt>configure</tt>.
-</div>
+<p>Historically, the <tt>test-suite</tt> was executed using a complicated setup
+of Makefiles. The LNT based approach above is recommended for most users, but
+there are some testing scenarios which are not supported by the LNT approach. In
+addition, LNT currently uses the Makefile setup under the covers and so
+developers who are interested in how LNT works under the hood may want to
+understand the Makefile based setup.</p>
 
-<!-- _______________________________________________________________________ -->
-<h3>
-  <a name="testsuitetests">Running different tests</a>
-</h3>
-<!-- _______________________________________________________________________ -->
-<div>
-<p>In addition to the regular "whole program" tests, the <tt>test-suite</tt>
-module also provides a mechanism for compiling the programs in different ways.
-If the variable TEST is defined on the <tt>gmake</tt> command line, the test system will
-include a Makefile named <tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.
-This Makefile can modify build rules to yield different results.</p>
-
-<p>For example, the LLVM nightly tester uses <tt>TEST.nightly.Makefile</tt> to
-create the nightly test reports.  To run the nightly tests, run <tt>gmake
-TEST=nightly</tt>.</p>
-
-<p>There are several TEST Makefiles available in the tree.  Some of them are
-designed for internal LLVM research and will not work outside of the LLVM
-research group.  They may still be valuable, however, as a guide to writing your
-own TEST Makefile for any optimization or analysis passes that you develop with
-LLVM.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<h3>
-  <a name="testsuiteoutput">Generating test output</a>
-</h3>
-<!-- _______________________________________________________________________ -->
-<div>
-  <p>There are a number of ways to run the tests and generate output. The most
-  simple one is simply running <tt>gmake</tt> with no arguments. This will
-  compile and run all programs in the tree using a number of different methods
-  and compare results. Any failures are reported in the output, but are likely
-  drowned in the other output. Passes are not reported explicitely.</p>
-
-  <p>Somewhat better is running <tt>gmake TEST=sometest test</tt>, which runs
-  the specified test and usually adds per-program summaries to the output
-  (depending on which sometest you use). For example, the <tt>nightly</tt> test
-  explicitely outputs TEST-PASS or TEST-FAIL for every test after each program.
-  Though these lines are still drowned in the output, it's easy to grep the
-  output logs in the Output directories.</p>
-
-  <p>Even better are the <tt>report</tt> and <tt>report.format</tt> targets
-  (where <tt>format</tt> is one of <tt>html</tt>, <tt>csv</tt>, <tt>text</tt> or
-  <tt>graphs</tt>). The exact contents of the report are dependent on which
-  <tt>TEST</tt> you are running, but the text results are always shown at the
-  end of the run and the results are always stored in the
-  <tt>report.&lt;type&gt;.format</tt> file (when running with
-  <tt>TEST=&lt;type&gt;</tt>).
-
-  The <tt>report</tt> also generate a file called
-  <tt>report.&lt;type&gt;.raw.out</tt> containing the output of the entire test
-  run.
-</div>
-
-<!-- _______________________________________________________________________ -->
-<h3>
-  <a name="testsuitecustom">Writing custom tests for the test suite</a>
-</h3>
-<!-- _______________________________________________________________________ -->
-
-<div>
-
-<p>Assuming you can run the test suite, (e.g. "<tt>gmake TEST=nightly report</tt>"
-should work), it is really easy to run optimizations or code generator
-components against every program in the tree, collecting statistics or running
-custom checks for correctness.  At base, this is how the nightly tester works,
-it's just one example of a general framework.</p>
-
-<p>Lets say that you have an LLVM optimization pass, and you want to see how
-many times it triggers.  First thing you should do is add an LLVM
-<a href="ProgrammersManual.html#Statistic">statistic</a> to your pass, which
-will tally counts of things you care about.</p>
-
-<p>Following this, you can set up a test and a report that collects these and
-formats them for easy viewing.  This consists of two files, a
-"<tt>test-suite/TEST.XXX.Makefile</tt>" fragment (where XXX is the name of your
-test) and a "<tt>test-suite/TEST.XXX.report</tt>" file that indicates how to
-format the output into a table.  There are many example reports of various
-levels of sophistication included with the test suite, and the framework is very
-general.</p>
-
-<p>If you are interested in testing an optimization pass, check out the
-"libcalls" test as an example.  It can be run like this:<p>
-
-<div class="doc_code">
-<pre>
-% cd llvm/projects/test-suite/MultiSource/Benchmarks  # or some other level
-% make TEST=libcalls report
-</pre>
-</div>
-
-<p>This will do a bunch of stuff, then eventually print a table like this:</p>
-
-<div class="doc_code">
-<pre>
-Name                                  | total | #exit |
-...
-FreeBench/analyzer/analyzer           | 51    | 6     | 
-FreeBench/fourinarow/fourinarow       | 1     | 1     | 
-FreeBench/neural/neural               | 19    | 9     | 
-FreeBench/pifft/pifft                 | 5     | 3     | 
-MallocBench/cfrac/cfrac               | 1     | *     | 
-MallocBench/espresso/espresso         | 52    | 12    | 
-MallocBench/gs/gs                     | 4     | *     | 
-Prolangs-C/TimberWolfMC/timberwolfmc  | 302   | *     | 
-Prolangs-C/agrep/agrep                | 33    | 12    | 
-Prolangs-C/allroots/allroots          | *     | *     | 
-Prolangs-C/assembler/assembler        | 47    | *     | 
-Prolangs-C/bison/mybison              | 74    | *     | 
-...
-</pre>
-</div>
-
-<p>This basically is grepping the -stats output and displaying it in a table.
-You can also use the "TEST=libcalls report.html" target to get the table in HTML
-form, similarly for report.csv and report.tex.</p>
-
-<p>The source for this is in test-suite/TEST.libcalls.*.  The format is pretty
-simple: the Makefile indicates how to run the test (in this case, 
-"<tt>opt -simplify-libcalls -stats</tt>"), and the report contains one line for
-each column of the output.  The first value is the header for the column and the
-second is the regex to grep the output of the command for.  There are lots of
-example reports that can do fancy stuff.</p>
-
+<p>For more information on the <tt>test-suite</tt> Makefile setup, please see
+the <a href="TestSuiteMakefileGuide.html">Test Suite Makefile Guide.</a></p>
 </div>
 
 </div>
