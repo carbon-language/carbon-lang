@@ -577,12 +577,16 @@ bool FastISel::SelectCall(const User *I) {
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(Call);
     if (!DIVariable(DI->getVariable()).Verify() ||
-        !FuncInfo.MF->getMMI().hasDebugInfo())
+        !FuncInfo.MF->getMMI().hasDebugInfo()) {
+      DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
       return true;
+    }
 
     const Value *Address = DI->getAddress();
-    if (!Address || isa<UndefValue>(Address) || isa<AllocaInst>(Address))
+    if (!Address || isa<UndefValue>(Address) || isa<AllocaInst>(Address)) {
+      DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
       return true;
+    }
 
     unsigned Reg = 0;
     unsigned Offset = 0;
