@@ -7954,7 +7954,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // C++0x 7.2p2: The type-specifier-seq of an enum-base shall name an
       // integral type; any cv-qualification is ignored.
       TypeSourceInfo *TI = 0;
-      QualType T = GetTypeFromParser(UnderlyingType.get(), &TI);
+      GetTypeFromParser(UnderlyingType.get(), &TI);
       EnumUnderlying = TI;
 
       if (CheckEnumUnderlyingType(TI))
