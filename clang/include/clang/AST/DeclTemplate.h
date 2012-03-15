@@ -618,8 +618,42 @@ public:
     getCommonPtr()->InstantiatedFromMember.setInt(true);
   }
 
-  /// \brief Retrieve the previous declaration of this template, or
-  /// NULL if no such declaration exists.
+  /// \brief Retrieve the member template from which this template was
+  /// instantiated, or NULL if this template was not instantiated from a 
+  /// member template.
+  ///
+  /// A template is instantiated from a member template when the member 
+  /// template itself is part of a class template (or member thereof). For
+  /// example, given
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   template<typename U> void f(T, U);
+  /// };
+  ///
+  /// void test(X<int> x) {
+  ///   x.f(1, 'a');
+  /// };
+  /// \endcode
+  ///
+  /// \c X<int>::f is a FunctionTemplateDecl that describes the function
+  /// template
+  ///
+  /// \code
+  /// template<typename U> void X<int>::f(int, U);
+  /// \endcode
+  ///
+  /// which was itself created during the instantiation of \c X<int>. Calling
+  /// getInstantiatedFromMemberTemplate() on this FunctionTemplateDecl will
+  /// retrieve the FunctionTemplateDecl for the original template "f" within
+  /// the class template \c X<T>, i.e.,
+  ///
+  /// \code
+  /// template<typename T>
+  /// template<typename U>
+  /// void X<T>::f(T, U);
+  /// \endcode
   RedeclarableTemplateDecl *getInstantiatedFromMemberTemplate() {
     return getCommonPtr()->InstantiatedFromMember.getPointer();
   }
