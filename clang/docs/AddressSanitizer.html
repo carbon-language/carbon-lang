@@ -43,7 +43,9 @@ The tool can detect the following types of bugs:
 Typical slowdown introduced by AddressSanitizer is <b>2x</b>.
 
 <h2 id="howtobuild">How to build</h2>
-Follow the <a href="../get_started.html">clang build instructions</a>.
+Follow the <a href="../get_started.html">clang build instructions</a>. <BR>
+Note: CMake build does not work yet.
+See <a href "http://llvm.org/bugs/show_bug.cgi?id=12272">bug 12272</a>.
 
 <h2 id="usage">Usage</h2>
 Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
@@ -107,7 +109,9 @@ AddressSanitizer is supported on
 <ul><li>Linux x86_64 (tested on Ubuntu 10.04).
 <li>MacOS 10.6 i386/x86_64.
 </ul>
-Support for Linux i386/ARM and MacOS 10.7 is in progress.
+Support for Linux i386/ARM and MacOS 10.7 is in progress
+(it may work, but is not guaranteed too).
+
 
 <h2 id="limitations">Limitations</h2>
 <ul>
