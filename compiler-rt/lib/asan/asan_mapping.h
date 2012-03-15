@@ -95,6 +95,18 @@ static inline bool AddrIsAlignedByGranularity(uintptr_t a) {
   return (a & (SHADOW_GRANULARITY - 1)) == 0;
 }
 
+static inline bool AddressIsPoisoned(uintptr_t a) {
+  const size_t kAccessSize = 1;
+  uint8_t *shadow_address = (uint8_t*)MemToShadow(a);
+  int8_t shadow_value = *shadow_address;
+  if (shadow_value) {
+    uint8_t last_accessed_byte = (a & (SHADOW_GRANULARITY - 1))
+                                 + kAccessSize - 1;
+    return (last_accessed_byte >= shadow_value);
+  }
+  return false;
+}
+
 }  // namespace __asan
 
 #endif  // ASAN_MAPPING_H

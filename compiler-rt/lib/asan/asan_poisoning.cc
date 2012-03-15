@@ -147,14 +147,5 @@ void __asan_unpoison_memory_region(void const volatile *addr, size_t size) {
 }
 
 bool __asan_address_is_poisoned(void const volatile *addr) {
-  const size_t kAccessSize = 1;
-  uintptr_t address = (uintptr_t)addr;
-  uint8_t *shadow_address = (uint8_t*)MemToShadow(address);
-  int8_t shadow_value = *shadow_address;
-  if (shadow_value) {
-    uint8_t last_accessed_byte = (address & (SHADOW_GRANULARITY - 1))
-                                 + kAccessSize - 1;
-    return (last_accessed_byte >= shadow_value);
-  }
-  return false;
+  return __asan::AddressIsPoisoned((uintptr_t)addr);
 }
