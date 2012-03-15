@@ -2905,6 +2905,40 @@ static bool hasDeducibleTemplateParameters(Sema &S,
                                            FunctionTemplateDecl *FunctionTemplate,
                                            QualType T);
 
+/// \brief Perform template argument deduction by matching a parameter type
+///        against a single expression, where the expression is an element of
+///        an initializer list that was originally matched against the argument
+///        type.
+static Sema::TemplateDeductionResult
+DeduceTemplateArgumentByListElement(Sema &S,
+                                    TemplateParameterList *TemplateParams,
+                                    QualType ParamType, Expr *Arg,
+                                    TemplateDeductionInfo &Info,
+                              SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                                    unsigned TDF) {
+  // Handle the case where an init list contains another init list as the
+  // element.
+  if (InitListExpr *ILE = dyn_cast<InitListExpr>(Arg)) {
+    QualType X;
+    if (!S.isStdInitializerList(ParamType.getNonReferenceType(), &X))
+      return Sema::TDK_Success; // Just ignore this expression.
+
+    // Recurse down into the init list.
+    for (unsigned i = 0, e = ILE->getNumInits(); i < e; ++i) {
+      if (Sema::TemplateDeductionResult Result =
+            DeduceTemplateArgumentByListElement(S, TemplateParams, X,
+                                                 ILE->getInit(i),
+                                                 Info, Deduced, TDF))
+        return Result;
+    }
+    return Sema::TDK_Success;
+  }
+
+  // For all other cases, just match by type.
+  return DeduceTemplateArgumentsByTypeMatch(S, TemplateParams, ParamType,
+                                            Arg->getType(), Info, Deduced, TDF);
+}
+
 /// \brief Perform template argument deduction from a function call
 /// (C++ [temp.deduct.call]).
 ///
@@ -3025,9 +3059,9 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
         for (unsigned i = 0, e = ILE->getNumInits(); i < e; ++i) {
           if (TemplateDeductionResult Result =
-                DeduceTemplateArgumentsByTypeMatch(*this, TemplateParams, X,
-                                                   ILE->getInit(i)->getType(),
-                                                   Info, Deduced, TDF))
+                DeduceTemplateArgumentByListElement(*this, TemplateParams, X,
+                                                     ILE->getInit(i),
+                                                     Info, Deduced, TDF))
             return Result;
         }
         // Don't track the argument type, since an initializer list has none.

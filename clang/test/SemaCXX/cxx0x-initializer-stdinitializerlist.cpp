@@ -137,3 +137,16 @@ struct haslist1 {
 haslist1::haslist1()
 : il{1, 2, 3} // expected-warning{{at the end of the constructor}}
 {}
+
+namespace PR12119 {
+  // Deduction with nested initializer lists.
+  template<typename T> void f(std::initializer_list<T>);
+  template<typename T> void g(std::initializer_list<std::initializer_list<T>>);
+
+  void foo() {
+    f({0, {1}});
+    g({{0, 1}, {2, 3}});
+    std::initializer_list<int> il = {1, 2};
+    g({il, {2, 3}});
+  }
+}
