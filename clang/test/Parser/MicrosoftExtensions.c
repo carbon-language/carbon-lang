@@ -52,6 +52,13 @@ typedef enum E { e1 };
 enum __declspec(deprecated) E2 { i, j, k };
 __declspec(deprecated) enum E3 { a, b, c } e;
 
+void deprecated_enum_test(void)
+{
+  // Test to make sure the deprecated warning follows the right thing
+  enum E2 e1;  // expected-warning {{'E2' is deprecated}}
+  enum E3 e2; // No warning expected, the deprecation follows the variable
+  enum E3 e3 = e;  // expected-warning {{'e' is deprecated}}
+}
 
 /* Microsoft attribute tests */
 [repeatable][source_annotation_attribute( Parameter|ReturnValue )]
