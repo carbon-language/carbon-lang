@@ -7422,6 +7422,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // will be type-legalized to complex code sequences.
   // We perform this optimization only before the operation legalizer because we
   // may introduce illegal operations.
+  // Create a new simpler BUILD_VECTOR sequence which other optimizations can
+  // turn into a single shuffle instruction.
   if ((Level == AfterLegalizeVectorOps || Level == AfterLegalizeTypes) &&
       ValidTypes) {
     bool isLE = TLI.isLittleEndian();
@@ -7462,6 +7464,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
                                  VecVT, &Ops[0], Ops.size());
 
+    // The new BUILD_VECTOR node has the potential to be further optimized.
+    AddToWorkList(BV.getNode());
     // Bitcast to the desired type.
     return DAG.getNode(ISD::BITCAST, dl, N->getValueType(0), BV);
   }
