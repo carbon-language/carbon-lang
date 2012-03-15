@@ -1701,10 +1701,10 @@ def warn_impcast_float_integer : Warning<
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_sign : Warning<
   "implicit conversion changes signedness: %0 to %1">,
-  InGroup<DiagGroup<"sign-conversion">>, DefaultIgnore;
+  InGroup<SignConversion>, DefaultIgnore;
 def warn_impcast_integer_sign_conditional : Warning<
   "operand of ? changes signedness: %0 to %1">,
-  InGroup<DiagGroup<"sign-conversion">>, DefaultIgnore;
+  InGroup<SignConversion>, DefaultIgnore;
 def warn_impcast_integer_precision : Warning<
   "implicit conversion loses integer precision: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
@@ -1713,29 +1713,29 @@ def warn_impcast_integer_64_32 : Warning<
   InGroup<DiagGroup<"shorten-64-to-32">>, DefaultIgnore;
 def warn_impcast_integer_precision_constant : Warning<
   "implicit conversion from %2 to %3 changes value from %0 to %1">,
-  InGroup<DiagGroup<"constant-conversion">>;
+  InGroup<ConstantConversion>;
 def warn_impcast_bitfield_precision_constant : Warning<
   "implicit truncation from %2 to bitfield changes value from %0 to %1">,
-  InGroup<DiagGroup<"constant-conversion">>;
+  InGroup<ConstantConversion>;
 def warn_impcast_literal_float_to_integer : Warning<
   "implicit conversion turns literal floating-point number into integer: "
   "%0 to %1">,
-  InGroup<DiagGroup<"literal-conversion">>, DefaultIgnore;
+  InGroup<LiteralConversion>, DefaultIgnore;
 def warn_impcast_string_literal_to_bool : Warning<
   "implicit conversion turns string literal into bool: %0 to %1">,
-  InGroup<DiagGroup<"string-conversion">>, DefaultIgnore;
+  InGroup<StringConversion>, DefaultIgnore;
 def warn_impcast_different_enum_types : Warning<
   "implicit conversion from enumeration type %0 to different enumeration type "
   "%1">, InGroup<DiagGroup<"conversion">>;
 def warn_impcast_bool_to_null_pointer : Warning<
     "initialization of pointer of type %0 to null from a constant boolean "
-    "expression">, InGroup<BoolConversions>;
+    "expression">, InGroup<BoolConversion>;
 def warn_impcast_null_pointer_to_integer : Warning<
     "implicit conversion of NULL constant to integer">,
     InGroup<NullConversion>;
 def warn_impcast_function_to_bool : Warning<
     "address of function %q0 will always evaluate to 'true'">,
-    InGroup<BoolConversions>;
+    InGroup<BoolConversion>;
 def note_function_to_bool_silence : Note<
     "prefix with the address-of operator to silence this warning">;
 def note_function_to_bool_call : Note<
@@ -4283,7 +4283,7 @@ def ext_typecheck_convert_pointer_int : ExtWarn<
   "take the address with &|"
   "remove *|"
   "remove &}3">,
-  InGroup<IntConversions>;
+  InGroup<IntConversion>;
 def ext_typecheck_convert_int_pointer : ExtWarn<
   "incompatible integer to pointer conversion "
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
@@ -4294,7 +4294,7 @@ def ext_typecheck_convert_int_pointer : ExtWarn<
   "take the address with &|"
   "remove *|"
   "remove &}3">,
-  InGroup<IntConversions>;
+  InGroup<IntConversion>;
 def ext_typecheck_convert_pointer_void_func : Extension<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "
@@ -4339,7 +4339,7 @@ def warn_incompatible_vectors : Warning<
   " %0 "
   "%select{from|to parameter of type|from a function with result type|to type|"
   "with an expression of type|to parameter of type|to type}2 %1">,
-  InGroup<VectorConversions>, DefaultIgnore;
+  InGroup<VectorConversion>, DefaultIgnore;
 def err_int_to_block_pointer : Error<
   "invalid block pointer conversion "
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"

@@ -26,8 +26,12 @@ def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
 def Availability : DiagGroup<"availability">;
 def AutoImport : DiagGroup<"auto-import">;
-def BoolConversions : DiagGroup<"bool-conversions">;
-def IntConversions : DiagGroup<"int-conversions">;
+def ConstantConversion : DiagGroup<"constant-conversion">;
+def LiteralConversion : DiagGroup<"literal-conversion">;
+def StringConversion : DiagGroup<"string-conversion">;
+def SignConversion : DiagGroup<"sign-conversion">;
+def BoolConversion : DiagGroup<"bool-conversion">;
+def IntConversion : DiagGroup<"int-conversion">;
 def NullConversion : DiagGroup<"null-conversion">;
 def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
 def CXXCompat: DiagGroup<"c++-compat">;
@@ -251,7 +255,7 @@ def SuperSubClassMismatch : DiagGroup<"super-class-method-mismatch">;
 def OverridingMethodMismatch : DiagGroup<"overriding-method-mismatch">;
 def : DiagGroup<"variadic-macros">;
 def VariadicMacros : DiagGroup<"variadic-macros">;
-def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
+def VectorConversion : DiagGroup<"vector-conversion">;      // clang specific
 def VexingParse : DiagGroup<"vexing-parse">;
 def VLA : DiagGroup<"vla">;
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
@@ -286,13 +290,13 @@ def Parentheses : DiagGroup<"parentheses",
 //   - __null-to-integer conversion warnings are on by default
 def Conversion : DiagGroup<"conversion",
                            [DiagGroup<"shorten-64-to-32">,
-                            DiagGroup<"constant-conversion">,
-                            DiagGroup<"literal-conversion">,
-                            DiagGroup<"string-conversion">,
-                            DiagGroup<"sign-conversion">,
-                            BoolConversions,
+                            ConstantConversion,
+                            LiteralConversion,
+                            StringConversion,
+                            SignConversion,
+                            BoolConversion,
                             NullConversion,
-                            IntConversions]>,
+                            IntConversion]>,
                  DiagCategory<"Value Conversion Issue">;
 
 def Unused : DiagGroup<"unused",
@@ -362,7 +366,12 @@ def : DiagGroup<"endif-labels", [ExtraTokens]>; // -Wendif-labels=-Wendif-tokens
 def : DiagGroup<"comments", [Comment]>;         // -Wcomments = -Wcomment
 def : DiagGroup<"conversion-null",
                 [NullConversion]>; // -Wconversion-null = -Wnull-conversion
-             
+def : DiagGroup<"bool-conversions",
+                [BoolConversion]>; // -Wbool-conversions  = -Wbool-conversion
+def : DiagGroup<"int-conversions",
+                [IntConversion]>; // -Wint-conversions = -Wint-conversion
+def : DiagGroup<"vector-conversions",
+                [VectorConversion]>; // -Wvector-conversions = -Wvector-conversion
 
 // A warning group for warnings that we want to have on by default in clang,
 // but which aren't on by default in GCC.

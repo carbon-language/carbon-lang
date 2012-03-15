@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only -Wvector-conversions
+// RUN: %clang_cc1 %s -verify -fsyntax-only -Wvector-conversion
 typedef unsigned int v2u __attribute__ ((vector_size (8)));
 typedef int v2s __attribute__ ((vector_size (8)));
 typedef float v2f __attribute__ ((vector_size(8)));

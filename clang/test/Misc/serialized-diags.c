@@ -52,7 +52,7 @@ void testMacro() {
 // CHECK: +-Range: {{.*[/\\]}}serialized-diags.c:22:3 {{.*[/\\]}}serialized-diags.c:22:6
 // CHECK: +-Range: {{.*[/\\]}}serialized-diags.c:20:15 {{.*[/\\]}}serialized-diags.c:20:16
 // CHECK: +-{{.*[/\\]}}serialized-diags.c:19:1: note: 'taz' declared here []
-// CHECK: {{.*[/\\]}}serialized-diags.h:5:7: warning: incompatible integer to pointer conversion initializing 'char *' with an expression of type 'int';  [-Wint-conversions]
+// CHECK: {{.*[/\\]}}serialized-diags.h:5:7: warning: incompatible integer to pointer conversion initializing 'char *' with an expression of type 'int';  [-Wint-conversion]
 // CHECK: Range: {{.*[/\\]}}serialized-diags.h:5:16 {{.*[/\\]}}serialized-diags.h:5:17
 // CHECK: +-{{.*[/\\]}}serialized-diags.c:26:10: note: in file included from {{.*[/\\]}}serialized-diags.c:26: []
 // CHECK: Number of diagnostics: 5

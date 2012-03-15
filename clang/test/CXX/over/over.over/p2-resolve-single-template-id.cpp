@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-bool-conversions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-bool-conversion %s
 
 typedef __typeof__(((int*)0)-((int*)0)) ptrdiff_t;
 
