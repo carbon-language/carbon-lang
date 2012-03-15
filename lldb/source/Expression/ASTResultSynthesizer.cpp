@@ -16,6 +16,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include "lldb/Core/Log.h"
@@ -329,8 +330,10 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         else
             result_ptr_id = &Ctx.Idents.get("$__lldb_expr_result_ptr");
         
-        QualType ptr_qual_type;
+        m_sema->RequireCompleteType(SourceLocation(), expr_qual_type, clang::diag::err_incomplete_type);
         
+        QualType ptr_qual_type;
+
         if (expr_qual_type->getAs<ObjCObjectType>() != NULL)
             ptr_qual_type = Ctx.getObjCObjectPointerType(expr_qual_type);
         else

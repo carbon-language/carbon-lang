@@ -2900,6 +2900,14 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP v
                                             &ut,
                                             &pt);
     
+    clang::QualType parser_opaque_type = QualType::getFromOpaquePtr(pt.GetOpaqueQualType());
+    
+    if (const clang::Type *parser_type = parser_opaque_type.getTypePtr())
+    {
+        if (const TagType *tag_type = dyn_cast<TagType>(parser_type))
+            CompleteType(tag_type->getDecl());
+    }
+    
     if (!var_location)
         return;
     
