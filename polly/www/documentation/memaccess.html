@@ -103,6 +103,23 @@ The transformed JSCOP file is:
 }]
 </pre>
 Code is generated for this change.
+<h3>Step 2.2 Code generation for coefficients</h3>
+The coefficients of induction variables are changed here. Let the original
+JSCOP file be:
+<pre>
+"accesses" : [{
+      "kind" : "read",
+               "relation" : "{ Stmt_for_body3[i0, i1] -> MemRef_A[32i0+i1] }"
+}]
+</pre>
+The transformed JSCOP file is:
+<pre>
+"accesses" : [{
+      "kind" : "read",
+               "relation" : "{ Stmt_for_body3[i0, i1] -> MemRef_A[16i0+2i1+5] }"
+}]
+</pre>
+Code is generated for this change.
 </div>
 </body>
 </html>
