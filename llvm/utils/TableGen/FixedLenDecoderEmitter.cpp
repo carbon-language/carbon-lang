@@ -126,7 +126,7 @@ typedef std::vector<bit_value_t> insn_t;
 /// version and return the Opcode since the two have the same Asm format string.
 class Filter {
 protected:
-  FilterChooser *Owner; // points to the FilterChooser who owns this filter
+  const FilterChooser *Owner;// points to the FilterChooser who owns this filter
   unsigned StartBit; // the starting bit position
   unsigned NumBits; // number of bits to filter
   bool Mixed; // a mixed region contains both set and unset bits
@@ -214,10 +214,10 @@ protected:
   const std::vector<const CodeGenInstruction*> &AllInstructions;
 
   // Vector of uid's for this filter chooser to work on.
-  const std::vector<unsigned> Opcodes;
+  const std::vector<unsigned> &Opcodes;
 
   // Lookup table for the operand decoding of instructions.
-  std::map<unsigned, std::vector<OperandInfo> > &Operands;
+  const std::map<unsigned, std::vector<OperandInfo> > &Operands;
 
   // Vector of candidate filters.
   std::vector<Filter> Filters;
@@ -227,7 +227,7 @@ protected:
   std::vector<bit_value_t> FilterBitValues;
 
   // Links to the FilterChooser above us in the decoding tree.
-  FilterChooser *Parent;
+  const FilterChooser *Parent;
 
   // Index of the best filter from Filters.
   int BestIndex;
@@ -248,7 +248,7 @@ public:
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
-                std::map<unsigned, std::vector<OperandInfo> > &Ops,
+                const std::map<unsigned, std::vector<OperandInfo> > &Ops,
                 unsigned BW,
                 const FixedLenDecoderEmitter *E)
     : AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
@@ -261,9 +261,9 @@ public:
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
-                std::map<unsigned, std::vector<OperandInfo> > &Ops,
-                std::vector<bit_value_t> &ParentFilterBitValues,
-                FilterChooser &parent)
+                const std::map<unsigned, std::vector<OperandInfo> > &Ops,
+                const std::vector<bit_value_t> &ParentFilterBitValues,
+                const FilterChooser &parent)
     : AllInstructions(Insts), Opcodes(IDs), Operands(Ops),
       Filters(), FilterBitValues(ParentFilterBitValues),
       Parent(&parent), BestIndex(-1), BitWidth(parent.BitWidth),
@@ -903,8 +903,10 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
     o << ") {\n";
     emitSoftFailCheck(o, Indentation+2, Opc);
     o.indent(Indentation) << "  MI.setOpcode(" << Opc << ");\n";
-    std::vector<OperandInfo>& InsnOperands = Operands[Opc];
-    for (std::vector<OperandInfo>::iterator
+    std::map<unsigned, std::vector<OperandInfo> >::const_iterator OpIter =
+      Operands.find(Opc);
+    const std::vector<OperandInfo>& InsnOperands = OpIter->second;
+    for (std::vector<OperandInfo>::const_iterator
          I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
       // If a custom instruction decoder was specified, use that.
       if (I->numFields() == 0 && I->Decoder.size()) {
@@ -954,8 +956,10 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
   }
   emitSoftFailCheck(o, Indentation+2, Opc);
   o.indent(Indentation) << "  MI.setOpcode(" << Opc << ");\n";
-  std::vector<OperandInfo>& InsnOperands = Operands[Opc];
-  for (std::vector<OperandInfo>::iterator
+  std::map<unsigned, std::vector<OperandInfo> >::const_iterator OpIter =
+    Operands.find(Opc);
+  const std::vector<OperandInfo>& InsnOperands = OpIter->second;
+  for (std::vector<OperandInfo>::const_iterator
        I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
     // If a custom instruction decoder was specified, use that.
     if (I->numFields() == 0 && I->Decoder.size()) {
@@ -1372,7 +1376,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
   }
 
   // For each operand, see if we can figure out where it is encoded.
-  for (std::vector<std::pair<Init*, std::string> >::iterator
+  for (std::vector<std::pair<Init*, std::string> >::const_iterator
        NI = InOutOperands.begin(), NE = InOutOperands.end(); NI != NE; ++NI) {
     std::string Decoder = "";
 
