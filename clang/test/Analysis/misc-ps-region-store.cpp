@@ -529,3 +529,26 @@ MyEnum rdar10892489_positive() {
   return MyEnumValue;
 }
 
+// Test handling of catch with no condition variable.
+void PR11545() {
+  try
+  {
+      throw;
+  }
+  catch (...)
+  {
+  }
+}
+
+void PR11545_positive() {
+  try
+  {
+      throw;
+  }
+  catch (...)
+  {
+    int *p = 0;
+    *p = 0xDEADBEEF; // expected-warning {{null}}
+  }
+}
+

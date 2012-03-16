@@ -268,6 +268,11 @@ void ExprEngine::VisitCXXCatchStmt(const CXXCatchStmt *CS,
                                    ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   const VarDecl *VD = CS->getExceptionDecl();
+  if (!VD) {
+    Dst.Add(Pred);
+    return;
+  }
+
   const LocationContext *LCtx = Pred->getLocationContext();
   SVal V = svalBuilder.getConjuredSymbolVal(CS, LCtx, VD->getType(),
                                  currentBuilderContext->getCurrentBlockCount());
