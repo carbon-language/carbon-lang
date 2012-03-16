@@ -32,8 +32,6 @@ namespace {
 
   // AlwaysInliner only inlines functions that are mark as "always inline".
   class AlwaysInliner : public Inliner {
-    // Functions that are never inlined
-    SmallPtrSet<const Function*, 16> NeverInline;
     InlineCostAnalyzer CA;
   public:
     // Use extremely low threshold.
@@ -46,7 +44,22 @@ namespace {
     }
     static char ID; // Pass identification, replacement for typeid
     InlineCost getInlineCost(CallSite CS) {
-      return CA.getInlineCost(CS, NeverInline);
+      Function *Callee = CS.getCalledFunction();
+      // We assume indirect calls aren't calling an always-inline function.
+      if (!Callee) return InlineCost::getNever();
+
+      // We can't inline calls to external functions.
+      // FIXME: We shouldn't even get here.
+      if (Callee->isDeclaration()) return InlineCost::getNever();
+
+      // Return never for anything not marked as always inline.
+      if (!Callee->hasFnAttr(Attribute::AlwaysInline))
+        return InlineCost::getNever();
+
+      // We still have to check the inline cost in case there are reasons to
+      // not inline which trump the always-inline attribute such as setjmp and
+      // indirectbr.
+      return CA.getInlineCost(CS);
     }
     float getInlineFudgeFactor(CallSite CS) {
       return CA.getInlineFudgeFactor(CS);
@@ -58,7 +71,7 @@ namespace {
       CA.growCachedCostInfo(Caller, Callee);
     }
     virtual bool doFinalization(CallGraph &CG) {
-      return removeDeadFunctions(CG, &NeverInline);
+      return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/true);
     }
     virtual bool doInitialization(CallGraph &CG);
     void releaseMemory() {
@@ -84,12 +97,5 @@ Pass *llvm::createAlwaysInlinerPass(bool InsertLifetime) {
 // been annotated with the "always inline" attribute.
 bool AlwaysInliner::doInitialization(CallGraph &CG) {
   CA.setTargetData(getAnalysisIfAvailable<TargetData>());
-
-  Module &M = CG.getModule();
-
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isDeclaration() && !I->hasFnAttr(Attribute::AlwaysInline))
-      NeverInline.insert(I);
-
   return false;
 }

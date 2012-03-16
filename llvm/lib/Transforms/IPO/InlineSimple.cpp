@@ -43,7 +43,16 @@ namespace {
     }
     static char ID; // Pass identification, replacement for typeid
     InlineCost getInlineCost(CallSite CS) {
-      return CA.getInlineCost(CS, NeverInline);
+      // Filter out functions which should never be inlined due to the global
+      // 'llvm.noinline'.
+      // FIXME: I'm 99% certain that this is an ancient bit of legacy that we
+      // no longer need to support, but I don't want to blindly nuke it just
+      // yet.
+      if (Function *Callee = CS.getCalledFunction())
+        if (NeverInline.count(Callee))
+          return InlineCost::getNever();
+
+      return CA.getInlineCost(CS);
     }
     float getInlineFudgeFactor(CallSite CS) {
       return CA.getInlineFudgeFactor(CS);
@@ -80,11 +89,6 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
   CA.setTargetData(getAnalysisIfAvailable<TargetData>());
 
   Module &M = CG.getModule();
-
-  for (Module::iterator I = M.begin(), E = M.end();
-       I != E; ++I)
-    if (!I->isDeclaration() && I->hasFnAttr(Attribute::NoInline))
-      NeverInline.insert(I);
 
   // Get llvm.noinline
   GlobalVariable *GV = M.getNamedGlobal("llvm.noinline");

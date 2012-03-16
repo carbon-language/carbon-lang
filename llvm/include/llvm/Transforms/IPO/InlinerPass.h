@@ -79,10 +79,14 @@ struct Inliner : public CallGraphSCCPass {
   /// has been inlined.
   virtual void growCachedCostInfo(Function *Caller, Function *Callee) = 0;
 
-  /// removeDeadFunctions - Remove dead functions that are not included in
-  /// DNR (Do Not Remove) list.
-  bool removeDeadFunctions(CallGraph &CG, 
-                           SmallPtrSet<const Function *, 16> *DNR = NULL);
+  /// removeDeadFunctions - Remove dead functions.
+  ///
+  /// This also includes a hack in the form of the 'AlwaysInlineOnly' flag
+  /// which restricts it to deleting functions with an 'AlwaysInline'
+  /// attribute. This is useful for the InlineAlways pass that only wants to
+  /// deal with that subset of the functions.
+  bool removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly = false);
+
 private:
   // InlineThreshold - Cache the value here for easy access.
   unsigned InlineThreshold;

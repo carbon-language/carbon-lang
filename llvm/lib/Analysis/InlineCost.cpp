@@ -520,22 +520,18 @@ int InlineCostAnalyzer::getInlineBonuses(CallSite CS, Function *Callee) {
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
 //
-InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
-                               SmallPtrSet<const Function*, 16> &NeverInline) {
-  return getInlineCost(CS, CS.getCalledFunction(), NeverInline);
+InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS) {
+  return getInlineCost(CS, CS.getCalledFunction());
 }
 
-InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
-                               Function *Callee,
-                               SmallPtrSet<const Function*, 16> &NeverInline) {
+InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee) {
   Instruction *TheCall = CS.getInstruction();
   Function *Caller = TheCall->getParent()->getParent();
 
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.
-  if (Callee->mayBeOverridden() ||
-      Callee->hasFnAttr(Attribute::NoInline) || NeverInline.count(Callee) ||
+  if (Callee->mayBeOverridden() || Callee->hasFnAttr(Attribute::NoInline) ||
       CS.isNoInline())
     return llvm::InlineCost::getNever();
 

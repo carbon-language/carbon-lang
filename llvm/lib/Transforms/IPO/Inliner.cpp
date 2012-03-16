@@ -556,25 +556,27 @@ bool Inliner::doFinalization(CallGraph &CG) {
 
 /// removeDeadFunctions - Remove dead functions that are not included in
 /// DNR (Do Not Remove) list.
-bool Inliner::removeDeadFunctions(CallGraph &CG, 
-                                  SmallPtrSet<const Function *, 16> *DNR) {
-  SmallPtrSet<CallGraphNode*, 16> FunctionsToRemove;
+bool Inliner::removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly) {
+  SmallVector<CallGraphNode*, 16> FunctionsToRemove;
 
   // Scan for all of the functions, looking for ones that should now be removed
   // from the program.  Insert the dead ones in the FunctionsToRemove set.
   for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ++I) {
     CallGraphNode *CGN = I->second;
-    if (CGN->getFunction() == 0)
-      continue;
-    
     Function *F = CGN->getFunction();
-    
+    if (!F || F->isDeclaration())
+      continue;
+
+    // Handle the case when this function is called and we only want to care
+    // about always-inline functions. This is a bit of a hack to share code
+    // between here and the InlineAlways pass.
+    if (AlwaysInlineOnly && !F->hasFnAttr(Attribute::AlwaysInline))
+      continue;
+
     // If the only remaining users of the function are dead constants, remove
     // them.
     F->removeDeadConstantUsers();
 
-    if (DNR && DNR->count(F))
-      continue;
     if (!F->isDefTriviallyDead())
       continue;
     
@@ -587,24 +589,28 @@ bool Inliner::removeDeadFunctions(CallGraph &CG,
     CG.getExternalCallingNode()->removeAnyCallEdgeTo(CGN);
 
     // Removing the node for callee from the call graph and delete it.
-    FunctionsToRemove.insert(CGN);
+    FunctionsToRemove.push_back(CGN);
   }
+  if (FunctionsToRemove.empty())
+    return false;
 
   // Now that we know which functions to delete, do so.  We didn't want to do
   // this inline, because that would invalidate our CallGraph::iterator
   // objects. :(
   //
-  // Note that it doesn't matter that we are iterating over a non-stable set
+  // Note that it doesn't matter that we are iterating over a non-stable order
   // here to do this, it doesn't matter which order the functions are deleted
   // in.
-  bool Changed = false;
-  for (SmallPtrSet<CallGraphNode*, 16>::iterator I = FunctionsToRemove.begin(),
-       E = FunctionsToRemove.end(); I != E; ++I) {
+  std::sort(FunctionsToRemove.begin(), FunctionsToRemove.end());
+  FunctionsToRemove.erase(std::unique(FunctionsToRemove.begin(),
+                                      FunctionsToRemove.end()),
+                          FunctionsToRemove.end());
+  for (SmallVectorImpl<CallGraphNode *>::iterator I = FunctionsToRemove.begin(),
+                                                  E = FunctionsToRemove.end();
+       I != E; ++I) {
     resetCachedCostInfo((*I)->getFunction());
     delete CG.removeFunctionFromModule(*I);
     ++NumDeleted;
-    Changed = true;
   }
-
-  return Changed;
+  return true;
 }
