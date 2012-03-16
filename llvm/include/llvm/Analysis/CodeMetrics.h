@@ -1,4 +1,4 @@
-//===- CodeMetrics.h - Measures the weight of a function---------*- C++ -*-===//
+//===- CodeMetrics.h - Code cost measurements -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,53 +18,58 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
-
   class BasicBlock;
   class Function;
   class TargetData;
   class Value;
 
-  // CodeMetrics - Calculate size and a few similar metrics for a set of
-  // basic blocks.
-  struct CodeMetrics {
-    /// NeverInline - True if this callee should never be inlined into a
-    /// caller.
-    // bool NeverInline;
+  /// \brief Check whether a call will lower to something small.
+  ///
+  /// This tests checks whether calls to this function will lower to something
+  /// significantly cheaper than a traditional call, often a single
+  /// instruction.
+  bool callIsSmall(const Function *F);
 
-    // True if this function contains a call to setjmp or other functions
-    // with attribute "returns twice" without having the attribute itself.
+  /// \brief Utility to calculate the size and a few similar metrics for a set
+  /// of basic blocks.
+  struct CodeMetrics {
+    /// \brief True if this function contains a call to setjmp or other functions
+    /// with attribute "returns twice" without having the attribute itself.
     bool exposesReturnsTwice;
 
-    // True if this function calls itself
+    /// \brief True if this function calls itself.
     bool isRecursive;
 
-    // True if this function contains one or more indirect branches
+    /// \brief True if this function contains one or more indirect branches.
     bool containsIndirectBr;
 
-    /// usesDynamicAlloca - True if this function calls alloca (in the C sense).
+    /// \brief True if this function calls alloca (in the C sense).
     bool usesDynamicAlloca;
 
-    /// NumInsts, NumBlocks - Keep track of how large each function is, which
-    /// is used to estimate the code size cost of inlining it.
-    unsigned NumInsts, NumBlocks;
+    /// \brief Number of instructions in the analyzed blocks.
+    unsigned NumInsts;
 
-    /// NumBBInsts - Keeps track of basic block code size estimates.
+    /// \brief Number of analyzed blocks.
+    unsigned NumBlocks;
+
+    /// \brief Keeps track of basic block code size estimates.
     DenseMap<const BasicBlock *, unsigned> NumBBInsts;
 
-    /// NumCalls - Keep track of the number of calls to 'big' functions.
+    /// \brief Keep track of the number of calls to 'big' functions.
     unsigned NumCalls;
 
-    /// NumInlineCandidates - Keep track of the number of calls to internal
-    /// functions with only a single caller.  These are likely targets for
-    /// future inlining, likely exposed by interleaved devirtualization.
+    /// \brief The number of calls to internal functions with a single caller.
+    ///
+    /// These are likely targets for future inlining, likely exposed by
+    /// interleaved devirtualization.
     unsigned NumInlineCandidates;
 
-    /// NumVectorInsts - Keep track of how many instructions produce vector
-    /// values.  The inliner is being more aggressive with inlining vector
-    /// kernels.
+    /// \brief How many instructions produce vector values.
+    ///
+    /// The inliner is more aggressive with inlining vector kernels.
     unsigned NumVectorInsts;
 
-    /// NumRets - Keep track of how many Ret instructions the block contains.
+    /// \brief How many 'ret' instructions the blocks contain.
     unsigned NumRets;
 
     CodeMetrics() : exposesReturnsTwice(false), isRecursive(false),
@@ -73,18 +78,11 @@ namespace llvm {
                     NumInlineCandidates(0), NumVectorInsts(0),
                     NumRets(0) {}
 
-    /// analyzeBasicBlock - Add information about the specified basic block
-    /// to the current structure.
+    /// \brief Add information about a block to the current state.
     void analyzeBasicBlock(const BasicBlock *BB, const TargetData *TD = 0);
 
-    /// analyzeFunction - Add information about the specified function
-    /// to the current structure.
+    /// \brief Add information about a function to the current state.
     void analyzeFunction(Function *F, const TargetData *TD = 0);
-
-    /// CountBonusForConstant - Figure out an approximation for how much
-    /// per-call performance boost we can expect if the specified value is
-    /// constant.
-    unsigned CountBonusForConstant(Value *V);
   };
 }
 
