@@ -29,12 +29,20 @@ def RemoveForce(f):
     except OSError:
         pass
 
-def WinRename(f_o, f_n):
-    import time
+def WinWaitReleased(f):
+    import time, win32file
     retry_cnt = 256
-    while (True):
+    while True:
         try:
-            os.rename(f_o, f_n)
+            h = win32file.CreateFile(
+                f,
+                0, # Querying, neither GENERIC_READ nor GENERIC_WRITE
+                0, # Exclusive
+                None,
+                win32file.OPEN_EXISTING,
+                win32file.FILE_ATTRIBUTE_NORMAL,
+                None)
+            h.close()
             break
         except WindowsError, (winerror, strerror):
             retry_cnt = retry_cnt - 1
@@ -44,21 +52,6 @@ def WinRename(f_o, f_n):
                 time.sleep(0.01)
             else:
                 raise
-
-def WinWaitReleased(f):
-    import random
-    t = "%s%06d" % (f, random.randint(0, 999999))
-    RemoveForce(t)
-    try:
-        WinRename(f, t) # rename
-        WinRename(t, f) # restore
-    except WindowsError, (winerror, strerror):
-        if winerror in (2, 3):
-            # 2: ERROR_FILE_NOT_FOUND
-            # 3: ERROR_PATH_NOT_FOUND
-            pass
-        else:
-            raise
 
 def executeCommand(command, cwd=None, env=None):
     p = subprocess.Popen(command, cwd=cwd,
