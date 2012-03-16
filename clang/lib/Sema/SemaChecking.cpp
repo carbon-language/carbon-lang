@@ -4075,8 +4075,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
 
   if ((E->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull)
            == Expr::NPCK_GNUNull) && Target->isIntegerType()) {
-    S.Diag(E->getExprLoc(), diag::warn_impcast_null_pointer_to_integer)
-        << T << E->getSourceRange() << clang::SourceRange(CC);
+    SourceLocation Loc = E->getSourceRange().getBegin();
+    if (Loc.isMacroID())
+      Loc = S.SourceMgr.getImmediateExpansionRange(Loc).first;
+    S.Diag(Loc, diag::warn_impcast_null_pointer_to_integer)
+        << T << Loc << clang::SourceRange(CC);
     return;
   }
 
