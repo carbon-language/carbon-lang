@@ -475,6 +475,11 @@ void Parser::Initialize() {
 bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
   DelayedCleanupPoint CleanupRAII(TopLevelDeclCleanupPool);
 
+  // Skip over the EOF token, flagging end of previous input for incremental 
+  // processing
+  if (PP.isIncrementalProcessingEnabled() && Tok.is(tok::eof))
+    ConsumeToken();
+
   while (Tok.is(tok::annot_pragma_unused))
     HandlePragmaUnused();
 
@@ -483,15 +488,17 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
     // Late template parsing can begin.
     if (getLangOpts().DelayedTemplateParsing)
       Actions.SetLateTemplateParser(LateTemplateParserCallback, this);
+    if (!PP.isIncrementalProcessingEnabled())
+      Actions.ActOnEndOfTranslationUnit();
+    //else don't tell Sema that we ended parsing: more input might come.
 
-    Actions.ActOnEndOfTranslationUnit();
     return true;
   }
 
   ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX0XAttributes(attrs);
   MaybeParseMicrosoftAttributes(attrs);
-  
+
   Result = ParseExternalDeclaration(attrs);
   return false;
 }

@@ -328,15 +328,17 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     CurLexer->BufferPtr = EndPos;
     CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
 
-    // We're done with the #included file.
-    CurLexer.reset();
+    if (!isIncrementalProcessingEnabled())
+      // We're done with lexing.
+      CurLexer.reset();
   } else {
     assert(CurPTHLexer && "Got EOF but no current lexer set!");
     CurPTHLexer->getEOF(Result);
     CurPTHLexer.reset();
   }
-
-  CurPPLexer = 0;
+  
+  if (!isIncrementalProcessingEnabled())
+    CurPPLexer = 0;
 
   // This is the end of the top-level file. 'WarnUnusedMacroLocs' has collected
   // all macro locations that we need to warn because they are not used.

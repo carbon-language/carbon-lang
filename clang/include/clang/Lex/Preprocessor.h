@@ -148,6 +148,10 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// with this preprocessor.
   std::vector<CommentHandler *> CommentHandlers;
 
+  /// \brief True if we want to ignore EOF token and continue later on (thus 
+  /// avoid tearing the Lexer and etc. down).
+  bool IncrementalProcessing;
+
   /// \brief The code-completion handler.
   CodeCompletionHandler *CodeComplete;
 
@@ -344,7 +348,8 @@ public:
                ModuleLoader &TheModuleLoader,
                IdentifierInfoLookup *IILookup = 0,
                bool OwnsHeaderSearch = false,
-               bool DelayInitialization = false);
+               bool DelayInitialization = false,
+               bool IncrProcessing = false);
 
   ~Preprocessor();
 
@@ -691,6 +696,14 @@ public:
   /// \brief Recompute the current lexer kind based on the CurLexer/CurPTHLexer/
   /// CurTokenLexer pointers.
   void recomputeCurLexerKind();
+
+  /// \brief Returns true if incremental processing is enabled
+  bool isIncrementalProcessingEnabled() const { return IncrementalProcessing; }
+
+  /// \brief Enables the incremental processing
+  void enableIncrementalProcessing(bool value = true) {
+    IncrementalProcessing = value;
+  }
   
   /// \brief Specify the point at which code-completion will be performed.
   ///
