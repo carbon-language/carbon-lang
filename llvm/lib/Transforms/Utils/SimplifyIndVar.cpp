@@ -231,8 +231,10 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
 
   // Inform IVUsers about the new users.
   if (IU) {
-    if (Instruction *I = dyn_cast<Instruction>(Rem->getOperand(0)))
-      IU->AddUsersIfInteresting(I);
+    if (Instruction *I = dyn_cast<Instruction>(Rem->getOperand(0))) {
+      SmallPtrSet<Loop*, 16> SimplifiedLoopNests;
+      IU->AddUsersIfInteresting(I, SimplifiedLoopNests);
+    }
   }
   DEBUG(dbgs() << "INDVARS: Simplified rem: " << *Rem << '\n');
   ++NumElimRem;

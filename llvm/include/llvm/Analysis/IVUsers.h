@@ -145,7 +145,8 @@ public:
   /// AddUsersIfInteresting - Inspect the specified Instruction.  If it is a
   /// reducible SCEV, recursively add its users to the IVUsesByStride set and
   /// return true.  Otherwise, return false.
-  bool AddUsersIfInteresting(Instruction *I);
+  bool AddUsersIfInteresting(Instruction *I,
+                             SmallPtrSet<Loop*,16> &SimpleLoopNests);
 
   IVStrideUse &AddUser(Instruction *User, Value *Operand);
 

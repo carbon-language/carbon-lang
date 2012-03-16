@@ -4534,22 +4534,25 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   if (!L->isLoopSimplifyForm())
     return;
 
+  // If there's no interesting work to be done, bail early.
+  if (IU.empty()) return;
+
+#ifndef NDEBUG
   // All dominating loops must have preheaders, or SCEVExpander may not be able
   // to materialize an AddRecExpr whose Start is an outer AddRecExpr.
   //
-  // FIXME: This is a little absurd. I think LoopSimplify should be taught
-  // to create a preheader under any circumstance.
+  // IVUsers analysis should only create users that are dominated by simple loop
+  // headers. Since this loop should dominate all of its users, its user list
+  // should be empty if this loop itself is not within a simple loop nest.
   for (DomTreeNode *Rung = DT.getNode(L->getLoopPreheader());
        Rung; Rung = Rung->getIDom()) {
     BasicBlock *BB = Rung->getBlock();
     const Loop *DomLoop = LI.getLoopFor(BB);
     if (DomLoop && DomLoop->getHeader() == BB) {
-      if (!DomLoop->getLoopPreheader())
-        return;
+      assert(DomLoop->getLoopPreheader() && "LSR needs a simplified loop nest");
     }
   }
-  // If there's no interesting work to be done, bail early.
-  if (IU.empty()) return;
+#endif // DEBUG
 
   DEBUG(dbgs() << "\nLSR on loop ";
         WriteAsOperand(dbgs(), L->getHeader(), /*PrintType=*/false);
