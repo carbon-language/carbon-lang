@@ -447,12 +447,13 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   }
 
 
-  isl_union_map *Validity = D->getDependences(ValidityKinds);
-  isl_union_map *Proximity = D->getDependences(ProximityKinds);
   isl_union_set *Domain = S.getDomains();
 
   if (!Domain)
     return false;
+
+  isl_union_map *Validity = D->getDependences(ValidityKinds);
+  isl_union_map *Proximity = D->getDependences(ProximityKinds);
 
   // Simplify the dependences by removing the constraints introduced by the
   // domains. This can speed up the scheduling time significantly, as large
