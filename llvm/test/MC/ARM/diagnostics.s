@@ -216,7 +216,7 @@
         @ Out of order STM registers
         stmda sp!, {r5, r2}
 
-@ CHECK-ERRORS: error: register list not in ascending order
+@ CHECK-ERRORS: warning: register list not in ascending order
 @ CHECK-ERRORS:         stmda     sp!, {r5, r2}
 @ CHECK-ERRORS:                            ^
 
