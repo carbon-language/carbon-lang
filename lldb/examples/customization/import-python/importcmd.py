@@ -16,6 +16,7 @@ def do_import(debugger,modname):
 
 def pyimport_cmd(debugger, args, result, dict):
 	"""Import a Python module given its full path"""
+	print 'WARNING: obsolete feature - use native command "command script import"'
 	if args == "":
 		return "no module path given";
 	if not (os.sep in args):

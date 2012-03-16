@@ -29,3 +29,12 @@ Enrico-Granatas-MacBook-Pro:Debug enricogranata$
 Of course, the commands to import the importcmd.py module and to define the import
 command, can be included in the .lldbinit file to make this feature available at
 debugger startup
+
+WARNING: The import command defined by importcmd.py is now obsolete
+In TOT LLDB, you can say:
+(lldb) command script import ../demo.py
+(lldb) script demo.test_function('hello world')
+I am a Python function that says hello world
+(lldb) quit
+
+using the native "command script import" command, which offers a superset of what the import command provided by importcmd.py does
