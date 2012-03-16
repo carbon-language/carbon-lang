@@ -175,6 +175,7 @@ module_iter = "    def module_iter(self): return lldb_iter(self, '%s', '%s')"
 breakpoint_iter = "    def breakpoint_iter(self): return lldb_iter(self, '%s', '%s')"
 watchpoint_iter = "    def watchpoint_iter(self): return lldb_iter(self, '%s', '%s')"
 section_iter = "    def section_iter(self): return lldb_iter(self, '%s', '%s')"
+compile_unit_iter = "    def compile_unit_iter(self): return lldb_iter(self, '%s', '%s')"
 
 # Called to implement the built-in function len().
 # Eligible objects are those containers with unambiguous iteration support.
@@ -227,6 +228,8 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
 
       # SBModule has an additional section_iter(), see below.
       'SBModule-section': ('GetNumSections', 'GetSectionAtIndex'),
+      # And compile_unit_iter().
+      'SBModule-compile-unit': ('GetNumCompileUnits', 'GetCompileUnitAtIndex'),
       # As well as symbol_in_section_iter().
       'SBModule-symbol-in-section': symbol_in_section_iter_def
       }
@@ -378,9 +381,10 @@ for line in content.splitlines():
                     new_content.add_line(eq_def % (cls, list_to_frag(e[cls])))
                     new_content.add_line(ne_def)
 
-            # SBModule has an extra SBSection iterator and symbol_in_section_iter()!
+            # SBModule has extra SBSection, SBCompileUnit iterators and symbol_in_section_iter()!
             if cls == "SBModule":
                 new_content.add_line(section_iter % d[cls+'-section'])
+                new_content.add_line(compile_unit_iter % d[cls+'-compile-unit'])
                 new_content.add_line(d[cls+'-symbol-in-section'])
             
             # This special purpose iterator is for SBValue only!!!

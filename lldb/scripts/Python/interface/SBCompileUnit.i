@@ -77,6 +77,15 @@ public:
                         lldb::SBFileSpec *inline_file_spec,
 			bool exact) const;
 
+    SBFileSpec
+    GetSupportFileAtIndex (uint32_t idx) const;
+
+    uint32_t
+    GetNumSupportFiles () const;
+
+    uint32_t
+    FindSupportFileIndex (uint32_t start_idx, const SBFileSpec &sb_file, bool full);
+
     bool
     GetDescription (lldb::SBStream &description);
     

@@ -25,6 +25,12 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         self.buildDefault()
         self.module_and_section_boundary_condition()
 
+    @python_api_test
+    def test_module_compile_unit_iter(self):
+        """Test module's compile unit iterator APIs."""
+        self.buildDefault()
+        self.module_compile_unit_iter()
+
     def module_and_section(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
@@ -99,6 +105,32 @@ class ModuleAndSectionAPIsTestCase(TestBase):
 
         if sec1:
             sec1.FindSubSection(None)
+
+    def module_compile_unit_iter(self):
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+        self.assertTrue(target.GetNumModules() > 0)
+
+        # Hide stdout if not running with '-t' option.
+        if not self.TraceOn():
+            self.HideStdout()
+
+        print "Number of modules for the target: %d" % target.GetNumModules()
+        for module in target.module_iter():
+            print module
+
+        # Get the executable module at index 0.
+        exe_module = target.GetModuleAtIndex(0)
+
+        print "Exe module: %s" % str(exe_module)
+        print "Number of compile units: %d" % exe_module.GetNumCompileUnits()
+        INDENT = ' ' * 4
+        INDENT2 = INDENT * 2
+        for cu in exe_module.compile_unit_iter():
+            print cu
+
 
 if __name__ == '__main__':
     import atexit
