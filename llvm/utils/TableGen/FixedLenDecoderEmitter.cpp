@@ -146,12 +146,8 @@ protected:
   // Keeps track of the last opcode in the filtered bucket.
   unsigned LastOpcFiltered;
 
-  // Number of instructions which fall under VariableInstructions category.
-  unsigned NumVariable;
-
 public:
   unsigned getNumFiltered() { return NumFiltered; }
-  unsigned getNumVariable() { return NumVariable; }
   unsigned getSingletonOpc() {
     assert(NumFiltered == 1);
     return LastOpcFiltered;
@@ -386,7 +382,7 @@ protected:
 
 ///////////////////////////
 //                       //
-// Filter Implmenetation //
+// Filter Implementation //
 //                       //
 ///////////////////////////
 
@@ -395,7 +391,7 @@ Filter::Filter(const Filter &f) :
   FilteredInstructions(f.FilteredInstructions),
   VariableInstructions(f.VariableInstructions),
   FilterChooserMap(f.FilterChooserMap), NumFiltered(f.NumFiltered),
-  LastOpcFiltered(f.LastOpcFiltered), NumVariable(f.NumVariable) {
+  LastOpcFiltered(f.LastOpcFiltered) {
 }
 
 Filter::Filter(FilterChooser &owner, unsigned startBit, unsigned numBits,
@@ -405,7 +401,6 @@ Filter::Filter(FilterChooser &owner, unsigned startBit, unsigned numBits,
 
   NumFiltered = 0;
   LastOpcFiltered = 0;
-  NumVariable = 0;
 
   for (unsigned i = 0, e = Owner->Opcodes.size(); i != e; ++i) {
     insn_t Insn;
@@ -424,10 +419,9 @@ Filter::Filter(FilterChooser &owner, unsigned startBit, unsigned numBits,
       FilteredInstructions[Field].push_back(LastOpcFiltered);
       ++NumFiltered;
     } else {
-      // Some of the encoding bit(s) are unspecfied.  This contributes to
+      // Some of the encoding bit(s) are unspecified.  This contributes to
       // one additional member of "Variable" instructions.
       VariableInstructions.push_back(Owner->Opcodes[i]);
-      ++NumVariable;
     }
   }
 
