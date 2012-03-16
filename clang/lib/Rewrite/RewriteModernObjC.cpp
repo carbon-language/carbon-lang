@@ -1939,8 +1939,8 @@ Stmt *RewriteModernObjC::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
   /* void objc_exception_throw(id) __attribute__((noreturn)); */
   if (S->getThrowExpr())
     buf = "objc_exception_throw(";
-  else // add an implicit argument
-    buf = "objc_exception_throw(_caught";
+  else
+    buf = "throw";
 
   // handle "@  throw" correctly.
   const char *wBuf = strchr(startBuf, 'w');
@@ -1950,7 +1950,8 @@ Stmt *RewriteModernObjC::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
   const char *semiBuf = strchr(startBuf, ';');
   assert((*semiBuf == ';') && "@throw: can't find ';'");
   SourceLocation semiLoc = startLoc.getLocWithOffset(semiBuf-startBuf);
-  ReplaceText(semiLoc, 1, ");");
+  if (S->getThrowExpr())
+    ReplaceText(semiLoc, 1, ");");
   return 0;
 }
 
