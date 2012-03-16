@@ -635,6 +635,9 @@ void InitializeWindowsInterceptors() {
 // ---------------------- InitializeAsanInterceptors ---------------- {{{1
 namespace __asan {
 void InitializeAsanInterceptors() {
+  static bool was_called_once;
+  CHECK(was_called_once == false);
+  was_called_once = true;
   // Intercept mem* functions.
   CHECK(INTERCEPT_FUNCTION(memcmp));
   CHECK(INTERCEPT_FUNCTION(memmove));
