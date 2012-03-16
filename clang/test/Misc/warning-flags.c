@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (254):
+CHECK: Warnings without flags (253):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -57,7 +57,6 @@ CHECK-NEXT:   ext_plain_complex
 CHECK-NEXT:   ext_pp_bad_vaargs_use
 CHECK-NEXT:   ext_pp_comma_expr
 CHECK-NEXT:   ext_pp_ident_directive
-CHECK-NEXT:   ext_pp_import_directive
 CHECK-NEXT:   ext_pp_include_next_directive
 CHECK-NEXT:   ext_pp_line_too_big
 CHECK-NEXT:   ext_pp_macro_redef

@@ -226,7 +226,8 @@ def warn_pp_convert_lhs_to_positive : Warning<
 def warn_pp_convert_rhs_to_positive : Warning<
   "right side of operator converted from negative value to unsigned: %0">;
 
-def ext_pp_import_directive : Extension<"#import is a language extension">;
+def ext_pp_import_directive : Extension<"#import is a language extension">,
+  InGroup<DiagGroup<"#import-pedantic">>;
 def ext_pp_ident_directive : Extension<"#ident is a language extension">;
 def ext_pp_include_next_directive : Extension<
   "#include_next is a language extension">;
