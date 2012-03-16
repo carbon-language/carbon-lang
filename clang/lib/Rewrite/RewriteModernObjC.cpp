@@ -1717,8 +1717,8 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   ReplaceText(rparenLoc, 1, buf);
   
   SourceLocation startRBraceLoc = S->getSynchBody()->getLocEnd();
-  const char *startRBraceBuf = SM->getCharacterData(startRBraceLoc);
-  assert((*startRBraceBuf == '}') && "bogus @synchronized block");
+  assert((*SM->getCharacterData(startRBraceLoc) == '}') &&
+         "bogus @synchronized block");
   
   buf = "} catch (id e) {_rethrow = e;}\n";
   Write_RethrowObject(buf);
@@ -6644,4 +6644,3 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
     ReplaceStmtWithRange(IV, Replacement, OldRange);
     return Replacement;  
 }
-
