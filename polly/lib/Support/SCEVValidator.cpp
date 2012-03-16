@@ -52,7 +52,9 @@ public:
   };
 
   /// @brief Construct a result with a certain type and no parameters.
-  ValidatorResult(SCEVType::TYPE Type) : Type(Type) {};
+  ValidatorResult(SCEVType::TYPE Type) : Type(Type) {
+    assert(Type != SCEVType::PARAM && "Did you forget to pass the parameter");
+  };
 
   /// @brief Construct a result with a certain type and a single parameter.
   ValidatorResult(SCEVType::TYPE Type, const SCEV *Expr) : Type(Type) {
@@ -247,7 +249,7 @@ public:
   }
 
   class ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
-    ValidatorResult Return(SCEVType::INT);
+    ValidatorResult Return(SCEVType::INT, Expr);
 
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
       ValidatorResult Op = visit(Expr->getOperand(i));
@@ -262,8 +264,6 @@ public:
   }
 
   class ValidatorResult visitUMaxExpr(const SCEVUMaxExpr *Expr) {
-    ValidatorResult Return(SCEVType::PARAM);
-
     // We do not support unsigned operations. If 'Expr' is constant during Scop
     // execution we treat this as a parameter, otherwise we bail out.
     for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
@@ -271,11 +271,9 @@ public:
 
       if (!Op.isConstant())
         return ValidatorResult(SCEVType::INVALID);
-
-      Return.merge(Op);
     }
 
-    return Return;
+    return ValidatorResult(SCEVType::PARAM, Expr);
   }
 
   ValidatorResult visitUnknown(const SCEVUnknown *Expr) {
