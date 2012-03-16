@@ -623,7 +623,9 @@ static void BuildAggStore(CodeGenFunction &CGF, llvm::Value *Val,
         SI->setAlignment(1);
     }
   } else {
-    CGF.Builder.CreateStore(Val, DestPtr, DestIsVolatile);
+    llvm::StoreInst *SI = CGF.Builder.CreateStore(Val, DestPtr, DestIsVolatile);
+    if (LowAlignment)
+      SI->setAlignment(1);
   }
 }
 
