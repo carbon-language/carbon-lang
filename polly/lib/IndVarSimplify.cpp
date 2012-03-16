@@ -447,8 +447,10 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   }
 
   // Add a new IVUsers entry for the newly-created integer PHI.
-  if (IU)
-    IU->AddUsersIfInteresting(NewPHI);
+  if (IU) {
+    SmallPtrSet<Loop*,16> SimpleLoopNests;
+    IU->AddUsersIfInteresting(NewPHI, SimpleLoopNests);
+  }
 
   Changed = true;
 }
