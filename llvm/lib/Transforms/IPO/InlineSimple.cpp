@@ -23,15 +23,12 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
 
 namespace {
 
   class SimpleInliner : public Inliner {
-    // Functions that are never inlined
-    SmallPtrSet<const Function*, 16> NeverInline;
     InlineCostAnalyzer CA;
   public:
     SimpleInliner() : Inliner(ID) {
@@ -43,15 +40,6 @@ namespace {
     }
     static char ID; // Pass identification, replacement for typeid
     InlineCost getInlineCost(CallSite CS) {
-      // Filter out functions which should never be inlined due to the global
-      // 'llvm.noinline'.
-      // FIXME: I'm 99% certain that this is an ancient bit of legacy that we
-      // no longer need to support, but I don't want to blindly nuke it just
-      // yet.
-      if (Function *Callee = CS.getCalledFunction())
-        if (NeverInline.count(Callee))
-          return InlineCost::getNever();
-
       return CA.getInlineCost(CS);
     }
     float getInlineFudgeFactor(CallSite CS) {
@@ -87,39 +75,6 @@ Pass *llvm::createFunctionInliningPass(int Threshold) {
 // annotated with the noinline attribute.
 bool SimpleInliner::doInitialization(CallGraph &CG) {
   CA.setTargetData(getAnalysisIfAvailable<TargetData>());
-
-  Module &M = CG.getModule();
-
-  // Get llvm.noinline
-  GlobalVariable *GV = M.getNamedGlobal("llvm.noinline");
-
-  if (GV == 0)
-    return false;
-
-  // Don't crash on invalid code
-  if (!GV->hasDefinitiveInitializer())
-    return false;
-
-  const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
-
-  if (InitList == 0)
-    return false;
-
-  // Iterate over each element and add to the NeverInline set
-  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-
-    // Get Source
-    const Constant *Elt = InitList->getOperand(i);
-
-    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(Elt))
-      if (CE->getOpcode() == Instruction::BitCast)
-        Elt = CE->getOperand(0);
-
-    // Insert into set of functions to never inline
-    if (const Function *F = dyn_cast<Function>(Elt))
-      NeverInline.insert(F);
-  }
-
   return false;
 }
 
