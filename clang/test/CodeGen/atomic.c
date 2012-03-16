@@ -8,6 +8,7 @@ int atomic(void) {
   _Bool valb = 0;
   unsigned int uval = 1;
   int cmp = 0;
+  int* ptrval;
 
   old = __sync_fetch_and_add(&val, 1);
   // CHECK: atomicrmw add i32* %val, i32 1 seq_cst
@@ -75,8 +76,11 @@ int atomic(void) {
   // CHECK: cmpxchg i32* null, i32 0, i32 0 seq_cst
   
   __sync_lock_release(&val);
-  // CHECK: store atomic {{.*}} release, align 4
-  
+  // CHECK: store atomic i32 0, {{.*}} release, align 4
+
+  __sync_lock_release(&ptrval);
+  // CHECK: store atomic i32 0, {{.*}} release, align 4
+
   __sync_synchronize ();
   // CHECK: fence seq_cst
 
