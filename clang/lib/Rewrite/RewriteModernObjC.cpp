@@ -1682,6 +1682,13 @@ Stmt *RewriteModernObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   return 0;
 }
 
+static void Write_RethrowObject(std::string &buf) {
+  buf += "{ struct _FIN { _FIN(id reth) : rethrow(reth) {}\n";
+  buf += "\t~_FIN() { if (rethrow) objc_exception_throw(rethrow); }\n";
+  buf += "\tid rethrow;\n";
+  buf += "\t} _fin_force_rethow(_rethrow);";
+}
+
 /// RewriteObjCSynchronizedStmt -
 /// This routine rewrites @synchronized(expr) stmt;
 /// into:
@@ -1696,39 +1703,31 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   assert((*startBuf == '@') && "bogus @synchronized location");
 
   std::string buf;
-  buf = "objc_sync_enter((id)";
+  buf = "{ id volatile _rethrow = 0; objc_sync_enter((id)";
+  
   const char *lparenBuf = startBuf;
   while (*lparenBuf != '(') lparenBuf++;
   ReplaceText(startLoc, lparenBuf-startBuf+1, buf);
-  // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since
-  // the sync expression is typically a message expression that's already
-  // been rewritten! (which implies the SourceLocation's are invalid).
   SourceLocation endLoc = S->getSynchBody()->getLocStart();
   const char *endBuf = SM->getCharacterData(endLoc);
   while (*endBuf != ')') endBuf--;
   SourceLocation rparenLoc = startLoc.getLocWithOffset(endBuf-startBuf);
   buf = ");\n";
-  // declare a new scope with two variables, _stack and _rethrow.
-  buf += "/* @try scope begin */ \n{ struct _objc_exception_data {\n";
-  buf += "int buf[18/*32-bit i386*/];\n";
-  buf += "char *pointers[4];} _stack;\n";
-  buf += "id volatile _rethrow = 0;\n";
-  buf += "objc_exception_try_enter(&_stack);\n";
-  buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
+  buf += "try ";
   ReplaceText(rparenLoc, 1, buf);
-  startLoc = S->getSynchBody()->getLocEnd();
-  startBuf = SM->getCharacterData(startLoc);
+  
+  SourceLocation startLBraceLoc = S->getSynchBody()->getLocEnd();
+  const char *startLBraceBuf = SM->getCharacterData(startLBraceLoc);
 
-  assert((*startBuf == '}') && "bogus @synchronized block");
-  SourceLocation lastCurlyLoc = startLoc;
-  buf = "}\nelse {\n";
-  buf += "  _rethrow = objc_exception_extract(&_stack);\n";
-  buf += "}\n";
-  buf += "{ /* implicit finally clause */\n";
-  buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
+  assert((*startLBraceBuf == '}') && "bogus @synchronized block");
+  
+  SourceLocation lastCurlyLoc = startLBraceLoc;
+  
+  buf = "} catch (id e) {_rethrow = e;}\n";
+  Write_RethrowObject(buf);
   
   std::string syncBuf;
-  syncBuf += " objc_sync_exit(";
+  syncBuf += "\n\tobjc_sync_exit(";
 
   Expr *syncExpr = S->getSynchExpr();
   CastKind CK = syncExpr->getType()->isObjCObjectPointerType()
@@ -1746,16 +1745,10 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   syncBuf += ");";
   
   buf += syncBuf;
-  buf += "\n  if (_rethrow) objc_exception_throw(_rethrow);\n";
   buf += "}\n";
-  buf += "}";
+  buf += "}\n";
 
   ReplaceText(lastCurlyLoc, 1, buf);
-
-  bool hasReturns = false;
-  HasReturnStmts(S->getSynchBody(), hasReturns);
-  if (hasReturns)
-    RewriteSyncReturnStmts(S->getSynchBody(), syncBuf);
 
   return 0;
 }
@@ -1912,10 +1905,7 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     Stmt *body = finalStmt->getFinallyBody();
     SourceLocation startFinalBodyLoc = body->getLocStart();
     buf.clear();
-    buf = "{ struct _FIN { _FIN(id reth) : rethrow(reth) {}\n";
-    buf += "\t~_FIN() { if (rethrow) objc_exception_throw(rethrow); }\n";
-    buf += "\tid rethrow;\n";
-    buf += "\t} _fin_force_rethow(_rethrow);";
+    Write_RethrowObject(buf);
     ReplaceText(startFinalBodyLoc, 1, buf);
     
     SourceLocation endFinalBodyLoc = body->getLocEnd();
@@ -5188,8 +5178,8 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_DLLIMPORT int objc_exception_match";
   Preamble += "(struct objc_class *, struct objc_object *);\n";
   // @synchronized hooks.
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_enter(struct objc_object *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_exit(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_enter(id);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_exit(id);\n";
   Preamble += "__OBJC_RW_DLLIMPORT Protocol *objc_getProtocol(const char *);\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
