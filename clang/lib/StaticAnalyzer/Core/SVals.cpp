@@ -57,10 +57,13 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
   return 0;
 }
 
-// If this SVal is a location (subclasses Loc) and wraps a symbol, return 
-// that SymbolRef.  Otherwise return 0.
-// FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
+/// \brief If this SVal is a location (subclasses Loc) and wraps a symbol,
+/// return that SymbolRef.  Otherwise return 0.
+///
+/// Implicit casts (ex: void* -> char*) can turn Symbolic region into Element
+/// region. If that is the case, gets the underlining region.
 SymbolRef SVal::getAsLocSymbol() const {
+  // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
   if (const nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(this))
     return X->getLoc().getAsLocSymbol();
 
@@ -92,10 +95,11 @@ SymbolRef SVal::getLocSymbolInBase() const {
 }
 
 // TODO: The next 3 functions have to be simplified.
-/// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
+
+/// \brief If this SVal wraps a symbol return that SymbolRef.
 ///  Otherwise return 0.
-// FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
 SymbolRef SVal::getAsSymbol() const {
+  // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
   if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
     return X->getSymbol();
 
