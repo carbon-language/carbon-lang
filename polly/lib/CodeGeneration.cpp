@@ -61,26 +61,26 @@ bool EnablePollyVector;
 static cl::opt<bool, true>
 Vector("enable-polly-vector",
        cl::desc("Enable polly vector code generation"), cl::Hidden,
-       cl::location(EnablePollyVector), cl::init(false));
+       cl::location(EnablePollyVector), cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 OpenMP("enable-polly-openmp",
        cl::desc("Generate OpenMP parallel code"), cl::Hidden,
        cl::value_desc("OpenMP code generation enabled if true"),
-       cl::init(false));
+       cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 AtLeastOnce("enable-polly-atLeastOnce",
        cl::desc("Give polly the hint, that every loop is executed at least"
                 "once"), cl::Hidden,
        cl::value_desc("OpenMP code generation enabled if true"),
-       cl::init(false));
+       cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 Aligned("enable-polly-aligned",
        cl::desc("Assumed aligned memory accesses."), cl::Hidden,
        cl::value_desc("OpenMP code generation enabled if true"),
-       cl::init(false));
+       cl::init(false), cl::ZeroOrMore);
 
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;

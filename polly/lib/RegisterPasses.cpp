@@ -34,43 +34,43 @@ using namespace llvm;
 
 static cl::opt<bool>
 PollyEnabled("polly", cl::desc("Enable the default passes of Polly in -O3"),
-             cl::init(false));
+             cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 DisableScheduler("polly-no-optimizer",
                  cl::desc("Disable Polly Scheduling Optimizer"), cl::Hidden,
-                 cl::init(false));
+                 cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
 DisableCodegen("polly-no-codegen",
        cl::desc("Disable Polly Code Generation"), cl::Hidden,
-       cl::init(false));
+       cl::init(false), cl::ZeroOrMore);
 static cl::opt<std::string>
 Optimizer("polly-optimizer",
-          cl::desc("Select the scheduling optimizer. " 
+          cl::desc("Select the scheduling optimizer. "
                    "Either isl (default) or pocc."),
           cl::Hidden, cl::init("isl"));
 static cl::opt<bool>
 ImportJScop("polly-run-import-jscop",
             cl::desc("Export the JScop description of the detected Scops"),
-            cl::Hidden, cl::init(false));
+            cl::Hidden, cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
 ExportJScop("polly-run-export-jscop",
             cl::desc("Export the JScop description of the detected Scops"),
-            cl::Hidden, cl::init(false));
+            cl::Hidden, cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
 ExportCLooG("polly-run-export-cloog",
             cl::desc("Export the CLooG input files for the detected Scops"),
-            cl::Hidden, cl::init(false));
+            cl::Hidden, cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
 PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
-       cl::init(false));
+       cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 DeadCodeElim("polly-run-dce",
              cl::desc("Run the dead code elimination"),
-             cl::Hidden, cl::init(false));
+             cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 PollyOnlyViewer("polly-show-only",
