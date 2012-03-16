@@ -37,8 +37,9 @@ configure_file(
 
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
+  option(POLLY_TEST_DISABLE_BAR "Run Polly tests with --no-progress-bar" OFF)
   set(POLLY_TEST_EXTRA_ARGS)
-  if (MSVC OR XCODE)
+  if (MSVC OR XCODE OR POLLY_TEST_DISABLE_BAR)
     set(POLLY_TEST_EXTRA_ARGS "--no-progress-bar")
   endif()
 
