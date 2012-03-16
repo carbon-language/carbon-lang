@@ -820,9 +820,8 @@ public:
   /// the DAG can optionally implement this interface.  This allows the clients
   /// to handle the various sorts of updates that happen.
   class DAGUpdateListener {
-    virtual void anchor();
   public:
-    virtual ~DAGUpdateListener() {}
+    virtual ~DAGUpdateListener();
 
     /// NodeDeleted - The node N that was deleted and, if E is not null, an
     /// equivalent node E that replaced it.
