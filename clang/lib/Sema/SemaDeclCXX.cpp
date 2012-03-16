@@ -10060,7 +10060,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
       // declarations should stop at the nearest enclosing namespace,
       // not that they should only consider the nearest enclosing
       // namespace.
-      while (DC->isRecord()) 
+      while (DC->isRecord() || DC->isTransparentContext()) 
         DC = DC->getParent();
 
       LookupQualifiedName(Previous, DC);

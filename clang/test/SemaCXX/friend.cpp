@@ -130,3 +130,11 @@ namespace test6_3 {
     v.f();
   }
 }
+
+namespace test7 {
+  extern "C" {
+    class X {
+      friend int f() { return 42; }
+    };
+  }
+}
