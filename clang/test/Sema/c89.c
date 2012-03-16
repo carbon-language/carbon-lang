@@ -90,4 +90,6 @@ void test16() {
   printg("Hello, world!\n"); /* expected-warning {{implicit declaration of function 'printg'}} */
 }
 
+struct x { int x,y[]; }; /* expected-warning {{Flexible array members are a C99-specific feature}} */
+
 void main() {} /* expected-error {{'main' must return 'int'}} */
