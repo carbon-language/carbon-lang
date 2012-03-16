@@ -354,8 +354,6 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   isl_constraint_set_constant_si(c, VectorWidth - 1);
   TilingMap = isl_map_add_constraint(TilingMap, c);
 
-  isl_map_dump(TilingMap);
-
   return TilingMap;
 }
 
