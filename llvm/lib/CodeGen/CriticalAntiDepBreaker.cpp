@@ -54,7 +54,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // Clear "do not change" set.
   KeepRegs.clear();
 
-  bool IsReturnBlock = (!BB->empty() && BB->back().isReturn());
+  bool IsReturnBlock = (BBSize != 0 && BB->back().isReturn());
 
   // Determine the live-out physregs for this block.
   if (IsReturnBlock) {
@@ -63,14 +63,14 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
          E = MRI.liveout_end(); I != E; ++I) {
       unsigned Reg = *I;
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[Reg] = BB->size();
+      KillIndices[Reg] = BBSize;
       DefIndices[Reg] = ~0u;
 
       // Repeat, for all aliases.
       for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
         Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[AliasReg] = BB->size();
+        KillIndices[AliasReg] = BBSize;
         DefIndices[AliasReg] = ~0u;
       }
     }
@@ -85,14 +85,14 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
            E = (*SI)->livein_end(); I != E; ++I) {
       unsigned Reg = *I;
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[Reg] = BB->size();
+      KillIndices[Reg] = BBSize;
       DefIndices[Reg] = ~0u;
 
       // Repeat, for all aliases.
       for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
         Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[AliasReg] = BB->size();
+        KillIndices[AliasReg] = BBSize;
         DefIndices[AliasReg] = ~0u;
       }
     }
@@ -106,14 +106,14 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
     unsigned Reg = *I;
     if (!IsReturnBlock && !Pristine.test(Reg)) continue;
     Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-    KillIndices[Reg] = BB->size();
+    KillIndices[Reg] = BBSize;
     DefIndices[Reg] = ~0u;
 
     // Repeat, for all aliases.
     for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       unsigned AliasReg = *Alias;
       Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[AliasReg] = BB->size();
+      KillIndices[AliasReg] = BBSize;
       DefIndices[AliasReg] = ~0u;
     }
   }
