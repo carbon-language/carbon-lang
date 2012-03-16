@@ -1852,6 +1852,48 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
   CCState CCInfo(CC, false, *FuncInfo.MF, TM, ArgLocs, *Context);
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
 
+  // Check that we can handle all of the arguments. If we can't, then bail out
+  // now before we add code to the MBB.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    MVT ArgVT = ArgVTs[VA.getValNo()];
+
+    // We don't handle NEON/vector parameters yet.
+    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64)
+      return false;
+
+    // Now copy/store arg to correct locations.
+    if (VA.isRegLoc() && !VA.needsCustom()) {
+      continue;
+    } else if (VA.needsCustom()) {
+      // TODO: We need custom lowering for vector (v2f64) args.
+      if (VA.getLocVT() != MVT::f64 ||
+          // TODO: Only handle register args for now.
+          !VA.isRegLoc() || !ArgLocs[++i].isRegLoc())
+        return false;
+    } else {
+      switch (static_cast<EVT>(ArgVT).getSimpleVT().SimpleTy) {
+      default:
+        return false;
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+        break;
+      case MVT::f32:
+        if (!Subtarget->hasVFP2())
+          return false;
+        break;
+      case MVT::f64:
+        if (!Subtarget->hasVFP2())
+          return false;
+        break;
+      }
+    }
+  }
+
+  // At the point, we are able to handle the call's arguments in fast isel.
+
   // Get a count of how many bytes are to be pushed on the stack.
   NumBytes = CCInfo.getNextStackOffset();
 
@@ -1867,9 +1909,8 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     unsigned Arg = ArgRegs[VA.getValNo()];
     MVT ArgVT = ArgVTs[VA.getValNo()];
 
-    // We don't handle NEON/vector parameters yet.
-    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64)
-      return false;
+    assert((!ArgVT.isVector() && ArgVT.getSizeInBits() <= 64) &&
+           "We don't handle NEON/vector parameters yet.");
 
     // Handle arg promotion, etc.
     switch (VA.getLocInfo()) {
@@ -1909,12 +1950,13 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
       RegArgs.push_back(VA.getLocReg());
     } else if (VA.needsCustom()) {
       // TODO: We need custom lowering for vector (v2f64) args.
-      if (VA.getLocVT() != MVT::f64) return false;
+      assert(VA.getLocVT() == MVT::f64 &&
+             "Custom lowering for v2f64 args not available");
 
       CCValAssign &NextVA = ArgLocs[++i];
 
-      // TODO: Only handle register args for now.
-      if(!(VA.isRegLoc() && NextVA.isRegLoc())) return false;
+      assert(VA.isRegLoc() && NextVA.isRegLoc() &&
+             "We only handle register args!");
 
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(ARM::VMOVRRD), VA.getLocReg())
@@ -1930,9 +1972,11 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
       Addr.Base.Reg = ARM::SP;
       Addr.Offset = VA.getLocMemOffset();
 
-      if (!ARMEmitStore(ArgVT, Arg, Addr)) return false;
+      bool EmitRet = ARMEmitStore(ArgVT, Arg, Addr); (void)EmitRet;
+      assert(EmitRet && "Could not emit a store for argument!");
     }
   }
+
   return true;
 }
 
@@ -2137,7 +2181,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(NULL);
-  if(isThumb2)
+  if (isThumb2)
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc)))
