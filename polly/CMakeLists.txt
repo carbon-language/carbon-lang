@@ -9,9 +9,14 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   if( NOT EXISTS ${LLVM_INSTALL_ROOT}/include/llvm )
     message(FATAL_ERROR "LLVM_INSTALL_ROOT (${LLVM_INSTALL_ROOT}) is not a valid LLVM installation.")
   endif(NOT EXISTS ${LLVM_INSTALL_ROOT}/include/llvm)
+  #FileCheck is not install by default, warn the user to Copy FileCheck
+  if( NOT EXISTS ${LLVM_INSTALL_ROOT}/bin/FileCheck )
+    message(WARNING "FileCheck is requred by running regress tests, but not been installed! "
+                    "Please copy it to ${LLVM_INSTALL_ROOT}/bin.")
+  endif(NOT EXISTS ${LLVM_INSTALL_ROOT}/bin/FileCheck)
   # Add the llvm header path.
   include_directories(${LLVM_INSTALL_ROOT}/include/)
-  
+
   # Get the system librarys that will link into LLVM.
   function(get_system_libs return_var)
     # Returns in `return_var' a list of system libraries used by LLVM.
