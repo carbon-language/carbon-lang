@@ -68,7 +68,7 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
     return 0;
 
   if (Elt < DbgNode->getNumOperands())
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(DbgNode->getOperand(Elt)))
+    if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DbgNode->getOperand(Elt)))
       return CI->getZExtValue();
 
   return 0;
