@@ -209,13 +209,13 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
   } else {
     // For others, e.g. fallthrough, conditional branch, assume the exit
     // uses all the registers that are livein to the successor blocks.
-    SmallSet<unsigned, 8> Seen;
+    assert(Uses.empty() && "Uses in set before adding deps?");
     for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
            SE = BB->succ_end(); SI != SE; ++SI)
       for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
              E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
-        if (Seen.insert(Reg))
+        if (!Uses.contains(Reg))
           Uses[Reg].push_back(&ExitSU);
       }
   }
