@@ -239,19 +239,19 @@ protected:
   const FixedLenDecoderEmitter *Emitter;
 
 public:
-  FilterChooser(const FilterChooser &FC) :
-    AllInstructions(FC.AllInstructions), Opcodes(FC.Opcodes),
+  FilterChooser(const FilterChooser &FC)
+    : AllInstructions(FC.AllInstructions), Opcodes(FC.Opcodes),
       Operands(FC.Operands), Filters(FC.Filters),
       FilterBitValues(FC.FilterBitValues), Parent(FC.Parent),
-    BestIndex(FC.BestIndex), BitWidth(FC.BitWidth),
-    Emitter(FC.Emitter) { }
+      BestIndex(FC.BestIndex), BitWidth(FC.BitWidth),
+      Emitter(FC.Emitter) { }
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
-    std::map<unsigned, std::vector<OperandInfo> > &Ops,
+                std::map<unsigned, std::vector<OperandInfo> > &Ops,
                 unsigned BW,
-                const FixedLenDecoderEmitter *E) :
-      AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
+                const FixedLenDecoderEmitter *E)
+    : AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
       Parent(NULL), BestIndex(-1), BitWidth(BW), Emitter(E) {
     for (unsigned i = 0; i < BitWidth; ++i)
       FilterBitValues.push_back(BIT_UNFILTERED);
@@ -261,10 +261,10 @@ public:
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
-        std::map<unsigned, std::vector<OperandInfo> > &Ops,
+                std::map<unsigned, std::vector<OperandInfo> > &Ops,
                 std::vector<bit_value_t> &ParentFilterBitValues,
-                FilterChooser &parent) :
-      AllInstructions(Insts), Opcodes(IDs), Operands(Ops),
+                FilterChooser &parent)
+    : AllInstructions(Insts), Opcodes(IDs), Operands(Ops),
       Filters(), FilterBitValues(ParentFilterBitValues),
       Parent(&parent), BestIndex(-1), BitWidth(parent.BitWidth),
       Emitter(parent.Emitter) {
@@ -309,7 +309,7 @@ protected:
   // Returns false if there exists any uninitialized bit value in the range.
   // Returns true, otherwise.
   bool fieldFromInsn(uint64_t &Field, insn_t &Insn, unsigned StartBit,
-      unsigned NumBits) const;
+                     unsigned NumBits) const;
 
   /// dumpFilterArray - dumpFilterArray prints out debugging info for the given
   /// filter array as a series of chars.
@@ -336,8 +336,8 @@ protected:
   // Inst{20} = 1 && Inst{3-0} == 0b1111 represents two islands of yet-to-be
   // decoded bits in order to verify that the instruction matches the Opcode.
   unsigned getIslands(std::vector<unsigned> &StartBits,
-      std::vector<unsigned> &EndBits, std::vector<uint64_t> &FieldVals,
-      insn_t &Insn);
+                      std::vector<unsigned> &EndBits,
+                      std::vector<uint64_t> &FieldVals, insn_t &Insn);
 
   // Emits code to check the Predicates member of an instruction are true.
   // Returns true if predicate matches were emitted, false otherwise.
@@ -357,12 +357,12 @@ protected:
 
   // Assign a single filter and run with it.
   void runSingleFilter(FilterChooser &owner, unsigned startBit, unsigned numBit,
-      bool mixed);
+                       bool mixed);
 
   // reportRegion is a helper function for filterProcessor to mark a region as
   // eligible for use as a filter region.
   void reportRegion(bitAttr_t RA, unsigned StartBit, unsigned BitIndex,
-      bool AllowMixed);
+                    bool AllowMixed);
 
   // FilterProcessor scans the well-known encoding bits of the instructions and
   // builds up a list of candidate filters.  It chooses the best filter and
@@ -386,17 +386,17 @@ protected:
 //                       //
 ///////////////////////////
 
-Filter::Filter(const Filter &f) :
-  Owner(f.Owner), StartBit(f.StartBit), NumBits(f.NumBits), Mixed(f.Mixed),
-  FilteredInstructions(f.FilteredInstructions),
-  VariableInstructions(f.VariableInstructions),
-  FilterChooserMap(f.FilterChooserMap), NumFiltered(f.NumFiltered),
-  LastOpcFiltered(f.LastOpcFiltered) {
+Filter::Filter(const Filter &f)
+  : Owner(f.Owner), StartBit(f.StartBit), NumBits(f.NumBits), Mixed(f.Mixed),
+    FilteredInstructions(f.FilteredInstructions),
+    VariableInstructions(f.VariableInstructions),
+    FilterChooserMap(f.FilterChooserMap), NumFiltered(f.NumFiltered),
+    LastOpcFiltered(f.LastOpcFiltered) {
 }
 
 Filter::Filter(FilterChooser &owner, unsigned startBit, unsigned numBits,
-    bool mixed) : Owner(&owner), StartBit(startBit), NumBits(numBits),
-                  Mixed(mixed) {
+               bool mixed)
+  : Owner(&owner), StartBit(startBit), NumBits(numBits), Mixed(mixed) {
   assert(StartBit + NumBits - 1 < Owner->BitWidth);
 
   NumFiltered = 0;
@@ -676,7 +676,7 @@ void FilterChooser::SingletonExists(unsigned Opc) {
   errs() << '\n';
 
   dumpStack(errs(), "\t\t");
-  for (unsigned i = 0; i < Opcodes.size(); i++) {
+  for (unsigned i = 0; i < Opcodes.size(); ++i) {
     const std::string &Name = nameWithID(Opcodes[i]);
 
     errs() << '\t' << Name << " ";
@@ -691,8 +691,9 @@ void FilterChooser::SingletonExists(unsigned Opc) {
 // Inst{20} = 1 && Inst{3-0} == 0b1111 represents two islands of yet-to-be
 // decoded bits in order to verify that the instruction matches the Opcode.
 unsigned FilterChooser::getIslands(std::vector<unsigned> &StartBits,
-    std::vector<unsigned> &EndBits, std::vector<uint64_t> &FieldVals,
-    insn_t &Insn) {
+                                   std::vector<unsigned> &EndBits,
+                                   std::vector<uint64_t> &FieldVals,
+                                   insn_t &Insn) {
   unsigned Num, BitNo;
   Num = BitNo = 0;
 
@@ -747,7 +748,7 @@ unsigned FilterChooser::getIslands(std::vector<unsigned> &StartBits,
 }
 
 void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
-                         OperandInfo &OpInfo) {
+                                     OperandInfo &OpInfo) {
   std::string &Decoder = OpInfo.Decoder;
 
   if (OpInfo.numFields() == 1) {
@@ -784,7 +785,7 @@ static void emitSinglePredicateMatch(raw_ostream &o, StringRef str,
 }
 
 bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
-                                           unsigned Opc) {
+                                       unsigned Opc) {
   ListInit *Predicates =
     AllInstructions[Opc]->TheDef->getValueAsListInit("Predicates");
   for (unsigned i = 0; i < Predicates->getSize(); ++i) {
@@ -969,7 +970,7 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
 
 // Emits code to decode the singleton, and then to decode the rest.
 void FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
-    Filter &Best) {
+                                         Filter &Best) {
 
   unsigned Opc = Best.getSingletonOpc();
 
@@ -986,7 +987,7 @@ void FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
 // Assign a single filter and run with it.  Top level API client can initialize
 // with a single filter to start the filtering process.
 void FilterChooser::runSingleFilter(FilterChooser &owner, unsigned startBit,
-    unsigned numBit, bool mixed) {
+                                    unsigned numBit, bool mixed) {
   Filters.clear();
   Filter F(*this, startBit, numBit, true);
   Filters.push_back(F);
@@ -997,7 +998,7 @@ void FilterChooser::runSingleFilter(FilterChooser &owner, unsigned startBit,
 // reportRegion is a helper function for filterProcessor to mark a region as
 // eligible for use as a filter region.
 void FilterChooser::reportRegion(bitAttr_t RA, unsigned StartBit,
-    unsigned BitIndex, bool AllowMixed) {
+                                 unsigned BitIndex, bool AllowMixed) {
   if (RA == ATTR_MIXED && AllowMixed)
     Filters.push_back(Filter(*this, StartBit, BitIndex - StartBit, true));
   else if (RA == ATTR_ALL_SET && !AllowMixed)
@@ -1299,7 +1300,7 @@ bool FilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
 
   dumpStack(errs(), "\t\t");
 
-  for (unsigned i = 0; i < Opcodes.size(); i++) {
+  for (unsigned i = 0; i < Opcodes.size(); ++i) {
     const std::string &Name = nameWithID(Opcodes[i]);
 
     errs() << '\t' << Name << " ";
@@ -1311,9 +1312,8 @@ bool FilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
   return true;
 }
 
-static bool populateInstruction(const CodeGenInstruction &CGI,
-                                unsigned Opc,
-                      std::map<unsigned, std::vector<OperandInfo> >& Operands){
+static bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc,
+                       std::map<unsigned, std::vector<OperandInfo> > &Operands){
   const Record &Def = *CGI.TheDef;
   // If all the bit positions are not specified; do not decode this instruction.
   // We are bound to fail!  For proper disassembly, the well-known encoding bits
@@ -1512,8 +1512,7 @@ static void emitHelper(llvm::raw_ostream &o, unsigned BitWidth) {
 }
 
 // Emits disassembler code for instruction decoding.
-void FixedLenDecoderEmitter::run(raw_ostream &o)
-{
+void FixedLenDecoderEmitter::run(raw_ostream &o) {
   o << "#include \"llvm/MC/MCInst.h\"\n";
   o << "#include \"llvm/Support/DataTypes.h\"\n";
   o << "#include <assert.h>\n";
