@@ -201,8 +201,10 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
 
       if (TRI->isPhysicalRegister(Reg))
         Uses[Reg].push_back(&ExitSU);
-      else
+      else {
         assert(!IsPostRA && "Virtual register encountered after regalloc.");
+        addVRegUseDeps(&ExitSU, i);
+      }
     }
   } else {
     // For others, e.g. fallthrough, conditional branch, assume the exit
