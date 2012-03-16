@@ -143,6 +143,52 @@ SBCompileUnit::FindLineEntryIndex (uint32_t start_idx, uint32_t line, SBFileSpec
     return index;
 }
 
+uint32_t
+SBCompileUnit::GetNumSupportFiles () const
+{
+    if (m_opaque_ptr)
+    {
+	FileSpecList& support_files = m_opaque_ptr->GetSupportFiles ();
+	return support_files.GetSize();
+    }
+    return 0;
+}
+
+SBFileSpec
+SBCompileUnit::GetSupportFileAtIndex (uint32_t idx) const
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBFileSpec sb_file_spec;
+    if (m_opaque_ptr)
+    {
+	FileSpecList &support_files = m_opaque_ptr->GetSupportFiles ();
+	FileSpec file_spec = support_files.GetFileSpecAtIndex(idx);
+	sb_file_spec.SetFileSpec(file_spec);
+    }
+    
+    if (log)
+    {
+        SBStream sstr;
+        sb_file_spec.GetDescription (sstr);
+        log->Printf ("SBCompileUnit(%p)::GetGetFileSpecAtIndex (idx=%u) => SBFileSpec(%p): '%s'", 
+                     m_opaque_ptr, idx, sb_file_spec.get(), sstr.GetData());
+    }
+
+    return sb_file_spec;
+}
+
+uint32_t
+SBCompileUnit::FindSupportFileIndex (uint32_t start_idx, const SBFileSpec &sb_file, bool full)
+{
+    if (m_opaque_ptr)
+    {
+	FileSpecList &support_files = m_opaque_ptr->GetSupportFiles ();
+	return support_files.FindFileIndex(start_idx, sb_file.ref(), full);
+    }
+    return 0;
+}
+
 bool
 SBCompileUnit::IsValid () const
 {

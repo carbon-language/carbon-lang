@@ -51,6 +51,15 @@ public:
                         lldb::SBFileSpec *inline_file_spec,
                         bool exact) const;
 
+    SBFileSpec
+    GetSupportFileAtIndex (uint32_t idx) const;
+
+    uint32_t
+    GetNumSupportFiles () const;
+
+    uint32_t
+    FindSupportFileIndex (uint32_t start_idx, const SBFileSpec &sb_file, bool full);
+
     bool
     operator == (const lldb::SBCompileUnit &rhs) const;
 
@@ -64,6 +73,7 @@ private:
     friend class SBAddress;
     friend class SBFrame;
     friend class SBSymbolContext;
+    friend class SBModule;
 
     SBCompileUnit (lldb_private::CompileUnit *lldb_object_ptr);
 

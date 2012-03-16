@@ -108,6 +108,12 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    uint32_t
+    GetNumCompileUnits();
+
+    lldb::SBCompileUnit
+    GetCompileUnitAtIndex (uint32_t);
+
     size_t
     GetNumSymbols ();
     

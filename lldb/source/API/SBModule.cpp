@@ -266,6 +266,30 @@ SBModule::GetDescription (SBStream &description)
     return true;
 }
 
+uint32_t
+SBModule::GetNumCompileUnits()
+{
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+    {
+        return module_sp->GetNumCompileUnits ();
+    }
+    return 0;
+}
+
+SBCompileUnit
+SBModule::GetCompileUnitAtIndex (uint32_t index)
+{
+    SBCompileUnit sb_cu;
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+    {
+        CompUnitSP cu_sp = module_sp->GetCompileUnitAtIndex (index);
+        sb_cu.reset(cu_sp.get());
+    }
+    return sb_cu;
+}
+
 size_t
 SBModule::GetNumSymbols ()
 {
