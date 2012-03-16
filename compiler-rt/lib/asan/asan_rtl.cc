@@ -452,12 +452,16 @@ void __asan_init() {
                                            "allow_user_poisoning=", 1);
   FLAG_sleep_before_dying = IntFlagValue(options, "sleep_before_dying=", 0);
 
+  FLAG_quarantine_size = IntFlagValue(options, "quarantine_size=",
+      (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28);
+
+  if (FLAG_v) {
+    Report("Parsed ASAN_OPTIONS: %s\n", options);
+  }
+
   if (FLAG_atexit) {
     Atexit(asan_atexit);
   }
-
-  FLAG_quarantine_size = IntFlagValue(options, "quarantine_size=",
-      (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28);
 
   // interceptors
   InitializeAsanInterceptors();
