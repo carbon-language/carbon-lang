@@ -380,22 +380,29 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 //===----------------------------------------------------------------------===//
 // "Minimal" path diagnostic generation algorithm.
 //===----------------------------------------------------------------------===//
+typedef std::pair<PathDiagnosticCallPiece*, const ExplodedNode*> StackDiagPair;
+typedef SmallVector<StackDiagPair, 6> StackDiagVector;
+
 static void updateStackPiecesWithMessage(PathDiagnosticPiece *P,
-                   llvm::SmallVector<PathDiagnosticCallPiece*, 6> &CallStack) {
+                                         StackDiagVector &CallStack) {
   // If the piece contains a special message, add it to all the call
   // pieces on the active stack.
   if (PathDiagnosticEventPiece *ep =
         dyn_cast<PathDiagnosticEventPiece>(P)) {
-    StringRef stackMsg = ep->getCallStackMessage();
 
-    if (!stackMsg.empty())
-      for (llvm::SmallVector<PathDiagnosticCallPiece*, 6>::iterator
-             I = CallStack.begin(), E = CallStack.end(); I != E; ++I)
+    if (ep->hasCallStackHint())
+      for (StackDiagVector::iterator I = CallStack.begin(),
+                                     E = CallStack.end(); I != E; ++I) {
+        PathDiagnosticCallPiece *CP = I->first;
+        const ExplodedNode *N = I->second;
+        StringRef stackMsg = ep->getCallStackMessage(N);
+
         // The last message on the path to final bug is the most important
         // one. Since we traverse the path backwards, do not add the message
         // if one has been previously added.
-        if  (!(*I)->hasCallStackMessage())
-          (*I)->setCallStackMessage(stackMsg);
+        if  (!CP->hasCallStackMessage())
+          CP->setCallStackMessage(stackMsg);
+      }
   }
 }
 
@@ -410,7 +417,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
   const ExplodedNode *NextNode = N->pred_empty()
                                         ? NULL : *(N->pred_begin());
 
-  llvm::SmallVector<PathDiagnosticCallPiece*, 6> CallStack;
+  StackDiagVector CallStack;
 
   while (NextNode) {
     N = NextNode;
@@ -424,7 +431,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         PathDiagnosticCallPiece::construct(N, *CE, SMgr);
       PD.getActivePath().push_front(C);
       PD.pushActivePath(&C->path);
-      CallStack.push_back(C);
+      CallStack.push_back(StackDiagPair(C, N));
       continue;      
     }
     
@@ -446,7 +453,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       }
       C->setCallee(*CE, SMgr);
       if (!CallStack.empty()) {
-        assert(CallStack.back() == C);
+        assert(CallStack.back().first == C);
         CallStack.pop_back();
       }
       continue;
@@ -1047,7 +1054,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             const ExplodedNode *N) {
   EdgeBuilder EB(PD, PDB);
   const SourceManager& SM = PDB.getSourceManager();
-  llvm::SmallVector<PathDiagnosticCallPiece*, 6> CallStack;
+  StackDiagVector CallStack;
 
   const ExplodedNode *NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
   while (NextNode) {
@@ -1068,7 +1075,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           PathDiagnosticCallPiece::construct(N, *CE, SM);
         PD.getActivePath().push_front(C);
         PD.pushActivePath(&C->path);
-        CallStack.push_back(C);
+        CallStack.push_back(StackDiagPair(C, N));
         break;
       }
       
@@ -1104,7 +1111,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         EB.addContext(CE->getCallExpr());
 
         if (!CallStack.empty()) {
-          assert(CallStack.back() == C);
+          assert(CallStack.back().first == C);
           CallStack.pop_back();
         }
         break;
