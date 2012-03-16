@@ -1716,16 +1716,14 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   buf += "try ";
   ReplaceText(rparenLoc, 1, buf);
   
-  SourceLocation startLBraceLoc = S->getSynchBody()->getLocEnd();
-  const char *startLBraceBuf = SM->getCharacterData(startLBraceLoc);
-
-  assert((*startLBraceBuf == '}') && "bogus @synchronized block");
-  
-  SourceLocation lastCurlyLoc = startLBraceLoc;
+  SourceLocation startRBraceLoc = S->getSynchBody()->getLocEnd();
+  const char *startRBraceBuf = SM->getCharacterData(startRBraceLoc);
+  assert((*startRBraceBuf == '}') && "bogus @synchronized block");
   
   buf = "} catch (id e) {_rethrow = e;}\n";
   Write_RethrowObject(buf);
   
+  // produce objc_sync_exit(expr);
   std::string syncBuf;
   syncBuf += "\n\tobjc_sync_exit(";
 
@@ -1748,7 +1746,7 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   buf += "}\n";
   buf += "}\n";
 
-  ReplaceText(lastCurlyLoc, 1, buf);
+  ReplaceText(startRBraceLoc, 1, buf);
 
   return 0;
 }
