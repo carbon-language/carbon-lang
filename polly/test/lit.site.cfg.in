@@ -5,6 +5,7 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvm_libs_dir = "@LLVM_LIBS_DIR@"
 config.polly_obj_root = "@POLLY_BINARY_DIR@"
+config.polly_lib_dir = "@POLLY_LIB_DIR@"
 config.target_triple = "@TARGET_TRIPLE@"
 lit.params['build_config'] = "@POLLY_SOURCE_DIR@/test"
 
@@ -18,7 +19,7 @@ except KeyError,e:
     lit.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
 
 config.substitutions.append(('%loadPolly', '-load '
-                             + config.llvm_libs_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
+                             + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
 config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare -polly-region-simplify -scev-aa '))
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
 
