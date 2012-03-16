@@ -303,9 +303,86 @@
                     </table>
                     <p>
                 </div>
+                <div class="postfooter"></div>
+
+                <h1 class ="postheader">Watchpoint Commands</h1>
+                <div class="post">
+
+                    <p>
+
+                    <table class="stats" width="620" cellspacing="0">
+                    <tr>
+                        <td class="hed" width="50%">LLDB</td>
+                        <td class="hed" width="50%">GDB</td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Set a watchpoint on a variable when it is written to.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> watchpoint set variable -w write global_var<br>
+                            <b>(lldb)</b> watch set var -w write global_var<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> watch global_var
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Set a watchpoint on a memory location when it is written into. The size of the region to watch for defaults to the pointer size if no '-x byte_size' is specified.
+                        This command takes raw input, evaluated as an expression returning an unsigned integer pointing to the start of the region, after the '--' option terminator.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> watchpoint set expression -w write -- my_ptr<br>
+                            <b>(lldb)</b> watch set exp -w write -- my_ptr<br>
+                      </td>
+                        <td class="content">
+                            <b>(gdb)</b> watch -location g_char_ptr
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Set a condition on a watchpoint</b>.</td></tr>
+                    <tr>
+                        <td class="content" colspan="2">
+                            <b>(lldb)</b> watch set var -w write global<br>
+                            <b>(lldb)</b> watchpoint modify -c '(global==5)'<br>
+                            <b>(lldb)</b> c<br>
+                            ...<br>
+                            <b>(lldb)</b> bt<br>
+                            * thread #1: tid = 0x1c03, 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16, stop reason = watchpoint 1<br>
+                              frame #0: 0x0000000100000ef5 a.out`modify + 21 at main.cpp:16<br>
+                              frame #1: 0x0000000100000eac a.out`main + 108 at main.cpp:25<br>
+                              frame #2: 0x00007fff8ac9c7e1 libdyld.dylib`start + 1<br>
+                            <b>(lldb)</b> frame var global<br>
+                            (int32_t) global = 5<br>
+                        </td>
+                   </tr>
+
+                   <tr><td class="header" colspan="2">List all watchpoints.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> watchpoint list<br>
+                            <b>(lldb)</b> watch l<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> info break<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Delete a watchpoint.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> watchpoint delete 1<br>
+                            <b>(lldb)</b> watch del 1<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> delete 1<br>
+                        </td>
+                    </tr>
+
+                    </table>
+                    <p>
+                </div>
 
             <div class="postfooter"></div>
-
             <h1 class ="postheader">Examining Variables</h1>
                 <div class="post">
                     <p>
