@@ -166,6 +166,8 @@ def ITSTATE    : ARMReg<4, "itstate">;
 
 // Special Registers - only available in privileged mode.
 def FPSID   : ARMReg<0, "fpsid">;
+def MVFR1   : ARMReg<6, "mvfr1">;
+def MVFR0   : ARMReg<7, "mvfr0">;
 def FPEXC   : ARMReg<8, "fpexc">;
 
 // Register classes.

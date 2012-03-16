@@ -120,12 +120,21 @@
 @ CHECK: vnmls.f32 s1, s2, s0        @ encoding: [0x00,0x0a,0x51,0xee]
         vnmls.f32       s1, s2, s0
 
-@ CHECK: vmrs APSR_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
-@ CHECK: vmrs APSR_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
-@ CHECK: vmrs APSR_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
         vmrs    APSR_nzcv, fpscr
         vmrs    apsr_nzcv, fpscr
         fmstat
+        vmrs    r2, fpsid
+        vmrs    r3, FPSID
+        vmrs    r4, mvfr0
+        vmrs    r5, MVFR1
+
+@ CHECK: vmrs APSR_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
+@ CHECK: vmrs APSR_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
+@ CHECK: vmrs APSR_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
+@ CHECK: vmrs r2, fpsid              @ encoding: [0x10,0x2a,0xf0,0xee]
+@ CHECK: vmrs r3, fpsid              @ encoding: [0x10,0x3a,0xf0,0xee]
+@ CHECK: vmrs r4, mvfr0              @ encoding: [0x10,0x4a,0xf7,0xee]
+@ CHECK: vmrs r5, mvfr1              @ encoding: [0x10,0x5a,0xf6,0xee]
 
 @ CHECK: vnegne.f64 d16, d16         @ encoding: [0x60,0x0b,0xf1,0x1e]
         vnegne.f64      d16, d16

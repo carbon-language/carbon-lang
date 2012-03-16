@@ -1212,6 +1212,10 @@ let Uses = [FPSCR] in {
                               "vmrs", "\t$Rt, fpexc", []>;
   def VMRS_FPSID : MovFromVFP<0b0000 /* fpsid */, (outs GPR:$Rt), (ins),
                               "vmrs", "\t$Rt, fpsid", []>;
+  def VMRS_MVFR0 : MovFromVFP<0b0111 /* mvfr0 */, (outs GPR:$Rt), (ins),
+                              "vmrs", "\t$Rt, mvfr0", []>;
+  def VMRS_MVFR1 : MovFromVFP<0b0110 /* mvfr1 */, (outs GPR:$Rt), (ins),
+                              "vmrs", "\t$Rt, mvfr1", []>;
 }
 
 //===----------------------------------------------------------------------===//
