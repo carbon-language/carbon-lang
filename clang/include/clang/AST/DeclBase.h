@@ -949,8 +949,11 @@ class DeclContext {
 
   /// \brief Pointer to the data structure used to lookup declarations
   /// within this context (or a DependentStoredDeclsMap if this is a
-  /// dependent context).
-  mutable StoredDeclsMap *LookupPtr;
+  /// dependent context), and a bool indicating whether we have lazily
+  /// omitted any declarations from the map. We maintain the invariant
+  /// that, if the map contains an entry for a DeclarationName, then it
+  /// contains all relevant entries for that name.
+  mutable llvm::PointerIntPair<StoredDeclsMap*, 1, bool> LookupPtr;
 
 protected:
   /// FirstDecl - The first declaration stored within this declaration
@@ -973,7 +976,7 @@ protected:
 
    DeclContext(Decl::Kind K)
      : DeclKind(K), ExternalLexicalStorage(false),
-       ExternalVisibleStorage(false), LookupPtr(0), FirstDecl(0),
+       ExternalVisibleStorage(false), LookupPtr(0, false), FirstDecl(0),
        LastDecl(0) { }
 
 public:
@@ -1458,7 +1461,11 @@ public:
   // Low-level accessors
 
   /// \brief Retrieve the internal representation of the lookup structure.
-  StoredDeclsMap* getLookupPtr() const { return LookupPtr; }
+  /// This may omit some names if we are lazily building the structure.
+  StoredDeclsMap *getLookupPtr() const { return LookupPtr.getPointer(); }
+
+  /// \brief Ensure the lookup structure is fully-built and return it.
+  StoredDeclsMap *buildLookup();
 
   /// \brief Whether this DeclContext has external storage containing
   /// additional declarations that are lexically in this context.
@@ -1510,7 +1517,9 @@ private:
   friend class DependentDiagnostic;
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
 
-  void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal);
+  void buildLookupImpl(DeclContext *DCtx);
+  void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal,
+                                         bool Rediscoverable);
   void makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal);
 };
 

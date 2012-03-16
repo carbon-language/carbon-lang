@@ -2798,7 +2798,7 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   // followed by a size, followed by references to the visible
   // declarations that have that name.
   uint64_t Offset = Stream.GetCurrentBitNo();
-  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
+  StoredDeclsMap *Map = DC->buildLookup();
   if (!Map || Map->empty())
     return 0;
 
@@ -2863,7 +2863,8 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 ///
 /// UPDATE_VISIBLE blocks contain the declarations that are added to an existing
 /// DeclContext in a dependent AST file. As such, they only exist for the TU
-/// (in C++) and for namespaces.
+/// (in C++), for namespaces, and for classes with forward-declared unscoped
+/// enumeration members (in C++11).
 void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
   if (!Map || Map->empty())

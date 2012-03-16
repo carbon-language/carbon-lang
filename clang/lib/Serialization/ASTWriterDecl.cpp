@@ -825,9 +825,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     Writer.AddUpdatedDeclContext(NS);
 
     // Make sure all visible decls are written. They will be recorded later.
-    NS->lookup(DeclarationName());
-    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(NS->getLookupPtr());
-    if (Map) {
+    if (StoredDeclsMap *Map = NS->buildLookup()) {
       for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
            D != DEnd; ++D) {
         DeclContext::lookup_result Result = D->second.getLookupResult();

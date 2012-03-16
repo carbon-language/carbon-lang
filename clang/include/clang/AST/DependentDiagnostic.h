@@ -177,7 +177,7 @@ inline DeclContext::ddiag_iterator DeclContext::ddiag_begin() const {
   assert(isDependentContext()
          && "cannot iterate dependent diagnostics of non-dependent context");
   const DependentStoredDeclsMap *Map
-    = static_cast<DependentStoredDeclsMap*>(getPrimaryContext()->LookupPtr);
+    = static_cast<DependentStoredDeclsMap*>(getPrimaryContext()->getLookupPtr());
 
   if (!Map) return ddiag_iterator();
   return ddiag_iterator(Map->FirstDiagnostic);
