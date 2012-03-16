@@ -379,22 +379,10 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     unsigned EffectiveStoreAlign = StoreAlign != 0 ? StoreAlign :
       TD->getABITypeAlignment(Val->getType());
 
-    if (KnownAlign > EffectiveStoreAlign) {
+    if (KnownAlign > EffectiveStoreAlign)
       SI.setAlignment(KnownAlign);
-    } else if (StoreAlign == 0) {
-      unsigned PtrAlign = 0;
-      if (GlobalValue *GV = dyn_cast<GlobalValue>(Ptr->stripPointerCasts()))
-        PtrAlign = GV->getAlignment();
-
-      if (PtrAlign != 0 && PtrAlign < EffectiveStoreAlign)
-        // The pointer alignment may be less than the effective store
-        // alignment. If so, then we don't want to increase the alignment here,
-        // since that could lead to code-gen using instructions which require a
-        // higher alignment than the pointer guarantees.
-        SI.setAlignment(PtrAlign);
-      else
-        SI.setAlignment(EffectiveStoreAlign);
-    }
+    else if (StoreAlign == 0)
+      SI.setAlignment(EffectiveStoreAlign);
   }
 
   // Don't hack volatile/atomic stores.
