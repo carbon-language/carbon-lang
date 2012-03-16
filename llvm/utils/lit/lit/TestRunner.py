@@ -98,7 +98,6 @@ def executeShCmd(cmd, cfg, cwd, results):
     input = subprocess.PIPE
     stderrTempFiles = []
     opened_files = []
-    written_files = []
     named_temp_files = []
     # To avoid deadlock, we use a single stderr stream for piped
     # output. This is null until we have seen some output using
@@ -146,6 +145,7 @@ def executeShCmd(cmd, cfg, cwd, results):
             else:
                 if r[2] is None:
                     if kAvoidDevNull and r[0] == '/dev/null':
+                        r[0] = None
                         r[2] = tempfile.TemporaryFile(mode=r[1])
                     else:
                         r[2] = open(r[0], r[1])
@@ -154,9 +154,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                     # FIXME: Actually, this is probably an instance of PR6753.
                     if r[1] == 'a':
                         r[2].seek(0, 2)
-                    opened_files.append(r[2])
-                    if r[1] in 'aw':
-                        written_files.append(r[0])
+                    opened_files.append(r)
                 result = r[2]
             final_redirects.append(result)
 
@@ -218,7 +216,7 @@ def executeShCmd(cmd, cfg, cwd, results):
     # on Win32, for example). Since we have already spawned the subprocess, our
     # handles have already been transferred so we do not need them anymore.
     for f in opened_files:
-        f.close()
+        f[2].close()
 
     # FIXME: There is probably still deadlock potential here. Yawn.
     procData = [None] * len(procs)
@@ -257,10 +255,11 @@ def executeShCmd(cmd, cfg, cwd, results):
         else:
             exitCode = res
 
-    # Make sure written_files is released by other (child) processes.
-    if (kIsWindows):
-        for f in written_files:
-            WinWaitReleased(f)
+    # Make sure opened_files is released by other (child) processes.
+    if kIsWindows:
+        for f in opened_files:
+            if f[0] is not None:
+                WinWaitReleased(f[0])
 
     # Remove any named temporary files we created.
     for f in named_temp_files:
