@@ -1929,8 +1929,11 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
 
   // Canonicalize xor to the RHS.
-  if (match(Op0, m_Xor(m_Value(), m_Value())))
+  bool SwappedForXor = false;
+  if (match(Op0, m_Xor(m_Value(), m_Value()))) {
     std::swap(Op0, Op1);
+    SwappedForXor = true;
+  }
 
   // A | ( A ^ B) -> A |  B
   // A | (~A ^ B) -> A | ~B
@@ -1960,6 +1963,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         Value *Not = Builder->CreateNot(NotOp, NotOp->getName()+".not");
         return BinaryOperator::CreateOr(Not, Op0);
       }
+
+  if (SwappedForXor)
+    std::swap(Op0, Op1);
 
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
