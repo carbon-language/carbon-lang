@@ -29,42 +29,6 @@ ASTTraverser::~ASTTraverser() { }
 // Helpers.
 //===----------------------------------------------------------------------===//
 
-/// \brief True if the class is one that does not support weak.
-static bool isClassInWeakBlacklist(ObjCInterfaceDecl *cls) {
-  if (!cls)
-    return false;
-
-  bool inList = llvm::StringSwitch<bool>(cls->getName())
-                 .Case("NSColorSpace", true)
-                 .Case("NSFont", true)
-                 .Case("NSFontPanel", true)
-                 .Case("NSImage", true)
-                 .Case("NSLazyBrowserCell", true)
-                 .Case("NSWindow", true)
-                 .Case("NSWindowController", true)
-                 .Case("NSViewController", true)
-                 .Case("NSMenuView", true)
-                 .Case("NSPersistentUIWindowInfo", true)
-                 .Case("NSTableCellView", true)
-                 .Case("NSATSTypeSetter", true)
-                 .Case("NSATSGlyphStorage", true)
-                 .Case("NSLineFragmentRenderingContext", true)
-                 .Case("NSAttributeDictionary", true)
-                 .Case("NSParagraphStyle", true)
-                 .Case("NSTextTab", true)
-                 .Case("NSSimpleHorizontalTypesetter", true)
-                 .Case("_NSCachedAttributedString", true)
-                 .Case("NSStringDrawingTextStorage", true)
-                 .Case("NSTextView", true)
-                 .Case("NSSubTextStorage", true)
-                 .Default(false);
-
-  if (inList)
-    return true;
-
-  return isClassInWeakBlacklist(cls->getSuperClass());
-}
-
 bool trans::canApplyWeak(ASTContext &Ctx, QualType type,
                          bool AllowOnUnknownClass) {
   if (!Ctx.getLangOpts().ObjCRuntimeHasWeak)
@@ -87,8 +51,6 @@ bool trans::canApplyWeak(ASTContext &Ctx, QualType type,
     if (!AllowOnUnknownClass && !Class->hasDefinition())
       return false; // forward classes are not verifiable, therefore not safe.
     if (Class->isArcWeakrefUnavailable())
-      return false;
-    if (isClassInWeakBlacklist(Class))
       return false;
   }
 
