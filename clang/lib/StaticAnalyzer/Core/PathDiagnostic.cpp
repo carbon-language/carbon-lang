@@ -568,12 +568,12 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
     return 0;
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Callee))
+  if (!CallStackMessage.empty())
+    Out << CallStackMessage;
+  else if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Callee))
     Out << "Returning from '" << *ND << "'";
   else
     Out << "Returning to caller";
-  if (!CallStackMessage.empty())
-    Out << CallStackMessage;
   return new PathDiagnosticEventPiece(callReturn, Out.str());
 }
 

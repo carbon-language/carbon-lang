@@ -87,6 +87,7 @@ void use_ret() {
     v = malloc_wrapper_ret();
 }
 
+
 // CHECK: <?xml version="1.0" encoding="UTF-8"?>
 // CHECK: <plist version="1.0">
 // CHECK: <dict>
@@ -1129,9 +1130,9 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>1</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Returning from &apos;wrapper&apos;; allocated memory returned</string>
+// CHECK:      <string>Returned allocated memory</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Returning from &apos;wrapper&apos;; allocated memory returned</string>
+// CHECK: <string>Returned allocated memory</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1568,9 +1569,9 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>2</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Returning from &apos;my_free&apos;; released memory via 1st parameter</string>
+// CHECK:      <string>Returned released memory via 1st parameter</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Returning from &apos;my_free&apos;; released memory via 1st parameter</string>
+// CHECK: <string>Returned released memory via 1st parameter</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1631,9 +1632,9 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>1</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Returning from &apos;my_malloc_and_free&apos;; released memory via 1st parameter</string>
+// CHECK:      <string>Returned released memory via 1st parameter</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Returning from &apos;my_malloc_and_free&apos;; released memory via 1st parameter</string>
+// CHECK: <string>Returned released memory via 1st parameter</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2139,9 +2140,9 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>1</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Returning from &apos;my_realloc&apos;; reallocation of 1st parameter failed</string>
+// CHECK:      <string>Reallocation of 1st parameter failed</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Returning from &apos;my_realloc&apos;; reallocation of 1st parameter failed</string>
+// CHECK: <string>Reallocation of 1st parameter failed</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2419,9 +2420,9 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>1</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Returning from &apos;malloc_wrapper_ret&apos;; allocated memory returned</string>
+// CHECK:      <string>Returned allocated memory</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Returning from &apos;malloc_wrapper_ret&apos;; allocated memory returned</string>
+// CHECK: <string>Returned allocated memory</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>

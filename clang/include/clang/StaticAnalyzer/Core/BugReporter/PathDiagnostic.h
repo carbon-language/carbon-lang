@@ -398,7 +398,7 @@ public:
   ///   'Msg via Nth parameter'
   virtual std::string getMessageForArg(const Expr *ArgE, unsigned ArgIndex);
   virtual std::string getMessageForReturn(const CallExpr *CallExpr) {
-    return Msg + " returned";
+    return Msg;
   }
   virtual std::string getMessageForSymbolNotFound() {
     return Msg;

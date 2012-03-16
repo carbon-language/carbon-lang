@@ -254,7 +254,7 @@ private:
         SmallString<200> buf;
         llvm::raw_svector_ostream os(buf);
 
-        os << "; reallocation of ";
+        os << "Reallocation of ";
         // Printed parameters start at 1, not 0.
         printOrdinal(++ArgIndex, os);
         os << " parameter failed";
@@ -263,7 +263,7 @@ private:
       }
 
       virtual std::string getMessageForReturn(const CallExpr *CallExpr) {
-        return "; reallocation of returned value failed";
+        return "Reallocation of returned value failed";
       }
     };
   };
@@ -1292,15 +1292,17 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
   if (Mode == Normal) {
     if (isAllocated(RS, RSPrev, S)) {
       Msg = "Memory is allocated";
-      StackHint = new StackHintGeneratorForSymbol(Sym, "; allocated memory");
+      StackHint = new StackHintGeneratorForSymbol(Sym,
+                                                  "Returned allocated memory");
     } else if (isReleased(RS, RSPrev, S)) {
       Msg = "Memory is released";
-      StackHint = new StackHintGeneratorForSymbol(Sym, "; released memory");
+      StackHint = new StackHintGeneratorForSymbol(Sym,
+                                                  "Returned released memory");
     } else if (isReallocFailedCheck(RS, RSPrev, S)) {
       Mode = ReallocationFailed;
       Msg = "Reallocation failed";
       StackHint = new StackHintGeneratorForReallocationFailed(Sym,
-                                                   "; reallocation failed");
+                                                       "Reallocation failed");
     }
 
   // We are in a special mode if a reallocation failed later in the path.
@@ -1320,7 +1322,8 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
     if (!(FunName.equals("realloc") || FunName.equals("reallocf")))
       return 0;
     Msg = "Attempt to reallocate memory";
-    StackHint = new StackHintGeneratorForSymbol(Sym, "; reallocated memory");
+    StackHint = new StackHintGeneratorForSymbol(Sym,
+                                                "Returned reallocated memory");
     Mode = Normal;
   }
 
