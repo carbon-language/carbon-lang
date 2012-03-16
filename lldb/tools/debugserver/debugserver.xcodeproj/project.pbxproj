@@ -559,7 +559,7 @@
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
-					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
+					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_BUILDANDINTEGRATION;
@@ -610,7 +610,7 @@
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
-					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
+					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -660,7 +660,7 @@
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
-					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
+					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_RELEASE;
