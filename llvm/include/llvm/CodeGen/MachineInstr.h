@@ -74,9 +74,10 @@ private:
                                         // anything other than to convey comment
                                         // information to AsmPrinter.
 
+  uint16_t NumMemRefs;                  // information on memory references
+  mmo_iterator MemRefs;
+
   std::vector<MachineOperand> Operands; // the operands
-  mmo_iterator MemRefs;                 // information on memory references
-  mmo_iterator MemRefsEnd;
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
   DebugLoc debugLoc;                    // Source line information.
 
@@ -284,13 +285,13 @@ public:
 
   /// Access to memory operands of the instruction
   mmo_iterator memoperands_begin() const { return MemRefs; }
-  mmo_iterator memoperands_end() const { return MemRefsEnd; }
-  bool memoperands_empty() const { return MemRefsEnd == MemRefs; }
+  mmo_iterator memoperands_end() const { return MemRefs + NumMemRefs; }
+  bool memoperands_empty() const { return NumMemRefs == 0; }
 
   /// hasOneMemOperand - Return true if this instruction has exactly one
   /// MachineMemOperand.
   bool hasOneMemOperand() const {
-    return MemRefsEnd - MemRefs == 1;
+    return NumMemRefs == 1;
   }
 
   /// API for querying MachineInstr properties. They are the same as MCInstrDesc
@@ -888,7 +889,7 @@ public:
   /// list. This does not transfer ownership.
   void setMemRefs(mmo_iterator NewMemRefs, mmo_iterator NewMemRefsEnd) {
     MemRefs = NewMemRefs;
-    MemRefsEnd = NewMemRefsEnd;
+    NumMemRefs = NewMemRefsEnd - NewMemRefs;
   }
 
 private:

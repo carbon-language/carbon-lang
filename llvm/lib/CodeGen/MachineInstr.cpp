@@ -482,7 +482,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
 /// MCID NULL and no operands.
 MachineInstr::MachineInstr()
   : MCID(0), Flags(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0),
+    NumMemRefs(0), MemRefs(0),
     Parent(0) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
@@ -502,7 +502,7 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// the MCInstrDesc.
 MachineInstr::MachineInstr(const MCInstrDesc &tid, bool NoImp)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0), Parent(0) {
+    NumMemRefs(0), MemRefs(0), Parent(0) {
   unsigned NumImplicitOps = 0;
   if (!NoImp)
     NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
@@ -517,7 +517,7 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, bool NoImp)
 MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
                            bool NoImp)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0), Parent(0), debugLoc(dl) {
+    NumMemRefs(0), MemRefs(0), Parent(0), debugLoc(dl) {
   unsigned NumImplicitOps = 0;
   if (!NoImp)
     NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
@@ -533,7 +533,7 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
 /// basic block.
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const MCInstrDesc &tid)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0), Parent(0) {
+    NumMemRefs(0), MemRefs(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   unsigned NumImplicitOps =
     MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
@@ -549,7 +549,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const MCInstrDesc &tid)
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
                            const MCInstrDesc &tid)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    MemRefs(0), MemRefsEnd(0), Parent(0), debugLoc(dl) {
+    NumMemRefs(0), MemRefs(0), Parent(0), debugLoc(dl) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   unsigned NumImplicitOps =
     MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
@@ -564,7 +564,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
 ///
 MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
   : MCID(&MI.getDesc()), Flags(0), AsmPrinterFlags(0),
-    MemRefs(MI.MemRefs), MemRefsEnd(MI.MemRefsEnd),
+    NumMemRefs(MI.NumMemRefs), MemRefs(MI.MemRefs),
     Parent(0), debugLoc(MI.getDebugLoc()) {
   Operands.reserve(MI.getNumOperands());
 
@@ -739,17 +739,16 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
 void MachineInstr::addMemOperand(MachineFunction &MF,
                                  MachineMemOperand *MO) {
   mmo_iterator OldMemRefs = MemRefs;
-  mmo_iterator OldMemRefsEnd = MemRefsEnd;
+  uint16_t OldNumMemRefs = NumMemRefs;
 
-  size_t NewNum = (MemRefsEnd - MemRefs) + 1;
+  uint16_t NewNum = NumMemRefs + 1;
   mmo_iterator NewMemRefs = MF.allocateMemRefsArray(NewNum);
-  mmo_iterator NewMemRefsEnd = NewMemRefs + NewNum;
 
-  std::copy(OldMemRefs, OldMemRefsEnd, NewMemRefs);
+  std::copy(OldMemRefs, OldMemRefs + OldNumMemRefs, NewMemRefs);
   NewMemRefs[NewNum - 1] = MO;
 
   MemRefs = NewMemRefs;
-  MemRefsEnd = NewMemRefsEnd;
+  NumMemRefs = NewNum;
 }
 
 bool
