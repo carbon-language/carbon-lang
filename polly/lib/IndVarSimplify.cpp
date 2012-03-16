@@ -1967,8 +1967,11 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // loop exit test instruction.
   if (IU && NewICmp) {
     ICmpInst *NewICmpInst = dyn_cast<ICmpInst>(NewICmp);
-    if (NewICmpInst)
-      IU->AddUsersIfInteresting(cast<Instruction>(NewICmpInst->getOperand(0)));
+    if (NewICmpInst) {
+      SmallPtrSet<Loop*,16> SimpleLoopNests;
+      IU->AddUsersIfInteresting(cast<Instruction>(NewICmpInst->getOperand(0)),
+                                SimpleLoopNests);
+    }
   }
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader());
