@@ -99,7 +99,29 @@ public:
     Type = std::max(Type, ToMerge.Type);
     addParamsFrom(ToMerge);
   }
+
+  void print(raw_ostream &OS) {
+    switch (Type) {
+      case SCEVType::INT:
+        OS << "SCEVType::INT\n";
+      break;
+      case SCEVType::PARAM:
+        OS << "SCEVType::PARAM\n";
+      break;
+      case SCEVType::IV:
+        OS << "SCEVType::IV\n";
+      break;
+      case SCEVType::INVALID:
+        OS << "SCEVType::INVALID\n";
+      break;
+    }
+  }
 };
+
+raw_ostream &operator<<(raw_ostream &OS, class ValidatorResult &VR) {
+  VR.print(OS);
+  return OS;
+}
 
 /// Check if a SCEV is valid in a SCoP.
 struct SCEVValidator
