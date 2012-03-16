@@ -39,12 +39,12 @@ struct OperandInfo {
     Fields.push_back(EncodingField(Base, Width, Offset));
   }
 
-  unsigned numFields() { return Fields.size(); }
+  unsigned numFields() const { return Fields.size(); }
 
-  typedef std::vector<EncodingField>::iterator iterator;
+  typedef std::vector<EncodingField>::const_iterator const_iterator;
 
-  iterator begin() { return Fields.begin(); }
-  iterator end()   { return Fields.end();   }
+  const_iterator begin() const { return Fields.begin(); }
+  const_iterator end() const   { return Fields.end();   }
 };
 
 class FixedLenDecoderEmitter : public TableGenBackend {
