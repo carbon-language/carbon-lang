@@ -574,7 +574,7 @@ multiclass T2I_bin_w_irs<bits<4> opcod, string opc,
                                                     cc_out:$s)>;
 
   // and with the optional destination operand, too.
-  def : t2InstAlias<!strconcat(opc, "${s}${p}.ri", " $Rdn, $imm"),
+  def : t2InstAlias<!strconcat(opc, "${s}${p}.w", " $Rdn, $imm"),
      (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rdn, rGPR:$Rdn,
                                                     t2_so_imm:$imm, pred:$p,
                                                     cc_out:$s)>;
