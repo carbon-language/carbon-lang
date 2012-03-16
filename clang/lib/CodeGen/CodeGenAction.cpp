@@ -23,6 +23,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/IRReader.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -393,8 +394,17 @@ void CodeGenAction::ExecuteAction() {
       StringRef Msg = Err.getMessage();
       if (Msg.startswith("error: "))
         Msg = Msg.substr(7);
+
+      // Escape '%', which is interpreted as a format character.
+      llvm::SmallString<128> EscapedMessage;
+      for (unsigned i = 0, e = Msg.size(); i != e; ++i) {
+        if (Msg[i] == '%')
+          EscapedMessage += '%';
+        EscapedMessage += Msg[i];
+      }
+
       unsigned DiagID = CI.getDiagnostics().getCustomDiagID(
-          DiagnosticsEngine::Error, Msg);
+          DiagnosticsEngine::Error, EscapedMessage);
 
       CI.getDiagnostics().Report(Loc, DiagID);
       return;
