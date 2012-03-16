@@ -3768,20 +3768,32 @@ def t2MCR : t2MovRCopro<0b1110, "mcr", 0,
                 c_imm:$CRm, imm0_7:$opc2),
            [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                          imm:$CRm, imm:$opc2)]>;
+def : t2InstAlias<"mcr $cop, $opc1, $Rt, $CRn, $CRm",
+                  (t2MCR p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
+                         c_imm:$CRm, 0)>;
 def t2MCR2 : t2MovRCopro<0b1111, "mcr2", 0,
              (outs), (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                           c_imm:$CRm, imm0_7:$opc2),
              [(int_arm_mcr2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                             imm:$CRm, imm:$opc2)]>;
+def : t2InstAlias<"mcr2 $cop, $opc1, $Rt, $CRn, $CRm",
+                  (t2MCR2 p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
+                          c_imm:$CRm, 0)>;
 
 /* from coprocessor to ARM core register */
 def t2MRC : t2MovRCopro<0b1110, "mrc", 1,
              (outs GPR:$Rt), (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
                                   c_imm:$CRm, imm0_7:$opc2), []>;
+def : t2InstAlias<"mrc $cop, $opc1, $Rt, $CRn, $CRm",
+                  (t2MRC GPR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
+                         c_imm:$CRm, 0)>;
 
 def t2MRC2 : t2MovRCopro<0b1111, "mrc2", 1,
              (outs GPR:$Rt), (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
                                   c_imm:$CRm, imm0_7:$opc2), []>;
+def : t2InstAlias<"mrc2 $cop, $opc1, $Rt, $CRn, $CRm",
+                  (t2MRC2 GPR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
+                          c_imm:$CRm, 0)>;
 
 def : T2v6Pat<(int_arm_mrc  imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
               (t2MRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
