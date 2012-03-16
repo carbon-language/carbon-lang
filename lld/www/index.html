@@ -41,15 +41,17 @@
   <h2 id="goals">Features and Goals</h2>
   <!--=====================================================================-->
 
-	<p><b>End-User Features:</b></p>
+    <p><b>End-User Features:</b></p>
     <ul>
-		<li>Compatible with existing linker options</li>
+        <li>Compatible with existing linker options</li>
+        <li>Reads standard Object Files (e.g. ELF, mach-o, PE/COFF)</li>
+        <li>Writes standard Executable Files (e.g. ELF, mach-o, PE)</li>
         <li>Fast link times</li>
         <li>Minimal memory use</li>
         <li>Remove clang's reliance on "the system linker"</li>
     </ul>
 
-	<p><b>Applications:</b></p>
+    <p><b>Applications:</b></p>
     <ul>
         <li>Use the LLVM 'BSD' License</li>
         <li>Modular design</li>
@@ -57,12 +59,13 @@
         <li>Easy to add new CPU support</li>
         <li>Can be built as static tool or library</li>
     </ul>
-	
-	<p><b>Design and Implementation:</b></p>
+    
+    <p><b>Design and Implementation:</b></p>
     <ul>
         <li>Extensive unit tests</li>
         <li>Internal linker model can be dumped/read to textual format</li>
-		<li>Internal linker model can be dumped/read to new native format</li>
+        <li>Internal linker model can be dumped/read to new native format</li>
+		<li>Native format designed to be fast to read and write</li>
         <li>Additional linking features can be plugged in as "passes"</li>
         <li>OS specific and CPU specific code factored out</li>
     </ul>
@@ -72,12 +75,12 @@
   <!--=====================================================================-->
 
   <p>The fact that clang relies on whatever linker tool you happen to have
-	installed means that clang has been very conservative adopting features
-	which require a recent linker.</p>
-	
+    installed means that clang has been very conservative adopting features
+    which require a recent linker.</p>
+    
  <p>In the same way that the MC layer of LLVM has removed clang's reliance
-	on the system assembler tool, the lld project will remove clang's reliance
-	on the system linker tool.</p>
+    on the system assembler tool, the lld project will remove clang's reliance
+    on the system linker tool.</p>
 
 
   <!--=====================================================================-->
