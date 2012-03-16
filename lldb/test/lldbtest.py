@@ -868,7 +868,7 @@ class Base(unittest2.TestCase):
         else:
             option_str = ""
         if comp:
-            option_str += "-C " + comp
+            option_str += " -C " + comp
         return option_str
 
     # ==================================================
