@@ -304,6 +304,12 @@ void test_smartpointer_3() {
   foo.noAdopt(x);
 }
 
+void test_smartpointer_4() {
+  id x = [[NSObject alloc] init];  // no-warning
+  SmartPointer *foo = new SmartPointer(x);
+  delete foo;
+}
+
 extern CFStringRef ElectronMicroscopyEngage(void);
 void test_microscopy() {
   NSString *token = (NSString*) ElectronMicroscopyEngage();
