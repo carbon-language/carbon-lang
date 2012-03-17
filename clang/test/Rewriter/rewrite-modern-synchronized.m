@@ -21,3 +21,10 @@ void foo(id sem)
     return;
  }
 }
+
+void test_sync_with_implicit_finally() {
+    id foo;
+    @synchronized (foo) {
+        return; // The rewriter knows how to generate code for implicit finally
+    }
+}

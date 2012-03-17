@@ -1703,18 +1703,30 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   assert((*startBuf == '@') && "bogus @synchronized location");
 
   std::string buf;
-  buf = "{ id volatile _rethrow = 0; objc_sync_enter((id)";
+  buf = "{ id _rethrow = 0; id _sync_obj = ";
   
   const char *lparenBuf = startBuf;
   while (*lparenBuf != '(') lparenBuf++;
   ReplaceText(startLoc, lparenBuf-startBuf+1, buf);
-  SourceLocation endLoc = S->getSynchBody()->getLocStart();
-  const char *endBuf = SM->getCharacterData(endLoc);
-  while (*endBuf != ')') endBuf--;
-  SourceLocation rparenLoc = startLoc.getLocWithOffset(endBuf-startBuf);
-  buf = ");\n";
-  buf += "try ";
-  ReplaceText(rparenLoc, 1, buf);
+  
+  buf = "; objc_sync_enter(_sync_obj);\n";
+  buf += "try {\n\tstruct _SYNC_EXIT { _SYNC_EXIT(id arg) : sync_exit(arg) {}";
+  buf += "\n\t~_SYNC_EXIT() {objc_sync_exit(sync_exit);}";
+  buf += "\n\tid sync_exit;";
+  buf += "\n\t} _sync_exit(_sync_obj);\n";
+
+  // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since
+  // the sync expression is typically a message expression that's already
+  // been rewritten! (which implies the SourceLocation's are invalid).
+  SourceLocation RParenExprLoc = S->getSynchBody()->getLocStart();
+  const char *RParenExprLocBuf = SM->getCharacterData(RParenExprLoc);
+  while (*RParenExprLocBuf != ')') RParenExprLocBuf--;
+  RParenExprLoc = startLoc.getLocWithOffset(RParenExprLocBuf-startBuf);
+  
+  SourceLocation LBranceLoc = S->getSynchBody()->getLocStart();
+  const char *LBraceLocBuf = SM->getCharacterData(LBranceLoc);
+  assert (*LBraceLocBuf == '{');
+  ReplaceText(RParenExprLoc, (LBraceLocBuf - SM->getCharacterData(RParenExprLoc) + 1), buf);
   
   SourceLocation startRBraceLoc = S->getSynchBody()->getLocEnd();
   assert((*SM->getCharacterData(startRBraceLoc) == '}') &&
@@ -1722,27 +1734,6 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   
   buf = "} catch (id e) {_rethrow = e;}\n";
   Write_RethrowObject(buf);
-  
-  // produce objc_sync_exit(expr);
-  std::string syncBuf;
-  syncBuf += "\n\tobjc_sync_exit(";
-
-  Expr *syncExpr = S->getSynchExpr();
-  CastKind CK = syncExpr->getType()->isObjCObjectPointerType()
-                  ? CK_BitCast :
-                syncExpr->getType()->isBlockPointerType()
-                  ? CK_BlockPointerToObjCPointerCast
-                  : CK_CPointerToObjCPointerCast;
-  syncExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                      CK, syncExpr);
-  std::string syncExprBufS;
-  llvm::raw_string_ostream syncExprBuf(syncExprBufS);
-  syncExpr->printPretty(syncExprBuf, *Context, 0,
-                        PrintingPolicy(LangOpts));
-  syncBuf += syncExprBuf.str();
-  syncBuf += ");";
-  
-  buf += syncBuf;
   buf += "}\n";
   buf += "}\n";
 
@@ -1908,6 +1899,8 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     
     SourceLocation endFinalBodyLoc = body->getLocEnd();
     ReplaceText(endFinalBodyLoc, 1, "}\n}");
+    // Now check for any return/continue/go statements within the @try.
+    WarnAboutReturnGotoStmts(S->getTryBody());
   }
 
   return 0;
