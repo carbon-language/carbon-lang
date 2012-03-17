@@ -24,11 +24,7 @@
 
 namespace llvm {
 
-class MachineJumpTableInfo;
-class MCContext;
-class MCInst;
 class MCStreamer;
-class MCSymbol;
 
 class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;

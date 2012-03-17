@@ -15,8 +15,8 @@
 #define POWERPC_INSTRUCTIONINFO_H
 
 #include "PPC.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "PPCRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "PPCGenInstrInfo.inc"

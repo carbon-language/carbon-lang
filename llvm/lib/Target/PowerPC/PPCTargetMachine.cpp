@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPC.h"
 #include "PPCTargetMachine.h"
+#include "PPC.h"
 #include "llvm/PassManager.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/CodeGen/Passes.h"

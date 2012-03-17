@@ -17,9 +17,9 @@
 #ifndef PTXBASEINFO_H
 #define PTXBASEINFO_H
 
+#include "PTXMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "PTXMCTargetDesc.h"
 
 namespace llvm {
   namespace PTXStateSpace {

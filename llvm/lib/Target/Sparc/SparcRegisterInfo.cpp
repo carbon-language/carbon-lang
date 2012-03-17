@@ -11,15 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Sparc.h"
 #include "SparcRegisterInfo.h"
+#include "Sparc.h"
 #include "SparcSubtarget.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 

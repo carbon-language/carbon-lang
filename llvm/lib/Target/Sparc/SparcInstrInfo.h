@@ -14,8 +14,8 @@
 #ifndef SPARCINSTRUCTIONINFO_H
 #define SPARCINSTRUCTIONINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
 #include "SparcRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "SparcGenInstrInfo.inc"

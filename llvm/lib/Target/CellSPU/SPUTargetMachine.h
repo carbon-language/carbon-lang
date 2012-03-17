@@ -23,9 +23,6 @@
 #include "llvm/Target/TargetData.h"
 
 namespace llvm {
-class PassManager;
-class GlobalValue;
-class TargetFrameLowering;
 
 /// SPUTargetMachine
 ///

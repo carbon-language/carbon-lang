@@ -14,11 +14,9 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
-  class MCAsmInfo;
   class MCContext;
   class MCInst;
   class MCOperand;
-  class MCSymbol;
   class MachineInstr;
   class MachineFunction;
   class Mangler;
@@ -38,7 +36,7 @@ public:
   void LowerCPLOAD(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
   void LowerCPRESTORE(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
   void LowerUnalignedLoadStore(const MachineInstr *MI,
-		                           SmallVector<MCInst, 4>& MCInsts);
+                               SmallVector<MCInst, 4>& MCInsts);
   void LowerSETGP01(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
 private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,

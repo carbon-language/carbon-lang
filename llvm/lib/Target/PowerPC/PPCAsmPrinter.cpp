@@ -20,6 +20,7 @@
 #include "PPC.h"
 #include "PPCTargetMachine.h"
 #include "PPCSubtarget.h"
+#include "InstPrinter/PPCInstPrinter.h"
 #include "MCTargetDesc/PPCPredicates.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Constants.h"
@@ -53,7 +54,6 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallString.h"
-#include "InstPrinter/PPCInstPrinter.h"
 using namespace llvm;
 
 namespace {

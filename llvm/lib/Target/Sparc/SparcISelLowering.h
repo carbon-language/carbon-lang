@@ -15,8 +15,8 @@
 #ifndef SPARC_ISELLOWERING_H
 #define SPARC_ISELLOWERING_H
 
-#include "llvm/Target/TargetLowering.h"
 #include "Sparc.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
   namespace SPISD {

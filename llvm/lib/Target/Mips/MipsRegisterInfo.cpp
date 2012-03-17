@@ -13,10 +13,10 @@
 
 #define DEBUG_TYPE "mips-reg-info"
 
+#include "MipsRegisterInfo.h"
 #include "Mips.h"
 #include "MipsAnalyzeImmediate.h"
 #include "MipsSubtarget.h"
-#include "MipsRegisterInfo.h"
 #include "MipsMachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"

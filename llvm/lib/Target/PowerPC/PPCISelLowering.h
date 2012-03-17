@@ -15,10 +15,10 @@
 #ifndef LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
 #define LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
 
-#include "llvm/Target/TargetLowering.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include "PPC.h"
 #include "PPCSubtarget.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 
 namespace llvm {
   namespace PPCISD {

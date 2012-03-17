@@ -8,13 +8,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "HexagonFrameLowering.h"
 #include "Hexagon.h"
 #include "HexagonInstrInfo.h"
 #include "HexagonRegisterInfo.h"
 #include "HexagonSubtarget.h"
 #include "HexagonTargetMachine.h"
 #include "HexagonMachineFunctionInfo.h"
-#include "HexagonFrameLowering.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"

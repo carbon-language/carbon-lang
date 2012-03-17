@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "reginfo"
+#include "PPCRegisterInfo.h"
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPCMachineFunctionInfo.h"
-#include "PPCRegisterInfo.h"
 #include "PPCFrameLowering.h"
 #include "PPCSubtarget.h"
 #include "llvm/CallingConv.h"

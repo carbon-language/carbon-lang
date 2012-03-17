@@ -14,13 +14,13 @@
 #ifndef HexagonTARGETMACHINE_H
 #define HexagonTARGETMACHINE_H
 
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
 #include "HexagonInstrInfo.h"
 #include "HexagonSubtarget.h"
 #include "HexagonISelLowering.h"
 #include "HexagonSelectionDAGInfo.h"
 #include "HexagonFrameLowering.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 
 namespace llvm {
 

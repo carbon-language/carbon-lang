@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "XCoreMachineFunctionInfo.h"
 #include "XCoreInstrInfo.h"
+#include "XCoreMachineFunctionInfo.h"
 #include "XCore.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

@@ -28,17 +28,16 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "HexagonMachineFunctionInfo.h"
 #include "llvm/Support/CommandLine.h"
+using namespace llvm;
 
 const unsigned Hexagon_MAX_RET_SIZE = 64;
-using namespace llvm;
 
 static cl::opt<bool>
 EmitJumpTables("hexagon-emit-jump-tables", cl::init(true), cl::Hidden,

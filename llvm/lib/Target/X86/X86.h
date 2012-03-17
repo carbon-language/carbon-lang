@@ -24,8 +24,6 @@ namespace llvm {
 
 class FunctionPass;
 class JITCodeEmitter;
-class MachineCodeEmitter;
-class Target;
 class X86TargetMachine;
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 

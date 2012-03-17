@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HexagonRegisterInfo.h"
 #include "HexagonInstrInfo.h"
+#include "HexagonRegisterInfo.h"
 #include "HexagonSubtarget.h"
 #include "Hexagon.h"
 #include "llvm/ADT/STLExtras.h"

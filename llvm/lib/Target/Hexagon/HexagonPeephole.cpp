@@ -36,6 +36,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "hexagon-peephole"
+#include "Hexagon.h"
+#include "HexagonTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/PassSupport.h"
 #include "llvm/ADT/DenseMap.h"
@@ -45,16 +47,13 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include <algorithm>
-#include "Hexagon.h"
-#include "HexagonTargetMachine.h"
-
-#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 

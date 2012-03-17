@@ -13,9 +13,9 @@
 
 #define DEBUG_TYPE "msp430-reg-info"
 
+#include "MSP430RegisterInfo.h"
 #include "MSP430.h"
 #include "MSP430MachineFunctionInfo.h"
-#include "MSP430RegisterInfo.h"
 #include "MSP430TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"

@@ -15,9 +15,9 @@
 #define MIPSINSTRUCTIONINFO_H
 
 #include "Mips.h"
+#include "MipsRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "MipsRegisterInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "MipsGenInstrInfo.inc"

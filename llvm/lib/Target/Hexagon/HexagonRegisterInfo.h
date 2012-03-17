@@ -16,9 +16,10 @@
 #define HexagonREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/MC/MachineLocation.h"
+
 #define GET_REGINFO_HEADER
 #include "HexagonGenRegisterInfo.inc"
-#include "llvm/MC/MachineLocation.h"
 
 //
 //  We try not to hard code the reserved registers in our code,

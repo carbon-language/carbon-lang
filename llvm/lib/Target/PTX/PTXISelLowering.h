@@ -18,8 +18,6 @@
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
-class PTXSubtarget;
-class PTXTargetMachine;
 
 namespace PTXISD {
   enum NodeType {

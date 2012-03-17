@@ -15,7 +15,6 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
 namespace llvm {
-  class X86TargetMachine;
 
   /// X8664_MachoTargetObjectFile - This TLOF implementation is used for Darwin
   /// x86-64.

@@ -14,8 +14,8 @@
 
 #define DEBUG_TYPE "ptx-asm-printer"
 
-#include "PTX.h"
 #include "PTXAsmPrinter.h"
+#include "PTX.h"
 #include "PTXMachineFunctionInfo.h"
 #include "PTXParamManager.h"
 #include "PTXRegisterInfo.h"

@@ -14,10 +14,10 @@
 #ifndef X86INSTRUCTIONINFO_H
 #define X86INSTRUCTIONINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
 #include "X86.h"
 #include "X86RegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "X86GenInstrInfo.inc"

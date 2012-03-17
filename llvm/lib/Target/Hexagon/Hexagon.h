@@ -15,7 +15,6 @@
 #ifndef TARGET_Hexagon_H
 #define TARGET_Hexagon_H
 
-#include <cassert>
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/Target/TargetLowering.h"
 

@@ -12,10 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InstPrinter/X86ATTInstPrinter.h"
 #include "X86MCInstLower.h"
 #include "X86AsmPrinter.h"
 #include "X86COFFMachineModuleInfo.h"
+#include "InstPrinter/X86ATTInstPrinter.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -26,7 +27,6 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 X86MCInstLower::X86MCInstLower(Mangler *mang, const MachineFunction &mf,

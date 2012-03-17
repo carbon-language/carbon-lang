@@ -14,7 +14,6 @@
 
 namespace llvm {
   class AsmPrinter;
-  class MCAsmInfo;
   class MCContext;
   class MCInst;
   class MCOperand;

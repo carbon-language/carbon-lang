@@ -14,13 +14,13 @@
 #ifndef XCORETARGETMACHINE_H
 #define XCORETARGETMACHINE_H
 
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
 #include "XCoreFrameLowering.h"
 #include "XCoreSubtarget.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreISelLowering.h"
 #include "XCoreSelectionDAGInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 
 namespace llvm {
 

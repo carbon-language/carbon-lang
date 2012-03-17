@@ -1,4 +1,3 @@
-//===-- PTX.h - Top-level interface for PTX representation ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

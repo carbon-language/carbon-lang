@@ -28,7 +28,6 @@
 
 namespace llvm {
 
-class formatted_raw_ostream;
 class StringRef;
 
 class X86TargetMachine : public LLVMTargetMachine {

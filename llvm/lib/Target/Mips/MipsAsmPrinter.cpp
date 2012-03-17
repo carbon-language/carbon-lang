@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-asm-printer"
-#include "Mips.h"
 #include "MipsAsmPrinter.h"
+#include "Mips.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MipsMCInstLower.h"

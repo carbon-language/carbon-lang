@@ -14,9 +14,9 @@
 
 #define DEBUG_TYPE "mblaze-frame-info"
 
+#include "MBlazeRegisterInfo.h"
 #include "MBlaze.h"
 #include "MBlazeSubtarget.h"
-#include "MBlazeRegisterInfo.h"
 #include "MBlazeMachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"

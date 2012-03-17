@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SPU.h"
 #include "SPUTargetMachine.h"
+#include "SPU.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Support/DynamicLibrary.h"

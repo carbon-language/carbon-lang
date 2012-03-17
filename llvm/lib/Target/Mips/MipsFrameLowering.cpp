@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsAnalyzeImmediate.h"
 #include "MipsFrameLowering.h"
+#include "MipsAnalyzeImmediate.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MCTargetDesc/MipsBaseInfo.h"

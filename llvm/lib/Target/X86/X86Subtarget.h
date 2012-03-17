@@ -14,9 +14,9 @@
 #ifndef X86SUBTARGET_H
 #define X86SUBTARGET_H
 
+#include "llvm/CallingConv.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include "llvm/CallingConv.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER

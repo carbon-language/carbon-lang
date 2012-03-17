@@ -14,8 +14,8 @@
 #ifndef XCOREINSTRUCTIONINFO_H
 #define XCOREINSTRUCTIONINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
 #include "XCoreRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "XCoreGenInstrInfo.inc"

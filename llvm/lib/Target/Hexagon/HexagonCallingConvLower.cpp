@@ -14,13 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "HexagonCallingConvLower.h"
+#include "Hexagon.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "Hexagon.h"
 using namespace llvm;
 
 Hexagon_CCState::Hexagon_CCState(CallingConv::ID CC, bool isVarArg,

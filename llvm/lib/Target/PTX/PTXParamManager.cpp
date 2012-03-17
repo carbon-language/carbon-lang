@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PTX.h"
 #include "PTXParamManager.h"
+#include "PTX.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace llvm;

@@ -22,9 +22,9 @@
 namespace llvm {
 class MCStreamer;
 class MachineInstr;
-class raw_ostream;
 class MachineBasicBlock;
 class Module;
+class raw_ostream;
 
 class LLVM_LIBRARY_VISIBILITY MipsAsmPrinter : public AsmPrinter {
 

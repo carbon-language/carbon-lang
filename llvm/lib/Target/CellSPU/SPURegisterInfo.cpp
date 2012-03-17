@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "reginfo"
-#include "SPU.h"
 #include "SPURegisterInfo.h"
+#include "SPU.h"
 #include "SPUInstrBuilder.h"
 #include "SPUSubtarget.h"
 #include "SPUMachineFunction.h"

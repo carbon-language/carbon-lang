@@ -15,10 +15,10 @@
 #ifndef MipsISELLOWERING_H
 #define MipsISELLOWERING_H
 
-#include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Target/TargetLowering.h"
 #include "Mips.h"
 #include "MipsSubtarget.h"
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
   namespace MipsISD {

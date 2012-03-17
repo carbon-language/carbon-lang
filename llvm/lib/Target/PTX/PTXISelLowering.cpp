@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PTX.h"
 #include "PTXISelLowering.h"
+#include "PTX.h"
 #include "PTXMachineFunctionInfo.h"
 #include "PTXRegisterInfo.h"
 #include "PTXSubtarget.h"

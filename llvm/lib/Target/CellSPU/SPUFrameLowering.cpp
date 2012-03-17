@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SPU.h"
 #include "SPUFrameLowering.h"
+#include "SPU.h"
 #include "SPUInstrBuilder.h"
 #include "SPUInstrInfo.h"
 #include "llvm/Function.h"

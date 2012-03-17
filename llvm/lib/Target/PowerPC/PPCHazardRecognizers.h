@@ -14,10 +14,10 @@
 #ifndef PPCHAZRECS_H
 #define PPCHAZRECS_H
 
+#include "PPCInstrInfo.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "PPCInstrInfo.h"
 
 namespace llvm {
 

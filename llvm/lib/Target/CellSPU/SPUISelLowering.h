@@ -15,9 +15,9 @@
 #ifndef SPU_ISELLOWERING_H
 #define SPU_ISELLOWERING_H
 
+#include "SPU.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "SPU.h"
 
 namespace llvm {
   namespace SPUISD {

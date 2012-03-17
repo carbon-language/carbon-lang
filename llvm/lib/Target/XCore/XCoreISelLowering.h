@@ -15,9 +15,9 @@
 #ifndef XCOREISELLOWERING_H
 #define XCOREISELLOWERING_H
 
+#include "XCore.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
-#include "XCore.h"
 
 namespace llvm {
 
