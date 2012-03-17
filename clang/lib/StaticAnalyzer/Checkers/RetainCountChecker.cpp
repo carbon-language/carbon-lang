@@ -642,8 +642,6 @@ public:
     return StopSummary;
   }
 
-  const RetainSummary *getInitMethodSummary(QualType RetTy);
-
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
 private:
@@ -810,23 +808,17 @@ public:
 class RetainSummaryTemplate {
   RetainSummaryManager &Manager;
   const RetainSummary *&RealSummary;
-  const RetainSummary *BaseSummary;
   RetainSummary ScratchSummary;
   bool Accessed;
 public:
-  RetainSummaryTemplate(const RetainSummary *&real, const RetainSummary &base,
-                        RetainSummaryManager &manager)
-  : Manager(manager),
-    RealSummary(real),
-    BaseSummary(&base),
-    ScratchSummary(base),
+  RetainSummaryTemplate(const RetainSummary *&real, const RetainSummary &base, 
+                        RetainSummaryManager &mgr)
+  : Manager(mgr), RealSummary(real), ScratchSummary(real ? *real : base),
     Accessed(false) {}
 
   ~RetainSummaryTemplate() {
     if (Accessed)
       RealSummary = Manager.copySummary(&ScratchSummary);
-    else if (!RealSummary)
-      RealSummary = BaseSummary;
   }
 
   RetainSummary &operator*() {
@@ -1125,18 +1117,6 @@ RetainSummaryManager::getCFSummaryGetRule(const FunctionDecl *FD) {
 // Summary creation for Selectors.
 //===----------------------------------------------------------------------===//
 
-const RetainSummary *
-RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
-  assert(ScratchArgs.isEmpty());
-  // 'init' methods conceptually return a newly allocated object and claim
-  // the receiver.
-  if (cocoa::isCocoaObjectRef(RetTy) ||
-      coreFoundation::isCFObjectRef(RetTy))
-    return getPersistentSummary(ObjCInitRetE, DecRefMsg);
-
-  return getDefaultSummary();
-}
-
 void
 RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                                    const FunctionDecl *FD) {
@@ -1192,37 +1172,6 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
     return;
 
   RetainSummaryTemplate Template(Summ, DefaultSummary, *this);
-  
-  // Check the method family, and apply any default annotations.
-  switch (MD->getMethodFamily()) {
-    case OMF_None:
-      break;
-    case OMF_init:
-      Template->setRetEffect(ObjCInitRetE);
-      Template->setReceiverEffect(DecRefMsg);
-      break;
-    case OMF_alloc:
-    case OMF_new:
-    case OMF_copy:
-    case OMF_mutableCopy:
-      Template->setRetEffect(ObjCAllocRetE);
-      break;
-    case OMF_autorelease:
-      Template->setReceiverEffect(Autorelease);
-    case OMF_retain:
-      Template->setReceiverEffect(IncRefMsg);
-      break;
-    case OMF_release:
-      Template->setReceiverEffect(DecRefMsg);
-      break;
-    case OMF_self:
-    case OMF_performSelector:
-    case OMF_retainCount:
-    case OMF_dealloc:
-    case OMF_finalize:
-      break;
-  }
-
   bool isTrackedLoc = false;
 
   // Effects on the receiver.
@@ -1289,8 +1238,74 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl *MD,
       }
   }
 
-  // Any special effect for the receiver?
+  // Any special effects?
   ArgEffect ReceiverEff = DoNothing;
+  RetEffect ResultEff = RetEffect::MakeNoRet();
+
+  // Check the method family, and apply any default annotations.
+  switch (MD ? MD->getMethodFamily() : S.getMethodFamily()) {
+    case OMF_None:
+    case OMF_performSelector:
+      // Assume all Objective-C methods follow Cocoa Memory Management rules.
+      // FIXME: Does the non-threaded performSelector family really belong here?
+      // The selector could be, say, @selector(copy).
+      if (cocoa::isCocoaObjectRef(RetTy))
+        ResultEff = RetEffect::MakeNotOwned(RetEffect::ObjC);
+      else if (coreFoundation::isCFObjectRef(RetTy)) {
+        // ObjCMethodDecl currently doesn't consider CF objects as valid return 
+        // values for alloc, new, copy, or mutableCopy, so we have to
+        // double-check with the selector. This is ugly, but there aren't that
+        // many Objective-C methods that return CF objects, right?
+        if (MD) {
+          switch (S.getMethodFamily()) {
+          case OMF_alloc:
+          case OMF_new:
+          case OMF_copy:
+          case OMF_mutableCopy:
+            ResultEff = RetEffect::MakeOwned(RetEffect::CF, true);
+            break;
+          default:
+            ResultEff = RetEffect::MakeNotOwned(RetEffect::CF);        
+            break;
+          }
+        } else {
+          ResultEff = RetEffect::MakeNotOwned(RetEffect::CF);        
+        }
+      }
+      break;
+    case OMF_init:
+      ResultEff = ObjCInitRetE;
+      ReceiverEff = DecRefMsg;
+      break;
+    case OMF_alloc:
+    case OMF_new:
+    case OMF_copy:
+    case OMF_mutableCopy:
+      if (cocoa::isCocoaObjectRef(RetTy))
+        ResultEff = ObjCAllocRetE;
+      else if (coreFoundation::isCFObjectRef(RetTy))
+        ResultEff = RetEffect::MakeOwned(RetEffect::CF, true);
+      break;
+    case OMF_autorelease:
+      ReceiverEff = Autorelease;
+      break;
+    case OMF_retain:
+      ReceiverEff = IncRefMsg;
+      break;
+    case OMF_release:
+      ReceiverEff = DecRefMsg;
+      break;
+    case OMF_dealloc:
+      ReceiverEff = Dealloc;
+      break;
+    case OMF_self:
+      // -self is handled specially by the ExprEngine to propagate the receiver.
+      break;
+    case OMF_retainCount:
+    case OMF_finalize:
+      // These methods don't return objects.
+      break;
+  }
 
   // If one of the arguments in the selector has the keyword 'delegate' we
   // should stop tracking the reference count for the receiver.  This is
@@ -1303,29 +1318,11 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl *MD,
       ReceiverEff = StopTracking;
   }
 
-  // Look for methods that return an owned object.
-  if (cocoa::isCocoaObjectRef(RetTy)) {
-    // EXPERIMENTAL: assume the Cocoa conventions for all objects returned
-    //  by instance methods.
-    RetEffect E = cocoa::followsFundamentalRule(S, MD)
-                  ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
-
-    return getPersistentSummary(E, ReceiverEff, MayEscape);
-  }
-
-  // Look for methods that return an owned core foundation object.
-  if (coreFoundation::isCFObjectRef(RetTy)) {
-    RetEffect E = cocoa::followsFundamentalRule(S, MD)
-      ? RetEffect::MakeOwned(RetEffect::CF, true)
-      : RetEffect::MakeNotOwned(RetEffect::CF);
-
-    return getPersistentSummary(E, ReceiverEff, MayEscape);
-  }
-
-  if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
+  if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing &&
+      ResultEff.getKind() == RetEffect::NoRet)
     return getDefaultSummary();
 
-  return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff, MayEscape);
+  return getPersistentSummary(ResultEff, ReceiverEff, MayEscape);
 }
 
 const RetainSummary *
@@ -1382,13 +1379,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   const RetainSummary *Summ = ObjCMethodSummaries.find(ID, ClsName, S);
 
   if (!Summ) {
-    assert(ScratchArgs.isEmpty());
-
-    // "initXXX": pass-through for receiver.
-    if (cocoa::deriveNamingConvention(S, MD) == cocoa::InitRule)
-      Summ = getInitMethodSummary(RetTy);
-    else
-      Summ = getCommonMethodSummary(MD, S, RetTy);
+    Summ = getCommonMethodSummary(MD, S, RetTy);
 
     // Annotations override defaults.
     updateSummaryFromAnnotations(Summ, MD);
