@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-output=plist -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -analyze -analyzer-checker=unix.Malloc -analyzer-output=plist -o %t %s
 // RUN: FileCheck --input-file %t %s
 
 typedef __typeof(sizeof(int)) size_t;
