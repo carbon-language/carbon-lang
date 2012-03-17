@@ -731,37 +731,30 @@ public:
 
   const RetainSummary *getSummary(const FunctionDecl *FD);
 
+  const RetainSummary *getMethodSummary(Selector S, IdentifierInfo *ClsName,
+                                        const ObjCInterfaceDecl *ID,
+                                        const ObjCMethodDecl *MD,
+                                        QualType RetTy,
+                                        ObjCMethodSummariesTy &CachedSummaries);
+
   const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
                                                 ProgramStateRef state,
                                                 const LocationContext *LC);
 
   const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
                                                 const ObjCInterfaceDecl *ID) {
-    return getInstanceMethodSummary(msg.getSelector(), 0,
-                            ID, msg.getMethodDecl(), msg.getType(Ctx));
+    return getMethodSummary(msg.getSelector(), 0, ID, msg.getMethodDecl(),
+                            msg.getType(Ctx), ObjCMethodSummaries);
   }
-
-  const RetainSummary *getInstanceMethodSummary(Selector S,
-                                                IdentifierInfo *ClsName,
-                                                const ObjCInterfaceDecl *ID,
-                                                const ObjCMethodDecl *MD,
-                                                QualType RetTy);
-
-  const RetainSummary *getClassMethodSummary(Selector S,
-                                             IdentifierInfo *ClsName,
-                                             const ObjCInterfaceDecl *ID,
-                                             const ObjCMethodDecl *MD,
-                                             QualType RetTy);
 
   const RetainSummary *getClassMethodSummary(const ObjCMessage &msg) {
     const ObjCInterfaceDecl *Class = 0;
     if (!msg.isInstanceMessage())
       Class = msg.getReceiverInterface();
 
-    return getClassMethodSummary(msg.getSelector(),
-                                 Class? Class->getIdentifier() : 0,
-                                 Class,
-                                 msg.getMethodDecl(), msg.getType(Ctx));
+    return getMethodSummary(msg.getSelector(), Class->getIdentifier(),
+                            Class, msg.getMethodDecl(), msg.getType(Ctx),
+                            ObjCClassMethodSummaries);
   }
 
   /// getMethodSummary - This version of getMethodSummary is used to query
@@ -773,13 +766,16 @@ public:
     IdentifierInfo *ClsName = ID->getIdentifier();
     QualType ResultTy = MD->getResultType();
 
+    ObjCMethodSummariesTy *CachedSummaries;
     if (MD->isInstanceMethod())
-      return getInstanceMethodSummary(S, ClsName, ID, MD, ResultTy);
+      CachedSummaries = &ObjCMethodSummaries;
     else
-      return getClassMethodSummary(S, ClsName, ID, MD, ResultTy);
+      CachedSummaries = &ObjCClassMethodSummaries;
+
+    return getMethodSummary(S, ClsName, ID, MD, ResultTy, *CachedSummaries);
   }
 
-  const RetainSummary *getCommonMethodSummary(const ObjCMethodDecl *MD,
+  const RetainSummary *getStandardMethodSummary(const ObjCMethodDecl *MD,
                                               Selector S, QualType RetTy);
 
   void updateSummaryFromAnnotations(const RetainSummary *&Summ,
@@ -1220,8 +1216,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
 }
 
 const RetainSummary *
-RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl *MD,
-                                             Selector S, QualType RetTy) {
+RetainSummaryManager::getStandardMethodSummary(const ObjCMethodDecl *MD,
+                                               Selector S, QualType RetTy) {
 
   if (MD) {
     // Scan the method decl for 'void*' arguments.  These should be treated
@@ -1369,45 +1365,22 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
 }
 
 const RetainSummary *
-RetainSummaryManager::getInstanceMethodSummary(Selector S,
-                                               IdentifierInfo *ClsName,
-                                               const ObjCInterfaceDecl *ID,
-                                               const ObjCMethodDecl *MD,
-                                               QualType RetTy) {
+RetainSummaryManager::getMethodSummary(Selector S, IdentifierInfo *ClsName,
+                                       const ObjCInterfaceDecl *ID,
+                                       const ObjCMethodDecl *MD, QualType RetTy,
+                                       ObjCMethodSummariesTy &CachedSummaries) {
 
   // Look up a summary in our summary cache.
-  const RetainSummary *Summ = ObjCMethodSummaries.find(ID, ClsName, S);
+  const RetainSummary *Summ = CachedSummaries.find(ID, ClsName, S);
 
   if (!Summ) {
-    Summ = getCommonMethodSummary(MD, S, RetTy);
+    Summ = getStandardMethodSummary(MD, S, RetTy);
 
     // Annotations override defaults.
     updateSummaryFromAnnotations(Summ, MD);
 
     // Memoize the summary.
-    ObjCMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
-  }
-
-  return Summ;
-}
-
-const RetainSummary *
-RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                            const ObjCInterfaceDecl *ID,
-                                            const ObjCMethodDecl *MD,
-                                            QualType RetTy) {
-
-  assert(ClsName && "Class name must be specified.");
-  const RetainSummary *Summ = ObjCClassMethodSummaries.find(ID, ClsName, S);
-
-  if (!Summ) {
-    Summ = getCommonMethodSummary(MD, S, RetTy);
-
-    // Annotations override defaults.
-    updateSummaryFromAnnotations(Summ, MD);
-
-    // Memoize the summary.
-    ObjCClassMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
+    CachedSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
   }
 
   return Summ;
