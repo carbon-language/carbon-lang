@@ -274,7 +274,8 @@ struct A {
 protected:
   struct B;
   struct B::C; // expected-error {{requires a template parameter list}} \
-               // expected-error {{no struct named 'C'}}
+               // expected-error {{no struct named 'C'}} \
+    // expected-error{{non-friend class member 'C' cannot have a qualified name}}
 };
 
 template<typename T>

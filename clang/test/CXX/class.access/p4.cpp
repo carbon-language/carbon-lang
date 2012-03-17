@@ -481,7 +481,7 @@ namespace test21 {
   };
   template <class T> class A<T>::Inner {};
   class B {
-    template <class T> class A<T>::Inner;
+    template <class T> class A<T>::Inner; // expected-error{{non-friend class member 'Inner' cannot have a qualified name}}
   };
 
   void test() {

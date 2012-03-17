@@ -3235,7 +3235,44 @@ bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
 
   return false;
 }
+
+/// \brief Diagnose a declaration that has a qualified name within a class,
+/// which is ill-formed but often recoverable.
+///
+/// \returns true if we cannot safely recover from this error, false otherwise.
+bool Sema::diagnoseQualifiedDeclInClass(CXXScopeSpec &SS, DeclContext *DC,
+                                        DeclarationName Name,
+                                        SourceLocation Loc) {
+  // The user provided a superfluous scope specifier inside a class
+  // definition:
+  //
+  // class X {
+  //   void X::f();
+  // };
+  if (CurContext->Equals(DC)) {
+    Diag(Loc, diag::warn_member_extra_qualification)
+      << Name << FixItHint::CreateRemoval(SS.getRange());
+    SS.clear();
+    return false;
+  } 
   
+  Diag(Loc, diag::err_member_qualification)
+    << Name << SS.getRange();
+  SS.clear();
+  
+  // C++ constructors and destructors with incorrect scopes can break
+  // our AST invariants by having the wrong underlying types. If
+  // that's the case, then drop this declaration entirely.
+  if ((Name.getNameKind() == DeclarationName::CXXConstructorName ||
+       Name.getNameKind() == DeclarationName::CXXDestructorName) &&
+      !Context.hasSameType(Name.getCXXNameType(),
+                          Context.getTypeDeclType(
+                            cast<CXXRecordDecl>(CurContext))))
+    return true;
+  
+  return false;
+}
+
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
                              MultiTemplateParamsArg TemplateParamLists) {
   // TODO: consider using NameInfo for diagnostic.
@@ -3294,31 +3331,9 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         D.setInvalidType();
       } else if (isa<CXXRecordDecl>(CurContext) && 
                  !D.getDeclSpec().isFriendSpecified()) {
-        // The user provided a superfluous scope specifier inside a class
-        // definition:
-        //
-        // class X {
-        //   void X::f();
-        // };
-        if (CurContext->Equals(DC)) {
-          Diag(D.getIdentifierLoc(), diag::warn_member_extra_qualification)
-            << Name << FixItHint::CreateRemoval(D.getCXXScopeSpec().getRange());
-        } else {
-          Diag(D.getIdentifierLoc(), diag::err_member_qualification)
-            << Name << D.getCXXScopeSpec().getRange();
-          
-          // C++ constructors and destructors with incorrect scopes can break
-          // our AST invariants by having the wrong underlying types. If
-          // that's the case, then drop this declaration entirely.
-          if ((Name.getNameKind() == DeclarationName::CXXConstructorName ||
-               Name.getNameKind() == DeclarationName::CXXDestructorName) &&
-              !Context.hasSameType(Name.getCXXNameType(),
-                 Context.getTypeDeclType(cast<CXXRecordDecl>(CurContext))))
-            return 0;
-        }
-
-        // Pretend that this qualifier was not here.
-        D.getCXXScopeSpec().clear();
+        if (diagnoseQualifiedDeclInClass(D.getCXXScopeSpec(), DC,
+                                         Name, D.getIdentifierLoc()))
+          return 0;
       }
     }
 
@@ -8004,6 +8019,9 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           << SS.getRange();
         return 0;
       }
+
+      if (isa<CXXRecordDecl>(CurContext))
+        diagnoseQualifiedDeclInClass(SS, DC, Name, NameLoc);
     }
 
     if (RequireCompleteDeclContext(SS, DC))
