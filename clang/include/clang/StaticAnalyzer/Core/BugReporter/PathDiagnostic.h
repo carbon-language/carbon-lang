@@ -443,7 +443,7 @@ public:
 
   /// Produce the hint for the given node. The node contains 
   /// information about the call for which the diagnostic can be generated.
-  StringRef getCallStackMessage(const ExplodedNode *N) {
+  std::string getCallStackMessage(const ExplodedNode *N) {
     if (CallStackHint)
       return CallStackHint->getMessage(N);
     return "";  

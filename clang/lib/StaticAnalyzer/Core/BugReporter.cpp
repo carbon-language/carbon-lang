@@ -395,7 +395,7 @@ static void updateStackPiecesWithMessage(PathDiagnosticPiece *P,
                                      E = CallStack.end(); I != E; ++I) {
         PathDiagnosticCallPiece *CP = I->first;
         const ExplodedNode *N = I->second;
-        StringRef stackMsg = ep->getCallStackMessage(N);
+        std::string stackMsg = ep->getCallStackMessage(N);
 
         // The last message on the path to final bug is the most important
         // one. Since we traverse the path backwards, do not add the message
