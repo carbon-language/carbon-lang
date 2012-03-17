@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file provides Cell Hexagon specific target descriptions.
+// This file provides Hexagon specific target descriptions.
 //
 //===----------------------------------------------------------------------===//
 
