@@ -398,6 +398,41 @@ get_thrown_object_ptr(_Unwind_Exception* unwind_exception)
     return adjustedPtr;
 }
 
+namespace
+{
+
+struct scan_results
+{
+    int64_t        ttypeIndex;   // > 0 catch handler, < 0 exception spec handler, == 0 a cleanup
+    const uint8_t* actionRecord;         // Currently unused.  Retained to ease future maintenance.
+    const uint8_t* languageSpecificData;  // Needed only for __cxa_call_unexpected
+    uintptr_t      landingPad;   // null -> nothing found, else something found
+    void*          adjustedPtr;  // Used in cxa_exception.cpp
+    _Unwind_Reason_Code reason;  // One of _URC_FATAL_PHASE1_ERROR,
+                                 //        _URC_FATAL_PHASE2_ERROR,
+                                 //        _URC_CONTINUE_UNWIND,
+                                 //        _URC_HANDLER_FOUND
+};
+
+}  // unnamed namespace
+
+static
+void
+set_registers(_Unwind_Exception* unwind_exception, _Unwind_Context* context,
+              const scan_results& results)
+{
+#if __arm__
+    _Unwind_SetGR(context, 0, reinterpret_cast<uintptr_t>(unwind_exception));
+    _Unwind_SetGR(context, 1, static_cast<uintptr_t>(results.ttypeIndex));
+#else
+    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
+                                 reinterpret_cast<uintptr_t>(unwind_exception));
+    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1),
+                                    static_cast<uintptr_t>(results.ttypeIndex));
+#endif
+    _Unwind_SetIP(context, results.landingPad);
+}
+
 /*
     There are 3 types of scans needed:
 
@@ -418,24 +453,6 @@ get_thrown_object_ptr(_Unwind_Exception* unwind_exception)
         May terminate for invalid exception table.
         _UA_CLEANUP_PHASE && !_UA_HANDLER_FRAME
 */
-
-namespace
-{
-
-struct scan_results
-{
-    int64_t        ttypeIndex;   // > 0 catch handler, < 0 exception spec handler, == 0 a cleanup
-    const uint8_t* actionRecord;         // Currently unused.  Retained to ease future maintenance.
-    const uint8_t* languageSpecificData;  // Needed only for __cxa_call_unexpected
-    uintptr_t      landingPad;   // null -> nothing found, else something found
-    void*          adjustedPtr;  // Used in cxa_exception.cpp
-    _Unwind_Reason_Code reason;  // One of _URC_FATAL_PHASE1_ERROR,
-                                 //        _URC_FATAL_PHASE2_ERROR,
-                                 //        _URC_CONTINUE_UNWIND,
-                                 //        _URC_HANDLER_FOUND
-};
-
-}  // unnamed namespace
 
 static
 void
@@ -554,6 +571,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
 #endif  // __arm__
         {
             // Found the call site containing ip.
+#if !__arm__
             if (landingPad == 0)
             {
                 // No handler here
@@ -561,6 +579,9 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                 return;
             }
             landingPad = (uintptr_t)lpStart + landingPad;
+#else  // __arm__
+            ++landingPad;
+#endif  // __arm__
             if (actionEntry == 0)
             {
                 // Found a cleanup
@@ -878,9 +899,7 @@ __gxx_personality_v0
                     call_terminate(native_exception, unwind_exception);
             }
             // Jump to the handler
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), (uintptr_t)results.ttypeIndex);
-            _Unwind_SetIP(context, results.landingPad);
+            set_registers(unwind_exception, context, results);
             return _URC_INSTALL_CONTEXT;
         }
         // Either we didn't do a phase 1 search (due to forced unwinding), or
@@ -890,9 +909,7 @@ __gxx_personality_v0
         if (results.reason == _URC_HANDLER_FOUND)
         {
             // Found a non-catching handler.  Jump to it:
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), (uintptr_t)results.ttypeIndex);
-            _Unwind_SetIP(context, results.landingPad);
+            set_registers(unwind_exception, context, results);
             return _URC_INSTALL_CONTEXT;
         }
         // Did not find a cleanup.  Return the results of the scan
