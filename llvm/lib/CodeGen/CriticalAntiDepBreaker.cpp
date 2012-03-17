@@ -35,7 +35,8 @@ CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo &RCI) :
   RegClassInfo(RCI),
   Classes(TRI->getNumRegs(), static_cast<const TargetRegisterClass *>(0)),
   KillIndices(TRI->getNumRegs(), 0),
-  DefIndices(TRI->getNumRegs(), 0) {}
+  DefIndices(TRI->getNumRegs(), 0),
+  KeepRegs(TRI->getNumRegs(), false) {}
 
 CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
 }
@@ -52,7 +53,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   }
 
   // Clear "do not change" set.
-  KeepRegs.clear();
+  KeepRegs.reset();
 
   bool IsReturnBlock = (BBSize != 0 && BB->back().isReturn());
 
@@ -121,7 +122,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
 
 void CriticalAntiDepBreaker::FinishBlock() {
   RegRefs.clear();
-  KeepRegs.clear();
+  KeepRegs.reset();
 }
 
 void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
@@ -233,10 +234,11 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
       RegRefs.insert(std::make_pair(Reg, &MO));
 
     if (MO.isUse() && Special) {
-      if (KeepRegs.insert(Reg)) {
+      if (!KeepRegs.test(Reg)) {
+        KeepRegs.set(Reg);
         for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
              *Subreg; ++Subreg)
-          KeepRegs.insert(*Subreg);
+          KeepRegs.set(*Subreg);
       }
     }
   }
@@ -259,7 +261,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
           if (MO.clobbersPhysReg(i)) {
             DefIndices[i] = Count;
             KillIndices[i] = ~0u;
-            KeepRegs.erase(i);
+            KeepRegs.reset(i);
             Classes[i] = 0;
             RegRefs.erase(i);
           }
@@ -276,7 +278,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
       assert(((KillIndices[Reg] == ~0u) !=
               (DefIndices[Reg] == ~0u)) &&
              "Kill and Def maps aren't consistent for Reg!");
-      KeepRegs.erase(Reg);
+      KeepRegs.reset(Reg);
       Classes[Reg] = 0;
       RegRefs.erase(Reg);
       // Repeat, for all subregs.
@@ -285,7 +287,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
         unsigned SubregReg = *Subreg;
         DefIndices[SubregReg] = Count;
         KillIndices[SubregReg] = ~0u;
-        KeepRegs.erase(SubregReg);
+        KeepRegs.reset(SubregReg);
         Classes[SubregReg] = 0;
         RegRefs.erase(SubregReg);
       }
@@ -551,7 +553,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
           if (!RegClassInfo.isAllocatable(AntiDepReg))
             // Don't break anti-dependencies on non-allocatable registers.
             AntiDepReg = 0;
-          else if (KeepRegs.count(AntiDepReg))
+          else if (KeepRegs.test(AntiDepReg))
             // Don't break anti-dependencies if an use down below requires
             // this exact register.
             AntiDepReg = 0;
