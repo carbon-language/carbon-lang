@@ -1026,8 +1026,8 @@ def function (valobj,dict):<br/>
 		</code>
 <sup>[1]</sup> Currently this method is optional, because the internal state of synthetic children providers will not be preserved. However, this is meant to change in future versions of LLDB.
 		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.
-			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/StdVectorSynthProvider.py">StdVector</a> to get
-			a feel for this feature, as it is a relatively easy and well commented example.</p>
+			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/bitfield">this example</a> to get
+			a feel for this feature, as it is a very easy and well commented example.</p>
 			<p>While the <code>update</code> method is optional, the design pattern consistently used in synthetic providers shipping with LLDB
 				is to use the <code>__init__</code> to store the SBValue instance as a part of <code>self</code>, and then call <code>update</code>
 				to perform the actual initialization. This pattern should make for a transparent transition to a future version of LLDB that persists synthetic children. For example:</p>
