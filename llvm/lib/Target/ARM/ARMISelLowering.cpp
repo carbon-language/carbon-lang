@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "arm-isel"
+#include "ARMISelLowering.h"
 #include "ARM.h"
 #include "ARMCallingConv.h"
 #include "ARMConstantPoolValue.h"
-#include "ARMISelLowering.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMPerfectShuffle.h"
 #include "ARMRegisterInfo.h"
@@ -49,7 +49,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include <sstream>
 using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");

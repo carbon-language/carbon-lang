@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Thumb1FrameLowering.h"
-#include "ARMBaseInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

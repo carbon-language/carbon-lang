@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARMBaseRegisterInfo.h"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
-#include "ARMBaseRegisterInfo.h"
 #include "ARMFrameLowering.h"
 #include "ARMInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"

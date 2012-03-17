@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
-#include "ARM.h"
 #include "ARMAsmPrinter.h"
+#include "ARM.h"
 #include "ARMBuildAttrs.h"
 #include "ARMBaseRegisterInfo.h"
 #include "ARMConstantPoolValue.h"

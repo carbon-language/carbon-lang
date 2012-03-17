@@ -16,13 +16,12 @@
 #define THUMB2REGISTERINFO_H
 
 #include "ARM.h"
-#include "ARMRegisterInfo.h"
+#include "ARMBaseRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
   class ARMSubtarget;
   class ARMBaseInstrInfo;
-  class Type;
 
 struct Thumb2RegisterInfo : public ARMBaseRegisterInfo {
 public:

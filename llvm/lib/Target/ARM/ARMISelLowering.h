@@ -15,6 +15,7 @@
 #ifndef ARMISELLOWERING_H
 #define ARMISELLOWERING_H
 
+#include "ARM.h"
 #include "ARMSubtarget.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"

@@ -12,12 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Thumb1RegisterInfo.h"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
-#include "Thumb1InstrInfo.h"
-#include "Thumb1RegisterInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"

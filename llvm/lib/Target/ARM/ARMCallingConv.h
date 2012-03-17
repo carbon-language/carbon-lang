@@ -15,13 +15,13 @@
 #ifndef ARMCALLINGCONV_H
 #define ARMCALLINGCONV_H
 
-#include "llvm/CallingConv.h"
-#include "llvm/CodeGen/CallingConvLower.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMRegisterInfo.h"
 #include "ARMSubtarget.h"
-#include "ARM.h"
+#include "llvm/CallingConv.h"
+#include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
 
