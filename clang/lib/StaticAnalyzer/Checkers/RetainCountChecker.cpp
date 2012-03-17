@@ -2055,8 +2055,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
 
           if (PrevV.getKind() == RefVal::Released) {
             assert(GCEnabled && CurrV.getCount() > 0);
-            os << " The object is not eligible for garbage collection until the "
-            "retain count reaches 0 again.";
+            os << " The object is not eligible for garbage collection until "
+                  "the retain count reaches 0 again.";
           }
 
           break;
@@ -2066,8 +2066,12 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
           break;
 
         case RefVal::ReturnedOwned:
-          os << "Object returned to caller as an owning reference (single retain "
-          "count transferred to caller)";
+          // Autoreleases can be applied after marking a node ReturnedOwned.
+          if (CurrV.getAutoreleaseCount())
+            return NULL;
+
+          os << "Object returned to caller as an owning reference (single "
+                "retain count transferred to caller)";
           break;
 
         case RefVal::ReturnedNotOwned:
