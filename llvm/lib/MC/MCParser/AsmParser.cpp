@@ -1528,6 +1528,11 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
     }
     Lex();
   }
+  // If there weren't any arguments, erase the token vector so everything
+  // else knows that. Leaving around the vestigal empty token list confuses
+  // things.
+  if (MacroArguments.size() == 1 && MacroArguments.back().empty())
+    MacroArguments.clear();
 
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.

@@ -8,3 +8,13 @@
 GET    is_sse, %eax
 
 // CHECK: movl	is_sse@GOTOFF(%ebx), %eax
+
+.macro bar
+    .long $n
+.endm
+
+bar 1, 2, 3
+bar
+
+// CHECK: .long 3
+// CHECK: .long 0
