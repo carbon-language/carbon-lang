@@ -1,4 +1,4 @@
-;===- ./lib/Target/CellSPU/MCTargetDesc/LLVMBuild.txt ----------*- Conf -*--===;
+;===- ./lib/Target/Hexagon/MCTargetDesc/LLVMBuild.txt ----------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;

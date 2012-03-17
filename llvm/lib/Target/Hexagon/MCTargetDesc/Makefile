@@ -1,4 +1,4 @@
-##===- lib/Target/CellSPU/TargetDesc/Makefile --------------*- Makefile -*-===##
+##===- lib/Target/Hexagon/TargetDesc/Makefile --------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
