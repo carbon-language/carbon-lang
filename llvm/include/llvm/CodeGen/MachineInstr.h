@@ -308,7 +308,14 @@ public:
   /// The first argument is the property being queried.
   /// The second argument indicates whether the query should look inside
   /// instruction bundles.
-  bool hasProperty(unsigned Flag, QueryType Type = AnyInBundle) const;
+  bool hasProperty(unsigned MCFlag, QueryType Type = AnyInBundle) const {
+    // Inline the fast path.
+    if (Type == IgnoreBundle || !isBundle())
+      return getDesc().getFlags() & (1 << MCFlag);
+
+    // If we have a bundle, take the slow path.
+    return hasPropertyInBundle(1 << MCFlag, Type);
+  }
 
   /// isVariadic - Return true if this instruction can have a variable number of
   /// operands.  In this case, the variable operands will be after the normal
@@ -911,6 +918,10 @@ private:
   /// this instruction from their respective use lists.  This requires that the
   /// operands not be on their use lists yet.
   void AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo);
+
+  /// hasPropertyInBundle - Slow path for hasProperty when we're dealing with a
+  /// bundle.
+  bool hasPropertyInBundle(unsigned Mask, QueryType Type) const;
 };
 
 /// MachineInstrExpressionTrait - Special DenseMapInfo traits to compare

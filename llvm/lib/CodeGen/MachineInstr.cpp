@@ -751,15 +751,11 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
   NumMemRefs = NewNum;
 }
 
-bool
-MachineInstr::hasProperty(unsigned MCFlag, QueryType Type) const {
-  if (Type == IgnoreBundle || !isBundle())
-    return getDesc().getFlags() & (1 << MCFlag);
-
+bool MachineInstr::hasPropertyInBundle(unsigned Mask, QueryType Type) const {
   const MachineBasicBlock *MBB = getParent();
   MachineBasicBlock::const_instr_iterator MII = *this; ++MII;
   while (MII != MBB->end() && MII->isInsideBundle()) {
-    if (MII->getDesc().getFlags() & (1 << MCFlag)) {
+    if (MII->getDesc().getFlags() & Mask) {
       if (Type == AnyInBundle)
         return true;
     } else {
