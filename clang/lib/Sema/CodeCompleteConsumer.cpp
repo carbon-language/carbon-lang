@@ -400,11 +400,19 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   }
 }
 
+/// \brief Retrieve the effective availability of the given declaration.
+static AvailabilityResult getDeclAvailability(Decl *D) {
+  AvailabilityResult AR = D->getAvailability();
+  if (isa<EnumConstantDecl>(D))
+    AR = std::max(AR, cast<Decl>(D->getDeclContext())->getAvailability());
+  return AR;
+}
+
 void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
   switch (Kind) {
-  case RK_Declaration:
+  case RK_Declaration: {
     // Set the availability based on attributes.
-    switch (Declaration->getAvailability()) {
+    switch (getDeclAvailability(Declaration)) {
     case AR_Available:
     case AR_NotYetIntroduced:
       Availability = CXAvailability_Available;      
@@ -436,6 +444,7 @@ void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
         CursorKind = CXCursor_NotImplemented;
     }
     break;
+  }
 
   case RK_Macro:
     Availability = CXAvailability_Available;      
