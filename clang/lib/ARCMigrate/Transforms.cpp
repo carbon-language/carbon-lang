@@ -12,7 +12,6 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringSwitch.h"
