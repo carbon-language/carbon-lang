@@ -1127,7 +1127,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                               << BaseExpr.get()->getSourceRange()))
       return ExprError();
     
-    ObjCInterfaceDecl *ClassDeclared;
+    ObjCInterfaceDecl *ClassDeclared = 0;
     ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
 
     if (!IV) {
@@ -1145,6 +1145,13 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                                           IV->getNameAsString());
         Diag(IV->getLocation(), diag::note_previous_decl)
           << IV->getDeclName();
+        
+        // Figure out the class that declares the ivar.
+        assert(!ClassDeclared);
+        Decl *D = cast<Decl>(IV->getDeclContext());
+        if (ObjCCategoryDecl *CAT = dyn_cast<ObjCCategoryDecl>(D))
+          D = CAT->getClassInterface();
+        ClassDeclared = cast<ObjCInterfaceDecl>(D);
       } else {
         if (IsArrow && IDecl->FindPropertyDeclaration(Member)) {
           Diag(MemberLoc, 
@@ -1160,6 +1167,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         return ExprError();
       }
     }
+    
+    assert(ClassDeclared);
 
     // If the decl being referenced had an error, return an error for this
     // sub-expr without emitting another error, in order to avoid cascading
