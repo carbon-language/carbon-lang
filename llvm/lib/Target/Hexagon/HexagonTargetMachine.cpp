@@ -50,7 +50,7 @@ extern "C" void LLVMInitializeHexagonTarget() {
 ///
 HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
-                                           TargetOptions Options,
+                                           const TargetOptions &Options,
                                            Reloc::Model RM,
                                            CodeModel::Model CM,
                                            CodeGenOpt::Level OL)

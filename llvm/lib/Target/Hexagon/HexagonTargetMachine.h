@@ -37,8 +37,9 @@ class HexagonTargetMachine : public LLVMTargetMachine {
 
 public:
   HexagonTargetMachine(const Target &T, StringRef TT,StringRef CPU,
-                       StringRef FS, TargetOptions Options, Reloc::Model RM,
-                       CodeModel::Model CM, CodeGenOpt::Level OL);
+                       StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL);
 
   virtual const HexagonInstrInfo *getInstrInfo() const {
     return &InstrInfo;
