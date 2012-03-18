@@ -1484,13 +1484,29 @@ void Preprocessor::HandleIncludeNextDirective(SourceLocation HashLoc,
   return HandleIncludeDirective(HashLoc, IncludeNextTok, Lookup);
 }
 
+/// HandleMicrosoftImportDirective - Implements #import for Microsoft Mode
+void Preprocessor::HandleMicrosoftImportDirective(Token &Tok) {
+  // The Microsoft #import directive takes a type library and generates header
+  // files from it, and includes those.  This is beyond the scope of what clang
+  // does, so we ignore it and error out.  However, #import can optionally have
+  // trailing attributes that span multiple lines.  We're going to eat those
+  // so we can continue processing from there.
+  Diag(Tok, diag::err_pp_import_directive_ms );
+
+  // Read tokens until we get to the end of the directive.  Note that the 
+  // directive can be split over multiple lines using the backslash character.
+  DiscardUntilEndOfDirective();
+}
+
 /// HandleImportDirective - Implements #import.
 ///
 void Preprocessor::HandleImportDirective(SourceLocation HashLoc,
                                          Token &ImportTok) {
-  if (!LangOpts.ObjC1)  // #import is standard for ObjC.
+  if (!LangOpts.ObjC1) {  // #import is standard for ObjC.
+    if (LangOpts.MicrosoftMode)
+      return HandleMicrosoftImportDirective(ImportTok);
     Diag(ImportTok, diag::ext_pp_import_directive);
-
+  }
   return HandleIncludeDirective(HashLoc, ImportTok, 0, true);
 }
 

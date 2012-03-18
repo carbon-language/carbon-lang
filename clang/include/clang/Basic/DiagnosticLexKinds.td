@@ -228,6 +228,10 @@ def warn_pp_convert_rhs_to_positive : Warning<
 
 def ext_pp_import_directive : Extension<"#import is a language extension">,
   InGroup<DiagGroup<"import-preprocessor-directive-pedantic">>;
+def err_pp_import_directive_ms : Error<
+  "#import of type library is an unsupported Microsoft feature">,
+  InGroup<Microsoft>;
+
 def ext_pp_ident_directive : Extension<"#ident is a language extension">;
 def ext_pp_include_next_directive : Extension<
   "#include_next is a language extension">;
