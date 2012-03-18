@@ -4282,9 +4282,10 @@ void Parser::ParseParameterDeclarationClause(
                                                 Param);
 
           ExprResult DefArgResult;
-          if (Tok.is(tok::l_brace))
+          if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
+            Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
             DefArgResult = ParseBraceInitializer();
-          else
+          } else
             DefArgResult = ParseAssignmentExpression();
           if (DefArgResult.isInvalid()) {
             Actions.ActOnParamDefaultArgumentError(Param);
