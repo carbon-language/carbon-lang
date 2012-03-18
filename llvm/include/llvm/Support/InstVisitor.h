@@ -166,8 +166,8 @@ public:
   RetTy visitUnreachableInst(UnreachableInst &I)    { DELEGATE(TerminatorInst);}
   RetTy visitICmpInst(ICmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitFCmpInst(FCmpInst &I)                  { DELEGATE(CmpInst);}
-  RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(Instruction); }
-  RetTy visitLoadInst(LoadInst     &I)              { DELEGATE(Instruction); }
+  RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(UnaryInstruction); }
+  RetTy visitLoadInst(LoadInst     &I)              { DELEGATE(UnaryInstruction); }
   RetTy visitStoreInst(StoreInst   &I)              { DELEGATE(Instruction); }
   RetTy visitAtomicCmpXchgInst(AtomicCmpXchgInst &I){ DELEGATE(Instruction); }
   RetTy visitAtomicRMWInst(AtomicRMWInst &I)        { DELEGATE(Instruction); }
@@ -188,11 +188,11 @@ public:
   RetTy visitBitCastInst(BitCastInst &I)            { DELEGATE(CastInst); }
   RetTy visitSelectInst(SelectInst &I)              { DELEGATE(Instruction); }
   RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
-  RetTy visitVAArgInst(VAArgInst   &I)              { DELEGATE(Instruction); }
+  RetTy visitVAArgInst(VAArgInst   &I)              { DELEGATE(UnaryInstruction); }
   RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction);}
   RetTy visitInsertElementInst(InsertElementInst &I) { DELEGATE(Instruction); }
   RetTy visitShuffleVectorInst(ShuffleVectorInst &I) { DELEGATE(Instruction); }
-  RetTy visitExtractValueInst(ExtractValueInst &I)  { DELEGATE(Instruction);}
+  RetTy visitExtractValueInst(ExtractValueInst &I)  { DELEGATE(UnaryInstruction);}
   RetTy visitInsertValueInst(InsertValueInst &I)    { DELEGATE(Instruction); }
   RetTy visitLandingPadInst(LandingPadInst &I)      { DELEGATE(Instruction); }
 
@@ -200,10 +200,11 @@ public:
   // instruction type, they can overload one of these to get the whole class
   // of instructions...
   //
-  RetTy visitTerminatorInst(TerminatorInst &I) { DELEGATE(Instruction); }
-  RetTy visitBinaryOperator(BinaryOperator &I) { DELEGATE(Instruction); }
-  RetTy visitCmpInst(CmpInst &I)               { DELEGATE(Instruction); }
-  RetTy visitCastInst(CastInst &I)             { DELEGATE(Instruction); }
+  RetTy visitCastInst(CastInst &I)                 { DELEGATE(UnaryInstruction); }
+  RetTy visitTerminatorInst(TerminatorInst &I)     { DELEGATE(Instruction); }
+  RetTy visitUnaryInstruction(UnaryInstruction &I) { DELEGATE(Instruction); }
+  RetTy visitBinaryOperator(BinaryOperator &I)     { DELEGATE(Instruction); }
+  RetTy visitCmpInst(CmpInst &I)                   { DELEGATE(Instruction); }
 
   // If the user wants a 'default' case, they can choose to override this
   // function.  If this function is not overloaded in the user's subclass, then
