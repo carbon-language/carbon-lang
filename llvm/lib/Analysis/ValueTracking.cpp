@@ -130,6 +130,71 @@ static void ComputeMaskedBitsAddSub(bool Add, Value *Op0, Value *Op1, bool NSW,
   }
 }
 
+static void ComputeMaskedBitsMul(Value *Op0, Value *Op1, bool NSW,
+                                 const APInt &Mask,
+                                 APInt &KnownZero, APInt &KnownOne,
+                                 APInt &KnownZero2, APInt &KnownOne2,
+                                 const TargetData *TD, unsigned Depth) {
+  unsigned BitWidth = Mask.getBitWidth();
+  APInt Mask2 = APInt::getAllOnesValue(BitWidth);
+  ComputeMaskedBits(Op1, Mask2, KnownZero, KnownOne, TD, Depth+1);
+  ComputeMaskedBits(Op0, Mask2, KnownZero2, KnownOne2, TD, Depth+1);
+  assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
+  assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
+
+  bool isKnownNegative = false;
+  bool isKnownNonNegative = false;
+  // If the multiplication is known not to overflow, compute the sign bit.
+  if (Mask.isNegative() && NSW) {
+    if (Op0 == Op1) {
+      // The product of a number with itself is non-negative.
+      isKnownNonNegative = true;
+    } else {
+      bool isKnownNonNegativeOp1 = KnownZero.isNegative();
+      bool isKnownNonNegativeOp0 = KnownZero2.isNegative();
+      bool isKnownNegativeOp1 = KnownOne.isNegative();
+      bool isKnownNegativeOp0 = KnownOne2.isNegative();
+      // The product of two numbers with the same sign is non-negative.
+      isKnownNonNegative = (isKnownNegativeOp1 && isKnownNegativeOp0) ||
+        (isKnownNonNegativeOp1 && isKnownNonNegativeOp0);
+      // The product of a negative number and a non-negative number is either
+      // negative or zero.
+      if (!isKnownNonNegative)
+        isKnownNegative = (isKnownNegativeOp1 && isKnownNonNegativeOp0 &&
+                           isKnownNonZero(Op0, TD, Depth)) ||
+                          (isKnownNegativeOp0 && isKnownNonNegativeOp1 &&
+                           isKnownNonZero(Op1, TD, Depth));
+    }
+  }
+
+  // If low bits are zero in either operand, output low known-0 bits.
+  // Also compute a conserative estimate for high known-0 bits.
+  // More trickiness is possible, but this is sufficient for the
+  // interesting case of alignment computation.
+  KnownOne.clearAllBits();
+  unsigned TrailZ = KnownZero.countTrailingOnes() +
+                    KnownZero2.countTrailingOnes();
+  unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
+                             KnownZero2.countLeadingOnes(),
+                             BitWidth) - BitWidth;
+
+  TrailZ = std::min(TrailZ, BitWidth);
+  LeadZ = std::min(LeadZ, BitWidth);
+  KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ) |
+              APInt::getHighBitsSet(BitWidth, LeadZ);
+  KnownZero &= Mask;
+
+  // Only make use of no-wrap flags if we failed to compute the sign bit
+  // directly.  This matters if the multiplication always overflows, in
+  // which case we prefer to follow the result of the direct computation,
+  // though as the program is invoking undefined behaviour we can choose
+  // whatever we like here.
+  if (isKnownNonNegative && !KnownOne.isNegative())
+    KnownZero.setBit(BitWidth - 1);
+  else if (isKnownNegative && !KnownZero.isNegative())
+    KnownOne.setBit(BitWidth - 1);
+}
+
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
 /// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
@@ -294,68 +359,11 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     return;
   }
   case Instruction::Mul: {
-    APInt Mask2 = APInt::getAllOnesValue(BitWidth);
-    ComputeMaskedBits(I->getOperand(1), Mask2, KnownZero, KnownOne, TD,Depth+1);
-    ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, TD,
-                      Depth+1);
-    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
-
-    bool isKnownNegative = false;
-    bool isKnownNonNegative = false;
-    // If the multiplication is known not to overflow, compute the sign bit.
-    if (Mask.isNegative() &&
-        cast<OverflowingBinaryOperator>(I)->hasNoSignedWrap()) {
-      Value *Op1 = I->getOperand(1), *Op2 = I->getOperand(0);
-      if (Op1 == Op2) {
-        // The product of a number with itself is non-negative.
-        isKnownNonNegative = true;
-      } else {
-        bool isKnownNonNegative1 = KnownZero.isNegative();
-        bool isKnownNonNegative2 = KnownZero2.isNegative();
-        bool isKnownNegative1 = KnownOne.isNegative();
-        bool isKnownNegative2 = KnownOne2.isNegative();
-        // The product of two numbers with the same sign is non-negative.
-        isKnownNonNegative = (isKnownNegative1 && isKnownNegative2) ||
-          (isKnownNonNegative1 && isKnownNonNegative2);
-        // The product of a negative number and a non-negative number is either
-        // negative or zero.
-        if (!isKnownNonNegative)
-          isKnownNegative = (isKnownNegative1 && isKnownNonNegative2 &&
-                             isKnownNonZero(Op2, TD, Depth)) ||
-                            (isKnownNegative2 && isKnownNonNegative1 &&
-                             isKnownNonZero(Op1, TD, Depth));
-      }
-    }
-
-    // If low bits are zero in either operand, output low known-0 bits.
-    // Also compute a conserative estimate for high known-0 bits.
-    // More trickiness is possible, but this is sufficient for the
-    // interesting case of alignment computation.
-    KnownOne.clearAllBits();
-    unsigned TrailZ = KnownZero.countTrailingOnes() +
-                      KnownZero2.countTrailingOnes();
-    unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
-                               KnownZero2.countLeadingOnes(),
-                               BitWidth) - BitWidth;
-
-    TrailZ = std::min(TrailZ, BitWidth);
-    LeadZ = std::min(LeadZ, BitWidth);
-    KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ) |
-                APInt::getHighBitsSet(BitWidth, LeadZ);
-    KnownZero &= Mask;
-
-    // Only make use of no-wrap flags if we failed to compute the sign bit
-    // directly.  This matters if the multiplication always overflows, in
-    // which case we prefer to follow the result of the direct computation,
-    // though as the program is invoking undefined behaviour we can choose
-    // whatever we like here.
-    if (isKnownNonNegative && !KnownOne.isNegative())
-      KnownZero.setBit(BitWidth - 1);
-    else if (isKnownNegative && !KnownZero.isNegative())
-      KnownOne.setBit(BitWidth - 1);
-
-    return;
+    bool NSW = cast<OverflowingBinaryOperator>(I)->hasNoSignedWrap();
+    ComputeMaskedBitsMul(I->getOperand(0), I->getOperand(1), NSW,
+                         Mask, KnownZero, KnownOne, KnownZero2, KnownOne2,
+                         TD, Depth);
+    break;
   }
   case Instruction::UDiv: {
     // For the purposes of computing leading zeros we can conservatively
@@ -776,6 +784,12 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                                   II->getArgOperand(1), false, Mask,
                                   KnownZero, KnownOne, KnownZero2, KnownOne2,
                                   TD, Depth);
+          break;
+        case Intrinsic::umul_with_overflow:
+        case Intrinsic::smul_with_overflow:
+          ComputeMaskedBitsMul(II->getArgOperand(0), II->getArgOperand(1),
+                               false, Mask, KnownZero, KnownOne,
+                               KnownZero2, KnownOne2, TD, Depth);
           break;
         }
       }
