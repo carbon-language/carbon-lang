@@ -132,6 +132,11 @@ public:
   static RetEffect MakeNoRet() {
     return RetEffect(NoRet);
   }
+
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddInteger((unsigned) K);
+    ID.AddInteger((unsigned) O);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -352,7 +357,7 @@ struct ProgramStateTrait<RefBindings>
 
 namespace {
 class RetainSummary {
-  /// Args - an ordered vector of (index, ArgEffect) pairs, where index
+  /// Args - a map of (index, ArgEffect) pairs, where index
   ///  specifies the argument (starting from 0).  This can be sparsely
   ///  populated; arguments with no entry in Args use 'DefaultArgEffect'.
   ArgEffects Args;
@@ -412,6 +417,19 @@ public:
   bool operator==(const RetainSummary &Other) const {
     return Args == Other.Args && DefaultArgEffect == Other.DefaultArgEffect &&
            Receiver == Other.Receiver && Ret == Other.Ret;
+  }
+
+  /// Profile this summary for inclusion in a FoldingSet.
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.Add(Args);
+    ID.Add(DefaultArgEffect);
+    ID.Add(Receiver);
+    ID.Add(Ret);
+  }
+
+  /// A retain summary is simple if it has no ArgEffects other than the default.
+  bool isSimple() const {
+    return Args.isEmpty();
   }
 };
 } // end anonymous namespace
@@ -554,6 +572,8 @@ class RetainSummaryManager {
 
   typedef ObjCSummaryCache ObjCMethodSummariesTy;
 
+  typedef llvm::FoldingSetNodeWrapper<RetainSummary> CachedSummaryNode;
+
   //==-----------------------------------------------------------------==//
   //  Data.
   //==-----------------------------------------------------------------==//
@@ -595,8 +615,9 @@ class RetainSummaryManager {
   ///   Objective-C objects.
   RetEffect ObjCInitRetE;
 
-  RetainSummary DefaultSummary;
-  const RetainSummary *StopSummary;
+  /// SimpleSummaries - Used for uniquing summaries that don't have special
+  /// effects.
+  llvm::FoldingSet<CachedSummaryNode> SimpleSummaries;
 
   //==-----------------------------------------------------------------==//
   //  Methods.
@@ -610,10 +631,6 @@ class RetainSummaryManager {
 
 public:
   RetEffect getObjAllocRetEffect() const { return ObjCAllocRetE; }
-
-  const RetainSummary *getDefaultSummary() {
-    return &DefaultSummary;
-  }
   
   const RetainSummary *getUnarySummary(const FunctionType* FT,
                                        UnaryFuncKind func);
@@ -622,24 +639,23 @@ public:
   const RetainSummary *getCFSummaryGetRule(const FunctionDecl *FD);
   const RetainSummary *getCFCreateGetRuleSummary(const FunctionDecl *FD);
 
-  const RetainSummary *getPersistentSummary(ArgEffects AE, RetEffect RetEff,
-                                            ArgEffect ReceiverEff = DoNothing,
-                                            ArgEffect DefaultEff = MayEscape);
+  const RetainSummary *getPersistentSummary(const RetainSummary &OldSumm);
 
-  const RetainSummary *getPersistentSummary(RetEffect RE,
+  const RetainSummary *getPersistentSummary(RetEffect RetEff,
                                             ArgEffect ReceiverEff = DoNothing,
                                             ArgEffect DefaultEff = MayEscape) {
-    return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
+    RetainSummary Summ(getArgEffects(), RetEff, DefaultEff, ReceiverEff);
+    return getPersistentSummary(Summ);
+  }
+
+  const RetainSummary *getDefaultSummary() {
+    return getPersistentSummary(RetEffect::MakeNoRet(),
+                                DoNothing, MayEscape);
   }
 
   const RetainSummary *getPersistentStopSummary() {
-    if (StopSummary)
-      return StopSummary;
-
-    StopSummary = getPersistentSummary(RetEffect::MakeNoRet(),
-                                       StopTracking, StopTracking);
-
-    return StopSummary;
+    return getPersistentSummary(RetEffect::MakeNoRet(),
+                                StopTracking, StopTracking);
   }
 
   void InitializeClassMethodSummaries();
@@ -718,13 +734,7 @@ public:
      ObjCInitRetE(gcenabled 
                     ? RetEffect::MakeGCNotOwned()
                     : (usesARC ? RetEffect::MakeARCNotOwned()
-                               : RetEffect::MakeOwnedWhenTrackedReceiver())),
-     DefaultSummary(AF.getEmptyMap() /* per-argument effects (none) */,
-                    RetEffect::MakeNoRet() /* return effect */,
-                    MayEscape, /* default argument effect */
-                    DoNothing /* receiver effect */),
-     StopSummary(0) {
-
+                               : RetEffect::MakeOwnedWhenTrackedReceiver())) {
     InitializeClassMethodSummaries();
     InitializeMethodSummaries();
   }
@@ -789,12 +799,6 @@ public:
   bool isARCEnabled() const { return ARCEnabled; }
   
   bool isARCorGCEnabled() const { return GCEnabled || ARCEnabled; }
-
-  const RetainSummary *copySummary(const RetainSummary *OldSumm) {
-    RetainSummary *Summ = (RetainSummary *) BPAlloc.Allocate<RetainSummary>();
-    new (Summ) RetainSummary(*OldSumm);
-    return Summ;
-  }
 };
 
 // Used to avoid allocating long-term (BPAlloc'd) memory for default retain
@@ -814,7 +818,7 @@ public:
 
   ~RetainSummaryTemplate() {
     if (Accessed)
-      RealSummary = Manager.copySummary(&ScratchSummary);
+      RealSummary = Manager.getPersistentSummary(ScratchSummary);
   }
 
   RetainSummary &operator*() {
@@ -841,12 +845,26 @@ ArgEffects RetainSummaryManager::getArgEffects() {
 }
 
 const RetainSummary *
-RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
-                                           ArgEffect ReceiverEff,
-                                           ArgEffect DefaultEff) {
-  // Create the summary and return it.
+RetainSummaryManager::getPersistentSummary(const RetainSummary &OldSumm) {
+  // Unique "simple" summaries -- those without ArgEffects.
+  if (OldSumm.isSimple()) {
+    llvm::FoldingSetNodeID ID;
+    OldSumm.Profile(ID);
+
+    void *Pos;
+    CachedSummaryNode *N = SimpleSummaries.FindNodeOrInsertPos(ID, Pos);
+
+    if (!N) {
+      N = (CachedSummaryNode *) BPAlloc.Allocate<CachedSummaryNode>();
+      new (N) CachedSummaryNode(OldSumm);
+      SimpleSummaries.InsertNode(N, Pos);
+    }
+
+    return &N->getValue();
+  }
+
   RetainSummary *Summ = (RetainSummary *) BPAlloc.Allocate<RetainSummary>();
-  new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff);
+  new (Summ) RetainSummary(OldSumm);
   return Summ;
 }
 
@@ -1119,7 +1137,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   if (!FD)
     return;
 
-  RetainSummaryTemplate Template(Summ, DefaultSummary, *this);
+  RetainSummaryTemplate Template(Summ, *getDefaultSummary(), *this);
 
   // Effects on the parameters.
   unsigned parm_idx = 0;
@@ -1167,7 +1185,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   if (!MD)
     return;
 
-  RetainSummaryTemplate Template(Summ, DefaultSummary, *this);
+  RetainSummaryTemplate Template(Summ, *getDefaultSummary(), *this);
   bool isTrackedLoc = false;
 
   // Effects on the receiver.
