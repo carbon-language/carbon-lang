@@ -846,6 +846,10 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   BugReport *R = new BugReport(*BT_Leak,
     "Memory is never released; potential memory leak", N, LocUsedForUniqueing);
   R->markInteresting(Sym);
+  // FIXME: This is a hack to make sure the MallocBugVisitor gets to look at
+  // the ExplodedNode chain first, in order to mark any failed realloc symbols
+  // as interesting for ConditionBRVisitor.
+  R->addVisitor(new ConditionBRVisitor());
   R->addVisitor(new MallocBugVisitor(Sym));
   C.EmitReport(R);
 }
@@ -1260,13 +1264,31 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
   return State;
 }
 
+static SymbolRef findFailedReallocSymbol(ProgramStateRef currState,
+                                         ProgramStateRef prevState) {
+  ReallocMap currMap = currState->get<ReallocPairs>();
+  ReallocMap prevMap = prevState->get<ReallocPairs>();
+
+  for (ReallocMap::iterator I = prevMap.begin(), E = prevMap.end();
+       I != E; ++I) {
+    SymbolRef sym = I.getKey();
+    if (!currMap.lookup(sym))
+      return sym;
+  }
+
+  return NULL;
+}
+
 PathDiagnosticPiece *
 MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
                                            const ExplodedNode *PrevN,
                                            BugReporterContext &BRC,
                                            BugReport &BR) {
-  const RefState *RS = N->getState()->get<RegionState>(Sym);
-  const RefState *RSPrev = PrevN->getState()->get<RegionState>(Sym);
+  ProgramStateRef state = N->getState();
+  ProgramStateRef statePrev = PrevN->getState();
+
+  const RefState *RS = state->get<RegionState>(Sym);
+  const RefState *RSPrev = statePrev->get<RegionState>(Sym);
   if (!RS && !RSPrev)
     return 0;
 
@@ -1288,7 +1310,6 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
     return 0;
 
   // Find out if this is an interesting point and what is the kind.
-  // TODO: Replace 'callee' by the function name.
   if (Mode == Normal) {
     if (isAllocated(RS, RSPrev, S)) {
       Msg = "Memory is allocated";
@@ -1303,6 +1324,9 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
       Msg = "Reallocation failed";
       StackHint = new StackHintGeneratorForReallocationFailed(Sym,
                                                        "Reallocation failed");
+
+      if (SymbolRef sym = findFailedReallocSymbol(state, statePrev))
+        BR.markInteresting(sym);
     }
 
   // We are in a special mode if a reallocation failed later in the path.
