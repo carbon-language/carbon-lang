@@ -3712,6 +3712,8 @@ static bool isVPERMILPMask(ArrayRef<int> Mask, EVT VT, bool HasAVX) {
 static bool isCommutedMOVLMask(ArrayRef<int> Mask, EVT VT,
                                bool V2IsSplat = false, bool V2IsUndef = false) {
   unsigned NumOps = VT.getVectorNumElements();
+  if (VT.getSizeInBits() == 256)
+    return false;
   if (NumOps != 2 && NumOps != 4 && NumOps != 8 && NumOps != 16)
     return false;
 
