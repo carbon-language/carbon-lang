@@ -182,6 +182,14 @@ const char *Sema::getFixItZeroInitializerForType(QualType T) const {
       else if (isMacroDefined(*this, "NULL"))
         return " = NULL";
     }
+    if (T->isCharType())
+      return " = '\\0'";
+    if (T->isWideCharType())
+      return " = L'\\0'";
+    if (T->isChar16Type())
+      return " = u'\\0'";
+    if (T->isChar32Type())
+      return " = U'\\0'";
     return " = 0";
   }
 

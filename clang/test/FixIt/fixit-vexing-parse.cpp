@@ -76,5 +76,14 @@ namespace N {
 #define NULL 0
     // CHECK: fix-it:"{{.*}}":{78:10-78:12}:" = NULL"
     Ptr p(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}}
+
+    // CHECK: fix-it:"{{.*}}":{81:11-81:13}:" = false"
+    bool b(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}}
+
+    // CHECK: fix-it:"{{.*}}":{84:11-84:13}:" = '\\0'"
+    char c(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}}
+
+    // CHECK: fix-it:"{{.*}}":{87:15-87:17}:" = L'\\0'"
+    wchar_t wc(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}}
   }
 }
