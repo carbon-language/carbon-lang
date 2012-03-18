@@ -872,7 +872,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (SS.isNotEmpty() && !SS.isInvalid()) {
     SemanticContext = computeDeclContext(SS, true);
     if (!SemanticContext) {
-      // FIXME: Produce a reasonable diagnostic here
+      Diag(NameLoc, diag::err_template_qualified_declarator_no_match)
+        << SS.getScopeRep() << SS.getRange();
       return true;
     }
 
