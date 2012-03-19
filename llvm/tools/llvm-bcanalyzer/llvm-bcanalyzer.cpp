@@ -331,7 +331,7 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
 
   // BLOCKINFO is a special part of the stream.
   if (BlockID == bitc::BLOCKINFO_BLOCK_ID) {
-    if (Dump) errs() << Indent << "<BLOCKINFO_BLOCK/>\n";
+    if (Dump) outs() << Indent << "<BLOCKINFO_BLOCK/>\n";
     if (Stream.ReadBlockInfoBlock())
       return Error("Malformed BlockInfoBlock");
     uint64_t BlockBitEnd = Stream.GetCurrentBitNo();
@@ -345,16 +345,16 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
 
   const char *BlockName = 0;
   if (Dump) {
-    errs() << Indent << "<";
+    outs() << Indent << "<";
     if ((BlockName = GetBlockName(BlockID, *Stream.getBitStreamReader())))
-      errs() << BlockName;
+      outs() << BlockName;
     else
-      errs() << "UnknownBlock" << BlockID;
+      outs() << "UnknownBlock" << BlockID;
 
     if (NonSymbolic && BlockName)
-      errs() << " BlockID=" << BlockID;
+      outs() << " BlockID=" << BlockID;
 
-    errs() << " NumWords=" << NumWords
+    outs() << " NumWords=" << NumWords
            << " BlockCodeSize=" << Stream.GetAbbrevIDWidth() << ">\n";
   }
 
@@ -376,11 +376,11 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
       uint64_t BlockBitEnd = Stream.GetCurrentBitNo();
       BlockStats.NumBits += BlockBitEnd-BlockBitStart;
       if (Dump) {
-        errs() << Indent << "</";
+        outs() << Indent << "</";
         if (BlockName)
-          errs() << BlockName << ">\n";
+          outs() << BlockName << ">\n";
         else
-          errs() << "UnknownBlock" << BlockID << ">\n";
+          outs() << "UnknownBlock" << BlockID << ">\n";
       }
       return false;
     }
@@ -422,25 +422,25 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
         BlockStats.CodeFreq[Code].NumAbbrev++;
 
       if (Dump) {
-        errs() << Indent << "  <";
+        outs() << Indent << "  <";
         if (const char *CodeName =
               GetCodeName(Code, BlockID, *Stream.getBitStreamReader()))
-          errs() << CodeName;
+          outs() << CodeName;
         else
-          errs() << "UnknownCode" << Code;
+          outs() << "UnknownCode" << Code;
         if (NonSymbolic &&
             GetCodeName(Code, BlockID, *Stream.getBitStreamReader()))
-          errs() << " codeid=" << Code;
+          outs() << " codeid=" << Code;
         if (AbbrevID != bitc::UNABBREV_RECORD)
-          errs() << " abbrevid=" << AbbrevID;
+          outs() << " abbrevid=" << AbbrevID;
 
         for (unsigned i = 0, e = Record.size(); i != e; ++i)
-          errs() << " op" << i << "=" << (int64_t)Record[i];
+          outs() << " op" << i << "=" << (int64_t)Record[i];
 
-        errs() << "/>";
+        outs() << "/>";
 
         if (BlobStart) {
-          errs() << " blob data = ";
+          outs() << " blob data = ";
           bool BlobIsPrintable = true;
           for (unsigned i = 0; i != BlobLen; ++i)
             if (!isprint(BlobStart[i])) {
@@ -449,12 +449,12 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
             }
 
           if (BlobIsPrintable)
-            errs() << "'" << std::string(BlobStart, BlobStart+BlobLen) <<"'";
+            outs() << "'" << std::string(BlobStart, BlobStart+BlobLen) <<"'";
           else
-            errs() << "unprintable, " << BlobLen << " bytes.";
+            outs() << "unprintable, " << BlobLen << " bytes.";
         }
 
-        errs() << "\n";
+        outs() << "\n";
       }
 
       break;
@@ -525,58 +525,58 @@ static int AnalyzeBitcode() {
     ++NumTopBlocks;
   }
 
-  if (Dump) errs() << "\n\n";
+  if (Dump) outs() << "\n\n";
 
   uint64_t BufferSizeBits = (EndBufPtr-BufPtr)*CHAR_BIT;
   // Print a summary of the read file.
-  errs() << "Summary of " << InputFilename << ":\n";
-  errs() << "         Total size: ";
+  outs() << "Summary of " << InputFilename << ":\n";
+  outs() << "         Total size: ";
   PrintSize(BufferSizeBits);
-  errs() << "\n";
-  errs() << "        Stream type: ";
+  outs() << "\n";
+  outs() << "        Stream type: ";
   switch (CurStreamType) {
-  case UnknownBitstream: errs() << "unknown\n"; break;
-  case LLVMIRBitstream:  errs() << "LLVM IR\n"; break;
+  case UnknownBitstream: outs() << "unknown\n"; break;
+  case LLVMIRBitstream:  outs() << "LLVM IR\n"; break;
   }
-  errs() << "  # Toplevel Blocks: " << NumTopBlocks << "\n";
-  errs() << "\n";
+  outs() << "  # Toplevel Blocks: " << NumTopBlocks << "\n";
+  outs() << "\n";
 
   // Emit per-block stats.
-  errs() << "Per-block Summary:\n";
+  outs() << "Per-block Summary:\n";
   for (std::map<unsigned, PerBlockIDStats>::iterator I = BlockIDStats.begin(),
        E = BlockIDStats.end(); I != E; ++I) {
-    errs() << "  Block ID #" << I->first;
+    outs() << "  Block ID #" << I->first;
     if (const char *BlockName = GetBlockName(I->first, StreamFile))
-      errs() << " (" << BlockName << ")";
-    errs() << ":\n";
+      outs() << " (" << BlockName << ")";
+    outs() << ":\n";
 
     const PerBlockIDStats &Stats = I->second;
-    errs() << "      Num Instances: " << Stats.NumInstances << "\n";
-    errs() << "         Total Size: ";
+    outs() << "      Num Instances: " << Stats.NumInstances << "\n";
+    outs() << "         Total Size: ";
     PrintSize(Stats.NumBits);
-    errs() << "\n";
+    outs() << "\n";
     double pct = (Stats.NumBits * 100.0) / BufferSizeBits;
     errs() << "    Percent of file: " << format("%2.4f%%", pct) << "\n";
     if (Stats.NumInstances > 1) {
-      errs() << "       Average Size: ";
+      outs() << "       Average Size: ";
       PrintSize(Stats.NumBits/(double)Stats.NumInstances);
-      errs() << "\n";
-      errs() << "  Tot/Avg SubBlocks: " << Stats.NumSubBlocks << "/"
+      outs() << "\n";
+      outs() << "  Tot/Avg SubBlocks: " << Stats.NumSubBlocks << "/"
              << Stats.NumSubBlocks/(double)Stats.NumInstances << "\n";
-      errs() << "    Tot/Avg Abbrevs: " << Stats.NumAbbrevs << "/"
+      outs() << "    Tot/Avg Abbrevs: " << Stats.NumAbbrevs << "/"
              << Stats.NumAbbrevs/(double)Stats.NumInstances << "\n";
-      errs() << "    Tot/Avg Records: " << Stats.NumRecords << "/"
+      outs() << "    Tot/Avg Records: " << Stats.NumRecords << "/"
              << Stats.NumRecords/(double)Stats.NumInstances << "\n";
     } else {
-      errs() << "      Num SubBlocks: " << Stats.NumSubBlocks << "\n";
-      errs() << "        Num Abbrevs: " << Stats.NumAbbrevs << "\n";
-      errs() << "        Num Records: " << Stats.NumRecords << "\n";
+      outs() << "      Num SubBlocks: " << Stats.NumSubBlocks << "\n";
+      outs() << "        Num Abbrevs: " << Stats.NumAbbrevs << "\n";
+      outs() << "        Num Records: " << Stats.NumRecords << "\n";
     }
     if (Stats.NumRecords) {
       double pct = (Stats.NumAbbreviatedRecords * 100.0) / Stats.NumRecords;
-      errs() << "    Percent Abbrevs: " << format("%2.4f%%", pct) << "\n";
+      outs() << "    Percent Abbrevs: " << format("%2.4f%%", pct) << "\n";
     }
-    errs() << "\n";
+    outs() << "\n";
 
     // Print a histogram of the codes we see.
     if (!NoHistogram && !Stats.CodeFreq.empty()) {
@@ -587,7 +587,7 @@ static int AnalyzeBitcode() {
       std::stable_sort(FreqPairs.begin(), FreqPairs.end());
       std::reverse(FreqPairs.begin(), FreqPairs.end());
 
-      errs() << "\tRecord Histogram:\n";
+      outs() << "\tRecord Histogram:\n";
       fprintf(stderr, "\t\t  Count    # Bits   %% Abv  Record Kind\n");
       for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
         const PerRecordStats &RecStats = Stats.CodeFreq[FreqPairs[i].second];
@@ -607,7 +607,7 @@ static int AnalyzeBitcode() {
         else
           fprintf(stderr, "UnknownCode%d\n", FreqPairs[i].second);
       }
-      errs() << "\n";
+      outs() << "\n";
 
     }
   }
