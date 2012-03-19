@@ -579,18 +579,23 @@ bool AddressSanitizer::runOnModule(Module &M) {
   if (ClGlobals)
     Res |= insertGlobalRedzones(M);
 
-  // Tell the run-time the current values of mapping offset and scale.
-  GlobalValue *asan_mapping_offset =
-      new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
-                     ConstantInt::get(IntptrTy, MappingOffset),
-                     kAsanMappingOffsetName);
-  GlobalValue *asan_mapping_scale =
-      new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
-                         ConstantInt::get(IntptrTy, MappingScale),
-                         kAsanMappingScaleName);
-  // Read these globals, otherwise they may be optimized away.
-  IRB.CreateLoad(asan_mapping_scale, true);
-  IRB.CreateLoad(asan_mapping_offset, true);
+  if (ClMappingOffsetLog >= 0) {
+    // Tell the run-time the current values of mapping offset and scale.
+    GlobalValue *asan_mapping_offset =
+        new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
+                       ConstantInt::get(IntptrTy, MappingOffset),
+                       kAsanMappingOffsetName);
+    // Read the global, otherwise it may be optimized away.
+    IRB.CreateLoad(asan_mapping_offset, true);
+  }
+  if (ClMappingScale) {
+    GlobalValue *asan_mapping_scale =
+        new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
+                           ConstantInt::get(IntptrTy, MappingScale),
+                           kAsanMappingScaleName);
+    // Read the global, otherwise it may be optimized away.
+    IRB.CreateLoad(asan_mapping_scale, true);
+  }
 
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
