@@ -922,3 +922,22 @@ _test2:                                 ## @test2
 The insertps's of $0 are pointless complex copies.
 
 //===---------------------------------------------------------------------===//
+
+[UNSAFE FP]
+
+void foo(double, double, double);
+void norm(double x, double y, double z) {
+  double scale = __builtin_sqrt(x*x + y*y + z*z);
+  foo(x/scale, y/scale, z/scale);
+}
+
+We currently generate an sqrtsd and 3 divsd instructions. This is bad, fp div is
+slow and not pipelined. In -ffast-math mode we could compute "1.0/scale" first
+and emit 3 mulsd in place of the divs. This can be done as a target-independent
+transform.
+
+If we're dealing with floats instead of doubles we could even replace the sqrtss
+and inversion with an rsqrtss instruction, which computes 1/sqrt faster at the
+cost of reduced accuracy.
+
+//===---------------------------------------------------------------------===//
