@@ -94,6 +94,10 @@ static void default_unexpected_handler()
 std::terminate_handler  __cxa_terminate_handler = default_terminate_handler;
 std::unexpected_handler __cxa_unexpected_handler = default_unexpected_handler;
 
+// In the future these will become:
+// std::atomic<std::terminate_handler>  __cxa_terminate_handler(default_terminate_handler);
+// std::atomic<std::unexpected_handler> __cxa_unexpected_handler(default_unexpected_handler);
+
 namespace std
 {
 
@@ -103,6 +107,8 @@ set_unexpected(unexpected_handler func) _NOEXCEPT
 	if (func == 0)
 		func = default_unexpected_handler;
 	return __sync_swap(&__cxa_unexpected_handler, func);
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_unexpected_handler.exchange(func, memory_order_acq_rel);
 }
 
 terminate_handler
@@ -111,6 +117,8 @@ set_terminate(terminate_handler func) _NOEXCEPT
 	if (func == 0)
 		func = default_terminate_handler;
 	return __sync_swap(&__cxa_terminate_handler, func);
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_terminate_handler.exchange(func, memory_order_acq_rel);
 }
 
-};
+}

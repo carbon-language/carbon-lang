@@ -25,7 +25,10 @@ namespace std
 unexpected_handler
 get_unexpected() _NOEXCEPT
 {
-    return __cxa_unexpected_handler;
+    return __sync_fetch_and_add(&__cxa_unexpected_handler, (unexpected_handler)0);
+//  The above is safe but overkill on x86
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_unexpected_handler.load(memory_order_acq);
 }
 
 __attribute__((visibility("hidden"), noreturn))
@@ -47,7 +50,10 @@ unexpected()
 terminate_handler
 get_terminate() _NOEXCEPT
 {
-    return __cxa_terminate_handler;
+    return __sync_fetch_and_add(&__cxa_terminate_handler, (terminate_handler)0);
+//  The above is safe but overkill on x86
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_terminate_handler.load(memory_order_acq);
 }
 
 __attribute__((visibility("hidden"), noreturn))
@@ -96,17 +102,24 @@ terminate() _NOEXCEPT
 }
 
 new_handler __cxa_new_handler = 0;
+// In the future these will become:
+// std::atomic<std::new_handler>  __cxa_new_handler(0);
 
 new_handler
 set_new_handler(new_handler handler) _NOEXCEPT
 {
     return __sync_swap(&__cxa_new_handler, handler);
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_new_handler.exchange(handler, memory_order_acq_rel);
 }
 
 new_handler
 get_new_handler() _NOEXCEPT
 {
-    return __cxa_new_handler;
+    return __sync_fetch_and_add(&__cxa_new_handler, (new_handler)0);
+//  The above is safe but overkill on x86
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_new_handler.load(memory_order_acq);
 }
 
 }  // std
