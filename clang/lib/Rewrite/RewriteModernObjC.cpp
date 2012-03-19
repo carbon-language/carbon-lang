@@ -316,8 +316,6 @@ namespace {
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
-    void RewriteTryReturnStmts(Stmt *S);
-    void RewriteSyncReturnStmts(Stmt *S, std::string buf);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
@@ -419,7 +417,6 @@ namespace {
     // Misc. helper routines.
     QualType getProtocolType();
     void WarnAboutReturnGotoStmts(Stmt *S);
-    void HasReturnStmts(Stmt *S, bool &hasReturns);
     void CheckFunctionPointerDecl(QualType dType, NamedDecl *ND);
     void InsertBlockLiteralsWithinFunction(FunctionDecl *FD);
     void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
@@ -1752,66 +1749,6 @@ void RewriteModernObjC::WarnAboutReturnGotoStmts(Stmt *S)
   if (isa<ReturnStmt>(S) || isa<GotoStmt>(S)) {
     Diags.Report(Context->getFullLoc(S->getLocStart()),
                  TryFinallyContainsReturnDiag);
-  }
-  return;
-}
-
-void RewriteModernObjC::HasReturnStmts(Stmt *S, bool &hasReturns) 
-{  
-  // Perform a bottom up traversal of all children.
-  for (Stmt::child_range CI = S->children(); CI; ++CI)
-   if (*CI)
-     HasReturnStmts(*CI, hasReturns);
-
- if (isa<ReturnStmt>(S))
-   hasReturns = true;
- return;
-}
-
-void RewriteModernObjC::RewriteTryReturnStmts(Stmt *S) {
- // Perform a bottom up traversal of all children.
- for (Stmt::child_range CI = S->children(); CI; ++CI)
-   if (*CI) {
-     RewriteTryReturnStmts(*CI);
-   }
- if (isa<ReturnStmt>(S)) {
-   SourceLocation startLoc = S->getLocStart();
-   const char *startBuf = SM->getCharacterData(startLoc);
-
-   const char *semiBuf = strchr(startBuf, ';');
-   assert((*semiBuf == ';') && "RewriteTryReturnStmts: can't find ';'");
-   SourceLocation onePastSemiLoc = startLoc.getLocWithOffset(semiBuf-startBuf+1);
-
-   std::string buf;
-   buf = "{ objc_exception_try_exit(&_stack); return";
-   
-   ReplaceText(startLoc, 6, buf);
-   InsertText(onePastSemiLoc, "}");
- }
- return;
-}
-
-void RewriteModernObjC::RewriteSyncReturnStmts(Stmt *S, std::string syncExitBuf) {
-  // Perform a bottom up traversal of all children.
-  for (Stmt::child_range CI = S->children(); CI; ++CI)
-    if (*CI) {
-      RewriteSyncReturnStmts(*CI, syncExitBuf);
-    }
-  if (isa<ReturnStmt>(S)) {
-    SourceLocation startLoc = S->getLocStart();
-    const char *startBuf = SM->getCharacterData(startLoc);
-
-    const char *semiBuf = strchr(startBuf, ';');
-    assert((*semiBuf == ';') && "RewriteSyncReturnStmts: can't find ';'");
-    SourceLocation onePastSemiLoc = startLoc.getLocWithOffset(semiBuf-startBuf+1);
-
-    std::string buf;
-    buf = "{ objc_exception_try_exit(&_stack);";
-    buf += syncExitBuf;
-    buf += " return";
-    
-    ReplaceText(startLoc, 6, buf);
-    InsertText(onePastSemiLoc, "}");
   }
   return;
 }
@@ -5163,11 +5100,6 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getMetaClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw( struct objc_object *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_enter(void *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_exit(void *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_exception_extract(void *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT int objc_exception_match";
-  Preamble += "(struct objc_class *, struct objc_object *);\n";
   // @synchronized hooks.
   Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_enter( struct objc_object *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_exit( struct objc_object *);\n";
