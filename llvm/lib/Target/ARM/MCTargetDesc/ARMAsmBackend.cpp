@@ -167,6 +167,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   case ARM::tBcc:       return ARM::t2Bcc;
   case ARM::tLDRpciASM: return ARM::t2LDRpci;
   case ARM::tADR:       return ARM::t2ADR;
+  case ARM::tB:         return ARM::t2B;
   }
 }
 
@@ -181,6 +182,16 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                          const MCInstFragment *DF,
                                          const MCAsmLayout &Layout) const {
   switch ((unsigned)Fixup.getKind()) {
+  case ARM::fixup_arm_thumb_br: {
+    // Relaxing tB to t2B. tB has a signed 12-bit displacement with the
+    // low bit being an implied zero. There's an implied +4 offset for the
+    // branch, so we adjust the other way here to determine what's
+    // encodable.
+    //
+    // Relax if the value is too big for a (signed) i8.
+    int64_t Offset = int64_t(Value) - 4;
+    return Offset > 2046 || Offset < -2048;
+  }
   case ARM::fixup_arm_thumb_bcc: {
     // Relaxing tBcc to t2Bcc. tBcc has a signed 9-bit displacement with the
     // low bit being an implied zero. There's an implied +4 offset for the
