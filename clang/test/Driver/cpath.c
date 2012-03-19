@@ -1,5 +1,8 @@
 // RUN: mkdir -p %T/test1 %T/test2 %T/test3
 
+// This could pass on Win32 if separator in pathenv were not ':' but ';'.
+// XFAIL: mingw32,win32
+
 // RUN: env CPATH=%T/test1:%T/test2 %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=CPATH
 // CPATH: -I {{.*}}/test1
 // CPATH: -I {{.*}}/test2
