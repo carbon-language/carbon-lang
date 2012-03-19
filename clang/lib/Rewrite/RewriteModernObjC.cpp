@@ -5162,15 +5162,15 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "(struct objc_class *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getMetaClass";
   Preamble += "(const char *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw(id);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw( struct objc_object *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_enter(void *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_try_exit(void *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_exception_extract(void *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT int objc_exception_match";
   Preamble += "(struct objc_class *, struct objc_object *);\n";
   // @synchronized hooks.
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_enter(id);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_exit(id);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_enter( struct objc_object *);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_sync_exit( struct objc_object *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT Protocol *objc_getProtocol(const char *);\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
