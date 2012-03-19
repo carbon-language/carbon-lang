@@ -2905,6 +2905,12 @@ parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index) {
       Parser.Lex(); // Eat the ']'.
       return MatchOperand_Success;
     }
+
+    // There's an optional '#' token here. Normally there wouldn't be, but
+    // inline assemble puts one in, and it's friendly to accept that.
+    if (Parser.getTok().is(AsmToken::Hash))
+      Parser.Lex(); // Eat the '#'
+
     const MCExpr *LaneIndex;
     SMLoc Loc = Parser.getTok().getLoc();
     if (getParser().ParseExpression(LaneIndex)) {
