@@ -177,6 +177,7 @@ public:
     return ec;
   }
   error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
+  error_code getSectionName(const coff_section *Sec, StringRef &Res) const;
 
   static inline bool classof(const Binary *v) {
     return v->isCOFF();

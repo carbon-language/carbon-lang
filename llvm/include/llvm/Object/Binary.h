@@ -88,7 +88,14 @@ public:
   }
 };
 
+/// @brief Create a Binary from Source, autodetecting the file type.
+///
+/// @param Source The data to create the Binary from. Ownership is transfered
+///        to Result if successful. If an error is returned, Source is destroyed
+///        by createBinary before returning.
+/// @param Result A pointer to the resulting Binary if no error occured.
 error_code createBinary(MemoryBuffer *Source, OwningPtr<Binary> &Result);
+
 error_code createBinary(StringRef Path, OwningPtr<Binary> &Result);
 
 }

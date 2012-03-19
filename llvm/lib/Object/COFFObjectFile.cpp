@@ -300,25 +300,7 @@ error_code COFFObjectFile::getSectionNext(DataRefImpl Sec,
 error_code COFFObjectFile::getSectionName(DataRefImpl Sec,
                                           StringRef &Result) const {
   const coff_section *sec = toSec(Sec);
-  StringRef name;
-  if (sec->Name[7] == 0)
-    // Null terminated, let ::strlen figure out the length.
-    name = sec->Name;
-  else
-    // Not null terminated, use all 8 bytes.
-    name = StringRef(sec->Name, 8);
-
-  // Check for string table entry. First byte is '/'.
-  if (name[0] == '/') {
-    uint32_t Offset;
-    if (name.substr(1).getAsInteger(10, Offset))
-      return object_error::parse_failed;
-    if (error_code ec = getString(Offset, name))
-      return ec;
-  }
-
-  Result = name;
-  return object_error::success;
+  return getSectionName(sec, Result);
 }
 
 error_code COFFObjectFile::getSectionAddress(DataRefImpl Sec,
@@ -628,6 +610,29 @@ error_code COFFObjectFile::getSymbolName(const coff_symbol *symbol,
   else
     // Not null terminated, use all 8 bytes.
     Res = StringRef(symbol->Name.ShortName, 8);
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getSectionName(const coff_section *Sec,
+                                          StringRef &Res) const {
+  StringRef Name;
+  if (Sec->Name[7] == 0)
+    // Null terminated, let ::strlen figure out the length.
+    Name = Sec->Name;
+  else
+    // Not null terminated, use all 8 bytes.
+    Name = StringRef(Sec->Name, 8);
+
+  // Check for string table entry. First byte is '/'.
+  if (Name[0] == '/') {
+    uint32_t Offset;
+    if (Name.substr(1).getAsInteger(10, Offset))
+      return object_error::parse_failed;
+    if (error_code ec = getString(Offset, Name))
+      return ec;
+  }
+
+  Res = Name;
   return object_error::success;
 }
 
