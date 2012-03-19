@@ -497,6 +497,7 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
             break;
     }
     std::string fullpath;
+    std::string remapped_fullpath;
     while (offset < end_prologue_offset)
     {
         const char* path = debug_line_data.GetCStr( &offset );
@@ -509,7 +510,10 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
             if (path[0] == '/')
             {
                 // The path starts with a directory delimiter, so we are done.
-                fullpath = path;
+                if (module_sp->RemapSourceFile (path, fullpath))
+                    support_files.Append(FileSpec (fullpath.c_str(), false));
+                else
+                    support_files.Append(FileSpec (path, false));
             }
             else
             {
@@ -538,16 +542,12 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
                         fullpath += '/';
                 }
                 fullpath += path;
+                if (module_sp->RemapSourceFile (fullpath.c_str(), remapped_fullpath))
+                    support_files.Append(FileSpec (remapped_fullpath.c_str(), false));
+                else
+                    support_files.Append(FileSpec (fullpath.c_str(), false));
             }
             
-            // We don't need to realpath files in the debug_line tables.
-            FileSpec file_spec(fullpath.c_str(), false);
-            
-            FileSpec remapped_file_spec;
-            if (module_sp->FindSourceFile(file_spec, remapped_file_spec))
-                support_files.Append(remapped_file_spec);
-            else
-                support_files.Append(file_spec);
         }
     }
 

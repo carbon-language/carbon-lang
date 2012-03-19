@@ -723,13 +723,17 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* curr_cu, CompUnitSP& compil
             LanguageType cu_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, curr_cu, DW_AT_language, 0);
             if (cu_die_name)
             {
+                std::string ramapped_file;
                 FileSpec cu_file_spec;
 
                 if (cu_die_name[0] == '/' || cu_comp_dir == NULL || cu_comp_dir[0] == '\0')
                 {
                     // If we have a full path to the compile unit, we don't need to resolve
                     // the file.  This can be expensive e.g. when the source files are NFS mounted.
-                    cu_file_spec.SetFile (cu_die_name, false);
+                    if (module_sp->RemapSourceFile(cu_die_name, ramapped_file))
+                        cu_file_spec.SetFile (ramapped_file.c_str(), false);
+                    else
+                        cu_file_spec.SetFile (cu_die_name, false);
                 }
                 else
                 {
@@ -737,12 +741,11 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* curr_cu, CompUnitSP& compil
                     if (*fullpath.rbegin() != '/')
                         fullpath += '/';
                     fullpath += cu_die_name;
-                    cu_file_spec.SetFile (fullpath.c_str(), false);
+                    if (module_sp->RemapSourceFile (fullpath.c_str(), ramapped_file))
+                        cu_file_spec.SetFile (ramapped_file.c_str(), false);
+                    else
+                        cu_file_spec.SetFile (fullpath.c_str(), false);
                 }
-
-                FileSpec remapped_file_spec;
-                if (module_sp->FindSourceFile(cu_file_spec, remapped_file_spec))
-                    cu_file_spec = remapped_file_spec;
 
                 compile_unit_sp.reset(new CompileUnit (module_sp,
                                                        curr_cu,

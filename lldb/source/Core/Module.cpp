@@ -1165,3 +1165,10 @@ Module::FindSourceFile (const FileSpec &orig_spec, FileSpec &new_spec) const
     return m_source_mappings.FindFile (orig_spec, new_spec);
 }
 
+bool
+Module::RemapSourceFile (const char *path, std::string &new_path) const
+{
+    Mutex::Locker locker (m_mutex);
+    return m_source_mappings.RemapPath(path, new_path);
+}
+

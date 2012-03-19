@@ -174,6 +174,27 @@ PathMappingList::RemapPath (const ConstString &path, ConstString &new_path) cons
 }
 
 bool
+PathMappingList::RemapPath (const char *path, std::string &new_path) const
+{
+    if (!m_pairs.empty() || path == NULL || path[0] == '\0')
+        return false;
+
+    const_iterator pos, end = m_pairs.end();
+    for (pos = m_pairs.begin(); pos != end; ++pos)
+    {
+        const size_t prefix_len = pos->first.GetLength();
+        
+        if (::strncmp (pos->first.GetCString(), path, prefix_len) == 0)
+        {
+            new_path = pos->second.GetCString();
+            new_path.append(path + prefix_len);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
 PathMappingList::FindFile (const FileSpec &orig_spec, FileSpec &new_spec) const
 {
     if (!m_pairs.empty())
