@@ -3869,6 +3869,14 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     return TU->mapRangeFromPreamble(Range);
   }
 
+  if (C.kind == CXCursor_TranslationUnit) {
+    ASTUnit *TU = getCursorASTUnit(C);
+    FileID MainID = TU->getSourceManager().getMainFileID();
+    SourceLocation Start = TU->getSourceManager().getLocForStartOfFile(MainID);
+    SourceLocation End = TU->getSourceManager().getLocForEndOfFile(MainID);
+    return SourceRange(Start, End);
+  }
+
   if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
     Decl *D = cxcursor::getCursorDecl(C);
     if (!D)
