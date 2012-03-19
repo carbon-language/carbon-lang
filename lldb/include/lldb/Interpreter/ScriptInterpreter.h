@@ -82,7 +82,7 @@ public:
     typedef void*          (*SWIGPythonGetChildAtIndex)             (void *implementor, uint32_t idx);
     typedef int            (*SWIGPythonGetIndexOfChildWithName)     (void *implementor, const char* child_name);
     typedef void*          (*SWIGPythonCastPyObjectToSBValue)       (void* data);
-    typedef void           (*SWIGPythonUpdateSynthProviderInstance) (void* data);    
+    typedef bool           (*SWIGPythonUpdateSynthProviderInstance) (void* data);
     
     typedef bool           (*SWIGPythonCallCommand)                 (const char *python_function_name,
                                                                      const char *session_dictionary_name,
@@ -229,9 +229,10 @@ public:
         return UINT32_MAX;
     }
     
-    virtual void
+    virtual bool
     UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor)
     {
+        return false;
     }
         
     virtual bool

@@ -69,54 +69,67 @@ public:
     
     enum GetExpressionPathFormat
     {
-        eDereferencePointers = 1,
-        eHonorPointers
+        eGetExpressionPathFormatDereferencePointers = 1,
+        eGetExpressionPathFormatHonorPointers
     };
     
     enum ValueObjectRepresentationStyle
     {
-        eDisplayValue = 1,
-        eDisplaySummary,
-        eDisplayLanguageSpecific,
-        eDisplayLocation,
-        eDisplayChildrenCount,
-        eDisplayType
+        eValueObjectRepresentationStyleValue = 1,
+        eValueObjectRepresentationStyleSummary,
+        eValueObjectRepresentationStyleLanguageSpecific,
+        eValueObjectRepresentationStyleLocation,
+        eValueObjectRepresentationStyleChildrenCount,
+        eValueObjectRepresentationStyleType
     };
     
     enum ExpressionPathScanEndReason
     {
-        eEndOfString = 1,           // out of data to parse
-        eNoSuchChild,               // child element not found
-        eEmptyRangeNotAllowed,      // [] only allowed for arrays
-        eDotInsteadOfArrow,         // . used when -> should be used
-        eArrowInsteadOfDot,         // -> used when . should be used
-        eFragileIVarNotAllowed,     // ObjC ivar expansion not allowed
-        eRangeOperatorNotAllowed,   // [] not allowed by options
-        eRangeOperatorInvalid,      // [] not valid on objects other than scalars, pointers or arrays
-        eArrayRangeOperatorMet,     // [] is good for arrays, but I cannot parse it
-        eBitfieldRangeOperatorMet,  // [] is good for bitfields, but I cannot parse after it
-        eUnexpectedSymbol,          // something is malformed in the expression
-        eTakingAddressFailed,       // impossible to apply & operator
-        eDereferencingFailed,       // impossible to apply * operator
-        eRangeOperatorExpanded,     // [] was expanded into a VOList
-        eUnknown = 0xFFFF
+        eExpressionPathScanEndReasonEndOfString = 1,           // out of data to parse
+        eExpressionPathScanEndReasonNoSuchChild,               // child element not found
+        eExpressionPathScanEndReasonEmptyRangeNotAllowed,      // [] only allowed for arrays
+        eExpressionPathScanEndReasonDotInsteadOfArrow,         // . used when -> should be used
+        eExpressionPathScanEndReasonArrowInsteadOfDot,         // -> used when . should be used
+        eExpressionPathScanEndReasonFragileIVarNotAllowed,     // ObjC ivar expansion not allowed
+        eExpressionPathScanEndReasonRangeOperatorNotAllowed,   // [] not allowed by options
+        eExpressionPathScanEndReasonRangeOperatorInvalid,      // [] not valid on objects other than scalars, pointers or arrays
+        eExpressionPathScanEndReasonArrayRangeOperatorMet,     // [] is good for arrays, but I cannot parse it
+        eExpressionPathScanEndReasonBitfieldRangeOperatorMet,  // [] is good for bitfields, but I cannot parse after it
+        eExpressionPathScanEndReasonUnexpectedSymbol,          // something is malformed in the expression
+        eExpressionPathScanEndReasonTakingAddressFailed,       // impossible to apply & operator
+        eExpressionPathScanEndReasonDereferencingFailed,       // impossible to apply * operator
+        eExpressionPathScanEndReasonRangeOperatorExpanded,     // [] was expanded into a VOList
+        eExpressionPathScanEndReasonSyntheticValueMissing,     // getting the synthetic children failed
+        eExpressionPathScanEndReasonUnknown = 0xFFFF
     };
     
     enum ExpressionPathEndResultType
     {
-        ePlain = 1,                 // anything but...
-        eBitfield,                  // a bitfield
-        eBoundedRange,              // a range [low-high]
-        eUnboundedRange,            // a range []
-        eValueObjectList,           // several items in a VOList
-        eInvalid = 0xFFFF
+        eExpressionPathEndResultTypePlain = 1,                 // anything but...
+        eExpressionPathEndResultTypeBitfield,                  // a bitfield
+        eExpressionPathEndResultTypeBoundedRange,              // a range [low-high]
+        eExpressionPathEndResultTypeUnboundedRange,            // a range []
+        eExpressionPathEndResultTypeValueObjectList,           // several items in a VOList
+        eExpressionPathEndResultTypeInvalid = 0xFFFF
     };
     
     enum ExpressionPathAftermath
     {
-        eNothing = 1,               // just return it
-        eDereference,               // dereference the target
-        eTakeAddress                // take target's address
+        eExpressionPathAftermathNothing = 1,               // just return it
+        eExpressionPathAftermathDereference,               // dereference the target
+        eExpressionPathAftermathTakeAddress                // take target's address
+    };
+    
+    enum ClearUserVisibleDataItems
+    {
+        eClearUserVisibleDataItemsNothing = 1u << 0,
+        eClearUserVisibleDataItemsValue = 1u << 1,
+        eClearUserVisibleDataItemsSummary = 1u << 2,
+        eClearUserVisibleDataItemsLocation = 1u << 3,
+        eClearUserVisibleDataItemsDescription = 1u << 4,
+        eClearUserVisibleDataItemsSyntheticChildren = 1u << 5,
+        eClearUserVisibleDataItemsAllStrings = eClearUserVisibleDataItemsValue | eClearUserVisibleDataItemsSummary | eClearUserVisibleDataItemsLocation | eClearUserVisibleDataItemsDescription,
+        eClearUserVisibleDataItemsAll = 0xFFFF
     };
     
     struct GetValueForExpressionPathOptions
@@ -211,7 +224,7 @@ public:
         bool m_show_location;
         bool m_use_objc;
         lldb::DynamicValueType m_use_dynamic;
-        lldb::SyntheticValueType m_use_synthetic;
+        bool m_use_synthetic;
         bool m_scope_already_checked;
         bool m_flat_output;
         uint32_t m_omit_summary_depth;
@@ -227,7 +240,7 @@ public:
             m_show_location(false),
             m_use_objc(false),
             m_use_dynamic(lldb::eNoDynamicValues),
-            m_use_synthetic(lldb::eUseSyntheticFilter),
+            m_use_synthetic(true),
             m_scope_already_checked(false),
             m_flat_output(false),
             m_omit_summary_depth(0),
@@ -305,9 +318,9 @@ public:
         }
         
         DumpValueObjectOptions&
-        SetUseSyntheticValue(lldb::SyntheticValueType syn = lldb::eUseSyntheticFilter)
+        SetUseSyntheticValue(bool use_synthetic = true)
         {
-            m_use_synthetic = syn;
+            m_use_synthetic = use_synthetic;
             return *this;
         }
 
@@ -344,13 +357,13 @@ public:
         {
             if (raw)
             {
-                SetUseSyntheticValue(lldb::eNoSyntheticFilter);
+                SetUseSyntheticValue(false);
                 SetOmitSummaryDepth(UINT32_MAX);
                 SetIgnoreCap(true);
             }
             else
             {
-                SetUseSyntheticValue(lldb::eUseSyntheticFilter);
+                SetUseSyntheticValue(true);
                 SetOmitSummaryDepth(0);
                 SetIgnoreCap(false);
             }
@@ -599,7 +612,7 @@ public:
     GetBaseClassPath (Stream &s);
 
     virtual void
-    GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat = eDereferencePointers);
+    GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat = eGetExpressionPathFormatDereferencePointers);
     
     lldb::ValueObjectSP
     GetValueForExpressionPath(const char* expression,
@@ -725,19 +738,21 @@ public:
     GetObjectDescription ();
     
     bool
-    GetPrintableRepresentation(Stream& s,
-                               ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
-                               lldb::Format custom_format = lldb::eFormatInvalid);
-
-    bool
-    HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
-                                              lldb::Format custom_format);
+    HasSpecialPrintableRepresentation (ValueObjectRepresentationStyle val_obj_display,
+                                       lldb::Format custom_format);
+    
+    enum PrintableRepresentationSpecialCases
+    {
+        ePrintableRepresentationSpecialCasesDisable = 0,
+        ePrintableRepresentationSpecialCasesAllow = 1,
+        ePrintableRepresentationSpecialCasesOnly = 3
+    };
     
     bool
-    DumpPrintableRepresentation(Stream& s,
-                                ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
-                                lldb::Format custom_format = lldb::eFormatInvalid,
-                                bool only_special = false);
+    DumpPrintableRepresentation (Stream& s,
+                                 ValueObjectRepresentationStyle val_obj_display = eValueObjectRepresentationStyleSummary,
+                                 lldb::Format custom_format = lldb::eFormatInvalid,
+                                 PrintableRepresentationSpecialCases special = ePrintableRepresentationSpecialCasesAllow);
     bool
     GetValueIsValid () const;
 
@@ -800,10 +815,13 @@ public:
     GetStaticValue ();
     
     lldb::ValueObjectSP
-    GetSyntheticValue (lldb::SyntheticValueType use_synthetic);
+    GetSyntheticValue (bool use_synthetic = true);
     
     virtual bool
     HasSyntheticValue();
+    
+    virtual bool
+    IsSynthetic() { return false; }
     
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);
@@ -842,9 +860,9 @@ public:
     virtual void
     ValueUpdated ()
     {
-        m_value_str.clear();
-        m_summary_str.clear();
-        m_object_desc_str.clear();
+        ClearUserVisibleData(eClearUserVisibleDataItemsValue |
+                             eClearUserVisibleDataItemsSummary |
+                             eClearUserVisibleDataItemsDescription);
     }
 
     virtual bool
@@ -909,7 +927,7 @@ public:
     SetFormat (lldb::Format format)
     {
         if (format != m_format)
-            m_value_str.clear();
+            ClearUserVisibleData(eClearUserVisibleDataItemsValue);
         m_format = format;
     }
     
@@ -924,7 +942,7 @@ public:
     SetSummaryFormat(lldb::TypeSummaryImplSP format)
     {
         m_type_summary_sp = format;
-        m_summary_str.clear();
+        ClearUserVisibleData(eClearUserVisibleDataItemsSummary);
         m_is_getting_summary = false;
     }
     
@@ -932,7 +950,7 @@ public:
     SetValueFormat(lldb::TypeFormatImplSP format)
     {
         m_type_format_sp = format;
-        m_value_str.clear();
+        ClearUserVisibleData(eClearUserVisibleDataItemsValue);
     }
     
     lldb::TypeFormatImplSP
@@ -943,10 +961,12 @@ public:
     }
     
     void
-    SetSyntheticChildren(lldb::SyntheticChildrenSP synth)
+    SetSyntheticChildren(const lldb::SyntheticChildrenSP &synth_sp)
     {
-        m_synthetic_children_sp = synth;
-        m_synthetic_value = NULL;
+        if (synth_sp.get() == m_synthetic_children_sp.get())
+            return;
+        ClearUserVisibleData(eClearUserVisibleDataItemsSyntheticChildren);
+        m_synthetic_children_sp = synth_sp;
     }
     
     lldb::SyntheticChildrenSP
@@ -1155,7 +1175,7 @@ protected:
     CalculateDynamicValue (lldb::DynamicValueType use_dynamic);
     
     virtual void
-    CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic);
+    CalculateSyntheticValue (bool use_synthetic = true);
     
     // Should only be called by ValueObject::GetChildAtIndex()
     // Returns a ValueObject managed by this ValueObject's manager.
@@ -1176,7 +1196,7 @@ protected:
     SetValueIsValid (bool valid);
     
     void
-    ClearUserVisibleData();
+    ClearUserVisibleData(uint32_t items = ValueObject::eClearUserVisibleDataItemsAllStrings);
     
     void
     AddSyntheticChild (const ConstString &key,

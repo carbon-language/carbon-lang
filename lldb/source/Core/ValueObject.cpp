@@ -179,7 +179,7 @@ ValueObject::UpdateValueIfNeeded (DynamicValueType use_dynamic, bool update_form
         // because of the frozen-pointer depth limit)
 		// TODO: decouple summary from value and then remove this code and only force-clear the summary
         if (update_format && !did_change_formats)
-            m_summary_str.clear();
+            ClearUserVisibleData(eClearUserVisibleDataItemsSummary);
         return m_error.Success();
     }
 
@@ -199,7 +199,7 @@ ValueObject::UpdateValueIfNeeded (DynamicValueType use_dynamic, bool update_form
         {
             m_old_value_valid = true;
             m_old_value_str.swap (m_value_str);
-            m_value_str.clear();
+            ClearUserVisibleData(eClearUserVisibleDataItemsValue);
         }
 
         ClearUserVisibleData();
@@ -268,7 +268,7 @@ ValueObject::SetNeedsUpdate ()
     m_update_point.SetNeedsUpdate();
     // We have to clear the value string here so ConstResult children will notice if their values are
     // changed by hand (i.e. with SetValueAsCString).
-    m_value_str.clear();
+    ClearUserVisibleData(eClearUserVisibleDataItemsValue);
 }
 
 ClangASTType
@@ -671,7 +671,9 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
     {
         if (summary_ptr)
         {
-            summary_ptr->FormatObject(GetSP(), destination);
+            if (HasSyntheticValue())
+                m_synthetic_value->UpdateValueIfNeeded(); // the summary might depend on the synthetic children being up-to-date (e.g. ${svar%#})
+            summary_ptr->FormatObject(this, destination);
         }
         else
         {
@@ -1242,110 +1244,18 @@ ValueObject::GetValueAsUnsigned (uint64_t fail_value)
     return fail_value;
 }
 
-bool
-ValueObject::GetPrintableRepresentation(Stream& s,
-                                        ValueObjectRepresentationStyle val_obj_display,
-                                        Format custom_format)
-{
-
-    if (custom_format != eFormatInvalid)
-        SetFormat(custom_format);
-    
-    const char * return_value;
-    std::string alloc_mem;
-    
-    switch(val_obj_display)
-    {
-        case eDisplayValue:
-            return_value = GetValueAsCString();
-            break;
-
-        case eDisplaySummary:
-            return_value = GetSummaryAsCString();
-            break;
-
-        case eDisplayLanguageSpecific:
-            return_value = GetObjectDescription();
-            break;
-
-        case eDisplayLocation:
-            return_value = GetLocationAsCString();
-            break;
-
-        case eDisplayChildrenCount:
-            {
-                alloc_mem.resize(512);
-                return_value = &alloc_mem[0];
-                int count = GetNumChildren();
-                snprintf((char*)return_value, 512, "%d", count);
-            }
-            break;
-
-        case eDisplayType:
-            return_value = GetTypeName().AsCString();
-            break;
-
-        default:
-            break;
-    }
-    
-    if (!return_value)
-    {
-        if (val_obj_display == eDisplayValue)
-            return_value = GetSummaryAsCString();        
-        else if (val_obj_display == eDisplaySummary)
-        {
-            if (ClangASTContext::IsAggregateType (GetClangType()) == true)
-            {
-                // this thing has no value, and it seems to have no summary
-                // some combination of unitialized data and other factors can also
-                // raise this condition, so let's print a nice generic description
-                {
-                    alloc_mem.resize(684);
-                    return_value = &alloc_mem[0];
-                    snprintf((char*)return_value, 684, "%s @ %s", GetTypeName().AsCString(), GetLocationAsCString());
-                }
-            }
-            else
-                return_value = GetValueAsCString();
-        }
-    }
-    
-    if (return_value)
-        s.PutCString(return_value);
-    else
-    {
-        if (m_error.Fail())
-            s.Printf("<%s>", m_error.AsCString());
-        else if (val_obj_display == eDisplaySummary)
-            s.PutCString("<no summary available>");
-        else if (val_obj_display == eDisplayValue)
-            s.PutCString("<no value available>");
-        else if (val_obj_display == eDisplayLanguageSpecific)
-            s.PutCString("<not a valid Objective-C object>"); // edit this if we have other runtimes that support a description
-        else
-            s.PutCString("<no printable representation>");
-    }
-    
-    // we should only return false here if we could not do *anything*
-    // even if we have an error message as output, that's a success
-    // from our callers' perspective, so return true
-    return true;
-    
-}
-
 // if any more "special cases" are added to ValueObject::DumpPrintableRepresentation() please keep
 // this call up to date by returning true for your new special cases. We will eventually move
 // to checking this call result before trying to display special cases
 bool
-ValueObject::HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
-                                                       Format custom_format)
+ValueObject::HasSpecialPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
+                                               Format custom_format)
 {
     clang_type_t elem_or_pointee_type;
     Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
     
     if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
-        && val_obj_display == ValueObject::eDisplayValue)
+        && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue)
     {        
         if (IsCStringContainer(true) && 
             (custom_format == eFormatCString ||
@@ -1382,131 +1292,225 @@ bool
 ValueObject::DumpPrintableRepresentation(Stream& s,
                                          ValueObjectRepresentationStyle val_obj_display,
                                          Format custom_format,
-                                         bool only_special)
+                                         PrintableRepresentationSpecialCases special)
 {
 
     clang_type_t elem_or_pointee_type;
     Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
     
-    if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
-         && val_obj_display == ValueObject::eDisplayValue)
+    bool allow_special = ((special & ePrintableRepresentationSpecialCasesAllow) == ePrintableRepresentationSpecialCasesAllow);
+    bool only_special = ((special & ePrintableRepresentationSpecialCasesOnly) == ePrintableRepresentationSpecialCasesOnly);
+    
+    if (allow_special)
     {
-        // when being asked to get a printable display an array or pointer type directly, 
-        // try to "do the right thing"
-        
-        if (IsCStringContainer(true) && 
-            (custom_format == eFormatCString ||
-             custom_format == eFormatCharArray ||
-             custom_format == eFormatChar ||
-             custom_format == eFormatVectorOfChar)) // print char[] & char* directly
+        if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
+             && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue)
         {
-            Error error;
-            ReadPointedString(s,
-                              error,
-                              0,
-                              (custom_format == eFormatVectorOfChar) ||
-                              (custom_format == eFormatCharArray));
-            return !error.Fail();
-        }
-        
-        if (custom_format == eFormatEnum)
-            return false;
-        
-        // this only works for arrays, because I have no way to know when
-        // the pointed memory ends, and no special \0 end of data marker
-        if (flags.Test(ClangASTContext::eTypeIsArray))
-        {
-            if ((custom_format == eFormatBytes) ||
-                (custom_format == eFormatBytesWithASCII))
+            // when being asked to get a printable display an array or pointer type directly, 
+            // try to "do the right thing"
+            
+            if (IsCStringContainer(true) && 
+                (custom_format == eFormatCString ||
+                 custom_format == eFormatCharArray ||
+                 custom_format == eFormatChar ||
+                 custom_format == eFormatVectorOfChar)) // print char[] & char* directly
             {
-                uint32_t count = GetNumChildren();
-                                
-                s << '[';
-                for (uint32_t low = 0; low < count; low++)
-                {
-                    
-                    if (low)
-                        s << ',';
-                    
-                    ValueObjectSP child = GetChildAtIndex(low,true);
-                    if (!child.get())
-                    {
-                        s << "<invalid child>";
-                        continue;
-                    }
-                    child->DumpPrintableRepresentation(s, ValueObject::eDisplayValue, custom_format);
-                }                
-                
-                s << ']';
-                
-                return true;
+                Error error;
+                ReadPointedString(s,
+                                  error,
+                                  0,
+                                  (custom_format == eFormatVectorOfChar) ||
+                                  (custom_format == eFormatCharArray));
+                return !error.Fail();
             }
             
-            if ((custom_format == eFormatVectorOfChar) ||
-                (custom_format == eFormatVectorOfFloat32) ||
-                (custom_format == eFormatVectorOfFloat64) ||
-                (custom_format == eFormatVectorOfSInt16) ||
-                (custom_format == eFormatVectorOfSInt32) ||
-                (custom_format == eFormatVectorOfSInt64) ||
-                (custom_format == eFormatVectorOfSInt8) ||
-                (custom_format == eFormatVectorOfUInt128) ||
-                (custom_format == eFormatVectorOfUInt16) ||
-                (custom_format == eFormatVectorOfUInt32) ||
-                (custom_format == eFormatVectorOfUInt64) ||
-                (custom_format == eFormatVectorOfUInt8)) // arrays of bytes, bytes with ASCII or any vector format should be printed directly
+            if (custom_format == eFormatEnum)
+                return false;
+            
+            // this only works for arrays, because I have no way to know when
+            // the pointed memory ends, and no special \0 end of data marker
+            if (flags.Test(ClangASTContext::eTypeIsArray))
             {
-                uint32_t count = GetNumChildren();
-
-                Format format = FormatManager::GetSingleItemFormat(custom_format);
-                
-                s << '[';
-                for (uint32_t low = 0; low < count; low++)
+                if ((custom_format == eFormatBytes) ||
+                    (custom_format == eFormatBytesWithASCII))
                 {
-                    
-                    if (low)
-                        s << ',';
-                    
-                    ValueObjectSP child = GetChildAtIndex(low,true);
-                    if (!child.get())
+                    uint32_t count = GetNumChildren();
+                                    
+                    s << '[';
+                    for (uint32_t low = 0; low < count; low++)
                     {
-                        s << "<invalid child>";
-                        continue;
-                    }
-                    child->DumpPrintableRepresentation(s, ValueObject::eDisplayValue, format);
-                }                
+                        
+                        if (low)
+                            s << ',';
+                        
+                        ValueObjectSP child = GetChildAtIndex(low,true);
+                        if (!child.get())
+                        {
+                            s << "<invalid child>";
+                            continue;
+                        }
+                        child->DumpPrintableRepresentation(s, ValueObject::eValueObjectRepresentationStyleValue, custom_format);
+                    }                
+                    
+                    s << ']';
+                    
+                    return true;
+                }
                 
-                s << ']';
-                
-                return true;
+                if ((custom_format == eFormatVectorOfChar) ||
+                    (custom_format == eFormatVectorOfFloat32) ||
+                    (custom_format == eFormatVectorOfFloat64) ||
+                    (custom_format == eFormatVectorOfSInt16) ||
+                    (custom_format == eFormatVectorOfSInt32) ||
+                    (custom_format == eFormatVectorOfSInt64) ||
+                    (custom_format == eFormatVectorOfSInt8) ||
+                    (custom_format == eFormatVectorOfUInt128) ||
+                    (custom_format == eFormatVectorOfUInt16) ||
+                    (custom_format == eFormatVectorOfUInt32) ||
+                    (custom_format == eFormatVectorOfUInt64) ||
+                    (custom_format == eFormatVectorOfUInt8)) // arrays of bytes, bytes with ASCII or any vector format should be printed directly
+                {
+                    uint32_t count = GetNumChildren();
+
+                    Format format = FormatManager::GetSingleItemFormat(custom_format);
+                    
+                    s << '[';
+                    for (uint32_t low = 0; low < count; low++)
+                    {
+                        
+                        if (low)
+                            s << ',';
+                        
+                        ValueObjectSP child = GetChildAtIndex(low,true);
+                        if (!child.get())
+                        {
+                            s << "<invalid child>";
+                            continue;
+                        }
+                        child->DumpPrintableRepresentation(s, ValueObject::eValueObjectRepresentationStyleValue, format);
+                    }                
+                    
+                    s << ']';
+                    
+                    return true;
+                }
             }
+            
+            if ((custom_format == eFormatBoolean) ||
+                (custom_format == eFormatBinary) ||
+                (custom_format == eFormatChar) ||
+                (custom_format == eFormatCharPrintable) ||
+                (custom_format == eFormatComplexFloat) ||
+                (custom_format == eFormatDecimal) ||
+                (custom_format == eFormatHex) ||
+                (custom_format == eFormatFloat) ||
+                (custom_format == eFormatOctal) ||
+                (custom_format == eFormatOSType) ||
+                (custom_format == eFormatUnicode16) ||
+                (custom_format == eFormatUnicode32) ||
+                (custom_format == eFormatUnsigned) ||
+                (custom_format == eFormatPointer) ||
+                (custom_format == eFormatComplexInteger) ||
+                (custom_format == eFormatComplex) ||
+                (custom_format == eFormatDefault)) // use the [] operator
+                return false;
         }
-        
-        if ((custom_format == eFormatBoolean) ||
-            (custom_format == eFormatBinary) ||
-            (custom_format == eFormatChar) ||
-            (custom_format == eFormatCharPrintable) ||
-            (custom_format == eFormatComplexFloat) ||
-            (custom_format == eFormatDecimal) ||
-            (custom_format == eFormatHex) ||
-            (custom_format == eFormatFloat) ||
-            (custom_format == eFormatOctal) ||
-            (custom_format == eFormatOSType) ||
-            (custom_format == eFormatUnicode16) ||
-            (custom_format == eFormatUnicode32) ||
-            (custom_format == eFormatUnsigned) ||
-            (custom_format == eFormatPointer) ||
-            (custom_format == eFormatComplexInteger) ||
-            (custom_format == eFormatComplex) ||
-            (custom_format == eFormatDefault)) // use the [] operator
-            return false;
     }
     
     if (only_special)
         return false;
     
-    bool var_success = GetPrintableRepresentation(s, val_obj_display, custom_format);
-    if (custom_format != eFormatInvalid)
-        SetFormat(eFormatDefault);
+    bool var_success = false;
+    
+    {
+        const char * return_value;
+        std::string alloc_mem;
+
+        if (custom_format != eFormatInvalid)
+            SetFormat(custom_format);
+        
+        switch(val_obj_display)
+        {
+            case eValueObjectRepresentationStyleValue:
+                return_value = GetValueAsCString();
+                break;
+                
+            case eValueObjectRepresentationStyleSummary:
+                return_value = GetSummaryAsCString();
+                break;
+                
+            case eValueObjectRepresentationStyleLanguageSpecific:
+                return_value = GetObjectDescription();
+                break;
+                
+            case eValueObjectRepresentationStyleLocation:
+                return_value = GetLocationAsCString();
+                break;
+                
+            case eValueObjectRepresentationStyleChildrenCount:
+            {
+                alloc_mem.resize(512);
+                return_value = &alloc_mem[0];
+                int count = GetNumChildren();
+                snprintf((char*)return_value, 512, "%d", count);
+            }
+                break;
+                
+            case eValueObjectRepresentationStyleType:
+                return_value = GetTypeName().AsCString();
+                break;
+                
+            default:
+                break;
+        }
+        
+        if (!return_value)
+        {
+            if (val_obj_display == eValueObjectRepresentationStyleValue)
+                return_value = GetSummaryAsCString();        
+            else if (val_obj_display == eValueObjectRepresentationStyleSummary)
+            {
+                if (ClangASTContext::IsAggregateType (GetClangType()) == true)
+                {
+                    // this thing has no value, and it seems to have no summary
+                    // some combination of unitialized data and other factors can also
+                    // raise this condition, so let's print a nice generic description
+                    {
+                        alloc_mem.resize(684);
+                        return_value = &alloc_mem[0];
+                        snprintf((char*)return_value, 684, "%s @ %s", GetTypeName().AsCString(), GetLocationAsCString());
+                    }
+                }
+                else
+                    return_value = GetValueAsCString();
+            }
+        }
+        
+        if (return_value)
+            s.PutCString(return_value);
+        else
+        {
+            if (m_error.Fail())
+                s.Printf("<%s>", m_error.AsCString());
+            else if (val_obj_display == eValueObjectRepresentationStyleSummary)
+                s.PutCString("<no summary available>");
+            else if (val_obj_display == eValueObjectRepresentationStyleValue)
+                s.PutCString("<no value available>");
+            else if (val_obj_display == eValueObjectRepresentationStyleLanguageSpecific)
+                s.PutCString("<not a valid Objective-C object>"); // edit this if we have other runtimes that support a description
+            else
+                s.PutCString("<no printable representation>");
+        }
+        
+        // we should only return false here if we could not do *anything*
+        // even if we have an error message as output, that's a success
+        // from our callers' perspective, so return true
+        var_success = true;
+        
+        if (custom_format != eFormatInvalid)
+            SetFormat(eFormatDefault);
+    }
+    
     return var_success;
 }
 
@@ -1987,19 +1991,18 @@ ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_cr
 }
 
 void
-ValueObject::CalculateSyntheticValue (SyntheticValueType use_synthetic)
+ValueObject::CalculateSyntheticValue (bool use_synthetic)
 {
-    if (use_synthetic == eNoSyntheticFilter)
+    if (use_synthetic == false)
         return;
     
-    UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+    if (!UpdateFormatsIfNeeded(m_last_format_mgr_dynamic) && m_synthetic_value)
+        return;
     
     if (m_synthetic_children_sp.get() == NULL)
         return;
     
-    if (m_synthetic_value == NULL)
-        m_synthetic_value = new ValueObjectSynthetic(*this, m_synthetic_children_sp);
-    
+    m_synthetic_value = new ValueObjectSynthetic(*this, m_synthetic_children_sp);
 }
 
 void
@@ -2068,27 +2071,18 @@ ValueObject::GetStaticValue()
     return GetSP();
 }
 
-// GetDynamicValue() returns a NULL SharedPointer if the object is not dynamic
-// or we do not really want a dynamic VO. this method instead returns this object
-// itself when making it synthetic has no meaning. this makes it much simpler
-// to replace the SyntheticValue for the ValueObject
 ValueObjectSP
-ValueObject::GetSyntheticValue (SyntheticValueType use_synthetic)
+ValueObject::GetSyntheticValue (bool use_synthetic)
 {
-    if (use_synthetic == eNoSyntheticFilter)
-        return GetSP();
-    
-    UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
-    
-    if (m_synthetic_children_sp.get() == NULL)
-        return GetSP();
-    
+    if (use_synthetic == false)
+        return ValueObjectSP();
+
     CalculateSyntheticValue(use_synthetic);
     
     if (m_synthetic_value)
         return m_synthetic_value->GetSP();
     else
-        return GetSP();
+        return ValueObjectSP();
 }
 
 bool
@@ -2099,7 +2093,7 @@ ValueObject::HasSyntheticValue()
     if (m_synthetic_children_sp.get() == NULL)
         return false;
     
-    CalculateSyntheticValue(eUseSyntheticFilter);
+    CalculateSyntheticValue(true);
     
     if (m_synthetic_value)
         return true;
@@ -2146,7 +2140,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
 {
     const bool is_deref_of_parent = IsDereferenceOfParent ();
 
-    if (is_deref_of_parent && epformat == eDereferencePointers)
+    if (is_deref_of_parent && epformat == eGetExpressionPathFormatDereferencePointers)
     {
         // this is the original format of GetExpressionPath() producing code like *(a_ptr).memberName, which is entirely
         // fine, until you put this into StackFrame::GetValueForVariableExpressionPath() which prefers to see a_ptr->memberName.
@@ -2162,7 +2156,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
     // if we are a deref_of_parent just because we are synthetic array
     // members made up to allow ptr[%d] syntax to work in variable
     // printing, then add our name ([%d]) to the expression path
-    if (m_is_array_item_for_pointer && epformat == eHonorPointers)
+    if (m_is_array_item_for_pointer && epformat == eGetExpressionPathFormatHonorPointers)
         s.PutCString(m_name.AsCString());
             
     if (!IsBaseClass())
@@ -2177,7 +2171,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
                 {
                     const uint32_t non_base_class_parent_type_info = ClangASTContext::GetTypeInfo (non_base_class_parent_clang_type, NULL, NULL);
                     
-                    if (parent && parent->IsDereferenceOfParent() && epformat == eHonorPointers)
+                    if (parent && parent->IsDereferenceOfParent() && epformat == eGetExpressionPathFormatHonorPointers)
                     {
                         s.PutCString("->");
                     }
@@ -2209,7 +2203,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
         }
     }
     
-    if (is_deref_of_parent && epformat == eDereferencePointers)
+    if (is_deref_of_parent && epformat == eGetExpressionPathFormatDereferencePointers)
     {
         s.PutChar(')');
     }
@@ -2227,7 +2221,7 @@ ValueObject::GetValueForExpressionPath(const char* expression,
     const char* dummy_first_unparsed;
     ExpressionPathScanEndReason dummy_reason_to_stop;
     ExpressionPathEndResultType dummy_final_value_type;
-    ExpressionPathAftermath dummy_final_task_on_target = ValueObject::eNothing;
+    ExpressionPathAftermath dummy_final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
     
     ValueObjectSP ret_val = GetValueForExpressionPath_Impl(expression,
                                                            first_unparsed ? first_unparsed : &dummy_first_unparsed,
@@ -2236,46 +2230,46 @@ ValueObject::GetValueForExpressionPath(const char* expression,
                                                            options,
                                                            final_task_on_target ? final_task_on_target : &dummy_final_task_on_target);
     
-    if (!final_task_on_target || *final_task_on_target == ValueObject::eNothing)
+    if (!final_task_on_target || *final_task_on_target == ValueObject::eExpressionPathAftermathNothing)
         return ret_val;
 
-    if (ret_val.get() && ((final_value_type ? *final_value_type : dummy_final_value_type) == ePlain)) // I can only deref and takeaddress of plain objects
+    if (ret_val.get() && ((final_value_type ? *final_value_type : dummy_final_value_type) == eExpressionPathEndResultTypePlain)) // I can only deref and takeaddress of plain objects
     {
-        if ( (final_task_on_target ? *final_task_on_target : dummy_final_task_on_target) == ValueObject::eDereference)
+        if ( (final_task_on_target ? *final_task_on_target : dummy_final_task_on_target) == ValueObject::eExpressionPathAftermathDereference)
         {
             Error error;
             ValueObjectSP final_value = ret_val->Dereference(error);
             if (error.Fail() || !final_value.get())
             {
                 if (reason_to_stop)
-                    *reason_to_stop = ValueObject::eDereferencingFailed;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
                 if (final_value_type)
-                    *final_value_type = ValueObject::eInvalid;
+                    *final_value_type = ValueObject::eExpressionPathEndResultTypeInvalid;
                 return ValueObjectSP();
             }
             else
             {
                 if (final_task_on_target)
-                    *final_task_on_target = ValueObject::eNothing;
+                    *final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
                 return final_value;
             }
         }
-        if (*final_task_on_target == ValueObject::eTakeAddress)
+        if (*final_task_on_target == ValueObject::eExpressionPathAftermathTakeAddress)
         {
             Error error;
             ValueObjectSP final_value = ret_val->AddressOf(error);
             if (error.Fail() || !final_value.get())
             {
                 if (reason_to_stop)
-                    *reason_to_stop = ValueObject::eTakingAddressFailed;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonTakingAddressFailed;
                 if (final_value_type)
-                    *final_value_type = ValueObject::eInvalid;
+                    *final_value_type = ValueObject::eExpressionPathEndResultTypeInvalid;
                 return ValueObjectSP();
             }
             else
             {
                 if (final_task_on_target)
-                    *final_task_on_target = ValueObject::eNothing;
+                    *final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
                 return final_value;
             }
         }
@@ -2295,7 +2289,7 @@ ValueObject::GetValuesForExpressionPath(const char* expression,
     const char* dummy_first_unparsed;
     ExpressionPathScanEndReason dummy_reason_to_stop;
     ExpressionPathEndResultType dummy_final_value_type;
-    ExpressionPathAftermath dummy_final_task_on_target = ValueObject::eNothing;
+    ExpressionPathAftermath dummy_final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
     
     ValueObjectSP ret_val = GetValueForExpressionPath_Impl(expression,
                                                            first_unparsed ? first_unparsed : &dummy_first_unparsed,
@@ -2307,46 +2301,46 @@ ValueObject::GetValuesForExpressionPath(const char* expression,
     if (!ret_val.get()) // if there are errors, I add nothing to the list
         return 0;
     
-    if (*reason_to_stop != eArrayRangeOperatorMet)
+    if (*reason_to_stop != eExpressionPathScanEndReasonArrayRangeOperatorMet)
     {
         // I need not expand a range, just post-process the final value and return
-        if (!final_task_on_target || *final_task_on_target == ValueObject::eNothing)
+        if (!final_task_on_target || *final_task_on_target == ValueObject::eExpressionPathAftermathNothing)
         {
             list->Append(ret_val);
             return 1;
         }
-        if (ret_val.get() && *final_value_type == ePlain) // I can only deref and takeaddress of plain objects
+        if (ret_val.get() && *final_value_type == eExpressionPathEndResultTypePlain) // I can only deref and takeaddress of plain objects
         {
-            if (*final_task_on_target == ValueObject::eDereference)
+            if (*final_task_on_target == ValueObject::eExpressionPathAftermathDereference)
             {
                 Error error;
                 ValueObjectSP final_value = ret_val->Dereference(error);
                 if (error.Fail() || !final_value.get())
                 {
-                    *reason_to_stop = ValueObject::eDereferencingFailed;
-                    *final_value_type = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
+                    *final_value_type = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return 0;
                 }
                 else
                 {
-                    *final_task_on_target = ValueObject::eNothing;
+                    *final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
                     list->Append(final_value);
                     return 1;
                 }
             }
-            if (*final_task_on_target == ValueObject::eTakeAddress)
+            if (*final_task_on_target == ValueObject::eExpressionPathAftermathTakeAddress)
             {
                 Error error;
                 ValueObjectSP final_value = ret_val->AddressOf(error);
                 if (error.Fail() || !final_value.get())
                 {
-                    *reason_to_stop = ValueObject::eTakingAddressFailed;
-                    *final_value_type = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonTakingAddressFailed;
+                    *final_value_type = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return 0;
                 }
                 else
                 {
-                    *final_task_on_target = ValueObject::eNothing;
+                    *final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
                     list->Append(final_value);
                     return 1;
                 }
@@ -2399,7 +2393,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
         
         if (!expression_cstr || *expression_cstr == '\0')
         {
-            *reason_to_stop = ValueObject::eEndOfString;
+            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
             return root;
         }
         
@@ -2411,8 +2405,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) ) // if you are trying to use -> on a non-pointer and I must catch the error
                 {
                     *first_unparsed = expression_cstr;
-                    *reason_to_stop = ValueObject::eArrowInsteadOfDot;
-                    *final_result = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrowInsteadOfDot;
+                    *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
                 if (root_clang_type_info.Test(ClangASTContext::eTypeIsObjC) &&  // if yo are trying to extract an ObjC IVar when this is forbidden
@@ -2420,15 +2414,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     options.m_no_fragile_ivar)
                 {
                     *first_unparsed = expression_cstr;
-                    *reason_to_stop = ValueObject::eFragileIVarNotAllowed;
-                    *final_result = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonFragileIVarNotAllowed;
+                    *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
                 if (expression_cstr[1] != '>')
                 {
                     *first_unparsed = expression_cstr;
-                    *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                    *final_result = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                    *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
                 expression_cstr++; // skip the -
@@ -2439,8 +2433,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     root_clang_type_info.Test(ClangASTContext::eTypeIsPointer)) // if you are trying to use . on a pointer and I must catch the error
                 {
                     *first_unparsed = expression_cstr;
-                    *reason_to_stop = ValueObject::eDotInsteadOfArrow;
-                    *final_result = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDotInsteadOfArrow;
+                    *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
                 expression_cstr++; // skip .
@@ -2454,13 +2448,19 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     if (child_valobj_sp.get()) // we know we are done, so just return
                     {
                         *first_unparsed = '\0';
-                        *reason_to_stop = ValueObject::eEndOfString;
-                        *final_result = ValueObject::ePlain;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
+                        *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         return child_valobj_sp;
                     }
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
-                        child_valobj_sp = root->GetSyntheticValue(eNoSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                        if (root->IsSynthetic())
+                            child_valobj_sp = root;
+                        else
+                            child_valobj_sp = root->GetSyntheticValue();
+                        
+                        if (child_valobj_sp.get())
+                            child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
@@ -2468,15 +2468,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     if(child_valobj_sp.get()) // if it worked, just return
                     {
                         *first_unparsed = '\0';
-                        *reason_to_stop = ValueObject::eEndOfString;
-                        *final_result = ValueObject::ePlain;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
+                        *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         return child_valobj_sp;
                     }
                     else
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eNoSuchChild;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                 }
@@ -2488,12 +2488,14 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     {
                         root = child_valobj_sp;
                         *first_unparsed = next_separator;
-                        *final_result = ValueObject::ePlain;
+                        *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         continue;
                     }
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
-                        child_valobj_sp = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                        child_valobj_sp = root->GetSyntheticValue(true);
+                        if (child_valobj_sp)
+                            child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
@@ -2502,14 +2504,14 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     {
                         root = child_valobj_sp;
                         *first_unparsed = next_separator;
-                        *final_result = ValueObject::ePlain;
+                        *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         continue;
                     }
                     else
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eNoSuchChild;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                 }
@@ -2524,16 +2526,16 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (options.m_no_synthetic_children) // ...only chance left is synthetic
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eRangeOperatorInvalid;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorInvalid;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                     }
                     else if (!options.m_allow_bitfields_syntax) // if this is a scalar, check that we can expand bitfields
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eRangeOperatorNotAllowed;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorNotAllowed;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                 }
@@ -2542,15 +2544,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eEmptyRangeNotAllowed;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                     else // even if something follows, we cannot expand unbounded ranges, just let the caller do it
                     {
                         *first_unparsed = expression_cstr+2;
-                        *reason_to_stop = ValueObject::eArrayRangeOperatorMet;
-                        *final_result = ValueObject::eUnboundedRange;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrayRangeOperatorMet;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeUnboundedRange;
                         return root;
                     }
                 }
@@ -2559,8 +2561,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                 if (!close_bracket_position) // if there is no ], this is a syntax error
                 {
                     *first_unparsed = expression_cstr;
-                    *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                    *final_result = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                    *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
                 if (!separator_position || separator_position > close_bracket_position) // if no separator, this is either [] or [N]
@@ -2570,8 +2572,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     if (!end || end != close_bracket_position) // if something weird is in our way return an error
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                     if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
@@ -2579,15 +2581,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
                         {
                             *first_unparsed = expression_cstr+2;
-                            *reason_to_stop = ValueObject::eArrayRangeOperatorMet;
-                            *final_result = ValueObject::eUnboundedRange;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrayRangeOperatorMet;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeUnboundedRange;
                             return root;
                         }
                         else
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eEmptyRangeNotAllowed;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                     }
@@ -2598,26 +2600,26 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (!child_valobj_sp)
                             child_valobj_sp = root->GetSyntheticArrayMemberFromArray(index, true);
                         if (!child_valobj_sp)
-                            if (root->HasSyntheticValue() && root->GetSyntheticValue(eUseSyntheticFilter)->GetNumChildren() > index)
-                                child_valobj_sp = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                            if (root->HasSyntheticValue() && root->GetSyntheticValue()->GetNumChildren() > index)
+                                child_valobj_sp = root->GetSyntheticValue()->GetChildAtIndex(index, true);
                         if (child_valobj_sp)
                         {
                             root = child_valobj_sp;
                             *first_unparsed = end+1; // skip ]
-                            *final_result = ValueObject::ePlain;
+                            *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                             continue;
                         }
                         else
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                     }
                     else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer))
                     {
-                        if (*what_next == ValueObject::eDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                        if (*what_next == ValueObject::eExpressionPathAftermathDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
                             pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
                         {
                             Error error;
@@ -2625,13 +2627,13 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             if (error.Fail() || !root.get())
                             {
                                 *first_unparsed = expression_cstr;
-                                *reason_to_stop = ValueObject::eDereferencingFailed;
-                                *final_result = ValueObject::eInvalid;
+                                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
+                                *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                                 return ValueObjectSP();
                             }
                             else
                             {
-                                *what_next = eNothing;
+                                *what_next = eExpressionPathAftermathNothing;
                                 continue;
                             }
                         }
@@ -2646,21 +2648,21 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                                 &&
                                 options.m_no_synthetic_children == false)
                             {
-                                root = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                                root = root->GetSyntheticValue()->GetChildAtIndex(index, true);
                             }
                             else
                                 root = root->GetSyntheticArrayMemberFromPointer(index, true);
                             if (!root.get())
                             {
                                 *first_unparsed = expression_cstr;
-                                *reason_to_stop = ValueObject::eNoSuchChild;
-                                *final_result = ValueObject::eInvalid;
+                                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                                *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                                 return ValueObjectSP();
                             }
                             else
                             {
                                 *first_unparsed = end+1; // skip ]
-                                *final_result = ValueObject::ePlain;
+                                *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                                 continue;
                             }
                         }
@@ -2671,40 +2673,58 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                         else // we do not know how to expand members of bitfields, so we just return and let the caller do any further processing
                         {
                             *first_unparsed = end+1; // skip ]
-                            *reason_to_stop = ValueObject::eBitfieldRangeOperatorMet;
-                            *final_result = ValueObject::eBitfield;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonBitfieldRangeOperatorMet;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeBitfield;
                             return root;
                         }
                     }
-                    else if (root->HasSyntheticValue() && options.m_no_synthetic_children == false)
+                    else if (options.m_no_synthetic_children == false)
                     {
-                        root = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                        if (root->HasSyntheticValue())
+                            root = root->GetSyntheticValue();
+                        else if (!root->IsSynthetic())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonSyntheticValueMissing;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
+                            return ValueObjectSP();
+                        }
+                        // if we are here, then root itself is a synthetic VO.. should be good to go
+                        
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonSyntheticValueMissing;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
+                            return ValueObjectSP();
+                        }
+                        root = root->GetChildAtIndex(index, true);
+                        if (!root.get())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                         else
                         {
                             *first_unparsed = end+1; // skip ]
-                            *final_result = ValueObject::ePlain;
+                            *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                             continue;
                         }
                     }
                     else
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eNoSuchChild;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                 }
@@ -2715,16 +2735,16 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     if (!end || end != separator_position) // if something weird is in our way return an error
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                     unsigned long index_higher = ::strtoul (separator_position+1, &end, 0);
                     if (!end || end != close_bracket_position) // if something weird is in our way return an error
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return ValueObjectSP();
                     }
                     if (index_lower > index_higher) // swap indices if required
@@ -2739,20 +2759,20 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                         else
                         {
                             *first_unparsed = end+1; // skip ]
-                            *reason_to_stop = ValueObject::eBitfieldRangeOperatorMet;
-                            *final_result = ValueObject::eBitfield;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonBitfieldRangeOperatorMet;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeBitfield;
                             return root;
                         }
                     }
                     else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
-                             *what_next == ValueObject::eDereference &&
+                             *what_next == ValueObject::eExpressionPathAftermathDereference &&
                              pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
                     {
                         Error error;
@@ -2760,21 +2780,21 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (error.Fail() || !root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eDereferencingFailed;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return ValueObjectSP();
                         }
                         else
                         {
-                            *what_next = ValueObject::eNothing;
+                            *what_next = ValueObject::eExpressionPathAftermathNothing;
                             continue;
                         }
                     }
                     else
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eArrayRangeOperatorMet;
-                        *final_result = ValueObject::eBoundedRange;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrayRangeOperatorMet;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeBoundedRange;
                         return root;
                     }
                 }
@@ -2783,8 +2803,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             default: // some non-separator is in the way
             {
                 *first_unparsed = expression_cstr;
-                *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                *final_result = ValueObject::eInvalid;
+                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                 return ValueObjectSP();
                 break;
             }
@@ -2822,7 +2842,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         
         if (!expression_cstr || *expression_cstr == '\0')
         {
-            *reason_to_stop = ValueObject::eEndOfString;
+            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
             list->Append(root);
             return 1;
         }
@@ -2836,15 +2856,15 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     if (!root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // if this is not even a scalar, this syntax is just plain wrong!
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eRangeOperatorInvalid;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorInvalid;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return 0;
                     }
                     else if (!options.m_allow_bitfields_syntax) // if this is a scalar, check that we can expand bitfields
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eRangeOperatorNotAllowed;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorNotAllowed;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return 0;
                     }
                 }
@@ -2853,8 +2873,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eEmptyRangeNotAllowed;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return 0;
                     }
                     else // expand this into list
@@ -2867,8 +2887,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             list->Append(child);
                         }
                         *first_unparsed = expression_cstr+2;
-                        *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                        *final_result = ValueObject::eValueObjectList;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                         return max_index; // tell me number of items I added to the VOList
                     }
                 }
@@ -2877,8 +2897,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                 if (!close_bracket_position) // if there is no ], this is a syntax error
                 {
                     *first_unparsed = expression_cstr;
-                    *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                    *final_result = ValueObject::eInvalid;
+                    *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                    *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return 0;
                 }
                 if (!separator_position || separator_position > close_bracket_position) // if no separator, this is either [] or [N]
@@ -2888,8 +2908,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     if (!end || end != close_bracket_position) // if something weird is in our way return an error
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return 0;
                     }
                     if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
@@ -2904,15 +2924,15 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                                 list->Append(child);
                             }
                             *first_unparsed = expression_cstr+2;
-                            *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                            *final_result = ValueObject::eValueObjectList;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                             return max_index; // tell me number of items I added to the VOList
                         }
                         else
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eEmptyRangeNotAllowed;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return 0;
                         }
                     }
@@ -2923,22 +2943,22 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return 0;
                         }
                         else
                         {
                             list->Append(root);
                             *first_unparsed = end+1; // skip ]
-                            *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                            *final_result = ValueObject::eValueObjectList;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                             return 1;
                         }
                     }
                     else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer))
                     {
-                        if (*what_next == ValueObject::eDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                        if (*what_next == ValueObject::eExpressionPathAftermathDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
                             pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
                         {
                             Error error;
@@ -2946,13 +2966,13 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             if (error.Fail() || !root.get())
                             {
                                 *first_unparsed = expression_cstr;
-                                *reason_to_stop = ValueObject::eDereferencingFailed;
-                                *final_result = ValueObject::eInvalid;
+                                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
+                                *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                                 return 0;
                             }
                             else
                             {
-                                *what_next = eNothing;
+                                *what_next = eExpressionPathAftermathNothing;
                                 continue;
                             }
                         }
@@ -2962,16 +2982,16 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             if (!root.get())
                             {
                                 *first_unparsed = expression_cstr;
-                                *reason_to_stop = ValueObject::eNoSuchChild;
-                                *final_result = ValueObject::eInvalid;
+                                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                                *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                                 return 0;
                             }
                             else
                             {
                                 list->Append(root);
                                 *first_unparsed = end+1; // skip ]
-                                *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                                *final_result = ValueObject::eValueObjectList;
+                                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                                *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                                 return 1;
                             }
                         }
@@ -2982,16 +3002,16 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return 0;
                         }
                         else // we do not know how to expand members of bitfields, so we just return and let the caller do any further processing
                         {
                             list->Append(root);
                             *first_unparsed = end+1; // skip ]
-                            *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                            *final_result = ValueObject::eValueObjectList;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                             return 1;
                         }
                     }
@@ -3003,16 +3023,16 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     if (!end || end != separator_position) // if something weird is in our way return an error
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return 0;
                     }
                     unsigned long index_higher = ::strtoul (separator_position+1, &end, 0);
                     if (!end || end != close_bracket_position) // if something weird is in our way return an error
                     {
                         *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                        *final_result = ValueObject::eInvalid;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                         return 0;
                     }
                     if (index_lower > index_higher) // swap indices if required
@@ -3027,21 +3047,21 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eNoSuchChild;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return 0;
                         }
                         else
                         {
                             list->Append(root);
                             *first_unparsed = end+1; // skip ]
-                            *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                            *final_result = ValueObject::eValueObjectList;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                             return 1;
                         }
                     }
                     else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
-                             *what_next == ValueObject::eDereference &&
+                             *what_next == ValueObject::eExpressionPathAftermathDereference &&
                              pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
                     {
                         Error error;
@@ -3049,13 +3069,13 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         if (error.Fail() || !root.get())
                         {
                             *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eDereferencingFailed;
-                            *final_result = ValueObject::eInvalid;
+                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDereferencingFailed;
+                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                             return 0;
                         }
                         else
                         {
-                            *what_next = ValueObject::eNothing;
+                            *what_next = ValueObject::eExpressionPathAftermathNothing;
                             continue;
                         }
                     }
@@ -3069,8 +3089,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             list->Append(child);
                         }
                         *first_unparsed = end+1;
-                        *reason_to_stop = ValueObject::eRangeOperatorExpanded;
-                        *final_result = ValueObject::eValueObjectList;
+                        *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorExpanded;
+                        *final_result = ValueObject::eExpressionPathEndResultTypeValueObjectList;
                         return index_higher-index_lower+1; // tell me number of items I added to the VOList
                     }
                 }
@@ -3079,8 +3099,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
             default: // some non-[ separator, or something entirely wrong, is in the way
             {
                 *first_unparsed = expression_cstr;
-                *reason_to_stop = ValueObject::eUnexpectedSymbol;
-                *final_result = ValueObject::eInvalid;
+                *reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnexpectedSymbol;
+                *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                 return 0;
                 break;
             }
@@ -3283,9 +3303,9 @@ DumpValueObject_Impl (Stream &s,
                 
                 if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
-                    ValueObjectSP synth_valobj = valobj->GetSyntheticValue (options.m_use_synthetic ?
-                                                                            eUseSyntheticFilter : 
-                                                                            eNoSyntheticFilter);
+                    ValueObject* synth_valobj;
+                    ValueObjectSP synth_valobj_sp = valobj->GetSyntheticValue (options.m_use_synthetic);
+                    synth_valobj = (synth_valobj_sp ? synth_valobj_sp.get() : valobj);
                     uint32_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
                     if (num_children)
@@ -3853,14 +3873,28 @@ ValueObject::EvaluationPoint::SetUpdated ()
 //}
 
 void
-ValueObject::ClearUserVisibleData()
+ValueObject::ClearUserVisibleData(uint32_t clear_mask)
 {
-    m_location_str.clear();
-    m_value_str.clear();
-    m_summary_str.clear();
-    m_object_desc_str.clear();
-    m_synthetic_value = NULL;
-    m_is_getting_summary = false;
+    if ((clear_mask & eClearUserVisibleDataItemsValue) == eClearUserVisibleDataItemsValue)
+        m_value_str.clear();
+    
+    if ((clear_mask & eClearUserVisibleDataItemsLocation) == eClearUserVisibleDataItemsLocation)
+        m_location_str.clear();
+    
+    if ((clear_mask & eClearUserVisibleDataItemsSummary) == eClearUserVisibleDataItemsSummary)
+    {
+        m_is_getting_summary = false;
+        m_summary_str.clear();
+    }
+    
+    if ((clear_mask & eClearUserVisibleDataItemsDescription) == eClearUserVisibleDataItemsDescription)
+        m_object_desc_str.clear();
+    
+    if ((clear_mask & eClearUserVisibleDataItemsSyntheticChildren) == eClearUserVisibleDataItemsSyntheticChildren)
+    {
+            if (m_synthetic_value)
+                m_synthetic_value = NULL;
+    }
 }
 
 SymbolContextScope *

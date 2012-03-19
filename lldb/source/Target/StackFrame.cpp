@@ -642,7 +642,11 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                             if (!child_valobj_sp)
                             {
                                 if (no_synth_child == false)
-                                    child_valobj_sp = valobj_sp->GetSyntheticValue(eUseSyntheticFilter)->GetChildMemberWithName (child_name, true);
+                                {
+                                    child_valobj_sp = valobj_sp->GetSyntheticValue();
+                                    if (child_valobj_sp)
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName (child_name, true);
+                                }
                                 
                                 if (no_synth_child || !child_valobj_sp)
                                 {
@@ -742,7 +746,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                     else if (is_objc_pointer)
                                     {                                            
                                         // dereferencing ObjC variables is not valid.. so let's try and recur to synthetic children
-                                        ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(eUseSyntheticFilter);
+                                        ValueObjectSP synthetic = valobj_sp->GetSyntheticValue();
                                         if (synthetic.get() == NULL /* no synthetic */
                                             || synthetic == valobj_sp) /* synthetic is the same as the original object */
                                         {
@@ -814,7 +818,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 }
                                 else
                                 {
-                                    ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(eUseSyntheticFilter);
+                                    ValueObjectSP synthetic = valobj_sp->GetSyntheticValue();
                                     if (no_synth_child /* synthetic is forbidden */ ||
                                         synthetic.get() == NULL /* no synthetic */
                                         || synthetic == valobj_sp) /* synthetic is the same as the original object */

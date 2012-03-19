@@ -258,7 +258,7 @@ LLDBSwigPythonCreateSyntheticProvider
     // has ownership of it and will manage memory for this object by itself
     lldb::SBValue *valobj_sb = new lldb::SBValue(valobj_sp);
 
-    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *)valobj_sb, SWIGTYPE_p_lldb__SBValue, SWIG_POINTER_OWN);
+    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *)valobj_sb, SWIGTYPE_p_lldb__SBValue, 0);
 
     if (ValObj_PyObj == NULL)
         Py_RETURN_NONE;
@@ -456,16 +456,19 @@ LLDBSwigPython_GetIndexOfChildWithName
     return 0;
 }
 
-SWIGEXPORT void
+SWIGEXPORT bool
 LLDBSwigPython_UpdateSynthProviderInstance
 (
     PyObject *implementor
 )
 {
+
+    bool ret_val = false;
+
     static char callee_name[] = "update";
 
     if (implementor == NULL || implementor == Py_None)
-        return;
+        return ret_val;
 
     // all this code is here because update is optional, so we don't want to bother trying to call it unless it's been def:ined for us
     // other synth provider calls are mandatory, so we want to fail in a very obvious way if they are missing!
@@ -479,7 +482,7 @@ LLDBSwigPython_UpdateSynthProviderInstance
     if (pmeth == NULL || pmeth == Py_None)
     {
         Py_XDECREF(pmeth);
-        return;
+        return ret_val;
     }
 
     if (PyCallable_Check(pmeth) == 0)
@@ -490,7 +493,7 @@ LLDBSwigPython_UpdateSynthProviderInstance
         }
 
         Py_XDECREF(pmeth);
-        return;
+        return ret_val;
     }
 
     if (PyErr_Occurred())
@@ -509,8 +512,13 @@ LLDBSwigPython_UpdateSynthProviderInstance
         PyErr_Print();
         PyErr_Clear();
     }
+    
+    if (py_return == Py_True)
+        ret_val = true;
 
     Py_XDECREF(py_return);
+    
+    return ret_val;
 
 }
 

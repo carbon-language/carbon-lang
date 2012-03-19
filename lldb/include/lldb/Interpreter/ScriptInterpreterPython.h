@@ -84,7 +84,7 @@ public:
     virtual int
     GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor, const char* child_name);
     
-    virtual void
+    virtual bool
     UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor);
     
     virtual bool

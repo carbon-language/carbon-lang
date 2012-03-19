@@ -149,7 +149,7 @@ class SynthDataFormatterTestCase(TestBase):
         # ...even if we use one-liner summaries
         self.runCmd("type summary add -c BagOfBags")
         self.expect('frame variable bag_bag',
-            substrs = ['(BagOfBags) bag_bag = (x.y=70, y->y[0-0]=true)'])
+            substrs = ['(BagOfBags) bag_bag = (x.y = 70, y->y[0-0] = true)'])
         
         self.runCmd("type summary delete BagOfBags")
 

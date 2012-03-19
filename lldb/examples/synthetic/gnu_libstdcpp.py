@@ -10,7 +10,6 @@ class StdListSynthProvider:
 
 	def __init__(self, valobj, dict):
 		self.valobj = valobj
-		self.update()
 
 	def next_node(self,node):
 		return node.GetChildMemberWithName('_M_next')
@@ -109,7 +108,6 @@ class StdVectorSynthProvider:
 
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
-		self.update()
 
 	def num_children(self):
 		if self.count == None:
@@ -193,7 +191,6 @@ class StdMapSynthProvider:
 
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
-		self.update()
 		
 	# we need this function as a temporary workaround for rdar://problem/10801549
 	# which prevents us from extracting the std::pair<K,V> SBType out of the template

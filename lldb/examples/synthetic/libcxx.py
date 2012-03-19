@@ -56,7 +56,6 @@ class stdvector_SynthProvider:
 
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
-		self.update()
 
 	def num_children(self):
 		try:
@@ -114,6 +113,7 @@ class stdvector_SynthProvider:
 		except:
 			pass
 
+# Just an example: the actual summary is produced by a summary string: size=${svar%#}
 def stdvector_SummaryProvider(valobj,dict):
 	prov = stdvector_SynthProvider(valobj,None)
 	return 'size=' + str(prov.num_children())
@@ -180,7 +180,6 @@ class stdlist_iterator:
 class stdlist_SynthProvider:
 	def __init__(self, valobj, dict):
 		self.valobj = valobj
-		self.update()
 
 	def next_node(self,node):
 		return node.GetChildMemberWithName('__next_')
@@ -272,6 +271,7 @@ class stdlist_SynthProvider:
 		except:
 			pass
 
+# Just an example: the actual summary is produced by a summary string: size=${svar%#}
 def stdlist_SummaryProvider(valobj,dict):
 	prov = stdlist_SynthProvider(valobj,None)
 	return 'size=' + str(prov.num_children())
@@ -368,7 +368,6 @@ class stdmap_SynthProvider:
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
 		self.pointer_size = self.valobj.GetProcess().GetAddressByteSize()
-		self.update()
 
 	def update(self):
 		try:
@@ -462,6 +461,7 @@ class stdmap_SynthProvider:
 			print err
 			return None
 
+# Just an example: the actual summary is produced by a summary string: size=${svar%#}
 def stdmap_SummaryProvider(valobj,dict):
 	prov = stdmap_SynthProvider(valobj,None)
 	return 'size=' + str(prov.num_children())

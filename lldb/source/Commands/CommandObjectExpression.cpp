@@ -363,7 +363,7 @@ CommandObjectExpression::EvaluateExpression
                 .SetUseDynamicType(use_dynamic)
                 .SetScopeChecked(true)
                 .SetFlatOutput(false)
-                .SetUseSyntheticValue(lldb::eUseSyntheticFilter)
+                .SetUseSyntheticValue(true)
                 .SetOmitSummaryDepth(0)
                 .SetIgnoreCap(false)
                 .SetFormat(format)

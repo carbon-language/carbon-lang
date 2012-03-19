@@ -57,6 +57,11 @@ int main()
                256*'B' +
                256*256*'C'+
                256*256*256*'D');
-    
+    // Set cast break point at this line.
+    test_cast.x = 'Q' +
+	               256*'X' +
+	               256*256*'T'+
+	               256*256*256*'F';
+    // Set second cast break point at this line.
     return 0;
 }

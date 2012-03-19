@@ -217,16 +217,19 @@ protected:
     Flags m_flags;
     lldb::Format m_format;
     uint32_t m_my_revision;
-};
     
+private:
+    DISALLOW_COPY_AND_ASSIGN(TypeFormatImpl);
+};
+
 class SyntheticChildrenFrontEnd
 {
 protected:
-    lldb::ValueObjectSP m_backend;
+    ValueObject &m_backend;
 public:
     
-    SyntheticChildrenFrontEnd(lldb::ValueObjectSP be) :
-    m_backend(be)
+    SyntheticChildrenFrontEnd(ValueObject &backend) :
+    m_backend(backend)
     {}
     
     virtual
@@ -243,13 +246,21 @@ public:
     virtual uint32_t
     GetIndexOfChildWithName (const ConstString &name) = 0;
     
-    virtual void
+    // this function is assumed to always succeed and it if fails, the front-end should know to deal
+    // with it in the correct way (most probably, by refusing to return any children)
+    // the return value of Update() should actually be interpreted as "ValueObjectSyntheticFilter cache is good/bad"
+    // if =true, ValueObjectSyntheticFilter is allowed to use the children it fetched previously and cached
+    // if =false, ValueObjectSyntheticFilter must throw away its cache, and query again for children
+    virtual bool
     Update() = 0;
     
     typedef STD_SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
-
-};
+    typedef std::auto_ptr<SyntheticChildrenFrontEnd> AutoPointer;
     
+private:
+    DISALLOW_COPY_AND_ASSIGN(SyntheticChildrenFrontEnd);
+};
+
 class SyntheticChildren
 {
 public:
@@ -419,8 +430,8 @@ public:
     virtual std::string
     GetDescription () = 0;
     
-    virtual SyntheticChildrenFrontEnd::SharedPointer
-    GetFrontEnd (lldb::ValueObjectSP backend) = 0;
+    virtual SyntheticChildrenFrontEnd::AutoPointer
+    GetFrontEnd (ValueObject &backend) = 0;
     
     typedef STD_SHARED_PTR(SyntheticChildren) SharedPointer;
     typedef bool(*SyntheticChildrenCallback)(void*, ConstString, const SyntheticChildren::SharedPointer&);
@@ -434,6 +445,9 @@ public:
 protected:
     uint32_t m_my_revision;
     Flags m_flags;
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(SyntheticChildren);
 };
 
 class TypeFilterImpl : public SyntheticChildren
@@ -525,8 +539,8 @@ public:
     public:
         
         FrontEnd(TypeFilterImpl* flt,
-                 lldb::ValueObjectSP be) :
-        SyntheticChildrenFrontEnd(be),
+                 ValueObject &backend) :
+        SyntheticChildrenFrontEnd(backend),
         filter(flt)
         {}
         
@@ -546,11 +560,11 @@ public:
         {
             if (idx >= filter->GetCount())
                 return lldb::ValueObjectSP();
-            return m_backend->GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx), can_create);
+            return m_backend.GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx), can_create);
         }
         
-        virtual void
-        Update() {}
+        virtual bool
+        Update() { return false; }
         
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name)
@@ -567,14 +581,18 @@ public:
         
         typedef STD_SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
         
+    private:
+        DISALLOW_COPY_AND_ASSIGN(FrontEnd);
     };
     
-    virtual SyntheticChildrenFrontEnd::SharedPointer
-    GetFrontEnd(lldb::ValueObjectSP backend)
+    virtual SyntheticChildrenFrontEnd::AutoPointer
+    GetFrontEnd(ValueObject &backend)
     {
-        return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(this, backend));
+        return SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(this, backend));
     }
     
+private:
+    DISALLOW_COPY_AND_ASSIGN(TypeFilterImpl);
 };
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -641,7 +659,7 @@ public:
     public:
         
         FrontEnd(std::string pclass,
-                 lldb::ValueObjectSP be);
+                 ValueObject &backend);
         
         virtual
         ~FrontEnd();
@@ -657,13 +675,13 @@ public:
         virtual lldb::ValueObjectSP
         GetChildAtIndex (uint32_t idx, bool can_create);
         
-        virtual void
+        virtual bool
         Update()
         {
             if (!m_wrapper_sp || m_interpreter == NULL)
-                return;
+                return false;
             
-            m_interpreter->UpdateSynthProviderInstance(m_wrapper_sp);
+            return m_interpreter->UpdateSynthProviderInstance(m_wrapper_sp);
         }
                 
         virtual uint32_t
@@ -675,14 +693,19 @@ public:
         }
         
         typedef STD_SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
-        
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN(FrontEnd);
     };
     
-    virtual SyntheticChildrenFrontEnd::SharedPointer
-    GetFrontEnd(lldb::ValueObjectSP backend)
+    virtual SyntheticChildrenFrontEnd::AutoPointer
+    GetFrontEnd(ValueObject &backend)
     {
-        return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(m_python_class, backend));
+        return SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(m_python_class, backend));
     }    
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(TypeSyntheticImpl);
 };
 
 #endif // #ifndef LLDB_DISABLE_PYTHON
@@ -841,8 +864,8 @@ public:
     public:
         
         FrontEnd(SyntheticArrayView* flt,
-                 lldb::ValueObjectSP be) :
-        SyntheticChildrenFrontEnd(be),
+                 ValueObject &backend) :
+        SyntheticChildrenFrontEnd(backend),
         filter(flt)
         {}
         
@@ -862,28 +885,32 @@ public:
         {
             if (idx >= filter->GetCount())
                 return lldb::ValueObjectSP();
-            return m_backend->GetSyntheticArrayMember(filter->GetRealIndexForIndex(idx), can_create);
+            return m_backend.GetSyntheticArrayMember(filter->GetRealIndexForIndex(idx), can_create);
         }
         
-        virtual void
-        Update() {}
+        virtual bool
+        Update() { return false; }
         
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name_cs);
         
         typedef STD_SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
-        
+    
+    private:
+        DISALLOW_COPY_AND_ASSIGN(FrontEnd);
     };
     
-    virtual SyntheticChildrenFrontEnd::SharedPointer
-    GetFrontEnd(lldb::ValueObjectSP backend)
+    virtual SyntheticChildrenFrontEnd::AutoPointer
+    GetFrontEnd(ValueObject &backend)
     {
-        return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(this, backend));
+        return SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(this, backend));
     }
 private:
     SyntheticArrayRange m_head;
     SyntheticArrayRange *m_tail;
-    
+
+private:
+    DISALLOW_COPY_AND_ASSIGN(SyntheticArrayView);
 };
 
 
@@ -1158,8 +1185,11 @@ public:
     {
     }
     
+    // we are using a ValueObject* instead of a ValueObjectSP because we do not need to hold on to this for
+    // extended periods of time and we trust the ValueObject to stay around for as long as it is required
+    // for us to generate its summary
     virtual bool
-    FormatObject (lldb::ValueObjectSP object,
+    FormatObject (ValueObject *valobj,
                   std::string& dest) = 0;
     
     virtual std::string
@@ -1181,7 +1211,9 @@ public:
 protected:
     uint32_t m_my_revision;
     Flags m_flags;
-
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(TypeSummaryImpl);
 };
 
 // simple string-based summaries, using ${var to show data
@@ -1213,7 +1245,7 @@ struct StringSummaryFormat : public TypeSummaryImpl
     }
     
     virtual bool
-    FormatObject(lldb::ValueObjectSP object,
+    FormatObject(ValueObject *valobj,
                  std::string& dest);
     
     virtual std::string
@@ -1224,7 +1256,10 @@ struct StringSummaryFormat : public TypeSummaryImpl
     {
         return false;
     }
-        
+
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(StringSummaryFormat);
 };
     
 #ifndef LLDB_DISABLE_PYTHON
@@ -1277,7 +1312,7 @@ struct ScriptSummaryFormat : public TypeSummaryImpl
     }
     
     virtual bool
-    FormatObject(lldb::ValueObjectSP object,
+    FormatObject(ValueObject *valobj,
                  std::string& dest);
     
     virtual std::string
@@ -1291,6 +1326,9 @@ struct ScriptSummaryFormat : public TypeSummaryImpl
     
     typedef STD_SHARED_PTR(ScriptSummaryFormat) SharedPointer;
 
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(ScriptSummaryFormat);
 };
 
 #endif // #ifndef LLDB_DISABLE_PYTHON
@@ -1317,7 +1355,7 @@ public:
     }
     
     // if constructing with a given type, is_regex cannot be true since we are
-    // very clearly pap
+    // giving an exact type to match
     TypeNameSpecifierImpl (lldb::TypeSP type) :
     m_is_regex(false),
     m_type()
@@ -1381,6 +1419,10 @@ private:
         lldb::TypeImplSP m_typeimpl_sp;
     };
     TypeOrName m_type;
+    
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN(TypeNameSpecifierImpl);
 };
     
 } // namespace lldb_private

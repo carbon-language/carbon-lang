@@ -127,8 +127,8 @@ class CppDataFormatterTestCase(TestBase):
         self.runCmd("type summary add -c Point")
             
         self.expect("frame variable iAmSomewhere",
-            substrs = ['x=4',
-                       'y=6'])
+            substrs = ['x = 4',
+                       'y = 6'])
         
         self.expect("type summary list",
             substrs = ['Point',

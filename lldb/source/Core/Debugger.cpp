@@ -867,20 +867,20 @@ ScanFormatDescriptor (const char* var_name_begin,
                 log->Printf("%s is an unknown format", format_name);
             // if this is an @ sign, print ObjC description
             if (*format_name == '@')
-                *val_obj_display = ValueObject::eDisplayLanguageSpecific;
+                *val_obj_display = ValueObject::eValueObjectRepresentationStyleLanguageSpecific;
             // if this is a V, print the value using the default format
             else if (*format_name == 'V')
-                *val_obj_display = ValueObject::eDisplayValue;
+                *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
             // if this is an L, print the location of the value
             else if (*format_name == 'L')
-                *val_obj_display = ValueObject::eDisplayLocation;
+                *val_obj_display = ValueObject::eValueObjectRepresentationStyleLocation;
             // if this is an S, print the summary after all
             else if (*format_name == 'S')
-                *val_obj_display = ValueObject::eDisplaySummary;
+                *val_obj_display = ValueObject::eValueObjectRepresentationStyleSummary;
             else if (*format_name == '#')
-                *val_obj_display = ValueObject::eDisplayChildrenCount;
+                *val_obj_display = ValueObject::eValueObjectRepresentationStyleChildrenCount;
             else if (*format_name == 'T')
-                *val_obj_display = ValueObject::eDisplayType;
+                *val_obj_display = ValueObject::eValueObjectRepresentationStyleType;
             else if (log)
                 log->Printf("%s is an error, leaving the previous value alone", format_name);
         }
@@ -889,7 +889,7 @@ ScanFormatDescriptor (const char* var_name_begin,
         {
             if (log)
                 log->Printf("will display value for this VO");
-            *val_obj_display = ValueObject::eDisplayValue;
+            *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
         }
         delete format_name;
     }
@@ -989,7 +989,7 @@ ExpandExpressionPath (ValueObject* valobj,
         *do_deref_pointer = true;
     }
 
-    valobj->GetExpressionPath(sstring, true, ValueObject::eHonorPointers);
+    valobj->GetExpressionPath(sstring, true, ValueObject::eGetExpressionPathFormatHonorPointers);
     if (log)
         log->Printf("expression path to expand in phase 0: %s",sstring.GetData());
     sstring.PutRawBytes(var_name_begin+3, var_name_final-var_name_begin-3);
@@ -1020,7 +1020,7 @@ ExpandIndexedExpression (ValueObject* valobj,
     ValueObject::GetValueForExpressionPathOptions options;
     ValueObject::ExpressionPathEndResultType final_value_type;
     ValueObject::ExpressionPathScanEndReason reason_to_stop;
-    ValueObject::ExpressionPathAftermath what_next = (deref_pointer ? ValueObject::eDereference : ValueObject::eNothing);
+    ValueObject::ExpressionPathAftermath what_next = (deref_pointer ? ValueObject::eExpressionPathAftermathDereference : ValueObject::eExpressionPathAftermathNothing);
     ValueObjectSP item = valobj->GetValueForExpressionPath (ptr_deref_buffer.get(),
                                                           &first_unparsed,
                                                           &reason_to_stop,
@@ -1135,8 +1135,8 @@ Debugger::FormatPrompt
                         const RegisterInfo *reg_info = NULL;
                         RegisterContext *reg_ctx = NULL;
                         bool do_deref_pointer = false;
-                        ValueObject::ExpressionPathScanEndReason reason_to_stop = ValueObject::eEndOfString;
-                        ValueObject::ExpressionPathEndResultType final_value_type = ValueObject::ePlain;
+                        ValueObject::ExpressionPathScanEndReason reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
+                        ValueObject::ExpressionPathEndResultType final_value_type = ValueObject::eExpressionPathEndResultTypePlain;
                         
                         // Each variable must set success to true below...
                         bool var_success = false;
@@ -1164,7 +1164,9 @@ Debugger::FormatPrompt
                                 
                                 if (*var_name_begin == 's')
                                 {
-                                    valobj = valobj->GetSyntheticValue(eUseSyntheticFilter).get();
+                                    valobj = valobj->GetSyntheticValue().get();
+                                    if (!valobj)
+                                        break;
                                     var_name_begin++;
                                 }
                                 
@@ -1179,10 +1181,10 @@ Debugger::FormatPrompt
                                     log->Printf("initial string: %s",var_name_begin);
                                                                 
                                 ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
-                                                                                  ValueObject::eDereference : ValueObject::eNothing);
+                                                                                  ValueObject::eExpressionPathAftermathDereference : ValueObject::eExpressionPathAftermathNothing);
                                 ValueObject::GetValueForExpressionPathOptions options;
                                 options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar().DoAllowSyntheticChildren();
-                                ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
+                                ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eValueObjectRepresentationStyleSummary;
                                 ValueObject* target = NULL;
                                 Format custom_format = eFormatInvalid;
                                 const char* var_name_final = NULL;
@@ -1201,7 +1203,7 @@ Debugger::FormatPrompt
                                 {
                                     was_plain_var = true;
                                     target = valobj;
-                                    val_obj_display = ValueObject::eDisplayValue;
+                                    val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
                                 }
                                 else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
                                 {
@@ -1209,7 +1211,7 @@ Debugger::FormatPrompt
                                     // this is a variable with some custom format applied to it
                                     const char* percent_position;
                                     target = valobj;
-                                    val_obj_display = ValueObject::eDisplayValue;
+                                    val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
                                     ScanFormatDescriptor (var_name_begin,
                                                           var_name_end,
                                                           &var_name_final,
@@ -1276,10 +1278,10 @@ Debugger::FormatPrompt
                                 else
                                     break;
                                 
-                                is_array_range = (final_value_type == ValueObject::eBoundedRange ||
-                                                  final_value_type == ValueObject::eUnboundedRange);
+                                is_array_range = (final_value_type == ValueObject::eExpressionPathEndResultTypeBoundedRange ||
+                                                  final_value_type == ValueObject::eExpressionPathEndResultTypeUnboundedRange);
                                 
-                                do_deref_pointer = (what_next == ValueObject::eDereference);
+                                do_deref_pointer = (what_next == ValueObject::eExpressionPathAftermathDereference);
 
                                 if (do_deref_pointer && !is_array_range)
                                 {
@@ -1302,14 +1304,14 @@ Debugger::FormatPrompt
                                 bool is_pointer = ClangASTContext::IsPointerType(target->GetClangType());
                                 bool is_aggregate = ClangASTContext::IsAggregateType(target->GetClangType());
                                 
-                                if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eDisplayValue) // this should be wrong, but there are some exceptions
+                                if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue) // this should be wrong, but there are some exceptions
                                 {
                                     StreamString str_temp;
                                     if (log)
                                         log->Printf("I am into array || pointer && !range");
                                     
-                                    if (target->HasSpecialCasesForPrintableRepresentation(val_obj_display,
-                                                                                          custom_format))
+                                    if (target->HasSpecialPrintableRepresentation(val_obj_display,
+                                                                                  custom_format))
                                     {
                                         // try to use the special cases
                                         var_success = target->DumpPrintableRepresentation(str_temp,
@@ -1334,9 +1336,10 @@ Debugger::FormatPrompt
                                         }
                                         else if (is_pointer) // if pointer, value is the address stored
                                         {
-                                            var_success = target->GetPrintableRepresentation(s,
+                                            var_success = target->DumpPrintableRepresentation(s,
                                                                                              val_obj_display,
-                                                                                             custom_format);
+                                                                                             custom_format,
+                                                                                             ValueObject::ePrintableRepresentationSpecialCasesDisable);
                                         }
                                         else
                                         {
@@ -1357,7 +1360,7 @@ Debugger::FormatPrompt
                                 }
                                 
                                 // if directly trying to print ${var%V}, and this is an aggregate, do not let the user do it
-                                if (is_aggregate && ((was_var_format && val_obj_display == ValueObject::eDisplayValue)))
+                                if (is_aggregate && ((was_var_format && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue)))
                                 {
                                     s << "<invalid use of aggregate type>";
                                     var_success = true;

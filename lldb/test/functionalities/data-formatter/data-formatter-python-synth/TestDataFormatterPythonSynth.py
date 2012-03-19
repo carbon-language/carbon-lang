@@ -22,14 +22,28 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.buildDwarf()
         self.data_formatter_commands()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_rdar10960550_with_dsym_and_run_command(self):
+        """Test data formatter commands."""
+        self.buildDsym()
+        self.rdar10960550_formatter_commands()
+
+    def test_rdar10960550_with_dwarf_and_run_command(self):
+        """Test data formatter commands."""
+        self.buildDwarf()
+        self.rdar10960550_formatter_commands()
+
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
+        self.line2 = line_number('main.cpp', '// Set cast break point at this line.')
+        self.line3 = line_number('main.cpp', '// Set second cast break point at this line.')
 
     def data_formatter_commands(self):
-        """Test that that file and class static variables display correctly."""
+        """Test using Python synthetic children provider."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         self.expect("breakpoint set -f main.cpp -l %d" % self.line,
@@ -184,17 +198,74 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
         self.expect("frame variable f00_1", matching=False,
                 substrs = ['fake_a = '])
-        
-        self.runCmd("n")
-        
-        self.runCmd("script from ftsp import *")
-        self.runCmd("type synth add -l ftsp wrapint")
-        
-        self.expect('frame variable test_cast',
-            substrs = ['A',
-                       'B',
-                       'C',
-                       'D'])
+
+    def rdar10960550_formatter_commands(self):
+        """Test that synthetic children persist stoppoints."""
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line2,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
+                        self.line2)
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line3,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 2: file ='main.cpp', line = %d, locations = 1" %
+                        self.line3)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type filter clear', check=False)
+            self.runCmd('type synth clear', check=False)
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
+        self.runCmd("command script import ./ftsp.py --allow-reload")
+        self.runCmd("type synth add -l ftsp.ftsp wrapint")
+
+        # we need to check that the VO is properly updated so that the same synthetic children are reused
+        # but their values change correctly across stop-points - in order to do this, self.runCmd("next")
+        # does not work because it forces a wipe of the stack frame - this is why we are using this more contrived
+        # mechanism to achieve our goal of preserving test_cast as a VO
+        test_cast = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('test_cast')
+
+        str_cast = str(test_cast)
+
+        if self.TraceOn():
+             print str_cast
+
+        self.assertTrue(str_cast.find('A') != -1, 'could not find A in output')
+        self.assertTrue(str_cast.find('B') != -1, 'could not find B in output')
+        self.assertTrue(str_cast.find('C') != -1, 'could not find C in output')
+        self.assertTrue(str_cast.find('D') != -1, 'could not find D in output')
+        self.assertTrue(str_cast.find("4 = '\\0'") != -1, 'could not find item 4 == 0')
+
+        self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().StepOver()
+
+        str_cast = str(test_cast)
+
+        if self.TraceOn():
+             print str_cast
+
+        # we detect that all the values of the child objects have changed - but the counter-generated item
+        # is still fixed at 0 because it is cached - this would fail if update(self): in ftsp returned False
+        # or if synthetic children were not being preserved
+        self.assertTrue(str_cast.find('Q') != -1, 'could not find Q in output')
+        self.assertTrue(str_cast.find('X') != -1, 'could not find X in output')
+        self.assertTrue(str_cast.find('T') != -1, 'could not find T in output')
+        self.assertTrue(str_cast.find('F') != -1, 'could not find F in output')
+        self.assertTrue(str_cast.find("4 = '\\0'") != -1, 'could not find item 4 == 0')
+
 
 if __name__ == '__main__':
     import atexit

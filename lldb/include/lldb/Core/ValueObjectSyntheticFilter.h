@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 #include <map>
-#include <ostream>
 #include <vector>
 // Other libraries and framework includes
 // Project includes
@@ -61,13 +60,15 @@ public:
     virtual bool
     HasSyntheticValue()
     {
-        return true;    // we are our own synthetic value
+        return false;
     }
     
+    virtual bool
+    IsSynthetic() { return true; }
+    
     virtual void
-    CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
+    CalculateSyntheticValue (bool use_synthetic)
     {
-        m_synthetic_value = this;
     }
     
     virtual bool
@@ -96,16 +97,6 @@ public:
         else
             return NULL;
     }
-
-    void
-    SetOwningSP (lldb::ValueObjectSP &owning_sp)
-    {
-        if (m_owning_valobj_sp == owning_sp)
-            return;
-            
-        assert (m_owning_valobj_sp.get() == NULL);
-        m_owning_valobj_sp = owning_sp;
-    }
     
 protected:
     virtual bool
@@ -117,21 +108,19 @@ protected:
     virtual lldb::clang_type_t
     GetClangTypeImpl ();
 
-    Address  m_address;  ///< The variable that this value object is based upon
-    lldb::TypeSP m_type_sp;
-    lldb::ValueObjectSP m_owning_valobj_sp;
-    lldb::SyntheticValueType m_use_synthetic;
-    lldb::SyntheticChildrenSP m_synth_sp;   // hold on to your synthetic children provider
-    lldb::SyntheticChildrenFrontEndSP m_synth_filter;
+    // we need to hold on to the SyntheticChildren because someone might delete the type binding while we are alive
+    lldb::SyntheticChildrenSP m_synth_sp;
+    std::auto_ptr<SyntheticChildrenFrontEnd> m_synth_filter_ap;
     
-    typedef std::map<uint32_t, lldb::ValueObjectSP> ByIndexMap;
+    typedef std::map<uint32_t, ValueObject*> ByIndexMap;
     typedef std::map<const char*, uint32_t> NameToIndexMap;
     
     typedef ByIndexMap::iterator ByIndexIterator;
     typedef NameToIndexMap::iterator NameToIndexIterator;
-    
-    ByIndexMap m_children_byindex;
-    NameToIndexMap m_name_toindex;
+
+    ByIndexMap      m_children_byindex;
+    NameToIndexMap  m_name_toindex;
+    uint32_t        m_children_count;
 
 private:
     friend class ValueObject;

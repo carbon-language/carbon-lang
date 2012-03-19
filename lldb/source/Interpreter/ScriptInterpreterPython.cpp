@@ -91,7 +91,7 @@ extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren        (void *impl
 extern "C" void*          LLDBSwigPython_GetChildAtIndex             (void *implementor, uint32_t idx);
 extern "C" int            LLDBSwigPython_GetIndexOfChildWithName     (void *implementor, const char* child_name);
 extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
-extern "C" void           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
+extern "C" bool           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
 
 extern "C" bool           LLDBSwigPythonCallCommand 
 (
@@ -1654,26 +1654,28 @@ ScriptInterpreterPython::GetIndexOfChildWithName (const lldb::ScriptInterpreterO
     return ret_val;
 }
 
-void
+bool
 ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor_sp)
 {
+    bool ret_val = false;
+    
     if (!implementor_sp)
-        return;
+        return ret_val;
     
     void* implementor = implementor_sp->GetObject();
     
     if (!implementor)
-        return;
+        return ret_val;
     
     if (!g_swig_update_provider)
-        return;
+        return ret_val;
     
     {
         Locker py_lock(this);
-        g_swig_update_provider       (implementor);
+        ret_val = g_swig_update_provider       (implementor);
     }
     
-    return;
+    return ret_val;
 }
 
 bool

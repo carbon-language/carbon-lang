@@ -701,7 +701,7 @@ public:
                     .SetUseObjectiveC(m_varobj_options.use_objc)
                     .SetScopeChecked(scope_already_checked)
                     .SetFlatOutput(m_varobj_options.flat_output)
-                    .SetUseSyntheticValue(m_varobj_options.be_raw ? lldb::eNoSyntheticFilter : (m_varobj_options.use_synth ? lldb::eUseSyntheticFilter : lldb::eNoSyntheticFilter) )
+                    .SetUseSyntheticValue(m_varobj_options.be_raw ? false : m_varobj_options.use_synth)
                     .SetOmitSummaryDepth(m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth)
                     .SetIgnoreCap(m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap)
                     .SetFormat(format)

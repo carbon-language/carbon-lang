@@ -22,7 +22,6 @@
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/StackFrame.h"
@@ -66,17 +65,17 @@ StringSummaryFormat::StringSummaryFormat(const TypeSummaryImpl::Flags& flags,
 }
 
 bool
-StringSummaryFormat::FormatObject(lldb::ValueObjectSP object,
+StringSummaryFormat::FormatObject(ValueObject *valobj,
                                   std::string& retval)
 {
-    if (!object.get())
+    if (!valobj)
     {
-        retval.assign("NULL sp");
+        retval.assign("NULL ValueObject");
         return false;
     }
     
     StreamString s;
-    ExecutionContext exe_ctx (object->GetExecutionContextRef());
+    ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
     SymbolContext sc;
     StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame)
@@ -84,15 +83,22 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object,
     
     if (IsOneliner())
     {
-        ValueObjectSP synth_valobj = object->GetSyntheticValue(lldb::eUseSyntheticFilter);
-        const uint32_t num_children = synth_valobj->GetNumChildren();
+        ValueObject* object;
+        
+        ValueObjectSP synth_valobj = valobj->GetSyntheticValue();
+        if (synth_valobj)
+            object = synth_valobj.get();
+        else
+            object = valobj;
+        
+        const uint32_t num_children = object->GetNumChildren();
         if (num_children)
         {
             s.PutChar('(');
             
             for (uint32_t idx=0; idx<num_children; ++idx)
             {
-                lldb::ValueObjectSP child_sp(synth_valobj->GetChildAtIndex(idx, true));
+                lldb::ValueObjectSP child_sp(object->GetChildAtIndex(idx, true));
                 if (child_sp.get())
                 {
                     if (idx)
@@ -100,9 +106,12 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object,
                     if (!HideNames())
                     {
                         s.PutCString(child_sp.get()->GetName().AsCString());
-                        s.PutChar('=');
+                        s.PutCString(" = ");
                     }
-                    child_sp.get()->GetPrintableRepresentation(s);
+                    child_sp.get()->DumpPrintableRepresentation(s,
+                                                                ValueObject::eValueObjectRepresentationStyleSummary,
+                                                                lldb::eFormatInvalid,
+                                                                ValueObject::ePrintableRepresentationSpecialCasesDisable);
                 }
             }
             
@@ -120,7 +129,7 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object,
     }
     else
     {
-        if (Debugger::FormatPrompt(m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, object.get()))
+        if (Debugger::FormatPrompt(m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, valobj))
         {
             retval.assign(s.GetString());
             return true;
@@ -167,14 +176,21 @@ ScriptSummaryFormat::ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
 }
 
 bool
-ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object,
+ScriptSummaryFormat::FormatObject(ValueObject *valobj,
                                   std::string& retval)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    Debugger& dbg = object->GetTargetSP()->GetDebugger();
-    ScriptInterpreter *script_interpreter = dbg.GetCommandInterpreter().GetScriptInterpreter();
-    
+    TargetSP target_sp(valobj->GetTargetSP());
+
+    if (!target_sp)
+    {
+        retval.assign("error: no target");
+        return false;
+    }
+
+    ScriptInterpreter *script_interpreter = target_sp->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+
     if (!script_interpreter)
     {
         retval.assign("error: no ScriptInterpreter");
@@ -182,7 +198,7 @@ ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object,
     }
         
     return script_interpreter->GetScriptedSummary(m_function_name.c_str(),
-                                                  object,
+                                                  valobj->GetSP(),
                                                   m_script_function_sp,
                                                   retval);
 
@@ -253,19 +269,24 @@ SyntheticArrayView::GetDescription()
 
 #ifndef LLDB_DISABLE_PYTHON
 
-TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass, lldb::ValueObjectSP be) :
-    SyntheticChildrenFrontEnd(be),
+TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass, ValueObject &backend) :
+    SyntheticChildrenFrontEnd(backend),
     m_python_class(pclass),
     m_wrapper_sp(),
     m_interpreter(NULL)
 {
-    if (be.get() == NULL)
+    if (backend == NULL)
         return;
     
-    m_interpreter = m_backend->GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    TargetSP target_sp = backend.GetTargetSP();
+    
+    if (!target_sp)
+        return;
+    
+    m_interpreter = target_sp->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
     if (m_interpreter != NULL)
-        m_wrapper_sp = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
+        m_wrapper_sp = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, backend.GetSP());
 }
 
 TypeSyntheticImpl::FrontEnd::~FrontEnd()

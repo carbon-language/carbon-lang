@@ -15,87 +15,62 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/FormatClasses.h"
-#include "lldb/Core/Module.h"
-#include "lldb/Core/ValueObjectList.h"
-#include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObject.h"
-
-#include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Symbol/Type.h"
-#include "lldb/Symbol/Variable.h"
-
-#include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/LanguageRuntime.h"
-#include "lldb/Target/Process.h"
-#include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/Target.h"
-#include "lldb/Target/Thread.h"
-
 
 using namespace lldb_private;
 
 ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter) :
     ValueObject(parent),
-    m_address (),
-    m_type_sp(),
-    m_use_synthetic (lldb::eUseSyntheticFilter),
     m_synth_sp(filter),
-    m_synth_filter(filter->GetFrontEnd(parent.GetSP())),
+    m_synth_filter_ap(filter->GetFrontEnd(parent)),
     m_children_byindex(),
-    m_name_toindex()
+    m_name_toindex(),
+    m_children_count(UINT32_MAX)
 {
-    SetName (parent.GetName());
+#ifdef LLDB_CONFIGURATION_DEBUG
+    std::string new_name(parent.GetName().AsCString());
+    new_name += "$$__synth__";
+    SetName (ConstString(new_name.c_str()));
+#else
+    SetName(parent.GetName());
+#endif
 }
 
 ValueObjectSynthetic::~ValueObjectSynthetic()
 {
-    m_owning_valobj_sp.reset();
 }
 
 lldb::clang_type_t
 ValueObjectSynthetic::GetClangTypeImpl ()
 {
-    if (m_type_sp)
-        return m_value.GetClangType();
-    else
-        return m_parent->GetClangType();
+    return m_parent->GetClangType();
 }
 
 ConstString
 ValueObjectSynthetic::GetTypeName()
 {
-    const bool success = UpdateValueIfNeeded(false);
-    if (success && m_type_sp)
-        return ClangASTType::GetConstTypeName (GetClangType());
-    else
-        return m_parent->GetTypeName();
+    return m_parent->GetTypeName();
 }
 
 uint32_t
 ValueObjectSynthetic::CalculateNumChildren()
 {
-    return m_synth_filter->CalculateNumChildren();
+    UpdateValueIfNeeded();
+    if (m_children_count < UINT32_MAX)
+        return m_children_count;
+    return (m_children_count = m_synth_filter_ap->CalculateNumChildren());
 }
 
 clang::ASTContext *
 ValueObjectSynthetic::GetClangASTImpl ()
 {
-    const bool success = UpdateValueIfNeeded(false);
-    if (success && m_type_sp)
-        return m_type_sp->GetClangAST();
-    else
-        return m_parent->GetClangAST ();
+    return m_parent->GetClangAST ();
 }
 
 size_t
 ValueObjectSynthetic::GetByteSize()
 {
-    const bool success = UpdateValueIfNeeded(false);
-    if (success && m_type_sp)
-        return m_value.GetValueByteSize(GetClangAST(), NULL);
-    else
-        return m_parent->GetByteSize();
+    return m_parent->GetByteSize();
 }
 
 lldb::ValueType
@@ -113,17 +88,19 @@ ValueObjectSynthetic::UpdateValue ()
     if (!m_parent->UpdateValueIfNeeded(false))
     {
         // our parent could not update.. as we are meaningless without a parent, just stop
-        if (m_error.Success() && m_parent->GetError().Fail())
+        if (m_parent->GetError().Fail())
             m_error = m_parent->GetError();
         return false;
     }
 
-    m_children_byindex.clear();
-    m_name_toindex.clear();
-    
     // let our backend do its update
-    
-    m_synth_filter->Update();
+    if (m_synth_filter_ap->Update() == false)
+    {
+        // filter said that cached values are stale
+        m_children_byindex.clear();
+        m_name_toindex.clear();
+        m_children_count = UINT32_MAX;
+    }
     
     SetValueIsValid(true);
     return true;
@@ -132,27 +109,30 @@ ValueObjectSynthetic::UpdateValue ()
 lldb::ValueObjectSP
 ValueObjectSynthetic::GetChildAtIndex (uint32_t idx, bool can_create)
 {
+    UpdateValueIfNeeded();
+    
     ByIndexIterator iter = m_children_byindex.find(idx);
     
     if (iter == m_children_byindex.end())
     {
-        if (can_create && m_synth_filter != NULL)
+        if (can_create && m_synth_filter_ap.get() != NULL)
         {
-            lldb::ValueObjectSP synth_guy = m_synth_filter->GetChildAtIndex (idx, can_create);
-            m_children_byindex[idx]= synth_guy;
+            lldb::ValueObjectSP synth_guy = m_synth_filter_ap->GetChildAtIndex (idx, can_create);
+            m_children_byindex[idx]= synth_guy.get();
             return synth_guy;
         }
         else
             return lldb::ValueObjectSP();
     }
     else
-        return iter->second;
+        return iter->second->GetSP();
 }
 
 lldb::ValueObjectSP
 ValueObjectSynthetic::GetChildMemberWithName (const ConstString &name, bool can_create)
 {
-    
+    UpdateValueIfNeeded();
+
     uint32_t index = GetIndexOfChildWithName(name);
     
     if (index == UINT32_MAX)
@@ -164,15 +144,17 @@ ValueObjectSynthetic::GetChildMemberWithName (const ConstString &name, bool can_
 uint32_t
 ValueObjectSynthetic::GetIndexOfChildWithName (const ConstString &name)
 {
+    UpdateValueIfNeeded();
+    
     NameToIndexIterator iter = m_name_toindex.find(name.GetCString());
     
-    if (iter == m_name_toindex.end() && m_synth_filter != NULL)
+    if (iter == m_name_toindex.end() && m_synth_filter_ap.get() != NULL)
     {
-        uint32_t index = m_synth_filter->GetIndexOfChildWithName (name);
+        uint32_t index = m_synth_filter_ap->GetIndexOfChildWithName (name);
         m_name_toindex[name.GetCString()] = index;
         return index;
     }
-    else if (iter == m_name_toindex.end() && m_synth_filter == NULL)
+    else if (iter == m_name_toindex.end() && m_synth_filter_ap.get() == NULL)
         return UINT32_MAX;
     else /*if (iter != m_name_toindex.end())*/
         return iter->second;

@@ -414,7 +414,7 @@ public:
             .SetShowLocation(m_varobj_options.show_location)
             .SetUseObjectiveC(m_varobj_options.use_objc)
             .SetUseDynamicType(m_varobj_options.use_dynamic)
-            .SetUseSyntheticValue((lldb::SyntheticValueType)m_varobj_options.use_synth)
+            .SetUseSyntheticValue(m_varobj_options.use_synth)
             .SetFlatOutput(m_varobj_options.flat_output)
             .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
             .SetIgnoreCap(m_varobj_options.ignore_cap)

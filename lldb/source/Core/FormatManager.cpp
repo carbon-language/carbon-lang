@@ -693,15 +693,12 @@ FormatManager::LoadLibcxxFormatters()
                                                                                                  "libcxx.stdmap_SynthProvider")));
     
     stl_summary_flags.SetDontShowChildren(false);
-    code.assign("     libcxx.stdvector_SummaryProvider(valobj,dict)");
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)vector<.+>$")),
-                                                        TypeSummaryImplSP(new ScriptSummaryFormat(stl_summary_flags, "libcxx.stdvector_SummaryProvider",code.c_str())));
-    code.assign("     libcxx.stdlist_SummaryProvider(valobj,dict)");
+                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)list<.+>$")),
-                                                        TypeSummaryImplSP(new ScriptSummaryFormat(stl_summary_flags, "libcxx.stdlist_SummaryProvider",code.c_str())));
-    code.assign("     libcxx.stdmap_SummaryProvider(valobj,dict)");
+                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)map<.+> >$")),
-                                                        TypeSummaryImplSP(new ScriptSummaryFormat(stl_summary_flags, "libcxx.stdmap_SummaryProvider",code.c_str())));
+                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
 #endif
 }
 

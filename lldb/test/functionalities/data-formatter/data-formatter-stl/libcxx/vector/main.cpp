@@ -1,4 +1,7 @@
 #include <string>
+#ifdef _LIBCPP_INLINE_VISIBILITY
+#undef _LIBCPP_INLINE_VISIBILITY
+#endif
 #define _LIBCPP_INLINE_VISIBILITY
 #include <vector>
 typedef std::vector<int> int_vect;
