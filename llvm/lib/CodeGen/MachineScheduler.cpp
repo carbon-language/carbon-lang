@@ -39,6 +39,9 @@ static cl::opt<bool> ForceBottomUp("misched-bottomup", cl::Hidden,
 #ifndef NDEBUG
 static cl::opt<bool> ViewMISchedDAGs("view-misched-dags", cl::Hidden,
   cl::desc("Pop up a window to show MISched dags after they are processed"));
+
+static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
+  cl::desc("Stop scheduling after N instructions"), cl::init(~0U));
 #else
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
@@ -281,10 +284,15 @@ class ScheduleDAGMI : public ScheduleDAGInstrs {
 
   /// The bottom of the unscheduled zone.
   MachineBasicBlock::iterator CurrentBottom;
+
+  /// The number of instructions scheduled so far. Used to cut off the
+  /// scheduler at the point determined by misched-cutoff.
+  unsigned NumInstrsScheduled;
 public:
   ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), SchedImpl(S), CurrentTop(), CurrentBottom() {}
+    AA(C->AA), SchedImpl(S), CurrentTop(), CurrentBottom(),
+    NumInstrsScheduled(0) {}
 
   ~ScheduleDAGMI() {
     delete SchedImpl;
@@ -398,6 +406,16 @@ void ScheduleDAGMI::schedule() {
   CurrentBottom = RegionEnd;
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
+
+#ifndef NDEBUG
+    // Enable break
+    if (NumInstrsScheduled == MISchedCutoff && MISchedCutoff != ~0U) {
+      CurrentTop = CurrentBottom;
+      break;
+    }
+    ++NumInstrsScheduled;
+#endif
+
     DEBUG(dbgs() << "*** " << (IsTopNode ? "Top" : "Bottom")
           << " Scheduling Instruction:\n"; SU->dump(this));
 
