@@ -17,7 +17,6 @@
 #include "cxa_handlers.hpp"
 #include "cxa_exception.hpp"
 #include "private_typeinfo.h"
-#include "cxa_default_handlers.hpp"
 
 __attribute__((noreturn))
 static void default_handler(const char* cause)
@@ -76,14 +75,14 @@ static void default_handler(const char* cause)
 }
 
 
-__attribute__((visibility("hidden"), noreturn))
-void default_terminate_handler() 
+__attribute__((noreturn))
+static void default_terminate_handler() 
 {
 	default_handler("terminate");
 }
 
-__attribute__((visibility("hidden"), noreturn))
-void default_unexpected_handler() 
+__attribute__((noreturn))
+static void default_unexpected_handler() 
 {
 	default_handler("unexpected");
 }
@@ -103,7 +102,7 @@ set_unexpected(unexpected_handler func) _NOEXCEPT
 {
 	if (func == 0)
 		func = default_unexpected_handler;
-	return __sync_swap(&__cxxabiapple::__cxa_unexpected_handler, func);
+	return __sync_swap(&__cxa_unexpected_handler, func);
 }
 
 terminate_handler
@@ -111,7 +110,7 @@ set_terminate(terminate_handler func) _NOEXCEPT
 {
 	if (func == 0)
 		func = default_terminate_handler;
-	return __sync_swap(&__cxxabiapple::__cxa_terminate_handler, func);
+	return __sync_swap(&__cxa_terminate_handler, func);
 }
 
 };

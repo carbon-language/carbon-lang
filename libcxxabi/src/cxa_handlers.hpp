@@ -10,6 +10,9 @@
 //   unexpected_handler, and new_handler.
 //===----------------------------------------------------------------------===//
 
+#ifndef _CXA_HANDLERS_H
+#define _CXA_HANDLERS_H
+
 #include <exception>
 
 namespace std
@@ -24,3 +27,14 @@ void
 __terminate(terminate_handler func) _NOEXCEPT;
 
 }  // std
+
+extern "C"
+{
+
+extern void (*__cxa_terminate_handler)();
+extern void (*__cxa_unexpected_handler)();
+extern void (*__cxa_new_handler)();
+
+} // extern "C"
+
+#endif  // _CXA_HANDLERS_H

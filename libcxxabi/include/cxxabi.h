@@ -172,21 +172,4 @@ extern bool __cxa_uncaught_exception() throw();
 
 namespace abi = __cxxabiv1;
 
-// Below are Apple extensions to support implementing C++ ABI in a seperate dylib
-namespace __cxxabiapple
-{
-extern "C"
-{
-
-// Apple additions to support multiple STL stacks that share common 
-// terminate, unexpected, and new handlers
-//   But touching these is a bad idea.  It is not thread safe.
-//   Use get_terminate, set_terminate, etc. instead.
-extern void (*__cxa_terminate_handler)();
-extern void (*__cxa_unexpected_handler)();
-extern void (*__cxa_new_handler)();
-
-} // extern "C"
-} // namespace __cxxabiv1
-
 #endif // __CXXABI_H 

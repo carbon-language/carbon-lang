@@ -17,10 +17,7 @@
 #include "cxxabi.h"
 #include "cxa_handlers.hpp"
 #include "cxa_exception.hpp"
-#include "cxa_default_handlers.hpp"
 #include "private_typeinfo.h"
-
-std::new_handler __cxa_new_handler = 0;
 
 namespace std
 {
@@ -28,7 +25,7 @@ namespace std
 unexpected_handler
 get_unexpected() _NOEXCEPT
 {
-    return __cxxabiapple::__cxa_unexpected_handler;
+    return __cxa_unexpected_handler;
 }
 
 __attribute__((visibility("hidden"), noreturn))
@@ -50,7 +47,7 @@ unexpected()
 terminate_handler
 get_terminate() _NOEXCEPT
 {
-    return __cxxabiapple::__cxa_terminate_handler;
+    return __cxa_terminate_handler;
 }
 
 __attribute__((visibility("hidden"), noreturn))
@@ -98,16 +95,18 @@ terminate() _NOEXCEPT
     __terminate(get_terminate());
 }
 
+new_handler __cxa_new_handler = 0;
+
 new_handler
 set_new_handler(new_handler handler) _NOEXCEPT
 {
-    return __sync_swap(&__cxxabiapple::__cxa_new_handler, handler);
+    return __sync_swap(&__cxa_new_handler, handler);
 }
 
 new_handler
 get_new_handler() _NOEXCEPT
 {
-    return __cxxabiapple::__cxa_new_handler;
+    return __cxa_new_handler;
 }
 
 }  // std

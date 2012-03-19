@@ -11,6 +11,9 @@
 //  
 //===----------------------------------------------------------------------===//
 
+#ifndef _CXA_EXCEPTION_H
+#define _CXA_EXCEPTION_H
+
 #include <exception> // for std::unexpected_handler and std::terminate_handler
 #include <cxxabi.h>
 #include "unwind.h"
@@ -116,3 +119,5 @@ static const uint64_t get_vendor_and_language =     0xFFFFFFFFFFFFFF00; // mask 
 
 #pragma GCC visibility pop
 }
+
+#endif  // _CXA_EXCEPTION_H
