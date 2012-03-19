@@ -144,6 +144,9 @@ def AtomItineraries : ProcessorItineraries<
   InstrItinData<IIC_MOVZX_R16_R8, [InstrStage<2, [Port0, Port1]>] >,
   InstrItinData<IIC_MOVZX_R16_M8, [InstrStage<3, [Port0, Port1]>] >,
 
+  InstrItinData<IIC_REP_MOVS, [InstrStage<75, [Port0, Port1]>] >,
+  InstrItinData<IIC_REP_STOS, [InstrStage<74, [Port0, Port1]>] >,
+
   // SSE binary operations
   // arithmetic fp scalar
   InstrItinData<IIC_SSE_ALU_F32S_RR, [InstrStage<5, [Port1]>] >,
@@ -289,6 +292,14 @@ def AtomItineraries : ProcessorItineraries<
   InstrItinData<IIC_SSE_CVT_SS2SI64_RR, [InstrStage<9, [Port0, Port1]>] >,
   InstrItinData<IIC_SSE_CVT_SS2SI64_RM, [InstrStage<10, [Port0, Port1]>] >,
   InstrItinData<IIC_SSE_CVT_SD2SI_RR, [InstrStage<8, [Port0, Port1]>] >,
-  InstrItinData<IIC_SSE_CVT_SD2SI_RM, [InstrStage<9, [Port0, Port1]>] >
-]>;
+  InstrItinData<IIC_SSE_CVT_SD2SI_RM, [InstrStage<9, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_CMPX_LOCK, [InstrStage<14, [Port0, Port1]>] >,
+  InstrItinData<IIC_CMPX_LOCK_8, [InstrStage<6, [Port0, Port1]>] >,
+  InstrItinData<IIC_CMPX_LOCK_8B, [InstrStage<18, [Port0, Port1]>] >,
+  InstrItinData<IIC_CMPX_LOCK_16B, [InstrStage<22, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_XADD_LOCK_MEM, [InstrStage<2, [Port0, Port1]>] >,
+  InstrItinData<IIC_XADD_LOCK_MEM, [InstrStage<3, [Port0, Port1]>] >
+  ]>;
 

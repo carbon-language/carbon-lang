@@ -114,6 +114,9 @@ def IIC_MOVZX : InstrItinClass;
 def IIC_MOVZX_R16_R8 : InstrItinClass;
 def IIC_MOVZX_R16_M8 : InstrItinClass;
 
+def IIC_REP_MOVS : InstrItinClass;
+def IIC_REP_STOS : InstrItinClass;
+
 // SSE scalar/parallel binary operations
 def IIC_SSE_ALU_F32S_RR : InstrItinClass;
 def IIC_SSE_ALU_F32S_RM : InstrItinClass;
@@ -249,6 +252,14 @@ def IIC_SSE_CVT_SS2SI64_RM : InstrItinClass;
 def IIC_SSE_CVT_SS2SI64_RR : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RM : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RR : InstrItinClass;
+
+def IIC_CMPX_LOCK : InstrItinClass;
+def IIC_CMPX_LOCK_8 : InstrItinClass;
+def IIC_CMPX_LOCK_8B : InstrItinClass;
+def IIC_CMPX_LOCK_16B : InstrItinClass;
+
+def IIC_XADD_LOCK_MEM : InstrItinClass;
+def IIC_XADD_LOCK_MEM8 : InstrItinClass;
 
 
 //===----------------------------------------------------------------------===//

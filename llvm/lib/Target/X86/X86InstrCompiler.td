@@ -153,7 +153,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, isCodeGenOnly = 1 in {
 def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
                     "ret\t#eh_return, addr: $addr",
-                    [(X86ehret GR32:$addr)]>;
+                    [(X86ehret GR32:$addr)], IIC_RET>;
 
 }
 
@@ -161,7 +161,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, isCodeGenOnly = 1 in {
 def EH_RETURN64   : I<0xC3, RawFrm, (outs), (ins GR64:$addr),
                      "ret\t#eh_return, addr: $addr",
-                     [(X86ehret GR64:$addr)]>;
+                     [(X86ehret GR64:$addr)], IIC_RET>;
 
 }
 
@@ -193,7 +193,7 @@ def MORESTACK_RET_RESTORE_R10 : I<0, Pseudo, (outs), (ins),
 let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
     isCodeGenOnly = 1 in {
 def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
-                 [(set GR8:$dst, 0)]>;
+                 [(set GR8:$dst, 0)], IIC_ALU_NONMEM>;
 
 // We want to rewrite MOV16r0 in terms of MOV32r0, because it's a smaller
 // encoding and avoids a partial-register update sometimes, but doing so
@@ -202,11 +202,11 @@ def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
 // to an MCInst.
 def MOV16r0   : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
                  "",
-                 [(set GR16:$dst, 0)]>, OpSize;
+                 [(set GR16:$dst, 0)], IIC_ALU_NONMEM>, OpSize;
 
 // FIXME: Set encoding to pseudo.
 def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
-                 [(set GR32:$dst, 0)]>;
+                 [(set GR32:$dst, 0)], IIC_ALU_NONMEM>;
 }
 
 // We want to rewrite MOV64r0 in terms of MOV32r0, because it's sometimes a
@@ -218,7 +218,7 @@ def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
 let Defs = [EFLAGS], isCodeGenOnly=1,
     AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
-                 [(set GR64:$dst, 0)]>;
+                 [(set GR64:$dst, 0)], IIC_ALU_NONMEM>;
 
 // Materialize i64 constant where top 32-bits are zero. This could theoretically
 // use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
@@ -226,7 +226,8 @@ def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
 let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1,
     isCodeGenOnly = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
-                        "", [(set GR64:$dst, i64immZExt32:$src)]>;
+                        "", [(set GR64:$dst, i64immZExt32:$src)],
+                        IIC_ALU_NONMEM>;
 
 // Use sbb to materialize carry bit.
 let Uses = [EFLAGS], Defs = [EFLAGS], isCodeGenOnly = 1 in {
@@ -236,14 +237,18 @@ let Uses = [EFLAGS], Defs = [EFLAGS], isCodeGenOnly = 1 in {
 // FIXME: Change these to have encoding Pseudo when X86MCCodeEmitter replaces
 // X86CodeEmitter.
 def SETB_C8r : I<0x18, MRMInitReg, (outs GR8:$dst), (ins), "",
-                 [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+                 [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
+                 IIC_ALU_NONMEM>;
 def SETB_C16r : I<0x19, MRMInitReg, (outs GR16:$dst), (ins), "",
-                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>,
+                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
+                 IIC_ALU_NONMEM>,
                 OpSize;
 def SETB_C32r : I<0x19, MRMInitReg, (outs GR32:$dst), (ins), "",
-                 [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+                 [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
+                 IIC_ALU_NONMEM>;
 def SETB_C64r : RI<0x19, MRMInitReg, (outs GR64:$dst), (ins), "",
-                 [(set GR64:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+                 [(set GR64:$dst, (X86setcc_c X86_COND_B, EFLAGS))],
+                 IIC_ALU_NONMEM>;
 } // isCodeGenOnly
 
 
@@ -297,32 +302,32 @@ def : Pat<(sub GR64:$op, (i64 (X86setcc_c X86_COND_B, EFLAGS))),
 //
 let Defs = [ECX,EDI,ESI], Uses = [ECX,EDI,ESI], isCodeGenOnly = 1 in {
 def REP_MOVSB : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
-                  [(X86rep_movs i8)]>, REP;
+                  [(X86rep_movs i8)], IIC_REP_MOVS>, REP;
 def REP_MOVSW : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
-                  [(X86rep_movs i16)]>, REP, OpSize;
+                  [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize;
 def REP_MOVSD : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
-                  [(X86rep_movs i32)]>, REP;
+                  [(X86rep_movs i32)], IIC_REP_MOVS>, REP;
 }
 
 let Defs = [RCX,RDI,RSI], Uses = [RCX,RDI,RSI], isCodeGenOnly = 1 in
 def REP_MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "{rep;movsq|rep movsq}",
-                   [(X86rep_movs i64)]>, REP;
+                   [(X86rep_movs i64)], IIC_REP_MOVS>, REP;
 
 
 // FIXME: Should use "(X86rep_stos AL)" as the pattern.
 let Defs = [ECX,EDI], Uses = [AL,ECX,EDI], isCodeGenOnly = 1 in
 def REP_STOSB : I<0xAA, RawFrm, (outs), (ins), "{rep;stosb|rep stosb}",
-                  [(X86rep_stos i8)]>, REP;
+                  [(X86rep_stos i8)], IIC_REP_STOS>, REP;
 let Defs = [ECX,EDI], Uses = [AX,ECX,EDI], isCodeGenOnly = 1 in
 def REP_STOSW : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
-                  [(X86rep_stos i16)]>, REP, OpSize;
+                  [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize;
 let Defs = [ECX,EDI], Uses = [EAX,ECX,EDI], isCodeGenOnly = 1 in
 def REP_STOSD : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
-                  [(X86rep_stos i32)]>, REP;
+                  [(X86rep_stos i32)], IIC_REP_STOS>, REP;
 
 let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI], isCodeGenOnly = 1 in
 def REP_STOSQ : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
-                   [(X86rep_stos i64)]>, REP;
+                   [(X86rep_stos i64)], IIC_REP_STOS>, REP;
 
 
 //===----------------------------------------------------------------------===//
@@ -571,7 +576,7 @@ let isCodeGenOnly = 1, Defs = [EFLAGS] in
 def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
                       "lock\n\t"
                       "or{l}\t{$zero, $dst|$dst, $zero}",
-                      []>, Requires<[In32BitMode]>, LOCK;
+                      [], IIC_ALU_MEM>, Requires<[In32BitMode]>, LOCK;
 
 let hasSideEffects = 1 in
 def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
@@ -591,72 +596,72 @@ def #NAME#8mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                    MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
                    !strconcat("lock\n\t", mnemonic, "{b}\t",
                               "{$src2, $dst|$dst, $src2}"),
-                   []>, LOCK;
+                   [], IIC_ALU_NONMEM>, LOCK;
 def #NAME#16mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                     RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
                     MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                     !strconcat("lock\n\t", mnemonic, "{w}\t",
                                "{$src2, $dst|$dst, $src2}"),
-                    []>, OpSize, LOCK;
+                    [], IIC_ALU_NONMEM>, OpSize, LOCK;
 def #NAME#32mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                     RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
                     MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                     !strconcat("lock\n\t", mnemonic, "{l}\t",
                                "{$src2, $dst|$dst, $src2}"),
-                    []>, LOCK;
+                    [], IIC_ALU_NONMEM>, LOCK;
 def #NAME#64mr : RI<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                      RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
                      MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                      !strconcat("lock\n\t", mnemonic, "{q}\t",
                                 "{$src2, $dst|$dst, $src2}"),
-                     []>, LOCK;
+                     [], IIC_ALU_NONMEM>, LOCK;
 
 def #NAME#8mi : Ii8<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                      ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 0 },
                      ImmMod, (outs), (ins i8mem :$dst, i8imm :$src2),
                      !strconcat("lock\n\t", mnemonic, "{b}\t",
                                 "{$src2, $dst|$dst, $src2}"),
-                     []>, LOCK;
+                     [], IIC_ALU_MEM>, LOCK;
 
 def #NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                        ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
                        ImmMod, (outs), (ins i16mem :$dst, i16imm :$src2),
                        !strconcat("lock\n\t", mnemonic, "{w}\t",
                                   "{$src2, $dst|$dst, $src2}"),
-                       []>, LOCK;
+                       [], IIC_ALU_MEM>, LOCK;
 
 def #NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                        ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
                        ImmMod, (outs), (ins i32mem :$dst, i32imm :$src2),
                        !strconcat("lock\n\t", mnemonic, "{l}\t",
                                   "{$src2, $dst|$dst, $src2}"),
-                       []>, LOCK;
+                       [], IIC_ALU_MEM>, LOCK;
 
 def #NAME#64mi32 : RIi32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                           ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
                           ImmMod, (outs), (ins i64mem :$dst, i64i32imm :$src2),
                           !strconcat("lock\n\t", mnemonic, "{q}\t",
                                      "{$src2, $dst|$dst, $src2}"),
-                          []>, LOCK;
+                          [], IIC_ALU_MEM>, LOCK;
 
 def #NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                        ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
                        ImmMod, (outs), (ins i16mem :$dst, i16i8imm :$src2),
                        !strconcat("lock\n\t", mnemonic, "{w}\t",
                                   "{$src2, $dst|$dst, $src2}"),
-                       []>, LOCK;
+                       [], IIC_ALU_MEM>, LOCK;
 def #NAME#32mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                        ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
                        ImmMod, (outs), (ins i32mem :$dst, i32i8imm :$src2),
                        !strconcat("lock\n\t", mnemonic, "{l}\t",
                                   "{$src2, $dst|$dst, $src2}"),
-                       []>, LOCK;
+                       [], IIC_ALU_MEM>, LOCK;
 def #NAME#64mi8 : RIi8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                         ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
                         ImmMod, (outs), (ins i64mem :$dst, i64i8imm :$src2),
                         !strconcat("lock\n\t", mnemonic, "{q}\t",
                                    "{$src2, $dst|$dst, $src2}"),
-                        []>, LOCK;
+                        [], IIC_ALU_MEM>, LOCK;
 
 }
 
@@ -673,29 +678,29 @@ let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
 
 def LOCK_INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst),
                     "lock\n\t"
-                    "inc{b}\t$dst", []>, LOCK;
+                    "inc{b}\t$dst", [], IIC_UNARY_MEM>, LOCK;
 def LOCK_INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst),
                     "lock\n\t"
-                    "inc{w}\t$dst", []>, OpSize, LOCK;
+                    "inc{w}\t$dst", [], IIC_UNARY_MEM>, OpSize, LOCK;
 def LOCK_INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst),
                     "lock\n\t"
-                    "inc{l}\t$dst", []>, LOCK;
+                    "inc{l}\t$dst", [], IIC_UNARY_MEM>, LOCK;
 def LOCK_INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst),
                      "lock\n\t"
-                     "inc{q}\t$dst", []>, LOCK;
+                     "inc{q}\t$dst", [], IIC_UNARY_MEM>, LOCK;
 
 def LOCK_DEC8m  : I<0xFE, MRM1m, (outs), (ins i8mem :$dst),
                     "lock\n\t"
-                    "dec{b}\t$dst", []>, LOCK;
+                    "dec{b}\t$dst", [], IIC_UNARY_MEM>, LOCK;
 def LOCK_DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst),
                     "lock\n\t"
-                    "dec{w}\t$dst", []>, OpSize, LOCK;
+                    "dec{w}\t$dst", [], IIC_UNARY_MEM>, OpSize, LOCK;
 def LOCK_DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst),
                     "lock\n\t"
-                    "dec{l}\t$dst", []>, LOCK;
+                    "dec{l}\t$dst", [], IIC_UNARY_MEM>, LOCK;
 def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
                       "lock\n\t"
-                      "dec{q}\t$dst", []>, LOCK;
+                      "dec{q}\t$dst", [], IIC_UNARY_MEM>, LOCK;
 }
 
 // Atomic compare and swap.
@@ -704,42 +709,42 @@ let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX],
 def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$ptr),
                "lock\n\t"
                "cmpxchg8b\t$ptr",
-               [(X86cas8 addr:$ptr)]>, TB, LOCK;
+               [(X86cas8 addr:$ptr)], IIC_CMPX_LOCK_8B>, TB, LOCK;
 
 let Defs = [RAX, RDX, EFLAGS], Uses = [RAX, RBX, RCX, RDX],
     isCodeGenOnly = 1 in
 def LCMPXCHG16B : RI<0xC7, MRM1m, (outs), (ins i128mem:$ptr),
                     "lock\n\t"
                     "cmpxchg16b\t$ptr",
-                    [(X86cas16 addr:$ptr)]>, TB, LOCK,
+                    [(X86cas16 addr:$ptr)], IIC_CMPX_LOCK_16B>, TB, LOCK,
                     Requires<[HasCmpxchg16b]>;
 
 let Defs = [AL, EFLAGS], Uses = [AL], isCodeGenOnly = 1 in {
 def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
                "lock\n\t"
                "cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
+               [(X86cas addr:$ptr, GR8:$swap, 1)], IIC_CMPX_LOCK_8>, TB, LOCK;
 }
 
 let Defs = [AX, EFLAGS], Uses = [AX], isCodeGenOnly = 1 in {
 def LCMPXCHG16 : I<0xB1, MRMDestMem, (outs), (ins i16mem:$ptr, GR16:$swap),
                "lock\n\t"
                "cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
+               [(X86cas addr:$ptr, GR16:$swap, 2)], IIC_CMPX_LOCK>, TB, OpSize, LOCK;
 }
 
 let Defs = [EAX, EFLAGS], Uses = [EAX], isCodeGenOnly = 1 in {
 def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
                "lock\n\t"
                "cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
+               [(X86cas addr:$ptr, GR32:$swap, 4)], IIC_CMPX_LOCK>, TB, LOCK;
 }
 
 let Defs = [RAX, EFLAGS], Uses = [RAX], isCodeGenOnly = 1 in {
 def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
                "lock\n\t"
                "cmpxchg{q}\t{$swap, $ptr|$ptr, $swap}",
-               [(X86cas addr:$ptr, GR64:$swap, 8)]>, TB, LOCK;
+               [(X86cas addr:$ptr, GR64:$swap, 8)], IIC_CMPX_LOCK>, TB, LOCK;
 }
 
 // Atomic exchange and add
@@ -747,22 +752,26 @@ let Constraints = "$val = $dst", Defs = [EFLAGS], isCodeGenOnly = 1 in {
 def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins GR8:$val, i8mem:$ptr),
                "lock\n\t"
                "xadd{b}\t{$val, $ptr|$ptr, $val}",
-               [(set GR8:$dst, (atomic_load_add_8 addr:$ptr, GR8:$val))]>,
+               [(set GR8:$dst, (atomic_load_add_8 addr:$ptr, GR8:$val))],
+                IIC_XADD_LOCK_MEM8>,
                 TB, LOCK;
 def LXADD16 : I<0xC1, MRMSrcMem, (outs GR16:$dst), (ins GR16:$val, i16mem:$ptr),
                "lock\n\t"
                "xadd{w}\t{$val, $ptr|$ptr, $val}",
-               [(set GR16:$dst, (atomic_load_add_16 addr:$ptr, GR16:$val))]>,
+               [(set GR16:$dst, (atomic_load_add_16 addr:$ptr, GR16:$val))],
+                IIC_XADD_LOCK_MEM>,
                 TB, OpSize, LOCK;
 def LXADD32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins GR32:$val, i32mem:$ptr),
                "lock\n\t"
                "xadd{l}\t{$val, $ptr|$ptr, $val}",
-               [(set GR32:$dst, (atomic_load_add_32 addr:$ptr, GR32:$val))]>,
+               [(set GR32:$dst, (atomic_load_add_32 addr:$ptr, GR32:$val))],
+                IIC_XADD_LOCK_MEM>,
                 TB, LOCK;
 def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins GR64:$val,i64mem:$ptr),
                "lock\n\t"
                "xadd{q}\t{$val, $ptr|$ptr, $val}",
-               [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
+               [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))],
+                IIC_XADD_LOCK_MEM>,
                 TB, LOCK;
 }
 
