@@ -7473,6 +7473,12 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // Check to see if this is a BUILD_VECTOR of a bunch of EXTRACT_VECTOR_ELT
   // operations.  If so, and if the EXTRACT_VECTOR_ELT vector inputs come from
   // at most two distinct vectors, turn this into a shuffle node.
+
+  // May only combine to shuffle after legalize if shuffle is legal.
+  if (LegalOperations &&
+      !TLI.isOperationLegalOrCustom(ISD::VECTOR_SHUFFLE, VT))
+    return SDValue();
+
   SDValue VecIn1, VecIn2;
   for (unsigned i = 0; i != NumInScalars; ++i) {
     // Ignore undef inputs.
