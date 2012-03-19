@@ -32,7 +32,7 @@ if(PYTHONINTERP_FOUND)
     ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     @ONLY)
 
-  add_custom_target(check
+  add_custom_target(check-libcxx
     COMMAND ${PYTHON_EXECUTABLE}
             ${LIT_EXECUTABLE}
             ${LIT_ARGS}

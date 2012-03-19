@@ -1,33 +1,33 @@
 # Get sources
-file(GLOB sources ../src/*.cpp)
+file(GLOB LIBCXX_SOURCES ../src/*.cpp)
 if(WIN32)
-  file(GLOB win32_sources ../src/support/win32/*.cpp)
-  list(APPEND sources ${win32_sources})
+  file(GLOB LIBCXX_WIN32_SOURCES ../src/support/win32/*.cpp)
+  list(APPEND LIBCXX_SOURCES ${LIBCXX_WIN32_SOURCES})
 endif()
 
 # Add all the headers to the project for IDEs.
 if (MSVC_IDE OR XCODE)
-  file(GLOB_RECURSE headers ../include/*)
+  file(GLOB_RECURSE LIBCXX_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../include/*)
   if(WIN32)
-    file( GLOB win32_headers ../include/support/win32/*.h)
-    list(APPEND headers ${win32_headers})
+    file( GLOB LIBCXX_WIN32_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../include/support/win32/*.h)
+    list(APPEND LIBCXX_HEADERS ${LIBCXX_WIN32_HEADERS})
   endif()
   # Force them all into the headers dir on MSVC, otherwise they end up at
   # project scope because they don't have extensions.
   if (MSVC_IDE)
-    source_group("Header Files" FILES ${headers})
+    source_group("Header Files" FILES ${LIBCXX_HEADERS})
   endif()
 endif()
 
 if (LIBCXX_ENABLE_SHARED)
   add_library(cxx SHARED
-    ${sources}
-    ${headers}
+    ${LIBCXX_SOURCES}
+    ${LIBCXX_HEADERS}
     )
 else()
   add_library(cxx STATIC
-    ${sources}
-    ${headers}
+    ${LIBCXX_SOURCES}
+    ${LIBCXX_HEADERS}
     )
 endif()
 
