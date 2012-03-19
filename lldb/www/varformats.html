@@ -596,7 +596,21 @@
                     </td>
             <table>
             
-			While the final result is the same, using <code>--inline-children</code> can often save time.
+			While the final result is the same, using <code>--inline-children</code> can often save time. If one does not need to
+			see the names of the variables, but just their values, the option <code>--omit-names</code> (<code>-O</code>, uppercase letter o), can be combined with <code>--inline-children</code> to obtain:
+			<br><code>
+
+              <b>(lldb)</b> frame variable a_pair<br>
+              (pair) a_pair = (1, 2)<br>
+            </code> </p>
+
+			which is of course the same as
+			typing
+			<table class="stats" width="620" cellspacing="0">
+                    <td class="content">
+                    	<b>(lldb)</b> type summary add pair --summary-string "(${var.first}, ${var.second})"<br>
+                    </td>
+            <table>
             </div>
           </div>
           <div class="post">
@@ -682,7 +696,7 @@
                   (Simple [3]) sarray = [1,4,7]<br></code></p>
                   
                 <p>The <code>[]</code> symbol amounts to: <i>if <code>var</code>
-                  is an array and I knows its size, apply this summary
+                  is an array and I know its size, apply this summary
                   string to every element of the array</i>. Here, we are
                 asking LLDB to display <code>.x</code> for every
                 element of the array, and in fact this is what happens.
@@ -771,7 +785,7 @@
             the contents of a variable. However, as soon as you need to do more than picking
             some values and rearranging them for display, summary strings stop being an
             effective tool. This is because summary strings lack the power to actually perform
-            some computation on the value of variables.</p>
+            any kind of computation on the value of variables.</p>
             <p>To solve this issue, you can bind some Python scripting code as a summary for
             your datatype, and that script has the ability to both extract children variables
             as the summary strings do and to perform active computation on the extracted
@@ -830,13 +844,15 @@ def function (valobj,dict):<br/>
             passed two parameters: <code>valobj</code> and <code>dict</code>.</p>
             
             <p><code>dict</code> is an internal support parameter used by LLDB and you should
-            not use it.<br/><code>valobj</code> is the object encapsulating the actual
+            not touch it.<br/><code>valobj</code> is the object encapsulating the actual
             variable being displayed, and its type is <a href="http://llvm.org/svn/llvm-project/lldb/trunk/include/lldb/API/SBValue.h">SBValue</a>.
  			Out of the many possible operations on an SBValue, the basic one is retrieve the children objects
             it contains (essentially, the fields of the object wrapped by it), by calling
             <code>GetChildMemberWithName()</code>, passing it the child's name as a string.<br/>
             If the variable has a value, you can ask for it, and return it as a string using <code>GetValue()</code>,
             or as a signed/unsigned number using <code>GetValueAsSigned()</code>, <code>GetValueAsUnsigned()</code>.
+			It is also possible to retrieve an <a href="http://llvm.org/svn/llvm-project/lldb/trunk/include/lldb/API/SBData.h"><code>SBData</code></a> object by calling <code>GetData()</code> and then read
+			the object's contents out of the <code>SBData</code>.
             
             <p>If you need to delve into several levels of hierarchy, as you can do with summary
             strings, you can use the method <code>GetValueForExpressionPath()</code>, passing it
@@ -1024,31 +1040,28 @@ def function (valobj,dict):<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> update(self): <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should be used to update the internal state of this Python object whenever the state of the variables in LLDB changes.</i><sup>[1]</sup><br/>
 		</code>
-<sup>[1]</sup> Currently this method is optional, because the internal state of synthetic children providers will not be preserved. However, this is meant to change in future versions of LLDB.
+<sup>[1]</sup> This method is optional. Also, it may optionally choose to return a value (starting with LLDB SVN rev153061/LLDB-134). If it returns a value, and that value is <font color=blue><code>True</code></font>, LLDB will be allowed to cache the children and the children count it previously obtained, and will not return to the provider class to ask. If nothing, <font color=blue><code>None</code></font>, or anything other than <font color=blue><code>True</code></font> is returned, LLDB will discard the cached information and ask. Regardless, whenever necessary LLDB will call <code>update</code>.
 		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.
 			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/bitfield">this example</a> to get
 			a feel for this feature, as it is a very easy and well commented example.</p>
-			<p>While the <code>update</code> method is optional, the design pattern consistently used in synthetic providers shipping with LLDB
-				is to use the <code>__init__</code> to store the SBValue instance as a part of <code>self</code>, and then call <code>update</code>
-				to perform the actual initialization. This pattern should make for a transparent transition to a future version of LLDB that persists synthetic children. For example:</p>
-		<code>
-			<font color=blue>def</font> __init__(self, valobj, dict):<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;self.valobj = valobj;<br/>
-				&nbsp;&nbsp;&nbsp;&nbsp;self.update()
-		</code>
+			The design pattern consistently used in synthetic providers shipping with LLDB
+				is to use the <code>__init__</code> to store the SBValue instance as a part of <code>self</code>. The <code>update</code> function is then used
+				to perform the actual initialization.
+				
+				
 		<p>Once a synthetic children provider is written, one must load it into LLDB before it can be used.
 			Currently, one can use the LLDB <code>script</code> command to type Python code interactively,
-			or use the <code>script import <i>module</i></code> command to load Python code from a Python module
+			or use the <code>command script import <i>fileName </i></code> command to load Python code from a Python module
 			(ordinary rules apply to importing modules this way). A third option is to type the code for
 			the provider class interactively while adding it.</p>
 		
 		<p>For example, let's pretend we have a class <code>Foo</code> for which a synthetic children provider class
-			<code>Foo_Provider</code> is available, in a Python module named <code>Foo_Tools</code>. The following interaction
+			<code>Foo_Provider</code> is available, in a Python module contained in file <code>~/Foo_Tools.py</code>. The following interaction
 			sets <code>Foo_Provider</code> as a synthetic children provider in LLDB:</p>
 		
 		    <table class="stats" width="620" cellspacing="0">
                     <td class="content">
-                        <b>(lldb)</b> script import Foo_Tools<br/>
+                        <b>(lldb)</b> command script import ~/Foo_Tools.py<br/>
                         <b>(lldb)</b> type synthetic add Foo --python-class Foo_Tools.Foo_Provider
                     </td>
             <table>
@@ -1060,7 +1073,7 @@ def function (valobj,dict):<br/>
             </code> </p>
         
 			<p>Currently, in LLDB <a href="http://llvm.org/svn/llvm-project/lldb/trunk/">top of tree</a>, synthetic children providers are enabled for
-				<code>std::vector&lt;T&gt;</code>, <code>std::list&lt;T&gt;</code> and <code>std::map&lt;K,V&gt;</code>.</p>
+				<code>std::vector&lt;T&gt;</code>, <code>std::list&lt;T&gt;</code> and <code>std::map&lt;K,V&gt;</code> both in the version provided by <a href="http://gcc.gnu.org/libstdc++/">libstdcpp</a> and by <a href="http://libcxx.llvm.org/">libcxx</a>.</p>
 
 			<p>Synthetic children extend summary strings by enabling a new special variable: <code>${svar</code>.<br/>
 				This symbol tells LLDB to refer expression paths to the
@@ -1176,19 +1189,31 @@ def function (valobj,dict):<br/>
 		      the formatters for the C++ STL objects in a category named <code>gnu-libstdc++</code>.
 				Basically, categories act like containers in which to store formatters for a same library
 			  or OS release.</p>
-			  <p>By default, three categories are created in LLDB: <code>system</code>, <code>gnu-libstdc++</code> and <code>default</code>.
-				Every formatter that is not created inside a category, is by default a part of the <code>default</code> category.
+			  <p>By default, several categories are created in LLDB: 
+				<ul>
+					<li><code>default</code>: this is the category where every formatter ends up, unless an other category is explicitly 			<li><code>objc</code>: formatters for basic and common Objective-C types that do not specifically depend on Mac OS X
+					<li><code>gnu-libstdc++</code>: formatters for std::string, std::vector, std::list and std::map as implemented by libstdcpp
+					<li><code>libcxx</code>: formatters for std::string, std::vector, std::list and std::map as implemented by libcxx
+					<li><code>system</code>: truly basic types for which a formatter is required
+					<li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/ObjC_classic/_index.html#//apple_ref/doc/uid/20001091"><code>AppKit</code></a>: Cocoa classes - disabled by default since this is Mac OS X specific
+					<li><a href="https://developer.apple.com/corefoundation/"><code>CoreFoundation</code></a>: CF classes - disabled by default since this is Mac OS X specific
+					<li><a href="https://developer.apple.com/library/mac/#documentation/CoreGraphics/Reference/CoreGraphicsConstantsRef/Reference/reference.html"><code>CoreGraphics</code></a>: CG classes - disabled by default since this is Mac OS X specific
+					<li><a href="http://developer.apple.com/library/mac/#documentation/Carbon/reference/CoreServicesReferenceCollection/_index.html"><code>CoreServices</code></a>: CS classes - disabled by default since this is Mac OS X specific
+					<li><code>VectorTypes</code>: compact display for several vector types - disabled by default since this is Mac OS X specific
+				</ul>
 				If you want to use a custom category for your formatters, all the <code>type ... add</code> (except for <code>type format add</code>),
 				provide a <code>--category</code> (<code>-w</code>) option, that names the category to add the formatter to.
 				To delete the formatter, you then have to specify the correct category.</p>
 				<p>Categories can be in one of two states: enabled and disabled. A category is initially disabled,
 					and can be enabled using the <code>type category enable</code> command. To disable an enabled category,
-					the command to use is <code>type category disable</code>. The order in which categories are enabled or disabled
+					the command to use is <code>type category disable</code>. 
+					<p>The order in which categories are enabled or disabled
 					is significant, in that LLDB uses that order when looking for formatters. Therefore, when you enable a category, it becomes
-					the first one to be searched. The default categories are enabled in such a way that the search order is: <code>default</code>
-					then <code>gnu-libstdc++</code> then finally <code>system</code>. As said, <code>gnu-libstdc++</code> contains formatters for C++ STL
+					the second one to be searched (after <code>default</code>, which always stays on top of the list). The default categories are enabled in such a way that the search order is: <code>default</code>, <code>objc</code>,
+					then <code>gnu-libstdc++</code>, <code>libcxx</code> and finally <code>system</code>.
+					<p>As said, <code>gnu-libstdc++</code> and <code>libcxx</code> contain formatters for C++ STL
 					data types. <code>system</code> contains formatters for <code>char*</code> and <code>char[]</code>, which reflect the behavior
-					of previous versions of LLDB which had built-in formatters for these types. Because now these are formatters, you can even
+					of older versions of LLDB which had built-in formatters for these types. Because now these are formatters, you can even
 					replace them with your own if so you wish.</p>
 				<p>There is no special command to create a category. When you place a formatter in a category, if that category does not
 					exist, it is automatically created. For instance,</p>
@@ -1259,20 +1284,6 @@ def function (valobj,dict):<br/>
 				in other categories). If nothing was found in the current category, the next
 				enabled category is scanned according to the same algorithm. If there are no
 				more enabled categories, the search has failed.</p>
-            </div>
-          </div>
-          <div class="post">
-            <h1 class="postheader">TODOs</h1>
-            <div class="postcontent">
-              <ul>
-                <li>There's no way to do multiple dereferencing, and you
-                  need to be careful what the dereferencing operation is
-                  binding to in complicated scenarios</li>
-                <li>Synthetic children providers cannot have a permanent state</li>
-                <li>Smarter algorithm to detect possible typos in category names</li>
-                <li><code>type format add</code> does not support the <code>-x</code>
-                  option</li>
-              </ul>
             </div>
           </div>
         </div>
