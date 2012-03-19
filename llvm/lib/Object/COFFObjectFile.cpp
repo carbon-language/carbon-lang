@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/COFF.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -320,16 +321,10 @@ error_code COFFObjectFile::getSectionSize(DataRefImpl Sec,
 error_code COFFObjectFile::getSectionContents(DataRefImpl Sec,
                                               StringRef &Result) const {
   const coff_section *sec = toSec(Sec);
-  // The only thing that we need to verify is that the contents is contained
-  // within the file bounds. We don't need to make sure it doesn't cover other
-  // data, as there's nothing that says that is not allowed.
-  uintptr_t con_start = uintptr_t(base()) + sec->PointerToRawData;
-  uintptr_t con_end = con_start + sec->SizeOfRawData;
-  if (con_end > uintptr_t(Data->getBufferEnd()))
-    return object_error::parse_failed;
-  Result = StringRef(reinterpret_cast<const char*>(con_start),
-                     sec->SizeOfRawData);
-  return object_error::success;
+  ArrayRef<uint8_t> Res;
+  error_code EC = getSectionContents(sec, Res);
+  Result = StringRef(reinterpret_cast<const char*>(Res.data()), Res.size());
+  return EC;
 }
 
 error_code COFFObjectFile::getSectionAlignment(DataRefImpl Sec,
@@ -633,6 +628,20 @@ error_code COFFObjectFile::getSectionName(const coff_section *Sec,
   }
 
   Res = Name;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getSectionContents(const coff_section *Sec,
+                                              ArrayRef<uint8_t> &Res) const {
+  // The only thing that we need to verify is that the contents is contained
+  // within the file bounds. We don't need to make sure it doesn't cover other
+  // data, as there's nothing that says that is not allowed.
+  uintptr_t ConStart = uintptr_t(base()) + Sec->PointerToRawData;
+  uintptr_t ConEnd = ConStart + Sec->SizeOfRawData;
+  if (ConEnd > uintptr_t(Data->getBufferEnd()))
+    return object_error::parse_failed;
+  Res = ArrayRef<uint8_t>(reinterpret_cast<const unsigned char*>(ConStart),
+                          Sec->SizeOfRawData);
   return object_error::success;
 }
 

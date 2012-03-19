@@ -19,6 +19,9 @@
 #include "llvm/Support/Endian.h"
 
 namespace llvm {
+  template <typename T>
+  class ArrayRef;
+
 namespace object {
 
 struct coff_file_header {
@@ -178,6 +181,8 @@ public:
   }
   error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
   error_code getSectionName(const coff_section *Sec, StringRef &Res) const;
+  error_code getSectionContents(const coff_section *Sec,
+                                ArrayRef<uint8_t> &Res) const;
 
   static inline bool classof(const Binary *v) {
     return v->isCOFF();
