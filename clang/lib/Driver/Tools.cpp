@@ -107,9 +107,9 @@ static void addDirectoryList(const ArgList &Args,
       CmdArgs.push_back(".");
     } else {
       CmdArgs.push_back(ArgName);
-      CmdArgs.push_back(Args.MakeArgString(Dirs.split(Delim).first));
+      CmdArgs.push_back(Args.MakeArgString(Dirs.substr(0, Delim)));
     }
-    Dirs = Dirs.split(Delim).second;
+    Dirs = Dirs.substr(Delim + 1);
   }
 
   if (Dirs.empty()) { // Trailing colon.
