@@ -3087,7 +3087,7 @@ CFGImplicitDtor::getDestructorDecl(ASTContext &astContext) const {
       const VarDecl *var = cast<CFGAutomaticObjDtor>(this)->getVarDecl();
       QualType ty = var->getType();
       ty = ty.getNonReferenceType();
-      if (const ArrayType *arrayType = astContext.getAsArrayType(ty)) {
+      while (const ArrayType *arrayType = astContext.getAsArrayType(ty)) {
         ty = arrayType->getElementType();
       }
       const RecordType *recordType = ty->getAs<RecordType>();
