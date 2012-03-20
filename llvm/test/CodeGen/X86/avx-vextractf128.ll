@@ -15,4 +15,3 @@ entry:
   %shuffle = shufflevector <4 x double> %a, <4 x double> undef, <4 x i32> <i32 2, i32 3, i32 4, i32 4>
   ret <4 x double> %shuffle
 }
-
