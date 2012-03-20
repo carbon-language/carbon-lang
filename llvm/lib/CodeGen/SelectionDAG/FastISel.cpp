@@ -597,6 +597,10 @@ bool FastISel::SelectCall(const User *I) {
               TII.get(TargetOpcode::DBG_VALUE))
         .addReg(Reg, RegState::Debug).addImm(Offset)
         .addMetadata(DI->getVariable());
+    else
+      // We can't yet handle anything else here because it would require
+      // generating code, thus altering codegen because of debug info.
+      DEBUG(dbgs() << "Dropping debug info for " << DI);
     return true;
   }
   case Intrinsic::dbg_value: {
