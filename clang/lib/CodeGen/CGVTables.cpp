@@ -584,8 +584,8 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
             VTableThunks[NextVTableThunkIndex].first == I) {
           const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
         
-          Init = CGM.GetAddrOfThunk(GD, Thunk);
           MaybeEmitThunkAvailableExternally(GD, Thunk);
+          Init = CGM.GetAddrOfThunk(GD, Thunk);
 
           NextVTableThunkIndex++;
         } else {
