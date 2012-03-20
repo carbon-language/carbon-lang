@@ -5595,9 +5595,19 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
 
 static void Write_class_t(ASTContext *Context, std::string &Result,
                           StringRef VarName,
-                          const ObjCInterfaceDecl *CDecl, bool metadata) {
+                          const ObjCInterfaceDecl *CDecl, bool metaclass) {
+  bool rootClass = (!CDecl->getSuperClass());
+  const ObjCInterfaceDecl *RootClass = CDecl;
   
-  if (metadata && !CDecl->getSuperClass()) {
+  if (!rootClass) {
+    // Find the Root class
+    RootClass = CDecl->getSuperClass();
+    while (RootClass->getSuperClass()) {
+      RootClass = RootClass->getSuperClass();
+    }
+  }
+
+  if (metaclass && rootClass) {
     // Need to handle a case of use of forward declaration.
     Result += "\n";
     if (CDecl->getImplementation())
@@ -5607,7 +5617,7 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
     Result += ";\n";
   }
   // Also, for possibility of 'super' metadata class not having been defined yet.
-  if (CDecl->getSuperClass()) {
+  if (!rootClass) {
     Result += "\n";
     if (CDecl->getSuperClass()->getImplementation())
       Result += "__declspec(dllexport) ";
@@ -5620,43 +5630,87 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   Result += "\n__declspec(dllexport) struct _class_t "; Result += VarName; Result += CDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__DATA,__objc_data\"))) = {\n";
   Result += "\t";
-  if (metadata) {
-    if (CDecl->getSuperClass()) {
-      Result += "&"; Result += VarName;
-      Result += CDecl->getSuperClass()->getNameAsString();
+  if (metaclass) {
+    if (!rootClass) {
+      Result += "0, // &"; Result += VarName;
+      Result += RootClass->getNameAsString();
       Result += ",\n\t";
-      Result += "&"; Result += VarName;
+      Result += "0, // &"; Result += VarName;
       Result += CDecl->getSuperClass()->getNameAsString();
       Result += ",\n\t";
     }
     else {
-      Result += "&"; Result += VarName; 
+      Result += "0, // "; Result += VarName; 
       Result += CDecl->getNameAsString();
       Result += ",\n\t";
-      Result += "&OBJC_CLASS_$_"; Result += CDecl->getNameAsString();
+      Result += "0, // &OBJC_CLASS_$_"; Result += CDecl->getNameAsString();
       Result += ",\n\t";
     }
   }
   else {
-    Result += "&OBJC_METACLASS_$_"; 
+    Result += "0, // &OBJC_METACLASS_$_"; 
     Result += CDecl->getNameAsString();
     Result += ",\n\t";
-    if (CDecl->getSuperClass()) {
-      Result += "&"; Result += VarName;
+    if (!rootClass) {
+      Result += "0, // &"; Result += VarName;
       Result += CDecl->getSuperClass()->getNameAsString();
       Result += ",\n\t";
     }
     else 
       Result += "0,\n\t";
   }
-  Result += "(void *)&_objc_empty_cache,\n\t";
-  Result += "(void *)&_objc_empty_vtable,\n\t";
-  if (metadata)
+  Result += "0, // (void *)&_objc_empty_cache,\n\t";
+  Result += "0, // unused, was (void *)&_objc_empty_vtable,\n\t";
+  if (metaclass)
     Result += "&_OBJC_METACLASS_RO_$_";
   else
     Result += "&_OBJC_CLASS_RO_$_";
   Result += CDecl->getNameAsString();
   Result += ",\n};\n";
+  
+  // Add static function to initialize some of the meta-data fields.
+  // avoid doing it twice.
+  if (metaclass)
+    return;
+  
+  const ObjCInterfaceDecl *SuperClass = 
+    rootClass ? CDecl : CDecl->getSuperClass();
+  
+  Result += "static void OBJC_CLASS_SETUP_$_";
+  Result += CDecl->getNameAsString();
+  Result += "(void ) {\n";
+  Result += "\tOBJC_METACLASS_$_"; Result += CDecl->getNameAsString();
+  Result += ".isa = "; Result += "&OBJC_METACLASS_$_";
+  Result += CDecl->getNameAsString(); Result += ";\n";
+  
+  Result += "\tOBJC_METACLASS_$_"; Result += CDecl->getNameAsString();
+  Result += ".superclass = "; Result += "&OBJC_METACLASS_$_";
+  Result += SuperClass->getNameAsString(); Result += ";\n";
+  
+  Result += "\tOBJC_METACLASS_$_"; Result += CDecl->getNameAsString();
+  Result += ".cache = "; Result += "&_objc_empty_cache"; Result += ";\n";
+  
+  Result += "\tOBJC_CLASS_$_"; Result += CDecl->getNameAsString();
+  Result += ".isa = "; Result += "&OBJC_METACLASS_$_";
+  Result += CDecl->getNameAsString(); Result += ";\n";
+  
+  if (!rootClass) {
+    Result += "\tOBJC_CLASS_$_"; Result += CDecl->getNameAsString();
+    Result += ".superclass = "; Result += "&OBJC_CLASS_$_";
+    Result += SuperClass->getNameAsString(); Result += ";\n";
+  }
+  
+  Result += "\tOBJC_CLASS_$_"; Result += CDecl->getNameAsString();
+  Result += ".cache = "; Result += "&_objc_empty_cache"; Result += ";\n";
+  Result += "}\n";
+  
+  Result += "#pragma section(\".objc_inithooks$B\", long, read, write\n";
+  Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
+  Result += "static void *OBJC_CLASS_SETUP2_$_";
+  Result += CDecl->getNameAsString();
+  Result += " = (void *)&OBJC_CLASS_SETUP_$_"; 
+  Result += CDecl->getNameAsString();
+  Result += ";\n\n";
 }
 
 static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context, 
