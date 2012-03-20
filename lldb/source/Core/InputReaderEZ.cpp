@@ -7,12 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
-
 #include "lldb/Core/InputReaderEZ.h"
-
-#include "lldb/Core/Debugger.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
 
 using namespace lldb;
 using namespace lldb_private;

@@ -10,14 +10,7 @@
 #ifndef liblldb_InputReaderEZ_h_
 #define liblldb_InputReaderEZ_h_
 
-#include <string.h>
-
-#include "lldb/lldb-public.h"
-#include "lldb/lldb-enumerations.h"
-#include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
-#include "lldb/Host/Predicate.h"
-
 
 namespace lldb_private {
 
