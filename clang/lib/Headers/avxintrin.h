@@ -1166,3 +1166,70 @@ _mm256_castsi128_si256(__m128i in)
   __m128i zero = _mm_setzero_si128();
   return __builtin_shufflevector(in, zero, 0, 1, 2, 2);
 }
+
+/* SIMD load ops (unaligned) */
+static __inline __m256 __attribute__((__always_inline__, __nodebug__))
+_mm256_loadu2_m128(float const *addr_hi, float const *addr_lo)
+{
+  struct __loadu_ps {
+    __m128 v;
+  } __attribute__((__packed__, __may_alias__));
+
+  __m256 v256 = _mm256_castps128_ps256(((struct __loadu_ps*)addr_lo)->v);
+  return _mm256_insertf128_ps(v256, ((struct __loadu_ps*)addr_hi)->v, 1);
+}
+
+static __inline __m256d __attribute__((__always_inline__, __nodebug__))
+_mm256_loadu2_m128d(double const *addr_hi, double const *addr_lo)
+{
+  struct __loadu_pd {
+    __m128d v;
+  } __attribute__((__packed__, __may_alias__));
+  
+  __m256d v256 = _mm256_castpd128_pd256(((struct __loadu_pd*)addr_lo)->v);
+  return _mm256_insertf128_pd(v256, ((struct __loadu_pd*)addr_hi)->v, 1);
+}
+
+static __inline __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_loadu2_m128i(__m128i const *addr_hi, __m128i const *addr_lo)
+{
+  struct __loadu_si128 {
+    __m128i v;
+  } __attribute__((packed, may_alias));
+  __m256i v256 = _mm256_castsi128_si256(((struct __loadu_si128*)addr_lo)->v);
+  return _mm256_insertf128_si256(v256, ((struct __loadu_si128*)addr_hi)->v, 1);
+}
+
+/* SIMD store ops (unaligned) */
+static __inline void __attribute__((__always_inline__, __nodebug__))
+_mm256_storeu2_m128(float const *addr_hi, float const *addr_lo, __m256 a)
+{
+  __m128 v128;
+
+  v128 = _mm256_castps256_ps128(a);
+  __builtin_ia32_storeups(addr_lo, v128);
+  v128 = _mm256_extractf128_ps(a, 1);
+  __builtin_ia32_storeups(addr_hi, v128);
+}
+
+static __inline void __attribute__((__always_inline__, __nodebug__))
+_mm256_storeu2_m128d(double const *addr_hi, double const *addr_lo, __m256d a)
+{
+  __m128d v128;
+
+  v128 = _mm256_castpd256_pd128(a);
+  __builtin_ia32_storeupd(addr_lo, v128);
+  v128 = _mm256_extractf128_pd(a, 1);
+  __builtin_ia32_storeupd(addr_hi, v128);
+}
+
+static __inline void __attribute__((__always_inline__, __nodebug__))
+_mm256_storeu2_m128i(__m128i const *addr_hi, __m128i const *addr_lo, __m256i a)
+{
+  __m128i v128;
+
+  v128 = _mm256_castsi256_si128(a);
+  __builtin_ia32_storedqu((char *)addr_lo, (__v16qi)v128);
+  v128 = _mm256_extractf128_si256(a, 1);
+  __builtin_ia32_storedqu((char *)addr_hi, (__v16qi)v128);
+}
