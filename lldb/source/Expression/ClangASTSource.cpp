@@ -387,6 +387,9 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
             
             Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, original_ctx, decl);
             
+            if (!copied_decl)
+                continue;
+            
             if (FieldDecl *copied_field = dyn_cast<FieldDecl>(copied_decl))
             {
                 QualType copied_field_type = copied_field->getType();
@@ -1291,6 +1294,9 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
     
     Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, namespace_decl.GetASTContext(), namespace_decl.GetNamespaceDecl());
     
+    if (!copied_decl)
+        return NULL;
+    
     NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
     
     m_ast_importer->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
@@ -1311,7 +1317,7 @@ ClangASTSource::GuardedCopyType (ASTContext *dest_context,
     
     SetImportInProgress(false);
     
-    if (ret_qual_type->getCanonicalTypeInternal().isNull()) 
+    if (ret && ret_qual_type->getCanonicalTypeInternal().isNull())
         // this shouldn't happen, but we're hardening because the AST importer seems to be generating bad types
         // on occasion.
         return NULL;
