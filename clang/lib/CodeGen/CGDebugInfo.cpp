@@ -1199,10 +1199,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
 
   if (FwdDecl.isForwardDecl())
     return FwdDecl;
-  
-  llvm::MDNode *MN = FwdDecl;
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
-  
+
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode(FwdDecl);
+
   // Push the struct on region stack.
   LexicalBlockStack.push_back(FwdDeclNode);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
@@ -1246,15 +1245,15 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // get some enums in llvm/Analysis/DebugInfo.h to refer to
   // them.
   if (RD->isUnion())
-    MN->replaceOperandWith(10, Elements);
+    FwdDeclNode->replaceOperandWith(10, Elements);
   else if (CXXDecl) {
-    MN->replaceOperandWith(10, Elements);
-    MN->replaceOperandWith(13, TParamsArray);
+    FwdDeclNode->replaceOperandWith(10, Elements);
+    FwdDeclNode->replaceOperandWith(13, TParamsArray);
   } else
-    MN->replaceOperandWith(10, Elements);
+    FwdDeclNode->replaceOperandWith(10, Elements);
 
-  RegionMap[Ty->getDecl()] = llvm::WeakVH(MN);
-  return llvm::DIType(MN);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDeclNode);
+  return llvm::DIType(FwdDeclNode);
 }
 
 /// CreateType - get objective-c object type.
@@ -1305,8 +1304,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // will find it and we're emitting the complete type.
   CompletedTypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
   // Push the struct on region stack.
-  llvm::MDNode *MN = RealDecl;
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode(RealDecl);
 
   LexicalBlockStack.push_back(FwdDeclNode);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
@@ -1401,10 +1399,10 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   }
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-  RealDecl->replaceOperandWith(10, Elements);
+  FwdDeclNode->replaceOperandWith(10, Elements);
   
   LexicalBlockStack.pop_back();
-  return RealDecl;
+  return llvm::DIType(FwdDeclNode);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty, llvm::DIFile Unit) {
@@ -1814,7 +1812,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-  llvm::MDNode *RealDecl = NULL;
+  llvm::TrackingVH<llvm::MDNode> RealDecl;
   
   if (RD->isUnion())
     RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
