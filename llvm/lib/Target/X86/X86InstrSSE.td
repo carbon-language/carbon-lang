@@ -7739,7 +7739,7 @@ def VINSERTI128rm : AVX2AIi8<0x38, MRMSrcMem, (outs VR256:$dst),
             (int_x86_avx2_vinserti128 VR256:$src1, (memopv2i64 addr:$src2),
              imm:$src3))]>, VEX_4V;
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2], AddedComplexity = 1 in {
 def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
                                    (i32 imm)),
           (VINSERTI128rr VR256:$src1, VR128:$src2,
