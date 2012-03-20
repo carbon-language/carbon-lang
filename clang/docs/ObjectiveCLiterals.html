@@ -120,11 +120,11 @@ NSDictionary *dictionary = @{
 };
 </pre>
 
-This creates an <code>NSDictionary</code> with 3 key/value pairs. Value sub-expressions of a dictionary literal must be Objective-C object pointer typed, as in array literals. Key sub-expresions must be of an Objective-C object pointer type that implements the <code>&LT;NSCopying&GT;</code> protocol.<p>
+This creates an <code>NSDictionary</code> with 3 key/value pairs. Value sub-expressions of a dictionary literal must be Objective-C object pointer typed, as in array literals. Key sub-expressions must be of an Objective-C object pointer type that implements the <code>&LT;NSCopying&GT;</code> protocol.<p>
 
 <h3>Discussion</h3>
 
-Nil keys or nil values are not supported in containers. If the compiler can prove that a key or value is nil at compile time, then a warning will be emitted. Otherwise, a runtime error will occur.<p>
+Neither keys nor values can have the value <code>nil</code> in containers. If the compiler can prove that a key or value is <code>nil</code> at compile time, then a warning will be emitted. Otherwise, a runtime error will occur.<p>
 
 Using array and dictionary literals is safer than the variadic creation forms commonly in use today. Array literal expressions expand to calls to <code>+[NSArray arrayWithObjects:count:]</code>, which validates that all objects are non-<code>nil</code>. The variadic form, <code>+[NSArray arrayWithObjects:]</code> uses <code>nil</code> as an argument list terminator, which can lead to malformed array objects. Dictionary literals are similarly created with <code>+[NSDictionary dictionaryWithObjects:forKeys:count:]</code> which validates all objects and keys, unlike <code>+[NSDictionary dictionaryWithObjectsAndKeys:]</code> which also uses a <code>nil</code> parameter as an argument list terminator.<p>
 
