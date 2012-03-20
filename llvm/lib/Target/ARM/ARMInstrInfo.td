@@ -637,6 +637,7 @@ def BitfieldAsmOperand : AsmOperandClass {
   let Name = "Bitfield";
   let ParserMethod = "parseBitfield";
 }
+
 def bf_inv_mask_imm : Operand<i32>,
                       PatLeaf<(imm), [{
   return ARM::isBitFieldInvertedMask(N->getZExtValue());
