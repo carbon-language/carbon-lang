@@ -148,7 +148,14 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I,
 
     // Only consider IVUsers that are dominated by simplified loop
     // headers. Otherwise, SCEVExpander will crash.
-    if (!isSimplifiedLoopNest(User->getParent(), DT, LI, SimpleLoopNests))
+    BasicBlock *UseBB = User->getParent();
+    // A phi's use is live out of its predecessor block.
+    if (PHINode *PHI = dyn_cast<PHINode>(User)) {
+      unsigned OperandNo = UI.getOperandNo();
+      unsigned ValNo = PHINode::getIncomingValueNumForOperand(OperandNo);
+      UseBB = PHI->getIncomingBlock(ValNo);
+    }
+    if (!isSimplifiedLoopNest(UseBB, DT, LI, SimpleLoopNests))
       return false;
 
     // Descend recursively, but not into PHI nodes outside the current loop.

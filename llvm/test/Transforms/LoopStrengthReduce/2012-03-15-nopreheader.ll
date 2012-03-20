@@ -49,6 +49,8 @@ return:                                           ; preds = %if.end677, %doshell
   ret void
 }
 
+; Another case with a dominating loop that does not contain the IV
+; User. Just make sure it doesn't assert.
 define void @nopreheader2() nounwind ssp {
 entry:
   indirectbr i8* undef, [label %while.cond, label %return]
@@ -119,5 +121,35 @@ while.body94:                                     ; preds = %lor.rhs87, %while.c
   indirectbr i8* undef, [label %while.cond81]
 
 return:                                           ; preds = %if.end216, %land.lhs.true183, %land.lhs.true, %while.end52, %lor.lhs.false, %while.end, %entry
+  ret void
+}
+
+; Test a phi operand IV User dominated by a no-preheader loop.
+define void @nopreheader3() nounwind uwtable ssp align 2 {
+entry:
+  indirectbr i8* blockaddress(@nopreheader3, %if.end10), [label %if.end22, label %if.end10]
+
+if.end10:                                         ; preds = %entry
+  indirectbr i8* blockaddress(@nopreheader3, %if.end6.i), [label %if.end22, label %if.end6.i]
+
+if.end6.i:                                        ; preds = %if.end10
+  indirectbr i8* blockaddress(@nopreheader3, %while.cond2.preheader.i.i), [label %if.then12, label %while.cond2.preheader.i.i]
+
+while.cond2.preheader.i.i:                        ; preds = %while.end.i18.i, %if.end6.i
+  indirectbr i8* blockaddress(@nopreheader3, %while.cond2.i.i), [label %while.cond2.i.i]
+
+while.cond2.i.i:                                  ; preds = %while.cond2.i.i, %while.cond2.preheader.i.i
+  %i1.1.i14.i = phi i32 [ %add.i15.i, %while.cond2.i.i ], [ undef, %while.cond2.preheader.i.i ]
+  %add.i15.i = add nsw i32 %i1.1.i14.i, undef
+  indirectbr i8* blockaddress(@nopreheader3, %while.end.i18.i), [label %while.cond2.i.i, label %while.end.i18.i]
+
+while.end.i18.i:                                  ; preds = %while.cond2.i.i
+  indirectbr i8* blockaddress(@nopreheader3, %while.cond2.preheader.i.i), [label %if.then12, label %while.cond2.preheader.i.i]
+
+if.then12:                                        ; preds = %while.end.i18.i, %if.end6.i
+  %i1.0.lcssa.i.i = phi i32 [ undef, %if.end6.i ], [ %i1.1.i14.i, %while.end.i18.i ]
+  indirectbr i8* blockaddress(@nopreheader3, %if.end22), [label %if.end22]
+
+if.end22:                                         ; preds = %if.then12, %if.end10, %entry
   ret void
 }
