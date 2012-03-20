@@ -67,7 +67,7 @@ entry:
 
 ; T2: t5:
 ; T2-NOT: moveq
-; T2: orreq.w r2, r2, #1
+; T2: orreq r2, r2, #1
   %tmp1 = icmp eq i32 %a, %b
   %tmp2 = zext i1 %tmp1 to i32
   %tmp3 = or i32 %tmp2, %c
