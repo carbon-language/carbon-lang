@@ -501,7 +501,7 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
 
   // SP can move around if there are allocas.  We may also lose track of SP
   // when emergency spilling inside a non-reserved call frame setup.
-  bool hasMovingSP = MFI->hasVarSizedObjects() || !hasReservedCallFrame(MF);
+  bool hasMovingSP = !hasReservedCallFrame(MF);
 
   // When dynamically realigning the stack, use the frame pointer for
   // parameters, and the stack/base pointer for locals.

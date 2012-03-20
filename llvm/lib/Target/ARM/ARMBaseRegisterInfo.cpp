@@ -493,8 +493,7 @@ bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   // When outgoing call frames are so large that we adjust the stack pointer
   // around the call, we can no longer use the stack pointer to reach the
   // emergency spill slot.
-  if (needsStackRealignment(MF) && (MFI->hasVarSizedObjects() ||
-                                    !TFI->hasReservedCallFrame(MF)))
+  if (needsStackRealignment(MF) && !TFI->hasReservedCallFrame(MF))
     return true;
 
   // Thumb has trouble with negative offsets from the FP. Thumb2 has a limited
