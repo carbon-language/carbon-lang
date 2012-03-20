@@ -13,14 +13,6 @@
 // C Includes
 // C++ Includes
 
-// <locale> is not strictly-speaking a requirement for DataVisualization.h
-// but including it ensures a smooth compilation of STLUtils.h. if <locale>
-// is not included, a macro definition of isspace() and other cctype functions occurs
-// which prevents <ostream> from getting included correctly. at least, this is what
-// happens on OSX Lion. If other OSs don't have this side effect, you may want to
-// #if defined (__APPLE__) this include directive
-#include <locale>
-
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ConstString.h"
