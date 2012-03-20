@@ -532,8 +532,9 @@ bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
   // register allocation with frame pointer elimination, it is too late now.
   if (!MRI->canReserveReg(FramePtr))
     return false;
-  // We may also need a base pointer if there are dynamic allocas.
-  if (!MFI->hasVarSizedObjects())
+  // We may also need a base pointer if there are dynamic allocas or stack
+  // pointer adjustments around calls.
+  if (MF.getTarget().getFrameLowering()->hasReservedCallFrame(MF))
     return true;
   if (!EnableBasePointer)
     return false;
