@@ -33,9 +33,19 @@ using namespace lldb_private;
 static uint32_t g_initialize_count = 0;
 
 Platform *
-PlatformLinux::CreateInstance ()
+PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
 {
-    return new PlatformLinux(true);
+    bool create = force;
+    if (create == false && arch && arch->IsValid())
+    {
+        const llvm::Triple &triple = arch->GetTriple();
+        const llvm::Triple::OSType os = triple.getOS();
+        if (os == llvm::Triple::Linux)
+            create = true;
+    }
+    if (create)
+        return new PlatformLinux(true);
+    return NULL;
 }
 
 const char *

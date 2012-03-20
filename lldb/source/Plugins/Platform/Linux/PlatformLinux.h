@@ -37,7 +37,7 @@ namespace lldb_private {
         // lldb_private::PluginInterface functions
         //------------------------------------------------------------
         static Platform *
-        CreateInstance ();
+        CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
         static const char *
         GetPluginNameStatic();

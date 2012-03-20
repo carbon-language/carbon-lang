@@ -30,7 +30,7 @@ public:
     Terminate ();
     
     static lldb_private::Platform* 
-    CreateInstance ();
+    CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
     static const char *
     GetShortPluginNameStatic();

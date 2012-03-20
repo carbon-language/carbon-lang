@@ -25,7 +25,7 @@ public:
     // Class functions
     //------------------------------------------------------------
     static lldb_private::Platform*
-    CreateInstance ();
+    CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
     static void
     Initialize ();

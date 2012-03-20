@@ -21,30 +21,36 @@ using namespace lldb;
 using namespace lldb_private;
 
 PlatformSP 
-OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter, bool make_selected, Error& error) const
+OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter, const ArchSpec &arch, bool make_selected, Error& error) const
 {
     PlatformSP platform_sp;
+    
     if (!m_platform_name.empty())
     {
         platform_sp = Platform::Create (m_platform_name.c_str(), error);
-        
-        if (platform_sp)
-        {
-            interpreter.GetDebugger().GetPlatformList().Append (platform_sp, make_selected);
-            if (m_os_version_major != UINT32_MAX)
-            {
-                platform_sp->SetOSVersion (m_os_version_major,
-                                           m_os_version_minor,
-                                           m_os_version_update);
-            }
-            
-            if (m_sdk_sysroot)
-                platform_sp->SetSDKRootDirectory (m_sdk_sysroot);
-
-            if (m_sdk_build)
-                platform_sp->SetSDKBuild (m_sdk_build);
-        }
     }
+    else if (arch.IsValid())
+    {
+        platform_sp = Platform::Create (arch, error);
+    }
+    
+    if (platform_sp)
+    {
+        interpreter.GetDebugger().GetPlatformList().Append (platform_sp, make_selected);
+        if (m_os_version_major != UINT32_MAX)
+        {
+            platform_sp->SetOSVersion (m_os_version_major,
+                                       m_os_version_minor,
+                                       m_os_version_update);
+        }
+        
+        if (m_sdk_sysroot)
+            platform_sp->SetSDKRootDirectory (m_sdk_sysroot);
+        
+        if (m_sdk_build)
+            platform_sp->SetSDKBuild (m_sdk_build);
+    }
+
     return platform_sp;
 }
 

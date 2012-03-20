@@ -612,11 +612,12 @@ SBDebugger::CreateTarget (const char *filename)
         Error error;
         const bool add_dependent_modules = true;
 
+        PlatformSP platform_sp(m_opaque_sp->GetPlatformList().GetSelectedPlatform());
         error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
                                                            file, 
                                                            arch, 
                                                            add_dependent_modules, 
-                                                           m_opaque_sp->GetPlatformList().GetSelectedPlatform(),
+                                                           platform_sp,
                                                            target_sp);
 
         if (error.Success())

@@ -126,8 +126,8 @@ lldb_private::Initialize ()
         ProcessGDBRemote::Initialize();
         ProcessMachCore::Initialize();
         SymbolVendorMacOSX::Initialize();
-        PlatformMacOSX::Initialize();
         PlatformRemoteiOS::Initialize();
+        PlatformMacOSX::Initialize();
         PlatformiOSSimulator::Initialize();
 #endif
 #if defined (__linux__)

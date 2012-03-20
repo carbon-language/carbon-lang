@@ -57,6 +57,9 @@ namespace lldb_private {
         static lldb::PlatformSP
         GetDefaultPlatform ();
 
+        static lldb::PlatformSP
+        GetPlatformForArchitecture (const ArchSpec &arch);
+
         static const char *
         GetHostPlatformName ();
 
@@ -66,6 +69,9 @@ namespace lldb_private {
         static lldb::PlatformSP
         Create (const char *platform_name, Error &error);
 
+        static lldb::PlatformSP
+        Create (const ArchSpec &arch, Error &error);
+        
         static uint32_t
         GetNumConnectedRemotePlatforms ();
         
@@ -272,6 +278,13 @@ namespace lldb_private {
         //------------------------------------------------------------------
         virtual Error
         LaunchProcess (ProcessLaunchInfo &launch_info);
+
+        //------------------------------------------------------------------
+        /// Lets a platform answer if it is compatible with a given
+        /// architecture and the target triple contained within.
+        //------------------------------------------------------------------
+        virtual bool
+        IsCompatibleWithArchitecture (const ArchSpec &arch);
 
         //------------------------------------------------------------------
         /// Not all platforms will support debugging a process by spawning

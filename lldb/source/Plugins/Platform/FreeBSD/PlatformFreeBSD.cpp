@@ -25,9 +25,20 @@ using namespace lldb;
 using namespace lldb_private;
 
 Platform *
-PlatformFreeBSD::CreateInstance ()
+PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
-    return new PlatformFreeBSD (true);
+    bool create = force;
+    if (create == false && arch && arch->IsValid())
+    {
+        const llvm::Triple &triple = arch->GetTriple();
+        const llvm::Triple::OSType os = triple.getOS();
+        if (os == llvm::Triple::FreeBSD || os == llvm::Triple::KFreeBSD)
+            create = true;
+    }
+    if (create)
+        return new PlatformFreeBSD (true);
+    return NULL;
+
 }
 
 const char *

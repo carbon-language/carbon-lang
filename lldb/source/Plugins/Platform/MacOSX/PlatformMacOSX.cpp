@@ -61,12 +61,24 @@ PlatformMacOSX::Terminate ()
 }
 
 Platform* 
-PlatformMacOSX::CreateInstance ()
+PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
 {
     // The only time we create an instance is when we are creating a remote
     // macosx platform
     const bool is_host = false;
-    return new PlatformMacOSX (is_host);
+    
+    bool create = force;
+    if (create == false && arch && arch->IsValid())
+    {
+        const llvm::Triple &triple = arch->GetTriple();
+        const llvm::Triple::OSType os = triple.getOS();
+        const llvm::Triple::VendorType vendor = triple.getVendor();
+        if (os == llvm::Triple::Darwin && vendor == llvm::Triple::Apple)
+            create = true;
+    }
+    if (create)
+        return new PlatformMacOSX (is_host);
+    return NULL;
 }
 
 

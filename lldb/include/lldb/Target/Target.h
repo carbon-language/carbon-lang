@@ -1067,7 +1067,13 @@ public:
     {
         return m_platform_sp;
     }
-    
+
+    void
+    SetPlatform (const lldb::PlatformSP &platform_sp)
+    {
+        m_platform_sp = platform_sp;
+    }
+
     SourceManager &
     GetSourceManager ()
     {

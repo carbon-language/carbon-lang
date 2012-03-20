@@ -17,6 +17,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
@@ -63,22 +64,7 @@ TargetList::CreateTarget (Debugger &debugger,
 {
     Error error;
     PlatformSP platform_sp;
-    if (platform_options)
-    {
-        if (platform_options->PlatformWasSpecified ())
-        {
-            const bool select_platform = true;
-            platform_sp = platform_options->CreatePlatformWithOptions (debugger.GetCommandInterpreter(), 
-                                                                       select_platform, 
-                                                                       error);
-            if (!platform_sp)
-                return error;
-        }
-    }
     
-    if (!platform_sp)
-        platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
-
     // This is purposely left empty unless it is specified by triple_cstr.
     // If not initialized via triple_cstr, then the currently selected platform
     // will set the architecture correctly.
@@ -93,6 +79,34 @@ TargetList::CreateTarget (Debugger &debugger,
             return error;
         }
     }
+
+    CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
+    if (platform_options)
+    {
+        if (platform_options->PlatformWasSpecified ())
+        {
+            const bool select_platform = true;
+            platform_sp = platform_options->CreatePlatformWithOptions (interpreter,
+                                                                       arch,
+                                                                       select_platform, 
+                                                                       error);
+            if (!platform_sp)
+                return error;
+        }
+    }
+    
+    if (!platform_sp)
+    {
+        // Get the current platform and make sure it is compatible with the
+        // current architecture if we have a valid architecture.
+        platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
+        
+        if (arch.IsValid() && !platform_sp->IsCompatibleWithArchitecture(arch))
+        {
+            platform_sp = Platform::GetPlatformForArchitecture(arch);
+        }
+    }
+
     error = TargetList::CreateTarget (debugger,
                                       file,
                                       arch,
@@ -119,7 +133,7 @@ TargetList::CreateTarget
     const FileSpec& file,
     const ArchSpec& arch,
     bool get_dependent_files,
-    const PlatformSP &platform_sp,
+    PlatformSP &platform_sp,
     TargetSP &target_sp
 )
 {
@@ -142,6 +156,13 @@ TargetList::CreateTarget
             error = platform_sp->ResolveExecutable (file, arch, 
                                                     exe_module_sp, 
                                                     executable_search_paths.GetSize() ? &executable_search_paths : NULL);
+            
+            if (exe_module_sp)
+            {
+                const ArchSpec &arch = exe_module_sp->GetArchitecture();
+                if (arch.IsValid() && !platform_sp->IsCompatibleWithArchitecture(arch))
+                    platform_sp = Platform::GetPlatformForArchitecture(arch);
+            }
         }
 
         if (error.Success() && exe_module_sp)

@@ -60,9 +60,31 @@ PlatformRemoteiOS::Terminate ()
 }
 
 Platform* 
-PlatformRemoteiOS::CreateInstance ()
+PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
 {
-    return new PlatformRemoteiOS ();
+    bool create = force;
+    if (create == false && arch && arch->IsValid())
+    {
+        switch (arch->GetMachine())
+        {
+        case llvm::Triple::arm:
+        case llvm::Triple::thumb:
+            {
+                const llvm::Triple &triple = arch->GetTriple();
+                const llvm::Triple::OSType os = triple.getOS();
+                const llvm::Triple::VendorType vendor = triple.getVendor();
+                if (os == llvm::Triple::Darwin && vendor == llvm::Triple::Apple)
+                    create = true;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (create)
+        return new PlatformRemoteiOS ();
+    return NULL;
 }
 
 

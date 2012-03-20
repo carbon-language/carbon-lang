@@ -60,9 +60,30 @@ PlatformiOSSimulator::Terminate ()
 }
 
 Platform* 
-PlatformiOSSimulator::CreateInstance ()
+PlatformiOSSimulator::CreateInstance (bool force, const ArchSpec *arch)
 {
-    return new PlatformiOSSimulator ();
+    bool create = force;
+    if (create == false && arch && arch->IsValid())
+    {
+        switch (arch->GetMachine())
+        {
+        // Currently simulator is i386 only...
+        case llvm::Triple::x86:
+            {
+                const llvm::Triple &triple = arch->GetTriple();
+                const llvm::Triple::OSType os = triple.getOS();
+                const llvm::Triple::VendorType vendor = triple.getVendor();
+                if (os == llvm::Triple::Darwin && vendor == llvm::Triple::Apple)
+                    create = true;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    if (create)
+        return new PlatformiOSSimulator ();
+    return NULL;
 }
 
 

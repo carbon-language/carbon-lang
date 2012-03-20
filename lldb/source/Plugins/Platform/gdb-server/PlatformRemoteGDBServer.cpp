@@ -56,7 +56,7 @@ PlatformRemoteGDBServer::Terminate ()
 }
 
 Platform* 
-PlatformRemoteGDBServer::CreateInstance ()
+PlatformRemoteGDBServer::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
     return new PlatformRemoteGDBServer ();
 }

@@ -115,7 +115,7 @@ public:
                   const FileSpec& file_spec,
                   const ArchSpec& arch,
                   bool get_dependent_modules,
-                  const lldb::PlatformSP &platform_sp,
+                  lldb::PlatformSP &platform_sp,
                   lldb::TargetSP &target_sp);
 
     //------------------------------------------------------------------

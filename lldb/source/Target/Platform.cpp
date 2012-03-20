@@ -110,7 +110,6 @@ Platform::GetSharedModule (const ModuleSpec &module_spec,
                                         always_create);
 }
 
-
 PlatformSP
 Platform::Create (const char *platform_name, Error &error)
 {
@@ -120,9 +119,30 @@ Platform::Create (const char *platform_name, Error &error)
     {
         create_callback = PluginManager::GetPlatformCreateCallbackForPluginName (platform_name);
         if (create_callback)
-            platform_sp.reset(create_callback());
+            platform_sp.reset(create_callback(true, NULL));
         else
             error.SetErrorStringWithFormat ("unable to find a plug-in for the platform named \"%s\"", platform_name);
+    }
+    else
+        error.SetErrorString ("invalid platform name");
+    return platform_sp;
+}
+
+
+PlatformSP
+Platform::Create (const ArchSpec &arch, Error &error)
+{
+    lldb::PlatformSP platform_sp;
+    if (arch.IsValid())
+    {
+        PlatformCreateInstance create_callback;
+        for (uint32_t idx = 0; (create_callback = PluginManager::GetPlatformCreateCallbackAtIndex (idx)); ++idx)
+        {
+            if (create_callback)
+                platform_sp.reset(create_callback(false, &arch));
+            if (platform_sp && platform_sp->IsCompatibleWithArchitecture(arch))
+                break;
+        }
     }
     else
         error.SetErrorString ("invalid platform name");
@@ -592,3 +612,38 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
     }
     return process_sp;
 }
+
+
+lldb::PlatformSP
+Platform::GetPlatformForArchitecture (const ArchSpec &arch)
+{
+    lldb::PlatformSP platform_sp;
+    Error error;
+    if (arch.IsValid())
+        platform_sp = Platform::Create (arch, error);
+    return platform_sp;
+}
+
+
+//------------------------------------------------------------------
+/// Lets a platform answer if it is compatible with a given
+/// architecture and the target triple contained within.
+//------------------------------------------------------------------
+bool
+Platform::IsCompatibleWithArchitecture (const ArchSpec &arch)
+{
+    // If the architecture is invalid, we must answer true...
+    if (!arch.IsValid())
+        return true;
+    
+    ArchSpec platform_arch;
+    for (uint32_t arch_idx=0; GetSupportedArchitectureAtIndex (arch_idx, platform_arch); ++arch_idx)
+    {
+        if (arch == platform_arch)
+            return true;
+    }
+    return false;
+    
+}
+
+
