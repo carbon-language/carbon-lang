@@ -13,6 +13,7 @@ t2_s0:
         t2_s0 = 2
 
         t3_s0 = t2_s0 + 1
+        .long t3_s0
 // CHECK: invalid reassignment of non-absolute variable 't3_s0'
         t3_s0 = 1
 

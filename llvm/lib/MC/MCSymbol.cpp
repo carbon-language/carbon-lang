@@ -54,8 +54,6 @@ const MCSymbol &MCSymbol::AliasedSymbol() const {
 void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert(!IsUsed && "Cannot set a variable that has already been used.");
   assert(Value && "Invalid variable value!");
-  assert((isUndefined() || (isAbsolute() && isa<MCConstantExpr>(Value))) &&
-         "Invalid redefinition!");
   this->Value = Value;
 
   // Variables should always be marked as in the same "section" as the value.
