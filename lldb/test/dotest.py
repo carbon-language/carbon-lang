@@ -97,6 +97,11 @@ config = {}
 archs = ['x86_64']
 compilers = ['clang']
 
+# The arch might dictate some specific CFLAGS to be passed to the toolchain to build
+# the inferior programs.  The global variable cflags_extras provides a hook to do
+# just that.
+cflags_extras = ''
+
 # Delay startup in order for the debugger to attach.
 delay = False
 
@@ -190,6 +195,10 @@ where options:
        -C /my/full/path/to/clang => specify a full path to the clang binary
        -C clang^gcc => build debuggee using clang and gcc compilers
 -D   : dump the Python sys.path variable
+-E   : specify the extra flags to be passed to the toolchain when building the
+       inferior programs to be debugged
+       suggestions: do not lump the -A arch1^arch2 together such that the -E
+       option applies to only one of the architectures
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
 +a   : just do lldb Python API tests
@@ -406,6 +415,14 @@ def parseOptionsAndInitTestdirs():
         elif sys.argv[index].startswith('-D'):
             dumpSysPath = True
             index += 1
+        elif sys.argv[index].startswith('-E'):
+            # Increment by 1 to fetch the CFLAGS_EXTRAS spec.
+            index += 1
+            if index >= len(sys.argv):
+                usage()
+            cflags_extras = sys.argv[index]
+            os.environ["CFLAGS_EXTRAS"] = cflags_extras
+            index += 1
         elif sys.argv[index].startswith('-a'):
             dont_do_python_api_test = True
             index += 1
@@ -576,7 +593,11 @@ def parseOptionsAndInitTestdirs():
 
         tmpdirs = []
         for srcdir in testdirs:
-            dstdir = os.path.join(rdir, os.path.basename(srcdir))
+            # For example, /Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/hello_watchpoint
+            # shall be split into ['/Volumes/data/lldb/svn/ToT/', 'functionalities/watchpoint/hello_watchpoint'].
+            # Utilize the relative path to the 'test' directory to make our destination dir path.
+            dstdir = os.path.join(rdir, srcdir.split("test"+os.sep)[1])
+            #print "(srcdir, dstdir)=(%s, %s)" % (srcdir, dstdir)
             # Don't copy the *.pyc and .svn stuffs.
             copytree(srcdir, dstdir, ignore=ignore_patterns('*.pyc', '.svn'))
             tmpdirs.append(dstdir)
