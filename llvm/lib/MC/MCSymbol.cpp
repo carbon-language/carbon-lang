@@ -60,11 +60,10 @@ void MCSymbol::setVariableValue(const MCExpr *Value) {
 
   // Variables should always be marked as in the same "section" as the value.
   const MCSection *Section = Value->FindAssociatedSection();
-  if (Section) {
+  if (Section)
     setSection(*Section);
-  } else {
+  else
     setUndefined();
-  }
 }
 
 void MCSymbol::print(raw_ostream &OS) const {
