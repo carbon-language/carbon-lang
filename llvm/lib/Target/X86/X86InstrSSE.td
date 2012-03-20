@@ -641,7 +641,7 @@ let Predicates = [HasAVX] in {
               (VMOVSDrr (v2i64 (V_SET0)),
                         (EXTRACT_SUBREG (v4i64 VR256:$src), sub_sd)), sub_xmm)>;
 
-// Extract and store.
+  // Extract and store.
   def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
                    addr:$dst),
             (VMOVSSmr addr:$dst,
