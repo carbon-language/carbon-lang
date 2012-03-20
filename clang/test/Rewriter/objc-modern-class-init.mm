@@ -13,3 +13,11 @@
 @implementation Sub @end
 
 @implementation Root @end
+
+@interface Root(Cat) @end
+
+@interface Sub(Cat) @end
+
+@implementation Root(Cat) @end
+
+@implementation Sub(Cat) @end

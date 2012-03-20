@@ -5277,7 +5277,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 
 /// struct _category_t {
 ///   const char * const name;
-///   struct _class_t *const cls;
+///   struct _class_t *cls;
 ///   const struct _method_list_t * const instance_methods;
 ///   const struct _method_list_t * const class_methods;
 ///   const struct _protocol_list_t * const protocols;
@@ -5362,7 +5362,7 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   
   Result += "\nstruct _category_t {\n";
   Result += "\tconst char * const name;\n";
-  Result += "\tstruct _class_t *const cls;\n";
+  Result += "\tstruct _class_t *cls;\n";
   Result += "\tconst struct _method_list_t *const instance_methods;\n";
   Result += "\tconst struct _method_list_t *const class_methods;\n";
   Result += "\tconst struct _protocol_list_t *const protocols;\n";
@@ -5753,7 +5753,7 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
   Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = \n";
   Result += "{\n";
   Result += "\t\""; Result += ClassName; Result += "\",\n";
-  Result += "\t&"; Result += "OBJC_CLASS_$_"; Result += ClassName;
+  Result += "\t0, // &"; Result += "OBJC_CLASS_$_"; Result += ClassName;
   Result += ",\n";
   if (InstanceMethods.size() > 0) {
     Result += "\t(const struct _method_list_t *)&";  
@@ -5791,6 +5791,31 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
     Result += "\t0,\n";
   
   Result += "};\n";
+  
+  // Add static function to initialize the class pointer in the category structure.
+  Result += "static void OBJC_CATEGORY_SETUP_$_";
+  Result += ClassDecl->getNameAsString();
+  Result += "_$_";
+  Result += CatName;
+  Result += "(void ) {\n";
+  Result += "\t_OBJC_$_CATEGORY_"; 
+  Result += ClassDecl->getNameAsString();
+  Result += "_$_";
+  Result += CatName;
+  Result += ".cls = "; Result += "&OBJC_CLASS_$_"; Result += ClassName;
+  Result += ";\n}\n";
+  
+  Result += "#pragma section(\".objc_inithooks$B\", long, read, write\n";
+  Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
+  Result += "static void *OBJC_CATEGORY_SETUP2_$_";
+  Result += ClassDecl->getNameAsString();
+  Result += "_$_";
+  Result += CatName;
+  Result += " = (void *)&OBJC_CATEGORY_SETUP_$_"; 
+  Result += ClassDecl->getNameAsString();
+  Result += "_$_";
+  Result += CatName;
+  Result += ";\n\n";
 }
 
 static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj,
