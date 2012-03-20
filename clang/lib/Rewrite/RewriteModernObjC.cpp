@@ -5625,6 +5625,15 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
     Result += VarName;
     Result += CDecl->getSuperClass()->getNameAsString();
     Result += ";\n";
+    
+    if (metaclass) {
+      if (RootClass->getImplementation())
+        Result += "__declspec(dllexport) ";
+      Result += "extern struct _class_t "; 
+      Result += VarName;
+      Result += RootClass->getNameAsString();
+      Result += ";\n";
+    }
   }
   
   Result += "\n__declspec(dllexport) struct _class_t "; Result += VarName; Result += CDecl->getNameAsString();
@@ -5640,7 +5649,7 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
       Result += ",\n\t";
     }
     else {
-      Result += "0, // "; Result += VarName; 
+      Result += "0, // &"; Result += VarName; 
       Result += CDecl->getNameAsString();
       Result += ",\n\t";
       Result += "0, // &OBJC_CLASS_$_"; Result += CDecl->getNameAsString();
@@ -5681,10 +5690,15 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   Result += "(void ) {\n";
   Result += "\tOBJC_METACLASS_$_"; Result += CDecl->getNameAsString();
   Result += ".isa = "; Result += "&OBJC_METACLASS_$_";
-  Result += CDecl->getNameAsString(); Result += ";\n";
+  Result += RootClass->getNameAsString(); Result += ";\n";
   
   Result += "\tOBJC_METACLASS_$_"; Result += CDecl->getNameAsString();
-  Result += ".superclass = "; Result += "&OBJC_METACLASS_$_";
+  Result += ".superclass = ";
+  if (rootClass)
+    Result += "&OBJC_CLASS_$_";
+  else
+     Result += "&OBJC_METACLASS_$_";
+
   Result += SuperClass->getNameAsString(); Result += ";\n";
   
   Result += "\tOBJC_METACLASS_$_"; Result += CDecl->getNameAsString();
