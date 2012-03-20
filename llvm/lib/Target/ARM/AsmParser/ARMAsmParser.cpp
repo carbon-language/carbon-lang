@@ -1102,7 +1102,7 @@ public:
   }
 
   bool isVecListDPairSpaced() const {
-    if (!isSingleSpacedVectorList()) return false;
+    if (isSingleSpacedVectorList()) return false;
     return (ARMMCRegisterClasses[ARM::DPairSpcRegClassID]
               .contains(VectorList.RegNum));
   }
