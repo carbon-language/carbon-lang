@@ -11,13 +11,7 @@
 #define lldb_FormatNavigator_h_
 
 // C Includes
-
-#include <stdint.h>
-#include <unistd.h>
-#include <sys/user.h>
-
 // C++ Includes
-#include <map>
 
 // Other libraries and framework includes
 #include "clang/AST/DeclCXX.h"
