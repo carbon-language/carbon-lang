@@ -4128,8 +4128,8 @@ multiclass AsI1_bincc_irs<bits<4> opcod, string opc,
     let Inst{3-0} = shift{3-0};
   }
 
-  def rsr : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
+  def rsr : AsI1<opcod, (outs GPRnopc:$Rd),
+               (ins GPRnopc:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift", []>,
                RegConstraint<"$Rn = $Rd"> {
     bits<4> Rd;

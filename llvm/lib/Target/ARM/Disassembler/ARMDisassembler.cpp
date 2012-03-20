@@ -869,8 +869,14 @@ static DecodeStatus DecodeGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
 static DecodeStatus
 DecodeGPRnopcRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                            uint64_t Address, const void *Decoder) {
-  if (RegNo == 15) return MCDisassembler::Fail;
-  return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
+  DecodeStatus S = MCDisassembler::Success;
+  
+  if (RegNo == 15) 
+    S = MCDisassembler::SoftFail;
+
+  Check(S, DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder));
+
+  return S;
 }
 
 static DecodeStatus DecodetGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
