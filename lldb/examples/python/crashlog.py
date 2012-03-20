@@ -195,7 +195,7 @@ class CrashLog:
                 if text_section:
                     error = lldb.target.SetSectionLoadAddress (text_section, self.text_addr_lo)
                     if error.Success():
-                        #print 'Success: loaded %s.__TEXT = 0x%x' % (self.basename(), self.text_addr_lo)
+                        #print 'Success: loaded %s.__TEXT = 0x%x' % (self.get_resolved_path_basename(), self.text_addr_lo)
                         return None
                     else:
                         return 'error: %s' % error.GetCString()
@@ -228,19 +228,22 @@ class CrashLog:
         
         def add_target_module(self):
             if lldb.target:
-                if self.fetch_symboled_executable_and_dsym ():
-                    resolved_path = self.get_resolved_path();
-                    path_spec = lldb.SBFileSpec (resolved_path)
-                    #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (resolved_path, self.arch, self.uuid)
-                    self.module = lldb.target.AddModule (resolved_path, self.arch, self.uuid)
-                    if self.module:
-                        err = self.load_module()
-                        if err:
-                            print err;
-                        else:
-                            return None
+                # Check for the module by UUID first in case it has been already loaded in LLDB
+                self.module = lldb.target.AddModule (None, None, str(self.uuid))
+                if not self.module:
+                    if self.fetch_symboled_executable_and_dsym ():
+                        resolved_path = self.get_resolved_path();
+                        path_spec = lldb.SBFileSpec (resolved_path)
+                        #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (resolved_path, self.arch, self.uuid)
+                        self.module = lldb.target.AddModule (resolved_path, self.arch, self.uuid)
+                if self.module:
+                    err = self.load_module()
+                    if err:
+                        print err;
                     else:
-                        return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
+                        return None
+                else:
+                    return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
             else:
                 return 'error: invalid target'
         
