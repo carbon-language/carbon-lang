@@ -285,8 +285,8 @@ Programs test for the new features by using clang's __has_feature checks. Here a
 #else
     // old way (equivalent).
     id keys[] = { @"H", @"He", @"O", @"C" };
-    id values[] = { [NSNumber numberWithFloat:1.0078], [NSNumber numberWithFloat:4.0026],
-                    [NSNumber numberWithFloat:15.9990], [NSNumber numberWithFloat:12.0096] };
+    id values[] = { [NSNumber numberWithDouble:1.0078], [NSNumber numberWithDouble:4.0026],
+                    [NSNumber numberWithDouble:15.9990], [NSNumber numberWithDouble:12.0096] };
     NSDictionary *masses = [NSDictionary dictionaryWithObjects:objects forKeys:keys count:4];
 #endif
 
