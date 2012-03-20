@@ -79,22 +79,31 @@ static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
   return false;
 }
 
-/// Return true if this loop and all loop headers that dominate it are in
-/// simplified form.
-static bool isSimplifiedLoopNest(Loop *L, const DominatorTree *DT,
-                                 const LoopInfo *LI) {
-  if (!L->isLoopSimplifyForm())
-    return false;
-
-  for (DomTreeNode *Rung = DT->getNode(L->getLoopPreheader());
+/// Return true if all loop headers that dominate this block are in simplified
+/// form.
+static bool isSimplifiedLoopNest(BasicBlock *BB, const DominatorTree *DT,
+                                 const LoopInfo *LI,
+                                 SmallPtrSet<Loop*,16> &SimpleLoopNests) {
+  Loop *NearestLoop = 0;
+  for (DomTreeNode *Rung = DT->getNode(BB);
        Rung; Rung = Rung->getIDom()) {
-    BasicBlock *BB = Rung->getBlock();
-    const Loop *DomLoop = LI->getLoopFor(BB);
-    if (DomLoop && DomLoop->getHeader() == BB) {
+    BasicBlock *DomBB = Rung->getBlock();
+    Loop *DomLoop = LI->getLoopFor(DomBB);
+    if (DomLoop && DomLoop->getHeader() == DomBB) {
+      // If the domtree walk reaches a loop with no preheader, return false.
       if (!DomLoop->isLoopSimplifyForm())
         return false;
+      // If we have already checked this loop nest, stop checking.
+      if (SimpleLoopNests.count(DomLoop))
+        break;
+      // If we have not already checked this loop nest, remember the loop
+      // header nearest to BB. The nearest loop may not contain BB.
+      if (!NearestLoop)
+        NearestLoop = DomLoop;
     }
   }
+  if (NearestLoop)
+    SimpleLoopNests.insert(NearestLoop);
   return true;
 }
 
@@ -137,15 +146,10 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I,
     if (isa<PHINode>(User) && Processed.count(User))
       continue;
 
-    Loop *UserLoop = LI->getLoopFor(User->getParent());
-
     // Only consider IVUsers that are dominated by simplified loop
     // headers. Otherwise, SCEVExpander will crash.
-    if (UserLoop && !SimpleLoopNests.count(UserLoop)) {
-      if (!isSimplifiedLoopNest(UserLoop, DT, LI))
-        return false;
-      SimpleLoopNests.insert(UserLoop);
-    }
+    if (!isSimplifiedLoopNest(User->getParent(), DT, LI, SimpleLoopNests))
+      return false;
 
     // Descend recursively, but not into PHI nodes outside the current loop.
     // It's important to see the entire expression outside the loop to get
@@ -154,7 +158,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I,
     // If User is already in Processed, we don't want to recurse into it again,
     // but do want to record a second reference in the same instruction.
     bool AddUserToIVUsers = false;
-    if (UserLoop != L) {
+    if (LI->getLoopFor(User->getParent()) != L) {
       if (isa<PHINode>(User) || Processed.count(User) ||
           !AddUsersIfInteresting(User, SimpleLoopNests)) {
         DEBUG(dbgs() << "FOUND USER in other loop: " << *User << '\n'

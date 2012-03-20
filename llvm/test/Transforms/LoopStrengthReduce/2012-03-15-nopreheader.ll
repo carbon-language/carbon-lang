@@ -48,3 +48,76 @@ for.inc:                                          ; preds = %lor.rhs234, %land.l
 return:                                           ; preds = %if.end677, %doshell, %if.then96
   ret void
 }
+
+define void @nopreheader2() nounwind ssp {
+entry:
+  indirectbr i8* undef, [label %while.cond, label %return]
+
+while.cond:                                       ; preds = %while.cond.backedge, %entry
+  indirectbr i8* undef, [label %while.cond.backedge, label %lor.rhs]
+
+lor.rhs:                                          ; preds = %while.cond
+  indirectbr i8* undef, [label %while.cond.backedge, label %while.end]
+
+while.cond.backedge:                              ; preds = %lor.rhs, %while.cond
+  indirectbr i8* undef, [label %while.cond]
+
+while.end:                                        ; preds = %lor.rhs
+  indirectbr i8* undef, [label %if.then18, label %return]
+
+if.then18:                                        ; preds = %while.end
+  indirectbr i8* undef, [label %if.end35, label %lor.lhs.false]
+
+lor.lhs.false:                                    ; preds = %if.then18
+  indirectbr i8* undef, [label %if.end35, label %return]
+
+if.end35:                                         ; preds = %lor.lhs.false, %if.then18
+  indirectbr i8* undef, [label %while.cond36]
+
+while.cond36:                                     ; preds = %while.body49, %if.end35
+  %0 = phi i64 [ %indvar.next13, %while.body49 ], [ 0, %if.end35 ]
+  indirectbr i8* undef, [label %while.body49, label %lor.rhs42]
+
+lor.rhs42:                                        ; preds = %while.cond36
+  indirectbr i8* undef, [label %while.body49, label %while.end52]
+
+while.body49:                                     ; preds = %lor.rhs42, %while.cond36
+  %indvar.next13 = add i64 %0, 1
+  indirectbr i8* undef, [label %while.cond36]
+
+while.end52:                                      ; preds = %lor.rhs42
+  indirectbr i8* undef, [label %land.lhs.true, label %return]
+
+land.lhs.true:                                    ; preds = %while.end52
+  indirectbr i8* undef, [label %while.cond66.preheader, label %return]
+
+while.cond66.preheader:                           ; preds = %land.lhs.true
+  indirectbr i8* undef, [label %while.cond66]
+
+while.cond66:                                     ; preds = %while.body77, %while.cond66.preheader
+  indirectbr i8* undef, [label %land.rhs, label %while.cond81.preheader]
+
+land.rhs:                                         ; preds = %while.cond66
+  indirectbr i8* undef, [label %while.body77, label %while.cond81.preheader]
+
+while.cond81.preheader:                           ; preds = %land.rhs, %while.cond66
+  %tmp45 = add i64 undef, %0
+  %tmp46 = add i64 %tmp45, undef
+  indirectbr i8* undef, [label %while.cond81]
+
+while.body77:                                     ; preds = %land.rhs
+  indirectbr i8* undef, [label %while.cond66]
+
+while.cond81:                                     ; preds = %while.body94, %while.cond81.preheader
+  %tmp25 = add i64 %tmp46, undef
+  indirectbr i8* undef, [label %while.body94, label %lor.rhs87]
+
+lor.rhs87:                                        ; preds = %while.cond81
+  indirectbr i8* undef, [label %while.body94, label %return]
+
+while.body94:                                     ; preds = %lor.rhs87, %while.cond81
+  indirectbr i8* undef, [label %while.cond81]
+
+return:                                           ; preds = %if.end216, %land.lhs.true183, %land.lhs.true, %while.end52, %lor.lhs.false, %while.end, %entry
+  ret void
+}
