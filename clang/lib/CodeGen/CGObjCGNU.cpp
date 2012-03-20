@@ -933,7 +933,8 @@ llvm::Constant *CGObjCGNU::GetEHType(QualType T) {
 
   // Return the existing typeinfo if it exists
   llvm::Constant *typeinfo = TheModule.getGlobalVariable(typeinfoName);
-  if (typeinfo) return typeinfo;
+  if (typeinfo)
+    return llvm::ConstantExpr::getBitCast(typeinfo, PtrToInt8Ty);
 
   // Otherwise create it.
 
