@@ -6337,6 +6337,8 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
 void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
+  if (LangOpts.MicrosoftExt)
+    Result += "#pragma optimize(\"g\", on)";
   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
@@ -6406,6 +6408,8 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
     }
     Result += "};\n";
   }
+  if (LangOpts.MicrosoftExt)
+    Result += "#pragma optimize(\"\", on)\n";
 }
 
 void RewriteModernObjC::WriteImageInfo(std::string &Result) {
