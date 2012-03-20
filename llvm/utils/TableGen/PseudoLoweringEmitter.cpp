@@ -100,8 +100,11 @@ void PseudoLoweringEmitter::evaluateExpansion(Record *Rec) {
     throw TGError(Rec->getLoc(), "Pseudo result '" + Operator->getName() +
                                  "' operand count mismatch");
 
+  unsigned NumMIOperands = 0;
+  for (unsigned i = 0, e = Insn.Operands.size(); i != e; ++i)
+    NumMIOperands += Insn.Operands[i].MINumOperands;
   IndexedMap<OpData> OperandMap;
-  OperandMap.grow(Insn.Operands.size());
+  OperandMap.grow(NumMIOperands);
 
   addDagOperandMapping(Rec, Dag, Insn, OperandMap, 0);
 
