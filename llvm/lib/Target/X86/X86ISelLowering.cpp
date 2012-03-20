@@ -4344,6 +4344,73 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
   return DAG.getVectorShuffle(VT, V2.getDebugLoc(), V1, V2, &MaskVec[0]);
 }
 
+/// getTargetShuffleMask - Calculates the shuffle mask corresponding to the
+/// target specific opcode. Returns true if the Mask could be calculated.
+static bool getTargetShuffleMask(SDNode *N, EVT VT,
+                                 SmallVectorImpl<int> &Mask) {
+  unsigned NumElems = VT.getVectorNumElements();
+  SDValue ImmN;
+
+  switch(N->getOpcode()) {
+  case X86ISD::SHUFP:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodeSHUFPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
+  case X86ISD::UNPCKH:
+    DecodeUNPCKHMask(VT, Mask);
+    break;
+  case X86ISD::UNPCKL:
+    DecodeUNPCKLMask(VT, Mask);
+    break;
+  case X86ISD::MOVHLPS:
+    DecodeMOVHLPSMask(NumElems, Mask);
+    break;
+  case X86ISD::MOVLHPS:
+    DecodeMOVLHPSMask(NumElems, Mask);
+    break;
+  case X86ISD::PSHUFD:
+  case X86ISD::VPERMILP:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodePSHUFMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
+  case X86ISD::PSHUFHW:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodePSHUFHWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
+  case X86ISD::PSHUFLW:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodePSHUFLWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
+  case X86ISD::MOVSS:
+  case X86ISD::MOVSD: {
+    // The index 0 always comes from the first element of the second source,
+    // this is why MOVSS and MOVSD are used in the first place. The other
+    // elements come from the other positions of the first source vector
+    Mask.push_back(NumElems);
+    for (unsigned i = 1; i != NumElems; ++i) {
+      Mask.push_back(i);
+    }
+    break;
+  }
+  case X86ISD::VPERM2X128:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
+  case X86ISD::MOVDDUP:
+  case X86ISD::MOVLHPD:
+  case X86ISD::MOVLPD:
+  case X86ISD::MOVLPS:
+  case X86ISD::MOVSHDUP:
+  case X86ISD::MOVSLDUP:
+  case X86ISD::PALIGN:
+    // Not yet implemented
+    return false;
+  default: llvm_unreachable("unknown target shuffle node");
+  }
+
+  return true;
+}
+
 /// getShuffleScalarElt - Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
 static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
@@ -4371,67 +4438,11 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
   // Recurse into target specific vector shuffles to find scalars.
   if (isTargetShuffle(Opcode)) {
     unsigned NumElems = VT.getVectorNumElements();
-    SmallVector<unsigned, 16> ShuffleMask;
+    SmallVector<int, 16> ShuffleMask;
     SDValue ImmN;
 
-    switch(Opcode) {
-    case X86ISD::SHUFP:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeSHUFPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                      ShuffleMask);
-      break;
-    case X86ISD::UNPCKH:
-      DecodeUNPCKHMask(VT, ShuffleMask);
-      break;
-    case X86ISD::UNPCKL:
-      DecodeUNPCKLMask(VT, ShuffleMask);
-      break;
-    case X86ISD::MOVHLPS:
-      DecodeMOVHLPSMask(NumElems, ShuffleMask);
-      break;
-    case X86ISD::MOVLHPS:
-      DecodeMOVLHPSMask(NumElems, ShuffleMask);
-      break;
-    case X86ISD::PSHUFD:
-    case X86ISD::VPERMILP:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodePSHUFMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                      ShuffleMask);
-      break;
-    case X86ISD::PSHUFHW:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodePSHUFHWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                        ShuffleMask);
-      break;
-    case X86ISD::PSHUFLW:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodePSHUFLWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                        ShuffleMask);
-      break;
-    case X86ISD::MOVSS:
-    case X86ISD::MOVSD: {
-      // The index 0 always comes from the first element of the second source,
-      // this is why MOVSS and MOVSD are used in the first place. The other
-      // elements come from the other positions of the first source vector.
-      unsigned OpNum = (Index == 0) ? 1 : 0;
-      return getShuffleScalarElt(V.getOperand(OpNum).getNode(), Index, DAG,
-                                 Depth+1);
-    }
-    case X86ISD::VPERM2X128:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                           ShuffleMask);
-      break;
-    case X86ISD::MOVDDUP:
-    case X86ISD::MOVLHPD:
-    case X86ISD::MOVLPD:
-    case X86ISD::MOVLPS:
-    case X86ISD::MOVSHDUP:
-    case X86ISD::MOVSLDUP:
-    case X86ISD::PALIGN:
-      return SDValue(); // Not yet implemented.
-    default: llvm_unreachable("unknown target shuffle node");
-    }
+    if (!getTargetShuffleMask(N, VT, ShuffleMask))
+      return SDValue();
 
     Index = ShuffleMask[Index];
     if (Index < 0)

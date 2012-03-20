@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   // Defaults the copying the dest value.
   ShuffleMask.push_back(0);
   ShuffleMask.push_back(1);
@@ -44,8 +44,7 @@ void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<unsigned> &ShuffleMask) {
 }
 
 // <3,1> or <6,7,2,3>
-void DecodeMOVHLPSMask(unsigned NElts,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeMOVHLPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
   for (unsigned i = NElts/2; i != NElts; ++i)
     ShuffleMask.push_back(NElts+i);
 
@@ -54,8 +53,7 @@ void DecodeMOVHLPSMask(unsigned NElts,
 }
 
 // <0,2> or <0,1,4,5>
-void DecodeMOVLHPSMask(unsigned NElts,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
   for (unsigned i = 0; i != NElts/2; ++i)
     ShuffleMask.push_back(i);
 
@@ -66,8 +64,7 @@ void DecodeMOVLHPSMask(unsigned NElts,
 /// DecodePSHUFMask - This decodes the shuffle masks for pshufd, and vpermilp*.
 /// VT indicates the type of the vector allowing it to handle different
 /// datatypes and vector widths.
-void DecodePSHUFMask(EVT VT, unsigned Imm,
-                     SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePSHUFMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   unsigned NumLanes = VT.getSizeInBits() / 128;
@@ -83,8 +80,7 @@ void DecodePSHUFMask(EVT VT, unsigned Imm,
   }
 }
 
-void DecodePSHUFHWMask(unsigned Imm,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePSHUFHWMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   ShuffleMask.push_back(0);
   ShuffleMask.push_back(1);
   ShuffleMask.push_back(2);
@@ -95,8 +91,7 @@ void DecodePSHUFHWMask(unsigned Imm,
   }
 }
 
-void DecodePSHUFLWMask(unsigned Imm,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePSHUFLWMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   for (unsigned i = 0; i != 4; ++i) {
     ShuffleMask.push_back((Imm & 3));
     Imm >>= 2;
@@ -110,8 +105,7 @@ void DecodePSHUFLWMask(unsigned Imm,
 /// DecodeSHUFPMask - This decodes the shuffle masks for shufp*. VT indicates
 /// the type of the vector allowing it to handle different datatypes and vector
 /// widths.
-void DecodeSHUFPMask(EVT VT, unsigned Imm,
-                     SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeSHUFPMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   unsigned NumLanes = VT.getSizeInBits() / 128;
@@ -136,7 +130,7 @@ void DecodeSHUFPMask(EVT VT, unsigned Imm,
 /// DecodeUNPCKHMask - This decodes the shuffle masks for unpckhps/unpckhpd
 /// and punpckh*. VT indicates the type of the vector allowing it to handle
 /// different datatypes and vector widths.
-void DecodeUNPCKHMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKHMask(EVT VT, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
@@ -156,7 +150,7 @@ void DecodeUNPCKHMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
 /// DecodeUNPCKLMask - This decodes the shuffle masks for unpcklps/unpcklpd
 /// and punpckl*. VT indicates the type of the vector allowing it to handle
 /// different datatypes and vector widths.
-void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
@@ -174,7 +168,7 @@ void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
 }
 
 void DecodeVPERM2X128Mask(EVT VT, unsigned Imm,
-                          SmallVectorImpl<unsigned> &ShuffleMask) {
+                          SmallVectorImpl<int> &ShuffleMask) {
   unsigned HalfSize = VT.getVectorNumElements()/2;
   unsigned FstHalfBegin = (Imm & 0x3) * HalfSize;
   unsigned SndHalfBegin = ((Imm >> 4) & 0x3) * HalfSize;

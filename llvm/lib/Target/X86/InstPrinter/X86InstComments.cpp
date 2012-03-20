@@ -29,7 +29,7 @@ using namespace llvm;
 void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
                                   const char *(*getRegName)(unsigned)) {
   // If this is a shuffle operation, the switch should fill in this state.
-  SmallVector<unsigned, 8> ShuffleMask;
+  SmallVector<int, 8> ShuffleMask;
   const char *DestName = 0, *Src1Name = 0, *Src2Name = 0;
 
   switch (MI->getOpcode()) {
@@ -500,7 +500,7 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     if (Src1Name == Src2Name) {
       for (unsigned i = 0, e = ShuffleMask.size(); i != e; ++i) {
         if ((int)ShuffleMask[i] >= 0 && // Not sentinel.
-            ShuffleMask[i] >= e)        // From second mask.
+            ShuffleMask[i] >= (int)e)        // From second mask.
           ShuffleMask[i] -= e;
       }
     }
@@ -511,20 +511,20 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     for (unsigned i = 0, e = ShuffleMask.size(); i != e; ++i) {
       if (i != 0)
         OS << ',';
-      if (ShuffleMask[i] == SM_SentinelZero) {
+      if (ShuffleMask[i] == (int)SM_SentinelZero) {
         OS << "zero";
         continue;
       }
 
       // Otherwise, it must come from src1 or src2.  Print the span of elements
       // that comes from this src.
-      bool isSrc1 = ShuffleMask[i] < ShuffleMask.size();
+      bool isSrc1 = ShuffleMask[i] < (int)ShuffleMask.size();
       const char *SrcName = isSrc1 ? Src1Name : Src2Name;
       OS << (SrcName ? SrcName : "mem") << '[';
       bool IsFirst = true;
       while (i != e &&
              (int)ShuffleMask[i] >= 0 &&
-             (ShuffleMask[i] < ShuffleMask.size()) == isSrc1) {
+             (ShuffleMask[i] < (int)ShuffleMask.size()) == isSrc1) {
         if (!IsFirst)
           OS << ',';
         else
