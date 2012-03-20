@@ -210,6 +210,7 @@ loadSegment32(const MachOObject *Obj,
 
   // Process the relocations for each section we're loading.
   Relocations.grow(Relocations.size() + SegmentLC->NumSections);
+  Referrers.grow(Referrers.size() + SegmentLC->NumSections);
   for (unsigned SectNum = 0; SectNum != SegmentLC->NumSections; ++SectNum) {
     InMemoryStruct<macho::Section> Sect;
     Obj->ReadSection(*SegmentLCI, SectNum, Sect);
@@ -246,10 +247,12 @@ loadSegment32(const MachOObject *Obj,
 
         // Store the relocation information. It will get resolved when
         // the section addresses are assigned.
+        uint32_t RelocationIndex = Relocations[SectionID].size();
         Relocations[SectionID].push_back(RelocationEntry(TargetID,
                                                          Offset,
                                                          RE->Word1,
                                                          0 /*Addend*/));
+        Referrers[TargetID].push_back(Referrer(SectionID, RelocationIndex));
       } else {
         StringRef SourceName = SymbolNames[SourceNum];
 
@@ -332,6 +335,7 @@ loadSegment64(const MachOObject *Obj,
 
   // Process the relocations for each section we're loading.
   Relocations.grow(Relocations.size() + Segment64LC->NumSections);
+  Referrers.grow(Referrers.size() + Segment64LC->NumSections);
   for (unsigned SectNum = 0; SectNum != Segment64LC->NumSections; ++SectNum) {
     InMemoryStruct<macho::Section64> Sect;
     Obj->ReadSection64(*SegmentLCI, SectNum, Sect);
@@ -368,10 +372,12 @@ loadSegment64(const MachOObject *Obj,
 
         // Store the relocation information. It will get resolved when
         // the section addresses are assigned.
+        uint32_t RelocationIndex = Relocations[SectionID].size();
         Relocations[SectionID].push_back(RelocationEntry(TargetID,
                                                          Offset,
                                                          RE->Word1,
                                                          0 /*Addend*/));
+        Referrers[TargetID].push_back(Referrer(SectionID, RelocationIndex));
       } else {
         StringRef SourceName = SymbolNames[SourceNum];
 
@@ -475,7 +481,9 @@ void RuntimeDyldMachO::resolveSymbol(StringRef Name) {
     // relative and move it to the resolved relocation list.
     RelocationEntry Entry = Relocs[i];
     Entry.Addend += Loc->second.second;
+    uint32_t RelocationIndex = Relocations[Loc->second.first].size();
     Relocations[Loc->second.first].push_back(Entry);
+    Referrers[Entry.SectionID].push_back(Referrer(Loc->second.first, RelocationIndex));
   }
   // FIXME: Keep a worklist of the relocations we've added so that we can
   // resolve more selectively later.
@@ -593,6 +601,31 @@ void RuntimeDyldMachO::reassignSectionAddress(unsigned SectionID,
   RelocationList &Relocs = Relocations[SectionID];
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     RelocationEntry &RE = Relocs[i];
+    uint8_t *Target = (uint8_t*)Sections[RE.SectionID].base() + RE.Offset;
+    uint64_t FinalTarget = (uint64_t)SectionLoadAddress[RE.SectionID] + RE.Offset;
+    bool isPCRel = (RE.Data >> 24) & 1;
+    unsigned Type = (RE.Data >> 28) & 0xf;
+    unsigned Size = 1 << ((RE.Data >> 25) & 3);
+
+    DEBUG(dbgs() << "Resolving relocation at Section #" << RE.SectionID
+          << " + " << RE.Offset << " (" << format("%p", Target) << ")"
+          << " from Section #" << SectionID << " (" << format("%p", Addr) << ")"
+          << "(" << (isPCRel ? "pcrel" : "absolute")
+          << ", type: " << Type << ", Size: " << Size << ", Addend: "
+          << RE.Addend << ").\n");
+
+    resolveRelocation(Target,
+                      FinalTarget,
+                      Addr,
+                      isPCRel,
+                      Type,
+                      Size,
+                      RE.Addend);
+  }
+  ReferrerList &Refers = Referrers[SectionID];
+  for (unsigned i = 0, e = Refers.size(); i != e; ++i) {
+    Referrer &R = Refers[i];
+    RelocationEntry &RE = Relocations[R.SectionID][R.Index];
     uint8_t *Target = (uint8_t*)Sections[RE.SectionID].base() + RE.Offset;
     uint64_t FinalTarget = (uint64_t)SectionLoadAddress[RE.SectionID] + RE.Offset;
     bool isPCRel = (RE.Data >> 24) & 1;

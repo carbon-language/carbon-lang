@@ -43,10 +43,26 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
       : SectionID(id), Offset(offset), Data(data), Addend(addend) {}
   };
   typedef SmallVector<RelocationEntry, 4> RelocationList;
+
+  // For each section, keep a list of referrers in that section that are clients
+  // of relocations in other sections.  Whenever a relocation gets created,
+  // create a corresponding referrer.  Whenever relocations are re-resolved,
+  // re-resolve the referrers' relocations as well.
+  struct Referrer {
+    unsigned    SectionID;  // Section whose RelocationList contains the relocation.
+    uint32_t    Index;      // Index of the RelocatonEntry in that RelocationList.
+
+    Referrer(unsigned id, uint32_t index)
+      : SectionID(id), Index(index) {}
+  };
+  typedef SmallVector<Referrer, 4> ReferrerList;
+
   // Relocations to sections already loaded. Indexed by SectionID which is the
   // source of the address. The target where the address will be writen is
   // SectionID/Offset in the relocation itself.
   IndexedMap<RelocationList> Relocations;
+  // Referrers corresponding to Relocations.
+  IndexedMap<ReferrerList> Referrers;
   // Relocations to symbols that are not yet resolved. Must be external
   // relocations by definition. Indexed by symbol name.
   StringMap<RelocationList> UnresolvedRelocations;
