@@ -386,7 +386,7 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
                                          this);
   } else {
     SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Header, OutsideBlocks, ".preheader", 
+    SplitLandingPadPredecessors(Header, OutsideBlocks, ".preheader",
                                 ".split-lp", this, NewBBs);
     PreheaderBB = NewBBs[0];
   }
@@ -538,7 +538,7 @@ void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM,
                                        BasicBlock *Preheader) {
-  // Don't try to separate loops without a preheader (this excludes 
+  // Don't try to separate loops without a preheader (this excludes
   // loop headers which are targeted by an indirectbr).
   if (!Preheader)
     return 0;
