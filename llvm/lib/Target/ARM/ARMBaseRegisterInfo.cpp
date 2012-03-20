@@ -517,7 +517,6 @@ bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 }
 
 bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
   const MachineRegisterInfo *MRI = &MF.getRegInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   // We can't realign the stack if:
