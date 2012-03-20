@@ -136,15 +136,8 @@ unsigned FastISel::getRegForValue(const Value *V) {
       return 0;
   }
 
-  // Look up the value to see if we already have a register for it. We
-  // cache values defined by Instructions across blocks, and other values
-  // only locally. This is because Instructions already have the SSA
-  // def-dominates-use requirement enforced.
-  DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(V);
-  if (I != FuncInfo.ValueMap.end())
-    return I->second;
-
-  unsigned Reg = LocalValueMap[V];
+  // Look up the value to see if we already have a register for it.
+  unsigned Reg = lookUpRegForValue(V);
   if (Reg != 0)
     return Reg;
 
