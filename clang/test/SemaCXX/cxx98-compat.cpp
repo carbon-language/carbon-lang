@@ -50,6 +50,10 @@ int InitList(int i = {}) { // expected-warning {{generalized initializer lists a
   s = {}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
   return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
 }
+struct DelayedDefaultArgumentParseInitList {
+  void f(int i = {1}) { // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  }
+};
 
 int operator"" _hello(const char *); // expected-warning {{literal operators are incompatible with C++98}}
 
