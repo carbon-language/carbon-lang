@@ -89,7 +89,7 @@
     <li><a href="#objc_arc">Automatic reference counting</a></li>
     <li><a href="#objc_fixed_enum">Enumerations with a fixed underlying type</a></li>
     <li><a href="#objc_lambdas">Interoperability with C++11 lambdas</a></li>
-    <li><a href="ObjectiveCLiterals.html">Object Literals and Subscripting</a></li>    
+    <li><a href="#object-literals-subscripting">Object Literals and Subscripting</a></li>    
   </ul>
 </li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
@@ -1133,6 +1133,12 @@ copying a block to the heap in the common case.</p>
 <p>The conversion from a lambda to a block pointer is only available
 in Objective-C++, and not in C++ with blocks, due to its use of
 Objective-C memory management (autorelease).</p>
+
+<!-- ======================================================================= -->
+<h2 id="object-literals-subscripting">Object Literals and Subscripting</h2>
+<!-- ======================================================================= -->
+
+<p>Clang provides support for <a href="ObjectiveCLiterals.html">Object Literals and Subscripting</a> in Objective-C, which simplifies common Objective-C programming patterns, make programs more concise, and improves the safety of container creation. There are several feature macros associated with object literals and subscripting: <code>__has_feature(objc_array_literals)</code> tests the availability of array literals; <code>__has_feature(objc_dictionary_literals)</code> tests the availability of dictionary literals; <code>__has_feature(objc_subscripting)</code> tests the availability of of object subscripting.</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>
