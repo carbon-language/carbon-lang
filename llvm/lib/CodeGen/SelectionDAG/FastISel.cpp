@@ -590,7 +590,12 @@ bool FastISel::SelectCall(const User *I) {
         Reg = TRI.getFrameRegister(*FuncInfo.MF);
     }
     if (!Reg)
-      Reg = getRegForValue(Address);
+      Reg = lookUpRegForValue(Address);
+
+    if (!Reg && isa<Instruction>(Address) &&
+        (!isa<AllocaInst>(Address) ||
+         !FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Address))))
+      Reg = FuncInfo.InitializeRegForValue(Address);
 
     if (Reg)
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
