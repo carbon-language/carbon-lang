@@ -49,17 +49,17 @@
         <li>Fast link times</li>
         <li>Minimal memory use</li>
         <li>Remove clang's reliance on "the system linker"</li>
+        <li>Uses the LLVM 'BSD' License</li>
     </ul>
 
     <p><b>Applications:</b></p>
     <ul>
-        <li>Use the LLVM 'BSD' License</li>
         <li>Modular design</li>
         <li>Support cross linking</li>
         <li>Easy to add new CPU support</li>
         <li>Can be built as static tool or library</li>
     </ul>
-    
+
     <p><b>Design and Implementation:</b></p>
     <ul>
         <li>Extensive unit tests</li>
@@ -77,7 +77,7 @@
   <p>The fact that clang relies on whatever linker tool you happen to have
     installed means that clang has been very conservative adopting features
     which require a recent linker.</p>
-    
+
  <p>In the same way that the MC layer of LLVM has removed clang's reliance
     on the system assembler tool, the lld project will remove clang's reliance
     on the system linker tool.</p>
@@ -96,7 +96,7 @@
 <ul>
    <li><a href="linker_design.html">Design of lld</a></li>
 </ul>
- 
+
 </div>
 </body>
 </html>
