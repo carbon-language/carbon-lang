@@ -18,7 +18,6 @@
 
 #include "asan_interceptors.h"
 
-#include <setjmp.h>
 #include <CoreFoundation/CFString.h>
 
 typedef void* pthread_workqueue_t;

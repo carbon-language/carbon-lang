@@ -34,6 +34,13 @@
 #include <strings.h>
 #endif  // __APPLE__
 
+#if defined(__APPLE__)
+extern "C" {
+void longjmp(void* env, int val);
+void _longjmp(void *env, int val);
+}  // extern "C"
+#endif  // __APPLE__
+
 #if defined(_WIN32) && !defined(_DLL)
 // FIXME: We might want to use these on Mac too.
 extern "C" {
