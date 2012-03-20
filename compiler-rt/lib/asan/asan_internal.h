@@ -219,6 +219,15 @@ void PoisonShadowPartialRightRedzone(uintptr_t addr,
                                      uintptr_t redzone_size,
                                      uint8_t value);
 
+// Platfrom-specific options.
+#ifdef __APPLE__
+bool PlatformHasDifferentMemcpyAndMemmove();
+# define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE \
+    (PlatformHasDifferentMemcpyAndMemmove())
+#else
+# define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE true
+#endif  // __APPLE__
+
 extern size_t FLAG_quarantine_size;
 extern int    FLAG_demangle;
 extern bool   FLAG_symbolize;

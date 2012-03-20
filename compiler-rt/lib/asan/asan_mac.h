@@ -21,17 +21,6 @@
 #include <setjmp.h>
 #include <CoreFoundation/CFString.h>
 
-enum {
-  MACOS_VERSION_UNKNOWN = 0,
-  MACOS_VERSION_LEOPARD,
-  MACOS_VERSION_SNOW_LEOPARD,
-  MACOS_VERSION_LION,
-};
-
-namespace __asan {
-int GetMacosVersion();
-}
-
 typedef void* pthread_workqueue_t;
 typedef void* pthread_workitem_handle_t;
 

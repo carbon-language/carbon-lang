@@ -642,21 +642,11 @@ void InitializeAsanInterceptors() {
   CHECK(INTERCEPT_FUNCTION(memcmp));
   CHECK(INTERCEPT_FUNCTION(memmove));
   CHECK(INTERCEPT_FUNCTION(memset));
-#ifdef __APPLE__
-  // Wrap memcpy() on OS X 10.6 only, because on 10.7 memcpy() and memmove()
-  // are resolved into memmove$VARIANT$sse42.
-  // See also http://code.google.com/p/address-sanitizer/issues/detail?id=34.
-  // TODO(glider): need to check dynamically that memcpy() and memmove() are
-  // actually the same function.
-  if (GetMacosVersion() == MACOS_VERSION_SNOW_LEOPARD) {
+  if (PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE) {
     CHECK(INTERCEPT_FUNCTION(memcpy));
   } else {
     REAL(memcpy) = REAL(memmove);
   }
-#else
-  // Always wrap memcpy() on non-Darwin platforms.
-  CHECK(INTERCEPT_FUNCTION(memcpy));
-#endif
 
   // Intercept str* functions.
   CHECK(INTERCEPT_FUNCTION(strcat));  // NOLINT

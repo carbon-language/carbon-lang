@@ -50,7 +50,14 @@ void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
 # endif  // __WORDSIZE
 }
 
-int GetMacosVersion() {
+enum {
+  MACOS_VERSION_UNKNOWN = 0,
+  MACOS_VERSION_LEOPARD,
+  MACOS_VERSION_SNOW_LEOPARD,
+  MACOS_VERSION_LION,
+};
+
+static int GetMacosVersion() {
   int mib[2] = { CTL_KERN, KERN_OSRELEASE };
   char version[100];
   size_t len = 0, maxlen = sizeof(version) / sizeof(version[0]);
@@ -70,6 +77,15 @@ int GetMacosVersion() {
     }
     default: return MACOS_VERSION_UNKNOWN;
   }
+}
+
+bool PlatformHasDifferentMemcpyAndMemmove() {
+  // On OS X 10.7 memcpy() and memmove() are both resolved
+  // into memmove$VARIANT$sse42.
+  // See also http://code.google.com/p/address-sanitizer/issues/detail?id=34.
+  // TODO(glider): need to check dynamically that memcpy() and memmove() are
+  // actually the same function.
+  return GetMacosVersion() == MACOS_VERSION_SNOW_LEOPARD;
 }
 
 // No-op. Mac does not support static linkage anyway.
