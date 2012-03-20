@@ -7309,6 +7309,23 @@ def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           []>, VEX;
 }
 
+// Extract and store.
+let Predicates = [HasAVX] in {
+  def : Pat<(alignedstore (int_x86_avx_vextractf128_ps_256 VR256:$src1, imm:$src2), addr:$dst),
+          (VEXTRACTF128mr addr:$dst, VR256:$src1, imm:$src2)>;
+  def : Pat<(alignedstore (int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2), addr:$dst),
+          (VEXTRACTF128mr addr:$dst, VR256:$src1, imm:$src2)>;
+  def : Pat<(alignedstore (int_x86_avx_vextractf128_si_256 VR256:$src1, imm:$src2), addr:$dst),
+          (VEXTRACTF128mr addr:$dst, VR256:$src1, imm:$src2)>;
+
+  def : Pat<(int_x86_sse_storeu_ps addr:$dst, (int_x86_avx_vextractf128_ps_256 VR256:$src1, imm:$src2)),
+          (VEXTRACTF128mr addr:$dst, VR256:$src1, imm:$src2)>;
+  def : Pat<(int_x86_sse2_storeu_pd addr:$dst, (int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2)),
+          (VEXTRACTF128mr addr:$dst, VR256:$src1, imm:$src2)>;
+  def : Pat<(int_x86_sse2_storeu_dq addr:$dst, (bc_v16i8 (int_x86_avx_vextractf128_si_256 VR256:$src1, imm:$src2))),
+          (VEXTRACTF128mr addr:$dst, VR256:$src1, imm:$src2)>;
+}
+
 // AVX1 patterns
 let Predicates = [HasAVX] in {
 def : Pat<(int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2),
