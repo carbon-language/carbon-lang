@@ -25,9 +25,15 @@ void testMacro() {
 // Test handling of issues from #includes.
 #include "serialized-diags.h"
 
+// Test handling of warnings that have empty fixits.
+void rdar11040133() {
+  unsigned x;
+}
+
 // RUN: rm -f %t
-// RUN: %clang -Wall -fsyntax-only %s --serialize-diagnostics %t > /dev/null 2>&1 || true
-// RUN: c-index-test -read-diagnostics %t 2>&1 | FileCheck %s
+// RUN: %clang -Wall -fsyntax-only %s --serialize-diagnostics %t.diag > /dev/null 2>&1 || true
+// RUN: c-index-test -read-diagnostics %t.diag > %t 2>&1
+// RUN: FileCheck --input-file=%t %s
 
 // This test case tests that we can handle multiple diagnostics which contain
 // FIXITs at different levels (one at the note, another at the main diagnostic).
@@ -55,5 +61,8 @@ void testMacro() {
 // CHECK: {{.*[/\\]}}serialized-diags.h:5:7: warning: incompatible integer to pointer conversion initializing 'char *' with an expression of type 'int';  [-Wint-conversion]
 // CHECK: Range: {{.*[/\\]}}serialized-diags.h:5:16 {{.*[/\\]}}serialized-diags.h:5:17
 // CHECK: +-{{.*[/\\]}}serialized-diags.c:26:10: note: in file included from {{.*[/\\]}}serialized-diags.c:26: []
-// CHECK: Number of diagnostics: 5
+// CHECK: Number FIXITs = 0
+// CHECK: {{.*[/\\]}}serialized-diags.c:30:12: warning: unused variable 'x'
+// CHECK: Number FIXITs = 0
+// CHECK: Number of diagnostics: 6
 

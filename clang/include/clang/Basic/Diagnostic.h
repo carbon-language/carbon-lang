@@ -946,7 +946,8 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const FixItHint &Hint) {
-  DB.AddFixItHint(Hint);
+  if (!Hint.isNull())
+    DB.AddFixItHint(Hint);
   return DB;
 }
 

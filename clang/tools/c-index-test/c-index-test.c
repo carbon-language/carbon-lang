@@ -381,6 +381,7 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
     return;
 
   num_fixits = clang_getDiagnosticNumFixIts(Diagnostic);
+  fprintf(stderr, "Number FIX-ITs = %d\n", num_fixits);
   for (i = 0; i != num_fixits; ++i) {
     CXSourceRange range;
     CXString insertion_text = clang_getDiagnosticFixIt(Diagnostic, i, &range);
@@ -2501,6 +2502,7 @@ static void printRanges(CXDiagnostic D, unsigned indent) {
 
 static void printFixIts(CXDiagnostic D, unsigned indent) {
   unsigned i, n = clang_getDiagnosticNumFixIts(D);
+  fprintf(stderr, "Number FIXITs = %d\n", n);
   for (i = 0 ; i < n; ++i) {
     CXSourceRange ReplacementRange;
     CXString text;
