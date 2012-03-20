@@ -573,7 +573,14 @@ public:
             for (int i = 0; i < filter->GetCount(); i++)
             {
                 const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
-                if (::strcmp(name_cstr, expr_cstr))
+                if (expr_cstr)
+                {
+                    if (*expr_cstr == '.')
+                        expr_cstr++;
+                    else if (*expr_cstr == '-' && *(expr_cstr+1) == '>')
+                        expr_cstr += 2;
+                }
+                if (!::strcmp(name_cstr, expr_cstr))
                     return i;
             }
             return UINT32_MAX;

@@ -118,6 +118,8 @@ ValueObjectSynthetic::GetChildAtIndex (uint32_t idx, bool can_create)
         if (can_create && m_synth_filter_ap.get() != NULL)
         {
             lldb::ValueObjectSP synth_guy = m_synth_filter_ap->GetChildAtIndex (idx, can_create);
+            if (!synth_guy)
+                return synth_guy;
             m_children_byindex[idx]= synth_guy.get();
             return synth_guy;
         }
@@ -151,6 +153,8 @@ ValueObjectSynthetic::GetIndexOfChildWithName (const ConstString &name)
     if (iter == m_name_toindex.end() && m_synth_filter_ap.get() != NULL)
     {
         uint32_t index = m_synth_filter_ap->GetIndexOfChildWithName (name);
+        if (index == UINT32_MAX)
+            return index;
         m_name_toindex[name.GetCString()] = index;
         return index;
     }
