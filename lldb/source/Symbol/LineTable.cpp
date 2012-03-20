@@ -227,7 +227,9 @@ LineTable::FindLineEntryByAddress (const Address &so_addr, LineEntry& line_entry
 
             }
             
-            if (pos != end_pos)
+            // Make sure we have a valid match and that the match isn't a terminating
+            // entry for a previous line...
+            if (pos != end_pos && pos->is_terminal_entry == false)
             {
                 uint32_t match_idx = std::distance (begin_pos, pos);
                 success = ConvertEntryAtIndexToLineEntry(match_idx, line_entry);
