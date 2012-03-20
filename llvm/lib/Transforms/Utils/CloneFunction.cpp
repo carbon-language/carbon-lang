@@ -424,10 +424,6 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     //
     BasicBlock::iterator I = NewBB->begin();
 
-    DebugLoc TheCallDL;
-    if (TheCall) 
-      TheCallDL = TheCall->getDebugLoc();
-    
     // Handle PHI nodes specially, as we have to remove references to dead
     // blocks.
     if (PHINode *PN = dyn_cast<PHINode>(I)) {
