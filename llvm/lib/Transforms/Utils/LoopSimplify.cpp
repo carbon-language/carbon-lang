@@ -538,8 +538,7 @@ void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM,
                                        BasicBlock *Preheader) {
-  // Don't try to separate loops without a preheader (this excludes
-  // loop headers which are targeted by an indirectbr).
+  // Don't try to separate loops without a preheader.
   if (!Preheader)
     return 0;
 
@@ -554,11 +553,15 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM,
   // handles the case when a PHI node has multiple instances of itself as
   // arguments.
   SmallVector<BasicBlock*, 8> OuterLoopPreds;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) != PN ||
-        !L->contains(PN->getIncomingBlock(i)))
+        !L->contains(PN->getIncomingBlock(i))) {
+      // We can't split indirectbr edges.
+      if (isa<IndirectBrInst>(PN->getIncomingBlock(i)->getTerminator()))
+        return 0;
       OuterLoopPreds.push_back(PN->getIncomingBlock(i));
-
+    }
+  }
   DEBUG(dbgs() << "LoopSimplify: Splitting out a new outer loop\n");
 
   // If ScalarEvolution is around and knows anything about values in
