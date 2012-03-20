@@ -7353,6 +7353,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     // Since we're explcitly calling ReplaceAllUses, add the new node to the
     // worklist explicitly as well.
     AddToWorkList(Load.getNode());
+    AddUsersToWorkList(Load.getNode()); // Add users too
     // Make sure to revisit this node to clean it up; it will usually be dead.
     AddToWorkList(N);
     return SDValue(N, 0);
