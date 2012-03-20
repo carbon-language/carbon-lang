@@ -613,6 +613,9 @@ ModuleList::GetSharedModule
             for (uint32_t module_idx = 0; module_idx < num_matching_modules; ++module_idx)
             {
                 module_sp = matching_module_list.GetModuleAtIndex(module_idx);
+                // If we had a UUID and we found a match, then that is good enough for a match
+                if (uuid_ptr)
+                    break;
                 if (module_file_spec)
                 {
                     // If we didn't have a UUID in mind when looking for the object file,
