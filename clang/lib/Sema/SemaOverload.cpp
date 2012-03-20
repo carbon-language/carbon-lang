@@ -2904,22 +2904,34 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
         else
           Usable = Usable &&Constructor->isConvertingConstructor(AllowExplicit);
         if (Usable) {
+          bool SuppressUserConversions = !ConstructorsOnly;
+          if (SuppressUserConversions && ListInitializing) {
+            SuppressUserConversions = false;
+            if (NumArgs == 1) {
+              // If the first argument is (a reference to) the target type,
+              // suppress conversions.
+              const FunctionProtoType *CtorType =
+                  Constructor->getType()->getAs<FunctionProtoType>();
+              if (CtorType->getNumArgs() > 0) {
+                QualType FirstArg = CtorType->getArgType(0);
+                if (S.Context.hasSameUnqualifiedType(ToType,
+                                              FirstArg.getNonReferenceType())) {
+                  SuppressUserConversions = true;
+                }
+              }
+            }
+          }
           if (ConstructorTmpl)
             S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                            /*ExplicitArgs*/ 0,
                                            llvm::makeArrayRef(Args, NumArgs),
-                                           CandidateSet,
-                                           /*SuppressUserConversions=*/
-                                           !ConstructorsOnly &&
-                                             !ListInitializing);
+                                           CandidateSet, SuppressUserConversions);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
             S.AddOverloadCandidate(Constructor, FoundDecl,
                                    llvm::makeArrayRef(Args, NumArgs),
-                                   CandidateSet,
-                                   /*SuppressUserConversions=*/
-                                   !ConstructorsOnly && !ListInitializing);
+                                   CandidateSet, SuppressUserConversions);
         }
       }
     }
