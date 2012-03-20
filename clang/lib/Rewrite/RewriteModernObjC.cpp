@@ -5269,7 +5269,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 
 /// struct _class_t {
 ///   struct _class_t *isa;
-///   struct _class_t * const superclass;
+///   struct _class_t *superclass;
 ///   void *cache;
 ///   IMP *vtable;
 ///   struct _class_ro_t *ro;
@@ -5354,7 +5354,7 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   
   Result += "\nstruct _class_t {\n";
   Result += "\tstruct _class_t *isa;\n";
-  Result += "\tstruct _class_t *const superclass;\n";
+  Result += "\tstruct _class_t *superclass;\n";
   Result += "\tvoid *cache;\n";
   Result += "\tvoid *vtable;\n";
   Result += "\tstruct _class_ro_t *ro;\n";
@@ -5369,7 +5369,7 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   Result += "\tconst struct _prop_list_t *const properties;\n";
   Result += "};\n";
   
-  Result += "extern void *_objc_empty_cache;\n";
+  Result += "__declspec(dllimport) extern struct objc_cache _objc_empty_cache;\n";
   Result += "extern void *_objc_empty_vtable;\n";
   
   meta_data_declared = true;
