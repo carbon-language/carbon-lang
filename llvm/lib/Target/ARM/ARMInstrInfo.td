@@ -4085,73 +4085,42 @@ def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),
  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm_not:$imm, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $Rd">;
 
-let isCodeGenOnly = 1 in {
 // Conditional instructions
-multiclass AsI1_bincc_irs<bits<4> opcod, string opc,
-                   InstrItinClass iii, InstrItinClass iir, InstrItinClass iis> {
-  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
-               iii, opc, "\t$Rd, $Rn, $imm", []>,
-               RegConstraint<"$Rn = $Rd"> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<12> imm;
-    let Inst{25} = 1;
-    let Inst{19-16} = Rn;
-    let Inst{15-12} = Rd;
-    let Inst{11-0} = imm;
-  }
-  def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
-               iir, opc, "\t$Rd, $Rn, $Rm", []>,
-               RegConstraint<"$Rn = $Rd"> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<4> Rm;
-    let Inst{25} = 0;
-    let Inst{19-16} = Rn;
-    let Inst{15-12} = Rd;
-    let Inst{11-4} = 0b00000000;
-    let Inst{3-0} = Rm;
-  }
+multiclass AsI1_bincc_irs<Instruction iri, Instruction irr, Instruction irsi,
+                          Instruction irsr,
+                          InstrItinClass iii, InstrItinClass iir,
+                          InstrItinClass iis> {
+  def ri  : ARMPseudoExpand<(outs GPR:$Rd),
+                            (ins GPR:$Rn, so_imm:$imm, pred:$p, cc_out:$s),
+                            4, iii, [],
+                       (iri GPR:$Rd, GPR:$Rn, so_imm:$imm, pred:$p, cc_out:$s)>,
+                            RegConstraint<"$Rn = $Rd">;
+  def rr  : ARMPseudoExpand<(outs GPR:$Rd),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                            4, iir, [],
+                           (irr GPR:$Rd, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+                            RegConstraint<"$Rn = $Rd">;
+  def rsi : ARMPseudoExpand<(outs GPR:$Rd),
+                           (ins GPR:$Rn, so_reg_imm:$shift, pred:$p, cc_out:$s),
+                            4, iis, [],
+                (irsi GPR:$Rd, GPR:$Rn, so_reg_imm:$shift, pred:$p, cc_out:$s)>,
+                            RegConstraint<"$Rn = $Rd">;
+  def rsr : ARMPseudoExpand<(outs GPRnopc:$Rd),
+                       (ins GPRnopc:$Rn, so_reg_reg:$shift, pred:$p, cc_out:$s),
+                            4, iis, [],
+                (irsr GPR:$Rd, GPR:$Rn, so_reg_reg:$shift, pred:$p, cc_out:$s)>,
+                            RegConstraint<"$Rn = $Rd">;
+}
 
-  def rsi : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
-               iis, opc, "\t$Rd, $Rn, $shift", []>,
-               RegConstraint<"$Rn = $Rd"> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<12> shift;
-    let Inst{25} = 0;
-    let Inst{19-16} = Rn;
-    let Inst{15-12} = Rd;
-    let Inst{11-5} = shift{11-5};
-    let Inst{4} = 0;
-    let Inst{3-0} = shift{3-0};
-  }
+defm ANDCC : AsI1_bincc_irs<ANDri, ANDrr, ANDrsi, ANDrsr,
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
+defm ORRCC : AsI1_bincc_irs<ORRri, ORRrr, ORRrsi, ORRrsr,
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
+defm EORCC : AsI1_bincc_irs<EORri, EORrr, EORrsi, EORrsr,
+                            IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
 
-  def rsr : AsI1<opcod, (outs GPRnopc:$Rd),
-               (ins GPRnopc:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
-               iis, opc, "\t$Rd, $Rn, $shift", []>,
-               RegConstraint<"$Rn = $Rd"> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<12> shift;
-    let Inst{25} = 0;
-    let Inst{19-16} = Rn;
-    let Inst{15-12} = Rd;
-    let Inst{11-8} = shift{11-8};
-    let Inst{7} = 0;
-    let Inst{6-5} = shift{6-5};
-    let Inst{4} = 1;
-    let Inst{3-0} = shift{3-0};
-  }
-} // AsI1_bincc_irs
-
-defm ANDCC : AsI1_bincc_irs<0b0000, "and", IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-defm ORRCC : AsI1_bincc_irs<0b1100, "orr", IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-defm EORCC : AsI1_bincc_irs<0b0001, "eor", IIC_iBITi, IIC_iBITr, IIC_iBITsr>;
-
-} // isCodeGenOnly
 } // neverHasSideEffects
+
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics
