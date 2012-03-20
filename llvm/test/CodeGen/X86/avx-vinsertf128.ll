@@ -117,7 +117,7 @@ entry:
   ret <8 x float> %2
 }
 
-rdar://11076953
+; rdar://11076953
 ; CHECK: vinsertf128_ucombine
 define <8 x float> @vinsertf128_ucombine(float* nocapture %f) nounwind uwtable readonly ssp {
 ; CHECK-NOT: vmovups
