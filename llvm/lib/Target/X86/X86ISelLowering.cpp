@@ -4346,11 +4346,13 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
 
 /// getTargetShuffleMask - Calculates the shuffle mask corresponding to the
 /// target specific opcode. Returns true if the Mask could be calculated.
+/// Sets IsUnary to true if only uses one source.
 static bool getTargetShuffleMask(SDNode *N, EVT VT,
-                                 SmallVectorImpl<int> &Mask) {
+                                 SmallVectorImpl<int> &Mask, bool &IsUnary) {
   unsigned NumElems = VT.getVectorNumElements();
   SDValue ImmN;
 
+  IsUnary = false;
   switch(N->getOpcode()) {
   case X86ISD::SHUFP:
     ImmN = N->getOperand(N->getNumOperands()-1);
@@ -4372,14 +4374,17 @@ static bool getTargetShuffleMask(SDNode *N, EVT VT,
   case X86ISD::VPERMILP:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodePSHUFMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = true;
     break;
   case X86ISD::PSHUFHW:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodePSHUFHWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = true;
     break;
   case X86ISD::PSHUFLW:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodePSHUFLWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = true;
     break;
   case X86ISD::MOVSS:
   case X86ISD::MOVSD: {
@@ -4440,8 +4445,9 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     unsigned NumElems = VT.getVectorNumElements();
     SmallVector<int, 16> ShuffleMask;
     SDValue ImmN;
+    bool IsUnary;
 
-    if (!getTargetShuffleMask(N, VT, ShuffleMask))
+    if (!getTargetShuffleMask(N, VT, ShuffleMask, IsUnary))
       return SDValue();
 
     Index = ShuffleMask[Index];
@@ -6093,88 +6099,6 @@ static bool RelaxedMayFoldVectorLoad(SDValue V) {
   return false;
 }
 
-/// CanFoldShuffleIntoVExtract - Check if the current shuffle is used by
-/// a vector extract, and if both can be later optimized into a single load.
-/// This is done in visitEXTRACT_VECTOR_ELT and the conditions are checked
-/// here because otherwise a target specific shuffle node is going to be
-/// emitted for this shuffle, and the optimization not done.
-/// FIXME: This is probably not the best approach, but fix the problem
-/// until the right path is decided.
-static
-bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
-                                         const TargetLowering &TLI) {
-  EVT VT = V.getValueType();
-  ShuffleVectorSDNode *SVOp = dyn_cast<ShuffleVectorSDNode>(V);
-
-  // Be sure that the vector shuffle is present in a pattern like this:
-  // (vextract (v4f32 shuffle (load $addr), <1,u,u,u>), c) -> (f32 load $addr)
-  if (!V.hasOneUse())
-    return false;
-
-  SDNode *N = *V.getNode()->use_begin();
-  if (N->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
-    return false;
-
-  SDValue EltNo = N->getOperand(1);
-  if (!isa<ConstantSDNode>(EltNo))
-    return false;
-
-  // If the bit convert changed the number of elements, it is unsafe
-  // to examine the mask.
-  bool HasShuffleIntoBitcast = false;
-  if (V.getOpcode() == ISD::BITCAST) {
-    EVT SrcVT = V.getOperand(0).getValueType();
-    if (SrcVT.getVectorNumElements() != VT.getVectorNumElements())
-      return false;
-    V = V.getOperand(0);
-    HasShuffleIntoBitcast = true;
-  }
-
-  // Select the input vector, guarding against out of range extract vector.
-  unsigned NumElems = VT.getVectorNumElements();
-  unsigned Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
-  int Idx = (Elt > NumElems) ? -1 : SVOp->getMaskElt(Elt);
-  V = (Idx < (int)NumElems) ? V.getOperand(0) : V.getOperand(1);
-
-  // If we are accessing the upper part of a YMM register
-  // then the EXTRACT_VECTOR_ELT is likely to be legalized to a sequence of
-  // EXTRACT_SUBVECTOR + EXTRACT_VECTOR_ELT, which are not detected at this point
-  // because the legalization of N did not happen yet.
-  if (Idx >= (int)NumElems/2 && VT.getSizeInBits() == 256)
-    return false;
-
-  // Skip one more bit_convert if necessary
-  if (V.getOpcode() == ISD::BITCAST) {
-    if (!V.hasOneUse())
-      return false;
-    V = V.getOperand(0);
-  }
-
-  if (!ISD::isNormalLoad(V.getNode()))
-    return false;
-
-  // Is the original load suitable?
-  LoadSDNode *LN0 = cast<LoadSDNode>(V);
-
-  if (!LN0 || !LN0->hasNUsesOfValue(1,0) || LN0->isVolatile())
-    return false;
-
-  if (!HasShuffleIntoBitcast)
-    return true;
-
-  // If there's a bitcast before the shuffle, check if the load type and
-  // alignment is valid.
-  unsigned Align = LN0->getAlignment();
-  unsigned NewAlign =
-    TLI.getTargetData()->getABITypeAlignment(
-                                  VT.getTypeForEVT(*DAG.getContext()));
-
-  if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VT))
-    return false;
-
-  return true;
-}
-
 static
 SDValue getMOVDDup(SDValue &Op, DebugLoc &dl, SDValue V1, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
@@ -6295,12 +6219,6 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
   if (SVOp->isSplat()) {
     unsigned NumElem = VT.getVectorNumElements();
     int Size = VT.getSizeInBits();
-    // Special case, this is the only place now where it's allowed to return
-    // a vector_shuffle operation without using a target specific node, because
-    // *hopefully* it will be optimized away by the dag combiner. FIXME: should
-    // this be moved to DAGCombine instead?
-    if (NumElem <= 4 && CanXFormVExtractWithShuffleIntoLoad(Op, DAG, TLI))
-      return Op;
 
     // Use vbroadcast whenever the splat comes from a foldable load
     SDValue LD = isVectorBroadcast(Op, Subtarget);
@@ -13018,11 +12936,109 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// XFormVExtractWithShuffleIntoLoad - Check if a vector extract from a target
+/// specific shuffle of a load can be folded into a single element load.
+/// Similar handling for VECTOR_SHUFFLE is performed by DAGCombiner, but
+/// shuffles have been customed lowered so we need to handle those here.
+static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
+                                         TargetLowering::DAGCombinerInfo &DCI) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  SDValue InVec = N->getOperand(0);
+  SDValue EltNo = N->getOperand(1);
+
+  if (!isa<ConstantSDNode>(EltNo))
+    return SDValue();
+
+  EVT VT = InVec.getValueType();
+
+  bool HasShuffleIntoBitcast = false;
+  if (InVec.getOpcode() == ISD::BITCAST) {
+    // Don't duplicate a load with other uses.
+    if (!InVec.hasOneUse())
+      return SDValue();
+    EVT BCVT = InVec.getOperand(0).getValueType();
+    if (BCVT.getVectorNumElements() != VT.getVectorNumElements())
+      return SDValue();
+    InVec = InVec.getOperand(0);
+    HasShuffleIntoBitcast = true;
+  }
+
+  if (!isTargetShuffle(InVec.getOpcode()))
+    return SDValue();
+
+  // Don't duplicate a load with other uses.
+  if (!InVec.hasOneUse())
+    return SDValue();
+
+  SmallVector<int, 16> ShuffleMask;
+  bool UnaryShuffle;
+  if (!getTargetShuffleMask(InVec.getNode(), VT, ShuffleMask, UnaryShuffle))
+    return SDValue();
+
+  // Select the input vector, guarding against out of range extract vector.
+  unsigned NumElems = VT.getVectorNumElements();
+  int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+  int Idx = (Elt > (int)NumElems) ? -1 : ShuffleMask[Elt];
+  SDValue LdNode = (Idx < (int)NumElems) ? InVec.getOperand(0)
+                                         : InVec.getOperand(1);
+
+  // If inputs to shuffle are the same for both ops, then allow 2 uses
+  unsigned AllowedUses = InVec.getOperand(0) == InVec.getOperand(1) ? 2 : 1;
+
+  if (LdNode.getOpcode() == ISD::BITCAST) {
+    // Don't duplicate a load with other uses.
+    if (!LdNode.getNode()->hasNUsesOfValue(AllowedUses, 0))
+      return SDValue();
+
+    AllowedUses = 1; // only allow 1 load use if we have a bitcast
+    LdNode = LdNode.getOperand(0);
+  }
+
+  if (!ISD::isNormalLoad(LdNode.getNode()))
+    return SDValue();
+
+  LoadSDNode *LN0 = cast<LoadSDNode>(LdNode);
+
+  if (!LN0 ||!LN0->hasNUsesOfValue(AllowedUses, 0) || LN0->isVolatile())
+    return SDValue();
+
+  if (HasShuffleIntoBitcast) {
+    // If there's a bitcast before the shuffle, check if the load type and
+    // alignment is valid.
+    unsigned Align = LN0->getAlignment();
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    unsigned NewAlign = TLI.getTargetData()->
+      getABITypeAlignment(VT.getTypeForEVT(*DAG.getContext()));
+
+    if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VT))
+      return SDValue();
+  }
+
+  // All checks match so transform back to vector_shuffle so that DAG combiner
+  // can finish the job
+  DebugLoc dl = N->getDebugLoc();
+
+  // Create shuffle node taking into account the case that its a unary shuffle
+  SDValue Shuffle = (UnaryShuffle) ? DAG.getUNDEF(VT) : InVec.getOperand(1);
+  Shuffle = DAG.getVectorShuffle(InVec.getValueType(), dl,
+                                 InVec.getOperand(0), Shuffle,
+                                 &ShuffleMask[0]);
+  Shuffle = DAG.getNode(ISD::BITCAST, dl, VT, Shuffle);
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, N->getValueType(0), Shuffle,
+                     EltNo);
+}
+
 /// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
 /// generation and convert it from being a bunch of shuffles and extracts
 /// to a simple store and scalar loads to extract the elements.
 static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
-                                                const TargetLowering &TLI) {
+                                         TargetLowering::DAGCombinerInfo &DCI) {
+  SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI);
+  if (NewOp.getNode())
+    return NewOp;
+
   SDValue InputVector = N->getOperand(0);
 
   // Only operate on vectors of 4 elements, where the alternative shuffling
@@ -13083,6 +13099,7 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
     unsigned EltSize =
         InputVector.getValueType().getVectorElementType().getSizeInBits()/8;
     uint64_t Offset = EltSize * cast<ConstantSDNode>(Idx)->getZExtValue();
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
     SDValue OffsetVal = DAG.getConstant(Offset, TLI.getPointerTy());
 
     SDValue ScalarAddr = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(),
@@ -13106,6 +13123,8 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                                     TargetLowering::DAGCombinerInfo &DCI,
                                     const X86Subtarget *Subtarget) {
+
+
   DebugLoc DL = N->getDebugLoc();
   SDValue Cond = N->getOperand(0);
   // Get the LHS/RHS of the select.
@@ -14910,7 +14929,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default: break;
   case ISD::EXTRACT_VECTOR_ELT:
-    return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
+    return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, DCI);
   case ISD::VSELECT:
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, DCI, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
