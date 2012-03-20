@@ -192,7 +192,7 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
       uint32_t IntBitWidth = IntVT.getSizeInBits();
       bool isExact;
       (void) Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
-                                APFloat::rmTowardZero, &isExact);
+                                  APFloat::rmTowardZero, &isExact);
       if (isExact) {
         APInt IntVal(IntBitWidth, x);
 
@@ -587,7 +587,7 @@ bool FastISel::SelectCall(const User *I) {
       // Some arguments' frame index is recorded during argument lowering.
       Offset = FuncInfo.getArgumentFrameIndex(Arg);
       if (Offset)
-	Reg = TRI.getFrameRegister(*FuncInfo.MF);
+        Reg = TRI.getFrameRegister(*FuncInfo.MF);
     }
     if (!Reg)
       Reg = getRegForValue(Address);
