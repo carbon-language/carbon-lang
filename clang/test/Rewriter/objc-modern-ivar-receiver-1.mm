@@ -25,4 +25,4 @@ void *sel_registerName(const char *);
 }
 @end
 
-// CHECK: id obj = (*(id *)((char *)newInv + OBJC_IVAR_$_NSInvocation__container));
+// CHECK: id obj = (*(id *)((char *)newInv + OBJC_IVAR_$_NSInvocation$_container));

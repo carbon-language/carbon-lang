@@ -3171,6 +3171,14 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     llvm_unreachable("struct already synthesize- RewriteObjCInternalStruct");
 }
 
+static void WriteInternalIvarName(ObjCInterfaceDecl *IDecl,
+                                  ObjCIvarDecl *IvarDecl, std::string &Result) {
+  Result += "OBJC_IVAR_$_";
+  Result += IDecl->getName();
+  Result += "$";
+  Result += IvarDecl->getName();
+}
+
 /// RewriteIvarOffsetSymbols - Rewrite ivar offset symbols of those ivars which
 /// have been referenced in an ivar access expression.
 void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
@@ -3193,9 +3201,9 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
       if (CDecl->getImplementation())
         Result += "__declspec(dllexport) ";
     }
-    Result += "extern unsigned long OBJC_IVAR_$_";
-    Result += CDecl->getName(); Result += "_";
-    Result += IvarDecl->getName(); Result += ";";
+    Result += "extern unsigned long ";
+    WriteInternalIvarName(CDecl, IvarDecl, Result);
+    Result += ";";
   }
 }
 
@@ -5746,8 +5754,7 @@ static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj
 static void Write_IvarOffsetVar(ASTContext *Context,
                                 std::string &Result, 
                                 ArrayRef<ObjCIvarDecl *> Ivars, 
-                                StringRef VarName, 
-                                StringRef ClassName) {
+                                ObjCInterfaceDecl *CDecl) {
   // FIXME. visibilty of offset symbols may have to be set; for Darwin
   // this is what happens:
   /**
@@ -5771,10 +5778,7 @@ static void Write_IvarOffsetVar(ASTContext *Context,
       Result += "unsigned long int "; 
     else
       Result += "__declspec(dllexport) unsigned long int ";
-    
-    Result += VarName;
-    Result += ClassName; Result += "_";
-    Result += IvarDecl->getName(); 
+    WriteInternalIvarName(CDecl, IvarDecl, Result);
     Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
     Result += " = ";
     if (IvarDecl->isBitField()) {
@@ -5784,7 +5788,7 @@ static void Write_IvarOffsetVar(ASTContext *Context,
     }
     else {
       Result += "__OFFSETOFIVAR__(struct ";
-      Result += ClassName;
+      Result += CDecl->getNameAsString();
       Result += "_IMPL, "; 
       Result += IvarDecl->getName(); Result += ");\n";
     }
@@ -5795,14 +5799,14 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
                                            ASTContext *Context, std::string &Result,
                                            ArrayRef<ObjCIvarDecl *> Ivars,
                                            StringRef VarName,
-                                           StringRef ClassName) {
+                                           ObjCInterfaceDecl *CDecl) {
   if (Ivars.size() > 0) {
-    Write_IvarOffsetVar(Context, Result, Ivars, "OBJC_IVAR_$_", ClassName);
+    Write_IvarOffsetVar(Context, Result, Ivars, CDecl);
     
     Result += "\nstatic ";
     Write__ivar_list_t_TypeDecl(Result, Ivars.size());
     Result += " "; Result += VarName;
-    Result += ClassName;
+    Result += CDecl->getNameAsString();
     Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
     Result += "\t"; Result += "sizeof(_ivar_t)"; Result += ",\n";
     Result += "\t"; Result += utostr(Ivars.size()); Result += ",\n";
@@ -5812,9 +5816,8 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
         Result += "\t{{";
       else
         Result += "\t {";
-      
-      Result += "(unsigned long int *)&OBJC_IVAR_$_";
-      Result += ClassName; Result += "_"; Result += IvarDecl->getName();
+      Result += "(unsigned long int *)&";
+      WriteInternalIvarName(CDecl, IvarDecl, Result);
       Result += ", ";
       
       Result += "\""; Result += IvarDecl->getName(); Result += "\", ";
@@ -6088,7 +6091,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   
   Write__ivar_list_t_initializer(*this, Context, Result, IVars, 
                                  "_OBJC_$_INSTANCE_VARIABLES_",
-                                 CDecl->getNameAsString());
+                                 CDecl);
   
   // Build _objc_method_list for class's instance methods if needed
   SmallVector<ObjCMethodDecl *, 32>
@@ -6523,10 +6526,9 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
       
       // Build name of symbol holding ivar offset.
-      std::string IvarOffsetName = "OBJC_IVAR_$_";
-      IvarOffsetName += clsDeclared->getIdentifier()->getName();
-      IvarOffsetName += "_";
-      IvarOffsetName += D->getName();
+      std::string IvarOffsetName;
+      WriteInternalIvarName(clsDeclared, D, IvarOffsetName);
+      
       ReferencedIvars[clsDeclared].insert(D);
       
       // cast offset to "char *".

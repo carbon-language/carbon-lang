@@ -14,4 +14,4 @@
 }
 @end
 
-// CHECK: ((void (*)(struct __block_impl *))((struct __block_impl *)(*(void (**)(void))((char *)self + OBJC_IVAR_$_Foo__block)))->FuncPtr)((struct __block_impl *)(*(void (**)(void))((char *)self + OBJC_IVAR_$_Foo__block)));
+// CHECK: ((void (*)(struct __block_impl *))((struct __block_impl *)(*(void (**)(void))((char *)self + OBJC_IVAR_$_Foo$_block)))->FuncPtr)((struct __block_impl *)(*(void (**)(void))((char *)self + OBJC_IVAR_$_Foo$_block)));

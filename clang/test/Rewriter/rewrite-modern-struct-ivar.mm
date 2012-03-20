@@ -21,4 +21,4 @@ struct S {
 - (struct S) dMeth{ return struct_ivar; }
 @end
   
-// CHECK: return (*(struct S *)((char *)self + OBJC_IVAR_$_I_struct_ivar));
+// CHECK: return (*(struct S *)((char *)self + OBJC_IVAR_$_I$struct_ivar));

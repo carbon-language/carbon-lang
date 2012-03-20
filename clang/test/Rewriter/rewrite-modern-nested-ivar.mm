@@ -30,4 +30,4 @@
   }
 @end
 
-// CHECK: (*(NSURLResponse **)((char *)(*(NSURLResponse **)((char *)(*(NSCachedURLResponseInternal **)((char *)self + OBJC_IVAR_$_NSCachedURLResponse__internal)) + OBJC_IVAR_$_NSCachedURLResponseInternal_response)) + OBJC_IVAR_$_NSURLResponse_InnerResponse)) = 0;
+// CHECK: (*(NSURLResponse **)((char *)(*(NSURLResponse **)((char *)(*(NSCachedURLResponseInternal **)((char *)self + OBJC_IVAR_$_NSCachedURLResponse$_internal)) + OBJC_IVAR_$_NSCachedURLResponseInternal$response)) + OBJC_IVAR_$_NSURLResponse$InnerResponse)) = 0;
