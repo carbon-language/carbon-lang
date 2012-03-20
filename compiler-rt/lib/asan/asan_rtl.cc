@@ -106,7 +106,10 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
 
 void AsanDie() {
   static int num_calls = 0;
-  if (AtomicInc(&num_calls) > 1) return;  // Don't die twice.
+  if (AtomicInc(&num_calls) > 1) {
+    // Don't die twice - run a busy loop.
+    while (1) { }
+  }
   if (FLAG_sleep_before_dying) {
     Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
     SleepForSeconds(FLAG_sleep_before_dying);
