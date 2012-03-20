@@ -1951,8 +1951,7 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D,
   return getOrCreateType(FnType, F);
 }
 
-/// EmitFunctionStart - Constructs the debug code for entering a function -
-/// "llvm.dbg.func.start.".
+/// EmitFunctionStart - Constructs the debug code for entering a function.
 void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
