@@ -26,6 +26,13 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCTarget Target information
+ * @ingroup LLVMC
+ *
+ * @{
+ */
+
 enum LLVMByteOrdering { LLVMBigEndian, LLVMLittleEndian };
 
 typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
@@ -209,6 +216,9 @@ unsigned long long LLVMOffsetOfElement(LLVMTargetDataRef, LLVMTypeRef StructTy,
     See the destructor llvm::TargetData::~TargetData. */
 void LLVMDisposeTargetData(LLVMTargetDataRef);
 
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

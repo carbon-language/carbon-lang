@@ -28,6 +28,13 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCObject Object file reading and writing
+ * @ingroup LLVMC
+ *
+ * @{
+ */
+
 // Opaque type wrappers
 typedef struct LLVMOpaqueObjectFile *LLVMObjectFileRef;
 typedef struct LLVMOpaqueSectionIterator *LLVMSectionIteratorRef;
@@ -86,6 +93,9 @@ uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI);
 const char *LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI);
 const char *LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
 
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

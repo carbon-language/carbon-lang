@@ -26,8 +26,19 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCTransformsVectorize Vectorization transformations
+ * @ingroup LLVMCTransforms
+ *
+ * @{
+ */
+
 /** See llvm::createBBVectorizePass function. */
 void LLVMAddBBVectorizePass(LLVMPassManagerRef PM);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

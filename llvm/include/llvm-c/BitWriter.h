@@ -25,6 +25,12 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCBitWriter Bit Writer
+ * @ingroup LLVMC
+ *
+ * @{
+ */
 
 /*===-- Operations on modules ---------------------------------------------===*/
 
@@ -38,6 +44,10 @@ int LLVMWriteBitcodeToFD(LLVMModuleRef M, int FD, int ShouldClose,
 /** Deprecated for LLVMWriteBitcodeToFD. Writes a module to an open file
     descriptor. Returns 0 on success. Closes the Handle. */ 
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int Handle);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

@@ -19,6 +19,13 @@
 #include <stddef.h>
 
 /**
+ * @defgroup LLVMCDisassembler Disassembler
+ * @ingroup LLVMC
+ *
+ * @{
+ */
+
+/**
  * An opaque reference to a disassembler context.
  */
 typedef void *LLVMDisasmContextRef;
@@ -156,6 +163,10 @@ void LLVMDisasmDispose(LLVMDisasmContextRef DC);
 size_t LLVMDisasmInstruction(LLVMDisasmContextRef DC, uint8_t *Bytes,
                              uint64_t BytesSize, uint64_t PC,
                              char *OutString, size_t OutStringSize);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

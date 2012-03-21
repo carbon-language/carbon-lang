@@ -20,6 +20,13 @@
 #include <stddef.h>
 #include <unistd.h>
 
+/**
+ * @defgroup LLVMCLTO LTO
+ * @ingroup LLVMC
+ *
+ * @{
+ */
+
 #define LTO_API_VERSION 4
 
 typedef enum {
@@ -289,5 +296,8 @@ lto_codegen_debug_options(lto_code_gen_t cg, const char *);
 }
 #endif
 
+/**
+ * @}
+ */
 
 #endif

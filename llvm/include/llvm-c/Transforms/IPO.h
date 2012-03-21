@@ -21,6 +21,13 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCTransformsIPO Interprocedural transformations
+ * @ingroup LLVMCTransforms
+ *
+ * @{
+ */
+
 /** See llvm::createArgumentPromotionPass function. */
 void LLVMAddArgumentPromotionPass(LLVMPassManagerRef PM);
 
@@ -62,6 +69,10 @@ void LLVMAddStripDeadPrototypesPass(LLVMPassManagerRef PM);
 
 /** See llvm::createStripSymbolsPass function. */
 void LLVMAddStripSymbolsPass(LLVMPassManagerRef PM);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

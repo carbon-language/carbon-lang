@@ -10,24 +10,6 @@
 |* This header declares the C interface to libLLVMCore.a, which implements    *|
 |* the LLVM intermediate representation.                                      *|
 |*                                                                            *|
-|* LLVM uses a polymorphic type hierarchy which C cannot represent, therefore *|
-|* parameters must be passed as base types. Despite the declared types, most  *|
-|* of the functions provided operate only on branches of the type hierarchy.  *|
-|* The declared parameter names are descriptive and specify which type is     *|
-|* required. Additionally, each type hierarchy is documented along with the   *|
-|* functions that operate upon it. For more detail, refer to LLVM's C++ code. *|
-|* If in doubt, refer to Core.cpp, which performs paramter downcasts in the   *|
-|* form unwrap<RequiredType>(Param).                                          *|
-|*                                                                            *|
-|* Many exotic languages can interoperate with C code but have a harder time  *|
-|* with C++ due to name mangling. So in addition to C, this interface enables *|
-|* tools written in such languages.                                           *|
-|*                                                                            *|
-|* When included into a C++ source file, also declares 'wrap' and 'unwrap'    *|
-|* helpers to perform opaque reference<-->pointer conversions. These helpers  *|
-|* are shorter and more tightly typed than writing the casts by hand when     *|
-|* authoring bindings. In assert builds, they will do runtime type checking.  *|
-|*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
 #ifndef LLVM_C_CORE_H
@@ -46,50 +28,121 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMC LLVM-C: C interface to LLVM
+ *
+ * This module exposes parts of the LLVM library as a C API.
+ *
+ * @{
+ */
+
+/**
+ * @defgroup LLVMCTransforms Transforms
+ */
+
+/**
+ * @defgroup LLVMCCore Core
+ *
+ * This modules provide an interface to libLLVMCore, which implements
+ * the LLVM intermediate representation as well as other related types
+ * and utilities.
+ *
+ * LLVM uses a polymorphic type hierarchy which C cannot represent, therefore
+ * parameters must be passed as base types. Despite the declared types, most
+ * of the functions provided operate only on branches of the type hierarchy.
+ * The declared parameter names are descriptive and specify which type is
+ * required. Additionally, each type hierarchy is documented along with the
+ * functions that operate upon it. For more detail, refer to LLVM's C++ code.
+ * If in doubt, refer to Core.cpp, which performs paramter downcasts in the
+ * form unwrap<RequiredType>(Param).
+ *
+ * Many exotic languages can interoperate with C code but have a harder time
+ * with C++ due to name mangling. So in addition to C, this interface enables
+ * tools written in such languages.
+ *
+ * When included into a C++ source file, also declares 'wrap' and 'unwrap'
+ * helpers to perform opaque reference<-->pointer conversions. These helpers
+ * are shorter and more tightly typed than writing the casts by hand when
+ * authoring bindings. In assert builds, they will do runtime type checking.
+ *
+ * @{
+ */
+
+/**
+ * @defgroup LLVMCCoreTypes Types and Enumerations
+ *
+ * @{
+ */
 
 typedef int LLVMBool;
 
 /* Opaque types. */
 
 /**
- * The top-level container for all LLVM global data.  See the LLVMContext class.
+ * The top-level container for all LLVM global data. See the LLVMContext class.
  */
 typedef struct LLVMOpaqueContext *LLVMContextRef;
 
 /**
  * The top-level container for all other LLVM Intermediate Representation (IR)
- * objects. See the llvm::Module class.
+ * objects.
+ *
+ * @see llvm::Module
  */
 typedef struct LLVMOpaqueModule *LLVMModuleRef;
 
 /**
- * Each value in the LLVM IR has a type, an LLVMTypeRef. See the llvm::Type
- * class.
+ * Each value in the LLVM IR has a type, an LLVMTypeRef.
+ *
+ * @see llvm::Type
  */
 typedef struct LLVMOpaqueType *LLVMTypeRef;
 
+/**
+ * Represents an individual value in LLVM IR.
+ *
+ * This models llvm::Value.
+ */
 typedef struct LLVMOpaqueValue *LLVMValueRef;
+
+/**
+ * Represents a basic block of instruction in LLVM IR.
+ *
+ * This models llvm::BasicBlock.
+ */
 typedef struct LLVMOpaqueBasicBlock *LLVMBasicBlockRef;
+
+/**
+ * Represents an LLVM basic block builder.
+ *
+ * This models llvm::IRBuilder.
+ */
 typedef struct LLVMOpaqueBuilder *LLVMBuilderRef;
 
-/* Interface used to provide a module to JIT or interpreter.  This is now just a
- * synonym for llvm::Module, but we have to keep using the different type to
- * keep binary compatibility.
+/**
+ * Interface used to provide a module to JIT or interpreter.
+ * This is now just a synonym for llvm::Module, but we have to keep using the
+ * different type to keep binary compatibility.
  */
 typedef struct LLVMOpaqueModuleProvider *LLVMModuleProviderRef;
 
-/* Used to provide a module to JIT or interpreter.
- * See the llvm::MemoryBuffer class.
+/**
+ * Used to provide a module to JIT or interpreter.
+ *
+ * @see llvm::MemoryBuffer
  */
 typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 
-/** See the llvm::PassManagerBase class. */
+/** @see llvm::PassManagerBase */
 typedef struct LLVMOpaquePassManager *LLVMPassManagerRef;
 
-/** See the llvm::PassRegistry class. */
+/** @see llvm::PassRegistry */
 typedef struct LLVMOpaquePassRegistry *LLVMPassRegistryRef;
 
-/** Used to get the users and usees of a Value. See the llvm::Use class. */
+/**
+ * Used to get the users and usees of a Value.
+ *
+ * @see llvm::Use */
 typedef struct LLVMOpaqueUse *LLVMUseRef;
 
 typedef enum {
@@ -298,6 +351,10 @@ typedef enum {
   LLVMLandingPadFilter    /**< A filter clause  */
 } LLVMLandingPadClauseTy;
 
+/**
+ * @}
+ */
+
 void LLVMInitializeCore(LLVMPassRegistryRef R);
 
 
@@ -306,49 +363,191 @@ void LLVMInitializeCore(LLVMPassRegistryRef R);
 void LLVMDisposeMessage(char *Message);
 
 
-/*===-- Contexts ----------------------------------------------------------===*/
+/**
+ * @defgroup LLVMCCoreContext Contexts
+ *
+ * Contexts are execution states for the core LLVM IR system.
+ *
+ * Most types are tied to a context instance. Multiple contexts can
+ * exist simultaneously. A single context is not thread safe. However,
+ * different contexts can execute on different threads simultaneously.
+ *
+ * @{
+ */
 
-/* Create and destroy contexts. */
+/**
+ * Create a new context.
+ *
+ * Every call to this function should be paired with a call to
+ * LLVMContextDispose() or the context will leak memory.
+ */
 LLVMContextRef LLVMContextCreate(void);
+
+/**
+ * Obtain the global context instance.
+ */
 LLVMContextRef LLVMGetGlobalContext(void);
+
+/**
+ * Destroy a context instance.
+ *
+ * This should be called for every call to LLVMContextCreate() or memory
+ * will be leaked.
+ */
 void LLVMContextDispose(LLVMContextRef C);
 
 unsigned LLVMGetMDKindIDInContext(LLVMContextRef C, const char* Name,
                                   unsigned SLen);
 unsigned LLVMGetMDKindID(const char* Name, unsigned SLen);
 
+/**
+ * @}
+ */
+
+/** @defgroup LLVMCCoreModule Modules
+ *
+ * Modules represent the top-level structure in a LLVM program. An LLVM
+ * module is effectively a translation unit or a collection of
+ * translation units merged together.
+ *
+ * @{
+ */
+
 /*===-- Modules -----------------------------------------------------------===*/
 
-/* Create and destroy modules. */ 
-/** See llvm::Module::Module. */
+/* Create and destroy modules. */
+/** @see llvm::Module::Module */
+
+/**
+ * Create a new, empty module in the global context.
+ *
+ * This is equivalent to calling LLVMModuleCreateWithNameInContext with
+ * LLVMGetGlobalContext() as the context parameter.
+ *
+ * Every invocation should be paired with LLVMDisposeModule() or memory
+ * will be leaked.
+ */
 LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID);
+
+/**
+ * Create a new, empty module in a specific context.
+ *
+ * Every invocation should be paired with LLVMDisposeModule() or memory
+ * will be leaked.
+ */
 LLVMModuleRef LLVMModuleCreateWithNameInContext(const char *ModuleID,
                                                 LLVMContextRef C);
 
-/** See llvm::Module::~Module. */
+/**
+ * Destroy a module instance.
+ *
+ * This must be called for every created module or memory will be
+ * leaked.
+ */
 void LLVMDisposeModule(LLVMModuleRef M);
 
-/** Data layout. See Module::getDataLayout. */
+/**
+ * Obtain the data layout for a module.
+ *
+ * @see Module::getDataLayout()
+ */
 const char *LLVMGetDataLayout(LLVMModuleRef M);
+
+/**
+ * Set the data layout for a module.
+ *
+ * @see Module::setDataLayout()
+ */
 void LLVMSetDataLayout(LLVMModuleRef M, const char *Triple);
 
-/** Target triple. See Module::getTargetTriple. */
+/**
+ * Obtain the target triple for a module.
+ *
+ * @see Module::getTargetTriple()
+ */
 const char *LLVMGetTarget(LLVMModuleRef M);
+
+/**
+ * Set the target triple for a module.
+ *
+ * @see Module::setTargetTriple()
+ */
 void LLVMSetTarget(LLVMModuleRef M, const char *Triple);
 
-/** See Module::dump. */
+/**
+ * Dump a representation of a module to stderr.
+ *
+ * @see Module::dump()
+ */
 void LLVMDumpModule(LLVMModuleRef M);
 
-/** See Module::setModuleInlineAsm. */
+/**
+ * Set inline assembly for a module.
+ *
+ * @see Module::setModuleInlineAsm()
+ */
 void LLVMSetModuleInlineAsm(LLVMModuleRef M, const char *Asm);
 
-/** See Module::getContext. */
+/**
+ * Obtain the context to which this module is associated.
+ *
+ * @see Module::getContext()
+ */
 LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
 
-/*===-- Types -------------------------------------------------------------===*/
+/**
+ * Obtain a Type from a module by its registered name.
+ */
+LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name);
 
-/* LLVM types conform to the following hierarchy:
- * 
+/**
+ * Obtain the number of operands for named metadata in a module.
+ *
+ * @see llvm::Module::getNamedMetadata()
+ */
+unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name);
+
+/**
+ * Obtain the named metadata operands for a module.
+ *
+ * The passed LLVMValueRef pointer should refer to an array of
+ * LLVMValueRef at least LLVMGetNamedMetadataNumOperands long. This
+ * array will be populated with the LLVMValueRef instances. Each
+ * instance corresponds to a llvm::MDNode.
+ *
+ * @see llvm::Module::getNamedMetadata()
+ * @see llvm::MDNode::getOperand()
+ */
+void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRef *Dest);
+
+/**
+ * Add an operand to named metadata.
+ *
+ * @see llvm::Module::getNamedMetadata()
+ * @see llvm::MDNode::addOperand()
+ */
+void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
+                                 LLVMValueRef Val);
+
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreType Types
+ *
+ * Types represent the type of a value.
+ *
+ * Types are associated with a context instance. The context internally
+ * deduplicates types so there is only 1 instance of a specific type
+ * alive at a time. In other words, a unique type is shared among all
+ * consumers within a context.
+ *
+ * A Type in the C API corresponds to llvm::Type.
+ *
+ * Types have the following hierarchy:
+ *
  *   types:
  *     integer type
  *     real type
@@ -360,16 +559,44 @@ LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
  *     void type
  *     label type
  *     opaque type
+ *
+ * @{
  */
 
-/** See llvm::LLVMTypeKind::getTypeID. */
+/**
+ * Obtain the enumerated type of a Type instance.
+ *
+ * @see llvm::Type:getTypeID()
+ */
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
+
+/**
+ * Whether the type has a known size.
+ *
+ * Things that don't have a size are abstract types, labels, and void.a
+ *
+ * @see llvm::Type::isSized()
+ */
 LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty);
 
-/** See llvm::LLVMType::getContext. */
+/**
+ * Obtain the context to which this type instance is associated.
+ *
+ * @see llvm::Type::getContext()
+ */
 LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty);
 
-/* Operations on integer types */
+/**
+ * @defgroup LLVMCCoreTypeInt Integer Types
+ *
+ * Functions in this section operate on integer types.
+ *
+ * @{
+ */
+
+/**
+ * Obtain an integer type from a context with specified bit width.
+ */
 LLVMTypeRef LLVMInt1TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMInt8TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMInt16TypeInContext(LLVMContextRef C);
@@ -377,6 +604,10 @@ LLVMTypeRef LLVMInt32TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMInt64TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMIntTypeInContext(LLVMContextRef C, unsigned NumBits);
 
+/**
+ * Obtain an integer type from the global context with a specified bit
+ * width.
+ */
 LLVMTypeRef LLVMInt1Type(void);
 LLVMTypeRef LLVMInt8Type(void);
 LLVMTypeRef LLVMInt16Type(void);
@@ -385,14 +616,52 @@ LLVMTypeRef LLVMInt64Type(void);
 LLVMTypeRef LLVMIntType(unsigned NumBits);
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 
-/* Operations on real types */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreTypeFloat Floating Point Types
+ *
+ * @{
+ */
+
+/**
+ * Obtain a 16-bit floating point type from a context.
+ */
 LLVMTypeRef LLVMHalfTypeInContext(LLVMContextRef C);
+
+/**
+ * Obtain a 32-bit floating point type from a context.
+ */
 LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C);
+
+/**
+ * Obtain a 64-bit floating point type from a context.
+ */
 LLVMTypeRef LLVMDoubleTypeInContext(LLVMContextRef C);
+
+/**
+ * Obtain a 80-bit floating point type (X87) from a context.
+ */
 LLVMTypeRef LLVMX86FP80TypeInContext(LLVMContextRef C);
+
+/**
+ * Obtain a 128-bit floating point type (112-bit mantissa) from a
+ * context.
+ */
 LLVMTypeRef LLVMFP128TypeInContext(LLVMContextRef C);
+
+/**
+ * Obtain a 128-bit floating point type (two 64-bits) from a context.
+ */
 LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C);
 
+/**
+ * Obtain a floating point type from the global context.
+ *
+ * These map to the functions in this group of the same name.
+ */
 LLVMTypeRef LLVMHalfType(void);
 LLVMTypeRef LLVMFloatType(void);
 LLVMTypeRef LLVMDoubleType(void);
@@ -400,55 +669,283 @@ LLVMTypeRef LLVMX86FP80Type(void);
 LLVMTypeRef LLVMFP128Type(void);
 LLVMTypeRef LLVMPPCFP128Type(void);
 
-/* Operations on function types */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreTypeFunction Function Types
+ *
+ * @{
+ */
+
+/**
+ * Obtain a function type consisting of a specified signature.
+ *
+ * The function is defined as a tuple of a return Type, a list of
+ * parameter types, and whether the function is variadic.
+ */
 LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
                              LLVMTypeRef *ParamTypes, unsigned ParamCount,
                              LLVMBool IsVarArg);
+
+/**
+ * Returns whether a function type is variadic.
+ */
 LLVMBool LLVMIsFunctionVarArg(LLVMTypeRef FunctionTy);
+
+/**
+ * Obtain the Type this function Type returns.
+ */
 LLVMTypeRef LLVMGetReturnType(LLVMTypeRef FunctionTy);
+
+/**
+ * Obtain the number of parameters this function accepts.
+ */
 unsigned LLVMCountParamTypes(LLVMTypeRef FunctionTy);
+
+/**
+ * Obtain the types of a function's parameters.
+ *
+ * The Dest parameter should point to a pre-allocated array of
+ * LLVMTypeRef at least LLVMCountParamTypes() large. On return, the
+ * first LLVMCountParamTypes() entries in the array will be populated
+ * with LLVMTypeRef instances.
+ *
+ * @param FunctionTy The function type to operate on.
+ * @param Dest Memory address of an array to be filled with result.
+ */
 void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef *Dest);
 
-/* Operations on struct types */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreTypeStruct Structure Types
+ *
+ * These functions relate to LLVMTypeRef instances.
+ *
+ * @see llvm::StructType
+ *
+ * @{
+ */
+
+/**
+ * Create a new structure type in a context.
+ *
+ * A structure is specified by a list of inner elements/types and
+ * whether these can be packed together.
+ *
+ * @see llvm::StructType::create()
+ */
 LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
                                     unsigned ElementCount, LLVMBool Packed);
+
+/**
+ * Create a new structure type in the global context.
+ *
+ * @see llvm::StructType::create()
+ */
 LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes, unsigned ElementCount,
                            LLVMBool Packed);
+
+/**
+ * Create an empty structure in a context having a specified name.
+ *
+ * @see llvm::StructType::create()
+ */
 LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name);
+
+/**
+ * Obtain the name of a structure.
+ *
+ * @see llvm::StructType::getName()
+ */
 const char *LLVMGetStructName(LLVMTypeRef Ty);
+
+/**
+ * Set the contents of a structure type.
+ *
+ * @see llvm::StructType::setBody()
+ */
 void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,
                        unsigned ElementCount, LLVMBool Packed);
 
+/**
+ * Get the number of elements defined inside the structure.
+ *
+ * @see llvm::StructType::getNumElements()
+ */
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy);
+
+/**
+ * Get the elements within a structure.
+ *
+ * The function is passed the address of a pre-allocated array of
+ * LLVMTypeRef at least LLVMCountStructElementTypes() long. After
+ * invocation, this array will be populated with the structure's
+ * elements. The objects in the destination array will have a lifetime
+ * of the structure type itself, which is the lifetime of the context it
+ * is contained in.
+ */
 void LLVMGetStructElementTypes(LLVMTypeRef StructTy, LLVMTypeRef *Dest);
+
+/**
+ * Determine whether a structure is packed.
+ *
+ * @see llvm::StructType::isPacked()
+ */
 LLVMBool LLVMIsPackedStruct(LLVMTypeRef StructTy);
+
+/**
+ * Determine whether a structure is opaque.
+ *
+ * @see llvm::StructType::isOpaque()
+ */
 LLVMBool LLVMIsOpaqueStruct(LLVMTypeRef StructTy);
 
-LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name);
+/**
+ * @}
+ */
 
-/* Operations on array, pointer, and vector types (sequence types) */
+
+/**
+ * @defgroup LLVMCCoreTypeSequential Sequential Types
+ *
+ * Sequential types represents "arrays" of types. This is a super class
+ * for array, vector, and pointer types.
+ *
+ * @{
+ */
+
+/**
+ * Obtain the type of elements within a sequential type.
+ *
+ * This works on array, vector, and pointer types.
+ *
+ * @see llvm::SequentialType::getElementType()
+ */
+LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty);
+
+/**
+ * Create a fixed size array type that refers to a specific type.
+ *
+ * The created type will exist in the context that its element type
+ * exists in.
+ *
+ * @see llvm::ArrayType::get()
+ */
 LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount);
+
+/**
+ * Obtain the length of an array type.
+ *
+ * This only works on types that represent arrays.
+ *
+ * @see llvm::ArrayType::getNumElements()
+ */
+unsigned LLVMGetArrayLength(LLVMTypeRef ArrayTy);
+
+/**
+ * Create a pointer type that points to a defined type.
+ *
+ * The created type will exist in the context that its pointee type
+ * exists in.
+ *
+ * @see llvm::PointerType::get()
+ */
 LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType, unsigned AddressSpace);
+
+/**
+ * Obtain the address space of a pointer type.
+ *
+ * This only works on types that represent pointers.
+ *
+ * @see llvm::PointerType::getAddressSpace()
+ */
+unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
+
+/**
+ * Create a vector type that contains a defined type and has a specific
+ * number of elements.
+ *
+ * The created type will exist in the context thats its element type
+ * exists in.
+ *
+ * @see llvm::VectorType::get()
+ */
 LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, unsigned ElementCount);
 
-LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty);
-unsigned LLVMGetArrayLength(LLVMTypeRef ArrayTy);
-unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
+/**
+ * Obtain the number of elements in a vector type.
+ *
+ * This only works on types that represent vectors.
+ *
+ * @see llvm::VectorType::getNumElements()
+ */
 unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy);
 
-/* Operations on other types */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreTypeOther Other Types
+ *
+ * @{
+ */
+
+/**
+ * Create a void type in a context.
+ */
 LLVMTypeRef LLVMVoidTypeInContext(LLVMContextRef C);
+
+/**
+ * Create a label type in a context.
+ */
 LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C);
+
+/**
+ * Create a X86 MMX type in a context.
+ */
 LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C);
 
+/**
+ * These are similar to the above functions except they operate on the
+ * global context.
+ */
 LLVMTypeRef LLVMVoidType(void);
 LLVMTypeRef LLVMLabelType(void);
 LLVMTypeRef LLVMX86MMXType(void);
 
-/*===-- Values ------------------------------------------------------------===*/
+/**
+ * @}
+ */
 
-/* The bulk of LLVM's object model consists of values, which comprise a very
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValues Values
+ *
+ * The bulk of LLVM's object model consists of values, which comprise a very
  * rich type hierarchy.
+ *
+ * LLVMValueRef essentially represents llvm::Value. There is a rich
+ * hierarchy of classes within this type. Depending on the instance
+ * obtain, not all APIs are available.
+ *
+ * Callers can determine the type of a LLVMValueRef by calling the
+ * LLVMIsA* family of functions (e.g. LLVMIsAArgument()). These
+ * functions are defined by a macro, so it isn't obvious which are
+ * available by looking at the Doxygen source code. Instead, look at the
+ * source definition of LLVM_FOR_EACH_VALUE_SUBCLASS and note the list
+ * of value names given. These value names also correspond to classes in
+ * the llvm::Value hierarchy.
+ *
+ * @{
  */
 
 #define LLVM_FOR_EACH_VALUE_SUBCLASS(macro) \
@@ -522,72 +1019,376 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(LoadInst)                       \
       macro(VAArgInst)
 
-/* Operations on all values */
-LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
-const char *LLVMGetValueName(LLVMValueRef Val);
-void LLVMSetValueName(LLVMValueRef Val, const char *Name);
-void LLVMDumpValue(LLVMValueRef Val);
-void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal);
-int LLVMHasMetadata(LLVMValueRef Val);
-LLVMValueRef LLVMGetMetadata(LLVMValueRef Val, unsigned KindID);
-void LLVMSetMetadata(LLVMValueRef Val, unsigned KindID, LLVMValueRef Node);
+/**
+ * @defgroup LLVMCCoreValueGeneral General APIs
+ *
+ * Functions in this section work on all LLVMValueRef instances,
+ * regardless of their sub-type. They correspond to functions available
+ * on llvm::Value.
+ *
+ * @{
+ */
 
-/* Conversion functions. Return the input value if it is an instance of the
-   specified class, otherwise NULL. See llvm::dyn_cast_or_null<>. */
+/**
+ * Obtain the type of a value.
+ *
+ * @see llvm::Value::getType()
+ */
+LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
+
+/**
+ * Obtain the string name of a value.
+ *
+ * @see llvm::Value::getName()
+ */
+const char *LLVMGetValueName(LLVMValueRef Val);
+
+/**
+ * Set the string name of a value.
+ *
+ * @see llvm::Value::setName()
+ */
+void LLVMSetValueName(LLVMValueRef Val, const char *Name);
+
+/**
+ * Dump a representation of a value to stderr.
+ *
+ * @see llvm::Value::dump()
+ */
+void LLVMDumpValue(LLVMValueRef Val);
+
+/**
+ * Replace all uses of a value with another one.
+ *
+ * @see llvm::Value::replaceAllUsesWith()
+ */
+void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal);
+
+/**
+ * Determine whether the specified constant instance is constant.
+ */
+LLVMBool LLVMIsConstant(LLVMValueRef Val);
+
+/**
+ * Determine whether a value instance is undefined.
+ */
+LLVMBool LLVMIsUndef(LLVMValueRef Val);
+
+/**
+ * Convert value instances between types.
+ *
+ * Internally, a LLVMValueRef is "pinned" to a specific type. This
+ * series of functions allows you to cast an instance to a specific
+ * type.
+ *
+ * If the cast is not valid for the specified type, NULL is returned.
+ *
+ * @see llvm::dyn_cast_or_null<>
+ */
 #define LLVM_DECLARE_VALUE_CAST(name) \
   LLVMValueRef LLVMIsA##name(LLVMValueRef Val);
 LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DECLARE_VALUE_CAST)
 
-/* Operations on Uses */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueUses Usage
+ *
+ * This module defines functions that allow you to inspect the uses of a
+ * LLVMValueRef.
+ *
+ * It is possible to obtain a LLVMUseRef for any LLVMValueRef instance.
+ * Each LLVMUseRef (which corresponds to a llvm::Use instance) holds a
+ * llvm::User and llvm::Value.
+ *
+ * @{
+ */
+
+/**
+ * Obtain the first use of a value.
+ *
+ * Uses are obtained in an iterator fashion. First, call this function
+ * to obtain a reference to the first use. Then, call LLVMGetNextUse()
+ * on that instance and all subsequently obtained instances untl
+ * LLVMGetNextUse() returns NULL.
+ *
+ * @see llvm::Value::use_begin()
+ */
 LLVMUseRef LLVMGetFirstUse(LLVMValueRef Val);
+
+/**
+ * Obtain the next use of a value.
+ *
+ * This effectively advances the iterator. It returns NULL if you are on
+ * the final use and no more are available.
+ */
 LLVMUseRef LLVMGetNextUse(LLVMUseRef U);
+
+/**
+ * Obtain the user value for a user.
+ *
+ * The returned value corresponds to a llvm::User type.
+ *
+ * @see llvm::Use::getUser()
+ */
 LLVMValueRef LLVMGetUser(LLVMUseRef U);
+
+/**
+ * Obtain the value this use corresponds to.
+ *
+ * @see llvm::Use::get().
+ */
 LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
 
-/* Operations on Users and metadata */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCValueUser User value
+ *
+ * Function in this group pertain to LLVMValueRef instances that descent
+ * from llvm::User. This includes constants, instructions, and
+ * operators.
+ *
+ * @{
+ */
+
+/**
+ * Obtain an operand at a specific index in a llvm::User value.
+ *
+ * @see llvm::User::getOperand()
+ */
 LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index);
+
+/**
+ * Set an operand at a specific index in a llvm::User value.
+ *
+ * @see llvm::User::setOperand()
+ */
 void LLVMSetOperand(LLVMValueRef User, unsigned Index, LLVMValueRef Val);
+
+/**
+ * Obtain the number of operands in a llvm::User value.
+ *
+ * @see llvm::User::getNumOperands()
+ */
 int LLVMGetNumOperands(LLVMValueRef Val);
 
-/* Operations on constants of any type */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCoreValueConstant Constant values
+ *
+ * This section contains APIs for interacting with LLVMValueRef that
+ * correspond to llvm::Constant instances.
+ *
+ * These functions will work for any LLVMValueRef in the llvm::Constant
+ * class hierarchy.
+ *
+ * @{
+ */
+
+/**
+ * Obtain a constant value referring to the null instance of a type.
+ *
+ * @see llvm::Constant::getNullValue()
+ */
 LLVMValueRef LLVMConstNull(LLVMTypeRef Ty); /* all zeroes */
-LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty); /* only for int/vector */
+
+/**
+ * Obtain a constant value referring to the instance of a type
+ * consisting of all ones.
+ *
+ * This is only valid for integer types.
+ *
+ * @see llvm::Constant::getAllOnesValue()
+ */
+LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty);
+
+/**
+ * Obtain a constant value referring to an undefined value of a type.
+ *
+ * @see llvm::UndefValue::get()
+ */
 LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty);
-LLVMBool LLVMIsConstant(LLVMValueRef Val);
+
+/**
+ * Determine whether a value instance is null.
+ *
+ * @see llvm::Constant::isNullValue()
+ */
 LLVMBool LLVMIsNull(LLVMValueRef Val);
-LLVMBool LLVMIsUndef(LLVMValueRef Val);
+
+/**
+ * Obtain a constant that is a constant pointer pointing to NULL for a
+ * specified type.
+ */
 LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty);
 
-/* Operations on metadata */
-LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
-                                   unsigned SLen);
-LLVMValueRef LLVMMDString(const char *Str, unsigned SLen);
-LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
-                                 unsigned Count);
-LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
-const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
-unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name);
-void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRef *Dest);
-void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
-                                 LLVMValueRef Val);
+/**
+ * @defgroup LLVMCCoreValueConstantScalar Scalar constants
+ *
+ * Functions in this group model LLVMValueRef instances that correspond
+ * to constants referring to scalar types.
+ *
+ * For integer types, the LLVMTypeRef parameter should correspond to a
+ * llvm::IntegerType instance and the returned LLVMValueRef will
+ * correspond to a llvm::ConstantInt.
+ *
+ * For floating point types, the LLVMTypeRef returned corresponds to a
+ * llvm::ConstantFP.
+ *
+ * @{
+ */
 
-/* Operations on scalar constants */
+/**
+ * Obtain a constant value for an integer type.
+ *
+ * The returned value corresponds to a llvm::ConstantInt.
+ *
+ * @see llvm::ConstantInt::get()
+ *
+ * @param IntTy Integer type to obtain value of.
+ * @param N The value the returned instance should refer to.
+ * @param SignExtend Whether to sign extend the produced value.
+ */
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
                           LLVMBool SignExtend);
+
+/**
+ * Obtain a constant value for an integer of arbitrary precision.
+ *
+ * @see llvm::ConstantInt::get()
+ */
 LLVMValueRef LLVMConstIntOfArbitraryPrecision(LLVMTypeRef IntTy,
                                               unsigned NumWords,
                                               const uint64_t Words[]);
+
+/**
+ * Obtain a constant value for an integer parsed from a string.
+ *
+ * A similar API, LLVMConstIntOfStringAndSize is also available. If the
+ * string's length is available, it is preferred to call that function
+ * instead.
+ *
+ * @see llvm::ConstantInt::get()
+ */
 LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const char *Text,
                                   uint8_t Radix);
+
+/**
+ * Obtain a constant value for an integer parsed from a string with
+ * specified length.
+ *
+ * @see llvm::ConstantInt::get()
+ */
 LLVMValueRef LLVMConstIntOfStringAndSize(LLVMTypeRef IntTy, const char *Text,
                                          unsigned SLen, uint8_t Radix);
+
+/**
+ * Obtain a constant value referring to a double floating point value.
+ */
 LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N);
+
+/**
+ * Obtain a constant for a floating point value parsed from a string.
+ *
+ * A similar API, LLVMConstRealOfStringAndSize is also available. It
+ * should be used if the input string's length is known.
+ */
 LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text);
+
+/**
+ * Obtain a constant for a floating point value parsed from a string.
+ */
 LLVMValueRef LLVMConstRealOfStringAndSize(LLVMTypeRef RealTy, const char *Text,
                                           unsigned SLen);
+
+/**
+ * Obtain the zero extended value for an integer constant value.
+ *
+ * @see llvm::ConstantInt::getZExtValue()
+ */
 unsigned long long LLVMConstIntGetZExtValue(LLVMValueRef ConstantVal);
+
+/**
+ * Obtain the sign extended value for an integer constant value.
+ *
+ * @see llvm::ConstantInt::getSExtValue()
+ */
 long long LLVMConstIntGetSExtValue(LLVMValueRef ConstantVal);
 
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueMetadata Metadata
+ *
+ * @{
+ */
+
+/**
+ * Obtain a MDString value from a context.
+ *
+ * The returned instance corresponds to the llvm::MDString class.
+ *
+ * The instance is specified by string data of a specified length. The
+ * string content is copied, so the backing memory can be freed after
+ * this function returns.
+ */
+LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
+                                   unsigned SLen);
+
+/**
+ * Obtain a MDString value from the global context.
+ */
+LLVMValueRef LLVMMDString(const char *Str, unsigned SLen);
+
+/**
+ * Obtain a MDNode value from a context.
+ *
+ * The returned value corresponds to the llvm::MDNode class.
+ */
+LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
+                                 unsigned Count);
+
+/**
+ * Obtain a MDNode value from the global context.
+ */
+LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
+
+/**
+ * Obtain the underlying string from a MDString value.
+ *
+ * @param V Instance to obtain string from.
+ * @param Len Memory address which will hold length of returned string.
+ * @return String data in MDString.
+ */
+const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueUNCATEGORIZED UNCATEGORIZED
+ *
+ * Functions in this group are not yet categorized. They belong
+ * somewhere else and will be organized there in the future. Perhaps you
+ * can help by submitting a patch to the documentation.
+ *
+ * @{
+ */
 
 /* Operations on composite constants */
 LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
@@ -736,98 +1537,600 @@ LLVMValueRef LLVMGetFirstFunction(LLVMModuleRef M);
 LLVMValueRef LLVMGetLastFunction(LLVMModuleRef M);
 LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn);
 LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueFunction Function values
+ *
+ * Functions in this group operate on LLVMValueRef instances that
+ * correspond to llvm::Function instances.
+ *
+ * @see llvm::Function
+ *
+ * @{
+ */
+
+/**
+ * Remove a function from its containing module and deletes it.
+ *
+ * @see llvm::Function::eraseFromParent()
+ */
 void LLVMDeleteFunction(LLVMValueRef Fn);
+
+/**
+ * Obtain the ID number from a function instance.
+ *
+ * @see llvm::Function::getIntrinsicID()
+ */
 unsigned LLVMGetIntrinsicID(LLVMValueRef Fn);
+
+/**
+ * Obtain the calling function of a function.
+ *
+ * The returned value corresponds to the LLVMCallConv enumeration.
+ *
+ * @see llvm::Function::getCallingConv()
+ */
 unsigned LLVMGetFunctionCallConv(LLVMValueRef Fn);
+
+/**
+ * Set the calling convention of a function.
+ *
+ * @see llvm::Function::setCallingConv()
+ *
+ * @param Fn Function to operate on
+ * @param CC LLVMCallConv to set calling convention to
+ */
 void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC);
+
+/**
+ * Obtain the name of the garbage collector to use during code
+ * generation.
+ *
+ * @see llvm::Function::getGC()
+ */
 const char *LLVMGetGC(LLVMValueRef Fn);
+
+/**
+ * Define the garbage collector to use during code generation.
+ *
+ * @see llvm::Function::setGC()
+ */
 void LLVMSetGC(LLVMValueRef Fn, const char *Name);
+
+/**
+ * Add an attribute to a function.
+ *
+ * @see llvm::Function::addAttribute()
+ */
 void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
+
+/**
+ * Obtain an attribute from a function.
+ *
+ * @see llvm::Function::getAttributes()
+ */
 LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn);
+
+/**
+ * Remove an attribute from a function.
+ */
 void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
 
-/* Operations on parameters */
+/**
+ * @defgroup LLVMCCoreValueFunctionParameters Function Parameters
+ *
+ * Functions in this group relate to arguments/parameters on functions.
+ *
+ * Functions in this group expect LLVMValueRef instances that correspond
+ * to llvm::Function instances.
+ *
+ * @{
+ */
+
+/**
+ * Obtain the number of parameters in a function.
+ *
+ * @see llvm::Function::arg_size()
+ */
 unsigned LLVMCountParams(LLVMValueRef Fn);
+
+/**
+ * Obtain the parameters in a function.
+ *
+ * The takes a pointer to a pre-allocated array of LLVMValueRef that is
+ * at least LLVMCountParams() long. This array will be filled with
+ * LLVMValueRef instances which correspond to the parameters the
+ * function receives. Each LLVMValueRef corresponds to a llvm::Argument
+ * instance.
+ *
+ * @see llvm::Function::arg_begin()
+ */
 void LLVMGetParams(LLVMValueRef Fn, LLVMValueRef *Params);
+
+/**
+ * Obtain the parameter at the specified index.
+ *
+ * Parameters are indexed from 0.
+ *
+ * @see llvm::Function::arg_begin()
+ */
 LLVMValueRef LLVMGetParam(LLVMValueRef Fn, unsigned Index);
+
+/**
+ * Obtain the function to which this argument belongs.
+ *
+ * Unlike other functions in this group, this one takes a LLVMValueRef
+ * that corresponds to a llvm::Attribute.
+ *
+ * The returned LLVMValueRef is the llvm::Function to which this
+ * argument belongs.
+ */
 LLVMValueRef LLVMGetParamParent(LLVMValueRef Inst);
+
+/**
+ * Obtain the first parameter to a function.
+ *
+ * @see llvm::Function::arg_begin()
+ */
 LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn);
+
+/**
+ * Obtain the last parameter to a function.
+ *
+ * @see llvm::Function::arg_end()
+ */
 LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
+
+/**
+ * Obtain the next parameter to a function.
+ *
+ * This takes a LLVMValueRef obtained from LLVMGetFirstParam() (which is
+ * actually a wrapped iterator) and obtains the next parameter from the
+ * underlying iterator.
+ */
 LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg);
+
+/**
+ * Obtain the previous parameter to a function.
+ *
+ * This is the opposite of LLVMGetNextParam().
+ */
 LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg);
+
+/**
+ * Add an attribute to a function argument.
+ *
+ * @see llvm::Argument::addAttr()
+ */
 void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+
+/**
+ * Remove an attribute from a function argument.
+ *
+ * @see llvm::Argument::removeAttr()
+ */
 void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+
+/**
+ * Get an attribute from a function argument.
+ */
 LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg);
+
+/**
+ * Set the alignment for a function parameter.
+ *
+ * @see llvm::Argument::addAttr()
+ * @see llvm::Attribute::constructAlignmentFromInt()
+ */
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align);
 
-/* Operations on basic blocks */
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueBasicBlock Basic Block
+ *
+ * A basic block represents a single entry single exit section of code.
+ * Basic blocks contain a list of instructions which form the body of
+ * the block.
+ *
+ * Basic blocks belong to functions. They have the type of label.
+ *
+ * Basic blocks are themselves values. However, the C API models them as
+ * LLVMBasicBlockRef.
+ *
+ * @see llvm::BasicBlock
+ *
+ * @{
+ */
+
+/**
+ * Convert a basic block instance to a value type.
+ */
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB);
+
+/**
+ * Determine whether a LLVMValueRef is itself a basic block.
+ */
 LLVMBool LLVMValueIsBasicBlock(LLVMValueRef Val);
+
+/**
+ * Convert a LLVMValueRef to a LLVMBasicBlockRef instance.
+ */
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
+
+/**
+ * Obtain the function to which a basic block belongs.
+ *
+ * @see llvm::BasicBlock::getParent()
+ */
 LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB);
+
+/**
+ * Obtain the terminator instruction for a basic block.
+ *
+ * If the basic block does not have a terminator (it is not well-formed
+ * if it doesn't), then NULL is returned.
+ *
+ * The returned LLVMValueRef corresponds to a llvm::TerminatorInst.
+ *
+ * @see llvm::BasicBlock::getTerminator()
+ */
 LLVMValueRef LLVMGetBasicBlockTerminator(LLVMBasicBlockRef BB);
+
+/**
+ * Obtain the number of basic blocks in a function.
+ *
+ * @param Fn Function value to operate on.
+ */
 unsigned LLVMCountBasicBlocks(LLVMValueRef Fn);
+
+/**
+ * Obtain all of the basic blocks in a function.
+ *
+ * This operates on a function value. The BasicBlocks parameter is a
+ * pointer to a pre-allocated array of LLVMBasicBlockRef of at least
+ * LLVMCountBasicBlocks() in length. This array is populated with
+ * LLVMBasicBlockRef instances.
+ */
 void LLVMGetBasicBlocks(LLVMValueRef Fn, LLVMBasicBlockRef *BasicBlocks);
+
+/**
+ * Obtain the first basic block in a function.
+ *
+ * The returned basic block can be used as an iterator. You will likely
+ * eventually call into LLVMGetNextBasicBlock() with it.
+ *
+ * @see llvm::Function::begin()
+ */
 LLVMBasicBlockRef LLVMGetFirstBasicBlock(LLVMValueRef Fn);
+
+/**
+ * Obtain the last basic block in a function.
+ *
+ * @see llvm::Function::end()
+ */
 LLVMBasicBlockRef LLVMGetLastBasicBlock(LLVMValueRef Fn);
+
+/**
+ * Advance a basic block iterator.
+ */
 LLVMBasicBlockRef LLVMGetNextBasicBlock(LLVMBasicBlockRef BB);
+
+/**
+ * Go backwards in a basic block iterator.
+ */
 LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB);
+
+/**
+ * Obtain the basic block that corresponds to the entry point of a
+ * function.
+ *
+ * @see llvm::Function::getEntryBlock()
+ */
 LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn);
 
+/**
+ * Append a basic block to the end of a function.
+ *
+ * @see llvm::BasicBlock::Create()
+ */
 LLVMBasicBlockRef LLVMAppendBasicBlockInContext(LLVMContextRef C,
                                                 LLVMValueRef Fn,
                                                 const char *Name);
+
+/**
+ * Append a basic block to the end of a function using the global
+ * context.
+ *
+ * @see llvm::BasicBlock::Create()
+ */
+LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const char *Name);
+
+/**
+ * Insert a basic block in a function before another basic block.
+ *
+ * The function to add to is determined by the function of the
+ * passed basic block.
+ *
+ * @see llvm::BasicBlock::Create()
+ */
 LLVMBasicBlockRef LLVMInsertBasicBlockInContext(LLVMContextRef C,
                                                 LLVMBasicBlockRef BB,
                                                 const char *Name);
 
-LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const char *Name);
+/**
+ * Insert a basic block in a function using the global context.
+ *
+ * @see llvm::BasicBlock::Create()
+ */
 LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
                                        const char *Name);
+
+/**
+ * Remove a basic block from a function and delete it.
+ *
+ * This deletes the basic block from its containing function and deletes
+ * the basic block itself.
+ *
+ * @see llvm::BasicBlock::eraseFromParent()
+ */
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
+
+/**
+ * Remove a basic block from a function.
+ *
+ * This deletes the basic block from its containing function but keep
+ * the basic block alive.
+ *
+ * @see llvm::BasicBlock::removeFromParent()
+ */
 void LLVMRemoveBasicBlockFromParent(LLVMBasicBlockRef BB);
 
+/**
+ * Move a basic block to before another one.
+ *
+ * @see llvm::BasicBlock::moveBefore()
+ */
 void LLVMMoveBasicBlockBefore(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos);
+
+/**
+ * Move a basic block to after another one.
+ *
+ * @see llvm::BasicBlock::moveAfter()
+ */
 void LLVMMoveBasicBlockAfter(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos);
 
+/**
+ * Obtain the first instruction in a basic block.
+ *
+ * The returned LLVMValueRef corresponds to a llvm::Instruction
+ * instance.
+ */
 LLVMValueRef LLVMGetFirstInstruction(LLVMBasicBlockRef BB);
+
+/**
+ * Obtain the last instruction in a basic block.
+ *
+ * The returned LLVMValueRef corresponds to a LLVM:Instruction.
+ */
 LLVMValueRef LLVMGetLastInstruction(LLVMBasicBlockRef BB);
 
-/* Operations on instructions */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueInstruction Instructions
+ *
+ * Functions in this group relate to the inspection and manipulation of
+ * individual instructions.
+ *
+ * In the C++ API, an instruction is modeled by llvm::Instruction. This
+ * class has a large number of descendents. llvm::Instruction is a
+ * llvm::Value and in the C API, instructions are modeled by
+ * LLVMValueRef.
+ *
+ * This group also contains sub-groups which operate on specific
+ * llvm::Instruction types, e.g. llvm::CallInst.
+ *
+ * @{
+ */
+
+/**
+ * Determine whether an instruction has any metadata attached.
+ */
+int LLVMHasMetadata(LLVMValueRef Val);
+
+/**
+ * Return metadata associated with an instruction value.
+ */
+LLVMValueRef LLVMGetMetadata(LLVMValueRef Val, unsigned KindID);
+
+/**
+ * Set metadata associated with an instruction value.
+ */
+void LLVMSetMetadata(LLVMValueRef Val, unsigned KindID, LLVMValueRef Node);
+
+/**
+ * Obtain the basic block to which an instruction belongs.
+ *
+ * @see llvm::Instruction::getParent()
+ */
 LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
+
+/**
+ * Obtain the instruction that occurs after the one specified.
+ *
+ * The next instruction will be from the same basic block.
+ *
+ * If this is the last instruction in a basic block, NULL will be
+ * returned.
+ */
 LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst);
+
+/**
+ * Obtain the instruction that occured before this one.
+ *
+ * If the instruction is the first instruction in a basic block, NULL
+ * will be returned.
+ */
 LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
+
+/**
+ * Remove and delete an instruction.
+ *
+ * The instruction specified is removed from its containing building
+ * block and then deleted.
+ *
+ * @see llvm::Instruction::eraseFromParent()
+ */
 void LLVMInstructionEraseFromParent(LLVMValueRef Inst);
+
+/**
+ * Obtain the code opcode for an individual instruction.
+ *
+ * @see llvm::Instruction::getOpCode()
+ */
 LLVMOpcode   LLVMGetInstructionOpcode(LLVMValueRef Inst);
+
+/**
+ * Obtain the predicate of an instruction.
+ *
+ * This is only valid for instructions that correspond to llvm::ICmpInst
+ * or llvm::ConstantExpr whose opcode is llvm::Instruction::ICmp.
+ *
+ * @see llvm::ICmpInst::getPredicate()
+ */
 LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst);
 
-/* Operations on call sites */
+/**
+ * @defgroup LLVMCCoreValueInstructionCall Call Sites and Invocations
+ *
+ * Functions in this group apply to instructions that refer to call
+ * sites and invocations. These correspond to C++ types in the
+ * llvm::CallInst class tree.
+ *
+ * @{
+ */
+
+/**
+ * Set the calling convention for a call instruction.
+ *
+ * This expects an LLVMValueRef that corresponds to a llvm::CallInst or
+ * llvm::InvokeInst.
+ *
+ * @see llvm::CallInst::setCallingConv()
+ * @see llvm::InvokeInst::setCallingConv()
+ */
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
+
+/**
+ * Obtain the calling convention for a call instruction.
+ *
+ * This is the opposite of LLVMSetInstructionCallConv(). Reads its
+ * usage.
+ *
+ * @see LLVMSetInstructionCallConv()
+ */
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr);
+
+
 void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, LLVMAttribute);
-void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
+void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
                               LLVMAttribute);
-void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
+void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
                                 unsigned align);
 
-/* Operations on call instructions (only) */
+/**
+ * Obtain whether a call instruction is a tail call.
+ *
+ * This only works on llvm::CallInst instructions.
+ *
+ * @see llvm::CallInst::isTailCall()
+ */
 LLVMBool LLVMIsTailCall(LLVMValueRef CallInst);
+
+/**
+ * Set whether a call instruction is a tail call.
+ *
+ * This only works on llvm::CallInst instructions.
+ *
+ * @see llvm::CallInst::setTailCall()
+ */
 void LLVMSetTailCall(LLVMValueRef CallInst, LLVMBool IsTailCall);
 
-/* Operations on switch instructions (only) */
+/**
+ * @}
+ */
+
+/**
+ * Obtain the default destination basic block of a switch instruction.
+ *
+ * This only works on llvm::SwitchInst instructions.
+ *
+ * @see llvm::SwitchInst::getDefaultDest()
+ */
 LLVMBasicBlockRef LLVMGetSwitchDefaultDest(LLVMValueRef SwitchInstr);
 
-/* Operations on phi nodes */
+/**
+ * @defgroup LLVMCCoreValueInstructionPHINode PHI Nodes
+ *
+ * Functions in this group only apply to instructions that map to
+ * llvm::PHINode instances.
+ *
+ * @{
+ */
+
+/**
+ * Add an incoming value to the end of a PHI list.
+ */
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,
                      LLVMBasicBlockRef *IncomingBlocks, unsigned Count);
+
+/**
+ * Obtain the number of incoming basic blocks to a PHI node.
+ */
 unsigned LLVMCountIncoming(LLVMValueRef PhiNode);
+
+/**
+ * Obtain an incoming value to a PHI node as a LLVMValueRef.
+ */
 LLVMValueRef LLVMGetIncomingValue(LLVMValueRef PhiNode, unsigned Index);
+
+/**
+ * Obtain an incoming value to a PHI node as a LLVMBasicBlockRef.
+ */
 LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
 
-/*===-- Instruction builders ----------------------------------------------===*/
+/**
+ * @}
+ */
 
-/* An instruction builder represents a point within a basic block, and is the
- * exclusive means of building instructions using the C interface.
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreInstructionBuilder Instruction Builders
+ *
+ * An instruction builder represents a point within a basic block and is
+ * the exclusive means of building instructions using the C interface.
+ *
+ * @{
  */
 
 LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef C);
@@ -1048,21 +2351,37 @@ LLVMValueRef LLVMBuildIsNotNull(LLVMBuilderRef, LLVMValueRef Val,
 LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef, LLVMValueRef LHS,
                               LLVMValueRef RHS, const char *Name);
 
+/**
+ * @}
+ */
 
-/*===-- Module providers --------------------------------------------------===*/
+/**
+ * @defgroup LLVMCCoreModuleProvider Module Providers
+ *
+ * @{
+ */
 
-/* Changes the type of M so it can be passed to FunctionPassManagers and the
+/**
+ * Changes the type of M so it can be passed to FunctionPassManagers and the
  * JIT.  They take ModuleProviders for historical reasons.
  */
 LLVMModuleProviderRef
 LLVMCreateModuleProviderForExistingModule(LLVMModuleRef M);
 
-/* Destroys the module M.
+/**
+ * Destroys the module M.
  */
 void LLVMDisposeModuleProvider(LLVMModuleProviderRef M);
 
+/**
+ * @}
+ */
 
-/*===-- Memory buffers ----------------------------------------------------===*/
+/**
+ * @defgroup LLVMCCoreMemoryBuffers Memory Buffers
+ *
+ * @{
+ */
 
 LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(const char *Path,
                                                   LLVMMemoryBufferRef *OutMemBuf,
@@ -1071,23 +2390,39 @@ LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                          char **OutMessage);
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
 
-/*===-- Pass Registry -----------------------------------------------------===*/
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCorePassRegistry Pass Registry
+ *
+ * @{
+ */
 
 /** Return the global pass registry, for use with initialization functions.
-    See llvm::PassRegistry::getPassRegistry. */
+    @see llvm::PassRegistry::getPassRegistry */
 LLVMPassRegistryRef LLVMGetGlobalPassRegistry(void);
 
-/*===-- Pass Managers -----------------------------------------------------===*/
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCorePassManagers Pass Managers
+ *
+ * @{
+ */
 
 /** Constructs a new whole-module pass pipeline. This type of pipeline is
     suitable for link-time optimization and whole-module transformations.
-    See llvm::PassManager::PassManager. */
+    @see llvm::PassManager::PassManager */
 LLVMPassManagerRef LLVMCreatePassManager(void);
 
 /** Constructs a new function-by-function pass pipeline over the module
     provider. It does not take ownership of the module provider. This type of
     pipeline is suitable for code generation and JIT compilation tasks.
-    See llvm::FunctionPassManager::FunctionPassManager. */
+    @see llvm::FunctionPassManager::FunctionPassManager */
 LLVMPassManagerRef LLVMCreateFunctionPassManagerForModule(LLVMModuleRef M);
 
 /** Deprecated: Use LLVMCreateFunctionPassManagerForModule instead. */
@@ -1095,30 +2430,42 @@ LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef MP);
 
 /** Initializes, executes on the provided module, and finalizes all of the
     passes scheduled in the pass manager. Returns 1 if any of the passes
-    modified the module, 0 otherwise. See llvm::PassManager::run(Module&). */
+    modified the module, 0 otherwise.
+    @see llvm::PassManager::run(Module&) */
 LLVMBool LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M);
 
 /** Initializes all of the function passes scheduled in the function pass
     manager. Returns 1 if any of the passes modified the module, 0 otherwise.
-    See llvm::FunctionPassManager::doInitialization. */
+    @see llvm::FunctionPassManager::doInitialization */
 LLVMBool LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM);
 
 /** Executes all of the function passes scheduled in the function pass manager
     on the provided function. Returns 1 if any of the passes modified the
     function, false otherwise.
-    See llvm::FunctionPassManager::run(Function&). */
+    @see llvm::FunctionPassManager::run(Function&) */
 LLVMBool LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F);
 
 /** Finalizes all of the function passes scheduled in in the function pass
     manager. Returns 1 if any of the passes modified the module, 0 otherwise.
-    See llvm::FunctionPassManager::doFinalization. */
+    @see llvm::FunctionPassManager::doFinalization */
 LLVMBool LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM);
 
 /** Frees the memory of a pass pipeline. For function pipelines, does not free
     the module provider.
-    See llvm::PassManagerBase::~PassManagerBase. */
+    @see llvm::PassManagerBase::~PassManagerBase. */
 void LLVMDisposePassManager(LLVMPassManagerRef PM);
 
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

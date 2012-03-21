@@ -23,6 +23,13 @@ typedef struct LLVMOpaquePassManagerBuilder *LLVMPassManagerBuilderRef;
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCTransformsPassManagerBuilder Pass manager builder
+ * @ingroup LLVMCTransforms
+ *
+ * @{
+ */
+
 /** See llvm::PassManagerBuilder. */
 LLVMPassManagerBuilderRef LLVMPassManagerBuilderCreate(void);
 void LLVMPassManagerBuilderDispose(LLVMPassManagerBuilderRef PMB);
@@ -72,6 +79,10 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
                                                   LLVMPassManagerRef PM,
                                                   bool Internalize,
                                                   bool RunInliner);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

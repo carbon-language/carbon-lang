@@ -25,6 +25,19 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCEnhancedDisassembly Enhanced Disassembly
+ * @ingroup LLVMC
+ * @deprecated
+ *
+ * This module contains an interface to the Enhanced Disassembly (edis)
+ * library. The edis library is deprecated and will likely disappear in
+ * the near future. You should use the @ref LLVMCDisassembler interface
+ * instead.
+ *
+ * @{
+ */
+
 /*!
  @typedef EDByteReaderCallback
  Interface to memory from which instructions may be read.
@@ -503,6 +516,10 @@ int EDBlockEvaluateOperand(uint64_t *result,
  */
 int EDBlockVisitTokens(EDInstRef inst,
                        EDTokenVisitor_t visitor);
+
+/**
+ * @}
+ */
 
 #endif
 
