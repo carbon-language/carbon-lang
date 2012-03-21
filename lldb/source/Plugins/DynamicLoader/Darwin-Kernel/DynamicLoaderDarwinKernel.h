@@ -203,6 +203,9 @@ protected:
         }
 
         bool
+        LoadImageAtFileAddress (lldb_private::Process *process);
+
+        bool
         LoadImageUsingMemoryModule (lldb_private::Process *process);
         
 //        bool
