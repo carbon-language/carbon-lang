@@ -404,7 +404,8 @@ unsigned LLVMGetMDKindID(const char* Name, unsigned SLen);
  * @}
  */
 
-/** @defgroup LLVMCCoreModule Modules
+/**
+ * @defgroup LLVMCCoreModule Modules
  *
  * Modules represent the top-level structure in a LLVM program. An LLVM
  * module is effectively a translation unit or a collection of
@@ -412,11 +413,6 @@ unsigned LLVMGetMDKindID(const char* Name, unsigned SLen);
  *
  * @{
  */
-
-/*===-- Modules -----------------------------------------------------------===*/
-
-/* Create and destroy modules. */
-/** @see llvm::Module::Module */
 
 /**
  * Create a new, empty module in the global context.
@@ -529,6 +525,52 @@ void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRe
 void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
                                  LLVMValueRef Val);
 
+/**
+ * Add a function to a module under a specified name.
+ *
+ * @see llvm::Function::Create()
+ */
+LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
+                             LLVMTypeRef FunctionTy);
+
+/**
+ * Obtain a Function value from a Module by its name.
+ *
+ * The returned value corresponds to a llvm::Function value.
+ *
+ * @see llvm::Module::getFunction()
+ */
+LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name);
+
+/**
+ * Obtain an iterator to the first Function in a Module.
+ *
+ * @see llvm::Module::begin()
+ */
+LLVMValueRef LLVMGetFirstFunction(LLVMModuleRef M);
+
+/**
+ * Obtain an iterator to the last Function in a Module.
+ *
+ * @see llvm::Module::end()
+ */
+LLVMValueRef LLVMGetLastFunction(LLVMModuleRef M);
+
+/**
+ * Advance a Function iterator to the next Function.
+ *
+ * Returns NULL if the iterator was already at the end and there are no more
+ * functions.
+ */
+LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn);
+
+/**
+ * Decrement a Function iterator to the previous Function.
+ *
+ * Returns NULL if the iterator was already at the beginning and there are
+ * no previous functions.
+ */
+LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn);
 
 /**
  * @}
@@ -1147,7 +1189,7 @@ LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
  */
 
 /**
- * @defgroup LLVMCValueUser User value
+ * @defgroup LLVMCCoreValueUser User value
  *
  * Function in this group pertain to LLVMValueRef instances that descent
  * from llvm::User. This includes constants, instructions, and
@@ -1182,7 +1224,7 @@ int LLVMGetNumOperands(LLVMValueRef Val);
  */
 
 /**
- * @defgroup LLVMCoreValueConstant Constant values
+ * @defgroup LLVMCCoreValueConstant Constants
  *
  * This section contains APIs for interacting with LLVMValueRef that
  * correspond to llvm::Constant instances.
@@ -1328,87 +1370,90 @@ long long LLVMConstIntGetSExtValue(LLVMValueRef ConstantVal);
  */
 
 /**
- * @}
- */
-
-/**
- * @defgroup LLVMCCoreValueMetadata Metadata
+ * @defgroup LLVMCCoreValueConstantComposite Composite Constants
+ *
+ * Functions in this group operate on composite constants.
  *
  * @{
  */
 
 /**
- * Obtain a MDString value from a context.
+ * Create a ConstantDataSequential and initialize it with a string.
  *
- * The returned instance corresponds to the llvm::MDString class.
- *
- * The instance is specified by string data of a specified length. The
- * string content is copied, so the backing memory can be freed after
- * this function returns.
+ * @see llvm::ConstantDataArray::getString()
  */
-LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
-                                   unsigned SLen);
-
-/**
- * Obtain a MDString value from the global context.
- */
-LLVMValueRef LLVMMDString(const char *Str, unsigned SLen);
-
-/**
- * Obtain a MDNode value from a context.
- *
- * The returned value corresponds to the llvm::MDNode class.
- */
-LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
-                                 unsigned Count);
-
-/**
- * Obtain a MDNode value from the global context.
- */
-LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
-
-/**
- * Obtain the underlying string from a MDString value.
- *
- * @param V Instance to obtain string from.
- * @param Len Memory address which will hold length of returned string.
- * @return String data in MDString.
- */
-const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
-
-/**
- * @}
- */
-
-/**
- * @defgroup LLVMCCoreValueUNCATEGORIZED UNCATEGORIZED
- *
- * Functions in this group are not yet categorized. They belong
- * somewhere else and will be organized there in the future. Perhaps you
- * can help by submitting a patch to the documentation.
- *
- * @{
- */
-
-/* Operations on composite constants */
 LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
                                       unsigned Length, LLVMBool DontNullTerminate);
-LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, 
+
+/**
+ * Create a ConstantDataSequential with string content in the global context.
+ *
+ * This is the same as LLVMConstStringInContext except it operates on the
+ * global context.
+ *
+ * @see LLVMConstStringInContext()
+ * @see llvm::ConstantDataArray::getString()
+ */
+LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
+                             LLVMBool DontNullTerminate);
+
+/**
+ * Create an anonymous ConstantStruct with the specified values.
+ *
+ * @see llvm::ConstantStruct::getAnon()
+ */
+LLVMValueRef LLVMConstStructInContext(LLVMContextRef C,
                                       LLVMValueRef *ConstantVals,
                                       unsigned Count, LLVMBool Packed);
 
-LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
-                             LLVMBool DontNullTerminate);
-LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
-                            LLVMValueRef *ConstantVals, unsigned Length);
+/**
+ * Create a ConstantStruct in the global Context.
+ *
+ * This is the same as LLVMConstStructInContext except it operates on the
+ * global Context.
+ *
+ * @see LLVMConstStructInContext()
+ */
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              LLVMBool Packed);
+
+/**
+ * Create a ConstantArray from values.
+ *
+ * @see llvm::ConstantArray::get()
+ */
+LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
+                            LLVMValueRef *ConstantVals, unsigned Length);
+
+/**
+ * Create a non-anonymous ConstantStruct from values.
+ *
+ * @see llvm::ConstantStruct::get()
+ */
 LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef StructTy,
                                   LLVMValueRef *ConstantVals,
                                   unsigned Count);
+
+/**
+ * Create a ConstantVector from values.
+ *
+ * @see llvm::ConstantVector::get()
+ */
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size);
 
-/* Constant expressions */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueConstantExpressions Constant Expressions
+ *
+ * Functions in this group correspond to APIs on llvm::ConstantExpr.
+ *
+ * @see llvm::ConstantExpr.
+ *
+ * @{
+ */
 LLVMOpcode LLVMGetConstOpcode(LLVMValueRef ConstantVal);
 LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty);
 LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty);
@@ -1495,7 +1540,21 @@ LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty,
                                 LLVMBool HasSideEffects, LLVMBool IsAlignStack);
 LLVMValueRef LLVMBlockAddress(LLVMValueRef F, LLVMBasicBlockRef BB);
 
-/* Operations on global variables, functions, and aliases (globals) */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueConstantGlobals Global Values
+ *
+ * This group contains functions that operate on global values. Functions in
+ * this group relate to functions in the llvm::GlobalValue class tree.
+ *
+ * @see llvm::GlobalValue
+ *
+ * @{
+ */
+
 LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global);
 LLVMBool LLVMIsDeclaration(LLVMValueRef Global);
 LLVMLinkage LLVMGetLinkage(LLVMValueRef Global);
@@ -1507,7 +1566,15 @@ void LLVMSetVisibility(LLVMValueRef Global, LLVMVisibility Viz);
 unsigned LLVMGetAlignment(LLVMValueRef Global);
 void LLVMSetAlignment(LLVMValueRef Global, unsigned Bytes);
 
-/* Operations on global variables */
+/**
+ * @defgroup LLVMCoreValueConstantGlobalVariable Global Variables
+ *
+ * This group contains functions that operate on global variable values.
+ *
+ * @see llvm::GlobalVariable
+ *
+ * @{
+ */
 LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name);
 LLVMValueRef LLVMAddGlobalInAddressSpace(LLVMModuleRef M, LLVMTypeRef Ty,
                                          const char *Name,
@@ -1525,18 +1592,21 @@ void LLVMSetThreadLocal(LLVMValueRef GlobalVar, LLVMBool IsThreadLocal);
 LLVMBool LLVMIsGlobalConstant(LLVMValueRef GlobalVar);
 void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, LLVMBool IsConstant);
 
-/* Operations on aliases */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCoreValueConstantGlobalAlias Global Aliases
+ *
+ * This group contains function that operate on global alias values.
+ *
+ * @see llvm::GlobalAlias
+ *
+ * @{
+ */
 LLVMValueRef LLVMAddAlias(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee,
                           const char *Name);
-
-/* Operations on functions */
-LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
-                             LLVMTypeRef FunctionTy);
-LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name);
-LLVMValueRef LLVMGetFirstFunction(LLVMModuleRef M);
-LLVMValueRef LLVMGetLastFunction(LLVMModuleRef M);
-LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn);
-LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn);
 
 /**
  * @}
@@ -1731,6 +1801,63 @@ void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align);
 /**
  * @}
  */
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreValueMetadata Metadata
+ *
+ * @{
+ */
+
+/**
+ * Obtain a MDString value from a context.
+ *
+ * The returned instance corresponds to the llvm::MDString class.
+ *
+ * The instance is specified by string data of a specified length. The
+ * string content is copied, so the backing memory can be freed after
+ * this function returns.
+ */
+LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
+                                   unsigned SLen);
+
+/**
+ * Obtain a MDString value from the global context.
+ */
+LLVMValueRef LLVMMDString(const char *Str, unsigned SLen);
+
+/**
+ * Obtain a MDNode value from a context.
+ *
+ * The returned value corresponds to the llvm::MDNode class.
+ */
+LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
+                                 unsigned Count);
+
+/**
+ * Obtain a MDNode value from the global context.
+ */
+LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
+
+/**
+ * Obtain the underlying string from a MDString value.
+ *
+ * @param V Instance to obtain string from.
+ * @param Len Memory address which will hold length of returned string.
+ * @return String data in MDString.
+ */
+const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
 
 /**
  * @}
