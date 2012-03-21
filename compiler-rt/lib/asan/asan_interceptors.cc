@@ -731,7 +731,7 @@ void InitializeAsanInterceptors() {
 #endif
 
   if (FLAG_v > 0) {
-    Printf("AddressSanitizer: libc interceptors initialized\n");
+    Report("AddressSanitizer: libc interceptors initialized\n");
   }
 }
 
