@@ -1165,7 +1165,8 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
   if (const ComplexType* CT = T->getAs<ComplexType>())
     T = CT->getElementType().getTypePtr();
   if (T->isSpecificBuiltinType(BuiltinType::Double) ||
-      T->isSpecificBuiltinType(BuiltinType::LongLong))
+      T->isSpecificBuiltinType(BuiltinType::LongLong) ||
+      T->isSpecificBuiltinType(BuiltinType::ULongLong))
     return std::max(ABIAlign, (unsigned)getTypeSize(T));
 
   return ABIAlign;
