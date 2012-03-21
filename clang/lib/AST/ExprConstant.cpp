@@ -4510,12 +4510,10 @@ public:
   bool Traverse(const BinaryOperator *E) {
     enqueue(E);
     EvalResult PrevResult;
-    while (!Queue.empty()) {
-      if (!process(PrevResult)) {
-        Queue.clear();
-        return false;
-      }
-    }
+    while (!Queue.empty())
+      process(PrevResult);
+
+    if (PrevResult.Failed) return false;
 
     FinalResult.swap(PrevResult.Val);
     return true;
@@ -4552,7 +4550,7 @@ private:
       Result.Val = APValue();
   }
 
-  bool process(EvalResult &Result);
+  void process(EvalResult &Result);
 
   void enqueue(const Expr *E) {
     E = E->IgnoreParens();
@@ -4785,7 +4783,7 @@ bool DataRecursiveIntBinOpEvaluator::
   }
 }
 
-bool DataRecursiveIntBinOpEvaluator::process(EvalResult &Result) {
+void DataRecursiveIntBinOpEvaluator::process(EvalResult &Result) {
   Job &job = Queue.back();
   
   switch (job.Kind) {
@@ -4794,13 +4792,13 @@ bool DataRecursiveIntBinOpEvaluator::process(EvalResult &Result) {
         if (shouldEnqueue(Bop)) {
           job.Kind = Job::BinOpKind;
           enqueue(Bop->getLHS());
-          return true;
+          return;
         }
       }
       
       EvaluateExpr(job.E, Result);
       Queue.pop_back();
-      return true;
+      return;
     }
       
     case Job::BinOpKind: {
@@ -4808,26 +4806,26 @@ bool DataRecursiveIntBinOpEvaluator::process(EvalResult &Result) {
       job.LHSResult.swap(Result);
       bool IgnoreRHS = false;
       bool SuppressRHSDiags = false;
-      bool ret = VisitBinOpLHSOnly(job.LHSResult, Bop, IgnoreRHS, Result.Val,
-                                   SuppressRHSDiags);
+      Result.Failed = !VisitBinOpLHSOnly(job.LHSResult, Bop, IgnoreRHS,
+                                         Result.Val, SuppressRHSDiags);
       if (IgnoreRHS) {
         Queue.pop_back();
-        return ret;
+        return;
       }
       if (SuppressRHSDiags)
         job.startSpeculativeEval(Info);
       job.Kind = Job::BinOpVisitedLHSKind;
       enqueue(Bop->getRHS());
-      return ret;
+      return;
     }
       
     case Job::BinOpVisitedLHSKind: {
       const BinaryOperator *Bop = cast<BinaryOperator>(job.E);
       EvalResult RHS;
       RHS.swap(Result);
-      bool ret = VisitBinOp(job.LHSResult, RHS, Bop, Result.Val);
+      Result.Failed = !VisitBinOp(job.LHSResult, RHS, Bop, Result.Val);
       Queue.pop_back();
-      return ret;
+      return;
     }
   }
   

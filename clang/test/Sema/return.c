@@ -255,3 +255,12 @@ int test_enum_cases(enum Cases C) {
   case C3: return 4;
   }
 } // no-warning
+
+// PR12318 - Don't give a may reach end of non-void function warning.
+int test34(int x) {
+  if (x == 1) {
+    return 3;
+  } else if ( x == 2 || 1) {
+    return 5;
+  }
+}
