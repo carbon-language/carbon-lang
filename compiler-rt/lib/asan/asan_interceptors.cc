@@ -29,44 +29,51 @@
 // intercepted functions.
 #include <pthread.h>
 #include <string.h>
-#include <strings.h>
 #endif  // __APPLE__
 
-#if defined(__APPLE__)
+// Use extern declarations of intercepted functions on Mac and Windows
+// to avoid including system headers.
+#if defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
 extern "C" {
 // signal.h
+# if !defined(_WIN32)
 struct sigaction;
 int sigaction(int sig, const struct sigaction *act,
               struct sigaction *oldact);
 void *signal(int signum, void *handler);
+# endif
+
 // setjmp.h
-void longjmp(void* env, int val);
-void _longjmp(void *env, int val);
-}  // extern "C"
-#endif  // __APPLE__
-
-#if defined(_WIN32) && !defined(_DLL)
-// FIXME: We might want to use these on Mac too.
-extern "C" {
-int memcmp(const void *b1, const void *b2, size_t sz);
-void* memmove(void *d, const void *s, size_t sz);
-void* memcpy(void *d, const void *s, size_t sz);
-void* memset(void *b, int c, size_t sz);
-
-char* strchr(const char *s, char c);
-char* strcat(char *d, const char* s);  // NOLINT
-char* strncat(char *d, const char* s, size_t sz);
-char* strcpy(char *d, const char* s);  // NOLINT
-char* strncpy(char *d, const char* s, size_t sz);
-int strcmp(const char *s1, const char* s2);
-int strncmp(const char *s1, const char* s2, size_t sz);
-size_t strnlen(const char *s1, size_t sz);
-
 void longjmp(void* env, int value);
+# if !defined(_WIN32)
+void _longjmp(void *env, int value);
+# endif
 
+// string.h / strings.h
+int memcmp(const void *a1, const void *a2, size_t size);
+void* memmove(void *to, const void *from, size_t size);
+void* memcpy(void *to, const void *from, size_t size);
+void* memset(void *block, int c, size_t size);
+# if defined(__APPLE__)
+char* strchr(const char *str, int c);
+# elif defined(_WIN32)
+char* strchr(const char *s, char c);
+# endif
+char* strcat(char *to, const char* from);  // NOLINT
+char* strcpy(char *to, const char* from);  // NOLINT
+char* strncpy(char *to, const char* from, size_t size);
+int strcmp(const char *s1, const char* s2);
+int strncmp(const char *s1, const char* s2, size_t size);
+# if !defined(__APPLE__)
+size_t strnlen(const char *s, size_t maxlen);
+# endif
+
+// Windows threads.
+# if defined(_WIN32)
 __declspec(dllimport)
 void* __stdcall CreateThread(void *sec, size_t st, void* start,
                              void *arg, DWORD fl, DWORD *id);
+# endif
 }  // extern "C"
 #endif
 
