@@ -1886,8 +1886,13 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         !(getLangOpts().CPlusPlus &&
           (RetValExp->isTypeDependent() ||
            RetValExp->getType()->isVoidType()))) {
-      Diag(ReturnLoc, diag::err_return_block_has_expr);
-      RetValExp = 0;
+      if (!getLangOpts().CPlusPlus &&
+          RetValExp->getType()->isVoidType())
+        Diag(ReturnLoc, diag::ext_return_has_void_expr) << "" << 2;
+      else {
+        Diag(ReturnLoc, diag::err_return_block_has_expr);
+        RetValExp = 0;
+      }
     }
   } else if (!RetValExp) {
     return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
