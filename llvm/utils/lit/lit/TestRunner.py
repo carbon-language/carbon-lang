@@ -23,42 +23,55 @@ kUseCloseFDs = not kIsWindows
 # Use temporary files to replace /dev/null on Windows.
 kAvoidDevNull = kIsWindows
 
+# Negate if win32file is not found.
+kHaveWin32File = kIsWindows
+
 def RemoveForce(f):
     try:
         os.remove(f)
     except OSError:
         pass
 
-def WinRename(f_o, f_n):
-    import time
-    retry_cnt = 256
-    while (True):
-        try:
-            os.rename(f_o, f_n)
-            break
-        except WindowsError, (winerror, strerror):
-            retry_cnt = retry_cnt - 1
-            if retry_cnt <= 0:
-                raise
-            elif winerror == 32: # ERROR_SHARING_VIOLATION
-                time.sleep(0.01)
-            else:
-                raise
-
 def WinWaitReleased(f):
-    import random
-    t = "%s%06d" % (f, random.randint(0, 999999))
-    RemoveForce(t)
+    global kHaveWin32File
+    if not kHaveWin32File:
+        return
     try:
-        WinRename(f, t) # rename
-        WinRename(t, f) # restore
-    except WindowsError, (winerror, strerror):
-        if winerror in (2, 3):
-            # 2: ERROR_FILE_NOT_FOUND
-            # 3: ERROR_PATH_NOT_FOUND
-            pass
-        else:
-            raise
+        import time
+        import win32file, pywintypes
+        retry_cnt = 256
+        while True:
+            try:
+                h = win32file.CreateFile(
+                    f,
+                    win32file.GENERIC_READ,
+                    0, # Exclusive
+                    None,
+                    win32file.OPEN_EXISTING,
+                    win32file.FILE_ATTRIBUTE_NORMAL,
+                    None)
+                h.close()
+                return
+            except WindowsError, (winerror, strerror):
+                retry_cnt = retry_cnt - 1
+                if retry_cnt <= 0:
+                    raise
+                elif winerror == 32: # ERROR_SHARING_VIOLATION
+                    pass
+                else:
+                    raise
+            except pywintypes.error, e:
+                retry_cnt = retry_cnt - 1
+                if retry_cnt <= 0:
+                    raise
+                elif e[0]== 32: # ERROR_SHARING_VIOLATION
+                    pass
+                else:
+                    raise
+            time.sleep(0.01)
+    except ImportError, e:
+        kHaveWin32File = False
+        return
 
 def executeCommand(command, cwd=None, env=None):
     p = subprocess.Popen(command, cwd=cwd,
