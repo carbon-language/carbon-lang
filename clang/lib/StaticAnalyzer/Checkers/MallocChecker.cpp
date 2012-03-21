@@ -815,14 +815,12 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
 
     // Find the most recent expression bound to the symbol in the current
     // context.
-    ProgramPoint L = N->getLocation();
     if (!ReferenceRegion) {
-      const MemRegion *MR = C.getLocationRegionIfPostStore(N);
-      if (MR) {
-          SVal Val = State->getSVal(MR);
-          if (Val.getAsLocSymbol() == Sym)
-            ReferenceRegion = MR;
-        }
+      if (const MemRegion *MR = C.getLocationRegionIfPostStore(N)) {
+        SVal Val = State->getSVal(MR);
+        if (Val.getAsLocSymbol() == Sym)
+          ReferenceRegion = MR;
+      }
     }
 
     // Allocation node, is the last node in the current context in which the
