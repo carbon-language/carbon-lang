@@ -15,7 +15,7 @@ char *fooRetPtr();
 
 void f1() {
   int *p = malloc(12);
-  return; // expected-warning{{Memory is never released; potential memory leak}}
+  return; // expected-warning{{Memory is never released; potential leak}}
 }
 
 void f2() {
@@ -40,7 +40,7 @@ void reallocNotNullPtr(unsigned sizeIn) {
   char *p = (char*)malloc(size);
   if (p) {
     char *q = (char*)realloc(p, sizeIn);
-    char x = *q; // expected-warning {{Memory is never released; potential memory leak}}
+    char x = *q; // expected-warning {{Memory is never released; potential leak}}
   }
 }
 
@@ -98,7 +98,7 @@ void reallocSizeZero5() {
 }
 
 void reallocPtrZero1() {
-  char *r = realloc(0, 12); // expected-warning {{Memory is never released; potential memory leak}}
+  char *r = realloc(0, 12); // expected-warning {{Memory is never released; potential leak}}
 }
 
 void reallocPtrZero2() {
@@ -116,7 +116,7 @@ void reallocRadar6337483_1() {
     char *buf = malloc(100);
     buf = (char*)realloc(buf, 0x1000000);
     if (!buf) {
-        return;// expected-warning {{Memory is never released; potential memory leak}}
+        return;// expected-warning {{Memory is never released; potential leak}}
     }
     free(buf);
 }
@@ -124,7 +124,7 @@ void reallocRadar6337483_1() {
 void reallocRadar6337483_2() {
     char *buf = malloc(100);
     char *buf2 = (char*)realloc(buf, 0x1000000);
-    if (!buf2) { // expected-warning {{Memory is never released; potential memory leak}}
+    if (!buf2) { // expected-warning {{Memory is never released; potential leak}}
       ;
     } else {
       free(buf2);
@@ -147,7 +147,7 @@ void reallocRadar6337483_4() {
     char *buf = malloc(100);
     char *buf2 = (char*)realloc(buf, 0x1000000);
     if (!buf2) {
-      return;  // expected-warning {{Memory is never released; potential memory leak}}
+      return;  // expected-warning {{Memory is never released; potential leak}}
     } else {
       free(buf2);
     }
@@ -182,7 +182,7 @@ void reallocfRadar6337483_3() {
 }
 
 void reallocfPtrZero1() {
-  char *r = reallocf(0, 12); // expected-warning {{Memory is never released; potential memory leak}}
+  char *r = reallocf(0, 12); // expected-warning {{Memory is never released; potential leak}}
 }
 
 
@@ -374,12 +374,12 @@ void mallocBindFreeUse() {
 void mallocEscapeMalloc() {
   int *p = malloc(12);
   myfoo(p);
-  p = malloc(12); // expected-warning{{Memory is never released; potential memory leak}}
+  p = malloc(12); // expected-warning{{Memory is never released; potential leak}}
 }
 
 void mallocMalloc() {
   int *p = malloc(12);
-  p = malloc(12); // expected-warning 2 {{Memory is never released; potential memory leak}}
+  p = malloc(12); // expected-warning 2 {{Memory is never released; potential leak}}
 }
 
 void mallocFreeMalloc() {
@@ -439,7 +439,7 @@ void mallocFailedOrNotLeak() {
   if (p == 0)
     return; // no warning
   else
-    return; // expected-warning {{Memory is never released; potential memory leak}}
+    return; // expected-warning {{Memory is never released; potential leak}}
 }
 
 void mallocAssignment() {
@@ -449,7 +449,7 @@ void mallocAssignment() {
 
 int vallocTest() {
   char *mem = valloc(12);
-  return 0; // expected-warning {{Memory is never released; potential memory leak}}
+  return 0; // expected-warning {{Memory is never released; potential leak}}
 }
 
 void vallocEscapeFreeUse() {
@@ -566,7 +566,7 @@ struct X* RegInvalidationDetect1(struct X *s2) {
   struct X *px= malloc(sizeof(struct X));
   px->p = 0;
   px = s2;
-  return px; // expected-warning {{Memory is never released; potential memory leak}}
+  return px; // expected-warning {{Memory is never released; potential leak}}
 }
 
 struct X* RegInvalidationGiveUp1() {
@@ -580,7 +580,7 @@ int **RegInvalidationDetect2(int **pp) {
   int *p = malloc(12);
   pp = &p;
   pp++;
-  return 0;// expected-warning {{Memory is never released; potential memory leak}}
+  return 0;// expected-warning {{Memory is never released; potential leak}}
 }
 
 extern void exit(int) __attribute__ ((__noreturn__));
@@ -659,7 +659,7 @@ char *strndup(const char *s, size_t n);
 
 void testStrdup(const char *s, unsigned validIndex) {
   char *s2 = strdup(s);
-  s2[validIndex + 1] = 'b';// expected-warning {{Memory is never released; potential memory leak}}
+  s2[validIndex + 1] = 'b';// expected-warning {{Memory is never released; potential leak}}
 }
 
 int testStrndup(const char *s, unsigned validIndex, unsigned size) {
@@ -668,7 +668,7 @@ int testStrndup(const char *s, unsigned validIndex, unsigned size) {
   if (s2[validIndex] != 'a')
     return 0;
   else
-    return 1;// expected-warning {{Memory is never released; potential memory leak}}
+    return 1;// expected-warning {{Memory is never released; potential leak}}
 }
 
 void testStrdupContentIsDefined(const char *s, unsigned validIndex) {
@@ -776,7 +776,7 @@ void dependsOnValueOfPtr(int *g, unsigned f) {
   if (p != g)
     free(p);
   else
-    return; // expected-warning{{Memory is never released; potential memory leak}}
+    return; // expected-warning{{Memory is never released; potential leak}}
   return;
 }
 

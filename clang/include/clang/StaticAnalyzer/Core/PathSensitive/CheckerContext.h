@@ -114,6 +114,18 @@ public:
     return Pred->getLocationContext()->getAnalysisDeclContext();
   }
 
+  /// \brief If the given node corresponds to a PostStore program point, retrieve
+  /// the location region as it was uttered in the code.
+  ///
+  /// This utility can be useful for generating extensive diagnostics, for
+  /// example, for finding variables that the given symbol was assigned to.
+  static const MemRegion *getLocationRegionIfPostStore(const ExplodedNode *N) {
+    ProgramPoint L = N->getLocation();
+    if (const PostStore *PSL = dyn_cast<PostStore>(&L))
+      return reinterpret_cast<const MemRegion*>(PSL->getLocationValue());
+    return 0;
+  }
+
   /// \brief Generates a new transition in the program state graph
   /// (ExplodedGraph). Uses the default CheckerContext predecessor node.
   ///

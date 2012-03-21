@@ -123,8 +123,6 @@ public:
 
   virtual MemRegionManager* getMemRegionManager() const = 0;
 
-  std::string getString() const;
-
   const MemSpaceRegion *getMemorySpace() const;
 
   const MemRegion *getBaseRegion() const;
@@ -142,9 +140,15 @@ public:
   /// Compute the offset within the top level memory object.
   RegionOffset getAsOffset() const;
 
+  /// \brief Get a string representation of a region for debug use.
+  std::string getString() const;
+
   virtual void dumpToStream(raw_ostream &os) const;
 
   void dump() const;
+
+  /// \brief Print the region for use in diagnostics.
+  virtual void dumpPretty(raw_ostream &os) const;
 
   Kind getKind() const { return kind; }
 
@@ -814,6 +818,8 @@ public:
   static bool classof(const MemRegion* R) {
     return R->getKind() == VarRegionKind;
   }
+
+  void dumpPretty(raw_ostream &os) const;
 };
   
 /// CXXThisRegion - Represents the region for the implicit 'this' parameter
@@ -853,9 +859,6 @@ class FieldRegion : public DeclRegion {
     : DeclRegion(fd, sReg, FieldRegionKind) {}
 
 public:
-
-  void dumpToStream(raw_ostream &os) const;
-
   const FieldDecl *getDecl() const { return cast<FieldDecl>(D); }
 
   QualType getValueType() const {
@@ -873,6 +876,9 @@ public:
   static bool classof(const MemRegion* R) {
     return R->getKind() == FieldRegionKind;
   }
+
+  void dumpToStream(raw_ostream &os) const;
+  void dumpPretty(raw_ostream &os) const;
 };
 
 class ObjCIvarRegion : public DeclRegion {

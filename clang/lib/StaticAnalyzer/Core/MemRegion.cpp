@@ -534,6 +534,19 @@ void GlobalImmutableSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "GlobalImmutableSpaceRegion";
 }
 
+void MemRegion::dumpPretty(raw_ostream &os) const {
+  return;
+}
+
+void VarRegion::dumpPretty(raw_ostream &os) const {
+  os << getDecl()->getName();
+}
+
+void FieldRegion::dumpPretty(raw_ostream &os) const {
+  superRegion->dumpPretty(os);
+  os << "->" << getDecl();
+}
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//

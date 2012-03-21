@@ -29,7 +29,7 @@ static void my_free1(void *p) {
 
 static void test1() {
   void *data = 0;
-  my_malloc1(&data, 4); // expected-warning {{Memory is never released; potential memory leak}}
+  my_malloc1(&data, 4); // expected-warning {{Memory is never released; potential leak of memory pointed to by 'data'}}
 }
 
 static void test11() {
@@ -41,8 +41,8 @@ static void test11() {
 static void testUniqueingByallocationSiteInTopLevelFunction() {
   void *data = my_malloc2(1, 4);
   data = 0;
-  int x = 5;// expected-warning {{Memory is never released; potential memory leak}}
-  data = my_malloc2(1, 4);// expected-warning {{Memory is never released; potential memory leak}}
+  int x = 5;// expected-warning {{Memory is never released; potential leak of memory pointed to by 'data'}}
+  data = my_malloc2(1, 4);// expected-warning {{Memory is never released; potential leak of memory pointed to by 'data'}}
 }
 
 static void test3() {
@@ -79,7 +79,7 @@ static char *reshape(char *in) {
 void testThatRemoveDeadBindingsRunBeforeEachCall() {
     char *v = malloc(12);
     v = reshape(v);
-    v = reshape(v);// expected-warning {{Memory is never released; potential memory leak}}
+    v = reshape(v);// expected-warning {{Memory is never released; potential leak of memory pointed to by 'v'}}
 }
 
 // Test that we keep processing after 'return;'

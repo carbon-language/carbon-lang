@@ -85,6 +85,17 @@ void use_ret() {
     v = malloc_wrapper_ret();
 }
 
+// Test that we refer to the last symbol used in the leak diagnostic.
+void LeakedSymbol(int in) {
+    int *m = 0;
+    int *p;
+    p = (int*)malloc(12);
+    (*p)++;
+    m = p;
+    p = 0;
+    (*m)++;
+    in++;
+}
 
 // CHECK: <?xml version="1.0" encoding="UTF-8"?>
 // CHECK: <plist version="1.0">
@@ -287,12 +298,12 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Memory is never released; potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Memory is never released; potential memory leak</string>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
@@ -446,12 +457,12 @@ void use_ret() {
 // CHECK:      </dict>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Memory is never released; potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Memory is never released; potential memory leak</string>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
@@ -843,12 +854,12 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Memory is never released; potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Memory is never released; potential memory leak</string>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
@@ -1239,12 +1250,12 @@ void use_ret() {
 // CHECK:      </dict>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Memory is never released; potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Memory is never released; potential memory leak</string>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
@@ -2327,12 +2338,12 @@ void use_ret() {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Memory is never released; potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Memory is never released; potential memory leak</string>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
@@ -2592,18 +2603,192 @@ void use_ret() {
 // CHECK:      </dict>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Memory is never released; potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Memory is never released; potential memory leak</string>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>86</integer>
 // CHECK:    <key>col</key><integer>1</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>90</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>90</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>92</integer>
+// CHECK:       <key>col</key><integer>15</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>92</integer>
+// CHECK:          <key>col</key><integer>15</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>92</integer>
+// CHECK:          <key>col</key><integer>24</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>97</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>97</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>97</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>97</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>97</integer>
+// CHECK:          <key>col</key><integer>8</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>97</integer>
+// CHECK:    <key>col</key><integer>5</integer>
 // CHECK:    <key>file</key><integer>0</integer>
 // CHECK:   </dict>
 // CHECK:   </dict>

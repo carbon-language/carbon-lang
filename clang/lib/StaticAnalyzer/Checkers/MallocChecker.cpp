@@ -82,6 +82,8 @@ struct ReallocPair {
   }
 };
 
+typedef std::pair<const Stmt*, const MemRegion*> LeakInfo;
+
 class MallocChecker : public Checker<check::DeadSymbols,
                                      check::EndPath,
                                      check::PreStmt<ReturnStmt>,
@@ -185,8 +187,8 @@ private:
 
   /// Find the location of the allocation for Sym on the path leading to the
   /// exploded node N.
-  const Stmt *getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
-                                CheckerContext &C) const;
+  LeakInfo getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
+                             CheckerContext &C) const;
 
   void reportLeak(SymbolRef Sym, ExplodedNode *N, CheckerContext &C) const;
 
@@ -797,17 +799,32 @@ ProgramStateRef MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE){
   return MallocMemAux(C, CE, TotalSize, zeroVal, state);
 }
 
-const Stmt *
+LeakInfo
 MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
                                  CheckerContext &C) const {
   const LocationContext *LeakContext = N->getLocationContext();
   // Walk the ExplodedGraph backwards and find the first node that referred to
   // the tracked symbol.
   const ExplodedNode *AllocNode = N;
+  const MemRegion *ReferenceRegion = 0;
 
   while (N) {
-    if (!N->getState()->get<RegionState>(Sym))
+    ProgramStateRef State = N->getState();
+    if (!State->get<RegionState>(Sym))
       break;
+
+    // Find the most recent expression bound to the symbol in the current
+    // context.
+    ProgramPoint L = N->getLocation();
+    if (!ReferenceRegion) {
+      const MemRegion *MR = C.getLocationRegionIfPostStore(N);
+      if (MR) {
+          SVal Val = State->getSVal(MR);
+          if (Val.getAsLocSymbol() == Sym)
+            ReferenceRegion = MR;
+        }
+    }
+
     // Allocation node, is the last node in the current context in which the
     // symbol was tracked.
     if (N->getLocationContext() == LeakContext)
@@ -816,10 +833,11 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
   }
 
   ProgramPoint P = AllocNode->getLocation();
-  if (!isa<StmtPoint>(P))
-    return 0;
+  const Stmt *AllocationStmt = 0;
+  if (isa<StmtPoint>(P))
+    AllocationStmt = cast<StmtPoint>(P).getStmt();
 
-  return cast<StmtPoint>(P).getStmt();
+  return LeakInfo(AllocationStmt, ReferenceRegion);
 }
 
 void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
@@ -839,12 +857,23 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.
   PathDiagnosticLocation LocUsedForUniqueing;
-  if (const Stmt *AllocStmt = getAllocationSite(N, Sym, C))
+  const Stmt *AllocStmt = 0;
+  const MemRegion *Region = 0;
+  llvm::tie(AllocStmt, Region) = getAllocationSite(N, Sym, C);
+  if (AllocStmt)
     LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocStmt,
                             C.getSourceManager(), N->getLocationContext());
 
-  BugReport *R = new BugReport(*BT_Leak,
-    "Memory is never released; potential memory leak", N, LocUsedForUniqueing);
+  SmallString<200> buf;
+  llvm::raw_svector_ostream os(buf);
+  os << "Memory is never released; potential leak";
+  if (Region) {
+    os << " of memory pointed to by '";
+    Region->dumpPretty(os);
+    os <<'\'';
+  }
+
+  BugReport *R = new BugReport(*BT_Leak, os.str(), N, LocUsedForUniqueing);
   R->markInteresting(Sym);
   // FIXME: This is a hack to make sure the MallocBugVisitor gets to look at
   // the ExplodedNode chain first, in order to mark any failed realloc symbols

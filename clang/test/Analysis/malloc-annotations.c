@@ -26,7 +26,7 @@ struct stuff myglobalstuff;
 
 void f1() {
   int *p = malloc(12);
-  return; // expected-warning{{Memory is never released; potential memory leak}}
+  return; // expected-warning{{Memory is never released; potential leak}}
 }
 
 void f2() {
@@ -54,16 +54,16 @@ void naf1() {
 
 void n2af1() {
   int *p = my_malloc2(12);
-  return; // expected-warning{{Memory is never released; potential memory leak}}
+  return; // expected-warning{{Memory is never released; potential leak}}
 }
 
 void af1() {
   int *p = my_malloc(12);
-  return; // expected-warning{{Memory is never released; potential memory leak}}
+  return; // expected-warning{{Memory is never released; potential leak}}
 }
 
 void af1_b() {
-  int *p = my_malloc(12); // expected-warning{{Memory is never released; potential memory leak}}
+  int *p = my_malloc(12); // expected-warning{{Memory is never released; potential leak}}
 }
 
 void af1_c() {

@@ -76,6 +76,7 @@ protected:
 protected:
   const void *getData1() const { return Data.first; }
   const void *getData2() const { return Data.second; }
+  void setData2(const void *d) { Data.second = d; }
 
 public:
   /// Create a new ProgramPoint object that is the same as the original
@@ -195,7 +196,7 @@ public:
 class PostStmt : public StmtPoint {
 protected:
   PostStmt(const Stmt *S, const void *data, Kind k, const LocationContext *L,
-           const ProgramPointTag *tag =0)
+           const ProgramPointTag *tag = 0)
     : StmtPoint(S, data, k, L, tag) {}
 
 public:
@@ -270,15 +271,29 @@ public:
   }
 };
 
+/// \class Represents a program point after a store evaluation.
 class PostStore : public PostStmt {
 public:
-  PostStore(const Stmt *S, const LocationContext *L,
+  /// Construct the post store point.
+  /// \param Loc can be used to store the information about the location 
+  /// used in the form it was uttered in the code.
+  PostStore(const Stmt *S, const LocationContext *L, const void *Loc,
             const ProgramPointTag *tag = 0)
-    : PostStmt(S, PostStoreKind, L, tag) {}
+    : PostStmt(S, PostStoreKind, L, tag) {
+    assert(getData2() == 0);
+    setData2(Loc);
+  }
 
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStoreKind;
   }
+  
+  /// \brief Returns the information about the location used in the store,
+  /// how it was uttered in the code.
+  const void *getLocationValue() const {
+    return getData2();
+  }
+
 };
 
 class PostLValue : public PostStmt {
