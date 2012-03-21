@@ -5736,7 +5736,7 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
                              ArrayRef<ObjCProtocolDecl *> RefedProtocols,
                              ArrayRef<ObjCPropertyDecl *> ClassProperties) {
   
-  StringRef ClassName = ClassDecl->getNameAsString();
+  StringRef ClassName = ClassDecl->getName();
   // must declare an extern class object in case this class is not implemented 
   // in this TU.
   Result += "\n";
