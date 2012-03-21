@@ -471,6 +471,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     substitutions.extend([('%s', sourcepath),
                           ('%S', sourcedir),
                           ('%p', sourcedir),
+                          ('%{pathsep}', os.pathsep),
                           ('%t', tmpBase + '.tmp'),
                           ('%T', tmpDir),
                           # FIXME: Remove this once we kill DejaGNU.
