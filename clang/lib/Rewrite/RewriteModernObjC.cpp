@@ -5718,7 +5718,7 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   Result += ".cache = "; Result += "&_objc_empty_cache"; Result += ";\n";
   Result += "}\n";
   
-  Result += "#pragma section(\".objc_inithooks$B\", long, read, write\n";
+  Result += "#pragma section(\".objc_inithooks$B\", long, read, write)\n";
   Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
   Result += "static void *OBJC_CLASS_SETUP2_$_";
   Result += CDecl->getNameAsString();
@@ -5805,7 +5805,7 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
   Result += ".cls = "; Result += "&OBJC_CLASS_$_"; Result += ClassName;
   Result += ";\n}\n";
   
-  Result += "#pragma section(\".objc_inithooks$B\", long, read, write\n";
+  Result += "#pragma section(\".objc_inithooks$B\", long, read, write)\n";
   Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
   Result += "static void *OBJC_CATEGORY_SETUP2_$_";
   Result += ClassDecl->getNameAsString();
