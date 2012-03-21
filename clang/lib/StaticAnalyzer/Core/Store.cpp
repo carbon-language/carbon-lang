@@ -340,5 +340,23 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
 
 StoreManager::BindingsHandler::~BindingsHandler() {}
 
+bool StoreManager::FindUniqueBinding::HandleBinding(StoreManager& SMgr,
+                                                    Store store,
+                                                    const MemRegion* R,
+                                                    SVal val) {
+  SymbolRef SymV = val.getAsLocSymbol();
+  if (!SymV || SymV != Sym)
+    return true;
+
+  if (Binding) {
+    First = false;
+    return false;
+  }
+  else
+    Binding = R;
+
+  return true;
+}
+
 void SubRegionMap::anchor() { }
 void SubRegionMap::Visitor::anchor() { }

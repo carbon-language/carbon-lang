@@ -205,6 +205,21 @@ public:
                                const MemRegion *region, SVal val) = 0;
   };
 
+  class FindUniqueBinding :
+  public BindingsHandler {
+    SymbolRef Sym;
+    const MemRegion* Binding;
+    bool First;
+
+  public:
+    FindUniqueBinding(SymbolRef sym) : Sym(sym), Binding(0), First(true) {}
+
+    bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
+                       SVal val);
+    operator bool() { return First && Binding; }
+    const MemRegion *getRegion() { return Binding; }
+  };
+
   /// iterBindings - Iterate over the bindings in the Store.
   virtual void iterBindings(Store store, BindingsHandler& f) = 0;
 
