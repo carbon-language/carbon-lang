@@ -74,11 +74,15 @@ void ToolChain::configureObjCRuntime(ObjCRuntime &runtime) const {
 // FIXME: tblgen this.
 static const char *getARMTargetCPU(const ArgList &Args,
                                    const llvm::Triple &Triple) {
-  // FIXME: Warn on inconsistent use of -mcpu and -march.
-
-  // If we have -mcpu=, use that.
-  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
-    return A->getValue(Args);
+  // For Darwin targets, the -arch option (which is translated to a
+  // corresponding -march option) should determine the architecture
+  // (and the Mach-O slice) regardless of any -mcpu options.
+  if (!Triple.isOSDarwin()) {
+    // FIXME: Warn on inconsistent use of -mcpu and -march.
+    // If we have -mcpu=, use that.
+    if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
+      return A->getValue(Args);
+  }
 
   StringRef MArch;
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
