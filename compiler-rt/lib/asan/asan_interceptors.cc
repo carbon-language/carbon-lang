@@ -16,7 +16,6 @@
 #include "asan_allocator.h"
 #include "asan_interface.h"
 #include "asan_internal.h"
-#include "asan_mac.h"
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
@@ -697,14 +696,6 @@ void InitializeAsanInterceptors() {
   // Intercept threading-related functions
 #if !defined(_WIN32)
   CHECK(INTERCEPT_FUNCTION(pthread_create));
-# if defined(__APPLE__)
-  // We don't need to intercept pthread_workqueue_additem_np() to support the
-  // libdispatch API, but it helps us to debug the unsupported functions. Let's
-  // intercept it only during verbose runs.
-  if (FLAG_v >= 2) {
-    CHECK(INTERCEPT_FUNCTION(pthread_workqueue_additem_np));
-  }
-# endif
 #endif
 
   // Some Windows-specific interceptors.
@@ -714,12 +705,7 @@ void InitializeAsanInterceptors() {
 
   // Some Mac-specific interceptors.
 #if defined(__APPLE__)
-  CHECK(INTERCEPT_FUNCTION(dispatch_async_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_sync_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
-
+  InitializeMacGCDInterceptors();
   // http://code.google.com/p/address-sanitizer/issues/detail?id=10
   PatchCFStringCreateCopy();
 #endif

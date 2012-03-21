@@ -173,7 +173,6 @@ RTL_HDR=asan_allocator.h \
 	asan_interceptors.h \
 	asan_interface.h \
 	asan_lock.h \
-	asan_mac.h \
 	asan_mapping.h \
 	asan_procmaps.h \
 	asan_stack.h \
