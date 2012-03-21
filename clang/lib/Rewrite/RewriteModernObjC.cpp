@@ -5089,18 +5089,16 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   if (LangOpts.MicrosoftExt) {
     Preamble += "#define __OBJC_RW_DLLIMPORT extern \"C\" __declspec(dllimport)\n";
     Preamble += "#define __OBJC_RW_STATICIMPORT extern \"C\"\n";
-  } else
+  } 
+  else
     Preamble += "#define __OBJC_RW_DLLIMPORT extern\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSend";
-  Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSendSuper";
-  Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object* objc_msgSend_stret";
-  Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object* objc_msgSendSuper_stret";
-  Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT double objc_msgSend_fpret";
-  Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
+  
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSend(void);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSendSuper(void);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSend_stret(void);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSendSuper_stret(void);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSend_fpret(void);\n";
+
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *class_getSuperclass";
