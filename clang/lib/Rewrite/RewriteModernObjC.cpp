@@ -5227,10 +5227,10 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 
 /// struct _protocol_t {
 ///   id isa;  // NULL
-///   const char * const protocol_name;
+///   const char *protocol_name;
 ///   const struct _protocol_list_t * protocol_list; // super protocols
-///   const struct method_list_t * const instance_methods;
-///   const struct method_list_t * const class_methods;
+///   const struct method_list_t *instance_methods;
+///   const struct method_list_t *class_methods;
 ///   const struct method_list_t *optionalInstanceMethods;
 ///   const struct method_list_t *optionalClassMethods;
 ///   const struct _prop_list_t * properties;
@@ -5258,13 +5258,13 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 ///   uint32_t const instanceStart;
 ///   uint32_t const instanceSize;
 ///   uint32_t const reserved;  // only when building for 64bit targets
-///   const uint8_t * const ivarLayout;
-///   const char *const name;
-///   const struct _method_list_t * const baseMethods;
-///   const struct _protocol_list_t *const baseProtocols;
-///   const struct _ivar_list_t *const ivars;
-///   const uint8_t * const weakIvarLayout;
-///   const struct _prop_list_t * const properties;
+///   const uint8_t *ivarLayout;
+///   const char *name;
+///   const struct _method_list_t *baseMethods;
+///   const struct _protocol_list_t *baseProtocols;
+///   const struct _ivar_list_t *ivars;
+///   const uint8_t *weakIvarLayout;
+///   const struct _prop_list_t *properties;
 /// }
 
 /// struct _class_t {
@@ -5276,12 +5276,12 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 /// }
 
 /// struct _category_t {
-///   const char * const name;
+///   const char *name;
 ///   struct _class_t *cls;
-///   const struct _method_list_t * const instance_methods;
-///   const struct _method_list_t * const class_methods;
-///   const struct _protocol_list_t * const protocols;
-///   const struct _prop_list_t * const properties;
+///   const struct _method_list_t *instance_methods;
+///   const struct _method_list_t *class_methods;
+///   const struct _protocol_list_t *protocols;
+///   const struct _prop_list_t *properties;
 /// }
 
 /// MessageRefTy - LLVM for:
@@ -5316,10 +5316,10 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   
   Result += "\nstruct _protocol_t {\n";
   Result += "\tvoid * isa;  // NULL\n";
-  Result += "\tconst char * const protocol_name;\n";
+  Result += "\tconst char *protocol_name;\n";
   Result += "\tconst struct _protocol_list_t * protocol_list; // super protocols\n";
-  Result += "\tconst struct method_list_t * const instance_methods;\n";
-  Result += "\tconst struct method_list_t * const class_methods;\n";
+  Result += "\tconst struct method_list_t *instance_methods;\n";
+  Result += "\tconst struct method_list_t *class_methods;\n";
   Result += "\tconst struct method_list_t *optionalInstanceMethods;\n";
   Result += "\tconst struct method_list_t *optionalClassMethods;\n";
   Result += "\tconst struct _prop_list_t * properties;\n";
@@ -5343,13 +5343,13 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   const llvm::Triple &Triple(Context->getTargetInfo().getTriple());
   if (Triple.getArch() == llvm::Triple::x86_64)
     Result += "\tunsigned int const reserved;\n";
-  Result += "\tconst unsigned char * const ivarLayout;\n";
-  Result += "\tconst char *const name;\n";
-  Result += "\tconst struct _method_list_t * const baseMethods;\n";
-  Result += "\tconst struct _objc_protocol_list *const baseProtocols;\n";
-  Result += "\tconst struct _ivar_list_t *const ivars;\n";
-  Result += "\tconst unsigned char *const weakIvarLayout;\n";
-  Result += "\tconst struct _prop_list_t *const properties;\n";
+  Result += "\tconst unsigned char *ivarLayout;\n";
+  Result += "\tconst char *name;\n";
+  Result += "\tconst struct _method_list_t *baseMethods;\n";
+  Result += "\tconst struct _objc_protocol_list *baseProtocols;\n";
+  Result += "\tconst struct _ivar_list_t *ivars;\n";
+  Result += "\tconst unsigned char *weakIvarLayout;\n";
+  Result += "\tconst struct _prop_list_t *properties;\n";
   Result += "};\n";
   
   Result += "\nstruct _class_t {\n";
@@ -5361,12 +5361,12 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   Result += "};\n";
   
   Result += "\nstruct _category_t {\n";
-  Result += "\tconst char * const name;\n";
+  Result += "\tconst char *name;\n";
   Result += "\tstruct _class_t *cls;\n";
-  Result += "\tconst struct _method_list_t *const instance_methods;\n";
-  Result += "\tconst struct _method_list_t *const class_methods;\n";
-  Result += "\tconst struct _protocol_list_t *const protocols;\n";
-  Result += "\tconst struct _prop_list_t *const properties;\n";
+  Result += "\tconst struct _method_list_t *instance_methods;\n";
+  Result += "\tconst struct _method_list_t *class_methods;\n";
+  Result += "\tconst struct _protocol_list_t *protocols;\n";
+  Result += "\tconst struct _prop_list_t *properties;\n";
   Result += "};\n";
   
   Result += "__declspec(dllimport) extern struct objc_cache _objc_empty_cache;\n";
@@ -6337,8 +6337,6 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
 void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
-  if (LangOpts.MicrosoftExt)
-    Result += "#pragma optimize(\"g\", on)";
   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
@@ -6408,8 +6406,6 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
     }
     Result += "};\n";
   }
-  if (LangOpts.MicrosoftExt)
-    Result += "#pragma optimize(\"\", on)\n";
 }
 
 void RewriteModernObjC::WriteImageInfo(std::string &Result) {
