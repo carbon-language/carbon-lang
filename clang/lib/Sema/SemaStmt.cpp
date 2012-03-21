@@ -1888,7 +1888,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
            RetValExp->getType()->isVoidType()))) {
       if (!getLangOpts().CPlusPlus &&
           RetValExp->getType()->isVoidType())
-        Diag(ReturnLoc, diag::ext_return_has_void_expr) << "" << 2;
+        Diag(ReturnLoc, diag::ext_return_has_void_expr) << "literal" << 2;
       else {
         Diag(ReturnLoc, diag::err_return_block_has_expr);
         RetValExp = 0;

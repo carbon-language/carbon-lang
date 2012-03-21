@@ -132,5 +132,5 @@ void foo7()
 
 // rdar://11069896
 void (^blk)(void) = ^{
-    return (void)0; // expected-warning {{void block  should not return void expression}}
+    return (void)0; // expected-warning {{void block literal should not return void expression}}
 };
