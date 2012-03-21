@@ -24,7 +24,7 @@
 
 namespace llvm {
 enum {
-  SM_SentinelZero = ~0U
+  SM_SentinelZero = -1
 };
 
 void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);

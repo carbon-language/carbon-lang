@@ -511,7 +511,7 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     for (unsigned i = 0, e = ShuffleMask.size(); i != e; ++i) {
       if (i != 0)
         OS << ',';
-      if (ShuffleMask[i] == (int)SM_SentinelZero) {
+      if (ShuffleMask[i] == SM_SentinelZero) {
         OS << "zero";
         continue;
       }
