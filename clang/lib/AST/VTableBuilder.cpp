@@ -466,10 +466,10 @@ public:
 
 static bool HasSameVirtualSignature(const CXXMethodDecl *LHS,
                                     const CXXMethodDecl *RHS) {
-  ASTContext &C = LHS->getASTContext(); // TODO: thread this down
-  CanQual<FunctionProtoType>
-    LT = C.getCanonicalType(LHS->getType()).getAs<FunctionProtoType>(),
-    RT = C.getCanonicalType(RHS->getType()).getAs<FunctionProtoType>();
+  const FunctionProtoType *LT =
+    cast<FunctionProtoType>(LHS->getType().getCanonicalType());
+  const FunctionProtoType *RT =
+    cast<FunctionProtoType>(RHS->getType().getCanonicalType());
 
   // Fast-path matches in the canonical types.
   if (LT == RT) return true;
@@ -477,7 +477,7 @@ static bool HasSameVirtualSignature(const CXXMethodDecl *LHS,
   // Force the signatures to match.  We can't rely on the overrides
   // list here because there isn't necessarily an inheritance
   // relationship between the two methods.
-  if (LT.getQualifiers() != RT.getQualifiers() ||
+  if (LT->getTypeQuals() != RT->getTypeQuals() ||
       LT->getNumArgs() != RT->getNumArgs())
     return false;
   for (unsigned I = 0, E = LT->getNumArgs(); I != E; ++I)
