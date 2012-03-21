@@ -109,14 +109,14 @@ void test7() {
   switch(a) {
     case A:
     case B:
-    case 3: // expected-warning{{case value not in enumerated type ''}}
+    case 3: // expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
   switch(a) {
     case A:
     case B:
-    case 3 ... //expected-warning{{case value not in enumerated type ''}}
-        4: //expected-warning{{case value not in enumerated type ''}}
+    case 3 ... //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
+        4: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
   switch(a) {
@@ -124,16 +124,16 @@ void test7() {
       break;
   }
   switch(a) {
-    case 0 ... 2: //expected-warning{{case value not in enumerated type ''}}
+    case 0 ... 2: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
   switch(a) {
-    case 1 ... 3: //expected-warning{{case value not in enumerated type ''}}
+    case 1 ... 3: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
   switch(a) {
-    case 0 ...  //expected-warning{{case value not in enumerated type ''}}
-      3:  //expected-warning{{case value not in enumerated type ''}}
+    case 0 ...  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
+      3:  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
 
@@ -167,11 +167,11 @@ void test9() {
     C = 1
   } a;
   switch(a) {
-    case 0: //expected-warning{{case value not in enumerated type ''}}
+    case 0: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
     case 1:
-    case 2: //expected-warning{{case value not in enumerated type ''}}
+    case 2: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
     case 3:
-    case 4: //expected-warning{{case value not in enumerated type ''}}
+    case 4: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
 }
@@ -184,14 +184,14 @@ void test10() {
     D = 12
   } a;
   switch(a) {
-    case 0 ...  //expected-warning{{case value not in enumerated type ''}}
-	    1:  //expected-warning{{case value not in enumerated type ''}}
+    case 0 ...  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
+	    1:  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
     case 2 ... 4:
-    case 5 ...  //expected-warning{{case value not in enumerated type ''}}	
-	      9:  //expected-warning{{case value not in enumerated type ''}}
+    case 5 ...  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}	
+	      9:  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
     case 10 ... 12:
-    case 13 ...  //expected-warning{{case value not in enumerated type ''}}
-              16: //expected-warning{{case value not in enumerated type ''}}
+    case 13 ...  //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
+              16: //expected-warning{{case value not in enumerated type 'enum <anonymous enum}}
       break;
   }
 }
@@ -302,4 +302,21 @@ int test18() {
   case 7: return 1; // expected-warning {{case value not in enumerated type}}
   default: return 2; // expected-warning {{default label in switch which covers all enumeration values}}
   }
+}
+
+// rdar://110822110
+typedef enum {
+        kOne = 1,
+} Ints;
+        
+void rdar110822110(Ints i)
+{
+        switch (i) {
+                case kOne:
+                        break;
+                case 2: 	// expected-warning {{case value not in enumerated type 'Ints'}}          
+                        break;
+                default:	// expected-warning {{default label in switch which covers all enumeration values}}
+                        break;
+                }
 }
