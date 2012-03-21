@@ -483,6 +483,37 @@ syntax, there are still significant gaps in that support.</p>
    LLVM API changes are:</p>
 
 <ul>
+  <li>Target specific options have been moved from global variables to members
+      on the new <code>TargetOptions</code> class, which is local to each
+      <code>TargetMachine</code>. As a consequence, the associated flags will
+      no longer be accepted by <tt>clang -mllvm</tt>. This includes:
+<ul>
+<li><code>llvm::PrintMachineCode</code>
+<li><code>llvm::NoFramePointerElim</code>
+<li><code>llvm::NoFramePointerElimNonLeaf</code>
+<li><code>llvm::DisableFramePointerElim(const MachineFunction &)</code>
+<li><code>llvm::LessPreciseFPMADOption</code>
+<li><code>llvm::LessPrecideFPMAD()</code>
+<li><code>llvm::NoExcessFPPrecision</code>
+<li><code>llvm::UnsafeFPMath</code>
+<li><code>llvm::NoInfsFPMath</code>
+<li><code>llvm::NoNaNsFPMath</code>
+<li><code>llvm::HonorSignDependentRoundingFPMathOption</code>
+<li><code>llvm::HonorSignDependentRoundingFPMath()</code>
+<li><code>llvm::UseSoftFloat</code>
+<li><code>llvm::FloatABIType</code>
+<li><code>llvm::NoZerosInBSS</code>
+<li><code>llvm::JITExceptionHandling</code>
+<li><code>llvm::JITEmitDebugInfo</code>
+<li><code>llvm::JITEmitDebugInfoToDisk</code>
+<li><code>llvm::GuaranteedTailCallOpt</code>
+<li><code>llvm::StackAlignmentOverride</code>
+<li><code>llvm::RealignStack</code>
+<li><code>llvm::DisableJumpTables</code>
+<li><code>llvm::EnableFastISel</code>
+<li><code>llvm::getTrapFunctionName()</code>
+<li><code>llvm::EnableSegmentedStacks</code>
+</ul></li>
   <li>....</li>
 </ul>
 
