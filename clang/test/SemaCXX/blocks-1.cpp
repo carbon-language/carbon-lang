@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks
+// RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks -std=c++11
 
 extern "C" int exit(int);
 
@@ -42,4 +42,17 @@ namespace rdar8134521 {
     P = reinterpret_cast<int(^)(int)>((void*)1);
     P = (int(^)(int))((void*)1);
   }
+}
+
+namespace rdar11055105 {
+  struct A {
+    void foo();
+  };
+
+  template <class T> void foo(T &x) noexcept(noexcept(x.foo()));
+
+  void (^block)() = ^{
+    A a;
+    foo(a);
+  };
 }
