@@ -454,7 +454,7 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
     GlobalVariable *G = GlobalsToChange[i];
     PointerType *PtrTy = cast<PointerType>(G->getType());
     Type *Ty = PtrTy->getElementType();
-    uint64_t SizeInBytes = TD->getTypeStoreSizeInBits(Ty) / 8;
+    uint64_t SizeInBytes = TD->getTypeAllocSize(Ty);
     uint64_t RightRedzoneSize = RedzoneSize +
         (RedzoneSize - (SizeInBytes % RedzoneSize));
     Type *RightRedZoneTy = ArrayType::get(IRB.getInt8Ty(), RightRedzoneSize);
