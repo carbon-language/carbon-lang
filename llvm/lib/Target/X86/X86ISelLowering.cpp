@@ -2910,7 +2910,7 @@ static bool isTargetShuffle(unsigned Opcode) {
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
-                                               SDValue V1, SelectionDAG &DAG) {
+                                    SDValue V1, SelectionDAG &DAG) {
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::MOVSHDUP:
@@ -2921,7 +2921,8 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
-                          SDValue V1, unsigned TargetMask, SelectionDAG &DAG) {
+                                    SDValue V1, unsigned TargetMask,
+                                    SelectionDAG &DAG) {
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::PSHUFD:
@@ -2933,7 +2934,8 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
-               SDValue V1, SDValue V2, unsigned TargetMask, SelectionDAG &DAG) {
+                                    SDValue V1, SDValue V2, unsigned TargetMask,
+                                    SelectionDAG &DAG) {
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::PALIGN:
@@ -4418,7 +4420,7 @@ static bool getTargetShuffleMask(SDNode *N, EVT VT,
 
 /// getShuffleScalarElt - Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
-static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
+static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
                                    unsigned Depth) {
   if (Depth == 6)
     return SDValue();  // Limit search depth.
@@ -4429,15 +4431,15 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
 
   // Recurse into ISD::VECTOR_SHUFFLE node to find scalars.
   if (const ShuffleVectorSDNode *SV = dyn_cast<ShuffleVectorSDNode>(N)) {
-    Index = SV->getMaskElt(Index);
+    int Elt = SV->getMaskElt(Index);
 
-    if (Index < 0)
+    if (Elt < 0)
       return DAG.getUNDEF(VT.getVectorElementType());
 
     unsigned NumElems = VT.getVectorNumElements();
-    SDValue NewV = (Index < (int)NumElems) ? SV->getOperand(0)
-                                           : SV->getOperand(1);
-    return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG, Depth+1);
+    SDValue NewV = (Elt < (int)NumElems) ? SV->getOperand(0)
+                                         : SV->getOperand(1);
+    return getShuffleScalarElt(NewV.getNode(), Elt % NumElems, DAG, Depth+1);
   }
 
   // Recurse into target specific vector shuffles to find scalars.
@@ -4450,13 +4452,13 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     if (!getTargetShuffleMask(N, VT, ShuffleMask, IsUnary))
       return SDValue();
 
-    Index = ShuffleMask[Index];
-    if (Index < 0)
+    int Elt = ShuffleMask[Index];
+    if (Elt < 0)
       return DAG.getUNDEF(VT.getVectorElementType());
 
-    SDValue NewV = (Index < (int)NumElems) ? N->getOperand(0)
+    SDValue NewV = (Elt < (int)NumElems) ? N->getOperand(0)
                                            : N->getOperand(1);
-    return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG,
+    return getShuffleScalarElt(NewV.getNode(), Elt % NumElems, DAG,
                                Depth+1);
   }
 
@@ -4472,7 +4474,7 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
 
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
     return (Index == 0) ? V.getOperand(0)
-                          : DAG.getUNDEF(VT.getVectorElementType());
+                        : DAG.getUNDEF(VT.getVectorElementType());
 
   if (V.getOpcode() == ISD::BUILD_VECTOR)
     return V.getOperand(Index);
@@ -4484,38 +4486,37 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
 /// shuffle operation which come from a consecutively from a zero. The
 /// search can start in two different directions, from left or right.
 static
-unsigned getNumOfConsecutiveZeros(SDNode *N, int NumElems,
+unsigned getNumOfConsecutiveZeros(ShuffleVectorSDNode *SVOp, unsigned NumElems,
                                   bool ZerosFromLeft, SelectionDAG &DAG) {
-  int i = 0;
-
-  while (i < NumElems) {
+  unsigned i;
+  for (i = 0; i != NumElems; ++i) {
     unsigned Index = ZerosFromLeft ? i : NumElems-i-1;
-    SDValue Elt = getShuffleScalarElt(N, Index, DAG, 0);
+    SDValue Elt = getShuffleScalarElt(SVOp, Index, DAG, 0);
     if (!(Elt.getNode() &&
          (Elt.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elt))))
       break;
-    ++i;
   }
 
   return i;
 }
 
-/// isShuffleMaskConsecutive - Check if the shuffle mask indicies from MaskI to
-/// MaskE correspond consecutively to elements from one of the vector operands,
+/// isShuffleMaskConsecutive - Check if the shuffle mask indicies [MaskI, MaskE)
+/// correspond consecutively to elements from one of the vector operands,
 /// starting from its index OpIdx. Also tell OpNum which source vector operand.
 static
-bool isShuffleMaskConsecutive(ShuffleVectorSDNode *SVOp, int MaskI, int MaskE,
-                              int OpIdx, int NumElems, unsigned &OpNum) {
+bool isShuffleMaskConsecutive(ShuffleVectorSDNode *SVOp,
+                              unsigned MaskI, unsigned MaskE, unsigned OpIdx,
+                              unsigned NumElems, unsigned &OpNum) {
   bool SeenV1 = false;
   bool SeenV2 = false;
 
-  for (int i = MaskI; i <= MaskE; ++i, ++OpIdx) {
+  for (unsigned i = MaskI; i != MaskE; ++i, ++OpIdx) {
     int Idx = SVOp->getMaskElt(i);
     // Ignore undef indicies
     if (Idx < 0)
       continue;
 
-    if (Idx < NumElems)
+    if (Idx < (int)NumElems)
       SeenV1 = true;
     else
       SeenV2 = true;
@@ -4550,7 +4551,7 @@ static bool isVectorShiftRight(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
   //
   if (!isShuffleMaskConsecutive(SVOp,
             0,                   // Mask Start Index
-            NumElems-NumZeros-1, // Mask End Index
+            NumElems-NumZeros,   // Mask End Index(exclusive)
             NumZeros,            // Where to start looking in the src vector
             NumElems,            // Number of elements in vector
             OpSrc))              // Which source operand ?
@@ -4583,7 +4584,7 @@ static bool isVectorShiftLeft(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
   //
   if (!isShuffleMaskConsecutive(SVOp,
             NumZeros,     // Mask Start Index
-            NumElems-1,   // Mask End Index
+            NumElems,     // Mask End Index(exclusive)
             0,            // Where to start looking in the src vector
             NumElems,     // Number of elements in vector
             OpSrc))       // Which source operand ?
