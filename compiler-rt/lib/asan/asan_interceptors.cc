@@ -28,7 +28,6 @@
 // FIXME(samsonov): Gradually replace system headers with declarations of
 // intercepted functions.
 #include <pthread.h>
-#include <string.h>
 #endif  // __APPLE__
 
 // Use extern declarations of intercepted functions on Mac and Windows
@@ -56,6 +55,7 @@ void* memcpy(void *to, const void *from, size_t size);
 void* memset(void *block, int c, size_t size);
 # if defined(__APPLE__)
 char* strchr(const char *str, int c);
+char* index(const char *string, int c);
 # elif defined(_WIN32)
 char* strchr(const char *s, char c);
 # endif
@@ -64,6 +64,12 @@ char* strcpy(char *to, const char* from);  // NOLINT
 char* strncpy(char *to, const char* from, size_t size);
 int strcmp(const char *s1, const char* s2);
 int strncmp(const char *s1, const char* s2, size_t size);
+# if !defined(_WIN32)
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t n);
+char* strdup(const char *s);
+# endif
+size_t strlen(const char *s);
 # if !defined(__APPLE__)
 size_t strnlen(const char *s, size_t maxlen);
 # endif
