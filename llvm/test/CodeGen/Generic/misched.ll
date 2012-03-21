@@ -1,5 +1,5 @@
-; RUN: llc -enable-misched -misched=shuffle -misched-bottomup < %s
-; XFAIL: *
+; RUN: true
+; llc -enable-misched -misched=shuffle -misched-bottomup < %s
 ;
 ; Interesting MachineScheduler cases.
 
