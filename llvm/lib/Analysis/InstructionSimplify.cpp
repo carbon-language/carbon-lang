@@ -95,6 +95,12 @@ static bool ValueDominatesPHI(Value *V, PHINode *P, const DominatorTree *DT) {
     // Arguments and constants dominate all instructions.
     return true;
 
+  // If we are processing instructions (and/or basic blocks) that have not been
+  // fully added to a function, the parent nodes may still be null. Simply
+  // return the conservative answer in these cases.
+  if (!I->getParent() || !P->getParent() || !I->getParent()->getParent())
+    return false;
+
   // If we have a DominatorTree then do a precise test.
   if (DT) {
     if (!DT->isReachableFromEntry(P->getParent()))
