@@ -2319,6 +2319,8 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST2b8wb_register:
     case ARM::VST2b16wb_register:
     case ARM::VST2b32wb_register:
+      Inst.addOperand(MCOperand::CreateImm(0));
+      break;
     case ARM::VST3d8_UPD:
     case ARM::VST3d16_UPD:
     case ARM::VST3d32_UPD:
@@ -2360,6 +2362,23 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST1q16wb_fixed:
     case ARM::VST1q32wb_fixed:
     case ARM::VST1q64wb_fixed:
+    case ARM::VST1d8Twb_fixed:
+    case ARM::VST1d16Twb_fixed:
+    case ARM::VST1d32Twb_fixed:
+    case ARM::VST1d64Twb_fixed:
+    case ARM::VST1d8Qwb_fixed:
+    case ARM::VST1d16Qwb_fixed:
+    case ARM::VST1d32Qwb_fixed:
+    case ARM::VST1d64Qwb_fixed:
+    case ARM::VST2d8wb_fixed:
+    case ARM::VST2d16wb_fixed:
+    case ARM::VST2d32wb_fixed:
+    case ARM::VST2q8wb_fixed:
+    case ARM::VST2q16wb_fixed:
+    case ARM::VST2q32wb_fixed:
+    case ARM::VST2b8wb_fixed:
+    case ARM::VST2b16wb_fixed:
+    case ARM::VST2b32wb_fixed:
       break;
   }
 
