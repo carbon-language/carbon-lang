@@ -49,9 +49,9 @@ public:
 
   void EmitInstruction(uint64_t Val, unsigned Size, raw_ostream &OS) const {
     // Output the instruction encoding in little endian byte order.
-    for (unsigned i = 0; i != Size; ++i) {
-      EmitByte(Val & 255, OS);
-      Val >>= 8;
+    for (unsigned i = 0; i < Size; ++i) {
+      unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
+      EmitByte((Val >> Shift) & 0xff, OS);
     }
   }
 

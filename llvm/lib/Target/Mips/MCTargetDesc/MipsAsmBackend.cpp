@@ -92,25 +92,42 @@ public:
     if (!Value)
       return; // Doesn't change encoding.
 
+    // Where do we start in the object
     unsigned Offset = Fixup.getOffset();
-    // FIXME: The below code will not work across endian models
-    // How many bytes/bits are we fixing up?
-    unsigned NumBytes = ((getFixupKindInfo(Kind).TargetSize-1)/8)+1;
-    uint64_t Mask = ((uint64_t)1 << getFixupKindInfo(Kind).TargetSize) - 1;
+    // Number of bytes we need to fixup
+    unsigned NumBytes = (getFixupKindInfo(Kind).TargetSize + 7) / 8;
+    // Used to point to big endian bytes
+    unsigned FullSize;
+
+    switch (Kind) {
+    case Mips::fixup_Mips_16:
+      FullSize = 2;
+      break;
+    case Mips::fixup_Mips_64:
+      FullSize = 8;
+      break;
+    default:
+      FullSize = 4;
+      break;
+    }
 
     // Grab current value, if any, from bits.
     uint64_t CurVal = 0;
-    for (unsigned i = 0; i != NumBytes; ++i)
-      CurVal |= ((uint8_t)Data[Offset + i]) << (i * 8);
 
+    for (unsigned i = 0; i != NumBytes; ++i) {
+      unsigned Idx = IsLittle ? i : (FullSize - 1 - i);
+      CurVal |= (uint64_t)((uint8_t)Data[Offset + Idx]) << (i*8);
+    }
+
+    uint64_t Mask = ((uint64_t)(-1) >> (64 - getFixupKindInfo(Kind).TargetSize));
     CurVal = (CurVal & ~Mask) | ((CurVal + Value) & Mask);
 
-    // Write out the bytes back to the code/data bits.
-    // First the unaffected bits and then the fixup.
+    // Write out the fixed up bytes back to the code/data bits.
     for (unsigned i = 0; i != NumBytes; ++i) {
-      Data[Offset + i] = uint8_t((CurVal >> (i * 8)) & 0xff);
+      unsigned Idx = IsLittle ? i : (FullSize - 1 - i);
+      Data[Offset + Idx] = (uint8_t)((CurVal >> (i*8)) & 0xff);
     }
-}
+  }
 
   unsigned getNumFixupKinds() const { return Mips::NumTargetFixupKinds; }
 
