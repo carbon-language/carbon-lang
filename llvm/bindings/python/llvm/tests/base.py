@@ -27,3 +27,4 @@ class TestBase(unittest.TestCase):
                     return path
 
         raise Exception('No suitable test binaries available!')
+    get_test_binary.__test__ = False
