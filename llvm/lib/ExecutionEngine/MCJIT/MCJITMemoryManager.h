@@ -41,6 +41,11 @@ public:
     return JMM->allocateCodeSection(Size, Alignment, SectionID);
   }
 
+  virtual void *getPointerToNamedFunction(const std::string &Name,
+                                          bool AbortOnFailure = true) {
+    return JMM->getPointerToNamedFunction(Name, AbortOnFailure);
+  }
+
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
   // memory was acutally allocated.

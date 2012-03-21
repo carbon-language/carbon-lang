@@ -61,6 +61,12 @@ public:
   uint8_t *startFunctionBody(const char *Name, uintptr_t &Size);
   void endFunctionBody(const char *Name, uint8_t *FunctionStart,
                        uint8_t *FunctionEnd);
+
+  virtual void *getPointerToNamedFunction(const std::string &Name,
+                                          bool AbortOnFailure = true) {
+    return 0;
+  }
+
 };
 
 uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
