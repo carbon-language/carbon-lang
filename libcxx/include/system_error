@@ -366,8 +366,8 @@ class _LIBCPP_VISIBLE error_category
 public:
     virtual ~error_category() _NOEXCEPT;
 
-private:
     error_category() _NOEXCEPT;
+private:
     error_category(const error_category&);// = delete;
     error_category& operator=(const error_category&);// = delete;
 
