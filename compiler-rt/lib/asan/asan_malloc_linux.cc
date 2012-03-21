@@ -115,7 +115,7 @@ INTERCEPTOR(int, mallopt, int cmd, int value) {
 
 INTERCEPTOR(int, posix_memalign, void **memptr, size_t alignment, size_t size) {
   GET_STACK_TRACE_HERE_FOR_MALLOC;
-  // Printf("posix_memalign: %lx %ld\n", alignment, size);
+  // Printf("posix_memalign: %zx %zu\n", alignment, size);
   return asan_posix_memalign(memptr, alignment, size, &stack);
 }
 

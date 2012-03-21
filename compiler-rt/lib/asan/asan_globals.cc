@@ -74,13 +74,13 @@ bool DescribeAddrIfMyRedZone(const Global &g, uintptr_t addr) {
   if (addr >= g.beg + g.size_with_redzone) return false;
   Printf("%p is located ", addr);
   if (addr < g.beg) {
-    Printf("%d bytes to the left", g.beg - addr);
+    Printf("%zd bytes to the left", g.beg - addr);
   } else if (addr >= g.beg + g.size) {
-    Printf("%d bytes to the right", addr - (g.beg + g.size));
+    Printf("%zd bytes to the right", addr - (g.beg + g.size));
   } else {
-    Printf("%d bytes inside", addr - g.beg);  // Can it happen?
+    Printf("%zd bytes inside", addr - g.beg);  // Can it happen?
   }
-  Printf(" of global variable '%s' (0x%lx) of size %ld\n",
+  Printf(" of global variable '%s' (0x%zx) of size %zu\n",
          g.name, g.beg, g.size);
   PrintIfASCII(g);
   return true;
@@ -94,7 +94,7 @@ bool DescribeAddrIfGlobal(uintptr_t addr) {
   for (ListOfGlobals *l = list_of_globals; l; l = l->next) {
     const Global &g = *l->g;
     if (FLAG_report_globals >= 2)
-      Printf("Search Global: beg=%p size=%ld name=%s\n",
+      Printf("Search Global: beg=%p size=%zu name=%s\n",
              g.beg, g.size, g.name);
     res |= DescribeAddrIfMyRedZone(g, addr);
   }
@@ -117,7 +117,7 @@ static void RegisterGlobal(const Global *g) {
   l->next = list_of_globals;
   list_of_globals = l;
   if (FLAG_report_globals >= 2)
-    Report("Added Global: beg=%p size=%ld name=%s\n",
+    Report("Added Global: beg=%p size=%zu name=%s\n",
            g->beg, g->size, g->name);
 }
 

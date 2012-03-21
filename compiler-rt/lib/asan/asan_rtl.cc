@@ -66,9 +66,9 @@ void ShowStatsAndAbort() {
 static void PrintBytes(const char *before, uintptr_t *a) {
   uint8_t *bytes = (uint8_t*)a;
   size_t byte_num = (__WORDSIZE) / 8;
-  Printf("%s%p:", before, (uintptr_t)a);
+  Printf("%s%p:", before, (void*)a);
   for (size_t i = 0; i < byte_num; i++) {
-    Printf(" %lx%lx", bytes[i] >> 4, bytes[i] & 15);
+    Printf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
   }
   Printf("\n");
 }
@@ -122,7 +122,7 @@ void AsanDie() {
 // ---------------------- mmap -------------------- {{{1
 void OutOfMemoryMessageAndDie(const char *mem_type, size_t size) {
   Report("ERROR: AddressSanitizer failed to allocate "
-         "0x%lx (%ld) bytes of %s\n",
+         "0x%zx (%zd) bytes of %s\n",
          size, size, mem_type);
   PRINT_CURRENT_STACK();
   ShowStatsAndAbort();
@@ -173,14 +173,14 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
   internal_strncat(buf, frame_descr,
                    Min(kBufSize,
                        static_cast<intptr_t>(name_end - frame_descr)));
-  Printf("Address %p is located at offset %ld "
+  Printf("Address %p is located at offset %zu "
          "in frame <%s> of T%d's stack:\n",
          addr, offset, buf, t->tid());
   // Report the number of stack objects.
   char *p;
   size_t n_objects = internal_simple_strtoll(name_end, &p, 10);
   CHECK(n_objects > 0);
-  Printf("  This frame has %ld object(s):\n", n_objects);
+  Printf("  This frame has %zu object(s):\n", n_objects);
   // Report all objects in this frame.
   for (size_t i = 0; i < n_objects; i++) {
     size_t beg, size;
@@ -197,7 +197,7 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
     buf[0] = 0;
     internal_strncat(buf, p, Min(kBufSize, len));
     p += len;
-    Printf("    [%ld, %ld) '%s'\n", beg, beg + size, buf);
+    Printf("    [%zu, %zu) '%s'\n", beg, beg + size, buf);
   }
   Printf("HINT: this may be a false positive if your program uses "
          "some custom stack unwind mechanism\n"
@@ -374,10 +374,10 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
   }
 
   Report("ERROR: AddressSanitizer %s on address "
-         "%p at pc 0x%lx bp 0x%lx sp 0x%lx\n",
+         "%p at pc 0x%zx bp 0x%zx sp 0x%zx\n",
          bug_descr, addr, pc, bp, sp);
 
-  Printf("%s of size %d at %p thread T%d\n",
+  Printf("%s of size %zu at %p thread T%d\n",
          access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
          access_size, addr, curr_tid);
 
@@ -486,12 +486,12 @@ void __asan_init() {
            MEM_TO_SHADOW(kLowShadowEnd),
            MEM_TO_SHADOW(kHighShadowBeg),
            MEM_TO_SHADOW(kHighShadowEnd));
-    Printf("red_zone=%ld\n", FLAG_redzone);
-    Printf("malloc_context_size=%ld\n", (int)FLAG_malloc_context_size);
+    Printf("red_zone=%zu\n", (size_t)FLAG_redzone);
+    Printf("malloc_context_size=%zu\n", (size_t)FLAG_malloc_context_size);
 
-    Printf("SHADOW_SCALE: %lx\n", SHADOW_SCALE);
-    Printf("SHADOW_GRANULARITY: %lx\n", SHADOW_GRANULARITY);
-    Printf("SHADOW_OFFSET: %lx\n", SHADOW_OFFSET);
+    Printf("SHADOW_SCALE: %zx\n", (size_t)SHADOW_SCALE);
+    Printf("SHADOW_GRANULARITY: %zx\n", (size_t)SHADOW_GRANULARITY);
+    Printf("SHADOW_OFFSET: %zx\n", (size_t)SHADOW_OFFSET);
     CHECK(SHADOW_SCALE >= 3 && SHADOW_SCALE <= 7);
   }
 

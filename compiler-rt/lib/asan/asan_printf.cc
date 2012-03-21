@@ -108,7 +108,7 @@ static inline int AppendPointer(char **buff, const char *buff_end,
 static int VSNPrintf(char *buff, int buff_length,
                      const char *format, va_list args) {
   static const char *kPrintfFormatsHelp = "Supported Printf formats: "
-                                          "%%[l]{d,u,x}; %%p; %%s";
+                                          "%%[z]{d,u,x}; %%p; %%s";
   RAW_CHECK(format);
   RAW_CHECK(buff_length > 0);
   const char *buff_end = &buff[buff_length - 1];
@@ -117,28 +117,28 @@ static int VSNPrintf(char *buff, int buff_length,
   for (; *cur; cur++) {
     if (*cur == '%') {
       cur++;
-      bool have_l = (*cur == 'l');
-      cur += have_l;
+      bool have_z = (*cur == 'z');
+      cur += have_z;
       int64_t dval;
-      uint64_t uval, xval;
+      uint64_t uval;
       switch (*cur) {
-        case 'd': dval = have_l ? va_arg(args, intptr_t)
+        case 'd': dval = have_z ? va_arg(args, intptr_t)
                                 : va_arg(args, int);
                   result += AppendSignedDecimal(&buff, buff_end, dval);
                   break;
-        case 'u': uval = have_l ? va_arg(args, uintptr_t)
-                                : va_arg(args, unsigned int);
+        case 'u': uval = have_z ? va_arg(args, size_t)
+                                : va_arg(args, unsigned);
                   result += AppendUnsigned(&buff, buff_end, uval, 10, 0);
                   break;
-        case 'x': xval = have_l ? va_arg(args, uintptr_t)
-                                : va_arg(args, unsigned int);
-                  result += AppendUnsigned(&buff, buff_end, xval, 16, 0);
+        case 'x': uval = have_z ? va_arg(args, size_t)
+                                : va_arg(args, unsigned);
+                  result += AppendUnsigned(&buff, buff_end, uval, 16, 0);
                   break;
-        case 'p': RAW_CHECK_MSG(!have_l, kPrintfFormatsHelp);
+        case 'p': RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
                   result += AppendPointer(&buff, buff_end,
                                           va_arg(args, uintptr_t));
                   break;
-        case 's': RAW_CHECK_MSG(!have_l, kPrintfFormatsHelp);
+        case 's': RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
                   result += AppendString(&buff, buff_end, va_arg(args, char*));
                   break;
         default:  RAW_CHECK_MSG(false, kPrintfFormatsHelp);

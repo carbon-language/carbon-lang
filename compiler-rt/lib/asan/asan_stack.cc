@@ -32,7 +32,7 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
     uintptr_t pc = addr[i];
     char buff[4096];
     ASAN_USE_EXTERNAL_SYMBOLIZER((void*)pc, buff, sizeof(buff));
-    Printf("  #%ld 0x%lx %s\n", i, pc, buff);
+    Printf("  #%zu 0x%zx %s\n", i, pc, buff);
   }
 }
 
@@ -46,9 +46,9 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
     char filename[4096];
     if (proc_maps.GetObjectNameAndOffset(pc, &offset,
                                          filename, sizeof(filename))) {
-      Printf("    #%ld 0x%lx (%s+0x%lx)\n", i, pc, filename, offset);
+      Printf("    #%zu 0x%zx (%s+0x%zx)\n", i, pc, filename, offset);
     } else {
-      Printf("    #%ld 0x%lx\n", i, pc);
+      Printf("    #%zu 0x%zx\n", i, pc);
     }
   }
 }
@@ -104,19 +104,19 @@ size_t AsanStackTrace::CompressStack(AsanStackTrace *stack,
     uintptr_t pc = stack->trace[i];
     if (!pc) break;
     if ((int64_t)pc < 0) break;
-    // Printf("C pc[%ld] %lx\n", i, pc);
+    // Printf("C pc[%zu] %zx\n", i, pc);
     if (prev_pc - pc < kMaxOffset || pc - prev_pc < kMaxOffset) {
       uintptr_t offset = (int64_t)(pc - prev_pc);
       offset |= (1U << 31);
       if (c_index >= size) break;
-      // Printf("C co[%ld] offset %lx\n", i, offset);
+      // Printf("C co[%zu] offset %zx\n", i, offset);
       compressed[c_index++] = offset;
     } else {
       uintptr_t hi = pc >> 32;
       uintptr_t lo = (pc << 32) >> 32;
       CHECK((hi & (1 << 31)) == 0);
       if (c_index + 1 >= size) break;
-      // Printf("C co[%ld] hi/lo: %lx %lx\n", c_index, hi, lo);
+      // Printf("C co[%zu] hi/lo: %zx %zx\n", c_index, hi, lo);
       compressed[c_index++] = hi;
       compressed[c_index++] = lo;
     }
@@ -134,7 +134,7 @@ size_t AsanStackTrace::CompressStack(AsanStackTrace *stack,
   AsanStackTrace check_stack;
   UncompressStack(&check_stack, compressed, size);
   if (res < check_stack.size) {
-    Printf("res %ld check_stack.size %ld; c_size %ld\n", res,
+    Printf("res %zu check_stack.size %zu; c_size %zu\n", res,
            check_stack.size, size);
   }
   // |res| may be greater than check_stack.size, because
@@ -164,7 +164,7 @@ void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
     uint32_t x = compressed[i];
     uintptr_t pc = 0;
     if (x & (1U << 31)) {
-      // Printf("U co[%ld] offset: %x\n", i, x);
+      // Printf("U co[%zu] offset: %x\n", i, x);
       // this is an offset
       int32_t offset = x;
       offset = (offset << 1) >> 1;  // remove the 31-byte and sign-extend.
@@ -175,12 +175,12 @@ void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
       if (i + 1 >= size) break;
       uintptr_t hi = x;
       uintptr_t lo = compressed[i+1];
-      // Printf("U co[%ld] hi/lo: %lx %lx\n", i, hi, lo);
+      // Printf("U co[%zu] hi/lo: %zx %zx\n", i, hi, lo);
       i++;
       pc = (hi << 32) | lo;
       if (!pc) break;
     }
-    // Printf("U pc[%ld] %lx\n", stack->size, pc);
+    // Printf("U pc[%zu] %zx\n", stack->size, pc);
     stack->trace[stack->size++] = pc;
     prev_pc = pc;
   }

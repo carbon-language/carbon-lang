@@ -219,15 +219,15 @@ struct AsanChunk: public ChunkBase {
     size_t offset;
     Printf("%p is located ", addr);
     if (AddrIsInside(addr, access_size, &offset)) {
-      Printf("%ld bytes inside of", offset);
+      Printf("%zu bytes inside of", offset);
     } else if (AddrIsAtLeft(addr, access_size, &offset)) {
-      Printf("%ld bytes to the left of", offset);
+      Printf("%zu bytes to the left of", offset);
     } else if (AddrIsAtRight(addr, access_size, &offset)) {
-      Printf("%ld bytes to the right of", offset);
+      Printf("%zu bytes to the right of", offset);
     } else {
       Printf(" somewhere around (this is AddressSanitizer bug!)");
     }
-    Printf(" %lu-byte region [%p,%p)\n",
+    Printf(" %zu-byte region [%p,%p)\n",
            used_size, beg(), beg() + used_size);
   }
 };
@@ -389,7 +389,7 @@ class MallocInfo {
     ScopedLock lock(&mu_);
     size_t malloced = 0;
 
-    Printf(" MallocInfo: in quarantine: %ld malloced: %ld; ",
+    Printf(" MallocInfo: in quarantine: %zu malloced: %zu; ",
            quarantine_.size() >> 20, malloced >> 20);
     for (size_t j = 1; j < kNumberOfSizeClasses; j++) {
       AsanChunk *i = free_lists_[j];
@@ -398,7 +398,7 @@ class MallocInfo {
       for (; i; i = i->next) {
         t += i->Size();
       }
-      Printf("%ld:%ld ", j, t >> 20);
+      Printf("%zu:%zu ", j, t >> 20);
     }
     Printf("\n");
   }
@@ -632,7 +632,7 @@ static uint8_t *Allocate(size_t alignment, size_t size, AsanStackTrace *stack) {
   CHECK(IsAligned(size_to_allocate, REDZONE));
 
   if (FLAG_v >= 2) {
-    Printf("Allocate align: %ld size: %ld class: %d real: %ld\n",
+    Printf("Allocate align: %zu size: %zu class: %u real: %zu\n",
          alignment, size, size_class, size_to_allocate);
   }
 
@@ -912,7 +912,7 @@ inline size_t FakeStack::ComputeSizeClass(size_t alloc_size) {
   size_t log = Log2(rounded_size);
   CHECK(alloc_size <= (1UL << log));
   if (!(alloc_size > (1UL << (log-1)))) {
-    Printf("alloc_size %ld log %ld\n", alloc_size, log);
+    Printf("alloc_size %zu log %zu\n", alloc_size, log);
   }
   CHECK(alloc_size > (1UL << (log-1)));
   size_t res = log < kMinStackFrameSizeLog ? 0 : log - kMinStackFrameSizeLog;
@@ -972,7 +972,7 @@ void FakeStack::AllocateOneSizeClass(size_t size_class) {
   CHECK(ClassMmapSize(size_class) >= kPageSize);
   uintptr_t new_mem = (uintptr_t)AsanMmapSomewhereOrDie(
       ClassMmapSize(size_class), __FUNCTION__);
-  // Printf("T%d new_mem[%ld]: %p-%p mmap %ld\n",
+  // Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",
   //       asanThreadRegistry().GetCurrent()->tid(),
   //       size_class, new_mem, new_mem + ClassMmapSize(size_class),
   //       ClassMmapSize(size_class));
@@ -1039,7 +1039,7 @@ size_t __asan_stack_malloc(size_t size, size_t real_stack) {
     return real_stack;
   }
   size_t ptr = t->fake_stack().AllocateStack(size, real_stack);
-  // Printf("__asan_stack_malloc %p %ld %p\n", ptr, size, real_stack);
+  // Printf("__asan_stack_malloc %p %zu %p\n", ptr, size, real_stack);
   return ptr;
 }
 
