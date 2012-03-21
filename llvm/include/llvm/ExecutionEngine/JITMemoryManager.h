@@ -47,6 +47,17 @@ public:
   /// debugging, and may be turned on by default in debug mode.
   virtual void setPoisonMemory(bool poison) = 0;
 
+  /// getPointerToNamedFunction - This method returns the address of the
+  /// specified function by using the dlsym function call.  As such it is only
+  /// useful for resolving library symbols, not code generated symbols.
+  ///
+  /// If AbortOnFailure is false and no function with the given name is
+  /// found, this function silently returns a null pointer. Otherwise,
+  /// it prints a message to stderr and aborts.
+  ///
+  virtual void *getPointerToNamedFunction(const std::string &Name,
+                                          bool AbortOnFailure = true) = 0;
+
   //===--------------------------------------------------------------------===//
   // Global Offset Table Management
   //===--------------------------------------------------------------------===//
