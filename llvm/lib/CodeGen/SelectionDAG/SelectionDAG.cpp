@@ -124,20 +124,29 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   if (i == e) return false;
 
   // Do not accept build_vectors that aren't all constants or which have non-~0
-  // elements.
+  // elements. We have to be a bit careful here, as the type of the constant
+  // may not be the same as the type of the vector elements due to type
+  // legalization (the elements are promoted to a legal type for the target and
+  // a vector of a type may be legal when the base element type is not).
+  // We only want to check enough bits to cover the vector elements, because
+  // we care if the resultant vector is all ones, not whether the individual
+  // constants are.
   SDValue NotZero = N->getOperand(i);
+  unsigned EltSize = N->getValueType(0).getVectorElementType().getSizeInBits();
   if (isa<ConstantSDNode>(NotZero)) {
-    if (!cast<ConstantSDNode>(NotZero)->isAllOnesValue())
+    if (cast<ConstantSDNode>(NotZero)->getAPIntValue().countTrailingOnes() <
+        EltSize)
       return false;
   } else if (isa<ConstantFPSDNode>(NotZero)) {
-    if (!cast<ConstantFPSDNode>(NotZero)->getValueAPF().
-                bitcastToAPInt().isAllOnesValue())
+    if (cast<ConstantFPSDNode>(NotZero)->getValueAPF()
+              .bitcastToAPInt().countTrailingOnes() < EltSize)
       return false;
   } else
     return false;
 
   // Okay, we have at least one ~0 value, check to see if the rest match or are
-  // undefs.
+  // undefs. Even with the above element type twiddling, this should be OK, as
+  // the same type legalization should have applied to all the elements.
   for (++i; i != e; ++i)
     if (N->getOperand(i) != NotZero &&
         N->getOperand(i).getOpcode() != ISD::UNDEF)
