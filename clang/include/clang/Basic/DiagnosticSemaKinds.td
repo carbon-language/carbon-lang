@@ -5159,7 +5159,7 @@ def ext_return_has_expr : ExtWarn<
   "should not return a value">,
   DefaultError, InGroup<ReturnType>;
 def ext_return_has_void_expr : Extension<
-  "void %select{function|method}1 %0 should not return void expression">;
+  "void %select{function|method|block}1 %0 should not return void expression">;
 def err_return_init_list : Error<
   "%select{void function|void method|constructor|destructor}1 %0 "
   "must not return a value">;

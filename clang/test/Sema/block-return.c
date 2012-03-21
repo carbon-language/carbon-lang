@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s -verify -fblocks
+// RUN: %clang_cc1 -pedantic -fsyntax-only %s -verify -fblocks
 
 typedef void (^CL)(void);
 
@@ -130,4 +130,7 @@ void foo7()
   int (^NN) (void)  = ^{ return cint; };
 }
 
-
+// rdar://11069896
+void (^blk)(void) = ^{
+    return (void)0; // expected-warning {{void block  should not return void expression}}
+};
