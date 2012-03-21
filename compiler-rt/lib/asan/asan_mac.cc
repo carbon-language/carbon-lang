@@ -23,6 +23,7 @@
 #include "asan_thread_registry.h"
 
 #include <crt_externs.h>  // for _NSGetEnviron
+#include <dispatch/dispatch.h>
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <sys/mman.h>
@@ -429,11 +430,6 @@ mach_error_t __interception_deallocate_island(void *ptr) {
 
 typedef void* pthread_workqueue_t;
 typedef void* pthread_workitem_handle_t;
-
-typedef void* dispatch_group_t;
-typedef void* dispatch_queue_t;
-typedef uint64_t dispatch_time_t;
-typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
 
 // A wrapper for the ObjC blocks used to support libdispatch.
@@ -444,16 +440,10 @@ typedef struct {
 } asan_block_context_t;
 
 extern "C" {
-void dispatch_async_f(dispatch_queue_t dq, void *ctxt,
-                      dispatch_function_t func);
-void dispatch_sync_f(dispatch_queue_t dq, void *ctxt,
-                     dispatch_function_t func);
-void dispatch_after_f(dispatch_time_t when, dispatch_queue_t dq, void *ctxt,
-                      dispatch_function_t func);
+// dispatch_barrier_async_f() is not declared in <dispatch/dispatch.h>.
 void dispatch_barrier_async_f(dispatch_queue_t dq, void *ctxt,
                               dispatch_function_t func);
-void dispatch_group_async_f(dispatch_group_t group, dispatch_queue_t dq,
-                            void *ctxt, dispatch_function_t func);
+// Neither is pthread_workqueue_additem_np().
 int pthread_workqueue_additem_np(pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
