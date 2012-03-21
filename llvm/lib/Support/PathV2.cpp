@@ -654,12 +654,13 @@ error_code create_directories(const Twine &path, bool &existed) {
   StringRef p = path.toStringRef(path_storage);
 
   StringRef parent = path::parent_path(p);
-  bool parent_exists;
+  if (!parent.empty()) {
+    bool parent_exists;
+    if (error_code ec = fs::exists(parent, parent_exists)) return ec;
 
-  if (error_code ec = fs::exists(parent, parent_exists)) return ec;
-
-  if (!parent_exists)
-    if (error_code ec = create_directories(parent, existed)) return ec;
+    if (!parent_exists)
+      if (error_code ec = create_directories(parent, existed)) return ec;
+  }
 
   return create_directory(p, existed);
 }
