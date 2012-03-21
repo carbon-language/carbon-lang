@@ -1949,7 +1949,9 @@ TEST(AddressSanitizerMac, CFStringCreateCopy) {
 // See http://llvm.org/bugs/show_bug.cgi?id=12047 for more details.
 TEST(AddressSanitizer, LongDoubleNegativeTest) {
   long double a, b;
+  static long double c;
   memcpy(Ident(&a), Ident(&b), sizeof(long double));
+  memcpy(Ident(&c), Ident(&b), sizeof(long double));
 };
 
 int main(int argc, char **argv) {
