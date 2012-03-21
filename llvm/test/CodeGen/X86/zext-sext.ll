@@ -1,4 +1,5 @@
 ; XFAIL: *
+; ...should pass. See PR12324: misched bringup
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 ; <rdar://problem/8006248>
 
