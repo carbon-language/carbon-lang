@@ -705,9 +705,7 @@ void InitializeAsanInterceptors() {
 
   // Some Mac-specific interceptors.
 #if defined(__APPLE__)
-  InitializeMacGCDInterceptors();
-  // http://code.google.com/p/address-sanitizer/issues/detail?id=10
-  PatchCFStringCreateCopy();
+  InitializeMacInterceptors();
 #endif
 
   if (FLAG_v > 0) {

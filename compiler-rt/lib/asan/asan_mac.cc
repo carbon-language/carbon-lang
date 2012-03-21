@@ -643,7 +643,8 @@ INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
 }
 
 namespace __asan {
-void InitializeMacGCDInterceptors() {
+
+void InitializeMacInterceptors() {
   CHECK(INTERCEPT_FUNCTION(dispatch_async_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_sync_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
@@ -655,8 +656,6 @@ void InitializeMacGCDInterceptors() {
   if (FLAG_v >= 2) {
     CHECK(INTERCEPT_FUNCTION(pthread_workqueue_additem_np));
   }
-}
-void PatchCFStringCreateCopy() {
   // Normally CFStringCreateCopy should not copy constant CF strings.
   // Replacing the default CFAllocator causes constant strings to be copied
   // rather than just returned, which leads to bugs in big applications like
@@ -666,6 +665,7 @@ void PatchCFStringCreateCopy() {
   // non-constant before calling CFStringCreateCopy.
   CHECK(INTERCEPT_FUNCTION(CFStringCreateCopy));
 }
+
 }  // namespace __asan
 
 #endif  // __APPLE__
