@@ -99,7 +99,7 @@ public:
     // Used to point to big endian bytes
     unsigned FullSize;
 
-    switch (Kind) {
+    switch ((unsigned)Kind) {
     case Mips::fixup_Mips_16:
       FullSize = 2;
       break;
