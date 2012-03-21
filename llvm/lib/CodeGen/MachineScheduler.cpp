@@ -306,6 +306,7 @@ public:
 
 protected:
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
+  bool checkSchedLimit();
 
   void releaseSucc(SUnit *SU, SDep *SuccEdge);
   void releaseSuccessors(SUnit *SU);
@@ -374,6 +375,17 @@ void ScheduleDAGMI::moveInstruction(MachineInstr *MI,
     RegionBegin = MI;
 }
 
+bool ScheduleDAGMI::checkSchedLimit() {
+#ifndef NDEBUG
+  if (NumInstrsScheduled == MISchedCutoff && MISchedCutoff != ~0U) {
+    CurrentTop = CurrentBottom;
+    return false;
+  }
+  ++NumInstrsScheduled;
+#endif
+  return true;
+}
+
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
 /// after setting up the current scheduling region.
 void ScheduleDAGMI::schedule() {
@@ -406,18 +418,10 @@ void ScheduleDAGMI::schedule() {
   CurrentBottom = RegionEnd;
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
-
-#ifndef NDEBUG
-    // Enable break
-    if (NumInstrsScheduled == MISchedCutoff && MISchedCutoff != ~0U) {
-      CurrentTop = CurrentBottom;
-      break;
-    }
-    ++NumInstrsScheduled;
-#endif
-
     DEBUG(dbgs() << "*** " << (IsTopNode ? "Top" : "Bottom")
           << " Scheduling Instruction:\n"; SU->dump(this));
+    if (!checkSchedLimit())
+      break;
 
     // Move the instruction to its new location in the instruction stream.
     MachineInstr *MI = SU->getInstr();
