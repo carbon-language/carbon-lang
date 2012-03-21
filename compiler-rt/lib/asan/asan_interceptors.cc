@@ -28,13 +28,18 @@
 // FIXME(samsonov): Gradually replace system headers with declarations of
 // intercepted functions.
 #include <pthread.h>
-#include <signal.h>
 #include <string.h>
 #include <strings.h>
 #endif  // __APPLE__
 
 #if defined(__APPLE__)
 extern "C" {
+// signal.h
+struct sigaction;
+int sigaction(int sig, const struct sigaction *act,
+              struct sigaction *oldact);
+void *signal(int signum, void *handler);
+// setjmp.h
 void longjmp(void* env, int val);
 void _longjmp(void *env, int val);
 }  // extern "C"
