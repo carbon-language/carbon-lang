@@ -24,12 +24,6 @@
 
 #include <new>
 
-#if defined(__APPLE__)
-// FIXME(samsonov): Gradually replace system headers with declarations of
-// intercepted functions.
-#include <pthread.h>
-#endif  // __APPLE__
-
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
 #if defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
@@ -79,6 +73,12 @@ size_t strnlen(const char *s, size_t maxlen);
 __declspec(dllimport)
 void* __stdcall CreateThread(void *sec, size_t st, void* start,
                              void *arg, DWORD fl, DWORD *id);
+# endif
+
+// Posix threads.
+# if !defined(_WIN32)
+int pthread_create(void *thread, void *attr, void *(*start_routine)(void*),
+                   void *arg);
 # endif
 }  // extern "C"
 #endif
