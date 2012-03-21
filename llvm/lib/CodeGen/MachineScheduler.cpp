@@ -369,8 +369,12 @@ void ScheduleDAGMI::releasePredecessors(SUnit *SU) {
 
 void ScheduleDAGMI::moveInstruction(MachineInstr *MI,
                                     MachineBasicBlock::iterator InsertPos) {
+  // Fix RegionBegin if the first instruction moves down.
+  if (&*RegionBegin == MI)
+    RegionBegin = llvm::next(RegionBegin);
   BB->splice(InsertPos, BB, MI);
   LIS->handleMove(MI);
+  // Fix RegionBegin if another instruction moves above the first instruction.
   if (RegionBegin == InsertPos)
     RegionBegin = MI;
 }
@@ -440,6 +444,8 @@ void ScheduleDAGMI::schedule() {
       if (&*llvm::prior(CurrentBottom) == MI)
         --CurrentBottom;
       else {
+        if (&*CurrentTop == MI)
+          CurrentTop = llvm::next(CurrentTop);
         moveInstruction(MI, CurrentBottom);
         CurrentBottom = MI;
       }
