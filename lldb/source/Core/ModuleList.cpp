@@ -711,14 +711,17 @@ ModuleList::GetSharedModule
         // Make sure no one else can try and get or create a module while this
         // function is actively working on it by doing an extra lock on the
         // global mutex list.
+        ModuleSpec platform_module_spec(module_spec);
+        platform_module_spec.GetFileSpec() = file_spec;
+        platform_module_spec.GetPlatformFileSpec() = file_spec;
         ModuleList matching_module_list;
-        if (shared_module_list.FindModules (module_spec, matching_module_list) > 0)
+        if (shared_module_list.FindModules (platform_module_spec, matching_module_list) > 0)
         {
             module_sp = matching_module_list.GetModuleAtIndex(0);
 
             // If we didn't have a UUID in mind when looking for the object file,
             // then we should make sure the modification time hasn't changed!
-            if (module_spec.GetUUIDPtr() == NULL)
+            if (platform_module_spec.GetUUIDPtr() == NULL)
             {
                 TimeValue file_spec_mod_time(file_spec.GetModificationTime());
                 if (file_spec_mod_time.IsValid())
@@ -736,7 +739,7 @@ ModuleList::GetSharedModule
 
         if (module_sp.get() == NULL)
         {
-            module_sp.reset (new Module (module_spec));
+            module_sp.reset (new Module (platform_module_spec));
             // Make sure there are a module and an object file since we can specify
             // a valid file path with an architecture that might not be in that file.
             // By getting the object file we can guarantee that the architecture matches

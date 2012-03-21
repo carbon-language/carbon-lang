@@ -155,6 +155,21 @@ DynamicLoaderDarwinKernel::Clear (bool clear_process)
 
 
 bool
+DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageAtFileAddress (Process *process)
+{
+    if (IsLoaded())
+        return true;
+
+    if (module_sp)
+    {
+        bool changed = false;
+        if (module_sp->SetLoadAddress (process->GetTarget(), 0, changed))
+            load_process_stop_id = process->GetStopID();
+    }
+    return false;
+}
+
+bool
 DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (Process *process)
 {
     if (IsLoaded())
@@ -191,7 +206,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
             
             if (!module_sp)
             {
-                ModuleSpec module_spec (FileSpec(), target.GetArchitecture());
+                ModuleSpec module_spec;
                 module_spec.GetUUID() = uuid;
                 module_sp = target.GetSharedModule (module_spec);
             }
@@ -307,7 +322,12 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
         }
         
         if (m_kernel.address != LLDB_INVALID_ADDRESS)
-            m_kernel.LoadImageUsingMemoryModule (m_process);
+        {
+            if (!m_kernel.LoadImageUsingMemoryModule (m_process))
+            {
+                m_kernel.LoadImageAtFileAddress (m_process);
+            }
+        }
 
         if (m_kernel.IsLoaded())
         {
@@ -446,7 +466,8 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
             }
         }
         
-        kext_summaries[i].LoadImageUsingMemoryModule (m_process);
+        if (!kext_summaries[i].LoadImageUsingMemoryModule (m_process))
+            kext_summaries[i].LoadImageAtFileAddress (m_process);
 
         if (s)
         {
@@ -491,26 +512,6 @@ DynamicLoaderDarwinKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
     
     if (loaded_module_list.GetSize() > 0)
     {
-        // FIXME: This should really be in the Runtime handlers class, which should get
-        // called by the target's ModulesDidLoad, but we're doing it all locally for now 
-        // to save time.
-        // Also, I'm assuming there can be only one libobjc dylib loaded...
-        
-        ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime();
-        if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
-        {
-            size_t num_modules = loaded_module_list.GetSize();
-            for (int i = 0; i < num_modules; i++)
-            {
-                if (objc_runtime->IsModuleObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
-                {
-                    objc_runtime->ReadObjCLibrary (loaded_module_list.GetModuleAtIndex (i));
-                    break;
-                }
-            }
-        }
-//        if (log)
-//            loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderDarwinKernel::ModulesDidLoad");
         m_process->GetTarget().ModulesDidLoad (loaded_module_list);
     }
     return true;
