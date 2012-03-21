@@ -720,14 +720,8 @@ void InitializeAsanInterceptors() {
   CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
 
-  // Normally CFStringCreateCopy should not copy constant CF strings.
-  // Replacing the default CFAllocator causes constant strings to be copied
-  // rather than just returned, which leads to bugs in big applications like
-  // Chromium and WebKit, see
   // http://code.google.com/p/address-sanitizer/issues/detail?id=10
-  // Until this problem is fixed we need to check that the string is
-  // non-constant before calling CFStringCreateCopy.
-  CHECK(INTERCEPT_FUNCTION(CFStringCreateCopy));
+  PatchCFStringCreateCopy();
 #endif
 
   if (FLAG_v > 0) {

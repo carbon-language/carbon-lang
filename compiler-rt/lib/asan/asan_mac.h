@@ -18,8 +18,6 @@
 
 #include "asan_interceptors.h"
 
-#include <CoreFoundation/CFString.h>
-
 typedef void* pthread_workqueue_t;
 typedef void* pthread_workitem_handle_t;
 
@@ -28,6 +26,10 @@ typedef void* dispatch_queue_t;
 typedef uint64_t dispatch_time_t;
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
+
+namespace __asan {
+void PatchCFStringCreateCopy();
+}  // namespace __asan
 
 DECLARE_REAL_AND_INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq,
                                                      void *ctxt,
@@ -54,9 +56,6 @@ DECLARE_REAL_AND_INTERCEPTOR(int, pthread_workqueue_additem_np,
                                   void * workitem_arg,
                                   pthread_workitem_handle_t * itemhandlep,
                                   unsigned int *gencountp);
-DECLARE_REAL_AND_INTERCEPTOR(CFStringRef, CFStringCreateCopy,
-                                          CFAllocatorRef alloc,
-                                          CFStringRef str);
 
 // A wrapper for the ObjC blocks used to support libdispatch.
 typedef struct {

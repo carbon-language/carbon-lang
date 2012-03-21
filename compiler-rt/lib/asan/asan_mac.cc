@@ -16,6 +16,7 @@
 
 #include "asan_mac.h"
 
+#include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
 #include "asan_procmaps.h"
@@ -34,6 +35,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <libkern/OSAtomic.h>
+#include <CoreFoundation/CFString.h>
 
 namespace __asan {
 
@@ -609,5 +611,18 @@ INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
     return REAL(CFStringCreateCopy)(alloc, str);
   }
 }
+
+namespace __asan {
+void PatchCFStringCreateCopy() {
+  // Normally CFStringCreateCopy should not copy constant CF strings.
+  // Replacing the default CFAllocator causes constant strings to be copied
+  // rather than just returned, which leads to bugs in big applications like
+  // Chromium and WebKit, see
+  // http://code.google.com/p/address-sanitizer/issues/detail?id=10
+  // Until this problem is fixed we need to check that the string is
+  // non-constant before calling CFStringCreateCopy.
+  CHECK(INTERCEPT_FUNCTION(CFStringCreateCopy));
+}
+}  // namespace __asan
 
 #endif  // __APPLE__
