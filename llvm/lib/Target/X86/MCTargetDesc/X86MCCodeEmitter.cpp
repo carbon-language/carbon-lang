@@ -46,6 +46,11 @@ public:
     return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
   }
 
+  bool is32BitMode() const {
+    // FIXME: Can tablegen auto-generate this?
+    return (STI.getFeatureBits() & X86::Mode64Bit) == 0;
+  }
+
   static unsigned GetX86RegNum(const MCOperand &MO) {
     return X86_MC::getX86RegNum(MO.getReg());
   }
@@ -154,9 +159,8 @@ static MCFixupKind getImmFixupKind(uint64_t TSFlags) {
   return MCFixup::getKindForSize(Size, isPCRel);
 }
 
-/// Is32BitMemOperand - Return true if the specified instruction with a memory
-/// operand should emit the 0x67 prefix byte in 64-bit mode due to a 32-bit
-/// memory operand.  Op specifies the operand # of the memoperand.
+/// Is32BitMemOperand - Return true if the specified instruction has
+/// a 32-bit memory operand. Op specifies the operand # of the memoperand.
 static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
   const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
   const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
@@ -165,6 +169,34 @@ static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
        X86MCRegisterClasses[X86::GR32RegClassID].contains(BaseReg.getReg())) ||
       (IndexReg.getReg() != 0 &&
        X86MCRegisterClasses[X86::GR32RegClassID].contains(IndexReg.getReg())))
+    return true;
+  return false;
+}
+
+/// Is64BitMemOperand - Return true if the specified instruction has
+/// a 64-bit memory operand. Op specifies the operand # of the memoperand.
+static bool Is64BitMemOperand(const MCInst &MI, unsigned Op) {
+  const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
+  const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
+
+  if ((BaseReg.getReg() != 0 &&
+       X86MCRegisterClasses[X86::GR64RegClassID].contains(BaseReg.getReg())) ||
+      (IndexReg.getReg() != 0 &&
+       X86MCRegisterClasses[X86::GR64RegClassID].contains(IndexReg.getReg())))
+    return true;
+  return false;
+}
+
+/// Is16BitMemOperand - Return true if the specified instruction has
+/// a 16-bit memory operand. Op specifies the operand # of the memoperand.
+static bool Is16BitMemOperand(const MCInst &MI, unsigned Op) {
+  const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
+  const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
+
+  if ((BaseReg.getReg() != 0 &&
+       X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg.getReg())) ||
+      (IndexReg.getReg() != 0 &&
+       X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg.getReg())))
     return true;
   return false;
 }
@@ -817,8 +849,22 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     EmitByte(0xF3, CurByte, OS);
 
   // Emit the address size opcode prefix as needed.
-  if ((TSFlags & X86II::AdSize) ||
-      (MemOperand != -1 && is64BitMode() && Is32BitMemOperand(MI, MemOperand)))
+  bool need_address_override;
+  if (TSFlags & X86II::AdSize) {
+    need_address_override = true;
+  } else if (MemOperand == -1) {
+    need_address_override = false;
+  } else if (is64BitMode()) {
+    assert(!Is16BitMemOperand(MI, MemOperand));
+    need_address_override = Is32BitMemOperand(MI, MemOperand);
+  } else if (is32BitMode()) {
+    assert(!Is64BitMemOperand(MI, MemOperand));
+    need_address_override = Is16BitMemOperand(MI, MemOperand);
+  } else {
+    need_address_override = false;
+  }
+
+  if (need_address_override)
     EmitByte(0x67, CurByte, OS);
 
   // Emit the operand size opcode prefix as needed.
