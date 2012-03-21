@@ -501,7 +501,7 @@ public:
   /// EnterBlockInfoBlock - Start emitting the BLOCKINFO_BLOCK.
   void EnterBlockInfoBlock(unsigned CodeWidth) {
     EnterSubblock(bitc::BLOCKINFO_BLOCK_ID, CodeWidth);
-    BlockInfoCurBID = -1U;
+    BlockInfoCurBID = ~0U;
   }
 private:
   /// SwitchToBlockID - If we aren't already talking about the specified block
