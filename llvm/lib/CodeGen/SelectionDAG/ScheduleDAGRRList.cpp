@@ -1587,6 +1587,7 @@ protected:
   std::vector<SUnit*> Queue;
   unsigned CurQueueId;
   bool TracksRegPressure;
+  bool SrcOrder;
 
   // SUnits - The SUnits for the current graph.
   std::vector<SUnit> *SUnits;
@@ -1612,11 +1613,12 @@ public:
   RegReductionPQBase(MachineFunction &mf,
                      bool hasReadyFilter,
                      bool tracksrp,
+                     bool srcorder,
                      const TargetInstrInfo *tii,
                      const TargetRegisterInfo *tri,
                      const TargetLowering *tli)
     : SchedulingPriorityQueue(hasReadyFilter),
-      CurQueueId(0), TracksRegPressure(tracksrp),
+      CurQueueId(0), TracksRegPressure(tracksrp), SrcOrder(srcorder),
       MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(NULL) {
     if (TracksRegPressure) {
       unsigned NumRC = TRI->getNumRegClasses();
@@ -1731,10 +1733,12 @@ class RegReductionPriorityQueue : public RegReductionPQBase {
 public:
   RegReductionPriorityQueue(MachineFunction &mf,
                             bool tracksrp,
+                            bool srcorder,
                             const TargetInstrInfo *tii,
                             const TargetRegisterInfo *tri,
                             const TargetLowering *tli)
-    : RegReductionPQBase(mf, SF::HasReadyFilter, tracksrp, tii, tri, tli),
+    : RegReductionPQBase(mf, SF::HasReadyFilter, tracksrp, srcorder,
+                         tii, tri, tli),
       Picker(this) {}
 
   bool isBottomUp() const { return SF::IsBottomUp; }
@@ -2625,7 +2629,7 @@ void RegReductionPQBase::initNodes(std::vector<SUnit> &sunits) {
   if (!Disable2AddrHack)
     AddPseudoTwoAddrDeps();
   // Reroute edges to nodes with multiple uses.
-  if (!TracksRegPressure)
+  if (!TracksRegPressure && !SrcOrder)
     PrescheduleNodesWithMultipleUses();
   // Calculate node priorities.
   CalculateSethiUllmanNumbers();
@@ -2948,7 +2952,7 @@ llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
   BURegReductionPriorityQueue *PQ =
-    new BURegReductionPriorityQueue(*IS->MF, false, TII, TRI, 0);
+    new BURegReductionPriorityQueue(*IS->MF, false, false, TII, TRI, 0);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
   return SD;
@@ -2962,7 +2966,7 @@ llvm::createSourceListDAGScheduler(SelectionDAGISel *IS,
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
   SrcRegReductionPriorityQueue *PQ =
-    new SrcRegReductionPriorityQueue(*IS->MF, false, TII, TRI, 0);
+    new SrcRegReductionPriorityQueue(*IS->MF, false, true, TII, TRI, 0);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
   return SD;
@@ -2977,7 +2981,7 @@ llvm::createHybridListDAGScheduler(SelectionDAGISel *IS,
   const TargetLowering *TLI = &IS->getTargetLowering();
 
   HybridBURRPriorityQueue *PQ =
-    new HybridBURRPriorityQueue(*IS->MF, true, TII, TRI, TLI);
+    new HybridBURRPriorityQueue(*IS->MF, true, false, TII, TRI, TLI);
 
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
@@ -2993,7 +2997,7 @@ llvm::createILPListDAGScheduler(SelectionDAGISel *IS,
   const TargetLowering *TLI = &IS->getTargetLowering();
 
   ILPBURRPriorityQueue *PQ =
-    new ILPBURRPriorityQueue(*IS->MF, true, TII, TRI, TLI);
+    new ILPBURRPriorityQueue(*IS->MF, true, false, TII, TRI, TLI);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
   return SD;
