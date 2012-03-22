@@ -237,7 +237,6 @@ void TypeMapTy::linkDefinedTypeBodies() {
   DstResolvedOpaqueTypes.clear();
 }
 
-
 /// get - Return the mapped type to use for the specified input type from the
 /// source module.
 Type *TypeMapTy::get(Type *Ty) {
@@ -340,8 +339,6 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   DstResolvedOpaqueTypes.insert(DTy);
   return *Entry = DTy;
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // ModuleLinker implementation.
@@ -597,8 +594,6 @@ void ModuleLinker::computeTypeMapping() {
   // At this point, the destination module may have a type "%foo = { i32 }" for
   // example.  When the source module got loaded into the same LLVMContext, if
   // it had the same type, it would have been renamed to "%foo.42 = { i32 }".
-  // Though it isn't required for correctness, attempt to link these up to clean
-  // up the IR.
   std::vector<StructType*> SrcStructTypes;
   SrcM->findUsedStructTypes(SrcStructTypes);
   
