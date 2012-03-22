@@ -554,7 +554,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // clear can be encoded.  This is extremely uncommon, because normally you
   // only "std" to a stack slot that is at least 4-byte aligned, but it can
   // happen in invalid code.
-  if (isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0)) {
+  if (OpC == PPC::DBG_VALUE || // DBG_VALUE is always Reg+Imm
+      (isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0))) {
     if (isIXAddr)
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
     MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
