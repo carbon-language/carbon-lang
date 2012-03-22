@@ -736,7 +736,7 @@ def postidx_reg : Operand<i32> {
   let DecoderMethod = "DecodePostIdxReg";
   let PrintMethod = "printPostIdxRegOperand";
   let ParserMatchClass = PostIdxRegAsmOperand;
-  let MIOperandInfo = (ops GPR, i32imm);
+  let MIOperandInfo = (ops GPRnopc, i32imm);
 }
 
 
@@ -2484,7 +2484,7 @@ multiclass AI3ldrT<bits<4> op, string opc> {
     let Inst{3-0} = offset{3-0};
     let AsmMatchConverter = "cvtLdExtTWriteBackImm";
   }
-  def r : AI3ldstidxT<op, 1, (outs GPR:$Rt, GPR:$base_wb),
+  def r : AI3ldstidxT<op, 1, (outs GPRnopc:$Rt, GPRnopc:$base_wb),
                       (ins addr_offset_none:$addr, postidx_reg:$Rm),
                       IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru, opc,
                       "\t$Rt, $addr, $Rm", "$addr.base = $base_wb", []> {
@@ -2492,8 +2492,10 @@ multiclass AI3ldrT<bits<4> op, string opc> {
     let Inst{23} = Rm{4};
     let Inst{22} = 0;
     let Inst{11-8} = 0;
+    let Unpredictable{11-8} = 0b1111;
     let Inst{3-0} = Rm{3-0};
     let AsmMatchConverter = "cvtLdExtTWriteBackReg";
+    let DecoderMethod = "DecodeLDR";
   }
 }
 

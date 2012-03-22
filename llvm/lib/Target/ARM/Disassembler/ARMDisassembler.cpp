@@ -323,8 +323,8 @@ static DecodeStatus DecodeT2LdStPre(llvm::MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeT2ShifterImmOperand(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 
-
-
+static DecodeStatus DecodeLDR(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
 #include "ARMGenEDInfo.inc"
@@ -3178,7 +3178,7 @@ static DecodeStatus DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   unsigned add = fieldFromInstruction32(Insn, 4, 1);
 
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder)))
     return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateImm(add));
 
@@ -4263,3 +4263,31 @@ static DecodeStatus DecodeVCVTQ(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
+
+static DecodeStatus DecodeLDR(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rn = fieldFromInstruction32(Val, 16, 4);
+  unsigned Rt = fieldFromInstruction32(Val, 12, 4);
+  unsigned Rm = fieldFromInstruction32(Val, 0, 4);
+  Rm |= (fieldFromInstruction32(Val, 23, 1) << 4);
+  unsigned Cond = fieldFromInstruction32(Val, 28, 4);
+ 
+  if (fieldFromInstruction32(Val, 8, 4) != 0 || Rn == Rt)
+    S = MCDisassembler::SoftFail;
+
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeAddrMode7Operand(Inst, Rn, Address, Decoder))) 
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodePostIdxReg(Inst, Rm, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodePredicateOperand(Inst, Cond, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
+}
+
