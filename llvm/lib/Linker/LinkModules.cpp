@@ -20,8 +20,9 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <cctype>
@@ -66,6 +67,20 @@ public:
   Type *get(Type *SrcTy);
 
   FunctionType *get(FunctionType *T) {return cast<FunctionType>(get((Type*)T));}
+
+#ifndef NDEBUG
+  /// dump - Dump out the type map for debugging purposes.
+  void dump() const {
+    for (DenseMap<Type*, Type*>::const_iterator
+           I = MappedTypes.begin(), E = MappedTypes.end(); I != E; ++I) {
+      dbgs() << "TypeMap: ";
+      I->first->dump();
+      dbgs() << " => ";
+      I->second->dump();
+      dbgs() << '\n';
+    }
+  }
+#endif
 
 private:
   Type *getImpl(Type *T);
@@ -431,8 +446,6 @@ namespace {
   };
 }
 
-
-
 /// forceRenaming - The LLVM SymbolTable class autorenames globals that conflict
 /// in the symbol table.  This is good for all clients except for us.  Go
 /// through the trouble to force this back.
@@ -454,9 +467,9 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
   }
 }
 
-/// CopyGVAttributes - copy additional attributes (those not needed to construct
+/// copyGVAttributes - copy additional attributes (those not needed to construct
 /// a GlobalValue) from the SrcGV to the DestGV.
-static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
+static void copyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
   // Use the maximum alignment, rather than just copying the alignment of SrcGV.
   unsigned Alignment = std::max(DestGV->getAlignment(), SrcGV->getAlignment());
   DestGV->copyAttributesFrom(SrcGV);
@@ -662,7 +675,7 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
                        DstGV->getType()->getAddressSpace());
   
   // Propagate alignment, visibility and section info.
-  CopyGVAttributes(NG, DstGV);
+  copyGVAttributes(NG, DstGV);
   
   AppendingVarInfo AVI;
   AVI.NewGV = NG;
@@ -736,7 +749,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
                        SGV->isThreadLocal(),
                        SGV->getType()->getAddressSpace());
   // Propagate alignment, visibility and section info.
-  CopyGVAttributes(NewDGV, SGV);
+  copyGVAttributes(NewDGV, SGV);
   if (NewVisibility)
     NewDGV->setVisibility(*NewVisibility);
 
@@ -784,7 +797,7 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
   // bring SF over.
   Function *NewDF = Function::Create(TypeMap.get(SF->getFunctionType()),
                                      SF->getLinkage(), SF->getName(), DstM);
-  CopyGVAttributes(NewDF, SF);
+  copyGVAttributes(NewDF, SF);
   if (NewVisibility)
     NewDF->setVisibility(*NewVisibility);
 
@@ -839,7 +852,7 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   GlobalAlias *NewDA = new GlobalAlias(TypeMap.get(SGA->getType()),
                                        SGA->getLinkage(), SGA->getName(),
                                        /*aliasee*/0, DstM);
-  CopyGVAttributes(NewDA, SGA);
+  copyGVAttributes(NewDA, SGA);
   if (NewVisibility)
     NewDA->setVisibility(*NewVisibility);
 
@@ -872,9 +885,8 @@ void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
   AVI.NewGV->setInitializer(ConstantArray::get(NewType, Elements));
 }
 
-
-// linkGlobalInits - Update the initializers in the Dest module now that all
-// globals that may be referenced are in Dest.
+/// linkGlobalInits - Update the initializers in the Dest module now that all
+/// globals that may be referenced are in Dest.
 void ModuleLinker::linkGlobalInits() {
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::const_global_iterator I = SrcM->global_begin(),
@@ -891,9 +903,9 @@ void ModuleLinker::linkGlobalInits() {
   }
 }
 
-// linkFunctionBody - Copy the source function over into the dest function and
-// fix up references to values.  At this point we know that Dest is an external
-// function, and that Src is not.
+/// linkFunctionBody - Copy the source function over into the dest function and
+/// fix up references to values.  At this point we know that Dest is an external
+/// function, and that Src is not.
 void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   assert(Src && Dst && Dst->isDeclaration() && !Src->isDeclaration());
 
@@ -932,7 +944,7 @@ void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   
 }
 
-
+/// linkAliasBodies - Insert all of the aliases in Src into the Dest module.
 void ModuleLinker::linkAliasBodies() {
   for (Module::alias_iterator I = SrcM->alias_begin(), E = SrcM->alias_end();
        I != E; ++I) {
@@ -945,7 +957,7 @@ void ModuleLinker::linkAliasBodies() {
   }
 }
 
-/// linkNamedMDNodes - Insert all of the named mdnodes in Src into the Dest
+/// linkNamedMDNodes - Insert all of the named MDNodes in Src into the Dest
 /// module.
 void ModuleLinker::linkNamedMDNodes() {
   const NamedMDNode *SrcModFlags = SrcM->getModuleFlagsMetadata();
@@ -961,7 +973,8 @@ void ModuleLinker::linkNamedMDNodes() {
   }
 }
 
-/// categorizeModuleFlagNodes -
+/// categorizeModuleFlagNodes - Categorize the module flags according to their
+/// type: Error, Warning, Override, and Require.
 bool ModuleLinker::
 categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
                           DenseMap<MDString*, MDNode*> &ErrorNode,
@@ -1293,11 +1306,11 @@ bool ModuleLinker::run() {
 // LinkModules entrypoint.
 //===----------------------------------------------------------------------===//
 
-// LinkModules - This function links two modules together, with the resulting
-// left module modified to be the composite of the two input modules.  If an
-// error occurs, true is returned and ErrorMsg (if not null) is set to indicate
-// the problem.  Upon failure, the Dest module could be in a modified state, and
-// shouldn't be relied on to be consistent.
+/// LinkModules - This function links two modules together, with the resulting
+/// left module modified to be the composite of the two input modules.  If an
+/// error occurs, true is returned and ErrorMsg (if not null) is set to indicate
+/// the problem.  Upon failure, the Dest module could be in a modified state,
+/// and shouldn't be relied on to be consistent.
 bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode, 
                          std::string *ErrorMsg) {
   ModuleLinker TheLinker(Dest, Src, Mode);
