@@ -1,4 +1,4 @@
-; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
+; RUN: opt < %s -loop-reduce -S | FileCheck %s
 ; CHECK-NOT: {{inttoptr|ptrtoint}}
 ; CHECK: scevgep
 ; CHECK-NOT: {{inttoptr|ptrtoint}}

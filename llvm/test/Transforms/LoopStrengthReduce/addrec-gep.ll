@@ -1,13 +1,17 @@
-; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
-; CHECK: getelementptr
-; CHECK: mul {{.*}}, 37
-; CHECK: add {{.*}}, 5203
+; RUN: opt < %s -loop-reduce -S | FileCheck %s
+; CHECK: bb1:
+; CHECK: load double* [[IV:%[^,]+]]
+; CHECK: store double {{.*}}, double* [[IV]]
+; CHECK: getelementptr double*
 ; CHECK-NOT: cast
+; CHECK: br {{.*}} label %bb1
 
 ; This test tests several things. The load and store should use the
 ; same address instead of having it computed twice, and SCEVExpander should
 ; be able to reconstruct the full getelementptr, despite it having a few
 ; obstacles set in its way.
+; We only check that the inner loop (bb1-bb2) is "reduced" because LSR
+; currently only operates on inner loops.
 
 target datalayout = "e-p:64:64:64-n32:64"
 
