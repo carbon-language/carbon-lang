@@ -1,4 +1,4 @@
-; RUN: opt < %s -indvars -enable-iv-rewrite=false -S | FileCheck %s
+; RUN: opt < %s -indvars -S | FileCheck %s
 ;
 ; Make sure that indvars can perform LFTR without a canonical IV.
 

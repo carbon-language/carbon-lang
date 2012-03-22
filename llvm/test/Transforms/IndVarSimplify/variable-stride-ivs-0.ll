@@ -1,5 +1,4 @@
 ; RUN: opt < %s -indvars -instcombine -S | FileCheck %s
-; RUN: opt < %s -indvars -enable-iv-rewrite=false -instcombine -S | FileCheck %s
 ;
 ; Test that -indvars can reduce variable stride IVs.  If it can reduce variable
 ; stride iv's, it will make %iv. and %m.0.0 isomorphic to each other without
