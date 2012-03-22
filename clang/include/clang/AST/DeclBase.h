@@ -967,6 +967,7 @@ protected:
   mutable Decl *LastDecl;
 
   friend class ExternalASTSource;
+  friend class ASTWriter;
 
   /// \brief Build up a chain of declarations.
   ///
