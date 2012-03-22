@@ -6246,7 +6246,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     ClassProperties.push_back(*I);
   
   Write_prop_list_t_initializer(*this, Context, Result, ClassProperties,
-                                 /* Container */0,
+                                 /* Container */IDecl,
                                  "_OBJC_$_PROP_LIST_",
                                  CDecl->getNameAsString());
 
