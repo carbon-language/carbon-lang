@@ -9,16 +9,14 @@ int f(A* a, int (A::*fp)()) {
 }
 
 // CHECK: define i32 @_Z2g1v()
-// CHECK-NEXT: {{.*}}:
-// CHECK-NEXT: ret i32 1
+// CHECK: ret i32 1
 int g1() {
   A a;
   return f(&a, &A::vf1);
 }
 
 // CHECK: define i32 @_Z2g2v()
-// CHECK-NEXT: {{.*}}:
-// CHECK-NEXT: ret i32 2
+// CHECK: ret i32 2
 int g2() {
   A a;
   return f(&a, &A::vf2);
