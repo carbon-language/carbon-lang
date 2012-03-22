@@ -35,7 +35,9 @@ public:
         m_sw_single_step_next_pc(INVALID_NUB_ADDRESS),
         m_sw_single_step_break_id(INVALID_NUB_BREAK_ID),
         m_sw_single_step_itblock_break_count(0),
-        m_last_decode_pc(INVALID_NUB_ADDRESS)
+        m_last_decode_pc(INVALID_NUB_ADDRESS),
+        m_watchpoint_hw_index(-1),
+        m_watchpoint_did_occur(false)
     {
         memset(&m_dbg_save, 0, sizeof(m_dbg_save));
 #if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
@@ -78,6 +80,7 @@ public:
     virtual uint32_t        EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size);
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_break_index);
+    virtual bool            EnableHardwareWatchpoint (uint32_t hw_break_index);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
     virtual bool            StepNotComplete ();
     virtual void            HardwareWatchpointStateChanged ();
@@ -258,6 +261,8 @@ protected:
     arm_decoded_instruction_t m_last_decode_arm;
 #endif
     nub_addr_t      m_last_decode_pc;
+    int32_t         m_watchpoint_hw_index;
+    bool            m_watchpoint_did_occur;
 
 };
 
