@@ -395,6 +395,13 @@ bool FastISel::SelectBinaryOp(const User *I, unsigned ISDOpcode) {
       ISDOpcode = ISD::SRA;
     }
 
+    // Transform "urem x, pow2" -> "and x, pow2-1".
+    if (ISDOpcode == ISD::UREM && isa<BinaryOperator>(I) &&
+        isPowerOf2_64(Imm)) {
+      --Imm;
+      ISDOpcode = ISD::AND;
+    }
+
     unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op0,
                                       Op0IsKill, Imm, VT.getSimpleVT());
     if (ResultReg == 0) return false;

@@ -217,3 +217,12 @@ entry:
 ; THUMB: vcmpe.f32 s0, #0
   ret i1 %4
 }
+
+; ARM: @urem_fold
+; THUMB: @urem_fold
+; ARM: and r0, r0, #31
+; THUMB: and r0, r0, #31
+define i32 @urem_fold(i32 %a) nounwind {
+  %rem = urem i32 %a, 32
+  ret i32 %rem
+}
