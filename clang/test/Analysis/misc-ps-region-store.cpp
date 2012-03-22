@@ -552,3 +552,19 @@ void PR11545_positive() {
   }
 }
 
+// Test handling taking the address of a field.  While the analyzer
+// currently doesn't do anything intelligent here, this previously
+// resulted in a crash.
+class PR11146 {
+public:
+  struct Entry;
+  void baz();
+};
+
+struct PR11146::Entry {
+  int x;
+};
+
+void PR11146::baz() {
+  (void) &Entry::x;
+}

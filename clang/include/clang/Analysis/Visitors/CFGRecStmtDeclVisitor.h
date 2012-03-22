@@ -66,6 +66,7 @@ public:
         DISPATCH_CASE(Record)    // FIXME: Refine.  VisitStructDecl?
         DISPATCH_CASE(CXXRecord)
         DISPATCH_CASE(Enum)
+        DISPATCH_CASE(Field)
         DISPATCH_CASE(UsingDirective)
         DISPATCH_CASE(Using)
       default:
@@ -82,6 +83,7 @@ public:
   DEFAULT_DISPATCH(Typedef)
   DEFAULT_DISPATCH(Record)
   DEFAULT_DISPATCH(Enum)
+  DEFAULT_DISPATCH(Field)
   DEFAULT_DISPATCH(ObjCInterface)
   DEFAULT_DISPATCH(ObjCMethod)
   DEFAULT_DISPATCH(ObjCProtocol)

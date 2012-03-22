@@ -1384,6 +1384,13 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
                       ProgramPoint::PostLValueKind);
     return;
   }
+  if (isa<FieldDecl>(D)) {
+    // FIXME: Compute lvalue of fields.
+    Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, UnknownVal()),
+		      false, 0, ProgramPoint::PostLValueKind);
+    return;
+  }
+
   assert (false &&
           "ValueDecl support for this ValueDecl not implemented.");
 }
