@@ -5512,7 +5512,13 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                         CXXRecordDecl *cxx_record_decl = pointee_qual_type->getAsCXXRecordDecl();
                         if (cxx_record_decl)
                         {
-                            if (GetCompleteQualType (ast, pointee_qual_type))
+                            // Do NOT complete the type here like we used to do
+                            // otherwise EVERY "class *" variable we have will try
+                            // to fully complete itself and this will take a lot of
+                            // time, memory and slow down debugging. If we have a complete
+                            // type, then answer the question definitively, else we
+                            // just say that a C++ class can possibly be dynamic...
+                            if (cxx_record_decl->getDefinition())
                             {
                                 success = cxx_record_decl->isDynamicClass();
                             }
@@ -5535,17 +5541,9 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                     
                 case clang::Type::ObjCObject:
                 case clang::Type::ObjCInterface:
-                    {
-                        const clang::ObjCObjectType *objc_class_type = pointee_qual_type->getAsObjCQualifiedInterfaceType();
-                        if (objc_class_type)
-                        {
-                            GetCompleteQualType (ast, pointee_qual_type);
-                            if (dynamic_pointee_type)
-                                *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
-                            return true;
-                        }
-                    }
-                    break;
+                    if (dynamic_pointee_type)
+                        *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
+                    return true;
 
                 default:
                     break;
