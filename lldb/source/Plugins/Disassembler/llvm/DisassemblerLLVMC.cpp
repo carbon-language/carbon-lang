@@ -356,11 +356,20 @@ protected:
             disasm_context = m_disasm.m_disasm_context;
         
         m_comment_stream.Clear();
-            
-        size_t inst_size = ::LLVMDisasmInstruction(disasm_context, 
-                                                   const_cast<uint8_t*>(data_start) + data_offset, 
-                                                   extractor.GetByteSize() - data_offset, 
-                                                   address.GetFileAddress(), 
+        
+        lldb::addr_t pc = LLDB_INVALID_ADDRESS;
+        
+        if (exe_scope)
+            if (TargetSP target_sp = exe_scope->CalculateTarget())
+                pc = m_address.GetLoadAddress(target_sp.get());
+        
+        if (pc == LLDB_INVALID_ADDRESS)
+            pc = m_address.GetFileAddress();
+                              
+        size_t inst_size = ::LLVMDisasmInstruction(disasm_context,
+                                                   const_cast<uint8_t*>(data_start) + data_offset,
+                                                   extractor.GetByteSize() - data_offset,
+                                                   pc, 
                                                    out_string.data(), 
                                                    out_string.size());
         
@@ -384,32 +393,32 @@ protected:
         {
             if (!inst_size)
                 return false;
-            
-            PopulateOpcode(extractor, data_offset, inst_size);
-            
-            m_raw_bytes.resize(inst_size);
-            memcpy(m_raw_bytes.data(), data_start + data_offset, inst_size);
-            
-            if (!s_regex_compiled)
-            {
-                ::regcomp(&s_regex, "[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
-                s_regex_compiled = true;
-            }
-            
-            ::regmatch_t matches[3];
-            
-            const char *out_data = out_string.data();
-            
-            if (!::regexec(&s_regex, out_data, sizeof(matches) / sizeof(::regmatch_t), matches, 0))
-            {
-                if (matches[1].rm_so != -1)
-                    m_opcode_name.assign(out_data + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
-                if (matches[2].rm_so != -1)
-                    m_mnemocics.assign(out_data + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
-            }
-                        
-            m_is_valid = true;
         }
+            
+        PopulateOpcode(extractor, data_offset, inst_size);
+        
+        m_raw_bytes.resize(inst_size);
+        memcpy(m_raw_bytes.data(), data_start + data_offset, inst_size);
+        
+        if (!s_regex_compiled)
+        {
+            ::regcomp(&s_regex, "[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
+            s_regex_compiled = true;
+        }
+        
+        ::regmatch_t matches[3];
+        
+        const char *out_data = out_string.data();
+        
+        if (!::regexec(&s_regex, out_data, sizeof(matches) / sizeof(::regmatch_t), matches, 0))
+        {
+            if (matches[1].rm_so != -1)
+                m_opcode_name.assign(out_data + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+            if (matches[2].rm_so != -1)
+                m_mnemocics.assign(out_data + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+        }
+                    
+        m_is_valid = true;
     
         return true;
     }
