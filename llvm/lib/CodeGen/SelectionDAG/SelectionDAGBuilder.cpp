@@ -3586,6 +3586,12 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
     }
 
     setValue(&I, Result);
+  } else {
+    // Assign order to result here. If the intrinsic does not produce a result,
+    // it won't be mapped to a SDNode and visit() will not assign it an order
+    // number.
+    ++SDNodeOrder;
+    AssignOrderingToNode(Result.getNode());
   }
 }
 
