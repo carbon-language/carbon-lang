@@ -51,8 +51,8 @@ class TypeMapTy : public ValueMapTypeRemapper {
   /// DstResolvedOpaqueTypes - This is the set of opaque types in the
   /// destination modules who are getting a body from the source module.
   SmallPtrSet<StructType*, 16> DstResolvedOpaqueTypes;
+
 public:
-  
   /// addTypeMapping - Indicate that the specified type in the destination
   /// module is conceptually equivalent to the specified type in the source
   /// module.
@@ -68,7 +68,6 @@ public:
 
   FunctionType *get(FunctionType *T) {return cast<FunctionType>(get((Type*)T));}
 
-#ifndef NDEBUG
   /// dump - Dump out the type map for debugging purposes.
   void dump() const {
     for (DenseMap<Type*, Type*>::const_iterator
@@ -80,7 +79,6 @@ public:
       dbgs() << '\n';
     }
   }
-#endif
 
 private:
   Type *getImpl(Type *T);
