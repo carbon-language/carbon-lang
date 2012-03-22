@@ -75,7 +75,7 @@ const char*
 SBTypeCategory::GetName()
 {
     if (!IsValid())
-        return false;
+        return NULL;
     return m_opaque_sp->GetName();
 }
 
