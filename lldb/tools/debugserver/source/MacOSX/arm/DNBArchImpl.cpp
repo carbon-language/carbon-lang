@@ -366,15 +366,18 @@ DNBArchMachARM::ThreadWillResume()
     }
 
     // Disable the triggered watchpoint temporarily because we resume.
-    if (this->m_watchpoint_did_occur)
+    if (m_watchpoint_did_occur)
     {
-        if (this->m_watchpoint_hw_index >= 0) {
-            DisableHardwareWatchpoint(this->m_watchpoint_hw_index);
+        if (m_watchpoint_hw_index >= 0) {
+            DisableHardwareWatchpoint(m_watchpoint_hw_index);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
-                             this->m_watchpoint_hw_index);
+                             m_watchpoint_hw_index);
+            // Reset the two watchpoint member variables.
+            m_watchpoint_did_occur = false;
+            m_watchpoint_hw_index = -1;
             /*
             printf("DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
-                   this->m_watchpoint_hw_index);
+                   m_watchpoint_hw_index);
             */
         }
     }
@@ -504,19 +507,18 @@ DNBArchMachARM::NotifyException(MachException::Data& exc)
                 // If yes, retrieve the exc_sub_code as the data break address.
                 if (!HasWatchpointOccurred())
                     break;
-                //printf("Info -- hardware watchpoint was hit!\n");
-                this->m_watchpoint_did_occur = true;
-                this->m_watchpoint_hw_index = -1;
+                //printf("Info -- Debug Status and Control Register indicates hardware watchpoint occurred!\n");
 
                 // The data break address is passed as exc_data[1].
                 nub_addr_t addr = exc.exc_data[1];
-                //printf("exc.exc_data[1]=0x%x\n", addr);
+                //printf("Info -- from mach exception: exc.exc_data[1]=0x%x\n", addr);
                 // Find the hardware index with the side effect of possibly massaging the
                 // addr to return the starting address as seen from the debugger side.
                 uint32_t hw_index = GetHardwareWatchpointHit(addr);
                 if (hw_index != INVALID_NUB_HW_INDEX)
                 {
-                    this->m_watchpoint_hw_index = hw_index;
+                    m_watchpoint_did_occur = true;
+                    m_watchpoint_hw_index = hw_index;
                     //printf("Setting exc.exc_data[1] to %u\n", addr);
                     exc.exc_data[1] = addr;
                     // Piggyback the hw_index in the exc.data.

@@ -261,6 +261,8 @@ protected:
     arm_decoded_instruction_t m_last_decode_arm;
 #endif
     nub_addr_t      m_last_decode_pc;
+
+    // The following two member variables should be updated atomically.
     int32_t         m_watchpoint_hw_index;
     bool            m_watchpoint_did_occur;
 
