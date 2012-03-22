@@ -1536,6 +1536,7 @@ DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
   unsigned W = fieldFromInstruction32(Insn, 21, 1);
   unsigned P = fieldFromInstruction32(Insn, 24, 1);
+  unsigned Rt2 = Rt + 1;
 
   bool writeback = (W == 1) | (P == 0);
 
@@ -1547,7 +1548,86 @@ DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDRD:
     case ARM::LDRD_PRE:
     case ARM::LDRD_POST:
-      if (Rt & 0x1) return MCDisassembler::Fail;
+      if (Rt & 0x1) S = MCDisassembler::SoftFail;
+      break;
+    default:
+      break;
+  }
+  switch (Inst.getOpcode()) {
+    case ARM::STRD:
+    case ARM::STRD_PRE:
+    case ARM::STRD_POST:
+      if (P == 0 && W == 1)
+        S = MCDisassembler::SoftFail;
+      
+      if (writeback && (Rn == 15 || Rn == Rt || Rn == Rt2))
+        S = MCDisassembler::SoftFail;
+      if (type && Rm == 15)
+        S = MCDisassembler::SoftFail;
+      if (Rt2 == 15)
+        S = MCDisassembler::SoftFail;
+      if (!type && fieldFromInstruction32(Insn, 8, 4))
+        S = MCDisassembler::SoftFail;
+      break;
+    case ARM::STRH:
+    case ARM::STRH_PRE:
+    case ARM::STRH_POST:
+      if (Rt == 15)
+        S = MCDisassembler::SoftFail;
+      if (writeback && (Rn == 15 || Rn == Rt))
+        S = MCDisassembler::SoftFail;
+      if (!type && Rm == 15)
+        S = MCDisassembler::SoftFail;
+      break;
+    case ARM::LDRD:
+    case ARM::LDRD_PRE:
+    case ARM::LDRD_POST:
+      if (type && Rn == 15){
+        if (Rt2 == 15)
+          S = MCDisassembler::SoftFail;
+        break;
+      }
+      if (P == 0 && W == 1)
+        S = MCDisassembler::SoftFail;
+      if (!type && (Rt2 == 15 || Rm == 15 || Rm == Rt || Rm == Rt2))
+        S = MCDisassembler::SoftFail;
+      if (!type && writeback && Rn == 15)
+        S = MCDisassembler::SoftFail;
+      if (writeback && (Rn == Rt || Rn == Rt2))
+        S = MCDisassembler::SoftFail;
+      break;
+    case ARM::LDRH:
+    case ARM::LDRH_PRE:
+    case ARM::LDRH_POST:
+      if (type && Rn == 15){
+        if (Rt == 15)
+          S = MCDisassembler::SoftFail;
+        break;
+      }
+      if (Rt == 15)
+        S = MCDisassembler::SoftFail;
+      if (!type && Rm == 15)
+        S = MCDisassembler::SoftFail;
+      if (!type && writeback && (Rn == 15 || Rn == Rt))
+        S = MCDisassembler::SoftFail;
+      break;
+    case ARM::LDRSH:
+    case ARM::LDRSH_PRE:
+    case ARM::LDRSH_POST:
+    case ARM::LDRSB:
+    case ARM::LDRSB_PRE:
+    case ARM::LDRSB_POST:
+      if (type && Rn == 15){
+        if (Rt == 15)
+          S = MCDisassembler::SoftFail;
+        break;
+      }
+      if (type && (Rt == 15 || (writeback && Rn == Rt)))
+        S = MCDisassembler::SoftFail;
+      if (!type && (Rt == 15 || Rm == 15))
+        S = MCDisassembler::SoftFail;
+      if (!type && writeback && (Rn == 15 || Rn == Rt))
+        S = MCDisassembler::SoftFail;
       break;
     default:
       break;
