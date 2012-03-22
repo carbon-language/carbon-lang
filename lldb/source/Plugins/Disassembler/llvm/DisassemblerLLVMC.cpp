@@ -620,10 +620,11 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t ReferenceValue,
         
         if (target)
         {
-            if (!target->GetSectionLoadList().IsEmpty())
-                target->GetSectionLoadList().ResolveLoadAddress(ReferenceValue, reference_address);
-            else
-                target->GetImages().ResolveFileAddress(ReferenceValue, reference_address);
+            if (!target->GetSectionLoadList().ResolveLoadAddress(ReferenceValue, reference_address))
+            {
+                if (ModuleSP module_sp = m_inst->GetAddress().GetModule())
+                    module_sp->ResolveFileAddress(ReferenceValue, reference_address);
+            }
             
             if (reference_address.IsValid() && reference_address.GetSection())
             {
@@ -634,7 +635,8 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t ReferenceValue,
                                         Address::DumpStyleResolvedDescriptionNoModule, 
                                         Address::DumpStyleSectionNameOffset);
                 
-                m_inst->AddReferencedAddress(ss.GetString());
+                if (!ss.GetString().empty())
+                    m_inst->AddReferencedAddress(ss.GetString());
             }
         }
     }
