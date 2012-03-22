@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -verify -fblocks %s
 #include "system-header-simulator-objc.h"
 
 typedef __typeof(sizeof(int)) size_t;
@@ -95,5 +95,14 @@ void TestCallbackReleasesMemory(CFDictionaryKeyCallBacks keyCallbacks) {
 NSData *radar10976702() {
   void *bytes = malloc(10);
   return [NSData dataWithBytesNoCopy:bytes length:10]; // no-warning
+}
+
+void testBlocks() {
+  int *x= (int*)malloc(sizeof(int));
+  int (^myBlock)(int) = ^(int num) {
+    free(x);
+    return num;
+  };
+  myBlock(3);
 }
 
