@@ -157,6 +157,12 @@ fixupInstructions(
     void		*instructionsToFix,
 	int			instructionCount,
 	uint8_t		*instructionSizes ) __attribute__((visibility("hidden")));
+
+#ifdef DEBUG_DISASM
+	static void
+dump16Bytes(
+	void	*ptr);
+#endif  // DEBUG_DISASM
 #endif
 
 /*******************************************************************************
@@ -830,9 +836,21 @@ fixupInstructions(
 	int			instructionCount,
 	uint8_t		*instructionSizes )
 {
-	int	index;
+	void *initialOriginalFunction = originalFunction;
+	int	index, fixed_size, code_size = 0;
+	for (index = 0;index < instructionCount;index += 1)
+		code_size += instructionSizes[index];
+
+#ifdef DEBUG_DISASM
+	void *initialInstructionsToFix = instructionsToFix;
+	fprintf(stderr, "BEFORE FIXING:\n");
+	dump16Bytes(initialOriginalFunction);
+	dump16Bytes(initialInstructionsToFix);
+#endif  // DEBUG_DISASM
+
 	for (index = 0;index < instructionCount;index += 1)
 	{
+                fixed_size = instructionSizes[index];
 		if ((*(uint8_t*)instructionsToFix == 0xE9) || // 32-bit jump relative
 		    (*(uint8_t*)instructionsToFix == 0xE8))   // 32-bit call relative
 		{
@@ -840,13 +858,56 @@ fixupInstructions(
 			uint32_t *jumpOffsetPtr = (uint32_t*)((uintptr_t)instructionsToFix + 1);
 			*jumpOffsetPtr += offset;
 		}
-
+		if ((*(uint8_t*)instructionsToFix == 0x74) ||  // Near jump if equal (je), 2 bytes.
+		    (*(uint8_t*)instructionsToFix == 0x77))    // Near jump if above (ja), 2 bytes.
+		{
+			// We replace a near je/ja instruction, "7P JJ", with a 32-bit je/ja, "0F 8P WW XX YY ZZ".
+			// This is critical, otherwise a near jump will likely fall outside the original function.
+			uint32_t offset = (uintptr_t)initialOriginalFunction - (uintptr_t)escapeIsland;
+			uint32_t jumpOffset = *(uint8_t*)((uintptr_t)instructionsToFix + 1);
+			*(uint8_t*)(instructionsToFix + 1) = *(uint8_t*)instructionsToFix + 0x10;
+			*(uint8_t*)instructionsToFix = 0x0F;
+			uint32_t *jumpOffsetPtr = (uint32_t*)((uintptr_t)instructionsToFix + 2 );
+			*jumpOffsetPtr = offset + jumpOffset;
+			fixed_size = 6;
+                }
 		
 		originalFunction = (void*)((uintptr_t)originalFunction + instructionSizes[index]);
 		escapeIsland = (void*)((uintptr_t)escapeIsland + instructionSizes[index]);
-		instructionsToFix = (void*)((uintptr_t)instructionsToFix + instructionSizes[index]);
-    }
+		instructionsToFix = (void*)((uintptr_t)instructionsToFix + fixed_size);
+
+		// Expanding short instructions into longer ones may overwrite the next instructions,
+		// so we must restore them.
+		code_size -= fixed_size;
+		if ((code_size > 0) && (fixed_size != instructionSizes[index])) {
+			bcopy(originalFunction, instructionsToFix, code_size);
+		}
+	}
+#ifdef DEBUG_DISASM
+	fprintf(stderr, "AFTER_FIXING:\n");
+	dump16Bytes(initialOriginalFunction);
+	dump16Bytes(initialInstructionsToFix);
+#endif  // DEBUG_DISASM
 }
+
+#ifdef DEBUG_DISASM
+#define HEX_DIGIT(x) ((((x) % 16) < 10) ? ('0' + ((x) % 16)) : ('A' + ((x) % 16 - 10)))
+
+	static void
+dump16Bytes(
+	void 	*ptr) {
+	int i;
+	char buf[3];
+	uint8_t *bytes = (uint8_t*)ptr;
+	for (i = 0; i < 16; i++) {
+		buf[0] = HEX_DIGIT(bytes[i] / 16);
+		buf[1] = HEX_DIGIT(bytes[i] % 16);
+		buf[2] = ' ';
+		write(2, buf, 3);
+	}
+	write(2, "\n", 1);
+}
+#endif  // DEBUG_DISASM
 #endif
 
 #if defined(__i386__)
