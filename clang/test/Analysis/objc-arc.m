@@ -200,4 +200,21 @@ void test_objc_arrays() {
     }
 }
 
+// <rdar://problem/11059275> - dispatch_set_context and ARC.
+__attribute__((cf_returns_retained)) CFTypeRef CFBridgingRetain(id X);
+typedef void* dispatch_object_t;
+void dispatch_set_context(dispatch_object_t object, const void *context);
+
+void rdar11059275(dispatch_object_t object) {
+  NSObject *o = [[NSObject alloc] init];
+  dispatch_set_context(object, CFBridgingRetain(o)); // no-warning  
+}
+void rdar11059275_positive() {
+  NSObject *o = [[NSObject alloc] init]; // expected-warning {{leak}}
+  CFBridgingRetain(o);
+}
+void rdar11059275_negative() {
+  NSObject *o = [[NSObject alloc] init]; // no-warning
+  (void) o;
+}
 
