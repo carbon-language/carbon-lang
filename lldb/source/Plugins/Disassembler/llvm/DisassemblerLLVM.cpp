@@ -767,13 +767,13 @@ DisassemblerLLVM::Terminate()
 const char *
 DisassemblerLLVM::GetPluginNameStatic()
 {
-    return "llvm";
+    return "llvm-edis";
 }
 
 const char *
 DisassemblerLLVM::GetPluginDescriptionStatic()
 {
-    return "Disassembler that uses LLVM opcode tables to disassemble i386, x86_64 and ARM.";
+    return "Disassembler that uses the LLVM enhanced disassembler to disassemble i386, x86_64 and ARM.";
 }
 
 //------------------------------------------------------------------

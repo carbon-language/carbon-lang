@@ -541,13 +541,13 @@ DisassemblerLLVMC::Terminate()
 const char *
 DisassemblerLLVMC::GetPluginNameStatic()
 {
-    return "llvm";
+    return "llvm-mc";
 }
 
 const char *
 DisassemblerLLVMC::GetPluginDescriptionStatic()
 {
-    return "Disassembler that uses LLVM opcode tables to disassemble i386, x86_64 and ARM.";
+    return "Disassembler that uses LLVM MC to disassemble i386, x86_64 and ARM.";
 }
 
 int DisassemblerLLVMC::OpInfoCallback (void *DisInfo,

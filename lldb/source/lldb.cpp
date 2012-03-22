@@ -73,8 +73,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-#define USE_NEW_DISASSEMBLER
-
 void
 lldb_private::Initialize ()
 {
@@ -93,11 +91,8 @@ lldb_private::Initialize ()
         ABIMacOSX_i386::Initialize();
         ABIMacOSX_arm::Initialize();
         ABISysV_x86_64::Initialize();
-#if defined (USE_NEW_DISASSEMBLER)
         DisassemblerLLVMC::Initialize();
-#else
         DisassemblerLLVM::Initialize();
-#endif
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
         SymbolFileDWARF::Initialize();
@@ -172,11 +167,8 @@ lldb_private::Terminate ()
     ABIMacOSX_i386::Terminate();
     ABIMacOSX_arm::Terminate();
     ABISysV_x86_64::Terminate();
-#if defined (USE_NEW_DISASSEMBLER)
     DisassemblerLLVMC::Terminate();
-#else
     DisassemblerLLVM::Terminate();
-#endif
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
     SymbolFileDWARF::Terminate();
