@@ -1255,18 +1255,9 @@ def function (valobj,dict):<br/>
                 <li>If this object is a reference, and there is a
                   formatter for the referred type that does not skip
                   references, use it</li>
-                <li>If this object is an Objective-C class with a parent
-                  class, look at the parent class (and parent of parent,
-                  ...). This phase can be based upon the actual type of
-				  the object as inferred by the value of its <code>isa</code>
-				 pointer, or upon the debugging information inferred by the
-				 debugger. The user can use the dynamic typing settings to
-				 elect one or the other behavior.</li>
-                <li>If this object is a C++ class with base classes,
-                  look at base classes (and bases of bases, ...)</li>
-                <li>If this object is a C++ class with virtual base
-                  classes, look at the virtual base classes (and bases
-                  of bases, ...)</li>
+                <li>If this object is an Objective-C class and dynamic types are enabled,
+					look for a formatter for the dynamic type of the object. If dynamic types are disabled,
+					or the search failed, look for a formatter for the declared type of the object</li>
                 <li>If this object's type is a typedef, go through
                   typedef hierarchy (LLDB might not be able to do this if
                   the compiler has not emitted enough information. If the
@@ -1274,7 +1265,8 @@ def function (valobj,dict):<br/>
                   missing, type cascading will not work. The
                   <a href="http://clang.llvm.org/">clang compiler</a>,
                   part of the LLVM project, emits the correct debugging
-                  information for LLDB to cascade)</li>
+                  information for LLDB to cascade). If at any level of the hierarchy
+				there is a valid formatter that can cascade, use it.</li>
                 <li>If everything has failed, repeat the above search,
                   looking for regular expressions instead of exact
                   matches</li>
@@ -1284,6 +1276,11 @@ def function (valobj,dict):<br/>
 				in other categories). If nothing was found in the current category, the next
 				enabled category is scanned according to the same algorithm. If there are no
 				more enabled categories, the search has failed.</p>
+				<p><font color=red>Warning</font>: previous versions of LLDB defined cascading to mean
+					not only going through typedef chains, but also through inheritance chains.
+					This feature has been removed since it significantly degrades performance.
+					You need to set up your formatters for every type in inheritance chains to which
+					you want the formatter to apply.</p>
             </div>
           </div>
         </div>

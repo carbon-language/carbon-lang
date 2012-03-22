@@ -12,7 +12,10 @@
 #include <stdint.h>
 
 struct Shape
-{};
+{
+	bool dummy;
+	Shape() : dummy(true) {}
+};
 
 struct Rectangle : public Shape {
     int w;

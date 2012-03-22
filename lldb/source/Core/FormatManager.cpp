@@ -881,50 +881,77 @@ FormatManager::LoadObjCFormatters()
     .SetHideItemNames(false);
 
     AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("NSArray"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("__NSArrayI"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("__NSArrayM"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("__NSCFArray"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("CFArrayRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("CFMutableArrayRef"), appkit_flags);
 
     AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("CFBagRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("__CFBag"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("const struct __CFBag"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("CFMutableBagRef"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("CFBinaryHeapRef"), appkit_flags);
-    
+    AddScriptSummary(appkit_category_sp, "CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("__CFBinaryHeap"), appkit_flags);
+
     AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("NSDictionary"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFDictionaryRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFMutableDictionaryRef"), appkit_flags);
-    
+    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSCFDictionary"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSDictionaryI"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSDictionaryM"), appkit_flags);
+
     AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSString"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("CFStringRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("CFMutableStringRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFString.CFAttributedString_SummaryProvider", ConstString("NSAttributedString"), appkit_flags);
-    
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("__NSCFConstantString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("__NSCFString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSCFConstantString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSCFString"), appkit_flags);
+
     AddScriptSummary(appkit_category_sp, "NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSData"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider2", ConstString("CFDataRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider2", ConstString("CFMutableDataRef"), appkit_flags);
-    
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSConcreteData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSConcreteMutableData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("__NSCFData"), appkit_flags);
+
     AddScriptSummary(appkit_category_sp, "NSException.NSException_SummaryProvider", ConstString("NSException"), appkit_flags);
 
     AddScriptSummary(appkit_category_sp, "NSMachPort.NSMachPort_SummaryProvider", ConstString("NSMachPort"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSNotification.NSNotification_SummaryProvider", ConstString("NSNotification"), appkit_flags);
-    
+    AddScriptSummary(appkit_category_sp, "NSNotification.NSNotification_SummaryProvider", ConstString("NSConcreteNotification"), appkit_flags);
+
     AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSNumber"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFBoolean"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFNumber"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSCFBoolean"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSCFNumber"), appkit_flags);
 
     AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("NSSet"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFSetRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFMutableSetRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("__NSCFSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("__NSSetI"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("__NSSetM"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("NSCountedSet"), appkit_flags);
 
     AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("NSURL"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("__NSDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("__NSTaggedDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSCalendarDate"), appkit_flags);
 
     AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("NSTimeZone"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("CFTimeZoneRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("__NSTimeZone"), appkit_flags);
 
     // CFAbsoluteTime is actually a double rather than a pointer to an object
     // we do not care about the numeric value, since it is probably meaningless to users
@@ -939,6 +966,8 @@ FormatManager::LoadObjCFormatters()
     
     AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("CFBitVectorRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("CFMutableBitVectorRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("__CFBitVector"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("__CFMutableBitVector"), appkit_flags);
 
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 

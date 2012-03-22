@@ -458,132 +458,6 @@ protected:
         return false;
     }
     
-    #define LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH 100
-    
-    bool Get_ObjC(const lldb::ProcessSP &process_sp,
-             ObjCLanguageRuntime::ObjCISA isa,
-             std::set<ObjCLanguageRuntime::ObjCISA> &found_values,
-             MapValueType& entry,
-             uint32_t& reason)
-    {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-        if (log)
-            log->Printf("going to an Objective-C dynamic scanning");
-        if (!process_sp)
-            return false;
-        ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
-        if (runtime == NULL)
-        {
-            if (log)
-                log->Printf("no valid ObjC runtime, bailing out");
-            return false;
-        }
-        if (runtime->IsValidISA(isa) == false)
-        {
-            if (log)
-                log->Printf("invalid ISA, bailing out");
-            return false;
-        }
-        
-        ConstString name = runtime->GetActualTypeName(isa);
-        if (log)
-            log->Printf("looking for formatter for %s", name.GetCString());
-        if (Get(name, entry))
-        {
-            if (log)
-                log->Printf("direct match found, returning");
-            return true;
-        }
-        if (log)
-            log->Printf("no direct match");
-        ObjCLanguageRuntime::ObjCISA parent = runtime->GetParentClass(isa);
-        if (runtime->IsValidISA(parent) == false)
-        {
-            if (log)
-                log->Printf("invalid parent ISA, bailing out");
-            return false;
-        }
-        
-        // Put the isa value in our map.  Then check the new_value, if it was already there, we've got a 
-        // loop in the inheritance hierarchy, and should bag out.
-        std::pair<std::set<ObjCLanguageRuntime::ObjCISA>::iterator, bool> new_value = found_values.insert (isa);
-        if (new_value.second == false)
-        {
-            //Our value already existed in the map.
-            if (log)
-                log->Printf ("ISA: 0x%llx already found in inheritance chain.", isa);
-            return false;
-        }
-        
-        if (found_values.size() > LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH)
-        {
-            // ObjC hierarchies are usually pretty shallow, if we've gone this far, we are probably chasing
-            // uninitialized memory.
-            if (log)
-                log->Printf("Parent-child depth of %d, we are probably off in the weeds, bailing out.",
-                            LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH);
-            return false;
-        }
-                
-        if (Get_ObjC(process_sp, parent, found_values, entry, reason))
-        {
-            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-            return true;
-        }
-        return false;
-    }
-    
-    bool
-    Get_CXXClass (ValueObject& valobj,
-                  const clang::Type* typePtr,
-                  MapValueType& entry,
-                  lldb::DynamicValueType use_dynamic,
-                  uint32_t& reason)
-    {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-        if (log)
-            log->Printf("working with C++");
-        clang::CXXRecordDecl* record = typePtr->getAsCXXRecordDecl();
-        if (record)
-        {
-            if (!record->hasDefinition())
-                ClangASTContext::GetCompleteType(valobj.GetClangAST(), valobj.GetClangType());
-            if (record->hasDefinition())
-            {
-                clang::CXXRecordDecl::base_class_iterator pos,end;
-                if (record->getNumBases() > 0)
-                {
-                    if (log)
-                        log->Printf("look into bases");
-                    end = record->bases_end();
-                    for (pos = record->bases_begin(); pos != end; pos++)
-                    {
-                        if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
-                        {
-                            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-                            return true;
-                        }
-                    }
-                }
-                if (record->getNumVBases() > 0)
-                {
-                    if (log)
-                        log->Printf("look into VBases");
-                    end = record->vbases_end();
-                    for (pos = record->vbases_begin(); pos != end; pos++)
-                    {
-                        if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
-                        {
-                            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-    
     bool
     Get_BitfieldMatch (ValueObject& valobj,
                        ConstString typeName,
@@ -612,68 +486,36 @@ protected:
         }
     }
     
-    bool
-    Get_ObjCDynamic(lldb::ProcessSP process_sp,
-                    ValueObject& valobj,
-                    MapValueType& entry,
-                    uint32_t& reason)
+    bool Get_ObjC (ValueObject& valobj,
+                   MapValueType& entry)
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-        if (!process_sp)
-            return false;
-        if (log)
-            log->Printf("this is an ObjC 'id', let's do dynamic search");
+        lldb::ProcessSP process_sp = valobj.GetProcessSP();
         ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
         if (runtime == NULL)
         {
             if (log)
                 log->Printf("no valid ObjC runtime, skipping dynamic");
+            return false;
         }
-        else
+        ObjCLanguageRuntime::ObjCISA isa = runtime->GetISA(valobj);
+        if (runtime->IsValidISA(isa) == false)
         {
-            std::set<ObjCLanguageRuntime::ObjCISA> found_values;
-            if (Get_ObjC(process_sp, runtime->GetISA(valobj), found_values, entry, reason))
-            {
-                reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
-                return true;
-            }
+            if (log)
+                log->Printf("invalid ISA, skipping dynamic");
+            return false;
         }
-        return false;
-    }
-    
-    bool
-    Get_ObjCStatic(const clang::ObjCObjectType *objc_class_type,
-                   ValueObject& valobj,
-                   clang::QualType type,
-                   MapValueType& entry,
-                   lldb::DynamicValueType use_dynamic,
-                   uint32_t& reason)
-    {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        ConstString name = runtime->GetActualTypeName(isa);
         if (log)
-            log->Printf("working with ObjC");
-        clang::ASTContext *ast = valobj.GetClangAST();
-        if (ClangASTContext::GetCompleteType(ast, valobj.GetClangType()) && !objc_class_type->isObjCId())
+            log->Printf("dynamic type inferred is %s - looking for direct dynamic match", name.GetCString());
+        if (Get(name, entry))
         {
-            clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-            if (class_interface_decl)
-            {
-                if (log)
-                    log->Printf("got an ObjCInterfaceDecl");
-                clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
-                if (superclass_interface_decl)
-                {
-                    if (log)
-                        log->Printf("got a parent class for this ObjC class");
-                    clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
-                    if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->Cascades())
-                    {
-                        reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-                        return true;
-                    }
-                }
-            }
+            if (log)
+                log->Printf("direct dynamic match found, returning");
+            return true;
         }
+        if (log)
+            log->Printf("no dynamic match");
         return false;
     }
     
@@ -690,7 +532,7 @@ protected:
                 log->Printf("type is NULL, returning");
             return false;
         }
-        // clang::QualType type = q_type.getUnqualifiedType();
+
         type.removeLocalConst(); type.removeLocalVolatile(); type.removeLocalRestrict();
         const clang::Type* typePtr = type.getTypePtrOrNull();
         if (!typePtr)
@@ -721,7 +563,8 @@ protected:
         }
         if (log)
             log->Printf("no direct match");
-        // look for a "base type", whatever that means
+
+        // strip pointers and references and see if that helps
         if (typePtr->isReferenceType())
         {
             if (log)
@@ -733,23 +576,6 @@ protected:
             }
         }
         
-        lldb::ProcessSP process_sp = valobj.GetProcessSP();
-        
-        if (use_dynamic != lldb::eNoDynamicValues &&
-             ClangASTType::GetMinimumLanguage(valobj.GetClangAST(), valobj.GetClangType()) == lldb::eLanguageTypeObjC)
-        {
-            if (Get_ObjCDynamic(process_sp, valobj, entry, reason))
-                return true;
-        }
-        else if (use_dynamic != lldb::eNoDynamicValues && log)
-        {
-            log->Printf("typename: %s, typePtr = %p, id = %p",
-                        typeName.AsCString(), typePtr, valobj.GetClangAST()->ObjCBuiltinIdTy.getTypePtr());
-        }
-        else if (log)
-        {
-            log->Printf("no dynamic");
-        }
         if (typePtr->isPointerType())
         {
             if (log)
@@ -761,49 +587,29 @@ protected:
                 return true;
             }
         }
+
         if (typePtr->isObjCObjectPointerType())
         {
-            if (use_dynamic != lldb::eNoDynamicValues &&
-                typeName == m_id_cs)
+            if (use_dynamic != lldb::eNoDynamicValues)
             {
-                if (Get_ObjCDynamic(process_sp, valobj, entry, reason))
+                if (log)
+                    log->Printf("allowed to figure out dynamic ObjC type");
+                if (Get_ObjC(valobj,entry))
+                {
+                    reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCDiscovery;
                     return true;
+                }
             }
             if (log)
-                log->Printf("stripping ObjC pointer");
-            
-            // For some reason, C++ can quite easily obtain the type hierarchy for a ValueObject
-            // even if the VO represent a pointer-to-class, as long as the typePtr is right
-            // Objective-C on the other hand cannot really complete an @interface when
-            // the VO refers to a pointer-to-@interface
-
-            Error error;
-            ValueObject* target = valobj.Dereference(error).get();
-            if (error.Fail() || !target)
-                return false;
-            if (Get(*target, typePtr->getPointeeType(), entry, use_dynamic, reason) && !entry->SkipsPointers())
+                log->Printf("dynamic disabled or failed - stripping ObjC pointer");
+            clang::QualType pointee = typePtr->getPointeeType();
+            if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->SkipsPointers())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
-        const clang::ObjCObjectType *objc_class_type = typePtr->getAs<clang::ObjCObjectType>();
-        if (objc_class_type)
-        {
-            if (Get_ObjCStatic(objc_class_type,
-                              valobj,
-                              type,
-                              entry,
-                              use_dynamic,
-                              reason))
-            return true;
-        }
-        // for C++ classes, navigate up the hierarchy
-        if (typePtr->isRecordType())
-        {
-            if (Get_CXXClass(valobj, typePtr, entry, use_dynamic, reason))
-                return true;
-        }
+    
         // try to strip typedef chains
         const clang::TypedefType* type_tdef = type->getAs<clang::TypedefType>();
         if (type_tdef)

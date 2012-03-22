@@ -255,36 +255,35 @@ class CategoriesDataFormatterTestCase(TestBase):
         self.runCmd("type summary add Shape -w BaseCategory --summary-string \"AShape\"")
         self.runCmd("type category enable BaseCategory")
 
-        self.expect("frame variable c1 r1 c_ptr r_ptr",
-            substrs = ['AShape',
-                       'AShape',
-                       'AShape',
-                       'AShape'])
-    
+        self.expect("print (Shape*)&c1",
+            substrs = ['AShape'])
+        self.expect("print (Shape*)&r1",
+            substrs = ['AShape'])
+        self.expect("print (Shape*)c_ptr",
+            substrs = ['AShape'])
+        self.expect("print (Shape*)r_ptr",
+            substrs = ['AShape'])
+
         self.runCmd("type summary add Circle -w CircleCategory --summary-string \"ACircle\"")
         self.runCmd("type summary add Rectangle -w RectangleCategory --summary-string \"ARectangle\"")
         self.runCmd("type category enable CircleCategory")
 
-        self.expect("frame variable c1 r1 c_ptr r_ptr",
-                    substrs = ['ACircle',
-                               'AShape',
-                               'ACircle',
-                               'AShape'])
+        self.expect("frame variable c1",
+                    substrs = ['ACircle'])
+        self.expect("frame variable c_ptr",
+                    substrs = ['ACircle'])
 
         self.runCmd("type summary add \"Rectangle *\" -w RectangleStarCategory --summary-string \"ARectangleStar\"")
         self.runCmd("type category enable RectangleStarCategory")
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
                 substrs = ['ACircle',
-                           'AShape',
-                           'ACircle',
                            'ARectangleStar'])
 
         self.runCmd("type category enable RectangleCategory")
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
                     substrs = ['ACircle',
-                               'ARectangle',
                                'ACircle',
                                'ARectangle'])
 
@@ -293,14 +292,13 @@ class CategoriesDataFormatterTestCase(TestBase):
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
                     substrs = ['ACircle',
-                               'AShape',
+                               '(Rectangle) r1 = {', 'w = 5', 'h = 6',
                                'ACircle',
                                'ARectangleStar'])
         
         # check that list commands work
         self.expect("type category list",
-                substrs = ['RectangleStarCategory',
-                           'is enabled'])
+                substrs = ['RectangleStarCategory is enabled'])
 
         self.expect("type summary list",
                 substrs = ['ARectangleStar'])
@@ -310,13 +308,10 @@ class CategoriesDataFormatterTestCase(TestBase):
         
         # check that list commands work
         self.expect("type category list",
-                    substrs = ['CircleCategory',
-                               'not enabled'])
+                    substrs = ['CircleCategory is not enabled'])
 
-        self.expect("frame variable c1 r1 c_ptr r_ptr",
+        self.expect("frame variable c1 r_ptr",
                     substrs = ['AShape',
-                               'AShape',
-                               'AShape',
                                'ARectangleStar'])
 
         # check that filters work into categories
