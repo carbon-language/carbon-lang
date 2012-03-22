@@ -29,6 +29,8 @@ using namespace ento;
 
 STATISTIC(NumReachedMaxSteps,
             "The # of times we reached the max number of steps.");
+STATISTIC(NumPathsExplored,
+            "The # of paths explored by the analyzer.");
 
 //===----------------------------------------------------------------------===//
 // Worklist classes for exploration of reachable states.
@@ -547,8 +549,10 @@ void CoreEngine::enqueueEndOfFunction(ExplodedNodeSet &Set) {
       N = generateCallExitNode(N);
       if (N)
         WList->enqueue(N);
-    } else
+    } else {
       G->addEndOfPath(N);
+      NumPathsExplored++;
+    }
   }
 }
 
