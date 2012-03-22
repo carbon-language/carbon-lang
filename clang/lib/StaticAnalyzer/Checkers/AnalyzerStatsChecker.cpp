@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 // This file reports various statistics about analyzer visitation.
 //===----------------------------------------------------------------------===//
+#define DEBUG_TYPE "StatsChecker"
 
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
@@ -20,9 +21,15 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Statistic.h"
 
 using namespace clang;
 using namespace ento;
+
+STATISTIC(NumBlocks,
+          "The # of blocks in top level functions");
+STATISTIC(NumBlocksUnreachable,
+          "The # of unreachable blocks in analyzing top level functions");
 
 namespace {
 class AnalyzerStatsChecker : public Checker<check::EndAnalysis> {
@@ -96,6 +103,9 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
     }
   }
   
+  NumBlocksUnreachable += unreachable;
+  NumBlocks += total;
+
   output << " -> Total CFGBlocks: " << total << " | Unreachable CFGBlocks: "
       << unreachable << " | Exhausted Block: "
       << (Eng.wasBlocksExhausted() ? "yes" : "no")
