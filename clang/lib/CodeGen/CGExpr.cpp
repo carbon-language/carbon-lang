@@ -950,9 +950,10 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV) {
   }
 
   if (LV.isVectorElt()) {
-    llvm::Value *Vec = Builder.CreateLoad(LV.getVectorAddr(),
-                                          LV.isVolatileQualified());
-    return RValue::get(Builder.CreateExtractElement(Vec, LV.getVectorIdx(),
+    llvm::LoadInst *Load = Builder.CreateLoad(LV.getVectorAddr(),
+                                              LV.isVolatileQualified());
+    Load->setAlignment(LV.getAlignment().getQuantity());
+    return RValue::get(Builder.CreateExtractElement(Load, LV.getVectorIdx(),
                                                     "vecext"));
   }
 
@@ -1039,8 +1040,10 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
 // If this is a reference to a subset of the elements of a vector, create an
 // appropriate shufflevector.
 RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
-  llvm::Value *Vec = Builder.CreateLoad(LV.getExtVectorAddr(),
-                                        LV.isVolatileQualified());
+  llvm::LoadInst *Load = Builder.CreateLoad(LV.getExtVectorAddr(),
+                                            LV.isVolatileQualified());
+  Load->setAlignment(LV.getAlignment().getQuantity());
+  llvm::Value *Vec = Load;
 
   const llvm::Constant *Elts = LV.getExtVectorElts();
 
@@ -1075,11 +1078,15 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, bool isInit
   if (!Dst.isSimple()) {
     if (Dst.isVectorElt()) {
       // Read/modify/write the vector, inserting the new element.
-      llvm::Value *Vec = Builder.CreateLoad(Dst.getVectorAddr(),
-                                            Dst.isVolatileQualified());
+      llvm::LoadInst *Load = Builder.CreateLoad(Dst.getVectorAddr(),
+                                                Dst.isVolatileQualified());
+      Load->setAlignment(Dst.getAlignment().getQuantity());
+      llvm::Value *Vec = Load;
       Vec = Builder.CreateInsertElement(Vec, Src.getScalarVal(),
                                         Dst.getVectorIdx(), "vecins");
-      Builder.CreateStore(Vec, Dst.getVectorAddr(),Dst.isVolatileQualified());
+      llvm::StoreInst *Store = Builder.CreateStore(Vec, Dst.getVectorAddr(),
+                                                   Dst.isVolatileQualified());
+      Store->setAlignment(Dst.getAlignment().getQuantity());
       return;
     }
 
@@ -1263,8 +1270,10 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
                                                                LValue Dst) {
   // This access turns into a read/modify/write of the vector.  Load the input
   // value now.
-  llvm::Value *Vec = Builder.CreateLoad(Dst.getExtVectorAddr(),
-                                        Dst.isVolatileQualified());
+  llvm::LoadInst *Load = Builder.CreateLoad(Dst.getExtVectorAddr(),
+                                            Dst.isVolatileQualified());
+  Load->setAlignment(Dst.getAlignment().getQuantity());
+  llvm::Value *Vec = Load;
   const llvm::Constant *Elts = Dst.getExtVectorElts();
 
   llvm::Value *SrcVal = Src.getScalarVal();
@@ -1320,7 +1329,9 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt);
   }
 
-  Builder.CreateStore(Vec, Dst.getExtVectorAddr(), Dst.isVolatileQualified());
+  llvm::StoreInst *Store = Builder.CreateStore(Vec, Dst.getExtVectorAddr(),
+                                               Dst.isVolatileQualified());
+  Store->setAlignment(Dst.getAlignment().getQuantity());
 }
 
 // setObjCGCLValueClass - sets class of he lvalue for the purpose of
@@ -1722,7 +1733,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
     Idx = Builder.CreateIntCast(Idx, Int32Ty, IdxSigned, "vidx");
     return LValue::MakeVectorElt(LHS.getAddress(), Idx,
-                                 E->getBase()->getType());
+                                 E->getBase()->getType(), LHS.getAlignment());
   }
 
   // Extend or truncate the index type to 32 or 64-bits.
@@ -1888,7 +1899,8 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 
   if (Base.isSimple()) {
     llvm::Constant *CV = GenerateConstantVector(Builder, Indices);
-    return LValue::MakeExtVectorElt(Base.getAddress(), CV, type);
+    return LValue::MakeExtVectorElt(Base.getAddress(), CV, type,
+                                    Base.getAlignment());
   }
   assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
 
@@ -1898,7 +1910,8 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   for (unsigned i = 0, e = Indices.size(); i != e; ++i)
     CElts.push_back(BaseElts->getAggregateElement(Indices[i]));
   llvm::Constant *CV = llvm::ConstantVector::get(CElts);
-  return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV, type);
+  return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV, type,
+                                  Base.getAlignment());
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {

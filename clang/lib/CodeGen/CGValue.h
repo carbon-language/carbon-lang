@@ -126,7 +126,8 @@ class LValue {
   // 'const' is unused here
   Qualifiers Quals;
 
-  /// The alignment to use when accessing this lvalue.
+  // The alignment to use when accessing this lvalue.  (For vector elements,
+  // this is the alignment of the whole vector.)
   unsigned short Alignment;
 
   // objective-c's ivar
@@ -267,22 +268,22 @@ public:
   }
 
   static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,
-                              QualType type) {
+                              QualType type, CharUnits Alignment) {
     LValue R;
     R.LVType = VectorElt;
     R.V = Vec;
     R.VectorIdx = Idx;
-    R.Initialize(type, type.getQualifiers());
+    R.Initialize(type, type.getQualifiers(), Alignment);
     return R;
   }
 
   static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts,
-                                 QualType type) {
+                                 QualType type, CharUnits Alignment) {
     LValue R;
     R.LVType = ExtVectorElt;
     R.V = Vec;
     R.VectorElts = Elts;
-    R.Initialize(type, type.getQualifiers());
+    R.Initialize(type, type.getQualifiers(), Alignment);
     return R;
   }
 
