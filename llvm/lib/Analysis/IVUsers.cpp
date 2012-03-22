@@ -107,11 +107,11 @@ static bool isSimplifiedLoopNest(BasicBlock *BB, const DominatorTree *DT,
   return true;
 }
 
-/// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
+/// AddUsersImpl - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
-bool IVUsers::AddUsersIfInteresting(Instruction *I,
-                                    SmallPtrSet<Loop*,16> &SimpleLoopNests) {
+bool IVUsers::AddUsersImpl(Instruction *I,
+                           SmallPtrSet<Loop*,16> &SimpleLoopNests) {
   // Add this IV user to the Processed set before returning false to ensure that
   // all IV users are members of the set. See IVUsers::isIVUserOrOperand.
   if (!Processed.insert(I))
@@ -167,13 +167,12 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I,
     bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
       if (isa<PHINode>(User) || Processed.count(User) ||
-          !AddUsersIfInteresting(User, SimpleLoopNests)) {
+          !AddUsersImpl(User, SimpleLoopNests)) {
         DEBUG(dbgs() << "FOUND USER in other loop: " << *User << '\n'
                      << "   OF SCEV: " << *ISE << '\n');
         AddUserToIVUsers = true;
       }
-    } else if (Processed.count(User)
-               || !AddUsersIfInteresting(User, SimpleLoopNests)) {
+    } else if (Processed.count(User) || !AddUsersImpl(User, SimpleLoopNests)) {
       DEBUG(dbgs() << "FOUND USER: " << *User << '\n'
                    << "   OF SCEV: " << *ISE << '\n');
       AddUserToIVUsers = true;
@@ -195,6 +194,15 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I,
     }
   }
   return true;
+}
+
+bool IVUsers::AddUsersIfInteresting(Instruction *I) {
+  // SCEVExpander can only handle users that are dominated by simplified loop
+  // entries. Keep track of all loops that are only dominated by other simple
+  // loops so we don't traverse the domtree for each user.
+  SmallPtrSet<Loop*,16> SimpleLoopNests;
+
+  return AddUsersImpl(I, SimpleLoopNests);
 }
 
 IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
@@ -222,16 +230,11 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   SE = &getAnalysis<ScalarEvolution>();
   TD = getAnalysisIfAvailable<TargetData>();
 
-  // SCEVExpander can only handle users that are dominated by simplified loop
-  // entries. Keep track of all loops that are only dominated by other simple
-  // loops so we don't traverse the domtree for each user.
-  SmallPtrSet<Loop*,16> SimpleLoopNests;
-
   // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I)
-    (void)AddUsersIfInteresting(I, SimpleLoopNests);
+    (void)AddUsersIfInteresting(I);
 
   return false;
 }

@@ -145,8 +145,7 @@ public:
   /// AddUsersIfInteresting - Inspect the specified Instruction.  If it is a
   /// reducible SCEV, recursively add its users to the IVUsesByStride set and
   /// return true.  Otherwise, return false.
-  bool AddUsersIfInteresting(Instruction *I,
-                             SmallPtrSet<Loop*,16> &SimpleLoopNests);
+  bool AddUsersIfInteresting(Instruction *I);
 
   IVStrideUse &AddUser(Instruction *User, Value *Operand);
 
@@ -175,6 +174,8 @@ public:
 
   /// dump - This method is used for debugging.
   void dump() const;
+protected:
+  bool AddUsersImpl(Instruction *I, SmallPtrSet<Loop*,16> &SimpleLoopNests);
 };
 
 Pass *createIVUsersPass();
