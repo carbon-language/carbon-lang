@@ -16,3 +16,8 @@ class TestCore(TestBase):
         source = self.get_test_binary()
 
         MemoryBuffer(filename=source)
+
+    def test_memory_buffer_failing(self):
+        with self.assertRaises(Exception):
+            MemoryBuffer(filename="/hopefully/this/path/doesnt/exist")
+
