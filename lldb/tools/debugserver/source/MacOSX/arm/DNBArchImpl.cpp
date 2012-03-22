@@ -275,11 +275,6 @@ DumpDBGState(const DNBArchMachARM::DBG& dbg)
         DNBLogThreadedIf(LOG_STEP, "BVR%-2u/BCR%-2u = { 0x%8.8x, 0x%8.8x } WVR%-2u/WCR%-2u = { 0x%8.8x, 0x%8.8x }",
             i, i, dbg.__bvr[i], dbg.__bcr[i],
             i, i, dbg.__wvr[i], dbg.__wcr[i]);
-        /*
-        printf("BVR%-2u/BCR%-2u = { 0x%8.8x, 0x%8.8x } WVR%-2u/WCR%-2u = { 0x%8.8x, 0x%8.8x }\n",
-               i, i, dbg.__bvr[i], dbg.__bcr[i],
-               i, i, dbg.__wvr[i], dbg.__wcr[i]);
-        */
     }
 }
 
@@ -365,20 +360,30 @@ DNBArchMachARM::ThreadWillResume()
         }
     }
 
-    // Disable the triggered watchpoint temporarily because we resume.
+    // Disable the triggered watchpoint temporarily before we resume.
+    // Plus, we try to enable hardware single step to execute past the instruction which triggered our watchpoint.
     if (m_watchpoint_did_occur)
     {
-        if (m_watchpoint_hw_index >= 0) {
+        if (m_watchpoint_hw_index >= 0)
+        {
             DisableHardwareWatchpoint(m_watchpoint_hw_index);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
                              m_watchpoint_hw_index);
-            // Reset the two watchpoint member variables.
-            m_watchpoint_did_occur = false;
-            m_watchpoint_hw_index = -1;
-            /*
-            printf("DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
-                   m_watchpoint_hw_index);
-            */
+
+            // Enable hardware single step to move past the watchpoint-triggering instruction.
+            m_watchpoint_resume_single_step_enabled = (EnableHardwareSingleStep(true) == KERN_SUCCESS);
+
+            // If we are not able to enable single step to move past the watchpoint-triggering instruction,
+            // at least we should reset the two watchpoint member variables so that the next time around
+            // this callback function is invoked, the enclosing logical branch is skipped.
+            if (!m_watchpoint_resume_single_step_enabled) {
+                // Reset the two watchpoint member variables.
+                m_watchpoint_did_occur = false;
+                m_watchpoint_hw_index = -1;
+                DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() failed to enable single step");
+            }
+            else
+                DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() succeeded to enable single step");
         }
     }
 }
@@ -389,6 +394,30 @@ DNBArchMachARM::ThreadDidStop()
     bool success = true;
 
     m_state.InvalidateRegisterSetState (e_regSetALL);
+
+    if (m_watchpoint_resume_single_step_enabled)
+    {
+        // Great!  We now disable the hardware single step as well as re-enable the hardware watchpoint.
+        // See also ThreadWillResume().
+        if (EnableHardwareSingleStep(false) == KERN_SUCCESS)
+        {
+            if (m_watchpoint_did_occur && m_watchpoint_hw_index >= 0)
+            {
+                EnableHardwareWatchpoint(m_watchpoint_hw_index);
+                m_watchpoint_resume_single_step_enabled = false;
+                m_watchpoint_did_occur = false;
+                m_watchpoint_hw_index = -1;
+            }
+            else
+            {
+                DNBLogError("internal error detected: m_watchpoint_resume_step_enabled is true but (m_watchpoint_did_occur && m_watchpoint_hw_index >= 0) does not hold!");
+            }
+        }
+        else
+        {
+            DNBLogError("internal error detected: m_watchpoint_resume_step_enabled is true but unable to disable single step!");
+        }
+    }
 
     // Are we stepping a single instruction?
     if (GetGPRState(true) == KERN_SUCCESS)
@@ -489,16 +518,11 @@ DNBArchMachARM::ThreadDidStop()
 bool
 DNBArchMachARM::NotifyException(MachException::Data& exc)
 {
-    //printf("exc.ex_type=%d\n", exc.exc_type);
     switch (exc.exc_type)
     {
         default:
             break;
         case EXC_BREAKPOINT:
-            /*
-            for (size_t i = 0; i < exc.exc_data.size(); ++i)
-                printf("exc.exc_data[%lu]=%llu\n", i, exc.exc_data[i]);
-            */
             if (exc.exc_data.size() == 2 && exc.exc_data[0] == EXC_ARM_DA_DEBUG)
             {
                 // exc_code = EXC_ARM_DA_DEBUG
@@ -507,11 +531,9 @@ DNBArchMachARM::NotifyException(MachException::Data& exc)
                 // If yes, retrieve the exc_sub_code as the data break address.
                 if (!HasWatchpointOccurred())
                     break;
-                //printf("Info -- Debug Status and Control Register indicates hardware watchpoint occurred!\n");
 
                 // The data break address is passed as exc_data[1].
                 nub_addr_t addr = exc.exc_data[1];
-                //printf("Info -- from mach exception: exc.exc_data[1]=0x%x\n", addr);
                 // Find the hardware index with the side effect of possibly massaging the
                 // addr to return the starting address as seen from the debugger side.
                 uint32_t hw_index = GetHardwareWatchpointHit(addr);
@@ -519,10 +541,8 @@ DNBArchMachARM::NotifyException(MachException::Data& exc)
                 {
                     m_watchpoint_did_occur = true;
                     m_watchpoint_hw_index = hw_index;
-                    //printf("Setting exc.exc_data[1] to %u\n", addr);
                     exc.exc_data[1] = addr;
                     // Piggyback the hw_index in the exc.data.
-                    //printf("Setting exc.exc_data[2] to %u\n", hw_index);
                     exc.exc_data.push_back(hw_index);
                 }
 
@@ -2258,7 +2278,6 @@ DNBArchMachARM::NumSupportedHardwareWatchpoints()
             }
         }
     }
-    //printf("g_num_supported_hw_watchpoints=%u\n", g_num_supported_hw_watchpoints);
     return g_num_supported_hw_watchpoints;
 }
 
@@ -2367,7 +2386,6 @@ DNBArchMachARM::DisableHardwareBreakpoint (uint32_t hw_index)
 uint32_t
 DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
-    //printf("DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %zu, read = %u, write = %u)\n", (uint64_t)addr, size, read, write);
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %zu, read = %u, write = %u)", (uint64_t)addr, size, read, write);
 
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
@@ -2428,7 +2446,6 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
         // See if we found an available hw watchpoint slot above
         if (i < num_hw_watchpoints)
         {
-            //printf("Found an available watchpoint slot: %u\nBefore setting WRP...\n", i);
             //DumpDBGState(m_state.dbg);
 
             // Make the byte_mask into a valid Byte Address Select mask
@@ -2442,7 +2459,6 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
                                     WCR_ENABLE;                 // Enable this watchpoint;
 
             kret = SetDBGState();
-            //printf("After setting WRP for slot: %u ...\n", i);
             //DumpDBGState(m_state.dbg);
 
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() SetDBGState() => 0x%8.8x.", kret);
@@ -2468,7 +2484,7 @@ DNBArchMachARM::EnableHardwareWatchpoint (uint32_t hw_index)
     {
         if (hw_index < num_hw_points)
         {
-            m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)0x1);
+            m_state.dbg.__wcr[hw_index] |= (nub_addr_t)WCR_ENABLE;
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
                     hw_index,
                     hw_index,
@@ -2495,7 +2511,7 @@ DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index)
     {
         if (hw_index < num_hw_points)
         {
-            m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)0x1);
+            m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)WCR_ENABLE);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::DisableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
                     hw_index,
                     hw_index,
@@ -2532,16 +2548,9 @@ static inline
 int32_t
 LowestBitSet(uint32_t val)
 {
-    //printf("LowestBitSet(): val=0x%x)\n", val);
-    /*
-    for (unsigned i = 0; i < 4; ++i)
-        printf("bit %u = %u\n", i, bit(val, i));
-    */
     for (unsigned i = 0; i < 4; ++i) {
-        if (bit(val, i)) {
-            //printf("LowestBitSet() returning %d\n", i);
+        if (bit(val, i))
             return i;
-        }
     }
     return -1;
 }
@@ -2554,7 +2563,6 @@ DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
 {
     // Read the debug state
     kern_return_t kret = GetDBGState(true);
-    //printf("GetHardwareWatchpointHit: dumping the debug state....\n");
     //DumpDBGState(m_state.dbg);
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::GetHardwareWatchpointHit() addr = 0x%llx", (uint64_t)addr);
@@ -2568,10 +2576,6 @@ DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
         for (i = 0; i < num; ++i)
         {
             nub_addr_t wp_addr = GetWatchAddress(debug_state, i);
-            /*
-            printf("DNBArchMachARM::GetHardwareWatchpointHit() slot: %u (addr = 0x%llx).\n",
-                   i, (uint64_t)wp_addr);
-            */
             DNBLogThreadedIf(LOG_WATCHPOINTS,
                              "DNBArchMachARM::GetHardwareWatchpointHit() slot: %u (addr = 0x%llx).",
                              i, (uint64_t)wp_addr);
@@ -2584,10 +2588,6 @@ DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
 
                 // Compute the starting address (from the point of view of the debugger).
                 addr = wp_addr + LowestBitSet(byte_mask);
-                /*
-                printf("DNBArchMachARM::GetHardwareWatchpointHit() found => %u (wp_addr = 0x%llx, addr = 0x%llx).\n",
-                       i, (uint64_t)wp_addr, (uint64_t)addr);
-                */
                 return i;
             }
         }
@@ -2605,13 +2605,11 @@ DNBArchMachARM::ClearWatchpointOccurred()
 {
     uint32_t register_DBGDSCR;
     asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-    //printf("ClearWatchpointOccurred: register_DBGDSCR: 0x%x, bits(5, 2): 0x%x\n", register_DBGDSCR, bits(register_DBGDSCR, 5, 2));
     if (bits(register_DBGDSCR, 5, 2) == WATCHPOINT_OCCURRED)
     {
         uint32_t mask = ~(0xF << 2);
         register_DBGDSCR &= mask;
         asm("mcr p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-        //printf("ClearWatchpointOccurred: cleared bits(5,2) of register_DBGDSCR\n");
     }
     return;
 }
@@ -2626,14 +2624,11 @@ DNBArchMachARM::HasWatchpointOccurred()
 {
     uint32_t register_DBGDSCR;
     asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-    //printf("HasWatchpointOccurred: register_DBGDSCR: 0x%x, bits(5, 2): 0x%x\n", register_DBGDSCR, bits(register_DBGDSCR, 5, 2));
     return (bits(register_DBGDSCR, 5, 2) == WATCHPOINT_OCCURRED);
 }
 
-// FIXME: IsWatchpointHit() currently returns the first enabled watchpoint,
-//        instead of finding the watchpoint that actually triggered.
 bool
-DNBArchMachARM::IsWatchpointHit(const DBG &debug_state, uint32_t hw_index)
+DNBArchMachARM::IsWatchpointEnabled(const DBG &debug_state, uint32_t hw_index)
 {
     // Watchpoint Control Registers, bitfield definitions
     // ...

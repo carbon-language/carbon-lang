@@ -37,7 +37,8 @@ public:
         m_sw_single_step_itblock_break_count(0),
         m_last_decode_pc(INVALID_NUB_ADDRESS),
         m_watchpoint_hw_index(-1),
-        m_watchpoint_did_occur(false)
+        m_watchpoint_did_occur(false),
+        m_watchpoint_resume_single_step_enabled(false)
     {
         memset(&m_dbg_save, 0, sizeof(m_dbg_save));
 #if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
@@ -242,7 +243,7 @@ protected:
     // Helper functions for watchpoint implementaions.
     static void ClearWatchpointOccurred();
     static bool HasWatchpointOccurred();
-    static bool IsWatchpointHit(const DBG &debug_state, uint32_t hw_index);
+    static bool IsWatchpointEnabled(const DBG &debug_state, uint32_t hw_index);
     static nub_addr_t GetWatchAddress(const DBG &debug_state, uint32_t hw_index);
 
 protected:
@@ -262,10 +263,10 @@ protected:
 #endif
     nub_addr_t      m_last_decode_pc;
 
-    // The following two member variables should be updated atomically.
+    // The following member variables should be updated atomically.
     int32_t         m_watchpoint_hw_index;
     bool            m_watchpoint_did_occur;
-
+    bool            m_watchpoint_resume_single_step_enabled;
 };
 
 #endif    // #if defined (__arm__)
