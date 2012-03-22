@@ -15,9 +15,7 @@
 #define SPARCMCTARGETDESC_H
 
 namespace llvm {
-class MCSubtargetInfo;
 class Target;
-class StringRef;
 
 extern Target TheSparcTarget;
 extern Target TheSparcV9Target;

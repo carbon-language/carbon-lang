@@ -15,9 +15,7 @@
 #define SPUMCTARGETDESC_H
 
 namespace llvm {
-class MCSubtargetInfo;
 class Target;
-class StringRef;
 
 extern Target TheCellSPUTarget;
 

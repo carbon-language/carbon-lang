@@ -15,9 +15,7 @@
 #define XCOREMCTARGETDESC_H
 
 namespace llvm {
-class MCSubtargetInfo;
 class Target;
-class StringRef;
 
 extern Target TheXCoreTarget;
 

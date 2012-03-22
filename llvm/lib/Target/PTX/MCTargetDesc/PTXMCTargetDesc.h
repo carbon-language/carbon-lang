@@ -15,9 +15,7 @@
 #define PTXMCTARGETDESC_H
 
 namespace llvm {
-class MCSubtargetInfo;
 class Target;
-class StringRef;
 
 extern Target ThePTX32Target;
 extern Target ThePTX64Target;

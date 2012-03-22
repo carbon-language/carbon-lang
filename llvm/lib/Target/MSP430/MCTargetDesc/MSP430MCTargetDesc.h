@@ -15,9 +15,7 @@
 #define MSP430MCTARGETDESC_H
 
 namespace llvm {
-class MCSubtargetInfo;
 class Target;
-class StringRef;
 
 extern Target TheMSP430Target;
 

@@ -25,7 +25,6 @@ class MCObjectWriter;
 class MCSubtargetInfo;
 class Target;
 class StringRef;
-class formatted_raw_ostream;
 class raw_ostream;
 
 extern Target TheMBlazeTarget;
