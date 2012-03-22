@@ -49,12 +49,6 @@ bool simplifyUsersOfIV(PHINode *CurrIV, ScalarEvolution *SE, LPPassManager *LPM,
 bool simplifyLoopIVs(Loop *L, ScalarEvolution *SE, LPPassManager *LPM,
                      SmallVectorImpl<WeakVH> &Dead);
 
-/// simplifyIVUsers - Simplify instructions recorded by the IVUsers pass.
-/// This is a legacy implementation to reproduce the behavior of the
-/// IndVarSimplify pass prior to DisableIVRewrite.
-bool simplifyIVUsers(IVUsers *IU, ScalarEvolution *SE, LPPassManager *LPM,
-                     SmallVectorImpl<WeakVH> &Dead);
-
 } // namespace llvm
 
 #endif
