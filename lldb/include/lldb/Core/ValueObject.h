@@ -881,7 +881,17 @@ public:
     DumpValueObject (Stream &s,
                      ValueObject *valobj,
                      const DumpValueObjectOptions& options);
-    
+
+    static void
+    LogValueObject (Log *log,
+                    ValueObject *valobj);
+
+    static void
+    LogValueObject (Log *log,
+                    ValueObject *valobj,
+                    const DumpValueObjectOptions& options);
+
+
     // returns true if this is a char* or a char[]
     // if it is a char* and check_pointer is true,
     // it also checks that the pointer is valid

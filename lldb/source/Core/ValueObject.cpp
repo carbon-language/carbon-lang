@@ -3391,6 +3391,28 @@ DumpValueObject_Impl (Stream &s,
 }
 
 void
+ValueObject::LogValueObject (Log *log,
+                             ValueObject *valobj)
+{
+    if (log && valobj)
+        return LogValueObject (log, valobj, DumpValueObjectOptions::DefaultOptions());
+}
+
+void
+ValueObject::LogValueObject (Log *log,
+                             ValueObject *valobj,
+                             const DumpValueObjectOptions& options)
+{
+    if (log && valobj)
+    {
+        StreamString s;
+        ValueObject::DumpValueObject (s, valobj, options);
+        if (s.GetSize())
+            log->PutCString(s.GetData());
+    }
+}
+
+void
 ValueObject::DumpValueObject (Stream &s,
                               ValueObject *valobj)
 {
