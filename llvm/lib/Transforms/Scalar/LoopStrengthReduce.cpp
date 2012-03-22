@@ -77,9 +77,6 @@
 #include <algorithm>
 using namespace llvm;
 
-static cl::opt<bool> EnableNested(
-  "enable-lsr-nested", cl::Hidden, cl::desc("Enable LSR on nested loops"));
-
 static cl::opt<bool> EnableRetry(
   "enable-lsr-retry", cl::Hidden, cl::desc("Enable LSR retry"));
 
@@ -824,36 +821,20 @@ void Cost::RateRegister(const SCEV *Reg,
                         const Loop *L,
                         ScalarEvolution &SE, DominatorTree &DT) {
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg)) {
-    if (AR->getLoop() == L)
-      AddRecCost += 1; /// TODO: This should be a function of the stride.
-
     // If this is an addrec for another loop, don't second-guess its addrec phi
     // nodes. LSR isn't currently smart enough to reason about more than one
-    // loop at a time. LSR has either already run on inner loops, will not run
-    // on other loops, and cannot be expected to change sibling loops. If the
-    // AddRec exists, consider it's register free and leave it alone. Otherwise,
-    // do not consider this formula at all.
-    else if (!EnableNested || L->contains(AR->getLoop()) ||
-             (!AR->getLoop()->contains(L) &&
-              DT.dominates(L->getHeader(), AR->getLoop()->getHeader()))) {
+    // loop at a time. LSR has already run on inner loops, will not run on outer
+    // loops, and cannot be expected to change sibling loops.
+    if (AR->getLoop() != L) {
+      // If the AddRec exists, consider it's register free and leave it alone.
       if (isExistingPhi(AR, SE))
         return;
 
-      // For !EnableNested, never rewrite IVs in other loops.
-      if (!EnableNested) {
-        Loose();
-        return;
-      }
-      // If this isn't one of the addrecs that the loop already has, it
-      // would require a costly new phi and add. TODO: This isn't
-      // precisely modeled right now.
-      ++NumBaseAdds;
-      if (!Regs.count(AR->getStart())) {
-        RateRegister(AR->getStart(), Regs, L, SE, DT);
-        if (isLoser())
-          return;
-      }
+      // Otherwise, do not consider this formula at all.
+      Loose();
+      return;
     }
+    AddRecCost += 1; /// TODO: This should be a function of the stride.
 
     // Add the step value register, if it needs one.
     // TODO: The non-affine case isn't precisely modeled here.
@@ -2193,7 +2174,7 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
     do {
       const SCEV *S = Worklist.pop_back_val();
       if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
-        if (EnableNested || AR->getLoop() == L)
+        if (AR->getLoop() == L)
           Strides.insert(AR->getStepRecurrence(SE));
         Worklist.push_back(AR->getStart());
       } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
@@ -4566,7 +4547,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   if (IU.empty()) return;
 
   // Skip nested loops until we can model them better with formulae.
-  if (!EnableNested && !L->empty()) {
+  if (!L->empty()) {
     DEBUG(dbgs() << "LSR skipping outer loop " << *L << "\n");
     return;
   }
