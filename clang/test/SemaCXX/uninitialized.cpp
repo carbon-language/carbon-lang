@@ -147,3 +147,18 @@ namespace rdar10398199 {
     (void)y;
   };
 }
+
+// PR 12325 - this was a false uninitialized value warning due to
+// a broken CFG.
+int pr12325(int params) {
+  int x = ({
+    while (false)
+      ;
+    int _v = params;
+    if (false)
+      ;
+    _v; // no-warning
+  });
+  return x;
+}
+

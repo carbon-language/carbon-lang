@@ -1464,14 +1464,24 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
 
   autoCreateBlock();
   appendStmt(Block, DS);
+  
+  // Keep track of the last non-null block, as 'Block' can be nulled out
+  // if the initializer expression is something like a 'while' in a
+  // statement-expression.
+  CFGBlock *LastBlock = Block;
 
   if (Init) {
-    if (HasTemporaries)
+    if (HasTemporaries) {
       // For expression with temporaries go directly to subexpression to omit
       // generating destructors for the second time.
-      Visit(cast<ExprWithCleanups>(Init)->getSubExpr());
-    else
-      Visit(Init);
+      ExprWithCleanups *EC = cast<ExprWithCleanups>(Init);
+      if (CFGBlock *newBlock = Visit(EC->getSubExpr()))
+        LastBlock = newBlock;
+    }
+    else {
+      if (CFGBlock *newBlock = Visit(Init))
+        LastBlock = newBlock;
+    }
   }
 
   // If the type of VD is a VLA, then we must process its size expressions.
@@ -1483,7 +1493,7 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
   if (ScopePos && VD == *ScopePos)
     ++ScopePos;
 
-  return Block;
+  return Block ? Block : LastBlock;
 }
 
 CFGBlock *CFGBuilder::VisitIfStmt(IfStmt *I) {
