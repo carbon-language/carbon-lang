@@ -326,7 +326,11 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
           OpNo += InlineAsm::getNumOperandRegisters(OpFlags) + 1;
         }
 
-        if (OpNo >= MI->getNumOperands()) {
+	// We may have a location metadata attached to the end of the
+	// instruction, and at no point should see metadata at any
+	// other point while processing. It's an error if so.
+        if (OpNo >= MI->getNumOperands() ||
+	    MI->getOperand(OpNo).isMetadata()) {
           Error = true;
         } else {
           unsigned OpFlags = MI->getOperand(OpNo).getImm();
