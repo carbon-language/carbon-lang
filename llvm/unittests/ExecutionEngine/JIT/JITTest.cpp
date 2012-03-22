@@ -64,10 +64,6 @@ public:
     : Base(JITMemoryManager::CreateDefaultMemManager()) {
     stubsAllocated = 0;
   }
-  virtual void *getPointerToNamedFunction(const std::string &Name,
-                                          bool AbortOnFailure = true) {
-    return Base->getPointerToNamedFunction(Name, AbortOnFailure);
-  }
 
   virtual void setMemoryWritable() { Base->setMemoryWritable(); }
   virtual void setMemoryExecutable() { Base->setMemoryExecutable(); }

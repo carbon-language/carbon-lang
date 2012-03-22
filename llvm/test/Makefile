@@ -171,7 +171,6 @@ lit.site.cfg: site.exp
 	@$(ECHOPATH) s=@ENABLE_ASSERTIONS@=$(ENABLE_ASSERTIONS)=g >> lit.tmp
 	@$(ECHOPATH) s=@TARGETS_TO_BUILD@=$(TARGETS_TO_BUILD)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINDINGS@=$(BINDINGS_TO_BUILD)=g >> lit.tmp
-	@$(ECHOPATH) s=@HOST_OS@=$(HOST_OS)=g >> lit.tmp
 	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 
@@ -185,6 +184,5 @@ Unit/lit.site.cfg: $(PROJ_OBJ_DIR)/Unit/.dir FORCE
 	@$(ECHOPATH) s=@ENABLE_SHARED@=$(ENABLE_SHARED)=g >> unit.tmp
 	@$(ECHOPATH) s=@SHLIBDIR@=$(SharedLibDir)=g >> unit.tmp
 	@$(ECHOPATH) s=@SHLIBPATH_VAR@=$(SHLIBPATH_VAR)=g >> unit.tmp
-	@$(ECHOPATH) s=@HOST_OS@=$(HOST_OS)=g >> unit.tmp
 	@sed -f unit.tmp $(PROJ_SRC_DIR)/Unit/lit.site.cfg.in > $@
 	@-rm -f unit.tmp

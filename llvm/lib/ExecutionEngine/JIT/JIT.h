@@ -58,7 +58,6 @@ class JIT : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
   JITCodeEmitter *JCE;     // JCE object
-  JITMemoryManager *JMM;
   std::vector<JITEventListener*> EventListeners;
 
   /// AllocateGVsWithCode - Some applications require that global variables and

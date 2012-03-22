@@ -58,11 +58,9 @@ public:
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID);
 
-  virtual void *getPointerToNamedFunction(const std::string &Name,
-                                          bool AbortOnFailure = true) {
-    return 0;
-  }
-
+  uint8_t *startFunctionBody(const char *Name, uintptr_t &Size);
+  void endFunctionBody(const char *Name, uint8_t *FunctionStart,
+                       uint8_t *FunctionEnd);
 };
 
 uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
@@ -75,6 +73,18 @@ uint8_t *TrivialMemoryManager::allocateDataSection(uintptr_t Size,
                                                    unsigned Alignment,
                                                    unsigned SectionID) {
   return (uint8_t*)sys::Memory::AllocateRWX(Size, 0, 0).base();
+}
+
+uint8_t *TrivialMemoryManager::startFunctionBody(const char *Name,
+                                                 uintptr_t &Size) {
+  return (uint8_t*)sys::Memory::AllocateRWX(Size, 0, 0).base();
+}
+
+void TrivialMemoryManager::endFunctionBody(const char *Name,
+                                           uint8_t *FunctionStart,
+                                           uint8_t *FunctionEnd) {
+  uintptr_t Size = FunctionEnd - FunctionStart + 1;
+  FunctionMemory.push_back(sys::MemoryBlock(FunctionStart, Size));
 }
 
 static const char *ProgramName;

@@ -215,23 +215,3 @@ GenericValue MCJIT::runFunction(Function *F,
 
   llvm_unreachable("Full-featured argument passing not supported yet!");
 }
-
-void *MCJIT::getPointerToNamedFunction(const std::string &Name,
-                                       bool AbortOnFailure){
-  if (!isSymbolSearchingDisabled()) {
-    void *ptr = MemMgr->getPointerToNamedFunction(Name, false);
-    if (ptr)
-      return ptr;
-  }
-
-  /// If a LazyFunctionCreator is installed, use it to get/create the function.
-  if (LazyFunctionCreator)
-    if (void *RP = LazyFunctionCreator(Name))
-      return RP;
-
-  if (AbortOnFailure) {
-    report_fatal_error("Program used external function '"+Name+
-                      "' which could not be resolved!");
-  }
-  return 0;
-}
