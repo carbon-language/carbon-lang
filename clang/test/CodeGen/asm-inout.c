@@ -37,3 +37,12 @@ int test4(volatile int *addr) {
   return (int)oldval;
 // CHECK: call i8 asm "frob $0", "=r,0{{.*}}"(i8 -1)
 }
+
+// <rdar://problem/10919182> - This should have both inputs be of type x86_mmx.
+// CHECK: @test5
+typedef long long __m64 __attribute__((__vector_size__(8)));
+__m64 test5(__m64 __A, __m64 __B) {
+  // CHECK: call x86_mmx asm "pmulhuw $1, $0\0A\09", "=y,y,0,~{dirflag},~{fpsr},~{flags}"(x86_mmx %{{.}}, x86_mmx %{{.}})
+  asm("pmulhuw %1, %0\n\t" : "+y" (__A) : "y" (__B));
+  return __A;
+}
