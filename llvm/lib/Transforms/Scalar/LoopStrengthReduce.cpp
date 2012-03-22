@@ -77,9 +77,6 @@
 #include <algorithm>
 using namespace llvm;
 
-static cl::opt<bool> EnableRetry(
-  "enable-lsr-retry", cl::Hidden, cl::desc("Enable LSR retry"));
-
 // Temporary flag to cleanup congruent phis after LSR phi expansion.
 // It's currently disabled until we can determine whether it's truly useful or
 // not. The flag should be removed after the v3.0 release.
@@ -3967,24 +3964,29 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
     if (LU.Regs.count(*I))
       ReqRegs.insert(*I);
 
-  bool AnySatisfiedReqRegs = false;
   SmallPtrSet<const SCEV *, 16> NewRegs;
   Cost NewCost;
-retry:
   for (SmallVectorImpl<Formula>::const_iterator I = LU.Formulae.begin(),
        E = LU.Formulae.end(); I != E; ++I) {
     const Formula &F = *I;
 
     // Ignore formulae which do not use any of the required registers.
+    bool SatisfiedReqReg = true;
     for (SmallSetVector<const SCEV *, 4>::const_iterator J = ReqRegs.begin(),
          JE = ReqRegs.end(); J != JE; ++J) {
       const SCEV *Reg = *J;
       if ((!F.ScaledReg || F.ScaledReg != Reg) &&
           std::find(F.BaseRegs.begin(), F.BaseRegs.end(), Reg) ==
-          F.BaseRegs.end())
-        goto skip;
+          F.BaseRegs.end()) {
+        SatisfiedReqReg = false;
+        break;
+      }
     }
-    AnySatisfiedReqRegs = true;
+    if (!SatisfiedReqReg) {
+      // If none of the formulae satisfied the required registers, then we could
+      // clear ReqRegs and try again. Currently, we simply give up in this case.
+      continue;
+    }
 
     // Evaluate the cost of the current formula. If it's already worse than
     // the current best, prune the search at that point.
@@ -4011,18 +4013,6 @@ retry:
       }
       Workspace.pop_back();
     }
-  skip:;
-  }
-
-  if (!EnableRetry && !AnySatisfiedReqRegs)
-    return;
-
-  // If none of the formulae had all of the required registers, relax the
-  // constraint so that we don't exclude all formulae.
-  if (!AnySatisfiedReqRegs) {
-    assert(!ReqRegs.empty() && "Solver failed even without required registers");
-    ReqRegs.clear();
-    goto retry;
   }
 }
 
