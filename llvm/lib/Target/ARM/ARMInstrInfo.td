@@ -3533,19 +3533,20 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
 //        property. Remove them when it's possible to add those properties
 //        on an individual MachineInstr, not just an instuction description.
 let isCommutable = 1 in {
-def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+def MUL  : AsMul1I32<0b0000000, (outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm),
                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
-                   [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
+                   [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))]>,
                    Requires<[IsARM, HasV6]> {
   let Inst{15-12} = 0b0000;
+  let Unpredictable{15-12} = 0b1111;
 }
 
 let Constraints = "@earlyclobber $Rd" in
-def MULv5: ARMPseudoExpand<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
+def MULv5: ARMPseudoExpand<(outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm,
                                             pred:$p, cc_out:$s),
                           4, IIC_iMUL32,
-                         [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))],
-                         (MUL GPR:$Rd, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+                         [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))],
+                         (MUL GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p, cc_out:$s)>,
                         Requires<[IsARM, NoV6]>;
 }
 
