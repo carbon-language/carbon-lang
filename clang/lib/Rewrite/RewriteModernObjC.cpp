@@ -74,6 +74,7 @@ namespace {
     TypeDecl *ProtocolTypeDecl;
     VarDecl *GlobalVarDecl;
     unsigned RewriteFailedDiag;
+    unsigned GlobalBlockRewriteFailedDiag;
     // ObjC string constant support.
     unsigned NumObjCStringLiterals;
     VarDecl *ConstantStringClassReference;
@@ -572,6 +573,11 @@ RewriteModernObjC::RewriteModernObjC(std::string inFile, raw_ostream* OS,
   IsHeader = IsHeaderFile(inFile);
   RewriteFailedDiag = Diags.getCustomDiagID(DiagnosticsEngine::Warning,
                "rewriting sub-expression within a macro (may not be correct)");
+  // FIXME. This should be an error. But if block is not called, it is OK. And it
+  // may break including some headers.
+  GlobalBlockRewriteFailedDiag = Diags.getCustomDiagID(DiagnosticsEngine::Warning,
+    "rewriting block literal declared in global scope is not implemented");
+          
   TryFinallyContainsReturnDiag = Diags.getCustomDiagID(
                DiagnosticsEngine::Warning,
                "rewriter doesn't support user-specified control flow semantics "
@@ -4409,7 +4415,12 @@ FunctionDecl *RewriteModernObjC::SynthBlockInitFunctionDecl(StringRef name) {
 
 Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
           const SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs) {
+  
   const BlockDecl *block = Exp->getBlockDecl();
+  
+  if (block->getDeclContext()->getRedeclContext()->isFileContext())
+    Diags.Report(block->getLocation(), GlobalBlockRewriteFailedDiag);
+  
   Blocks.push_back(Exp);
 
   CollectBlockDeclRefInfo(Exp);

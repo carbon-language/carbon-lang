@@ -71,7 +71,7 @@ void test_arguments() {
 }
 
 static int global_x = 10;
-void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); };
+void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); }; // expected-warning {{rewriting block literal declared in global scope is not implemented}}
 
 typedef void (^void_block_t)(void);
 
