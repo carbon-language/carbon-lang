@@ -447,10 +447,8 @@ void PollyIndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   }
 
   // Add a new IVUsers entry for the newly-created integer PHI.
-  if (IU) {
-    SmallPtrSet<Loop*,16> SimpleLoopNests;
-    IU->AddUsersIfInteresting(NewPHI, SimpleLoopNests);
-  }
+  if (IU)
+    IU->AddUsersIfInteresting(NewPHI);
 
   Changed = true;
 }
@@ -1969,11 +1967,8 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // loop exit test instruction.
   if (IU && NewICmp) {
     ICmpInst *NewICmpInst = dyn_cast<ICmpInst>(NewICmp);
-    if (NewICmpInst) {
-      SmallPtrSet<Loop*,16> SimpleLoopNests;
-      IU->AddUsersIfInteresting(cast<Instruction>(NewICmpInst->getOperand(0)),
-                                SimpleLoopNests);
-    }
+    if (NewICmpInst)
+      IU->AddUsersIfInteresting(cast<Instruction>(NewICmpInst->getOperand(0)));
   }
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader());
