@@ -103,6 +103,72 @@ finally.rethrow:                                  ; preds = %invoke.cont, %entry
   unreachable
 }
 
+; Don't try to place code on invoke critical edges.
+
+; CHECK: define void @test3(
+; CHECK: if.end:
+; CHECK-NEXT: call void @objc_release(i8* %p) nounwind
+; CHECK-NEXT: ret void
+define void @test3(i8* %p, i1 %b) {
+entry:
+  %0 = call i8* @objc_retain(i8* %p)
+  call void @callee()
+  br i1 %b, label %if.else, label %if.then
+
+if.then:
+  invoke void @use_pointer(i8* %p)
+          to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+
+if.else:
+  invoke void @use_pointer(i8* %p)
+          to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+
+lpad:
+  %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+       cleanup
+  ret void
+
+if.end:
+  call void @objc_release(i8* %p)
+  ret void
+}
+
+; Like test3, but with ARC-relevant exception handling.
+
+; CHECK: define void @test4(
+; CHECK: lpad:
+; CHECK-NEXT: %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+; CHECK-NEXT: cleanup
+; CHECK-NEXT: call void @objc_release(i8* %p) nounwind
+; CHECK-NEXT: ret void
+; CHECK: if.end:
+; CHECK-NEXT: call void @objc_release(i8* %p) nounwind
+; CHECK-NEXT: ret void
+define void @test4(i8* %p, i1 %b) {
+entry:
+  %0 = call i8* @objc_retain(i8* %p)
+  call void @callee()
+  br i1 %b, label %if.else, label %if.then
+
+if.then:
+  invoke void @use_pointer(i8* %p)
+          to label %if.end unwind label %lpad
+
+if.else:
+  invoke void @use_pointer(i8* %p)
+          to label %if.end unwind label %lpad
+
+lpad:
+  %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+       cleanup
+  call void @objc_release(i8* %p)
+  ret void
+
+if.end:
+  call void @objc_release(i8* %p)
+  ret void
+}
+
 declare i32 @__gxx_personality_v0(...)
 declare i32 @__objc_personality_v0(...)
 

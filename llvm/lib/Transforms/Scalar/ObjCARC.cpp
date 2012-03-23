@@ -1679,6 +1679,7 @@ namespace {
                             DenseMap<const BasicBlock *, BBState> &BBStates,
                             BBState &MyStates) const;
     bool VisitInstructionBottomUp(Instruction *Inst,
+                                  BasicBlock *BB,
                                   MapVector<Value *, RRInfo> &Retains,
                                   BBState &MyStates);
     bool VisitBottomUp(BasicBlock *BB,
@@ -2523,6 +2524,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
 
 bool
 ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
+                                     BasicBlock *BB,
                                      MapVector<Value *, RRInfo> &Retains,
                                      BBState &MyStates) {
   bool NestingDetected = false;
@@ -2642,14 +2644,24 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     case S_MovableRelease:
       if (CanUse(Inst, Ptr, PA, Class)) {
         assert(S.RRI.ReverseInsertPts.empty());
-        S.RRI.ReverseInsertPts.insert(Inst);
+        // If this is an invoke instruction, we're scanning it as part of
+        // one of its successor blocks, since we can't insert code after it
+        // in its own block, and we don't want to split critical edges.
+        if (isa<InvokeInst>(Inst))
+          S.RRI.ReverseInsertPts.insert(BB->getFirstInsertionPt());
+        else
+          S.RRI.ReverseInsertPts.insert(next(BasicBlock::iterator(Inst)));
         S.SetSeq(S_Use);
       } else if (Seq == S_Release &&
                  (Class == IC_User || Class == IC_CallOrUser)) {
         // Non-movable releases depend on any possible objc pointer use.
         S.SetSeq(S_Stop);
         assert(S.RRI.ReverseInsertPts.empty());
-        S.RRI.ReverseInsertPts.insert(Inst);
+        // As above; handle invoke specially.
+        if (isa<InvokeInst>(Inst))
+          S.RRI.ReverseInsertPts.insert(BB->getFirstInsertionPt());
+        else
+          S.RRI.ReverseInsertPts.insert(next(BasicBlock::iterator(Inst)));
       }
       break;
     case S_Stop:
@@ -2713,7 +2725,23 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
     Instruction *Inst = llvm::prior(I);
-    NestingDetected |= VisitInstructionBottomUp(Inst, Retains, MyStates);
+
+    // Invoke instructions are visited as part of their successors (below).
+    if (isa<InvokeInst>(Inst))
+      continue;
+
+    NestingDetected |= VisitInstructionBottomUp(Inst, BB, Retains, MyStates);
+  }
+
+  // If there's a predecessor with an invoke, visit the invoke as
+  // if it were part of this block, since we can't insert code after
+  // an invoke in its own block, and we don't want to split critical
+  // edges.
+  for (pred_iterator PI(BB), PE(BB, false); PI != PE; ++PI) {
+    BasicBlock *Pred = *PI;
+    TerminatorInst *PredTI = cast<TerminatorInst>(&Pred->back());
+    if (isa<InvokeInst>(PredTI))
+      NestingDetected |= VisitInstructionBottomUp(PredTI, BB, Retains, MyStates);
   }
 
   return NestingDetected;
@@ -3058,35 +3086,17 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
   for (SmallPtrSet<Instruction *, 2>::const_iterator
        PI = RetainsToMove.ReverseInsertPts.begin(),
        PE = RetainsToMove.ReverseInsertPts.end(); PI != PE; ++PI) {
-    Instruction *LastUse = *PI;
-    Instruction *InsertPts[] = { 0, 0, 0 };
-    if (InvokeInst *II = dyn_cast<InvokeInst>(LastUse)) {
-      // We can't insert code immediately after an invoke instruction, so
-      // insert code at the beginning of both successor blocks instead.
-      // The invoke's return value isn't available in the unwind block,
-      // but our releases will never depend on it, because they must be
-      // paired with retains from before the invoke.
-      InsertPts[0] = II->getNormalDest()->getFirstInsertionPt();
-      if (!II->getMetadata(NoObjCARCExceptionsMDKind))
-        InsertPts[1] = II->getUnwindDest()->getFirstInsertionPt();
-    } else {
-      // Insert code immediately after the last use.
-      InsertPts[0] = llvm::next(BasicBlock::iterator(LastUse));
-    }
-
-    for (Instruction **I = InsertPts; *I; ++I) {
-      Instruction *InsertPt = *I;
-      Value *MyArg = ArgTy == ParamTy ? Arg :
-                     new BitCastInst(Arg, ParamTy, "", InsertPt);
-      CallInst *Call = CallInst::Create(getReleaseCallee(M), MyArg,
-                                        "", InsertPt);
-      // Attach a clang.imprecise_release metadata tag, if appropriate.
-      if (MDNode *M = ReleasesToMove.ReleaseMetadata)
-        Call->setMetadata(ImpreciseReleaseMDKind, M);
-      Call->setDoesNotThrow();
-      if (ReleasesToMove.IsTailCallRelease)
-        Call->setTailCall();
-    }
+    Instruction *InsertPt = *PI;
+    Value *MyArg = ArgTy == ParamTy ? Arg :
+                   new BitCastInst(Arg, ParamTy, "", InsertPt);
+    CallInst *Call = CallInst::Create(getReleaseCallee(M), MyArg,
+                                      "", InsertPt);
+    // Attach a clang.imprecise_release metadata tag, if appropriate.
+    if (MDNode *M = ReleasesToMove.ReleaseMetadata)
+      Call->setMetadata(ImpreciseReleaseMDKind, M);
+    Call->setDoesNotThrow();
+    if (ReleasesToMove.IsTailCallRelease)
+      Call->setTailCall();
   }
 
   // Delete the original retain and release calls.
