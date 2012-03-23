@@ -2001,6 +2001,9 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
       LVN = RVN;
     }
   }
+  assert((!isa<Instruction>(RHS) ||
+          DT->properlyDominates(cast<Instruction>(RHS)->getParent(), Root)) &&
+         "Instruction doesn't dominate scope!");
 
   // If value numbering later deduces that an instruction in the scope is equal
   // to 'LHS' then ensure it will be turned into 'RHS'.
