@@ -286,6 +286,10 @@ class CFGBuilder {
   CFG::BuildOptions::ForcedBlkExprs::value_type *cachedEntry;
   const Stmt *lastLookup;
 
+  // Caches boolean evaluations of expressions to avoid multiple re-evaluations
+  // during construction of branches for chained logical operators.
+  llvm::DenseMap<Expr *, TryResult> CachedBoolEvals;
+
 public:
   explicit CFGBuilder(ASTContext *astContext,
                       const CFG::BuildOptions &buildOpts) 
@@ -439,12 +443,65 @@ private:
   /// tryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
   /// if we can evaluate to a known value, otherwise return -1.
   TryResult tryEvaluateBool(Expr *S) {
-    bool Result;
     if (!BuildOpts.PruneTriviallyFalseEdges ||
-        S->isTypeDependent() || S->isValueDependent() ||
-        !S->EvaluateAsBooleanCondition(Result, *Context))
+        S->isTypeDependent() || S->isValueDependent())
       return TryResult();
-    return Result;
+
+    if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(S)) {
+      if (Bop->isLogicalOp()) {
+        // Check the cache first.
+        typedef llvm::DenseMap<Expr *, TryResult>::iterator eval_iterator;
+        eval_iterator I;
+        bool Inserted;
+        llvm::tie(I, Inserted) =
+            CachedBoolEvals.insert(std::make_pair(S, TryResult()));
+        if (!Inserted)
+          return I->second; // already in map;
+    
+        return (I->second = evaluateAsBooleanConditionNoCache(S));
+      }
+    }
+
+    return evaluateAsBooleanConditionNoCache(S);
+  }
+
+  /// \brief Evaluate as boolean \param E without using the cache.
+  TryResult evaluateAsBooleanConditionNoCache(Expr *E) {
+    if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(E)) {
+      if (Bop->isLogicalOp()) {
+        TryResult LHS = tryEvaluateBool(Bop->getLHS());
+        if (LHS.isKnown()) {
+          // We were able to evaluate the LHS, see if we can get away with not
+          // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
+          if (LHS.isTrue() == (Bop->getOpcode() == BO_LOr))
+            return LHS.isTrue();
+
+          TryResult RHS = tryEvaluateBool(Bop->getRHS());
+          if (RHS.isKnown()) {
+            if (Bop->getOpcode() == BO_LOr)
+              return LHS.isTrue() || RHS.isTrue();
+            else
+              return LHS.isTrue() && RHS.isTrue();
+          }
+        } else {
+          TryResult RHS = tryEvaluateBool(Bop->getRHS());
+          if (RHS.isKnown()) {
+            // We can't evaluate the LHS; however, sometimes the result
+            // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
+            if (RHS.isTrue() == (Bop->getOpcode() == BO_LOr))
+              return RHS.isTrue();
+          }
+        }
+
+        return TryResult();
+      }
+    }
+
+    bool Result;
+    if (E->EvaluateAsBooleanCondition(Result, *Context))
+      return Result;
+
+    return TryResult();
   }
   
 };
@@ -1127,6 +1184,10 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
       RHSBlock = createBlock();
     }
 
+    // Generate the blocks for evaluating the LHS.
+    Block = LHSBlock;
+    CFGBlock *EntryLHSBlock = addStmt(B->getLHS());
+
     // See if this is a known constant.
     TryResult KnownVal = tryEvaluateBool(B->getLHS());
     if (KnownVal.isKnown() && (B->getOpcode() == BO_LOr))
@@ -1142,9 +1203,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
       addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
     }
 
-    // Generate the blocks for evaluating the LHS.
-    Block = LHSBlock;
-    return addStmt(B->getLHS());
+    return EntryLHSBlock;
   }
 
   if (B->getOpcode() == BO_Comma) { // ,
