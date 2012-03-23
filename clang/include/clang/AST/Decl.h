@@ -2704,13 +2704,6 @@ class EnumDecl : public TagDecl {
   /// information.
   MemberSpecializationInfo *SpecializationInfo;
 
-  // The number of positive and negative bits required by the
-  // enumerators are stored in the SubclassBits field.
-  enum {
-    NumBitsWidth = 8,
-    NumBitsMask = (1 << NumBitsWidth) - 1
-  };
-
   EnumDecl(DeclContext *DC, SourceLocation StartLoc, SourceLocation IdLoc,
            IdentifierInfo *Id, EnumDecl *PrevDecl,
            bool Scoped, bool ScopedUsingClassTag, bool Fixed)
