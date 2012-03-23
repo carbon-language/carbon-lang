@@ -31,4 +31,4 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %for.cond
   ret i32 0
 }
-; CHECK: load i32* getelementptr inbounds ([100 x i32]* @A, i32 0, i32 0)
+; CHECK: load i32* getelementptr inbounds ([100 x i32]* @A, i64 0, i64 0)

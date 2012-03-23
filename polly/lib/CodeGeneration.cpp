@@ -154,7 +154,8 @@ class IslGenerator;
 
 class IslGenerator {
 public:
-  IslGenerator(IRBuilder<> &Builder) : Builder(Builder) {}
+  IslGenerator(IRBuilder<> &Builder, std::vector<Value *> &IVS) :
+    Builder(Builder), IVS(IVS) {}
   Value *generateIslInt(__isl_take isl_int Int);
   Value *generateIslAff(__isl_take isl_aff *Aff);
   Value *generateIslPwAff(__isl_take isl_pw_aff *PwAff);
@@ -166,6 +167,7 @@ private:
   } IslGenInfo;
 
   IRBuilder<> &Builder;
+  std::vector<Value *> &IVS;
   static int mergeIslAffValues(__isl_take isl_set *Set,
                                __isl_take isl_aff *Aff, void *User);
 };
@@ -180,18 +182,46 @@ Value *IslGenerator::generateIslInt(isl_int Int) {
 }
 
 Value *IslGenerator::generateIslAff(__isl_take isl_aff *Aff) {
-  assert(isl_aff_is_cst(Aff) && "Only constant access functions supported");
+  Value *Result;
   Value *ConstValue;
   isl_int ConstIsl;
 
   isl_int_init(ConstIsl);
   isl_aff_get_constant(Aff, &ConstIsl);
   ConstValue = generateIslInt(ConstIsl);
+  Type *Ty = Builder.getInt64Ty();
 
+  // FIXME: We should give the constant and coefficients the right type. Here
+  // we force it into i64.
+  Result = Builder.CreateSExtOrBitCast(ConstValue, Ty);
+
+  unsigned int NbInputDims = isl_aff_dim(Aff, isl_dim_in);
+
+  assert((IVS.size() == NbInputDims) && "The Dimension of Induction Variables"
+         "must match the dimension of the affine space.");
+
+  isl_int CoefficientIsl;
+  isl_int_init(CoefficientIsl);
+
+  for (unsigned int i = 0; i < NbInputDims; ++i) {
+    Value *CoefficientValue;
+    isl_aff_get_coefficient(Aff, isl_dim_in, i, &CoefficientIsl);
+
+    if (isl_int_is_zero(CoefficientIsl))
+      continue;
+
+    CoefficientValue = generateIslInt(CoefficientIsl);
+    CoefficientValue = Builder.CreateIntCast(CoefficientValue, Ty, true);
+    Value *IV = Builder.CreateIntCast(IVS[i], Ty, true);
+    Value *PAdd = Builder.CreateMul(CoefficientValue, IV, "p_mul_coeff");
+    Result = Builder.CreateAdd(Result, PAdd, "p_sum_coeff");
+  }
+
+  isl_int_clear(CoefficientIsl);
   isl_int_clear(ConstIsl);
   isl_aff_free(Aff);
 
-  return ConstValue;
+  return Result;
 }
 
 int IslGenerator::mergeIslAffValues(__isl_take isl_set *Set,
@@ -266,13 +296,14 @@ protected:
 
   /// @brief Get the memory access offset to be added to the base address
   std::vector<Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
-                                            Value *BaseAddress);
+                                           Value *BaseAddress, ValueMapT &BBMap,
+                                           ValueMapT &GlobalMap);
 
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
                              Value *BaseAddress, const Value *OldOperand,
-                             ValueMapT &BBMap);
+                             ValueMapT &BBMap, ValueMapT &GlobalMap);
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
@@ -281,6 +312,9 @@ protected:
 
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap,
                             ValueMapT &GlobalMap);
+
+  Value *generateScalarStore(const StoreInst *store, ValueMapT &BBMap,
+                             ValueMapT &GlobalMap);
 
   /// @brief Copy a single Instruction.
   ///
@@ -367,23 +401,29 @@ void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
     NewInst->setName("p_" + Inst->getName());
 }
 
-std::vector <Value*> BlockGenerator::getMemoryAccessIndex(
-  __isl_keep isl_map *AccessRelation, Value *BaseAddress) {
+std::vector<Value*> BlockGenerator::getMemoryAccessIndex(
+  __isl_keep isl_map *AccessRelation, Value *BaseAddress,
+  ValueMapT &BBMap, ValueMapT &GlobalMap) {
+
   assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
          && "Only single dimensional access functions supported");
 
+  std::vector<Value *> IVS;
+  for (unsigned i = 0; i < Statement.getNumIterators(); ++i) {
+    const Value *OriginalIV = Statement.getInductionVariableForDimension(i);
+    Value *NewIV = getNewValue(OriginalIV, BBMap, GlobalMap);
+    IVS.push_back(NewIV);
+  }
+
   isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
-  IslGenerator IslGen(Builder);
+  IslGenerator IslGen(Builder, IVS);
   Value *OffsetValue = IslGen.generateIslPwAff(PwAff);
 
-  PointerType *BaseAddressType = dyn_cast<PointerType>(
-    BaseAddress->getType());
-  Type *ArrayTy = BaseAddressType->getElementType();
-  Type *ArrayElementType = dyn_cast<ArrayType>(ArrayTy)->getElementType();
-  OffsetValue = Builder.CreateSExtOrBitCast(OffsetValue, ArrayElementType);
+  Type *Ty = Builder.getInt64Ty();
+  OffsetValue = Builder.CreateIntCast(OffsetValue, Ty, true);
 
   std::vector<Value*> IndexArray;
-  Value *NullValue = Constant::getNullValue(ArrayElementType);
+  Value *NullValue = Constant::getNullValue(Ty);
   IndexArray.push_back(NullValue);
   IndexArray.push_back(OffsetValue);
   return IndexArray;
@@ -391,9 +431,10 @@ std::vector <Value*> BlockGenerator::getMemoryAccessIndex(
 
 Value *BlockGenerator::getNewAccessOperand(
   __isl_keep isl_map *NewAccessRelation, Value *BaseAddress, const Value
-  *OldOperand, ValueMapT &BBMap) {
+  *OldOperand, ValueMapT &BBMap, ValueMapT &GlobalMap) {
   std::vector<Value*> IndexArray = getMemoryAccessIndex(NewAccessRelation,
-                                                        BaseAddress);
+                                                        BaseAddress,
+                                                        BBMap, GlobalMap);
   Value *NewOperand = Builder.CreateGEP(BaseAddress, IndexArray,
                                         "p_newarrayidx_");
   return NewOperand;
@@ -417,7 +458,7 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
   } else {
     Value *BaseAddress = const_cast<Value*>(Access.getBaseAddr());
     NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, Pointer,
-                                     BBMap);
+                                     BBMap, GlobalMap);
   }
 
   isl_map_free(CurrentAccessRelation);
@@ -436,6 +477,17 @@ Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
   return ScalarLoad;
 }
 
+Value *BlockGenerator::generateScalarStore(const StoreInst *Store,
+                                           ValueMapT &BBMap,
+                                           ValueMapT &GlobalMap) {
+  const Value *Pointer = Store->getPointerOperand();
+  Value *NewPointer = generateLocationAccessed(Store, Pointer, BBMap,
+                                               GlobalMap);
+  Value *ValueOperand = getNewValue(Store->getValueOperand(), BBMap, GlobalMap);
+
+  return Builder.CreateStore(ValueOperand, NewPointer);
+}
+
 void BlockGenerator::copyInstruction(const Instruction *Inst,
                                      ValueMapT &BBMap, ValueMapT &GlobalMap) {
   // Terminator instructions control the control flow. They are explicitly
@@ -445,6 +497,11 @@ void BlockGenerator::copyInstruction(const Instruction *Inst,
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
     BBMap[Load] = generateScalarLoad(Load, BBMap, GlobalMap);
+    return;
+  }
+
+  if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
+    BBMap[Store] = generateScalarStore(Store, BBMap, GlobalMap);
     return;
   }
 
