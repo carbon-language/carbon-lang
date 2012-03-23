@@ -58,7 +58,7 @@
 // CHECK: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=b:9:15 Extent=[9:15 - 9:16]
 // CHECK: properties-class-extensions.m:9:15: ObjCInstanceMethodDecl=setB::9:15 Extent=[9:15 - 9:16]
 // CHECK: properties-class-extensions.m:9:15: ParmDecl=b:9:15 (Definition) Extent=[9:15 - 9:16]
-// CHECK: properties-class-extensions.m:10:1: ObjCInstanceMethodDecl=bar:10:1 Extent=[10:1 - 10:14]
+// CHECK: properties-class-extensions.m:10:10: ObjCInstanceMethodDecl=bar:10:10 Extent=[10:1 - 10:14]
 // CHECK: properties-class-extensions.m:15:12: ObjCInterfaceDecl=Bar:15:12 Extent=[15:1 - 17:5]
 // CHECK: properties-class-extensions.m:16:25: ObjCPropertyDecl=bar:16:25 Extent=[16:1 - 16:28]
 // CHECK: properties-class-extensions.m:16:22: TypeRef=id:0:0 Extent=[16:22 - 16:24]

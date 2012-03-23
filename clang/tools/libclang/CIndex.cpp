@@ -3764,6 +3764,10 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       Loc = VD->getLocation();
   }
 
+  // For ObjC methods, give the start location of the method name.
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    Loc = MD->getSelectorStartLoc();
+
   return cxloc::translateSourceLocation(getCursorContext(C), Loc);
 }
 

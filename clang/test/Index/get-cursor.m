@@ -46,7 +46,7 @@ struct S {};
 // CHECK-WITH-WEAK: ObjCClassRef=Foo:8:8
 
 // RUN: c-index-test -cursor-at=%s:20:10 %s | FileCheck -check-prefix=CHECK-METHOD %s
-// CHECK-METHOD: ObjCInstanceMethodDecl=name:20:1
+// CHECK-METHOD: ObjCInstanceMethodDecl=name:20:7
 
 // RUN: c-index-test -cursor-at=%s:37:17 %s | FileCheck -check-prefix=CHECK-IN-IMPL %s
 // CHECK-IN-IMPL: VarDecl=i:37:17

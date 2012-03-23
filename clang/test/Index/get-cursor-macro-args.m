@@ -14,6 +14,6 @@
 // RUN:       %s -include-pch %t.pch | FileCheck %s
 
 // CHECK:      ObjCClassRef=MyClass:1:12
-// CHECK-NEXT: ObjCMessageExpr=meth:2:1
-// CHECK-NEXT: ObjCMessageExpr=meth:2:1
+// CHECK-NEXT: ObjCMessageExpr=meth:2:8
+// CHECK-NEXT: ObjCMessageExpr=meth:2:8
 // CHECK-NEXT: ObjCClassRef=MyClass:1:12
