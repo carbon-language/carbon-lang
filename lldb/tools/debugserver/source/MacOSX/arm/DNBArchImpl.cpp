@@ -366,7 +366,16 @@ DNBArchMachARM::ThreadWillResume()
     {
         if (m_watchpoint_hw_index >= 0)
         {
-            DisableHardwareWatchpoint(m_watchpoint_hw_index);
+            kern_return_t kret = GetDBGState(false);
+            if (kret == KERN_SUCCESS && !IsWatchpointEnabled(m_state.dbg, m_watchpoint_hw_index)) {
+                // The watchpoint might have been disabled by the user.  We don't need to do anything at all
+                // to enable hardware single stepping.
+                m_watchpoint_did_occur = false;
+                m_watchpoint_hw_index = -1;
+                return;
+            }
+
+            DisableHardwareWatchpoint0(m_watchpoint_hw_index, true);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
                              m_watchpoint_hw_index);
 
@@ -403,7 +412,7 @@ DNBArchMachARM::ThreadDidStop()
         {
             if (m_watchpoint_did_occur && m_watchpoint_hw_index >= 0)
             {
-                EnableHardwareWatchpoint(m_watchpoint_hw_index);
+                EnableHardwareWatchpoint0(m_watchpoint_hw_index, true);
                 m_watchpoint_resume_single_step_enabled = false;
                 m_watchpoint_did_occur = false;
                 m_watchpoint_hw_index = -1;
@@ -2383,6 +2392,10 @@ DNBArchMachARM::DisableHardwareBreakpoint (uint32_t hw_index)
     return false;
 }
 
+// This stores the lo->hi mappings.  It's safe to initialize to all 0's
+// since hi > lo and therefore LoHi[i] cannot be 0.
+static uint32_t LoHi[16] = { 0 };
+
 uint32_t
 DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
@@ -2398,7 +2411,24 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
     if (read == false && write == false)
         return INVALID_NUB_HW_INDEX;
 
-    // Can't watch more than 4 bytes per WVR/WCR pair
+    // Divide-and-conquer for size == 8.
+    if (size == 8)
+    {
+        uint32_t lo = EnableHardwareWatchpoint(addr, 4, read, write);
+        if (lo == INVALID_NUB_HW_INDEX)
+            return INVALID_NUB_HW_INDEX;
+        uint32_t hi = EnableHardwareWatchpoint(addr+4, 4, read, write);
+        if (hi == INVALID_NUB_HW_INDEX)
+        {
+            DisableHardwareWatchpoint(lo);
+            return INVALID_NUB_HW_INDEX;
+        }
+        // Tag thsi lo->hi mapping in our database.
+        LoHi[lo] = hi;
+        return lo;
+    }
+
+    // Otherwise, can't watch more than 4 bytes per WVR/WCR pair
     if (size > 4)
         return INVALID_NUB_HW_INDEX;
 
@@ -2475,57 +2505,68 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
 }
 
 bool
-DNBArchMachARM::EnableHardwareWatchpoint (uint32_t hw_index)
+DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
 {
     kern_return_t kret = GetDBGState(false);
+    if (kret != KERN_SUCCESS)
+        return false;
 
     const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
-    if (kret == KERN_SUCCESS)
-    {
-        if (hw_index < num_hw_points)
-        {
-            m_state.dbg.__wcr[hw_index] |= (nub_addr_t)WCR_ENABLE;
-            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
-                    hw_index,
-                    hw_index,
-                    m_state.dbg.__wvr[hw_index],
-                    hw_index,
-                    m_state.dbg.__wcr[hw_index]);
+    if (hw_index >= num_hw_points)
+        return false;
 
-            kret = SetDBGState();
-
-            if (kret == KERN_SUCCESS)
-                return true;
-        }
+    if (Delegate && LoHi[hw_index]) {
+        // Enable lo and hi watchpoint hardware indexes.
+        return EnableHardwareWatchpoint0(hw_index, false) &&
+            EnableHardwareWatchpoint0(LoHi[hw_index], false);
     }
-    return false;
+
+    m_state.dbg.__wcr[hw_index] |= (nub_addr_t)WCR_ENABLE;
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
+                     hw_index,
+                     hw_index,
+                     m_state.dbg.__wvr[hw_index],
+                     hw_index,
+                     m_state.dbg.__wcr[hw_index]);
+
+    kret = SetDBGState();
+
+    return (kret == KERN_SUCCESS);
 }
 
 bool
 DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index)
 {
+    return DisableHardwareWatchpoint0(hw_index, true);
+}
+bool
+DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
+{
     kern_return_t kret = GetDBGState(false);
+    if (kret != KERN_SUCCESS)
+        return false;
 
     const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
-    if (kret == KERN_SUCCESS)
-    {
-        if (hw_index < num_hw_points)
-        {
-            m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)WCR_ENABLE);
-            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::DisableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
-                    hw_index,
-                    hw_index,
-                    m_state.dbg.__wvr[hw_index],
-                    hw_index,
-                    m_state.dbg.__wcr[hw_index]);
+    if (hw_index >= num_hw_points)
+        return false;
 
-            kret = SetDBGState();
-
-            if (kret == KERN_SUCCESS)
-                return true;
-        }
+    if (Delegate && LoHi[hw_index]) {
+        // Disable lo and hi watchpoint hardware indexes.
+        return DisableHardwareWatchpoint0(hw_index, false) &&
+            DisableHardwareWatchpoint0(LoHi[hw_index], false);
     }
-    return false;
+
+    m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)WCR_ENABLE);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::DisableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
+                     hw_index,
+                     hw_index,
+                     m_state.dbg.__wvr[hw_index],
+                     hw_index,
+                     m_state.dbg.__wcr[hw_index]);
+
+    kret = SetDBGState();
+
+    return (kret == KERN_SUCCESS);
 }
 
 // {0} -> __bvr[16], {0} -> __bcr[16], {0} --> __wvr[16], {0} -> __wcr{16}

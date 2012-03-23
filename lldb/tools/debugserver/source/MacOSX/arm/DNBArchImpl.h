@@ -81,8 +81,9 @@ public:
     virtual uint32_t        EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size);
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_break_index);
-    virtual bool            EnableHardwareWatchpoint (uint32_t hw_break_index);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
+    virtual bool            EnableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate);
+    virtual bool            DisableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate);
     virtual bool            StepNotComplete ();
     virtual void            HardwareWatchpointStateChanged ();
     virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
