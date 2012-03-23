@@ -25,6 +25,7 @@ add_polly_library(LLVMPolly
   IndependentBlocks.cpp
   IndVarSimplify.cpp
   MayAliasSet.cpp
+  LoopGenerators.cpp
   Pocc.cpp
   RegionSimplify.cpp
   RegisterPasses.cpp

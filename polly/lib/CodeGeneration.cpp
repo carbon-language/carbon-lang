@@ -29,6 +29,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
 #include "polly/Support/GICHelper.h"
+#include "polly/LoopGenerators.h"
 
 #include "llvm/Module.h"
 #include "llvm/ADT/SetVector.h"
@@ -85,70 +86,6 @@ Aligned("enable-polly-aligned",
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
-
-// Create a new loop.
-//
-// @param Builder The builder used to create the loop.  It also defines the
-//                place where to create the loop.
-// @param UB      The upper bound of the loop iv.
-// @param Stride  The number by which the loop iv is incremented after every
-//                iteration.
-static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
-                         APInt Stride, Pass *P, BasicBlock **AfterBlock) {
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
-  Function *F = Builder->GetInsertBlock()->getParent();
-  LLVMContext &Context = F->getContext();
-
-  BasicBlock *PreheaderBB = Builder->GetInsertBlock();
-  BasicBlock *HeaderBB = BasicBlock::Create(Context, "polly.loop_header", F);
-  BasicBlock *BodyBB = BasicBlock::Create(Context, "polly.loop_body", F);
-  BasicBlock *AfterBB = SplitBlock(PreheaderBB, Builder->GetInsertPoint()++, P);
-  AfterBB->setName("polly.loop_after");
-
-  PreheaderBB->getTerminator()->setSuccessor(0, HeaderBB);
-  DT.addNewBlock(HeaderBB, PreheaderBB);
-
-  Builder->SetInsertPoint(HeaderBB);
-
-  // Use the type of upper and lower bound.
-  assert(LB->getType() == UB->getType()
-         && "Different types for upper and lower bound.");
-
-  IntegerType *LoopIVType = dyn_cast<IntegerType>(UB->getType());
-  assert(LoopIVType && "UB is not integer?");
-
-  // IV
-  PHINode *IV = Builder->CreatePHI(LoopIVType, 2, "polly.loopiv");
-  IV->addIncoming(LB, PreheaderBB);
-
-  // IV increment.
-  Value *StrideValue = ConstantInt::get(LoopIVType,
-                                        Stride.zext(LoopIVType->getBitWidth()));
-  Value *IncrementedIV = Builder->CreateAdd(IV, StrideValue,
-                                            "polly.next_loopiv");
-
-  // Exit condition.
-  Value *CMP;
-  if (AtLeastOnce) { // At least on iteration.
-    UB = Builder->CreateAdd(UB, Builder->getInt64(1));
-    CMP = Builder->CreateICmpNE(IV, UB);
-  } else { // Maybe not executed at all.
-    CMP = Builder->CreateICmpSLE(IV, UB);
-  }
-
-  Builder->CreateCondBr(CMP, BodyBB, AfterBB);
-  DT.addNewBlock(BodyBB, HeaderBB);
-
-  Builder->SetInsertPoint(BodyBB);
-  Builder->CreateBr(HeaderBB);
-  IV->addIncoming(IncrementedIV, BodyBB);
-  DT.changeImmediateDominator(AfterBB, HeaderBB);
-
-  Builder->SetInsertPoint(BodyBB->begin());
-  *AfterBlock = AfterBB;
-
-  return IV;
-}
 
 class IslGenerator;
 
@@ -1036,6 +973,10 @@ void ClastExpCodeGen::setIVS(CharMapT *IVSNew) {
 }
 
 class ClastStmtCodeGen {
+public:
+  const std::vector<std::string> &getParallelLoops();
+
+private:
   // The Scop we code generate.
   Scop *S;
   Pass *P;
@@ -1066,11 +1007,6 @@ class ClastStmtCodeGen {
 
   std::vector<std::string> parallelLoops;
 
-public:
-
-  const std::vector<std::string> &getParallelLoops();
-
-  protected:
   void codegen(const clast_assignment *a);
 
   void codegen(const clast_assignment *a, ScopStmt *Statement,
@@ -1087,36 +1023,16 @@ public:
   void codegen(const clast_block *b);
 
   /// @brief Create a classical sequential loop.
-  void codegenForSequential(const clast_for *f, Value *LowerBound = 0,
-                                                Value *UpperBound = 0);
-
-  /// @brief Add a new definition of an openmp subfunction.
-  Function *addOpenMPSubfunction(Module *M);
-
-  /// @brief Add values to the OpenMP structure.
-  ///
-  /// Create the subfunction structure and add the values from the list.
-  Value *addValuesToOpenMPStruct(SetVector<Value*> OMPDataVals,
-                                 Function *SubFunction);
+  void codegenForSequential(const clast_for *f);
 
   /// @brief Create OpenMP structure values.
   ///
-  /// Create a list of values that has to be stored into the subfuncition
+  /// Create a list of values that has to be stored into the OpenMP subfuncition
   /// structure.
-  SetVector<Value*> createOpenMPStructValues();
+  SetVector<Value*> getOMPValues();
 
-  /// @brief Extract the values from the subfunction parameter.
-  ///
-  /// Extract the values from the subfunction parameter and update the clast
-  /// variables to point to the new values.
-  void extractValuesFromOpenMPStruct(CharMapT *clastVarsOMP,
-                                     SetVector<Value*> OMPDataVals,
-                                     Value *userContext);
-
-  /// @brief Add body to the subfunction.
-  void addOpenMPSubfunctionBody(Function *FN, const clast_for *f,
-                                Value *structData,
-                                SetVector<Value*> OMPDataVals);
+  void updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
+                          CharMapT &ClastVarsNew);
 
   /// @brief Create an OpenMP parallel for loop.
   ///
@@ -1232,24 +1148,16 @@ void ClastStmtCodeGen::codegen(const clast_block *b) {
     codegen(b->body);
 }
 
-void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
-                                            Value *LowerBound,
-                                            Value *UpperBound) {
+void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
+  Value *LowerBound, *UpperBound, *IV, *Stride;
   BasicBlock *AfterBB;
   Type *IntPtrTy = getIntPtrTy();
-  APInt Stride = APInt_from_MPZ(f->stride);
 
-  // The value of lowerbound and upperbound will be supplied, if this
-  // function is called while generating OpenMP code. Otherwise get
-  // the values.
-  assert(!!LowerBound == !!UpperBound && "Either give both bounds or none");
+  LowerBound = ExpGen.codegen(f->LB, IntPtrTy);
+  UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
+  Stride = Builder.getInt(APInt_from_MPZ(f->stride));
 
-  if (LowerBound == 0) {
-    LowerBound = ExpGen.codegen(f->LB, IntPtrTy);
-    UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
-  }
-
-  Value *IV = createLoop(&Builder, LowerBound, UpperBound, Stride, P, &AfterBB);
+  IV = createLoop(LowerBound, UpperBound, Stride, &Builder, P, &AfterBB);
 
   // Add loop iv to symbols.
   (*ClastVars)[f->iterator] = IV;
@@ -1262,193 +1170,87 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
   Builder.SetInsertPoint(AfterBB->begin());
 }
 
-Function *ClastStmtCodeGen::addOpenMPSubfunction(Module *M) {
-  Function *F = Builder.GetInsertBlock()->getParent();
-  std::vector<Type*> Arguments(1, Builder.getInt8PtrTy());
-  FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
-  Function *FN = Function::Create(FT, Function::InternalLinkage,
-                                  F->getName() + ".omp_subfn", M);
-  // Do not run any polly pass on the new function.
-  P->getAnalysis<ScopDetection>().markFunctionAsInvalid(FN);
+SetVector<Value*> ClastStmtCodeGen::getOMPValues() {
+  SetVector<Value*> Values;
 
-  Function::arg_iterator AI = FN->arg_begin();
-  AI->setName("omp.userContext");
-
-  return FN;
-}
-
-Value *ClastStmtCodeGen::addValuesToOpenMPStruct(SetVector<Value*> OMPDataVals,
-                                                 Function *SubFunction) {
-  std::vector<Type*> structMembers;
-
-  // Create the structure.
-  for (unsigned i = 0; i < OMPDataVals.size(); i++)
-    structMembers.push_back(OMPDataVals[i]->getType());
-
-  StructType *structTy = StructType::get(Builder.getContext(),
-                                         structMembers);
-  // Store the values into the structure.
-  Value *structData = Builder.CreateAlloca(structTy, 0, "omp.userContext");
-  for (unsigned i = 0; i < OMPDataVals.size(); i++) {
-    Value *storeAddr = Builder.CreateStructGEP(structData, i);
-    Builder.CreateStore(OMPDataVals[i], storeAddr);
-  }
-
-  return structData;
-}
-
-SetVector<Value*> ClastStmtCodeGen::createOpenMPStructValues() {
-  SetVector<Value*> OMPDataVals;
-
-  // Push the clast variables available in the clastVars.
+  // The clast variables
   for (CharMapT::iterator I = ClastVars->begin(), E = ClastVars->end();
        I != E; I++)
-    OMPDataVals.insert(I->second);
+    Values.insert(I->second);
 
-  // Push the base addresses of memory references.
+  // The memory reference base addresses
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
     for (SmallVector<MemoryAccess*, 8>::iterator I = Stmt->memacc_begin(),
          E = Stmt->memacc_end(); I != E; ++I) {
       Value *BaseAddr = const_cast<Value*>((*I)->getBaseAddr());
-      OMPDataVals.insert((BaseAddr));
+      Values.insert((BaseAddr));
     }
   }
 
-  return OMPDataVals;
+  return Values;
 }
 
-void ClastStmtCodeGen::extractValuesFromOpenMPStruct(CharMapT *clastVarsOMP,
-  SetVector<Value*> OMPDataVals, Value *userContext) {
-  // Extract the clast variables.
-  unsigned i = 0;
+void ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
+                                          CharMapT &ClastVarsNew) {
+  std::set<Value*> Inserted;
+
   for (CharMapT::iterator I = ClastVars->begin(), E = ClastVars->end();
        I != E; I++) {
-    Value *loadAddr = Builder.CreateStructGEP(userContext, i);
-    (*clastVarsOMP)[I->first] = Builder.CreateLoad(loadAddr);
-    i++;
+    ClastVarsNew[I->first] = VMap[I->second];
+    Inserted.insert(I->second);
   }
 
-  // Extract the base addresses of memory references.
-  for (unsigned j = i; j < OMPDataVals.size(); j++) {
-    Value *loadAddr = Builder.CreateStructGEP(userContext, j);
-    Value *baseAddr = OMPDataVals[j];
-    ValueMap[baseAddr] = Builder.CreateLoad(loadAddr);
+  for (std::map<Value*, Value*>::iterator I = VMap.begin(), E = VMap.end();
+      I != E; ++I) {
+    if (Inserted.count(I->first))
+      continue;
+
+    ValueMap[I->first] = I->second;
   }
 }
 
-void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
-                                                const clast_for *f,
-                                                Value *StructData,
-                                                SetVector<Value*> OMPDataVals) {
-  Type *IntPtrTy = getIntPtrTy();
-  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  LLVMContext &Context = FN->getContext();
+void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
+  Value *Stride, *LowerBound, *UpperBound, *IV;
+  BasicBlock::iterator LoopBody;
+  IntegerType *IntPtrTy = getIntPtrTy();
+  SetVector<Value*> Values;
+  OMPGenerator::ValueToValueMapTy VMap;
+  OMPGenerator OMPGen(Builder, P);
 
-  // Store the previous basic block.
-  BasicBlock::iterator PrevInsertPoint = Builder.GetInsertPoint();
-  BasicBlock *PrevBB = Builder.GetInsertBlock();
 
-  // Create basic blocks.
-  BasicBlock *HeaderBB = BasicBlock::Create(Context, "omp.setup", FN);
-  BasicBlock *ExitBB = BasicBlock::Create(Context, "omp.exit", FN);
-  BasicBlock *CheckNextBB = BasicBlock::Create(Context, "omp.checkNext", FN);
-  BasicBlock *LoadIVBoundsBB = BasicBlock::Create(Context, "omp.loadIVBounds",
-                                                  FN);
+  Stride = Builder.getInt(APInt_from_MPZ(For->stride));
+  Stride = Builder.CreateSExtOrBitCast(Stride, IntPtrTy);
+  LowerBound = ExpGen.codegen(For->LB, IntPtrTy);
+  UpperBound = ExpGen.codegen(For->UB, IntPtrTy);
 
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
-  DT.addNewBlock(HeaderBB, PrevBB);
-  DT.addNewBlock(ExitBB, HeaderBB);
-  DT.addNewBlock(CheckNextBB, HeaderBB);
-  DT.addNewBlock(LoadIVBoundsBB, HeaderBB);
+  Values = getOMPValues();
 
-  // Fill up basic block HeaderBB.
-  Builder.SetInsertPoint(HeaderBB);
-  Value *LowerBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.lowerBoundPtr");
-  Value *UpperBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.upperBoundPtr");
-  Value *UserContext = Builder.CreateBitCast(FN->arg_begin(),
-                                             StructData->getType(),
-                                             "omp.userContext");
-
-  CharMapT ClastVarsOMP;
-  extractValuesFromOpenMPStruct(&ClastVarsOMP, OMPDataVals, UserContext);
-
-  Builder.CreateBr(CheckNextBB);
-
-  // Add code to check if another set of iterations will be executed.
-  Builder.SetInsertPoint(CheckNextBB);
-  Function *RuntimeNextFunction = M->getFunction("GOMP_loop_runtime_next");
-  Value *Ret1 = Builder.CreateCall2(RuntimeNextFunction,
-                                    LowerBoundPtr, UpperBoundPtr);
-  Value *HasNextSchedule = Builder.CreateTrunc(Ret1, Builder.getInt1Ty(),
-                                               "omp.hasNextScheduleBlock");
-  Builder.CreateCondBr(HasNextSchedule, LoadIVBoundsBB, ExitBB);
-
-  // Add code to to load the iv bounds for this set of iterations.
-  Builder.SetInsertPoint(LoadIVBoundsBB);
-  Value *LowerBound = Builder.CreateLoad(LowerBoundPtr, "omp.lowerBound");
-  Value *UpperBound = Builder.CreateLoad(UpperBoundPtr, "omp.upperBound");
-
-  // Subtract one as the upper bound provided by openmp is a < comparison
-  // whereas the codegenForSequential function creates a <= comparison.
-  UpperBound = Builder.CreateSub(UpperBound, ConstantInt::get(IntPtrTy, 1),
-                                 "omp.upperBoundAdjusted");
+  IV = OMPGen.createParallelLoop(LowerBound, UpperBound, Stride, Values, VMap,
+                                 &LoopBody);
+  BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
+  Builder.SetInsertPoint(LoopBody);
 
   // Use clastVarsOMP during code generation of the OpenMP subfunction.
+  CharMapT ClastVarsOMP;
+  updateWithValueMap(VMap, ClastVarsOMP);
   CharMapT *OldClastVars = ClastVars;
   ClastVars = &ClastVarsOMP;
   ExpGen.setIVS(&ClastVarsOMP);
 
-  Builder.CreateBr(CheckNextBB);
-  Builder.SetInsertPoint(--Builder.GetInsertPoint());
-  codegenForSequential(f, LowerBound, UpperBound);
+  // Add loop iv to symbols.
+  (*ClastVars)[For->iterator] = IV;
+
+  if (For->body)
+    codegen(For->body);
+
+  // Loop is finished, so remove its iv from the live symbols.
+  ClastVars->erase(For->iterator);
 
   // Restore the old clastVars.
   ClastVars = OldClastVars;
   ExpGen.setIVS(OldClastVars);
-
-  // Add code to terminate this openmp subfunction.
-  Builder.SetInsertPoint(ExitBB);
-  Function *EndnowaitFunction = M->getFunction("GOMP_loop_end_nowait");
-  Builder.CreateCall(EndnowaitFunction);
-  Builder.CreateRetVoid();
-
-  // Restore the previous insert point.
-  Builder.SetInsertPoint(PrevInsertPoint);
-}
-
-void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
-  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  IntegerType *IntPtrTy = getIntPtrTy();
-
-  Function *SubFunction = addOpenMPSubfunction(M);
-  SetVector<Value*> OMPDataVals = createOpenMPStructValues();
-  Value *StructData = addValuesToOpenMPStruct(OMPDataVals, SubFunction);
-
-  addOpenMPSubfunctionBody(SubFunction, For, StructData, OMPDataVals);
-
-  // Create call for GOMP_parallel_loop_runtime_start.
-  Value *SubfunctionParam = Builder.CreateBitCast(StructData,
-                                                  Builder.getInt8PtrTy(),
-                                                  "omp_data");
-
-  Value *NumberOfThreads = Builder.getInt32(0);
-  Value *LowerBound = ExpGen.codegen(For->LB, IntPtrTy);
-  Value *UpperBound = ExpGen.codegen(For->UB, IntPtrTy);
-
-  // Add one as the upper bound provided by openmp is a < comparison
-  // whereas the codegenForSequential function creates a <= comparison.
-  UpperBound = Builder.CreateAdd(UpperBound, ConstantInt::get(IntPtrTy, 1));
-  APInt APStride = APInt_from_MPZ(For->stride);
-  Value *Stride = ConstantInt::get(IntPtrTy,
-                                   APStride.zext(IntPtrTy->getBitWidth()));
-
-  Value *Arguments[] = { SubFunction, SubfunctionParam, NumberOfThreads,
-    LowerBound, UpperBound, Stride};
-  Builder.CreateCall(M->getFunction("GOMP_parallel_loop_runtime_start"),
-                     Arguments);
-  Builder.CreateCall(SubFunction, SubfunctionParam);
-  Builder.CreateCall(M->getFunction("GOMP_parallel_end"));
+  Builder.SetInsertPoint(AfterLoop);
 }
 
 bool ClastStmtCodeGen::isInnermostLoop(const clast_for *f) {
@@ -1679,53 +1481,6 @@ class CodeGeneration : public ScopPass {
 
   CodeGeneration() : ScopPass(ID) {}
 
-  // Add the declarations needed by the OpenMP function calls that we insert in
-  // OpenMP mode.
-  void addOpenMPDeclarations(Module *M)
-  {
-    IRBuilder<> Builder(M->getContext());
-    Type *LongTy = getAnalysis<TargetData>().getIntPtrType(M->getContext());
-
-    llvm::GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-
-    if (!M->getFunction("GOMP_parallel_end")) {
-      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), false);
-      Function::Create(Ty, Linkage, "GOMP_parallel_end", M);
-    }
-
-    if (!M->getFunction("GOMP_parallel_loop_runtime_start")) {
-      Type *Params[] = {
-        PointerType::getUnqual(FunctionType::get(Builder.getVoidTy(),
-                                                 Builder.getInt8PtrTy(),
-                                                 false)),
-        Builder.getInt8PtrTy(),
-        Builder.getInt32Ty(),
-        LongTy,
-        LongTy,
-        LongTy,
-      };
-
-      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Params, false);
-      Function::Create(Ty, Linkage, "GOMP_parallel_loop_runtime_start", M);
-    }
-
-    if (!M->getFunction("GOMP_loop_runtime_next")) {
-      PointerType *LongPtrTy = PointerType::getUnqual(LongTy);
-      Type *Params[] = {
-        LongPtrTy,
-        LongPtrTy,
-      };
-
-      FunctionType *Ty = FunctionType::get(Builder.getInt8Ty(), Params, false);
-      Function::Create(Ty, Linkage, "GOMP_loop_runtime_next", M);
-    }
-
-    if (!M->getFunction("GOMP_loop_end_nowait")) {
-      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), false);
-      Function::Create(Ty, Linkage, "GOMP_loop_end_nowait", M);
-    }
-  }
-
   // Split the entry edge of the region and generate a new basic block on this
   // edge. This function also updates ScopInfo and RegionInfo.
   //
@@ -1819,10 +1574,6 @@ class CodeGeneration : public ScopPass {
     parallelLoops.clear();
 
     assert(region->isSimple() && "Only simple regions are supported");
-
-    Module *M = region->getEntry()->getParent()->getParent();
-
-    if (OpenMP) addOpenMPDeclarations(M);
 
     // In the CFG the optimized code of the SCoP is generated next to the
     // original code. Both the new and the original version of the code remain
