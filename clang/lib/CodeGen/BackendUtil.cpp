@@ -168,7 +168,7 @@ void EmitAssemblyHelper::CreatePasses() {
   }
 
   if (LangOpts.ThreadSanitizer) {
-    PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
+    PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addThreadSanitizerPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addThreadSanitizerPass);
