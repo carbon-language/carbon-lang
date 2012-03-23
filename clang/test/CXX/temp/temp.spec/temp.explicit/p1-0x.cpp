@@ -13,3 +13,12 @@ struct Y {
 };
 
 template constexpr int Y<int>::f(); // expected-error{{explicit instantiation cannot be 'constexpr'}}
+
+template<typename T>
+struct Z {
+  enum E : T { e1, e2 };
+  T t; // expected-note {{refers here}}
+};
+
+template enum Z<int>::E; // expected-error {{enumerations cannot be explicitly instantiated}}
+template int Z<int>::t; // expected-error {{explicit instantiation of 't' does not refer to}}

@@ -2674,6 +2674,24 @@ void EnumDecl::completeDefinition(QualType NewType,
   TagDecl::completeDefinition();
 }
 
+TemplateSpecializationKind EnumDecl::getTemplateSpecializationKind() const {
+  if (MemberSpecializationInfo *MSI = getMemberSpecializationInfo())
+    return MSI->getTemplateSpecializationKind();
+
+  return TSK_Undeclared;
+}
+
+void EnumDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
+                                         SourceLocation PointOfInstantiation) {
+  MemberSpecializationInfo *MSI = getMemberSpecializationInfo();
+  assert(MSI && "Not an instantiated member enumeration?");
+  MSI->setTemplateSpecializationKind(TSK);
+  if (TSK != TSK_ExplicitSpecialization &&
+      PointOfInstantiation.isValid() &&
+      MSI->getPointOfInstantiation().isInvalid())
+    MSI->setPointOfInstantiation(PointOfInstantiation);
+}
+
 EnumDecl *EnumDecl::getInstantiatedFromMemberEnum() const {
   if (SpecializationInfo)
     return cast<EnumDecl>(SpecializationInfo->getInstantiatedFrom());

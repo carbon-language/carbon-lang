@@ -968,12 +968,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // As an extension we do not perform access checking on the names used to
   // specify explicit specializations either. This is important to allow
   // specializing traits classes for private types.
-  bool SuppressingAccessChecks = false;
-  if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
-      TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization) {
-    Actions.ActOnStartSuppressingAccessChecks();
-    SuppressingAccessChecks = true;
-  }
+  Sema::SuppressAccessChecksRAII SuppressAccess(Actions,
+    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
+    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
 
   ParsedAttributes attrs(AttrFactory);
   // If attributes exist after tag, parse them.
@@ -1102,17 +1099,13 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
       DS.SetTypeSpecError();
       SkipUntil(tok::semi, false, true);
-      if (SuppressingAccessChecks)
-        Actions.ActOnStopSuppressingAccessChecks();
-
       return;
     }
   }
 
   // As soon as we're finished parsing the class's template-id, turn access
   // checking back on.
-  if (SuppressingAccessChecks)
-    Actions.ActOnStopSuppressingAccessChecks();
+  SuppressAccess.done();
 
   // There are four options here.
   //  - If we are in a trailing return type, this is always just a reference,

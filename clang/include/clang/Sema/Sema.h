@@ -4132,6 +4132,26 @@ public:
   /// failures rather than hard errors.
   bool AccessCheckingSFINAE;
 
+  /// \brief RAII object used to temporarily suppress access checking.
+  class SuppressAccessChecksRAII {
+    Sema &S;
+    bool SuppressingAccess;
+
+  public:
+    SuppressAccessChecksRAII(Sema &S, bool Suppress)
+      : S(S), SuppressingAccess(Suppress) {
+      if (Suppress) S.ActOnStartSuppressingAccessChecks();
+    }
+    ~SuppressAccessChecksRAII() {
+      done();
+    }
+    void done() {
+      if (!SuppressingAccess) return;
+      S.ActOnStopSuppressingAccessChecks();
+      SuppressingAccess = false;
+    }
+  };
+
   void ActOnStartSuppressingAccessChecks();
   void ActOnStopSuppressingAccessChecks();
 

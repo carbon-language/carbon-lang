@@ -246,10 +246,14 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
   EnumDecl *ED = enumType->getDecl();
   if (EnumDecl *Pattern = ED->getInstantiatedFromMemberEnum()) {
     MemberSpecializationInfo *MSI = ED->getMemberSpecializationInfo();
-    if (MSI->getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
-      return InstantiateEnum(loc, ED, Pattern,
-                             getTemplateInstantiationArgs(ED),
-                             TSK_ImplicitInstantiation);
+    if (MSI->getTemplateSpecializationKind() != TSK_ExplicitSpecialization) {
+      if (InstantiateEnum(loc, ED, Pattern, getTemplateInstantiationArgs(ED),
+                          TSK_ImplicitInstantiation)) {
+        SS.SetInvalid(SS.getRange());
+        return true;
+      }
+      return false;
+    }
   }
 
   Diag(loc, diag::err_incomplete_nested_name_spec)

@@ -4699,8 +4699,11 @@ static bool CheckTemplateSpecializationScope(Sema &S,
     EntityKind = 4;
   else if (isa<RecordDecl>(Specialized))
     EntityKind = 5;
+  else if (isa<EnumDecl>(Specialized) && S.getLangOpts().CPlusPlus0x)
+    EntityKind = 6;
   else {
-    S.Diag(Loc, diag::err_template_spec_unknown_kind);
+    S.Diag(Loc, diag::err_template_spec_unknown_kind)
+      << S.getLangOpts().CPlusPlus0x;
     S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
     return true;
   }
@@ -5816,6 +5819,14 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
       InstantiatedFrom = PrevRecord->getInstantiatedFromMemberClass();
       MSInfo = PrevRecord->getMemberSpecializationInfo();
     }
+  } else if (isa<EnumDecl>(Member)) {
+    EnumDecl *PrevEnum;
+    if (Previous.isSingleResult() &&
+        (PrevEnum = dyn_cast<EnumDecl>(Previous.getFoundDecl()))) {
+      Instantiation = PrevEnum;
+      InstantiatedFrom = PrevEnum->getInstantiatedFromMemberEnum();
+      MSInfo = PrevEnum->getMemberSpecializationInfo();
+    }
   }
 
   if (!Instantiation) {
@@ -5906,8 +5917,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
                                                 cast<VarDecl>(InstantiatedFrom),
                                                 TSK_ExplicitSpecialization);
     MarkUnusedFileScopedDecl(InstantiationVar);
-  } else {
-    assert(isa<CXXRecordDecl>(Member) && "Only member classes remain");
+  } else if (isa<CXXRecordDecl>(Member)) {
     CXXRecordDecl *InstantiationClass = cast<CXXRecordDecl>(Instantiation);
     if (InstantiationClass->getTemplateSpecializationKind() ==
           TSK_ImplicitInstantiation) {
@@ -5919,6 +5929,18 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
     cast<CXXRecordDecl>(Member)->setInstantiationOfMemberClass(
                                         cast<CXXRecordDecl>(InstantiatedFrom),
                                                    TSK_ExplicitSpecialization);
+  } else {
+    assert(isa<EnumDecl>(Member) && "Only member enums remain");
+    EnumDecl *InstantiationEnum = cast<EnumDecl>(Instantiation);
+    if (InstantiationEnum->getTemplateSpecializationKind() ==
+          TSK_ImplicitInstantiation) {
+      InstantiationEnum->setTemplateSpecializationKind(
+                                                   TSK_ExplicitSpecialization);
+      InstantiationEnum->setLocation(Member->getLocation());
+    }
+
+    cast<EnumDecl>(Member)->setInstantiationOfMemberEnum(
+        cast<EnumDecl>(InstantiatedFrom), TSK_ExplicitSpecialization);
   }
 
   // Save the caller the trouble of having to figure out which declaration
@@ -6219,11 +6241,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     return true;
 
   TagDecl *Tag = cast<TagDecl>(TagD);
-  if (Tag->isEnum()) {
-    Diag(TemplateLoc, diag::err_explicit_instantiation_enum)
-      << Context.getTypeDeclType(Tag);
-    return true;
-  }
+  assert(!Tag->isEnum() && "shouldn't see enumerations here");
 
   if (Tag->isInvalidDecl())
     return true;

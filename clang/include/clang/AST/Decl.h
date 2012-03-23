@@ -2862,6 +2862,16 @@ public:
   /// this enumeration was not instantiated from any template.
   EnumDecl *getInstantiatedFromMemberEnum() const;
 
+  /// \brief If this enumeration is a member of a specialization of a
+  /// templated class, determine what kind of template specialization
+  /// or instantiation this is.
+  TemplateSpecializationKind getTemplateSpecializationKind() const;
+
+  /// \brief For an enumeration member that was instantiated from a member
+  /// enumeration of a templated class, set the template specialiation kind.
+  void setTemplateSpecializationKind(TemplateSpecializationKind TSK,
+                        SourceLocation PointOfInstantiation = SourceLocation());
+
   /// \brief If this enumeration is an instantiation of a member enumeration of
   /// a class template specialization, retrieves the member specialization
   /// information.

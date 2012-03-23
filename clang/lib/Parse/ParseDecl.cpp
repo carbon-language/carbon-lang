@@ -2611,19 +2611,20 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 ///         'enum' identifier
 /// [GNU]   'enum' attributes[opt] identifier
 ///
-/// [C++0x] enum-head '{' enumerator-list[opt] '}'
-/// [C++0x] enum-head '{' enumerator-list ','  '}'
+/// [C++11] enum-head '{' enumerator-list[opt] '}'
+/// [C++11] enum-head '{' enumerator-list ','  '}'
 ///
-///       enum-head: [C++0x]
-///         enum-key attributes[opt] identifier[opt] enum-base[opt]
-///         enum-key attributes[opt] nested-name-specifier identifier enum-base[opt]
+///       enum-head: [C++11]
+///         enum-key attribute-specifier-seq[opt] identifier[opt] enum-base[opt]
+///         enum-key attribute-specifier-seq[opt] nested-name-specifier
+///             identifier enum-base[opt]
 ///
-///       enum-key: [C++0x]
+///       enum-key: [C++11]
 ///         'enum'
 ///         'enum' 'class'
 ///         'enum' 'struct'
 ///
-///       enum-base: [C++0x]
+///       enum-base: [C++11]
 ///         ':' type-specifier-seq
 ///
 /// [C++] elaborated-type-specifier:
@@ -2648,7 +2649,14 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
     ScopedEnumKWLoc = ConsumeToken();
   }
-  
+
+  // C++11 [temp.explicit]p12: The usual access controls do not apply to names
+  // used to specify explicit instantiations. We extend this to also cover
+  // explicit specializations.
+  Sema::SuppressAccessChecksRAII SuppressAccess(Actions,
+    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
+    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
+
   // If attributes exist after tag, parse them.
   ParsedAttributes attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
@@ -2710,6 +2718,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     ScopedEnumKWLoc = SourceLocation();
     IsScopedUsingClassTag = false;
   }
+
+  // Stop suppressing access control now we've parsed the enum name.
+  SuppressAccess.done();
 
   TypeResult BaseType;
 
@@ -2801,34 +2812,44 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TUK = Sema::TUK_Declaration;
   else
     TUK = Sema::TUK_Reference;
-  
-  // enums cannot be templates, although they can be referenced from a 
-  // template.
+
+  MultiTemplateParamsArg TParams;
   if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
       TUK != Sema::TUK_Reference) {
-    Diag(Tok, diag::err_enum_template);
-    
-    // Skip the rest of this declarator, up until the comma or semicolon.
-    SkipUntil(tok::comma, true);
-    return;      
+    if (!getLangOpts().CPlusPlus0x || !SS.isSet()) {
+      // Skip the rest of this declarator, up until the comma or semicolon.
+      Diag(Tok, diag::err_enum_template);
+      SkipUntil(tok::comma, true);
+      return;
+    }
+
+    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation) {
+      // Enumerations can't be explicitly instantiated.
+      DS.SetTypeSpecError();
+      Diag(StartLoc, diag::err_explicit_instantiation_enum);
+      return;
+    }
+
+    assert(TemplateInfo.TemplateParams && "no template parameters");
+    TParams = MultiTemplateParamsArg(TemplateInfo.TemplateParams->data(),
+                                     TemplateInfo.TemplateParams->size());
   }
-  
+
   if (!Name && TUK != Sema::TUK_Definition) {
     Diag(Tok, diag::err_enumerator_unnamed_no_def);
-    
+
     // Skip the rest of this declarator, up until the comma or semicolon.
     SkipUntil(tok::comma, true);
     return;
   }
-      
+
   bool Owned = false;
   bool IsDependent = false;
   const char *PrevSpec = 0;
   unsigned DiagID;
   Decl *TagDecl = Actions.ActOnTag(getCurScope(), DeclSpec::TST_enum, TUK,
                                    StartLoc, SS, Name, NameLoc, attrs.getList(),
-                                   AS, DS.getModulePrivateSpecLoc(),
-                                   MultiTemplateParamsArg(Actions),
+                                   AS, DS.getModulePrivateSpecLoc(), TParams,
                                    Owned, IsDependent, ScopedEnumKWLoc,
                                    IsScopedUsingClassTag, BaseType);
 
@@ -2870,10 +2891,14 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   }
 
   if (Tok.is(tok::l_brace) && TUK != Sema::TUK_Reference) {
-    if (TUK == Sema::TUK_Friend)
+    if (TUK == Sema::TUK_Friend) {
       Diag(Tok, diag::err_friend_decl_defines_type)
         << SourceRange(DS.getFriendSpecLoc());
-    ParseEnumBody(StartLoc, TagDecl);
+      ConsumeBrace();
+      SkipUntil(tok::r_brace);
+    } else {
+      ParseEnumBody(StartLoc, TagDecl);
+    }
   }
 
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc,

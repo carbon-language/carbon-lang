@@ -1843,7 +1843,20 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         if (OldField->getInClassInitializer())
           FieldsWithMemberInitializers.push_back(std::make_pair(OldField,
                                                                 Field));
-      } else if (NewMember->isInvalidDecl())
+      } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(NewMember)) {
+        // C++11 [temp.inst]p1: The implicit instantiation of a class template
+        // specialization causes the implicit instantiation of the definitions
+        // of unscoped member enumerations.
+        // Record a point of instantiation for this implicit instantiation.
+        if (TSK == TSK_ImplicitInstantiation && !Enum->isScoped()) {
+          MemberSpecializationInfo *MSInfo =Enum->getMemberSpecializationInfo();
+          assert(MSInfo && "no spec info for member enum specialization");
+          MSInfo->setTemplateSpecializationKind(TSK_ImplicitInstantiation);
+          MSInfo->setPointOfInstantiation(PointOfInstantiation);
+        }
+      }
+
+      if (NewMember->isInvalidDecl())
         Invalid = true;
     } else {
       // FIXME: Eventually, a NULL return will mean that one of the

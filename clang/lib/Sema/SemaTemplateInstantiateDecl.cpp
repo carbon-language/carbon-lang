@@ -600,7 +600,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   // not the definitions of scoped member enumerations.
   // FIXME: There appears to be no wording for what happens for an enum defined
   // within a block scope, but we treat that like a member of a class template.
-  if (!Enum->isScoped())
+  if (!Enum->isScoped() && D->getDefinition())
     InstantiateEnumDefinition(Enum, D);
 
   return Enum;
@@ -609,6 +609,9 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 void TemplateDeclInstantiator::InstantiateEnumDefinition(
     EnumDecl *Enum, EnumDecl *Pattern) {
   Enum->startDefinition();
+
+  // Update the location to refer to the definition.
+  Enum->setLocation(Pattern->getLocation());
 
   SmallVector<Decl*, 4> Enumerators;
 

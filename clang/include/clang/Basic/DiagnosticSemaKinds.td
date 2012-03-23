@@ -2376,7 +2376,8 @@ def err_pointer_to_member_oper_value_classify: Error<
 // C++ template specialization
 def err_template_spec_unknown_kind : Error<
   "can only provide an explicit specialization for a class template, function "
-  "template, or a member function, static data member, or member class of a "
+  "template, or a member function, static data member, "
+  "%select{or member class|member class, or member enumeration}0 of a "
   "class template">;
 def note_specialized_entity : Note<
   "explicitly specialized declaration is here">;
@@ -2388,30 +2389,30 @@ def err_template_spec_decl_friend : Error<
   "cannot declare an explicit specialization in a friend">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "%select{class template|class template partial|function template|member "
-  "function|static data member|member class}0 specialization of %1 must "
-  "originally be declared in the global scope">;
+  "function|static data member|member class|member enumeration}0 "
+  "specialization of %1 must originally be declared in the global scope">;
 def err_template_spec_decl_out_of_scope : Error<
   "%select{class template|class template partial|function template|member "
-  "function|static data member|member class}0 specialization of %1 must "
-  "originally be declared in namespace %2">;
+  "function|static data member|member class|member enumeration}0 "
+  "specialization of %1 must originally be declared in namespace %2">;
 def ext_template_spec_decl_out_of_scope : ExtWarn<
   "first declaration of %select{class template|class template partial|"
-  "function template|member function|static data member|member class}0 "
-  "specialization of %1 outside namespace %2 is a C++11 extension">,
-  InGroup<CXX11>;
+  "function template|member function|static data member|member class|"
+  "member enumeration}0 specialization of %1 outside namespace %2 is a "
+  "C++11 extension">, InGroup<CXX11>;
 def warn_cxx98_compat_template_spec_decl_out_of_scope : Warning<
   "%select{class template|class template partial|function template|member "
-  "function|static data member|member class}0 specialization of %1 outside "
-  "namespace %2 is incompatible with C++98">,
+  "function|static data member|member class|member enumeration}0 "
+  "specialization of %1 outside namespace %2 is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_template_spec_redecl_out_of_scope : Error<
   "%select{class template|class template partial|function template|member "
-  "function|static data member|member class}0 specialization of %1 not in a "
-  "namespace enclosing %2">;
+  "function|static data member|member class|member enumeration}0 "
+  "specialization of %1 not in a namespace enclosing %2">;
 def err_template_spec_redecl_global_scope : Error<
   "%select{class template|class template partial|function template|member "
-  "function|static data member|member class}0 specialization of %1 must occur "
-  "at global scope">;
+  "function|static data member|member class|member enumeration}0 "
+  "specialization of %1 must occur at global scope">;
 def err_spec_member_not_instantiated : Error<
   "specialization of member %q0 does not specialize an instantiated member">;
 def note_specialized_decl : Note<"attempt to specialize declaration here">;
@@ -2579,8 +2580,6 @@ def warn_cxx98_compat_explicit_instantiation_after_specialization : Warning<
     InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def note_previous_template_specialization : Note<
     "previous template specialization is here">;
-def err_explicit_instantiation_enum : Error<
-    "explicit instantiation of enumeration type %0">;
 def err_explicit_instantiation_nontemplate_type : Error<
     "explicit instantiation of non-templated type %0">;
 def note_nontemplate_decl_here : Note<

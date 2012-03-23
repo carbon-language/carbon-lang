@@ -8283,10 +8283,19 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
               // If we're defining a specialization and the previous definition
               // is from an implicit instantiation, don't emit an error
               // here; we'll catch this in the general case below.
-              if (!isExplicitSpecialization ||
-                  !isa<CXXRecordDecl>(Def) ||
-                  cast<CXXRecordDecl>(Def)->getTemplateSpecializationKind() 
-                                               == TSK_ExplicitSpecialization) {
+              bool IsExplicitSpecializationAfterInstantiation = false;
+              if (isExplicitSpecialization) {
+                if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Def))
+                  IsExplicitSpecializationAfterInstantiation =
+                    RD->getTemplateSpecializationKind() !=
+                    TSK_ExplicitSpecialization;
+                else if (EnumDecl *ED = dyn_cast<EnumDecl>(Def))
+                  IsExplicitSpecializationAfterInstantiation =
+                    ED->getTemplateSpecializationKind() !=
+                    TSK_ExplicitSpecialization;
+              }
+
+              if (!IsExplicitSpecializationAfterInstantiation) {
                 // A redeclaration in function prototype scope in C isn't
                 // visible elsewhere, so merely issue a warning.
                 if (!getLangOpts().CPlusPlus && S->containedInPrototypeScope())
