@@ -2143,17 +2143,26 @@ ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
 /// return true.
 bool
 ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
-  // Check for the argument being from an immediately preceding call.
+  // Check for the argument being from an immediately preceding call or invoke.
   Value *Arg = GetObjCArg(RetainRV);
   CallSite CS(Arg);
-  if (Instruction *Call = CS.getInstruction())
+  if (Instruction *Call = CS.getInstruction()) {
     if (Call->getParent() == RetainRV->getParent()) {
       BasicBlock::iterator I = Call;
       ++I;
       while (isNoopInstruction(I)) ++I;
       if (&*I == RetainRV)
         return false;
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
+      BasicBlock *RetainRVParent = RetainRV->getParent();
+      if (II->getNormalDest() == RetainRVParent) {
+        BasicBlock::iterator I = RetainRVParent->begin();
+        while (isNoopInstruction(I)) ++I;
+        if (&*I == RetainRV)
+          return false;
+      }
     }
+  }
 
   // Check for being preceded by an objc_autoreleaseReturnValue on the same
   // pointer. In this case, we can delete the pair.

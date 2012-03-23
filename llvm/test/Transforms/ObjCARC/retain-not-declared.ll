@@ -30,7 +30,7 @@ entry:
 
 ; CHECK: @test1(
 ; CHECK: @objc_retain(
-; CHECK: @objc_retain(
+; CHECK: @objc_retainAutoreleasedReturnValue(
 ; CHECK: @objc_release(
 ; CHECK: @objc_release(
 ; CHECK: }

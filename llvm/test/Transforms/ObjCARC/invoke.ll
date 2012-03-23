@@ -6,6 +6,7 @@ declare i8* @objc_retainAutoreleasedReturnValue(i8*)
 declare i8* @objc_msgSend(i8*, i8*, ...)
 declare void @use_pointer(i8*)
 declare void @callee()
+declare i8* @returner()
 
 ; ARCOpt shouldn't try to move the releases to the block containing the invoke.
 
@@ -166,6 +167,48 @@ lpad:
 
 if.end:
   call void @objc_release(i8* %p)
+  ret void
+}
+
+; Don't turn the retainAutoreleaseReturnValue into retain, because it's
+; for an invoke which we can assume codegen will put immediately prior.
+
+; CHECK: define void @test5(
+; CHECK: call i8* @objc_retainAutoreleasedReturnValue(i8* %z)
+; CHECK: }
+define void @test5() {
+entry:
+  %z = invoke i8* @returner()
+          to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+
+lpad:
+  %r13 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+          cleanup
+  ret void
+
+if.end:
+  call i8* @objc_retainAutoreleasedReturnValue(i8* %z)
+  ret void
+}
+
+; Like test5, but there's intervening code.
+
+; CHECK: define void @test6(
+; CHECK: call i8* @objc_retain(i8* %z)
+; CHECK: }
+define void @test6() {
+entry:
+  %z = invoke i8* @returner()
+          to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+
+lpad:
+  %r13 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+          cleanup
+  ret void
+
+if.end:
+  call void @callee()
+  call i8* @objc_retainAutoreleasedReturnValue(i8* %z)
   ret void
 }
 
