@@ -73,6 +73,10 @@ public:
     /// cleanup-ish optimizations.
     EP_ScalarOptimizerLate,
 
+    /// EP_OptimizerLast -- This extension point allows adding passes that
+    /// run after everything else.
+    EP_OptimizerLast,
+
     /// EP_EnabledOnOptLevel0 - This extension point allows adding passes that
     /// should not be disabled by O0 optimization level. The passes will be
     /// inserted after the inlining pass.

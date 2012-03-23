@@ -202,6 +202,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
     if (OptLevel > 1)
       MPM.add(createConstantMergePass());     // Merge dup global constants
   }
+  addExtensionsToPM(EP_OptimizerLast, MPM);
 }
 
 void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
