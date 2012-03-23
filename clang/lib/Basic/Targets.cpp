@@ -3440,11 +3440,19 @@ namespace {
 namespace {
 class MipsTargetInfoBase : public TargetInfo {
   std::string CPU;
+  bool SoftFloat;
+  bool SingleFloat;
+
 protected:
   std::string ABI;
+
 public:
   MipsTargetInfoBase(const std::string& triple, const std::string& ABIStr)
-    : TargetInfo(triple), ABI(ABIStr) {}
+    : TargetInfo(triple),
+      SoftFloat(false), SingleFloat(false),
+      ABI(ABIStr)
+  {}
+
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) = 0;
   virtual bool setCPU(const std::string &Name) {
@@ -3455,8 +3463,19 @@ public:
     Features[ABI] = true;
     Features[CPU] = true;
   }
+
   virtual void getArchDefines(const LangOptions &Opts,
-                              MacroBuilder &Builder) const = 0;
+                              MacroBuilder &Builder) const {
+    if (SoftFloat)
+      Builder.defineMacro("__mips_soft_float", Twine(1));
+    else if (SingleFloat)
+      Builder.defineMacro("__mips_single_float", Twine(1));
+    else if (!SoftFloat && !SingleFloat)
+      Builder.defineMacro("__mips_hard_float", Twine(1));
+    else
+      llvm_unreachable("Invalid float ABI for Mips.");
+  }
+
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const = 0;
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -3507,6 +3526,37 @@ public:
     // FIXME: Implement!
     return "";
   }
+
+  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                 StringRef Name,
+                                 bool Enabled) const {
+    if (Name == "soft-float" || Name == "single-float") {
+      Features[Name] = Enabled;
+      return true;
+    }
+    return false;
+  }
+
+  virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
+    SoftFloat = false;
+    SingleFloat = false;
+
+    for (std::vector<std::string>::iterator it = Features.begin(),
+         ie = Features.end(); it != ie; ++it) {
+      if (*it == "+single-float") {
+        SingleFloat = true;
+        break;
+      }
+
+      if (*it == "+soft-float") {
+        SoftFloat = true;
+        // This option is front-end specific.
+        // Do not need to pass it to the backend.
+        Features.erase(it);
+        break;
+      }
+    }
+  }
 };
 
 class Mips32TargetInfoBase : public MipsTargetInfoBase {
@@ -3525,6 +3575,8 @@ public:
   }
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
+    MipsTargetInfoBase::getArchDefines(Opts, Builder);
+
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
     Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));
     Builder.defineMacro("_MIPS_SZLONG", Twine(getLongWidth()));
@@ -3642,6 +3694,8 @@ public:
   }
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
+    MipsTargetInfoBase::getArchDefines(Opts, Builder);
+
     if (ABI == "n32") {
       Builder.defineMacro("__mips_n32");
       Builder.defineMacro("_ABIN32", "2");
