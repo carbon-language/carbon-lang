@@ -138,13 +138,15 @@ namespace {
     const CheckersTy &Checkers;
     const Stmt *S;
     ExprEngine &Eng;
+    bool wasInlined;
 
     CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
     CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckStmtContext(bool isPreVisit, const CheckersTy &checkers,
-                     const Stmt *s, ExprEngine &eng)
-      : IsPreVisit(isPreVisit), Checkers(checkers), S(s), Eng(eng) { }
+                     const Stmt *s, ExprEngine &eng, bool wasInlined = false)
+      : IsPreVisit(isPreVisit), Checkers(checkers), S(s), Eng(eng),
+        wasInlined(wasInlined) {}
 
     void runChecker(CheckerManager::CheckStmtFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
@@ -153,8 +155,7 @@ namespace {
                                            ProgramPoint::PostStmtKind;
       const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                 Pred->getLocationContext(), checkFn.Checker);
-      CheckerContext C(Bldr, Eng, Pred, L);
-
+      CheckerContext C(Bldr, Eng, Pred, L, wasInlined);
       checkFn(S, C);
     }
   };
@@ -165,9 +166,10 @@ void CheckerManager::runCheckersForStmt(bool isPreVisit,
                                         ExplodedNodeSet &Dst,
                                         const ExplodedNodeSet &Src,
                                         const Stmt *S,
-                                        ExprEngine &Eng) {
+                                        ExprEngine &Eng,
+                                        bool wasInlined) {
   CheckStmtContext C(isPreVisit, *getCachedStmtCheckersFor(S, isPreVisit),
-                     S, Eng);
+                     S, Eng, wasInlined);
   expandGraphWithCheckers(C, Dst, Src);
 }
 

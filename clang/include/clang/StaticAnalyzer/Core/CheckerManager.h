@@ -193,14 +193,16 @@ public:
   void runCheckersForPostStmt(ExplodedNodeSet &Dst,
                               const ExplodedNodeSet &Src,
                               const Stmt *S,
-                              ExprEngine &Eng) {
-    runCheckersForStmt(/*isPreVisit=*/false, Dst, Src, S, Eng);
+                              ExprEngine &Eng,
+                              bool wasInlined = false) {
+    runCheckersForStmt(/*isPreVisit=*/false, Dst, Src, S, Eng, wasInlined);
   }
 
   /// \brief Run checkers for visiting Stmts.
   void runCheckersForStmt(bool isPreVisit,
                           ExplodedNodeSet &Dst, const ExplodedNodeSet &Src,
-                          const Stmt *S, ExprEngine &Eng);
+                          const Stmt *S, ExprEngine &Eng,
+                          bool wasInlined = false);
 
   /// \brief Run checkers for pre-visiting obj-c messages.
   void runCheckersForPreObjCMessage(ExplodedNodeSet &Dst,

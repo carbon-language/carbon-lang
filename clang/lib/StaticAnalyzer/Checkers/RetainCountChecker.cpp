@@ -2599,6 +2599,9 @@ void RetainCountChecker::checkPostStmt(const CastExpr *CE,
 
 void RetainCountChecker::checkPostStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
+  if (C.wasInlined)
+    return;
+  
   // Get the callee.
   ProgramStateRef state = C.getState();
   const Expr *Callee = CE->getCallee();

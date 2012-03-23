@@ -341,9 +341,9 @@ int rdar10553686(void)
 }
 int rdar10553686_positive(void)
 {
-  NSObject* bar = static_objc_cast<NSObject*>([[NSObject alloc] init]); // expected-warning {{Potential leak}}
+  NSObject* bar = static_objc_cast<NSObject*>([[NSObject alloc] init]);
   [bar release];
-  [bar retain];
+  [bar retain]; // expected-warning {{used after it is released}}
   return 0;
 }
 

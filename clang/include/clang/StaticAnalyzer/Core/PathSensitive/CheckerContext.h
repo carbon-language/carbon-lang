@@ -33,15 +33,21 @@ class CheckerContext {
   NodeBuilder &NB;
 
 public:
+  /// If we are post visiting a call, this flag will be set if the
+  /// call was inlined.  In all other cases it will be false.
+  const bool wasInlined;
+  
   CheckerContext(NodeBuilder &builder,
                  ExprEngine &eng,
                  ExplodedNode *pred,
-                 const ProgramPoint &loc)
+                 const ProgramPoint &loc,
+                 bool wasInlined = false)
     : Eng(eng),
       Pred(pred),
       Changed(false),
       Location(loc),
-      NB(builder) {
+      NB(builder),
+      wasInlined(wasInlined) {
     assert(Pred->getState() &&
            "We should not call the checkers on an empty state.");
   }

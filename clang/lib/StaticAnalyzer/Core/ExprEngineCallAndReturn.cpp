@@ -107,7 +107,8 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
                                                     &Ctx);
   SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
   
-  getCheckerManager().runCheckersForPostStmt(Dst, N, CE, *this);
+  getCheckerManager().runCheckersForPostStmt(Dst, N, CE, *this,
+                                             /* wasInlined */ true);
   
   // Enqueue the next element in the block.
   for (ExplodedNodeSet::iterator I = Dst.begin(), E = Dst.end(); I != E; ++I) {
