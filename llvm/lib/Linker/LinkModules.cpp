@@ -1226,7 +1226,6 @@ bool ModuleLinker::run() {
     }
     
     linkFunctionBody(cast<Function>(ValueMap[SF]), SF);
-    SF->Dematerialize();
   }
 
   // Resolve all uses of aliases with aliasees.
@@ -1266,8 +1265,7 @@ bool ModuleLinker::run() {
         
         // Link in function body.
         linkFunctionBody(DF, SF);
-        SF->Dematerialize();
-
+        
         // "Remove" from vector by setting the element to 0.
         *I = 0;
         
