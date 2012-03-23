@@ -8260,10 +8260,11 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             EnumUnderlyingTy = QualType(T, 0);
 
           // All conflicts with previous declarations are recovered by
-          // returning the previous declaration.
+          // returning the previous declaration, unless this is a definition,
+          // in which case we want the caller to bail out.
           if (CheckEnumRedeclaration(NameLoc.isValid() ? NameLoc : KWLoc,
                                      ScopedEnum, EnumUnderlyingTy, PrevEnum))
-            return PrevTagDecl;
+            return TUK == TUK_Declaration ? PrevTagDecl : 0;
         }
 
         if (!Invalid) {

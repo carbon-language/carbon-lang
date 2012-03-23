@@ -189,3 +189,14 @@ namespace test7 {
   enum class E { e = (struct S*)0 == (struct S*)0 };
   S *p;
 }
+
+namespace test8 {
+  template<typename T> struct S {
+    enum A : int; // expected-note {{here}}
+    enum class B; // expected-note {{here}}
+    enum class C : int; // expected-note {{here}}
+  };
+  template<typename T> enum S<T>::A { a }; // expected-error {{previously declared with fixed underlying type}}
+  template<typename T> enum class S<T>::B : char { b }; // expected-error {{redeclared with different underlying}}
+  template<typename T> enum S<T>::C : int { c }; // expected-error {{previously declared as scoped}}
+}

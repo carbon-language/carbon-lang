@@ -1848,7 +1848,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         // specialization causes the implicit instantiation of the definitions
         // of unscoped member enumerations.
         // Record a point of instantiation for this implicit instantiation.
-        if (TSK == TSK_ImplicitInstantiation && !Enum->isScoped()) {
+        if (TSK == TSK_ImplicitInstantiation && !Enum->isScoped() &&
+            Enum->isCompleteDefinition()) {
           MemberSpecializationInfo *MSInfo =Enum->getMemberSpecializationInfo();
           assert(MSInfo && "no spec info for member enum specialization");
           MSInfo->setTemplateSpecializationKind(TSK_ImplicitInstantiation);
