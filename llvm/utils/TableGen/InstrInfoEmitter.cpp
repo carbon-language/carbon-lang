@@ -18,6 +18,7 @@
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
+#include <cstdio>
 using namespace llvm;
 
 static void PrintDefList(const std::vector<Record*> &Uses,

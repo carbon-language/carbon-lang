@@ -16,6 +16,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Module.h"
+#include <cstdio>
 #include <cstdlib>
 #include <memory>
 using namespace llvm;
