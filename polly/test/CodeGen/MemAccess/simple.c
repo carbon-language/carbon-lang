@@ -1,7 +1,7 @@
 int A[100];
 int B[100];
 
-int memaccess_simple()
+int simple()
 {
   int i, j;
   for (i = 0; i < 12; i++) {

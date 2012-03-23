@@ -1,12 +1,12 @@
-;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -stats %s 2>&1  | FileCheck %s
-; ModuleID = 'memaccess_simple.ll'
+;RUN: opt %loadPolly -polly-import-jscop -analyze -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed %s | FileCheck %s
+; ModuleID = 'simple.ll'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
 target triple = "i386-pc-linux-gnu"
 
 @A = common global [100 x i32] zeroinitializer, align 4
 @B = common global [100 x i32] zeroinitializer, align 4
 
-define i32 @memaccess_simple() nounwind {
+define i32 @simple() nounwind {
 entry:
   br label %for.cond
 
@@ -44,4 +44,5 @@ for.inc11:                                        ; preds = %for.body7
 for.end14:                                        ; preds = %for.cond4
   ret i32 0
 }
-; CHECK: 2 polly-import-jscop
+; CHECK: New access function '{ Stmt_for_body7[i0] -> MemRef_B[0] }'detected in JSCOP file
+; CHECK: New access function '{ Stmt_for_body[i0] -> MemRef_A[0] }'detected in JSCOP file
