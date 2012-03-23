@@ -28,8 +28,7 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    AutoPick, RunLLI, RunJIT, RunLLC, RunLLCIA, RunCBE, CBE_bug, LLC_Safe,
-    CompileCustom, Custom
+    AutoPick, RunLLI, RunJIT, RunLLC, RunLLCIA, LLC_Safe, CompileCustom, Custom
   };
 
   cl::opt<double>
@@ -48,8 +47,6 @@ namespace {
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunLLCIA, "run-llc-ia",
                                   "Compile with LLC with integrated assembler"),
-                            clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
-                            clEnumValN(CBE_bug,"cbe-bug", "Find CBE bugs"),
                             clEnumValN(LLC_Safe, "llc-safe", "Use LLC for all"),
                             clEnumValN(CompileCustom, "compile-custom",
                             "Use -compile-command to define a command to "
@@ -64,7 +61,6 @@ namespace {
   SafeInterpreterSel(cl::desc("Specify \"safe\" i.e. known-good backend:"),
               cl::values(clEnumValN(AutoPick, "safe-auto", "Use best guess"),
                          clEnumValN(RunLLC, "safe-run-llc", "Compile with LLC"),
-                         clEnumValN(RunCBE, "safe-run-cbe", "Compile with CBE"),
                          clEnumValN(Custom, "safe-run-custom",
                          "Use -exec-command to define a command to execute "
                          "the bitcode. Useful for cross-compilation."),
@@ -154,10 +150,6 @@ bool BugDriver::initializeExecutionEnvironment() {
 
   switch (InterpreterSel) {
   case AutoPick:
-    InterpreterSel = RunCBE;
-    Interpreter =
-      AbstractInterpreter::createCBE(getToolName(), Message, GCCBinary,
-                                     &ToolArgv, &GCCToolArgv);
     if (!Interpreter) {
       InterpreterSel = RunJIT;
       Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
@@ -195,12 +187,6 @@ bool BugDriver::initializeExecutionEnvironment() {
     Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
                                                  &ToolArgv);
     break;
-  case RunCBE:
-  case CBE_bug:
-    Interpreter = AbstractInterpreter::createCBE(getToolName(), Message,
-                                                 GCCBinary, &ToolArgv,
-                                                 &GCCToolArgv);
-    break;
   case CompileCustom:
     Interpreter =
       AbstractInterpreter::createCustomCompiler(Message, CustomCompileCommand);
@@ -221,17 +207,6 @@ bool BugDriver::initializeExecutionEnvironment() {
   std::vector<std::string> SafeToolArgs = SafeToolArgv;
   switch (SafeInterpreterSel) {
   case AutoPick:
-    // In "cbe-bug" mode, default to using LLC as the "safe" backend.
-    if (!SafeInterpreter &&
-        InterpreterSel == CBE_bug) {
-      SafeInterpreterSel = RunLLC;
-      SafeToolArgs.push_back("--relocation-model=pic");
-      SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
-                                                       GCCBinary,
-                                                       &SafeToolArgs,
-                                                       &GCCToolArgv);
-    }
-
     // In "llc-safe" mode, default to using LLC as the "safe" backend.
     if (!SafeInterpreter &&
         InterpreterSel == LLC_Safe) {
@@ -243,17 +218,6 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                        &GCCToolArgv);
     }
 
-    // Pick a backend that's different from the test backend. The JIT and
-    // LLC backends share a lot of code, so prefer to use the CBE as the
-    // safe back-end when testing them.
-    if (!SafeInterpreter &&
-        InterpreterSel != RunCBE) {
-      SafeInterpreterSel = RunCBE;
-      SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
-                                                       GCCBinary,
-                                                       &SafeToolArgs,
-                                                       &GCCToolArgv);
-    }
     if (!SafeInterpreter &&
         InterpreterSel != RunLLC &&
         InterpreterSel != RunJIT) {
@@ -276,11 +240,6 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                      GCCBinary, &SafeToolArgs,
                                                      &GCCToolArgv,
                                                 SafeInterpreterSel == RunLLCIA);
-    break;
-  case RunCBE:
-    SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
-                                                     GCCBinary, &SafeToolArgs,
-                                                     &GCCToolArgv);
     break;
   case Custom:
     SafeInterpreter =
@@ -459,8 +418,8 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
     errs() << Error;
     if (Interpreter != SafeInterpreter) {
       errs() << "*** There is a bug running the \"safe\" backend.  Either"
-             << " debug it (for example with the -run-cbe bugpoint option,"
-             << " if CBE is being used as the \"safe\" backend), or fix the"
+             << " debug it (for example with the -run-jit bugpoint option,"
+             << " if JIT is being used as the \"safe\" backend), or fix the"
              << " error some other way.\n";
     }
     return false;

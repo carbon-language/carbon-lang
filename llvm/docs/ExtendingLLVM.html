@@ -105,19 +105,6 @@ function and then be turned into an instruction if warranted.</p>
 support for it.  Generally you must do the following steps:</p>
 
 <dl>
-<dt>Add support to the C backend in <tt>lib/Target/CBackend/</tt></dt>
-
-<dd>Depending on the intrinsic, there are a few ways to implement this.  For
-    most intrinsics, it makes sense to add code to lower your intrinsic in
-    <tt>LowerIntrinsicCall</tt> in <tt>lib/CodeGen/IntrinsicLowering.cpp</tt>.
-    Second, if it makes sense to lower the intrinsic to an expanded sequence of
-    C code in all cases, just emit the expansion in <tt>visitCallInst</tt> in
-    <tt>Writer.cpp</tt>.  If the intrinsic has some way to express it with GCC
-    (or any other compiler) extensions, it can be conditionally supported based
-    on the compiler compiling the CBE output (see <tt>llvm.prefetch</tt> for an
-    example).  Third, if the intrinsic really has no way to be lowered, just
-    have the code generator emit code that prints an error message and calls
-    abort if executed.</dd>
 
 <dt>Add support to the .td file for the target(s) of your choice in 
    <tt>lib/Target/*/*.td</tt>.</dt>
