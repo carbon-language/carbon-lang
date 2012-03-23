@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 
 using namespace llvm;
@@ -35,4 +36,11 @@ const MCSymbol *MCELFObjectTargetWriter::ExplicitRelSym(const MCAssembler &Asm,
 
 void MCELFObjectTargetWriter::adjustFixupOffset(const MCFixup &Fixup,
                                                 uint64_t &RelocOffset) {
+}
+
+void
+MCELFObjectTargetWriter::sortRelocs(const MCAssembler &Asm,
+                                    std::vector<ELFRelocationEntry> &Relocs) {
+  // Sort by the r_offset, just like gnu as does.
+  array_pod_sort(Relocs.begin(), Relocs.end());
 }

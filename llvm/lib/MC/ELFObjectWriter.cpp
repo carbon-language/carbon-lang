@@ -84,32 +84,6 @@ class ELFObjectWriter : public MCObjectWriter {
       }
     };
 
-    /// @name Relocation Data
-    /// @{
-
-    struct ELFRelocationEntry {
-      // Make these big enough for both 32-bit and 64-bit
-      uint64_t r_offset;
-      int Index;
-      unsigned Type;
-      const MCSymbol *Symbol;
-      uint64_t r_addend;
-
-      ELFRelocationEntry()
-        : r_offset(0), Index(0), Type(0), Symbol(0), r_addend(0) {}
-
-      ELFRelocationEntry(uint64_t RelocOffset, int Idx,
-                         unsigned RelType, const MCSymbol *Sym,
-                         uint64_t Addend)
-        : r_offset(RelocOffset), Index(Idx), Type(RelType),
-          Symbol(Sym), r_addend(Addend) {}
-
-      // Support lexicographic sorting.
-      bool operator<(const ELFRelocationEntry &RE) const {
-        return RE.r_offset < r_offset;
-      }
-    };
-
     /// The target specific ELF writer instance.
     llvm::OwningPtr<MCELFObjectTargetWriter> TargetObjectWriter;
 
@@ -786,7 +760,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   else
     assert(isInt<32>(Addend));
 
-  ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
+  ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend, Fixup);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
 
@@ -1072,8 +1046,10 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
                                                MCDataFragment *F,
                                                const MCSectionData *SD) {
   std::vector<ELFRelocationEntry> &Relocs = Relocations[SD];
-  // sort by the r_offset just like gnu as does
-  array_pod_sort(Relocs.begin(), Relocs.end());
+
+  // Sort the relocation entries. Most targets just sort by r_offset, but some
+  // (e.g., MIPS) have additional constraints.
+  TargetObjectWriter->sortRelocs(Asm, Relocs);
 
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     ELFRelocationEntry entry = Relocs[e - i - 1];

@@ -13,8 +13,35 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
+#include <vector>
 
 namespace llvm {
+/// @name Relocation Data
+/// @{
+
+struct ELFRelocationEntry {
+  // Make these big enough for both 32-bit and 64-bit
+  uint64_t r_offset;
+  int Index;
+  unsigned Type;
+  const MCSymbol *Symbol;
+  uint64_t r_addend;
+  const MCFixup *Fixup;
+
+  ELFRelocationEntry()
+    : r_offset(0), Index(0), Type(0), Symbol(0), r_addend(0), Fixup(0) {}
+
+  ELFRelocationEntry(uint64_t RelocOffset, int Idx, unsigned RelType,
+                     const MCSymbol *Sym, uint64_t Addend, const MCFixup &Fixup)
+    : r_offset(RelocOffset), Index(Idx), Type(RelType), Symbol(Sym),
+      r_addend(Addend), Fixup(&Fixup) {}
+
+  // Support lexicographic sorting.
+  bool operator<(const ELFRelocationEntry &RE) const {
+    return RE.r_offset < r_offset;
+  }
+};
+
 class MCELFObjectTargetWriter {
   const uint8_t OSABI;
   const uint16_t EMachine;
@@ -52,6 +79,8 @@ public:
   virtual void adjustFixupOffset(const MCFixup &Fixup,
                                  uint64_t &RelocOffset);
 
+  virtual void sortRelocs(const MCAssembler &Asm,
+                          std::vector<ELFRelocationEntry> &Relocs);
 
   /// @name Accessors
   /// @{
