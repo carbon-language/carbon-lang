@@ -288,10 +288,13 @@ static const Expr *IgnoreNarrowingConversion(const Expr *Converted) {
 /// \param Converted  The result of applying this standard conversion sequence.
 /// \param ConstantValue  If this is an NK_Constant_Narrowing conversion, the
 ///        value of the expression prior to the narrowing conversion.
+/// \param ConstantType  If this is an NK_Constant_Narrowing conversion, the
+///        type of the expression prior to the narrowing conversion.
 NarrowingKind
 StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
                                              const Expr *Converted,
-                                             APValue &ConstantValue) const {
+                                             APValue &ConstantValue,
+                                             QualType &ConstantType) const {
   assert(Ctx.getLangOpts().CPlusPlus && "narrowing check outside C++");
 
   // C++11 [dcl.init.list]p7:
@@ -325,6 +328,7 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
         // If the resulting value is different, this was a narrowing conversion.
         if (IntConstantValue != ConvertedValue) {
           ConstantValue = APValue(IntConstantValue);
+          ConstantType = Initializer->getType();
           return NK_Constant_Narrowing;
         }
       } else {
@@ -354,8 +358,10 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
           llvm::APFloat::rmNearestTiesToEven, &ignored);
         // If there was no overflow, the source value is within the range of
         // values that can be represented.
-        if (ConvertStatus & llvm::APFloat::opOverflow)
+        if (ConvertStatus & llvm::APFloat::opOverflow) {
+          ConstantType = Initializer->getType();
           return NK_Constant_Narrowing;
+        }
       } else {
         return NK_Variable_Narrowing;
       }
@@ -400,8 +406,10 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
         ConvertedValue = ConvertedValue.extend(InitializerValue.getBitWidth());
         ConvertedValue.setIsSigned(InitializerValue.isSigned());
         // If the result is different, this was a narrowing conversion.
-        if (ConvertedValue != InitializerValue)
+        if (ConvertedValue != InitializerValue) {
+          ConstantType = Initializer->getType();
           return NK_Constant_Narrowing;
+        }
       } else {
         // Variables are always narrowings.
         return NK_Variable_Narrowing;
@@ -4789,8 +4797,10 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
 
   // Check for a narrowing implicit conversion.
   APValue PreNarrowingValue;
+  QualType PreNarrowingType;
   bool Diagnosed = false;
-  switch (SCS->getNarrowingKind(Context, Result.get(), PreNarrowingValue)) {
+  switch (SCS->getNarrowingKind(Context, Result.get(), PreNarrowingValue,
+                                PreNarrowingType)) {
   case NK_Variable_Narrowing:
     // Implicit conversion to a narrower type, and the value is not a constant
     // expression. We'll diagnose this in a moment.
@@ -4800,7 +4810,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
   case NK_Constant_Narrowing:
     Diag(From->getLocStart(), diag::err_cce_narrowing)
       << CCE << /*Constant*/1
-      << PreNarrowingValue.getAsString(Context, QualType()) << T;
+      << PreNarrowingValue.getAsString(Context, PreNarrowingType) << T;
     Diagnosed = true;
     break;
 

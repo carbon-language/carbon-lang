@@ -96,3 +96,7 @@ void LabelDiffTest() {
   static_assert(mulBy3((LabelDiffTy)&&a-(LabelDiffTy)&&b) == 3, ""); // expected-error {{constant expression}} expected-note {{call to 'mulBy3(&&a - &&b)'}}
   a:b:return;
 }
+
+constexpr bool test_bool_printing(bool b) { return 1 / !(2*b | !(2*b)); } // expected-note 2{{division by zero}}
+constexpr bool test_bool_0 = test_bool_printing(false); // expected-error {{constant expr}} expected-note {{in call to 'test_bool_printing(false)'}}
+constexpr bool test_bool_1 = test_bool_printing(true); // expected-error {{constant expr}} expected-note {{in call to 'test_bool_printing(true)'}}

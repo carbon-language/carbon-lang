@@ -236,7 +236,8 @@ namespace clang {
     
     ImplicitConversionRank getRank() const;
     NarrowingKind getNarrowingKind(ASTContext &Context, const Expr *Converted,
-                                   APValue &ConstantValue) const;
+                                   APValue &ConstantValue,
+                                   QualType &ConstantType) const;
     bool isPointerConversionToBool() const;
     bool isPointerConversionToVoidPointer(ASTContext& Context) const;
     void DebugPrint() const;

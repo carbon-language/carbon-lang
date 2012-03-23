@@ -6045,7 +6045,9 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
 
   // C++11 [dcl.init.list]p7: Check whether this is a narrowing conversion.
   APValue ConstantValue;
-  switch (SCS->getNarrowingKind(S.Context, PostInit, ConstantValue)) {
+  QualType ConstantType;
+  switch (SCS->getNarrowingKind(S.Context, PostInit, ConstantValue,
+                                ConstantType)) {
   case NK_Not_Narrowing:
     // No narrowing occurred.
     return;
@@ -6074,7 +6076,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
              diag::err_init_list_constant_narrowing_sfinae
            : diag::err_init_list_constant_narrowing)
       << PostInit->getSourceRange()
-      << ConstantValue.getAsString(S.getASTContext(), EntityType)
+      << ConstantValue.getAsString(S.getASTContext(), ConstantType)
       << EntityType.getLocalUnqualifiedType();
     break;
 
