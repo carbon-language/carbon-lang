@@ -34,9 +34,21 @@ void free(void *ptr) {
   return asan_free(ptr, &stack);
 }
 
+void _free_dbg(void* ptr, int) {
+  free(ptr);
+}
+
+void cfree(void *ptr) {
+  CHECK(!"cfree() should not be used on Windows?");
+}
+
 void *malloc(size_t size) {
   GET_STACK_TRACE_HERE_FOR_MALLOC;
   return asan_malloc(size, &stack);
+}
+
+void* _malloc_dbg(size_t size, int , const char*, int) {
+  return malloc(size);
 }
 
 void *calloc(size_t nmemb, size_t size) {
@@ -44,9 +56,12 @@ void *calloc(size_t nmemb, size_t size) {
   return asan_calloc(nmemb, size, &stack);
 }
 
+void* _calloc_dbg(size_t n, size_t size, int, const char*, int) {
+  return calloc(n, size);
+}
+
 void *_calloc_impl(size_t nmemb, size_t size, int *errno_tmp) {
-  GET_STACK_TRACE_HERE_FOR_MALLOC;
-  return asan_calloc(nmemb, size, &stack);
+  return calloc(nmemb, size);
 }
 
 void *realloc(void *ptr, size_t size) {
@@ -54,9 +69,37 @@ void *realloc(void *ptr, size_t size) {
   return asan_realloc(ptr, size, &stack);
 }
 
+void *_realloc_dbg(void *ptr, size_t size, int) {
+  CHECK(!"_realloc_dbg should not exist!");
+  return NULL;
+}
+
+void* _recalloc(void* p, size_t n, size_t elem_size) {
+  if (!p)
+    return calloc(n, elem_size);
+  const size_t size = n * elem_size;
+  if (elem_size != 0 && size / elem_size != n)
+    return NULL;
+  return realloc(p, size);
+}
+
 size_t _msize(void *ptr) {
   GET_STACK_TRACE_HERE_FOR_MALLOC;
   return asan_malloc_usable_size(ptr, &stack);
+}
+
+int _CrtDbgReport(int, const char*, int,
+                  const char*, const char*, ...) {
+  ShowStatsAndAbort();
+}
+
+int _CrtDbgReportW(int reportType, const wchar_t*, int,
+                   const wchar_t*, const wchar_t*, ...) {
+  ShowStatsAndAbort();
+}
+
+int _CrtSetReportMode(int, int) {
+  return 0;
 }
 }  // extern "C"
 
