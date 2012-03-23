@@ -1056,7 +1056,7 @@ class ClastStmtCodeGen {
   //       Stmt(i = s + 3 * m, j = t);
   //
   // {s,t,i,j,n,m} is the set of clast variables in this clast.
-  CharMapT *clastVars;
+  CharMapT *ClastVars;
 
   // Codegenerator for clast expressions.
   ClastExpCodeGen ExpGen;
@@ -1162,7 +1162,7 @@ const std::vector<std::string> &ClastStmtCodeGen::getParallelLoops() {
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a) {
   Value *V= ExpGen.codegen(a->RHS, getIntPtrTy());
-  (*clastVars)[a->LHS] = V;
+  (*ClastVars)[a->LHS] = V;
 }
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a, ScopStmt *Statement,
@@ -1218,7 +1218,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     int i = 0;
     for (std::vector<Value*>::iterator II = IVS->begin(), IE = IVS->end();
          II != IE; ++II) {
-      (*clastVars)[iterator] = *II;
+      (*ClastVars)[iterator] = *II;
       codegenSubstitutions(u->substitutions, Statement, i, &VectorMap);
       i++;
     }
@@ -1252,13 +1252,13 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
   Value *IV = createLoop(&Builder, LowerBound, UpperBound, Stride, P, &AfterBB);
 
   // Add loop iv to symbols.
-  (*clastVars)[f->iterator] = IV;
+  (*ClastVars)[f->iterator] = IV;
 
   if (f->body)
     codegen(f->body);
 
   // Loop is finished, so remove its iv from the live symbols.
-  clastVars->erase(f->iterator);
+  ClastVars->erase(f->iterator);
   Builder.SetInsertPoint(AfterBB->begin());
 }
 
@@ -1301,7 +1301,7 @@ SetVector<Value*> ClastStmtCodeGen::createOpenMPStructValues() {
   SetVector<Value*> OMPDataVals;
 
   // Push the clast variables available in the clastVars.
-  for (CharMapT::iterator I = clastVars->begin(), E = clastVars->end();
+  for (CharMapT::iterator I = ClastVars->begin(), E = ClastVars->end();
        I != E; I++)
     OMPDataVals.insert(I->second);
 
@@ -1322,7 +1322,7 @@ void ClastStmtCodeGen::extractValuesFromOpenMPStruct(CharMapT *clastVarsOMP,
   SetVector<Value*> OMPDataVals, Value *userContext) {
   // Extract the clast variables.
   unsigned i = 0;
-  for (CharMapT::iterator I = clastVars->begin(), E = clastVars->end();
+  for (CharMapT::iterator I = ClastVars->begin(), E = ClastVars->end();
        I != E; I++) {
     Value *loadAddr = Builder.CreateStructGEP(userContext, i);
     (*clastVarsOMP)[I->first] = Builder.CreateLoad(loadAddr);
@@ -1339,7 +1339,7 @@ void ClastStmtCodeGen::extractValuesFromOpenMPStruct(CharMapT *clastVarsOMP,
 
 void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
                                                 const clast_for *f,
-                                                Value *structData,
+                                                Value *StructData,
                                                 SetVector<Value*> OMPDataVals) {
   Type *IntPtrTy = getIntPtrTy();
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
@@ -1352,65 +1352,65 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
   // Create basic blocks.
   BasicBlock *HeaderBB = BasicBlock::Create(Context, "omp.setup", FN);
   BasicBlock *ExitBB = BasicBlock::Create(Context, "omp.exit", FN);
-  BasicBlock *checkNextBB = BasicBlock::Create(Context, "omp.checkNext", FN);
-  BasicBlock *loadIVBoundsBB = BasicBlock::Create(Context, "omp.loadIVBounds",
+  BasicBlock *CheckNextBB = BasicBlock::Create(Context, "omp.checkNext", FN);
+  BasicBlock *LoadIVBoundsBB = BasicBlock::Create(Context, "omp.loadIVBounds",
                                                   FN);
 
   DominatorTree &DT = P->getAnalysis<DominatorTree>();
   DT.addNewBlock(HeaderBB, PrevBB);
   DT.addNewBlock(ExitBB, HeaderBB);
-  DT.addNewBlock(checkNextBB, HeaderBB);
-  DT.addNewBlock(loadIVBoundsBB, HeaderBB);
+  DT.addNewBlock(CheckNextBB, HeaderBB);
+  DT.addNewBlock(LoadIVBoundsBB, HeaderBB);
 
   // Fill up basic block HeaderBB.
   Builder.SetInsertPoint(HeaderBB);
-  Value *lowerBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.lowerBoundPtr");
-  Value *upperBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.upperBoundPtr");
-  Value *userContext = Builder.CreateBitCast(FN->arg_begin(),
-                                             structData->getType(),
+  Value *LowerBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.lowerBoundPtr");
+  Value *UpperBoundPtr = Builder.CreateAlloca(IntPtrTy, 0, "omp.upperBoundPtr");
+  Value *UserContext = Builder.CreateBitCast(FN->arg_begin(),
+                                             StructData->getType(),
                                              "omp.userContext");
 
-  CharMapT clastVarsOMP;
-  extractValuesFromOpenMPStruct(&clastVarsOMP, OMPDataVals, userContext);
+  CharMapT ClastVarsOMP;
+  extractValuesFromOpenMPStruct(&ClastVarsOMP, OMPDataVals, UserContext);
 
-  Builder.CreateBr(checkNextBB);
+  Builder.CreateBr(CheckNextBB);
 
   // Add code to check if another set of iterations will be executed.
-  Builder.SetInsertPoint(checkNextBB);
-  Function *runtimeNextFunction = M->getFunction("GOMP_loop_runtime_next");
-  Value *ret1 = Builder.CreateCall2(runtimeNextFunction,
-                                    lowerBoundPtr, upperBoundPtr);
-  Value *hasNextSchedule = Builder.CreateTrunc(ret1, Builder.getInt1Ty(),
+  Builder.SetInsertPoint(CheckNextBB);
+  Function *RuntimeNextFunction = M->getFunction("GOMP_loop_runtime_next");
+  Value *Ret1 = Builder.CreateCall2(RuntimeNextFunction,
+                                    LowerBoundPtr, UpperBoundPtr);
+  Value *HasNextSchedule = Builder.CreateTrunc(Ret1, Builder.getInt1Ty(),
                                                "omp.hasNextScheduleBlock");
-  Builder.CreateCondBr(hasNextSchedule, loadIVBoundsBB, ExitBB);
+  Builder.CreateCondBr(HasNextSchedule, LoadIVBoundsBB, ExitBB);
 
   // Add code to to load the iv bounds for this set of iterations.
-  Builder.SetInsertPoint(loadIVBoundsBB);
-  Value *lowerBound = Builder.CreateLoad(lowerBoundPtr, "omp.lowerBound");
-  Value *upperBound = Builder.CreateLoad(upperBoundPtr, "omp.upperBound");
+  Builder.SetInsertPoint(LoadIVBoundsBB);
+  Value *LowerBound = Builder.CreateLoad(LowerBoundPtr, "omp.lowerBound");
+  Value *UpperBound = Builder.CreateLoad(UpperBoundPtr, "omp.upperBound");
 
   // Subtract one as the upper bound provided by openmp is a < comparison
   // whereas the codegenForSequential function creates a <= comparison.
-  upperBound = Builder.CreateSub(upperBound, ConstantInt::get(IntPtrTy, 1),
+  UpperBound = Builder.CreateSub(UpperBound, ConstantInt::get(IntPtrTy, 1),
                                  "omp.upperBoundAdjusted");
 
   // Use clastVarsOMP during code generation of the OpenMP subfunction.
-  CharMapT *oldClastVars = clastVars;
-  clastVars = &clastVarsOMP;
-  ExpGen.setIVS(&clastVarsOMP);
+  CharMapT *OldClastVars = ClastVars;
+  ClastVars = &ClastVarsOMP;
+  ExpGen.setIVS(&ClastVarsOMP);
 
-  Builder.CreateBr(checkNextBB);
+  Builder.CreateBr(CheckNextBB);
   Builder.SetInsertPoint(--Builder.GetInsertPoint());
-  codegenForSequential(f, lowerBound, upperBound);
+  codegenForSequential(f, LowerBound, UpperBound);
 
   // Restore the old clastVars.
-  clastVars = oldClastVars;
-  ExpGen.setIVS(oldClastVars);
+  ClastVars = OldClastVars;
+  ExpGen.setIVS(OldClastVars);
 
   // Add code to terminate this openmp subfunction.
   Builder.SetInsertPoint(ExitBB);
-  Function *endnowaitFunction = M->getFunction("GOMP_loop_end_nowait");
-  Builder.CreateCall(endnowaitFunction);
+  Function *EndnowaitFunction = M->getFunction("GOMP_loop_end_nowait");
+  Builder.CreateCall(EndnowaitFunction);
   Builder.CreateRetVoid();
 
   // Restore the previous insert point.
@@ -1525,7 +1525,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   isl_set *Domain = isl_set_from_cloog_domain(F->domain);
 
   // Add loop iv to symbols.
-  (*clastVars)[F->iterator] = LB;
+  (*ClastVars)[F->iterator] = LB;
 
   const clast_stmt *Stmt = F->body;
 
@@ -1537,7 +1537,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
 
   // Loop is finished, so remove its iv from the live symbols.
   isl_set_free(Domain);
-  clastVars->erase(F->iterator);
+  ClastVars->erase(F->iterator);
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
@@ -1642,16 +1642,16 @@ void ClastStmtCodeGen::addParameters(const CloogNames *names) {
 
     Instruction *insertLocation = --(Builder.GetInsertBlock()->end());
     Value *V = Rewriter.expandCodeFor(Param, Ty, insertLocation);
-    (*clastVars)[names->parameters[i]] = V;
+    (*ClastVars)[names->parameters[i]] = V;
 
     ++i;
   }
 }
 
 void ClastStmtCodeGen::codegen(const clast_root *r) {
-  clastVars = new CharMapT();
+  ClastVars = new CharMapT();
   addParameters(r->names);
-  ExpGen.setIVS(clastVars);
+  ExpGen.setIVS(ClastVars);
 
   parallelCodeGeneration = false;
 
@@ -1659,7 +1659,7 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
   if (stmt->next)
     codegen(stmt->next);
 
-  delete clastVars;
+  delete ClastVars;
 }
 
 ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P) :
