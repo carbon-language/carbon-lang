@@ -48,3 +48,7 @@ void foo() {
                                     // expected-warning {{cannot find interface declaration for 'SomeI'}}
 -(void)meth {}
 @end
+
+@interface I3
+__attribute__((unavailable)) @interface I4 @end // expected-error {{Objective-C declarations may only appear in global scope}}
+@end

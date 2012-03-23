@@ -31,7 +31,7 @@
 @implementation Q
 
 __attribute__((visibility("default")))
-@interface QN 
+@interface QN // expected-error {{Objective-C declarations may only appear in global scope}}
 {
 }
 @end

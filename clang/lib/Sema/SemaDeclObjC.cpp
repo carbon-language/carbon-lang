@@ -2903,13 +2903,15 @@ Decl *Sema::ActOnMethodDeclaration(
 }
 
 bool Sema::CheckObjCDeclScope(Decl *D) {
-  if (isa<TranslationUnitDecl>(CurContext->getRedeclContext()))
-    return false;
   // Following is also an error. But it is caused by a missing @end
   // and diagnostic is issued elsewhere.
-  if (isa<ObjCContainerDecl>(CurContext->getRedeclContext())) {
+  if (isa<ObjCContainerDecl>(CurContext->getRedeclContext()))
     return false;
-  }
+
+  // If we switched context to translation unit while we are still lexically in
+  // an objc container, it means the parser missed emitting an error.
+  if (isa<TranslationUnitDecl>(getCurLexicalContext()->getRedeclContext()))
+    return false;
   
   Diag(D->getLocation(), diag::err_objc_decls_may_only_appear_in_global_scope);
   D->setInvalidDecl();
