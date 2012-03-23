@@ -402,14 +402,15 @@ ExecutionEngine *ExecutionEngine::create(Module *M,
                                          std::string *ErrorStr,
                                          CodeGenOpt::Level OptLevel,
                                          bool GVsWithCode) {
-  return EngineBuilder(M)
+  EngineBuilder EB =  EngineBuilder(M)
       .setEngineKind(ForceInterpreter
                      ? EngineKind::Interpreter
                      : EngineKind::JIT)
       .setErrorStr(ErrorStr)
       .setOptLevel(OptLevel)
-      .setAllocateGVsWithCode(GVsWithCode)
-      .create();
+      .setAllocateGVsWithCode(GVsWithCode);
+
+  return EB.create();
 }
 
 /// createJIT - This is the factory method for creating a JIT for the current
@@ -430,21 +431,23 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
 
   // Use the defaults for extra parameters.  Users can use EngineBuilder to
   // set them.
-  StringRef MArch = "";
-  StringRef MCPU = "";
-  SmallVector<std::string, 1> MAttrs;
+  EngineBuilder EB(M);
+  EB.setEngineKind(EngineKind::JIT);
+  EB.setErrorStr(ErrorStr);
+  EB.setRelocationModel(RM);
+  EB.setCodeModel(CMM);
+  EB.setAllocateGVsWithCode(GVsWithCode);
+  EB.setOptLevel(OL);
+  EB.setJITMemoryManager(JMM);
 
-  Triple TT(M->getTargetTriple());
   // TODO: permit custom TargetOptions here
-  TargetMachine *TM =
-    EngineBuilder::selectTarget(TT, MArch, MCPU, MAttrs, TargetOptions(), RM,
-                                CMM, OL, ErrorStr);
+  TargetMachine *TM = EB.selectTarget();
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
 
   return ExecutionEngine::JITCtor(M, ErrorStr, JMM, GVsWithCode, TM);
 }
 
-ExecutionEngine *EngineBuilder::create() {
+ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
   if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
@@ -465,29 +468,24 @@ ExecutionEngine *EngineBuilder::create() {
 
   // Unless the interpreter was explicitly selected or the JIT is not linked,
   // try making a JIT.
-  if (WhichEngine & EngineKind::JIT) {
+  if ((WhichEngine & EngineKind::JIT) && TM) {
     Triple TT(M->getTargetTriple());
-    if (TargetMachine *TM = EngineBuilder::selectTarget(TT, MArch, MCPU, MAttrs,
-                                                        Options,
-                                                        RelocModel, CMModel,
-                                                        OptLevel, ErrorStr)) {
-      if (!TM->getTarget().hasJIT()) {
-        errs() << "WARNING: This target JIT is not designed for the host"
-               << " you are running.  If bad things happen, please choose"
-               << " a different -march switch.\n";
-      }
+    if (!TM->getTarget().hasJIT()) {
+      errs() << "WARNING: This target JIT is not designed for the host"
+             << " you are running.  If bad things happen, please choose"
+             << " a different -march switch.\n";
+    }
 
-      if (UseMCJIT && ExecutionEngine::MCJITCtor) {
-        ExecutionEngine *EE =
-          ExecutionEngine::MCJITCtor(M, ErrorStr, JMM,
-                                     AllocateGVsWithCode, TM);
-        if (EE) return EE;
-      } else if (ExecutionEngine::JITCtor) {
-        ExecutionEngine *EE =
-          ExecutionEngine::JITCtor(M, ErrorStr, JMM,
+    if (UseMCJIT && ExecutionEngine::MCJITCtor) {
+      ExecutionEngine *EE =
+        ExecutionEngine::MCJITCtor(M, ErrorStr, JMM,
                                    AllocateGVsWithCode, TM);
-        if (EE) return EE;
-      }
+      if (EE) return EE;
+    } else if (ExecutionEngine::JITCtor) {
+      ExecutionEngine *EE =
+        ExecutionEngine::JITCtor(M, ErrorStr, JMM,
+                                 AllocateGVsWithCode, TM);
+      if (EE) return EE;
     }
   }
 

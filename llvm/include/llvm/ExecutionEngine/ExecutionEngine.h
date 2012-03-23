@@ -602,19 +602,20 @@ public:
     return *this;
   }
 
+  TargetMachine *selectTarget();
+
   /// selectTarget - Pick a target either via -march or by guessing the native
   /// arch.  Add any CPU features specified via -mcpu or -mattr.
-  static TargetMachine *selectTarget(const Triple &TargetTriple,
-                                     StringRef MArch,
-                                     StringRef MCPU,
-                                     const SmallVectorImpl<std::string>& MAttrs,
-                                     const TargetOptions &Options,
-                                     Reloc::Model RM,
-                                     CodeModel::Model CM,
-                                     CodeGenOpt::Level OL,
-                                     std::string *Err);
+  TargetMachine *selectTarget(const Triple &TargetTriple,
+                              StringRef MArch,
+                              StringRef MCPU,
+                              const SmallVectorImpl<std::string>& MAttrs);
 
-  ExecutionEngine *create();
+  ExecutionEngine *create() {
+    return create(selectTarget());
+  }
+
+  ExecutionEngine *create(TargetMachine *TM);
 };
 
 } // End llvm namespace
