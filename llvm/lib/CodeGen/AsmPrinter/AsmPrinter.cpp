@@ -1764,7 +1764,9 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   if (CFP->getType()->isFloatTy()) {
     if (AP.isVerbose()) {
       float Val = CFP->getValueAPF().convertToFloat();
-      AP.OutStreamer.GetCommentOS() << "float " << Val << '\n';
+      uint64_t IntVal = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+      AP.OutStreamer.GetCommentOS() << "float " << Val << '\n'
+                                    << " (" << format("0x%x", IntVal) << ")\n";
     }
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     AP.OutStreamer.EmitIntValue(Val, 4, AddrSpace);
@@ -1776,7 +1778,9 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   if (CFP->getType()->isDoubleTy()) {
     if (AP.isVerbose()) {
       double Val = CFP->getValueAPF().convertToDouble();
-      AP.OutStreamer.GetCommentOS() << "double " << Val << '\n';
+      uint64_t IntVal = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+      AP.OutStreamer.GetCommentOS() << "double " << Val << '\n'
+                                    << " (" << format("0x%lx", IntVal) << ")\n";
     }
 
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
