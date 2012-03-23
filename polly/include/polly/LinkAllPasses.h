@@ -123,6 +123,7 @@ namespace llvm {
 #ifdef SCOPLIB_FOUND
   void initializePoccPass(llvm::PassRegistry&);
 #endif
+  void initializePollyIndVarSimplifyPass(llvm::PassRegistry&);
   void initializeRegionSimplifyPass(llvm::PassRegistry&);
 }
 

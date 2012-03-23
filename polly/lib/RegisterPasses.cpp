@@ -109,6 +109,7 @@ void initializePollyPasses(PassRegistry &Registry) {
 #ifdef SCOPLIB_FOUND
   initializePoccPass(Registry);
 #endif
+  initializePollyIndVarSimplifyPass(Registry);
   initializeRegionSimplifyPass(Registry);
   initializeScopDetectionPass(Registry);
   initializeScopInfoPass(Registry);
