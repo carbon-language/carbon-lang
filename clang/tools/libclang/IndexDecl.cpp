@@ -328,7 +328,9 @@ void IndexingContext::indexDeclGroupRef(DeclGroupRef DG) {
 }
 
 void IndexingContext::indexTUDeclsInObjCContainer() {
-  for (unsigned i = 0, e = TUDeclsInObjCContainer.size(); i != e; ++i)
-    indexDeclGroupRef(TUDeclsInObjCContainer[i]);
-  TUDeclsInObjCContainer.clear();
+  while (!TUDeclsInObjCContainer.empty()) {
+    DeclGroupRef DG = TUDeclsInObjCContainer.front();
+    TUDeclsInObjCContainer.pop_front();
+    indexDeclGroupRef(DG);
+  }
 }

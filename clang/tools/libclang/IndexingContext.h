@@ -13,6 +13,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclGroup.h"
 #include "llvm/ADT/DenseSet.h"
+#include <deque>
 
 namespace clang {
   class FileEntry;
@@ -285,7 +286,7 @@ class IndexingContext {
 
   llvm::DenseSet<RefFileOccurence> RefFileOccurences;
 
-  SmallVector<DeclGroupRef, 8> TUDeclsInObjCContainer;
+  std::deque<DeclGroupRef> TUDeclsInObjCContainer;
   
   llvm::BumpPtrAllocator StrScratch;
   unsigned StrAdapterCount;
