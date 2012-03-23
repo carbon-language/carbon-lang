@@ -195,6 +195,18 @@ void CppWriter::error(const std::string& msg) {
   report_fatal_error(msg);
 }
 
+static inline std::string ftostr(const APFloat& V) {
+  std::string Buf;
+  if (&V.getSemantics() == &APFloat::IEEEdouble) {
+    raw_string_ostream(Buf) << V.convertToDouble();
+    return Buf;
+  } else if (&V.getSemantics() == &APFloat::IEEEsingle) {
+    raw_string_ostream(Buf) << (double)V.convertToFloat();
+    return Buf;
+  }
+  return "<unknown format in ftostr>"; // error
+}
+
 // printCFP - Print a floating point constant .. very carefully :)
 // This makes sure that conversion to/from floating yields the same binary
 // result so that we don't lose precision.
