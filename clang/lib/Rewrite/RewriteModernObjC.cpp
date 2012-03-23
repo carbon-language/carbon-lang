@@ -73,6 +73,7 @@ namespace {
     
     TypeDecl *ProtocolTypeDecl;
     VarDecl *GlobalVarDecl;
+    Expr *GlobalConstructionExp;
     unsigned RewriteFailedDiag;
     unsigned GlobalBlockRewriteFailedDiag;
     // ObjC string constant support.
@@ -612,6 +613,7 @@ void RewriteModernObjC::InitializeCommon(ASTContext &context) {
   CurFunctionDef = 0;
   CurFunctionDeclToDeclareForBlock = 0;
   GlobalVarDecl = 0;
+  GlobalConstructionExp = 0;
   SuperStructDecl = 0;
   ProtocolTypeDecl = 0;
   ConstantStringDecl = 0;
@@ -3269,7 +3271,7 @@ std::string RewriteModernObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
   QualType RT = AFT->getResultType();
   std::string StructRef = "struct " + Tag;
   std::string S = "static " + RT.getAsString(Context->getPrintingPolicy()) + " __" +
-                  funcName.str() + "_" + "block_func_" + utostr(i);
+                  funcName.str() + "_block_func_" + utostr(i);
 
   BlockDecl *BD = CE->getBlockDecl();
 
@@ -3632,7 +3634,27 @@ void RewriteModernObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
       SC += "restrict ";
     InsertText(FunLocStart, SC);
   }
+  if (GlobalConstructionExp) {
+    // extra fancy dance for global literal expression.
+    
+    // Always the latest block expression on the block stack.
+    std::string Tag = "__";
+    Tag += FunName;
+    Tag += "_block_impl_";
+    Tag += utostr(Blocks.size()-1);
+    std::string globalBuf = "static ";
+    globalBuf += Tag; globalBuf += " ";
+    std::string SStr;
   
+    llvm::raw_string_ostream constructorExprBuf(SStr);
+    GlobalConstructionExp->printPretty(constructorExprBuf, *Context, 0,
+                                         PrintingPolicy(LangOpts));
+    globalBuf += constructorExprBuf.str();
+    globalBuf += ";\n";
+    InsertText(FunLocStart, globalBuf);
+    GlobalConstructionExp = 0;
+  }
+
   Blocks.clear();
   InnerDeclRefsCount.clear();
   InnerDeclRefs.clear();
@@ -4418,9 +4440,6 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
   
   const BlockDecl *block = Exp->getBlockDecl();
   
-  if (block->getDeclContext()->getRedeclContext()->isFileContext())
-    Diags.Report(block->getLocation(), GlobalBlockRewriteFailedDiag);
-  
   Blocks.push_back(Exp);
 
   CollectBlockDeclRefInfo(Exp);
@@ -4465,9 +4484,16 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
   else if (GlobalVarDecl)
     FuncName = std::string(GlobalVarDecl->getNameAsString());
 
+  bool GlobalBlockExpr = 
+    block->getDeclContext()->getRedeclContext()->isFileContext();
+  
+  if (GlobalBlockExpr && !GlobalVarDecl) {
+    Diags.Report(block->getLocation(), GlobalBlockRewriteFailedDiag);
+    GlobalBlockExpr = false;
+  }
+  
   std::string BlockNumber = utostr(Blocks.size()-1);
 
-  std::string Tag = "__" + FuncName + "_block_impl_" + BlockNumber;
   std::string Func = "__" + FuncName + "_block_func_" + BlockNumber;
 
   // Get a pointer to the function type so we can cast appropriately.
@@ -4478,6 +4504,14 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
   Expr *NewRep;
 
   // Simulate a contructor call...
+  std::string Tag;
+  
+  if (GlobalBlockExpr)
+    Tag = "__global_";
+  else
+    Tag = "__";
+  Tag += FuncName + "_block_impl_" + BlockNumber;
+  
   FD = SynthBlockInitFunctionDecl(Tag);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(FD, false, FType, VK_RValue,
                                                SourceLocation());
@@ -4599,6 +4633,14 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
   }
   NewRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0], InitExprs.size(),
                                   FType, VK_LValue, SourceLocation());
+  
+  if (GlobalBlockExpr) {
+    assert (GlobalConstructionExp == 0 && 
+            "SynthBlockInitExpr - GlobalConstructionExp must be null");
+    GlobalConstructionExp = NewRep;
+    NewRep = DRE;
+  }
+  
   NewRep = new (Context) UnaryOperator(NewRep, UO_AddrOf,
                              Context->getPointerType(NewRep->getType()),
                              VK_RValue, OK_Ordinary, SourceLocation());

@@ -1,4 +1,9 @@
-// RUN: %clang_cc1 -rewrite-objc %s -fblocks -o -
+// RUN: %clang_cc1 -E %s -o %t.mm
+// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %t.mm -o - | FileCheck %s
+// RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc -fobjc-fragile-abi %s -o %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
+
+// rdar: // 11006566
 
 void I( void (^)(void));
 void (^noop)(void);
@@ -36,11 +41,6 @@ void test2() {
   }
 }
 
-
-void (^test3())(void) { 
-  return ^{};
-}
-
 void test4() {
   void (^noop)(void) = ^{};
   void (*noop2)() = 0;
@@ -61,17 +61,11 @@ void test5() {
 
 void *X;
 
-void test_arguments() {
-  int y;
-  int (^c)(char);
-  (1 ? c : 0)('x');
-  (1 ? 0 : c)('x');
-
-  (1 ? c : c)('x');
-}
-
 static int global_x = 10;
-void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); }; // expected-warning {{rewriting block literal declared in global scope is not implemented}}
+void (^global_block)(void) = ^{ printf("global x is %d\n", global_x); };
+
+// CHECK: static __global_block_block_impl_0 __global_global_block_block_impl_0((void *)__global_block_block_func_0, &__global_block_block_desc_0_DATA);
+// CHECK: void (*global_block)(void) = (void (*)())&__global_global_block_block_impl_0;
 
 typedef void (^void_block_t)(void);
 
