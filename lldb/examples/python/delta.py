@@ -49,6 +49,9 @@ def parse_time_log(debugger, command, result, dict):
     # Any commands whose names might be followed by more valid C identifier 
     # characters must be listed here
     command_args = shlex.split(command)
+    parse_time_log_args (command_args)
+
+def parse_time_log_args(command_args):
     usage = "usage: parse_time_log [options] [<LOGFILEPATH>]"
     description='''Parse a log file that contains timestamps and convert the timestamps to delta times between log lines.'''
     parser = optparse.OptionParser(description=description, prog='parse_time_log',usage=usage)
@@ -71,6 +74,10 @@ def parse_log_file(file, options):
     for GDB remote commands to make a send/receive round trip. This can be
     handy when trying to figure out why some operation in the debugger is taking
     a long time during a preset set of debugger commands.'''
+
+    print '#----------------------------------------------------------------------'
+    print "# Log file: '%s'" % file
+    print '#----------------------------------------------------------------------'
 
     timestamp_regex = re.compile('(\s*)([1-9][0-9]+\.[0-9]+)([^0-9].*)$')
 
@@ -97,13 +104,7 @@ def parse_log_file(file, options):
     
 if __name__ == '__main__':
     import sys
-    # This script is being run from the command line, create a debugger in case we are
-    # going to use any debugger functions in our function.
-    for file in sys.argv:
-        print '#----------------------------------------------------------------------'
-        print "# Log file: '%s'" % file
-        print '#----------------------------------------------------------------------'
-        parse_log_file (file, None)
+    parse_time_log_args (sys.argv[1:])
 
 else:
     import lldb
