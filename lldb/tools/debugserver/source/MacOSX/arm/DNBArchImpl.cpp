@@ -2423,7 +2423,7 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
             DisableHardwareWatchpoint(lo);
             return INVALID_NUB_HW_INDEX;
         }
-        // Tag thsi lo->hi mapping in our database.
+        // Tag this lo->hi mapping in our database.
         LoHi[lo] = hi;
         return lo;
     }
