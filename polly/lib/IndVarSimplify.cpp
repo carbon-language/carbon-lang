@@ -1846,8 +1846,13 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     RewriteLoopExitValues(L, Rewriter);
 
   // Eliminate redundant IV users.
-  if (EnableIVRewrite)
-    Changed |= simplifyIVUsers(IU, SE, &LPM, DeadInsts);
+  // FIXME: Disabled as the function was removed from LLVM trunk. We may get
+  //        along with this, as Polly does not need a lot of simplifications,
+  //        but just a canonical induction variable. In the near future, we
+  //        should remove the need of canonical induction variables all
+  //        together.
+  //if (EnableIVRewrite)
+  //  Changed |= simplifyIVUsers(IU, SE, &LPM, DeadInsts);
 
   // Eliminate redundant IV cycles.
   if (!EnableIVRewrite)
