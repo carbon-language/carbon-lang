@@ -14,10 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/DebugInfoProbe.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Timer.h"
 using namespace llvm;
 
@@ -51,20 +49,6 @@ public:
 };
 
 char PrintLoopPass::ID = 0;
-}
-
-//===----------------------------------------------------------------------===//
-// DebugInfoProbe
-
-static DebugInfoProbeInfo *TheDebugProbe;
-static void createDebugInfoProbe() {
-  if (TheDebugProbe) return;
-
-  // Constructed the first time this is called. This guarantees that the
-  // object will be constructed, if -enable-debug-info-probe is set,
-  // before static globals, thus it will be destroyed before them.
-  static ManagedStatic<DebugInfoProbeInfo> DIP;
-  TheDebugProbe = &*DIP;
 }
 
 //===----------------------------------------------------------------------===//
@@ -195,7 +179,6 @@ void LPPassManager::getAnalysisUsage(AnalysisUsage &Info) const {
 bool LPPassManager::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   bool Changed = false;
-  createDebugInfoProbe();
 
   // Collect inherited analysis from Module level pass manager.
   populateInheritedAnalysis(TPM->activeStack);
@@ -227,21 +210,19 @@ bool LPPassManager::runOnFunction(Function &F) {
     // Run all passes on the current Loop.
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       LoopPass *P = getContainedPass(Index);
+
       dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG,
                    CurrentLoop->getHeader()->getName());
       dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);
-      if (TheDebugProbe)
-        TheDebugProbe->initialize(P, F);
+
       {
         PassManagerPrettyStackEntry X(P, *CurrentLoop->getHeader());
         TimeRegion PassTimer(getPassTimer(P));
 
         Changed |= P->runOnLoop(CurrentLoop, *this);
       }
-      if (TheDebugProbe)
-        TheDebugProbe->finalize(P, F);
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG,
