@@ -20,7 +20,7 @@
 #include <setjmp.h>
 #include <assert.h>
 
-#if defined(__i386__) or defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 #include <emmintrin.h>
 #endif
 
@@ -777,7 +777,7 @@ TEST(AddressSanitizer, ThreadStackReuseTest) {
   pthread_join(t, 0);
 }
 
-#if defined(__i386__) or defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 TEST(AddressSanitizer, Store128Test) {
   char *a = Ident((char*)malloc(Ident(12)));
   char *p = a;
