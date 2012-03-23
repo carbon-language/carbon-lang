@@ -72,6 +72,8 @@ endif
 ifeq ($(HOST_OS),Linux)
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
+    # Add soname to the library.
+    LLVMLibsOptions += -Wl,--soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ifeq ($(HOST_OS),SunOS)
