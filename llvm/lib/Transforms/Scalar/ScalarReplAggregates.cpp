@@ -574,7 +574,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
     // transform it into a store of the expanded constant value.
     if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
       assert(MSI->getRawDest() == Ptr && "Consistency error!");
-     int64_t SNumBytes = cast<ConstantInt>(MSI->getLength())->getSExtValue();
+      int64_t SNumBytes = cast<ConstantInt>(MSI->getLength())->getSExtValue();
       if (SNumBytes > 0 && (SNumBytes >> 32) == 0) {
         unsigned NumBytes = static_cast<unsigned>(SNumBytes);
         unsigned Val = cast<ConstantInt>(MSI->getValue())->getZExtValue();
