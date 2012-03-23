@@ -827,7 +827,7 @@ void VectorBlockGenerator::copyBB() {
 /// Class to generate LLVM-IR that calculates the value of a clast_expr.
 class ClastExpCodeGen {
   IRBuilder<> &Builder;
-  const CharMapT *IVS;
+  const CharMapT &IVS;
 
   Value *codegen(const clast_name *e, Type *Ty);
   Value *codegen(const clast_term *e, Type *Ty);
@@ -842,25 +842,19 @@ public:
   // @param IVMAP A Map that translates strings describing the induction
   //              variables to the Values* that represent these variables
   //              on the LLVM side.
-  ClastExpCodeGen(IRBuilder<> &B, CharMapT *IVMap);
+  ClastExpCodeGen(IRBuilder<> &B, CharMapT &IVMap);
 
   // Generates code to calculate a given clast expression.
   //
   // @param e The expression to calculate.
   // @return The Value that holds the result.
   Value *codegen(const clast_expr *e, Type *Ty);
-
-  // @brief Reset the CharMap.
-  //
-  // This function is called to reset the CharMap to new one, while generating
-  // OpenMP code.
-  void setIVS(CharMapT *IVSNew);
 };
 
 Value *ClastExpCodeGen::codegen(const clast_name *e, Type *Ty) {
-  CharMapT::const_iterator I = IVS->find(e->name);
+  CharMapT::const_iterator I = IVS.find(e->name);
 
-  assert(I != IVS->end() && "Clast name not found");
+  assert(I != IVS.end() && "Clast name not found");
 
   return Builder.CreateSExtOrBitCast(I->second, Ty);
 }
@@ -950,7 +944,7 @@ Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
   return old;
 }
 
-ClastExpCodeGen::ClastExpCodeGen(IRBuilder<> &B, CharMapT *IVMap)
+ClastExpCodeGen::ClastExpCodeGen(IRBuilder<> &B, CharMapT &IVMap)
   : Builder(B), IVS(IVMap) {}
 
 Value *ClastExpCodeGen::codegen(const clast_expr *e, Type *Ty) {
@@ -966,10 +960,6 @@ Value *ClastExpCodeGen::codegen(const clast_expr *e, Type *Ty) {
   }
 
   llvm_unreachable("Unknown clast expression!");
-}
-
-void ClastExpCodeGen::setIVS(CharMapT *IVSNew) {
-  IVS = IVSNew;
 }
 
 class ClastStmtCodeGen {
@@ -997,7 +987,7 @@ private:
   //       Stmt(i = s + 3 * m, j = t);
   //
   // {s,t,i,j,n,m} is the set of clast variables in this clast.
-  CharMapT *ClastVars;
+  CharMapT ClastVars;
 
   // Codegenerator for clast expressions.
   ClastExpCodeGen ExpGen;
@@ -1031,8 +1021,12 @@ private:
   /// structure.
   SetVector<Value*> getOMPValues();
 
+  /// @brief Update the internal structures according to a Value Map.
+  ///
+  /// @param VMap     A map from old to new values.
+  /// @param Reverse  If true, we assume the update should be reversed.
   void updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
-                          CharMapT &ClastVarsNew);
+                          bool Reverse);
 
   /// @brief Create an OpenMP parallel for loop.
   ///
@@ -1078,7 +1072,7 @@ const std::vector<std::string> &ClastStmtCodeGen::getParallelLoops() {
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a) {
   Value *V= ExpGen.codegen(a->RHS, getIntPtrTy());
-  (*ClastVars)[a->LHS] = V;
+  ClastVars[a->LHS] = V;
 }
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a, ScopStmt *Statement,
@@ -1134,7 +1128,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     int i = 0;
     for (std::vector<Value*>::iterator II = IVS->begin(), IE = IVS->end();
          II != IE; ++II) {
-      (*ClastVars)[iterator] = *II;
+      ClastVars[iterator] = *II;
       codegenSubstitutions(u->substitutions, Statement, i, &VectorMap);
       i++;
     }
@@ -1160,13 +1154,13 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
   IV = createLoop(LowerBound, UpperBound, Stride, &Builder, P, &AfterBB);
 
   // Add loop iv to symbols.
-  (*ClastVars)[f->iterator] = IV;
+  ClastVars[f->iterator] = IV;
 
   if (f->body)
     codegen(f->body);
 
   // Loop is finished, so remove its iv from the live symbols.
-  ClastVars->erase(f->iterator);
+  ClastVars.erase(f->iterator);
   Builder.SetInsertPoint(AfterBB->begin());
 }
 
@@ -1174,7 +1168,7 @@ SetVector<Value*> ClastStmtCodeGen::getOMPValues() {
   SetVector<Value*> Values;
 
   // The clast variables
-  for (CharMapT::iterator I = ClastVars->begin(), E = ClastVars->end();
+  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
        I != E; I++)
     Values.insert(I->second);
 
@@ -1192,17 +1186,36 @@ SetVector<Value*> ClastStmtCodeGen::getOMPValues() {
 }
 
 void ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
-                                          CharMapT &ClastVarsNew) {
+                                          bool Reverse) {
   std::set<Value*> Inserted;
 
-  for (CharMapT::iterator I = ClastVars->begin(), E = ClastVars->end();
+  if (Reverse) {
+    OMPGenerator::ValueToValueMapTy ReverseMap;
+
+    for (std::map<Value*, Value*>::iterator I = VMap.begin(), E = VMap.end();
+         I != E; ++I)
+       ReverseMap.insert(std::make_pair(I->second, I->first));
+
+    for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
+         I != E; I++) {
+      ClastVars[I->first] = ReverseMap[I->second];
+      Inserted.insert(I->second);
+    }
+
+    /// FIXME: At the moment we do not reverse the update of the ValueMap.
+    ///        This is incomplet, but the failure should be obvious, such that
+    ///        we can fix this later.
+    return;
+  }
+
+  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
        I != E; I++) {
-    ClastVarsNew[I->first] = VMap[I->second];
+    ClastVars[I->first] = VMap[I->second];
     Inserted.insert(I->second);
   }
 
   for (std::map<Value*, Value*>::iterator I = VMap.begin(), E = VMap.end();
-      I != E; ++I) {
+       I != E; ++I) {
     if (Inserted.count(I->first))
       continue;
 
@@ -1218,7 +1231,6 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   OMPGenerator::ValueToValueMapTy VMap;
   OMPGenerator OMPGen(Builder, P);
 
-
   Stride = Builder.getInt(APInt_from_MPZ(For->stride));
   Stride = Builder.CreateSExtOrBitCast(Stride, IntPtrTy);
   LB = ExpGen.codegen(For->LB, IntPtrTy);
@@ -1230,25 +1242,15 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
   Builder.SetInsertPoint(LoopBody);
 
-  // Use clastVarsOMP during code generation of the OpenMP subfunction.
-  CharMapT ClastVarsOMP;
-  updateWithValueMap(VMap, ClastVarsOMP);
-  CharMapT *OldClastVars = ClastVars;
-  ClastVars = &ClastVarsOMP;
-  ExpGen.setIVS(&ClastVarsOMP);
-
-  // Add loop iv to symbols.
-  (*ClastVars)[For->iterator] = IV;
+  updateWithValueMap(VMap, /* reverse */ false);
+  ClastVars[For->iterator] = IV;
 
   if (For->body)
     codegen(For->body);
 
-  // Loop is finished, so remove its iv from the live symbols.
-  ClastVars->erase(For->iterator);
+  ClastVars.erase(For->iterator);
+  updateWithValueMap(VMap, /* reverse */ true);
 
-  // Restore the old clastVars.
-  ClastVars = OldClastVars;
-  ExpGen.setIVS(OldClastVars);
   Builder.SetInsertPoint(AfterLoop);
 }
 
@@ -1326,7 +1328,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   isl_set *Domain = isl_set_from_cloog_domain(F->domain);
 
   // Add loop iv to symbols.
-  (*ClastVars)[F->iterator] = LB;
+  ClastVars[F->iterator] = LB;
 
   const clast_stmt *Stmt = F->body;
 
@@ -1338,7 +1340,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
 
   // Loop is finished, so remove its iv from the live symbols.
   isl_set_free(Domain);
-  ClastVars->erase(F->iterator);
+  ClastVars.erase(F->iterator);
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
@@ -1443,28 +1445,24 @@ void ClastStmtCodeGen::addParameters(const CloogNames *names) {
 
     Instruction *insertLocation = --(Builder.GetInsertBlock()->end());
     Value *V = Rewriter.expandCodeFor(Param, Ty, insertLocation);
-    (*ClastVars)[names->parameters[i]] = V;
+    ClastVars[names->parameters[i]] = V;
 
     ++i;
   }
 }
 
 void ClastStmtCodeGen::codegen(const clast_root *r) {
-  ClastVars = new CharMapT();
   addParameters(r->names);
-  ExpGen.setIVS(ClastVars);
 
   parallelCodeGeneration = false;
 
   const clast_stmt *stmt = (const clast_stmt*) r;
   if (stmt->next)
     codegen(stmt->next);
-
-  delete ClastVars;
 }
 
 ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P) :
-    S(scop), P(P), Builder(B), ExpGen(Builder, NULL) {}
+    S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {}
 
 namespace {
 class CodeGeneration : public ScopPass {
