@@ -145,9 +145,9 @@ public:
   /// \brief Called after analysis of a TranslationUnit is complete.
   ///
   /// check::EndOfTranslationUnit
-  void checkEndTranslationUnit(const TranslationUnitDecl *TU,
-                               AnalysisManager &Mgr,
-                               BugReporter &BR) {}
+  void checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
+                                 AnalysisManager &Mgr,
+                                 BugReporter &BR) const {}
 
 
   /// \brief Evaluates function call.
