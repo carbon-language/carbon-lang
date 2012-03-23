@@ -1211,7 +1211,7 @@ void ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
 }
 
 void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
-  Value *Stride, *LowerBound, *UpperBound, *IV;
+  Value *Stride, *LB, *UB, *IV;
   BasicBlock::iterator LoopBody;
   IntegerType *IntPtrTy = getIntPtrTy();
   SetVector<Value*> Values;
@@ -1221,13 +1221,12 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
 
   Stride = Builder.getInt(APInt_from_MPZ(For->stride));
   Stride = Builder.CreateSExtOrBitCast(Stride, IntPtrTy);
-  LowerBound = ExpGen.codegen(For->LB, IntPtrTy);
-  UpperBound = ExpGen.codegen(For->UB, IntPtrTy);
+  LB = ExpGen.codegen(For->LB, IntPtrTy);
+  UB = ExpGen.codegen(For->UB, IntPtrTy);
 
   Values = getOMPValues();
 
-  IV = OMPGen.createParallelLoop(LowerBound, UpperBound, Stride, Values, VMap,
-                                 &LoopBody);
+  IV = OMPGen.createParallelLoop(LB, UB, Stride, Values, VMap, &LoopBody);
   BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
   Builder.SetInsertPoint(LoopBody);
 
