@@ -1276,8 +1276,6 @@ def err_enum_class_reference : Error<
   "not 'enum class'">;
 def err_only_enums_have_underlying_types : Error<
   "only enumeration types have underlying types">;
-def err_unscoped_enum_defined_out_of_class : Error<
-  "out-of-line definition of unscoped enumeration member is not supported">;
 
 // C++11 delegating constructors
 def err_delegating_ctor : Error<
