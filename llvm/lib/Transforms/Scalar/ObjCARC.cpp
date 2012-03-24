@@ -2659,7 +2659,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         if (isa<InvokeInst>(Inst))
           S.RRI.ReverseInsertPts.insert(BB->getFirstInsertionPt());
         else
-          S.RRI.ReverseInsertPts.insert(next(BasicBlock::iterator(Inst)));
+          S.RRI.ReverseInsertPts.insert(llvm::next(BasicBlock::iterator(Inst)));
         S.SetSeq(S_Use);
       } else if (Seq == S_Release &&
                  (Class == IC_User || Class == IC_CallOrUser)) {
@@ -2670,7 +2670,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         if (isa<InvokeInst>(Inst))
           S.RRI.ReverseInsertPts.insert(BB->getFirstInsertionPt());
         else
-          S.RRI.ReverseInsertPts.insert(next(BasicBlock::iterator(Inst)));
+          S.RRI.ReverseInsertPts.insert(llvm::next(BasicBlock::iterator(Inst)));
       }
       break;
     case S_Stop:
