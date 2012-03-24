@@ -426,6 +426,15 @@ SBType::GetFieldAtIndex (uint32_t idx)
     return sb_type_member;
 }
 
+bool
+SBType::IsTypeComplete()
+{
+    if (!IsValid())
+        return false;
+    
+    return ClangASTContext::IsCompleteType(m_opaque_sp->GetASTContext(), m_opaque_sp->GetOpaqueQualType());
+}
+
 const char*
 SBType::GetName()
 {

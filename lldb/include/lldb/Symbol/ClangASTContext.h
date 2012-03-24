@@ -128,6 +128,13 @@ public:
                      lldb::clang_type_t clang_type);
 
     bool
+    IsCompleteType (lldb::clang_type_t clang_type);
+    
+    static bool
+    IsCompleteType (clang::ASTContext *ast,
+                    lldb::clang_type_t clang_type);
+    
+    bool
     GetCompleteDecl (clang::Decl *decl)
     {
         return ClangASTContext::GetCompleteDecl(getASTContext(), decl);

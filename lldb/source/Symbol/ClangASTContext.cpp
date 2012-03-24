@@ -78,7 +78,7 @@ using namespace clang;
 
 
 static bool
-GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
+GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool allow_completion = true)
 {
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
@@ -88,7 +88,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
             const clang::ArrayType *array_type = dyn_cast<clang::ArrayType>(qual_type.getTypePtr());
             
             if (array_type)
-                return GetCompleteQualType (ast, array_type->getElementType());
+                return GetCompleteQualType (ast, array_type->getElementType(), allow_completion);
         }
         break;
             
@@ -103,6 +103,9 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
                 {
                     if (tag_decl->getDefinition())
                         return true;
+                    
+                    if (!allow_completion)
+                        return false;
 
                     if (tag_decl->hasExternalLexicalStorage())
                     {
@@ -137,6 +140,9 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
                     if (class_interface_decl->getDefinition())
                         return true;
                     
+                    if (!allow_completion)
+                        return false;
+                    
                     if (class_interface_decl->hasExternalLexicalStorage())
                     {
                         if (ast)
@@ -156,10 +162,10 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
         break;
 
     case clang::Type::Typedef:
-        return GetCompleteQualType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType());
+        return GetCompleteQualType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType(), allow_completion);
     
     case clang::Type::Elaborated:
-        return GetCompleteQualType (ast, cast<ElaboratedType>(qual_type)->getNamedType());
+        return GetCompleteQualType (ast, cast<ElaboratedType>(qual_type)->getNamedType(), allow_completion);
 
     default:
         break;
@@ -167,7 +173,6 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
 
     return true;
 }
-
 
 static AccessSpecifier
 ConvertAccessTypeToAccessSpecifier (AccessType access)
@@ -6335,6 +6340,22 @@ bool
 ClangASTContext::GetCompleteType (clang_type_t clang_type)
 {   
     return ClangASTContext::GetCompleteType (getASTContext(), clang_type);
+}
+
+bool
+ClangASTContext::IsCompleteType (clang::ASTContext *ast, lldb::clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return false;
+    
+    return GetCompleteQualType (ast, clang::QualType::getFromOpaquePtr(clang_type), false); // just check but don't let it actually complete
+}
+
+
+bool
+ClangASTContext::IsCompleteType (clang_type_t clang_type)
+{   
+    return ClangASTContext::IsCompleteType (getASTContext(), clang_type);
 }
 
 bool

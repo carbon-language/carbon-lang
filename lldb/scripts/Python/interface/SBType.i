@@ -199,6 +199,9 @@ public:
     
     lldb::TemplateArgumentKind
     GetTemplateArgumentKind (uint32_t idx);
+    
+    bool
+    IsTypeComplete ();
 
     %pythoncode %{
         def template_arg_array(self):
@@ -239,7 +242,9 @@ public:
 
         __swig_getmethods__["class"] = GetTypeClass
         if _newclass: x = property(GetTypeClass, None)
-
+        
+        __swig_getmethods__["is_complete"] = IsTypeComplete
+        if _newclass: is_complete = property(IsTypeComplete, None)
         %}
 
 };

@@ -134,6 +134,9 @@ public:
     
     lldb::TypeClass
     GetTypeClass ();
+    
+    bool
+    IsTypeComplete ();
 
     // DEPRECATED: but needed for Xcode right now
     static bool
