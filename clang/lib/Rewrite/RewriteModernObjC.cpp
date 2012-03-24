@@ -5305,10 +5305,10 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 /// }
 
 /// struct _class_ro_t {
-///   uint32_t const flags;
-///   uint32_t const instanceStart;
-///   uint32_t const instanceSize;
-///   uint32_t const reserved;  // only when building for 64bit targets
+///   uint32_t flags;
+///   uint32_t instanceStart;
+///   uint32_t instanceSize;
+///   uint32_t reserved;  // only when building for 64bit targets
 ///   const uint8_t *ivarLayout;
 ///   const char *name;
 ///   const struct _method_list_t *baseMethods;
@@ -5388,12 +5388,12 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   Result += "};\n";
   
   Result += "\nstruct _class_ro_t {\n";
-  Result += "\tunsigned int const flags;\n";
+  Result += "\tunsigned int flags;\n";
   Result += "\tunsigned int instanceStart;\n";
-  Result += "\tunsigned int const instanceSize;\n";
+  Result += "\tunsigned int instanceSize;\n";
   const llvm::Triple &Triple(Context->getTargetInfo().getTriple());
   if (Triple.getArch() == llvm::Triple::x86_64)
-    Result += "\tunsigned int const reserved;\n";
+    Result += "\tunsigned int reserved;\n";
   Result += "\tconst unsigned char *ivarLayout;\n";
   Result += "\tconst char *name;\n";
   Result += "\tconst struct _method_list_t *baseMethods;\n";
