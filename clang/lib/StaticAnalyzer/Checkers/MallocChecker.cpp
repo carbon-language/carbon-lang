@@ -201,16 +201,22 @@ private:
   protected:
     enum NotificationMode {
       Normal,
-      Complete,
       ReallocationFailed
     };
 
     // The allocated region symbol tracked by the main analysis.
     SymbolRef Sym;
-    NotificationMode Mode;
 
-  public:
-    MallocBugVisitor(SymbolRef S) : Sym(S), Mode(Normal) {}
+     // The mode we are in, i.e. what kind of diagnostics will be emitted.
+     NotificationMode Mode;
+
+     // A symbol from when the primary region should have been reallocated.
+     SymbolRef FailedReallocSymbol;
+
+   public:
+     MallocBugVisitor(SymbolRef S)
+       : Sym(S), Mode(Normal), FailedReallocSymbol(0) {}
+
     virtual ~MallocBugVisitor() {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -1390,30 +1396,33 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
       StackHint = new StackHintGeneratorForReallocationFailed(Sym,
                                                        "Reallocation failed");
 
-      if (SymbolRef sym = findFailedReallocSymbol(state, statePrev))
+      if (SymbolRef sym = findFailedReallocSymbol(state, statePrev)) {
+        // Is it possible to fail two reallocs WITHOUT testing in between?
+        assert((!FailedReallocSymbol || FailedReallocSymbol == sym) &&
+          "We only support one failed realloc at a time.");
         BR.markInteresting(sym);
+        FailedReallocSymbol = sym;
+      }
     }
 
   // We are in a special mode if a reallocation failed later in the path.
   } else if (Mode == ReallocationFailed) {
-    // Generate a special diagnostic for the first realloc we find.
-    if (!isAllocated(RS, RSPrev, S) && !isReleased(RS, RSPrev, S))
-      return 0;
+    assert(FailedReallocSymbol && "No symbol to look for.");
 
-    // Check that the name of the function is realloc.
-    const CallExpr *CE = dyn_cast<CallExpr>(S);
-    if (!CE)
-      return 0;
-    const FunctionDecl *funDecl = CE->getDirectCallee();
-    if (!funDecl)
-      return 0;
-    StringRef FunName = funDecl->getName();
-    if (!(FunName.equals("realloc") || FunName.equals("reallocf")))
-      return 0;
-    Msg = "Attempt to reallocate memory";
-    StackHint = new StackHintGeneratorForSymbol(Sym,
-                                                "Returned reallocated memory");
-    Mode = Normal;
+    // Is this is the first appearance of the reallocated symbol?
+    if (!statePrev->get<RegionState>(FailedReallocSymbol)) {
+      // If we ever hit this assert, that means BugReporter has decided to skip
+      // node pairs or visit them out of order.
+      assert(state->get<RegionState>(FailedReallocSymbol) &&
+        "Missed the reallocation point");
+
+      // We're at the reallocation point.
+      Msg = "Attempt to reallocate memory";
+      StackHint = new StackHintGeneratorForSymbol(Sym,
+                                                 "Returned reallocated memory");
+      FailedReallocSymbol = NULL;
+      Mode = Normal;
+    }
   }
 
   if (!Msg)
