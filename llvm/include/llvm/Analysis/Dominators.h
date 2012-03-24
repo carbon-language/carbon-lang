@@ -338,9 +338,12 @@ public:
   /// Note that this is not a constant time operation!
   ///
   bool properlyDominates(const DomTreeNodeBase<NodeT> *A,
-                         const DomTreeNodeBase<NodeT> *B) const {
-    if (A == 0 || B == 0) return false;
-    return dominatedBySlowTreeWalk(A, B);
+                         const DomTreeNodeBase<NodeT> *B) {
+    if (A == 0 || B == 0)
+      return false;
+    if (A == B)
+      return false;
+    return dominates(A, B);
   }
 
   inline bool properlyDominates(const NodeT *A, const NodeT *B) {
@@ -350,8 +353,8 @@ public:
     // Cast away the const qualifiers here. This is ok since
     // this function doesn't actually return the values returned
     // from getNode.
-    return properlyDominates(getNode(const_cast<NodeT *>(A)),
-                             getNode(const_cast<NodeT *>(B)));
+    return dominates(getNode(const_cast<NodeT *>(A)),
+                     getNode(const_cast<NodeT *>(B)));
   }
 
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
