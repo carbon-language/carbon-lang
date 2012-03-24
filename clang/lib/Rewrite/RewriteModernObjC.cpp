@@ -5421,7 +5421,6 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   Result += "};\n";
   
   Result += "__declspec(dllimport) extern struct objc_cache _objc_empty_cache;\n";
-  Result += "extern void *_objc_empty_vtable;\n";
   
   meta_data_declared = true;
 }
