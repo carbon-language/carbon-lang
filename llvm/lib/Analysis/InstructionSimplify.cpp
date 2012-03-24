@@ -2841,7 +2841,8 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
   if (SimpleV) {
     for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
          ++UI)
-      Worklist.push_back(cast<Instruction>(*UI));
+      if (*UI != I)
+        Worklist.push_back(cast<Instruction>(*UI));
 
     // Replace the instruction with its simplified value.
     I->replaceAllUsesWith(SimpleV);
@@ -2869,7 +2870,8 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
     // uses of To on the recursive step in most cases.
     for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
          ++UI)
-      Worklist.push_back(cast<Instruction>(*UI));
+      if (*UI != I)
+        Worklist.push_back(cast<Instruction>(*UI));
 
     // Replace the instruction with its simplified value.
     I->replaceAllUsesWith(SimpleV);
