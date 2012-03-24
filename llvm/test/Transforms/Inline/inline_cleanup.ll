@@ -1,10 +1,8 @@
 ; Test that the inliner doesn't leave around dead allocas, and that it folds
 ; uncond branches away after it is done specializing.
 
-; RUN: opt < %s -inline -S | \
-; RUN:    not grep {alloca.*uses=0}
-; RUN: opt < %s -inline -S | \
-; RUN:    not grep {br label}
+; RUN: opt < %s -inline -S | FileCheck %s
+
 @A = weak global i32 0		; <i32*> [#uses=1]
 @B = weak global i32 0		; <i32*> [#uses=1]
 @C = weak global i32 0		; <i32*> [#uses=1]
@@ -54,6 +52,18 @@ UnifiedReturnBlock:		; preds = %cond_next13
 declare void @ext(i32*)
 
 define void @test() {
+; CHECK: @test
+; CHECK-NOT: ret
+;
+; FIXME: This should be a CHECK-NOT, but currently we have a bug that causes us
+; to not nuke unused allocas.
+; CHECK: alloca
+; CHECK-NOT: ret
+;
+; No branches should survive the inliner's cleanup.
+; CHECK-NOT: br
+; CHECK: ret void
+
 entry:
 	tail call fastcc void @foo( i32 1 )
 	tail call fastcc void @foo( i32 2 )
