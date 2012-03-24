@@ -808,6 +808,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 let isBranch = 1, isTerminator = 1 in {
   // FIXME: The pattern part is blank because I cannot (or do not yet know
   // how to) use the first operand of PredicateOperand (a RegPred register) here
+  // When this is revisited, make sure to also look at LowerSETCC and try to
+  // fold it into negated predicates, if possible.
   def BRAdp
     : InstPTX<(outs), (ins brtarget:$d), "bra\t$d",
               [/*(brcond pred:$_p, bb:$d)*/]>;
@@ -1017,6 +1019,9 @@ def : Pat<(f64 (sint_to_fp RegI64:$a)), (CVTf64s64 RndDefault, RegI64:$a)>;
 def : Pat<(f64 (fextend RegF32:$a)),    (CVTf64f32 RegF32:$a)>;
 def : Pat<(f64 (bitconvert RegI64:$a)), (MOVf64i64 RegI64:$a)>;
 
+// setcc - predicate inversion for branch conditions
+def : Pat<(i1 (setcc RegPred:$a, imm:$b, SETNE)),
+          (XORripreds RegPred:$a, imm:$b)>;
 
 ///===- Intrinsic Instructions --------------------------------------------===//
 include "PTXIntrinsicInstrInfo.td"

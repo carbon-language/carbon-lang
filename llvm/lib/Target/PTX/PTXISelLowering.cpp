@@ -97,7 +97,8 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
 
   // customise setcc to use bitwise logic if possible
 
-  setOperationAction(ISD::SETCC, MVT::i1, Custom);
+  //setOperationAction(ISD::SETCC, MVT::i1, Custom);
+  setOperationAction(ISD::SETCC, MVT::i1, Legal);
 
   // customize translation of memory addresses
 
@@ -156,18 +157,27 @@ SDValue PTXTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Op1 = Op.getOperand(1);
   SDValue Op2 = Op.getOperand(2);
   DebugLoc dl = Op.getDebugLoc();
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  //ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
 
   // Look for X == 0, X == 1, X != 0, or X != 1
   // We can simplify these to bitwise logic
 
-  if (Op1.getOpcode() == ISD::Constant &&
-      (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
-       cast<ConstantSDNode>(Op1)->isNullValue()) &&
-      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+  //if (Op1.getOpcode() == ISD::Constant &&
+  //    (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
+  //     cast<ConstantSDNode>(Op1)->isNullValue()) &&
+  //    (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+  //
+  //  return DAG.getNode(ISD::AND, dl, MVT::i1, Op0, Op1);
+  //}
 
-    return DAG.getNode(ISD::AND, dl, MVT::i1, Op0, Op1);
-  }
+  //ConstantSDNode* COp1 = cast<ConstantSDNode>(Op1);
+  //if(COp1 && COp1->getZExtValue() == 1) {
+  //  if(CC == ISD::SETNE) {
+  //    return DAG.getNode(PTX::XORripreds, dl, MVT::i1, Op0);
+  //  }
+  //}
+
+  llvm_unreachable("setcc was not matched by a pattern!");
 
   return DAG.getNode(ISD::SETCC, dl, MVT::i1, Op0, Op1, Op2);
 }
@@ -384,22 +394,22 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   PTXMachineFunctionInfo *PTXMFI = MF.getInfo<PTXMachineFunctionInfo>();
   PTXParamManager &PM = PTXMFI->getParamManager();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  
+
   assert(getTargetMachine().getSubtarget<PTXSubtarget>().callsAreHandled() &&
          "Calls are not handled for the target device");
 
   // Identify the callee function
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Callee)->getGlobal();
   const Function *function = cast<Function>(GV);
-  
+
   // allow non-device calls only for printf
-  bool isPrintf = function->getName() == "printf" || function->getName() == "puts";	
-  
+  bool isPrintf = function->getName() == "printf" || function->getName() == "puts";
+
   assert((isPrintf || function->getCallingConv() == CallingConv::PTX_Device) &&
 			 "PTX function calls must be to PTX device functions");
-  
+
   unsigned outSize = isPrintf ? 2 : Outs.size();
-  
+
   std::vector<SDValue> Ops;
   // The layout of the ops will be [Chain, #Ins, Ins, Callee, #Outs, Outs]
   Ops.resize(outSize + Ins.size() + 4);
@@ -412,7 +422,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // #Outs
   Ops[Ins.size()+3] = DAG.getTargetConstant(outSize, MVT::i32);
-  
+
   if (isPrintf) {
     // first argument is the address of the global string variable in memory
     unsigned Param0 = PM.addLocalParam(getPointerTy().getSizeInBits());
@@ -421,29 +431,29 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
                         ParamValue0, OutVals[0]);
     Ops[Ins.size()+4] = ParamValue0;
-      
+
     // alignment is the maximum size of all the arguments
     unsigned alignment = 0;
     for (unsigned i = 1; i < OutVals.size(); ++i) {
-      alignment = std::max(alignment, 
+      alignment = std::max(alignment,
     		               OutVals[i].getValueType().getSizeInBits());
     }
 
     // size is the alignment multiplied by the number of arguments
     unsigned size = alignment * (OutVals.size() - 1);
-  
+
     // second argument is the address of the stack object (unless no arguments)
     unsigned Param1 = PM.addLocalParam(getPointerTy().getSizeInBits());
     SDValue ParamValue1 = DAG.getTargetExternalSymbol(PM.getParamName(Param1).c_str(),
                                                       MVT::Other);
     Ops[Ins.size()+5] = ParamValue1;
-    
+
     if (size > 0)
     {
       // create a local stack object to store the arguments
       unsigned StackObject = MFI->CreateStackObject(size / 8, alignment / 8, false);
       SDValue FrameIndex = DAG.getFrameIndex(StackObject, getPointerTy());
-	  
+
       // store each of the arguments to the stack in turn
       for (unsigned int i = 1; i != OutVals.size(); i++) {
         SDValue FrameAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), FrameIndex, DAG.getTargetConstant((i - 1) * 8, getPointerTy()));
@@ -475,7 +485,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 		Ops[i+Ins.size()+4] = ParamValue;
 	  }
   }
-  
+
   std::vector<SDValue> InParams;
 
   // Generate list of .param variables to hold the return value(s).
