@@ -26,8 +26,17 @@
 
 // Use macro to describe if specific function should be
 // intercepted on a given platform.
-#define ASAN_INTERCEPT_STRTOLL !defined(_WIN32)
-#define ASAN_INTERCEPT_STRNLEN !defined(__APPLE__)
+#if !defined(_WIN32)
+# define ASAN_INTERCEPT_STRTOLL 1
+#else
+# define ASAN_INTERCEPT_STRTOLL 0
+#endif
+
+#if !defined(__APPLE__)
+# define ASAN_INTERCEPT_STRNLEN 1
+#else
+# define ASAN_INTERCEPT_STRNLEN 0
+#endif
 
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
