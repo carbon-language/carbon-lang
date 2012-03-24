@@ -718,9 +718,14 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_WO_CHAIN:
   case ISD::INTRINSIC_VOID:
-  case ISD::VAARG:
   case ISD::STACKSAVE:
     Action = TLI.getOperationAction(Node->getOpcode(), MVT::Other);
+    break;
+  case ISD::VAARG:
+    Action = TLI.getOperationAction(Node->getOpcode(),
+                                    Node->getValueType(0));
+    if (Action != TargetLowering::Promote)
+      Action = TLI.getOperationAction(Node->getOpcode(), MVT::Other);
     break;
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
@@ -3528,6 +3533,33 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
                                  Node->getOpcode() == ISD::SINT_TO_FP, dl);
     Results.push_back(Tmp1);
     break;
+  case ISD::VAARG: {
+    SDValue Chain = Node->getOperand(0); // Get the chain.
+    SDValue Ptr = Node->getOperand(1); // Get the pointer.
+
+    unsigned TruncOp;
+    if (OVT.isVector()) {
+      TruncOp = ISD::BITCAST;
+    } else {
+      assert(OVT.isInteger()
+        && "VAARG promotion is supported only for vectors or integer types");
+      TruncOp = ISD::TRUNCATE;
+    }
+
+    // Perform the larger operation, then convert back
+    Tmp1 = DAG.getVAArg(NVT, dl, Chain, Ptr, Node->getOperand(2),
+             Node->getConstantOperandVal(3));
+    Chain = Tmp1.getValue(1);
+
+    Tmp2 = DAG.getNode(TruncOp, dl, OVT, Tmp1);
+
+    // Modified the chain result - switch anything that used the old chain to
+    // use the new one.
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Tmp2);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Chain);
+    ReplacedNode(Node);
+    break;
+  }
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR: {
