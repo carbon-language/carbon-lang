@@ -24,6 +24,14 @@
 
 #include <new>
 
+// Use macro to describe if specific function should be
+// intercepted on a given platform.
+#if !defined(_WIN32)
+# define ASAN_INTERCEPT_STRTOLL 1
+#else
+# define ASAN_INTERCEPT_STRTOLL 0
+#endif  // ASAN_WINDOWS
+
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
 #if defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
@@ -66,6 +74,11 @@ char* strdup(const char *s);
 size_t strlen(const char *s);
 # if !defined(__APPLE__)
 size_t strnlen(const char *s, size_t maxlen);
+# endif
+
+// stdlib.h
+# if ASAN_INTERCEPT_STRTOLL
+long long strtoll(const char *nptr, char **endptr, int base);  // NOLINT
 # endif
 
 // Windows threads.
@@ -635,6 +648,42 @@ INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
 }
 #endif
 
+# if ASAN_INTERCEPT_STRTOLL
+// Returns pointer to first character of "nptr" after skipping
+// leading blanks and optional +/- sign.
+static char *SkipBlanksAndSign(const char *nptr) {
+  while (IsSpace(*nptr)) nptr++;
+  if (*nptr == '+' || *nptr == '-') nptr++;
+  return (char*)nptr;
+}
+
+INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
+            char **endptr, int base) {
+  ENSURE_ASAN_INITED();
+  if (!FLAG_replace_str) {
+    return REAL(strtoll)(nptr, endptr, base);
+  }
+  char *real_endptr;
+  long long result = REAL(strtoll)(nptr, &real_endptr, base);  // NOLINT
+  if (endptr != NULL) {
+    *endptr = real_endptr;
+  }
+  // If base has unsupported value, strtoll can exit with EINVAL
+  // without reading any characters. So do additional checks only
+  // if base is valid.
+  if (base == 0 || (2 <= base && base <= 36)) {
+    if (real_endptr == nptr) {
+      // No digits were found, find out the last symbol read by strtoll
+      // on our own.
+      real_endptr = SkipBlanksAndSign(nptr);
+    }
+    CHECK(real_endptr >= nptr);
+    ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
+  }
+  return result;
+}
+#endif  // ASAN_INTERCEPT_STRTOLL
+
 #if defined(_WIN32)
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, size_t stack_size,
@@ -692,6 +741,10 @@ void InitializeAsanInterceptors() {
 #endif
 #if !defined(__APPLE__)
   CHECK(INTERCEPT_FUNCTION(strnlen));
+#endif
+
+#if ASAN_INTERCEPT_STRTOLL
+  CHECK(INTERCEPT_FUNCTION(strtoll));
 #endif
 
   // Intecept signal- and jump-related functions.
