@@ -1672,34 +1672,25 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Eliminate redundant IV cycles.
   NumElimIV += Rewriter.replaceCongruentIVs(L, DT, DeadInsts);
 
-  // Compute the type of the largest recurrence expression, and decide whether
-  // a canonical induction variable should be inserted.
-  bool ExpandBECount = canExpandBackedgeTakenCount(L, SE);
-
-  // Now that we know the largest of the induction variable expressions
-  // in this loop, insert a canonical induction variable of the largest size.
-  PHINode *IndVar = 0;
-  if (ExpandBECount && needsLFTR(L, DT)) {
-    IndVar = FindLoopCounter(L, BackedgeTakenCount, SE, DT, TD);
-  }
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  We can currently only handle loops with a single exit.
-  Value *NewICmp = 0;
-  if (ExpandBECount && IndVar) {
-    // Check preconditions for proper SCEVExpander operation. SCEV does not
-    // express SCEVExpander's dependencies, such as LoopSimplify. Instead any
-    // pass that uses the SCEVExpander must do it. This does not work well for
-    // loop passes because SCEVExpander makes assumptions about all loops, while
-    // LoopPassManager only forces the current loop to be simplified.
-    //
-    // FIXME: SCEV expansion has no way to bail out, so the caller must
-    // explicitly check any assumptions made by SCEV. Brittle.
-    const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(BackedgeTakenCount);
-    if (!AR || AR->getLoop()->getLoopPreheader())
-      NewICmp =
-        LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar, Rewriter);
+  if (canExpandBackedgeTakenCount(L, SE) && needsLFTR(L, DT)) {
+    PHINode *IndVar = FindLoopCounter(L, BackedgeTakenCount, SE, DT, TD);
+    if (IndVar) {
+      // Check preconditions for proper SCEVExpander operation. SCEV does not
+      // express SCEVExpander's dependencies, such as LoopSimplify. Instead any
+      // pass that uses the SCEVExpander must do it. This does not work well for
+      // loop passes because SCEVExpander makes assumptions about all loops, while
+      // LoopPassManager only forces the current loop to be simplified.
+      //
+      // FIXME: SCEV expansion has no way to bail out, so the caller must
+      // explicitly check any assumptions made by SCEV. Brittle.
+      const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(BackedgeTakenCount);
+      if (!AR || AR->getLoop()->getLoopPreheader())
+        (void)LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
+                                        Rewriter);
+    }
   }
-
   // Clear the rewriter cache, because values that are in the rewriter's cache
   // can be deleted in the loop below, causing the AssertingVH in the cache to
   // trigger.
