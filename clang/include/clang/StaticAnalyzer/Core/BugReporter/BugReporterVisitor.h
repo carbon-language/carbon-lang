@@ -90,7 +90,7 @@ public:
 template <class DERIVED>
 class BugReporterVisitorImpl : public BugReporterVisitor {
   virtual BugReporterVisitor *clone() const {
-    return new DERIVED(*(DERIVED *)this);
+    return new DERIVED(*static_cast<const DERIVED *>(this));
   }
 };
 
