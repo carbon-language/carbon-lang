@@ -355,7 +355,8 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
 /// instructions in other blocks as well in this block.
 bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD) {
   bool MadeChange = false;
-  for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
+  for (BasicBlock::iterator BI = BB->begin(), E = --BB->end(); BI != E; ) {
+    assert(!BI->isTerminator());
     Instruction *Inst = BI++;
 
     WeakVH BIHandle(BI);
@@ -365,9 +366,6 @@ bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD) {
         BI = BB->begin();
       continue;
     }
-
-    if (Inst->isTerminator())
-      break;
 
     MadeChange |= RecursivelyDeleteTriviallyDeadInstructions(Inst);
     if (BIHandle != BI)
