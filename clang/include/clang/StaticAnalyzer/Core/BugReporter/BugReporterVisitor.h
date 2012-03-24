@@ -28,9 +28,27 @@ class ExplodedNode;
 class MemRegion;
 class PathDiagnosticPiece;
 
+/// \brief BugReporterVisitors are used to add custom diagnostics along a path.
+///
+/// Custom visitors should subclass the BugReporterVisitorImpl class for a
+/// default implementation of the clone() method.
+/// (Warning: if you have a deep subclass of BugReporterVisitorImpl, the
+/// default implementation of clone() will NOT do the right thing, and you
+/// will have to provide your own implementation.)
 class BugReporterVisitor : public llvm::FoldingSetNode {
 public:
   virtual ~BugReporterVisitor();
+
+  /// \brief Returns a copy of this BugReporter.
+  ///
+  /// Custom BugReporterVisitors should not override this method directly.
+  /// Instead, they should inherit from BugReporterVisitorImpl and provide
+  /// a protected or public copy constructor.
+  ///
+  /// (Warning: if you have a deep subclass of BugReporterVisitorImpl, the
+  /// default implementation of clone() will NOT do the right thing, and you
+  /// will have to provide your own implementation.)
+  virtual BugReporterVisitor *clone() const = 0;
 
   /// \brief Return a diagnostic piece which should be associated with the
   /// given node.
@@ -61,7 +79,24 @@ public:
 
 };
 
-class FindLastStoreBRVisitor : public BugReporterVisitor {
+/// This class provides a convenience implementation for clone() using the
+/// Curiously-Recurring Template Pattern. If you are implementing a custom
+/// BugReporterVisitor, subclass BugReporterVisitorImpl and provide a public
+/// or protected copy constructor.
+///
+/// (Warning: if you have a deep subclass of BugReporterVisitorImpl, the
+/// default implementation of clone() will NOT do the right thing, and you
+/// will have to provide your own implementation.)
+template <class DERIVED>
+class BugReporterVisitorImpl : public BugReporterVisitor {
+  virtual BugReporterVisitor *clone() const {
+    return new DERIVED(*(DERIVED *)this);
+  }
+};
+
+class FindLastStoreBRVisitor
+  : public BugReporterVisitorImpl<FindLastStoreBRVisitor>
+{
   const MemRegion *R;
   SVal V;
   bool satisfied;
@@ -94,7 +129,9 @@ public:
                                  BugReport &BR);
 };
 
-class TrackConstraintBRVisitor : public BugReporterVisitor {
+class TrackConstraintBRVisitor
+  : public BugReporterVisitorImpl<TrackConstraintBRVisitor>
+{
   DefinedSVal Constraint;
   const bool Assumption;
   bool isSatisfied;
@@ -111,7 +148,9 @@ public:
                                  BugReport &BR);
 };
 
-class NilReceiverBRVisitor : public BugReporterVisitor {
+class NilReceiverBRVisitor
+  : public BugReporterVisitorImpl<NilReceiverBRVisitor>
+{
 public:
   void Profile(llvm::FoldingSetNodeID &ID) const {
     static int x = 0;
@@ -125,7 +164,7 @@ public:
 };
 
 /// Visitor that tries to report interesting diagnostics from conditions.
-class ConditionBRVisitor : public BugReporterVisitor {
+class ConditionBRVisitor : public BugReporterVisitorImpl<ConditionBRVisitor> {
 public:
   void Profile(llvm::FoldingSetNodeID &ID) const {
     static int x = 0;

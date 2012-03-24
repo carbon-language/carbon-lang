@@ -1713,7 +1713,7 @@ namespace {
   // Bug Reports.  //
   //===---------===//
 
-  class CFRefReportVisitor : public BugReporterVisitor {
+  class CFRefReportVisitor : public BugReporterVisitorImpl<CFRefReportVisitor> {
   protected:
     SymbolRef Sym;
     const SummaryLogTy &SummaryLog;
@@ -1748,6 +1748,15 @@ namespace {
     PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
                                     const ExplodedNode *N,
                                     BugReport &BR);
+
+    virtual BugReporterVisitor *clone() const {
+      // The curiously-recurring template pattern only works for one level of
+      // subclassing. Rather than make a new template base for
+      // CFRefReportVisitor, we simply override clone() to do the right thing.
+      // This could be trouble someday if BugReporterVisitorImpl is ever
+      // used for something else besides a convenient implementation of clone().
+      return new CFRefLeakReportVisitor(*this);
+    }
   };
 
   class CFRefReport : public BugReport {
