@@ -2522,6 +2522,7 @@ public:
                      unsigned AccuracyD = 1);
 
 private:
+  llvm::MDNode *getRangeForLoadFromType(QualType Ty);
   void EmitReturnOfRValue(RValue RV, QualType Ty);
 
   /// ExpandTypeFromArgs - Reconstruct a structure of type \arg Ty
