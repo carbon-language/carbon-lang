@@ -275,9 +275,9 @@ void llvm::sys::PrintStackTraceOnErrorSignal() {
 
     kern_return_t ret = task_set_exception_ports(self, 
                              mask,
-                             NULL,
+                             MACH_PORT_NULL,
                              EXCEPTION_STATE_IDENTITY | MACH_EXCEPTION_CODES, 
-                             NULL);
+                             THREAD_STATE_NONE);
     (void)ret;
   }
 #endif
