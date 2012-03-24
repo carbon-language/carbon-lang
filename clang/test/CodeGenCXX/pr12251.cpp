@@ -123,7 +123,7 @@ enum e16 { e16_a = -2147483648 };
 e16 g16(e16 *x) {
   return *x;
 }
-// CHECK: define i32 @_Z3g16P3e16q
+// CHECK: define i32 @_Z3g16P3e16
 // CHECK: load i32* %x, align 4
 // CHECK-NOT: range
 // CHECK: ret
