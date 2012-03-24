@@ -772,14 +772,12 @@ public:
     LoopT *L = new LoopT(BB);
     BBMap[BB] = L;
 
-    BlockT *EntryBlock = BB->getParent()->begin();
-
     while (!TodoStack.empty()) {  // Process all the nodes in the loop
       BlockT *X = TodoStack.back();
       TodoStack.pop_back();
 
       if (!L->contains(X) &&         // As of yet unprocessed??
-          DT.dominates(EntryBlock, X)) {   // X is reachable from entry block?
+          DT.isReachableFromEntry(X)) {
         // Check to see if this block already belongs to a loop.  If this occurs
         // then we have a case where a loop that is supposed to be a child of
         // the current loop was processed before the current loop.  When this
