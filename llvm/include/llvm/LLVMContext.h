@@ -42,7 +42,8 @@ public:
     MD_dbg = 0,  // "dbg"
     MD_tbaa = 1, // "tbaa"
     MD_prof = 2,  // "prof"
-    MD_fpaccuracy = 3  // "fpaccuracy"
+    MD_fpaccuracy = 3,  // "fpaccuracy"
+    MD_range = 4 // "range"
   };
   
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

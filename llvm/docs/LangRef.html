@@ -104,6 +104,7 @@
         <ol>
           <li><a href="#tbaa">'<tt>tbaa</tt>' Metadata</a></li>
           <li><a href="#fpaccuracy">'<tt>fpaccuracy</tt>' Metadata</a></li>
+          <li><a href="#range">'<tt>range</tt>' Metadata</a></li>
         </ol>
       </li>
     </ol>
@@ -3028,6 +3029,39 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 </pre>
 </div>
 
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="range">'<tt>range</tt>' Metadata</a>
+</h4>
+
+<div>
+<p><tt>range</tt> metadata may be attached only to loads of integer types. It
+   expresses the possible ranges the loaded value is in. The ranges are
+   represented with a flattened list of integers. The loaded value is known to
+   be in the union of the ranges defined by each consecutive pair. Each pair
+   has the following properties:</p>
+<ul>
+   <li>The type must match the type loaded by the instruction.</li>
+   <li>The pair <tt>a,b</tt> represents the range <tt>[a,b)</tt>.</li>
+   <li>Both <tt>a</tt> and <tt>b</tt> are constants.</li>
+   <li>The range is allowed to wrap.</li>
+   <li>The range should not represent the full or empty set. That is,
+       <tt>a!=b</tt>. </li>
+</ul>
+
+<p>Examples:</p>
+<div class="doc_code">
+<pre>
+  %a = load i8* %x, align 1, !range !0 ; Can only be 0 or 1
+  %b = load i8* %y, align 1, !range !1 ; Can only be 255 (-1), 0 or 1
+  %c = load i8* %z, align 1, !range !2 ; Can only be 0, 1, 3, 4 or 5
+...
+!0 = metadata !{ i8 0, i8 2 }
+!1 = metadata !{ i8 255, i8 2 }
+!2 = metadata !{ i8 0, i8 2, i8 3, i8 6 }
+</pre>
+</div>
+</div>
 </div>
 
 </div>

@@ -48,6 +48,11 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned FPAccuracyID = getMDKindID("fpaccuracy");
   assert(FPAccuracyID == MD_fpaccuracy && "fpaccuracy kind id drifted");
   (void)FPAccuracyID;
+
+  // Create the 'range' metadata kind.
+  unsigned RangeID = getMDKindID("range");
+  assert(RangeID == MD_range && "range kind id drifted");
+  (void)RangeID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

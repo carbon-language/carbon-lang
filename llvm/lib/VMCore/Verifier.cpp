@@ -51,6 +51,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -1369,6 +1370,25 @@ void Verifier::visitLoadInst(LoadInst &LI) {
     Assert1(LI.getSynchScope() == CrossThread,
             "Non-atomic load cannot have SynchronizationScope specified", &LI);
   }
+
+  if (MDNode *Range = LI.getMetadata(LLVMContext::MD_range)) {
+    unsigned NumOperands = Range->getNumOperands();
+    Assert1(NumOperands % 2 == 0, "Unfinished range!", Range);
+    unsigned NumRanges = NumOperands / 2;
+    Assert1(NumRanges >= 1, "It should have at least one range!", Range);
+    for (unsigned i = 0; i < NumRanges; ++i) {
+      ConstantInt *Low = dyn_cast<ConstantInt>(Range->getOperand(2*i));
+      Assert1(Low, "The lower limit must be an integer!", Low);
+      ConstantInt *High = dyn_cast<ConstantInt>(Range->getOperand(2*i + 1));
+      Assert1(High, "The upper limit must be an integer!", High);
+      Assert1(High->getType() == Low->getType() &&
+              High->getType() == ElTy, "Range types must match load type!",
+              &LI);
+      Assert1(High->getValue() != Low->getValue(), "Range must not be empty!",
+              Range);
+    }
+  }
+
   visitInstruction(LI);
 }
 
@@ -1641,6 +1661,10 @@ void Verifier::visitInstruction(Instruction &I) {
               "Cannot take the address of an inline asm!", &I);
     }
   }
+
+  MDNode *MD = I.getMetadata(LLVMContext::MD_range);
+  Assert1(!MD || isa<LoadInst>(I), "Ranges are only for loads!", &I);
+
   InstsInThisBlock.insert(&I);
 }
 
