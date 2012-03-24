@@ -30,7 +30,7 @@ int _setup_posixspawn_attributes_file_actions(xpc_object_t message, posix_spawna
     if (errorCode)
         return errorCode;
     
-    cpu_type_t cpuType = xpc_dictionary_get_int64(message, LauncherXPCServiceCPUTypeKey);
+    cpu_type_t cpuType = (cpu_type_t)xpc_dictionary_get_int64(message, LauncherXPCServiceCPUTypeKey);
     if (cpuType == -2) {
         cpuType= CPU_TYPE_ANY;
     }
@@ -71,7 +71,7 @@ bool extract_args(xpc_object_t message, const char *prefix, const char ***argsOu
     char buf[50]; // long enough for 'argXXX'
     memset(buf, 0, 50);
     sprintf(buf, "%sCount", prefix);
-    int argsCount = xpc_dictionary_get_int64(message, buf);
+    int argsCount = (int)xpc_dictionary_get_int64(message, buf);
     if (argsCount == 0) {
         return true;
     }
