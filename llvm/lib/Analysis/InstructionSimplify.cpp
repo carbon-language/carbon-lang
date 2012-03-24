@@ -21,6 +21,7 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/Operator.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -2834,7 +2835,7 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
                                               const TargetLibraryInfo *TLI,
                                               const DominatorTree *DT) {
   bool Simplified = false;
-  SmallVector<Instruction *, 8> Worklist;
+  SmallSetVector<Instruction *, 8> Worklist;
 
   // If we have an explicit value to collapse to, do that round of the
   // simplification loop by hand initially.
@@ -2842,7 +2843,7 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
     for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
          ++UI)
       if (*UI != I)
-        Worklist.push_back(cast<Instruction>(*UI));
+        Worklist.insert(cast<Instruction>(*UI));
 
     // Replace the instruction with its simplified value.
     I->replaceAllUsesWith(SimpleV);
@@ -2852,11 +2853,12 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
     if (I->getParent())
       I->eraseFromParent();
   } else {
-    Worklist.push_back(I);
+    Worklist.insert(I);
   }
 
-  while (!Worklist.empty()) {
-    I = Worklist.pop_back_val();
+  // Note that we must test the size on each iteration, the worklist can grow.
+  for (unsigned Idx = 0; Idx != Worklist.size(); ++Idx) {
+    I = Worklist[Idx];
 
     // See if this instruction simplifies.
     SimpleV = SimplifyInstruction(I, TD, TLI, DT);
@@ -2870,8 +2872,7 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
     // uses of To on the recursive step in most cases.
     for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
          ++UI)
-      if (*UI != I)
-        Worklist.push_back(cast<Instruction>(*UI));
+      Worklist.insert(cast<Instruction>(*UI));
 
     // Replace the instruction with its simplified value.
     I->replaceAllUsesWith(SimpleV);
