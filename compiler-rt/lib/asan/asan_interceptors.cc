@@ -30,7 +30,13 @@
 # define ASAN_INTERCEPT_STRTOLL 1
 #else
 # define ASAN_INTERCEPT_STRTOLL 0
-#endif  // ASAN_WINDOWS
+#endif
+
+#if !defined(__APPLE__)
+# define ASAN_INTERCEPT_STRNLEN 1
+#else
+# define ASAN_INTERCEPT_STRNLEN 0
+#endif
 
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
@@ -72,7 +78,7 @@ int strncasecmp(const char *s1, const char *s2, size_t n);
 char* strdup(const char *s);
 # endif
 size_t strlen(const char *s);
-# if !defined(__APPLE__)
+# if ASAN_INTERCEPT_STRNLEN
 size_t strnlen(const char *s, size_t maxlen);
 # endif
 
@@ -214,7 +220,7 @@ size_t internal_strlen(const char *s) {
 }
 
 size_t internal_strnlen(const char *s, size_t maxlen) {
-#ifndef __APPLE__
+#if ASAN_INTERCEPT_STRNLEN
   if (REAL(strnlen) != NULL) {
     return REAL(strnlen)(s, maxlen);
   }
@@ -637,7 +643,7 @@ INTERCEPTOR(char*, strncpy, char *to, const char *from, size_t size) {
   return REAL(strncpy)(to, from, size);
 }
 
-#ifndef __APPLE__
+#if ASAN_INTERCEPT_STRNLEN
 INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
   ENSURE_ASAN_INITED();
   size_t length = REAL(strnlen)(s, maxlen);
@@ -646,7 +652,7 @@ INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
   }
   return length;
 }
-#endif
+#endif  // ASAN_INTERCEPT_STRNLEN
 
 # if ASAN_INTERCEPT_STRTOLL
 // Returns pointer to first character of "nptr" after skipping
@@ -739,7 +745,7 @@ void InitializeAsanInterceptors() {
   CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr)));
 # endif
 #endif
-#if !defined(__APPLE__)
+#if ASAN_INTERCEPT_STRNLEN
   CHECK(INTERCEPT_FUNCTION(strnlen));
 #endif
 
