@@ -118,7 +118,6 @@ namespace {
   struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
-    bool RealPass;        // Are we not being run by a PassManager?
     VerifierFailureAction action;
                           // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
@@ -144,13 +143,13 @@ namespace {
     const Value *PersonalityFn;
 
     Verifier()
-      : FunctionPass(ID), Broken(false), RealPass(true),
+      : FunctionPass(ID), Broken(false),
         action(AbortProcessAction), Mod(0), Context(0), DT(0),
         MessagesStr(Messages), PersonalityFn(0) {
       initializeVerifierPass(*PassRegistry::getPassRegistry());
     }
     explicit Verifier(VerifierFailureAction ctn)
-      : FunctionPass(ID), Broken(false), RealPass(true), action(ctn), Mod(0),
+      : FunctionPass(ID), Broken(false), action(ctn), Mod(0),
         Context(0), DT(0), MessagesStr(Messages), PersonalityFn(0) {
       initializeVerifierPass(*PassRegistry::getPassRegistry());
     }
@@ -159,17 +158,14 @@ namespace {
       Mod = &M;
       Context = &M.getContext();
 
-      // If this is a real pass, in a pass manager, we must abort before
-      // returning back to the pass manager, or else the pass manager may try to
-      // run other passes on the broken module.
-      if (RealPass)
-        return abortIfBroken();
-      return false;
+      // We must abort before returning back to the pass manager, or else the
+      // pass manager may try to run other passes on the broken module.
+      return abortIfBroken();
     }
 
     bool runOnFunction(Function &F) {
       // Get dominator information if we are being run by PassManager
-      if (RealPass) DT = &getAnalysis<DominatorTree>();
+      DT = &getAnalysis<DominatorTree>();
 
       Mod = F.getParent();
       if (!Context) Context = &F.getContext();
@@ -178,13 +174,9 @@ namespace {
       InstsInThisBlock.clear();
       PersonalityFn = 0;
 
-      // If this is a real pass, in a pass manager, we must abort before
-      // returning back to the pass manager, or else the pass manager may try to
-      // run other passes on the broken module.
-      if (RealPass)
-        return abortIfBroken();
-
-      return false;
+      // We must abort before returning back to the pass manager, or else the
+      // pass manager may try to run other passes on the broken module.
+      return abortIfBroken();
     }
 
     bool doFinalization(Module &M) {
@@ -215,8 +207,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequiredID(PreVerifyID);
-      if (RealPass)
-        AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTree>();
     }
 
     /// abortIfBroken - If the module is broken and we are supposed to abort on
