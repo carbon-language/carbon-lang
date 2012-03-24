@@ -860,6 +860,61 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(LValue lvalue) {
                           lvalue.getType(), lvalue.getTBAAInfo());
 }
 
+static bool hasBooleanRepresentation(QualType Ty) {
+  if (Ty->isBooleanType())
+    return true;
+
+  if (const EnumType *ET = Ty->getAs<EnumType>())
+    return ET->getDecl()->getIntegerType()->isBooleanType();
+
+  return false;
+}
+
+llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
+  const EnumType *ET = Ty->getAs<EnumType>();
+  bool IsRegularCPlusPlusEnum = getLangOpts().CPlusPlus && ET &&
+    !ET->getDecl()->isFixed();
+  bool IsBool = hasBooleanRepresentation(Ty);
+  llvm::Type *LTy;
+  if (!IsBool && !IsRegularCPlusPlusEnum)
+    return NULL;
+
+  uint64_t Min;
+  uint64_t End;
+  if (IsBool) {
+    Min = 0;
+    End = 2;
+    LTy = Int8Ty;
+  } else {
+    const EnumDecl *ED = ET->getDecl();
+    LTy = ConvertTypeForMem(ED->getIntegerType());
+    unsigned NumNegativeBits = ED->getNumNegativeBits();
+    unsigned NumPositiveBits = ED->getNumPositiveBits();
+
+    if (NumNegativeBits) {
+      unsigned NumBits = std::max(NumNegativeBits, NumPositiveBits + 1);
+      assert(NumBits <= 64);
+      End = 1ULL << (NumBits - 1);
+      Min = -End;
+    } else {
+      assert(NumPositiveBits <= 64);
+      if (NumPositiveBits == 64)
+        return NULL;
+      End = 1ULL << NumPositiveBits;
+      Min = 0;
+    }
+  }
+
+  assert(End != Min);
+  llvm::Value *LowAndHigh[2];
+  LowAndHigh[0] = llvm::ConstantInt::get(LTy, Min);
+  LowAndHigh[1] = llvm::ConstantInt::get(LTy, End);
+
+  llvm::LLVMContext &C = getLLVMContext();
+  llvm::MDNode *Range = llvm::MDNode::get(C, LowAndHigh);
+  return Range;
+}
+
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                               unsigned Alignment, QualType Ty,
                                               llvm::MDNode *TBAAInfo) {
@@ -874,18 +929,16 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
   if (Ty->isAtomicType())
     Load->setAtomic(llvm::SequentiallyConsistent);
 
-  return EmitFromMemory(Load, Ty);
-}
+  if (CGM.getCodeGenOpts().OptimizationLevel > 0)
+    if (llvm::MDNode *RangeInfo = getRangeForLoadFromType(Ty))
+      Load->setMetadata(llvm::LLVMContext::MD_range, RangeInfo);
 
-static bool isBooleanUnderlyingType(QualType Ty) {
-  if (const EnumType *ET = dyn_cast<EnumType>(Ty))
-    return ET->getDecl()->getIntegerType()->isBooleanType();
-  return false;
+  return EmitFromMemory(Load, Ty);
 }
 
 llvm::Value *CodeGenFunction::EmitToMemory(llvm::Value *Value, QualType Ty) {
   // Bool has a different representation in memory than in registers.
-  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
+  if (hasBooleanRepresentation(Ty)) {
     // This should really always be an i1, but sometimes it's already
     // an i8, and it's awkward to track those cases down.
     if (Value->getType()->isIntegerTy(1))
@@ -898,7 +951,7 @@ llvm::Value *CodeGenFunction::EmitToMemory(llvm::Value *Value, QualType Ty) {
 
 llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
   // Bool has a different representation in memory than in registers.
-  if (Ty->isBooleanType() || isBooleanUnderlyingType(Ty)) {
+  if (hasBooleanRepresentation(Ty)) {
     assert(Value->getType()->isIntegerTy(8) && "memory rep of bool not i8");
     return Builder.CreateTrunc(Value, Builder.getInt1Ty(), "tobool");
   }
