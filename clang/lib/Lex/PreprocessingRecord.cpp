@@ -358,10 +358,7 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
 
 void PreprocessingRecord::MacroUndefined(const Token &Id,
                                          const MacroInfo *MI) {
-  llvm::DenseMap<const MacroInfo *, PPEntityID>::iterator Pos
-    = MacroDefinitions.find(MI);
-  if (Pos != MacroDefinitions.end())
-    MacroDefinitions.erase(Pos);
+  MacroDefinitions.erase(MI);
 }
 
 void PreprocessingRecord::InclusionDirective(

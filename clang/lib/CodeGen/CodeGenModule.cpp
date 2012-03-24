@@ -823,10 +823,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       FD->getBody(InlineDefinition);
 
       StringRef MangledName = getMangledName(GD);
-      llvm::StringMap<GlobalDecl>::iterator DDI =
-          DeferredDecls.find(MangledName);
-      if (DDI != DeferredDecls.end())
-        DeferredDecls.erase(DDI);
+      DeferredDecls.erase(MangledName);
       EmitGlobalDefinition(InlineDefinition);
       return;
     }

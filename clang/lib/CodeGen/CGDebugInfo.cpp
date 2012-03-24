@@ -1235,10 +1235,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   }
 
   LexicalBlockStack.pop_back();
-  llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator RI = 
-    RegionMap.find(Ty->getDecl());
-  if (RI != RegionMap.end())
-    RegionMap.erase(RI);
+  RegionMap.erase(Ty->getDecl());
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
   // FIXME: Magic numbers ahoy! These should be changed when we

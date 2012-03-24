@@ -280,10 +280,7 @@ void FileRemapper::resetTarget(Target &targ) {
     delete oldmem;
   } else {
     const FileEntry *toFE = targ.get<const FileEntry *>();
-    llvm::DenseMap<const FileEntry *, const FileEntry *>::iterator
-      I = ToFromMappings.find(toFE);
-    if (I != ToFromMappings.end())
-      ToFromMappings.erase(I);
+    ToFromMappings.erase(toFE);
   }
 }
 
