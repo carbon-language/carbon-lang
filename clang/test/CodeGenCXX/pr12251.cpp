@@ -81,14 +81,14 @@ enum e11 g11(enum e11 *x) {
   return *x;
 }
 // CHECK: define i64 @_Z3g11P3e11
-// CHECK: load i64* %x, align 8, !range !7
+// CHECK: load i64* %x, align {{[84]}}, !range !7
 
 enum e12 {e12_a = 9223372036854775808U };
 enum e12 g12(enum e12 *x) {
   return *x;
 }
 // CHECK: define i64 @_Z3g12P3e12
-// CHECK: load i64* %x, align 8
+// CHECK: load i64* %x, align {{[84]}}
 // CHECK-NOT: range
 // CHECK: ret
 
