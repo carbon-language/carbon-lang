@@ -2818,58 +2818,82 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
   return Result == I ? UndefValue::get(I->getType()) : Result;
 }
 
-/// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
-/// delete the From instruction.  In addition to a basic RAUW, this does a
-/// recursive simplification of the newly formed instructions.  This catches
-/// things where one simplification exposes other opportunities.  This only
-/// simplifies and deletes scalar operations, it does not change the CFG.
+/// \brief Implementation of recursive simplification through an instructions
+/// uses.
 ///
-void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
-                                     const TargetData *TD,
-                                     const TargetLibraryInfo *TLI,
-                                     const DominatorTree *DT) {
-  assert(From != To && "ReplaceAndSimplifyAllUses(X,X) is not valid!");
+/// This is the common implementation of the recursive simplification routines.
+/// If we have a pre-simplified value in 'SimpleV', that is forcibly used to
+/// replace the instruction 'I'. Otherwise, we simply add 'I' to the list of
+/// instructions to process and attempt to simplify it using
+/// InstructionSimplify.
+///
+/// This routine returns 'true' only when *it* simplifies something. The passed
+/// in simplified value does not count toward this.
+static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
+                                              const TargetData *TD,
+                                              const TargetLibraryInfo *TLI,
+                                              const DominatorTree *DT) {
+  bool Simplified = false;
+  SmallVector<Instruction *, 8> Worklist;
 
-  // FromHandle/ToHandle - This keeps a WeakVH on the from/to values so that
-  // we can know if it gets deleted out from under us or replaced in a
-  // recursive simplification.
-  WeakVH FromHandle(From);
-  WeakVH ToHandle(To);
+  // If we have an explicit value to collapse to, do that round of the
+  // simplification loop by hand initially.
+  if (SimpleV) {
+    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
+         ++UI)
+      Worklist.push_back(cast<Instruction>(*UI));
 
-  while (!From->use_empty()) {
-    // Update the instruction to use the new value.
-    Use &TheUse = From->use_begin().getUse();
-    Instruction *User = cast<Instruction>(TheUse.getUser());
-    TheUse = To;
+    // Replace the instruction with its simplified value.
+    I->replaceAllUsesWith(SimpleV);
 
-    // Check to see if the instruction can be folded due to the operand
-    // replacement.  For example changing (or X, Y) into (or X, -1) can replace
-    // the 'or' with -1.
-    Value *SimplifiedVal;
-    {
-      // Sanity check to make sure 'User' doesn't dangle across
-      // SimplifyInstruction.
-      AssertingVH<> UserHandle(User);
-
-      SimplifiedVal = SimplifyInstruction(User, TD, TLI, DT);
-      if (SimplifiedVal == 0) continue;
-    }
-
-    // Recursively simplify this user to the new value.
-    ReplaceAndSimplifyAllUses(User, SimplifiedVal, TD, TLI, DT);
-    From = dyn_cast_or_null<Instruction>((Value*)FromHandle);
-    To = ToHandle;
-
-    assert(ToHandle && "To value deleted by recursive simplification?");
-
-    // If the recursive simplification ended up revisiting and deleting
-    // 'From' then we're done.
-    if (From == 0)
-      return;
+    // Gracefully handle edge cases where the instruction is not wired into any
+    // parent block.
+    if (I->getParent())
+      I->eraseFromParent();
+  } else {
+    Worklist.push_back(I);
   }
 
-  // If 'From' has value handles referring to it, do a real RAUW to update them.
-  From->replaceAllUsesWith(To);
+  while (!Worklist.empty()) {
+    I = Worklist.pop_back_val();
 
-  From->eraseFromParent();
+    // See if this instruction simplifies.
+    SimpleV = SimplifyInstruction(I, TD, TLI, DT);
+    if (!SimpleV)
+      continue;
+
+    Simplified = true;
+
+    // Stash away all the uses of the old instruction so we can check them for
+    // recursive simplifications after a RAUW. This is cheaper than checking all
+    // uses of To on the recursive step in most cases.
+    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
+         ++UI)
+      Worklist.push_back(cast<Instruction>(*UI));
+
+    // Replace the instruction with its simplified value.
+    I->replaceAllUsesWith(SimpleV);
+
+    // Gracefully handle edge cases where the instruction is not wired into any
+    // parent block.
+    if (I->getParent())
+      I->eraseFromParent();
+  }
+  return Simplified;
+}
+
+bool llvm::recursivelySimplifyInstruction(Instruction *I,
+                                          const TargetData *TD,
+                                          const TargetLibraryInfo *TLI,
+                                          const DominatorTree *DT) {
+  return replaceAndRecursivelySimplifyImpl(I, 0, TD, TLI, DT);
+}
+
+bool llvm::replaceAndRecursivelySimplify(Instruction *I, Value *SimpleV,
+                                         const TargetData *TD,
+                                         const TargetLibraryInfo *TLI,
+                                         const DominatorTree *DT) {
+  assert(I != SimpleV && "replaceAndRecursivelySimplify(X,X) is not valid!");
+  assert(SimpleV && "Must provide a simplified value.");
+  return replaceAndRecursivelySimplifyImpl(I, SimpleV, TD, TLI, DT);
 }

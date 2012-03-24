@@ -189,16 +189,29 @@ namespace llvm {
                              const DominatorTree *DT = 0);
 
 
-  /// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
-  /// delete the From instruction.  In addition to a basic RAUW, this does a
-  /// recursive simplification of the updated instructions.  This catches
-  /// things where one simplification exposes other opportunities.  This only
-  /// simplifies and deletes scalar operations, it does not change the CFG.
+  /// \brief Replace all uses of 'I' with 'SimpleV' and simplify the uses
+  /// recursively.
   ///
-  void ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
-                                 const TargetData *TD = 0,
-                                 const TargetLibraryInfo *TLI = 0,
-                                 const DominatorTree *DT = 0);
+  /// This first performs a normal RAUW of I with SimpleV. It then recursively
+  /// attempts to simplify those users updated by the operation. The 'I'
+  /// instruction must not be equal to the simplified value 'SimpleV'.
+  ///
+  /// The function returns true if any simplifications were performed.
+  bool replaceAndRecursivelySimplify(Instruction *I, Value *SimpleV,
+                                     const TargetData *TD = 0,
+                                     const TargetLibraryInfo *TLI = 0,
+                                     const DominatorTree *DT = 0);
+
+  /// \brief Recursively attempt to simplify an instruction.
+  ///
+  /// This routine uses SimplifyInstruction to simplify 'I', and if successful
+  /// replaces uses of 'I' with the simplified value. It then recurses on each
+  /// of the users impacted. It returns true if any simplifications were
+  /// performed.
+  bool recursivelySimplifyInstruction(Instruction *I,
+                                      const TargetData *TD = 0,
+                                      const TargetLibraryInfo *TLI = 0,
+                                      const DominatorTree *DT = 0);
 } // end namespace llvm
 
 #endif

@@ -567,8 +567,8 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     // happens.
     WeakVH IterHandle(CurInstIterator);
     
-    ReplaceAndSimplifyAllUses(CI, RetVal, TLI ? TLI->getTargetData() : 0,
-                              TLInfo, ModifiedDT ? 0 : DT);
+    replaceAndRecursivelySimplify(CI, RetVal, TLI ? TLI->getTargetData() : 0,
+                                  TLInfo, ModifiedDT ? 0 : DT);
 
     // If the iterator instruction was recursively deleted, start over at the
     // start of the block.
