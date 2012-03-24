@@ -61,7 +61,8 @@ public:
   };
 
   typedef const SourceRange *ranges_iterator;
-  typedef llvm::ImmutableList<BugReporterVisitor*>::iterator visitor_iterator;
+  typedef SmallVector<BugReporterVisitor *, 8> VisitorList;
+  typedef VisitorList::iterator visitor_iterator;
   typedef SmallVector<StringRef, 2> ExtraTextList;
 
 protected:
@@ -90,25 +91,30 @@ protected:
   /// to include when constructing the final path diagnostic.
   Regions interestingRegions;
 
-  // Not the most efficient data structure, but we use an ImmutableList for the
-  // Callbacks because it is safe to make additions to list during iteration.
-  llvm::ImmutableList<BugReporterVisitor*>::Factory F;
-  llvm::ImmutableList<BugReporterVisitor*> Callbacks;
+  /// A set of custom visitors which generate "event" diagnostics at
+  /// interesting points in the path.
+  VisitorList Callbacks;
+
+  /// Used for ensuring the visitors are only added once.
   llvm::FoldingSet<BugReporterVisitor> CallbacksSet;
+
+  /// Used for clients to tell if the report's configuration has changed
+  /// since the last time they checked.
+  unsigned ConfigurationChangeToken;
 
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
     : BT(bt), Description(desc), ErrorNode(errornode),
-      Callbacks(F.getEmptyList()) {}
+      ConfigurationChangeToken(0) {}
 
   BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
     : BT(bt), ShortDescription(shortDesc), Description(desc),
-      ErrorNode(errornode), Callbacks(F.getEmptyList()) {}
+      ErrorNode(errornode), ConfigurationChangeToken(0) {}
 
   BugReport(BugType& bt, StringRef desc, PathDiagnosticLocation l)
     : BT(bt), Description(desc), Location(l), ErrorNode(0),
-      Callbacks(F.getEmptyList()) {}
+      ConfigurationChangeToken(0) {}
 
   /// \brief Create a BugReport with a custom uniqueing location.
   ///
@@ -120,7 +126,7 @@ public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode,
             PathDiagnosticLocation LocationToUnique)
     : BT(bt), Description(desc), UniqueingLocation(LocationToUnique),
-      ErrorNode(errornode), Callbacks(F.getEmptyList()) {}
+      ErrorNode(errornode), ConfigurationChangeToken(0) {}
 
   virtual ~BugReport();
 
@@ -142,6 +148,10 @@ public:
   bool isInteresting(SymbolRef sym) const;
   bool isInteresting(const MemRegion *R) const;
   bool isInteresting(SVal V) const;
+
+  unsigned getConfigurationChangeToken() const {
+    return ConfigurationChangeToken;
+  }
   
   /// \brief This allows for addition of meta data to the diagnostic.
   ///

@@ -875,10 +875,6 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
 
   BugReport *R = new BugReport(*BT_Leak, os.str(), N, LocUsedForUniqueing);
   R->markInteresting(Sym);
-  // FIXME: This is a hack to make sure the MallocBugVisitor gets to look at
-  // the ExplodedNode chain first, in order to mark any failed realloc symbols
-  // as interesting for ConditionBRVisitor.
-  R->addVisitor(new ConditionBRVisitor());
   R->addVisitor(new MallocBugVisitor(Sym));
   C.EmitReport(R);
 }

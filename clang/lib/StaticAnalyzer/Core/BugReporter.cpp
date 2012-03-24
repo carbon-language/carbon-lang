@@ -410,7 +410,8 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM);
 
 static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
-                                          const ExplodedNode *N) {
+                                          const ExplodedNode *N,
+                                      ArrayRef<BugReporterVisitor *> visitors) {
 
   SourceManager& SMgr = PDB.getSourceManager();
   const LocationContext *LC = PDB.LC;
@@ -712,8 +713,9 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
     if (NextNode) {
       // Add diagnostic pieces from custom visitors.
       BugReport *R = PDB.getBugReport();
-      for (BugReport::visitor_iterator I = R->visitor_begin(),
-           E = R->visitor_end(); I!=E; ++I) {
+      for (ArrayRef<BugReporterVisitor *>::iterator I = visitors.begin(),
+                                                    E = visitors.end();
+           I != E; ++I) {
         if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R)) {
           PD.getActivePath().push_front(p);
           updateStackPiecesWithMessage(p, CallStack);
@@ -1051,7 +1053,8 @@ void EdgeBuilder::addContext(const Stmt *S) {
 
 static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
-                                            const ExplodedNode *N) {
+                                            const ExplodedNode *N,
+                                      ArrayRef<BugReporterVisitor *> visitors) {
   EdgeBuilder EB(PD, PDB);
   const SourceManager& SM = PDB.getSourceManager();
   StackDiagVector CallStack;
@@ -1183,8 +1186,9 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
     // Add pieces from custom visitors.
     BugReport *R = PDB.getBugReport();
-    for (BugReport::visitor_iterator I = R->visitor_begin(),
-                                     E = R->visitor_end(); I!=E; ++I) {
+    for (ArrayRef<BugReporterVisitor *>::iterator I = visitors.begin(),
+                                                  E = visitors.end();
+         I != E; ++I) {
       if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R)) {
         const PathDiagnosticLocation &Loc = p->getLocation();
         EB.addEdge(Loc, true);
@@ -1227,7 +1231,8 @@ void BugReport::addVisitor(BugReporterVisitor* visitor) {
   }
 
   CallbacksSet.InsertNode(visitor, InsertPos);
-  Callbacks = F.add(visitor, Callbacks);
+  Callbacks.push_back(visitor);
+  ++ConfigurationChangeToken;
 }
 
 BugReport::~BugReport() {
@@ -1261,7 +1266,10 @@ void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
 void BugReport::markInteresting(SymbolRef sym) {
   if (!sym)
     return;
-  interestingSymbols.insert(sym);  
+
+  // If the symbol wasn't already in our set, note a configuration change.
+  if (interestingSymbols.insert(sym).second)
+    ++ConfigurationChangeToken;
 
   if (const SymbolMetadata *meta = dyn_cast<SymbolMetadata>(sym))
     interestingRegions.insert(meta->getRegion());
@@ -1270,8 +1278,11 @@ void BugReport::markInteresting(SymbolRef sym) {
 void BugReport::markInteresting(const MemRegion *R) {
   if (!R)
     return;
+
+  // If the base region wasn't already in our set, note a configuration change.
   R = R->getBaseRegion();
-  interestingRegions.insert(R);
+  if (interestingRegions.insert(R).second)
+    ++ConfigurationChangeToken;
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
     interestingSymbols.insert(SR->getSymbol());
@@ -1696,33 +1707,57 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   R->addVisitor(new NilReceiverBRVisitor());
   R->addVisitor(new ConditionBRVisitor());
 
-  // Generate the very last diagnostic piece - the piece is visible before 
-  // the trace is expanded.
-  PathDiagnosticPiece *LastPiece = 0;
-  for (BugReport::visitor_iterator I = R->visitor_begin(),
-                                   E = R->visitor_end(); I!=E; ++I) {
-    if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
-      assert (!LastPiece &&
-              "There can only be one final piece in a diagnostic.");
-      LastPiece = Piece;
-    }
-  }
-  if (!LastPiece)
-    LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
-  if (LastPiece)
-    PD.getActivePath().push_back(LastPiece);
-  else
-    return;
+  BugReport::VisitorList visitors;
+  unsigned originalReportConfigToken, finalReportConfigToken;
 
-  switch (PDB.getGenerationScheme()) {
+  // While generating diagnostics, it's possible the visitors will decide
+  // new symbols and regions are interesting, or add other visitors based on
+  // the information they find. If they do, we need to regenerate the path
+  // based on our new report configuration.
+  do {
+    // Get a clean copy of all the visitors.
+    for (BugReport::visitor_iterator I = R->visitor_begin(),
+                                     E = R->visitor_end(); I != E; ++I)
+       visitors.push_back((*I)->clone());
+
+    // Clear out the active path from any previous work.
+    PD.getActivePath().clear();
+    originalReportConfigToken = R->getConfigurationChangeToken();
+
+    // Generate the very last diagnostic piece - the piece is visible before 
+    // the trace is expanded.
+    PathDiagnosticPiece *LastPiece = 0;
+    for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
+         I != E; ++I) {
+      if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
+        assert (!LastPiece &&
+                "There can only be one final piece in a diagnostic.");
+        LastPiece = Piece;
+      }
+    }
+    if (!LastPiece)
+      LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
+    if (LastPiece)
+      PD.getActivePath().push_back(LastPiece);
+    else
+      return;
+
+    switch (PDB.getGenerationScheme()) {
     case PathDiagnosticConsumer::Extensive:
-      GenerateExtensivePathDiagnostic(PD, PDB, N);
+      GenerateExtensivePathDiagnostic(PD, PDB, N, visitors);
       break;
     case PathDiagnosticConsumer::Minimal:
-      GenerateMinimalPathDiagnostic(PD, PDB, N);
+      GenerateMinimalPathDiagnostic(PD, PDB, N, visitors);
       break;
-  }
-  
+    }
+
+    // Clean up the visitors we used.
+    llvm::DeleteContainerPointers(visitors);
+
+    // Did anything change while generating this path?
+    finalReportConfigToken = R->getConfigurationChangeToken();
+  } while(finalReportConfigToken != originalReportConfigToken);
+
   // Finally, prune the diagnostic path of uninteresting stuff.
   bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces());
   assert(hasSomethingInteresting);
