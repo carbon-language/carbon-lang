@@ -142,6 +142,7 @@ protected:
         std::vector<uint32_t> function_indexes;
         std::vector<uint32_t> static_indexes;
         STD_SHARED_PTR(lldb_private::SectionList) debug_map_sections_sp;
+        bool symbol_file_supported;
 
         CompileUnitInfo() :
             so_file (),
@@ -155,7 +156,8 @@ protected:
             oso_symbol_vendor (NULL),
             function_indexes (),
             static_indexes (),
-            debug_map_sections_sp ()
+            debug_map_sections_sp (),
+            symbol_file_supported (true)
         {
         }
     };

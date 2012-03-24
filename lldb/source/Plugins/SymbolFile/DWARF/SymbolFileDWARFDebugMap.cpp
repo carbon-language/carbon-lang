@@ -162,7 +162,7 @@ SymbolFileDWARFDebugMap::GetModuleByOSOIndex (uint32_t oso_idx)
 Module *
 SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_info)
 {
-    if (comp_unit_info->oso_module_sp.get() == NULL)
+    if (comp_unit_info->oso_module_sp.get() == NULL && comp_unit_info->symbol_file_supported)
     {
         Symbol *oso_symbol = comp_unit_info->oso_symbol;
         if (oso_symbol)
@@ -258,7 +258,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByOSOIndex (uint32_t oso_idx)
 SymbolFileDWARF *
 SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit_info)
 {
-    if (comp_unit_info->oso_symbol_vendor == NULL)
+    if (comp_unit_info->oso_symbol_vendor == NULL && comp_unit_info->symbol_file_supported)
     {
         ObjectFile *oso_objfile = GetObjectFileByCompUnitInfo (comp_unit_info);
 
@@ -273,6 +273,18 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                 // that the DWARF is being used along with a debug map and that
                 // it will have the remapped sections that we do below.
                 SymbolFileDWARF *oso_symfile = (SymbolFileDWARF *)comp_unit_info->oso_symbol_vendor->GetSymbolFile();
+                
+                if (oso_symfile->GetNumCompileUnits() != 1)
+                {
+                    oso_symfile->GetObjectFile()->GetModule()->ReportError ("DWARF for object file '%s' contains multiple translation units!",
+                                                                            oso_symfile->GetObjectFile()->GetFileSpec().GetFilename().AsCString());
+                    comp_unit_info->symbol_file_supported = false;
+                    comp_unit_info->oso_module_sp.reset();
+                    comp_unit_info->oso_compile_unit_sp.reset();
+                    comp_unit_info->oso_symbol_vendor = NULL;
+                    return NULL;
+                }
+                
                 oso_symfile->SetDebugMapSymfile(this);
                 // Set the ID of the symbol file DWARF to the index of the OSO
                 // shifted left by 32 bits to provide a unique prefix for any
@@ -469,7 +481,7 @@ SymbolFileDWARFDebugMap::ParseCompileUnitAtIndex(uint32_t cu_idx)
 
     if (cu_idx < cu_count)
     {
-        if (m_compile_unit_infos[cu_idx].oso_compile_unit_sp.get() == NULL)
+        if (m_compile_unit_infos[cu_idx].oso_compile_unit_sp.get() == NULL && m_compile_unit_infos[cu_idx].symbol_file_supported)
         {
             SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (cu_idx);
             if (oso_dwarf)
