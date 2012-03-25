@@ -114,3 +114,9 @@ class TestingConfig:
             # files. Should we distinguish them?
             self.test_source_root = str(self.test_source_root)
         self.excludes = set(self.excludes)
+
+    @property
+    def root(self):
+        """root attribute - The root configuration for the test suite."""
+        return self if self.parent is None else self.parent.root
+

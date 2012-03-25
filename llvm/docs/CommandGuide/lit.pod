@@ -301,6 +301,9 @@ reported as unsupported. Used by: I<ShTest>, I<TclTest>.
 B<parent> The parent configuration, this is the config object for the directory
 containing the test suite, or None.
 
+B<root> The root configuration. This is the top-most B<lit> configuration in
+the project.
+
 B<on_clone> The config is actually cloned for every subdirectory inside a test
 suite, to allow local configuration on a per-directory basis. The I<on_clone>
 variable can be set to a Python function which will be called whenever a
