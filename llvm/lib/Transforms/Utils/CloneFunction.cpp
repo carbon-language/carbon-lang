@@ -498,13 +498,19 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
         ++OldI;
       }
     }
-    // NOTE: We cannot eliminate single entry phi nodes here, because of
-    // VMap.  Single entry phi nodes can have multiple VMap entries
-    // pointing at them.  Thus, deleting one would require scanning the VMap
-    // to update any entries in it that would require that.  This would be
-    // really slow.
   }
-  
+
+  // Make a second pass over the PHINodes now that all of them have been
+  // remapped into the new function, simplifying the PHINode and performing any
+  // recursive simplifications exposed. This will transparently update the
+  // TrackingVH in the VMap. Notably, we rely on that so that if we coalesce
+  // two PHINodes, the iteration over the old PHIs remains valid, and the
+  // mapping will just map us to the new node (which may not even be a PHI
+  // node).
+  for (unsigned Idx = 0, Size = PHIToResolve.size(); Idx != Size; ++Idx)
+    if (PHINode *PN = dyn_cast<PHINode>(VMap[PHIToResolve[Idx]]))
+      recursivelySimplifyInstruction(PN, TD);
+
   // Now that the inlined function body has been fully constructed, go through
   // and zap unconditional fall-through branches.  This happen all the time when
   // specializing code: code specialization turns conditional branches into
@@ -514,15 +520,15 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     BranchInst *BI = dyn_cast<BranchInst>(I->getTerminator());
     if (!BI || BI->isConditional()) { ++I; continue; }
     
-    // Note that we can't eliminate uncond branches if the destination has
-    // single-entry PHI nodes.  Eliminating the single-entry phi nodes would
-    // require scanning the VMap to update any entries that point to the phi
-    // node.
     BasicBlock *Dest = BI->getSuccessor(0);
-    if (!Dest->getSinglePredecessor() || isa<PHINode>(Dest->begin())) {
+    if (!Dest->getSinglePredecessor()) {
       ++I; continue;
     }
-    
+
+    // We shouldn't be able to get single-entry PHI nodes here, as instsimplify
+    // above should have zapped all of them..
+    assert(!isa<PHINode>(Dest->begin()));
+
     // We know all single-entry PHI nodes in the inlined function have been
     // removed, so we just need to splice the blocks.
     BI->eraseFromParent();
