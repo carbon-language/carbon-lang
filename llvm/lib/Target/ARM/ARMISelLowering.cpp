@@ -1672,7 +1672,7 @@ llvm::ARMTargetLowering::HandleByVal(CCState *State, unsigned &size) const {
 static
 bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
                          MachineFrameInfo *MFI, const MachineRegisterInfo *MRI,
-                         const ARMInstrInfo *TII) {
+                         const TargetInstrInfo *TII) {
   unsigned Bytes = Arg.getValueType().getSizeInBits() / 8;
   int FI = INT_MAX;
   if (Arg.getOpcode() == ISD::CopyFromReg) {
@@ -1807,8 +1807,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       // the caller's fixed stack objects.
       MachineFrameInfo *MFI = MF.getFrameInfo();
       const MachineRegisterInfo *MRI = &MF.getRegInfo();
-      const ARMInstrInfo *TII =
-        ((ARMTargetMachine&)getTargetMachine()).getInstrInfo();
+      const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
       for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
            i != e;
            ++i, ++realArgIdx) {

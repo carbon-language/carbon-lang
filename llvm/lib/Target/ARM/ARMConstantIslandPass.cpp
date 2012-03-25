@@ -16,7 +16,6 @@
 #define DEBUG_TYPE "arm-cp-islands"
 #include "ARM.h"
 #include "ARMMachineFunctionInfo.h"
-#include "ARMInstrInfo.h"
 #include "Thumb2InstrInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -266,7 +265,7 @@ namespace {
 
     MachineFunction *MF;
     MachineConstantPool *MCP;
-    const ARMInstrInfo *TII;
+    const ARMBaseInstrInfo *TII;
     const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
     bool isThumb;
@@ -383,7 +382,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
                << MCP->getConstants().size() << " CP entries, aligned to "
                << MCP->getConstantPoolAlignment() << " bytes *****\n");
 
-  TII = (const ARMInstrInfo*)MF->getTarget().getInstrInfo();
+  TII = (const ARMBaseInstrInfo*)MF->getTarget().getInstrInfo();
   AFI = MF->getInfo<ARMFunctionInfo>();
   STI = &MF->getTarget().getSubtarget<ARMSubtarget>();
 

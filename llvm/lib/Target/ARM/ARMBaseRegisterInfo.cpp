@@ -15,7 +15,6 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMFrameLowering.h"
-#include "ARMInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
 #include "MCTargetDesc/ARMAddressingModes.h"

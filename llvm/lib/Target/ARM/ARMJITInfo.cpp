@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "ARMJITInfo.h"
-#include "ARMInstrInfo.h"
+#include "ARM.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"

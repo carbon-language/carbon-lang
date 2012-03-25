@@ -18,7 +18,6 @@
 #include "ARMBaseInstrInfo.h"
 #include "ARMRegisterInfo.h"
 #include "ARMSubtarget.h"
-#include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
   class ARMSubtarget;

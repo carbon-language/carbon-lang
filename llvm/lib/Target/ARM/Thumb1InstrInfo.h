@@ -17,7 +17,6 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "Thumb1RegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
   class ARMSubtarget;
