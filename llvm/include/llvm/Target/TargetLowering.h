@@ -25,7 +25,6 @@
 #include "llvm/CallingConv.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Attributes.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/Support/DebugLoc.h"

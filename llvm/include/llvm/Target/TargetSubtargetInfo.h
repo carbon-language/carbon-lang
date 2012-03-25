@@ -15,7 +15,7 @@
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CodeGen.h"
 
 namespace llvm {
 

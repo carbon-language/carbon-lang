@@ -15,8 +15,6 @@
 #define LLVM_TARGET_TARGETFRAMELOWERING_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/MC/MCDwarf.h"
-#include "llvm/ADT/ArrayRef.h"
 
 #include <utility>
 #include <vector>
@@ -24,8 +22,6 @@
 namespace llvm {
   class CalleeSavedInfo;
   class MachineFunction;
-  class MachineBasicBlock;
-  class MachineMove;
   class RegScavenger;
 
 /// Information about stack frame layout on the target.  It holds the direction

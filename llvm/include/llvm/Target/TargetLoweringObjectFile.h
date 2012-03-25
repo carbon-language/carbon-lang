@@ -19,19 +19,15 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
   class MachineModuleInfo;
   class Mangler;
-  class MCAsmInfo;
   class MCContext;
   class MCExpr;
   class MCSection;
-  class MCSectionMachO;
   class MCSymbol;
   class MCStreamer;
-  class NamedMDNode;
   class GlobalValue;
   class TargetMachine;
   

@@ -15,9 +15,6 @@
 #define LLVM_TARGET_TARGETELFWRITERINFO_H
 
 namespace llvm {
-  class Function;
-  class TargetData;
-  class TargetMachine;
 
   //===--------------------------------------------------------------------===//
   //                          TargetELFWriterInfo

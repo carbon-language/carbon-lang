@@ -14,8 +14,8 @@
 #ifndef LLVM_TARGET_TARGETMACHINE_H
 #define LLVM_TARGET_TARGETMACHINE_H
 
+#include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>
@@ -27,8 +27,6 @@ class JITCodeEmitter;
 class MCAsmInfo;
 class MCCodeGenInfo;
 class MCContext;
-class Pass;
-class PassManager;
 class PassManagerBase;
 class Target;
 class TargetData;

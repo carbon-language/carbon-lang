@@ -17,11 +17,9 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
-class StringRef;
 class Twine;
-class Value;
 class GlobalValue;
-template <typename T> class SmallVectorImpl; 
+template <typename T> class SmallVectorImpl;
 class MCContext;
 class MCSymbol;
 class TargetData;
