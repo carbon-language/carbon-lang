@@ -710,7 +710,7 @@ static Constant *stripAndComputeConstantOffsets(const TargetData &TD,
   Visited.insert(V);
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      if (!accumulateGEPOffset(TD, GEP, Offset))
+      if (!GEP->isInBounds() || !accumulateGEPOffset(TD, GEP, Offset))
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
