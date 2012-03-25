@@ -5364,7 +5364,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         // made with the specification and not with this die.
                                         DWARFCompileUnitSP spec_cu_sp;
                                         const DWARFDebugInfoEntry* spec_die = DebugInfo()->GetDIEPtr(specification_die_offset, &spec_cu_sp);
-                                        clang::DeclContext *spec_clang_decl_ctx = GetCachedClangDeclContextForDIE (spec_die);
+                                        clang::DeclContext *spec_clang_decl_ctx = GetClangDeclContextForDIE (sc, dwarf_cu, spec_die);
                                         if (spec_clang_decl_ctx)
                                         {
                                             LinkDeclContextToDIE(spec_clang_decl_ctx, die);
@@ -5387,7 +5387,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                                         DWARFCompileUnitSP abs_cu_sp;
                                         const DWARFDebugInfoEntry* abs_die = DebugInfo()->GetDIEPtr(abstract_origin_die_offset, &abs_cu_sp);
-                                        clang::DeclContext *abs_clang_decl_ctx = GetCachedClangDeclContextForDIE (abs_die);
+                                        clang::DeclContext *abs_clang_decl_ctx = GetClangDeclContextForDIE (sc, dwarf_cu, abs_die);
                                         if (abs_clang_decl_ctx)
                                         {
                                             LinkDeclContextToDIE (abs_clang_decl_ctx, die);
