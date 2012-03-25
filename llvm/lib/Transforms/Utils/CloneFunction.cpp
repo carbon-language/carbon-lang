@@ -25,6 +25,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>
@@ -218,11 +219,6 @@ namespace {
     /// anything that it can reach.
     void CloneBlock(const BasicBlock *BB,
                     std::vector<const BasicBlock*> &ToClone);
-    
-  public:
-    /// ConstantFoldMappedInstruction - Constant fold the specified instruction,
-    /// mapping its operands through VMap if they are available.
-    Constant *ConstantFoldMappedInstruction(const Instruction *I);
   };
 }
 
@@ -262,19 +258,33 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   // loop doesn't include the terminator.
   for (BasicBlock::const_iterator II = BB->begin(), IE = --BB->end();
        II != IE; ++II) {
-    // If this instruction constant folds, don't bother cloning the instruction,
-    // instead, just add the constant to the value map.
-    if (Constant *C = ConstantFoldMappedInstruction(II)) {
-      VMap[II] = C;
-      continue;
+    Instruction *NewInst = II->clone();
+
+    // Eagerly remap operands to the newly cloned instruction, except for PHI
+    // nodes for which we defer processing until we update the CFG.
+    if (!isa<PHINode>(NewInst)) {
+      RemapInstruction(NewInst, VMap,
+                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
+
+      // If we can simplify this instruction to some other value, simply add
+      // a mapping to that value rather than inserting a new instruction into
+      // the basic block.
+      if (Value *V = SimplifyInstruction(NewInst, TD)) {
+        // On the off-chance that this simplifies to an instruction in the old
+        // function, map it back into the new function.
+        if (Value *MappedV = VMap.lookup(V))
+          V = MappedV;
+
+        VMap[II] = V;
+        delete NewInst;
+        continue;
+      }
     }
 
-    Instruction *NewInst = II->clone();
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
-    NewBB->getInstList().push_back(NewInst);
     VMap[II] = NewInst;                // Add instruction map to value.
-    
+    NewBB->getInstList().push_back(NewInst);
     hasCalls |= (isa<CallInst>(II) && !isa<DbgInfoIntrinsic>(II));
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
       if (isa<ConstantInt>(AI->getArraySize()))
@@ -345,30 +355,6 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
     Returns.push_back(RI);
 }
 
-/// ConstantFoldMappedInstruction - Constant fold the specified instruction,
-/// mapping its operands through VMap if they are available.
-Constant *PruningFunctionCloner::
-ConstantFoldMappedInstruction(const Instruction *I) {
-  SmallVector<Constant*, 8> Ops;
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-    if (Constant *Op = dyn_cast_or_null<Constant>(MapValue(I->getOperand(i),
-                                                           VMap,
-                  ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges)))
-      Ops.push_back(Op);
-    else
-      return 0;  // All operands not constant!
-
-  if (const CmpInst *CI = dyn_cast<CmpInst>(I))
-    return ConstantFoldCompareInstOperands(CI->getPredicate(), Ops[0], Ops[1],
-                                           TD);
-
-  if (const LoadInst *LI = dyn_cast<LoadInst>(I))
-    if (!LI->isVolatile())
-      return ConstantFoldLoadFromConstPtr(Ops[0], TD);
-
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Ops, TD);
-}
-
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
 /// except that it does some simple constant prop and DCE on the fly.  The
 /// effect of this is to copy significantly less code in cases where (for
@@ -418,25 +404,19 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
     // Add the new block to the new function.
     NewFunc->getBasicBlockList().push_back(NewBB);
-    
-    // Loop over all of the instructions in the block, fixing up operand
-    // references as we go.  This uses VMap to do all the hard work.
-    //
-    BasicBlock::iterator I = NewBB->begin();
 
     // Handle PHI nodes specially, as we have to remove references to dead
     // blocks.
-    if (PHINode *PN = dyn_cast<PHINode>(I)) {
-      // Skip over all PHI nodes, remembering them for later.
-      BasicBlock::const_iterator OldI = BI->begin();
-      for (; (PN = dyn_cast<PHINode>(I)); ++I, ++OldI)
-        PHIToResolve.push_back(cast<PHINode>(OldI));
-    }
-    
-    // Otherwise, remap the rest of the instructions normally.
-    for (; I != NewBB->end(); ++I)
-      RemapInstruction(I, VMap,
-                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
+    for (BasicBlock::const_iterator I = BI->begin(), E = BI->end(); I != E; ++I)
+      if (const PHINode *PN = dyn_cast<PHINode>(I))
+        PHIToResolve.push_back(PN);
+      else
+        break;
+
+    // Finally, remap the terminator instructions, as those can't be remapped
+    // until all BBs are mapped.
+    RemapInstruction(NewBB->getTerminator(), VMap,
+                     ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
   }
   
   // Defer PHI resolution until rest of function is resolved, PHI resolution

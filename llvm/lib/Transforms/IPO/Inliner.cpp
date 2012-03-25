@@ -19,7 +19,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/InlineCost.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -335,38 +334,6 @@ static bool InlineHistoryIncludes(Function *F, int InlineHistoryID,
   return false;
 }
 
-/// \brief Simplify arguments going into a particular callsite.
-///
-/// This is important to do each time we add a callsite due to inlining so that
-/// constants and other entities which feed into inline cost estimation are
-/// properly recognized when analyzing the new callsite. Consider:
-///   void outer(int x) {
-///     if (x < 42)
-///       return inner(42 - x);
-///     ...
-///   }
-///   void inner(int x) {
-///     ...
-///   }
-///
-/// The inliner gives calls to 'outer' with a constant argument a bonus because
-/// it will delete one side of a branch. But the resulting call to 'inner'
-/// will, after inlining, also have a constant operand. We need to do just
-/// enough constant folding to expose this for callsite arguments. The rest
-/// will be taken care of after the inliner finishes running.
-static void simplifyCallSiteArguments(const TargetData *TD, CallSite CS) {
-  // FIXME: It would be nice to avoid this smallvector if RAUW doesn't
-  // invalidate operand iterators in any cases.
-  SmallVector<std::pair<Value *, Value*>, 4> SimplifiedArgs;
-  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
-       I != E; ++I)
-    if (Instruction *Inst = dyn_cast<Instruction>(*I))
-      if (Value *SimpleArg = SimplifyInstruction(Inst, TD))
-        SimplifiedArgs.push_back(std::make_pair(Inst, SimpleArg));
-  for (unsigned Idx = 0, Size = SimplifiedArgs.size(); Idx != Size; ++Idx)
-    SimplifiedArgs[Idx].first->replaceAllUsesWith(SimplifiedArgs[Idx].second);
-}
-
 bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
@@ -494,9 +461,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
           for (unsigned i = 0, e = InlineInfo.InlinedCalls.size();
                i != e; ++i) {
             Value *Ptr = InlineInfo.InlinedCalls[i];
-            CallSite NewCS = Ptr;
-            simplifyCallSiteArguments(TD, NewCS);
-            CallSites.push_back(std::make_pair(NewCS, NewHistoryID));
+            CallSites.push_back(std::make_pair(CallSite(Ptr), NewHistoryID));
           }
         }
         

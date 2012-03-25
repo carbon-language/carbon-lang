@@ -71,3 +71,48 @@ entry:
 	tail call fastcc void @foo( i32 8 )
 	ret void
 }
+
+declare void @f(i32 %x)
+
+define void @inner2(i32 %x, i32 %y, i32 %z) {
+entry:
+  %cmp1 = icmp ne i32 %x, 0
+  br i1 %cmp1, label %then1, label %end1
+
+then1:
+  call void @f(i32 %x)
+  br label %end1
+
+end1:
+  %x2 = and i32 %x, %z
+  %cmp2 = icmp sgt i32 %x2, 1
+  br i1 %cmp2, label %then2, label %end2
+
+then2:
+  call void @f(i32 %x2)
+  br label %end2
+
+end2:
+  %y2 = or i32 %y, %z
+  %cmp3 = icmp sgt i32 %y2, 0
+  br i1 %cmp3, label %then3, label %end3
+
+then3:
+  call void @f(i32 %y2)
+  br label %end3
+
+end3:
+  ret void
+}
+
+define void @outer2(i32 %z) {
+; Ensure that after inlining, none of the blocks with a call to @f actually
+; make it through inlining.
+; CHECK: define void @outer2
+; CHECK-NOT: call
+; CHECK: ret void
+
+entry:
+  call void @inner2(i32 0, i32 -1, i32 %z)
+  ret void
+}
