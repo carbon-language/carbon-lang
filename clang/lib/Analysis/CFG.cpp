@@ -457,8 +457,11 @@ private:
             CachedBoolEvals.insert(std::make_pair(S, TryResult()));
         if (!Inserted)
           return I->second; // already in map;
-    
-        return (I->second = evaluateAsBooleanConditionNoCache(S));
+
+        // Retrieve result at first, or the map might be updated.
+        TryResult Result = evaluateAsBooleanConditionNoCache(S);
+        CachedBoolEvals[S] = Result; // update or insert
+        return Result;
       }
     }
 
