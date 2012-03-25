@@ -103,6 +103,68 @@ define i1 @gep8(%gept* %x) {
 ; CHECK: ret i1 %equal
 }
 
+define i1 @gep9(i8* %ptr) {
+; CHECK: @gep9
+; CHECK-NOT: ret
+; CHECK: ret i1 true
+
+entry:
+  %first1 = getelementptr inbounds i8* %ptr, i32 0
+  %first2 = getelementptr inbounds i8* %first1, i32 1
+  %first3 = getelementptr inbounds i8* %first2, i32 2
+  %first4 = getelementptr inbounds i8* %first3, i32 4
+  %last1 = getelementptr inbounds i8* %first2, i32 48
+  %last2 = getelementptr inbounds i8* %last1, i32 8
+  %last3 = getelementptr inbounds i8* %last2, i32 -4
+  %last4 = getelementptr inbounds i8* %last3, i32 -4
+  %first.int = ptrtoint i8* %first4 to i32
+  %last.int = ptrtoint i8* %last4 to i32
+  %cmp = icmp ne i32 %last.int, %first.int
+  ret i1 %cmp
+}
+
+define i1 @gep10(i8* %ptr) {
+; CHECK: @gep10
+; CHECK-NOT: ret
+; CHECK: ret i1 true
+
+entry:
+  %first1 = getelementptr inbounds i8* %ptr, i32 -2
+  %first2 = getelementptr inbounds i8* %first1, i32 44
+  %last1 = getelementptr inbounds i8* %ptr, i32 48
+  %last2 = getelementptr inbounds i8* %last1, i32 -6
+  %first.int = ptrtoint i8* %first2 to i32
+  %last.int = ptrtoint i8* %last2 to i32
+  %cmp = icmp eq i32 %last.int, %first.int
+  ret i1 %cmp
+}
+
+define i1 @gep11(i8* %ptr) {
+; CHECK: @gep11
+; CHECK-NOT: ret
+; CHECK: ret i1 true
+
+entry:
+  %first1 = getelementptr inbounds i8* %ptr, i32 -2
+  %last1 = getelementptr inbounds i8* %ptr, i32 48
+  %last2 = getelementptr inbounds i8* %last1, i32 -6
+  %cmp = icmp ult i8* %first1, %last2
+  ret i1 %cmp
+}
+
+define i1 @gep12(i8* %ptr) {
+; CHECK: @gep12
+; CHECK-NOT: ret
+; CHECK: ret i1 %cmp
+
+entry:
+  %first1 = getelementptr inbounds i8* %ptr, i32 -2
+  %last1 = getelementptr inbounds i8* %ptr, i32 48
+  %last2 = getelementptr inbounds i8* %last1, i32 -6
+  %cmp = icmp slt i8* %first1, %last2
+  ret i1 %cmp
+}
+
 define i1 @zext(i32 %x) {
 ; CHECK: @zext
   %e1 = zext i32 %x to i64

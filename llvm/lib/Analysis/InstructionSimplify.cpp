@@ -1591,6 +1591,45 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
   return 0;
 }
 
+static Constant *computePointerICmp(const TargetData &TD,
+                                    CmpInst::Predicate Pred,
+                                    Value *LHS, Value *RHS) {
+  // We can only fold certain predicates on pointer comparisons.
+  switch (Pred) {
+  default:
+    return 0;
+
+    // Equality comaprisons are easy to fold.
+  case CmpInst::ICMP_EQ:
+  case CmpInst::ICMP_NE:
+    break;
+
+    // We can only handle unsigned relational comparisons because 'inbounds' on
+    // a GEP only protects against unsigned wrapping.
+  case CmpInst::ICMP_UGT:
+  case CmpInst::ICMP_UGE:
+  case CmpInst::ICMP_ULT:
+  case CmpInst::ICMP_ULE:
+    // However, we have to switch them to their signed variants to handle
+    // negative indices from the base pointer.
+    Pred = ICmpInst::getSignedPredicate(Pred);
+    break;
+  }
+
+  Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
+  if (!LHSOffset)
+    return 0;
+  Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
+  if (!RHSOffset)
+    return 0;
+
+  // If LHS and RHS are not related via constant offsets to the same base
+  // value, there is nothing we can do here.
+  if (LHS != RHS)
+    return 0;
+
+  return ConstantExpr::getICmp(Pred, LHSOffset, RHSOffset);
+}
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
@@ -2311,7 +2350,12 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       return getFalse(ITy);
   }
 
-  // Simplify comparisons of GEPs.
+  // Simplify comparisons of related pointers using a powerful, recursive
+  // GEP-walk when we have target data available..
+  if (Q.TD && LHS->getType()->isPointerTy() && RHS->getType()->isPointerTy())
+    if (Constant *C = computePointerICmp(*Q.TD, Pred, LHS, RHS))
+      return C;
+
   if (GetElementPtrInst *GLHS = dyn_cast<GetElementPtrInst>(LHS)) {
     if (GEPOperator *GRHS = dyn_cast<GEPOperator>(RHS)) {
       if (GLHS->getPointerOperand() == GRHS->getPointerOperand() &&
