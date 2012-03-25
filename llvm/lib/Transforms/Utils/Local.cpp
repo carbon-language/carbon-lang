@@ -355,6 +355,15 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
 /// instructions in other blocks as well in this block.
 bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD) {
   bool MadeChange = false;
+
+#ifndef NDEBUG
+  // In debug builds, ensure that the terminator of the block is never replaced
+  // or deleted by these simplifications. The idea of simplification is that it
+  // cannot introduce new instructions, and there is no way to replace the
+  // terminator of a block without introducing a new instruction.
+  AssertingVH<Instruction> TerminatorVH(--BB->end());
+#endif
+
   for (BasicBlock::iterator BI = BB->begin(), E = --BB->end(); BI != E; ) {
     assert(!BI->isTerminator());
     Instruction *Inst = BI++;
