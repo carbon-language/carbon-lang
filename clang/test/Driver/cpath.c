@@ -1,13 +1,13 @@
 // RUN: mkdir -p %T/test1 %T/test2 %T/test3
 
-// RUN: env CPATH=%T/test1%{pathsep}%T/test2 %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=CPATH
+// RUN: env "CPATH=%T/test1%{pathsep}%T/test2" %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=CPATH
 // CPATH: -I {{.*}}/test1
 // CPATH: -I {{.*}}/test2
 // CPATH: search starts here
 // CPATH: test1
 // CPATH: test2
 
-// RUN: env OBJC_INCLUDE_PATH=%T/test1%{pathsep}%T/test2  OBJCPLUS_INCLUDE_PATH=%T/test1  CPLUS_INCLUDE_PATH=%T/test1%{pathsep}%t/test2 C_INCLUDE_PATH=%T/test3 %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=C_INCLUDE_PATH
+// RUN: env "OBJC_INCLUDE_PATH=%T/test1%{pathsep}%T/test2"  OBJCPLUS_INCLUDE_PATH=%T/test1  "CPLUS_INCLUDE_PATH=%T/test1%{pathsep}%t/test2" C_INCLUDE_PATH=%T/test3 %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=C_INCLUDE_PATH
 // C_INCLUDE_PATH: -c-isystem {{"?.*}}/test3{{"?}} -cxx-isystem {{"?.*}}/test1{{"?}} -cxx-isystem {{"?.*}}/test2{{"?}} -objc-isystem {{"?.*}}/test1{{"?}} -objc-isystem {{"?.*}}/test2{{"?}} -objcxx-isystem {{"?.*}}/test1{{"?}}
 // C_INCLUDE_PATH: search starts here
 // C_INCLUDE_PATH-NOT: test1
