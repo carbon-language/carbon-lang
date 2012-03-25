@@ -24,9 +24,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/Regex.h"
 
 #include "clang/Config/config.h" // C_INCLUDE_DIRS
 
@@ -66,17 +64,17 @@ public:
                                    StringRef Dir32,
                                    StringRef Dir64,
                                    const llvm::Triple &triple);
-  
-  /// AddMinGWCIncludePaths - Add MinGW paths that should always be searched
-  void AddMinGWCIncludePaths(StringRef Base);
 
   /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to support a MinGW
   ///  libstdc++.
-  void AddMinGWCPlusPlusIncludePaths(StringRef Base, StringRef Arch);
+  void AddMinGWCPlusPlusIncludePaths(StringRef Base,
+                                     StringRef Arch,
+                                     StringRef Version);
 
   /// AddMinGW64CXXPaths - Add the necessary paths to support
   /// libstdc++ of x86_64-w64-mingw32 aka mingw-w64.
-  void AddMinGW64CXXPaths(StringRef Base);
+  void AddMinGW64CXXPaths(StringRef Base,
+                          StringRef Version);
 
   // AddDefaultCIncludePaths - Add paths that should always be searched.
   void AddDefaultCIncludePaths(const llvm::Triple &triple,
@@ -180,54 +178,28 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(StringRef Base,
   AddPath(Base + "/backward", CXXSystem, true, false, false);
 }
 
-void InitHeaderSearch::AddMinGWCIncludePaths(StringRef Base) {
-  // match directories of the forms x.x and x.x.x where x can be 1 or 2 digits
-  llvm::Regex Regex("[0-9]{1,2}\\.[0-9]{1,2}(\\.[0-9]{1,2})?$");
-  llvm::error_code EC;
-  for (llvm::sys::fs::directory_iterator I(Base + "/lib/gcc/mingw32", EC), E;
-       I != E && !EC; I.increment(EC)) {
-    llvm::sys::fs::file_status status;
-    if (!I->status(status) && is_directory(status) && Regex.match(I->path())) {
-      AddPath(I->path() + "/include", System, true, false, false);
-      AddPath(Base + "/" + "include", System, true, false, false);
-      AddPath(I->path() + "/include-fixed", System, true, false, false);
-    }
-  }
-}
-
 void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(StringRef Base,
-                                                     StringRef Arch) {
-  // match directories of the forms x.x and x.x.x where x can be 1 or 2 digits
-  llvm::Regex Regex("[0-9]{1,2}\\.[0-9]{1,2}(\\.[0-9]{1,2})?$");
-  llvm::error_code EC;
-  for (llvm::sys::fs::directory_iterator I(Base + "/" + Arch, EC), E;
-       I != E && !EC; I.increment(EC)) {
-    llvm::sys::fs::file_status status;
-    if (!I->status(status) && is_directory(status) && Regex.match(I->path())) {
-      const std::string &P = I->path();
-      AddPath(P + "/include/c++", CXXSystem, true, false, false);
-      AddPath(P + "/include/c++/" + Arch, CXXSystem, true, false, false);
-      AddPath(P + "/include/c++/backward", CXXSystem, true, false, false);
-    }
-  }
+                                                     StringRef Arch,
+                                                     StringRef Version) {
+  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
+          CXXSystem, true, false, false);
+  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
+          CXXSystem, true, false, false);
+  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/backward",
+          CXXSystem, true, false, false);
 }
 
-void InitHeaderSearch::AddMinGW64CXXPaths(StringRef Base) {
-  // match directories of the forms x.x and x.x.x where x can be 1 or 2 digits
-  llvm::Regex Regex("[0-9]{1,2}\\.[0-9]{1,2}(\\.[0-9]{1,2})?$");
-  llvm::error_code EC;
+void InitHeaderSearch::AddMinGW64CXXPaths(StringRef Base,
+                                          StringRef Version) {
   // Assumes Base is HeaderSearchOpts' ResourceDir
-  llvm::Twine Path = Base + "/../../../include/c++/";
-  for (llvm::sys::fs::directory_iterator I(Path, EC), E;
-       I != E && !EC; I.increment(EC)) {
-    llvm::sys::fs::file_status status;
-    if (!I->status(status) && is_directory(status) && Regex.match(I->path())) {
-      AddPath(I->path(), CXXSystem, true, false, false);
-      AddPath(I->path() + "/x86_64-w64-mingw32", CXXSystem, true, false, false);
-      AddPath(I->path() + "/i686-w64-mingw32", CXXSystem, true, false, false);
-      AddPath(I->path() + "/backward", CXXSystem, true, false, false);
-    }
-  }
+  AddPath(Base + "/../../../include/c++/" + Version,
+          CXXSystem, true, false, false);
+  AddPath(Base + "/../../../include/c++/" + Version + "/x86_64-w64-mingw32",
+          CXXSystem, true, false, false);
+  AddPath(Base + "/../../../include/c++/" + Version + "/i686-w64-mingw32",
+          CXXSystem, true, false, false);
+  AddPath(Base + "/../../../include/c++/" + Version + "/backward",
+          CXXSystem, true, false, false);
 }
 
 void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
@@ -339,7 +311,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       P.appendComponent("../../../include"); // <sysroot>/include
       AddPath(P.str(), System, true, false, false);
       AddPath("/mingw/include", System, true, false, false);
-      AddMinGWCIncludePaths("c:/mingw");
+      AddPath("c:/mingw/include", System, true, false, false); 
     }
     break;
       
@@ -395,14 +367,32 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     llvm_unreachable("Include management is handled in the driver.");
 
   case llvm::Triple::Cygwin:
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin");
+    // Cygwin-1.7
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.5.3");
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
+    // g++-4 / Cygwin-1.5
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
     break;
   case llvm::Triple::MinGW32:
     // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
-    AddMinGW64CXXPaths(HSOpts.ResourceDir);
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.0");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.1");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.2");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.3");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.4");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.0");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.1");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.2");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.3");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.0");
     // mingw.org C++ include paths
-    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32"); //MSYS
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32");
+    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2"); //MSYS
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.6.2");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.6.1");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.2");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
     break;
   case llvm::Triple::DragonFly:
     AddPath("/usr/include/c++/4.1", CXXSystem, true, false, false);
