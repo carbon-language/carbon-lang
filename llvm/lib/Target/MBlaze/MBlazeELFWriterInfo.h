@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetELFWriterInfo.h"
 
 namespace llvm {
+  class TargetMachine;
 
   class MBlazeELFWriterInfo : public TargetELFWriterInfo {
   public:

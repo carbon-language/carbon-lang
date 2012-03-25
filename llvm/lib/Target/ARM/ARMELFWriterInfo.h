@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetELFWriterInfo.h"
 
 namespace llvm {
+  class TargetMachine;
 
   class ARMELFWriterInfo : public TargetELFWriterInfo {
   public:
