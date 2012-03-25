@@ -118,5 +118,8 @@ class TestingConfig:
     @property
     def root(self):
         """root attribute - The root configuration for the test suite."""
-        return self if self.parent is None else self.parent.root
+        if self.parent is None:
+            return self
+        else:
+            return self.parent.root
 
