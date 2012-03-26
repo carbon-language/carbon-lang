@@ -277,6 +277,40 @@ CodeCompletionString *CodeCompletionBuilder::TakeString() {
   return Result;
 }
 
+void CodeCompletionBuilder::AddTypedTextChunk(const char *Text) {
+  Chunks.push_back(Chunk(CodeCompletionString::CK_TypedText, Text));
+}
+
+void CodeCompletionBuilder::AddTextChunk(const char *Text) {
+  Chunks.push_back(Chunk::CreateText(Text));
+}
+
+void CodeCompletionBuilder::AddOptionalChunk(CodeCompletionString *Optional) {
+  Chunks.push_back(Chunk::CreateOptional(Optional));
+}
+
+void CodeCompletionBuilder::AddPlaceholderChunk(const char *Placeholder) {
+  Chunks.push_back(Chunk::CreatePlaceholder(Placeholder));
+}
+
+void CodeCompletionBuilder::AddInformativeChunk(const char *Text) {
+  Chunks.push_back(Chunk::CreateInformative(Text));
+}
+
+void CodeCompletionBuilder::AddResultTypeChunk(const char *ResultType) {
+  Chunks.push_back(Chunk::CreateResultType(ResultType));
+}
+
+void
+CodeCompletionBuilder::AddCurrentParameterChunk(const char *CurrentParameter) {
+  Chunks.push_back(Chunk::CreateCurrentParameter(CurrentParameter));
+}
+
+void CodeCompletionBuilder::AddChunk(CodeCompletionString::ChunkKind CK,
+                                     const char *Text) {
+  Chunks.push_back(Chunk(CK, Text));
+}
+
 unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
   if (!ND)
     return CCP_Unlikely;

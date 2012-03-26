@@ -405,7 +405,7 @@ public:
 
     Chunk() : Kind(CK_Text), Text(0) { }
 
-    Chunk(ChunkKind Kind, const char *Text = "");
+    explicit Chunk(ChunkKind Kind, const char *Text = "");
 
     /// \brief Create a new text chunk.
     static Chunk CreateText(const char *Text);
@@ -546,42 +546,28 @@ public:
   CodeCompletionString *TakeString();
 
   /// \brief Add a new typed-text chunk.
-  void AddTypedTextChunk(const char *Text) {
-    Chunks.push_back(Chunk(CodeCompletionString::CK_TypedText, Text));
-  }
+  void AddTypedTextChunk(const char *Text);
 
   /// \brief Add a new text chunk.
-  void AddTextChunk(const char *Text) {
-    Chunks.push_back(Chunk::CreateText(Text));
-  }
+  void AddTextChunk(const char *Text);
 
   /// \brief Add a new optional chunk.
-  void AddOptionalChunk(CodeCompletionString *Optional) {
-    Chunks.push_back(Chunk::CreateOptional(Optional));
-  }
+  void AddOptionalChunk(CodeCompletionString *Optional);
 
   /// \brief Add a new placeholder chunk.
-  void AddPlaceholderChunk(const char *Placeholder) {
-    Chunks.push_back(Chunk::CreatePlaceholder(Placeholder));
-  }
+  void AddPlaceholderChunk(const char *Placeholder);
 
   /// \brief Add a new informative chunk.
-  void AddInformativeChunk(const char *Text) {
-    Chunks.push_back(Chunk::CreateInformative(Text));
-  }
+  void AddInformativeChunk(const char *Text);
 
   /// \brief Add a new result-type chunk.
-  void AddResultTypeChunk(const char *ResultType) {
-    Chunks.push_back(Chunk::CreateResultType(ResultType));
-  }
+  void AddResultTypeChunk(const char *ResultType);
 
   /// \brief Add a new current-parameter chunk.
-  void AddCurrentParameterChunk(const char *CurrentParameter) {
-    Chunks.push_back(Chunk::CreateCurrentParameter(CurrentParameter));
-  }
+  void AddCurrentParameterChunk(const char *CurrentParameter);
 
   /// \brief Add a new chunk.
-  void AddChunk(Chunk C) { Chunks.push_back(C); }
+  void AddChunk(CodeCompletionString::ChunkKind CK, const char *Text = "");
 
   void AddAnnotation(const char *A) { Annotations.push_back(A); }
 };
