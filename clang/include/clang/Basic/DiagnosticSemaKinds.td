@@ -3542,6 +3542,11 @@ def err_member_not_yet_instantiated : Error<
 def note_non_instantiated_member_here : Note<
   "not-yet-instantiated member is declared here">;
 
+def err_enumerator_does_not_exist : Error<
+  "enumerator %0 does not exist in instantiation of %1">;
+def note_enum_specialized_here : Note<
+  "enum %0 was explicitly specialized here">;
+
 def err_member_redeclared : Error<"class member cannot be redeclared">;
 def err_member_name_of_class : Error<"member %0 has the same name as its class">;
 def err_member_def_undefined_record : Error<

@@ -3289,6 +3289,20 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
           << D->getDeclName()
           << Context.getTypeDeclType(cast<CXXRecordDecl>(ParentDC));
         Diag(D->getLocation(), diag::note_non_instantiated_member_here);
+      } else if (EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D)) {
+        // This enumeration constant was found when the template was defined,
+        // but can't be found in the instantiation. This can happen if an
+        // unscoped enumeration member is explicitly specialized.
+        EnumDecl *Enum = cast<EnumDecl>(ED->getLexicalDeclContext());
+        EnumDecl *Spec = cast<EnumDecl>(FindInstantiatedDecl(Loc, Enum,
+                                                             TemplateArgs));
+        assert(Spec->getTemplateSpecializationKind() ==
+                 TSK_ExplicitSpecialization);
+        Diag(Loc, diag::err_enumerator_does_not_exist)
+          << D->getDeclName()
+          << Context.getTypeDeclType(cast<TypeDecl>(Spec->getDeclContext()));
+        Diag(Spec->getLocation(), diag::note_enum_specialized_here)
+          << Context.getTypeDeclType(Spec);
       } else {
         // We should have found something, but didn't.
         llvm_unreachable("Unable to find instantiation of declaration!");
