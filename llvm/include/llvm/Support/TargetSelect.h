@@ -149,6 +149,18 @@ namespace llvm {
 #endif
   }  
 
+  /// InitializeNativeTargetDisassembler - The main program should call
+  /// this function to initialize the native target disassembler.
+  inline bool InitializeNativeTargetDisassembler() {
+  // If we have a native target, initialize the corresponding disassembler.
+#ifdef LLVM_NATIVE_DISASSEMBLER
+    LLVM_NATIVE_DISASSEMBLER();
+    return false;
+#else
+    return true;
+#endif
+  }  
+
 }
 
 #endif

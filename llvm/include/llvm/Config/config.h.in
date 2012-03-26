@@ -567,6 +567,9 @@
 /* LLVM name for the native AsmPrinter init function, if available */
 #undef LLVM_NATIVE_ASMPRINTER
 
+/* LLVM name for the native Disassembler init function, if available */
+#undef LLVM_NATIVE_DISASSEMBLER
+
 /* LLVM name for the native Target init function, if available */
 #undef LLVM_NATIVE_TARGET
 

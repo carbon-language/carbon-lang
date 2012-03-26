@@ -5306,6 +5306,9 @@ _ACEOF
     if test -f ${srcdir}/lib/Target/${LLVM_NATIVE_ARCH}/AsmParser/Makefile ; then
       LLVM_NATIVE_ASMPARSER="LLVMInitialize${LLVM_NATIVE_ARCH}AsmParser"
     fi
+    if test -f ${srcdir}/lib/Target/${LLVM_NATIVE_ARCH}/Disassembler/Makefile ; then
+      LLVM_NATIVE_DISASSEMBLER="LLVMInitialize${LLVM_NATIVE_ARCH}Disassembler"
+    fi
 
 cat >>confdefs.h <<_ACEOF
 #define LLVM_NATIVE_TARGET $LLVM_NATIVE_TARGET
@@ -5330,6 +5333,13 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define LLVM_NATIVE_ASMPARSER $LLVM_NATIVE_ASMPARSER
+_ACEOF
+
+    fi
+    if test -f ${srcdir}/lib/Target/${LLVM_NATIVE_ARCH}/Disassembler/Makefile ; then
+
+cat >>confdefs.h <<_ACEOF
+#define LLVM_NATIVE_DISASSEMBLER $LLVM_NATIVE_DISASSEMBLER
 _ACEOF
 
     fi
@@ -10290,7 +10300,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10293 "configure"
+#line 10303 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
