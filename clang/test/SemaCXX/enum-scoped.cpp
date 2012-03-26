@@ -221,3 +221,27 @@ namespace test9 {
   // never instantiate the definitions of S<short>::ET nor S<short>::Eint.
   S<short> s; // expected-note {{in instantiation of}}
 }
+
+namespace test10 {
+  template<typename T> int f() {
+    enum E : int;
+    enum E : T; // expected-note {{here}}
+    E x;
+    enum E : int { e }; // expected-error {{different underlying}}
+    x = e;
+    return x;
+  }
+  int k = f<int>();
+  int l = f<short>(); // expected-note {{here}}
+
+  template<typename T> int g() {
+    enum class E : int;
+    enum class E : T; // expected-note {{here}}
+    E x;
+    enum class E : int { e }; // expected-error {{different underlying}}
+    x = E::e;
+    return (int)x;
+  }
+  int m = g<int>();
+  int n = g<short>(); // expected-note {{here}}
+}

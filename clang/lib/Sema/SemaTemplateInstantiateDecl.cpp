@@ -558,9 +558,18 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
+  EnumDecl *PrevDecl = 0;
+  if (D->getPreviousDecl()) {
+    NamedDecl *Prev = SemaRef.FindInstantiatedDecl(D->getLocation(),
+                                                   D->getPreviousDecl(),
+                                                   TemplateArgs);
+    if (!Prev) return 0;
+    PrevDecl = cast<EnumDecl>(Prev);
+  }
+
   EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner, D->getLocStart(),
                                     D->getLocation(), D->getIdentifier(),
-                                    /*PrevDecl=*/0, D->isScoped(),
+                                    PrevDecl, D->isScoped(),
                                     D->isScopedUsingClassTag(), D->isFixed());
   if (D->isFixed()) {
     if (TypeSourceInfo *TI = D->getIntegerTypeSourceInfo()) {
@@ -610,8 +619,11 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   // specialization causes the implicit instantiation of the declarations, but
   // not the definitions of scoped member enumerations.
   // FIXME: There appears to be no wording for what happens for an enum defined
-  // within a block scope, but we treat that like a member of a class template.
-  if (!Enum->isScoped() && Def)
+  // within a block scope, but we treat that much like a member template. Only
+  // instantiate the definition when visiting the definition in that case, since
+  // we will visit all redeclarations.
+  if (!Enum->isScoped() && Def &&
+      (!D->getDeclContext()->isFunctionOrMethod() || D->isCompleteDefinition()))
     InstantiateEnumDefinition(Enum, Def);
 
   return Enum;
