@@ -25,7 +25,6 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <link.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -35,6 +34,8 @@
 // FIXME: where to get ucontext on Android?
 #include <sys/ucontext.h>
 #endif
+
+extern "C" void* _DYNAMIC;
 
 namespace __asan {
 
