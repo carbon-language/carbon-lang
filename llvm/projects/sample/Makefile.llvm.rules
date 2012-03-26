@@ -245,6 +245,11 @@ else
   endif
 endif
 
+ifeq ($(ENABLE_LIBCPP),1)
+  CXX.Flags +=  -stdlib=libc++
+  LD.Flags +=  -stdlib=libc++
+endif
+
 ifeq ($(ENABLE_PROFILING),1)
   BuildMode := $(BuildMode)+Profile
   CXX.Flags := $(filter-out -fomit-frame-pointer,$(CXX.Flags)) -pg -g

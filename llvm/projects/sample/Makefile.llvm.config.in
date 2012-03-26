@@ -182,6 +182,10 @@ RDYNAMIC := @RDYNAMIC@
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1):
 
+# When ENABLE_LIBCPP is enabled, LLVM uses libc++ by default to build.
+#ENABLE_LIBCPP = 0
+ENABLE_LIBCPP = @ENABLE_LIBCPP@
+
 # When ENABLE_OPTIMIZED is enabled, LLVM code is optimized and output is put
 # into the "Release" directories. Otherwise, LLVM code is not optimized and
 # output is put in the "Debug" directories.

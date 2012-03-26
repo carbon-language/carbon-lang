@@ -682,6 +682,7 @@ BUILD_CC
 BUILD_EXEEXT
 BUILD_CXX
 CVSBUILD
+ENABLE_LIBCPP
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
@@ -1373,6 +1374,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-polly          Use polly if available (default is YES)
+  --enable-libcpp         Use libc++ if available (default is NO)
   --enable-optimized      Compile with optimizations enabled (default is NO)
   --enable-profiling      Compile with profiling enabled (default is NO)
   --enable-assertions     Compile with assertion checks enabled (default is
@@ -4912,6 +4914,25 @@ else
   optimize="yes"
 fi
 
+
+# Check whether --enable-libcpp was given.
+if test "${enable_libcpp+set}" = set; then
+  enableval=$enable_libcpp;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes) ENABLE_LIBCPP=1
+ ;;
+  no)  ENABLE_LIBCPP=0
+ ;;
+  default) ENABLE_LIBCPP=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-libcpp. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 
 # Check whether --enable-optimized was given.
 if test "${enable_optimized+set}" = set; then
@@ -10269,7 +10290,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10272 "configure"
+#line 10293 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15930,7 +15951,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
     ac_save_CXXFLAGS=$CXXFLAGS
-    CXXFLAGS=-pedantic
+    CXXFLAGS+=" -pedantic"
     if test "$cross_compiling" = yes; then
   ac_cv_huge_val_sanity=yes
 else
@@ -19555,7 +19576,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-float f; std::isinf(f)}
+float f; std::isinf(f);
   ;
   return 0;
 }
@@ -21601,6 +21622,7 @@ BUILD_CC!$BUILD_CC$ac_delim
 BUILD_EXEEXT!$BUILD_EXEEXT$ac_delim
 BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
+ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
@@ -21615,7 +21637,6 @@ ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 ENABLE_THREADS!$ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
-ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -21657,6 +21678,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 ENABLE_EMBED_STDCXX!$ENABLE_EMBED_STDCXX$ac_delim
 ENABLE_TIMESTAMPS!$ENABLE_TIMESTAMPS$ac_delim
 TARGETS_TO_BUILD!$TARGETS_TO_BUILD$ac_delim
@@ -21747,7 +21769,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 88; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

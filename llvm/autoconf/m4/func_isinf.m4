@@ -19,7 +19,7 @@ fi
 
 AC_SINGLE_CXX_CHECK([ac_cv_func_std_isinf_in_cmath],
                     [std::isinf], [<cmath>],
-                    [float f; std::isinf(f)}])
+                    [float f; std::isinf(f);])
 if test "$ac_cv_func_std_isinf_in_cmath" = "yes" ; then 
   AC_DEFINE([HAVE_STD_ISINF_IN_CMATH],1,[Set to 1 if the std::isinf function is found in <cmath>])
 fi
