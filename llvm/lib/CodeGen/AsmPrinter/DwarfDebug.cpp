@@ -438,7 +438,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
 
   DILocation DL(Scope->getInlinedAt());
-  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, TheCU->getID());
+  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0,
+                 GetOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
