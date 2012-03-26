@@ -704,8 +704,9 @@ static bool isHighCostExpansion(const SCEV *S,
         Value *UVal = U->getValue();
         for (Value::use_iterator UI = UVal->use_begin(), UE = UVal->use_end();
              UI != UE; ++UI) {
-          Instruction *User = cast<Instruction>(*UI);
-          if (User->getOpcode() == Instruction::Mul
+          // If U is a constant, it may be used by a ConstantExpr.
+          Instruction *User = dyn_cast<Instruction>(*UI);
+          if (User && User->getOpcode() == Instruction::Mul
               && SE.isSCEVable(User->getType())) {
             return SE.getSCEV(User) == Mul;
           }
