@@ -236,7 +236,7 @@ def client__name : JoinedOrSeparate<"-client_name">;
 def combine : Flag<"-combine">, Flags<[DriverOption, Unsupported]>;
 def compatibility__version : JoinedOrSeparate<"-compatibility_version">;
 def coverage : Flag<"-coverage">;
-def cpp_precomp : Flag<"-cpp-precomp">;
+def cpp_precomp : Flag<"-cpp-precomp">, Group<clang_ignored_f_Group>;
 def current__version : JoinedOrSeparate<"-current_version">;
 def cxx_isystem : JoinedOrSeparate<"-cxx-isystem">, Group<clang_i_Group>;
 def c : Flag<"-c">, Flags<[DriverOption]>,
@@ -684,7 +684,7 @@ def m_Separate : Separate<"-m">, Group<m_Group>;
 def m_Joined : Joined<"-m">, Group<m_Group>;
 def no_canonical_prefixes : Flag<"-no-canonical-prefixes">, Flags<[HelpHidden]>,
   HelpText<"Use relative instead of canonical paths">;
-def no_cpp_precomp : Flag<"-no-cpp-precomp">;
+def no_cpp_precomp : Flag<"-no-cpp-precomp">, Group<clang_ignored_f_Group>;
 def no_integrated_as : Flag<"-no-integrated-as">, Flags<[DriverOption]>;
 def no_integrated_cpp : Flag<"-no-integrated-cpp">, Flags<[DriverOption]>;
 def no__dead__strip__inits__and__terms : Flag<"-no_dead_strip_inits_and_terms">;
