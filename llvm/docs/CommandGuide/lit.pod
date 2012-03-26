@@ -341,6 +341,53 @@ define subdirectories of optional tests, or to change other configuration
 parameters -- for example, to change the test format, or the suffixes which
 identify test files.
 
+=head2 TEST RUN OUTPUT FORMAT
+
+The b<lit> output for a test run conforms to the following schema, in both short
+and verbose modes (although in short mode no PASS lines will be shown). This
+schema has been chosen to be relatively easy to reliably parse by a machine (for
+example in buildbot log scraping), and for other tools to generate.
+
+Each test result is expected to appear on a line that matches:
+
+<result code>: <test name> (<progress info>)
+
+where <result-code> is a standard test result such as PASS, FAIL, XFAIL, XPASS,
+UNRESOLVED, or UNSUPPORTED. The performance result codes of IMPROVED and
+REGRESSED are also allowed.
+
+The <test name> field can consist of an arbitrary string containing no newline.
+
+The <progress info> field can be used to report progress information such as
+(1/300) or can be empty, but even when empty the parentheses are required.
+
+Each test result may include additional (multiline) log information in the
+following format.
+
+<log delineator> TEST '(<test name>)' <trailing delineator>
+... log message ...
+<log delineator>
+
+where <test name> should be the name of a preceeding reported test, <log
+delineator> is a string of '*' characters I<at least> four characters long (the
+recommended length is 20), and <trailing delineator> is an arbitrary (unparsed)
+string.
+
+The following is an example of a test run output which consists of four tests A,
+B, C, and D, and a log message for the failing test C.
+
+=head3 Example Test Run Output Listing
+
+PASS: A (1 of 4)
+PASS: B (2 of 4)
+FAIL: C (3 of 4)
+******************** TEST 'C' FAILED ********************
+Test 'C' failed as a result of exit code 1.
+********************
+PASS: D (4 of 4)
+
+=back
+
 =head2 LIT EXAMPLE TESTS
 
 The B<lit> distribution contains several example implementations of test suites
