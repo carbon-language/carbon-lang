@@ -448,6 +448,7 @@ public:
   bool shouldUseTBAA() const { return TBAA != 0; }
 
   llvm::MDNode *getTBAAInfo(QualType QTy);
+  llvm::MDNode *getTBAAInfoForVTablePtr();
 
   bool isTypeConstant(QualType QTy, bool ExcludeCtorDtor);
 

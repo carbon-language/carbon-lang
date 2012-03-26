@@ -68,6 +68,10 @@ public:
   /// getTBAAInfo - Get the TBAA MDNode to be used for a dereference
   /// of the given type.
   llvm::MDNode *getTBAAInfo(QualType QTy);
+
+  /// getTBAAInfoForVTablePtr - Get the TBAA MDNode to be used for a
+  /// dereference of a vtable pointer.
+  llvm::MDNode *getTBAAInfoForVTablePtr();
 };
 
 }  // end namespace CodeGen

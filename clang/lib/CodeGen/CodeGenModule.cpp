@@ -182,6 +182,12 @@ llvm::MDNode *CodeGenModule::getTBAAInfo(QualType QTy) {
   return TBAA->getTBAAInfo(QTy);
 }
 
+llvm::MDNode *CodeGenModule::getTBAAInfoForVTablePtr() {
+  if (!TBAA)
+    return 0;
+  return TBAA->getTBAAInfoForVTablePtr();
+}
+
 void CodeGenModule::DecorateInstruction(llvm::Instruction *Inst,
                                         llvm::MDNode *TBAAInfo) {
   Inst->setMetadata(llvm::LLVMContext::MD_tbaa, TBAAInfo);

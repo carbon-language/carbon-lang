@@ -179,3 +179,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // For now, handle any other kind of type conservatively.
   return MetadataCache[Ty] = getChar();
 }
+
+llvm::MDNode *CodeGenTBAA::getTBAAInfoForVTablePtr() {
+  return getTBAAInfoForNamedType("vtable pointer", getRoot());
+}
