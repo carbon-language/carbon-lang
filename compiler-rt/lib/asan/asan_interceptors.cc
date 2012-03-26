@@ -38,12 +38,18 @@
 # define ASAN_INTERCEPT_STRNLEN 0
 #endif
 
+#if defined(ANDROID) || defined(_WIN32)
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 0
+#else
+# define ASAN_INTERCEPT_SIGNAL_AND_SIGACTION 1
+#endif
+
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
 #if defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
 extern "C" {
 // signal.h
-# if !defined(_WIN32)
+# if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 struct sigaction;
 int sigaction(int sig, const struct sigaction *act,
               struct sigaction *oldact);
@@ -346,7 +352,7 @@ INTERCEPTOR(int, pthread_create, void *thread,
 }
 #endif  // !_WIN32
 
-#if !defined(ANDROID) && !defined(_WIN32)
+#if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 INTERCEPTOR(void*, signal, int signum, void *handler) {
   if (!AsanInterceptsSignal(signum)) {
     return REAL(signal)(signum, handler);
@@ -361,7 +367,11 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
   }
   return 0;
 }
-#endif  // !ANDROID && !_WIN32
+#elif ASAN_POSIX
+// We need to have defined REAL(sigaction) on posix systems.
+DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
+    struct sigaction *oldact);
+#endif  // ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 
 INTERCEPTOR(void, longjmp, void *env, int val) {
   __asan_handle_no_return();
@@ -509,11 +519,6 @@ INTERCEPTOR(char*, index, const char *string, int c)
   ALIAS(WRAPPER_NAME(strchr));
 #else
 DEFINE_REAL(char*, index, const char *string, int c);
-#endif
-
-#ifdef ANDROID
-DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
-    struct sigaction *oldact);
 #endif
 
 INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
@@ -755,7 +760,7 @@ void InitializeAsanInterceptors() {
 
   // Intecept signal- and jump-related functions.
   CHECK(INTERCEPT_FUNCTION(longjmp));
-#if !defined(ANDROID) && !defined(_WIN32)
+#if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
   CHECK(INTERCEPT_FUNCTION(sigaction));
   CHECK(INTERCEPT_FUNCTION(signal));
 #endif

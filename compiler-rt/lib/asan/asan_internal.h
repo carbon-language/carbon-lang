@@ -104,6 +104,8 @@ extern "C" void* _ReturnAddress(void);
 # define ASAN_WINDOWS 0
 #endif
 
+#define ASAN_POSIX (ASAN_LINUX || ASAN_MAC)
+
 #if !defined(__has_feature)
 #define __has_feature(x) 0
 #endif
