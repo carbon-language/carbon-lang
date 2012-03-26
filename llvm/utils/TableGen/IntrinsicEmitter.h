@@ -48,8 +48,6 @@ namespace llvm {
                         raw_ostream &OS);
     void EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints,
                             raw_ostream &OS);
-    void EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, 
-                            raw_ostream &OS);
     void EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
                                       raw_ostream &OS);
     void EmitSuffix(raw_ostream &OS);

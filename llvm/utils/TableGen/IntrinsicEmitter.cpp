@@ -57,9 +57,6 @@ void IntrinsicEmitter::run(raw_ostream &OS) {
   // Emit intrinsic alias analysis mod/ref behavior.
   EmitModRefBehavior(Ints, OS);
 
-  // Emit a list of intrinsics with corresponding GCC builtins.
-  EmitGCCBuiltinList(Ints, OS);
-
   // Emit code to translate GCC builtins into LLVM intrinsics.
   EmitIntrinsicToGCCBuiltinMap(Ints, OS);
 
@@ -651,22 +648,6 @@ EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
   OS << "};\n\n"
      << "return static_cast<ModRefBehavior>(IntrinsicModRefBehavior[iid]);\n"
      << "#endif // GET_INTRINSIC_MODREF_BEHAVIOR\n\n";
-}
-
-void IntrinsicEmitter::
-EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
-  OS << "// Get the GCC builtin that corresponds to an LLVM intrinsic.\n";
-  OS << "#ifdef GET_GCC_BUILTIN_NAME\n";
-  OS << "  switch (F->getIntrinsicID()) {\n";
-  OS << "  default: BuiltinName = \"\"; break;\n";
-  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    if (!Ints[i].GCCBuiltinName.empty()) {
-      OS << "  case Intrinsic::" << Ints[i].EnumName << ": BuiltinName = \""
-         << Ints[i].GCCBuiltinName << "\"; break;\n";
-    }
-  }
-  OS << "  }\n";
-  OS << "#endif\n\n";
 }
 
 /// EmitTargetBuiltins - All of the builtins in the specified map are for the
