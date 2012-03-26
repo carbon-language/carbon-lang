@@ -20,10 +20,8 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
 #include "llvm/Operator.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
@@ -197,26 +195,6 @@ static void ComputeMaskedBitsMul(Value *Op0, Value *Op1, bool NSW,
     KnownOne.setBit(BitWidth - 1);
 }
 
-static void computeMaskedBitsLoad(const MDNode &Ranges, const APInt &Mask,
-                                  APInt &KnownZero) {
-  unsigned BitWidth = Mask.getBitWidth();
-  unsigned NumRanges = Ranges.getNumOperands() / 2;
-  assert(NumRanges >= 1);
-
-  // Use the high end of the ranges to find leading zeros.
-  unsigned MinLeadingZeros = BitWidth;
-  for (unsigned i = 0; i < NumRanges; ++i) {
-    ConstantInt *Lower = cast<ConstantInt>(Ranges.getOperand(2*i + 0));
-    ConstantInt *Upper = cast<ConstantInt>(Ranges.getOperand(2*i + 1));
-    ConstantRange Range(Lower->getValue(), Upper->getValue());
-    if (Range.isWrappedSet())
-      MinLeadingZeros = 0; // -1 has no zeros
-    unsigned LeadingZeros = (Upper->getValue() - 1).countLeadingZeros();
-    MinLeadingZeros = std::min(LeadingZeros, MinLeadingZeros);
-  }
-
-  KnownZero = Mask & APInt::getHighBitsSet(BitWidth, MinLeadingZeros);
-}
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
 /// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
@@ -337,10 +315,6 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   APInt KnownZero2(KnownZero), KnownOne2(KnownOne);
   switch (I->getOpcode()) {
   default: break;
-  case Instruction::Load:
-    if (MDNode *MD = cast<LoadInst>(I)->getMetadata(LLVMContext::MD_range))
-      computeMaskedBitsLoad(*MD, Mask, KnownZero);
-    return;
   case Instruction::And: {
     // If either the LHS or the RHS are Zero, the result is zero.
     ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, TD, Depth+1);

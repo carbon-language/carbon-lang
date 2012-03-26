@@ -1370,21 +1370,6 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const Query &Q,
       return Op1;
   }
 
-  unsigned Bitwidth = Op1->getType()->getScalarSizeInBits();
-  APInt DemandedMask = APInt::getAllOnesValue(Bitwidth);
-  APInt KnownZero0 = APInt::getNullValue(Bitwidth);
-  APInt KnownOne0 = APInt::getNullValue(Bitwidth);
-  ComputeMaskedBits(Op0, DemandedMask, KnownZero0, KnownOne0);
-  APInt KnownZero1 = APInt::getNullValue(Bitwidth);
-  APInt KnownOne1 = APInt::getNullValue(Bitwidth);
-  ComputeMaskedBits(Op1, DemandedMask, KnownZero1, KnownOne1);
-
-  if ((KnownZero0 | KnownOne1).isAllOnesValue())
-    return Op0;
-
-  if ((KnownZero1 | KnownOne0).isAllOnesValue())
-    return Op1;
-
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::And, Op0, Op1, Q,
                                           MaxRecurse))
