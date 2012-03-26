@@ -32,6 +32,14 @@ resolveRelocation(uint8_t *LocalAddress,
   // This just dispatches to the proper target specific routine.
   switch (CPUType) {
   default: llvm_unreachable("Unsupported CPU type!");
+  case mach::CTM_i386:
+    return resolveI386Relocation(LocalAddress,
+                                 FinalAddress,
+                                 (uintptr_t)Value,
+                                 isPCRel,
+                                 Type,
+                                 Size,
+                                 Addend);
   case mach::CTM_x86_64:
     return resolveX86_64Relocation(LocalAddress,
                                    FinalAddress,
@@ -48,6 +56,35 @@ resolveRelocation(uint8_t *LocalAddress,
                                 Type,
                                 Size,
                                 Addend);
+  }
+}
+
+bool RuntimeDyldMachO::
+resolveI386Relocation(uint8_t *LocalAddress,
+                      uint64_t FinalAddress,
+                      uint64_t Value,
+                      bool isPCRel,
+                      unsigned Type,
+                      unsigned Size,
+                      int64_t Addend) {
+  if (isPCRel)
+    Value -= FinalAddress + 4; // see resolveX86_64Relocation
+
+  switch (Type) {
+  default:
+    llvm_unreachable("Invalid relocation type!");
+  case macho::RIT_Vanilla: {
+    uint8_t *p = LocalAddress;
+    uint64_t ValueToWrite = Value + Addend;
+    for (unsigned i = 0; i < Size; ++i) {
+      *p++ = (uint8_t)(ValueToWrite & 0xff);
+      ValueToWrite >>= 8;
+    }
+  }
+  case macho::RIT_Difference:
+  case macho::RIT_Generic_LocalDifference:
+  case macho::RIT_Generic_PreboundLazyPointer:
+    return Error("Relocation type not implemented yet!");
   }
 }
 

@@ -74,6 +74,13 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
                          unsigned Type,
                          unsigned Size,
                          int64_t Addend);
+  bool resolveI386Relocation(uint8_t *LocalAddress,
+                             uint64_t FinalAddress,
+                             uint64_t Value,
+                             bool isPCRel,
+                             unsigned Type,
+                             unsigned Size,
+                             int64_t Addend);
   bool resolveX86_64Relocation(uint8_t *LocalAddress,
                                uint64_t FinalAddress,
                                uint64_t Value,
