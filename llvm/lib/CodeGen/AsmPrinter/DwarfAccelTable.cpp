@@ -15,6 +15,7 @@
 #include "DwarfDebug.h"
 #include "DIE.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
@@ -68,11 +69,10 @@ void DwarfAccelTable::AddName(StringRef Name, DIE* die, char Flags) {
 
 void DwarfAccelTable::ComputeBucketCount(void) {
   // First get the number of unique hashes.
-  std::vector<uint32_t> uniques;
-  uniques.resize(Data.size());
+  std::vector<uint32_t> uniques(Data.size());
   for (size_t i = 0, e = Data.size(); i < e; ++i)
     uniques[i] = Data[i]->HashValue;
-  std::stable_sort(uniques.begin(), uniques.end());
+  array_pod_sort(uniques.begin(), uniques.end());
   std::vector<uint32_t>::iterator p =
     std::unique(uniques.begin(), uniques.end());
   uint32_t num = std::distance(uniques.begin(), p);
