@@ -1916,6 +1916,25 @@ bool ARMBaseInstrInfo::FoldImmediate(MachineInstr *UseMI,
   if (!MRI->hasOneNonDBGUse(Reg))
     return false;
 
+  const MCInstrDesc &DefMCID = DefMI->getDesc();
+  if (DefMCID.hasOptionalDef()) {
+    unsigned NumOps = DefMCID.getNumOperands();
+    const MachineOperand &MO = DefMI->getOperand(NumOps-1);
+    if (MO.getReg() == ARM::CPSR && !MO.isDead())
+      // If DefMI defines CPSR and it is not dead, it's obviously not safe
+      // to delete DefMI.
+      return false;
+  }
+
+  const MCInstrDesc &UseMCID = UseMI->getDesc();
+  if (UseMCID.hasOptionalDef()) {
+    unsigned NumOps = UseMCID.getNumOperands();
+    if (UseMI->getOperand(NumOps-1).getReg() == ARM::CPSR)
+      // If the instruction sets the flag, do not attempt this optimization
+      // since it may change the semantics of the code.
+      return false;
+  }
+
   unsigned UseOpc = UseMI->getOpcode();
   unsigned NewUseOpc = 0;
   uint32_t ImmVal = (uint32_t)DefMI->getOperand(1).getImm();
