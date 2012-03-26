@@ -4478,7 +4478,14 @@ namespace {
 class DifferentNameValidatorCCC : public CorrectionCandidateCallback {
  public:
   DifferentNameValidatorCCC(CXXRecordDecl *Parent)
-      : ExpectedParent(Parent ? Parent->getCanonicalDecl() : 0) {}
+      : ExpectedParent(Parent ? Parent->getCanonicalDecl() : 0) {
+    // Don't allow any additional qualification.
+    // FIXME: It would be nice to perform this additional qualification. 
+    // However, DiagnoseInvalidRedeclaration is unable to handle the 
+    // qualification, because it doesn't know how to pass the corrected
+    // nested-name-specifier through to ActOnFunctionDeclarator.
+    AllowAddedQualifier = false;
+  }
 
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     if (candidate.getEditDistance() == 0)

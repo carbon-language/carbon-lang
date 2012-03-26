@@ -205,7 +205,7 @@ class CorrectionCandidateCallback {
       : WantTypeSpecifiers(true), WantExpressionKeywords(true),
         WantCXXNamedCasts(true), WantRemainingKeywords(true),
         WantObjCSuper(false),
-        IsObjCIvarLookup(false) {}
+        IsObjCIvarLookup(false), AllowAddedQualifier(true) {}
 
   virtual ~CorrectionCandidateCallback() {}
 
@@ -239,6 +239,10 @@ class CorrectionCandidateCallback {
   // Temporary hack for the one case where a CorrectTypoContext enum is used
   // when looking up results.
   bool IsObjCIvarLookup;
+  
+  /// \brief Whether to allow this typo correction to add a 
+  /// nested-name-specifier.
+  bool AllowAddedQualifier;
 };
 
 /// @brief Simple template class for restricting typo correction candidates
