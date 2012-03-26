@@ -508,8 +508,12 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type)
                         rc.Success() ? "succeeded" : "failed",
                         wp_sp->GetID());
 
-    if (rc.Fail())
+    if (rc.Fail()) {
+        // Enabling the watchpoint on the device side failed.
+        // Remove the said watchpoint from the list maintained by the target instance.
+        m_watchpoint_list.Remove(wp_sp->GetID());
         wp_sp.reset();
+    }
     else
         m_last_created_watchpoint = wp_sp;
     return wp_sp;
