@@ -74,7 +74,7 @@ static void PrintOps(Instruction *I, const SmallVectorImpl<ValueEntry> &Ops) {
 namespace {
   class Reassociate : public FunctionPass {
     DenseMap<BasicBlock*, unsigned> RankMap;
-    DenseMap<AssertingVH<>, unsigned> ValueRankMap;
+    DenseMap<AssertingVH<Value>, unsigned> ValueRankMap;
     SmallVector<WeakVH, 8> RedoInsts;
     SmallVector<WeakVH, 8> DeadInsts;
     bool MadeChange;
@@ -210,7 +210,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 /// LowerNegateToMultiply - Replace 0-X with X*-1.
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
-                              DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
+                         DenseMap<AssertingVH<Value>, unsigned> &ValueRankMap) {
   Constant *Cst = Constant::getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
@@ -492,7 +492,7 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
 static Instruction *BreakUpSubtract(Instruction *Sub,
-                              DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
+                         DenseMap<AssertingVH<Value>, unsigned> &ValueRankMap) {
   // Convert a subtract into an add and a neg instruction. This allows sub
   // instructions to be commuted with other add instructions.
   //
@@ -517,8 +517,8 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
 /// ConvertShiftToMul - If this is a shift of a reassociable multiply or is used
 /// by one, change this into a multiply by a constant to assist with further
 /// reassociation.
-static Instruction *ConvertShiftToMul(Instruction *Shl, 
-                              DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
+static Instruction *ConvertShiftToMul(Instruction *Shl,
+                         DenseMap<AssertingVH<Value>, unsigned> &ValueRankMap) {
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||

@@ -15,7 +15,6 @@
 #define LLVM_VALUE_H
 
 #include "llvm/Use.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 
 namespace llvm {
@@ -31,8 +30,6 @@ class GlobalAlias;
 class InlineAsm;
 class ValueSymbolTable;
 template<typename ValueTy> class StringMapEntry;
-template <typename ValueTy = Value>
-class AssertingVH;
 typedef StringMapEntry<Value*> ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
@@ -41,6 +38,7 @@ class LLVMContext;
 class Twine;
 class MDNode;
 class Type;
+class StringRef;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class

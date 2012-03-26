@@ -10,12 +10,19 @@
 #ifndef LLVM_MC_MCELFOBJECTWRITER_H
 #define LLVM_MC_MCELFOBJECTWRITER_H
 
-#include "llvm/MC/MCObjectWriter.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
 #include <vector>
 
 namespace llvm {
+class MCAssembler;
+class MCFixup;
+class MCFragment;
+class MCObjectWriter;
+class MCSymbol;
+class MCValue;
+
 /// @name Relocation Data
 /// @{
 

@@ -16,6 +16,7 @@
 
 #include "llvm/MC/MCSection.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 

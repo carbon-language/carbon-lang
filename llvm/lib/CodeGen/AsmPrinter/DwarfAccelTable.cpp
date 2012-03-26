@@ -11,14 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "DwarfAccelTable.h"
+#include "DwarfDebug.h"
+#include "DIE.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
-#include "DwarfAccelTable.h"
-#include "DwarfDebug.h"
-#include "DIE.h"
 
 using namespace llvm;
 

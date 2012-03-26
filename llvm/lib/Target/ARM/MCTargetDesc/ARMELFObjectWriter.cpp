@@ -11,6 +11,7 @@
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCELFObjectWriter.h"

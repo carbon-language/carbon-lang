@@ -16,7 +16,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector> // FIXME: Shouldn't be needed.
 
@@ -31,6 +30,7 @@ namespace llvm {
   class MCObjectFileInfo;
   class MCRegisterInfo;
   class MCLineSection;
+  class SMLoc;
   class StringRef;
   class Twine;
   class MCSectionMachO;

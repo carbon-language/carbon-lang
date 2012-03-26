@@ -14,13 +14,12 @@
 #ifndef LLVM_MC_MCBJECTFILEINFO_H
 #define LLVM_MC_MCBJECTFILEINFO_H
 
-#include "llvm/MC/MCCodeGenInfo.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/MC/SectionKind.h"
+#include "llvm/Support/CodeGen.h"
 
 namespace llvm {
   class MCContext;
   class MCSection;
+  class StringRef;
   class Triple;
 
 class MCObjectFileInfo {  

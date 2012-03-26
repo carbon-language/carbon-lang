@@ -10,12 +10,8 @@
 #ifndef LLVM_MC_MCCODEEMITTER_H
 #define LLVM_MC_MCCODEEMITTER_H
 
-#include "llvm/MC/MCFixup.h"
-
-#include <cassert>
-
 namespace llvm {
-class MCExpr;
+class MCFixup;
 class MCInst;
 class raw_ostream;
 template<typename T> class SmallVectorImpl;

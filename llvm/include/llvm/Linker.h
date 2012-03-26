@@ -15,14 +15,15 @@
 #define LLVM_LINKER_H
 
 #include <memory>
+#include <string>
 #include <vector>
-#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
   namespace sys { class Path; }
 
 class Module;
 class LLVMContext;
+class StringRef;
 
 /// This class provides the core functionality of linking in LLVM. It retains a
 /// Module object which is the composite of the modules and libraries linked

@@ -23,7 +23,6 @@ class Function;
 class BasicBlock;
 class Instruction;
 class Value;
-class raw_ostream;
 class formatted_raw_ostream;
 
 class AssemblyAnnotationWriter {

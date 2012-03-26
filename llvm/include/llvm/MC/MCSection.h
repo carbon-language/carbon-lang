@@ -14,12 +14,10 @@
 #ifndef LLVM_MC_MCSECTION_H
 #define LLVM_MC_MCSECTION_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Casting.h"
 
 namespace llvm {
-  class MCContext;
   class MCAsmInfo;
   class raw_ostream;
 

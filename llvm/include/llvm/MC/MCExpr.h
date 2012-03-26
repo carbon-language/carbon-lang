@@ -15,7 +15,6 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-class MCAsmInfo;
 class MCAsmLayout;
 class MCAssembler;
 class MCContext;

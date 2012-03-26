@@ -12,7 +12,6 @@
 
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -20,15 +19,13 @@ namespace llvm {
 class MCAsmLayout;
 class MCAssembler;
 class MCELFObjectTargetWriter;
-class MCFixup;
+struct MCFixupKindInfo;
 class MCFragment;
 class MCInst;
 class MCInstFragment;
 class MCObjectWriter;
 class MCSection;
 class MCValue;
-template<typename T>
-class SmallVectorImpl;
 class raw_ostream;
 
 /// MCAsmBackend - Generic interface to target specific assembler backends.

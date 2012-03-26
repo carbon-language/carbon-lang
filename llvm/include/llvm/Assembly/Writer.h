@@ -19,7 +19,6 @@
 
 namespace llvm {
 
-class Type;
 class Module;
 class Value;
 class raw_ostream;

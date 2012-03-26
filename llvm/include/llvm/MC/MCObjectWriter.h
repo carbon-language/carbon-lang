@@ -10,7 +10,6 @@
 #ifndef LLVM_MC_MCOBJECTWRITER_H
 #define LLVM_MC_MCOBJECTWRITER_H
 
-#include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
@@ -20,11 +19,9 @@ class MCAsmLayout;
 class MCAssembler;
 class MCFixup;
 class MCFragment;
-class MCSymbol;
 class MCSymbolData;
 class MCSymbolRefExpr;
 class MCValue;
-class raw_ostream;
 
 /// MCObjectWriter - Defines the object file and target independent interfaces
 /// used by the assembler backend to write native file format object files.

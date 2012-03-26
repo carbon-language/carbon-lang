@@ -23,7 +23,6 @@
 
 namespace llvm {
   class MCAsmBackend;
-  class MCAsmInfo;
   class MCCodeEmitter;
   class MCContext;
   class MCExpr;
@@ -32,7 +31,6 @@ namespace llvm {
   class MCSection;
   class MCSymbol;
   class StringRef;
-  class TargetLoweringObjectFile;
   class Twine;
   class raw_ostream;
   class formatted_raw_ostream;

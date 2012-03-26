@@ -17,6 +17,7 @@
 #define LLVM_INLINEASM_H
 
 #include "llvm/Value.h"
+#include "llvm/ADT/StringRef.h"
 #include <vector>
 
 namespace llvm {

@@ -17,20 +17,16 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MachineLocation.h"
-#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Dwarf.h"
 #include <vector>
 
 namespace llvm {
   class MCContext;
-  class MCExpr;
+  class MCObjectWriter;
   class MCSection;
-  class MCSectionData;
   class MCStreamer;
   class MCSymbol;
-  class MCObjectStreamer;
-  class raw_ostream;
   class SourceMgr;
   class SMLoc;
 

@@ -21,7 +21,6 @@ namespace llvm {
 class Module;
 class MemoryBuffer;
 class SMDiagnostic;
-class raw_ostream;
 class LLVMContext;
 
 /// This function is the main interface to the LLVM Assembly Parser. It parses
