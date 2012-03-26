@@ -73,7 +73,7 @@ ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
-        m_type_name = ClangASTType::GetConstTypeName (GetClangType());
+        m_type_name = ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
         if (m_type_name)
         {
             if (m_bitfield_bit_size > 0)
@@ -89,6 +89,26 @@ ValueObjectChild::GetTypeName()
         }
     }
     return m_type_name;
+}
+
+ConstString
+ValueObjectChild::GetQualifiedTypeName()
+{
+    ConstString qualified_name = ClangASTType::GetConstQualifiedTypeName (GetClangAST(), GetClangType());
+    if (qualified_name)
+    {
+        if (m_bitfield_bit_size > 0)
+        {
+            const char *clang_type_name = qualified_name.AsCString();
+            if (clang_type_name)
+            {
+                std::vector<char> bitfield_type_name (strlen(clang_type_name) + 32, 0);
+                ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", clang_type_name, m_bitfield_bit_size);
+                qualified_name.SetCString(&bitfield_type_name.front());
+            }
+        }
+    }
+    return qualified_name;
 }
 
 bool

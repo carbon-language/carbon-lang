@@ -1954,14 +1954,15 @@ SBTarget::FindTypes (const char* type)
     {
         ModuleList& images = target_sp->GetImages();
         ConstString name_const(type);
+        bool exact_match = false;
         SymbolContext sc;
         TypeList type_list;
         
-        uint32_t num_matches = images.FindTypes(sc,
-                                                name_const,
-                                                true,
-                                                UINT32_MAX,
-                                                type_list);
+        uint32_t num_matches = images.FindTypes2 (sc,
+                                                 name_const,
+                                                 exact_match,
+                                                 UINT32_MAX,
+                                                 type_list);
         
         for (size_t idx = 0; idx < num_matches; idx++)
         {

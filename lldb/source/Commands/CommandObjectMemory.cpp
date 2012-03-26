@@ -386,7 +386,7 @@ public:
         {
             // We are viewing memory as a type
             SymbolContext sc;
-            const bool append = true;
+            const bool exact_match = false;
             TypeList type_list;
             uint32_t reference_count = 0;
             uint32_t pointer_count = 0;
@@ -458,17 +458,16 @@ public:
                 {
                     sc.module_sp->FindTypes (sc,
                                              lookup_type_name,
-                                             NULL,
-                                             append, 
+                                             exact_match,
                                              1, 
                                              type_list);
                 }
             }
             if (type_list.GetSize() == 0)
             {
-                target->GetImages().FindTypes (sc, 
+                target->GetImages().FindTypes2 (sc, 
                                                lookup_type_name, 
-                                               append, 
+                                               exact_match, 
                                                1, 
                                                type_list);
             }

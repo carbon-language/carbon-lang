@@ -566,12 +566,15 @@ public:
     virtual lldb::ValueType
     GetValueType() const = 0;
 
-    virtual ConstString
-    GetTypeName() = 0;
-
     //------------------------------------------------------------------
     // Sublasses can implement the functions below.
     //------------------------------------------------------------------
+    virtual ConstString
+    GetTypeName();
+    
+    virtual ConstString
+    GetQualifiedTypeName();
+
     virtual lldb::LanguageType
     GetObjectRuntimeLanguage();
 

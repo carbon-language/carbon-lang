@@ -59,6 +59,9 @@ public:
     virtual ConstString
     GetTypeName();
 
+    virtual ConstString
+    GetQualifiedTypeName();
+    
     virtual bool
     IsInScope ();
 

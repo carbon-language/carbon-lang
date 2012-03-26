@@ -67,8 +67,16 @@ ValueObjectVariable::GetTypeName()
     Type * var_type = m_variable_sp->GetType();
     if (var_type)
         return var_type->GetName();
-    ConstString empty_type_name;
-    return empty_type_name;
+    return ConstString();
+}
+
+ConstString
+ValueObjectVariable::GetQualifiedTypeName()
+{
+    Type * var_type = m_variable_sp->GetType();
+    if (var_type)
+        return var_type->GetQualifiedName();
+    return ConstString();
 }
 
 uint32_t

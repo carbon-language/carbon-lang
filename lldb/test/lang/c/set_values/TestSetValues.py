@@ -99,12 +99,12 @@ class SetValuesTestCase(TestBase):
         # main.c:57
         # Check that 'frame variable -T' displays the correct data type and value.
         self.expect("frame variable -T", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(long int) i = 33")
+            startstr = "(long) i = 33")
 
         # Now set variable 'i' and check that it is correctly displayed.
         self.runCmd("expression i = 33333")
         self.expect("frame variable -T", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = "(long int) i = 33333")
+            startstr = "(long) i = 33333")
 
         self.runCmd("continue")
 

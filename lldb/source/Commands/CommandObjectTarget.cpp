@@ -1585,12 +1585,13 @@ LookupTypeInModule (CommandInterpreter &interpreter,
     if (module && name_cstr && name_cstr[0])
     {
         TypeList type_list;
-        const uint32_t max_num_matches = 1;
+        const uint32_t max_num_matches = UINT32_MAX;
         uint32_t num_matches = 0;
+        bool name_is_fully_qualified = false;
         SymbolContext sc;
 
         ConstString name(name_cstr);
-        num_matches = module->FindTypes(sc, name, NULL, true, max_num_matches, type_list);
+        num_matches = module->FindTypes(sc, name, name_is_fully_qualified, max_num_matches, type_list);
             
         if (num_matches)
         {

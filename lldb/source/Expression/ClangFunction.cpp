@@ -113,7 +113,8 @@ ClangFunction::CompileFunction (Stream &errors)
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     unsigned num_errors = 0;
     
-    std::string return_type_str (ClangASTType::GetTypeNameForOpaqueQualType (m_function_return_qual_type));
+    std::string return_type_str (ClangASTType::GetTypeNameForOpaqueQualType (m_clang_ast_context->getASTContext(),
+                                                                             m_function_return_qual_type));
     
     // Cons up the function we're going to wrap our call in, then compile it...
     // We declare the function "extern "C"" because the compiler might be in C++
@@ -159,7 +160,8 @@ ClangFunction::CompileFunction (Stream &errors)
         if (trust_function)
         {
             lldb::clang_type_t arg_clang_type = m_function_ptr->GetArgumentTypeAtIndex(i);
-            type_name = ClangASTType::GetTypeNameForOpaqueQualType (arg_clang_type);
+            type_name = ClangASTType::GetTypeNameForOpaqueQualType (m_clang_ast_context->getASTContext(),
+                                                                    arg_clang_type);
         }
         else
         {
@@ -167,7 +169,8 @@ ClangFunction::CompileFunction (Stream &errors)
             lldb::clang_type_t clang_qual_type = arg_value->GetClangType ();
             if (clang_qual_type != NULL)
             {
-                type_name = ClangASTType::GetTypeNameForOpaqueQualType (clang_qual_type);
+                type_name = ClangASTType::GetTypeNameForOpaqueQualType (m_clang_ast_context->getASTContext(),
+                                                                        clang_qual_type);
             }
             else
             {   

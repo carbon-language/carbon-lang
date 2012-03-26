@@ -630,7 +630,7 @@ FormatManager::LoadSTLFormatters()
                                                 std_string_summary_sp);
     gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
                                                 std_string_summary_sp);
-    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >"),
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char, std::char_traits<char>, std::allocator<char> >"),
                                                 std_string_summary_sp);
     
     
@@ -676,7 +676,7 @@ FormatManager::LoadLibcxxFormatters()
     
     libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::string"),
                                                    std_string_summary_sp);
-    libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::basic_string<char, class std::__1::char_traits<char>, class std::__1::allocator<char> >"),
+    libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >"),
                                                    std_string_summary_sp);
 
     SyntheticChildren::Flags stl_synth_flags;

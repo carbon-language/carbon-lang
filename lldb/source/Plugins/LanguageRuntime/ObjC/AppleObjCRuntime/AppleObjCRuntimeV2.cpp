@@ -349,9 +349,10 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             
             TypeList class_types;
             SymbolContext sc;
-            uint32_t num_matches = target.GetImages().FindTypes (sc, 
+            const bool exact_match = true;
+            uint32_t num_matches = target.GetImages().FindTypes2 (sc,
                                                                  class_type_or_name.GetName(),
-                                                                 true,
+                                                                 exact_match,
                                                                  UINT32_MAX,
                                                                  class_types);
             if (num_matches == 1)

@@ -55,8 +55,8 @@ class UnsignedTypesTestCase(TestBase):
             startstr = "(unsigned char) the_unsigned_char = 'c'",
             patterns = ["\((short unsigned int|unsigned short)\) the_unsigned_short = 99"],
             substrs = ["(unsigned int) the_unsigned_int = 99",
-                       "(long unsigned int) the_unsigned_long = 99",
-                       "(long long unsigned int) the_unsigned_long_long = 99",
+                       "(unsigned long) the_unsigned_long = 99",
+                       "(unsigned long long) the_unsigned_long_long = 99",
                        "(uint32_t) the_uint32 = 99"])
 
 

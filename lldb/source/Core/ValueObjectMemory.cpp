@@ -143,7 +143,7 @@ ValueObjectMemory::GetTypeName()
 {
     if (m_type_sp)
         return m_type_sp->GetName();
-    return ClangASTType::GetConstTypeName (m_clang_type.GetOpaqueQualType());
+    return ClangASTType::GetConstTypeName (GetClangAST(), m_clang_type.GetOpaqueQualType());
 }
 
 uint32_t

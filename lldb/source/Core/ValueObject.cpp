@@ -1676,6 +1676,19 @@ ValueObject::GetDeclaration (Declaration &decl)
     return false;
 }
 
+ConstString
+ValueObject::GetTypeName()
+{
+    return ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
+}
+
+ConstString
+ValueObject::GetQualifiedTypeName()
+{
+    return ClangASTType::GetConstQualifiedTypeName (GetClangAST(), GetClangType());
+}
+
+
 LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
@@ -2640,13 +2653,10 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         else
                         {
                             if (ClangASTType::GetMinimumLanguage(root->GetClangAST(),
-                                                                    root->GetClangType()) == eLanguageTypeObjC
-                                &&
-                                ClangASTContext::IsPointerType(ClangASTType::GetPointeeType(root->GetClangType())) == false
-                                &&
-                                root->HasSyntheticValue()
-                                &&
-                                options.m_no_synthetic_children == false)
+                                                                 root->GetClangType()) == eLanguageTypeObjC
+                                && ClangASTContext::IsPointerType(ClangASTType::GetPointeeType(root->GetClangType())) == false
+                                && root->HasSyntheticValue()
+                                && options.m_no_synthetic_children == false)
                             {
                                 root = root->GetSyntheticValue()->GetChildAtIndex(index, true);
                             }
@@ -3152,7 +3162,8 @@ DumpValueObject_Impl (Stream &s,
             // Always show the type for the top level items.
             if (options.m_show_types || (curr_depth == 0 && !options.m_flat_output))
             {
-                const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
+                const char* typeName = valobj->GetQualifiedTypeName().AsCString("<invalid type>");
+                //const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
                 s.Printf("(%s", typeName);
                 // only show dynamic types if the user really wants to see types
                 if (options.m_show_types && options.m_use_dynamic != eNoDynamicValues &&

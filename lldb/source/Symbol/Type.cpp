@@ -120,8 +120,19 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
     *s << "id = " << (const UserID&)*this;
 
     // Call the name accessor to make sure we resolve the type name
-    if (show_name && GetName())
-        *s << ", name = \"" << m_name << '"';
+    if (show_name)
+    {
+        const ConstString &type_name = GetName();
+        if (type_name)
+        {
+            *s << ", name = \"" << type_name << '"';
+            ConstString qualified_type_name (GetQualifiedName());
+            if (qualified_type_name != type_name)
+            {
+                *s << ", qualified = \"" << qualified_type_name << '"';
+            }
+        }
+    }
 
     // Call the get byte size accesor so we resolve our byte size
     if (GetByteSize())
@@ -213,7 +224,7 @@ Type::GetName()
     if (!m_name)
     {
         if (ResolveClangType(eResolveStateForward))
-            m_name = ClangASTType::GetConstTypeName (m_clang_type);
+            m_name = ClangASTType::GetConstTypeName (GetClangASTContext ().getASTContext(), m_clang_type);
     }
     return m_name;
 }
@@ -692,6 +703,49 @@ Type::IsRealObjCClass()
     else
         return false;
 }
+
+ConstString
+Type::GetQualifiedName ()
+{
+    ConstString qualified_name (ClangASTType::GetTypeNameForOpaqueQualType (GetClangASTContext ().getASTContext(), GetClangForwardType()).c_str());
+    return qualified_name;
+}
+
+
+bool
+Type::GetTypeScopeAndBasename (const char* name_cstr,
+                               std::string &scope,
+                               std::string &basename)
+{
+    // Protect against null c string.
+    
+    if (name_cstr && name_cstr[0])
+    {
+        const char *basename_cstr = name_cstr;
+        const char* namespace_separator = ::strstr (basename_cstr, "::");
+        if (namespace_separator)
+        {
+            const char* template_arg_char = ::strchr (basename_cstr, '<');
+            while (namespace_separator != NULL)
+            {
+                if (template_arg_char && namespace_separator > template_arg_char) // but namespace'd template arguments are still good to go
+                    break;
+                basename_cstr = namespace_separator + 2;
+                namespace_separator = strstr(basename_cstr, "::");
+            }
+            if (basename_cstr > name_cstr)
+            {
+                scope.assign (name_cstr, basename_cstr - name_cstr);
+                basename.assign (basename_cstr);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+
 
 TypeAndOrName::TypeAndOrName () : m_type_sp(), m_type_name()
 {

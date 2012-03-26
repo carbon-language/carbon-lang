@@ -58,8 +58,8 @@ class UnsignedTypesTestCase(TestBase):
             patterns = ["\((short int|short)\) the_signed_short = 99"],
             substrs = ["(signed char) the_signed_char = 'c'",
                        "(int) the_signed_int = 99",
-                       "(long int) the_signed_long = 99",
-                       "(long long int) the_signed_long_long = 99"])
+                       "(long) the_signed_long = 99",
+                       "(long long) the_signed_long_long = 99"])
 
 
 if __name__ == '__main__':

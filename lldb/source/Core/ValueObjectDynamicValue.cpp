@@ -66,12 +66,6 @@ ValueObjectCast::GetClangTypeImpl ()
     return m_cast_type.GetOpaqueQualType();
 }
 
-ConstString
-ValueObjectCast::GetTypeName()
-{
-    return ClangASTType::GetConstTypeName (GetClangType());
-}
-
 uint32_t
 ValueObjectCast::CalculateNumChildren()
 {
@@ -172,7 +166,7 @@ ValueObjectDynamicValue::GetTypeName()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
-        return ClangASTType::GetConstTypeName (GetClangType());
+        return ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
     else
         return m_parent->GetTypeName();
 }

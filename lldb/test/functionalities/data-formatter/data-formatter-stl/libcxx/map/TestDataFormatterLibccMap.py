@@ -58,7 +58,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
 
         self.runCmd("frame variable ii -T")
         
-        self.runCmd("type summary add -x \"std::map<\" --summary-string \"map has ${svar%#} items\" -e") 
+        self.runCmd("type summary add -x \"std::__1::map<\" --summary-string \"map has ${svar%#} items\" -e") 
         
         self.expect('frame variable ii',
             substrs = ['map has 0 items',
@@ -135,9 +135,6 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable si -T")
 
-        #self.runCmd("type summary add std::strint_map strint_map --summary-string \"map has ${svar%#} items\" -e")
-        #self.runCmd("type synth add std::strint_map strint_map -l StdMapSynthProvider")
-        
         self.expect('frame variable si',
                     substrs = ['map has 0 items',
                                '{}'])
@@ -210,9 +207,6 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable is -T")
         
-        #self.runCmd("type summary add std::intstr_map intstr_map --summary-string \"map has ${svar%#} items\" -e")
-        #self.runCmd("type synth add std::intstr_map intstr_map -l StdMapSynthProvider")
-
         self.expect('frame variable is',
                     substrs = ['map has 0 items',
                                '{}'])

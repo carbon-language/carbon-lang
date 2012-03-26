@@ -620,32 +620,37 @@ public:
     //------------------------------------------------------------------
     /// Find types by name.
     ///
+    /// Type lookups in modules go through the SymbolVendor (which will
+    /// use one or more SymbolFile subclasses). The SymbolFile needs to
+    /// be able to lookup types by basename and not the fully qualified
+    /// typename. This allows the type accelerator tables to stay small,
+    /// even with heavily templatized C++. The type search will then
+    /// narrow down the search results. If "exact_match" is true, then
+    /// the type search will only match exact type name matches. If
+    /// "exact_match" is false, the type will match as long as the base
+    /// typename matches and as long as any immediate containing
+    /// namespaces/class scopes that are specified match. So to search
+    /// for a type "d" in "b::c", the name "b::c::d" can be specified
+    /// and it will match any class/namespace "b" which contains a
+    /// class/namespace "c" which contains type "d". We do this to
+    /// allow users to not always have to specify complete scoping on
+    /// all expressions, but it also allows for exact matching when
+    /// required.
+    ///
     /// @param[in] sc
     ///     A symbol context that scopes where to extract a type list
     ///     from.
     ///
-    /// @param[in] name
-    ///     The name of the type we are looking for.
+    /// @param[in] type_name
+    ///     The name of the type we are looking for that is a fully
+    ///     or partially qualfieid type name.
     ///
-    /// @param[in] namespace_decl
-    ///     If valid, a namespace to search in.
-    ///
-    /// @param[in] append
-    ///     If \b true, any matches will be appended to \a
-    ///     variable_list, else matches replace the contents of
-    ///     \a variable_list.
-    ///
-    /// @param[in] max_matches
-    ///     Allow the number of matches to be limited to \a
-    ///     max_matches. Specify UINT32_MAX to get all possible matches.
-    ///
-    /// @param[in] encoding
-    ///     Limit the search to specific types, or get all types if
-    ///     set to Type::invalid.
-    ///
-    /// @param[in] udt_name
-    ///     If the encoding is a user defined type, specify the name
-    ///     of the user defined type ("struct", "union", "class", etc).
+    /// @param[in] exact_match
+    ///     If \b true, \a type_name is fully qualifed and must match
+    ///     exactly. If \b false, \a type_name is a partially qualfied
+    ///     name where the leading namespaces or classes can be
+    ///     omitted to make finding types that a user may type
+    ///     easier.
     ///
     /// @param[out] type_list
     ///     A type list gets populated with any matches.
@@ -655,11 +660,39 @@ public:
     //------------------------------------------------------------------
     uint32_t
     FindTypes (const SymbolContext& sc,
-               const ConstString &name,
-               const ClangNamespaceDecl *namespace_decl,
-               bool append, 
-               uint32_t max_matches, 
+               const ConstString &type_name,
+               bool exact_match,
+               uint32_t max_matches,
                TypeList& types);
+
+    //------------------------------------------------------------------
+    /// Find types by name that are in a namespace. This function is
+    /// used by the expression parser when searches need to happen in
+    /// an exact namespace scope.
+    ///
+    /// @param[in] sc
+    ///     A symbol context that scopes where to extract a type list
+    ///     from.
+    ///
+    /// @param[in] type_name
+    ///     The name of a type within a namespace that should not include
+    ///     any qualifying namespaces (just a type basename).
+    ///
+    /// @param[in] namespace_decl
+    ///     The namespace declaration that this type must exist in.
+    ///
+    /// @param[out] type_list
+    ///     A type list gets populated with any matches.
+    ///
+    /// @return
+    ///     The number of matches added to \a type_list.
+    //------------------------------------------------------------------
+    uint32_t
+    FindTypesInNamespace (const SymbolContext& sc,
+                          const ConstString &type_name,
+                          const ClangNamespaceDecl *namespace_decl,
+                          uint32_t max_matches,
+                          TypeList& type_list);
 
     //------------------------------------------------------------------
     /// Get const accessor for the module architecture.

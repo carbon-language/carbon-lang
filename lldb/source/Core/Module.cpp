@@ -632,7 +632,12 @@ Module::FindFunctions (const RegularExpression& regex,
 }
 
 uint32_t
-Module::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
+Module::FindTypes_Impl (const SymbolContext& sc,
+                        const ConstString &name,
+                        const ClangNamespaceDecl *namespace_decl,
+                        bool append,
+                        uint32_t max_matches,
+                        TypeList& types)
 {
     Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     if (sc.module_sp.get() == NULL || sc.module_sp.get() == this)
@@ -644,46 +649,59 @@ Module::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, const 
     return 0;
 }
 
-// depending on implementation details, type lookup might fail because of
-// embedded spurious namespace:: prefixes. this call strips them, paying
-// attention to the fact that a type might have namespace'd type names as
-// arguments to templates, and those must not be stripped off
-static const char*
-StripTypeName(const char* name_cstr)
+uint32_t
+Module::FindTypesInNamespace (const SymbolContext& sc,
+                              const ConstString &type_name,
+                              const ClangNamespaceDecl *namespace_decl,
+                              uint32_t max_matches,
+                              TypeList& type_list)
 {
-    // Protect against null c string.
-    if (!name_cstr)
-        return name_cstr;
-    const char* skip_namespace = strstr(name_cstr, "::");
-    const char* template_arg_char = strchr(name_cstr, '<');
-    while (skip_namespace != NULL)
-    {
-        if (template_arg_char != NULL &&
-            skip_namespace > template_arg_char) // but namespace'd template arguments are still good to go
-            break;
-        name_cstr = skip_namespace+2;
-        skip_namespace = strstr(name_cstr, "::");
-    }
-    return name_cstr;
+    const bool append = true;
+    return FindTypes_Impl(sc, type_name, namespace_decl, append, max_matches, type_list);
 }
 
 uint32_t
-Module::FindTypes (const SymbolContext& sc,  const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types)
+Module::FindTypes (const SymbolContext& sc,
+                   const ConstString &name,
+                   bool exact_match,
+                   uint32_t max_matches,
+                   TypeList& types)
 {
-    uint32_t retval = FindTypes_Impl(sc, name, namespace_decl, append, max_matches, types);
-    
-    if (retval == 0)
+    uint32_t num_matches = 0;
+    const char *type_name_cstr = name.GetCString();
+    std::string type_scope;
+    std::string type_basename;
+    const bool append = true;
+    if (Type::GetTypeScopeAndBasename (type_name_cstr, type_scope, type_basename))
     {
-        const char *orig_name = name.GetCString();
-        const char *stripped = StripTypeName(orig_name);
-        // Only do this lookup if StripTypeName has stripped the name:
-        if (stripped != orig_name)
-           return FindTypes_Impl(sc, ConstString(stripped), namespace_decl, append, max_matches, types);
+        // Check if "name" starts with "::" which means the qualified type starts
+        // from the root namespace and implies and exact match. The typenames we
+        // get back from clang do not start with "::" so we need to strip this off
+        // in order to get the qualfied names to match
+
+        if (type_scope.size() >= 2 && type_scope[0] == ':' && type_scope[1] == ':')
+        {
+            type_scope.erase(0,2);
+            exact_match = true;
+        }
+        ConstString type_basename_const_str (type_basename.c_str());
+        if (FindTypes_Impl(sc, type_basename_const_str, NULL, append, max_matches, types))
+        {
+            types.RemoveMismatchedTypes (type_scope, type_basename, exact_match);
+            num_matches = types.GetSize();
+        }
         else
-            return 0;
+        {
+            types.Clear();
+        }
     }
     else
-        return retval;
+    {
+        // The type is not in a namespace/class scope, just search for it by basename
+        num_matches = FindTypes_Impl(sc, name, NULL, append, max_matches, types);
+    }
+    
+    return num_matches;
     
 }
 

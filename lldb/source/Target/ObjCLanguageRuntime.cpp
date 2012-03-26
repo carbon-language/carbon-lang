@@ -130,17 +130,15 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
         return TypeSP();
     
     const SymbolContext null_sc;
-    const ClangNamespaceDecl *null_namespace_decl = NULL;
-    const bool append = false;
+    const bool exact_match = true;
     const uint32_t max_matches = UINT32_MAX;
     TypeList types;
     
-    module_sp->FindTypes(null_sc, 
-                         name,
-                         null_namespace_decl,
-                         append, 
-                         max_matches, 
-                         types);
+    module_sp->FindTypes (null_sc,
+                          name,
+                          exact_match,
+                          max_matches,
+                          types);
     
     if (types.GetSize() == 1)
     {

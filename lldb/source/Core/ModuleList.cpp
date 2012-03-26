@@ -352,19 +352,16 @@ ModuleList::FindModule (const UUID &uuid)
 
 
 uint32_t
-ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+ModuleList::FindTypes2 (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, uint32_t max_matches, TypeList& types)
 {
     Mutex::Locker locker(m_modules_mutex);
-    
-    if (!append)
-        types.Clear();
 
     uint32_t total_matches = 0;
     collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
         if (sc.module_sp.get() == NULL || sc.module_sp.get() == (*pos).get())
-            total_matches += (*pos)->FindTypes (sc, name, NULL, true, max_matches, types);
+            total_matches += (*pos)->FindTypes (sc, name, name_is_fully_qualified, max_matches, types);
 
         if (total_matches >= max_matches)
             break;

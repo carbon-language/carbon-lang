@@ -51,6 +51,17 @@ public:
     lldb::TypeSP
     GetTypeAtIndex(uint32_t idx);
 
+    bool
+    RemoveTypeWithUID (lldb::user_id_t uid);
+
+    void
+    RemoveMismatchedTypes (const char *qualified_typename,
+                           bool exact_match);
+
+    void
+    RemoveMismatchedTypes (const std::string &type_scope,
+                           const std::string &type_basename,
+                           bool exact_match);
 private:
     typedef std::multimap<lldb::user_id_t, lldb::TypeSP> collection;
     typedef collection::iterator iterator;

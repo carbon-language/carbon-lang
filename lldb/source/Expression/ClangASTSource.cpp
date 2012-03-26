@@ -206,7 +206,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                 SymbolContext null_sc;
                 ConstString name(tag_decl->getName().str().c_str());
                 
-                i->first->FindTypes(null_sc, name, &i->second, true, UINT32_MAX, types);
+                i->first->FindTypesInNamespace(null_sc, name, &i->second, UINT32_MAX, types);
                 
                 for (uint32_t ti = 0, te = types.GetSize();
                      ti != te && !found;
@@ -244,7 +244,8 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
             
             ModuleList &module_list = m_target->GetImages();
 
-            module_list.FindTypes(null_sc, name, true, UINT32_MAX, types);
+            bool exact_match = false;
+            module_list.FindTypes2 (null_sc, name, exact_match, UINT32_MAX, types);
             
             for (uint32_t ti = 0, te = types.GetSize();
                  ti != te && !found;
@@ -592,11 +593,12 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
     {
         TypeList types;
         SymbolContext null_sc;
+        const bool exact_match = false;
       
         if (module_sp && namespace_decl)
-            module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
+            module_sp->FindTypesInNamespace(null_sc, name, &namespace_decl, 1, types);
         else 
-            m_target->GetImages().FindTypes(null_sc, name, true, 1, types);
+            m_target->GetImages().FindTypes2(null_sc, name, exact_match, 1, types);
         
         if (types.GetSize())
         {

@@ -425,12 +425,12 @@ SBModule::FindFirstType (const char *name_cstr)
         SymbolContext sc;
         TypeList type_list;
         uint32_t num_matches = 0;
+        const bool exact_match = false;
         ConstString name(name_cstr);
 
         num_matches = module_sp->FindTypes (sc,
                                             name,
-                                            NULL,
-                                            false,
+                                            exact_match,
                                             1,
                                             type_list);
         
@@ -451,13 +451,13 @@ SBModule::FindTypes (const char *type)
     {
         SymbolContext sc;
         TypeList type_list;
+        const bool exact_match = false;
         uint32_t num_matches = 0;
         ConstString name(type);
         
         num_matches = module_sp->FindTypes (sc,
                                             name,
-                                            NULL,
-                                            false,
+                                            exact_match,
                                             UINT32_MAX,
                                             type_list);
             

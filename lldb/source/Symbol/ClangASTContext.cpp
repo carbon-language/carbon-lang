@@ -1038,10 +1038,10 @@ ClangASTContext::CopyDecl (ASTContext *dst_ast,
 }
 
 bool
-ClangASTContext::AreTypesSame(ASTContext *ast,
-             clang_type_t type1,
-             clang_type_t type2,
-             bool ignore_qualifiers)
+ClangASTContext::AreTypesSame (ASTContext *ast,
+                               clang_type_t type1,
+                               clang_type_t type2,
+                               bool ignore_qualifiers)
 {
     QualType type1_qual = QualType::getFromOpaquePtr(type1);
     QualType type2_qual = QualType::getFromOpaquePtr(type2);
@@ -3797,7 +3797,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                             // Base classes should be a multiple of 8 bits in size
                             child_byte_offset = bit_offset/8;
                             
-                            child_name = ClangASTType::GetTypeNameForQualType(base_class->getType());
+                            child_name = ClangASTType::GetTypeNameForQualType(ast, base_class->getType());
 
                             uint64_t clang_type_info_bit_size = ast->getTypeSize(base_class->getType());
 
@@ -4662,7 +4662,7 @@ ClangASTContext::GetIndexOfChildWithName
                         if (omit_empty_base_classes && RecordHasFields(base_class_decl) == false)
                             continue;
 
-                        std::string base_class_type_name (ClangASTType::GetTypeNameForQualType(base_class->getType()));
+                        std::string base_class_type_name (ClangASTType::GetTypeNameForQualType(ast, base_class->getType()));
                         if (base_class_type_name.compare (name) == 0)
                             return child_idx;
                         ++child_idx;

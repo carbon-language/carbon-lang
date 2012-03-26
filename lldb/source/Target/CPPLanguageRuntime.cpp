@@ -23,11 +23,9 @@ public:
     {
         
         m_impl.Append(ConstString("std::basic_string<char, std::char_traits<char>, std::allocator<char> >").AsCString(), ConstString("basic_string<char>"));
-        m_impl.Append(ConstString("class std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >").AsCString(), ConstString("basic_string<char>"));
 
         // these two (with a prefixed std::) occur when c++stdlib string class occurs as a template argument in some STL container
         m_impl.Append(ConstString("std::basic_string<char, std::char_traits<char>, std::allocator<char> >").AsCString(), ConstString("std::basic_string<char>"));
-        m_impl.Append(ConstString("class std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >").AsCString(), ConstString("std::asic_string<char>"));
         
         m_impl.Sort();
     }

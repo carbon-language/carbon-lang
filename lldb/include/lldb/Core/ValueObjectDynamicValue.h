@@ -33,9 +33,6 @@ namespace lldb_private {
         virtual size_t
         GetByteSize();
         
-        virtual ConstString
-        GetTypeName();
-        
         virtual uint32_t
         CalculateNumChildren();
         

@@ -441,7 +441,8 @@ SBType::GetName()
     if (!IsValid())
         return "";
 
-    return ClangASTType::GetConstTypeName(m_opaque_sp->GetOpaqueQualType()).GetCString();
+    return ClangASTType::GetConstTypeName(m_opaque_sp->GetASTContext(),
+                                          m_opaque_sp->GetOpaqueQualType()).GetCString();
 }
 
 lldb::TypeClass

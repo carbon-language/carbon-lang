@@ -476,12 +476,6 @@ PlatformDarwin::LaunchProcess (ProcessLaunchInfo &launch_info)
     
     if (IsHost())
     {
-        if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
-        {
-            const bool is_localhost = true;
-            if (!launch_info.ConvertArgumentsForLaunchingInShell (error, is_localhost))
-                return error;
-        }
         error = Platform::LaunchProcess (launch_info);
     }
     else

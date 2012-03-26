@@ -147,6 +147,9 @@ public:
         return m_name;
     }
 
+    ConstString
+    GetQualifiedName ();
+
     void
     DumpValue(ExecutionContext *exe_ctx,
               Stream *s,
@@ -240,6 +243,12 @@ public:
     static int
     Compare(const Type &a, const Type &b);
 
+    // From a fully qualified typename, split the type into the type basename
+    // and the remaining type scope (namespaces/classes).
+    static bool
+    GetTypeScopeAndBasename (const char* name_cstr,
+                             std::string &scope,
+                             std::string &basename);
     void
     SetEncodingType (Type *encoding_type)
     {
@@ -491,7 +500,7 @@ public:
     {
         return m_name;
     }
-
+    
     uint64_t
     GetBitOffset () const
     {

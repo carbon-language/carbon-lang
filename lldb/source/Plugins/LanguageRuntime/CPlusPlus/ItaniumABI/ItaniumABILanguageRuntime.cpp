@@ -57,9 +57,6 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
     // Only a pointer or reference type can have a different dynamic and static type:
     if (CouldHaveDynamicValue (in_value))
     {
-        // FIXME: Can we get the Clang Type and ask it if the thing is really virtual?  That would avoid false positives,
-        // at the cost of not looking for the dynamic type of objects if DWARF->Clang gets it wrong.
-        
         // First job, pull out the address at 0 offset from the object.
         AddressType address_type;
         lldb::addr_t original_ptr = in_value.GetPointerValue(&address_type);
@@ -107,52 +104,76 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                     const char *name = symbol->GetMangled().GetDemangledName().AsCString();
                     if (strstr(name, vtable_demangled_prefix) == name)
                     {
+                        printf ("0x%16.16llx: static-type = '%s' has vtable symbol '%s'\n",
+                                original_ptr,
+                                in_value.GetTypeName().GetCString(),
+                                name);
                          // We are a C++ class, that's good.  Get the class name and look it up:
                         const char *class_name = name + strlen(vtable_demangled_prefix);
                         class_type_or_name.SetName (class_name);
+                        const bool exact_match = true;
                         TypeList class_types;
-                        uint32_t num_matches = target->GetImages().FindTypes (sc, 
-                                                                              ConstString(class_name),
-                                                                              true,
-                                                                              UINT32_MAX,
-                                                                              class_types);
+                        uint32_t num_matches = target->GetImages().FindTypes2 (sc, 
+                                                                               ConstString(class_name),
+                                                                               exact_match,
+                                                                               UINT32_MAX,
+                                                                               class_types);
+                        if (num_matches == 0)
+                        {
+                            printf ("0x%16.16llx: is not dynamic\n", original_ptr);
+                            return false;
+                        }
                         if (num_matches == 1)
                         {
+                            lldb::TypeSP type_sp(class_types.GetTypeAtIndex(0));
+
+                            printf ("0x%16.16llx: static-type = '%s' has single matching dynamic type: uid={0x%llx}, type-name='%s'\n",
+                                    original_ptr,
+                                    in_value.GetTypeName().AsCString(),
+                                    type_sp->GetID(),
+                                    type_sp->GetName().GetCString());
+
                             class_type_or_name.SetTypeSP(class_types.GetTypeAtIndex(0));
                         }
                         else if (num_matches > 1)
                         {
                             for (size_t i = 0; i < num_matches; i++)
                             {
-                                lldb::TypeSP this_type(class_types.GetTypeAtIndex(i));
-                                if (this_type)
+                                lldb::TypeSP type_sp(class_types.GetTypeAtIndex(i));
+                                if (type_sp)
                                 {
-                                    if (ClangASTContext::IsCXXClassType(this_type->GetClangFullType()))
-                                    {
-                                        // There can only be one type with a given name,
-                                        // so we've just found duplicate definitions, and this
-                                        // one will do as well as any other.
-                                        // We don't consider something to have a dynamic type if
-                                        // it is the same as the static type.  So compare against
-                                        // the value we were handed:
-                                        
-                                        clang::ASTContext *in_ast_ctx = in_value.GetClangAST ();
-                                        clang::ASTContext *this_ast_ctx = this_type->GetClangAST ();
-                                        if (in_ast_ctx != this_ast_ctx
-                                            || !ClangASTContext::AreTypesSame (in_ast_ctx, 
-                                                                               in_value.GetClangType(),
-                                                                               this_type->GetClangFullType()))
-                                        {
-                                            class_type_or_name.SetTypeSP (this_type);
-                                            return true;
-                                        }
-                                        return false;
-                                    }
+                                    printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types: uid={0x%llx}, type-name='%s'\n",
+                                            original_ptr,
+                                            in_value.GetTypeName().AsCString(),
+                                            type_sp->GetID(),
+                                            type_sp->GetName().GetCString());
+                                    
+
+//                                    if (ClangASTContext::IsCXXClassType(type_sp->GetClangFullType()))
+//                                    {
+//                                        // There can only be one type with a given name,
+//                                        // so we've just found duplicate definitions, and this
+//                                        // one will do as well as any other.
+//                                        // We don't consider something to have a dynamic type if
+//                                        // it is the same as the static type.  So compare against
+//                                        // the value we were handed:
+//                                        
+//                                        clang::ASTContext *in_ast_ctx = in_value.GetClangAST ();
+//                                        clang::ASTContext *this_ast_ctx = type_sp->GetClangAST ();
+//                                        if (in_ast_ctx != this_ast_ctx
+//                                            || !ClangASTContext::AreTypesSame (in_ast_ctx, 
+//                                                                               in_value.GetClangType(),
+//                                                                               type_sp->GetClangFullType()))
+//                                        {
+//                                            class_type_or_name.SetTypeSP (this_type);
+//                                            return true;
+//                                        }
+//                                        return false;
+//                                    }
                                 }
                             }
-                        }
-                        else
                             return false;
+                        }
                             
                         // The offset_to_top is two pointers above the address.
                         Address offset_to_top_address = address_point_address;
@@ -187,7 +208,6 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                 }
             }
         }
-        
     }
     
     return false;

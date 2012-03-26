@@ -519,11 +519,11 @@ protected:
         return false;
     }
     
-    bool Get(ValueObject& valobj,
-             clang::QualType type,
-             MapValueType& entry,
-             lldb::DynamicValueType use_dynamic,
-             uint32_t& reason)
+    bool Get (ValueObject& valobj,
+              clang::QualType type, // TODO: find out why "type" is passed in the type when it belongs to valobj? Can it ever differ?
+              MapValueType& entry,
+              lldb::DynamicValueType use_dynamic,
+              uint32_t& reason)
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         if (type.isNull())
@@ -541,7 +541,7 @@ protected:
                 log->Printf("type is NULL, returning");
             return false;
         }
-        ConstString typeName(ClangASTType::GetTypeNameForQualType(type).c_str());
+        ConstString typeName(ClangASTType::GetTypeNameForQualType(valobj.GetClangAST(), type).c_str());
         
         if (valobj.GetBitfieldBitSize() > 0)
         {

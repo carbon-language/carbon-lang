@@ -567,7 +567,19 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
     // Take care of the host case so that each subclass can just 
     // call this function to get the host functionality.
     if (IsHost())
+    {
+        if (::getenv ("LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY"))
+            launch_info.GetFlags().Set (eLaunchFlagLaunchInTTY);
+        
+        if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
+        {
+            const bool is_localhost = true;
+            if (!launch_info.ConvertArgumentsForLaunchingInShell (error, is_localhost))
+                return error;
+        }
+
         error = Host::LaunchProcess (launch_info);
+    }
     else
         error.SetErrorString ("base lldb_private::Platform class can't launch remote processes");
     return error;

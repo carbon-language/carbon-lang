@@ -138,7 +138,8 @@ SBValue::GetTypeName ()
     const char *name = NULL;
     lldb::ValueObjectSP value_sp(GetSP());
     if (value_sp)
-        name = value_sp->GetTypeName().GetCString();
+        //name = value_sp->GetTypeName().GetCString();
+        name = value_sp->GetQualifiedTypeName().GetCString();
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
