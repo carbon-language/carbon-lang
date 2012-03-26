@@ -455,7 +455,7 @@ static DebugLoc updateInlinedAtInfo(const DebugLoc &DL,
 /// fixupLineNumbers - Update inlined instructions' line numbers to 
 /// to encode location where these instructions are inlined.
 static void fixupLineNumbers(Function *Fn, Function::iterator FI,
-                              Instruction *TheCall) {
+                             Instruction *TheCall) {
   DebugLoc TheCallDL = TheCall->getDebugLoc();
   if (TheCallDL.isUnknown())
     return;
