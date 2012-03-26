@@ -621,17 +621,16 @@ namespace clang {
 namespace thread_safety {
 typedef llvm::SmallVector<PartialDiagnosticAt, 1> OptionalNotes;
 typedef std::pair<PartialDiagnosticAt, OptionalNotes> DelayedDiag;
-typedef llvm::SmallVector<DelayedDiag, 4> DiagList;
+typedef std::list<DelayedDiag> DiagList;
 
 struct SortDiagBySourceLocation {
-  Sema &S;
-  SortDiagBySourceLocation(Sema &S) : S(S) {}
+  SourceManager &SM;
+  SortDiagBySourceLocation(SourceManager &SM) : SM(SM) {}
 
   bool operator()(const DelayedDiag &left, const DelayedDiag &right) {
     // Although this call will be slow, this is only called when outputting
     // multiple warnings.
-    return S.getSourceManager().isBeforeInTranslationUnit(left.first.first,
-                                                          right.first.first);
+    return SM.isBeforeInTranslationUnit(left.first.first, right.first.first);
   }
 };
 
@@ -660,8 +659,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
   /// the lockset in deterministic order, so this function orders diagnostics
   /// and outputs them.
   void emitDiagnostics() {
-    SortDiagBySourceLocation SortDiagBySL(S);
-    sort(Warnings.begin(), Warnings.end(), SortDiagBySL);
+    Warnings.sort(SortDiagBySourceLocation(S.getSourceManager()));
     for (DiagList::iterator I = Warnings.begin(), E = Warnings.end();
          I != E; ++I) {
       S.Diag(I->first.first, I->first.second);
