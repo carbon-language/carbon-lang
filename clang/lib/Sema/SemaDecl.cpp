@@ -7780,7 +7780,9 @@ bool Sema::CheckEnumRedeclaration(SourceLocation EnumLoc, bool IsScoped,
   }
 
   if (IsFixed && Prev->isFixed()) {
-    if (!Context.hasSameUnqualifiedType(EnumUnderlyingTy,
+    if (!EnumUnderlyingTy->isDependentType() &&
+        !Prev->getIntegerType()->isDependentType() &&
+        !Context.hasSameUnqualifiedType(EnumUnderlyingTy,
                                         Prev->getIntegerType())) {
       Diag(EnumLoc, diag::err_enum_redeclare_type_mismatch)
         << EnumUnderlyingTy << Prev->getIntegerType();

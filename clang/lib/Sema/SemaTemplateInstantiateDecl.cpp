@@ -588,9 +588,20 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   if (SubstQualifier(D, Enum)) return 0;
   Owner->addDecl(Enum);
 
-  // FIXME: If this is a redeclaration:
-  // CheckEnumRedeclaration(Enum->getLocation(), Enum->isScoped(),
-  //                        Enum->getIntegerType(), Prev);
+  EnumDecl *Def = D->getDefinition();
+  if (Def && Def != D) {
+    // If this is an out-of-line definition of an enum member template, check
+    // that the underlying types match in the instantiation of both
+    // declarations.
+    if (TypeSourceInfo *TI = Def->getIntegerTypeSourceInfo()) {
+      SourceLocation UnderlyingLoc = TI->getTypeLoc().getBeginLoc();
+      QualType DefnUnderlying =
+        SemaRef.SubstType(TI->getType(), TemplateArgs,
+                          UnderlyingLoc, DeclarationName());
+      SemaRef.CheckEnumRedeclaration(Def->getLocation(), Def->isScoped(),
+                                     DefnUnderlying, Enum);
+    }
+  }
 
   if (D->getDeclContext()->isFunctionOrMethod())
     SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Enum);
@@ -600,8 +611,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   // not the definitions of scoped member enumerations.
   // FIXME: There appears to be no wording for what happens for an enum defined
   // within a block scope, but we treat that like a member of a class template.
-  if (!Enum->isScoped() && D->getDefinition())
-    InstantiateEnumDefinition(Enum, D);
+  if (!Enum->isScoped() && Def)
+    InstantiateEnumDefinition(Enum, Def);
 
   return Enum;
 }

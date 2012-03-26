@@ -195,8 +195,29 @@ namespace test8 {
     enum A : int; // expected-note {{here}}
     enum class B; // expected-note {{here}}
     enum class C : int; // expected-note {{here}}
+    enum class D : int; // expected-note {{here}}
   };
   template<typename T> enum S<T>::A { a }; // expected-error {{previously declared with fixed underlying type}}
   template<typename T> enum class S<T>::B : char { b }; // expected-error {{redeclared with different underlying}}
   template<typename T> enum S<T>::C : int { c }; // expected-error {{previously declared as scoped}}
+  template<typename T> enum class S<T>::D : char { d }; // expected-error {{redeclared with different underlying}}
+}
+
+namespace test9 {
+  template<typename T> struct S {
+    enum class ET : T; // expected-note 2{{here}}
+    enum class Eint : int; // expected-note 2{{here}}
+  };
+  template<> enum class S<int>::ET : int {};
+  template<> enum class S<char>::ET : short {}; // expected-error {{different underlying type}}
+  template<> enum class S<int>::Eint : short {}; // expected-error {{different underlying type}}
+  template<> enum class S<char>::Eint : int {};
+
+  template<typename T> enum class S<T>::ET : int {}; // expected-error {{different underlying type 'int' (was 'short')}}
+  template<typename T> enum class S<T>::Eint : T {}; // expected-error {{different underlying type 'short' (was 'int')}}
+
+  // The implicit instantiation of S<short> causes the implicit instantiation of
+  // all declarations of member enumerations, so is ill-formed, even though we
+  // never instantiate the definitions of S<short>::ET nor S<short>::Eint.
+  S<short> s; // expected-note {{in instantiation of}}
 }
