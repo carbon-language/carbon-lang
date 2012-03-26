@@ -1257,7 +1257,8 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     // this would be to implement a pointer escapes callback.
     if (FName == "CVPixelBufferCreateWithBytes" ||
         FName == "CGBitmapContextCreateWithData" ||
-        FName == "CVPixelBufferCreateWithPlanarBytes") {
+        FName == "CVPixelBufferCreateWithPlanarBytes" ||
+        FName == "OSAtomicEnqueue") {
       return false;
     }
 

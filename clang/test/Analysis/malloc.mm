@@ -106,3 +106,14 @@ void testBlocks() {
   myBlock(3);
 }
 
+// Test that we handle pointer escaping through OSAtomicEnqueue.
+typedef volatile struct {
+ void *opaque1;
+ long opaque2;
+} OSQueueHead;
+void OSAtomicEnqueue( OSQueueHead *__list, void *__new, size_t __offset) __attribute__((weak_import));
+static inline void radar11111210(OSQueueHead *pool) {
+    void *newItem = malloc(4);
+    OSAtomicEnqueue(pool, newItem, 4);
+}
+
