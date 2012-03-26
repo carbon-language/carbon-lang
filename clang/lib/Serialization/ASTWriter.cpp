@@ -365,7 +365,7 @@ void ASTTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
 }
 
 void ASTTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
-  Writer.AddDeclRef(T->getDecl(), Record);
+  Writer.AddDeclRef(T->getDecl()->getCanonicalDecl(), Record);
   Writer.AddTypeRef(T->getInjectedSpecializationType(), Record);
   Code = TYPE_INJECTED_CLASS_NAME;
 }

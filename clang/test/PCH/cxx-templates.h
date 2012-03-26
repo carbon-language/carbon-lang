@@ -205,3 +205,13 @@ namespace NonTypeTemplateParmContext {
   template<int inlineCapacity>
     inline bool equalIgnoringNullity(const Vector<char, inlineCapacity>& a, const String& b) { return false; }
 }
+
+// <rdar://problem/11112464>
+template< typename > class Foo;
+
+template< typename T >
+class Foo : protected T
+{
+ public:
+  Foo& operator=( const Foo& other );
+};

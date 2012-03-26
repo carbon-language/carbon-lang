@@ -62,3 +62,9 @@ namespace Test1 {
     }
   };
 }
+
+template< typename D >
+Foo< D >& Foo< D >::operator=( const Foo& other )
+{
+   return *this;
+}
