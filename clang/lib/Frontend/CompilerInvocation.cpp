@@ -110,38 +110,48 @@ static const char *
 // Serialization (to args)
 //===----------------------------------------------------------------------===//
 
-static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
-                               std::vector<std::string> &Res) {
+namespace {
+  /// ToArgsList - Helper class to create a list of std::strings.
+  class ToArgsList {
+    std::vector<std::string> &Res;
+  public:
+    explicit ToArgsList(std::vector<std::string> &Res) : Res(Res) {}
+
+    void push_back(StringRef Str) {
+      // Avoid creating a temporary string.
+      Res.push_back(std::string());
+      Res.back().assign(Str.data(), Str.size());
+    }
+
+    void push_back(StringRef Str1, StringRef Str2) {
+      push_back(Str1);
+      push_back(Str2);
+    }
+  };
+}
+
+static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts, ToArgsList &Res) {
   if (Opts.ShowCheckerHelp)
     Res.push_back("-analyzer-checker-help");
-  if (Opts.AnalysisStoreOpt != RegionStoreModel) {
-    Res.push_back("-analyzer-store");
-    Res.push_back(getAnalysisStoreName(Opts.AnalysisStoreOpt));
-  }
-  if (Opts.AnalysisConstraintsOpt != RangeConstraintsModel) {
-    Res.push_back("-analyzer-constraints");
-    Res.push_back(getAnalysisConstraintName(Opts.AnalysisConstraintsOpt));
-  }
-  if (Opts.AnalysisDiagOpt != PD_HTML) {
-    Res.push_back("-analyzer-output");
-    Res.push_back(getAnalysisDiagClientName(Opts.AnalysisDiagOpt));
-  }
-  if (Opts.AnalysisPurgeOpt != PurgeStmt) {
-    Res.push_back("-analyzer-purge");
-    Res.push_back(getAnalysisPurgeModeName(Opts.AnalysisPurgeOpt));
-  }
-  if (!Opts.AnalyzeSpecificFunction.empty()) {
-    Res.push_back("-analyze-function");
-    Res.push_back(Opts.AnalyzeSpecificFunction);
-  }
-  if (Opts.IPAMode != Inlining) {
-    Res.push_back("-analyzer-ipa");
-    Res.push_back(getAnalysisIPAModeName(Opts.IPAMode));
-  }
-  if (Opts.InliningMode != NoRedundancy) {
-    Res.push_back("-analyzer-inlining-mode");
-    Res.push_back(getAnalysisInliningModeName(Opts.InliningMode));
-  }
+  if (Opts.AnalysisStoreOpt != RegionStoreModel)
+    Res.push_back("-analyzer-store",
+                  getAnalysisStoreName(Opts.AnalysisStoreOpt));
+  if (Opts.AnalysisConstraintsOpt != RangeConstraintsModel)
+    Res.push_back("-analyzer-constraints",
+                  getAnalysisConstraintName(Opts.AnalysisConstraintsOpt));
+  if (Opts.AnalysisDiagOpt != PD_HTML)
+    Res.push_back("-analyzer-output",
+                  getAnalysisDiagClientName(Opts.AnalysisDiagOpt));
+  if (Opts.AnalysisPurgeOpt != PurgeStmt)
+    Res.push_back("-analyzer-purge",
+                  getAnalysisPurgeModeName(Opts.AnalysisPurgeOpt));
+  if (!Opts.AnalyzeSpecificFunction.empty())
+    Res.push_back("-analyze-function", Opts.AnalyzeSpecificFunction);
+  if (Opts.IPAMode != Inlining)
+    Res.push_back("-analyzer-ipa", getAnalysisIPAModeName(Opts.IPAMode));
+  if (Opts.InliningMode != NoRedundancy)
+    Res.push_back("-analyzer-inlining-mode",
+                  getAnalysisInliningModeName(Opts.InliningMode));
 
   if (Opts.AnalyzeAll)
     Res.push_back("-analyzer-opt-analyze-headers");
@@ -168,8 +178,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
   }
 }
 
-static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
-                              std::vector<std::string> &Res) {
+static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
   if (Opts.DebugInfo)
     Res.push_back("-g");
   if (Opts.DisableLLVMOpts)
@@ -178,14 +187,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-disable-red-zone");
   if (Opts.DisableTailCalls)
     Res.push_back("-mdisable-tail-calls");
-  if (!Opts.DebugCompilationDir.empty()) {
-    Res.push_back("-fdebug-compilation-dir");
-    Res.push_back(Opts.DebugCompilationDir);
-  }
-  if (!Opts.DwarfDebugFlags.empty()) {
-    Res.push_back("-dwarf-debug-flags");
-    Res.push_back(Opts.DwarfDebugFlags);
-  }
+  if (!Opts.DebugCompilationDir.empty())
+    Res.push_back("-fdebug-compilation-dir", Opts.DebugCompilationDir);
+  if (!Opts.DwarfDebugFlags.empty())
+    Res.push_back("-dwarf-debug-flags", Opts.DwarfDebugFlags);
   if (Opts.ObjCRuntimeHasARC)
     Res.push_back("-fobjc-runtime-has-arc");
   if (Opts.ObjCRuntimeHasTerminate)
@@ -211,10 +216,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Opts.OptimizeSize == 1 ? Res.push_back("-Os") : Res.push_back("-Oz");
   } else if (Opts.OptimizationLevel != 0)
     Res.push_back("-O" + llvm::utostr(Opts.OptimizationLevel));
-  if (!Opts.MainFileName.empty()) {
-    Res.push_back("-main-file-name");
-    Res.push_back(Opts.MainFileName);
-  }
+  if (!Opts.MainFileName.empty())
+    Res.push_back("-main-file-name", Opts.MainFileName);
   if (Opts.NoInfsFPMath)
     Res.push_back("-menable-no-infinities");
   if (Opts.NoNaNsFPMath)
@@ -234,10 +237,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-ffunction-sections");
   if (Opts.AsmVerbose)
     Res.push_back("-masm-verbose");
-  if (!Opts.CodeModel.empty()) {
-    Res.push_back("-mcode-model");
-    Res.push_back(Opts.CodeModel);
-  }
+  if (!Opts.CodeModel.empty())
+    Res.push_back("-mcode-model", Opts.CodeModel);
   if (Opts.CUDAIsDevice)
     Res.push_back("-fcuda-is-device");
   if (!Opts.CXAAtExit)
@@ -247,19 +248,14 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   if (Opts.ObjCAutoRefCountExceptions)
     Res.push_back("-fobjc-arc-eh");
   if (!Opts.DebugPass.empty()) {
-    Res.push_back("-mdebug-pass");
-    Res.push_back(Opts.DebugPass);
+    Res.push_back("-mdebug-pass", Opts.DebugPass);
   }
   if (Opts.DisableFPElim)
     Res.push_back("-mdisable-fp-elim");
-  if (!Opts.FloatABI.empty()) {
-    Res.push_back("-mfloat-abi");
-    Res.push_back(Opts.FloatABI);
-  }
-  if (!Opts.LimitFloatPrecision.empty()) {
-    Res.push_back("-mlimit-float-precision");
-    Res.push_back(Opts.LimitFloatPrecision);
-  }
+  if (!Opts.FloatABI.empty())
+    Res.push_back("-mfloat-abi", Opts.FloatABI);
+  if (!Opts.LimitFloatPrecision.empty())
+    Res.push_back("-mlimit-float-precision", Opts.LimitFloatPrecision);
   if (Opts.NoZeroInitializedInBSS)
     Res.push_back("-mno-zero-initialized-bss");
   switch (Opts.getObjCDispatchMethod()) {
@@ -272,10 +268,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-fobjc-dispatch-method=non-legacy");
     break;
   }
-  if (Opts.NumRegisterParameters) {
-    Res.push_back("-mregparm");
-    Res.push_back(llvm::utostr(Opts.NumRegisterParameters));
-  }
+  if (Opts.NumRegisterParameters)
+    Res.push_back("-mregparm", llvm::utostr(Opts.NumRegisterParameters));
   if (Opts.NoGlobalMerge)
     Res.push_back("-mno-global-merge");
   if (Opts.NoExecStack)
@@ -292,42 +286,32 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-msoft-float");
   if (Opts.UnwindTables)
     Res.push_back("-munwind-tables");
-  if (Opts.RelocationModel != "pic") {
-    Res.push_back("-mrelocation-model");
-    Res.push_back(Opts.RelocationModel);
-  }
+  if (Opts.RelocationModel != "pic")
+    Res.push_back("-mrelocation-model", Opts.RelocationModel);
   if (!Opts.VerifyModule)
     Res.push_back("-disable-llvm-verifier");
-  for (unsigned i = 0, e = Opts.BackendOptions.size(); i != e; ++i) {
-    Res.push_back("-backend-option");
-    Res.push_back(Opts.BackendOptions[i]);
-  }
+  for (unsigned i = 0, e = Opts.BackendOptions.size(); i != e; ++i)
+    Res.push_back("-backend-option", Opts.BackendOptions[i]);
 }
 
 static void DependencyOutputOptsToArgs(const DependencyOutputOptions &Opts,
-                                       std::vector<std::string> &Res) {
+                                       ToArgsList &Res) {
   if (Opts.IncludeSystemHeaders)
     Res.push_back("-sys-header-deps");
   if (Opts.ShowHeaderIncludes)
     Res.push_back("-H");
-  if (!Opts.HeaderIncludeOutputFile.empty()) {
-    Res.push_back("-header-include-file");
-    Res.push_back(Opts.HeaderIncludeOutputFile);
-  }
+  if (!Opts.HeaderIncludeOutputFile.empty())
+    Res.push_back("-header-include-file", Opts.HeaderIncludeOutputFile);
   if (Opts.UsePhonyTargets)
     Res.push_back("-MP");
-  if (!Opts.OutputFile.empty()) {
-    Res.push_back("-dependency-file");
-    Res.push_back(Opts.OutputFile);
-  }
-  for (unsigned i = 0, e = Opts.Targets.size(); i != e; ++i) {
-    Res.push_back("-MT");
-    Res.push_back(Opts.Targets[i]);
-  }
+  if (!Opts.OutputFile.empty())
+    Res.push_back("-dependency-file", Opts.OutputFile);
+  for (unsigned i = 0, e = Opts.Targets.size(); i != e; ++i)
+    Res.push_back("-MT", Opts.Targets[i]);
 }
 
 static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
-                                 std::vector<std::string> &Res) {
+                                 ToArgsList &Res) {
   if (Opts.IgnoreWarnings)
     Res.push_back("-w");
   if (Opts.NoRewriteMacros)
@@ -366,42 +350,29 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
   case DiagnosticOptions::Vi:    
     Res.push_back("-fdiagnostics-format=vi");    break;
   }
-  if (Opts.ErrorLimit) {
-    Res.push_back("-ferror-limit");
-    Res.push_back(llvm::utostr(Opts.ErrorLimit));
-  }
-  if (!Opts.DiagnosticLogFile.empty()) {
-    Res.push_back("-diagnostic-log-file");
-    Res.push_back(Opts.DiagnosticLogFile);
-  }
+  if (Opts.ErrorLimit)
+    Res.push_back("-ferror-limit", llvm::utostr(Opts.ErrorLimit));
+  if (!Opts.DiagnosticLogFile.empty())
+    Res.push_back("-diagnostic-log-file", Opts.DiagnosticLogFile);
   if (Opts.MacroBacktraceLimit
-                        != DiagnosticOptions::DefaultMacroBacktraceLimit) {
-    Res.push_back("-fmacro-backtrace-limit");
-    Res.push_back(llvm::utostr(Opts.MacroBacktraceLimit));
-  }
+                        != DiagnosticOptions::DefaultMacroBacktraceLimit)
+    Res.push_back("-fmacro-backtrace-limit",
+                  llvm::utostr(Opts.MacroBacktraceLimit));
   if (Opts.TemplateBacktraceLimit
-                        != DiagnosticOptions::DefaultTemplateBacktraceLimit) {
-    Res.push_back("-ftemplate-backtrace-limit");
-    Res.push_back(llvm::utostr(Opts.TemplateBacktraceLimit));
-  }
+                        != DiagnosticOptions::DefaultTemplateBacktraceLimit)
+    Res.push_back("-ftemplate-backtrace-limit",
+                  llvm::utostr(Opts.TemplateBacktraceLimit));
   if (Opts.ConstexprBacktraceLimit
-                        != DiagnosticOptions::DefaultConstexprBacktraceLimit) {
-    Res.push_back("-fconstexpr-backtrace-limit");
-    Res.push_back(llvm::utostr(Opts.ConstexprBacktraceLimit));
-  }
+                        != DiagnosticOptions::DefaultConstexprBacktraceLimit)
+    Res.push_back("-fconstexpr-backtrace-limit",
+                  llvm::utostr(Opts.ConstexprBacktraceLimit));
 
-  if (Opts.TabStop != DiagnosticOptions::DefaultTabStop) {
-    Res.push_back("-ftabstop");
-    Res.push_back(llvm::utostr(Opts.TabStop));
-  }
-  if (Opts.MessageLength) {
-    Res.push_back("-fmessage-length");
-    Res.push_back(llvm::utostr(Opts.MessageLength));
-  }
-  if (!Opts.DumpBuildInformation.empty()) {
-    Res.push_back("-dump-build-information");
-    Res.push_back(Opts.DumpBuildInformation);
-  }
+  if (Opts.TabStop != DiagnosticOptions::DefaultTabStop)
+    Res.push_back("-ftabstop", llvm::utostr(Opts.TabStop));
+  if (Opts.MessageLength)
+    Res.push_back("-fmessage-length", llvm::utostr(Opts.MessageLength));
+  if (!Opts.DumpBuildInformation.empty())
+    Res.push_back("-dump-build-information", Opts.DumpBuildInformation);
   for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i)
     Res.push_back("-W" + Opts.Warnings[i]);
 }
@@ -465,16 +436,12 @@ static const char *getActionName(frontend::ActionKind Kind) {
   llvm_unreachable("Unexpected language kind!");
 }
 
-static void FileSystemOptsToArgs(const FileSystemOptions &Opts,
-                                 std::vector<std::string> &Res) {
-  if (!Opts.WorkingDir.empty()) {
-    Res.push_back("-working-directory");
-    Res.push_back(Opts.WorkingDir);
-  }
+static void FileSystemOptsToArgs(const FileSystemOptions &Opts, ToArgsList &Res){
+  if (!Opts.WorkingDir.empty())
+    Res.push_back("-working-directory", Opts.WorkingDir);
 }
 
-static void FrontendOptsToArgs(const FrontendOptions &Opts,
-                               std::vector<std::string> &Res) {
+static void FrontendOptsToArgs(const FrontendOptions &Opts, ToArgsList &Res) {
   if (Opts.DisableFree)
     Res.push_back("-disable-free");
   if (Opts.RelocatablePCH)
@@ -514,14 +481,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-arcmt-migrate");
     break;
   }
-  if (!Opts.MTMigrateDir.empty()) {
-    Res.push_back("-mt-migrate-directory");
-    Res.push_back(Opts.MTMigrateDir);
-  }
-  if (!Opts.ARCMTMigrateReportOut.empty()) {
-    Res.push_back("-arcmt-migrate-report-output");
-    Res.push_back(Opts.ARCMTMigrateReportOut);
-  }
+  if (!Opts.MTMigrateDir.empty())
+    Res.push_back("-mt-migrate-directory", Opts.MTMigrateDir);
+  if (!Opts.ARCMTMigrateReportOut.empty())
+    Res.push_back("-arcmt-migrate-report-output", Opts.ARCMTMigrateReportOut);
   if (Opts.ARCMTMigrateEmitARCErrors)
     Res.push_back("-arcmt-migrate-emit-errors");
 
@@ -535,62 +498,46 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     if (FrontendOptions::getInputKindForExtension(Opts.Inputs[i].File) !=
         Opts.Inputs[i].Kind)
       NeedLang = true;
-  if (NeedLang) {
-    Res.push_back("-x");
-    Res.push_back(getInputKindName(Opts.Inputs[0].Kind));
-  }
+  if (NeedLang)
+    Res.push_back("-x", getInputKindName(Opts.Inputs[0].Kind));
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i) {
     assert((!NeedLang || Opts.Inputs[i].Kind == Opts.Inputs[0].Kind) &&
            "Unable to represent this input vector!");
     Res.push_back(Opts.Inputs[i].File);
   }
 
-  if (!Opts.OutputFile.empty()) {
-    Res.push_back("-o");
-    Res.push_back(Opts.OutputFile);
-  }
-  if (!Opts.CodeCompletionAt.FileName.empty()) {
-    Res.push_back("-code-completion-at");
-    Res.push_back(Opts.CodeCompletionAt.FileName + ":" +
+  if (!Opts.OutputFile.empty())
+    Res.push_back("-o", Opts.OutputFile);
+  if (!Opts.CodeCompletionAt.FileName.empty())
+    Res.push_back("-code-completion-at",
+                  Opts.CodeCompletionAt.FileName + ":" +
                   llvm::utostr(Opts.CodeCompletionAt.Line) + ":" +
                   llvm::utostr(Opts.CodeCompletionAt.Column));
-  }
   if (Opts.ProgramAction != frontend::PluginAction)
     Res.push_back(getActionName(Opts.ProgramAction));
   if (!Opts.ActionName.empty()) {
-    Res.push_back("-plugin");
-    Res.push_back(Opts.ActionName);
-    for(unsigned i = 0, e = Opts.PluginArgs.size(); i != e; ++i) {
-      Res.push_back("-plugin-arg-" + Opts.ActionName);
-      Res.push_back(Opts.PluginArgs[i]);
-    }
+    Res.push_back("-plugin", Opts.ActionName);
+    for(unsigned i = 0, e = Opts.PluginArgs.size(); i != e; ++i)
+      Res.push_back("-plugin-arg-" + Opts.ActionName, Opts.PluginArgs[i]);
   }
-  for (unsigned i = 0, e = Opts.Plugins.size(); i != e; ++i) {
-    Res.push_back("-load");
-    Res.push_back(Opts.Plugins[i]);
-  }
+  for (unsigned i = 0, e = Opts.Plugins.size(); i != e; ++i)
+    Res.push_back("-load", Opts.Plugins[i]);
   for (unsigned i = 0, e = Opts.AddPluginActions.size(); i != e; ++i) {
-    Res.push_back("-add-plugin");
-    Res.push_back(Opts.AddPluginActions[i]);
-    for(unsigned ai = 0, ae = Opts.AddPluginArgs.size(); ai != ae; ++ai) {
-      Res.push_back("-plugin-arg-" + Opts.AddPluginActions[i]);
-      Res.push_back(Opts.AddPluginArgs[i][ai]);
-    }
+    Res.push_back("-add-plugin", Opts.AddPluginActions[i]);
+    for(unsigned ai = 0, ae = Opts.AddPluginArgs.size(); ai != ae; ++ai)
+      Res.push_back("-plugin-arg-" + Opts.AddPluginActions[i],
+                    Opts.AddPluginArgs[i][ai]);
   }
-  for (unsigned i = 0, e = Opts.ASTMergeFiles.size(); i != e; ++i) {
-    Res.push_back("-ast-merge");
-    Res.push_back(Opts.ASTMergeFiles[i]);
-  }
-  for (unsigned i = 0, e = Opts.LLVMArgs.size(); i != e; ++i) {
-    Res.push_back("-mllvm");
-    Res.push_back(Opts.LLVMArgs[i]);
-  }
+  for (unsigned i = 0, e = Opts.ASTMergeFiles.size(); i != e; ++i)
+    Res.push_back("-ast-merge", Opts.ASTMergeFiles[i]);
+  for (unsigned i = 0, e = Opts.LLVMArgs.size(); i != e; ++i)
+    Res.push_back("-mllvm", Opts.LLVMArgs[i]);
   if (!Opts.OverrideRecordLayoutsFile.empty())
     Res.push_back("-foverride-record-layout=" + Opts.OverrideRecordLayoutsFile);
 }
 
 static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
-                                   std::vector<std::string> &Res) {
+                                   ToArgsList &Res) {
   if (Opts.Sysroot != "/") {
     Res.push_back("-isysroot");
     Res.push_back(Opts.Sysroot);
@@ -657,14 +604,10 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back(E.Path);
   }
 
-  if (!Opts.ResourceDir.empty()) {
-    Res.push_back("-resource-dir");
-    Res.push_back(Opts.ResourceDir);
-  }
-  if (!Opts.ModuleCachePath.empty()) {
-    Res.push_back("-fmodule-cache-path");
-    Res.push_back(Opts.ModuleCachePath);
-  }
+  if (!Opts.ResourceDir.empty())
+    Res.push_back("-resource-dir", Opts.ResourceDir);
+  if (!Opts.ModuleCachePath.empty())
+    Res.push_back("-fmodule-cache-path", Opts.ModuleCachePath);
   if (!Opts.UseStandardSystemIncludes)
     Res.push_back("-nostdsysteminc");
   if (!Opts.UseStandardCXXIncludes)
@@ -675,8 +618,7 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back("-v");
 }
 
-static void LangOptsToArgs(const LangOptions &Opts,
-                           std::vector<std::string> &Res) {
+static void LangOptsToArgs(const LangOptions &Opts, ToArgsList &Res) {
   LangOptions DefaultLangOpts;
 
   // FIXME: Need to set -std to get all the implicit options.
@@ -771,10 +713,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   case LangOptions::SOB_Defined:   Res.push_back("-fwrapv"); break;
   case LangOptions::SOB_Trapping:
     Res.push_back("-ftrapv");
-    if (!Opts.OverflowHandler.empty()) {
-      Res.push_back("-ftrapv-handler");
-      Res.push_back(Opts.OverflowHandler);
-    }
+    if (!Opts.OverflowHandler.empty())
+      Res.push_back("-ftrapv-handler", Opts.OverflowHandler);
     break;
   }
   if (Opts.HeinousExtensions)
@@ -793,10 +733,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fdump-vtable-layouts");
   if (Opts.NoBitFieldTypeAlign)
     Res.push_back("-fno-bitfield-type-alignment");
-  if (Opts.PICLevel) {
-    Res.push_back("-pic-level");
-    Res.push_back(llvm::utostr(Opts.PICLevel));
-  }
+  if (Opts.PICLevel)
+    Res.push_back("-pic-level", llvm::utostr(Opts.PICLevel));
   if (Opts.ObjCGCBitmapPrint)
     Res.push_back("-print-ivar-layout");
   if (Opts.NoConstantCFStrings)
@@ -840,22 +778,14 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.InlineVisibilityHidden)
     Res.push_back("-fvisibility-inlines-hidden");
 
-  if (Opts.getStackProtector() != 0) {
-    Res.push_back("-stack-protector");
-    Res.push_back(llvm::utostr(Opts.getStackProtector()));
-  }
-  if (Opts.InstantiationDepth != DefaultLangOpts.InstantiationDepth) {
-    Res.push_back("-ftemplate-depth");
-    Res.push_back(llvm::utostr(Opts.InstantiationDepth));
-  }
-  if (Opts.ConstexprCallDepth != DefaultLangOpts.ConstexprCallDepth) {
-    Res.push_back("-fconstexpr-depth");
-    Res.push_back(llvm::utostr(Opts.ConstexprCallDepth));
-  }
-  if (!Opts.ObjCConstantStringClass.empty()) {
-    Res.push_back("-fconstant-string-class");
-    Res.push_back(Opts.ObjCConstantStringClass);
-  }
+  if (Opts.getStackProtector() != 0)
+    Res.push_back("-stack-protector", llvm::utostr(Opts.getStackProtector()));
+  if (Opts.InstantiationDepth != DefaultLangOpts.InstantiationDepth)
+    Res.push_back("-ftemplate-depth", llvm::utostr(Opts.InstantiationDepth));
+  if (Opts.ConstexprCallDepth != DefaultLangOpts.ConstexprCallDepth)
+    Res.push_back("-fconstexpr-depth", llvm::utostr(Opts.ConstexprCallDepth));
+  if (!Opts.ObjCConstantStringClass.empty())
+    Res.push_back("-fconstant-string-class", Opts.ObjCConstantStringClass);
   if (Opts.FakeAddressSpaceMap)
     Res.push_back("-ffake-address-space-map");
   if (Opts.ParseUnknownAnytype)
@@ -877,52 +807,41 @@ static void LangOptsToArgs(const LangOptions &Opts,
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
-                                   std::vector<std::string> &Res) {
+                                   ToArgsList &Res) {
   for (unsigned i = 0, e = Opts.Macros.size(); i != e; ++i)
     Res.push_back(std::string(Opts.Macros[i].second ? "-U" : "-D") +
                   Opts.Macros[i].first);
   for (unsigned i = 0, e = Opts.Includes.size(); i != e; ++i) {
     // FIXME: We need to avoid reincluding the implicit PCH and PTH includes.
-    Res.push_back("-include");
-    Res.push_back(Opts.Includes[i]);
+    Res.push_back("-include", Opts.Includes[i]);
   }
-  for (unsigned i = 0, e = Opts.MacroIncludes.size(); i != e; ++i) {
-    Res.push_back("-imacros");
-    Res.push_back(Opts.MacroIncludes[i]);
-  }
+  for (unsigned i = 0, e = Opts.MacroIncludes.size(); i != e; ++i)
+    Res.push_back("-imacros", Opts.MacroIncludes[i]);
   if (!Opts.UsePredefines)
     Res.push_back("-undef");
   if (Opts.DetailedRecord)
     Res.push_back("-detailed-preprocessing-record");
-  if (!Opts.ImplicitPCHInclude.empty()) {
-    Res.push_back("-include-pch");
-    Res.push_back(Opts.ImplicitPCHInclude);
-  }
-  if (!Opts.ImplicitPTHInclude.empty()) {
-    Res.push_back("-include-pth");
-    Res.push_back(Opts.ImplicitPTHInclude);
-  }
+  if (!Opts.ImplicitPCHInclude.empty())
+    Res.push_back("-include-pch", Opts.ImplicitPCHInclude);
+  if (!Opts.ImplicitPTHInclude.empty())
+    Res.push_back("-include-pth", Opts.ImplicitPTHInclude);
   if (!Opts.TokenCache.empty()) {
-    if (Opts.ImplicitPTHInclude.empty()) {
-      Res.push_back("-token-cache");
-      Res.push_back(Opts.TokenCache);
-    } else
+    if (Opts.ImplicitPTHInclude.empty())
+      Res.push_back("-token-cache", Opts.TokenCache);
+    else
       assert(Opts.ImplicitPTHInclude == Opts.TokenCache &&
              "Unsupported option combination!");
   }
-  for (unsigned i = 0, e = Opts.ChainedIncludes.size(); i != e; ++i) {
-    Res.push_back("-chain-include");
-    Res.push_back(Opts.ChainedIncludes[i]);
-  }
+  for (unsigned i = 0, e = Opts.ChainedIncludes.size(); i != e; ++i)
+    Res.push_back("-chain-include", Opts.ChainedIncludes[i]);
   for (unsigned i = 0, e = Opts.RemappedFiles.size(); i != e; ++i) {
-    Res.push_back("-remap-file");
-    Res.push_back(Opts.RemappedFiles[i].first + ";" +
-                  Opts.RemappedFiles[i].second);
+    Res.push_back("-remap-file", Opts.RemappedFiles[i].first + ";" +
+                                 Opts.RemappedFiles[i].second);
   }
 }
 
 static void PreprocessorOutputOptsToArgs(const PreprocessorOutputOptions &Opts,
-                                         std::vector<std::string> &Res) {
+                                         ToArgsList &Res) {
   if (!Opts.ShowCPP && !Opts.ShowMacros)
     llvm::report_fatal_error("Invalid option combination!");
 
@@ -940,43 +859,34 @@ static void PreprocessorOutputOptsToArgs(const PreprocessorOutputOptions &Opts,
 }
 
 static void TargetOptsToArgs(const TargetOptions &Opts,
-                             std::vector<std::string> &Res) {
+                             ToArgsList &Res) {
   Res.push_back("-triple");
   Res.push_back(Opts.Triple);
-  if (!Opts.CPU.empty()) {
-    Res.push_back("-target-cpu");
-    Res.push_back(Opts.CPU);
-  }
-  if (!Opts.ABI.empty()) {
-    Res.push_back("-target-abi");
-    Res.push_back(Opts.ABI);
-  }
-  if (!Opts.LinkerVersion.empty()) {
-    Res.push_back("-target-linker-version");
-    Res.push_back(Opts.LinkerVersion);
-  }
-  if (!Opts.CXXABI.empty()) {
-    Res.push_back("-cxx-abi");
-    Res.push_back(Opts.CXXABI);
-  }
-  for (unsigned i = 0, e = Opts.Features.size(); i != e; ++i) {
-    Res.push_back("-target-feature");
-    Res.push_back(Opts.Features[i]);
-  }
+  if (!Opts.CPU.empty())
+    Res.push_back("-target-cpu", Opts.CPU);
+  if (!Opts.ABI.empty())
+    Res.push_back("-target-abi", Opts.ABI);
+  if (!Opts.LinkerVersion.empty())
+    Res.push_back("-target-linker-version", Opts.LinkerVersion);
+  if (!Opts.CXXABI.empty())
+    Res.push_back("-cxx-abi", Opts.CXXABI);
+  for (unsigned i = 0, e = Opts.Features.size(); i != e; ++i)
+    Res.push_back("-target-feature", Opts.Features[i]);
 }
 
 void CompilerInvocation::toArgs(std::vector<std::string> &Res) {
-  AnalyzerOptsToArgs(getAnalyzerOpts(), Res);
-  CodeGenOptsToArgs(getCodeGenOpts(), Res);
-  DependencyOutputOptsToArgs(getDependencyOutputOpts(), Res);
-  DiagnosticOptsToArgs(getDiagnosticOpts(), Res);
-  FileSystemOptsToArgs(getFileSystemOpts(), Res);
-  FrontendOptsToArgs(getFrontendOpts(), Res);
-  HeaderSearchOptsToArgs(getHeaderSearchOpts(), Res);
-  LangOptsToArgs(*getLangOpts(), Res);
-  PreprocessorOptsToArgs(getPreprocessorOpts(), Res);
-  PreprocessorOutputOptsToArgs(getPreprocessorOutputOpts(), Res);
-  TargetOptsToArgs(getTargetOpts(), Res);
+  ToArgsList List(Res);
+  AnalyzerOptsToArgs(getAnalyzerOpts(), List);
+  CodeGenOptsToArgs(getCodeGenOpts(), List);
+  DependencyOutputOptsToArgs(getDependencyOutputOpts(), List);
+  DiagnosticOptsToArgs(getDiagnosticOpts(), List);
+  FileSystemOptsToArgs(getFileSystemOpts(), List);
+  FrontendOptsToArgs(getFrontendOpts(), List);
+  HeaderSearchOptsToArgs(getHeaderSearchOpts(), List);
+  LangOptsToArgs(*getLangOpts(), List);
+  PreprocessorOptsToArgs(getPreprocessorOpts(), List);
+  PreprocessorOutputOptsToArgs(getPreprocessorOutputOpts(), List);
+  TargetOptsToArgs(getTargetOpts(), List);
 }
 
 //===----------------------------------------------------------------------===//
