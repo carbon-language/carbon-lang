@@ -16,3 +16,7 @@
 // CHECK-ARM: "-fno-builtin"
 // CHECK-ARM: "-fno-rtti"
 // CHECK-ARM: "-fno-common"
+
+// RUN: %clang -target x86_64-apple-darwin10 \
+// RUN:   -Werror -fno-builtin -fno-exceptions -fno-common -fno-rtti \
+// RUN:   -mkernel -fsyntax-only %s
