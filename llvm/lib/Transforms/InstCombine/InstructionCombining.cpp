@@ -915,10 +915,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
   Value *StrippedPtr = PtrOp->stripPointerCasts();
-  PointerType *StrippedPtrTy = dyn_cast<PointerType>(StrippedPtr->getType());
+
   // We do not handle pointer-vector geps here
   if (!StrippedPtr)
     return 0;
+
+  PointerType *StrippedPtrTy = dyn_cast<PointerType>(StrippedPtr->getType());
 
   if (StrippedPtr != PtrOp &&
     StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
