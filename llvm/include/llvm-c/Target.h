@@ -58,16 +58,19 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 #define LLVM_ASM_PRINTER(TargetName) \
   void LLVMInitialize##TargetName##AsmPrinter();
 #include "llvm/Config/AsmPrinters.def"
+#undef LLVM_ASM_PRINTER  /* Explicit undef to make SWIG happier */
 
 /* Declare all of the available assembly parser initialization functions. */
 #define LLVM_ASM_PARSER(TargetName) \
   void LLVMInitialize##TargetName##AsmParser();
 #include "llvm/Config/AsmParsers.def"
+#undef LLVM_ASM_PARSER  /* Explicit undef to make SWIG happier */
 
 /* Declare all of the available disassembler initialization functions. */
 #define LLVM_DISASSEMBLER(TargetName) \
   void LLVMInitialize##TargetName##Disassembler();
 #include "llvm/Config/Disassemblers.def"
+#undef LLVM_DISASSEMBLER  /* Explicit undef to make SWIG happier */
   
 /** LLVMInitializeAllTargetInfos - The main program should call this function if
     it wants access to all available targets that LLVM is configured to
