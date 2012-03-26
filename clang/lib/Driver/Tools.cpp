@@ -2401,6 +2401,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Args.hasArg(options::OPT_fapple_kext)) {
     if (!Args.hasArg(options::OPT_fcommon))
       CmdArgs.push_back("-fno-common");
+    Args.ClaimAllArgs(options::OPT_fno_common);
   }
 
   // -fcommon is default, only pass non-default.
