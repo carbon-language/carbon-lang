@@ -2076,6 +2076,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fapple-kext");
     if (!Args.hasArg(options::OPT_fbuiltin))
       CmdArgs.push_back("-fno-builtin");
+    Args.ClaimAllArgs(options::OPT_fno_builtin);
   }
   // -fbuiltin is default.
   else if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
