@@ -27,11 +27,14 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Function.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
@@ -61,6 +64,7 @@ struct ThreadSanitizer : public FunctionPass {
   static const size_t kNumberOfAccessSizes = 5;
   Value *TsanRead[kNumberOfAccessSizes];
   Value *TsanWrite[kNumberOfAccessSizes];
+  Value *TsanVptrUpdate;
 };
 }  // namespace
 
@@ -105,6 +109,9 @@ bool ThreadSanitizer::doInitialization(Module &M) {
     TsanWrite[i] = M.getOrInsertFunction(WriteName, IRB.getVoidTy(),
                                          IRB.getInt8PtrTy(), NULL);
   }
+  TsanVptrUpdate = M.getOrInsertFunction("__tsan_vptr_update", IRB.getVoidTy(),
+                                         IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+                                         NULL);
   return true;
 }
 
@@ -151,8 +158,19 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
       IRBuilder<> IRBRet(RetVec[i]);
       IRBRet.CreateCall(TsanFuncExit);
     }
+    Res = true;
   }
   return Res;
+}
+
+static bool isVtableAccess(Instruction *I) {
+  if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa)) {
+    if (Tag->getNumOperands() < 1) return false;
+    if (MDString *Tag1 = dyn_cast<MDString>(Tag->getOperand(0))) {
+      if (Tag1->getString() == "vtable pointer") return true;
+    }
+  }
+  return false;
 }
 
 bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
@@ -169,6 +187,13 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
       TypeSize != 32 && TypeSize != 64 && TypeSize != 128) {
     // Ignore all unusual sizes.
     return false;
+  }
+  if (IsWrite && isVtableAccess(I)) {
+    Value *StoredValue = cast<StoreInst>(I)->getValueOperand();
+    IRB.CreateCall2(TsanVptrUpdate,
+                    IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
+                    IRB.CreatePointerCast(StoredValue, IRB.getInt8PtrTy()));
+    return true;
   }
   size_t Idx = CountTrailingZeros_32(TypeSize / 8);
   assert(Idx < kNumberOfAccessSizes);
