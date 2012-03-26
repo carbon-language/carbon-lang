@@ -4619,6 +4619,10 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
       Indexes.push_back(0);
     }
 
+  // Loop-invariant loads may be a byproduct of loop optimization. Skip them.
+  if (!VarIdx)
+    return getCouldNotCompute();
+
   // Okay, we know we have a (load (gep GV, 0, X)) comparison with a constant.
   // Check to see if X is a loop variant variable value now.
   const SCEV *Idx = getSCEV(VarIdx);
@@ -6845,7 +6849,7 @@ ScalarEvolution::computeBlockDisposition(const SCEV *S, const BasicBlock *BB) {
     return ProperlyDominatesBlock;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-  default: 
+  default:
     llvm_unreachable("Unknown SCEV kind!");
   }
 }
