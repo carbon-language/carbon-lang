@@ -31,10 +31,12 @@
 #include "llvm/Support/IRBuilder.h"
 using namespace llvm;
 
-bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI, bool InsertLifetime) {
+bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI,
+                          bool InsertLifetime) {
   return InlineFunction(CallSite(CI), IFI, InsertLifetime);
 }
-bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI, bool InsertLifetime) {
+bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
+                          bool InsertLifetime) {
   return InlineFunction(CallSite(II), IFI, InsertLifetime);
 }
 
@@ -434,8 +436,8 @@ static bool hasLifetimeMarkers(AllocaInst *AI) {
   return false;
 }
 
-/// updateInlinedAtInfo - Helper function used by fixupLineNumbers to recursively
-/// update InlinedAtEntry of a DebugLoc.
+/// updateInlinedAtInfo - Helper function used by fixupLineNumbers to
+/// recursively update InlinedAtEntry of a DebugLoc.
 static DebugLoc updateInlinedAtInfo(const DebugLoc &DL, 
                                     const DebugLoc &InlinedAtDL,
                                     LLVMContext &Ctx) {
@@ -445,7 +447,7 @@ static DebugLoc updateInlinedAtInfo(const DebugLoc &DL,
     return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(Ctx),
                          NewInlinedAtDL.getAsMDNode(Ctx));
   }
-                                             
+
   return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(Ctx),
                        InlinedAtDL.getAsMDNode(Ctx));
 }
@@ -484,7 +486,8 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
 /// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
 /// exists in the instruction stream.  Similarly this will inline a recursive
 /// function by one level.
-bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI, bool InsertLifetime) {
+bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
+                          bool InsertLifetime) {
   Instruction *TheCall = CS.getInstruction();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
