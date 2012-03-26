@@ -89,6 +89,7 @@ size_t strnlen(const char *s, size_t maxlen);
 # endif
 
 // stdlib.h
+long strtol(const char *nptr, char **endptr, int base);  // NOLINT
 # if ASAN_INTERCEPT_STRTOLL
 long long strtoll(const char *nptr, char **endptr, int base);  // NOLINT
 # endif
@@ -659,15 +660,24 @@ INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
 }
 #endif  // ASAN_INTERCEPT_STRNLEN
 
-# if ASAN_INTERCEPT_STRTOLL
-// Returns pointer to first character of "nptr" after skipping
-// leading blanks and optional +/- sign.
-static char *SkipBlanksAndSign(const char *nptr) {
-  while (IsSpace(*nptr)) nptr++;
-  if (*nptr == '+' || *nptr == '-') nptr++;
-  return (char*)nptr;
+static inline bool IsValidStrtolBase(int base) {
+  return (base == 0) || (2 <= base && base <= 36);
 }
 
+static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
+  CHECK(endptr != NULL);
+  if (nptr == *endptr) {
+    // No digits were found at strtol call, we need to find out the last
+    // symbol accessed by strtoll on our own.
+    // We get this symbol by skipping leading blanks and optional +/- sign.
+    while (IsSpace(*nptr)) nptr++;
+    if (*nptr == '+' || *nptr == '-') nptr++;
+    *endptr = (char*)nptr;
+  }
+  CHECK(*endptr >= nptr);
+}
+
+# if ASAN_INTERCEPT_STRTOLL
 INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
             char **endptr, int base) {
   ENSURE_ASAN_INITED();
@@ -682,18 +692,31 @@ INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
   // If base has unsupported value, strtoll can exit with EINVAL
   // without reading any characters. So do additional checks only
   // if base is valid.
-  if (base == 0 || (2 <= base && base <= 36)) {
-    if (real_endptr == nptr) {
-      // No digits were found, find out the last symbol read by strtoll
-      // on our own.
-      real_endptr = SkipBlanksAndSign(nptr);
-    }
-    CHECK(real_endptr >= nptr);
+  if (IsValidStrtolBase(base)) {
+    FixRealStrtolEndptr(nptr, &real_endptr);
     ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
   }
   return result;
 }
 #endif  // ASAN_INTERCEPT_STRTOLL
+
+INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
+            char **endptr, int base) {
+  ENSURE_ASAN_INITED();
+  if (!FLAG_replace_str) {
+    return REAL(strtol)(nptr, endptr, base);
+  }
+  char *real_endptr;
+  long result = REAL(strtol)(nptr, &real_endptr, base);  // NOLINT
+  if (endptr != NULL) {
+    *endptr = real_endptr;
+  }
+  if (IsValidStrtolBase(base)) {
+    FixRealStrtolEndptr(nptr, &real_endptr);
+    ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
+  }
+  return result;
+}
 
 #if defined(_WIN32)
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
@@ -754,6 +777,7 @@ void InitializeAsanInterceptors() {
   CHECK(INTERCEPT_FUNCTION(strnlen));
 #endif
 
+  CHECK(INTERCEPT_FUNCTION(strtol));
 #if ASAN_INTERCEPT_STRTOLL
   CHECK(INTERCEPT_FUNCTION(strtoll));
 #endif

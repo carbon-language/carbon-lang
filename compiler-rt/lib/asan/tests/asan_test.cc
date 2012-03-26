@@ -1349,44 +1349,59 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   free(str);
 }
 
-TEST(AddressSanitizer, StrtollOOBTest) {
+void CallStrtol(const char *nptr, char **endptr, int base) {
+  Ident(strtol(nptr, endptr, base));
+}
+void CallStrtoll(const char *nptr, char **endptr, int base) {
+  Ident(strtoll(nptr, endptr, base));
+}
+typedef void(*PointerToCallStrtol)(const char*, char**, int);
+
+void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   char *array = MallocAndMemsetString(3);
   char *endptr = NULL;
   array[0] = '1';
   array[1] = '2';
   array[2] = '3';
   // Invalid pointer to the string.
-  EXPECT_DEATH(strtoll(array + 3, NULL, 0), RightOOBErrorMessage(0));
-  EXPECT_DEATH(strtoll(array - 1, NULL, 0), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Strtol(array + 3, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array - 1, NULL, 0), LeftOOBErrorMessage(1));
   // Buffer overflow if there is no terminating null (depends on base).
-  Ident(strtoll(array, &endptr, 3));
+  Strtol(array, &endptr, 3);
   EXPECT_EQ(array + 2, endptr);
-  EXPECT_DEATH(strtoll(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
   array[2] = 'z';
-  Ident(strtoll(array, &endptr, 35));
+  Strtol(array, &endptr, 35);
   EXPECT_EQ(array + 2, endptr);
-  EXPECT_DEATH(strtoll(array, NULL, 36), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 36), RightOOBErrorMessage(0));
   // Add terminating zero to get rid of overflow.
   array[2] = '\0';
-  Ident(strtoll(array, NULL, 36));
+  Strtol(array, NULL, 36);
   // Don't check for overflow if base is invalid.
-  Ident(strtoll(array - 1, NULL, -1));
-  Ident(strtoll(array + 3, NULL, 1));
+  Strtol(array - 1, NULL, -1);
+  Strtol(array + 3, NULL, 1);
   // Sometimes we need to detect overflow if no digits are found.
   array[0] = array[1] = array[2] = ' ';
-  EXPECT_DEATH(strtoll(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
   array[2] = '+';
-  EXPECT_DEATH(strtoll(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
   array[2] = '-';
-  EXPECT_DEATH(strtoll(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
   array[1] = '+';
-  Ident(strtoll(array, NULL, 0));
+  Strtol(array, NULL, 0);
   array[1] = array[2] = 'z';
-  Ident(strtoll(array, &endptr, 0));
+  Strtol(array, &endptr, 0);
   EXPECT_EQ(array, endptr);
-  Ident(strtoll(array + 2, NULL, 0));
+  Strtol(array + 2, NULL, 0);
   EXPECT_EQ(array, endptr);
   delete array;
+}
+
+TEST(AddressSanitizer, StrtollOOBTest) {
+  RunStrtolOOBTest(&CallStrtoll);
+}
+TEST(AddressSanitizer, StrtolOOBTest) {
+  RunStrtolOOBTest(&CallStrtol);
 }
 
 // At the moment we instrument memcpy/memove/memset calls at compile time so we
