@@ -13,7 +13,7 @@ void CallFoo(A *a) {
   a->foo();
 }
 
-// CHECK: %vtable = load {{.*}} !tbaa !0
+// CHECK: %{{.*}} = load {{.*}} !tbaa !0
 // CHECK: store {{.*}} !tbaa !0
 // CHECK: !0 = metadata !{metadata !"vtable pointer", metadata !1}
 // CHECK: !1 = metadata !{metadata !"Simple C/C++ TBAA", null}
