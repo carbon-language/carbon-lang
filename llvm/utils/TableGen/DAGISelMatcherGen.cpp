@@ -217,7 +217,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
 
   DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue());
   if (DI == 0) {
-    errs() << "Unknown leaf kind: " << *DI << "\n";
+    errs() << "Unknown leaf kind: " << *N << "\n";
     abort();
   }
 
