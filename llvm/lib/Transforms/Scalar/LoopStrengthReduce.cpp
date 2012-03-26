@@ -2441,7 +2441,7 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
     if (!isCompatibleIVType(PrevIV, NextIV))
       continue;
 
-    // A phi nodes terminates a chain.
+    // A phi node terminates a chain.
     if (isa<PHINode>(UserInst)
         && isa<PHINode>(IVChainVec[ChainIdx].back().UserInst))
       continue;
