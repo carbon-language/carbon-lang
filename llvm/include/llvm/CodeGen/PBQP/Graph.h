@@ -350,6 +350,43 @@ namespace PBQP {
       numNodes = numEdges = 0;
     }
 
+    /// \brief Dump a graph to an output stream.
+    template <typename OStream>
+    void dump(OStream &os) {
+      os << getNumNodes() << " " << getNumEdges() << "\n";
+
+      for (NodeItr nodeItr = nodesBegin(), nodeEnd = nodesEnd();
+           nodeItr != nodeEnd; ++nodeItr) {
+        const Vector& v = getNodeCosts(nodeItr);
+        os << "\n" << v.getLength() << "\n";
+        assert(v.getLength() != 0 && "Empty vector in graph.");
+        os << v[0];
+        for (unsigned i = 1; i < v.getLength(); ++i) {
+          os << " " << v[i];
+        }
+        os << "\n";
+      }
+
+      for (EdgeItr edgeItr = edgesBegin(), edgeEnd = edgesEnd();
+           edgeItr != edgeEnd; ++edgeItr) {
+        unsigned n1 = std::distance(nodesBegin(), getEdgeNode1(edgeItr));
+        unsigned n2 = std::distance(nodesBegin(), getEdgeNode2(edgeItr));
+        assert(n1 != n2 && "PBQP graphs shound not have self-edges.");
+        const Matrix& m = getEdgeCosts(edgeItr);
+        os << "\n" << n1 << " " << n2 << "\n"
+           << m.getRows() << " " << m.getCols() << "\n";
+        assert(m.getRows() != 0 && "No rows in matrix.");
+        assert(m.getCols() != 0 && "No cols in matrix.");
+        for (unsigned i = 0; i < m.getRows(); ++i) {
+          os << m[i][0];
+          for (unsigned j = 1; j < m.getCols(); ++j) {
+            os << " " << m[i][j];
+          }
+          os << "\n";
+        }
+      }
+    }
+
     /// \brief Print a representation of this graph in DOT format.
     /// @param os Output stream to print on.
     template <typename OStream>

@@ -36,6 +36,7 @@
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "RegisterCoalescer.h"
+#include "llvm/Module.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -56,6 +57,7 @@
 #include <limits>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <vector>
 
 using namespace llvm;
@@ -68,6 +70,13 @@ static cl::opt<bool>
 pbqpCoalescing("pbqp-coalescing",
                 cl::desc("Attempt coalescing during PBQP register allocation."),
                 cl::init(false), cl::Hidden);
+
+#ifndef NDEBUG
+static cl::opt<bool>
+pbqpDumpGraphs("pbqp-dump-graphs",
+               cl::desc("Dump graphs for each function/round in the compilation unit."),
+               cl::init(false), cl::Hidden);
+#endif
 
 namespace {
 
@@ -667,6 +676,12 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   // Find the vreg intervals in need of allocation.
   findVRegIntervalsToAlloc();
 
+  const Function* func = mf->getFunction();
+  std::string fqn =
+    func->getParent()->getModuleIdentifier() + "." +
+    func->getName().str();
+  (void)fqn;
+
   // If there are non-empty intervals allocate them using pbqp.
   if (!vregsToAlloc.empty()) {
 
@@ -678,6 +693,20 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 
       std::auto_ptr<PBQPRAProblem> problem =
         builder->build(mf, lis, loopInfo, vregsToAlloc);
+
+#ifndef NDEBUG
+      if (pbqpDumpGraphs) {
+        std::ostringstream rs;
+        rs << round;
+        std::string graphFileName(fqn + "." + rs.str() + ".pbqpgraph");
+        std::string tmp;
+        raw_fd_ostream os(graphFileName.c_str(), tmp);
+        DEBUG(dbgs() << "Dumping graph for round " << round << " to \""
+              << graphFileName << "\"\n");
+        problem->getGraph().dump(os);
+      }
+#endif
+
       PBQP::Solution solution =
         PBQP::HeuristicSolver<PBQP::Heuristics::Briggs>::solve(
           problem->getGraph());
