@@ -20,23 +20,8 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   # Add the llvm header path.
   include_directories(${LLVM_INSTALL_ROOT}/include/)
 
-  # Get the system librarys that will link into LLVM.
-  function(get_system_libs return_var)
-    # Returns in `return_var' a list of system libraries used by LLVM.
-    if( NOT MSVC )
-      if( MINGW )
-        set(system_libs ${system_libs} imagehlp psapi)
-      elseif( CMAKE_HOST_UNIX )
-        if( HAVE_LIBDL )
-          set(system_libs ${system_libs} ${CMAKE_DL_LIBS})
-        endif()
-        if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD )
-          set(system_libs ${system_libs} pthread)
-        endif()
-      endif( MINGW )
-    endif( NOT MSVC )
-    set(${return_var} ${system_libs} PARENT_SCOPE)
-  endfunction(get_system_libs)
+  # Load the configuration of the installed llvm.
+  include(${LLVM_INSTALL_ROOT}/share/llvm/cmake/LLVMConfig.cmake)
 
   # Now set the header paths.
   execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --includedir
