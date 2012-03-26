@@ -2497,13 +2497,14 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
   for (Value::use_iterator UseIter = IVOper->use_begin(),
          UseEnd = IVOper->use_end(); UseIter != UseEnd; ++UseIter) {
     Instruction *OtherUse = dyn_cast<Instruction>(*UseIter);
+    if (!OtherUse || OtherUse == UserInst)
+      continue;
     if (SE.isSCEVable(OtherUse->getType())
         && !isa<SCEVUnknown>(SE.getSCEV(OtherUse))
         && IU.isIVUserOrOperand(OtherUse)) {
       continue;
     }
-    if (OtherUse && OtherUse != UserInst)
-      NearUsers.insert(OtherUse);
+    NearUsers.insert(OtherUse);
   }
 
   // Since this user is part of the chain, it's no longer considered a use
