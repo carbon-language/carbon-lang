@@ -1362,13 +1362,8 @@ static bool CollectBSwapParts(Value *V, int OverallLeftShift, uint32_t ByteMask,
   // part of the value (e.g. byte 3) then it must be shifted right.  If from the
   // low part, it must be shifted left.
   unsigned DestByteNo = InputByteNo + OverallLeftShift;
-  if (InputByteNo < ByteValues.size()/2) {
-    if (ByteValues.size()-1-DestByteNo != InputByteNo)
-      return true;
-  } else {
-    if (ByteValues.size()-1-DestByteNo != InputByteNo)
-      return true;
-  }
+  if (ByteValues.size()-1-DestByteNo != InputByteNo)
+    return true;
   
   // If the destination byte value is already defined, the values are or'd
   // together, which isn't a bswap (unless it's an or of the same bits).
