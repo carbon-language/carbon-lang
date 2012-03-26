@@ -90,14 +90,12 @@ public:
   StmtIteratorImpl(const VariableArrayType *t) : StmtIteratorBase(t) {}
 
   DERIVED& operator++() {
-    if (inDecl() || inDeclGroup()) {
-      if (getVAPtr()) NextVA();
-      else NextDecl();
-    }
-    else if (inSizeOfTypeVA())
+    if (inStmt())
+      ++stmt;
+    else if (getVAPtr())
       NextVA();
     else
-      ++stmt;
+      NextDecl();
 
     return static_cast<DERIVED&>(*this);
   }
