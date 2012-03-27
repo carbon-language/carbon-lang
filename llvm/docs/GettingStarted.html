@@ -155,8 +155,8 @@ also be a good place to start.</p>
     <li><tt>cd <i>where-you-want-to-build-llvm</i></tt></li>
     <li><tt>mkdir build</tt> (for building without polluting the source dir)</li>
     <li><tt>cd build</tt></li>
-    <li><tt>../llvm/configure [options]</tt></li>
-    Some common options:
+    <li><tt>../llvm/configure [options]</tt>
+    <br>Some common options:
 
       <ul>
         <li><tt>--prefix=<i>directory</i></tt> -
@@ -174,7 +174,7 @@ also be a good place to start.</p>
         <li><tt>--enable-assertions</tt> -
         Compile with assertion checks enabled (default is YES).</li>
       </ul>
-
+   </li>
     <li><tt>make [-j]</tt> - The -j specifies the number of jobs (commands) to 
     run simultaneously.  This builds both LLVM and Clang for Debug+Asserts mode.
     The --enabled-optimized configure option is used to specify a Release build.</li>
@@ -192,7 +192,6 @@ also be a good place to start.</p>
 
   </ul>
   </li>
-  </ol>
 
 </ol>
 

@@ -2567,7 +2567,7 @@ block but not delete it, you can use the <tt>removeFromParent()</tt> method.</p>
 
 <div>
 
-<p><i>Replacing individual instructions</i></p>
+<h5><i>Replacing individual instructions</i></h5>
 
 <p>Including "<a href="/doxygen/BasicBlockUtils_8h-source.html">llvm/Transforms/Utils/BasicBlockUtils.h</a>"
 permits use of two very useful replace functions: <tt>ReplaceInstWithValue</tt>
@@ -2575,6 +2575,7 @@ and <tt>ReplaceInstWithInst</tt>.</p>
 
 <h5><a name="schanges_deleting">Deleting <tt>Instruction</tt>s</a></h5>
 
+<div>
 <ul>
   <li><tt>ReplaceInstWithValue</tt>
 
@@ -2611,7 +2612,9 @@ ReplaceInstWithInst(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
 </pre></div></li>
 </ul>
 
-<p><i>Replacing multiple uses of <tt>User</tt>s and <tt>Value</tt>s</i></p>
+</div>
+
+<h5><i>Replacing multiple uses of <tt>User</tt>s and <tt>Value</tt>s</i></h5>
 
 <p>You can use <tt>Value::replaceAllUsesWith</tt> and
 <tt>User::replaceUsesOfWith</tt> to change more than one use at a time.  See the
@@ -3305,13 +3308,12 @@ helpful member functions that try to make common operations easy.</p>
 <div>
 
 <ul>
-  <li><tt>Module::Module(std::string name = "")</tt></li>
-</ul>
+  <li><tt>Module::Module(std::string name = "")</tt>
 
-<p>Constructing a <a href="#Module">Module</a> is easy. You can optionally
+  <p>Constructing a <a href="#Module">Module</a> is easy. You can optionally
 provide a name for it (probably based on the name of the translation unit).</p>
+  </li>
 
-<ul>
   <li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
     <tt>Module::const_iterator</tt> - Typedef for const_iterator.<br>
 

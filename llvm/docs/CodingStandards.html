@@ -465,7 +465,7 @@ common use case of LLVM as a library linked into a larger application.</p>
 <p>Consider the use of LLVM as a JIT linked into another application (perhaps
 for <a href="http://llvm.org/Users.html">OpenGL, custom languages</a>,
 <a href="http://llvm.org/devmtg/2010-11/Gritz-OpenShadingLang.pdf">shaders in
-movies</a>, etc</a>).  Due to the design of static constructors, they must be
+movies</a>, etc).  Due to the design of static constructors, they must be
 executed at startup time of the entire application, regardless of whether or
 how LLVM is used in that larger application.  There are two problems with
 this:</p>
