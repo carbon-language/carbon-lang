@@ -3200,6 +3200,7 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
        e = Ivars.end(); i != e; i++) {
     ObjCIvarDecl *IvarDecl = (*i);
     Result += "\n";
+    Result += "extern \"C\" ";
     if (LangOpts.MicrosoftExt)
       Result += "__declspec(allocate(\".objc_ivar$B\")) ";
     if (LangOpts.MicrosoftExt && 
@@ -3209,7 +3210,7 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
       if (CDecl->getImplementation())
         Result += "__declspec(dllexport) ";
     }
-    Result += "extern unsigned long ";
+    Result += "unsigned long ";
     WriteInternalIvarName(CDecl, IvarDecl, Result);
     Result += ";";
   }
@@ -5420,7 +5421,7 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   Result += "\tconst struct _prop_list_t *properties;\n";
   Result += "};\n";
   
-  Result += "__declspec(dllimport) extern struct objc_cache _objc_empty_cache;\n";
+  Result += "extern \"C\" __declspec(dllimport) struct objc_cache _objc_empty_cache;\n";
   
   meta_data_declared = true;
 }
@@ -5660,26 +5661,29 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   if (metaclass && rootClass) {
     // Need to handle a case of use of forward declaration.
     Result += "\n";
+    Result += "extern \"C\" ";
     if (CDecl->getImplementation())
       Result += "__declspec(dllexport) ";
-    Result += "extern struct _class_t OBJC_CLASS_$_";
+    Result += "struct _class_t OBJC_CLASS_$_";
     Result += CDecl->getNameAsString();
     Result += ";\n";
   }
   // Also, for possibility of 'super' metadata class not having been defined yet.
   if (!rootClass) {
     Result += "\n";
+    Result += "extern \"C\" ";
     if (CDecl->getSuperClass()->getImplementation())
       Result += "__declspec(dllexport) ";
-    Result += "extern struct _class_t "; 
+    Result += "struct _class_t "; 
     Result += VarName;
     Result += CDecl->getSuperClass()->getNameAsString();
     Result += ";\n";
     
     if (metaclass) {
+      Result += "extern \"C\" ";
       if (RootClass->getImplementation())
         Result += "__declspec(dllexport) ";
-      Result += "extern struct _class_t "; 
+      Result += "struct _class_t "; 
       Result += VarName;
       Result += RootClass->getNameAsString();
       Result += ";\n";
@@ -5790,10 +5794,11 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
   // must declare an extern class object in case this class is not implemented 
   // in this TU.
   Result += "\n";
+  Result += "extern \"C\" ";
   if (ClassDecl->getImplementation())
     Result += "__declspec(dllexport) ";
   
-  Result += "extern struct _class_t ";
+  Result += "struct _class_t ";
   Result += "OBJC_CLASS_$_"; Result += ClassName;
   Result += ";\n";
   

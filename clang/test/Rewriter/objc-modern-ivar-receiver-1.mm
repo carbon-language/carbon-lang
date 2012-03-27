@@ -28,4 +28,4 @@ void *sel_registerName(const char *);
 // CHECK: id obj = (*(id *)((char *)newInv + OBJC_IVAR_$_NSInvocation$_container));
 // rdar://11076938
 // CHECK: struct _class_t *superclass;
-// CHECK: __declspec(dllimport) extern struct objc_cache _objc_empty_cache;
+// CHECK: extern "C" __declspec(dllimport) struct objc_cache _objc_empty_cache;
