@@ -7991,8 +7991,8 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
 
       if ((LLD->hasAnyUseOfValue(1) &&
            (LLD->isPredecessorOf(CondLHS) || LLD->isPredecessorOf(CondRHS))) ||
-          (LLD->hasAnyUseOfValue(1) &&
-           (LLD->isPredecessorOf(CondLHS) || LLD->isPredecessorOf(CondRHS))))
+          (RLD->hasAnyUseOfValue(1) &&
+           (RLD->isPredecessorOf(CondLHS) || RLD->isPredecessorOf(CondRHS))))
         return false;
 
       Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
