@@ -1137,10 +1137,8 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
       std::string Name = PDecl->getNameAsString();
       QualType QT = PDecl->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (convertBlockPointerToFunctionPointer(QT))
-        QT.getAsStringInternal(Name, Context->getPrintingPolicy());
-      else
-        PDecl->getType().getAsStringInternal(Name, Context->getPrintingPolicy());
+      (void)convertBlockPointerToFunctionPointer(QT);
+      QT.getAsStringInternal(Name, Context->getPrintingPolicy());
       ResultStr += Name;
     }
   }
@@ -3355,10 +3353,8 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
       if (AI != BD->param_begin()) S += ", ";
       ParamStr = (*AI)->getNameAsString();
       QualType QT = (*AI)->getType();
-      if (convertBlockPointerToFunctionPointer(QT))
-        QT.getAsStringInternal(ParamStr, Context->getPrintingPolicy());
-      else
-        QT.getAsStringInternal(ParamStr, Context->getPrintingPolicy());      
+      (void)convertBlockPointerToFunctionPointer(QT);
+      QT.getAsStringInternal(ParamStr, Context->getPrintingPolicy());
       S += ParamStr;
     }
     if (FT->isVariadic()) {
