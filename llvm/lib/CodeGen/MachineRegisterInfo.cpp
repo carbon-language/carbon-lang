@@ -18,7 +18,7 @@
 using namespace llvm;
 
 MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI)
-  : TRI(&TRI), IsSSA(true) {
+  : TRI(&TRI), IsSSA(true), TracksLiveness(true) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
   UsedPhysRegs.resize(TRI.getNumRegs());

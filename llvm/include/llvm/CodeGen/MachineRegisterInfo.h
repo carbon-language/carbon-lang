@@ -32,6 +32,11 @@ class MachineRegisterInfo {
   /// registers have a single def.
   bool IsSSA;
 
+  /// TracksLiveness - True while register liveness is being tracked accurately.
+  /// Basic block live-in lists, kill flags, and implicit defs may not be
+  /// accurate when after this flag is cleared.
+  bool TracksLiveness;
+
   /// VRegInfo - Information we keep for each virtual register.
   ///
   /// Each element in this list contains the register class of the vreg and the
@@ -102,6 +107,23 @@ public:
 
   // leaveSSA - Indicates that the machine function is no longer in SSA form.
   void leaveSSA() { IsSSA = false; }
+
+  /// tracksLiveness - Returns true when tracking register liveness accurately.
+  ///
+  /// While this flag is true, register liveness information in basic block
+  /// live-in lists and machine instruction operands is accurate. This means it
+  /// can be used to change the code in ways that affect the values in
+  /// registers, for example by the register scavenger.
+  ///
+  /// When this flag is false, liveness is no longer reliable.
+  bool tracksLiveness() const { return TracksLiveness; }
+
+  /// invalidateLiveness - Indicates that register liveness is no longer being
+  /// tracked accurately.
+  ///
+  /// This should be called by late passes that invalidate the liveness
+  /// information.
+  void invalidateLiveness() { TracksLiveness = false; }
 
   //===--------------------------------------------------------------------===//
   // Register Info

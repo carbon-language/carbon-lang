@@ -83,6 +83,11 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   assert((NumPhysRegs == 0 || NumPhysRegs == TRI->getNumRegs()) &&
          "Target changed?");
 
+  // It is not possible to use the register scavenger after late optimization
+  // passes that don't preserve accurate liveness information.
+  assert(MRI->tracksLiveness() &&
+         "Cannot use register scavenger with inaccurate liveness");
+
   // Self-initialize.
   if (!MBB) {
     NumPhysRegs = TRI->getNumRegs();
