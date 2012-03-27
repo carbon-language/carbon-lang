@@ -615,7 +615,8 @@ ObjectFileELF::GetSectionList()
             const ELFSectionHeader &header = *I;
 
             ConstString name(m_shstr_data.PeekCStr(header.sh_name));
-            uint64_t size = header.sh_type == SHT_NOBITS ? 0 : header.sh_size;
+            const uint64_t file_size = header.sh_type == SHT_NOBITS ? 0 : header.sh_size;
+            const uint64_t vm_size = header.sh_flags & SHF_ALLOC ? header.sh_size : 0;
 
             static ConstString g_sect_name_text (".text");
             static ConstString g_sect_name_data (".data");
@@ -658,9 +659,9 @@ ObjectFileELF::GetSectionList()
                 name,               // Section name.
                 sect_type,          // Section type.
                 header.sh_addr,     // VM address.
-                header.sh_size,     // VM size in bytes of this section.
+                vm_size,            // VM size in bytes of this section.
                 header.sh_offset,   // Offset of this section in the file.
-                size,               // Size of the section as found in the file.
+                file_size,          // Size of the section as found in the file.
                 header.sh_flags));  // Flags for this section.
 
             m_sections_ap->AddSection(section);
@@ -781,11 +782,11 @@ ParseSymbols(Symtab *symtab,
         const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
         bool is_global = symbol.getBinding() == STB_GLOBAL;
         uint32_t flags = symbol.st_other << 8 | symbol.st_info;
-
+        bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
         Symbol dc_symbol(
             i + start_id,       // ID is the original symbol table index.
             symbol_name,        // Symbol name.
-            false,              // Is the symbol name mangled?
+            is_mangled,         // Is the symbol name mangled?
             symbol_type,        // Type of this symbol
             is_global,          // Is this globally visible?
             false,              // Is this symbol debug info?
@@ -976,11 +977,12 @@ ParsePLTRelocations(Symtab *symbol_table,
             break;
 
         const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
+        bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
 
         Symbol jump_symbol(
             i + start_id,    // Symbol table index
             symbol_name,     // symbol name.
-            false,           // is the symbol name mangled?
+            is_mangled,      // is the symbol name mangled?
             eSymbolTypeTrampoline, // Type of this symbol
             false,           // Is this globally visible?
             false,           // Is this symbol debug info?

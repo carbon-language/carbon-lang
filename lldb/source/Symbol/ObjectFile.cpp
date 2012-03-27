@@ -449,7 +449,7 @@ ObjectFile::MemoryMapSectionData (const Section *section, DataExtractor& section
     else
     {
         // The object file now contains a full mmap'ed copy of the object file data, so just use this
-        return GetData(section->GetFileOffset(), section->GetByteSize(), section_data);
+        return GetData(section->GetFileOffset(), section->GetFileSize(), section_data);
     }
     section_data.Clear();
     return 0;

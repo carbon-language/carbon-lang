@@ -439,65 +439,65 @@ SymbolFileDWARF::CalculateAbilities ()
         section = section_list->FindSectionByType (eSectionTypeDWARFDebugInfo, true).get();
         if (section != NULL)
         {
-            debug_info_file_size = section->GetByteSize();
+            debug_info_file_size = section->GetFileSize();
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugAbbrev, true).get();
             if (section)
-                debug_abbrev_file_size = section->GetByteSize();
+                debug_abbrev_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugAbbrevData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugAranges, true).get();
             if (section)
-                debug_aranges_file_size = section->GetByteSize();
+                debug_aranges_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugArangesData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugFrame, true).get();
             if (section)
-                debug_frame_file_size = section->GetByteSize();
+                debug_frame_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugFrameData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugLine, true).get();
             if (section)
-                debug_line_file_size = section->GetByteSize();
+                debug_line_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugLineData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugLoc, true).get();
             if (section)
-                debug_loc_file_size = section->GetByteSize();
+                debug_loc_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugLocData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugMacInfo, true).get();
             if (section)
-                debug_macinfo_file_size = section->GetByteSize();
+                debug_macinfo_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugMacInfoData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugPubNames, true).get();
             if (section)
-                debug_pubnames_file_size = section->GetByteSize();
+                debug_pubnames_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugPubNamesData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugPubTypes, true).get();
             if (section)
-                debug_pubtypes_file_size = section->GetByteSize();
+                debug_pubtypes_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugPubTypesData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugRanges, true).get();
             if (section)
-                debug_ranges_file_size = section->GetByteSize();
+                debug_ranges_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugRangesData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugStr, true).get();
             if (section)
-                debug_str_file_size = section->GetByteSize();
+                debug_str_file_size = section->GetFileSize();
             else
                 m_flags.Set (flagsGotDebugStrData);
         }
@@ -541,7 +541,7 @@ SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type,
                 // See if we memory mapped the DWARF segment?
                 if (m_dwarf_data.GetByteSize())
                 {
-                    data.SetData(m_dwarf_data, section_sp->GetOffset (), section_sp->GetByteSize());
+                    data.SetData(m_dwarf_data, section_sp->GetOffset (), section_sp->GetFileSize());
                 }
                 else
                 {
