@@ -62,7 +62,7 @@ getCalleeSavedRegs(const MachineFunction *MF) const
     return CSR_O32_SaveList;
   else if (Subtarget.isABI_N32())
     return CSR_N32_SaveList;
-  
+
   assert(Subtarget.isABI_N64());
   return CSR_N64_SaveList;  
 }
