@@ -20,6 +20,16 @@ div.rationale em {
   font-style: normal
 }
 
+/* Revisions are also italicized. */
+span.revision {
+  font-style: italic
+}
+
+span.whenRevised {
+  font-weight: bold;
+  font-style: normal
+}
+
 div h1 { font-size: 2em; margin: .67em 0 }
 div div h1 { font-size: 1.5em; margin: .75em 0 }
 div div div h1 { font-size: 1.17em; margin: .83em 0 }
@@ -209,6 +219,38 @@ adjusting the reference count, not by calling <tt>Block_copy</tt>.</p>
 
 </div> <!-- meta.background -->
 
+<div id="meta.evolution">
+<h1>Evolution</h1>
+
+<p>ARC is under continual evolution, and this document must be updated
+as the language progresses.</p>
+
+<p>If a change increases the expressiveness of the language, for
+example by lifting a restriction or by adding new syntax, the change
+will be annotated with a revision marker, like so:</p>
+
+<blockquote>
+  ARC applies to Objective-C pointer types, block pointer types, and
+  <span class="revision"><span class="whenRevised">[beginning Apple
+  8.0, LLVM 3.8]</span> BPTRs declared within <code>extern
+  "BCPL"</code> blocks</span>.
+</blockquote>
+
+<p>For now, it is sensible to version this document by the releases of
+its sole implementation (and its host project), clang.
+<q>LLVM X.Y</q> refers to an open-source release of clang from the
+LLVM project.  <q>Apple X.Y</q> refers to an Apple-provided release of
+the Apple LLVM Compiler.  Other organizations that prepare their own,
+separately-versioned clang releases and wish to maintain similar
+information in this document should send requests to cfe-dev.</p>
+
+<p>If a change decreases the expressiveness of the language, for
+example by imposing a new restriction, this should be taken as an
+oversight in the original specification and something to be avoided
+in all versions.  Such changes are generally to be avoided.</p>
+
+</div> <!-- meta.evolution -->
+
 </div> <!-- meta -->
 
 <div id="general">
@@ -216,8 +258,10 @@ adjusting the reference count, not by calling <tt>Block_copy</tt>.</p>
 
 <p>Automatic Reference Counting implements automatic memory management
 for Objective-C objects and blocks, freeing the programmer from the
-need explicitly insert retains and releases.  It does not provide a
-cycle collector; users must explicitly manage lifetime instead.</p>
+need to explicitly insert retains and releases.  It does not provide a
+cycle collector; users must explicitly manage the lifetime of their
+objects, breaking cycles manually or with weak or unsafe
+references.</p>
 
 <p>ARC may be explicitly enabled with the compiler
 flag <tt>-fobjc-arc</tt>.  It may also be explicitly disabled with the
@@ -229,7 +273,7 @@ appearing on the compile line <q>wins</q>.</p>
 see the <a href="LanguageExtensions.html#__has_feature_extension">language
 extensions</a> document.</p>
 
-</div>
+</div>  <!-- general -->
 
 <div id="objects">
 <h1>Retainable object pointers</h1>
@@ -446,9 +490,9 @@ The rule about function calls is really just an application of the
 existing C/C++ rule about calling functions through an incompatible
 function type, but it's useful to state it explicitly.</p></div>
 
-</div>
+</div>  <!-- objects.operands.consumed -->
 
-<div id="objects.operands.retained_returns">
+<div id="objects.operands.retained-returns">
 <h1>Retained return values</h1>
 
 <p>A function or method which returns a retainable object pointer type
@@ -483,7 +527,6 @@ and <tt>new</tt> <a href="#family">families</a> are implicitly marked
 <tt>__attribute__((ns_returns_retained))</tt>.  This may be suppressed
 by explicitly marking the
 method <tt>__attribute__((ns_returns_not_retained))</tt>.</p>
-</div>
 
 <p>It is undefined behavior if the method to which an Objective-C
 message send statically resolves has different retain semantics on its
@@ -498,6 +541,7 @@ Again, the rule about function calls is really just an application of
 the existing C/C++ rule about calling functions through an
 incompatible function type.</p></div>
 
+</div>  <!-- objects.operands.retained-returns -->
 
 <div id="objects.operands.other-returns">
 <h1>Unretained return values</h1>
@@ -530,7 +574,8 @@ that it returns a pointer which is guaranteed to be valid at least as
 long as the innermost autorelease pool.  There are no additional
 semantics enforced in the definition of such a method; it merely
 enables optimizations in callers.</p>
-</div>
+
+</div>  <!-- objects.operands.other-returns -->
 
 <div id="objects.operands.casts">
 <h1>Bridged casts</h1>
@@ -569,9 +614,9 @@ object pointers</a>.</p>
 cast purely to convince ARC to emit an unbalanced retain or release,
 respectively, is poor form.</p>
 
-</div>
+</div>  <!-- objects.operands.casts -->
 
-</div>
+</div>  <!-- objects.operands -->
 
 <div id="objects.restrictions">
 <h1>Restrictions</h1>
@@ -593,28 +638,125 @@ management of the lifetime of objects if they may be freely passed
 around as unmanaged types.  The bridged casts are provided so that the
 programmer may explicitly describe whether the cast transfers control
 into or out of ARC.</p></div>
-</div>
 
-<p>An unbridged cast to a retainable object pointer type of the return
-value of a Objective-C message send which yields a non-retainable
-pointer is treated as a <tt>__bridge_transfer</tt> cast
-if:</p>
+<p>However, the following exceptions apply.</p>
 
+</div>  <!-- objects.restrictions.conversion -->
+
+<div id="objects.restrictions.conversion-exception-known">
+<h1>Conversion to retainable object pointer type of
+  expressions with known semantics</h1>
+
+<p><span class="revision"><span class="whenRevised">[beginning Apple
+  4.0, LLVM 3.1]</span> These exceptions have been greatly expanded;
+  they previously applied only to a much-reduced subset which is
+  difficult to categorize but which included null pointers, message
+  sends (under the given rules), and the various global constants.</span></p>
+  
+<p>An unbridged conversion to a retainable object pointer type from a
+type other than a retainable object pointer type is ill-formed, as
+discussed above, unless the operand of the cast has a syntactic form
+which is known retained, known unretained, or known
+retain-agnostic.</p>
+
+<p>An expression is <span class="term">known retain-agnostic</span> if
+it is:</p>
 <ul>
-<li>the method has the <tt>cf_returns_retained</tt> attribute, or if
-not that,</li>
-<li>the method does not have the <tt>cf_returns_not_retained</tt>
-attribute and</li>
-<li>the method's <a href="#family">selector family</a> would imply
-the <tt>ns_returns_retained</tt> attribute on a method which returned
-a retainable object pointer type.</li>
+<li>an Objective-C string literal,</li>
+<li>a load from a <tt>const</tt> system global variable of
+<a href="#misc.c-retainable">C retainable pointer type</a>, or</li>
+<li>a null pointer constant.</li>
 </ul>
 
-<p>Otherwise the cast is treated as a <tt>__bridge</tt> cast.</p>
+<p>An expression is <span class="term">known unretained</span> if it
+is an rvalue of <a href="#misc.c-retainable">C retainable
+pointer type</a> and it is:</p>
+<ul>
+<li>a direct call to a function, and either that function has the
+  <tt>cf_returns_not_retained</tt> attribute or it is an
+  <a href="#misc.c-retainable.audit">audited</a> function that does not
+  have the <tt>cf_returns_retained</tt> attribute and does not follow
+  the create/copy naming convention,</li>
+<li>a message send, and the declared method either has
+  the <tt>cf_returns_not_retained</tt> attribute or it has neither
+  the <tt>cf_returns_retained</tt> attribute nor a
+  <a href="#family">selector family</a> that implies a retained
+  result.</li>
+</ul>
 
-</div>
+<p>An expression is <span class="term">known retained</span> if it is
+an rvalue of <a href="#misc.c-retainable">C retainable pointer type</a>
+and it is:</p>
+<ul>
+<li>a message send, and the declared method either has the
+  <tt>cf_returns_retained</tt> attribute, or it does not have
+  the <tt>cf_returns_not_retained</tt> attribute but it does have a
+  <a href="#family">selector family</a> that implies a retained
+  result.</li>
+</ul>
 
-</div>
+<p>Furthermore:</p>
+<ul>
+<li>a comma expression is classified according to its right-hand side,</li>
+<li>a statement expression is classified according to its result
+expression, if it has one,</li>
+<li>an lvalue-to-rvalue conversion applied to an Objective-C property
+lvalue is classified according to the underlying message send, and</li>
+<li>a conditional operator is classified according to its second and
+third operands, if they agree in classification, or else the other
+if one is known retain-agnostic.</li>
+</ul>
+
+<p>If the cast operand is known retained, the conversion is treated as
+a <tt>__bridge_transfer</tt> cast.  If the cast operand is known
+unretained or known retain-agnostic, the conversion is treated as
+a <tt>__bridge</tt> cast.</p>
+
+<div class="rationale"><p>Rationale: Bridging casts are annoying.
+Absent the ability to completely automate the management of CF
+objects, however, we are left with relatively poor attempts to reduce
+the need for a glut of explicit bridges.  Hence these rules.</p>
+
+<p>We've so far consciously refrained from implicitly turning retained
+CF results from function calls into <tt>__bridge_transfer</tt> casts.
+The worry is that some code patterns &mdash; for example, creating a
+CF value, assigning it to an ObjC-typed local, and then
+calling <tt>CFRelease</tt> when done &mdash; are a bit too likely to
+be accidentally accepted, leading to mysterious behavior.</p></div>
+
+</div>  <!-- objects.restrictions.conversion-exception-known -->
+
+<div id="objects.restrictions.conversion-exception-contextual">
+<h1>Conversion from retainable object pointer type in certain contexts</h1>
+
+<p><span class="revision"><span class="whenRevised">[beginning Apple
+  4.0, LLVM 3.1]</span></span></p>
+
+<p>If an expression of retainable object pointer type is explicitly
+cast to a <a href="#misc.c-retainable">C retainable pointer type</a>,
+the program is ill-formed as discussed above unless the result is
+immediately used:</p>
+
+<ul>
+<li>to initialize a parameter in an Objective-C message send where the
+parameter is not marked with the <tt>cf_consumed</tt> attribute, or</li>
+<li>to initialize a parameter in a direct call to
+an <a href="#misc.c-retainable.audit">audited</a> function where the
+parameter is not marked with the <tt>cf_consumed</tt> attribute.</li>
+</ul>
+
+<div class="rationale"><p>Rationale: Consumed parameters are left out
+because ARC would naturally balance them with a retain, which was
+judged too treacherous.  This is in part because several of the most
+common consuming functions are in the <tt>Release</tt> family, and it
+would be quite unfortunate for explicit releases to be silently
+balanced out in this way.</p></div>
+
+</div>  <!-- objects.restrictions.conversion-exception-contextual -->
+
+</div>  <!-- objects.restrictions -->
+
+</div>  <!-- objects -->
 
 <div id="ownership">
 <h1>Ownership qualification</h1>
@@ -723,6 +865,29 @@ already exists, then its ownership qualification must equal the
 ownership of the property; otherwise, the instance variable is created
 with that ownership qualification.</p>
 
+<p>A property of retainable object pointer type which is synthesized
+without a source of ownership has the ownership of its associated
+instance variable, if it already exists; otherwise,
+<span class="revision"><span class="whenRevised">[beginning Apple 3.1,
+LLVM 3.1]</span> its ownership is implicitly <tt>strong</tt></span>.
+Prior to this revision, it was ill-formed to synthesize such a
+property.</p>
+
+<div class="rationale"><p>Rationale: using <tt>strong</tt> by default
+is safe and consistent with the generic ARC rule about
+<a href="#ownership.inference.variables">inferring ownership</a>.  It
+is, unfortunately, inconsistent with the non-ARC rule which states
+that such properties are implicitly <tt>assign</tt>.  However, that
+rule is clearly untenable in ARC, since it leads to default-unsafe
+code.  The main merit to banning the properties is to avoid confusion
+with non-ARC practice, which did not ultimately strike us as
+sufficient to justify requiring extra syntax and (more importantly)
+forcing novices to understand ownership rules just to declare a
+property when the default is so reasonable.  Changing the rule away
+from non-ARC practice was acceptable because we had conservatively
+banned the synthesis in order to give ourselves exactly this
+leeway.</p></div>
+
 </div> <!-- ownership.spelling.property -->
 
 </div> <!-- ownership.spelling -->
@@ -762,11 +927,11 @@ finally, the old pointee is released.  This is not performed
 atomically; external synchronization must be used to make this safe in
 the face of concurrent loads and stores.</li>
 <li>For <tt>__weak</tt> objects, the lvalue is updated to point to the
-new pointee, unless that object is currently undergoing deallocation,
-in which case it the lvalue is updated to a null pointer.  This must
-execute atomically with respect to other assignments to the object, to
-reads from the object, and to the final release of the new pointed-to
-value.</li>
+new pointee, unless the new pointee is an object currently undergoing
+deallocation, in which case the lvalue is updated to a null pointer.
+This must execute atomically with respect to other assignments to the
+object, to reads from the object, and to the final release of the new
+pointee.</li>
 <li>For <tt>__unsafe_unretained</tt> objects, the new pointee is
 stored into the lvalue using primitive semantics.</li>
 <li>For <tt>__autoreleasing</tt> objects, the new pointee is retained,
@@ -969,7 +1134,7 @@ not immediately seen in the original argument variable.</p></div>
  the argument, and no further work is required for the pass-by-writeback.</li>
 <li>Otherwise, a temporary of type <tt>T __autoreleasing</tt> is
  created and initialized to a null pointer.</li>
-<li>If the argument is not an Objective-C method parameter marked
+<li>If the parameter is not an Objective-C method parameter marked
  <tt>out</tt>, then <tt>*p</tt> is read, and the result is written
  into the temporary with primitive semantics.</li>
 <li>The address of the temporary is passed as the argument to the
@@ -1007,17 +1172,17 @@ object.</p></div>
 nontrivally ownership-qualified types are considered non-POD: in C++11
 terms, they are not trivially default constructible, copy
 constructible, move constructible, copy assignable, move assignable,
-or destructible.  It is a violation of C++ One Definition Rule to use
-a class outside of ARC that, under ARC, would have an
+or destructible.  It is a violation of C++'s One Definition Rule to use
+a class outside of ARC that, under ARC, would have a nontrivially
 ownership-qualified member.</p>
 
 <div class="rationale"><p>Rationale: unlike in C, we can express all
 the necessary ARC semantics for ownership-qualified subobjects as
 suboperations of the (default) special member functions for the class.
 These functions then become non-trivial.  This has the non-obvious
-repercussion that the class will have a non-trivial copy constructor
-and non-trivial destructor; if it wouldn't outside of ARC, this means
-that objects of the type will be passed and returned in an
+result that the class will have a non-trivial copy constructor and
+non-trivial destructor; if this would not normally be true outside of
+ARC, objects of the type will be passed and returned in an
 ABI-incompatible manner.</p></div>
 
 </div>
@@ -1186,7 +1351,7 @@ mechanical system, they are only imperfectly kept, especially as they
 haven't always even been precisely defined.  While it is possible to
 define low-level ownership semantics with attributes like
 <tt>ns_returns_retained</tt>, this attribute allows the user to
-communicate semantic intent, which of use both to ARC (which, e.g.,
+communicate semantic intent, which is of use both to ARC (which, e.g.,
 treats calls to <tt>init</tt> specially) and the static analyzer.</p></div>
 </div>
 
@@ -1278,7 +1443,7 @@ of ARC.</p>
 more prone than most code to signature errors, i.e. errors where a
 call was emitted against one method signature, but the implementing
 method has an incompatible signature.  Having more precise type
-information helps drastically lower this risks, as well as catching
+information helps drastically lower this risk, as well as catching
 a number of latent bugs.</p></div>
 
 </div> <!-- family.semantics.result_type -->
@@ -1345,7 +1510,7 @@ clearer.</p></div>
 
 </div> <!-- optimization.precise -->
 
-</div>
+</div> <!-- optimization -->
 
 <div id="misc">
 <h1>Miscellaneous</h1>
@@ -1517,7 +1682,7 @@ the variable with <tt>__strong</tt>, which will make the variable
 mutable again and cause the loop to retain the objects it
 encounters.</p></div>
 
-</div>
+</div> <!-- misc.enumeration -->
 
 <div id="misc.blocks">
 <h1>Blocks</h1>
@@ -1643,6 +1808,87 @@ requires a very explicit annotation, which allows ARC to trust the
 user with good cheer.</p></div>
 
 </div> <!-- misc.interior -->
+
+<div id="misc.c-retainable">
+<h1>C retainable pointer types</h1>
+
+<p>A type is a <span class="term">C retainable pointer type</span>
+if it is a pointer to (possibly qualified) <tt>void</tt> or a
+pointer to a (possibly qualifier) <tt>struct</tt> or <tt>class</tt>
+type.</p>
+
+<div class="rationale"><p>Rationale: ARC does not manage pointers of
+CoreFoundation type (or any of the related families of retainable C
+pointers which interoperate with Objective-C for retain/release
+operation).  In fact, ARC does not even know how to distinguish these
+types from arbitrary C pointer types.  The intent of this concept is
+to filter out some obviously non-object types while leaving a hook for
+later tightening if a means of exhaustively marking CF types is made
+available.</p></div>
+
+<div id="misc.c-retainable.audit">
+<h1>Auditing of C retainable pointer interfaces</h1>
+
+<p><span class="revision"><span class="whenRevised">[beginning Apple 4.0, LLVM 3.1]</span></span></p>
+
+<p>A C function may be marked with the <tt>cf_audited_transfer</tt>
+attribute to express that, except as otherwise marked with attributes,
+it obeys the parameter (consuming vs. non-consuming) and return
+(retained vs. non-retained) conventions for a C function of its name,
+namely:</p>
+
+<ul>
+<li>A parameter of C retainable pointer type is assumed to not be
+consumed unless it is marked with the <tt>cf_consumed</tt> attribute, and</li>
+<li>A result of C retainable pointer type is assumed to not be
+returned retained unless the function is either
+marked <tt>cf_returns_retained</tt> or it follows
+the create/copy naming convention and is not
+marked <tt>cf_returns_not_retained</tt>.</li>
+</ul>
+
+<p>A function obeys the <span class="term">create/copy</span> naming
+convention if its name contains as a substring:</p>
+<ul>
+<li>either <q>Create</q> or <q>Copy</q> not followed by a lowercase letter, or</li>
+<li>either <q>create</q> or <q>copy</q> not followed by a lowercase
+letter and not preceded by any letter, whether uppercase or lowercase.</li>
+</ul>
+
+<p>A second attribute, <tt>cf_unknown_transfer</tt>, signifies that a
+function's transfer semantics cannot be accurately captured using any
+of these annotations.  A program is ill-formed if it annotates the
+same function with both <tt>cf_audited_transfer</tt>
+and <tt>cf_unknown_transfer</tt>.</p>
+
+<p>A pragma is provided to faciliate the mass annotation of interfaces:</p>
+
+<pre>#pragma arc_cf_code_audited begin
+...
+#pragma arc_cf_code_audited end</pre>
+
+<p>All C functions declared within the extent of this pragma are
+treated as if annotated with the <tt>cf_audited_transfer</tt>
+attribute unless they otherwise have the <tt>cf_unknown_transfer</tt>
+attribute.  The pragma is accepted in all language modes.  A program
+is ill-formed if it attempts to change files, whether by including a
+file or ending the current file, within the extent of this pragma.</p>
+
+<p>It is possible to test for all the features in this section with
+<tt>__has_feature(arc_cf_code_audited)</tt>.</p>
+
+<div class="rationale"><p>Rationale: A significant inconvenience in
+ARC programming is the necessity of interacting with APIs based around
+C retainable pointers.  These features are designed to make it
+relatively easy for API authors to quickly review and annotate their
+interfaces, in turn improving the fidelity of tools such as the static
+analyzer and ARC.  The single-file restriction on the pragma is
+designed to eliminate the risk of accidentally annotating some other
+header's interfaces.</p></div>
+
+</div> <!-- misc.c-retainable.audit -->
+
+</div> <!-- misc.c-retainable -->
 
 </div> <!-- misc -->
 
