@@ -346,6 +346,9 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (!requestedToGetTU)
     CInvok->getPreprocessorOpts().DetailedRecord = false;
 
+  if (index_options & CXIndexOpt_SuppressWarnings)
+    CInvok->getDiagnosticOpts().IgnoreWarnings = true;
+
   ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
                                   /*CaptureDiagnostics=*/true);
   OwningPtr<CXTUOwner> CXTU(new CXTUOwner(MakeCXTranslationUnit(Unit)));

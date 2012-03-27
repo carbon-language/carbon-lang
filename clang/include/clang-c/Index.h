@@ -4494,7 +4494,12 @@ typedef enum {
    * \brief Implicit function/class template instantiations should be indexed.
    * If this is not set, implicit instantiations will be ignored.
    */
-  CXIndexOpt_IndexImplicitTemplateInstantiations = 0x4
+  CXIndexOpt_IndexImplicitTemplateInstantiations = 0x4,
+
+  /**
+   * \brief Suppress all compiler warnings when parsing for indexing.
+   */
+  CXIndexOpt_SuppressWarnings = 0x8
 } CXIndexOptFlags;
 
 /**
