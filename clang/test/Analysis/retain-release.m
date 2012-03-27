@@ -1668,6 +1668,29 @@ void rdar_10824732() {
 }
 
 //===----------------------------------------------------------------------===//
+// Test returning allocated memory in a struct.
+// 
+// We currently don't have a general way to track pointers that "escape".
+// Here we test that RetainCountChecker doesn't get excited about returning
+// allocated CF objects in struct fields.
+//===----------------------------------------------------------------------===//
+void *malloc(size_t);
+struct rdar11104566 { CFStringRef myStr; };
+struct rdar11104566 test_rdar11104566() {
+  CFStringRef cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 ); // no-warning
+  struct rdar11104566 V;
+  V.myStr = cf;
+  return V; // no-warning
+}
+
+struct rdar11104566 *test_2_rdar11104566() {
+  CFStringRef cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 ); // no-warning
+  struct rdar11104566 *V = (struct rdar11104566 *) malloc(sizeof(*V));
+  V->myStr = cf;
+  return V; // no-warning
+}
+
+//===----------------------------------------------------------------------===//
 // ObjC literals support.
 //===----------------------------------------------------------------------===//
 

@@ -100,6 +100,10 @@ struct foo {
   NSDate* f;
 };
 
+// FIXME: We should be warning about a use-after-free here, but we
+// temporarily "escape" retain counted objects stored to structs very eagerly
+// until we can properly tell whether they have escaped via a return value
+// or not.
 CFAbsoluteTime f4() {
   struct foo x;
   
@@ -110,7 +114,8 @@ CFAbsoluteTime f4() {
   CFDateGetAbsoluteTime(date); // no-warning
   x.f = (NSDate*) date;  
   [((NSDate*) date) release];
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released}}
+  // FIXME: the following line should warn.
+  t = CFDateGetAbsoluteTime(date);   // no-warning
   return t;
 }
 
