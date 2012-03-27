@@ -387,10 +387,13 @@ namespace {
                    StringRef prefix, StringRef ClassName, std::string &Result);
     virtual void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                           std::string &Result);
+    virtual void RewriteClassSetupInitHook(std::string &Result);
+    
     virtual void RewriteMetaDataIntoBuffer(std::string &Result);
     virtual void WriteImageInfo(std::string &Result);
     virtual void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
                                              std::string &Result);
+    virtual void RewriteCategorySetupInitHook(std::string &Result);
     
     // Rewriting ivar
     virtual void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
@@ -5767,25 +5770,17 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   Result += "\tOBJC_CLASS_$_"; Result += CDecl->getNameAsString();
   Result += ".cache = "; Result += "&_objc_empty_cache"; Result += ";\n";
   Result += "}\n";
-  
-  Result += "#pragma section(\".objc_inithooks$B\", long, read, write)\n";
-  Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
-  Result += "static void *OBJC_CLASS_SETUP2_$_";
-  Result += CDecl->getNameAsString();
-  Result += " = (void *)&OBJC_CLASS_SETUP_$_"; 
-  Result += CDecl->getNameAsString();
-  Result += ";\n\n";
 }
 
 static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context, 
                              std::string &Result,
-                             StringRef CatName,
+                             ObjCCategoryDecl *CatDecl,
                              ObjCInterfaceDecl *ClassDecl,
                              ArrayRef<ObjCMethodDecl *> InstanceMethods,
                              ArrayRef<ObjCMethodDecl *> ClassMethods,
                              ArrayRef<ObjCProtocolDecl *> RefedProtocols,
                              ArrayRef<ObjCPropertyDecl *> ClassProperties) {
-  
+  StringRef CatName = CatDecl->getName();
   StringRef ClassName = ClassDecl->getName();
   // must declare an extern class object in case this class is not implemented 
   // in this TU.
@@ -5855,18 +5850,6 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
   Result += CatName;
   Result += ".cls = "; Result += "&OBJC_CLASS_$_"; Result += ClassName;
   Result += ";\n}\n";
-  
-  Result += "#pragma section(\".objc_inithooks$B\", long, read, write)\n";
-  Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
-  Result += "static void *OBJC_CATEGORY_SETUP2_$_";
-  Result += ClassDecl->getNameAsString();
-  Result += "_$_";
-  Result += CatName;
-  Result += " = (void *)&OBJC_CATEGORY_SETUP_$_"; 
-  Result += ClassDecl->getNameAsString();
-  Result += "_$_";
-  Result += CatName;
-  Result += ";\n\n";
 }
 
 static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj,
@@ -6385,6 +6368,22 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                 
 }
 
+void RewriteModernObjC::RewriteClassSetupInitHook(std::string &Result) {
+  int ClsDefCount = ClassImplementation.size();
+  if (!ClsDefCount)
+    return;
+  Result += "#pragma section(\".objc_inithooks$B\", long, read, write)\n";
+  Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
+  Result += "static void *OBJC_CLASS_SETUP[] = {\n";
+  for (int i = 0; i < ClsDefCount; i++) {
+    ObjCImplementationDecl *IDecl = ClassImplementation[i];
+    ObjCInterfaceDecl *CDecl = IDecl->getClassInterface();
+    Result += "\t(void *)&OBJC_CLASS_SETUP_$_";
+    Result  += CDecl->getName(); Result += ",\n";
+  }
+  Result += "};\n";
+}
+
 void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
@@ -6393,9 +6392,13 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   for (int i = 0; i < ClsDefCount; i++)
     RewriteObjCClassMetaData(ClassImplementation[i], Result);
   
+  RewriteClassSetupInitHook(Result);
+  
   // For each implemented category, write out all its meta data.
   for (int i = 0; i < CatDefCount; i++)
     RewriteObjCCategoryImplDecl(CategoryImplementation[i], Result);
+  
+  RewriteCategorySetupInitHook(Result);
   
   if (ClsDefCount > 0) {
     if (LangOpts.MicrosoftExt)
@@ -6550,7 +6553,7 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
                                 FullCategoryName);
   
   Write_category_t(*this, Context, Result,
-                   CDecl->getNameAsString(),
+                   CDecl,
                    ClassDecl,
                    InstanceMethods,
                    ClassMethods,
@@ -6560,7 +6563,27 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   // Determine if this category is also "non-lazy".
   if (ImplementationIsNonLazy(IDecl))
     DefinedNonLazyCategories.push_back(CDecl);
-  
+    
+}
+
+void RewriteModernObjC::RewriteCategorySetupInitHook(std::string &Result) {
+  int CatDefCount = CategoryImplementation.size();
+  if (!CatDefCount)
+    return;
+  Result += "#pragma section(\".objc_inithooks$B\", long, read, write)\n";
+  Result += "__declspec(allocate(\".objc_inithooks$B\")) ";
+  Result += "static void *OBJC_CATEGORY_SETUP[] = {\n";
+  for (int i = 0; i < CatDefCount; i++) {
+    ObjCCategoryImplDecl *IDecl = CategoryImplementation[i];
+    ObjCCategoryDecl *CatDecl= IDecl->getCategoryDecl();
+    ObjCInterfaceDecl *ClassDecl = IDecl->getClassInterface();
+    Result += "\t(void *)&OBJC_CATEGORY_SETUP_$_";
+    Result += ClassDecl->getName();
+    Result += "_$_";
+    Result += CatDecl->getName();
+    Result += ",\n";
+  }
+  Result += "};\n";
 }
 
 // RewriteObjCMethodsMetaData - Rewrite methods metadata for instance or
