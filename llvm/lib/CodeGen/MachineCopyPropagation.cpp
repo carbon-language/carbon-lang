@@ -22,7 +22,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -44,9 +43,12 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
   private:
+    typedef SmallVector<unsigned, 4> DestList;
+    typedef DenseMap<unsigned, DestList> SourceMap;
+
     void SourceNoLongerAvailable(unsigned Reg,
-                                 DenseMap<unsigned, DenseSet<unsigned> > &SrcMap,
-                               DenseMap<unsigned, MachineInstr*> &AvailCopyMap);
+                                 SourceMap &SrcMap,
+                                 DenseMap<unsigned, MachineInstr*> &AvailCopyMap);
     bool CopyPropagateBlock(MachineBasicBlock &MBB);
   };
 }
@@ -58,12 +60,12 @@ INITIALIZE_PASS(MachineCopyPropagation, "machine-cp",
 
 void
 MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
-                              DenseMap<unsigned, DenseSet<unsigned> > &SrcMap,
+                              SourceMap &SrcMap,
                               DenseMap<unsigned, MachineInstr*> &AvailCopyMap) {
-  DenseMap<unsigned, DenseSet<unsigned> >::iterator SI = SrcMap.find(Reg);
+  SourceMap::iterator SI = SrcMap.find(Reg);
   if (SI != SrcMap.end()) {
-    const DenseSet<unsigned>& Defs = SI->second;
-    for (DenseSet<unsigned>::const_iterator I = Defs.begin(), E = Defs.end();
+    const DestList& Defs = SI->second;
+    for (DestList::const_iterator I = Defs.begin(), E = Defs.end();
          I != E; ++I) {
       unsigned MappedDef = *I;
       // Source of copy is no longer available for propagation.
@@ -76,8 +78,8 @@ MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
   for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
     SI = SrcMap.find(*AS);
     if (SI != SrcMap.end()) {
-      const DenseSet<unsigned>& Defs = SI->second;
-      for (DenseSet<unsigned>::const_iterator I = Defs.begin(), E = Defs.end();
+      const DestList& Defs = SI->second;
+      for (DestList::const_iterator I = Defs.begin(), E = Defs.end();
            I != E; ++I) {
         unsigned MappedDef = *I;
         if (AvailCopyMap.erase(MappedDef)) {
@@ -137,7 +139,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
   SmallSetVector<MachineInstr*, 8> MaybeDeadCopies;  // Candidates for deletion
   DenseMap<unsigned, MachineInstr*> AvailCopyMap;    // Def -> available copies map
   DenseMap<unsigned, MachineInstr*> CopyMap;         // Def -> copies map
-  DenseMap<unsigned, DenseSet<unsigned> > SrcMap; // Src -> Def map
+  SourceMap SrcMap; // Src -> Def map
 
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ) {
@@ -222,7 +224,10 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
 
       // Remember source that's copied to Def. Once it's clobbered, then
       // it's no longer available for copy propagation.
-      SrcMap[Src].insert(Def);
+      if (std::find(SrcMap[Src].begin(), SrcMap[Src].end(), Def) ==
+          SrcMap[Src].end()) {
+        SrcMap[Src].push_back(Def);
+      }
 
       continue;
     }
