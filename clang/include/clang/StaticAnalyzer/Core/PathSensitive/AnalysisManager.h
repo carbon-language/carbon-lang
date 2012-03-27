@@ -91,6 +91,10 @@ public:
   /// \brief The mode of function selection used during inlining.
   AnalysisInliningMode InliningMode;
 
+  /// \brief Re-analyze paths leading to exhausted nodes with a different
+  /// strategy for better code coverage.
+  bool RetryExhausted;
+
 public:
   AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags, 
                   const LangOptions &lang, PathDiagnosticConsumer *pd,
@@ -107,7 +111,8 @@ public:
                   AnalysisIPAMode ipa,
                   unsigned inlineMaxStack,
                   unsigned inlineMaxFunctionSize,
-                  AnalysisInliningMode inliningMode);
+                  AnalysisInliningMode inliningMode,
+                  bool retry);
 
   /// Construct a clone of the given AnalysisManager with the given ASTContext
   /// and DiagnosticsEngine.

@@ -129,8 +129,7 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
 }
 
 // Determine if we should inline the call.
-static bool shouldInline(const FunctionDecl *FD, ExplodedNode *Pred,
-                         AnalysisManager &AMgr) {
+bool ExprEngine::shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred) {
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
   const CFG *CalleeCFG = CalleeADC->getCFG();
 
@@ -144,9 +143,35 @@ static bool shouldInline(const FunctionDecl *FD, ExplodedNode *Pred,
   return true;
 }
 
+// For now, skip inlining variadic functions.
+// We also don't inline blocks.
+static bool shouldInlineCallExpr(const CallExpr *CE, ExprEngine *E) {
+  if (!E->getAnalysisManager().shouldInlineCall())
+    return false;
+  QualType callee = CE->getCallee()->getType();
+  const FunctionProtoType *FT = 0;
+  if (const PointerType *PT = callee->getAs<PointerType>())
+    FT = dyn_cast<FunctionProtoType>(PT->getPointeeType());
+  else if (const BlockPointerType *BT = callee->getAs<BlockPointerType>()) {
+    // FIXME: inline blocks.
+    // FT = dyn_cast<FunctionProtoType>(BT->getPointeeType());
+    (void) BT;
+    return false;
+  }
+  // If we have no prototype, assume the function is okay.
+  if (!FT)
+    return true;
+
+  // Skip inlining of variadic functions.
+  return !FT->isVariadic();
+}
+
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
                             const CallExpr *CE, 
                             ExplodedNode *Pred) {
+  if (!shouldInlineCallExpr(CE, this))
+    return false;
+
   ProgramStateRef state = Pred->getState();
   const Expr *Callee = CE->getCallee();
   const FunctionDecl *FD =
@@ -159,7 +184,7 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
       // FIXME: Handle C++.
       break;
     case Stmt::CallExprClass: {
-      if (!shouldInline(FD, Pred, AMgr))
+      if (!shouldInlineDecl(FD, Pred))
         return false;
 
       // Construct a new stack frame for the callee.
@@ -346,28 +371,16 @@ ExprEngine::invalidateArguments(ProgramStateRef State,
 
 }
 
-// For now, skip inlining variadic functions.
-// We also don't inline blocks.
-static bool shouldInlineCall(const CallExpr *CE, ExprEngine &Eng) {
-  if (!Eng.getAnalysisManager().shouldInlineCall())
-    return false;
-  QualType callee = CE->getCallee()->getType();
-  const FunctionProtoType *FT = 0;
-  if (const PointerType *PT = callee->getAs<PointerType>())
-    FT = dyn_cast<FunctionProtoType>(PT->getPointeeType());
-  else if (const BlockPointerType *BT = callee->getAs<BlockPointerType>()) {
-    // FIXME: inline blocks.
-    // FT = dyn_cast<FunctionProtoType>(BT->getPointeeType());
-    (void) BT;
-    return false;
+static ProgramStateRef getReplayWithoutInliningState(ExplodedNode *&N,
+                                                     const CallExpr *CE) {
+  void *ReplayState = N->getState()->get<ReplayWithoutInlining>();
+  if (!ReplayState)
+    return 0;
+  const CallExpr *ReplayCE = reinterpret_cast<const CallExpr*>(ReplayState);
+  if (CE == ReplayCE) {
+    return N->getState()->remove<ReplayWithoutInlining>();
   }
-
-  // If we have no prototype, assume the function is okay.
-  if (!FT)
-    return true;
-  
-  // Skip inlining of variadic functions.
-  return !FT->isVariadic();
+  return 0;
 }
 
 void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
@@ -385,18 +398,20 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
     DefaultEval(ExprEngine &eng, const CallExpr *ce)
     : Eng(eng), CE(ce) {}
     virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
-      // Should we inline the call?
-      if (shouldInlineCall(CE, Eng) &&
-          Eng.InlineCall(Dst, CE, Pred)) {
+
+      ProgramStateRef state = getReplayWithoutInliningState(Pred, CE);
+
+      // First, try to inline the call.
+      if (state == 0 && Eng.InlineCall(Dst, CE, Pred))
         return;
-      }
 
       // First handle the return value.
       StmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext);
 
       // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
-      ProgramStateRef state = Pred->getState();
+      if (state == 0)
+        state = Pred->getState();
       SVal L = state->getSVal(Callee, Pred->getLocationContext());
 
       // Figure out the result type. We do this dance to handle references.

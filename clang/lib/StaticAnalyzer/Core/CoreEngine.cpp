@@ -211,45 +211,56 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
     // Retrieve the node.
     ExplodedNode *Node = WU.getNode();
 
-    // Dispatch on the location type.
-    switch (Node->getLocation().getKind()) {
-      case ProgramPoint::BlockEdgeKind:
-        HandleBlockEdge(cast<BlockEdge>(Node->getLocation()), Node);
-        break;
-
-      case ProgramPoint::BlockEntranceKind:
-        HandleBlockEntrance(cast<BlockEntrance>(Node->getLocation()), Node);
-        break;
-
-      case ProgramPoint::BlockExitKind:
-        assert (false && "BlockExit location never occur in forward analysis.");
-        break;
-
-      case ProgramPoint::CallEnterKind: {
-        CallEnter CEnter = cast<CallEnter>(Node->getLocation());
-        if (AnalyzedCallees)
-          if (const CallExpr* CE =
-              dyn_cast_or_null<CallExpr>(CEnter.getCallExpr()))
-            if (const Decl *CD = CE->getCalleeDecl())
-              AnalyzedCallees->insert(CD);
-        SubEng.processCallEnter(CEnter, Node);
-        break;
-      }
-
-      case ProgramPoint::CallExitKind:
-        SubEng.processCallExit(Node);
-        break;
-
-      default:
-        assert(isa<PostStmt>(Node->getLocation()) || 
-               isa<PostInitializer>(Node->getLocation()));
-        HandlePostStmt(WU.getBlock(), WU.getIndex(), Node);
-        break;
-    }
+    dispatchWorkItem(Node, Node->getLocation(), WU);
   }
-
   SubEng.processEndWorklist(hasWorkRemaining());
   return WList->hasWork();
+}
+
+void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
+                                  const WorkListUnit& WU) {
+  // Dispatch on the location type.
+  switch (Loc.getKind()) {
+    case ProgramPoint::BlockEdgeKind:
+      HandleBlockEdge(cast<BlockEdge>(Loc), Pred);
+      break;
+
+    case ProgramPoint::BlockEntranceKind:
+      HandleBlockEntrance(cast<BlockEntrance>(Loc), Pred);
+      break;
+
+    case ProgramPoint::BlockExitKind:
+      assert (false && "BlockExit location never occur in forward analysis.");
+      break;
+
+    case ProgramPoint::CallEnterKind: {
+      CallEnter CEnter = cast<CallEnter>(Loc);
+      if (AnalyzedCallees)
+        if (const CallExpr* CE =
+            dyn_cast_or_null<CallExpr>(CEnter.getCallExpr()))
+          if (const Decl *CD = CE->getCalleeDecl())
+            AnalyzedCallees->insert(CD);
+      SubEng.processCallEnter(CEnter, Pred);
+      break;
+    }
+
+    case ProgramPoint::CallExitKind:
+      SubEng.processCallExit(Pred);
+      break;
+
+    case ProgramPoint::EpsilonKind: {
+      assert(Pred->hasSinglePred() &&
+             "Assume epsilon has exactly one predecessor by construction");
+      ExplodedNode *PNode = Pred->getFirstPred();
+      dispatchWorkItem(Pred, PNode->getLocation(), WU);
+      break;
+    }
+    default:
+      assert(isa<PostStmt>(Loc) ||
+             isa<PostInitializer>(Loc));
+      HandlePostStmt(WU.getBlock(), WU.getIndex(), Pred);
+      break;
+  }
 }
 
 void CoreEngine::ExecuteWorkListWithInitialState(const LocationContext *L, 
@@ -488,6 +499,11 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   // Do not create extra nodes. Move to the next CFG element.
   if (isa<PostInitializer>(N->getLocation())) {
     WList->enqueue(N, Block, Idx+1);
+    return;
+  }
+
+  if (isa<EpsilonPoint>(N->getLocation())) {
+    WList->enqueue(N, Block, Idx);
     return;
   }
 

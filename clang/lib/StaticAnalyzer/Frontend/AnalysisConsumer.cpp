@@ -203,7 +203,8 @@ public:
                                   Opts.IPAMode,
                                   Opts.InlineMaxStackDepth,
                                   Opts.InlineMaxFunctionSize,
-                                  Opts.InliningMode));
+                                  Opts.InliningMode,
+                                  Opts.RetryExhausted));
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);

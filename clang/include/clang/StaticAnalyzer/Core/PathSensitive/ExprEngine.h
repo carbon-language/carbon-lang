@@ -20,6 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
@@ -455,7 +456,19 @@ private:
                     ProgramStateRef St, SVal location,
                     const ProgramPointTag *tag, bool isLoad);
 
+  bool shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred);
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
+
+  bool replayWithoutInlining(ExplodedNode *P, const LocationContext *CalleeLC);
+};
+
+/// Traits for storing the call processing policy inside GDM.
+/// The GDM stores the corresponding CallExpr pointer.
+struct ReplayWithoutInlining{};
+template <>
+struct ProgramStateTrait<ReplayWithoutInlining> :
+  public ProgramStatePartialTrait<void*> {
+  static void *GDMIndex() { static int index = 0; return &index; }
 };
 
 } // end ento namespace

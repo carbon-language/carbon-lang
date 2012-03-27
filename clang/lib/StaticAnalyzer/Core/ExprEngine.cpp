@@ -50,6 +50,13 @@ STATISTIC(NumMaxBlockCountReached,
 STATISTIC(NumMaxBlockCountReachedInInlined,
             "The # of aborted paths due to reaching the maximum block count in "
             "an inlined function");
+STATISTIC(NumTimesRetriedWithoutInlining,
+            "The # of times we re-evaluated a call without inlining");
+
+STATISTIC(NumNotNew,
+            "Cached out");
+STATISTIC(NumNull,
+            "Null node");
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
@@ -972,6 +979,64 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   }
 }
 
+bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
+                                       const LocationContext *CalleeLC) {
+  const StackFrameContext *CalleeSF = CalleeLC->getCurrentStackFrame();
+  const StackFrameContext *CallerSF = CalleeSF->getParent()->getCurrentStackFrame();
+  assert(CalleeSF && CallerSF);
+  ExplodedNode *BeforeProcessingCall = 0;
+
+  // Find the first node before we started processing the call expression.
+  while (N) {
+    ProgramPoint L = N->getLocation();
+    BeforeProcessingCall = N;
+    N = N->pred_empty() ? NULL : *(N->pred_begin());
+
+    // Skip the nodes corresponding to the inlined code.
+    if (L.getLocationContext()->getCurrentStackFrame() != CallerSF)
+      continue;
+    // We reached the caller. Find the node right before we started
+    // processing the CallExpr.
+    if (isa<PostPurgeDeadSymbols>(L))
+      continue;
+    if (const StmtPoint *SP = dyn_cast<StmtPoint>(&L))
+      if (SP->getStmt() == CalleeSF->getCallSite())
+        continue;
+    break;
+  }
+
+  if (!BeforeProcessingCall) {
+    NumNull++;
+    return false;
+  }
+
+  // TODO: Clean up the unneeded nodes.
+
+  // Build an Epsilon node from which we will restart the analyzes.
+  const Stmt *CE = CalleeSF->getCallSite();
+  ProgramPoint NewNodeLoc =
+               EpsilonPoint(BeforeProcessingCall->getLocationContext(), CE);
+  // Add the special flag to GDM to signal retrying with no inlining.
+  // Note, changing the state ensures that we are not going to cache out.
+  ProgramStateRef NewNodeState = BeforeProcessingCall->getState();
+  NewNodeState = NewNodeState->set<ReplayWithoutInlining>((void*)CE);
+
+  // Make the new node a successor of BeforeProcessingCall.
+  bool IsNew = false;
+  ExplodedNode *NewNode = G.getNode(NewNodeLoc, NewNodeState, false, &IsNew);
+  if (!IsNew) {
+    NumNotNew++;
+    return false;
+  }
+  NewNode->addPredecessor(BeforeProcessingCall, G);
+
+  // Add the new node to the work list.
+  Engine.enqueueStmtNode(NewNode, CalleeSF->getCallSiteBlock(),
+                                  CalleeSF->getIndex());
+  NumTimesRetriedWithoutInlining++;
+  return true;
+}
+
 /// Block entrance.  (Update counters).
 void ExprEngine::processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder) {
   
@@ -984,10 +1049,17 @@ void ExprEngine::processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder) {
 
     // Check if we stopped at the top level function or not.
     // Root node should have the location context of the top most function.
-    if ((*G.roots_begin())->getLocation().getLocationContext() !=
-        pred->getLocation().getLocationContext())
-      NumMaxBlockCountReachedInInlined++;
-    else
+    const LocationContext *CalleeLC = pred->getLocation().getLocationContext();
+    const LocationContext *RootLC =
+                        (*G.roots_begin())->getLocation().getLocationContext();
+    if (RootLC->getCurrentStackFrame() != CalleeLC->getCurrentStackFrame()) {
+      // Re-run the call evaluation without inlining it, by storing the
+      // no-inlining policy in the state and enqueuing the new work item on
+      // the list. Replay should almost never fail. Use the stats to catch it
+      // if it does.
+      if (!(AMgr.RetryExhausted && replayWithoutInlining(pred, CalleeLC)))
+        NumMaxBlockCountReachedInInlined++;
+    } else
       NumMaxBlockCountReached++;
   }
 }
@@ -1786,6 +1858,10 @@ struct DOTGraphTraits<ExplodedNode*> :
 
       case ProgramPoint::CallExitKind:
         Out << "CallExit";
+        break;
+
+      case ProgramPoint::EpsilonKind:
+        Out << "Epsilon Point";
         break;
 
       default: {

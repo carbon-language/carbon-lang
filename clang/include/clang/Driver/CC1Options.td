@@ -98,6 +98,9 @@ def analyzer_ipa_EQ : Joined<"-analyzer-ipa=">, Alias<analyzer_ipa>;
 def analyzer_inlining_mode : Separate<"-analyzer-inlining-mode">,
   HelpText<"Specify the function selection heuristic used during inlining">;
 def analyzer_inlining_mode_EQ : Joined<"-analyzer-inlining-mode=">, Alias<analyzer_inlining_mode>;
+
+def analyzer_retry_exhausted : Flag<"-analyzer-retry-exhausted">,
+  HelpText<"Re-analyze paths leading to exhausted nodes with a different strategy for better code coverage">;
   
 def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
   HelpText<"The maximum number of nodes the analyzer can generate (150000 default, 0 = no limit)">;

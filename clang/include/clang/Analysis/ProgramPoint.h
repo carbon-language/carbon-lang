@@ -51,7 +51,8 @@ public:
               CallEnterKind,
               CallExitKind,
               MinPostStmtKind = PostStmtKind,
-              MaxPostStmtKind = CallExitKind };
+              MaxPostStmtKind = CallExitKind,
+              EpsilonKind};
 
 private:
   std::pair<const void *, const void *> Data;
@@ -377,6 +378,21 @@ public:
 
   static bool classof(const ProgramPoint *Location) {
     return Location->getKind() == CallExitKind;
+  }
+};
+
+/// This is a meta program point, which should be skipped by all the diagnostic
+/// reasoning etc.
+class EpsilonPoint : public ProgramPoint {
+public:
+  EpsilonPoint(const LocationContext *L, const void *Data1,
+               const void *Data2 = 0, const ProgramPointTag *tag = 0)
+    : ProgramPoint(Data1, Data2, EpsilonKind, L, tag) {}
+
+  const void *getData() const { return getData1(); }
+
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == EpsilonKind;
   }
 };
 
