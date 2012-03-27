@@ -20,7 +20,7 @@ namespace clang {
 namespace ento {
 
 /// The GDM component containing the tainted root symbols. We lazily infer the
-/// taint of the dependednt symbols. Currently, this is a map from a symbol to
+/// taint of the dependent symbols. Currently, this is a map from a symbol to
 /// tag kind. TODO: Should support multiple tag kinds.
 struct TaintMap {};
 typedef llvm::ImmutableMap<SymbolRef, TaintTagType> TaintMapImpl;
