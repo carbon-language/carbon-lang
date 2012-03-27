@@ -260,7 +260,7 @@ bool Inliner::shouldInline(CallSite CS) {
     int TotalSecondaryCost = 0;
     bool outerCallsFound = false;
     // This bool tracks what happens if we do NOT inline C into B.
-    bool callerWillBeRemoved = true;
+    bool callerWillBeRemoved = Caller->hasLocalLinkage();
     // This bool tracks what happens if we DO inline C into B.
     bool inliningPreventsSomeOuterInline = false;
     for (Value::use_iterator I = Caller->use_begin(), E =Caller->use_end(); 
