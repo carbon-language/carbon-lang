@@ -1712,7 +1712,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
   //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode);
 
-  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64) {
     SDValue CPHi = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
                                              N->getOffset(), MipsII::MO_ABS_HI);
     SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
