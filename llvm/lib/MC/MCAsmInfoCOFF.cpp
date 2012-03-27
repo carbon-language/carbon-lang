@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAsmInfoCOFF.h"
-#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 void MCAsmInfoCOFF::anchor() { }

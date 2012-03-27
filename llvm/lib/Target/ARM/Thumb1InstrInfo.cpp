@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCInst.h"
 
 using namespace llvm;

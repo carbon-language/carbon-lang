@@ -25,7 +25,6 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCWin64EH.h"
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/ADT/StringMap.h"
 
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"

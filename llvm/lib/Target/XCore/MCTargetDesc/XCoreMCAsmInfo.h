@@ -14,10 +14,10 @@
 #ifndef XCORETARGETASMINFO_H
 #define XCORETARGETASMINFO_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
+  class StringRef;
   class Target;
 
   class XCoreMCAsmInfo : public MCAsmInfo {

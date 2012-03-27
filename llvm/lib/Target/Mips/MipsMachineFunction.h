@@ -14,7 +14,6 @@
 #ifndef MIPS_MACHINE_FUNCTION_INFO_H
 #define MIPS_MACHINE_FUNCTION_INFO_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include <utility>

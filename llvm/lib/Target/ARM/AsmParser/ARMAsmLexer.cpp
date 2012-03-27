@@ -17,8 +17,6 @@
 
 #include "llvm/Support/TargetRegistry.h"
 
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 
 #include <string>

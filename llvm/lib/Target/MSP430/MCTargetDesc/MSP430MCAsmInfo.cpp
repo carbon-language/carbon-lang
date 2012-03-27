@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430MCAsmInfo.h"
+#include "llvm/ADT/StringRef.h"
 using namespace llvm;
 
 void MSP430MCAsmInfo::anchor() { }

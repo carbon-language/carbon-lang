@@ -28,7 +28,6 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

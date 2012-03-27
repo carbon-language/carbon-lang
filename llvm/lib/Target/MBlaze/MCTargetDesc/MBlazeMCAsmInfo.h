@@ -14,7 +14,6 @@
 #ifndef MBLAZETARGETASMINFO_H
 #define MBLAZETARGETASMINFO_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
