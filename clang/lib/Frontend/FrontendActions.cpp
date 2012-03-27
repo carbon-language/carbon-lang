@@ -25,6 +25,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include <set>
 
 using namespace clang;
 
@@ -352,6 +353,77 @@ bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
 ASTConsumer *SyntaxOnlyAction::CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) {
   return new ASTConsumer();
+}
+
+namespace {
+  class PubnamesDumpConsumer : public ASTConsumer {
+    Preprocessor &PP;
+    
+    /// \brief Determine whether the given identifier provides a 'public' name.
+    bool isPublicName(IdentifierInfo *II) {
+      // If there are any top-level declarations associated with this
+      // identifier, it is a public name.
+      if (II->getFETokenInfo<void>())
+        return true;
+
+      // If this identifier is the name of a non-builtin macro that isn't
+      // defined on the command line or implicitly by the front end, it is a
+      // public name.
+      if (II->hasMacroDefinition()) {
+        if (MacroInfo *M = PP.getMacroInfo(II))
+          if (!M->isBuiltinMacro()) {
+            SourceLocation Loc = M->getDefinitionLoc();
+            FileID File = PP.getSourceManager().getFileID(Loc);
+            if (PP.getSourceManager().getFileEntryForID(File))
+              return true;
+          }
+      }
+      
+      return false;
+    }
+      
+  public:
+    PubnamesDumpConsumer(Preprocessor &PP) : PP(PP) { }
+        
+    virtual void HandleTranslationUnit(ASTContext &Ctx) {
+      std::set<StringRef> Pubnames;
+      
+      // Add the names of any non-builtin macros.
+      for (IdentifierTable::iterator I = Ctx.Idents.begin(),
+                                  IEnd = Ctx.Idents.end();
+           I != IEnd; ++I) {
+        if (isPublicName(I->second))
+          Pubnames.insert(I->first());
+      }
+      
+      // If there is an external identifier lookup source, consider those
+      // identifiers as well.
+      if (IdentifierInfoLookup *External
+            = Ctx.Idents.getExternalIdentifierLookup()) {
+        OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
+        do {
+          StringRef Name = Iter->Next();
+          if (Name.empty())
+            break;
+          
+          if (isPublicName(PP.getIdentifierInfo(Name)))
+            Pubnames.insert(Name);
+        } while (true);
+      }
+
+      // Print the names, in lexicographical order.
+      for (std::set<StringRef>::iterator N = Pubnames.begin(),
+                                      NEnd = Pubnames.end();
+           N != NEnd; ++N) {
+        llvm::outs() << *N << '\n';
+      }
+    }
+  };
+}
+
+ASTConsumer *PubnamesDumpAction::CreateASTConsumer(CompilerInstance &CI,
+                                                   StringRef InFile) {
+  return new PubnamesDumpConsumer(CI.getPreprocessor());
 }
 
 //===----------------------------------------------------------------------===//
