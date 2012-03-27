@@ -192,9 +192,12 @@ CodeCompletionString::CodeCompletionString(const Chunk *Chunks,
                                            unsigned Priority, 
                                            CXAvailabilityKind Availability,
                                            const char **Annotations,
-                                           unsigned NumAnnotations)
-  : NumChunks(NumChunks), NumAnnotations(NumAnnotations)
-  , Priority(Priority), Availability(Availability)
+                                           unsigned NumAnnotations,
+                                           CXCursorKind ParentKind,
+                                           StringRef ParentName)
+  : NumChunks(NumChunks), NumAnnotations(NumAnnotations),
+    Priority(Priority), Availability(Availability), ParentKind(ParentKind),
+    ParentName(ParentName)
 { 
   assert(NumChunks <= 0xffff);
   assert(NumAnnotations <= 0xffff);
@@ -272,7 +275,8 @@ CodeCompletionString *CodeCompletionBuilder::TakeString() {
   CodeCompletionString *Result 
     = new (Mem) CodeCompletionString(Chunks.data(), Chunks.size(),
                                      Priority, Availability,
-                                     Annotations.data(), Annotations.size());
+                                     Annotations.data(), Annotations.size(),
+                                     ParentKind, ParentName);
   Chunks.clear();
   return Result;
 }
@@ -309,6 +313,70 @@ CodeCompletionBuilder::AddCurrentParameterChunk(const char *CurrentParameter) {
 void CodeCompletionBuilder::AddChunk(CodeCompletionString::ChunkKind CK,
                                      const char *Text) {
   Chunks.push_back(Chunk(CK, Text));
+}
+
+void CodeCompletionBuilder::addParentContext(DeclContext *DC) {
+  if (DC->isTranslationUnit()) {
+    ParentKind = CXCursor_TranslationUnit;
+    return;
+  }
+  
+  if (DC->isFunctionOrMethod())
+    return;
+  
+  NamedDecl *ND = dyn_cast<NamedDecl>(DC);
+  if (!ND)
+    return;
+  
+  ParentKind = getCursorKindForDecl(ND);
+  
+  // Check whether we've already cached the parent name.
+  StringRef &CachedParentName = Allocator.getParentNames()[DC];
+  if (!CachedParentName.empty()) {
+    ParentName = CachedParentName;
+    return;
+  }
+
+  // Find the interesting names.
+  llvm::SmallVector<DeclContext *, 2> Contexts;
+  while (DC && !DC->isFunctionOrMethod()) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(DC)) {
+      if (ND->getIdentifier())
+        Contexts.push_back(DC);
+    }
+    
+    DC = DC->getParent();
+  }
+
+  {
+    llvm::SmallString<128> S;
+    llvm::raw_svector_ostream OS(S);
+    bool First = true;
+    for (unsigned I = Contexts.size(); I != 0; --I) {
+      if (First)
+        First = false;
+      else {
+        OS << "::";
+      }
+      
+      DeclContext *CurDC = Contexts[I-1];
+      if (ObjCCategoryImplDecl *CatImpl = dyn_cast<ObjCCategoryImplDecl>(CurDC))
+        CurDC = CatImpl->getCategoryDecl();
+      
+      if (ObjCCategoryDecl *Cat = dyn_cast<ObjCCategoryDecl>(CurDC)) {
+        ObjCInterfaceDecl *Interface = Cat->getClassInterface();
+        if (!Interface)
+          return;
+        
+        OS << Interface->getName() << '(' << Cat->getName() << ')';
+      } else {
+        OS << cast<NamedDecl>(CurDC)->getName();
+      }
+    }
+    
+    ParentName = Allocator.CopyString(OS.str());
+    CachedParentName = ParentName;
+  }
 }
 
 unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
@@ -444,6 +512,13 @@ static AvailabilityResult getDeclAvailability(Decl *D) {
 
 void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
   switch (Kind) {
+  case RK_Pattern:
+    if (!Declaration) {
+      // Do nothing: Patterns can come with cursor kinds!
+      break;
+    }
+    // Fall through
+      
   case RK_Declaration: {
     // Set the availability based on attributes.
     switch (getDeclAvailability(Declaration)) {
@@ -488,11 +563,7 @@ void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
   case RK_Keyword:
     Availability = CXAvailability_Available;      
     CursorKind = CXCursor_NotImplemented;
-    break;
-      
-  case RK_Pattern:
-    // Do nothing: Patterns can come with cursor kinds!
-    break;
+    break;      
   }
 
   if (!Accessible)

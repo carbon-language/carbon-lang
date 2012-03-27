@@ -2454,6 +2454,13 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
   if (Kind == RK_Pattern) {
     Pattern->Priority = Priority;
     Pattern->Availability = Availability;
+    
+    if (Declaration) {
+      Result.addParentContext(Declaration->getDeclContext());
+      Pattern->ParentKind = Result.getParentKind();
+      Pattern->ParentName = Result.getParentName();
+    }
+    
     return Pattern;
   }
   
@@ -2509,7 +2516,8 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
   
   assert(Kind == RK_Declaration && "Missed a result kind?");
   NamedDecl *ND = Declaration;
-  
+  Result.addParentContext(ND->getDeclContext());
+                          
   if (StartsNestedNameSpecifier) {
     Result.AddTypedTextChunk(
                       Result.getAllocator().CopyString(ND->getNameAsString()));
@@ -3023,7 +3031,9 @@ static void MaybeAddOverrideCalls(Sema &S, DeclContext *InContext,
     Builder.AddChunk(CodeCompletionString::CK_RightParen);
     Results.AddResult(CodeCompletionResult(Builder.TakeString(),
                                            CCP_SuperCompletion,
-                                           CXCursor_CXXMethod));
+                                           CXCursor_CXXMethod,
+                                           CXAvailability_Available,
+                                           Overridden));
     Results.Ignore(Overridden);
   }
 }
@@ -3342,28 +3352,8 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
             Builder.AddTypedTextChunk(
                             Results.getAllocator().CopyString(Name->getName()));
             
-            CXAvailabilityKind Availability = CXAvailability_Available;
-            switch (M->getAvailability()) {
-            case AR_Available:
-            case AR_NotYetIntroduced:
-              Availability = CXAvailability_Available;      
-              break;
-              
-            case AR_Deprecated:
-              Availability = CXAvailability_Deprecated;
-              break;
-              
-            case AR_Unavailable:
-              Availability = CXAvailability_NotAvailable;
-              break;
-            }
-
-            Results.MaybeAddResult(Result(Builder.TakeString(),
-                                  CCP_MemberDeclaration + CCD_MethodAsProperty,
-                                          M->isInstanceMethod()
-                                            ? CXCursor_ObjCInstanceMethodDecl
-                                            : CXCursor_ObjCClassMethodDecl,
-                                          Availability),
+            Results.MaybeAddResult(Result(Builder.TakeString(), *M,
+                                  CCP_MemberDeclaration + CCD_MethodAsProperty),
                                           CurContext);
           }
     }
@@ -4028,7 +4018,8 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     // namespace to the list of results.
     Results.EnterNewScope();
     for (std::map<NamespaceDecl *, NamespaceDecl *>::iterator 
-         NS = OrigToLatest.begin(), NSEnd = OrigToLatest.end();
+              NS = OrigToLatest.begin(),
+           NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
       Results.AddResult(CodeCompletionResult(NS->second, 0),
                         CurContext, 0, false);
@@ -4188,7 +4179,9 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     Results.AddResult(CodeCompletionResult(Builder.TakeString(), 
                                    SawLastInitializer? CCP_NextInitializer
                                                      : CCP_MemberDeclaration,
-                                           CXCursor_MemberRef));
+                                           CXCursor_MemberRef,
+                                           CXAvailability_Available,
+                                           *Field));
     SawLastInitializer = false;
   }
   Results.ExitScope();
@@ -5057,10 +5050,8 @@ static ObjCMethodDecl *AddSuperSendCompletion(Sema &S, bool NeedSuperKeyword,
     }
   }
   
-  Results.AddResult(CodeCompletionResult(Builder.TakeString(), CCP_SuperCompletion,
-                                         SuperMethod->isInstanceMethod()
-                                           ? CXCursor_ObjCInstanceMethodDecl
-                                           : CXCursor_ObjCClassMethodDecl));
+  Results.AddResult(CodeCompletionResult(Builder.TakeString(), SuperMethod,
+                                         CCP_SuperCompletion));
   return SuperMethod;
 }
                                    
@@ -6747,10 +6738,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     if (!M->second.second)
       Priority += CCD_InBaseClass;
     
-    Results.AddResult(Result(Builder.TakeString(), Priority, 
-                             Method->isInstanceMethod()
-                               ? CXCursor_ObjCInstanceMethodDecl
-                               : CXCursor_ObjCClassMethodDecl));
+    Results.AddResult(Result(Builder.TakeString(), Method, Priority));
   }
 
   // Add Key-Value-Coding and Key-Value-Observing accessor methods for all of 

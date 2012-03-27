@@ -845,7 +845,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
 }
 
 std::string NamedDecl::getQualifiedNameAsString() const {
-  return getQualifiedNameAsString(getASTContext().getLangOpts());
+  return getQualifiedNameAsString(getASTContext().getPrintingPolicy());
 }
 
 std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {

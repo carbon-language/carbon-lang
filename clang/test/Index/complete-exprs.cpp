@@ -34,6 +34,17 @@ void X::f() const {
 
 }
 
+namespace N {
+  int x;
+  class C {
+    int member;
+
+    int f(int param) {
+      return member;
+    }
+  };
+}
+
 // RUN: c-index-test -code-completion-at=%s:20:2 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:20:2 -std=c++0x %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{ResultType size_t}{TypedText alignof}{LeftParen (}{Placeholder type}{RightParen )} (40)
@@ -65,3 +76,9 @@ void X::f() const {
 
 // RUN: c-index-test -code-completion-at=%s:34:1 %s -std=c++0x | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: NotImplemented:{ResultType const X *}{TypedText this} (40)
+
+// RUN: c-index-test -code-completion-at=%s:43:14 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: FieldDecl:{ResultType int}{TypedText member} (8) (parent: ClassDecl 'N::C')
+// CHECK-CC5: ParmDecl:{ResultType int}{TypedText param} (8)
+// CHECK-CC5: StructDecl:{TypedText X} (50) (parent: TranslationUnit '(null)')
+// CHECK-CC5: VarDecl:{ResultType int}{TypedText x} (12) (parent: Namespace 'N')

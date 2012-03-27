@@ -65,6 +65,7 @@ clang_getCompletionChunkCompletionString
 clang_getCompletionChunkKind
 clang_getCompletionChunkText
 clang_getCompletionNumAnnotations
+clang_getCompletionParent
 clang_getCompletionPriority
 clang_getCursor
 clang_getCursorAvailability

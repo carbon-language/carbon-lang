@@ -1082,7 +1082,9 @@ void print_completion_result(CXCompletionResult *completion_result,
   FILE *file = (FILE *)client_data;
   CXString ks = clang_getCursorKindSpelling(completion_result->CursorKind);
   unsigned annotationCount;
-
+  enum CXCursorKind ParentKind;
+  CXString ParentName;
+  
   fprintf(file, "%s:", clang_getCString(ks));
   clang_disposeString(ks);
 
@@ -1121,6 +1123,19 @@ void print_completion_result(CXCompletionResult *completion_result,
     fprintf(file, ")");
   }
 
+  if (!getenv("CINDEXTEST_NO_COMPLETION_PARENTS")) {
+    ParentName = clang_getCompletionParent(completion_result->CompletionString,
+                                           &ParentKind);
+    if (ParentKind != CXCursor_NotImplemented) {
+      CXString KindSpelling = clang_getCursorKindSpelling(ParentKind);
+      fprintf(file, " (parent: %s '%s')",
+              clang_getCString(KindSpelling),
+              clang_getCString(ParentName));
+      clang_disposeString(KindSpelling);
+    }
+    clang_disposeString(ParentName);
+  }
+  
   fprintf(file, "\n");
 }
 
