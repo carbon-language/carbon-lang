@@ -20,14 +20,34 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   # Add the llvm header path.
   include_directories(${LLVM_INSTALL_ROOT}/include/)
 
-  # Load the configuration of the installed llvm.
-  include(${LLVM_INSTALL_ROOT}/share/llvm/cmake/LLVMConfig.cmake)
+  # Get the system librarys that will link into LLVM.
+  function(get_system_libs return_var)
+    # Returns in `return_var' a list of system libraries used by LLVM.
+    if( NOT MSVC )
+      if( MINGW )
+        set(system_libs ${system_libs} imagehlp psapi)
+      elseif( CMAKE_HOST_UNIX )
+        if( HAVE_LIBDL )
+          set(system_libs ${system_libs} ${CMAKE_DL_LIBS})
+        endif()
+        if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD )
+          set(system_libs ${system_libs} pthread)
+        endif()
+      endif( MINGW )
+    endif( NOT MSVC )
+    set(${return_var} ${system_libs} PARENT_SCOPE)
+  endfunction(get_system_libs)
 
   # Now set the header paths.
   execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --includedir
                   OUTPUT_VARIABLE LLVM_INCLUDE_DIR
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
   include_directories( ${LLVM_INCLUDE_DIR} )
+
+  # Get the TARGET_TRIPLE
+  execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --host-target
+                  OUTPUT_VARIABLE TARGET_TRIPLE
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # And then set the cxx flags.
   execute_process(COMMAND "${LLVM_INSTALL_ROOT}/bin/llvm-config" --cxxflags
