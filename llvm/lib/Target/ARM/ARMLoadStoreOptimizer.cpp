@@ -1411,6 +1411,10 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   }
 
   delete RS;
+
+  // Kill flags aren't updated accurately by this pass.
+  Fn.getRegInfo().invalidateLiveness();
+
   return Modified;
 }
 
