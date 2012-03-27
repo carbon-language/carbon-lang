@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -183,8 +184,14 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
   TII = tii;
   TRI = tri;
   MMI = mmi;
+  RS = NULL;
 
-  RS = TRI->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
+  // Use a RegScavenger to help update liveness when required.
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  if (MRI.tracksLiveness() && TRI->requiresRegisterScavenging(MF))
+    RS = new RegScavenger();
+  else
+    MRI.invalidateLiveness();
 
   // Fix CFG.  The later algorithms expect it to be right.
   bool MadeChange = false;
