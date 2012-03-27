@@ -3491,14 +3491,18 @@ public:
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
     static const char * const GCCRegNames[] = {
+      // CPU register names
+      // Must match second column of GCCRegAliases
       "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
       "$8",   "$9",   "$10",  "$11",  "$12",  "$13",  "$14",  "$15",
       "$16",  "$17",  "$18",  "$19",  "$20",  "$21",  "$22",  "$23",
-      "$24",  "$25",  "$26",  "$27",  "$28",  "$sp",  "$fp",  "$31",
+      "$24",  "$25",  "$26",  "$27",  "$28",  "$29",  "$30",  "$31",
+      // Floating point register names
       "$f0",  "$f1",  "$f2",  "$f3",  "$f4",  "$f5",  "$f6",  "$f7",
       "$f8",  "$f9",  "$f10", "$f11", "$f12", "$f13", "$f14", "$f15",
       "$f16", "$f17", "$f18", "$f19", "$f20", "$f21", "$f22", "$f23",
       "$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
+      // Hi/lo and condition register names
       "hi",   "lo",   "",     "$fcc0","$fcc1","$fcc2","$fcc3","$fcc4",
       "$fcc5","$fcc6","$fcc7"
     };
@@ -3622,8 +3626,8 @@ public:
       { { "k0" }, "$26" },
       { { "k1" }, "$27" },
       { { "gp" }, "$28" },
-      { { "sp" }, "$29" },
-      { { "fp" }, "$30" },
+      { { "sp","$sp" }, "$29" },
+      { { "fp","$fp" }, "$30" },
       { { "ra" }, "$31" }
     };
     Aliases = GCCRegAliases;
@@ -3740,8 +3744,8 @@ public:
       { { "k0" }, "$26" },
       { { "k1" }, "$27" },
       { { "gp" }, "$28" },
-      { { "sp" }, "$29" },
-      { { "fp" }, "$30" },
+      { { "sp","$sp" }, "$29" },
+      { { "fp","$fp" }, "$30" },
       { { "ra" }, "$31" }
     };
     Aliases = GCCRegAliases;
