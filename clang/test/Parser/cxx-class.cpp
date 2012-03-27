@@ -61,6 +61,30 @@ class F {
     typedef void F4() {} // expected-error{{function definition declared 'typedef'}}
 };
 
+namespace ctor_error {
+  class Foo {};
+  // By [class.qual]p2, this is a constructor declaration.
+  Foo::Foo (F) = F(); // expected-error{{does not match any declaration in 'ctor_error::Foo'}}
+
+  class Ctor { // expected-note{{not complete until the closing '}'}}
+    Ctor(f)(int); // ok
+    Ctor(g(int)); // ok
+    Ctor(x[5]); // expected-error{{incomplete type}}
+
+    Ctor(UnknownType *); // expected-error{{unknown type name 'UnknownType'}}
+  };
+
+  Ctor::Ctor (x) = { 0 }; // \
+    // expected-error{{qualified reference to 'Ctor' is a constructor name}}
+
+  // FIXME: These diagnostics are terrible.
+  Ctor::Ctor(UnknownType *) {} // \
+    // expected-error{{'Ctor' cannot be the name of a variable or data member}} \
+    // expected-error{{use of undeclared identifier 'UnknownType'}} \
+    // expected-error{{expected expression}} \
+    // expected-error{{expected ';' after top level declarator}}
+}
+
 // PR11109 must appear at the end of the source file
 class pr11109r3 { // expected-note{{to match this '{'}}
   public // expected-error{{expected ':'}} expected-error{{expected '}'}} expected-error{{expected ';' after class}}
