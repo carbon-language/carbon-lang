@@ -2758,6 +2758,19 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
   return UnwrappedAnyPointer && Context.hasSameUnqualifiedType(FromType,ToType);
 }
 
+static bool isFirstArgumentCompatibleWithType(ASTContext &Context,
+                                              CXXConstructorDecl *Constructor,
+                                              QualType Type) {
+  const FunctionProtoType *CtorType =
+      Constructor->getType()->getAs<FunctionProtoType>();
+  if (CtorType->getNumArgs() > 0) {
+    QualType FirstArg = CtorType->getArgType(0);
+    if (Context.hasSameUnqualifiedType(Type, FirstArg.getNonReferenceType()))
+      return true;
+  }
+  return false;
+}
+
 static OverloadingResult
 IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
                                        CXXRecordDecl *To,
@@ -2784,15 +2797,19 @@ IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
                   S.isInitListConstructor(Constructor) &&
                   (AllowExplicit || !Constructor->isExplicit());
     if (Usable) {
+      // If the first argument is (a reference to) the target type,
+      // suppress conversions.
+      bool SuppressUserConversions =
+          isFirstArgumentCompatibleWithType(S.Context, Constructor, ToType);
       if (ConstructorTmpl)
         S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                        /*ExplicitArgs*/ 0,
                                        From, CandidateSet,
-                                       /*SuppressUserConversions=*/true);
+                                       SuppressUserConversions);
       else
         S.AddOverloadCandidate(Constructor, FoundDecl,
                                From, CandidateSet,
-                               /*SuppressUserConversions=*/true);
+                               SuppressUserConversions);
     }
   }
 
@@ -2918,15 +2935,8 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
             if (NumArgs == 1) {
               // If the first argument is (a reference to) the target type,
               // suppress conversions.
-              const FunctionProtoType *CtorType =
-                  Constructor->getType()->getAs<FunctionProtoType>();
-              if (CtorType->getNumArgs() > 0) {
-                QualType FirstArg = CtorType->getArgType(0);
-                if (S.Context.hasSameUnqualifiedType(ToType,
-                                              FirstArg.getNonReferenceType())) {
-                  SuppressUserConversions = true;
-                }
-              }
+              SuppressUserConversions = isFirstArgumentCompatibleWithType(
+                                                S.Context, Constructor, ToType);
             }
           }
           if (ConstructorTmpl)
