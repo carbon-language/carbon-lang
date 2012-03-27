@@ -14,7 +14,9 @@
 #ifndef MIPSBASEINFO_H
 #define MIPSBASEINFO_H
 
+#include "MipsFixupKinds.h"
 #include "MipsMCTargetDesc.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -197,6 +199,34 @@ inline static unsigned getMipsRegisterNumbering(unsigned RegEnum)
     return 31;
   default: llvm_unreachable("Unknown register number!");
   }
+}
+
+inline static std::pair<const MCSymbolRefExpr*, int64_t>
+MipsGetSymAndOffset(const MCFixup &Fixup) {
+  MCFixupKind FixupKind = Fixup.getKind();
+
+  if ((FixupKind < FirstTargetFixupKind) ||
+      (FixupKind >= MCFixupKind(Mips::LastTargetFixupKind)))
+    return std::make_pair((const MCSymbolRefExpr*)0, (int64_t)0);
+
+  const MCExpr *Expr = Fixup.getValue();
+  MCExpr::ExprKind Kind = Expr->getKind();
+
+  if (Kind == MCExpr::Binary) {
+    const MCBinaryExpr *BE = static_cast<const MCBinaryExpr*>(Expr);
+    const MCExpr *LHS = BE->getLHS();
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(BE->getRHS());
+
+    if ((LHS->getKind() != MCExpr::SymbolRef) || !CE)
+      return std::make_pair((const MCSymbolRefExpr*)0, (int64_t)0);
+
+    return std::make_pair(cast<MCSymbolRefExpr>(LHS), CE->getValue());
+  }
+
+  if (Kind != MCExpr::SymbolRef)
+    return std::make_pair((const MCSymbolRefExpr*)0, (int64_t)0);
+
+  return std::make_pair(cast<MCSymbolRefExpr>(Expr), 0);
 }
 }
 
