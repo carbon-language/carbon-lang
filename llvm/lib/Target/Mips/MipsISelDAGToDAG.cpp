@@ -142,6 +142,7 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
 
   if (Subtarget.isABI_N64()) {
     MF.getRegInfo().addLiveIn(Mips::T9_64);
+    MBB.addLiveIn(Mips::T9_64);
 
     // lui $v0, %hi(%neg(%gp_rel(fname)))
     // daddu $v1, $v0, $t9
@@ -163,6 +164,7 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
       .addExternalSymbol("__gnu_local_gp", MipsII::MO_ABS_LO);
   } else {
     MF.getRegInfo().addLiveIn(Mips::T9);
+    MBB.addLiveIn(Mips::T9);
 
     if (Subtarget.isABI_N32()) {
       // lui $v0, %hi(%neg(%gp_rel(fname)))
