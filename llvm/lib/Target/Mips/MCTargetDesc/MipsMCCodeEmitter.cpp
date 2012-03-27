@@ -179,73 +179,71 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   } else if (MO.isFPImm()) {
     return static_cast<unsigned>(APFloat(MO.getFPImm())
         .bitcastToAPInt().getHiBits(32).getLimitedValue());
-  } else if (MO.isExpr()) {
-    const MCExpr *Expr = MO.getExpr();
-    MCExpr::ExprKind Kind = Expr->getKind();
-    unsigned Ret = 0;
+  } 
 
-    if (Kind == MCExpr::Binary) {
-      const MCBinaryExpr *BE = static_cast<const MCBinaryExpr*>(Expr);
-      Expr = BE->getLHS();
-      Kind = Expr->getKind();
-      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(BE->getRHS());
-      assert((Kind == MCExpr::SymbolRef) && CE &&
-             "Binary expression must be sym+const.");
-      Ret = CE->getValue();
-    }
+  // MO must be an Expr.
+  assert(MO.isExpr());
 
-    if (Kind == MCExpr::SymbolRef) {
-      Mips::Fixups FixupKind;
+  const MCExpr *Expr = MO.getExpr();
+  MCExpr::ExprKind Kind = Expr->getKind();
 
-      switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
-      case MCSymbolRefExpr::VK_Mips_GPREL:
-        FixupKind = Mips::fixup_Mips_GPREL16;
-        break;
-      case MCSymbolRefExpr::VK_Mips_GOT_CALL:
-        FixupKind = Mips::fixup_Mips_CALL16;
-        break;
-      case MCSymbolRefExpr::VK_Mips_GOT16:
-        FixupKind = Mips::fixup_Mips_GOT_Global;
-        break;
-      case MCSymbolRefExpr::VK_Mips_GOT:
-        FixupKind = Mips::fixup_Mips_GOT_Local;
-        break;
-      case MCSymbolRefExpr::VK_Mips_ABS_HI:
-        FixupKind = Mips::fixup_Mips_HI16;
-        break;
-      case MCSymbolRefExpr::VK_Mips_ABS_LO:
-        FixupKind = Mips::fixup_Mips_LO16;
-        break;
-      case MCSymbolRefExpr::VK_Mips_TLSGD:
-        FixupKind = Mips::fixup_Mips_TLSGD;
-        break;
-      case MCSymbolRefExpr::VK_Mips_TLSLDM:
-        FixupKind = Mips::fixup_Mips_TLSLDM;
-        break;
-      case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
-        FixupKind = Mips::fixup_Mips_DTPREL_HI;
-        break;
-      case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
-        FixupKind = Mips::fixup_Mips_DTPREL_LO;
-        break;
-      case MCSymbolRefExpr::VK_Mips_GOTTPREL:
-        FixupKind = Mips::fixup_Mips_GOTTPREL;
-        break;
-      case MCSymbolRefExpr::VK_Mips_TPREL_HI:
-        FixupKind = Mips::fixup_Mips_TPREL_HI;
-        break;
-      case MCSymbolRefExpr::VK_Mips_TPREL_LO:
-        FixupKind = Mips::fixup_Mips_TPREL_LO;
-        break;
-      default:
-        return Ret;
-      } // switch
-      Fixups.push_back(MCFixup::Create(0, Expr, MCFixupKind(FixupKind)));
-    } // if SymbolRef
-    // All of the information is in the fixup.
-    return Ret;
+  if (Kind == MCExpr::Binary) {
+    Expr = static_cast<const MCBinaryExpr*>(Expr)->getLHS();
+    Kind = Expr->getKind();
   }
-  llvm_unreachable("Unable to encode MCOperand!");
+
+  assert (Kind == MCExpr::SymbolRef);
+    
+  Mips::Fixups FixupKind;
+
+  switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
+  case MCSymbolRefExpr::VK_Mips_GPREL:
+    FixupKind = Mips::fixup_Mips_GPREL16;
+    break;
+  case MCSymbolRefExpr::VK_Mips_GOT_CALL:
+    FixupKind = Mips::fixup_Mips_CALL16;
+    break;
+  case MCSymbolRefExpr::VK_Mips_GOT16:
+    FixupKind = Mips::fixup_Mips_GOT_Global;
+    break;
+  case MCSymbolRefExpr::VK_Mips_GOT:
+    FixupKind = Mips::fixup_Mips_GOT_Local;
+    break;
+  case MCSymbolRefExpr::VK_Mips_ABS_HI:
+    FixupKind = Mips::fixup_Mips_HI16;
+    break;
+  case MCSymbolRefExpr::VK_Mips_ABS_LO:
+    FixupKind = Mips::fixup_Mips_LO16;
+    break;
+  case MCSymbolRefExpr::VK_Mips_TLSGD:
+    FixupKind = Mips::fixup_Mips_TLSGD;
+    break;
+  case MCSymbolRefExpr::VK_Mips_TLSLDM:
+    FixupKind = Mips::fixup_Mips_TLSLDM;
+    break;
+  case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
+    FixupKind = Mips::fixup_Mips_DTPREL_HI;
+    break;
+  case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
+    FixupKind = Mips::fixup_Mips_DTPREL_LO;
+    break;
+  case MCSymbolRefExpr::VK_Mips_GOTTPREL:
+    FixupKind = Mips::fixup_Mips_GOTTPREL;
+    break;
+  case MCSymbolRefExpr::VK_Mips_TPREL_HI:
+    FixupKind = Mips::fixup_Mips_TPREL_HI;
+    break;
+  case MCSymbolRefExpr::VK_Mips_TPREL_LO:
+    FixupKind = Mips::fixup_Mips_TPREL_LO;
+    break;
+  default:
+    break;
+  } // switch
+
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(), MCFixupKind(FixupKind)));
+
+  // All of the information is in the fixup.
+  return 0;
 }
 
 /// getMemEncoding - Return binary encoding of memory related operand.

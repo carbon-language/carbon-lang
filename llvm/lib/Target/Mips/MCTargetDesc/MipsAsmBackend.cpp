@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 //
 
+#include "MipsBaseInfo.h"
 #include "MipsFixupKinds.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -82,8 +83,9 @@ public:
                   uint64_t Value) const {
     MCFixupKind Kind = Fixup.getKind();
     Value = adjustFixupValue((unsigned)Kind, Value);
+    int64_t SymOffset = MipsGetSymAndOffset(Fixup).second;
 
-    if (!Value)
+    if (!Value && !SymOffset)
       return; // Doesn't change encoding.
 
     // Where do we start in the object
@@ -114,7 +116,7 @@ public:
     }
 
     uint64_t Mask = ((uint64_t)(-1) >> (64 - getFixupKindInfo(Kind).TargetSize));
-    CurVal = (CurVal & ~Mask) | ((CurVal + Value) & Mask);
+    CurVal |= (Value + SymOffset) & Mask;
 
     // Write out the fixed up bytes back to the code/data bits.
     for (unsigned i = 0; i != NumBytes; ++i) {
