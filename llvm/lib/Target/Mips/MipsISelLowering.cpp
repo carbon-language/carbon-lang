@@ -2545,7 +2545,8 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 static void ReadByValArg(MachineFunction &MF, SDValue Chain, DebugLoc dl,
                          std::vector<SDValue>& OutChains,
                          SelectionDAG &DAG, unsigned NumWords, SDValue FIN,
-                         const CCValAssign &VA, const ISD::ArgFlagsTy& Flags) {
+                         const CCValAssign &VA, const ISD::ArgFlagsTy& Flags,
+                         const Argument *FuncArg) {
   unsigned LocMem = VA.getLocMemOffset();
   unsigned FirstWord = LocMem / 4;
 
@@ -2560,8 +2561,8 @@ static void ReadByValArg(MachineFunction &MF, SDValue Chain, DebugLoc dl,
     SDValue StorePtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIN,
                                    DAG.getConstant(i * 4, MVT::i32));
     SDValue Store = DAG.getStore(Chain, dl, DAG.getRegister(Reg, MVT::i32),
-                                 StorePtr, MachinePointerInfo(), false,
-                                 false, 0);
+                                 StorePtr, MachinePointerInfo(FuncArg, i * 4),
+                                 false, false, 0);
     OutChains.push_back(Store);
   }
 }
@@ -2573,7 +2574,7 @@ CopyMips64ByValRegs(MachineFunction &MF, SDValue Chain, DebugLoc dl,
                     const CCValAssign &VA, const ISD::ArgFlagsTy& Flags,
                     MachineFrameInfo *MFI, bool IsRegLoc,
                     SmallVectorImpl<SDValue> &InVals, MipsFunctionInfo *MipsFI,
-                    EVT PtrTy) {
+                    EVT PtrTy, const Argument *FuncArg) {
   const uint16_t *Reg = Mips64IntRegs + 8;
   int FOOffset; // Frame object offset from virtual frame pointer.
 
@@ -2597,8 +2598,8 @@ CopyMips64ByValRegs(MachineFunction &MF, SDValue Chain, DebugLoc dl,
     SDValue StorePtr = DAG.getNode(ISD::ADD, dl, PtrTy, FIN,
                                    DAG.getConstant(I * 8, PtrTy));
     SDValue Store = DAG.getStore(Chain, dl, DAG.getRegister(VReg, MVT::i64),
-                                 StorePtr, MachinePointerInfo(), false,
-                                 false, 0);
+                                 StorePtr, MachinePointerInfo(FuncArg, I * 8),
+                                 false, false, 0);
     OutChains.push_back(Store);
   }
 
@@ -2634,9 +2635,11 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
+  Function::const_arg_iterator FuncArg =
+    DAG.getMachineFunction().getFunction()->arg_begin();
   int LastFI = 0;// MipsFI->LastInArgFI is 0 at the entry of this function.
 
-  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i, ++FuncArg) {
     CCValAssign &VA = ArgLocs[i];
     EVT ValVT = VA.getValVT();
     ISD::ArgFlagsTy Flags = Ins[i].Flags;
@@ -2651,11 +2654,12 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
                                         true);
         SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
         InVals.push_back(FIN);
-        ReadByValArg(MF, Chain, dl, OutChains, DAG, NumWords, FIN, VA, Flags);
+        ReadByValArg(MF, Chain, dl, OutChains, DAG, NumWords, FIN, VA, Flags,
+                     &*FuncArg);
       } else // N32/64
         LastFI = CopyMips64ByValRegs(MF, Chain, dl, OutChains, DAG, VA, Flags,
                                      MFI, IsRegLoc, InVals, MipsFI,
-                                     getPointerTy());
+                                     getPointerTy(), &*FuncArg);
       continue;
     }
 
