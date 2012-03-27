@@ -478,6 +478,10 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
 /// HoistRegionPostRA - Walk the specified region of the CFG and hoist loop
 /// invariants out to the preheader.
 void MachineLICM::HoistRegionPostRA() {
+  MachineBasicBlock *Preheader = getCurPreheader();
+  if (!Preheader)
+    return;
+
   unsigned NumRegs = TRI->getNumRegs();
   BitVector PhysRegDefs(NumRegs); // Regs defined once in the loop.
   BitVector PhysRegClobbers(NumRegs); // Regs defined more than once.
@@ -514,25 +518,46 @@ void MachineLICM::HoistRegionPostRA() {
     }
   }
 
+  // Gather the registers read / clobbered by the terminator.
+  BitVector TermRegs(NumRegs);
+  MachineBasicBlock::iterator TI = Preheader->getFirstTerminator();
+  if (TI != Preheader->end()) {
+    for (unsigned i = 0, e = TI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = TI->getOperand(i);
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!Reg)
+        continue;
+      for (const uint16_t *AS = TRI->getOverlaps(Reg); *AS; ++AS)
+        TermRegs.set(*AS);
+    }
+  }
+
   // Now evaluate whether the potential candidates qualify.
   // 1. Check if the candidate defined register is defined by another
   //    instruction in the loop.
   // 2. If the candidate is a load from stack slot (always true for now),
   //    check if the slot is stored anywhere in the loop.
+  // 3. Make sure candidate def should not clobber
+  //    registers read by the terminator. Similarly its def should not be
+  //    clobbered by the terminator.
   for (unsigned i = 0, e = Candidates.size(); i != e; ++i) {
     if (Candidates[i].FI != INT_MIN &&
         StoredFIs.count(Candidates[i].FI))
       continue;
 
-    if (!PhysRegClobbers.test(Candidates[i].Def)) {
+    unsigned Def = Candidates[i].Def;
+    if (!PhysRegClobbers.test(Def) && !TermRegs.test(Def)) {
       bool Safe = true;
       MachineInstr *MI = Candidates[i].MI;
       for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
         const MachineOperand &MO = MI->getOperand(j);
         if (!MO.isReg() || MO.isDef() || !MO.getReg())
           continue;
-        if (PhysRegDefs.test(MO.getReg()) ||
-            PhysRegClobbers.test(MO.getReg())) {
+        unsigned Reg = MO.getReg();
+        if (PhysRegDefs.test(Reg) ||
+            PhysRegClobbers.test(Reg)) {
           // If it's using a non-loop-invariant register, then it's obviously
           // not safe to hoist.
           Safe = false;
@@ -571,7 +596,6 @@ void MachineLICM::AddToLiveIns(unsigned Reg) {
 /// dirty work.
 void MachineLICM::HoistPostRA(MachineInstr *MI, unsigned Def) {
   MachineBasicBlock *Preheader = getCurPreheader();
-  if (!Preheader) return;
 
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
