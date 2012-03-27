@@ -125,6 +125,10 @@ getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(Mips::GP_64);
   }
 
+  // Reserve hardware registers.
+  Reserved.set(Mips::HWR29);
+  Reserved.set(Mips::HWR29_64);
+
   return Reserved;
 }
 
