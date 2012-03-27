@@ -94,6 +94,7 @@ public:
   unsigned SaveTempLabels    : 1; /// Save temporary labels.
   unsigned SimplifyLibCalls  : 1; /// Set when -fbuiltin is enabled.
   unsigned SoftFloat         : 1; /// -soft-float.
+  unsigned StrictEnums       : 1; /// Optimize based on strict enum definition.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
                                   /// selection.
@@ -205,6 +206,7 @@ public:
     SaveTempLabels = 0;
     SimplifyLibCalls = 1;
     SoftFloat = 0;
+    StrictEnums = 0;
     TimePasses = 0;
     UnitAtATime = 1;
     UnrollLoops = 0;

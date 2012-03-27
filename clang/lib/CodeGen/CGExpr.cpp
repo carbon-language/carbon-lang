@@ -872,8 +872,9 @@ static bool hasBooleanRepresentation(QualType Ty) {
 
 llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
   const EnumType *ET = Ty->getAs<EnumType>();
-  bool IsRegularCPlusPlusEnum = getLangOpts().CPlusPlus && ET &&
-    !ET->getDecl()->isFixed();
+  bool IsRegularCPlusPlusEnum = (getLangOpts().CPlusPlus && ET &&
+                                 CGM.getCodeGenOpts().StrictEnums &&
+                                 !ET->getDecl()->isFixed());
   bool IsBool = hasBooleanRepresentation(Ty);
   llvm::Type *LTy;
   if (!IsBool && !IsRegularCPlusPlusEnum)

@@ -1,10 +1,17 @@
-// RUN: %clang_cc1 %s -emit-llvm -O1 -relaxed-aliasing -std=c++11 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -O1 -relaxed-aliasing -fstrict-enums -std=c++11 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -O1 -relaxed-aliasing -std=c++11 -o - | FileCheck --check-prefix=NO-STRICT-ENUMS %s
 
 bool f(bool *x) {
   return *x;
 }
 // CHECK: define zeroext i1 @_Z1fPb
 // CHECK: load i8* %{{.*}}, align 1, !range !0
+
+// Only enum-tests follow. Ensure that after the bool test, no further range
+// metadata shows up when strict enums are disabled.
+// NO-STRICT-ENUMS: define zeroext i1 @_Z1fPb
+// NO-STRICT-ENUMS: load i8* %{{.*}}, align 1, !range !0
+// NO-STRICT-ENUMS-NOT: !range
 
 enum e1 { };
 e1 g1(e1 *x) {

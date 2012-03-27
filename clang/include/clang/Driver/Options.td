@@ -444,6 +444,7 @@ def fno_show_source_location : Flag<"-fno-show-source-location">, Group<f_Group>
 def fno_spell_checking : Flag<"-fno-spell-checking">, Group<f_Group>;
 def fno_stack_protector : Flag<"-fno-stack-protector">, Group<f_Group>;
 def fno_strict_aliasing : Flag<"-fno-strict-aliasing">, Group<f_Group>;
+def fno_strict_enums : Flag<"-fno-strict-enums">, Group<f_Group>;
 def fno_strict_overflow : Flag<"-fno-strict-overflow">, Group<f_Group>;
 def fno_threadsafe_statics : Flag<"-fno-threadsafe-statics">, Group<f_Group>;
 def fno_use_cxa_atexit : Flag<"-fno-use-cxa-atexit">, Group<f_Group>;
@@ -515,6 +516,7 @@ def fsigned_char : Flag<"-fsigned-char">, Group<f_Group>;
 def fstack_protector_all : Flag<"-fstack-protector-all">, Group<f_Group>;
 def fstack_protector : Flag<"-fstack-protector">, Group<f_Group>;
 def fstrict_aliasing : Flag<"-fstrict-aliasing">, Group<f_Group>;
+def fstrict_enums : Flag<"-fstrict-enums">, Group<f_Group>;
 def fstrict_overflow : Flag<"-fstrict-overflow">, Group<f_Group>;
 def fsyntax_only : Flag<"-fsyntax-only">, Flags<[DriverOption]>;
 def ftabstop_EQ : Joined<"-ftabstop=">, Group<f_Group>;
