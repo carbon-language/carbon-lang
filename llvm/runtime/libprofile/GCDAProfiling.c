@@ -114,8 +114,9 @@ void llvm_gcda_start_file(const char *orig_filename) {
   output_file = fopen(filename, "wb");
 
   if (!output_file) {
+    const char *cptr = 0;
     filename[0] = '\0';  /* The size of filename should be big enough. */
-    char *cptr = strrchr(orig_filename, '/');
+    cptr = strrchr(orig_filename, '/');
     strcat(filename, cptr ? cptr + 1 : orig_filename);
     output_file = fopen(filename, "wb");
 
