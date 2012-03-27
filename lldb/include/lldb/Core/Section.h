@@ -261,6 +261,18 @@ public:
     {
         return m_parent_wp.lock();
     }
+    
+    bool
+    IsThreadSpecific () const
+    {
+        return m_thread_specific;
+    }
+
+    void
+    SetIsThreadSpecific (bool b)
+    {
+        m_thread_specific = b;
+    }
 
 protected:
 
@@ -277,7 +289,8 @@ protected:
                                         // children contains an address. This allows for gaps between the children
                                         // that are contained in the address range for this section, but do not produce
                                         // hits unless the children contain the address.
-                    m_encrypted:1;      // Set to true if the contents are encrypted
+                    m_encrypted:1,      // Set to true if the contents are encrypted
+                    m_thread_specific:1;// This section is thread specific
     lldb::SectionWP m_linked_section_wp;
     uint64_t        m_linked_offset;
 private:

@@ -2517,30 +2517,13 @@ public:
                             SectionList *section_list = objfile->GetSectionList();
                             if (section_list)
                             {
+                                bool changed = false;
                                 if (argc == 0)
                                 {
                                     if (m_slide_option.GetOptionValue().OptionWasSet())
                                     {
-                                        Module *module = matching_modules.GetModulePointerAtIndex(0);
-                                        if (module)
-                                        {
-                                            ObjectFile *objfile = module->GetObjectFile();
-                                            if (objfile)
-                                            {
-                                                SectionList *section_list = objfile->GetSectionList();
-                                                if (section_list)
-                                                {
-                                                    const size_t num_sections = section_list->GetSize();
-                                                    const addr_t slide = m_slide_option.GetOptionValue().GetCurrentValue();
-                                                    for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
-                                                    {
-                                                        SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
-                                                        if (section_sp)
-                                                            target->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), section_sp->GetFileAddress() + slide);
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        const addr_t slide = m_slide_option.GetOptionValue().GetCurrentValue();
+                                        module->SetLoadAddress (*target, slide, changed);
                                     }
                                     else
                                     {
@@ -2572,8 +2555,18 @@ public:
                                                 SectionSP section_sp (section_list->FindSectionByName(const_sect_name));
                                                 if (section_sp)
                                                 {
-                                                    target->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), load_addr);
-                                                    result.AppendMessageWithFormat("section '%s' loaded at 0x%llx\n", sect_name, load_addr);
+                                                    if (section_sp->IsThreadSpecific())
+                                                    {
+                                                        result.AppendErrorWithFormat ("thread specific sections are not yet supported (section '%s')\n", sect_name);
+                                                        result.SetStatus (eReturnStatusFailed);
+                                                        break;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (target->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), load_addr))
+                                                            changed = true;
+                                                        result.AppendMessageWithFormat("section '%s' loaded at 0x%llx\n", sect_name, load_addr);
+                                                    }
                                                 }
                                                 else
                                                 {
@@ -2600,6 +2593,9 @@ public:
                                         }
                                     }
                                 }
+                                
+                                if (changed)
+                                    target->ModulesDidLoad (matching_modules);
                             }
                             else
                             {

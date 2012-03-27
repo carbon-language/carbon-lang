@@ -1104,11 +1104,11 @@ Module::SetArchitecture (const ArchSpec &new_arch)
 bool 
 Module::SetLoadAddress (Target &target, lldb::addr_t offset, bool &changed)
 {
-    changed = false;
-    ObjectFile *image_object_file = GetObjectFile();
-    if (image_object_file)
+    size_t num_loaded_sections = 0;
+    ObjectFile *objfile = GetObjectFile();
+    if (objfile)
     {
-        SectionList *section_list = image_object_file->GetSectionList ();
+        SectionList *section_list = objfile->GetSectionList ();
         if (section_list)
         {
             const size_t num_sections = section_list->GetSize();
@@ -1119,16 +1119,17 @@ Module::SetLoadAddress (Target &target, lldb::addr_t offset, bool &changed)
                 // first section that starts of file offset zero and that
                 // has bytes in the file...
                 Section *section = section_list->GetSectionAtIndex (sect_idx).get();
-                if (section)
+                // Only load non-thread specific sections when given a slide
+                if (section && !section->IsThreadSpecific())
                 {
                     if (target.GetSectionLoadList().SetSectionLoadAddress (section, section->GetFileAddress() + offset))
-                        changed = true;
+                        ++num_loaded_sections;
                 }
             }
-            return sect_idx > 0;
         }
     }
-    return false;
+    changed = num_loaded_sections > 0;
+    return num_loaded_sections > 0;
 }
 
 

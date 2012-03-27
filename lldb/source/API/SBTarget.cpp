@@ -2086,12 +2086,23 @@ SBTarget::SetSectionLoadAddress (lldb::SBSection section,
         }
         else
         {
-            target_sp->GetSectionLoadList().SetSectionLoadAddress (section.GetSP().get(), section_base_addr);
+            SectionSP section_sp (section.GetSP());
+            if (section_sp)
+            {
+                if (section_sp->IsThreadSpecific())
+                {
+                    sb_error.SetErrorString ("thread specific sections are not yet supported");
+                }
+                else
+                {
+                    target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), section_base_addr);
+                }
+            }
         }
     }
     else
     {
-        sb_error.SetErrorStringWithFormat ("invalid target");
+        sb_error.SetErrorString ("invalid target");
     }
     return sb_error;
 }
@@ -2132,30 +2143,17 @@ SBTarget::SetModuleLoadAddress (lldb::SBModule module, int64_t slide_offset)
         ModuleSP module_sp (module.GetSP());
         if (module_sp)
         {
-            ObjectFile *objfile = module_sp->GetObjectFile();
-            if (objfile)
+            bool changed = false;
+            if (module_sp->SetLoadAddress (*target_sp, slide_offset, changed))
             {
-                SectionList *section_list = objfile->GetSectionList();
-                if (section_list)
+                // The load was successful, make sure that at least some sections
+                // changed before we notify that our module was loaded.
+                if (changed)
                 {
-                    const size_t num_sections = section_list->GetSize();
-                    for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
-                    {
-                        SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
-                        if (section_sp)
-                            target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), section_sp->GetFileAddress() + slide_offset);
-                    }
+                    ModuleList module_list;
+                    module_list.Append(module_sp);
+                    target_sp->ModulesDidLoad (module_list);
                 }
-                else
-                {
-                    module_sp->GetFileSpec().GetPath (path, sizeof(path));
-                    sb_error.SetErrorStringWithFormat ("no sections in object file '%s'", path);
-                }
-            }
-            else
-            {
-                module_sp->GetFileSpec().GetPath (path, sizeof(path));
-                sb_error.SetErrorStringWithFormat ("no object file for module '%s'", path);
             }
         }
         else

@@ -36,6 +36,8 @@ Section::Section (const ModuleSP &module_sp,
     m_file_size     (file_size),
     m_children      (),
     m_fake          (false),
+    m_encrypted     (false),
+    m_thread_specific (false),
     m_linked_section_wp(),
     m_linked_offset (0)
 {
@@ -65,6 +67,8 @@ Section::Section (const lldb::SectionSP &parent_section_sp,
     m_file_size     (file_size),
     m_children      (),
     m_fake          (false),
+    m_encrypted     (false),
+    m_thread_specific (false),
     m_linked_section_wp(),
     m_linked_offset (0)
 {

@@ -621,6 +621,8 @@ ObjectFileELF::GetSectionList()
             static ConstString g_sect_name_text (".text");
             static ConstString g_sect_name_data (".data");
             static ConstString g_sect_name_bss (".bss");
+            static ConstString g_sect_name_tdata (".tdata");
+            static ConstString g_sect_name_tbss (".tbss");
             static ConstString g_sect_name_dwarf_debug_abbrev (".debug_abbrev");
             static ConstString g_sect_name_dwarf_debug_aranges (".debug_aranges");
             static ConstString g_sect_name_dwarf_debug_frame (".debug_frame");
@@ -636,9 +638,21 @@ ObjectFileELF::GetSectionList()
 
             SectionType sect_type = eSectionTypeOther;
 
+            bool is_thread_specific = false;
+            
             if      (name == g_sect_name_text)                  sect_type = eSectionTypeCode;
             else if (name == g_sect_name_data)                  sect_type = eSectionTypeData;
             else if (name == g_sect_name_bss)                   sect_type = eSectionTypeZeroFill;
+            else if (name == g_sect_name_tdata)
+            {
+                sect_type = eSectionTypeData;
+                is_thread_specific = true;   
+            }
+            else if (name == g_sect_name_tbss)
+            {
+                sect_type = eSectionTypeZeroFill;   
+                is_thread_specific = true;   
+            }
             else if (name == g_sect_name_dwarf_debug_abbrev)    sect_type = eSectionTypeDWARFDebugAbbrev;
             else if (name == g_sect_name_dwarf_debug_aranges)   sect_type = eSectionTypeDWARFDebugAranges;
             else if (name == g_sect_name_dwarf_debug_frame)     sect_type = eSectionTypeDWARFDebugFrame;
@@ -653,7 +667,7 @@ ObjectFileELF::GetSectionList()
             else if (name == g_sect_name_eh_frame)              sect_type = eSectionTypeEHFrame;
             
             
-            SectionSP section(new Section(
+            SectionSP section_sp(new Section(
                 GetModule(),        // Module to which this section belongs.
                 SectionIndex(I),    // Section ID.
                 name,               // Section name.
@@ -664,7 +678,9 @@ ObjectFileELF::GetSectionList()
                 file_size,          // Size of the section as found in the file.
                 header.sh_flags));  // Flags for this section.
 
-            m_sections_ap->AddSection(section);
+            if (is_thread_specific)
+                section_sp->SetIsThreadSpecific (is_thread_specific);
+            m_sections_ap->AddSection(section_sp);
         }
     }
 
