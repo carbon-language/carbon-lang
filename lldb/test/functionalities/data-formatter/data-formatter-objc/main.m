@@ -631,6 +631,12 @@ int main (int argc, const char * argv[])
 
 	Molecule *molecule = [Molecule new];
 
+	Class myclass = NSClassFromString(@"NSValue");
+	Class myclass2 = [str0 class];
+	Class myclass3 = [molecule class];
+	Class myclass4 = NSClassFromString(@"NSMutableArray");
+	Class myclass5 = [nil class];
+
     // Set break point at this line.
 
     [molecule addObserver:[My_KVO_Observer new] forKeyPath:@"atoms" options:0 context:NULL];

@@ -796,6 +796,7 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("struct objc_selector"), objc_flags);
     AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("objc_selector"), objc_flags);
     AddScriptSummary(objc_category_sp, "Selector.SELPointer_Summary", ConstString("objc_selector *"), objc_flags);
+    AddScriptSummary(objc_category_sp, "Class.Class_Summary", ConstString("Class"), objc_flags);
     objc_flags.SetSkipPointers(false);
 
     TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);

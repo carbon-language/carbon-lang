@@ -593,6 +593,12 @@ class ObjCRuntime:
 			return 1
 		return 2
 
+	@staticmethod
+	def runtime_from_isa(isa):
+		runtime = ObjCRuntime(isa)
+		runtime.isa = isa
+		return runtime
+
 	def __init__(self,valobj):
 		self.valobj = valobj
 		self.adjust_for_architecture()

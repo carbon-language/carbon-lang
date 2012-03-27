@@ -297,6 +297,20 @@ class ObjCDataFormatterTestCase(TestBase):
                     '@"Europe/Paris"'])
 
 
+        self.runCmd('type category list')
+        self.runCmd('type summary list')
+        self.expect('frame variable myclass',
+                    substrs = ['(Class) myclass = NSValue'])
+        self.expect('frame variable myclass2',
+                    substrs = ['(Class) myclass2 = __NSCFConstantString'])
+        self.expect('frame variable myclass3',
+                    substrs = ['(Class) myclass3 = Molecule'])
+        self.expect('frame variable myclass4',
+                    substrs = ['(Class) myclass4 = NSMutableArray'])
+        self.expect('frame variable myclass5',
+                    substrs = ['(Class) myclass5 = <error: unknown Class>'])
+
+
     def expr_objc_data_formatter_commands(self):
         """Test common cases of expression parser <--> formatters interaction."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
