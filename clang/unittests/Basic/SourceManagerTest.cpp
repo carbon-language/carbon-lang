@@ -176,6 +176,121 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
   EXPECT_TRUE(defLoc2.isFileID());
 }
 
+namespace {
+
+struct MacroAction {
+  SourceLocation Loc;
+  std::string Name;
+  bool isDefinition; // if false, it is expansion.
+  
+  MacroAction(SourceLocation Loc, StringRef Name, bool isDefinition)
+    : Loc(Loc), Name(Name), isDefinition(isDefinition) { }
+};
+
+class MacroTracker : public PPCallbacks {
+  std::vector<MacroAction> &Macros;
+
+public:
+  explicit MacroTracker(std::vector<MacroAction> &Macros) : Macros(Macros) { }
+  
+  virtual void MacroDefined(const Token &MacroNameTok, const MacroInfo *MI) {
+    Macros.push_back(MacroAction(MI->getDefinitionLoc(),
+                                 MacroNameTok.getIdentifierInfo()->getName(),
+                                 true));
+  }
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI,
+                            SourceRange Range) {
+    Macros.push_back(MacroAction(MacroNameTok.getLocation(),
+                                 MacroNameTok.getIdentifierInfo()->getName(),
+                                 false));
+  }
+};
+
+}
+
+TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
+  const char *header =
+    "#define MACRO_IN_INCLUDE 0\n";
+
+  const char *main =
+    "#define M(x) x\n"
+    "#define INC \"/test-header.h\"\n"
+    "#include M(INC)\n"
+    "#define INC2 </test-header.h>\n"
+    "#include M(INC2)\n";
+
+  MemoryBuffer *headerBuf = MemoryBuffer::getMemBuffer(header);
+  MemoryBuffer *mainBuf = MemoryBuffer::getMemBuffer(main);
+  SourceMgr.createMainFileIDForMemBuffer(mainBuf);
+
+  const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
+                                                 headerBuf->getBufferSize(), 0);
+  SourceMgr.overrideFileContents(headerFile, headerBuf);
+
+  VoidModuleLoader ModLoader;
+  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts, &*Target);
+  Preprocessor PP(Diags, LangOpts,
+                  Target.getPtr(),
+                  SourceMgr, HeaderInfo, ModLoader,
+                  /*IILookup =*/ 0,
+                  /*OwnsHeaderSearch =*/false,
+                  /*DelayInitialization =*/ false);
+
+  std::vector<MacroAction> Macros;
+  PP.addPPCallbacks(new MacroTracker(Macros));
+
+  PP.EnterMainSourceFile();
+
+  std::vector<Token> toks;
+  while (1) {
+    Token tok;
+    PP.Lex(tok);
+    if (tok.is(tok::eof))
+      break;
+    toks.push_back(tok);
+  }
+
+  // Make sure we got the tokens that we expected.
+  ASSERT_EQ(0U, toks.size());
+
+  ASSERT_EQ(9U, Macros.size());
+  // #define M(x) x
+  ASSERT_TRUE(Macros[0].isDefinition);
+  ASSERT_EQ("M", Macros[0].Name);
+  // #define INC "/test-header.h"
+  ASSERT_TRUE(Macros[1].isDefinition);
+  ASSERT_EQ("INC", Macros[1].Name);
+  // M expansion in #include M(INC)
+  ASSERT_FALSE(Macros[2].isDefinition);
+  ASSERT_EQ("M", Macros[2].Name);
+  // INC expansion in #include M(INC)
+  ASSERT_FALSE(Macros[3].isDefinition);
+  ASSERT_EQ("INC", Macros[3].Name);
+  // #define MACRO_IN_INCLUDE 0
+  ASSERT_TRUE(Macros[4].isDefinition);
+  ASSERT_EQ("MACRO_IN_INCLUDE", Macros[4].Name);
+  // #define INC2 </test-header.h>
+  ASSERT_TRUE(Macros[5].isDefinition);
+  ASSERT_EQ("INC2", Macros[5].Name);
+  // M expansion in #include M(INC2)
+  ASSERT_FALSE(Macros[6].isDefinition);
+  ASSERT_EQ("M", Macros[6].Name);
+  // INC2 expansion in #include M(INC2)
+  ASSERT_FALSE(Macros[7].isDefinition);
+  ASSERT_EQ("INC2", Macros[7].Name);
+  // #define MACRO_IN_INCLUDE 0
+  ASSERT_TRUE(Macros[8].isDefinition);
+  ASSERT_EQ("MACRO_IN_INCLUDE", Macros[8].Name);
+
+  // The INC expansion in #include M(INC) comes before the first
+  // MACRO_IN_INCLUDE definition of the included file.
+  EXPECT_TRUE(SourceMgr.isBeforeInTranslationUnit(Macros[3].Loc, Macros[4].Loc));
+
+  // The INC2 expansion in #include M(INC2) comes before the second
+  // MACRO_IN_INCLUDE definition of the included file.
+  EXPECT_TRUE(SourceMgr.isBeforeInTranslationUnit(Macros[7].Loc, Macros[8].Loc));
+}
+
 #endif
 
 } // anonymous namespace

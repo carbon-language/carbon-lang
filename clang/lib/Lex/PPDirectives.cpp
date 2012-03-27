@@ -1453,8 +1453,12 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   }
 
   // Look up the file, create a File ID for it.
-  FileID FID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
-                                      FileCharacter);
+  SourceLocation IncludePos = End;
+  // If the filename string was the result of macro expansions, set the include
+  // position on the file where it will be included and after the expansions.
+  if (IncludePos.isMacroID())
+    IncludePos = SourceMgr.getExpansionRange(IncludePos).second;
+  FileID FID = SourceMgr.createFileID(File, IncludePos, FileCharacter);
   assert(!FID.isInvalid() && "Expected valid file ID");
 
   // Finally, if all is good, enter the new file!

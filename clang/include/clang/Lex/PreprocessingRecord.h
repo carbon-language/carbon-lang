@@ -556,7 +556,7 @@ namespace clang {
     bool isEntityInFileID(iterator PPEI, FileID FID);
 
     /// \brief Add a new preprocessed entity to this record.
-    void addPreprocessedEntity(PreprocessedEntity *Entity);
+    PPEntityID addPreprocessedEntity(PreprocessedEntity *Entity);
 
     /// \brief Returns true if this PreprocessingRecord is keeping track of
     /// conditional directives locations.

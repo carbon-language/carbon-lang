@@ -244,33 +244,58 @@ unsigned PreprocessingRecord::findEndLocalPreprocessedEntity(
   return I - PreprocessedEntities.begin();
 }
 
-void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
+PreprocessingRecord::PPEntityID
+PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
   assert(Entity);
   SourceLocation BeginLoc = Entity->getSourceRange().getBegin();
-  
+
+  if (!isa<class InclusionDirective>(Entity)) {
+    assert((PreprocessedEntities.empty() ||
+            !SourceMgr.isBeforeInTranslationUnit(BeginLoc,
+                   PreprocessedEntities.back()->getSourceRange().getBegin())) &&
+           "a macro directive was encountered out-of-order");
+    PreprocessedEntities.push_back(Entity);
+    return getPPEntityID(PreprocessedEntities.size()-1, /*isLoaded=*/false);
+  }
+
   // Check normal case, this entity begin location is after the previous one.
   if (PreprocessedEntities.empty() ||
       !SourceMgr.isBeforeInTranslationUnit(BeginLoc,
                    PreprocessedEntities.back()->getSourceRange().getBegin())) {
     PreprocessedEntities.push_back(Entity);
-    return;
+    return getPPEntityID(PreprocessedEntities.size()-1, /*isLoaded=*/false);
   }
 
-  // The entity's location is not after the previous one; this can happen rarely
-  // e.g. with "#include MACRO".
-  // Iterate the entities vector in reverse until we find the right place to
-  // insert the new entity.
-  for (std::vector<PreprocessedEntity *>::iterator
-         RI = PreprocessedEntities.end(), Begin = PreprocessedEntities.begin();
-       RI != Begin; --RI) {
-    std::vector<PreprocessedEntity *>::iterator I = RI;
+  // The entity's location is not after the previous one; this can happen with
+  // include directives that form the filename using macros, e.g:
+  // "#include MACRO(STUFF)".
+
+  typedef std::vector<PreprocessedEntity *>::iterator pp_iter;
+
+  // Usually there are few macro expansions when defining the filename, do a
+  // linear search for a few entities.
+  unsigned count = 0;
+  for (pp_iter RI    = PreprocessedEntities.end(),
+               Begin = PreprocessedEntities.begin();
+       RI != Begin && count < 4; --RI, ++count) {
+    pp_iter I = RI;
     --I;
     if (!SourceMgr.isBeforeInTranslationUnit(BeginLoc,
                                            (*I)->getSourceRange().getBegin())) {
-      PreprocessedEntities.insert(RI, Entity);
-      return;
+      pp_iter insertI = PreprocessedEntities.insert(RI, Entity);
+      return getPPEntityID(insertI - PreprocessedEntities.begin(),
+                           /*isLoaded=*/false);
     }
   }
+
+  // Linear search unsuccessful. Do a binary search.
+  pp_iter I = std::upper_bound(PreprocessedEntities.begin(),
+                               PreprocessedEntities.end(),
+                               BeginLoc,
+                               PPEntityComp<&SourceRange::getBegin>(SourceMgr));
+  pp_iter insertI = PreprocessedEntities.insert(I, Entity);
+  return getPPEntityID(insertI - PreprocessedEntities.begin(),
+                       /*isLoaded=*/false);
 }
 
 void PreprocessingRecord::SetExternalSource(
@@ -351,9 +376,7 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
   SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
   MacroDefinition *Def
       = new (*this) MacroDefinition(Id.getIdentifierInfo(), R);
-  addPreprocessedEntity(Def);
-  MacroDefinitions[MI] = getPPEntityID(PreprocessedEntities.size()-1,
-                                       /*isLoaded=*/false);
+  MacroDefinitions[MI] = addPreprocessedEntity(Def);
 }
 
 void PreprocessingRecord::MacroUndefined(const Token &Id,
