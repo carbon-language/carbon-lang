@@ -55,7 +55,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Mips::fixup_Mips_HI16:
   case Mips::fixup_Mips_GOT_Local:
     // Get the higher 16-bits. Also add 1 if bit 15 is 1.
-    Value = (Value >> 16) + ((Value & 0x8000) != 0);
+    Value = ((Value + 0x8000) >> 16) & 0xffff;
     break;
   }
 
