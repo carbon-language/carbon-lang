@@ -73,7 +73,8 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_source_manager(*this),
     m_stop_hooks (),
     m_stop_hook_next_id (0),
-    m_suppress_stop_hooks (false)
+    m_suppress_stop_hooks (false),
+    m_suppress_synthetic_value(false)
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -183,6 +184,7 @@ Target::Destroy()
     m_stop_hooks.clear();
     m_stop_hook_next_id = 0;
     m_suppress_stop_hooks = false;
+    m_suppress_synthetic_value = false;
 }
 
 
@@ -2106,6 +2108,7 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_DEFAULT_ARCH        "default-arch"
 #define TSC_EXPR_PREFIX         "expr-prefix"
 #define TSC_PREFER_DYNAMIC      "prefer-dynamic-value"
+#define TSC_ENABLE_SYNTHETIC    "enable-synthetic-value"
 #define TSC_SKIP_PROLOGUE       "skip-prologue"
 #define TSC_SOURCE_MAP          "source-map"
 #define TSC_EXE_SEARCH_PATHS    "exec-search-paths"
@@ -2140,6 +2143,13 @@ static const ConstString &
 GetSettingNameForPreferDynamicValue ()
 {
     static ConstString g_const_string (TSC_PREFER_DYNAMIC);
+    return g_const_string;
+}
+
+static const ConstString &
+GetSettingNameForEnableSyntheticValue ()
+{
+    static ConstString g_const_string (TSC_ENABLE_SYNTHETIC);
     return g_const_string;
 }
 
@@ -2291,6 +2301,7 @@ TargetInstanceSettings::TargetInstanceSettings
     m_expr_prefix_file (),
     m_expr_prefix_contents (),
     m_prefer_dynamic_value (2),
+    m_enable_synthetic_value(true, true),
     m_skip_prologue (true, true),
     m_source_map (NULL, NULL),
     m_exe_search_paths (),
@@ -2330,6 +2341,7 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     m_expr_prefix_file (rhs.m_expr_prefix_file),
     m_expr_prefix_contents (rhs.m_expr_prefix_contents),
     m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
+    m_enable_synthetic_value(rhs.m_enable_synthetic_value),
     m_skip_prologue (rhs.m_skip_prologue),
     m_source_map (rhs.m_source_map),
     m_exe_search_paths (rhs.m_exe_search_paths),
@@ -2365,6 +2377,7 @@ TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
         m_expr_prefix_file = rhs.m_expr_prefix_file;
         m_expr_prefix_contents = rhs.m_expr_prefix_contents;
         m_prefer_dynamic_value = rhs.m_prefer_dynamic_value;
+        m_enable_synthetic_value = rhs.m_enable_synthetic_value;
         m_skip_prologue = rhs.m_skip_prologue;
         m_source_map = rhs.m_source_map;
         m_exe_search_paths = rhs.m_exe_search_paths;
@@ -2441,6 +2454,13 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
         UserSettingsController::UpdateEnumVariable (g_dynamic_value_types, &new_value, value, err);
         if (err.Success())
             m_prefer_dynamic_value = new_value;
+    }
+    else if (var_name == GetSettingNameForEnableSyntheticValue())
+    {
+        bool ok;
+        bool new_value = Args::StringToBoolean(value, true, &ok);
+        if (ok)
+            m_enable_synthetic_value.SetCurrentValue(new_value);
     }
     else if (var_name == GetSettingNameForSkipPrologue())
     {
@@ -2625,6 +2645,13 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
         value.AppendString (g_dynamic_value_types[m_prefer_dynamic_value].string_value);
+    }
+    else if (var_name == GetSettingNameForEnableSyntheticValue())
+    {
+        if (m_skip_prologue)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
     }
     else if (var_name == GetSettingNameForSkipPrologue())
     {
@@ -2824,6 +2851,7 @@ Target::SettingsController::instance_settings_table[] =
     // =================    ==================  =============== ======================= ====== ====== =========================================================================
     { TSC_EXPR_PREFIX       , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
     { TSC_PREFER_DYNAMIC    , eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
+    { TSC_ENABLE_SYNTHETIC  , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Should synthetic values be used by default whenever available." },
     { TSC_SKIP_PROLOGUE     , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
     { TSC_SOURCE_MAP        , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
     { TSC_EXE_SEARCH_PATHS  , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Executable search paths to use when locating executable files whose paths don't match the local file system." },

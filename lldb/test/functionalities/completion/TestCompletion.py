@@ -57,12 +57,12 @@ class CommandLineCompletionTestCase(TestBase):
         self.complete_from_to('settings append target.er', 'settings append target.error-path')
 
     def test_settings_insert_after_target_en(self):
-        """Test that 'settings insert-after target.en' completes to 'settings insert-after target.env-vars'."""
-        self.complete_from_to('settings insert-after target.en', 'settings insert-after target.env-vars')
+        """Test that 'settings insert-after target.env' completes to 'settings insert-after target.env-vars'."""
+        self.complete_from_to('settings insert-after target.env', 'settings insert-after target.env-vars')
 
     def test_settings_insert_before_target_en(self):
-        """Test that 'settings insert-before target.en' completes to 'settings insert-before target.env-vars'."""
-        self.complete_from_to('settings insert-before target.en', 'settings insert-before target.env-vars')
+        """Test that 'settings insert-before target.env' completes to 'settings insert-before target.env-vars'."""
+        self.complete_from_to('settings insert-before target.env', 'settings insert-before target.env-vars')
 
     def test_settings_replace_target_ru(self):
         """Test that 'settings replace target.ru' completes to 'settings replace target.run-args'."""

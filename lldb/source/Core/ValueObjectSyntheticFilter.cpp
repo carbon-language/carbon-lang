@@ -25,7 +25,7 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
     m_synth_filter_ap(filter->GetFrontEnd(parent)),
     m_children_byindex(),
     m_name_toindex(),
-    m_children_count(UINT32_MAX)
+    m_synthetic_children_count(UINT32_MAX)
 {
 #ifdef LLDB_CONFIGURATION_DEBUG
     std::string new_name(parent.GetName().AsCString());
@@ -56,9 +56,9 @@ uint32_t
 ValueObjectSynthetic::CalculateNumChildren()
 {
     UpdateValueIfNeeded();
-    if (m_children_count < UINT32_MAX)
-        return m_children_count;
-    return (m_children_count = m_synth_filter_ap->CalculateNumChildren());
+    if (m_synthetic_children_count < UINT32_MAX)
+        return m_synthetic_children_count;
+    return (m_synthetic_children_count = m_synth_filter_ap->CalculateNumChildren());
 }
 
 clang::ASTContext *
@@ -99,7 +99,11 @@ ValueObjectSynthetic::UpdateValue ()
         // filter said that cached values are stale
         m_children_byindex.clear();
         m_name_toindex.clear();
-        m_children_count = UINT32_MAX;
+        // usually, an object's value can change but this does not alter its children count
+        // for a synthetic VO that might indeed happen, so we need to tell the upper echelons
+        // that they need to come back to us asking for children
+        m_children_count_valid = false;
+        m_synthetic_children_count = UINT32_MAX;
     }
     
     SetValueIsValid(true);

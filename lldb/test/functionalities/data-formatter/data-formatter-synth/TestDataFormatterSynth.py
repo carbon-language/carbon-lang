@@ -83,16 +83,16 @@ class SynthDataFormatterTestCase(TestBase):
                                'z = 8'])
         
         # Summary+Synth must work together
-        self.runCmd("type summary add BagOfInts --summary-string \"y=${var.y}\" -e")
+        self.runCmd("type summary add BagOfInts --summary-string \"x=${var.x}\" -e")
         self.expect('frame variable int_bag',
-                    substrs = ['y=7',
+                    substrs = ['x=6',
                                'x = 6',
                                'z = 8'])
         
         # Same output, but using Python
-        self.runCmd("type summary add BagOfInts --python-script \"return 'y=%s' % valobj.GetChildMemberWithName('y').GetValue()\" -e")
+        self.runCmd("type summary add BagOfInts --python-script \"return 'x=%s' % valobj.GetChildMemberWithName('x').GetValue()\" -e")
         self.expect('frame variable int_bag',
-                    substrs = ['y=7',
+                    substrs = ['x=6',
                                'x = 6',
                                'z = 8'])
 
@@ -111,10 +111,10 @@ class SynthDataFormatterTestCase(TestBase):
         # Add the synth again and check that it's honored deeper in the hierarchy
         self.runCmd("type filter add BagOfInts --child x --child z")
         self.expect('frame variable bag_bag',
-            substrs = ['x = y=70 {',
+            substrs = ['x = x=69 {',
                        'x = 69',
                        'z = 71',
-                       'y = y=67 {',
+                       'y = x=66 {',
                        'x = 66',
                        'z = 68'])
         self.expect('frame variable bag_bag', matching=False,

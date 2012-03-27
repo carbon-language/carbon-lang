@@ -1,5 +1,9 @@
-#include <map>
 #include <string>
+#ifdef _LIBCPP_INLINE_VISIBILITY
+#undef _LIBCPP_INLINE_VISIBILITY
+#endif
+#define _LIBCPP_INLINE_VISIBILITY
+#include <map>
 
 #define intint_map std::map<int, int> 
 #define strint_map std::map<std::string, int> 

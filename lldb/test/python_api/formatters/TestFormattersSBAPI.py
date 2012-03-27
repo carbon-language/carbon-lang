@@ -24,6 +24,13 @@ class SBFormattersAPITestCase(TestBase):
         self.setTearDownCleanup()
         self.formatters()
 
+    @python_api_test
+    def test_force_synth_off(self):
+        """Test that one can have the public API return non-synthetic SBValues if desired"""
+        self.buildDwarf(dictionary={'EXE':'no_synth'})
+        self.setTearDownCleanup()
+        self.force_synth_off()
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -155,7 +162,18 @@ class SBFormattersAPITestCase(TestBase):
         self.expect("frame variable foo", matching=True,
              substrs = ['X = 1'])
 
+        foo_var = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('foo')
+        self.assertTrue(foo_var.IsValid(), 'could not find foo')
+
+        self.assertTrue(foo_var.GetNumChildren() == 2, 'synthetic value has wrong number of child items (synth)')
+        self.assertTrue(foo_var.GetChildMemberWithName('X').GetValueAsUnsigned() == 1, 'foo_synth.X has wrong value (synth)')
+        self.assertFalse(foo_var.GetChildMemberWithName('B').IsValid(), 'foo_synth.B is valid but should not (synth)')
+
         self.dbg.GetCategory("JASSynth").SetEnabled(False)
+        foo_var = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('foo')
+        self.assertTrue(foo_var.IsValid(), 'could not find foo')
+
+        self.assertFalse(foo_var.GetNumChildren() == 2, 'still seeing synthetic value')
 
         filter = lldb.SBTypeFilter(0)
         filter.AppendExpressionPath("A")
@@ -163,6 +181,13 @@ class SBFormattersAPITestCase(TestBase):
         category.AddTypeFilter(lldb.SBTypeNameSpecifier("JustAStruct"),filter)
         self.expect("frame variable foo",
              substrs = ['A = 1', 'D = 6.28'])
+
+        foo_var = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('foo')
+        self.assertTrue(foo_var.IsValid(), 'could not find foo')
+
+        self.assertTrue(foo_var.GetNumChildren() == 2, 'synthetic value has wrong number of child items (filter)')
+        self.assertTrue(foo_var.GetChildMemberWithName('X').GetValueAsUnsigned() == 0, 'foo_synth.X has wrong value (filter)')
+        self.assertTrue(foo_var.GetChildMemberWithName('A').GetValueAsUnsigned() == 1, 'foo_synth.A has wrong value (filter)')
 
         self.assertTrue(filter.ReplaceExpressionPathAtIndex(0,"C"), "failed to replace an expression path in filter")
         self.expect("frame variable foo",
@@ -179,6 +204,10 @@ class SBFormattersAPITestCase(TestBase):
              substrs = ["C = 'e'", 'F = 0'])
         self.expect("frame variable bar",
              substrs = ["C = 'e'", 'D = 6.28'])
+
+        foo_var = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('foo')
+        self.assertTrue(foo_var.IsValid(), 'could not find foo')
+        self.assertTrue(foo_var.GetChildMemberWithName('C').GetValueAsUnsigned() == ord('e'), 'foo_synth.C has wrong value (filter)')
 
         chosen = self.dbg.GetFilterForType(lldb.SBTypeNameSpecifier("JustAStruct"))
         self.assertTrue(chosen.count == 2, "wrong filter found for JustAStruct")
@@ -268,6 +297,58 @@ class SBFormattersAPITestCase(TestBase):
 
         self.assertTrue(summary.IsValid(), "no summary found for foo* when one was in place")
         self.assertTrue(summary.GetData() == "hello static world", "wrong summary found for foo*")
+
+    def force_synth_off(self):
+        """Test that one can have the public API return non-synthetic SBValues if desired"""
+        self.runCmd("file no_synth", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.cpp', line = %d, locations = 1" %
+                        self.line)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type filter clear', check=False)
+            self.runCmd('type synthetic clear', check=False)
+            self.runCmd('type category delete foobar', check=False)
+            self.runCmd('type category delete JASSynth', check=False)
+            self.runCmd('type category delete newbar', check=False)
+            self.runCmd('settings set target.enable-synthetic-value true')
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
+        frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+        int_vector = frame.FindVariable("int_vector")
+        if self.TraceOn():
+             print int_vector
+        self.assertTrue(int_vector.GetNumChildren() == 0, 'synthetic vector is empty')
+
+        self.runCmd('settings set target.enable-synthetic-value false')
+        frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+        int_vector = frame.FindVariable("int_vector")
+        if self.TraceOn():
+             print int_vector
+        self.assertFalse(int_vector.GetNumChildren() == 0, '"physical" vector is not empty')
+
+        self.runCmd('settings set target.enable-synthetic-value true')
+        frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+        int_vector = frame.FindVariable("int_vector")
+        if self.TraceOn():
+             print int_vector
+        self.assertTrue(int_vector.GetNumChildren() == 0, 'synthetic vector is still empty')
+
 
 if __name__ == '__main__':
     import atexit

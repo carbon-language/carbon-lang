@@ -74,7 +74,19 @@ public:
     {
         return (lldb::DynamicValueType) g_dynamic_value_types[m_prefer_dynamic_value].value;
     }
+    
+    bool
+    GetEnableSyntheticValue ()
+    {
+        return m_enable_synthetic_value;
+    }
 
+    void
+    SetEnableSyntheticValue (bool b)
+    {
+        m_enable_synthetic_value = b;
+    }
+    
     bool
     GetSkipPrologue()
     {
@@ -236,6 +248,7 @@ protected:
     OptionValueFileSpec m_expr_prefix_file;
     std::string m_expr_prefix_contents;
     int m_prefer_dynamic_value;
+    OptionValueBoolean m_enable_synthetic_value;
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;
     FileSpecList m_exe_search_paths;
@@ -1024,6 +1037,20 @@ public:
         return m_suppress_stop_hooks;
     }
     
+    bool
+    SetSuppressSyntheticValue (bool suppress)
+    {
+        bool old_value = m_suppress_synthetic_value;
+        m_suppress_synthetic_value = suppress;
+        return old_value;
+    }
+    
+    bool
+    GetSuppressSyntheticValue ()
+    {
+        return m_suppress_synthetic_value;
+    }
+    
 //    StopHookSP &
 //    GetStopHookByIndex (size_t index);
 //    
@@ -1169,6 +1196,7 @@ protected:
     StopHookCollection      m_stop_hooks;
     lldb::user_id_t         m_stop_hook_next_id;
     bool                    m_suppress_stop_hooks;
+    bool                    m_suppress_synthetic_value;
     
     static void
     ImageSearchPathsChanged (const PathMappingList &path_list,

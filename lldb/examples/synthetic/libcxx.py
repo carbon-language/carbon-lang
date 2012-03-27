@@ -253,6 +253,8 @@ class stdlist_SynthProvider:
 
 	def extract_type(self):
 		list_type = self.valobj.GetType().GetUnqualifiedType()
+		if list_type.IsReferenceType():
+			list_type = list_type.GetDereferencedType()
 		if list_type.GetNumberOfTemplateArguments() > 0:
 			data_type = list_type.GetTemplateArgumentType(0)
 		else:

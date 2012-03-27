@@ -85,6 +85,8 @@ class StdListSynthProvider:
 
 	def extract_type(self):
 		list_type = self.valobj.GetType().GetUnqualifiedType()
+		if list_type.IsReferenceType():
+			list_type = list_type.GetDereferencedType()
 		if list_type.GetNumberOfTemplateArguments() > 0:
 			data_type = list_type.GetTemplateArgumentType(0)
 		else:
@@ -200,15 +202,15 @@ class StdMapSynthProvider:
 	# to replace the longer versions of std::string with the shorter one in order to be able
 	# to find the type name
 	def fixup_class_name(self, class_name):
-		if class_name == 'std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >':
-			return 'std::basic_string<char>'
-		if class_name == 'basic_string<char, class std::char_traits<char>, class std::allocator<char> >':
-			return 'std::basic_string<char>'
 		if class_name == 'std::basic_string<char, std::char_traits<char>, std::allocator<char> >':
-			return 'std::basic_string<char>'
+			return 'std::basic_string<char>',True
 		if class_name == 'basic_string<char, std::char_traits<char>, std::allocator<char> >':
-			return 'std::basic_string<char>'
-		return class_name
+			return 'std::basic_string<char>',True
+		if class_name == 'std::basic_string<char, std::char_traits<char>, std::allocator<char> >':
+			return 'std::basic_string<char>',True
+		if class_name == 'basic_string<char, std::char_traits<char>, std::allocator<char> >':
+			return 'std::basic_string<char>',True
+		return class_name,False
 
 	def update(self):
 		try:
@@ -216,13 +218,27 @@ class StdMapSynthProvider:
 			self.Mimpl = self.Mt.GetChildMemberWithName('_M_impl')
 			self.Mheader = self.Mimpl.GetChildMemberWithName('_M_header')
 			
-			map_arg_0 = str(self.valobj.GetType().GetTemplateArgumentType(0).GetName())
-			map_arg_1 = str(self.valobj.GetType().GetTemplateArgumentType(1).GetName())
+			map_type = self.valobj.GetType()
+			if map_type.IsReferenceType():
+				map_type = map_type.GetDereferencedType()
 			
-			map_arg_0 = self.fixup_class_name(map_arg_0)
-			map_arg_1 = self.fixup_class_name(map_arg_1)
+			map_arg_0 = str(map_type.GetTemplateArgumentType(0).GetName())
+			map_arg_1 = str(map_type.GetTemplateArgumentType(1).GetName())
 			
-			map_arg_type = "std::pair<const " + map_arg_0 + ", " + map_arg_1
+			map_arg_0,fixed_0 = self.fixup_class_name(map_arg_0)
+			map_arg_1,fixed_1 = self.fixup_class_name(map_arg_1)
+			
+			# HACK: this is related to the above issue with the typename for std::string
+			# being shortened by clang - the changes to typename display and searching to honor
+			# namespaces make it so that we go looking for std::pair<const std::basic_string<char>, ...>
+			# but when we find a type for this, we then compare it against the fully-qualified
+			# std::pair<const std::basic_string<char, std::char_traits... and of course fail
+			# the way to bypass this problem is to avoid using the std:: prefix in this specific case
+			if fixed_0 or fixed_1:
+				map_arg_type = "pair<const " + map_arg_0 + ", " + map_arg_1
+			else:
+				map_arg_type = "std::pair<const " + map_arg_0 + ", " + map_arg_1
+			
 			if map_arg_1[-1] == '>':
 				map_arg_type = map_arg_type + " >"
 			else:

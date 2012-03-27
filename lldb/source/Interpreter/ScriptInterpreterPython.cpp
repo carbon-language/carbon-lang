@@ -234,6 +234,24 @@ ScriptInterpreterPython::Locker::~Locker()
         DoFreeLock();
 }
 
+class ForceDisableSyntheticChildren
+{
+public:
+    ForceDisableSyntheticChildren (Target* target) :
+        m_target(target)
+    {
+        m_old_value = target->GetSuppressSyntheticValue();
+        target->SetSuppressSyntheticValue(true);
+    }
+    ~ForceDisableSyntheticChildren ()
+    {
+        m_target->SetSuppressSyntheticValue(m_old_value);
+    }
+private:
+    Target* m_target;
+    bool m_old_value;
+};
+
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
     ScriptInterpreter (interpreter, eScriptLanguagePython),
     m_embedded_python_pty (),
@@ -1328,6 +1346,7 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
 
     {
         Locker py_lock(this);
+        ForceDisableSyntheticChildren no_synthetics(target);
         ret_val = g_swig_synthetic_script    (class_name, 
                                               python_interpreter->m_dictionary_name.c_str(),
                                               valobj);
@@ -1586,6 +1605,7 @@ ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObje
     
     {
         Locker py_lock(this);
+        ForceDisableSyntheticChildren no_synthetics(GetCommandInterpreter().GetDebugger().GetSelectedTarget().get());
         ret_val = g_swig_calc_children       (implementor);
     }
     
@@ -1612,6 +1632,7 @@ ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP&
     
     {
         Locker py_lock(this);
+        ForceDisableSyntheticChildren no_synthetics(GetCommandInterpreter().GetDebugger().GetSelectedTarget().get());
         child_ptr = g_swig_get_child_index       (implementor,idx);
         if (child_ptr != NULL && child_ptr != Py_None)
         {
@@ -1648,6 +1669,7 @@ ScriptInterpreterPython::GetIndexOfChildWithName (const lldb::ScriptInterpreterO
     
     {
         Locker py_lock(this);
+        ForceDisableSyntheticChildren no_synthetics(GetCommandInterpreter().GetDebugger().GetSelectedTarget().get());
         ret_val = g_swig_get_index_child       (implementor, child_name);
     }
     
@@ -1672,6 +1694,7 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpre
     
     {
         Locker py_lock(this);
+        ForceDisableSyntheticChildren no_synthetics(GetCommandInterpreter().GetDebugger().GetSelectedTarget().get());
         ret_val = g_swig_update_provider       (implementor);
     }
     

@@ -572,6 +572,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 uint32_t
 ValueObject::GetNumChildren ()
 {
+    UpdateValueIfNeeded();
     if (!m_children_count_valid)
     {
         SetNumChildren (CalculateNumChildren());
@@ -2009,6 +2010,13 @@ ValueObject::CalculateSyntheticValue (bool use_synthetic)
     if (use_synthetic == false)
         return;
     
+    TargetSP target_sp(GetTargetSP());
+    if (target_sp && (target_sp->GetEnableSyntheticValue() == false || target_sp->GetSuppressSyntheticValue() == true))
+    {
+        m_synthetic_value = NULL;
+        return;
+    }
+    
     if (!UpdateFormatsIfNeeded(m_last_format_mgr_dynamic) && m_synthetic_value)
         return;
     
@@ -3317,6 +3325,7 @@ DumpValueObject_Impl (Stream &s,
                     ValueObject* synth_valobj;
                     ValueObjectSP synth_valobj_sp = valobj->GetSyntheticValue (options.m_use_synthetic);
                     synth_valobj = (synth_valobj_sp ? synth_valobj_sp.get() : valobj);
+                    
                     uint32_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
                     if (num_children)

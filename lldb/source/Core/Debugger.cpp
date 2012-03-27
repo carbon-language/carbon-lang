@@ -1164,7 +1164,8 @@ Debugger::FormatPrompt
                                 
                                 if (*var_name_begin == 's')
                                 {
-                                    valobj = valobj->GetSyntheticValue().get();
+                                    if (!valobj->IsSynthetic())
+                                        valobj = valobj->GetSyntheticValue().get();
                                     if (!valobj)
                                         break;
                                     var_name_begin++;

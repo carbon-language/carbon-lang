@@ -639,18 +639,24 @@ FormatManager::LoadSTLFormatters()
     SyntheticChildren::Flags stl_synth_flags;
     stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
     
-    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::vector<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "gnu_libstdcpp.StdVectorSynthProvider")));
-    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?map<.+> >$")),
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::map<.+> >(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "gnu_libstdcpp.StdMapSynthProvider")));
-    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?list<.+>$")),
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::list<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "gnu_libstdcpp.StdListSynthProvider")));
     
     stl_summary_flags.SetDontShowChildren(false);
-    gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
+    gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::vector<.+>(( )?&)?$")),
+                                                     TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
+                                                                                               "size=${svar%#}")));
+    gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::map<.+> >(( )?&)?$")),
+                                                     TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
+                                                                                               "size=${svar%#}")));
+    gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::list<.+>(( )?&)?$")),
                                                      TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
                                                                                                "size=${svar%#}")));
 #endif
@@ -682,22 +688,22 @@ FormatManager::LoadLibcxxFormatters()
     SyntheticChildren::Flags stl_synth_flags;
     stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
     
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)vector<.+>$")),
+    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "libcxx.stdvector_SynthProvider")));
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)list<.+>$")),
+    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::list<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "libcxx.stdlist_SynthProvider")));
-    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)map<.+> >$")),
+    libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "libcxx.stdmap_SynthProvider")));
     
     stl_summary_flags.SetDontShowChildren(false);
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)vector<.+>$")),
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)list<.+>$")),
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::list<.+>(( )?&)?$")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)map<.+> >$")),
+    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
 #endif
 }

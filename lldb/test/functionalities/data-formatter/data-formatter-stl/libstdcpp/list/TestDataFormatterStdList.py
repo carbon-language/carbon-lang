@@ -64,6 +64,9 @@ class StdListDataFormatterTestCase(TestBase):
         self.expect("frame variable numbers_list --raw", matching=False,
                     substrs = ['list has 0 items',
                                '{}'])
+        self.expect("frame variable &numbers_list._M_impl._M_node --raw", matching=False,
+                    substrs = ['list has 0 items',
+                               '{}'])
 
         self.expect("frame variable numbers_list",
                     substrs = ['list has 0 items',

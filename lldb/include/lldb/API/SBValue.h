@@ -92,6 +92,9 @@ public:
     lldb::SBValue
     GetStaticValue ();
     
+    lldb::SBValue
+    GetNonSyntheticValue ();
+    
     bool
     IsDynamic();
 
@@ -370,6 +373,10 @@ protected:
     lldb::ValueObjectSP
     GetSP () const;
     
+    // anyone who needs to set the value of the SP on this SBValue should rely on SetSP() exclusively
+    // since this function contains logic to "do the right thing" with regard to providing to the user
+    // a synthetic value when possible - in the future the same should automatically occur with
+    // dynamic values
     void
     SetSP (const lldb::ValueObjectSP &sp);
     

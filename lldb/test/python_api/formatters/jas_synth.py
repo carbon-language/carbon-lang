@@ -5,6 +5,7 @@ class jasSynthProvider:
      def num_children(self):
          return 2;
      def get_child_at_index(self, index):
+         child = None
          if index == 0:
              child = self.valobj.GetChildMemberWithName('A');
          if index == 1:
@@ -15,7 +16,7 @@ class jasSynthProvider:
              return 0;
          if name == 'X':
              return 1;
-         return 2;
+         return None;
 
 def __lldb_init_module(debugger,dict):
      debugger.CreateCategory("JASSynth").AddTypeSynthetic(lldb.SBTypeNameSpecifier("JustAStruct"),

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <vector>
 
 struct JustAStruct
 {
@@ -34,5 +35,6 @@ int main(int argc, char const *argv[]) {
 	bar.D = 6.28;
 	bar.E = 3100419850;
 	JustAStruct* foo_ptr = &foo;
+	std::vector<int> int_vector;
 	return 0; // Set break point at this line.
 }

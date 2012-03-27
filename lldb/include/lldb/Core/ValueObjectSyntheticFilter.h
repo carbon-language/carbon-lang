@@ -120,7 +120,7 @@ protected:
 
     ByIndexMap      m_children_byindex;
     NameToIndexMap  m_name_toindex;
-    uint32_t        m_children_count;
+    uint32_t        m_synthetic_children_count; // FIXME use the ValueObject's ChildrenManager instead of a special purpose solution
 
 private:
     friend class ValueObject;

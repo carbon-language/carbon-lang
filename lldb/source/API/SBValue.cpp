@@ -51,21 +51,23 @@ SBValue::SBValue () :
 {
 }
 
-SBValue::SBValue (const lldb::ValueObjectSP &value_sp) :
-    m_opaque_sp (value_sp)
+SBValue::SBValue (const lldb::ValueObjectSP &value_sp)
 {
+    SetSP(value_sp); // whenever setting the SP call SetSP() since it knows how to deal with synthetic values properly
 }
 
-SBValue::SBValue(const SBValue &rhs) :
-    m_opaque_sp (rhs.m_opaque_sp)
+SBValue::SBValue(const SBValue &rhs)
 {
+    SetSP(rhs.m_opaque_sp); // whenever setting the SP call SetSP() since it knows how to deal with synthetic values properly
 }
 
 SBValue &
 SBValue::operator = (const SBValue &rhs)
 {
     if (this != &rhs)
-        m_opaque_sp = rhs.m_opaque_sp;
+    {
+        SetSP(rhs.m_opaque_sp); // whenever setting the SP call SetSP() since it knows how to deal with synthetic values properly
+    }
     return *this;
 }
 
@@ -809,6 +811,30 @@ SBValue::GetStaticValue ()
     return SBValue();
 }
 
+lldb::SBValue
+SBValue::GetNonSyntheticValue ()
+{
+    SBValue sb_value;
+    lldb::ValueObjectSP value_sp(GetSP());
+    if (value_sp)
+    {
+        if (value_sp->IsSynthetic())
+        {
+            TargetSP target_sp(value_sp->GetTargetSP());
+            if (target_sp)
+            {
+                Mutex::Locker api_locker (target_sp->GetAPIMutex());
+                // deliberately breaking the rules here to optimize the case where we DO NOT want
+                // the synthetic value to be returned to the user - if we did not do this, we would have to tell
+                // the target to suppress the synthetic value, and then return the flag to its original value
+                if (value_sp->GetParent())
+                    sb_value.m_opaque_sp = value_sp->GetParent()->GetSP();
+            }
+        }
+    }
+    return sb_value;
+}
+
 bool
 SBValue::IsDynamic()
 {
@@ -1124,6 +1150,8 @@ void
 SBValue::SetSP (const lldb::ValueObjectSP &sp)
 {
     m_opaque_sp = sp;
+    if (IsValid() && m_opaque_sp->HasSyntheticValue())
+        m_opaque_sp = m_opaque_sp->GetSyntheticValue();
 }
 
 

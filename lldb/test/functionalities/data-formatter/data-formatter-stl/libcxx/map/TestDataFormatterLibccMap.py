@@ -9,7 +9,7 @@ from lldbtest import *
 
 class LibcxxMapDataFormatterTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libstdcpp", "map")
+    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libcxx", "map")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
@@ -56,6 +56,8 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
+        self.expect('image list',substrs=['libc++.1.dylib','libc++abi.dylib'])
+
         self.runCmd("frame variable ii -T")
         
         self.runCmd("type summary add -x \"std::__1::map<\" --summary-string \"map has ${svar%#} items\" -e") 
@@ -87,19 +89,20 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'second = 1'])
 
         self.runCmd("n");self.runCmd("n");
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("n");self.runCmd("n");
+        self.runCmd("frame select 0")
 
         self.expect("frame variable ii",
-                    substrs = ['map has 9 items',
+                    substrs = ['map has 8 items',
                                '[5] = {',
                                'first = 5',
                                'second = 0',
                                '[7] = {',
                                'first = 7',
                                'second = 1'])
-        
+
         self.expect("p ii",
-                    substrs = ['map has 9 items',
+                    substrs = ['map has 8 items',
                                '[5] = {',
                                'first = 5',
                                'second = 0',
@@ -114,9 +117,6 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         self.expect("frame variable ii[3]",
                     substrs = ['first =',
                                'second =']);
-        
-        self.expect("frame variable ii[8]", matching=True,
-                    substrs = ['1234567'])
 
         # check that the expression parser does not make use of
         # synthetic children instead of running code
@@ -126,20 +126,19 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression ii[8]", matching=False, error=True,
         #            substrs = ['1234567'])
 
-        self.runCmd("n")
+        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
         
         self.expect('frame variable ii',
                     substrs = ['map has 0 items',
                                '{}'])
         
-        self.runCmd("n")
         self.runCmd("frame variable si -T")
 
         self.expect('frame variable si',
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n")
+        self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
 
         self.expect('frame variable si',
                     substrs = ['map has 1 items',
@@ -148,9 +147,11 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'second = 0'])
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n")
+        self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
 
         self.expect("frame variable si",
-                    substrs = ['map has 5 items',
+                    substrs = ['map has 4 items',
                                '[0] = ',
                                'first = \"zero\"',
                                'second = 0',
@@ -162,13 +163,10 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                 'second = 2',
                                 '[3] = ',
                                 'first = \"three\"',
-                                'second = 3',
-                                '[4] = ',
-                                'first = \"four\"',
-                                'second = 4'])
+                                'second = 3'])
 
         self.expect("p si",
-                    substrs = ['map has 5 items',
+                    substrs = ['map has 4 items',
                                '[0] = ',
                                'first = \"zero\"',
                                'second = 0',
@@ -180,15 +178,12 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'second = 2',
                                '[3] = ',
                                'first = \"three\"',
-                               'second = 3',
-                               '[4] = ',
-                               'first = \"four\"',
-                               'second = 4'])
+                               'second = 3'])
 
         # check access-by-index
         self.expect("frame variable si[0]",
-                    substrs = ['first = ', 'four',
-                               'second = 4']);
+                    substrs = ['first = ', 'one',
+                               'second = 1']);
         
         # check that the expression parser does not make use of
         # synthetic children instead of running code
@@ -198,7 +193,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression si[0]", matching=False, error=True,
         #            substrs = ['first = ', 'zero'])
 
-        self.runCmd("n")
+        self.runCmd("n");self.runCmd("n");
         
         self.expect('frame variable si',
                     substrs = ['map has 0 items',
@@ -262,17 +257,18 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n")
+        self.runCmd("n");self.runCmd("n");
         self.runCmd("frame variable ss -T")
         
         self.expect('frame variable ss',
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
 
         self.expect("frame variable ss",
-                    substrs = ['map has 4 items',
+                    substrs = ['map has 3 items',
                                '[0] = ',
                                'second = \"hello\"',
                                'first = \"ciao\"',
@@ -281,13 +277,10 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'first = \"casa\"',
                                '[2] = ',
                                'second = \"cat\"',
-                               'first = \"gatto\"',
-                               '[3] = ',
-                               'second = \"..is always a Mac!\"',
-                               'first = \"a Mac..\"'])
+                               'first = \"gatto\"'])
         
         self.expect("p ss",
-                    substrs = ['map has 4 items',
+                    substrs = ['map has 3 items',
                                '[0] = ',
                                'second = \"hello\"',
                                'first = \"ciao\"',
@@ -296,13 +289,10 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'first = \"casa\"',
                                '[2] = ',
                                'second = \"cat\"',
-                               'first = \"gatto\"',
-                               '[3] = ',
-                               'second = \"..is always a Mac!\"',
-                               'first = \"a Mac..\"'])
+                               'first = \"gatto\"'])
 
         # check access-by-index
-        self.expect("frame variable ss[3]",
+        self.expect("frame variable ss[2]",
                     substrs = ['gatto', 'cat']);
         
         # check that the expression parser does not make use of
@@ -313,7 +303,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression ss[3]", matching=False, error=True,
         #            substrs = ['gatto'])
 
-        self.runCmd("n")
+        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
         
         self.expect('frame variable ss',
                     substrs = ['map has 0 items',
