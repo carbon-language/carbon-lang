@@ -1330,8 +1330,8 @@ getRegisterListOpValue(const MCInst &MI, unsigned Op,
   // LDM/STM:
   //   {15-0}  = Bitfield of GPRs.
   unsigned Reg = MI.getOperand(Op).getReg();
-  bool SPRRegs = llvm::ARMMCRegisterClasses[ARM::SPRRegClassID].contains(Reg);
-  bool DPRRegs = llvm::ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg);
+  bool SPRRegs = ARMMCRegisterClasses[ARM::SPRRegClassID].contains(Reg);
+  bool DPRRegs = ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg);
 
   unsigned Binary = 0;
 

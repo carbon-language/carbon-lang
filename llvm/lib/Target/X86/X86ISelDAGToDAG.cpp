@@ -2465,6 +2465,6 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 /// X86-specific DAG, ready for instruction scheduling.
 ///
 FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM,
-                                     llvm::CodeGenOpt::Level OptLevel) {
+                                     CodeGenOpt::Level OptLevel) {
   return new X86DAGToDAGISel(TM, OptLevel);
 }

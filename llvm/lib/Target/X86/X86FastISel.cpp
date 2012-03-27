@@ -2179,7 +2179,7 @@ bool X86FastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
 
 
 namespace llvm {
-  llvm::FastISel *X86::createFastISel(FunctionLoweringInfo &funcInfo) {
+  FastISel *X86::createFastISel(FunctionLoweringInfo &funcInfo) {
     return new X86FastISel(funcInfo);
   }
 }

@@ -1641,7 +1641,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 /// and then confiscate the rest of the parameter registers to insure
 /// this.
 void
-llvm::ARMTargetLowering::HandleByVal(CCState *State, unsigned &size) const {
+ARMTargetLowering::HandleByVal(CCState *State, unsigned &size) const {
   unsigned reg = State->AllocateReg(GPRArgRegs, 4);
   assert((State->getCallOrPrologue() == Prologue ||
           State->getCallOrPrologue() == Call) &&

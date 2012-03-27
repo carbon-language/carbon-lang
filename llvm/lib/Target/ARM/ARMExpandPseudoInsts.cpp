@@ -612,7 +612,7 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
   MachineInstr &MI = *MBBI;
   unsigned Opcode = MI.getOpcode();
   unsigned PredReg = 0;
-  ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
+  ARMCC::CondCodes Pred = getInstrPredicate(&MI, PredReg);
   unsigned DstReg = MI.getOperand(0).getReg();
   bool DstIsDead = MI.getOperand(0).isDead();
   bool isCC = Opcode == ARM::MOVCCi32imm || Opcode == ARM::t2MOVCCi32imm;
@@ -793,15 +793,15 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                "base pointer without frame pointer?");
 
         if (AFI->isThumb2Function()) {
-          llvm::emitT2RegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
-                                       FramePtr, -NumBytes, ARMCC::AL, 0, *TII);
+          emitT2RegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
+                                 FramePtr, -NumBytes, ARMCC::AL, 0, *TII);
         } else if (AFI->isThumbFunction()) {
-          llvm::emitThumbRegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
-                                          FramePtr, -NumBytes, *TII, RI);
+          emitThumbRegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
+                                    FramePtr, -NumBytes, *TII, RI);
         } else {
-          llvm::emitARMRegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
-                                        FramePtr, -NumBytes, ARMCC::AL, 0,
-                                        *TII);
+          emitARMRegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
+                                  FramePtr, -NumBytes, ARMCC::AL, 0,
+                                  *TII);
         }
         // If there's dynamic realignment, adjust for it.
         if (RI.needsStackRealignment(MF)) {

@@ -5737,7 +5737,7 @@ bool PPCTargetLowering::isLegalAddressImmediate(int64_t V,Type *Ty) const{
   return (V > -(1 << 16) && V < (1 << 16)-1);
 }
 
-bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
+bool PPCTargetLowering::isLegalAddressImmediate(GlobalValue* GV) const {
   return false;
 }
 

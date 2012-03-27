@@ -3224,7 +3224,7 @@ bool SPUTargetLowering::isLegalAddressImmediate(int64_t V,
   return (V > -(1 << 18) && V < (1 << 18) - 1);
 }
 
-bool SPUTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
+bool SPUTargetLowering::isLegalAddressImmediate(GlobalValue* GV) const {
   return false;
 }
 

@@ -2638,7 +2638,7 @@ bool ARMFastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
 }
 
 namespace llvm {
-  llvm::FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
+  FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
     // Completely untested on non-iOS.
     const TargetMachine &TM = funcInfo.MF->getTarget();
 

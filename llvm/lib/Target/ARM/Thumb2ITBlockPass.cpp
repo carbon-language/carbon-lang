@@ -154,7 +154,7 @@ Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
     ++I;
   if (I != E) {
     unsigned NPredReg = 0;
-    ARMCC::CondCodes NCC = llvm::getITInstrPredicate(I, NPredReg);
+    ARMCC::CondCodes NCC = getITInstrPredicate(I, NPredReg);
     if (NCC == CC || NCC == OCC)
       return true;
   }
@@ -171,7 +171,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
     MachineInstr *MI = &*MBBI;
     DebugLoc dl = MI->getDebugLoc();
     unsigned PredReg = 0;
-    ARMCC::CondCodes CC = llvm::getITInstrPredicate(MI, PredReg);
+    ARMCC::CondCodes CC = getITInstrPredicate(MI, PredReg);
     if (CC == ARMCC::AL) {
       ++MBBI;
       continue;
@@ -207,7 +207,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
       MI = NMI;
 
       unsigned NPredReg = 0;
-      ARMCC::CondCodes NCC = llvm::getITInstrPredicate(NMI, NPredReg);
+      ARMCC::CondCodes NCC = getITInstrPredicate(NMI, NPredReg);
       if (NCC == CC || NCC == OCC) {
         Mask |= (NCC & 1) << Pos;
         // Add implicit use of ITSTATE.

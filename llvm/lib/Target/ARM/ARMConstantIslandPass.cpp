@@ -1354,7 +1354,7 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
   // Avoid splitting an IT block.
   if (LastIT) {
     unsigned PredReg = 0;
-    ARMCC::CondCodes CC = llvm::getITInstrPredicate(MI, PredReg);
+    ARMCC::CondCodes CC = getITInstrPredicate(MI, PredReg);
     if (CC != ARMCC::AL)
       MI = LastIT;
   }
@@ -1799,7 +1799,7 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
 
     NewOpc = 0;
     unsigned PredReg = 0;
-    ARMCC::CondCodes Pred = llvm::getInstrPredicate(Br.MI, PredReg);
+    ARMCC::CondCodes Pred = getInstrPredicate(Br.MI, PredReg);
     if (Pred == ARMCC::EQ)
       NewOpc = ARM::tCBZ;
     else if (Pred == ARMCC::NE)
@@ -1817,7 +1817,7 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
         --CmpMI;
         if (CmpMI->getOpcode() == ARM::tCMPi8) {
           unsigned Reg = CmpMI->getOperand(0).getReg();
-          Pred = llvm::getInstrPredicate(CmpMI, PredReg);
+          Pred = getInstrPredicate(CmpMI, PredReg);
           if (Pred == ARMCC::AL &&
               CmpMI->getOperand(1).getImm() == 0 &&
               isARMLowRegister(Reg)) {

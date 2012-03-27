@@ -1046,10 +1046,10 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
   // If this function is using the interrupt_handler calling convention
   // then use "rtid r14, 0" otherwise use "rtsd r15, 8"
-  unsigned Ret = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet
-                                                              : MBlazeISD::Ret;
-  unsigned Reg = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlaze::R14
-                                                              : MBlaze::R15;
+  unsigned Ret = (CallConv == CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet
+                                                        : MBlazeISD::Ret;
+  unsigned Reg = (CallConv == CallingConv::MBLAZE_INTR) ? MBlaze::R14
+                                                        : MBlaze::R15;
   SDValue DReg = DAG.getRegister(Reg, MVT::i32);
 
   if (Flag.getNode())

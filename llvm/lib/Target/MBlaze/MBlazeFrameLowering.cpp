@@ -211,13 +211,13 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
 
 static void interruptFrameLayout(MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  llvm::CallingConv::ID CallConv = F->getCallingConv();
+  CallingConv::ID CallConv = F->getCallingConv();
 
   // If this function is not using either the interrupt_handler
   // calling convention or the save_volatiles calling convention
   // then we don't need to do any additional frame layout.
-  if (CallConv != llvm::CallingConv::MBLAZE_INTR &&
-      CallConv != llvm::CallingConv::MBLAZE_SVOL)
+  if (CallConv != CallingConv::MBLAZE_INTR &&
+      CallConv != CallingConv::MBLAZE_SVOL)
       return;
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -228,7 +228,7 @@ static void interruptFrameLayout(MachineFunction &MF) {
   // Determine if the calling convention is the interrupt_handler
   // calling convention. Some pieces of the prologue and epilogue
   // only need to be emitted if we are lowering and interrupt handler.
-  bool isIntr = CallConv == llvm::CallingConv::MBLAZE_INTR;
+  bool isIntr = CallConv == CallingConv::MBLAZE_INTR;
 
   // Determine where to put prologue and epilogue additions
   MachineBasicBlock &MENT   = MF.front();
@@ -347,8 +347,8 @@ void MBlazeFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
-  llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
-  bool requiresRA = CallConv == llvm::CallingConv::MBLAZE_INTR;
+  CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
+  bool requiresRA = CallConv == CallingConv::MBLAZE_INTR;
 
   // Determine the correct frame layout
   determineFrameLayout(MF);
@@ -393,8 +393,8 @@ void MBlazeFrameLowering::emitEpilogue(MachineFunction &MF,
 
   DebugLoc dl = MBBI->getDebugLoc();
 
-  llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
-  bool requiresRA = CallConv == llvm::CallingConv::MBLAZE_INTR;
+  CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
+  bool requiresRA = CallConv == CallingConv::MBLAZE_INTR;
 
   // Get the FI's where RA and FP are saved.
   int FPOffset = MBlazeFI->getFPStackOffset();
@@ -431,8 +431,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
-  llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
-  bool requiresRA = CallConv == llvm::CallingConv::MBLAZE_INTR;
+  CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
+  bool requiresRA = CallConv == CallingConv::MBLAZE_INTR;
 
   if (MFI->adjustsStack() || requiresRA) {
     MBlazeFI->setRAStackOffset(0);
