@@ -961,6 +961,18 @@ optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
 
 //===---------------------------------------------------------------------===//
 
+int g(int x) { return (x - 10) < 0; }
+Should combine to "x <= 9" (the sub has nsw).  Currently not
+optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
+
+//===---------------------------------------------------------------------===//
+
+int g(int x) { return (x + 10) < 0; }
+Should combine to "x < -10" (the add has nsw).  Currently not
+optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
+
+//===---------------------------------------------------------------------===//
+
 This was noticed in the entryblock for grokdeclarator in 403.gcc:
 
         %tmp = icmp eq i32 %decl_context, 4          
