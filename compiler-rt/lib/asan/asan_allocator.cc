@@ -631,7 +631,7 @@ static uint8_t *Allocate(size_t alignment, size_t size, AsanStackTrace *stack) {
   CHECK(size_to_allocate >= needed_size);
   CHECK(IsAligned(size_to_allocate, REDZONE));
 
-  if (FLAG_v >= 2) {
+  if (FLAG_v >= 3) {
     Printf("Allocate align: %zu size: %zu class: %u real: %zu\n",
          alignment, size, size_class, size_to_allocate);
   }
