@@ -100,3 +100,28 @@ namespace trailing_return {
     }
   }
 }
+
+namespace ellipsis {
+  template<typename...T>
+  struct S {
+    void e(S::S());
+    void f(S(...args[sizeof(T)])); // expected-note {{here}}
+    void f(S(...args)[sizeof(T)]); // expected-error {{redeclared}} expected-note {{here}}
+    void f(S ...args[sizeof(T)]); // expected-error {{redeclared}}
+    void g(S(...[sizeof(T)])); // expected-note {{here}}
+    void g(S(...)[sizeof(T)]); // expected-error {{function cannot return array type}}
+    void g(S ...[sizeof(T)]); // expected-error {{redeclared}}
+    void h(T(...)); // function type, expected-error {{unexpanded parameter pack}}
+    void h(T...); // pack expansion, ok
+    void i(int(T...)); // expected-note {{here}}
+    void i(int(T...a)); // expected-error {{redeclared}}
+    void i(int(T, ...)); // function type, expected-error {{unexpanded parameter pack}}
+    void i(int(T, ...a)); // expected-error {{expected ')'}} expected-note {{to match}} expected-error {{unexpanded parameter pack}}
+    void j(int(int...)); // function type, ok
+    void j(int(int...a)); // expected-error {{does not contain any unexpanded parameter packs}}
+    void j(T(int...)); // expected-error {{unexpanded parameter pack}}
+    void j(T(T...)); // expected-error {{unexpanded parameter pack}}
+    void k(int(...)(T)); // expected-error {{cannot return function type}}
+    void k(int ...(T));
+  };
+}

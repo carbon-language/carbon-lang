@@ -3354,15 +3354,17 @@ bool Parser::isConstructorDeclarator() {
     return false;
   }
 
-  // Current class name must be followed by a left parentheses.
+  // Current class name must be followed by a left parenthesis.
   if (Tok.isNot(tok::l_paren)) {
     TPA.Revert();
     return false;
   }
   ConsumeParen();
 
-  // A right parentheses or ellipsis signals that we have a constructor.
-  if (Tok.is(tok::r_paren) || Tok.is(tok::ellipsis)) {
+  // A right parenthesis, or ellipsis followed by a right parenthesis signals
+  // that we have a constructor.
+  if (Tok.is(tok::r_paren) ||
+      (Tok.is(tok::ellipsis) && NextToken().is(tok::r_paren))) {
     TPA.Revert();
     return true;
   }
@@ -3948,7 +3950,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // paren, because we haven't seen the identifier yet.
     isGrouping = true;
   } else if (Tok.is(tok::r_paren) ||           // 'int()' is a function.
-             (getLangOpts().CPlusPlus && Tok.is(tok::ellipsis)) || // C++ int(...)
+             (getLangOpts().CPlusPlus && Tok.is(tok::ellipsis) &&
+              NextToken().is(tok::r_paren)) || // C++ int(...)
              isDeclarationSpecifier()) {       // 'int(int)' is a function.
     // This handles C99 6.7.5.3p11: in "typedef int X; void foo(X)", X is
     // considered to be a type, not a K&R identifier-list.

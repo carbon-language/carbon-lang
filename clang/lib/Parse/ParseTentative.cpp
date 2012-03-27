@@ -553,7 +553,8 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
     ConsumeParen();
     if (mayBeAbstract &&
         (Tok.is(tok::r_paren) ||       // 'int()' is a function.
-         Tok.is(tok::ellipsis) ||      // 'int(...)' is a function.
+         // 'int(...)' is a function.
+         (Tok.is(tok::ellipsis) && NextToken().is(tok::r_paren)) ||
          isDeclarationSpecifier())) {   // 'int(int)' is a function.
       // '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
       //        exception-specification[opt]
@@ -1236,7 +1237,10 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
     // '...'[opt]
     if (Tok.is(tok::ellipsis)) {
       ConsumeToken();
-      return TPResult::True(); // '...' is a sign of a function declarator.
+      if (Tok.is(tok::r_paren))
+        return TPResult::True(); // '...)' is a sign of a function declarator.
+      else
+        return TPResult::False();
     }
 
     ParsedAttributes attrs(AttrFactory);
@@ -1269,7 +1273,10 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
 
     if (Tok.is(tok::ellipsis)) {
       ConsumeToken();
-      return TPResult::True(); // '...' is a sign of a function declarator.
+      if (Tok.is(tok::r_paren))
+        return TPResult::True(); // '...)' is a sign of a function declarator.
+      else
+        return TPResult::False();
     }
 
     if (Tok.isNot(tok::comma))
