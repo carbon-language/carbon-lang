@@ -555,9 +555,9 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
   NewCU->addString(Die, dwarf::DW_AT_name, FN);
-  // Use DW_AT_entry_pc instead of DW_AT_low_pc/DW_AT_high_pc pair. This
-  // simplifies debug range entries.
-  NewCU->addUInt(Die, dwarf::DW_AT_entry_pc, dwarf::DW_FORM_addr, 0);
+  // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
+  // into an entity.
+  NewCU->addUInt(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
   if (Asm->MAI->doesDwarfRequireRelocationForSectionOffset())
