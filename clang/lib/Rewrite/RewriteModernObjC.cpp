@@ -317,6 +317,7 @@ namespace {
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
+    Stmt *RewriteObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
@@ -2448,6 +2449,21 @@ Stmt *RewriteModernObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   ReplaceStmt(Exp, cast);
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
   return cast;
+}
+
+Stmt *RewriteModernObjC::RewriteObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Exp) {
+  unsigned IntSize =
+    static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
+  
+  Expr *FlagExp = IntegerLiteral::Create(*Context, 
+                                         llvm::APInt(IntSize, Exp->getValue()), 
+                                         Context->IntTy, Exp->getLocation());
+  CastExpr *cast = NoTypeInfoCStyleCastExpr(Context, Context->ObjCBuiltinBoolTy,
+                                            CK_BitCast, FlagExp);
+  ParenExpr *PE = new (Context) ParenExpr(Exp->getLocation(), Exp->getExprLoc(), 
+                                          cast);
+  ReplaceStmt(Exp, PE);
+  return PE;
 }
 
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
@@ -4741,6 +4757,9 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 
   if (ObjCStringLiteral *AtString = dyn_cast<ObjCStringLiteral>(S))
     return RewriteObjCStringLiteral(AtString);
+  
+  if (ObjCBoolLiteralExpr *BoolLitExpr = dyn_cast<ObjCBoolLiteralExpr>(S))
+    return RewriteObjCBoolLiteralExpr(BoolLitExpr);
 
   if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
 #if 0
