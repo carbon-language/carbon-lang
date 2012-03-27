@@ -284,7 +284,13 @@ void MachineFunction::dump() const {
 }
 
 void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
-  OS << "# Machine code for function " << Fn->getName() << ":\n";
+  OS << "# Machine code for function " << Fn->getName() << ": ";
+  if (RegInfo) {
+    OS << (RegInfo->isSSA() ? "SSA" : "Post SSA");
+    if (!RegInfo->tracksLiveness())
+      OS << ", not tracking liveness";
+  }
+  OS << '\n';
 
   // Print Frame Information
   FrameInfo->print(*this, OS);
