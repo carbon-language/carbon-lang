@@ -430,10 +430,11 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
     if ((*WI)->hasBody()) {
       if (Mode != ANALYSIS_PATH)
         checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
-      if (Mode != ANALYSIS_SYNTAX && checkerMgr->hasPathSensitiveCheckers())
+      if (Mode != ANALYSIS_SYNTAX && checkerMgr->hasPathSensitiveCheckers()) {
         RunPathSensitiveChecks(*WI, VisitedCallees);
+        NumFunctionsAnalyzed++;
+      }
     }
-  NumFunctionsAnalyzed++;
 }
 
 //===----------------------------------------------------------------------===//
