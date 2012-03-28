@@ -509,7 +509,7 @@ public:
   SolarisTargetInfo(const std::string& triple)
     : OSTargetInfo<Target>(triple) {
     this->UserLabelPrefix = "";
-    this->WCharType = this->SignedLong;
+    this->WCharType = this->SignedInt;
     // FIXME: WIntType should be SignedLong
   }
 };
