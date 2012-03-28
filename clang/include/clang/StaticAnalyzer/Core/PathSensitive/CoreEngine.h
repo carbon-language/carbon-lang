@@ -42,6 +42,7 @@ class NodeBuilder;
 class CoreEngine {
   friend struct NodeBuilderContext;
   friend class NodeBuilder;
+  friend class ExprEngine;
   friend class CommonNodeBuilder;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
@@ -124,7 +125,8 @@ public:
   ///  steps.  Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(const LocationContext *L, unsigned Steps,
                        ProgramStateRef InitState);
-  void ExecuteWorkListWithInitialState(const LocationContext *L,
+  /// Returns true if there is still simulation state on the worklist.
+  bool ExecuteWorkListWithInitialState(const LocationContext *L,
                                        unsigned Steps,
                                        ProgramStateRef InitState, 
                                        ExplodedNodeSet &Dst);

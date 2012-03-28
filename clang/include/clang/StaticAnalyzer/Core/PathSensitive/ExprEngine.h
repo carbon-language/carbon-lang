@@ -95,17 +95,19 @@ public:
 
   ~ExprEngine();
 
-  void ExecuteWorkList(const LocationContext *L, unsigned Steps = 150000) {
-    Engine.ExecuteWorkList(L, Steps, 0);
+  /// Returns true if there is still simulation state on the worklist.
+  bool ExecuteWorkList(const LocationContext *L, unsigned Steps = 150000) {
+    return Engine.ExecuteWorkList(L, Steps, 0);
   }
 
   /// Execute the work list with an initial state. Nodes that reaches the exit
   /// of the function are added into the Dst set, which represent the exit
-  /// state of the function call.
-  void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
+  /// state of the function call. Returns true if there is still simulation
+  /// state on the worklist.
+  bool ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
                                        ProgramStateRef InitState, 
                                        ExplodedNodeSet &Dst) {
-    Engine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
+    return Engine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
   }
 
   /// getContext - Return the ASTContext associated with this analysis.
@@ -168,7 +170,8 @@ public:
                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   /// Called by CoreEngine when processing the entrance of a CFGBlock.
-  virtual void processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder);
+  virtual void processCFGBlockEntrance(const BlockEdge &L,
+                                       NodeBuilderWithSinks &nodeBuilder);
   
   /// ProcessBranch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.

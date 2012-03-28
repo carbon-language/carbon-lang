@@ -53,11 +53,6 @@ STATISTIC(NumMaxBlockCountReachedInInlined,
 STATISTIC(NumTimesRetriedWithoutInlining,
             "The # of times we re-evaluated a call without inlining");
 
-STATISTIC(NumNotNew,
-            "Cached out");
-STATISTIC(NumNull,
-            "Null node");
-
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
@@ -1005,10 +1000,8 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
     break;
   }
 
-  if (!BeforeProcessingCall) {
-    NumNull++;
+  if (!BeforeProcessingCall)
     return false;
-  }
 
   // TODO: Clean up the unneeded nodes.
 
@@ -1024,10 +1017,11 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
   // Make the new node a successor of BeforeProcessingCall.
   bool IsNew = false;
   ExplodedNode *NewNode = G.getNode(NewNodeLoc, NewNodeState, false, &IsNew);
-  if (!IsNew) {
-    NumNotNew++;
-    return false;
-  }
+  // We cached out at this point. Caching out is common due to us backtracking
+  // from the inlined function, which might spawn several paths.
+  if (!IsNew)
+    return true;
+
   NewNode->addPredecessor(BeforeProcessingCall, G);
 
   // Add the new node to the work list.
@@ -1038,14 +1032,16 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
 }
 
 /// Block entrance.  (Update counters).
-void ExprEngine::processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder) {
+void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
+                                         NodeBuilderWithSinks &nodeBuilder) {
   
   // FIXME: Refactor this into a checker.
   ExplodedNode *pred = nodeBuilder.getContext().getPred();
   
   if (nodeBuilder.getContext().getCurrentBlockCount() >= AMgr.getMaxVisit()) {
     static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
-    nodeBuilder.generateNode(pred->getState(), pred, &tag, true);
+    const ExplodedNode *Sink =
+                   nodeBuilder.generateNode(pred->getState(), pred, &tag, true);
 
     // Check if we stopped at the top level function or not.
     // Root node should have the location context of the top most function.
@@ -1057,10 +1053,14 @@ void ExprEngine::processCFGBlockEntrance(NodeBuilderWithSinks &nodeBuilder) {
       // no-inlining policy in the state and enqueuing the new work item on
       // the list. Replay should almost never fail. Use the stats to catch it
       // if it does.
-      if (!(AMgr.RetryExhausted && replayWithoutInlining(pred, CalleeLC)))
-        NumMaxBlockCountReachedInInlined++;
+      if ((AMgr.RetryExhausted && replayWithoutInlining(pred, CalleeLC)))
+        return;
+      NumMaxBlockCountReachedInInlined++;
     } else
       NumMaxBlockCountReached++;
+
+    // Make sink nodes as exhausted(for stats) only if retry failed.
+    Engine.blocksExhausted.push_back(std::make_pair(L, Sink));
   }
 }
 
