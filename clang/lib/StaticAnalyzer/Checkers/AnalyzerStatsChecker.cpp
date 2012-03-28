@@ -42,22 +42,22 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
                                             BugReporter &B,
                                             ExprEngine &Eng) const {
   const CFG *C  = 0;
-  const Decl *D = 0;
   const SourceManager &SM = B.getSourceManager();
   llvm::SmallPtrSet<const CFGBlock*, 256> reachable;
 
   // Root node should have the location context of the top most function.
   const ExplodedNode *GraphRoot = *G.roots_begin();
-  const LocationContext *LC =
-          GraphRoot->getLocation().getLocationContext()->getCurrentStackFrame();
+  const LocationContext *LC = GraphRoot->getLocation().getLocationContext();
+
+  const Decl *D = LC->getDecl();
 
   // Iterate over the exploded graph.
   for (ExplodedGraph::node_iterator I = G.nodes_begin();
       I != G.nodes_end(); ++I) {
     const ProgramPoint &P = I->getLocation();
 
-    // Only check the coverage in the top level function.
-    if (LC != P.getLocationContext()->getCurrentStackFrame())
+    // Only check the coverage in the top level function (optimization).
+    if (D != P.getLocationContext()->getDecl())
       continue;
 
     if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
@@ -66,9 +66,8 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
     }
   }
 
-  // Get the CFG and the Decl of this block
+  // Get the CFG and the Decl of this block.
   C = LC->getCFG();
-  D = LC->getAnalysisDeclContext()->getDecl();
 
   unsigned total = 0, unreachable = 0;
 
