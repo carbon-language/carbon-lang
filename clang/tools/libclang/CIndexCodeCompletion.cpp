@@ -668,7 +668,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
 
   CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   ASTUnit::ConcurrencyCheck Check(*AST);
 

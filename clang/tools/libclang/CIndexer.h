@@ -90,7 +90,7 @@ public:
 
   /// \brief Set the thread priority to background.
   /// FIXME: Move to llvm/Support.
-  void setBackGroundPriority();
+  void setThreadBackgroundPriority();
 
   /// \brief Print libclang's resource usage to standard error.
   void PrintLibclangResourceUsage(CXTranslationUnit TU);

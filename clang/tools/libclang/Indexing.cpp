@@ -276,7 +276,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   CaptureDiagnosticConsumer *CaptureDiag = new CaptureDiagnosticConsumer();
 
@@ -507,7 +507,7 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
 
   CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   IndexerCallbacks CB;
   memset(&CB, 0, sizeof(CB));

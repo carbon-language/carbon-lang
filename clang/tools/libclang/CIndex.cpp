@@ -2511,7 +2511,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
   // FIXME: Add a flag for modules.
@@ -2688,7 +2688,7 @@ static void clang_saveTranslationUnit_Impl(void *UserData) {
 
   CIndexer *CXXIdx = (CIndexer*)STUI->TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   STUI->result = static_cast<ASTUnit *>(STUI->TU->TUData)->Save(STUI->FileName);
 }
@@ -2779,7 +2779,7 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
 
   CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
@@ -5166,7 +5166,7 @@ static void clang_annotateTokensImpl(void *UserData) {
 
   CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
-    setBackGroundPriority();
+    setThreadBackgroundPriority();
 
   // Determine the region of interest, which contains all of the tokens.
   SourceRange RegionOfInterest;
@@ -5741,7 +5741,7 @@ void SetSafetyThreadStackSize(unsigned Value) {
 
 }
 
-void clang::setBackGroundPriority() {
+void clang::setThreadBackgroundPriority() {
   // FIXME: Move to llvm/Support and make it cross-platform.
 #ifdef __APPLE__
   setpriority(PRIO_DARWIN_THREAD, 0, PRIO_DARWIN_BG);
