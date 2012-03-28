@@ -1014,11 +1014,11 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   // Check whether there is already a function template specialization for
   // this declaration.
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
-  void *InsertPos = 0;
   if (FunctionTemplate && !TemplateParams) {
     std::pair<const TemplateArgument *, unsigned> Innermost
       = TemplateArgs.getInnermost();
 
+    void *InsertPos = 0;
     FunctionDecl *SpecFunc
       = FunctionTemplate->findSpecialization(Innermost.first, Innermost.second,
                                              InsertPos);
@@ -1148,7 +1148,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                             TemplateArgumentList::CreateCopy(SemaRef.Context,
                                                              Innermost.first,
                                                              Innermost.second),
-                                                InsertPos);
+                                                /*InsertPos=*/0);
   } else if (isFriend) {
     // Note, we need this connection even if the friend doesn't have a body.
     // Its body may exist but not have been attached yet due to deferred
@@ -1316,7 +1316,6 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                       TemplateParameterList *TemplateParams,
                                       bool IsClassScopeSpecialization) {
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
-  void *InsertPos = 0;
   if (FunctionTemplate && !TemplateParams) {
     // We are creating a function template specialization from a function
     // template. Check whether there is already a function template
@@ -1324,6 +1323,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     std::pair<const TemplateArgument *, unsigned> Innermost
       = TemplateArgs.getInnermost();
 
+    void *InsertPos = 0;
     FunctionDecl *SpecFunc
       = FunctionTemplate->findSpecialization(Innermost.first, Innermost.second,
                                              InsertPos);
@@ -1476,7 +1476,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                          TemplateArgumentList::CreateCopy(SemaRef.Context,
                                                           Innermost.first,
                                                           Innermost.second),
-                                              InsertPos);
+                                              /*InsertPos=*/0);
   } else if (!isFriend) {
     // Record that this is an instantiation of a member function.
     Method->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
@@ -2125,7 +2125,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
 
   // Add this partial specialization to the set of class template partial
   // specializations.
-  ClassTemplate->AddPartialSpecialization(InstPartialSpec, InsertPos);
+  ClassTemplate->AddPartialSpecialization(InstPartialSpec, /*InsertPos=*/0);
   return InstPartialSpec;
 }
 

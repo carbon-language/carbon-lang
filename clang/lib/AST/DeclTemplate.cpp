@@ -238,7 +238,10 @@ FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
 
 void FunctionTemplateDecl::addSpecialization(
       FunctionTemplateSpecializationInfo *Info, void *InsertPos) {
-  getSpecializations().InsertNode(Info, InsertPos);
+  if (InsertPos)
+    getSpecializations().InsertNode(Info, InsertPos);
+  else
+    getSpecializations().GetOrInsertNode(Info);
   if (ASTMutationListener *L = getASTMutationListener())
     L->AddedCXXTemplateSpecialization(this, Info->Function);
 }
@@ -322,7 +325,14 @@ ClassTemplateDecl::findSpecialization(const TemplateArgument *Args,
 
 void ClassTemplateDecl::AddSpecialization(ClassTemplateSpecializationDecl *D,
                                           void *InsertPos) {
-  getSpecializations().InsertNode(D, InsertPos);
+  if (InsertPos)
+    getSpecializations().InsertNode(D, InsertPos);
+  else {
+    ClassTemplateSpecializationDecl *Existing 
+      = getSpecializations().GetOrInsertNode(D);
+    (void)Existing;
+    assert(Existing->isCanonicalDecl() && "Non-canonical specialization?");
+  }
   if (ASTMutationListener *L = getASTMutationListener())
     L->AddedCXXTemplateSpecialization(this, D);
 }
@@ -338,7 +348,15 @@ ClassTemplateDecl::findPartialSpecialization(const TemplateArgument *Args,
 void ClassTemplateDecl::AddPartialSpecialization(
                                       ClassTemplatePartialSpecializationDecl *D,
                                       void *InsertPos) {
-  getPartialSpecializations().InsertNode(D, InsertPos);
+  if (InsertPos)
+    getPartialSpecializations().InsertNode(D, InsertPos);
+  else {
+    ClassTemplatePartialSpecializationDecl *Existing
+      = getPartialSpecializations().GetOrInsertNode(D);
+    (void)Existing;
+    assert(Existing->isCanonicalDecl() && "Non-canonical specialization?");
+  }
+
   if (ASTMutationListener *L = getASTMutationListener())
     L->AddedCXXTemplateSpecialization(this, D);
 }
