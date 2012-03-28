@@ -78,6 +78,9 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
   unsigned Reg0 = HasDef ? MI->getOperand(0).getReg() : 0;
   unsigned Reg1 = MI->getOperand(Idx1).getReg();
   unsigned Reg2 = MI->getOperand(Idx2).getReg();
+  unsigned SubReg0 = HasDef ? MI->getOperand(0).getSubReg() : 0;
+  unsigned SubReg1 = MI->getOperand(Idx1).getSubReg();
+  unsigned SubReg2 = MI->getOperand(Idx2).getSubReg();
   bool Reg1IsKill = MI->getOperand(Idx1).isKill();
   bool Reg2IsKill = MI->getOperand(Idx2).isKill();
   // If destination is tied to either of the commuted source register, then
@@ -86,10 +89,12 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
       MI->getDesc().getOperandConstraint(Idx1, MCOI::TIED_TO) == 0) {
     Reg2IsKill = false;
     Reg0 = Reg2;
+    SubReg0 = SubReg2;
   } else if (HasDef && Reg0 == Reg2 &&
              MI->getDesc().getOperandConstraint(Idx2, MCOI::TIED_TO) == 0) {
     Reg1IsKill = false;
     Reg0 = Reg1;
+    SubReg0 = SubReg1;
   }
 
   if (NewMI) {
@@ -98,19 +103,23 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
     MachineFunction &MF = *MI->getParent()->getParent();
     if (HasDef)
       return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
-        .addReg(Reg0, RegState::Define | getDeadRegState(Reg0IsDead))
-        .addReg(Reg2, getKillRegState(Reg2IsKill))
-        .addReg(Reg1, getKillRegState(Reg2IsKill));
+        .addReg(Reg0, RegState::Define | getDeadRegState(Reg0IsDead), SubReg0)
+        .addReg(Reg2, getKillRegState(Reg2IsKill), SubReg2)
+        .addReg(Reg1, getKillRegState(Reg1IsKill), SubReg1);
     else
       return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
-        .addReg(Reg2, getKillRegState(Reg2IsKill))
-        .addReg(Reg1, getKillRegState(Reg2IsKill));
+        .addReg(Reg2, getKillRegState(Reg2IsKill), SubReg2)
+        .addReg(Reg1, getKillRegState(Reg1IsKill), SubReg1);
   }
 
-  if (HasDef)
+  if (HasDef) {
     MI->getOperand(0).setReg(Reg0);
+    MI->getOperand(0).setSubReg(SubReg0);
+  }
   MI->getOperand(Idx2).setReg(Reg1);
   MI->getOperand(Idx1).setReg(Reg2);
+  MI->getOperand(Idx2).setSubReg(SubReg1);
+  MI->getOperand(Idx1).setSubReg(SubReg2);
   MI->getOperand(Idx2).setIsKill(Reg1IsKill);
   MI->getOperand(Idx1).setIsKill(Reg2IsKill);
   return MI;
