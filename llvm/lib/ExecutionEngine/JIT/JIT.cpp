@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -267,9 +268,10 @@ extern "C" {
 }
 
 JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
-         JITMemoryManager *JMM, bool GVsWithCode)
-  : ExecutionEngine(M), TM(tm), TJI(tji), AllocateGVsWithCode(GVsWithCode),
-    isAlreadyCodeGenerating(false) {
+         JITMemoryManager *jmm, bool GVsWithCode)
+  : ExecutionEngine(M), TM(tm), TJI(tji),
+    JMM(jmm ? jmm : JITMemoryManager::CreateDefaultMemManager()),
+    AllocateGVsWithCode(GVsWithCode), isAlreadyCodeGenerating(false) {
   setTargetData(TM.getTargetData());
 
   jitstate = new JITState(M);
@@ -322,6 +324,7 @@ JIT::~JIT() {
   AllJits->Remove(this);
   delete jitstate;
   delete JCE;
+  // JMM is a ownership of JCE, so we no need delete JMM here.
   delete &TM;
 }
 
@@ -710,6 +713,27 @@ void *JIT::getPointerToBasicBlock(BasicBlock *BB) {
                      " it eliminated by optimizer?");
   }
 }
+
+void *JIT::getPointerToNamedFunction(const std::string &Name,
+                                     bool AbortOnFailure){
+  if (!isSymbolSearchingDisabled()) {
+    void *ptr = JMM->getPointerToNamedFunction(Name, false);
+    if (ptr)
+      return ptr;
+  }
+
+  /// If a LazyFunctionCreator is installed, use it to get/create the function.
+  if (LazyFunctionCreator)
+    if (void *RP = LazyFunctionCreator(Name))
+      return RP;
+
+  if (AbortOnFailure) {
+    report_fatal_error("Program used external function '"+Name+
+                      "' which could not be resolved!");
+  }
+  return 0;
+}
+
 
 /// getOrEmitGlobalVariable - Return the address of the specified global
 /// variable, possibly emitting it to memory if needed.  This is used by the

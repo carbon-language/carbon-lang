@@ -54,6 +54,10 @@ public:
   // memory was actually used.
   virtual void endFunctionBody(const char *Name, uint8_t *FunctionStart,
                                uint8_t *FunctionEnd) = 0;
+
+  
+  virtual void *getPointerToNamedFunction(const std::string &Name,
+                                          bool AbortOnFailure = true) = 0;
 };
 
 class RuntimeDyld {

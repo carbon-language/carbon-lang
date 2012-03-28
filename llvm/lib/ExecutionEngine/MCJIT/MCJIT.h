@@ -67,6 +67,7 @@ public:
   ///
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true);
+
   /// mapSectionAddress - map a section to its target address space value.
   /// Map the address of a JIT section as returned from the memory manager
   /// to the address in the target process as the running code will see it.
