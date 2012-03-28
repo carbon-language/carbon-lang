@@ -321,8 +321,8 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
 void MachineBasicBlock::removeLiveIn(unsigned Reg) {
   std::vector<unsigned>::iterator I =
     std::find(LiveIns.begin(), LiveIns.end(), Reg);
-  assert(I != LiveIns.end() && "Not a live in!");
-  LiveIns.erase(I);
+  if (I != LiveIns.end())
+    LiveIns.erase(I);
 }
 
 bool MachineBasicBlock::isLiveIn(unsigned Reg) const {
