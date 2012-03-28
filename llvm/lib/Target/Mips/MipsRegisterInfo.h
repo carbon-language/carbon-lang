@@ -47,6 +47,8 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

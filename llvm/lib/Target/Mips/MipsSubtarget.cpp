@@ -13,6 +13,7 @@
 
 #include "MipsSubtarget.h"
 #include "Mips.h"
+#include "MipsRegisterInfo.h"
 #include "llvm/Support/TargetRegistry.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
@@ -53,4 +54,15 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)
     IsLinux = false;
+}
+
+bool
+MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                                    TargetSubtargetInfo::AntiDepBreakMode& Mode,
+                                     RegClassVector& CriticalPathRCs) const {
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
+  CriticalPathRCs.clear();
+  CriticalPathRCs.push_back(hasMips64() ?
+                            &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass);
+  return OptLevel >= CodeGenOpt::Default;
 }

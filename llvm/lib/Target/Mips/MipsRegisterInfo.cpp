@@ -132,6 +132,11 @@ getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+bool
+MipsRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
+  return true;
+}
+
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void MipsRegisterInfo::
