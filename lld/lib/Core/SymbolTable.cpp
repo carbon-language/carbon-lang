@@ -9,22 +9,22 @@
 
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/Atom.h"
-#include "lld/Core/DefinedAtom.h"
-#include "lld/Core/UndefinedAtom.h"
-#include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/AbsoluteAtom.h"
+#include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/Platform.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Platform/Platform.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/UndefinedAtom.h"
 
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <algorithm>
 #include <cassert>
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 
 namespace lld {

@@ -10,7 +10,9 @@
 #ifndef LLD_CORE_ATOM_H_
 #define LLD_CORE_ATOM_H_
 
-#include <assert.h>
+#include "llvm/Support/DataTypes.h"
+
+#include <cassert>
 
 namespace llvm {
   class StringRef;

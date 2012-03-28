@@ -10,8 +10,6 @@
 #ifndef LLD_CORE_DEFINED_ATOM_H_
 #define LLD_CORE_DEFINED_ATOM_H_
 
-#include <assert.h>
-
 #include "lld/Core/Atom.h"
 #include "lld/Core/Reference.h"
 

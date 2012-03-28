@@ -13,7 +13,6 @@
 #include "lld/Core/File.h"
 
 #include "llvm/ADT/OwningPtr.h"
-
 #include "llvm/Support/system_error.h"
 
 #include <vector>

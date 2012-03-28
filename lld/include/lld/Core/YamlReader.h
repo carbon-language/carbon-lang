@@ -14,7 +14,10 @@
 
 #include <vector>
 
-namespace llvm { class MemoryBuffer; }
+namespace llvm {
+class MemoryBuffer;
+class StringRef;
+}
 
 namespace lld {
 

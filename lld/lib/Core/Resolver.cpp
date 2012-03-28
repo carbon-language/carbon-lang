@@ -11,15 +11,14 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/Platform.h"
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/UndefinedAtom.h"
-#include "lld/Platform/Platform.h"
 
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
 #include <cassert>
-
 #include <vector>
 
 namespace lld {

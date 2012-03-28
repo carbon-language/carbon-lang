@@ -7,9 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <vector>
+#include "NativeFileFormat.h"
 
-#include <assert.h>
+#include "lld/Core/Atom.h"
+#include "lld/Core/Error.h"
+#include "lld/Core/File.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -17,11 +19,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 
-#include "lld/Core/Error.h"
-#include "lld/Core/File.h"
-#include "lld/Core/Atom.h"
-
-#include "NativeFileFormat.h"
+#include <vector>
 
 namespace lld {
 

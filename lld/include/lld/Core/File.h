@@ -10,14 +10,14 @@
 #ifndef LLD_CORE_FILE_H_
 #define LLD_CORE_FILE_H_
 
-#include <vector>
+#include "lld/Core/AbsoluteAtom.h"
+#include "lld/Core/DefinedAtom.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/ADT/StringRef.h"
 
-#include "lld/Core/DefinedAtom.h"
-#include "lld/Core/UndefinedAtom.h"
-#include "lld/Core/SharedLibraryAtom.h"
-#include "lld/Core/AbsoluteAtom.h"
+#include <vector>
 
 namespace lld {
 

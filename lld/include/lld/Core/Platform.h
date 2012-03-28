@@ -10,9 +10,9 @@
 #ifndef LLD_CORE_PLATFORM_H_
 #define LLD_CORE_PLATFORM_H_
 
-#include <vector>
-
 #include "lld/Core/Reference.h"
+
+#include <vector>
 
 namespace lld {
 class Atom;

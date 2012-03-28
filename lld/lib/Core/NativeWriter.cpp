@@ -7,17 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <vector>
+#include "lld/Core/NativeWriter.h"
+#include "NativeFileFormat.h"
+#include "lld/Core/File.h"
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringRef.h"
 
-#include "lld/Core/File.h"
-#include "lld/Core/NativeWriter.h"
-
-#include "NativeFileFormat.h"
-
+#include <vector>
 
 namespace lld {
 

@@ -10,10 +10,10 @@
 #ifndef LLD_CORE_PASS_H_
 #define LLD_CORE_PASS_H_
 
-#include <vector>
-
 #include "lld/Core/Atom.h"
 #include "lld/Core/Platform.h"
+
+#include <vector>
 
 namespace lld {
 

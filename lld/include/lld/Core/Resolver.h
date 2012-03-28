@@ -16,8 +16,8 @@
 
 #include "llvm/ADT/DenseSet.h"
 
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace lld {
 

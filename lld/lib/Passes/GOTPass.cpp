@@ -6,7 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
 //
 // This linker pass transforms all GOT kind references to real references.
 // That is, in assembly you can write something like:
@@ -30,6 +29,7 @@
 // LEA instruction that is the same size.  The platform method isGOTAccess()
 // should only return true for "canBypassGOT" if this optimization is supported.
 //
+//===----------------------------------------------------------------------===//
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"

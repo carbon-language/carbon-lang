@@ -6,13 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
 //
 // This linker pass updates call sites which have references to shared library
 // atoms to instead have a reference to a stub (PLT entry) for the specified
 // symbol.  The platform object does the work of creating the platform-specific
 // StubAtom.
 //
+//===----------------------------------------------------------------------===//
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"

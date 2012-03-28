@@ -10,14 +10,13 @@
 #ifndef LLD_CORE_SYMBOL_TABLE_H_
 #define LLD_CORE_SYMBOL_TABLE_H_
 
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringRef.h"
+
 #include <cstring>
 #include <map>
 #include <vector>
-
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/StringExtras.h"
-
 
 namespace lld {
 

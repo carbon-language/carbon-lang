@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string.h>
-
 #include "YamlKeyValues.h"
 
 #include "llvm/Support/ErrorHandling.h"
+
+#include <cstring>
 
 namespace lld {
 namespace yaml {

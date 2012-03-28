@@ -7,30 +7,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string.h>
-
-#include "YamlKeyValues.h"
-
 #include "lld/Core/YamlReader.h"
+#include "YamlKeyValues.h"
 #include "lld/Core/Atom.h"
-#include "lld/Core/UndefinedAtom.h"
-#include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
+#include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
-
-#include "lld/Platform/Platform.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
 
+#include <cstring>
 #include <vector>
 
 
