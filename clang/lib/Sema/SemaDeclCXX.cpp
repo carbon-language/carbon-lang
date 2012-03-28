@@ -1538,10 +1538,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // class X {
       //   int X::member;
       // };
-      DeclContext *DC = 0;
-      if ((DC = computeDeclContext(SS, false)) && DC->Equals(CurContext))
-        Diag(D.getIdentifierLoc(), diag::warn_member_extra_qualification)
-          << Name << FixItHint::CreateRemoval(SS.getRange());
+      if (DeclContext *DC = computeDeclContext(SS, false))
+        diagnoseQualifiedDeclaration(SS, DC, Name, D.getIdentifierLoc());
       else
         Diag(D.getIdentifierLoc(), diag::err_member_qualification)
           << Name << SS.getRange();

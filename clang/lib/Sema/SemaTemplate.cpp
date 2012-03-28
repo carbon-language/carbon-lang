@@ -887,9 +887,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       ContextRAII SavedContext(*this, SemanticContext);
       if (RebuildTemplateParamsInCurrentInstantiation(TemplateParams))
         Invalid = true;
-    } else if (CurContext->isRecord() && TUK != TUK_Friend &&
-               TUK != TUK_Reference)
-      diagnoseQualifiedDeclInClass(SS, SemanticContext, Name, NameLoc);
+    } else if (TUK != TUK_Friend && TUK != TUK_Reference)
+      diagnoseQualifiedDeclaration(SS, SemanticContext, Name, NameLoc);
         
     LookupQualifiedName(Previous, SemanticContext);
   } else {

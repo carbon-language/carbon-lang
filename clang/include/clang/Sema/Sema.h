@@ -1091,7 +1091,7 @@ public:
                                         const LookupResult &Previous,
                                         Scope *S);
   bool DiagnoseClassNameShadow(DeclContext *DC, DeclarationNameInfo Info);
-  bool diagnoseQualifiedDeclInClass(CXXScopeSpec &SS, DeclContext *DC,
+  bool diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
                                     DeclarationName Name,
                                     SourceLocation Loc);
   void DiagnoseFunctionSpecifiers(Declarator& D);

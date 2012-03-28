@@ -20,3 +20,18 @@ namespace PR8019 {
   };
 
 }
+
+namespace NS {
+  void foo();
+  extern int bar;
+  struct X;
+  template<typename T> struct Y;
+  template<typename T> void wibble(T);
+}
+namespace NS {
+  void NS::foo() {} // expected-warning{{extra qualification on member 'foo'}}
+  int NS::bar; // expected-warning{{extra qualification on member 'bar'}}
+  struct NS::X { }; // expected-warning{{extra qualification on member 'X'}}
+  template<typename T> struct NS::Y; // expected-warning{{extra qualification on member 'Y'}}
+  template<typename T> void NS::wibble(T) { } // expected-warning{{extra qualification on member 'wibble'}}
+}

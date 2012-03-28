@@ -3236,40 +3236,96 @@ bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
   return false;
 }
 
-/// \brief Diagnose a declaration that has a qualified name within a class,
-/// which is ill-formed but often recoverable.
+/// \brief Diagnose a declaration whose declarator-id has the given 
+/// nested-name-specifier.
+///
+/// \param SS The nested-name-specifier of the declarator-id.
+///
+/// \param DC The declaration context to which the nested-name-specifier 
+/// resolves.
+///
+/// \param Name The name of the entity being declared.
+///
+/// \param Loc The location of the name of the entity being declared.
 ///
 /// \returns true if we cannot safely recover from this error, false otherwise.
-bool Sema::diagnoseQualifiedDeclInClass(CXXScopeSpec &SS, DeclContext *DC,
+bool Sema::diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
                                         DeclarationName Name,
-                                        SourceLocation Loc) {
-  // The user provided a superfluous scope specifier inside a class
-  // definition:
+                                      SourceLocation Loc) {
+  DeclContext *Cur = CurContext;
+  while (isa<LinkageSpecDecl>(Cur))
+    Cur = Cur->getParent();
+  
+  // C++ [dcl.meaning]p1:
+  //   A declarator-id shall not be qualified except for the definition
+  //   of a member function (9.3) or static data member (9.4) outside of
+  //   its class, the definition or explicit instantiation of a function 
+  //   or variable member of a namespace outside of its namespace, or the
+  //   definition of an explicit specialization outside of its namespace,
+  //   or the declaration of a friend function that is a member of 
+  //   another class or namespace (11.3). [...]
+    
+  // The user provided a superfluous scope specifier that refers back to the
+  // class or namespaces in which the entity is already declared.
   //
   // class X {
   //   void X::f();
   // };
-  if (CurContext->Equals(DC)) {
+  if (Cur->Equals(DC)) {
     Diag(Loc, diag::warn_member_extra_qualification)
       << Name << FixItHint::CreateRemoval(SS.getRange());
     SS.clear();
     return false;
   } 
-  
-  Diag(Loc, diag::err_member_qualification)
-    << Name << SS.getRange();
-  SS.clear();
-  
-  // C++ constructors and destructors with incorrect scopes can break
-  // our AST invariants by having the wrong underlying types. If
-  // that's the case, then drop this declaration entirely.
-  if ((Name.getNameKind() == DeclarationName::CXXConstructorName ||
-       Name.getNameKind() == DeclarationName::CXXDestructorName) &&
-      !Context.hasSameType(Name.getCXXNameType(),
-                          Context.getTypeDeclType(
-                            cast<CXXRecordDecl>(CurContext))))
+
+  // Check whether the qualifying scope encloses the scope of the original
+  // declaration.
+  if (!Cur->Encloses(DC)) {
+    if (Cur->isRecord())
+      Diag(Loc, diag::err_member_qualification)
+        << Name << SS.getRange();
+    else if (isa<TranslationUnitDecl>(DC))
+      Diag(Loc, diag::err_invalid_declarator_global_scope)
+        << Name << SS.getRange();
+    else if (isa<FunctionDecl>(Cur))
+      Diag(Loc, diag::err_invalid_declarator_in_function) 
+        << Name << SS.getRange();
+    else
+      Diag(Loc, diag::err_invalid_declarator_scope)
+      << Name << cast<NamedDecl>(DC) << SS.getRange();
+    
     return true;
+  }
+
+  if (Cur->isRecord()) {
+    // Cannot qualify members within a class.
+    Diag(Loc, diag::err_member_qualification)
+      << Name << SS.getRange();
+    SS.clear();
+    
+    // C++ constructors and destructors with incorrect scopes can break
+    // our AST invariants by having the wrong underlying types. If
+    // that's the case, then drop this declaration entirely.
+    if ((Name.getNameKind() == DeclarationName::CXXConstructorName ||
+         Name.getNameKind() == DeclarationName::CXXDestructorName) &&
+        !Context.hasSameType(Name.getCXXNameType(),
+                             Context.getTypeDeclType(cast<CXXRecordDecl>(Cur))))
+      return true;
+    
+    return false;
+  }
   
+  // C++11 [dcl.meaning]p1:
+  //   [...] "The nested-name-specifier of the qualified declarator-id shall
+  //   not begin with a decltype-specifer"
+  NestedNameSpecifierLoc SpecLoc(SS.getScopeRep(), SS.location_data());
+  while (SpecLoc.getPrefix())
+    SpecLoc = SpecLoc.getPrefix();
+  if (dyn_cast_or_null<DecltypeType>(
+        SpecLoc.getNestedNameSpecifier()->getAsType()))
+    Diag(Loc, diag::err_decltype_in_declarator)
+      << SpecLoc.getTypeLoc().getSourceRange();
+
   return false;
 }
 
@@ -3323,17 +3379,18 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         RequireCompleteDeclContext(D.getCXXScopeSpec(), DC))
       return 0;
 
-    if (isa<CXXRecordDecl>(DC)) {
-      if (!cast<CXXRecordDecl>(DC)->hasDefinition()) {
-        Diag(D.getIdentifierLoc(),
-             diag::err_member_def_undefined_record)
-          << Name << DC << D.getCXXScopeSpec().getRange();
-        D.setInvalidType();
-      } else if (isa<CXXRecordDecl>(CurContext) && 
-                 !D.getDeclSpec().isFriendSpecified()) {
-        if (diagnoseQualifiedDeclInClass(D.getCXXScopeSpec(), DC,
-                                         Name, D.getIdentifierLoc()))
+    if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
+      Diag(D.getIdentifierLoc(),
+           diag::err_member_def_undefined_record)
+        << Name << DC << D.getCXXScopeSpec().getRange();
+      D.setInvalidType();
+    } else if (!D.getDeclSpec().isFriendSpecified()) {
+      if (diagnoseQualifiedDeclaration(D.getCXXScopeSpec(), DC,
+                                      Name, D.getIdentifierLoc())) {
+        if (DC->isRecord())
           return 0;
+        
+        D.setInvalidType();
       }
     }
 
@@ -3391,21 +3448,16 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   } else { // Something like "int foo::x;"
     LookupQualifiedName(Previous, DC);
 
-    // Don't consider using declarations as previous declarations for
-    // out-of-line members.
-    RemoveUsingDecls(Previous);
-
-    // C++ 7.3.1.2p2:
-    // Members (including explicit specializations of templates) of a named
-    // namespace can also be defined outside that namespace by explicit
-    // qualification of the name being defined, provided that the entity being
-    // defined was already declared in the namespace and the definition appears
-    // after the point of declaration in a namespace that encloses the
-    // declarations namespace.
+    // C++ [dcl.meaning]p1:
+    //   When the declarator-id is qualified, the declaration shall refer to a 
+    //  previously declared member of the class or namespace to which the 
+    //  qualifier refers (or, in the case of a namespace, of an element of the
+    //  inline namespace set of that namespace (7.3.1)) or to a specialization
+    //  thereof; [...] 
     //
-    // Note that we only check the context at this point. We don't yet
-    // have enough information to make sure that PrevDecl is actually
-    // the declaration we want to match. For example, given:
+    // Note that we already checked the context above, and that we do not have
+    // enough information to make sure that Previous contains the declaration
+    // we want to match. For example, given:
     //
     //   class X {
     //     void f();
@@ -3414,45 +3466,15 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
     //
     //   void X::f(int) { } // ill-formed
     //
-    // In this case, PrevDecl will point to the overload set
+    // In this case, Previous will point to the overload set
     // containing the two f's declared in X, but neither of them
     // matches.
-
-    // First check whether we named the global scope.
-    if (isa<TranslationUnitDecl>(DC)) {
-      Diag(D.getIdentifierLoc(), diag::err_invalid_declarator_global_scope)
-        << Name << D.getCXXScopeSpec().getRange();
-    } else {
-      DeclContext *Cur = CurContext;
-      while (isa<LinkageSpecDecl>(Cur))
-        Cur = Cur->getParent();
-      if (!Cur->Encloses(DC)) {
-        // The qualifying scope doesn't enclose the original declaration.
-        // Emit diagnostic based on current scope.
-        SourceLocation L = D.getIdentifierLoc();
-        SourceRange R = D.getCXXScopeSpec().getRange();
-        if (isa<FunctionDecl>(Cur))
-          Diag(L, diag::err_invalid_declarator_in_function) << Name << R;
-        else
-          Diag(L, diag::err_invalid_declarator_scope)
-            << Name << cast<NamedDecl>(DC) << R;
-        D.setInvalidType();
-      }
-
-      // C++11 8.3p1:
-      // ... "The nested-name-specifier of the qualified declarator-id shall
-      // not begin with a decltype-specifer"
-      NestedNameSpecifierLoc SpecLoc = 
-            D.getCXXScopeSpec().getWithLocInContext(Context);
-      assert(SpecLoc && "A non-empty CXXScopeSpec should have a non-empty "
-                        "NestedNameSpecifierLoc");
-      while (SpecLoc.getPrefix())
-        SpecLoc = SpecLoc.getPrefix();
-      if (dyn_cast_or_null<DecltypeType>(
-            SpecLoc.getNestedNameSpecifier()->getAsType()))
-        Diag(SpecLoc.getBeginLoc(), diag::err_decltype_in_declarator)
-          << SpecLoc.getTypeLoc().getSourceRange();
-    }
+    
+    // C++ [dcl.meaning]p1:
+    //   [...] the member shall not merely have been introduced by a 
+    //   using-declaration in the scope of the class or namespace nominated by 
+    //   the nested-name-specifier of the declarator-id.
+    RemoveUsingDecls(Previous);
   }
 
   if (Previous.isSingleResult() &&
@@ -7916,6 +7938,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                      bool ScopedEnumUsesClassTag,
                      TypeResult UnderlyingType) {
   // If this is not a definition, it must have a name.
+  IdentifierInfo *OrigName = Name;
   assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
   assert(TemplateParameterLists.size() == 0 || TUK != TUK_Reference);
@@ -8028,9 +8051,6 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           << SS.getRange();
         return 0;
       }
-
-      if (isa<CXXRecordDecl>(CurContext))
-        diagnoseQualifiedDeclInClass(SS, DC, Name, NameLoc);
     }
 
     if (RequireCompleteDeclContext(SS, DC))
@@ -8491,6 +8511,16 @@ CreateNewDecl:
   // Maybe add qualifier info.
   if (SS.isNotEmpty()) {
     if (SS.isSet()) {
+      // If this is either a declaration or a definition, check the 
+      // nested-name-specifier against the current context. We don't do this
+      // for explicit specializations, because they have similar checking
+      // (with more specific diagnostics) in the call to 
+      // CheckMemberSpecialization, below.
+      if (!isExplicitSpecialization &&
+          (TUK == TUK_Definition || TUK == TUK_Declaration) &&
+          diagnoseQualifiedDeclaration(SS, DC, OrigName, NameLoc))
+        Invalid = true;
+
       New->setQualifierInfo(SS.getWithLocInContext(Context));
       if (TemplateParameterLists.size() > 0) {
         New->setTemplateParameterListsInfo(Context,
@@ -8533,7 +8563,7 @@ CreateNewDecl:
   // check the specialization.
   if (isExplicitSpecialization && CheckMemberSpecialization(New, Previous))
     Invalid = true;
-
+           
   if (Invalid)
     New->setInvalidDecl();
 
