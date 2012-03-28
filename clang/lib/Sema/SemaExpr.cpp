@@ -3115,18 +3115,18 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     ResultType = PTy->getPointeeType();
-  } else if (const PointerType *PTy = RHSTy->getAs<PointerType>()) {
-     // Handle the uncommon case of "123[Ptr]".
-    BaseExpr = RHSExp;
-    IndexExpr = LHSExp;
-    ResultType = PTy->getPointeeType();
   } else if (const ObjCObjectPointerType *PTy =
-               LHSTy->getAs<ObjCObjectPointerType>()) {
+             LHSTy->getAs<ObjCObjectPointerType>()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     Result = BuildObjCSubscriptExpression(RLoc, BaseExpr, IndexExpr, 0, 0);
     if (!Result.isInvalid())
       return Owned(Result.take());
+    ResultType = PTy->getPointeeType();
+  } else if (const PointerType *PTy = RHSTy->getAs<PointerType>()) {
+     // Handle the uncommon case of "123[Ptr]".
+    BaseExpr = RHSExp;
+    IndexExpr = LHSExp;
     ResultType = PTy->getPointeeType();
   } else if (const ObjCObjectPointerType *PTy =
                RHSTy->getAs<ObjCObjectPointerType>()) {

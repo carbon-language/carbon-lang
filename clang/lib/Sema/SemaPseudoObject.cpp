@@ -842,14 +842,20 @@ Sema::ObjCSubscriptKind
   // If we don't have a class type in C++, there's no way we can get an
   // expression of integral or enumeration type.
   const RecordType *RecordTy = T->getAs<RecordType>();
-  if (!RecordTy)
+  if (!RecordTy && T->isObjCObjectPointerType())
     // All other scalar cases are assumed to be dictionary indexing which
     // caller handles, with diagnostics if needed.
     return OS_Dictionary;
-  if (!getLangOpts().CPlusPlus || RecordTy->isIncompleteType()) {
+  if (!getLangOpts().CPlusPlus || 
+      !RecordTy || RecordTy->isIncompleteType()) {
     // No indexing can be done. Issue diagnostics and quit.
-    Diag(FromE->getExprLoc(), diag::err_objc_subscript_type_conversion)
-    << FromE->getType();
+    const Expr *IndexExpr = FromE->IgnoreParenImpCasts();
+    if (isa<StringLiteral>(IndexExpr))
+      Diag(FromE->getExprLoc(), diag::err_objc_subscript_pointer)
+        << T << FixItHint::CreateInsertion(FromE->getExprLoc(), "@");
+    else
+      Diag(FromE->getExprLoc(), diag::err_objc_subscript_type_conversion)
+        << T;
     return OS_Error;
   }
   

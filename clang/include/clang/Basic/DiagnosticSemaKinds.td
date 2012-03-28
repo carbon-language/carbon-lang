@@ -3780,7 +3780,10 @@ def err_objc_multiple_subscript_type_conversion : Error<
   "multiple type conversion functions">;
 def err_objc_subscript_type_conversion : Error<
   "indexing expression is invalid because subscript type %0 is not an intergal"
-  "or objective-C pointer type">;
+  " or objective-C pointer type">;
+def err_objc_subscript_pointer : Error<
+  "indexing expression is invalid because subscript type %0 is not an"
+  " objective-C pointer">;
 def err_objc_indexing_method_result_type : Error<
   "method for accessing %select{dictionary|array}1 element must have Objective-C"
   " object return type instead of %0">;

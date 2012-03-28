@@ -16,8 +16,8 @@ typedef unsigned int size_t;
 id func() {
   NSMutableArray *array;
   float f; 
-  array[f] = array; // expected-error {{expected method to write dictionary element not found on object of type 'NSMutableArray *'}}
-  return array[3.14]; // expected-error {{expected method to read dictionary element not found on object of type 'NSMutableArray *'}}
+  array[f] = array; // expected-error {{indexing expression is invalid because subscript type 'float' is not an intergal or objective-C pointer type}}
+  return array[3.14]; // expected-error {{indexing expression is invalid because subscript type 'double' is not an intergal or objective-C pointer type}}
 }
 
 void test_unused() {
