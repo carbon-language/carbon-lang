@@ -4697,7 +4697,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     const AllocaInst *AI = dyn_cast<AllocaInst>(V);
     // Don't handle byval struct arguments or VLAs, for example.
     if (!AI) {
-      DEBUG(dbgs() << "Dropping debug location info for:\n\t" << DI << "\n");
+      DEBUG(dbgs() << "Dropping debug location info for:\n  " << DI << "\n");
+      DEBUG(dbgs() << "  Last seen at:\n    " << *V << "\n");
       return 0;
     }
     DenseMap<const AllocaInst*, int>::iterator SI =
