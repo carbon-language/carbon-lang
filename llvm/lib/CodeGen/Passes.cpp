@@ -394,7 +394,7 @@ void TargetPassConfig::addMachinePasses() {
 
   // Expand pseudo instructions before second scheduling pass.
   addPass(ExpandPostRAPseudosID);
-  printNoVerify("After ExpandPostRAPseudos");
+  printAndVerify("After ExpandPostRAPseudos");
 
   // Run pre-sched2 passes.
   if (addPreSched2())
