@@ -195,7 +195,7 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
 static llvm::Function *
 CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
                                    llvm::FunctionType *FTy,
-                                   StringRef Name) {
+                                   const Twine &Name) {
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &CGM.getModule());
