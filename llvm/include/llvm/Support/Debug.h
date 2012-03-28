@@ -35,14 +35,14 @@ class raw_ostream;
 #ifndef DEBUG_TYPE
 #define DEBUG_TYPE ""
 #endif
-  
+
 #ifndef NDEBUG
 /// DebugFlag - This boolean is set to true if the '-debug' command line option
 /// is specified.  This should probably not be referenced directly, instead, use
 /// the DEBUG macro below.
 ///
 extern bool DebugFlag;
-  
+
 /// isCurrentDebugType - Return true if the specified string is the debug type
 /// specified on the command line, or if none was specified on the command line
 /// with the -debug-only=X option.
@@ -54,7 +54,7 @@ bool isCurrentDebugType(const char *Type);
 /// debug output to be produced.
 ///
 void SetCurrentDebugType(const char *Type);
-  
+
 /// DEBUG_WITH_TYPE macro - This macro should be used by passes to emit debug
 /// information.  In the '-debug' option is specified on the commandline, and if
 /// this is a debug build, then the code specified as the option to the macro
