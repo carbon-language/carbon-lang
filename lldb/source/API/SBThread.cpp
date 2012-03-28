@@ -430,18 +430,18 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
                 thread->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                        eStepTypeOver,
-                                                        sc.line_entry.range, 
-                                                        sc,
-                                                        stop_other_threads,
-                                                        false);
+                                                     eStepTypeOver,
+                                                     sc.line_entry.range, 
+                                                     sc,
+                                                     stop_other_threads,
+                                                     false);
                 
             }
             else
             {
                 thread->QueueThreadPlanForStepSingleInstruction (true, 
-                                                                    abort_other_plans, 
-                                                                    stop_other_threads);
+                                                                 abort_other_plans, 
+                                                                 stop_other_threads);
             }
         }
 
