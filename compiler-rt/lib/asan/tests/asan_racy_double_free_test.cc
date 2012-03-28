@@ -5,7 +5,7 @@
 const int N = 1000;
 void *x[N];
 
-void *Thread1(void *) {
+void *Thread1(void *unused) {
   for (int i = 0; i < N; i++) {
     fprintf(stderr, "%s %d\n", __FUNCTION__, i);
     free(x[i]);
@@ -13,7 +13,7 @@ void *Thread1(void *) {
   return NULL;
 }
 
-void *Thread2(void *) {
+void *Thread2(void *unused) {
   for (int i = 0; i < N; i++) {
     fprintf(stderr, "%s %d\n", __FUNCTION__, i);
     free(x[i]);
