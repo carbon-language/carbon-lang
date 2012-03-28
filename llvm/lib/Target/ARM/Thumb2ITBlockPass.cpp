@@ -15,7 +15,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -258,9 +257,6 @@ bool Thumb2ITBlockPass::runOnMachineFunction(MachineFunction &Fn) {
 
   if (!AFI->isThumbFunction())
     return false;
-
-  // IT block insertion invalidates accurate register liveness.
-  Fn.getRegInfo().invalidateLiveness();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E; ) {
