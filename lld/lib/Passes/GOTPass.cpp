@@ -31,14 +31,13 @@
 // should only return true for "canBypassGOT" if this optimization is supported.
 //
 
-#include "llvm/ADT/DenseMap.h"
-
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/Pass.h"
 #include "lld/Core/File.h"
+#include "lld/Core/Pass.h"
+#include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
-#include "lld/Platform/Platform.h"
 
+#include "llvm/ADT/DenseMap.h"
 
 namespace lld {
 

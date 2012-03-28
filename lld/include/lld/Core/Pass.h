@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "lld/Core/Atom.h"
-#include "lld/Platform/Platform.h"
+#include "lld/Core/Platform.h"
 
 namespace lld {
 

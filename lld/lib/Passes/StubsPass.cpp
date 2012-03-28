@@ -14,15 +14,13 @@
 // StubAtom.
 //
 
+#include "lld/Core/DefinedAtom.h"
+#include "lld/Core/File.h"
+#include "lld/Core/Pass.h"
+#include "lld/Core/Platform.h"
+#include "lld/Core/Reference.h"
 
 #include "llvm/ADT/DenseMap.h"
-
-#include "lld/Core/DefinedAtom.h"
-#include "lld/Core/Pass.h"
-#include "lld/Core/File.h"
-#include "lld/Core/Reference.h"
-#include "lld/Platform/Platform.h"
-
 
 namespace lld {
 

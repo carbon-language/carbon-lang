@@ -1,4 +1,4 @@
-//===- Platform/Platform.h - Platform Interface ---------------------------===//
+//===- Core/Platform.h - Platform Interface -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_PLATFORM_PLATFORM_H_
-#define LLD_PLATFORM_PLATFORM_H_
+#ifndef LLD_CORE_PLATFORM_H_
+#define LLD_CORE_PLATFORM_H_
 
 #include <vector>
 
 #include "lld/Core/Reference.h"
- 
+
 namespace lld {
 class Atom;
 class DefinedAtom;
@@ -74,7 +74,7 @@ public:
   /// When core linking finds a duplicate definition, the platform
   /// can either print an error message and terminate or return with
   /// which atom the linker should use.
-  virtual const Atom& handleMultipleDefinitions(const Atom& def1, 
+  virtual const Atom& handleMultipleDefinitions(const Atom& def1,
                                                 const Atom& def2) = 0;
 
   /// @brief print out undefined symbol error messages in platform specific way
@@ -101,21 +101,21 @@ public:
 
   /// @brief last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *>& all) = 0;
-  
-  /// Converts a reference kind string to a in-memory numeric value. 
+
+  /// Converts a reference kind string to a in-memory numeric value.
   /// For use with parsing YAML encoded object files.
   virtual Reference::Kind kindFromString(llvm::StringRef) = 0;
-  
+
   /// Converts an in-memory reference kind value to a string.
   /// For use with writing YAML encoded object files.
   virtual llvm::StringRef kindToString(Reference::Kind) = 0;
-  
+
   /// If true, the linker will use stubs and GOT entries for
   /// references to shared library symbols. If false, the linker
   /// will generate relocations on the text segment which the
   /// runtime loader will use to patch the program at runtime.
   virtual bool noTextRelocs() = 0;
-  
+
   /// Returns if the Reference kind is for a call site.  The "stubs" Pass uses
   /// this to find calls that need to be indirected through a stub.
   virtual bool isCallSite(Reference::Kind) = 0;
@@ -123,24 +123,24 @@ public:
   /// Returns if the Reference kind is a pre-instantiated GOT access.
   /// The "got" Pass uses this to figure out what GOT entries to instantiate.
   virtual bool isGOTAccess(Reference::Kind, bool& canBypassGOT) = 0;
-  
-  /// The platform needs to alter the reference kind from a pre-instantiated 
-  /// GOT access to an actual access.  If targetIsNowGOT is true, the "got" 
+
+  /// The platform needs to alter the reference kind from a pre-instantiated
+  /// GOT access to an actual access.  If targetIsNowGOT is true, the "got"
   /// Pass has instantiated a GOT atom and altered the reference's target
-  /// to point to that atom.  If targetIsNowGOT is false, the "got" Pass 
-  /// determined a GOT entry is not needed because the reference site can 
+  /// to point to that atom.  If targetIsNowGOT is false, the "got" Pass
+  /// determined a GOT entry is not needed because the reference site can
   /// directly access the target.
   virtual void updateReferenceToGOT(const Reference*, bool targetIsNowGOT) = 0;
-  
-  /// Create a platform specific atom which contains a stub/PLT entry 
+
+  /// Create a platform specific atom which contains a stub/PLT entry
   /// targeting the specified shared library atom.
   virtual const DefinedAtom* makeStub(const Atom&, File&) = 0;
 
-  /// Create a platform specific GOT atom. 
+  /// Create a platform specific GOT atom.
   virtual const DefinedAtom* makeGOTEntry(const Atom&, File&) = 0;
 
 };
 
 } // namespace lld
 
-#endif // LLD_PLATFORM_PLATFORM_H_
+#endif // LLD_CORE_PLATFORM_H_

@@ -17,7 +17,7 @@
 #include "lld/Core/YamlWriter.h"
 #include "lld/Core/NativeReader.h"
 #include "lld/Core/NativeWriter.h"
-#include "lld/Platform/Platform.h"
+#include "lld/Core/Platform.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
