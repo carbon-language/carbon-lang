@@ -358,6 +358,12 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('expr -d true -- @"Hello"',
             substrs = ['Hello'])
 
+        self.expect('expr -d true -o -- @"Hello"',
+            substrs = ['Hello'])
+        self.expect('expr -d true -o -- @"Hello"', matching=False,
+            substrs = ['@"Hello" Hello'])
+
+
     def cf_data_formatter_commands(self):
         """Test formatters for Core OSX frameworks."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)

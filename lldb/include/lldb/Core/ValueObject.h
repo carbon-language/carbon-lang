@@ -309,6 +309,16 @@ public:
             m_use_objc = use;
             return *this;
         }
+    
+        DumpValueObjectOptions&
+        SetShowSummary(bool show = true)
+        {
+            if (show == false)
+                SetOmitSummaryDepth(UINT32_MAX);
+            else
+                SetOmitSummaryDepth(0);
+            return *this;
+        }
         
         DumpValueObjectOptions&
         SetUseDynamicType(lldb::DynamicValueType dyn = lldb::eNoDynamicValues)

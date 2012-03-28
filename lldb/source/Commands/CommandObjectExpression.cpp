@@ -364,10 +364,11 @@ CommandObjectExpression::EvaluateExpression
                 .SetScopeChecked(true)
                 .SetFlatOutput(false)
                 .SetUseSyntheticValue(true)
-                .SetOmitSummaryDepth(0)
                 .SetIgnoreCap(false)
                 .SetFormat(format)
-                .SetSummary();
+                .SetSummary()
+                .SetShowSummary(!m_command_options.print_object);
+                
                 ValueObject::DumpValueObject (*(output_stream),
                                               result_valobj_sp.get(),   // Variable object to dump
                                               options);
