@@ -601,15 +601,15 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
 void TargetPassConfig::addMachineLateOptimization() {
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (addPass(BranchFolderPassID) != &NoPassID)
-    printNoVerify("After BranchFolding");
+    printAndVerify("After BranchFolding");
 
   // Tail duplication.
   if (addPass(TailDuplicateID) != &NoPassID)
-    printNoVerify("After TailDuplicate");
+    printAndVerify("After TailDuplicate");
 
   // Copy propagation.
   if (addPass(MachineCopyPropagationID) != &NoPassID)
-    printNoVerify("After copy propagation pass");
+    printAndVerify("After copy propagation pass");
 }
 
 /// Add standard basic block placement passes.
