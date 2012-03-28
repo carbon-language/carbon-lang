@@ -662,12 +662,6 @@ static bool isDeclaration(const GlobalValue &V) {
   return V.isDeclaration();
 }
 
-/// isAliasToDeclaration - Return 'true' if the global value is an alias to a
-/// declaration.
-static bool isAliasToDeclaration(const GlobalAlias &V) {
-  return isDeclaration(*V.getAliasedGlobal());
-}
-
 /// ParseSymbols - Parse the symbols from the module and model-level ASM and add
 /// them to either the defined or undefined lists.
 bool LTOModule::ParseSymbols(std::string &errMsg) {
@@ -695,7 +689,8 @@ bool LTOModule::ParseSymbols(std::string &errMsg) {
   // add aliases
   for (Module::alias_iterator i = _module->alias_begin(),
          e = _module->alias_end(); i != e; ++i) {
-    if (isAliasToDeclaration(*i))
+    if (isDeclaration(*i->getAliasedGlobal()))
+      // Is an alias to a declaration.
       addPotentialUndefinedSymbol(i);
     else
       addDefinedDataSymbol(i);
