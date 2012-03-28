@@ -12,6 +12,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
@@ -104,13 +105,13 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                     const char *name = symbol->GetMangled().GetDemangledName().AsCString();
                     if (strstr(name, vtable_demangled_prefix) == name)
                     {
-                        /*
-                        printf ("0x%16.16llx: static-type = '%s' has vtable symbol '%s'\n",
-                                original_ptr,
-                                in_value.GetTypeName().GetCString(),
-                                name);
-                        */
-                         // We are a C++ class, that's good.  Get the class name and look it up:
+                        LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+                        if (log)
+                            log->Printf ("0x%16.16llx: static-type = '%s' has vtable symbol '%s'\n",
+                                         original_ptr,
+                                         in_value.GetTypeName().GetCString(),
+                                         name);
+                        // We are a C++ class, that's good.  Get the class name and look it up:
                         const char *class_name = name + strlen(vtable_demangled_prefix);
                         class_type_or_name.SetName (class_name);
                         const bool exact_match = true;
@@ -122,19 +123,20 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                                                                                class_types);
                         if (num_matches == 0)
                         {
-                            //printf ("0x%16.16llx: is not dynamic\n", original_ptr);
+                            if (log)
+                                log->Printf("0x%16.16llx: is not dynamic\n", original_ptr);
                             return false;
                         }
                         if (num_matches == 1)
                         {
                             lldb::TypeSP type_sp(class_types.GetTypeAtIndex(0));
-                            /*
-                            printf ("0x%16.16llx: static-type = '%s' has single matching dynamic type: uid={0x%llx}, type-name='%s'\n",
-                                    original_ptr,
-                                    in_value.GetTypeName().AsCString(),
-                                    type_sp->GetID(),
-                                    type_sp->GetName().GetCString());
-                            */
+                            if (log)
+                                log->Printf ("0x%16.16llx: static-type = '%s' has dynamic type: uid={0x%llx}, type-name='%s'\n",
+                                             original_ptr,
+                                             in_value.GetTypeName().AsCString(),
+                                             type_sp->GetID(),
+                                             type_sp->GetName().GetCString());
+
                             class_type_or_name.SetTypeSP(class_types.GetTypeAtIndex(0));
                         }
                         else if (num_matches > 1)
@@ -144,13 +146,12 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                                 lldb::TypeSP type_sp(class_types.GetTypeAtIndex(i));
                                 if (type_sp)
                                 {
-                                    /*
-                                    printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types: uid={0x%llx}, type-name='%s'\n",
-                                            original_ptr,
-                                            in_value.GetTypeName().AsCString(),
-                                            type_sp->GetID(),
-                                            type_sp->GetName().GetCString());
-                                    */
+                                    if (log)
+                                        log->Printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types: uid={0x%llx}, type-name='%s'\n",
+                                                     original_ptr,
+                                                     in_value.GetTypeName().AsCString(),
+                                                     type_sp->GetID(),
+                                                     type_sp->GetName().GetCString());
 
 //                                    if (ClangASTContext::IsCXXClassType(type_sp->GetClangFullType()))
 //                                    {
