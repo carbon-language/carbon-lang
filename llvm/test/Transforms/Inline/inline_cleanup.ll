@@ -130,16 +130,6 @@ define void @outer2(i32 %z, i1 %b) {
 ; make it through inlining.
 ; CHECK: define void @outer2
 ; CHECK-NOT: call
-;
-; FIXME: Currently, we aren't smart enough to delete the last dead basic block.
-; However, we do make the condition a constant. Check that at least until we can
-; start removing the block itself.
-; CHECK: br i1 false, label %[[LABEL:[a-z0-9_.]+]],
-; CHECK-NOT: call
-; CHECK: [[LABEL]]:
-; CHECK-NEXT: call void @f(i32 10)
-; CHECK-NOT: call
-;
 ; CHECK: ret void
 
 entry:

@@ -23,6 +23,8 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -226,7 +228,7 @@ namespace {
 /// anything that it can reach.
 void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
                                        std::vector<const BasicBlock*> &ToClone){
-  TrackingVH<Value> &BBEntry = VMap[BB];
+  WeakVH &BBEntry = VMap[BB];
 
   // Have we already cloned this block?
   if (BBEntry) return;
@@ -503,7 +505,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // Make a second pass over the PHINodes now that all of them have been
   // remapped into the new function, simplifying the PHINode and performing any
   // recursive simplifications exposed. This will transparently update the
-  // TrackingVH in the VMap. Notably, we rely on that so that if we coalesce
+  // WeakVH in the VMap. Notably, we rely on that so that if we coalesce
   // two PHINodes, the iteration over the old PHIs remains valid, and the
   // mapping will just map us to the new node (which may not even be a PHI
   // node).
@@ -515,8 +517,26 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // and zap unconditional fall-through branches.  This happen all the time when
   // specializing code: code specialization turns conditional branches into
   // uncond branches, and this code folds them.
-  Function::iterator I = cast<BasicBlock>(VMap[&OldFunc->getEntryBlock()]);
+  Function::iterator Begin = cast<BasicBlock>(VMap[&OldFunc->getEntryBlock()]);
+  Function::iterator I = Begin;
   while (I != NewFunc->end()) {
+    // Check if this block has become dead during inlining or other
+    // simplifications. Note that the first block will appear dead, as it has
+    // not yet been wired up properly.
+    if (I != Begin && (pred_begin(I) == pred_end(I) ||
+                       I->getSinglePredecessor() == I)) {
+      BasicBlock *DeadBB = I++;
+      DeleteDeadBlock(DeadBB);
+      continue;
+    }
+
+    // We need to simplify conditional branches and switches with a constant
+    // operand. We try to prune these out when cloning, but if the
+    // simplification required looking through PHI nodes, those are only
+    // available after forming the full basic block. That may leave some here,
+    // and we still want to prune the dead code as early as possible.
+    ConstantFoldTerminator(I);
+
     BranchInst *BI = dyn_cast<BranchInst>(I->getTerminator());
     if (!BI || BI->isConditional()) { ++I; continue; }
     
