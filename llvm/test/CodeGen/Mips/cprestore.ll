@@ -1,7 +1,9 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
 
 ; CHECK: .set macro
+; CHECK: .set at
 ; CHECK-NEXT: .cprestore
+; CHECK: .set noat
 ; CHECK-NEXT: .set nomacro
 
 %struct.S = type { [16384 x i32] }
