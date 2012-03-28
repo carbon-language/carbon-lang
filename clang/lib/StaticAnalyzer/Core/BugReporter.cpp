@@ -925,7 +925,7 @@ bool EdgeBuilder::containsLocation(const PathDiagnosticLocation &Container,
            SM.getExpansionColumnNumber(ContaineeRBeg)) &&
           (ContainerEndLine != ContaineeEndLine ||
            SM.getExpansionColumnNumber(ContainerREnd) >=
-           SM.getExpansionColumnNumber(ContainerREnd)));
+           SM.getExpansionColumnNumber(ContaineeREnd)));
 }
 
 void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
