@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "LTOModule.h"
-
 #include "llvm/Constants.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -41,9 +40,15 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
 using namespace llvm;
 
+LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
+  : _module(m), _target(t),
+    _context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL),
+    _mangler(_context, *_target->getTargetData()) {}
+
+/// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
+/// bitcode.
 bool LTOModule::isBitcodeFile(const void *mem, size_t length) {
   return llvm::sys::IdentifyFileType((char*)mem, length)
     == llvm::sys::Bitcode_FileType;
@@ -53,6 +58,8 @@ bool LTOModule::isBitcodeFile(const char *path) {
   return llvm::sys::Path(path).isBitcodeFile();
 }
 
+/// isBitcodeFileForTarget - Returns 'true' if the file (or memory contents) is
+/// LLVM bitcode for the specified triple.
 bool LTOModule::isBitcodeFileForTarget(const void *mem, size_t length,
                                        const char *triplePrefix) {
   MemoryBuffer *buffer = makeBuffer(mem, length);
@@ -69,23 +76,17 @@ bool LTOModule::isBitcodeFileForTarget(const char *path,
   return isTargetMatch(buffer.take(), triplePrefix);
 }
 
-// Takes ownership of buffer.
+/// isTargetMatch - Returns 'true' if the memory buffer is for the specified
+/// target triple.
 bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
   std::string Triple = getBitcodeTargetTriple(buffer, getGlobalContext());
   delete buffer;
   return strncmp(Triple.c_str(), triplePrefix, strlen(triplePrefix)) == 0;
 }
 
-
-LTOModule::LTOModule(Module *m, TargetMachine *t)
-  : _module(m), _target(t),
-    _context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL),
-    _mangler(_context, *_target->getTargetData())
-{
-}
-
-LTOModule *LTOModule::makeLTOModule(const char *path,
-                                    std::string &errMsg) {
+/// makeLTOModule - Create an LTOModule. N.B. These methods take ownership of
+/// the buffer.
+LTOModule *LTOModule::makeLTOModule(const char *path, std::string &errMsg) {
   OwningPtr<MemoryBuffer> buffer;
   if (error_code ec = MemoryBuffer::getFile(path, buffer)) {
     errMsg = ec.message();
@@ -111,12 +112,6 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
     return NULL;
   }
   return makeLTOModule(buffer.take(), errMsg);
-}
-
-/// makeBuffer - Create a MemoryBuffer from a memory range.
-MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
-  const char *startPtr = (char*)mem;
-  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
 }
 
 LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
@@ -171,20 +166,13 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   return Ret;
 }
 
-const char *LTOModule::getTargetTriple() {
-  return _module->getTargetTriple().c_str();
+/// makeBuffer - Create a MemoryBuffer from a memory range.
+MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
+  const char *startPtr = (char*)mem;
+  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
 }
 
-void LTOModule::setTargetTriple(const char *triple) {
-  _module->setTargetTriple(triple);
-}
-
-void LTOModule::addDefinedFunctionSymbol(Function *f) {
-  // add to list of defined symbols
-  addDefinedSymbol(f, true);
-}
-
-// Get string that data pointer points to.
+/// objcClassNameFromExpression - Get string that the data pointer points to.
 bool LTOModule::objcClassNameFromExpression(Constant *c, std::string &name) {
   if (ConstantExpr *ce = dyn_cast<ConstantExpr>(c)) {
     Constant *op = ce->getOperand(0);
@@ -201,7 +189,7 @@ bool LTOModule::objcClassNameFromExpression(Constant *c, std::string &name) {
   return false;
 }
 
-// Parse i386/ppc ObjC class data structure.
+/// addObjCClass - Parse i386/ppc ObjC class data structure.
 void LTOModule::addObjCClass(GlobalVariable *clgv) {
   ConstantStruct *c = dyn_cast<ConstantStruct>(clgv->getInitializer());
   if (!c) return;
@@ -234,8 +222,7 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
   }
 }
 
-
-// Parse i386/ppc ObjC category data structure.
+/// addObjCCategory - Parse i386/ppc ObjC category data structure.
 void LTOModule::addObjCCategory(GlobalVariable *clgv) {
   ConstantStruct *c = dyn_cast<ConstantStruct>(clgv->getInitializer());
   if (!c) return;
@@ -258,8 +245,7 @@ void LTOModule::addObjCCategory(GlobalVariable *clgv) {
   entry.setValue(info);
 }
 
-
-// Parse i386/ppc ObjC class list data structure.
+/// addObjCClassRef - Parse i386/ppc ObjC class list data structure.
 void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
   std::string targetclassName;
   if (!objcClassNameFromExpression(clgv->getInitializer(), targetclassName))
@@ -277,7 +263,7 @@ void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
   entry.setValue(info);
 }
 
-
+/// addDefinedDataSymbol - Add a data symbol as defined to the list.
 void LTOModule::addDefinedDataSymbol(GlobalValue *v) {
   // Add to list of defined symbols.
   addDefinedSymbol(v, false);
@@ -325,6 +311,13 @@ void LTOModule::addDefinedDataSymbol(GlobalValue *v) {
   }
 }
 
+/// addDefinedFunctionSymbol - Add a function symbol as defined to the list.
+void LTOModule::addDefinedFunctionSymbol(Function *f) {
+  // add to list of defined symbols
+  addDefinedSymbol(f, true);
+}
+
+/// addDefinedSymbol - Add a defined symbol to the list.
 void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
   // ignore all llvm.* symbols
   if (def->getName().startswith("llvm."))
@@ -385,6 +378,8 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
   _symbols.push_back(info);
 }
 
+/// addAsmGlobalSymbol - Add a global symbol from module-level ASM to the
+/// defined list.
 void LTOModule::addAsmGlobalSymbol(const char *name,
                                    lto_symbol_attributes scope) {
   StringSet::value_type &entry = _defines.GetOrCreateValue(name);
@@ -403,6 +398,8 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
   _symbols.push_back(info);
 }
 
+/// addAsmGlobalSymbolUndef - Add a global symbol from module-level ASM to the
+/// undefined list.
 void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);
@@ -422,6 +419,8 @@ void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   entry.setValue(info);
 }
 
+/// addPotentialUndefinedSymbol - Add a symbol which isn't defined just yet to a
+/// list to be resolved later.
 void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl) {
   // ignore all llvm.* symbols
   if (decl->getName().startswith("llvm."))
@@ -444,6 +443,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl) {
   NameAndAttributes info;
 
   info.name = entry.getKey().data();
+
   if (decl->hasExternalWeakLinkage())
     info.attributes = LTO_SYMBOL_DEFINITION_WEAKUNDEF;
   else
@@ -607,6 +607,8 @@ namespace {
   };
 }
 
+/// addAsmGlobalSymbols - Add global symbols from module-level ASM to the
+/// defined or undefined lists.
 bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
   const std::string &inlineAsm = _module->getModuleInlineAsm();
   if (inlineAsm.empty())
@@ -651,6 +653,7 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
   return false;
 }
 
+/// isDeclaration - Return 'true' if the global value is a declaration.
 static bool isDeclaration(const GlobalValue &V) {
   if (V.hasAvailableExternallyLinkage())
     return true;
@@ -659,10 +662,14 @@ static bool isDeclaration(const GlobalValue &V) {
   return V.isDeclaration();
 }
 
+/// isAliasToDeclaration - Return 'true' if the global value is an alias to a
+/// declaration.
 static bool isAliasToDeclaration(const GlobalAlias &V) {
   return isDeclaration(*V.getAliasedGlobal());
 }
 
+/// ParseSymbols - Parse the symbols from the module and model-level ASM and add
+/// them to either the defined or undefined lists.
 bool LTOModule::ParseSymbols(std::string &errMsg) {
   // add functions
   for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
@@ -705,22 +712,4 @@ bool LTOModule::ParseSymbols(std::string &errMsg) {
     }
   }
   return false;
-}
-
-uint32_t LTOModule::getSymbolCount() {
-  return _symbols.size();
-}
-
-lto_symbol_attributes LTOModule::getSymbolAttributes(uint32_t index) {
-  if (index < _symbols.size())
-    return _symbols[index].attributes;
-  else
-    return lto_symbol_attributes(0);
-}
-
-const char *LTOModule::getSymbolName(uint32_t index) {
-  if (index < _symbols.size())
-    return _symbols[index].name;
-  else
-    return NULL;
 }
