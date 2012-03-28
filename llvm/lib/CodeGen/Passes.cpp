@@ -272,11 +272,6 @@ AnalysisID TargetPassConfig::addPass(char &ID) {
   return FinalID;
 }
 
-void TargetPassConfig::printNoVerify(const char *Banner) const {
-  if (TM->shouldPrintMachineCode())
-    PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
-}
-
 void TargetPassConfig::printAndVerify(const char *Banner) const {
   if (TM->shouldPrintMachineCode())
     PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
@@ -403,7 +398,7 @@ void TargetPassConfig::addMachinePasses() {
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(PostRASchedulerID);
-    printNoVerify("After PostRAScheduler");
+    printAndVerify("After PostRAScheduler");
   }
 
   // GC
@@ -416,7 +411,7 @@ void TargetPassConfig::addMachinePasses() {
     addBlockPlacement();
 
   if (addPreEmitPass())
-    printNoVerify("After PreEmit passes");
+    printAndVerify("After PreEmit passes");
 }
 
 /// Add passes that optimize machine instructions in SSA form.
@@ -628,6 +623,6 @@ void TargetPassConfig::addBlockPlacement() {
     if (EnableBlockPlacementStats)
       addPass(MachineBlockPlacementStatsID);
 
-    printNoVerify("After machine block placement.");
+    printAndVerify("After machine block placement.");
   }
 }

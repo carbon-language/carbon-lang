@@ -223,11 +223,6 @@ protected:
   /// regalloc pass.
   FunctionPass *createRegAllocPass(bool Optimized);
 
-  /// printNoVerify - Add a pass to dump the machine function, if debugging is
-  /// enabled.
-  ///
-  void printNoVerify(const char *Banner) const;
-
   /// printAndVerify - Add a pass to dump then verify the machine function, if
   /// those steps are enabled.
   ///
