@@ -93,7 +93,9 @@ namespace {
     bool MergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                   int Offset, unsigned Base, bool BaseKill, int Opcode,
                   ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
-                  DebugLoc dl, SmallVector<std::pair<unsigned, bool>, 8> &Regs);
+                  DebugLoc dl,
+                  ArrayRef<std::pair<unsigned, bool> > Regs,
+                  ArrayRef<unsigned> ImpDefs);
     void MergeOpsUpdate(MachineBasicBlock &MBB,
                         MemOpQueue &MemOps,
                         unsigned memOpsBegin,
@@ -282,7 +284,8 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
                           int Offset, unsigned Base, bool BaseKill,
                           int Opcode, ARMCC::CondCodes Pred,
                           unsigned PredReg, unsigned Scratch, DebugLoc dl,
-                          SmallVector<std::pair<unsigned, bool>, 8> &Regs) {
+                          ArrayRef<std::pair<unsigned, bool> > Regs,
+                          ArrayRef<unsigned> ImpDefs) {
   // Only a single register to load / store. Don't bother.
   unsigned NumRegs = Regs.size();
   if (NumRegs <= 1)
@@ -350,6 +353,10 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
     MIB = MIB.addReg(Regs[i].first, getDefRegState(isDef)
                      | getKillRegState(Regs[i].second));
 
+  // Add implicit defs for super-registers.
+  for (unsigned i = 0, e = ImpDefs.size(); i != e; ++i)
+    MIB.addReg(ImpDefs[i], RegState::ImplicitDefine);
+
   return true;
 }
 
@@ -384,19 +391,29 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
   }
 
   SmallVector<std::pair<unsigned, bool>, 8> Regs;
+  SmallVector<unsigned, 8> ImpDefs;
   for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
     unsigned Reg = memOps[i].Reg;
     // If we are inserting the merged operation after an operation that
     // uses the same register, make sure to transfer any kill flag.
     bool isKill = memOps[i].isKill || KilledRegs.count(Reg);
     Regs.push_back(std::make_pair(Reg, isKill));
+
+    // Collect any implicit defs of super-registers. They must be preserved.
+    for (MIOperands MO(memOps[i].MBBI); MO.isValid(); ++MO) {
+      if (!MO->isReg() || !MO->isDef() || !MO->isImplicit() || MO->isDead())
+        continue;
+      unsigned DefReg = MO->getReg();
+      if (std::find(ImpDefs.begin(), ImpDefs.end(), DefReg) == ImpDefs.end())
+        ImpDefs.push_back(DefReg);
+    }
   }
 
   // Try to do the merge.
   MachineBasicBlock::iterator Loc = memOps[insertAfter].MBBI;
   ++Loc;
   if (!MergeOps(MBB, Loc, Offset, Base, BaseKill, Opcode,
-                Pred, PredReg, Scratch, dl, Regs))
+                Pred, PredReg, Scratch, dl, Regs, ImpDefs))
     return;
 
   // Merge succeeded, update records.
