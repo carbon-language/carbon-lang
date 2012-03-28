@@ -1053,7 +1053,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
       // no-inlining policy in the state and enqueuing the new work item on
       // the list. Replay should almost never fail. Use the stats to catch it
       // if it does.
-      if ((AMgr.RetryExhausted && replayWithoutInlining(pred, CalleeLC)))
+      if ((!AMgr.NoRetryExhausted && replayWithoutInlining(pred, CalleeLC)))
         return;
       NumMaxBlockCountReachedInInlined++;
     } else

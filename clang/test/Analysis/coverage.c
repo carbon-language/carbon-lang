@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -analyzer-max-loop 4 -analyzer-retry-exhausted -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -analyzer-max-loop 4 -verify %s
 #include "system-header-simulator.h"
 
 typedef __typeof(sizeof(int)) size_t;

@@ -99,7 +99,7 @@ public:
   unsigned CFGAddInitializers : 1;
   unsigned EagerlyTrimEGraph : 1;
   unsigned PrintStats : 1;
-  unsigned RetryExhausted : 1;
+  unsigned NoRetryExhausted : 1;
   unsigned InlineMaxStackDepth;
   unsigned InlineMaxFunctionSize;
   AnalysisInliningMode InliningMode;
@@ -124,7 +124,7 @@ public:
     CFGAddInitializers = 0;
     EagerlyTrimEGraph = 0;
     PrintStats = 0;
-    RetryExhausted = 0;
+    NoRetryExhausted = 0;
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
     InlineMaxStackDepth = 5;
     InlineMaxFunctionSize = 200;

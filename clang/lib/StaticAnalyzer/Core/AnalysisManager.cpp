@@ -34,7 +34,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  unsigned inlineMaxStack,
                                  unsigned inlineMaxFunctionSize,
                                  AnalysisInliningMode IMode,
-                                 bool retry)
+                                 bool NoRetry)
   : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
     Ctx(ctx), Diags(diags), LangOpts(lang), PD(pd),
     CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
@@ -47,7 +47,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     InlineMaxStackDepth(inlineMaxStack),
     InlineMaxFunctionSize(inlineMaxFunctionSize),
     InliningMode(IMode),
-    RetryExhausted(retry)
+    NoRetryExhausted(NoRetry)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
@@ -76,7 +76,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     InlineMaxStackDepth(ParentAM.InlineMaxStackDepth),
     InlineMaxFunctionSize(ParentAM.InlineMaxFunctionSize),
     InliningMode(ParentAM.InliningMode),
-    RetryExhausted(ParentAM.RetryExhausted)
+    NoRetryExhausted(ParentAM.NoRetryExhausted)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
