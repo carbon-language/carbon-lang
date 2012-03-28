@@ -202,6 +202,7 @@ namespace {
     void report(const char *msg, const MachineInstr *MI);
     void report(const char *msg, const MachineOperand *MO, unsigned MONum);
 
+    void checkLiveness(const MachineOperand *MO, unsigned MONum);
     void markReachable(const MachineBasicBlock *MBB);
     void calcRegsPassed();
     void checkPHIOps(const MachineBasicBlock *MBB);
@@ -656,112 +657,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     const unsigned Reg = MO->getReg();
     if (!Reg)
       return;
+    if (MRI->tracksLiveness() && !MI->isDebugValue())
+      checkLiveness(MO, MONum);
 
-    // Check Live Variables.
-    if (MI->isDebugValue()) {
-      // Liveness checks are not valid for debug values.
-    } else if (MO->isUse() && !MO->isUndef()) {
-      regsLiveInButUnused.erase(Reg);
-
-      bool isKill = false;
-      unsigned defIdx;
-      if (MI->isRegTiedToDefOperand(MONum, &defIdx)) {
-        // A two-addr use counts as a kill if use and def are the same.
-        unsigned DefReg = MI->getOperand(defIdx).getReg();
-        if (Reg == DefReg)
-          isKill = true;
-        else if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-          report("Two-address instruction operands must be identical",
-                 MO, MONum);
-        }
-      } else
-        isKill = MO->isKill();
-
-      if (isKill)
-        addRegWithSubRegs(regsKilled, Reg);
-
-      // Check that LiveVars knows this kill.
-      if (LiveVars && TargetRegisterInfo::isVirtualRegister(Reg) &&
-          MO->isKill()) {
-        LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
-        if (std::find(VI.Kills.begin(),
-                      VI.Kills.end(), MI) == VI.Kills.end())
-          report("Kill missing from LiveVariables", MO, MONum);
-      }
-
-      // Check LiveInts liveness and kill.
-      if (TargetRegisterInfo::isVirtualRegister(Reg) &&
-          LiveInts && !LiveInts->isNotInMIMap(MI)) {
-        SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getRegSlot(true);
-        if (LiveInts->hasInterval(Reg)) {
-          const LiveInterval &LI = LiveInts->getInterval(Reg);
-          if (!LI.liveAt(UseIdx)) {
-            report("No live range at use", MO, MONum);
-            *OS << UseIdx << " is not live in " << LI << '\n';
-          }
-          // Check for extra kill flags.
-          // Note that we allow missing kill flags for now.
-          if (MO->isKill() && !LI.killedAt(UseIdx.getRegSlot())) {
-            report("Live range continues after kill flag", MO, MONum);
-            *OS << "Live range: " << LI << '\n';
-          }
-        } else {
-          report("Virtual register has no Live interval", MO, MONum);
-        }
-      }
-
-      // Use of a dead register.
-      if (!regsLive.count(Reg)) {
-        if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-          // Reserved registers may be used even when 'dead'.
-          if (!isReserved(Reg))
-            report("Using an undefined physical register", MO, MONum);
-        } else {
-          BBInfo &MInfo = MBBInfoMap[MI->getParent()];
-          // We don't know which virtual registers are live in, so only complain
-          // if vreg was killed in this MBB. Otherwise keep track of vregs that
-          // must be live in. PHI instructions are handled separately.
-          if (MInfo.regsKilled.count(Reg))
-            report("Using a killed virtual register", MO, MONum);
-          else if (!MI->isPHI())
-            MInfo.vregsLiveIn.insert(std::make_pair(Reg, MI));
-        }
-      }
-    } else if (MO->isDef()) {
-      // Register defined.
-      // TODO: verify that earlyclobber ops are not used.
-      if (MO->isDead())
-        addRegWithSubRegs(regsDead, Reg);
-      else
-        addRegWithSubRegs(regsDefined, Reg);
-
-      // Verify SSA form.
-      if (MRI->isSSA() && TargetRegisterInfo::isVirtualRegister(Reg) &&
-          llvm::next(MRI->def_begin(Reg)) != MRI->def_end())
-        report("Multiple virtual register defs in SSA form", MO, MONum);
-
-      // Check LiveInts for a live range, but only for virtual registers.
-      if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
-          !LiveInts->isNotInMIMap(MI)) {
-        SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getRegSlot();
-        if (LiveInts->hasInterval(Reg)) {
-          const LiveInterval &LI = LiveInts->getInterval(Reg);
-          if (const VNInfo *VNI = LI.getVNInfoAt(DefIdx)) {
-            assert(VNI && "NULL valno is not allowed");
-            if (VNI->def != DefIdx && !MO->isEarlyClobber()) {
-              report("Inconsistent valno->def", MO, MONum);
-              *OS << "Valno " << VNI->id << " is not defined at "
-                  << DefIdx << " in " << LI << '\n';
-            }
-          } else {
-            report("No live range at def", MO, MONum);
-            *OS << DefIdx << " is not live in " << LI << '\n';
-          }
-        } else {
-          report("Virtual register has no Live interval", MO, MONum);
-        }
-      }
-    }
 
     // Check register classes.
     if (MONum < MCID.getNumOperands() && !MO->isImplicit()) {
@@ -850,6 +748,115 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
 
   default:
     break;
+  }
+}
+
+void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
+  const MachineInstr *MI = MO->getParent();
+  const unsigned Reg = MO->getReg();
+
+  // Both use and def operands can read a register.
+  if (MO->readsReg()) {
+    regsLiveInButUnused.erase(Reg);
+
+    bool isKill = false;
+    unsigned defIdx;
+    if (MI->isRegTiedToDefOperand(MONum, &defIdx)) {
+      // A two-addr use counts as a kill if use and def are the same.
+      unsigned DefReg = MI->getOperand(defIdx).getReg();
+      if (Reg == DefReg)
+        isKill = true;
+      else if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        report("Two-address instruction operands must be identical", MO, MONum);
+      }
+    } else
+      isKill = MO->isKill();
+
+    if (isKill)
+      addRegWithSubRegs(regsKilled, Reg);
+
+    // Check that LiveVars knows this kill.
+    if (LiveVars && TargetRegisterInfo::isVirtualRegister(Reg) &&
+        MO->isKill()) {
+      LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
+      if (std::find(VI.Kills.begin(), VI.Kills.end(), MI) == VI.Kills.end())
+        report("Kill missing from LiveVariables", MO, MONum);
+    }
+
+    // Check LiveInts liveness and kill.
+    if (TargetRegisterInfo::isVirtualRegister(Reg) &&
+        LiveInts && !LiveInts->isNotInMIMap(MI)) {
+      SlotIndex UseIdx = LiveInts->getInstructionIndex(MI).getRegSlot(true);
+      if (LiveInts->hasInterval(Reg)) {
+        const LiveInterval &LI = LiveInts->getInterval(Reg);
+        if (!LI.liveAt(UseIdx)) {
+          report("No live range at use", MO, MONum);
+          *OS << UseIdx << " is not live in " << LI << '\n';
+        }
+        // Check for extra kill flags.
+        // Note that we allow missing kill flags for now.
+        if (MO->isKill() && !LI.killedAt(UseIdx.getRegSlot())) {
+          report("Live range continues after kill flag", MO, MONum);
+          *OS << "Live range: " << LI << '\n';
+        }
+      } else {
+        report("Virtual register has no Live interval", MO, MONum);
+      }
+    }
+
+    // Use of a dead register.
+    if (!regsLive.count(Reg)) {
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        // Reserved registers may be used even when 'dead'.
+        if (!isReserved(Reg))
+          report("Using an undefined physical register", MO, MONum);
+      } else {
+        BBInfo &MInfo = MBBInfoMap[MI->getParent()];
+        // We don't know which virtual registers are live in, so only complain
+        // if vreg was killed in this MBB. Otherwise keep track of vregs that
+        // must be live in. PHI instructions are handled separately.
+        if (MInfo.regsKilled.count(Reg))
+          report("Using a killed virtual register", MO, MONum);
+        else if (!MI->isPHI())
+          MInfo.vregsLiveIn.insert(std::make_pair(Reg, MI));
+      }
+    }
+  }
+
+  if (MO->isDef()) {
+    // Register defined.
+    // TODO: verify that earlyclobber ops are not used.
+    if (MO->isDead())
+      addRegWithSubRegs(regsDead, Reg);
+    else
+      addRegWithSubRegs(regsDefined, Reg);
+
+    // Verify SSA form.
+    if (MRI->isSSA() && TargetRegisterInfo::isVirtualRegister(Reg) &&
+        llvm::next(MRI->def_begin(Reg)) != MRI->def_end())
+      report("Multiple virtual register defs in SSA form", MO, MONum);
+
+    // Check LiveInts for a live range, but only for virtual registers.
+    if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
+        !LiveInts->isNotInMIMap(MI)) {
+      SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getRegSlot();
+      if (LiveInts->hasInterval(Reg)) {
+        const LiveInterval &LI = LiveInts->getInterval(Reg);
+        if (const VNInfo *VNI = LI.getVNInfoAt(DefIdx)) {
+          assert(VNI && "NULL valno is not allowed");
+          if (VNI->def != DefIdx && !MO->isEarlyClobber()) {
+            report("Inconsistent valno->def", MO, MONum);
+            *OS << "Valno " << VNI->id << " is not defined at "
+              << DefIdx << " in " << LI << '\n';
+          }
+        } else {
+          report("No live range at def", MO, MONum);
+          *OS << DefIdx << " is not live in " << LI << '\n';
+        }
+      } else {
+        report("Virtual register has no Live interval", MO, MONum);
+      }
+    }
   }
 }
 
