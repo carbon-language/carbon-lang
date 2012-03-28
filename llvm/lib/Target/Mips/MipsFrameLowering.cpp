@@ -108,9 +108,6 @@ static void expandLargeImm(unsigned Reg, int64_t Imm, bool IsN64,
     AnalyzeImm.Analyze(Imm, IsN64 ? 64 : 32, false /* LastInstrIsADDiu */);
   MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
 
-  // FIXME: change this when mips goes MC".
-  BuildMI(MBB, II, DL, TII.get(Mips::NOAT));
-
   // The first instruction can be a LUi, which is different from other
   // instructions (ADDiu, ORI and SLL) in that it does not have a register
   // operand.
@@ -127,7 +124,6 @@ static void expandLargeImm(unsigned Reg, int64_t Imm, bool IsN64,
       .addImm(SignExtend64<16>(Inst->ImmOpnd));
 
   BuildMI(MBB, II, DL, TII.get(ADDu), Reg).addReg(Reg).addReg(ATReg);
-  BuildMI(MBB, II, DL, TII.get(Mips::ATMACRO));
 }
 
 void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
@@ -159,18 +155,22 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
    // Update stack size
   MFI->setStackSize(StackSize);
 
-  BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
-  BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
-
   // Emit instructions that set the global base register if the target ABI is
   // O32.
-  if (isPIC && MipsFI->globalBaseRegSet() && STI.isABI_O32()) {
-    if (MipsFI->globalBaseRegFixed())
-      BuildMI(MBB, llvm::prior(MBBI), dl, TII.get(Mips::CPLOAD))
-        .addReg(RegInfo->getPICCallReg());
-    else
+  if (isPIC && MipsFI->globalBaseRegSet() && STI.isABI_O32() &&
+      !MipsFI->globalBaseRegFixed()) {
       // See MipsInstrInfo.td for explanation.
-      BuildMI(MBB, MBBI, dl, TII.get(Mips:: SETGP01), Mips::V0);
+    MachineBasicBlock *NewEntry = MF.CreateMachineBasicBlock();
+    MF.insert(&MBB, NewEntry);
+    NewEntry->addSuccessor(&MBB);
+
+    // Copy live in registers.
+    for (MachineBasicBlock::livein_iterator R = MBB.livein_begin();
+         R != MBB.livein_end(); ++R)
+      NewEntry->addLiveIn(*R);
+
+    BuildMI(*NewEntry, NewEntry->begin(), dl, TII.get(Mips:: SETGP01),
+            Mips::V0);
   }
 
   // No need to allocate space on the stack.
@@ -183,8 +183,10 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Adjust stack.
   if (isInt<16>(-StackSize)) // addi sp, sp, (-stacksize)
     BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(-StackSize);
-  else // Expand immediate that doesn't fit in 16-bit.
+  else { // Expand immediate that doesn't fit in 16-bit.
+    MipsFI->setEmitNOAT();
     expandLargeImm(SP, -StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl);
+  }
 
   // emit ".cfi_def_cfa_offset StackSize"
   MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
@@ -254,12 +256,8 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Restore GP from the saved stack location
   if (MipsFI->needGPSaveRestore()) {
     unsigned Offset = MFI->getObjectOffset(MipsFI->getGPFI());
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE)).addImm(Offset);
-
-    if (Offset >= 0x8000) {
-      BuildMI(MBB, llvm::prior(MBBI), dl, TII.get(Mips::MACRO));
-      BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
-    }
+    BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE)).addImm(Offset)
+      .addReg(Mips::GP);
   }
 }
 

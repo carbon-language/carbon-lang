@@ -227,8 +227,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
       AnalyzeImm.Analyze(Offset, Size, true /* LastInstrIsADDiu */);
     MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
 
-    // FIXME: change this when mips goes MC".
-    BuildMI(MBB, II, DL, TII.get(Mips::NOAT));
+    MipsFI->setEmitNOAT();
 
     // The first instruction can be a LUi, which is different from other
     // instructions (ADDiu, ORI and SLL) in that it does not have a register
@@ -249,7 +248,6 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
     FrameReg = ATReg;
     Offset = SignExtend64<16>(Inst->ImmOpnd);
-    BuildMI(MBB, ++II, MI.getDebugLoc(), TII.get(Mips::ATMACRO));
   }
 
   MI.getOperand(i).ChangeToRegister(FrameReg, false);

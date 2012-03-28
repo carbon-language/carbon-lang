@@ -16,8 +16,6 @@
 #include "MipsAsmPrinter.h"
 #include "Mips.h"
 #include "MipsInstrInfo.h"
-#include "MipsMachineFunction.h"
-#include "MipsMCInstLower.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/ADT/SmallString.h"
@@ -45,24 +43,23 @@
 
 using namespace llvm;
 
-static bool isUnalignedLoadStore(unsigned Opc) {
-  return Opc == Mips::ULW    || Opc == Mips::ULH    || Opc == Mips::ULHu ||
-         Opc == Mips::USW    || Opc == Mips::USH    ||
-         Opc == Mips::ULW_P8 || Opc == Mips::ULH_P8 || Opc == Mips::ULHu_P8 ||
-         Opc == Mips::USW_P8 || Opc == Mips::USH_P8 ||
-         Opc == Mips::ULD    || Opc == Mips::ULW64  || Opc == Mips::ULH64 ||
-         Opc == Mips::ULHu64 || Opc == Mips::USD    || Opc == Mips::USW64 ||
-         Opc == Mips::USH64  ||
-         Opc == Mips::ULD_P8    || Opc == Mips::ULW64_P8  ||
-         Opc == Mips::ULH64_P8  || Opc == Mips::ULHu64_P8 ||
-         Opc == Mips::USD_P8    || Opc == Mips::USW64_P8  ||
-         Opc == Mips::USH64_P8;
+void MipsAsmPrinter::EmitInstrWithMacroNoAT(const MachineInstr *MI) {
+  MCInst TmpInst;
+
+  MCInstLowering.Lower(MI, TmpInst);
+  OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
+  if (MipsFI->getEmitNOAT())
+    OutStreamer.EmitRawText(StringRef("\t.set\tat"));
+  OutStreamer.EmitInstruction(TmpInst);
+  if (MipsFI->getEmitNOAT())
+    OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
+  OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
 }
 
-static bool isDirective(unsigned Opc) {
-  return Opc == Mips::MACRO   || Opc == Mips::NOMACRO ||
-         Opc == Mips::REORDER || Opc == Mips::NOREORDER ||
-         Opc == Mips::ATMACRO || Opc == Mips::NOAT;
+bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  MipsFI = MF.getInfo<MipsFunctionInfo>();
+  AsmPrinter::runOnMachineFunction(MF);
+  return true;
 }
 
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -74,49 +71,70 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  MipsMCInstLower MCInstLowering(Mang, *MF, *this);
   unsigned Opc = MI->getOpcode();
   MCInst TmpInst0;
   SmallVector<MCInst, 4> MCInsts;
-  MCInstLowering.Lower(MI, TmpInst0);
 
-  if (!OutStreamer.hasRawTextSupport() && isDirective(Opc))
-    return;
-
-  // Enclose unaligned load or store with .macro & .nomacro directives.
-  if (isUnalignedLoadStore(Opc)) {
+  switch (Opc) {
+  case Mips::ULW:
+  case Mips::ULH:
+  case Mips::ULHu:
+  case Mips::USW:
+  case Mips::USH:
+  case Mips::ULW_P8:
+  case Mips::ULH_P8:
+  case Mips::ULHu_P8:
+  case Mips::USW_P8:
+  case Mips::USH_P8:
+  case Mips::ULD:
+  case Mips::ULW64:
+  case Mips::ULH64:
+  case Mips::ULHu64:
+  case Mips::USD:
+  case Mips::USW64:
+  case Mips::USH64:
+  case Mips::ULD_P8:
+  case Mips::ULW64_P8:
+  case Mips::ULH64_P8:
+  case Mips::ULHu64_P8:
+  case Mips::USD_P8:
+  case Mips::USW64_P8:
+  case Mips::USH64_P8: {
     if (OutStreamer.hasRawTextSupport()) {
-      MCInst Directive;
-      Directive.setOpcode(Mips::MACRO);
-      OutStreamer.EmitInstruction(Directive);
-      OutStreamer.EmitInstruction(TmpInst0);
-      Directive.setOpcode(Mips::NOMACRO);
-      OutStreamer.EmitInstruction(Directive);
-    } else {
-      MCInstLowering.LowerUnalignedLoadStore(MI, MCInsts);
-      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin(); I
-          != MCInsts.end(); ++I)
-        OutStreamer.EmitInstruction(*I);
+      EmitInstrWithMacroNoAT(MI);
+      return;
     }
+
+    MCInstLowering.LowerUnalignedLoadStore(MI, MCInsts);
+    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin(); I
+           != MCInsts.end(); ++I)
+      OutStreamer.EmitInstruction(*I);
+
     return;
   }
+  case Mips::CPRESTORE: {
+    const MachineOperand &MO = MI->getOperand(0);
+    assert(MO.isImm() && "CPRESTORE's operand must be an immediate.");
+    int64_t Offset = MO.getImm();
 
-  if (!OutStreamer.hasRawTextSupport()) {
-    // Lower CPLOAD and CPRESTORE
-    if (Opc == Mips::CPLOAD)
-      MCInstLowering.LowerCPLOAD(MI, MCInsts);
-    else if (Opc == Mips::CPRESTORE)
-      MCInstLowering.LowerCPRESTORE(MI, MCInsts);
+    if (OutStreamer.hasRawTextSupport()) {
+      if (!isInt<16>(Offset)) {
+        EmitInstrWithMacroNoAT(MI);
+        return;
+      }
+    } else {
+      MCInstLowering.LowerCPRESTORE(Offset, MCInsts);
 
-    if (!MCInsts.empty()) {
       for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
            I != MCInsts.end(); ++I)
         OutStreamer.EmitInstruction(*I);
+
       return;
     }
-  }
 
-  if (Opc == Mips::SETGP01) {
+    break;
+  }
+  case Mips::SETGP01: {
     MCInstLowering.LowerSETGP01(MI, MCInsts);
 
     for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
@@ -125,7 +143,11 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     return;
   }
+  default:
+    break;
+  }
 
+  MCInstLowering.Lower(MI, TmpInst0);
   OutStreamer.EmitInstruction(TmpInst0);
 }
 
@@ -269,13 +291,35 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 /// EmitFunctionBodyStart - Targets can override this to emit stuff before
 /// the first basic block in the function.
 void MipsAsmPrinter::EmitFunctionBodyStart() {
+  MCInstLowering.Initialize(Mang, &MF->getContext());
+
   emitFrameDirective();
+
+  bool EmitCPLoad = (MF->getTarget().getRelocationModel() == Reloc::PIC_) &&
+    Subtarget->isABI_O32() && MipsFI->globalBaseRegSet() &&
+    MipsFI->globalBaseRegFixed();
 
   if (OutStreamer.hasRawTextSupport()) {
     SmallString<128> Str;
     raw_svector_ostream OS(Str);
     printSavedRegsBitmask(OS);
     OutStreamer.EmitRawText(OS.str());
+
+    OutStreamer.EmitRawText(StringRef("\t.set\tnoreorder"));
+
+    // Emit .cpload directive if needed.
+    if (EmitCPLoad)
+      OutStreamer.EmitRawText(StringRef("\t.cpload\t$25"));
+
+    OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
+    if (MipsFI->getEmitNOAT())
+      OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
+  } else if (EmitCPLoad) {
+    SmallVector<MCInst, 4> MCInsts;
+    MCInstLowering.LowerCPLOAD(MCInsts);
+    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
+         I != MCInsts.end(); ++I)
+      OutStreamer.EmitInstruction(*I);
   }
 }
 
@@ -286,6 +330,9 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
   // always be at the function end, and we can't emit and
   // break with BB logic.
   if (OutStreamer.hasRawTextSupport()) {
+    if (MipsFI->getEmitNOAT())
+      OutStreamer.EmitRawText(StringRef("\t.set\tat"));
+
     OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
     OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
     OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
