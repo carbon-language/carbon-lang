@@ -666,6 +666,10 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   if (!AST)
     return;
 
+  CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
+  if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
+    setBackGroundPriority();
+
   ASTUnit::ConcurrencyCheck Check(*AST);
 
   // Perform the remapping of source files.

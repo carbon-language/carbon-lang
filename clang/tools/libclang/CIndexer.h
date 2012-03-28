@@ -29,12 +29,14 @@ namespace clang {
 class CIndexer {
   bool OnlyLocalDecls;
   bool DisplayDiagnostics;
+  unsigned Options; // CXGlobalOptFlags.
 
   llvm::sys::Path ResourcesPath;
   std::string WorkingDir;
 
 public:
- CIndexer() : OnlyLocalDecls(false), DisplayDiagnostics(false) { }
+ CIndexer() : OnlyLocalDecls(false), DisplayDiagnostics(false),
+              Options(CXGlobalOpt_None) { }
   
   /// \brief Whether we only want to see "local" declarations (that did not
   /// come from a previous precompiled header). If false, we want to see all
@@ -45,6 +47,13 @@ public:
   bool getDisplayDiagnostics() const { return DisplayDiagnostics; }
   void setDisplayDiagnostics(bool Display = true) {
     DisplayDiagnostics = Display;
+  }
+
+  unsigned getCXGlobalOptFlags() const { return Options; }
+  void setCXGlobalOptFlags(unsigned options) { Options = options; }
+
+  bool isOptEnabled(CXGlobalOptFlags opt) const {
+    return Options & ~unsigned(opt);
   }
 
   /// \brief Get the path of the clang resource files.
@@ -78,6 +87,10 @@ public:
   /// \return False if a crash was detected.
   bool RunSafely(llvm::CrashRecoveryContext &CRC,
                  void (*Fn)(void*), void *UserData, unsigned Size = 0);
+
+  /// \brief Set the thread priority to background.
+  /// FIXME: Move to llvm/Support.
+  void setBackGroundPriority();
 
   /// \brief Print libclang's resource usage to standard error.
   void PrintLibclangResourceUsage(CXTranslationUnit TU);

@@ -52,10 +52,11 @@ using namespace clang::cxcursor;
 using namespace clang::cxstring;
 using namespace clang::cxtu;
 
-CXTranslationUnit cxtu::MakeCXTranslationUnit(ASTUnit *TU) {
+CXTranslationUnit cxtu::MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *TU) {
   if (!TU)
     return 0;
   CXTranslationUnit D = new CXTranslationUnitImpl();
+  D->CIdx = CIdx;
   D->TUData = TU;
   D->StringPool = createCXStringPool();
   D->Diagnostics = 0;
@@ -2411,12 +2412,31 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
     CIdxr->setOnlyLocalDecls();
   if (displayDiagnostics)
     CIdxr->setDisplayDiagnostics();
+
+  if (getenv("LIBCLANG_BGPRIO_INDEX"))
+    CIdxr->setCXGlobalOptFlags(CIdxr->getCXGlobalOptFlags() |
+                               CXGlobalOpt_ThreadBackgroundPriorityForIndexing);
+  if (getenv("LIBCLANG_BGPRIO_EDIT"))
+    CIdxr->setCXGlobalOptFlags(CIdxr->getCXGlobalOptFlags() |
+                               CXGlobalOpt_ThreadBackgroundPriorityForEditing);
+
   return CIdxr;
 }
 
 void clang_disposeIndex(CXIndex CIdx) {
   if (CIdx)
     delete static_cast<CIndexer *>(CIdx);
+}
+
+void clang_CXIndex_setGlobalOptions(CXIndex CIdx, unsigned options) {
+  if (CIdx)
+    static_cast<CIndexer *>(CIdx)->setCXGlobalOptFlags(options);
+}
+
+unsigned clang_CXIndex_getGlobalOptions(CXIndex CIdx) {
+  if (CIdx)
+    return static_cast<CIndexer *>(CIdx)->getCXGlobalOptFlags();
+  return 0;
 }
 
 void clang_toggleCrashRecovery(unsigned isEnabled) {
@@ -2441,7 +2461,7 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                   0, 0,
                                   /*CaptureDiagnostics=*/true,
                                   /*AllowPCHWithCompilerErrors=*/true);
-  return MakeCXTranslationUnit(TU);
+  return MakeCXTranslationUnit(CXXIdx, TU);
 }
 
 unsigned clang_defaultEditingTranslationUnitOptions() {
@@ -2489,6 +2509,9 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     return;
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+
+  if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
+    setBackGroundPriority();
 
   bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
   // FIXME: Add a flag for modules.
@@ -2601,7 +2624,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     }
   }
 
-  PTUI->result = MakeCXTranslationUnit(Unit.take());
+  PTUI->result = MakeCXTranslationUnit(CXXIdx, Unit.take());
 }
 CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                              const char *source_filename,
@@ -2662,6 +2685,10 @@ struct SaveTranslationUnitInfo {
 static void clang_saveTranslationUnit_Impl(void *UserData) {
   SaveTranslationUnitInfo *STUI =
     static_cast<SaveTranslationUnitInfo*>(UserData);
+
+  CIndexer *CXXIdx = (CIndexer*)STUI->TU->CIdx;
+  if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
+    setBackGroundPriority();
 
   STUI->result = static_cast<ASTUnit *>(STUI->TU->TUData)->Save(STUI->FileName);
 }
@@ -2749,6 +2776,10 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
 
   if (!TU)
     return;
+
+  CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
+  if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
+    setBackGroundPriority();
 
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
@@ -5133,6 +5164,10 @@ static void clang_annotateTokensImpl(void *UserData) {
   const unsigned NumTokens = ((clang_annotateTokens_Data*)UserData)->NumTokens;
   CXCursor *Cursors = ((clang_annotateTokens_Data*)UserData)->Cursors;
 
+  CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
+  if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
+    setBackGroundPriority();
+
   // Determine the region of interest, which contains all of the tokens.
   SourceRange RegionOfInterest;
   RegionOfInterest.setBegin(
@@ -5702,6 +5737,13 @@ unsigned GetSafetyThreadStackSize() {
 
 void SetSafetyThreadStackSize(unsigned Value) {
   SafetyStackThreadSize = Value;
+}
+
+void clang::setBackGroundPriority() {
+  // FIXME: Move to llvm/Support and make it cross-platform.
+#ifdef __APPLE__
+  setpriority(PRIO_DARWIN_THREAD, 0, PRIO_DARWIN_BG);
+#endif
 }
 
 }

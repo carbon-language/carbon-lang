@@ -1,5 +1,7 @@
 clang_CXCursorSet_contains
 clang_CXCursorSet_insert
+clang_CXIndex_getGlobalOptions
+clang_CXIndex_setGlobalOptions
 clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
 clang_Cursor_getTranslationUnit
