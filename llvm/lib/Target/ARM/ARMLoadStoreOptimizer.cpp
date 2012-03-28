@@ -1184,6 +1184,10 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
           EvenDeadKill = false;
           OddDeadKill = true;
         }
+        // Never kill the base register in the first instruction.
+        // <rdar://problem/11101911>
+        if (EvenReg == BaseReg)
+          EvenDeadKill = false;
         InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
                       EvenReg, EvenDeadKill, EvenUndef,
                       BaseReg, false, BaseUndef, false, OffUndef,
