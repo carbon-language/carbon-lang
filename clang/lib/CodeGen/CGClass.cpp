@@ -401,7 +401,8 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
     AggValueSlot::forAddr(V, Alignment, Qualifiers(),
                           AggValueSlot::IsDestructed,
                           AggValueSlot::DoesNotNeedGCBarriers,
-                          AggValueSlot::IsNotAliased);
+                          AggValueSlot::IsNotAliased,
+                          AggValueSlot::IsNotCompleteObject);
 
   CGF.EmitAggExpr(BaseInit->getInit(), AggSlot);
   
@@ -449,7 +450,8 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
           AggValueSlot::forLValue(LV,
                                   AggValueSlot::IsDestructed,
                                   AggValueSlot::DoesNotNeedGCBarriers,
-                                  AggValueSlot::IsNotAliased);
+                                  AggValueSlot::IsNotAliased,
+                                  AggValueSlot::IsCompleteObject);
 
         CGF.EmitAggExpr(Init, Slot);
       }
@@ -589,7 +591,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       
       // Copy the aggregate.
       CGF.EmitAggregateCopy(LHS.getAddress(), Src.getAddress(), FieldType,
-                            LHS.isVolatileQualified());
+                            LHS.isVolatileQualified(),
+                            /*destIsCompleteObject*/ true);
       return;
     }
   }
@@ -1371,7 +1374,10 @@ CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor
     AggValueSlot::forAddr(ThisPtr, Alignment, Qualifiers(),
                           AggValueSlot::IsDestructed,
                           AggValueSlot::DoesNotNeedGCBarriers,
-                          AggValueSlot::IsNotAliased);
+                          AggValueSlot::IsNotAliased,
+                          CurGD.getCtorType() == Ctor_Complete
+                            ? AggValueSlot::IsCompleteObject
+                            : AggValueSlot::IsNotCompleteObject);
 
   EmitAggExpr(Ctor->init_begin()[0]->getInit(), AggSlot);
 

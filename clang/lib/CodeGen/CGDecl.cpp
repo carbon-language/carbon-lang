@@ -1092,9 +1092,10 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
   } else {
     // TODO: how can we delay here if D is captured by its initializer?
     EmitAggExpr(init, AggValueSlot::forLValue(lvalue,
-                                              AggValueSlot::IsDestructed,
+                                         AggValueSlot::IsDestructed,
                                          AggValueSlot::DoesNotNeedGCBarriers,
-                                              AggValueSlot::IsNotAliased));
+                                         AggValueSlot::IsNotAliased,
+                                         AggValueSlot::IsCompleteObject));
     MaybeEmitStdInitializerListCleanup(lvalue.getAddress(), init);
   }
 }

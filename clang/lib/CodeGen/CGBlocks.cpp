@@ -734,7 +734,8 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
             AggValueSlot::forAddr(blockField, Align, Qualifiers(),
                                   AggValueSlot::IsDestructed,
                                   AggValueSlot::DoesNotNeedGCBarriers,
-                                  AggValueSlot::IsNotAliased);
+                                  AggValueSlot::IsNotAliased,
+                                  AggValueSlot::IsCompleteObject);
         EmitAggExpr(copyExpr, Slot);
       } else {
         EmitSynthesizedCXXCopyCtor(blockField, src, copyExpr);

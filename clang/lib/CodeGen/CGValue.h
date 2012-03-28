@@ -318,22 +318,22 @@ class AggValueSlot {
   // Qualifiers
   Qualifiers Quals;
 
-  unsigned short Alignment;
+  unsigned Alignment : 16;
 
   /// DestructedFlag - This is set to true if some external code is
   /// responsible for setting up a destructor for the slot.  Otherwise
   /// the code which constructs it should push the appropriate cleanup.
-  bool DestructedFlag : 1;
+  unsigned DestructedFlag : 1;
 
   /// ObjCGCFlag - This is set to true if writing to the memory in the
   /// slot might require calling an appropriate Objective-C GC
   /// barrier.  The exact interaction here is unnecessarily mysterious.
-  bool ObjCGCFlag : 1;
+  unsigned ObjCGCFlag : 1;
   
   /// ZeroedFlag - This is set to true if the memory in the slot is
   /// known to be zero before the assignment into it.  This means that
   /// zero fields don't need to be set.
-  bool ZeroedFlag : 1;
+  unsigned ZeroedFlag : 1;
 
   /// AliasedFlag - This is set to true if the slot might be aliased
   /// and it's not undefined behavior to access it through such an
@@ -347,19 +347,32 @@ class AggValueSlot {
   /// over.  Since it's invalid in general to memcpy a non-POD C++
   /// object, it's important that this flag never be set when
   /// evaluating an expression which constructs such an object.
-  bool AliasedFlag : 1;
+  unsigned AliasedFlag : 1;
+
+  /// CompleteObjectFlag - This is set to true if the slot is known to
+  /// be a complete object.  When emitting an aggregate copy of a
+  /// non-POD C++ struct to a location which may not be a complete
+  /// object, only the data size of the type can be copied in order to
+  /// prevent unrelated fields from being overwritten.
+  unsigned CompleteObjectFlag : 1;
 
 public:
   enum IsAliased_t { IsNotAliased, IsAliased };
   enum IsDestructed_t { IsNotDestructed, IsDestructed };
   enum IsZeroed_t { IsNotZeroed, IsZeroed };
+  enum IsCompleteObject_t {
+    IsNotCompleteObject,
+    MayNotBeCompleteObject = IsNotCompleteObject,
+    IsCompleteObject
+  };
   enum NeedsGCBarriers_t { DoesNotNeedGCBarriers, NeedsGCBarriers };
 
   /// ignored - Returns an aggregate value slot indicating that the
   /// aggregate value is being ignored.
   static AggValueSlot ignored() {
     return forAddr(0, CharUnits(), Qualifiers(), IsNotDestructed,
-                   DoesNotNeedGCBarriers, IsNotAliased);
+                   DoesNotNeedGCBarriers, IsNotAliased,
+                   IsCompleteObject);
   }
 
   /// forAddr - Make a slot for an aggregate value.
@@ -377,6 +390,7 @@ public:
                               IsDestructed_t isDestructed,
                               NeedsGCBarriers_t needsGC,
                               IsAliased_t isAliased,
+                              IsCompleteObject_t isCompleteObject,
                               IsZeroed_t isZeroed = IsNotZeroed) {
     AggValueSlot AV;
     AV.Addr = addr;
@@ -386,15 +400,18 @@ public:
     AV.ObjCGCFlag = needsGC;
     AV.ZeroedFlag = isZeroed;
     AV.AliasedFlag = isAliased;
+    AV.CompleteObjectFlag = isCompleteObject;
     return AV;
   }
 
   static AggValueSlot forLValue(LValue LV, IsDestructed_t isDestructed,
                                 NeedsGCBarriers_t needsGC,
                                 IsAliased_t isAliased,
+                                IsCompleteObject_t isCompleteObject,
                                 IsZeroed_t isZeroed = IsNotZeroed) {
     return forAddr(LV.getAddress(), LV.getAlignment(),
-                   LV.getQuals(), isDestructed, needsGC, isAliased, isZeroed);
+                   LV.getQuals(), isDestructed, needsGC, isAliased,
+                   isCompleteObject, isZeroed);
   }
 
   IsDestructed_t isExternallyDestructed() const {
@@ -432,6 +449,10 @@ public:
 
   IsAliased_t isPotentiallyAliased() const {
     return IsAliased_t(AliasedFlag);
+  }
+
+  IsCompleteObject_t isCompleteObject() const {
+    return IsCompleteObject_t(CompleteObjectFlag);
   }
 
   // FIXME: Alignment?

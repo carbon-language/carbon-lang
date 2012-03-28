@@ -781,7 +781,8 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
       = AggValueSlot::forAddr(NewPtr, Alignment, AllocType.getQualifiers(),
                               AggValueSlot::IsDestructed,
                               AggValueSlot::DoesNotNeedGCBarriers,
-                              AggValueSlot::IsNotAliased);
+                              AggValueSlot::IsNotAliased,
+                              AggValueSlot::IsCompleteObject);
     CGF.EmitAggExpr(Init, Slot);
 
     CGF.MaybeEmitStdInitializerListCleanup(NewPtr, Init);
