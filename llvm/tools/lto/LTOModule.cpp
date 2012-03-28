@@ -158,7 +158,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   TargetMachine *target = march->createTargetMachine(Triple, CPU, FeatureStr,
                                                      Options);
   LTOModule *Ret = new LTOModule(m.take(), target);
-  if (Ret->ParseSymbols(errMsg)) {
+  if (Ret->parseSymbols(errMsg)) {
     delete Ret;
     return NULL;
   }
@@ -662,9 +662,9 @@ static bool isDeclaration(const GlobalValue &V) {
   return V.isDeclaration();
 }
 
-/// ParseSymbols - Parse the symbols from the module and model-level ASM and add
+/// parseSymbols - Parse the symbols from the module and model-level ASM and add
 /// them to either the defined or undefined lists.
-bool LTOModule::ParseSymbols(std::string &errMsg) {
+bool LTOModule::parseSymbols(std::string &errMsg) {
   // add functions
   for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
     if (isDeclaration(*f))
