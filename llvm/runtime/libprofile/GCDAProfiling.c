@@ -119,7 +119,7 @@ void llvm_gcda_start_file(const char *orig_filename) {
 
     if (!output_file) {
       fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
-              filename);
+              cptr ? cptr + 1 : orig_filename);
       perror("");
       exit(1);
     }
