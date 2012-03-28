@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -verify-machineinstrs
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 target triple = "thumbv7-apple-darwin10"
 
@@ -47,3 +47,17 @@ bb2:                                              ; preds = %bb
   tail call void @llvm.arm.neon.vst4.v4i32(i8* bitcast ([16 x i32]* @dbuf to i8*), <4 x i32> %2, <4 x i32> %3, <4 x i32> %4, <4 x i32> %5, i32 1) nounwind
   ret i32 0
 }
+
+; PR12389
+; Make sure the DPair register class can spill.
+define void @pr12389(i8* %p) nounwind ssp {
+entry:
+  %vld1 = tail call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %p, i32 1)
+  tail call void asm sideeffect "", "~{q0},~{q1},~{q2},~{q3},~{q4},~{q5},~{q6},~{q7},~{q8},~{q9},~{q10},~{q11},~{q12},~{q13},~{q14},~{q15}"() nounwind
+  tail call void @llvm.arm.neon.vst1.v4f32(i8* %p, <4 x float> %vld1, i32 1)
+  ret void
+}
+
+declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
+
+declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind

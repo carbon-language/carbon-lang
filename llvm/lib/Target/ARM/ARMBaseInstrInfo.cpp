@@ -757,7 +757,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
         llvm_unreachable("Unknown reg class!");
       break;
     case 16:
-      if (ARM::QPRRegClass.hasSubClassEq(RC)) {
+      if (ARM::DPairRegClass.hasSubClassEq(RC)) {
         // Use aligned spills if the stack can be realigned.
         if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
           AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q64))
@@ -907,7 +907,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       llvm_unreachable("Unknown reg class!");
     break;
   case 16:
-    if (ARM::QPRRegClass.hasSubClassEq(RC)) {
+    if (ARM::DPairRegClass.hasSubClassEq(RC)) {
       if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
         AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64), DestReg)
                      .addFrameIndex(FI).addImm(16)

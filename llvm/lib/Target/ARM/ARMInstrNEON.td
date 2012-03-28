@@ -530,16 +530,16 @@ def NEONimmAllOnesV: PatLeaf<(NEONvmovImm (i32 timm)), [{
 // Use VLDM to load a Q register as a D register pair.
 // This is a pseudo instruction that is expanded to VLDMD after reg alloc.
 def VLDMQIA
-  : PseudoVFPLdStM<(outs QPR:$dst), (ins GPR:$Rn),
+  : PseudoVFPLdStM<(outs DPair:$dst), (ins GPR:$Rn),
                     IIC_fpLoad_m, "",
-                   [(set QPR:$dst, (v2f64 (load GPR:$Rn)))]>;
+                   [(set DPair:$dst, (v2f64 (load GPR:$Rn)))]>;
 
 // Use VSTM to store a Q register as a D register pair.
 // This is a pseudo instruction that is expanded to VSTMD after reg alloc.
 def VSTMQIA
-  : PseudoVFPLdStM<(outs), (ins QPR:$src, GPR:$Rn),
+  : PseudoVFPLdStM<(outs), (ins DPair:$src, GPR:$Rn),
                     IIC_fpStore_m, "",
-                   [(store (v2f64 QPR:$src), GPR:$Rn)]>;
+                   [(store (v2f64 DPair:$src), GPR:$Rn)]>;
 
 // Classes for VLD* pseudo-instructions with multi-register operands.
 // These are expanded to real instructions after register allocation.
