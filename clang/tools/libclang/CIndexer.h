@@ -53,7 +53,7 @@ public:
   void setCXGlobalOptFlags(unsigned options) { Options = options; }
 
   bool isOptEnabled(CXGlobalOptFlags opt) const {
-    return Options & ~unsigned(opt);
+    return Options & opt;
   }
 
   /// \brief Get the path of the clang resource files.
