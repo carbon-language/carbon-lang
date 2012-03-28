@@ -24,6 +24,8 @@ namespace llvm {
   class CrashRecoveryContext;
 }
 
+namespace clang {
+
 class CIndexer {
   bool OnlyLocalDecls;
   bool DisplayDiagnostics;
@@ -52,7 +54,6 @@ public:
   void setWorkingDirectory(const std::string &Dir) { WorkingDir = Dir; }
 };
 
-namespace clang {
   /**
    * \brief Given a set of "unsaved" files, create temporary files and 
    * construct the clang -cc1 argument list needed to perform the remapping.
