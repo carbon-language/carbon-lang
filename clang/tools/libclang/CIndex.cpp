@@ -2647,16 +2647,63 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
 unsigned clang_defaultSaveOptions(CXTranslationUnit TU) {
   return CXSaveTranslationUnit_None;
 }  
-  
+
+namespace {
+
+struct SaveTranslationUnitInfo {
+  CXTranslationUnit TU;
+  const char *FileName;
+  unsigned options;
+  CXSaveError result;
+};
+
+}
+
+static void clang_saveTranslationUnit_Impl(void *UserData) {
+  SaveTranslationUnitInfo *STUI =
+    static_cast<SaveTranslationUnitInfo*>(UserData);
+
+  STUI->result = static_cast<ASTUnit *>(STUI->TU->TUData)->Save(STUI->FileName);
+}
+
 int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
                               unsigned options) {
   if (!TU)
     return CXSaveError_InvalidTU;
-  
-  CXSaveError result = static_cast<ASTUnit *>(TU->TUData)->Save(FileName);
-  if (getenv("LIBCLANG_RESOURCE_USAGE"))
+
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+
+  SaveTranslationUnitInfo STUI = { TU, FileName, options, CXSaveError_None };
+
+  if (!CXXUnit->getDiagnostics().hasUnrecoverableErrorOccurred() ||
+      getenv("LIBCLANG_NOTHREADS")) {
+    clang_saveTranslationUnit_Impl(&STUI);
+
+    if (getenv("LIBCLANG_RESOURCE_USAGE"))
+      PrintLibclangResourceUsage(TU);
+
+    return STUI.result;
+  }
+
+  // We have an AST that has invalid nodes due to compiler errors.
+  // Use a crash recovery thread for protection.
+
+  llvm::CrashRecoveryContext CRC;
+
+  if (!RunSafely(CRC, clang_saveTranslationUnit_Impl, &STUI)) {
+    fprintf(stderr, "libclang: crash detected during AST saving: {\n");
+    fprintf(stderr, "  'filename' : '%s'\n", FileName);
+    fprintf(stderr, "  'options' : %d,\n", options);
+    fprintf(stderr, "}\n");
+
+    return CXSaveError_Unknown;
+
+  } else if (getenv("LIBCLANG_RESOURCE_USAGE")) {
     PrintLibclangResourceUsage(TU);
-  return result;
+  }
+
+  return STUI.result;
 }
 
 void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
