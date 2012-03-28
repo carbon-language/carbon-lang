@@ -398,7 +398,7 @@ void TargetPassConfig::addMachinePasses() {
 
   // Run pre-sched2 passes.
   if (addPreSched2())
-    printNoVerify("After PreSched2 passes");
+    printAndVerify("After PreSched2 passes");
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {
