@@ -341,6 +341,12 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
           dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP, TD, TLI));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
+
+        // If the initializer is an all-null value and we have an inbounds GEP,
+        // we already know what the result of any load from that GEP is.
+        // TODO: Handle splats.
+        if (Init && isa<ConstantAggregateZero>(Init) && GEP->isInBounds())
+          SubInit = Constant::getNullValue(GEP->getType()->getElementType());
       }
       Changed |= CleanupConstantGlobalUsers(GEP, SubInit, TD, TLI);
 
