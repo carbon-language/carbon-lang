@@ -19,6 +19,7 @@
 #include "lld/Core/NativeWriter.h"
 #include "lld/Core/Platform.h"
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
