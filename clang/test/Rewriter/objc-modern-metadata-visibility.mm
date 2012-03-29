@@ -21,6 +21,9 @@
 - (id) MyNSString { return subIvar ? PrivateIvar : nsstring; }
 @end
 
+@interface NSString @end
+@implementation NSString @end
+
 // CHECK: __declspec(allocate(".objc_ivar$B")) extern "C" __declspec(dllimport) unsigned long OBJC_IVAR_$_Sub$subIvar;
 // CHECK: __declspec(allocate(".objc_ivar$B")) extern "C" unsigned long OBJC_IVAR_$_Sub$PrivateIvar;
 // CHECK: __declspec(allocate(".objc_ivar$B")) extern "C" __declspec(dllimport) unsigned long OBJC_IVAR_$_Sub$nsstring;
@@ -32,3 +35,6 @@
 // CHECK: extern "C" __declspec(dllexport) struct _class_t OBJC_METACLASS_$_Sub
 // CHECK: extern "C" __declspec(dllimport) struct _class_t OBJC_CLASS_$_NSObject;
 // CHECK: extern "C" __declspec(dllexport) struct _class_t OBJC_CLASS_$_Sub
+// CHECK: extern "C" __declspec(dllexport) struct _class_t OBJC_CLASS_$_NSString;
+// CHECK: extern "C" __declspec(dllexport) struct _class_t OBJC_METACLASS_$_NSString
+// CHECK: extern "C" __declspec(dllexport) struct _class_t OBJC_CLASS_$_NSString
