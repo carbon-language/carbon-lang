@@ -49,8 +49,6 @@ else()
   set(ENABLE_ASSERTIONS "0")
 endif()
 
-set(HOST_OS ${CMAKE_HOST_SYSTEM_NAME})
-
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg

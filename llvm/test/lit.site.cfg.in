@@ -9,7 +9,6 @@ config.enable_shared = @ENABLE_SHARED@
 config.enable_assertions = @ENABLE_ASSERTIONS@
 config.targets_to_build = "@TARGETS_TO_BUILD@"
 config.llvm_bindings = "@LLVM_BINDINGS@"
-config.host_os = "@HOST_OS@"
 
 # Support substitution of the tools_dir with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
