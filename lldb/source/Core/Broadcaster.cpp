@@ -294,6 +294,15 @@ Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
     
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
+    if (log)
+    {
+        log->Printf ("%p Broadcaster(\"%s\")::HijackBroadcaster (listener(\"%s\")=%p)",
+                     this,
+                     m_broadcaster_name.AsCString(""),
+                     listener->m_name.c_str(),
+                     listener);
+    }
     m_hijacking_listeners.push_back(listener);
     m_hijacking_masks.push_back(event_mask);
     return true;
@@ -303,6 +312,17 @@ void
 Broadcaster::RestoreBroadcaster ()
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
+
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
+    if (log)
+    {
+        Listener *listener = m_hijacking_listeners.back();
+        log->Printf ("%p Broadcaster(\"%s\")::RestoreBroadcaster (about to pop listener(\"%s\")=%p)",
+                     this,
+                     m_broadcaster_name.AsCString(""),
+                     listener->m_name.c_str(),
+                     listener);
+    }
     m_hijacking_listeners.pop_back();
     m_hijacking_masks.pop_back();
 }
