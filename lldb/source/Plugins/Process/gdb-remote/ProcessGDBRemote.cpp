@@ -1426,13 +1426,15 @@ ProcessGDBRemote::DoHalt (bool &caused_stop)
     }
     else
     {
-        if (!m_gdb_comm.SendInterrupt (locker, 2, caused_stop, timed_out))
+        if (!m_gdb_comm.SendInterrupt (locker, 2, timed_out))
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");
             else
                 error.SetErrorString("unknown error sending interrupt packet");
         }
+        
+        caused_stop = m_gdb_comm.GetInterruptWasSent ();
     }
     return error;
 }
@@ -1474,10 +1476,9 @@ ProcessGDBRemote::InterruptIfRunning
         }
 
         bool timed_out = false;
-        bool sent_interrupt = false;
         Mutex::Locker locker;
         
-        if (!m_gdb_comm.SendInterrupt (locker, 1, sent_interrupt, timed_out))
+        if (!m_gdb_comm.SendInterrupt (locker, 1, timed_out))
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");

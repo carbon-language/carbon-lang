@@ -77,7 +77,6 @@ public:
     bool
     SendInterrupt (lldb_private::Mutex::Locker &locker, 
                    uint32_t seconds_to_wait_for_stop, 
-                   bool &sent_interrupt, 
                    bool &timed_out);
 
     lldb::pid_t
@@ -322,6 +321,11 @@ public:
     GetCurrentThreadIDs (std::vector<lldb::tid_t> &thread_ids,
                          bool &sequence_mutex_unavailable);
     
+    bool
+    GetInterruptWasSent () const
+    {
+        return m_interrupt_sent;
+    }
 protected:
 
     //------------------------------------------------------------------
@@ -363,6 +367,7 @@ protected:
     std::string m_async_packet;
     StringExtractorGDBRemote m_async_response;
     int m_async_signal; // We were asked to deliver a signal to the inferior process.
+    bool m_interrupt_sent;
     
     lldb_private::ArchSpec m_host_arch;
     uint32_t m_os_version_major;

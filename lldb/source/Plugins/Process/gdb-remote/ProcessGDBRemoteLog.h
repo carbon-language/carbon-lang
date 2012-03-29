@@ -37,6 +37,9 @@ class ProcessGDBRemoteLog
 public:
     static lldb::LogSP
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
+    
+    static lldb::LogSP
+    GetLogIfAnyCategoryIsSet (uint32_t mask);
 
     static void
     DisableLog (const char **categories, lldb_private::Stream *feedback_strm);
