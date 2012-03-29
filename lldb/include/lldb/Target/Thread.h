@@ -320,13 +320,13 @@ public:
     virtual uint32_t
     GetStackFrameCount()
     {
-        return GetStackFrameList().GetNumFrames();
+        return GetStackFrameList()->GetNumFrames();
     }
 
     virtual lldb::StackFrameSP
     GetStackFrameAtIndex (uint32_t idx)
     {
-        return GetStackFrameList().GetFrameAtIndex(idx);
+        return GetStackFrameList()->GetFrameAtIndex(idx);
     }
     
     virtual lldb::StackFrameSP
@@ -335,37 +335,38 @@ public:
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)
     {
-        return GetStackFrameList().GetFrameWithStackID (stack_id);
+        return GetStackFrameList()->GetFrameWithStackID (stack_id);
     }
 
     uint32_t
     GetSelectedFrameIndex ()
     {
-        return GetStackFrameList().GetSelectedFrameIndex();
+        return GetStackFrameList()->GetSelectedFrameIndex();
     }
 
     lldb::StackFrameSP
     GetSelectedFrame ()
     {
-        return GetStackFrameAtIndex (GetStackFrameList().GetSelectedFrameIndex());
+        lldb::StackFrameListSP stack_frame_list_sp(GetStackFrameList());
+        return stack_frame_list_sp->GetFrameAtIndex (stack_frame_list_sp->GetSelectedFrameIndex());
     }
 
     uint32_t
     SetSelectedFrame (lldb_private::StackFrame *frame)
     {
-        return GetStackFrameList().SetSelectedFrame(frame);
+        return GetStackFrameList()->SetSelectedFrame(frame);
     }
 
     bool
     SetSelectedFrameByIndex (uint32_t frame_idx)
     {
-        return GetStackFrameList().SetSelectedFrameByIndex(frame_idx);
+        return GetStackFrameList()->SetSelectedFrameByIndex(frame_idx);
     }
 
     void
     SetDefaultFileAndLineToSelectedFrame()
     {
-        GetStackFrameList().SetDefaultFileAndLineToSelectedFrame();
+        GetStackFrameList()->SetDefaultFileAndLineToSelectedFrame();
     }
 
     virtual lldb::RegisterContextSP
@@ -798,7 +799,7 @@ protected:
     virtual lldb_private::Unwind *
     GetUnwinder ();
 
-    StackFrameList &
+    lldb::StackFrameListSP
     GetStackFrameList ();
     
     lldb::StateType GetTemporaryResumeState()
@@ -832,6 +833,7 @@ protected:
     plan_stack          m_plan_stack;           ///< The stack of plans this thread is executing.
     plan_stack          m_completed_plan_stack; ///< Plans that have been completed by this stop.  They get deleted when the thread resumes.
     plan_stack          m_discarded_plan_stack; ///< Plans that have been discarded by this stop.  They get deleted when the thread resumes.
+    mutable Mutex       m_frame_mutex;          ///< Multithreaded protection for m_state.
     lldb::StackFrameListSP m_curr_frames_sp;    ///< The stack frames that get lazily populated after a thread stops.
     lldb::StackFrameListSP m_prev_frames_sp;    ///< The previous stack frames from the last time this thread stopped.
     int                 m_resume_signal;        ///< The signal that should be used when continuing this thread.

@@ -54,6 +54,7 @@ Thread::Thread (const ProcessSP &process_sp, lldb::tid_t tid) :
     m_state_mutex (Mutex::eMutexTypeRecursive),
     m_plan_stack (),
     m_completed_plan_stack(),
+    m_frame_mutex (Mutex::eMutexTypeRecursive),
     m_curr_frames_sp (),
     m_prev_frames_sp (),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
@@ -1058,17 +1059,28 @@ Thread::CalculateExecutionContext (ExecutionContext &exe_ctx)
 }
 
 
-StackFrameList &
+StackFrameListSP
 Thread::GetStackFrameList ()
 {
-    if (!m_curr_frames_sp)
-        m_curr_frames_sp.reset (new StackFrameList (*this, m_prev_frames_sp, true));
-    return *m_curr_frames_sp;
+    StackFrameListSP frame_list_sp;
+    Mutex::Locker locker(m_frame_mutex);
+    if (m_curr_frames_sp)
+    {
+        frame_list_sp = m_curr_frames_sp;
+    }
+    else
+    {
+        frame_list_sp.reset(new StackFrameList (*this, m_prev_frames_sp, true));
+        m_curr_frames_sp = frame_list_sp;
+    }
+    return frame_list_sp;
 }
 
 void
 Thread::ClearStackFrames ()
 {
+    Mutex::Locker locker(m_frame_mutex);
+
     // Only store away the old "reference" StackFrameList if we got all its frames:
     // FIXME: At some point we can try to splice in the frames we have fetched into
     // the new frame as we make it, but let's not try that now.
@@ -1080,7 +1092,7 @@ Thread::ClearStackFrames ()
 lldb::StackFrameSP
 Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 {
-    return GetStackFrameList().GetFrameWithConcreteFrameIndex (unwind_idx);
+    return GetStackFrameList()->GetFrameWithConcreteFrameIndex (unwind_idx);
 }
 
 void
@@ -1176,7 +1188,7 @@ Thread::UpdateInstanceName ()
 lldb::StackFrameSP
 Thread::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
 {
-    return GetStackFrameList().GetStackFrameSPForStackFramePtr (stack_frame_ptr);
+    return GetStackFrameList()->GetStackFrameSPForStackFramePtr (stack_frame_ptr);
 }
 
 const char *
@@ -1253,13 +1265,13 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
         const uint32_t source_lines_before = 3;
         const uint32_t source_lines_after = 3;
         strm.IndentMore ();
-        num_frames_shown = GetStackFrameList ().GetStatus (strm, 
-                                                           start_frame, 
-                                                           num_frames, 
-                                                           show_frame_info, 
-                                                           num_frames_with_source,
-                                                           source_lines_before,
-                                                           source_lines_after);
+        num_frames_shown = GetStackFrameList ()->GetStatus (strm,
+                                                            start_frame, 
+                                                            num_frames, 
+                                                            show_frame_info, 
+                                                            num_frames_with_source,
+                                                            source_lines_before,
+                                                            source_lines_after);
         strm.IndentLess();
         strm.IndentLess();
     }
@@ -1275,13 +1287,13 @@ Thread::GetStackFrameStatus (Stream& strm,
                              uint32_t source_lines_before,
                              uint32_t source_lines_after)
 {
-    return GetStackFrameList().GetStatus (strm, 
-                                          first_frame,
-                                          num_frames,
-                                          show_frame_info,
-                                          num_frames_with_source,
-                                          source_lines_before,
-                                          source_lines_after);
+    return GetStackFrameList()->GetStatus (strm,
+                                           first_frame,
+                                           num_frames,
+                                           show_frame_info,
+                                           num_frames_with_source,
+                                           source_lines_before,
+                                           source_lines_after);
 }
 
 bool
