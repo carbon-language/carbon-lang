@@ -349,7 +349,7 @@ private:
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
-    if (atomsStart == NULL )
+    if (atomsStart == nullptr)
       return make_error_code(native_reader_error::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
@@ -387,7 +387,7 @@ private:
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
-    if (atomsStart == NULL )
+    if (atomsStart == nullptr)
       return make_error_code(native_reader_error::memory_error);
     const size_t ivarElementSize = chunk->fileSize 
                                           / chunk->elementCount;
@@ -418,7 +418,7 @@ private:
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
-    if (atomsStart == NULL )
+    if (atomsStart == nullptr)
       return make_error_code(native_reader_error::memory_error);
     const size_t ivarElementSize = chunk->fileSize 
                                           / chunk->elementCount;
@@ -449,7 +449,7 @@ private:
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
-    if (atomsStart == NULL )
+    if (atomsStart == nullptr)
       return make_error_code(native_reader_error::memory_error);
     const size_t ivarElementSize = chunk->fileSize 
                                           / chunk->elementCount;
@@ -484,7 +484,7 @@ private:
     size_t refsArraySize = chunk->elementCount * refSize;
     uint8_t* refsStart = reinterpret_cast<uint8_t*>
                                 (operator new(refsArraySize, std::nothrow));
-    if (refsStart == NULL )
+    if (refsStart == nullptr)
       return make_error_code(native_reader_error::memory_error);
     const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
@@ -621,15 +621,15 @@ private:
   NativeFile(std::unique_ptr<llvm::MemoryBuffer> mb, llvm::StringRef path) :
     lld::File(path), 
     _buffer(std::move(mb)),  // NativeFile now takes ownership of buffer
-    _header(NULL), 
-    _targetsTable(NULL), 
+    _header(nullptr),
+    _targetsTable(nullptr),
     _targetsTableCount(0),
-    _strings(NULL), 
+    _strings(nullptr),
     _stringsMaxOffset(0),
-    _addends(NULL), 
+    _addends(nullptr),
     _addendsMaxIndex(0),
-    _contentStart(NULL), 
-    _contentEnd(NULL)
+    _contentStart(nullptr),
+    _contentEnd(nullptr)
   {
     _header = reinterpret_cast<const NativeFileHeader*>
                                                   (_buffer->getBufferStart());
@@ -638,7 +638,7 @@ private:
   template <typename T>
   class AtomArray : public File::atom_collection<T> {
   public:
-     AtomArray() : _arrayStart(NULL), _arrayEnd(NULL), 
+     AtomArray() : _arrayStart(nullptr), _arrayEnd(nullptr),
                    _elementSize(0), _elementCount(0) { }
                                     
     virtual atom_iterator<T> begin() const { 
@@ -663,8 +663,8 @@ private:
 
   struct IvarArray {
                       IvarArray() : 
-                        arrayStart(NULL), 
-                        arrayEnd(NULL), 
+                        arrayStart(nullptr),
+                        arrayEnd(nullptr),
                         elementSize(0), 
                         elementCount(0) { } 
     

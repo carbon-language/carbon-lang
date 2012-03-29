@@ -52,7 +52,7 @@ public:
   /// @brief if target must have some atoms, denote here
   virtual bool getImplicitDeadStripRoots(std::vector<const DefinedAtom *>&) = 0;
 
-  /// @brief return entry point for output file (e.g. "main") or NULL
+  /// @brief return entry point for output file (e.g. "main") or nullptr
   virtual llvm::StringRef entryPointName() = 0;
 
   /// @brief for iterating must-be-defined symbols ("main" or -u command line

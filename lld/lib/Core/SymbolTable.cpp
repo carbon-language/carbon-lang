@@ -126,7 +126,7 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
 void SymbolTable::addByName(const Atom & newAtom) {
   llvm::StringRef name = newAtom.name();
   const Atom *existing = this->findByName(name);
-  if (existing == NULL) {
+  if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
     _nameTable[name] = &newAtom;
   } 
@@ -162,8 +162,8 @@ void SymbolTable::addByName(const Atom & newAtom) {
       case NCR_DupUndef: {
           const UndefinedAtom* existingUndef = existing->undefinedAtom();
           const UndefinedAtom* newUndef = newAtom.undefinedAtom();
-          assert(existingUndef != NULL);
-          assert(newUndef != NULL);
+          assert(existingUndef != nullptr);
+          assert(newUndef != nullptr);
           if ( existingUndef->canBeNull() == newUndef->canBeNull() ) {
             useNew = false;
           }
@@ -178,8 +178,8 @@ void SymbolTable::addByName(const Atom & newAtom) {
       case NCR_DupShLib: {
           const SharedLibraryAtom* existingShLib = existing->sharedLibraryAtom();
           const SharedLibraryAtom* newShLib = newAtom.sharedLibraryAtom();
-          assert(existingShLib != NULL);
-          assert(newShLib != NULL);
+          assert(existingShLib != nullptr);
+          assert(newShLib != nullptr);
           if ( (existingShLib->canBeNullAtRuntime() 
                   == newShLib->canBeNullAtRuntime()) &&
                existingShLib->loadName().equals(newShLib->loadName()) ) {
@@ -263,13 +263,13 @@ void SymbolTable::addByContent(const DefinedAtom & newAtom) {
 const Atom *SymbolTable::findByName(llvm::StringRef sym) {
   NameToAtom::iterator pos = _nameTable.find(sym);
   if (pos == _nameTable.end())
-    return NULL;
+    return nullptr;
   return pos->second;
 }
 
 bool SymbolTable::isDefined(llvm::StringRef sym) {
   const Atom *atom = this->findByName(sym);
-  if (atom == NULL)
+  if (atom == nullptr)
     return false;
   if (atom->definition() == Atom::definitionUndefined)
     return false;
@@ -292,7 +292,7 @@ void SymbolTable::undefines(std::vector<const Atom *> &undefs) {
   for (NameToAtom::iterator it = _nameTable.begin(),
        end = _nameTable.end(); it != end; ++it) {
     const Atom *atom = it->second;
-    assert(atom != NULL);
+    assert(atom != nullptr);
     if (atom->definition() == Atom::definitionUndefined)
       undefs.push_back(atom);
   }

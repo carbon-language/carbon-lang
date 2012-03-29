@@ -69,12 +69,12 @@ static const DefinitionMapping defMappings[] = {
   { "absolute",       Atom::definitionAbsolute },
   { "undefined",      Atom::definitionUndefined },
   { "shared-library", Atom::definitionSharedLibrary },
-  { NULL,             Atom::definitionRegular }
+  { nullptr,          Atom::definitionRegular }
 };
 
 Atom::Definition KeyValues::definition(const char* s)
 {
-  for (const DefinitionMapping* p = defMappings; p->string != NULL; ++p) {
+  for (const DefinitionMapping* p = defMappings; p->string != nullptr; ++p) {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -82,7 +82,7 @@ Atom::Definition KeyValues::definition(const char* s)
 }
 
 const char* KeyValues::definition(Atom::Definition s) {
-  for (const DefinitionMapping* p = defMappings; p->string != NULL; ++p) {
+  for (const DefinitionMapping* p = defMappings; p->string != nullptr; ++p) {
     if ( p->value == s )
       return p->string;
   }
@@ -102,12 +102,12 @@ static const ScopeMapping scopeMappings[] = {
   { "global", DefinedAtom::scopeGlobal },
   { "hidden", DefinedAtom::scopeLinkageUnit },
   { "static", DefinedAtom::scopeTranslationUnit },
-  { NULL,     DefinedAtom::scopeGlobal }
+  { nullptr,  DefinedAtom::scopeGlobal }
 };
   
 DefinedAtom::Scope KeyValues::scope(const char* s)
 {
-  for (const ScopeMapping* p = scopeMappings; p->string != NULL; ++p) {
+  for (const ScopeMapping* p = scopeMappings; p->string != nullptr; ++p) {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -115,7 +115,7 @@ DefinedAtom::Scope KeyValues::scope(const char* s)
 }
 
 const char* KeyValues::scope(DefinedAtom::Scope s) {
-  for (const ScopeMapping* p = scopeMappings; p->string != NULL; ++p) {
+  for (const ScopeMapping* p = scopeMappings; p->string != nullptr; ++p) {
     if ( p->value == s )
       return p->string;
   }
@@ -161,12 +161,12 @@ static const ContentTypeMapping typeMappings[] = {
   { "tlv-data",       DefinedAtom::typeTLVInitialData },
   { "tlv-zero-fill",  DefinedAtom::typeTLVInitialZeroFill },
   { "tlv-init-ptr",   DefinedAtom::typeTLVInitializerPtr },
-  { NULL,             DefinedAtom::typeUnknown }
+  { nullptr,          DefinedAtom::typeUnknown }
 };
 
 DefinedAtom::ContentType KeyValues::contentType(const char* s)
 {
-  for (const ContentTypeMapping* p = typeMappings; p->string != NULL; ++p) {
+  for (const ContentTypeMapping* p = typeMappings; p->string != nullptr; ++p) {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -174,7 +174,7 @@ DefinedAtom::ContentType KeyValues::contentType(const char* s)
 }
 
 const char* KeyValues::contentType(DefinedAtom::ContentType s) {
-  for (const ContentTypeMapping* p = typeMappings; p->string != NULL; ++p) {
+  for (const ContentTypeMapping* p = typeMappings; p->string != nullptr; ++p) {
     if ( p->value == s )
       return p->string;
   }
@@ -196,12 +196,13 @@ static const DeadStripMapping deadStripMappings[] = {
   { "normal",         DefinedAtom::deadStripNormal },
   { "never",          DefinedAtom::deadStripNever },
   { "always",         DefinedAtom::deadStripAlways },
-  { NULL,             DefinedAtom::deadStripNormal }
+  { nullptr,          DefinedAtom::deadStripNormal }
 };
 
 DefinedAtom::DeadStripKind KeyValues::deadStripKind(const char* s)
 {
-  for (const DeadStripMapping* p = deadStripMappings; p->string != NULL; ++p) {
+  for (const DeadStripMapping* p = deadStripMappings; p->string != nullptr; ++p)
+  {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -209,7 +210,8 @@ DefinedAtom::DeadStripKind KeyValues::deadStripKind(const char* s)
 }
 
 const char* KeyValues::deadStripKind(DefinedAtom::DeadStripKind dsk) {
-  for (const DeadStripMapping* p = deadStripMappings; p->string != NULL; ++p) {
+  for (const DeadStripMapping* p = deadStripMappings; p->string != nullptr; ++p)
+  {
     if ( p->value == dsk )
       return p->string;
   }
@@ -229,12 +231,12 @@ static const InterposableMapping interMappings[] = {
   { "no",           DefinedAtom::interposeNo },
   { "yes",          DefinedAtom::interposeYes },
   { "yesAndWeak",   DefinedAtom::interposeYesAndRuntimeWeak },
-  { NULL,           DefinedAtom::interposeNo }
+  { nullptr,        DefinedAtom::interposeNo }
 };
 
 DefinedAtom::Interposable KeyValues::interposable(const char* s)
 {
-  for (const InterposableMapping* p = interMappings; p->string != NULL; ++p) {
+  for (const InterposableMapping* p = interMappings; p->string != nullptr; ++p){
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -242,7 +244,7 @@ DefinedAtom::Interposable KeyValues::interposable(const char* s)
 }
 
 const char* KeyValues::interposable(DefinedAtom::Interposable in) {
-  for (const InterposableMapping* p = interMappings; p->string != NULL; ++p) {
+  for (const InterposableMapping* p = interMappings; p->string != nullptr; ++p){
     if ( p->value == in )
       return p->string;
   }
@@ -264,12 +266,12 @@ static const MergeMapping mergeMappings[] = {
   { "asTentative",    DefinedAtom::mergeAsTentative },
   { "asWeak",         DefinedAtom::mergeAsWeak },
   { "asAddressedWeak",DefinedAtom::mergeAsWeakAndAddressUsed },
-  { NULL,             DefinedAtom::mergeNo }
+  { nullptr,          DefinedAtom::mergeNo }
 };
 
 DefinedAtom::Merge KeyValues::merge(const char* s)
 {
-  for (const MergeMapping* p = mergeMappings; p->string != NULL; ++p) {
+  for (const MergeMapping* p = mergeMappings; p->string != nullptr; ++p) {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -277,7 +279,7 @@ DefinedAtom::Merge KeyValues::merge(const char* s)
 }
 
 const char* KeyValues::merge(DefinedAtom::Merge in) {
-  for (const MergeMapping* p = mergeMappings; p->string != NULL; ++p) {
+  for (const MergeMapping* p = mergeMappings; p->string != nullptr; ++p) {
     if ( p->value == in )
       return p->string;
   }
@@ -298,12 +300,12 @@ static const SectionChoiceMapping sectMappings[] = {
   { "content",         DefinedAtom::sectionBasedOnContent },
   { "custom",          DefinedAtom::sectionCustomPreferred },
   { "custom-required", DefinedAtom::sectionCustomRequired },
-  { NULL,              DefinedAtom::sectionBasedOnContent }
+  { nullptr,           DefinedAtom::sectionBasedOnContent }
 };
 
 DefinedAtom::SectionChoice KeyValues::sectionChoice(const char* s)
 {
-  for (const SectionChoiceMapping* p = sectMappings; p->string != NULL; ++p) {
+  for (const SectionChoiceMapping* p = sectMappings; p->string != nullptr; ++p){
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -311,7 +313,7 @@ DefinedAtom::SectionChoice KeyValues::sectionChoice(const char* s)
 }
 
 const char* KeyValues::sectionChoice(DefinedAtom::SectionChoice s) {
-  for (const SectionChoiceMapping* p = sectMappings; p->string != NULL; ++p) {
+  for (const SectionChoiceMapping* p = sectMappings; p->string != nullptr; ++p){
     if ( p->value == s )
       return p->string;
   }
@@ -335,12 +337,12 @@ static const PermissionsMapping permMappings[] = {
   { "custom-required", DefinedAtom::permR_X },
   { "custom-required", DefinedAtom::permRW_ },
   { "custom-required", DefinedAtom::permRW_L },
-  { NULL,              DefinedAtom::perm___ }
+  { nullptr,           DefinedAtom::perm___ }
 };
 
 DefinedAtom::ContentPermissions KeyValues::permissions(const char* s)
 {
-  for (const PermissionsMapping* p = permMappings; p->string != NULL; ++p) {
+  for (const PermissionsMapping* p = permMappings; p->string != nullptr; ++p) {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -348,7 +350,7 @@ DefinedAtom::ContentPermissions KeyValues::permissions(const char* s)
 }
 
 const char* KeyValues::permissions(DefinedAtom::ContentPermissions s) {
-  for (const PermissionsMapping* p = permMappings; p->string != NULL; ++p) {
+  for (const PermissionsMapping* p = permMappings; p->string != nullptr; ++p) {
     if ( p->value == s )
       return p->string;
   }
@@ -402,13 +404,13 @@ static const CanBeNullMapping cbnMappings[] = {
   { "never",         UndefinedAtom::canBeNullNever },
   { "at-runtime",    UndefinedAtom::canBeNullAtRuntime },
   { "at-buildtime",  UndefinedAtom::canBeNullAtBuildtime },
-  { NULL,            UndefinedAtom::canBeNullNever }
+  { nullptr,         UndefinedAtom::canBeNullNever }
 };
 
 
 UndefinedAtom::CanBeNull KeyValues::canBeNull(const char* s)
 {
-  for (const CanBeNullMapping* p = cbnMappings; p->string != NULL; ++p) {
+  for (const CanBeNullMapping* p = cbnMappings; p->string != nullptr; ++p) {
     if ( strcmp(p->string, s) == 0 )
       return p->value;
   }
@@ -416,7 +418,7 @@ UndefinedAtom::CanBeNull KeyValues::canBeNull(const char* s)
 }
 
 const char* KeyValues::canBeNull(UndefinedAtom::CanBeNull c) {
-  for (const CanBeNullMapping* p = cbnMappings; p->string != NULL; ++p) {
+  for (const CanBeNullMapping* p = cbnMappings; p->string != nullptr; ++p) {
     if ( p->value == c )
       return p->string;
   }

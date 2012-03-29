@@ -119,15 +119,15 @@ public:
   }
   
   virtual reference_iterator referencesBegin() const {
-    return reference_iterator(*this, NULL);
+    return reference_iterator(*this, nullptr);
   }
   
   virtual reference_iterator referencesEnd() const {
-    return reference_iterator(*this, NULL);
+    return reference_iterator(*this, nullptr);
   }
   
   virtual const Reference* derefIterator(const void* iter) const {
-    return NULL;
+    return nullptr;
   }
   
   virtual void incrementIterator(const void*& iter) const {
@@ -218,15 +218,15 @@ public:
   }
   
   virtual reference_iterator referencesBegin() const {
-    return reference_iterator(*this, NULL);
+    return reference_iterator(*this, nullptr);
   }
   
   virtual reference_iterator referencesEnd() const {
-    return reference_iterator(*this, NULL);
+    return reference_iterator(*this, nullptr);
   }
   
   virtual const Reference* derefIterator(const void* iter) const {
-    return NULL;
+    return nullptr;
   }
   
   virtual void incrementIterator(const void*& iter) const {
@@ -283,18 +283,18 @@ public:
     return false;
   }
 
-  // return entry point for output file (e.g. "main") or NULL
+  // return entry point for output file (e.g. "main") or nullptr
   virtual llvm::StringRef entryPointName() {
-    return NULL;
+    return nullptr;
   }
 
   // for iterating must-be-defined symbols ("main" or -u command line option)
   typedef llvm::StringRef const *UndefinesIterator;
   virtual UndefinesIterator initialUndefinesBegin() const {
-    return NULL;
+    return nullptr;
   }
   virtual UndefinesIterator initialUndefinesEnd() const {
-    return NULL;
+    return nullptr;
   }
 
   // if platform wants resolvers to search libraries for overrides
@@ -353,7 +353,7 @@ public:
   static const KindMapping _s_kindMappings[]; 
   
   virtual Reference::Kind kindFromString(llvm::StringRef kindName) {
-    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
       if ( kindName.equals(p->string) )
         return p->value;
     }
@@ -364,7 +364,7 @@ public:
   }
   
   virtual llvm::StringRef kindToString(Reference::Kind value) {
-    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
       if ( value == p->value)
         return p->string;
     }
@@ -376,7 +376,7 @@ public:
   }
   
   virtual bool isCallSite(Reference::Kind kind) {
-    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
       if ( kind == p->value )
         return p->isBranch;
     }
@@ -384,7 +384,7 @@ public:
   }
 
   virtual bool isGOTAccess(Reference::Kind kind, bool& canBypassGOT) {
-    for (const KindMapping* p = _s_kindMappings; p->string != NULL; ++p) {
+    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
       if ( kind == p->value ) {
         canBypassGOT = p->isGotLoad;
         return p->isGotUse;
@@ -422,7 +422,7 @@ const TestingPlatform::KindMapping TestingPlatform::_s_kindMappings[] = {
     { "gotLoad32",      3,    false, true,  true },
     { "gotUse32",       4,    false, false, true },
     { "lea32wasGot",    5,    false, false, false },
-    { NULL,             0,    false, false, false }
+    { nullptr,          0,    false, false, false }
   };
 
 

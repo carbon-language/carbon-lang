@@ -43,7 +43,7 @@ public:
     Entry(const char *k, const char *v, std::vector<uint8_t>* vs, 
           int d, bool bd, bool bs)
       : key(strdup(k))
-      , value(v ? strdup(v) : NULL)
+      , value(v ? strdup(v) : nullptr)
       , valueSequenceBytes(vs)
       , depth(d)
       , beginSequence(bs)
@@ -79,12 +79,12 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
   State state = start;
   char key[64];
   char value[64];
-  char *p = NULL;
+  char *p = nullptr;
   unsigned int lineNumber = 1;
   int depth = 0;
   bool nextKeyIsStartOfDocument = false;
   bool nextKeyIsStartOfSequence = false;
-  std::vector<uint8_t>* sequenceBytes = NULL;
+  std::vector<uint8_t>* sequenceBytes = nullptr;
   unsigned contentByte = 0;
   for (const char *s = mb->getBufferStart(); s < mb->getBufferEnd(); ++s) {
     char c = *s;
@@ -183,7 +183,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         *p++ = c;
         state = inValue;
       } else if (c == '\n') {
-        entries.push_back(new Entry(key, "", NULL, depth,
+        entries.push_back(new Entry(key, "", nullptr, depth,
                                     nextKeyIsStartOfDocument,
                                     nextKeyIsStartOfSequence));
         nextKeyIsStartOfSequence = false;
@@ -205,7 +205,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
     case inValue:
       if (c == '\n') {
         *p = '\0';
-        entries.push_back(new Entry(key, value, NULL, depth,
+        entries.push_back(new Entry(key, value, nullptr, depth,
                                     nextKeyIsStartOfDocument,
                                     nextKeyIsStartOfSequence));
         nextKeyIsStartOfSequence = false;
@@ -240,7 +240,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
       break;
     case inValueSequenceEnd:
       if (c == '\n') {
-        entries.push_back(new Entry(key, NULL, sequenceBytes, depth,
+        entries.push_back(new Entry(key, nullptr, sequenceBytes, depth,
                                     nextKeyIsStartOfDocument,
                                     nextKeyIsStartOfSequence));
         nextKeyIsStartOfSequence = false;
@@ -257,7 +257,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
 
 class YAMLReference : public Reference {
 public: 
-                YAMLReference() : _target(NULL), _targetName(NULL), 
+                YAMLReference() : _target(nullptr), _targetName(nullptr),
                                    _offsetInAtom(0), _addend(0), _kind(0) { }
 
   virtual uint64_t offsetInAtom() const {
@@ -386,7 +386,7 @@ public:
   }
 
   virtual llvm::StringRef name() const {
-    if ( _name == NULL )
+    if (_name == nullptr)
       return llvm::StringRef();
     else
       return _name;
@@ -441,7 +441,7 @@ public:
   }
   
  llvm::ArrayRef<uint8_t> rawContent() const {
-    if ( _content != NULL ) 
+    if (_content != nullptr)
       return llvm::ArrayRef<uint8_t>(*_content);
     else
       return llvm::ArrayRef<uint8_t>();
@@ -615,7 +615,7 @@ Atom* YAMLFile::findAtom(const char* name) {
 
 void YAMLFile::addDefinedAtom(YAMLDefinedAtom* atom, const char* refName) {
   _definedAtoms._atoms.push_back(atom);
-  assert(refName != NULL);
+  assert(refName != nullptr);
   _nameToAtomMapping.push_back(NameAtomPair(refName, atom));
 }
 
@@ -676,14 +676,14 @@ public:
 
 YAMLAtomState::YAMLAtomState(Platform& platform)
   : _platform(platform)
-  , _name(NULL)
-  , _refName(NULL)
-  , _sectionName(NULL)
-  , _loadName(NULL)
+  , _name(nullptr)
+  , _refName(nullptr)
+  , _sectionName(nullptr)
+  , _loadName(nullptr)
   , _size(0)
   , _value(0)
   , _ordinal(0)
-  , _content(NULL) 
+  , _content(nullptr)
   , _alignment(0, 0)
   , _definition(KeyValues::definitionDefault)
   , _scope(KeyValues::scopeDefault)
@@ -728,14 +728,14 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   }
  
   // reset state for next atom
-  _name             = NULL;
-  _refName          = NULL;
-  _sectionName      = NULL;
-  _loadName         = NULL;
+  _name             = nullptr;
+  _refName          = nullptr;
+  _sectionName      = nullptr;
+  _loadName         = nullptr;
   _size             = 0;
   _value            = 0;
   _ordinal          = 0;
-  _content          = NULL;
+  _content          = nullptr;
   _alignment.powerOf2= 0;
   _alignment.modulus = 0;
   _definition       = KeyValues::definitionDefault;
@@ -749,8 +749,8 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _isThumb          = KeyValues::isThumbDefault;
   _isAlias          = KeyValues::isAliasDefault;
   _canBeNull        = KeyValues::canBeNullDefault;
-  _ref._target       = NULL;
-  _ref._targetName   = NULL;
+  _ref._target       = nullptr;
+  _ref._targetName   = nullptr;
   _ref._addend       = 0;
   _ref._offsetInAtom = 0;
   _ref._kind         = 0;
@@ -781,8 +781,8 @@ void YAMLAtomState::setFixupTarget(const char *s) {
 void YAMLAtomState::addFixup(YAMLFile *f) {
   f->_references.push_back(_ref);
   // clear for next ref
-  _ref._target       = NULL;
-  _ref._targetName   = NULL;
+  _ref._target       = nullptr;
+  _ref._targetName   = nullptr;
   _ref._addend       = 0;
   _ref._offsetInAtom = 0;
   _ref._kind         = 0;
@@ -803,7 +803,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
   std::vector<const YAML::Entry *> entries;
   YAML::parse(mb, entries);
 
-  YAMLFile *file = NULL;
+  YAMLFile *file = nullptr;
   YAMLAtomState atomState(platform);
   bool inAtoms       = false;
   bool inFixups      = false;
@@ -818,7 +818,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
     const YAML::Entry *entry = *it;
 
     if (entry->beginDocument) {
-      if (file != NULL) {
+      if (file != nullptr) {
         if (haveAtom) {
           atomState.makeAtom(*file);
           haveAtom = false;
@@ -976,7 +976,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
   if (haveAtom) {
     atomState.makeAtom(*file);
   }
-  if ( file != NULL ) { 
+  if (file != nullptr) {
     file->bindTargetReferences();
     result.push_back(file);
   }

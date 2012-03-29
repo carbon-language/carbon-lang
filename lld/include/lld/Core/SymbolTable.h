@@ -52,7 +52,7 @@ public:
   ///        UndefinedAtom
   bool isDefined(llvm::StringRef sym);
 
-  /// @brief returns atom in symbol table for specified name (or NULL)
+  /// @brief returns atom in symbol table for specified name (or nullptr)
   const Atom *findByName(llvm::StringRef sym);
 
   /// @brief returns vector of remaining UndefinedAtoms
@@ -79,7 +79,7 @@ private:
                                            StringRefMappingInfo> NameToAtom;
   
   struct AtomMappingInfo {
-    static const DefinedAtom * getEmptyKey() { return NULL; }
+    static const DefinedAtom * getEmptyKey() { return nullptr; }
     static const DefinedAtom * getTombstoneKey() { return (DefinedAtom*)(-1); }
     static unsigned getHashValue(const DefinedAtom * const Val);
     static bool isEqual(const DefinedAtom * const LHS, 

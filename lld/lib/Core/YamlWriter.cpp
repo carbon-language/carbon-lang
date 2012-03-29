@@ -333,7 +333,7 @@ public:
             << _platform.kindToString(ref->kind())
             << "\n";
       const Atom* target = ref->target();
-      if ( target != NULL ) {
+      if (target != nullptr) {
         llvm::StringRef refName = target->name();
         if ( _rnb.hasRefName(target) )
           refName = _rnb.refName(target);

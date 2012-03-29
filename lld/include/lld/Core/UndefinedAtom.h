@@ -23,23 +23,23 @@ public:
   }
 
   /// like dynamic_cast, if atom is definitionUndefined
-  /// returns atom cast to UndefinedAtom*, else returns NULL
+  /// returns atom cast to UndefinedAtom*, else returns nullptr
   virtual const UndefinedAtom* undefinedAtom() const { 
     return this;
   }
 
   /// Whether this undefined symbol needs to be resolved,
-  /// or whether it can just evaluate to NULL.
+  /// or whether it can just evaluate to nullptr.
   /// This concept is often called "weak", but that term
   /// is overloaded to mean other things too.
   enum CanBeNull {
     /// Normal symbols must be resolved at build time
     canBeNullNever,
     
-    /// This symbol can be missing at runtime and will evalute to NULL.
+    /// This symbol can be missing at runtime and will evalute to nullptr.
     /// That is, the static linker still must find a definition (usually
     /// is some shared library), but at runtime, the dynamic loader
-    /// will allow the symbol to be missing and resolved to NULL.
+    /// will allow the symbol to be missing and resolved to nullptr.
     ///
     /// On Darwin this is generated using a function prototype with
     /// __attribute__((weak_import)).  

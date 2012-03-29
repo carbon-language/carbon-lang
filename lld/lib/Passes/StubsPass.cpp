@@ -42,7 +42,7 @@ void StubsPass::perform() {
       // Look at call-sites.
       if ( _platform.isCallSite(ref->kind()) ) {
         const Atom* target = ref->target();
-        assert(target != NULL);
+        assert(target != nullptr);
         bool replaceCalleeWithStub = false;
         if ( target->definition() == Atom::definitionSharedLibrary ) {
           // Calls to shared libraries go through stubs.
@@ -63,14 +63,14 @@ void StubsPass::perform() {
           if ( pos == targetToStub.end() ) {
             // This is no existing stub.  Create a new one.
             stub = _platform.makeStub(*target, _file);
-            assert(stub != NULL);
+            assert(stub != nullptr);
             assert(stub->contentType() == DefinedAtom::typeStub);
             targetToStub[target] = stub;
           }
           else {
             // Reuse an existing stub.
             stub = pos->second;
-            assert(stub != NULL);
+            assert(stub != nullptr);
           }
           // Switch call site to reference stub atom.
           (const_cast<Reference*>(ref))->setTarget(stub);

@@ -205,7 +205,7 @@ void Resolver::resolveUndefines() {
         // this tentative, so check again
         llvm::StringRef tentName = (*dit)->name();
         const Atom *curAtom = _symbolTable.findByName(tentName);
-        assert(curAtom != NULL);
+        assert(curAtom != nullptr);
         if ( const DefinedAtom* curDefAtom = curAtom->definedAtom() ) {
           if (curDefAtom->merge() == DefinedAtom::mergeAsTentative )
             _inputFiles.searchLibraries(tentName, searchDylibs, 
@@ -236,10 +236,10 @@ void Resolver::updateReferences() {
 // for dead code stripping, recursively mark atom "live"
 void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   // if -why_live cares about this symbol, then dump chain
-  if ((previous->referer != NULL) && _platform.printWhyLive(atom.name())) {
+  if ((previous->referer != nullptr) && _platform.printWhyLive(atom.name())) {
     llvm::errs() << atom.name() << " from " << atom.file().path() << "\n";
     int depth = 1;
-    for (WhyLiveBackChain *p = previous; p != NULL;
+    for (WhyLiveBackChain *p = previous; p != nullptr;
          p = p->previous, ++depth) {
       for (int i = depth; i > 0; --i)
         llvm::errs() << "  ";
@@ -279,7 +279,7 @@ void Resolver::deadStripOptimize() {
 
   // add entry point (main) to live roots
   const Atom *entry = this->entryPoint();
-  if (entry != NULL)
+  if (entry != nullptr)
     _deadStripRoots.insert(entry);
 
   // add -exported_symbols_list, -init, and -u entries to live roots
@@ -300,7 +300,7 @@ void Resolver::deadStripOptimize() {
   for (std::set<const Atom *>::iterator it = _deadStripRoots.begin();
        it != _deadStripRoots.end(); ++it) {
     WhyLiveBackChain rootChain;
-    rootChain.previous = NULL;
+    rootChain.previous = nullptr;
     rootChain.referer = *it;
     this->markLive(**it, &rootChain);
   }
@@ -343,7 +343,7 @@ void Resolver::checkDylibSymbolCollisions() {
   for (std::vector<const Atom *>::const_iterator it = _atoms.begin();
        it != _atoms.end(); ++it) {
     const DefinedAtom* defAtom = (*it)->definedAtom();
-    if ( defAtom == NULL ) 
+    if (defAtom == nullptr)
       continue;
     if ( defAtom->merge() != DefinedAtom::mergeAsTentative ) 
       continue;
@@ -358,10 +358,10 @@ void Resolver::checkDylibSymbolCollisions() {
 // get "main" atom for linkage unit
 const Atom *Resolver::entryPoint() {
   llvm::StringRef symbolName = _platform.entryPointName();
-  if (symbolName != NULL)
+  if (symbolName != nullptr)
     return _symbolTable.findByName(symbolName);
 
-  return NULL;
+  return nullptr;
 }
 
 // give platform a chance to tweak the set of atoms

@@ -27,7 +27,7 @@ public:
   }
 
   /// like dynamic_cast, if atom is definitionSharedLibrary
-  /// returns atom cast to SharedLibraryAtom*, else returns NULL
+  /// returns atom cast to SharedLibraryAtom*, else returns nullptr
   virtual const SharedLibraryAtom* sharedLibraryAtom() const { 
     return this;
   }
@@ -38,7 +38,7 @@ public:
   virtual llvm::StringRef loadName() const = 0;
 
   /// Returns if shared library symbol can be missing at runtime and if
-  /// so the loader should silently resolve address of symbol to be NULL.
+  /// so the loader should silently resolve address of symbol to be nullptr.
   virtual bool canBeNullAtRuntime() const = 0;
   
 protected:

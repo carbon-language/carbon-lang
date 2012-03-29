@@ -56,14 +56,14 @@ void GOTPass::perform() {
       bool canBypassGOT;
       if ( _platform.isGOTAccess(ref->kind(), canBypassGOT) ) {
         const Atom* target = ref->target();
-        assert(target != NULL);
+        assert(target != nullptr);
         const DefinedAtom* defTarget = target->definedAtom();
         bool replaceTargetWithGOTAtom = false;
         if ( target->definition() == Atom::definitionSharedLibrary ) {
           // Accesses to shared library symbols must go through GOT.
           replaceTargetWithGOTAtom = true;
         }
-        else if ( (defTarget != NULL)
+        else if ( (defTarget != nullptr)
                && (defTarget->interposable() != DefinedAtom::interposeNo) ) {
           // Accesses to interposable symbols in same linkage unit 
           // must also go through GOT.
@@ -78,19 +78,19 @@ void GOTPass::perform() {
         } 
         if ( replaceTargetWithGOTAtom ) {
           // Replace the target with a reference to a GOT entry.
-          const DefinedAtom* gotEntry = NULL;
+          const DefinedAtom* gotEntry = nullptr;
           auto pos = targetToGOT.find(target);
           if ( pos == targetToGOT.end() ) {
             // This is no existing GOT entry.  Create a new one.
             gotEntry = _platform.makeGOTEntry(*target, _file);
-            assert(gotEntry != NULL);
+            assert(gotEntry != nullptr);
             assert(gotEntry->contentType() == DefinedAtom::typeGOT);
             targetToGOT[target] = gotEntry;
           }
           else {
             // Reuse an existing GOT entry.
             gotEntry = pos->second;
-            assert(gotEntry != NULL);
+            assert(gotEntry != nullptr);
           }
           // Switch reference to GOT atom.
           (const_cast<Reference*>(ref))->setTarget(gotEntry);

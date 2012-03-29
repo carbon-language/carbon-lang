@@ -23,7 +23,7 @@ public:
   }
 
   /// like dynamic_cast, if atom is definitionAbsolute
-  /// returns atom cast to AbsoluteAtom*, else returns NULL
+  /// returns atom cast to AbsoluteAtom*, else returns nullptr
   virtual const AbsoluteAtom* absoluteAtom() const { 
     return this;
   }
