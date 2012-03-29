@@ -1596,9 +1596,7 @@ public:
                                  T.getQualifiers(),
                                  AggValueSlot::IsNotDestructed,
                                  AggValueSlot::DoesNotNeedGCBarriers,
-                                 AggValueSlot::IsNotAliased,
-                                 AggValueSlot::IsCompleteObject,
-                                 AggValueSlot::IsNotZeroed);
+                                 AggValueSlot::IsNotAliased);
   }
 
   /// Emit a cast to void* in the appropriate address space.
@@ -1630,10 +1628,9 @@ public:
   RValue EmitAnyExprToTemp(const Expr *E);
 
   /// EmitAnyExprToMem - Emits the code necessary to evaluate an
-  /// arbitrary expression as an initialization of the given memory
-  /// location.
+  /// arbitrary expression into the given memory location.
   void EmitAnyExprToMem(const Expr *E, llvm::Value *Location,
-                        Qualifiers Quals);
+                        Qualifiers Quals, bool IsInitializer);
 
   /// EmitExprAsInit - Emits the code necessary to initialize a
   /// location in memory with the given initializer.
@@ -1644,12 +1641,9 @@ public:
   ///
   /// \param isVolatile - True iff either the source or the destination is
   /// volatile.
-  /// \param destIsCompleteObject - True if the destination is known to be
-  /// a complete object.
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy, bool isVolatile=false,
-                         unsigned alignment = 0,
-                         bool destIsCompleteObject = false);
+                         unsigned Alignment = 0);
 
   /// StartBlock - Start new block named N. If insert block is a dummy block
   /// then reuse it.

@@ -28,24 +28,3 @@ namespace test1 {
 
   A<int> a;
 }
-
-// PR12204
-namespace test2 {
-  struct A {
-    A() {} // make this non-POD to enable tail layout
-    void *ptr;
-    char c;
-  };
-
-  void test(A &out) {
-    out = A();
-  }
-}
-// CHECK:    define void @_ZN5test24testERNS_1AE(
-// CHECK:      [[OUT:%.*]] = alloca [[A:%.*]]*, align 8
-// CHECK-NEXT: [[TMP:%.*]] = alloca [[A]], align 8
-// CHECK:      [[REF:%.*]] = load [[A]]** [[OUT]], align 8
-// CHECK-NEXT: call void @_ZN5test21AC1Ev([[A]]* [[TMP]])
-// CHECK-NEXT: [[T0:%.*]] = bitcast [[A]]* [[REF]] to i8*
-// CHECK-NEXT: [[T1:%.*]] = bitcast [[A]]* [[TMP]] to i8*
-// CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[T0]], i8* [[T1]], i64 9, i32 8, i1 false)

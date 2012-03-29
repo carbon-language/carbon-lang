@@ -1875,8 +1875,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
           if (Align > AI->getAlignment())
             AI->setAlignment(Align);
           Args.push_back(AI);
-          EmitAggregateCopy(AI, Addr, I->Ty, RV.isVolatileQualified(),
-                            /*destIsCompleteObject*/ true);
+          EmitAggregateCopy(AI, Addr, I->Ty, RV.isVolatileQualified());
               
           // Validate argument match.
           checkArgMatches(AI, IRArgNo, IRFuncTy);

@@ -722,8 +722,7 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
   if (RV.isScalar()) {
     Builder.CreateStore(RV.getScalarVal(), ReturnValue);
   } else if (RV.isAggregate()) {
-    EmitAggregateCopy(ReturnValue, RV.getAggregateAddr(), Ty,
-                      /*volatile*/ false, 0, /*destIsCompleteObject*/ true);
+    EmitAggregateCopy(ReturnValue, RV.getAggregateAddr(), Ty);
   } else {
     StoreComplexToAddr(RV.getComplexVal(), ReturnValue, false);
   }
@@ -770,8 +769,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Alignment, Qualifiers(),
                                           AggValueSlot::IsDestructed,
                                           AggValueSlot::DoesNotNeedGCBarriers,
-                                          AggValueSlot::IsNotAliased,
-                                          AggValueSlot::IsCompleteObject));
+                                          AggValueSlot::IsNotAliased));
   }
 
   EmitBranchThroughCleanup(ReturnBlock);

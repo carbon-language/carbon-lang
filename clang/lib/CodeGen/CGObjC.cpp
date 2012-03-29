@@ -887,8 +887,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
       // The return value slot is guaranteed to not be aliased, but
       // that's not necessarily the same as "on the stack", so
       // we still potentially need objc_memmove_collectable.
-      EmitAggregateCopy(ReturnValue, LV.getAddress(), ivarType,
-                        /*volatile*/ false, 0, /*destIsCompleteObject*/ true);
+      EmitAggregateCopy(ReturnValue, LV.getAddress(), ivarType);
     } else {
       llvm::Value *value;
       if (propType->isReferenceType()) {
@@ -1313,8 +1312,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       EmitAggExpr(IvarInit->getInit(),
                   AggValueSlot::forLValue(LV, AggValueSlot::IsDestructed,
                                           AggValueSlot::DoesNotNeedGCBarriers,
-                                          AggValueSlot::IsNotAliased,
-                                          AggValueSlot::IsCompleteObject));
+                                          AggValueSlot::IsNotAliased));
     }
     // constructor returns 'self'.
     CodeGenTypes &Types = CGM.getTypes();
@@ -2939,8 +2937,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
               AggValueSlot::forAddr(DV.getScalarVal(), Alignment, Qualifiers(),
                                     AggValueSlot::IsDestructed,
                                     AggValueSlot::DoesNotNeedGCBarriers,
-                                    AggValueSlot::IsNotAliased,
-                                    AggValueSlot::IsCompleteObject));
+                                    AggValueSlot::IsNotAliased));
   
   FinishFunction();
   HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);

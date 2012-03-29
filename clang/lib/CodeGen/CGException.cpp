@@ -373,7 +373,8 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
   // evaluated but before the exception is caught.  But the best way
   // to handle that is to teach EmitAggExpr to do the final copy
   // differently if it can't be elided.
-  CGF.EmitAnyExprToMem(e, typedAddr, e->getType().getQualifiers());
+  CGF.EmitAnyExprToMem(e, typedAddr, e->getType().getQualifiers(), 
+                       /*IsInit*/ true);
 
   // Deactivate the cleanup block.
   CGF.DeactivateCleanupBlock(cleanup, cast<llvm::Instruction>(typedAddr));
@@ -1047,8 +1048,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
   if (!copyExpr) {
     llvm::Value *rawAdjustedExn = CallBeginCatch(CGF, Exn, true);
     llvm::Value *adjustedExn = CGF.Builder.CreateBitCast(rawAdjustedExn, PtrTy);
-    CGF.EmitAggregateCopy(ParamAddr, adjustedExn, CatchType,
-                          /*volatile*/ false, 0, /*destIsCompleteObject*/ true);
+    CGF.EmitAggregateCopy(ParamAddr, adjustedExn, CatchType);
     return;
   }
 
@@ -1076,8 +1076,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
                   AggValueSlot::forAddr(ParamAddr, Alignment, Qualifiers(),
                                         AggValueSlot::IsNotDestructed,
                                         AggValueSlot::DoesNotNeedGCBarriers,
-                                        AggValueSlot::IsNotAliased,
-                                        AggValueSlot::IsCompleteObject));
+                                        AggValueSlot::IsNotAliased));
 
   // Leave the terminate scope.
   CGF.EHStack.popTerminate();

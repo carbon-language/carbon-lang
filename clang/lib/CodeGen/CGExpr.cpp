@@ -133,17 +133,17 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E) {
 /// location.
 void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
                                        llvm::Value *Location,
-                                       Qualifiers Quals) {
+                                       Qualifiers Quals,
+                                       bool IsInit) {
   // FIXME: This function should take an LValue as an argument.
   if (E->getType()->isAnyComplexType()) {
     EmitComplexExprIntoAddr(E, Location, Quals.hasVolatile());
   } else if (hasAggregateLLVMType(E->getType())) {
     CharUnits Alignment = getContext().getTypeAlignInChars(E->getType());
     EmitAggExpr(E, AggValueSlot::forAddr(Location, Alignment, Quals,
-                                         AggValueSlot::IsDestructed,
+                                         AggValueSlot::IsDestructed_t(IsInit),
                                          AggValueSlot::DoesNotNeedGCBarriers,
-                                         AggValueSlot::IsNotAliased,
-                                         AggValueSlot::IsCompleteObject));
+                                         AggValueSlot::IsAliased_t(!IsInit)));
   } else {
     RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
     LValue LV = MakeAddrLValue(Location, E->getType());
@@ -366,8 +366,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
       AggSlot = AggValueSlot::forAddr(ReferenceTemporary, Alignment,
                                       Qualifiers(), isDestructed,
                                       AggValueSlot::DoesNotNeedGCBarriers,
-                                      AggValueSlot::IsNotAliased,
-                                      AggValueSlot::IsCompleteObject);
+                                      AggValueSlot::IsNotAliased);
     }
     
     if (InitializedDecl) {
@@ -2152,7 +2151,8 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
   const Expr *InitExpr = E->getInitializer();
   LValue Result = MakeAddrLValue(DeclPtr, E->getType());
 
-  EmitAnyExprToMem(InitExpr, DeclPtr, E->getType().getQualifiers());
+  EmitAnyExprToMem(InitExpr, DeclPtr, E->getType().getQualifiers(),
+                   /*Init*/ true);
 
   return Result;
 }
@@ -2283,7 +2283,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     // as a value, copy it into a temporary, and return an lvalue referring to
     // that temporary.
     llvm::Value *V = CreateMemTemp(E->getType(), "ref.temp");
-    EmitAnyExprToMem(E, V, E->getType().getQualifiers());
+    EmitAnyExprToMem(E, V, E->getType().getQualifiers(), false);
     return MakeAddrLValue(V, E->getType());
   }
 
@@ -2754,7 +2754,8 @@ EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
 static llvm::Value *
 EmitValToTemp(CodeGenFunction &CGF, Expr *E) {
   llvm::Value *DeclPtr = CGF.CreateMemTemp(E->getType(), ".atomictmp");
-  CGF.EmitAnyExprToMem(E, DeclPtr, E->getType().getQualifiers());
+  CGF.EmitAnyExprToMem(E, DeclPtr, E->getType().getQualifiers(),
+                       /*Init*/ true);
   return DeclPtr;
 }
 
