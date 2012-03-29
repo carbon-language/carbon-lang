@@ -10,6 +10,7 @@ import lldb
 import ctypes
 import objc_runtime
 import metrics
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -25,6 +26,8 @@ class NSConcreteData_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
+		logger >> "NSConcreteData_SummaryProvider __init__"
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -46,9 +49,13 @@ class NSConcreteData_SummaryProvider:
 		return 2 * self.sys_params.pointer_size
 
 	def length(self):
+		logger = Logger.Logger()
+		logger >> "NSConcreteData_SummaryProvider length"
 		size = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
+		logger >> str(size)
+		logger >> str(size.GetValueAsUnsigned(0))
 		return size.GetValueAsUnsigned(0)
 
 
@@ -57,6 +64,8 @@ class NSDataUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
+		logger >> "NSDataUnknown_SummaryProvider __init__"
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
@@ -65,21 +74,31 @@ class NSDataUnknown_SummaryProvider:
 		self.adjust_for_architecture();
 
 	def length(self):
+		logger = Logger.Logger()
+		logger >> "NSDataUnknown_SummaryProvider length"
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
+		logger >> stream.GetData()
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)[" + stream.GetData() + " length]");
+		logger >> "still in after expression: " + str(num_children_vo)
 		if num_children_vo.IsValid():
+			logger >> "wow - expr output is valid: " + str(num_children_vo.GetValueAsUnsigned())
 			return num_children_vo.GetValueAsUnsigned(0)
+		logger >> "invalid expr output - too bad"
 		return '<variable is not NSData>'
 
 
 def GetSummary_Impl(valobj):
 	global statistics
+	logger = Logger.Logger()
+	logger >> "NSData GetSummary_Impl"
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
+		logger >> "got a wrapper summary - using it"
 		return wrapper
 	
 	name_string = class_data.class_name()
+	logger >> "class name: " + name_string
 	if name_string == 'NSConcreteData' or \
 	   name_string == 'NSConcreteMutableData' or \
 	   name_string == '__NSCFData':
@@ -91,12 +110,16 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def NSData_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
+	logger >> "NSData_SummaryProvider"
 	provider = GetSummary_Impl(valobj);
+	logger >> "found a summary provider, it is: " + str(provider)
 	if provider != None:
 		try:
 			summary = provider.length();
 		except:
 			summary = None
+		logger >> "got a summary: it is " + str(summary)
 		if summary == None:
 			summary = '<variable is not NSData>'
 		elif isinstance(summary,basestring):
@@ -110,7 +133,10 @@ def NSData_SummaryProvider (valobj,dict):
 	return 'Summary Unavailable'
 
 def NSData_SummaryProvider2 (valobj,dict):
+	logger = Logger.Logger()
+	logger >> "NSData_SummaryProvider2"
 	provider = GetSummary_Impl(valobj);
+	logger >> "found a summary provider, it is: " + str(provider)
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
 			return provider.message()
@@ -118,6 +144,7 @@ def NSData_SummaryProvider2 (valobj,dict):
 			summary = provider.length();
 		except:
 			summary = None
+		logger >> "got a summary: it is " + str(summary)
 		if summary == None:
 			summary = '<variable is not CFData>'
 		elif isinstance(summary,basestring):

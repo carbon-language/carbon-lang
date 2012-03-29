@@ -1,4 +1,5 @@
 import lldb
+import Logger
 
 # libcxx STL formatters for LLDB
 # These formatters are based upon the implementation of libc++ that
@@ -27,6 +28,7 @@ def extract_short_size(value):
 # no external significance - we access them by index since this saves a name lookup that would add
 # no information for readers of the code, but when possible try to use meaningful variable names
 def stdstring_SummaryProvider(valobj,dict):
+	logger = Logger.Logger()
 	r = valobj.GetChildAtIndex(0)
 	B = r.GetChildAtIndex(0)
 	first = B.GetChildAtIndex(0)
@@ -55,9 +57,11 @@ def stdstring_SummaryProvider(valobj,dict):
 class stdvector_SynthProvider:
 
 	def __init__(self, valobj, dict):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 
 	def num_children(self):
+		logger = Logger.Logger()
 		try:
 			start_val = self.start.GetValueAsUnsigned(0)
 			finish_val = self.finish.GetValueAsUnsigned(0)
@@ -85,12 +89,14 @@ class stdvector_SynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
+		logger = Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
+		logger = Logger.Logger()
 		if index < 0:
 			return None;
 		if index >= self.num_children():
@@ -102,6 +108,7 @@ class stdvector_SynthProvider:
 			return None
 
 	def update(self):
+		logger = Logger.Logger()
 		try:
 			self.start = self.valobj.GetChildMemberWithName('__begin_')
 			self.finish = self.valobj.GetChildMemberWithName('__end_')
@@ -121,21 +128,27 @@ def stdvector_SummaryProvider(valobj,dict):
 class stdlist_entry:
 
 	def __init__(self,entry):
+		logger = Logger.Logger()
 		self.entry = entry
 
 	def _next_impl(self):
+		logger = Logger.Logger()
 		return stdlist_entry(self.entry.GetChildMemberWithName('__next_'))
 
 	def _prev_impl(self):
+		logger = Logger.Logger()
 		return stdlist_entry(self.entry.GetChildMemberWithName('__prev_'))
 
 	def _value_impl(self):
+		logger = Logger.Logger()
 		return self.entry.GetValueAsUnsigned(0)
 
 	def _isnull_impl(self):
+		logger = Logger.Logger()
 		return self._value_impl() == 0
 
 	def _sbvalue_impl(self):
+		logger = Logger.Logger()
 		return self.entry
 
 	next = property(_next_impl,None)
@@ -146,17 +159,21 @@ class stdlist_entry:
 class stdlist_iterator:
 
 	def increment_node(self,node):
+		logger = Logger.Logger()
 		if node.is_null:
 			return None
 		return node.next
 
 	def __init__(self,node):
+		logger = Logger.Logger()
 		self.node = stdlist_entry(node) # we convert the SBValue to an internal node object on entry
 
 	def value(self):
+		logger = Logger.Logger()
 		return self.node.sbvalue # and return the SBValue back on exit
 
 	def next(self):
+		logger = Logger.Logger()
 		node = self.increment_node(self.node)
 		if node != None and node.sbvalue.IsValid() and not(node.is_null):
 			self.node = node
@@ -165,6 +182,7 @@ class stdlist_iterator:
 			return None
 
 	def advance(self,N):
+		logger = Logger.Logger()
 		if N < 0:
 			return None
 		if N == 0:
@@ -179,17 +197,25 @@ class stdlist_iterator:
 
 class stdlist_SynthProvider:
 	def __init__(self, valobj, dict):
+		logger = Logger.Logger()
 		self.valobj = valobj
 
 	def next_node(self,node):
+		logger = Logger.Logger()
 		return node.GetChildMemberWithName('__next_')
 
 	def value(self,node):
+		logger = Logger.Logger()
 		return node.GetValueAsUnsigned()
 
 	# Floyd's cyle-finding algorithm
 	# try to detect if this list has a loop
 	def has_loop(self):
+		global _list_uses_loop_detector
+		logger = Logger.Logger()
+		if _list_uses_loop_detector == False:
+			logger >> "Asked not to use loop detection"
+			return False
 		slow = stdlist_entry(self.head)
 		fast1 = stdlist_entry(self.head)
 		fast2 = stdlist_entry(self.head)
@@ -203,11 +229,17 @@ class stdlist_SynthProvider:
 		return False
 
 	def num_children(self):
+		global _list_capping_size
+		logger = Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
+			if self.count > _list_capping_size:
+				self.count = _list_capping_size
 		return self.count
 
 	def num_children_impl(self):
+		global _list_capping_size
+		logger = Logger.Logger()
 		try:
 			next_val = self.head.GetValueAsUnsigned(0)
 			prev_val = self.tail.GetValueAsUnsigned(0)
@@ -225,17 +257,21 @@ class stdlist_SynthProvider:
 			while current.next.value != self.node_address:
 				size = size + 1
 				current = current.next
+				if size > _list_capping_size:
+					return _list_capping_size
 			return (size - 1)
 		except:
 			return 0;
 
 	def get_child_index(self,name):
+		logger = Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
+		logger = Logger.Logger()
 		if index < 0:
 			return None;
 		if index >= self.num_children():
@@ -252,6 +288,7 @@ class stdlist_SynthProvider:
 			return None
 
 	def extract_type(self):
+		logger = Logger.Logger()
 		list_type = self.valobj.GetType().GetUnqualifiedType()
 		if list_type.IsReferenceType():
 			list_type = list_type.GetDereferencedType()
@@ -262,6 +299,7 @@ class stdlist_SynthProvider:
 		return data_type
 
 	def update(self):
+		logger = Logger.Logger()
 		try:
 			impl = self.valobj.GetChildMemberWithName('__end_')
 			self.node_address = self.valobj.AddressOf().GetValueAsUnsigned(0)
@@ -281,24 +319,31 @@ def stdlist_SummaryProvider(valobj,dict):
 # a tree node - this class makes the syntax in the actual iterator nicer to read and maintain
 class stdmap_iterator_node:
 	def _left_impl(self):
+		logger = Logger.Logger()
 		return stdmap_iterator_node(self.node.GetChildMemberWithName("__left_"))
 
 	def _right_impl(self):
+		logger = Logger.Logger()
 		return stdmap_iterator_node(self.node.GetChildMemberWithName("__right_"))
 
 	def _parent_impl(self):
+		logger = Logger.Logger()
 		return stdmap_iterator_node(self.node.GetChildMemberWithName("__parent_"))
 
 	def _value_impl(self):
+		logger = Logger.Logger()
 		return self.node.GetValueAsUnsigned(0)
 
 	def _sbvalue_impl(self):
+		logger = Logger.Logger()
 		return self.node
 
 	def _null_impl(self):
+		logger = Logger.Logger()
 		return self.value == 0
 
 	def __init__(self,node):
+		logger = Logger.Logger()
 		self.node = node
 
 	left = property(_left_impl,None)
@@ -312,13 +357,20 @@ class stdmap_iterator_node:
 class stdmap_iterator:
 
 	def tree_min(self,x):
+		logger = Logger.Logger()
+		steps = 0
 		if x.is_null:
 			return None
 		while (not x.left.is_null):
 			x = x.left
+			steps += 1
+			if steps > self.max_count:
+				logger >> "Returning None - we overflowed"
+				return None
 		return x
 
 	def tree_max(self,x):
+		logger = Logger.Logger()
 		if x.is_null:
 			return None
 		while (not x.right.is_null):
@@ -326,26 +378,37 @@ class stdmap_iterator:
 		return x
 
 	def tree_is_left_child(self,x):
+		logger = Logger.Logger()
 		if x.is_null:
 			return None
 		return True if x.value == x.parent.left.value else False
 
 	def increment_node(self,node):
+		logger = Logger.Logger()
 		if node.is_null:
 			return None
 		if not node.right.is_null:
 			return self.tree_min(node.right)
+		steps = 0
 		while (not self.tree_is_left_child(node)):
+			steps += 1
+			if steps > self.max_count:
+				logger >> "Returning None - we overflowed"
+				return None
 			node = node.parent
 		return node.parent
 
-	def __init__(self,node):
+	def __init__(self,node,max_count=0):
+		logger = Logger.Logger()
 		self.node = stdmap_iterator_node(node) # we convert the SBValue to an internal node object on entry
+		self.max_count = max_count
 
 	def value(self):
+		logger = Logger.Logger()
 		return self.node.sbvalue # and return the SBValue back on exit
 
 	def next(self):
+		logger = Logger.Logger()
 		node = self.increment_node(self.node)
 		if node != None and node.sbvalue.IsValid() and not(node.is_null):
 			self.node = node
@@ -354,6 +417,7 @@ class stdmap_iterator:
 			return None
 
 	def advance(self,N):
+		logger = Logger.Logger()
 		if N < 0:
 			return None
 		if N == 0:
@@ -361,18 +425,24 @@ class stdmap_iterator:
 		if N == 1:
 			return self.next()
 		while N > 0:
-			self.next()
+			if self.next() == None:
+				return None
 			N = N - 1
 		return self.value()
 
 class stdmap_SynthProvider:
 
 	def __init__(self, valobj, dict):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.pointer_size = self.valobj.GetProcess().GetAddressByteSize()
 
 	def update(self):
+		logger = Logger.Logger()
 		try:
+			# we will set this to True if we find out that discovering a node in the map takes more steps than the overall size of the RB tree
+			# if this gets set to True, then we will merrily return None for any child from that moment on
+			self.garbage = False
 			self.tree = self.valobj.GetChildMemberWithName('__tree_')
 			self.root_node = self.tree.GetChildMemberWithName('__begin_node_')
 			# this data is either lazily-calculated, or cannot be inferred at this moment
@@ -385,17 +455,23 @@ class stdmap_SynthProvider:
 			pass
 
 	def num_children(self):
+		global _map_capping_size
+		logger = Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
+			if self.count > _map_capping_size:
+				self.count = _map_capping_size
 		return self.count
 
 	def num_children_impl(self):
+		logger = Logger.Logger()
 		try:
 			return self.valobj.GetChildMemberWithName('__tree_').GetChildMemberWithName('__pair3_').GetChildMemberWithName('__first_').GetValueAsUnsigned()
 		except:
 			return 0;
 
 	def get_data_type(self):
+		logger = Logger.Logger()
 		if self.data_type == None or self.data_size == None:
 			if self.num_children() == 0:
 				return False
@@ -413,6 +489,7 @@ class stdmap_SynthProvider:
 			return True
 
 	def get_value_offset(self,node):
+		logger = Logger.Logger()
 		if self.skip_size == None:
 			node_type = node.GetType()
 			fields_count = node_type.GetNumberOfFields()
@@ -424,24 +501,31 @@ class stdmap_SynthProvider:
 		return (self.skip_size != None)
 
 	def get_child_index(self,name):
+		logger = Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
+		logger = Logger.Logger()
 		if index < 0:
 			return None
 		if index >= self.num_children():
 			return None;
+		if self.garbage:
+			return None
 		try:
-			iterator = stdmap_iterator(self.root_node)
+			iterator = stdmap_iterator(self.root_node,max_count=self.num_children())
 			# the debug info for libc++ std::map is such that __begin_node_ has a very nice and useful type
 			# out of which we can grab the information we need - every other node has a less informative
 			# type which omits all value information and only contains housekeeping information for the RB tree
 			# hence, we need to know if we are at a node != 0, so that we can still get at the data
 			need_to_skip = (index > 0)
 			current = iterator.advance(index)
+			if current == None:
+				self.garbage = True
+				return None
 			if self.get_data_type():
 				if not(need_to_skip):
 					current = current.Dereference()
@@ -481,3 +565,7 @@ def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand('type synthetic add -l libcxx.stdmap_SynthProvider -x "^(std::__1::)map<.+> >$" -w libcxx')
 	debugger.HandleCommand('type summary add -F libcxx.stdmap_SummaryProvider -e -x "^(std::__1::)map<.+> >$" -w libcxx')
 	debugger.HandleCommand("type category enable libcxx")
+
+_map_capping_size = 255
+_list_capping_size = 255
+_list_uses_loop_detector = True

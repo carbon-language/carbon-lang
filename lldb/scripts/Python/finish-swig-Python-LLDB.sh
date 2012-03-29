@@ -508,6 +508,20 @@ else
     fi
 fi
 
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/Logger.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying Logger.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/Logger.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/Logger.py"
+    fi
+fi
+
 if [ -f "${SRC_ROOT}/examples/summaries/cocoa/objc_lldb.py" ]
 then
     if [ $Debug == 1 ]
