@@ -291,7 +291,7 @@ bool DIDescriptor::isEnumerator() const {
 
 /// isObjCProperty - Return true if the specified tag is DW_TAG
 bool DIDescriptor::isObjCProperty() const {
-  return DbgNode && getTag() == dwarf::DW_TAG_APPLE_Property;
+  return DbgNode && getTag() == dwarf::DW_TAG_APPLE_property;
 }
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
@@ -382,7 +382,7 @@ bool DIObjCProperty::Verify() const {
   if (!DbgNode)
     return false;
   unsigned Tag = getTag();
-  if (Tag != dwarf::DW_TAG_APPLE_Property) return false;
+  if (Tag != dwarf::DW_TAG_APPLE_property) return false;
   DIType Ty = getType();
   if (!Ty.Verify()) return false;
 

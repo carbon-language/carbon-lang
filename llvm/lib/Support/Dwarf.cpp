@@ -95,7 +95,7 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
     return "DW_TAG_GNU_template_parameter_pack";
   case DW_TAG_GNU_formal_parameter_pack:
     return "DW_TAG_GNU_formal_parameter_pack";
-  case DW_TAG_APPLE_Property:            return "DW_TAG_APPLE_property";
+  case DW_TAG_APPLE_property:            return "DW_TAG_APPLE_property";
   }
   return 0;
 }

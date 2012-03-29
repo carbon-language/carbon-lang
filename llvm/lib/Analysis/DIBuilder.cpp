@@ -392,7 +392,7 @@ DIObjCProperty DIBuilder::createObjCProperty(StringRef Name,
                                              unsigned PropertyAttributes,
 					     DIType Ty) {
   Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_APPLE_Property),
+    GetTagConstant(VMContext, dwarf::DW_TAG_APPLE_property),
     MDString::get(VMContext, Name),
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
