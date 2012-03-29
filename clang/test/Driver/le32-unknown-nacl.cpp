@@ -40,6 +40,11 @@ int align_ld = __alignof(long double);
 // CHECK: @align_vl = global i32 4
 int align_vl = __alignof(va_list);
 
+// CHECK: __LITTLE_ENDIAN__defined
+#ifdef __LITTLE_ENDIAN__
+void __LITTLE_ENDIAN__defined() {}
+#endif
+
 // CHECK: __native_client__defined
 #ifdef __native_client__
 void __native_client__defined() {}

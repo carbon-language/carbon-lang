@@ -3847,6 +3847,7 @@ public:
     if (Opts.CPlusPlus)
       Builder.defineMacro("_GNU_SOURCE");
 
+    Builder.defineMacro("__LITTLE_ENDIAN__");
     Builder.defineMacro("__native_client__");
     getArchDefines(Opts, Builder);
   }
