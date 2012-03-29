@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 Test lldb data formatter subsystem.
 """
@@ -61,6 +62,18 @@ class ObjCDataFormatterTestCase(TestBase):
         self.kvo_data_formatter_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_rdar11106605_with_dsym_and_run_command(self):
+        """Check that Unicode characters come out of CFString summary correctly."""
+        self.buildDsym()
+        self.rdar11106605_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_rdar11106605_with_dwarf_and_run_command(self):
+        """Check that Unicode characters come out of CFString summary correctly."""
+        self.buildDwarf()
+        self.rdar11106605_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailurei386
     def test_expr_with_dsym_and_run_command(self):
         """Test common cases of expression parser <--> formatters interaction."""
@@ -79,6 +92,44 @@ class ObjCDataFormatterTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to break at.
         self.line = line_number('main.m', '// Set break point at this line.')
+
+    def rdar11106605_commands(self):
+        """Check that Unicode characters come out of CFString summary correctly."""
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.m', line = %d, locations = 1" %
+                        self.line)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type synth clear', check=False)
+            self.runCmd('type category disable CoreFoundation', check=False)
+            self.runCmd('type category disable CoreGraphics', check=False)
+            self.runCmd('type category disable CoreServices', check=False)
+            self.runCmd('type category disable AppKit', check=False)
+
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
+        self.runCmd("type category enable AppKit")
+
+        self.expect('frame variable italian', substrs = ['L\'Italia è una Repubblica democratica, fondata sul lavoro. La sovranità appartiene al popolo, che la esercita nelle forme e nei limiti della Costituzione.'])
+        self.expect('frame variable french', substrs = ['Que veut cette horde d\'esclaves, De traîtres, de rois conjurés?'])
+        self.expect('frame variable german', substrs = ['Über-Ich und aus den Ansprüchen der sozialen Umwelt'])
+        self.expect('frame variable japanese', substrs = ['色は匂へど散りぬるを'])
 
     def plain_data_formatter_commands(self):
         """Test basic ObjC formatting behavior."""
@@ -197,7 +248,7 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSString *) str6 = ',' @"1ST"',
                     '(NSString *) str8 = ',' @"hasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTime',
                     '(NSString *) str9 = ',' @"a very much boring task to write a string this way!!',
-                    '(NSString *) str10 = ',' @"This is a Unicode string',
+                    '(NSString *) str10 = ',' @"This is a Unicode string σ number 4 right here"',
                     '(NSString *) str11 = ',' @"__NSCFString"',
                     '(NSString *) label1 = ',' @"Process Name: "',
                     '(NSString *) label2 = ',' @"Process Id: "',

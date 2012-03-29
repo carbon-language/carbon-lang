@@ -14,7 +14,11 @@ def CFString_SummaryProvider (valobj,dict):
 	provider = CFStringSynthProvider(valobj,dict);
 	if provider.invalid == False:
 		try:
-			summary = provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
+			summary = provider.get_child_at_index(provider.get_child_index("content"))
+			if type(summary) == lldb.SBValue:
+				summary = summary.GetSummary()
+			else:
+				summary = '"' + summary + '"'
 		except:
 			summary = None
 		if summary == None:
@@ -111,20 +115,19 @@ class CFStringSynthProvider:
 				# a full pointer is skipped here before getting to the live data
 				pointer = pointer + self.pointer_size
 		else:
-			pointer = self.valobj.GetValueAsUnsigned(0) + self.size_of_cfruntime_base();
+			pointer = self.valobj.GetValueAsUnsigned(0) + self.size_of_cfruntime_base()
 			# read 8 bytes here and make an address out of them
 			try:
-			    vopointer = self.valobj.CreateChildAtOffset("dummy",
-				pointer,self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType());
-			    pointer = vopointer.GetValueAsUnsigned(0)
+				char_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType()
+				vopointer = self.valobj.CreateValueFromAddress("dummy",pointer,char_type);
+				pointer = vopointer.GetValueAsUnsigned(0)
 			except:
-			    return self.valobj.CreateValueFromExpression("content",
+				return self.valobj.CreateValueFromExpression("content",
                                                              '(char*)"@\"invalid NSString\""')
 		# step 2: read Unicode data at pointer
 		pystr = self.read_unicode(pointer)
 		# step 3: return it
-		return self.valobj.CreateValueFromExpression("content",
-			"(char*)\"" + pystr.encode('utf-8') + "\"")
+		return pystr.encode('utf-8')
 
 	def handle_inline_explicit(self):
 		offset = 3*self.pointer_size
@@ -177,6 +180,11 @@ class CFStringSynthProvider:
 			# if this is not possible, a new flag might have to be made up (like the "special" flag
 			# below, which is not a real flag in CFString), or alternatively one might need to use
 			# the ObjC runtime helper to detect the new class and deal with it accordingly
+			#print 'mutable = ' + str(self.mutable)
+			#print 'inline = ' + str(self.inline)
+			#print 'explicit = ' + str(self.explicit)
+			#print 'unicode = ' + str(self.unicode)
+			#print 'special = ' + str(self.special)
 			if self.mutable == True:
 				return self.handle_mutable_string()
 			elif self.inline == True and self.explicit == True and \

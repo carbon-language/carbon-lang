@@ -2322,7 +2322,7 @@ ValueObject::GetValuesForExpressionPath(const char* expression,
     if (!ret_val.get()) // if there are errors, I add nothing to the list
         return 0;
     
-    if (*reason_to_stop != eExpressionPathScanEndReasonArrayRangeOperatorMet)
+    if ( (reason_to_stop ? *reason_to_stop : dummy_reason_to_stop) != eExpressionPathScanEndReasonArrayRangeOperatorMet)
     {
         // I need not expand a range, just post-process the final value and return
         if (!final_task_on_target || *final_task_on_target == ValueObject::eExpressionPathAftermathNothing)
@@ -2330,7 +2330,7 @@ ValueObject::GetValuesForExpressionPath(const char* expression,
             list->Append(ret_val);
             return 1;
         }
-        if (ret_val.get() && *final_value_type == eExpressionPathEndResultTypePlain) // I can only deref and takeaddress of plain objects
+        if (ret_val.get() && (final_value_type ? *final_value_type : dummy_final_value_type) == eExpressionPathEndResultTypePlain) // I can only deref and takeaddress of plain objects
         {
             if (*final_task_on_target == ValueObject::eExpressionPathAftermathDereference)
             {

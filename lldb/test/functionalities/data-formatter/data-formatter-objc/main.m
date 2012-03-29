@@ -277,6 +277,13 @@ int main (int argc, const char * argv[])
 
 	    NSString *strD12 = [NSString stringWithFormat:@"%@ %@ %@ %@", label1, processName, label2, processID];
 
+	    NSString *eAcute = [NSString stringWithFormat: @"%C", 0x00E9];
+	    NSString *randomHaziChar = [NSString stringWithFormat: @"%C", 0x9DC5];
+	    NSString *japanese = @"色は匂へど散りぬるを";
+	    NSString *italian = @"L'Italia è una Repubblica democratica, fondata sul lavoro. La sovranità appartiene al popolo, che la esercita nelle forme e nei limiti della Costituzione.";
+	    NSString* french = @"Que veut cette horde d'esclaves, De traîtres, de rois conjurés?";
+	    NSString* german = @"Über-Ich und aus den Ansprüchen der sozialen Umwelt";
+
 	    void* data_set[3] = {str1,str2,str3};
 
 	    NSArray* newArray = [[NSMutableArray alloc] init];
