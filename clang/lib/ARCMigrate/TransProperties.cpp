@@ -73,13 +73,18 @@ public:
   explicit PropertiesRewriter(MigrationContext &MigrateCtx)
     : MigrateCtx(MigrateCtx), Pass(MigrateCtx.Pass) { }
 
-  static void collectProperties(ObjCContainerDecl *D, AtPropDeclsTy &AtProps) {
+  static void collectProperties(ObjCContainerDecl *D, AtPropDeclsTy &AtProps,
+                                AtPropDeclsTy *PrevAtProps = 0) {
     for (ObjCInterfaceDecl::prop_iterator
            propI = D->prop_begin(),
            propE = D->prop_end(); propI != propE; ++propI) {
       if (propI->getAtLoc().isInvalid())
         continue;
-      PropsTy &props = AtProps[propI->getAtLoc().getRawEncoding()];
+      unsigned RawLoc = propI->getAtLoc().getRawEncoding();
+      if (PrevAtProps)
+        if (PrevAtProps->find(RawLoc) != PrevAtProps->end())
+          continue;
+      PropsTy &props = AtProps[RawLoc];
       props.push_back(*propI);
     }
   }
@@ -139,7 +144,7 @@ public:
     for (ObjCCategoryDecl *Cat = iface->getCategoryList();
            Cat; Cat = Cat->getNextClassCategory())
       if (Cat->IsClassExtension())
-        collectProperties(Cat, AtExtProps);
+        collectProperties(Cat, AtExtProps, &AtProps);
 
     for (AtPropDeclsTy::iterator
            I = AtExtProps.begin(), E = AtExtProps.end(); I != E; ++I) {

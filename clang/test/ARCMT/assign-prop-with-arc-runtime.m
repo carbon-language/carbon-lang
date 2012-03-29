@@ -65,8 +65,9 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @interface TestExt()
 @property (retain,readwrite) TestExt *x1;
 @property (readwrite) TestExt *x2;
+@property (retain) TestExt *x3;
 @end
 
 @implementation TestExt
-@synthesize x1, x2;
+@synthesize x1, x2, x3;
 @end
