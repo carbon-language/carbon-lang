@@ -680,29 +680,51 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  // Generate instructions for VMOVQQ and VMOVQQQQ pseudos in place.
-  if (ARM::QQPRRegClass.contains(DestReg, SrcReg) ||
-      ARM::QQQQPRRegClass.contains(DestReg, SrcReg)) {
+  // Handle register classes that require multiple instructions.
+  unsigned BeginIdx = 0;
+  unsigned SubRegs = 0;
+  unsigned Spacing = 1;
+
+  // Use VORRq when possible.
+  if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VORRq, BeginIdx = ARM::qsub_0, SubRegs = 2;
+  else if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VORRq, BeginIdx = ARM::qsub_0, SubRegs = 4;
+  // Fall back to VMOVD.
+  else if (ARM::DPairRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 2;
+  else if (ARM::DTripleRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 3;
+  else if (ARM::DQuadRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 4;
+
+  else if (ARM::DPairSpcRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 2, Spacing = 2;
+  else if (ARM::DTripleSpcRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 3, Spacing = 2;
+  else if (ARM::DQuadSpcRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD, BeginIdx = ARM::dsub_0, SubRegs = 4, Spacing = 2;
+
+  if (Opc) {
     const TargetRegisterInfo *TRI = &getRegisterInfo();
-    assert(ARM::qsub_0 + 3 == ARM::qsub_3 && "Expected contiguous enum.");
-    unsigned EndSubReg = ARM::QQPRRegClass.contains(DestReg, SrcReg) ?
-      ARM::qsub_1 : ARM::qsub_3;
-    for (unsigned i = ARM::qsub_0, e = EndSubReg + 1; i != e; ++i) {
-      unsigned Dst = TRI->getSubReg(DestReg, i);
-      unsigned Src = TRI->getSubReg(SrcReg, i);
-      MachineInstrBuilder Mov =
-        AddDefaultPred(BuildMI(MBB, I, I->getDebugLoc(), get(ARM::VORRq))
-                       .addReg(Dst, RegState::Define)
-                       .addReg(Src, getKillRegState(KillSrc))
-                       .addReg(Src, getKillRegState(KillSrc)));
-      if (i == EndSubReg) {
-        Mov->addRegisterDefined(DestReg, TRI);
-        if (KillSrc)
-          Mov->addRegisterKilled(SrcReg, TRI);
-      }
+    MachineInstrBuilder Mov;
+    for (unsigned i = 0; i != SubRegs; ++i) {
+      unsigned Dst = TRI->getSubReg(DestReg, BeginIdx + i*Spacing);
+      unsigned Src = TRI->getSubReg(SrcReg,  BeginIdx + i*Spacing);
+      assert(Dst && Src && "Bad sub-register");
+      Mov = AddDefaultPred(BuildMI(MBB, I, I->getDebugLoc(), get(Opc), Dst)
+                             .addReg(Src));
+      // VORR takes two source operands.
+      if (Opc == ARM::VORRq)
+        Mov.addReg(Src);
     }
+    // Add implicit super-register defs and kills to the last instruction.
+    Mov->addRegisterDefined(DestReg, TRI);
+    if (KillSrc)
+      Mov->addRegisterKilled(SrcReg, TRI);
     return;
   }
+
   llvm_unreachable("Impossible reg-to-reg copy");
 }
 
