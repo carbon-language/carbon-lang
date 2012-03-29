@@ -119,6 +119,8 @@ LineTable::Entry::LessThanBinaryPredicate::operator() (const LineTable::Entry& a
     {
         #define LT_COMPARE(a,b) if (a != b) return a < b
         LT_COMPARE (a.sect_offset, b.sect_offset);
+        // b and a reversed on purpose below.
+        LT_COMPARE (b.is_terminal_entry, a.is_terminal_entry);
         LT_COMPARE (a.line, b.line);
         LT_COMPARE (a.column, b.column);
         LT_COMPARE (a.is_start_of_statement, b.is_start_of_statement);
@@ -126,8 +128,6 @@ LineTable::Entry::LessThanBinaryPredicate::operator() (const LineTable::Entry& a
         // b and a reversed on purpose below.
         LT_COMPARE (b.is_prologue_end, a.is_prologue_end);
         LT_COMPARE (a.is_epilogue_begin, b.is_epilogue_begin);
-        // b and a reversed on purpose below.
-        LT_COMPARE (b.is_terminal_entry, a.is_terminal_entry);
         LT_COMPARE (a.file_idx, b.file_idx);
         return false;
         #undef LT_COMPARE
