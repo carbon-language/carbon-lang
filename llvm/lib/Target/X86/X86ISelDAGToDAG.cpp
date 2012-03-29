@@ -1847,86 +1847,6 @@ static bool HasNoSignedComparisonUses(SDNode *N) {
   return true;
 }
 
-/// isLoadIncOrDecStore - Check whether or not the chain ending in StoreNode
-/// is suitable for doing the {load; increment or decrement; store} to modify
-/// transformation.
-static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc, 
-                                SDValue &StoredVal) {
-
-  // is the value stored the result of a DEC or INC?
-  if (!(Opc == X86ISD::DEC || Opc == X86ISD::INC)) return false;
-
-  // is the size of the value one that we can handle? (i.e. 64, 32, 16, or 8)
-  SDValue Chain = StoreNode->getChain();
-  LoadSDNode *LoadNode = cast<LoadSDNode>(Chain.getNode());
-  EVT LdVT = LoadNode->getMemoryVT();    
-  if (LdVT != MVT::i64 && LdVT != MVT::i32 && LdVT != MVT::i16 && 
-      LdVT != MVT::i8)
-    return false;
-
-  // quick check of whether the store is simple
-  SDValue Undef = StoreNode->getOffset();
-  if (Undef->getOpcode() != ISD::UNDEF) return false;
-
-  // is the chain predecessor to the store a load?
-  if (Chain->getOpcode() != ISD::LOAD) return false;
-  
-  // is the stored value result 0 of the load?
-  if (StoredVal.getResNo() != 0) return false;
-
-  // are there other uses of the loaded value than the inc or dec?
-  if (!StoredVal.getNode()->hasNUsesOfValue(1, 0)) return false;
-
-  // is there exactly one use of the load?
-  if (!LoadNode->hasNUsesOfValue(1, 0)) return false;
-  
-  // are the load and store connected by the chain?
-  if (StoredVal->getOperand(0).getNode() != LoadNode) return false;
-
-  //OPC_CheckPredicate, 1, // Predicate_nontemporalstore
-  if (StoreNode->isNonTemporal())
-    return false;
-
-  // is the address of the store the same as the load?
-  SDValue Address = StoreNode->getBasePtr();
-  if (LoadNode->getBasePtr() != Address ||
-      LoadNode->getOffset() != Undef)
-    return false;
-
-  // is the load non-extending and non-indexed?
-  if (!ISD::isNormalLoad(LoadNode))
-    return false;
-
-  // is the store non-extending and non-indexed?
-  if (!ISD::isNormalStore(StoreNode))
-    return false;
-
-  // check load chain has only one use (from the store)
-  if (!Chain.hasOneUse())
-    return false;
-
-  return true;
-}
-
-/// getFusedLdStOpcode - Get the appropriate X86 opcode for an in memory 
-/// increment or decrement. Opc should be X86ISD::DEC or X86ISD:INC.
-static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
-  if (Opc == X86ISD::DEC) {
-    if (LdVT == MVT::i64) return X86::DEC64m;
-    if (LdVT == MVT::i32) return X86::DEC32m;
-    if (LdVT == MVT::i16) return X86::DEC16m;
-    if (LdVT == MVT::i8)  return X86::DEC8m;
-    assert(0 && "unrecognized size for LdVT");
-  }
-  else {
-    if (LdVT == MVT::i64) return X86::INC64m;
-    if (LdVT == MVT::i32) return X86::INC32m;
-    if (LdVT == MVT::i16) return X86::INC16m;
-    if (LdVT == MVT::i8)  return X86::INC8m;
-    assert(0 && "unrecognized size for LdVT");
-  }
-}
-
 SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   EVT NVT = Node->getValueType(0);
   unsigned Opc, MOpc;
@@ -2434,13 +2354,9 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     break;
   }
   case ISD::STORE: {
-    // Change a chain of {load; incr or dec; store} of the same value into
-    // a simple increment or decrement through memory of that value, if the
-    // uses of the modified value and its address are suitable.
     // The DEC64m tablegen pattern is currently not able to match the case where
-    // the EFLAGS on the original DEC are used. (This also applies to 
-    // {INC,DEC}X{64,32,16,8}.)
-    // We'll need to improve tablegen to allow flags to be transferred from a
+    // the EFLAGS on the original DEC are used.
+    // we'll need to improve tablegen to allow flags to be transferred from a
     // node in the pattern to the result node.  probably with a new keyword
     // for example, we have this
     // def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
@@ -2450,16 +2366,42 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     // def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
     //  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
     //   (transferrable EFLAGS)]>;
-
     StoreSDNode *StoreNode = cast<StoreSDNode>(Node);
+    SDValue Chain = StoreNode->getOperand(0);
     SDValue StoredVal = StoreNode->getOperand(1);
-    unsigned Opc = StoredVal->getOpcode();
+    SDValue Address = StoreNode->getOperand(2);
+    SDValue Undef = StoreNode->getOperand(3);
 
-    if (!isLoadIncOrDecStore(StoreNode, Opc, StoredVal)) break;
+    if (StoreNode->getMemOperand()->getSize() != 8 ||
+        Undef->getOpcode() != ISD::UNDEF ||
+        Chain->getOpcode() != ISD::LOAD ||
+        StoredVal->getOpcode() != X86ISD::DEC ||
+        StoredVal.getResNo() != 0 ||
+        !StoredVal.getNode()->hasNUsesOfValue(1, 0) ||
+        !Chain.getNode()->hasNUsesOfValue(1, 0) ||
+        StoredVal->getOperand(0).getNode() != Chain.getNode())
+      break;
+
+    //OPC_CheckPredicate, 1, // Predicate_nontemporalstore
+    if (StoreNode->isNonTemporal())
+      break;
+
+    LoadSDNode *LoadNode = cast<LoadSDNode>(Chain.getNode());
+    if (LoadNode->getOperand(1) != Address ||
+        LoadNode->getOperand(2) != Undef)
+      break;
+
+    if (!ISD::isNormalLoad(LoadNode))
+      break;
+
+    if (!ISD::isNormalStore(StoreNode))
+      break;
+
+    // check load chain has only one use (from the store)
+    if (!Chain.hasOneUse())
+      break;
 
     // Merge the input chains if they are not intra-pattern references.
-    SDValue Chain = StoreNode->getOperand(0);
-    LoadSDNode *LoadNode = cast<LoadSDNode>(Chain.getNode());
     SDValue InputChain = LoadNode->getOperand(0);
 
     SDValue Base, Scale, Index, Disp, Segment;
@@ -2471,9 +2413,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     MemOp[0] = StoreNode->getMemOperand();
     MemOp[1] = LoadNode->getMemOperand();
     const SDValue Ops[] = { Base, Scale, Index, Disp, Segment, InputChain };
-    EVT LdVT = LoadNode->getMemoryVT();    
-    unsigned newOpc = getFusedLdStOpcode(LdVT, Opc);
-    MachineSDNode *Result = CurDAG->getMachineNode(newOpc,
+    MachineSDNode *Result = CurDAG->getMachineNode(X86::DEC64m,
                                                    Node->getDebugLoc(),
                                                    MVT::i32, MVT::Other, Ops,
                                                    array_lengthof(Ops));
