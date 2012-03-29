@@ -2407,7 +2407,6 @@ ClangASTContext::AddObjCClassProperty
             else if (ivar_decl)
                 property_opaque_type_to_access = ivar_decl->getType().getAsOpaquePtr();
                         
-            // FIXME: For now, we don't know how to add properties if we don't have their associated ivar.
             if (class_interface_decl && property_opaque_type_to_access)
             {
                 clang::TypeSourceInfo *prop_type_source;

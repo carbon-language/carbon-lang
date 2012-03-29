@@ -1462,6 +1462,7 @@ SymbolFileDWARF::ParseChildMembers
         switch (tag)
         {
         case DW_TAG_member:
+        case DW_TAG_APPLE_Property:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
                 const size_t num_attributes = die->GetAttributes (this, 
@@ -1547,7 +1548,30 @@ SymbolFileDWARF::ParseChildMembers
                         }
                     }
                     
-                    // Clang has a DWARF generation bug where sometimes it 
+                    ConstString fixed_getter;
+                    ConstString fixed_setter;
+                    
+                    if (prop_getter_name && prop_getter_name[0] == '-')
+                    {
+                        ObjCLanguageRuntime::ParseMethodName (prop_getter_name,
+                                                              NULL,
+                                                              &fixed_getter,
+                                                              NULL,
+                                                              NULL);
+                        prop_getter_name = fixed_getter.GetCString();
+                    }
+                    
+                    if (prop_setter_name && prop_setter_name[0] == '-')
+                    {
+                        ObjCLanguageRuntime::ParseMethodName (prop_setter_name,
+                                                              NULL,
+                                                              &fixed_setter,
+                                                              NULL,
+                                                              NULL);
+                        prop_setter_name = fixed_setter.GetCString();
+                    }
+                    
+                    // Clang has a DWARF generation bug where sometimes it
                     // represents fields that are references with bad byte size
                     // and bit size/offset information such as:
                     //
@@ -1587,77 +1611,84 @@ SymbolFileDWARF::ParseChildMembers
                     {
                         Type *member_type = ResolveTypeUID(encoding_uid);
                         clang::FieldDecl *field_decl = NULL;
-                        if (member_type)
+                        if (tag == DW_TAG_member)
                         {
-                            if (accessibility == eAccessNone)
-                                accessibility = default_accessibility;
-                            member_accessibilities.push_back(accessibility);
+                            if (member_type)
+                            {
+                                if (accessibility == eAccessNone)
+                                    accessibility = default_accessibility;
+                                member_accessibilities.push_back(accessibility);
 
-                            field_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type, 
-                                                                                    name, 
-                                                                                    member_type->GetClangLayoutType(), 
-                                                                                    accessibility, 
-                                                                                    bit_size);
-                        }
-                        else
-                        {
-                            if (name)
-                                GetObjectFile()->GetModule()->ReportError ("0x%8.8llx: DW_TAG_member '%s' refers to type 0x%8.8llx which was unable to be parsed",
-                                                                           MakeUserID(die->GetOffset()),
-                                                                           name,
-                                                                           encoding_uid);
-                            else
-                                GetObjectFile()->GetModule()->ReportError ("0x%8.8llx: DW_TAG_member refers to type 0x%8.8llx which was unable to be parsed",
-                                                                           MakeUserID(die->GetOffset()),
-                                                                           encoding_uid);
-                        }
-
-                        if (member_byte_offset != UINT32_MAX || bit_size != 0)
-                        {
-                            /////////////////////////////////////////////////////////////
-                            // How to locate a field given the DWARF debug information
-                            //
-                            // AT_byte_size indicates the size of the word in which the
-                            // bit offset must be interpreted.
-                            //
-                            // AT_data_member_location indicates the byte offset of the
-                            // word from the base address of the structure.
-                            //
-                            // AT_bit_offset indicates how many bits into the word
-                            // (according to the host endianness) the low-order bit of
-                            // the field starts.  AT_bit_offset can be negative.
-                            //
-                            // AT_bit_size indicates the size of the field in bits.
-                            /////////////////////////////////////////////////////////////
-                                                    
-                            ByteOrder object_endian = GetObjectFile()->GetModule()->GetArchitecture().GetDefaultEndian();
-
-                            uint64_t total_bit_offset = 0;
-                            
-                            total_bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
-                            
-                            if (object_endian == eByteOrderLittle)
-                            {  
-                                total_bit_offset += byte_size * 8;
-                                total_bit_offset -= (bit_offset + bit_size);
+                                field_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type, 
+                                                                                        name, 
+                                                                                        member_type->GetClangLayoutType(), 
+                                                                                        accessibility, 
+                                                                                        bit_size);
                             }
                             else
                             {
-                                total_bit_offset += bit_offset;
+                                if (name)
+                                    GetObjectFile()->GetModule()->ReportError ("0x%8.8llx: DW_TAG_member '%s' refers to type 0x%8.8llx which was unable to be parsed",
+                                                                               MakeUserID(die->GetOffset()),
+                                                                               name,
+                                                                               encoding_uid);
+                                else
+                                    GetObjectFile()->GetModule()->ReportError ("0x%8.8llx: DW_TAG_member refers to type 0x%8.8llx which was unable to be parsed",
+                                                                               MakeUserID(die->GetOffset()),
+                                                                               encoding_uid);
                             }
+
+                            if (member_byte_offset != UINT32_MAX || bit_size != 0)
+                            {
+                                /////////////////////////////////////////////////////////////
+                                // How to locate a field given the DWARF debug information
+                                //
+                                // AT_byte_size indicates the size of the word in which the
+                                // bit offset must be interpreted.
+                                //
+                                // AT_data_member_location indicates the byte offset of the
+                                // word from the base address of the structure.
+                                //
+                                // AT_bit_offset indicates how many bits into the word
+                                // (according to the host endianness) the low-order bit of
+                                // the field starts.  AT_bit_offset can be negative.
+                                //
+                                // AT_bit_size indicates the size of the field in bits.
+                                /////////////////////////////////////////////////////////////
                                                         
-                            layout_info.field_offsets.insert(std::make_pair(field_decl, total_bit_offset));
+                                ByteOrder object_endian = GetObjectFile()->GetModule()->GetArchitecture().GetDefaultEndian();
+
+                                uint64_t total_bit_offset = 0;
+                                
+                                total_bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
+                                
+                                if (object_endian == eByteOrderLittle)
+                                {  
+                                    total_bit_offset += byte_size * 8;
+                                    total_bit_offset -= (bit_offset + bit_size);
+                                }
+                                else
+                                {
+                                    total_bit_offset += bit_offset;
+                                }
+                                                            
+                                layout_info.field_offsets.insert(std::make_pair(field_decl, total_bit_offset));
+                            }
                         }
+                        
                         if (prop_name != NULL)
                         {
+                            clang::ObjCIvarDecl *ivar_decl = NULL;
                             
-                            clang::ObjCIvarDecl *ivar_decl = clang::dyn_cast<clang::ObjCIvarDecl>(field_decl);
-                            assert (ivar_decl != NULL);
+                            if (field_decl)
+                            {
+                                ivar_decl = clang::dyn_cast<clang::ObjCIvarDecl>(field_decl);
+                                assert (ivar_decl != NULL);
+                            }
                             
-
                             GetClangASTContext().AddObjCClassProperty (class_clang_type,
                                                                        prop_name,
-                                                                       0,
+                                                                       member_type->GetClangLayoutType(),
                                                                        ivar_decl,
                                                                        prop_setter_name,
                                                                        prop_getter_name,
