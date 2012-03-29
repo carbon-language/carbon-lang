@@ -2311,6 +2311,17 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                             if (sc.function == NULL)
                                 sc.function = ParseCompileUnitFunction(sc, curr_cu, function_die);
                         }
+                        else
+                        {
+                            // We might have had a compile unit that had discontiguous
+                            // address ranges where the gaps are symbols that don't have
+                            // any debug info. Discontiguous compile unit address ranges
+                            // should only happen when there aren't other functions from
+                            // other compile units in these gaps. This helps keep the size
+                            // of the aranges down.
+                            sc.comp_unit = NULL;
+                            resolved &= ~eSymbolContextCompUnit;
+                        }
 
                         if (sc.function != NULL)
                         {

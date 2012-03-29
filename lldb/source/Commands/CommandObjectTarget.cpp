@@ -3559,55 +3559,16 @@ public:
                                 ModuleSP old_module_sp (target->GetImages().FindModule (symfile_module_sp->GetUUID()));
                                 if (old_module_sp)
                                 {
-                                    const bool can_create = false;
-                                    if (old_module_sp->GetSymbolVendor (can_create))
-                                    {
-                                        // The current module already has a symbol file, so we need
-                                        // need to unload the existing references to this module,
-                                        // and reload with the new one.
-                                        
-                                        ModuleSP target_exe_module_sp (target->GetExecutableModule());
-                                        const bool adding_symbols_to_executable = target_exe_module_sp.get() == old_module_sp.get();
-                                        ModuleSpec module_spec (old_module_sp->GetFileSpec(), old_module_sp->GetArchitecture());
-                                        module_spec.GetSymbolFileSpec() = symfile_spec;
-                                        // Unload the old module
-                                        ModuleList module_list;
-                                        module_list.Append (old_module_sp);
-                                        target->ModulesDidUnload (module_list);
+                                    // The module has not yet created its symbol vendor, we can just
+                                    // give the existing target module the symfile path to use for
+                                    // when it decides to create it!
+                                    old_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
 
-                                        // Remove the module from the shared list
-                                        ModuleList::RemoveSharedModule (old_module_sp);
-
-                                        // Now create the new module and load it
-                                        module_list.Clear();
-                                        //ModuleSP new_module_sp (new Module (target_module_file, target_module_arch));
-                                        ModuleSP new_module_sp;
-                                                                
-                                        new_module_sp = target->GetSharedModule (module_spec);
-                                                        
-                                        if (new_module_sp)
-                                        {
-                                            new_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
-                                            
-                                            if (adding_symbols_to_executable)
-                                            {
-                                                bool get_dependent_files = true;
-                                                target->SetExecutableModule(new_module_sp, get_dependent_files);
-                                            }
-                                            else
-                                            {
-                                                module_list.Append (new_module_sp);
-                                                target->ModulesDidLoad(module_list);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // The module has not yet created its symbol vendor, we can just
-                                        // give the existing target module the symfile path to use for
-                                        // when it decides to create it!
-                                        old_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
-                                    }
+                                    // Let clients know something changed in the module
+                                    // if it is currently loaded
+                                    ModuleList module_list;
+                                    module_list.Append (old_module_sp);
+                                    target->ModulesDidLoad (module_list);
                                 }
                             }
                             else

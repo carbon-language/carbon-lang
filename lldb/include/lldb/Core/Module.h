@@ -758,6 +758,8 @@ public:
     SetSymbolFileFileSpec (const FileSpec &file)
     {
         m_symfile_spec = file;
+        m_symfile_ap.reset();
+        m_did_load_symbol_vendor = false;
     }
 
     const TimeValue &
