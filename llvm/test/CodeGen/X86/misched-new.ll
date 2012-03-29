@@ -1,8 +1,9 @@
 ; RUN: llc -march=x86-64 -mcpu=core2 -enable-misched -misched=shuffle -misched-bottomup < %s
-; XFAIL: *
-; ...should pass. See PR12324: misched bringup
 ;
 ; Interesting MachineScheduler cases.
+;
+; FIXME: There should be an assert in the coalescer that we're not rematting
+; "not-quite-dead" copies, but that breaks a lot of tests <rdar://problem/11148682>.
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 

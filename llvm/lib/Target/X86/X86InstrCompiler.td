@@ -301,34 +301,67 @@ def : Pat<(sub GR64:$op, (i64 (X86setcc_c X86_COND_B, EFLAGS))),
 // String Pseudo Instructions
 //
 let Defs = [ECX,EDI,ESI], Uses = [ECX,EDI,ESI], isCodeGenOnly = 1 in {
-def REP_MOVSB : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
-                  [(X86rep_movs i8)], IIC_REP_MOVS>, REP;
-def REP_MOVSW : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
-                  [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize;
-def REP_MOVSD : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
-                  [(X86rep_movs i32)], IIC_REP_MOVS>, REP;
+def REP_MOVSB_32 : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
+                    [(X86rep_movs i8)], IIC_REP_MOVS>, REP,
+                   Requires<[In32BitMode]>;
+def REP_MOVSW_32 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
+                    [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize,
+                   Requires<[In32BitMode]>;
+def REP_MOVSD_32 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
+                    [(X86rep_movs i32)], IIC_REP_MOVS>, REP,
+                   Requires<[In32BitMode]>;
 }
 
-let Defs = [RCX,RDI,RSI], Uses = [RCX,RDI,RSI], isCodeGenOnly = 1 in
-def REP_MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "{rep;movsq|rep movsq}",
-                   [(X86rep_movs i64)], IIC_REP_MOVS>, REP;
-
+let Defs = [RCX,RDI,RSI], Uses = [RCX,RDI,RSI], isCodeGenOnly = 1 in {
+def REP_MOVSB_64 : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
+                    [(X86rep_movs i8)], IIC_REP_MOVS>, REP,
+                   Requires<[In64BitMode]>;
+def REP_MOVSW_64 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
+                    [(X86rep_movs i16)], IIC_REP_MOVS>, REP, OpSize,
+                   Requires<[In64BitMode]>;
+def REP_MOVSD_64 : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
+                    [(X86rep_movs i32)], IIC_REP_MOVS>, REP,
+                   Requires<[In64BitMode]>;
+def REP_MOVSQ_64 : RI<0xA5, RawFrm, (outs), (ins), "{rep;movsq|rep movsq}",
+                    [(X86rep_movs i64)], IIC_REP_MOVS>, REP,
+                   Requires<[In64BitMode]>;
+}
 
 // FIXME: Should use "(X86rep_stos AL)" as the pattern.
-let Defs = [ECX,EDI], Uses = [AL,ECX,EDI], isCodeGenOnly = 1 in
-def REP_STOSB : I<0xAA, RawFrm, (outs), (ins), "{rep;stosb|rep stosb}",
-                  [(X86rep_stos i8)], IIC_REP_STOS>, REP;
-let Defs = [ECX,EDI], Uses = [AX,ECX,EDI], isCodeGenOnly = 1 in
-def REP_STOSW : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
-                  [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize;
-let Defs = [ECX,EDI], Uses = [EAX,ECX,EDI], isCodeGenOnly = 1 in
-def REP_STOSD : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
-                  [(X86rep_stos i32)], IIC_REP_STOS>, REP;
+let Defs = [ECX,EDI], isCodeGenOnly = 1 in {
+  let Uses = [AL,ECX,EDI] in
+  def REP_STOSB_32 : I<0xAA, RawFrm, (outs), (ins), "{rep;stosb|rep stosb}",
+                      [(X86rep_stos i8)], IIC_REP_STOS>, REP,
+                     Requires<[In32BitMode]>;
+  let Uses = [AX,ECX,EDI] in
+  def REP_STOSW_32 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
+                      [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize,
+                     Requires<[In32BitMode]>;
+  let Uses = [EAX,ECX,EDI] in
+  def REP_STOSD_32 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
+                      [(X86rep_stos i32)], IIC_REP_STOS>, REP,
+                     Requires<[In32BitMode]>;
+}
 
-let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI], isCodeGenOnly = 1 in
-def REP_STOSQ : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
-                   [(X86rep_stos i64)], IIC_REP_STOS>, REP;
-
+let Defs = [RCX,RDI], isCodeGenOnly = 1 in {
+  let Uses = [AL,RCX,RDI] in
+  def REP_STOSB_64 : I<0xAA, RawFrm, (outs), (ins), "{rep;stosb|rep stosb}",
+                      [(X86rep_stos i8)], IIC_REP_STOS>, REP,
+                     Requires<[In64BitMode]>;
+  let Uses = [AX,RCX,RDI] in
+  def REP_STOSW_64 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
+                      [(X86rep_stos i16)], IIC_REP_STOS>, REP, OpSize,
+                     Requires<[In64BitMode]>;
+  let Uses = [RAX,RCX,RDI] in
+  def REP_STOSD_64 : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
+                      [(X86rep_stos i32)], IIC_REP_STOS>, REP,
+                     Requires<[In64BitMode]>;
+ 
+  let Uses = [RAX,RCX,RDI] in
+  def REP_STOSQ_64 : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
+                      [(X86rep_stos i64)], IIC_REP_STOS>, REP,
+                     Requires<[In64BitMode]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Thread Local Storage Instructions
