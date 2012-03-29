@@ -377,6 +377,19 @@ bool DICompileUnit::Verify() const {
   return true;
 }
 
+/// Verify - Verify that an ObjC property is well formed.
+bool DIObjCProperty::Verify() const {
+  if (!DbgNode)
+    return false;
+  unsigned Tag = getTag();
+  if (Tag != dwarf::DW_TAG_APPLE_Property) return false;
+  DIType Ty = getType();
+  if (!Ty.Verify()) return false;
+
+  // Don't worry about the rest of the strings for now.
+  return true;
+}
+
 /// Verify - Verify that a type descriptor is well formed.
 bool DIType::Verify() const {
   if (!DbgNode)

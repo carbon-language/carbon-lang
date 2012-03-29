@@ -211,13 +211,19 @@ namespace llvm {
     /// createObjCProperty - Create debugging information entry for Objective-C
     /// property.
     /// @param Name         Property name.
+    /// @param File         File where this property is defined.
+    /// @param LineNumber   Line number.
     /// @param GetterName   Name of the Objective C property getter selector.
     /// @param SetterName   Name of the Objective C property setter selector.
     /// @param PropertyAttributes Objective C property attributes.
-    DIObjCProperty createObjCProperty(StringRef Name, StringRef GetterName,
-                                      StringRef SetterName, 
-                                      unsigned PropertyAttributes);
-
+    /// @param Ty           Type.
+    DIObjCProperty createObjCProperty(StringRef Name,
+				      DIFile File, unsigned LineNumber,
+				      StringRef GetterName,
+				      StringRef SetterName,
+				      unsigned PropertyAttributes,
+				      DIType Ty);
+      
     /// createClassType - Create debugging information entry for a class.
     /// @param Scope        Scope in which this class is defined.
     /// @param Name         class name.

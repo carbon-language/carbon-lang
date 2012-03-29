@@ -188,6 +188,24 @@ void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
+void CompileUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
+  // Verify type.
+  if (!Ty.Verify())
+    return;
+
+  unsigned Line = Ty.getLineNumber();
+  if (Line == 0)
+    return;
+  DIFile File = Ty.getFile();
+  unsigned FileID = DD->GetOrCreateSourceID(File.getFilename(),
+					    File.getDirectory());
+  assert(FileID && "Invalid file id");
+  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+}
+
+/// addSourceLine - Add location information to specified debug information
+/// entry.
 void CompileUnit::addSourceLine(DIE *Die, DINameSpace NS) {
   // Verify namespace.
   if (!NS.Verify())
@@ -839,6 +857,8 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         ElemDie = new DIE(Property.getTag());
         StringRef PropertyName = Property.getObjCPropertyName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
+	addType(ElemDie, Property.getType());
+	addSourceLine(ElemDie, Property);
         StringRef GetterName = Property.getObjCPropertyGetterName();
         if (!GetterName.empty())
           addString(ElemDie, dwarf::DW_AT_APPLE_property_getter, GetterName);

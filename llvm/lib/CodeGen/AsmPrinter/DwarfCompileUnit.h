@@ -213,6 +213,7 @@ public:
   void addSourceLine(DIE *Die, DISubprogram SP);
   void addSourceLine(DIE *Die, DIType Ty);
   void addSourceLine(DIE *Die, DINameSpace NS);
+  void addSourceLine(DIE *Die, DIObjCProperty Ty);
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
