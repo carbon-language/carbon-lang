@@ -950,20 +950,21 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   if ((PatchedName.startswith("cmp") || PatchedName.startswith("vcmp")) &&
       (PatchedName.endswith("ss") || PatchedName.endswith("sd") ||
        PatchedName.endswith("ps") || PatchedName.endswith("pd"))) {
-    bool IsVCMP = PatchedName.startswith("vcmp");
+    bool IsVCMP = PatchedName[0] == 'v';
     unsigned SSECCIdx = IsVCMP ? 4 : 3;
     unsigned SSEComparisonCode = StringSwitch<unsigned>(
       PatchedName.slice(SSECCIdx, PatchedName.size() - 2))
-      .Case("eq",          0)
-      .Case("lt",          1)
-      .Case("le",          2)
-      .Case("unord",       3)
-      .Case("neq",         4)
-      .Case("nlt",         5)
-      .Case("nle",         6)
-      .Case("ord",         7)
-      .Case("eq_uq",       8)
-      .Case("nge",         9)
+      .Case("eq",       0x00)
+      .Case("lt",       0x01)
+      .Case("le",       0x02)
+      .Case("unord",    0x03)
+      .Case("neq",      0x04)
+      .Case("nlt",      0x05)
+      .Case("nle",      0x06)
+      .Case("ord",      0x07)
+      /* AVX only from here */
+      .Case("eq_uq",    0x08)
+      .Case("nge",      0x09)
       .Case("ngt",      0x0A)
       .Case("false",    0x0B)
       .Case("neq_oq",   0x0C)
@@ -987,7 +988,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       .Case("gt_oq",    0x1E)
       .Case("true_us",  0x1F)
       .Default(~0U);
-    if (SSEComparisonCode != ~0U) {
+    if (SSEComparisonCode != ~0U && (IsVCMP || SSEComparisonCode < 8)) {
       ExtraImmOp = MCConstantExpr::Create(SSEComparisonCode,
                                           getParser().getContext());
       if (PatchedName.endswith("ss")) {
