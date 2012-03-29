@@ -228,9 +228,9 @@ public:
 
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transfered to the resulting File object.
-  static llvm::error_code make(llvm::OwningPtr<llvm::MemoryBuffer>& mb, 
-                               llvm::StringRef path, 
-                               llvm::OwningPtr<File>& result) {
+  static llvm::error_code make(std::unique_ptr<llvm::MemoryBuffer> mb,
+                               llvm::StringRef path,
+                               std::unique_ptr<File> &result) {
     const uint8_t* const base = 
                        reinterpret_cast<const uint8_t*>(mb->getBufferStart());
     const NativeFileHeader* const header = 
@@ -247,7 +247,7 @@ public:
       return make_error_code(native_reader_error::file_too_short);
 
     // instantiate NativeFile object and add values to it as found
-    NativeFile* file = new NativeFile(mb, path);
+    std::unique_ptr<NativeFile> file(new NativeFile(std::move(mb), path));
     
     // process each chunk
     for(uint32_t i=0; i < header->chunkCount; ++i) {
@@ -294,16 +294,12 @@ public:
           return make_error_code(native_reader_error::unknown_chunk_type);
       }
       if ( ec ) {
-        delete file;
         return ec;
       }
-      
       // TO DO: validate enough chunks were used
-      
-      result.reset(file);
     }
 
-
+    result.reset(file.release());
     return make_error_code(native_reader_error::success);
   }
   
@@ -622,9 +618,9 @@ private:
  
   
   // private constructor, only called by make()
-  NativeFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb, llvm::StringRef path) :
+  NativeFile(std::unique_ptr<llvm::MemoryBuffer> mb, llvm::StringRef path) :
     lld::File(path), 
-    _buffer(mb.take()),  // NativeFile now takes ownership of buffer
+    _buffer(std::move(mb)),  // NativeFile now takes ownership of buffer
     _header(NULL), 
     _targetsTable(NULL), 
     _targetsTableCount(0),
@@ -679,7 +675,7 @@ private:
   };
 
 
-  llvm::OwningPtr<llvm::MemoryBuffer>  _buffer;
+  std::unique_ptr<llvm::MemoryBuffer> _buffer;
   const NativeFileHeader*         _header;
   AtomArray<DefinedAtom>          _definedAtoms;
   AtomArray<UndefinedAtom>        _undefinedAtoms;
@@ -807,10 +803,10 @@ inline void NativeReferenceV1::setTarget(const Atom* newAtom) {
 //
 // Instantiate an lld::File from the given native object file buffer
 //
-llvm::error_code parseNativeObjectFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb, 
-                                       llvm::StringRef path, 
-                                       llvm::OwningPtr<File>& result) {
-  return NativeFile::make(mb, path, result);
+llvm::error_code parseNativeObjectFile(std::unique_ptr<llvm::MemoryBuffer> mb,
+                                       llvm::StringRef path,
+                                       std::unique_ptr<File> &result) {
+  return NativeFile::make(std::move(mb), path, result);
 }
 
 
@@ -818,14 +814,16 @@ llvm::error_code parseNativeObjectFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb,
 //
 // Instantiate an lld::File from the given native object file path
 //
-llvm::error_code parseNativeObjectFileOrSTDIN(llvm::StringRef path, 
-                                              llvm::OwningPtr<File>& result) {
+llvm::error_code parseNativeObjectFileOrSTDIN(llvm::StringRef path,
+                                              std::unique_ptr<File>& result) {
   llvm::OwningPtr<llvm::MemoryBuffer> mb;
   llvm::error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
   if ( ec ) 
       return ec;
 
-  return parseNativeObjectFile(mb, path, result);
+  return parseNativeObjectFile( std::unique_ptr<llvm::MemoryBuffer>(mb.take())
+                              , path
+                              , result);
 }
 
 

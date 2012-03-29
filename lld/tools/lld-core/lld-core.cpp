@@ -550,7 +550,7 @@ int main(int argc, char *argv[]) {
 //  out << "native file: " << tempPath.str() << "\n";
   
   // read native file
-  llvm::OwningPtr<lld::File> natFile;
+  std::unique_ptr<lld::File> natFile;
   if ( error(parseNativeObjectFileOrSTDIN(tempPath, natFile)) ) 
 	return 1;
 	
