@@ -77,3 +77,26 @@ void f() {
   'c'_z;
   'd'_whoops;
 }
+
+template<typename ...Ts> struct MisplacedEllipsis {
+  int a(Ts ...(x)); // expected-error {{'...' must immediately precede declared identifier}}
+  int b(Ts ...&x); // expected-error {{'...' must immediately precede declared identifier}}
+  int c(Ts ...&); // expected-error {{'...' must be innermost component of anonymous pack declaration}}
+  int d(Ts ...(...&...)); // expected-error 2{{'...' must be innermost component of anonymous pack declaration}}
+  int e(Ts ...*[]); // expected-error {{'...' must be innermost component of anonymous pack declaration}}
+  int f(Ts ...(...*)()); // expected-error 2{{'...' must be innermost component of anonymous pack declaration}}
+  int g(Ts ...()); // ok
+};
+namespace TestMisplacedEllipsisRecovery {
+  MisplacedEllipsis<int, char> me;
+  int i; char k;
+  int *ip; char *kp;
+  int ifn(); char kfn();
+  int a = me.a(i, k);
+  int b = me.b(i, k);
+  int c = me.c(i, k);
+  int d = me.d(i, k);
+  int e = me.e(&ip, &kp);
+  int f = me.f(ifn, kfn);
+  int g = me.g(ifn, kfn);
+}

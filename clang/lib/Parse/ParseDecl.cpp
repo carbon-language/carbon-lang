@@ -3540,6 +3540,17 @@ void Parser::ParseDeclarator(Declarator &D) {
   ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
 }
 
+static bool isPtrOperatorToken(tok::TokenKind Kind, const LangOptions &Lang) {
+  if (Kind == tok::star || Kind == tok::caret)
+    return true;
+
+  // We parse rvalue refs in C++03, because otherwise the errors are scary.
+  if (!Lang.CPlusPlus)
+    return false;
+
+  return Kind == tok::amp || Kind == tok::ampamp;
+}
+
 /// ParseDeclaratorInternal - Parse a C or C++ declarator. The direct-declarator
 /// is parsed by the function passed to it. Pass null, and the direct-declarator
 /// isn't parsed at all, making this function effectively parse the C++
@@ -3611,10 +3622,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 
   tok::TokenKind Kind = Tok.getKind();
   // Not a pointer, C++ reference, or block.
-  if (Kind != tok::star && Kind != tok::caret &&
-      (Kind != tok::amp || !getLangOpts().CPlusPlus) &&
-      // We parse rvalue refs in C++03, because otherwise the errors are scary.
-      (Kind != tok::ampamp || !getLangOpts().CPlusPlus)) {
+  if (!isPtrOperatorToken(Kind, getLangOpts())) {
     if (DirectDeclParser)
       (this->*DirectDeclParser)(D);
     return;
@@ -3706,6 +3714,19 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   }
 }
 
+static void diagnoseMisplacedEllipsis(Parser &P, Declarator &D,
+                                      SourceLocation EllipsisLoc) {
+  if (EllipsisLoc.isValid()) {
+    FixItHint Insertion;
+    if (!D.getEllipsisLoc().isValid()) {
+      Insertion = FixItHint::CreateInsertion(D.getIdentifierLoc(), "...");
+      D.setEllipsisLoc(EllipsisLoc);
+    }
+    P.Diag(EllipsisLoc, diag::err_misplaced_ellipsis_in_declaration)
+      << FixItHint::CreateRemoval(EllipsisLoc) << Insertion << !D.hasName();
+  }
+}
+
 /// ParseDirectDeclarator
 ///       direct-declarator: [C99 6.7.5]
 /// [C99]   identifier
@@ -3767,13 +3788,26 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     //   abstract-declarator if the type of the parameter names a template 
     //   parameter pack that has not been expanded; otherwise, it is parsed
     //   as part of the parameter-declaration-clause.
-    if (Tok.is(tok::ellipsis) &&
+    if (Tok.is(tok::ellipsis) && D.getCXXScopeSpec().isEmpty() &&
         !((D.getContext() == Declarator::PrototypeContext ||
            D.getContext() == Declarator::BlockLiteralContext) &&
           NextToken().is(tok::r_paren) &&
-          !Actions.containsUnexpandedParameterPacks(D)))
-      D.setEllipsisLoc(ConsumeToken());
-    
+          !Actions.containsUnexpandedParameterPacks(D))) {
+      SourceLocation EllipsisLoc = ConsumeToken();
+      if (isPtrOperatorToken(Tok.getKind(), getLangOpts())) {
+        // The ellipsis was put in the wrong place. Recover, and explain to
+        // the user what they should have done.
+        ParseDeclarator(D);
+        diagnoseMisplacedEllipsis(*this, D, EllipsisLoc);
+        return;
+      } else
+        D.setEllipsisLoc(EllipsisLoc);
+
+      // The ellipsis can't be followed by a parenthesized declarator. We
+      // check for that in ParseParenDeclarator, after we have disambiguated
+      // the l_paren token.
+    }
+
     if (Tok.is(tok::identifier) || Tok.is(tok::kw_operator) ||
         Tok.is(tok::annot_template_id) || Tok.is(tok::tilde)) {
       // We found something that indicates the start of an unqualified-id.
@@ -3818,7 +3852,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     ConsumeToken();
     goto PastIdentifier;
   }
-    
+
   if (Tok.is(tok::l_paren)) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'
@@ -3830,7 +3864,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // the scope already. Re-enter the scope, if we need to.
     if (D.getCXXScopeSpec().isSet()) {
       // If there was an error parsing parenthesized declarator, declarator
-      // scope may have been enterred before. Don't do it again.
+      // scope may have been entered before. Don't do it again.
       if (!D.isInvalidType() &&
           Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
@@ -3965,9 +3999,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // direct-declarator: '(' declarator ')'
   // direct-declarator: '(' attributes declarator ')'
   if (isGrouping) {
+    SourceLocation EllipsisLoc = D.getEllipsisLoc();
+    D.setEllipsisLoc(SourceLocation());
+
     bool hadGroupingParens = D.hasGroupingParens();
     D.setGroupingParens(true);
-
     ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
     // Match the ')'.
     T.consumeClose();
@@ -3976,6 +4012,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
                   attrs, T.getCloseLocation());
 
     D.setGroupingParens(hadGroupingParens);
+
+    // An ellipsis cannot be placed outside parentheses.
+    if (EllipsisLoc.isValid())
+      diagnoseMisplacedEllipsis(*this, D, EllipsisLoc);
+
     return;
   }
 

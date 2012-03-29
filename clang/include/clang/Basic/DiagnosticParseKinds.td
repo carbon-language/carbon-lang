@@ -428,6 +428,9 @@ def err_default_arg_unparsed : Error<
   "unexpected end of default argument expression">;
 def err_parser_impl_limit_overflow : Error<
   "parser recursion limit reached, program too complex">, DefaultFatal;
+def err_misplaced_ellipsis_in_declaration : Error<
+  "'...' must %select{immediately precede declared identifier|"
+  "be innermost component of anonymous pack declaration}0">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
