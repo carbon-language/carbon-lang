@@ -1,7 +1,7 @@
 ; RUN: llc < %s -widen-vmovs -mcpu=cortex-a8 -verify-machineinstrs | FileCheck %s
 target triple = "thumbv7-apple-ios"
 
-; The 0.0 constant is loaded from the constant pool and kept in a register.
+; The 1.0e+10 constant is loaded from the constant pool and kept in a register.
 ; CHECK: %entry
 ; CHECK: vldr s
 ; The float loop variable is initialized with a vmovs from the constant register.
@@ -24,8 +24,8 @@ for.body4:
   br label %for.body.i
 
 for.body.i:
-  %tmp3.i = phi float [ 0.000000e+00, %for.body4 ], [ %add.i, %for.body.i ]
-  %add.i = fadd float %tmp3.i, 0.000000e+00
+  %tmp3.i = phi float [ 1.000000e+10, %for.body4 ], [ %add.i, %for.body.i ]
+  %add.i = fadd float %tmp3.i, 1.000000e+10
   %exitcond.i = icmp eq i32 undef, 41
   br i1 %exitcond.i, label %rInnerproduct.exit, label %for.body.i
 
