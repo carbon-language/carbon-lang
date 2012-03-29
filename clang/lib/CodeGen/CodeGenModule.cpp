@@ -1941,12 +1941,11 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
 
 static llvm::StringMapEntry<llvm::Constant*> &
 GetConstantStringEntry(llvm::StringMap<llvm::Constant*> &Map,
-		       const StringLiteral *Literal,
-		       unsigned &StringLength)
-{
-	StringRef String = Literal->getString();
-	StringLength = String.size();
-	return Map.GetOrCreateValue(String);
+                       const StringLiteral *Literal,
+                       unsigned &StringLength) {
+  StringRef String = Literal->getString();
+  StringLength = String.size();
+  return Map.GetOrCreateValue(String);
 }
 
 llvm::Constant *
