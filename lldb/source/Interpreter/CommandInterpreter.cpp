@@ -244,6 +244,12 @@ CommandInterpreter::Initialize ()
         AddOrReplaceAliasOptions ("r", alias_arguments_vector_sp);
         AddOrReplaceAliasOptions ("run", alias_arguments_vector_sp);
     }
+    
+    cmd_obj_sp = GetCommandSPExact ("target symbols add", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("add-dsym", cmd_obj_sp);
+    }
 }
 
 const char *
