@@ -204,6 +204,8 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
       const char *symbolName = entry.getKey().data();
       info.name = symbolName;
       info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+      info.isFunction = false;
+      info.symbol = clgv;
       entry.setValue(info);
     }
   }
@@ -213,11 +215,13 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
   if (objcClassNameFromExpression(c->getOperand(2), className)) {
     StringSet::value_type &entry = _defines.GetOrCreateValue(className);
     entry.setValue(1);
+
     NameAndAttributes info;
     info.name = entry.getKey().data();
-    info.attributes = lto_symbol_attributes(LTO_SYMBOL_PERMISSIONS_DATA |
-                                            LTO_SYMBOL_DEFINITION_REGULAR |
-                                            LTO_SYMBOL_SCOPE_DEFAULT);
+    info.attributes = LTO_SYMBOL_PERMISSIONS_DATA |
+      LTO_SYMBOL_DEFINITION_REGULAR | LTO_SYMBOL_SCOPE_DEFAULT;
+    info.isFunction = false;
+    info.symbol = clgv;
     _symbols.push_back(info);
   }
 }
@@ -242,6 +246,8 @@ void LTOModule::addObjCCategory(GlobalVariable *clgv) {
   const char *symbolName = entry.getKey().data();
   info.name = symbolName;
   info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+  info.isFunction = false;
+  info.symbol = clgv;
   entry.setValue(info);
 }
 
@@ -260,6 +266,8 @@ void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
   const char *symbolName = entry.getKey().data();
   info.name = symbolName;
   info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+  info.isFunction = false;
+  info.symbol = clgv;
   entry.setValue(info);
 }
 
@@ -332,9 +340,9 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
   uint32_t attr = align ? CountTrailingZeros_32(def->getAlignment()) : 0;
 
   // set permissions part
-  if (isFunction)
+  if (isFunction) {
     attr |= LTO_SYMBOL_PERMISSIONS_CODE;
-  else {
+  } else {
     GlobalVariable *gv = dyn_cast<GlobalVariable>(def);
     if (gv && gv->isConstant())
       attr |= LTO_SYMBOL_PERMISSIONS_RODATA;
@@ -366,15 +374,19 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, bool isFunction) {
   else
     attr |= LTO_SYMBOL_SCOPE_INTERNAL;
 
-  // add to table of symbols
-  NameAndAttributes info;
   StringSet::value_type &entry = _defines.GetOrCreateValue(Buffer);
   entry.setValue(1);
 
+  // fill information structure
+  NameAndAttributes info;
   StringRef Name = entry.getKey();
   info.name = Name.data();
   assert(info.name[Name.size()] == '\0');
-  info.attributes = (lto_symbol_attributes)attr;
+  info.attributes = attr;
+  info.isFunction = isFunction;
+  info.symbol = def;
+
+  // add to table of symbols
   _symbols.push_back(info);
 }
 
@@ -389,13 +401,13 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
     return;
 
   entry.setValue(1);
-  const char *symbolName = entry.getKey().data();
-  uint32_t attr = LTO_SYMBOL_DEFINITION_REGULAR;
-  attr |= scope;
-  NameAndAttributes info;
-  info.name = symbolName;
-  info.attributes = (lto_symbol_attributes)attr;
-  _symbols.push_back(info);
+
+  NameAndAttributes &info = _undefines[entry.getKey().data()];
+
+  if (info.isFunction)
+    addDefinedFunctionSymbol(cast<Function>(info.symbol));
+  else
+    addDefinedDataSymbol(info.symbol);
 }
 
 /// addAsmGlobalSymbolUndef - Add a global symbol from module-level ASM to the
@@ -414,14 +426,16 @@ void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   attr |= LTO_SYMBOL_SCOPE_DEFAULT;
   NameAndAttributes info;
   info.name = entry.getKey().data();
-  info.attributes = (lto_symbol_attributes)attr;
+  info.attributes = attr;
+  info.isFunction = false;
+  info.symbol = 0;
 
   entry.setValue(info);
 }
 
 /// addPotentialUndefinedSymbol - Add a symbol which isn't defined just yet to a
 /// list to be resolved later.
-void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl) {
+void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl, bool isFunc) {
   // ignore all llvm.* symbols
   if (decl->getName().startswith("llvm."))
     return;
@@ -448,6 +462,9 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl) {
     info.attributes = LTO_SYMBOL_DEFINITION_WEAKUNDEF;
   else
     info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+
+  info.isFunction = isFunc;
+  info.symbol = decl;
 
   entry.setValue(info);
 }
@@ -605,7 +622,7 @@ namespace {
     }
     virtual void FinishImpl() {}
   };
-}
+} // end anonymous namespace
 
 /// addAsmGlobalSymbols - Add global symbols from module-level ASM to the
 /// defined or undefined lists.
@@ -668,7 +685,7 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
   // add functions
   for (Module::iterator f = _module->begin(), e = _module->end(); f != e; ++f) {
     if (isDeclaration(*f))
-      addPotentialUndefinedSymbol(f);
+      addPotentialUndefinedSymbol(f, true);
     else
       addDefinedFunctionSymbol(f);
   }
@@ -677,7 +694,7 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
   for (Module::global_iterator v = _module->global_begin(),
          e = _module->global_end(); v !=  e; ++v) {
     if (isDeclaration(*v))
-      addPotentialUndefinedSymbol(v);
+      addPotentialUndefinedSymbol(v, false);
     else
       addDefinedDataSymbol(v);
   }
@@ -687,24 +704,24 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
     return true;
 
   // add aliases
-  for (Module::alias_iterator i = _module->alias_begin(),
-         e = _module->alias_end(); i != e; ++i) {
-    if (isDeclaration(*i->getAliasedGlobal()))
+  for (Module::alias_iterator a = _module->alias_begin(),
+         e = _module->alias_end(); a != e; ++a) {
+    if (isDeclaration(*a->getAliasedGlobal()))
       // Is an alias to a declaration.
-      addPotentialUndefinedSymbol(i);
+      addPotentialUndefinedSymbol(a, false);
     else
-      addDefinedDataSymbol(i);
+      addDefinedDataSymbol(a);
   }
 
   // make symbols for all undefines
-  for (StringMap<NameAndAttributes>::iterator it=_undefines.begin(),
-         e = _undefines.end(); it != e; ++it) {
-    // if this symbol also has a definition, then don't make an undefine
-    // because it is a tentative definition
-    if (_defines.count(it->getKey()) == 0) {
-      NameAndAttributes info = it->getValue();
-      _symbols.push_back(info);
-    }
+  for (StringMap<NameAndAttributes>::iterator u =_undefines.begin(),
+         e = _undefines.end(); u != e; ++u) {
+    // If this symbol also has a definition, then don't make an undefine because
+    // it is a tentative definition.
+    if (_defines.count(u->getKey())) continue;
+    NameAndAttributes info = u->getValue();
+    _symbols.push_back(info);
   }
+
   return false;
 }

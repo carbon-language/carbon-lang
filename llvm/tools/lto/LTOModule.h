@@ -43,8 +43,10 @@ private:
   typedef llvm::StringMap<uint8_t> StringSet;
 
   struct NameAndAttributes {
-    const char  *name;
-    uint32_t     attributes;
+    const char        *name;
+    uint32_t           attributes;
+    bool               isFunction;
+    llvm::GlobalValue *symbol;
   };
 
   llvm::OwningPtr<llvm::Module>           _module;
@@ -134,7 +136,7 @@ private:
 
   /// addPotentialUndefinedSymbol - Add a symbol which isn't defined just yet
   /// to a list to be resolved later.
-  void addPotentialUndefinedSymbol(llvm::GlobalValue *dcl);
+  void addPotentialUndefinedSymbol(llvm::GlobalValue *dcl, bool isFunc);
 
   /// addDefinedSymbol - Add a defined symbol to the list.
   void addDefinedSymbol(llvm::GlobalValue *def, bool isFunction);
