@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ..
-DIRS := driver
+DIRS := driver lldb-platform
 
 include $(LLDB_LEVEL)/Makefile

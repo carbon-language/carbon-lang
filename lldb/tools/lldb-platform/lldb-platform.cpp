@@ -24,7 +24,7 @@
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
-#include "GDBRemoteCommunicationServer.h"
+#include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 using namespace lldb;
 using namespace lldb_private;
