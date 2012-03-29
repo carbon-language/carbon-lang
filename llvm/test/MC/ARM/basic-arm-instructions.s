@@ -494,6 +494,7 @@ Lforward:
         cmp r7, r8, ror r2
         cmp r1, r6, rrx
         cmp r0, #-2
+        cmp lr, #0
 
 @ CHECK: cmp	r1, #15                 @ encoding: [0x0f,0x00,0x51,0xe3]
 @ CHECK: cmp	r1, r6                  @ encoding: [0x06,0x00,0x51,0xe1]
@@ -508,6 +509,7 @@ Lforward:
 @ CHECK: cmp	r7, r8, ror r2          @ encoding: [0x78,0x02,0x57,0xe1]
 @ CHECK: cmp	r1, r6, rrx             @ encoding: [0x66,0x00,0x51,0xe1]
 @ CHECK: cmn	r0, #2                  @ encoding: [0x02,0x00,0x70,0xe3]
+@ CHECK: cmp  lr, #0                    @ encoding: [0x00,0x00,0x5e,0xe3]
 
 
 @------------------------------------------------------------------------------

@@ -251,7 +251,8 @@ def imm16_31 : ImmLeaf<i32, [{
 
 def so_imm_neg_asmoperand : AsmOperandClass { let Name = "ARMSOImmNeg"; }
 def so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
-    return ARM_AM::getSOImmVal(-(uint32_t)N->getZExtValue()) != -1;
+    int64_t Value = -(int)N->getZExtValue();
+    return Value && ARM_AM::getSOImmVal(Value) != -1;
   }], so_imm_neg_XFORM> {
   let ParserMatchClass = so_imm_neg_asmoperand;
 }
