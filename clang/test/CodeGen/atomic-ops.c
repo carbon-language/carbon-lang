@@ -81,3 +81,39 @@ int lock_free() {
   // CHECK: ret i32 1
   return __atomic_is_lock_free(sizeof(_Atomic(int)));
 }
+
+// Tests for atomic operations on big values.  These should call the functions
+// defined here:
+// http://gcc.gnu.org/wiki/Atomic/GCCMM/LIbrary#The_Library_interface
+
+struct foo {
+  int big[128];
+};
+
+_Atomic(struct foo) bigAtomic;
+
+void structAtomicStore() {
+  // CHECK: @structAtomicStore
+  struct foo f = {0};
+  __atomic_store(&bigAtomic, f, 5);
+  // CHECK: call void @__atomic_store(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %3, i32 5)
+}
+void structAtomicLoad() {
+  // CHECK: @structAtomicLoad
+  struct foo f = __atomic_load(&bigAtomic, 5);
+  // CHECK: call void @__atomic_load(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %0, i32 5)
+}
+struct foo structAtomicExchange() {
+  // CHECK: @structAtomicExchange
+  struct foo f = {0};
+  return __atomic_exchange(&bigAtomic, f, 5);
+  // CHECK: call void @__atomic_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %3, i8* %4, i32 5)
+}
+int structAtomicCmpExchange() {
+  // CHECK: @structAtomicCmpExchange
+  struct foo f = {0};
+  struct foo g = {0};
+  g.big[12] = 12;
+  return __atomic_compare_exchange_strong(&bigAtomic, &f, g, 5, 5);
+  // CHECK: call zeroext i1 @__atomic_compare_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %4, i8* %5, i32 5, i32 5)
+}

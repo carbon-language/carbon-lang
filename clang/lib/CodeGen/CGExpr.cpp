@@ -2798,7 +2798,6 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     Val1 = EmitScalarExpr(E->getVal1());
     Val2 = EmitValToTemp(*this, E->getVal2());
     OrderFail = EmitScalarExpr(E->getOrderFail());
-    (void)OrderFail; // OrderFail is unused at the moment
   } else if ((E->getOp() == AtomicExpr::Add || E->getOp() == AtomicExpr::Sub) &&
              MemTy->isPointerType()) {
     // For pointers, we're required to do a bit of math: adding 1 to an int*
@@ -2817,50 +2816,78 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   if (E->getOp() != AtomicExpr::Store && !Dest)
     Dest = CreateMemTemp(E->getType(), ".atomicdst");
 
+  // Use a library call.  See: http://gcc.gnu.org/wiki/Atomic/GCCMM/LIbrary .
   if (UseLibcall) {
-    // FIXME: Finalize what the libcalls are actually supposed to look like.
-    // See also http://gcc.gnu.org/wiki/Atomic/GCCMM/LIbrary .
-    return EmitUnsupportedRValue(E, "atomic library call");
-  }
-#if 0
-  if (UseLibcall) {
+
+    llvm::SmallVector<QualType, 5> Params;
+    CallArgList Args;
+    // Size is always the first parameter
+    Args.add(RValue::get(llvm::ConstantInt::get(SizeTy, Size)),
+             getContext().getSizeType());
+    // Atomic address is always the second parameter
+    Args.add(RValue::get(EmitCastToVoidPtr(Ptr)),
+             getContext().VoidPtrTy);
+
     const char* LibCallName;
+    QualType RetTy = getContext().VoidTy;
     switch (E->getOp()) {
+    // There is only one libcall for compare an exchange, because there is no
+    // optimisation benefit possible from a libcall version of a weak compare
+    // and exchange.
+    // bool __atomic_compare_exchange(size_t size, void *obj, void *expected,
+     //                               void *desired, int success, int failure)
     case AtomicExpr::CmpXchgWeak:
-      LibCallName = "__atomic_compare_exchange_generic"; break;
     case AtomicExpr::CmpXchgStrong:
-      LibCallName = "__atomic_compare_exchange_generic"; break;
+      LibCallName = "__atomic_compare_exchange";
+      RetTy = getContext().BoolTy;
+      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
+               getContext().VoidPtrTy);
+      Args.add(RValue::get(EmitCastToVoidPtr(Val2)),
+               getContext().VoidPtrTy);
+      Args.add(RValue::get(Order),
+               getContext().IntTy);
+      Order = OrderFail;
+      break;
+    // void __atomic_exchange(size_t size, void *mem, void *val, void *return,
+    //                        int order)
+    case AtomicExpr::Xchg:
+      LibCallName = "__atomic_exchange";
+      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
+               getContext().VoidPtrTy);
+      Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
+               getContext().VoidPtrTy);
+      break;
+    // void __atomic_store(size_t size, void *mem, void *val, int order)
+    case AtomicExpr::Store:
+      LibCallName = "__atomic_store";
+      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
+               getContext().VoidPtrTy);
+      break;
+    // void __atomic_load(size_t size, void *mem, void *return, int order)
+    case AtomicExpr::Load:
+      LibCallName = "__atomic_load";
+      Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
+               getContext().VoidPtrTy);
+      break;
+#if 0
+    // These are only defined for 1-16 byte integers.  It is not clear what
+    // their semantics would be on anything else...
     case AtomicExpr::Add:   LibCallName = "__atomic_fetch_add_generic"; break;
     case AtomicExpr::Sub:   LibCallName = "__atomic_fetch_sub_generic"; break;
     case AtomicExpr::And:   LibCallName = "__atomic_fetch_and_generic"; break;
     case AtomicExpr::Or:    LibCallName = "__atomic_fetch_or_generic"; break;
     case AtomicExpr::Xor:   LibCallName = "__atomic_fetch_xor_generic"; break;
-    case AtomicExpr::Xchg:  LibCallName = "__atomic_exchange_generic"; break;
-    case AtomicExpr::Store: LibCallName = "__atomic_store_generic"; break;
-    case AtomicExpr::Load:  LibCallName = "__atomic_load_generic"; break;
+#endif
+    default: return EmitUnsupportedRValue(E, "atomic library call");
     }
-    llvm::SmallVector<QualType, 4> Params;
-    CallArgList Args;
-    QualType RetTy = getContext().VoidTy;
-    if (E->getOp() != AtomicExpr::Store && !E->isCmpXChg())
-      Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
-               getContext().VoidPtrTy);
-    Args.add(RValue::get(EmitCastToVoidPtr(Ptr)),
-             getContext().VoidPtrTy);
-    if (E->getOp() != AtomicExpr::Load)
-      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
-               getContext().VoidPtrTy);
-    if (E->isCmpXChg()) {
-      Args.add(RValue::get(EmitCastToVoidPtr(Val2)),
-               getContext().VoidPtrTy);
-      RetTy = getContext().IntTy;
-    }
-    Args.add(RValue::get(llvm::ConstantInt::get(SizeTy, Size)),
-             getContext().getSizeType());
+    // order is always the last parameter
+    Args.add(RValue::get(Order),
+             getContext().IntTy);
+
     const CGFunctionInfo &FuncInfo =
-        CGM.getTypes().arrangeFunctionCall(RetTy, Args, FunctionType::ExtInfo(),
-                                           /*variadic*/ false);
-    llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FuncInfo, false);
+        CGM.getTypes().arrangeFunctionCall(RetTy, Args,
+            FunctionType::ExtInfo(), RequiredArgs::All);
+    llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FuncInfo);
     llvm::Constant *Func = CGM.CreateRuntimeFunction(FTy, LibCallName);
     RValue Res = EmitCall(FuncInfo, Func, ReturnValueSlot(), Args);
     if (E->isCmpXChg())
@@ -2869,7 +2896,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       return RValue::get(0);
     return ConvertTempToRValue(*this, E->getType(), Dest);
   }
-#endif
+
   llvm::Type *IPtrTy =
       llvm::IntegerType::get(getLLVMContext(), Size * 8)->getPointerTo();
   llvm::Value *OrigDest = Dest;
