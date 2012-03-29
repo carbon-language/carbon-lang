@@ -43,17 +43,18 @@ Optimizations (ongoing)</h3>
 </td></tr>
 
 <tr>
-<th align="left"> Model integer wrapping
+<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=12397">Model
+integer wrapping</a>
 </th><td align="center" class='inprogress'> Planning
-</td><td> Tobias
+</td><td>
 </td></tr>
 <tr>
 <th align="left"> Variable size multi-dimensional arrays
 </th><td align="center" class='inprogress'> Planning
-</td><td> Tobias
+</td><td>
 </td></tr>
 <tr><td colspan='4'>&nbsp;</td></tr>
-<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Middle Part </th></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Optimizer </th></tr>
 <tr style="background: rgb(239, 239, 239)">
   <th width="400px"> Task </th>
   <th width="150px"> Status </th>
@@ -64,7 +65,9 @@ Optimizations (ongoing)</h3>
 </th><td class="open">Open
 </td><td>
 </td></tr>
-<th align="left"> Import/Export - Update to released OpenSCoP format
+<th align="left"> <a
+href="http://llvm.org/bugs/show_bug.cgi?id=10229">Import/Export - Update to
+released OpenSCoP format</a>
 </th><td class="open">Open
 </td><td>
 </td></tr>
@@ -80,24 +83,31 @@ Optimizations (ongoing)</h3>
 href="http://polly.llvm.org/documentation/memaccess.html">Allow optimizers to
 change memory access functions</a>
 </th><td class="inprogress">10% done
-</td><td>Raghesh, Tobias
+</td><td>
 </td><td>
 
 </td></tr>
 <tr>
-<th align="left"> Derive optimal types (instead of always using i64)
-</th><td class="open"> Waiting for code generator support
+<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=10381">Derive
+optimal types (instead of always using i64)</a>
+</th><td class="open"> Requires code generator support
+</td><td>
+</td></tr>
+<tr>
+<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=12398">Remove
+the need for independent blocks</a>
+</th><td class="open"> Open
 </td><td>
 </td></tr>
 <tr>
 <th align="left"> Modularize the code generation to allow FPGA/GPU backends
 </th><td class="inprogress">In progress
-</td><td>Tobias, Ether?
+</td><td>
 </td></tr>
 <tr>
 <th align="left"> Integrate with the LLVM BBVectorizer
 </th><td class="inprogress">In progress
-</td><td>Sebastian
+</td><td>
 </td></tr>
 
 <tr>
@@ -109,16 +119,25 @@ change memory access functions</a>
   <th> Owner </th>
 </tr>
 <tr>
+<th align="left"> Add FORTRAN Support to the LLVM test suite
+</th><td class="open"> Open
+</td><td>
+</td></tr>
+<th align="left"> Add <a
+href="http://www.cse.ohio-state.edu/~pouchet/software/polybench/">Polybench
+3.2</a> to the LLVM test suite
+</th><td class="open"> Open
+</td><td>
+</td></tr>
+<tr>
 <th align="left"> Build against an installed LLVM
 </th><td class="inprogress"> Partial <br />(cmake only, no tests)
-</td><td> Ether
+</td><td>
 </td></tr>
 <tr>
 <th align="left"> Setup buildbot regression testers using LNT
-</th><td class="open">Still open
-</td><td>
-</td><td>
-
+</th><td class="inprogress"> In progress
+</td><td> Tobias
 </td></tr>
 </tbody></table>
 <h3 id="llvm"> Polly as a LLVM Project (Finished February 2012)</h3>
@@ -211,7 +230,7 @@ experience. We also try to increase the amount of code we can optimize.
 </td><td> Tobias
 </td></tr>
 <tr><td colspan='4'>&nbsp;</td></tr>
-<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Middle Part </th></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Optimizer </th></tr>
 <tr style="background: rgb(239, 239, 239)">
   <th width="400px"> Task </th>
   <th width="150px"> Status </th>
@@ -328,7 +347,7 @@ Ether
 </td><td>Tobias, Ether
 </td></tr>
 <tr><td colspan='4'>&nbsp;</td></tr>
-<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Middle Part</th></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Optimizer </th></tr>
 <tr style="background: rgb(239, 239, 239)">
   <th width="400px"> Task </th>
   <th width="150px"> Status </th>
