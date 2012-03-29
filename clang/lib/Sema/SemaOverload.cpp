@@ -4808,7 +4808,6 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
   // Check for a narrowing implicit conversion.
   APValue PreNarrowingValue;
   QualType PreNarrowingType;
-  bool Diagnosed = false;
   switch (SCS->getNarrowingKind(Context, Result.get(), PreNarrowingValue,
                                 PreNarrowingType)) {
   case NK_Variable_Narrowing:
@@ -4818,16 +4817,18 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     break;
 
   case NK_Constant_Narrowing:
-    Diag(From->getLocStart(), diag::err_cce_narrowing)
+    Diag(From->getLocStart(),
+         isSFINAEContext() ? diag::err_cce_narrowing_sfinae :
+                             diag::err_cce_narrowing)
       << CCE << /*Constant*/1
       << PreNarrowingValue.getAsString(Context, PreNarrowingType) << T;
-    Diagnosed = true;
     break;
 
   case NK_Type_Narrowing:
-    Diag(From->getLocStart(), diag::err_cce_narrowing)
+    Diag(From->getLocStart(),
+         isSFINAEContext() ? diag::err_cce_narrowing_sfinae :
+                             diag::err_cce_narrowing)
       << CCE << /*Constant*/0 << From->getType() << T;
-    Diagnosed = true;
     break;
   }
 
@@ -4848,10 +4849,6 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
       return Result;
     }
   }
-
-  // Only issue one narrowing diagnostic.
-  if (Diagnosed)
-    return Result;
 
   // It's not a constant expression. Produce an appropriate diagnostic.
   if (Notes.size() == 1 &&
