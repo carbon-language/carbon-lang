@@ -267,6 +267,19 @@ int internal_memcmp(const void* s1, const void* s2, size_t n) {
   return 0;
 }
 
+// Should not be used in performance-critical places.
+void* internal_memset(void* s, int c, size_t n) {
+  // The next line prevents Clang from making a call to memset() instead of the
+  // loop below.
+  // FIXME: building the runtime with -ffreestanding is a better idea. However
+  // there currently are linktime problems due to PR12396.
+  char volatile *t = (char*)s;
+  for (size_t i = 0; i < n; ++i, ++t) {
+    *t = c;
+  }
+  return s;
+}
+
 char *internal_strstr(const char *haystack, const char *needle) {
   // This is O(N^2), but we are not using it in hot places.
   size_t len1 = internal_strlen(haystack);
@@ -497,7 +510,7 @@ INTERCEPTOR(void*, memmove, void *to, const void *from, size_t size) {
 }
 
 INTERCEPTOR(void*, memset, void *block, int c, size_t size) {
-  // memset is called inside INTERCEPT_FUNCTION on Mac.
+  // memset is called inside Printf.
   if (asan_init_is_running) {
     return REAL(memset)(block, c, size);
   }

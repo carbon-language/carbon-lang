@@ -386,9 +386,18 @@ mach_error_t __interception_allocate_island(void **ptr,
     if (island_allocator_pos != (void*)kIslandBeg) {
       return KERN_NO_SPACE;
     }
+    if (FLAG_v) {
+      Report("Mapped pages %p--%p for branch islands.\n",
+             kIslandBeg, kIslandEnd);
+    }
+    // Should not be very performance-critical.
+    internal_memset(island_allocator_pos, 0xCC, kIslandEnd - kIslandBeg);
   };
   *ptr = island_allocator_pos;
   island_allocator_pos = (char*)island_allocator_pos + kPageSize;
+  if (FLAG_v) {
+    Report("Branch island allocated at %p\n", *ptr);
+  }
   return err_none;
 }
 
