@@ -137,6 +137,7 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Cases("arm1156t2-s",  "arm1156t2f-s", "v6t2")
     .Cases("cortex-a8", "cortex-a9", "v7")
     .Case("cortex-m3", "v7m")
+    .Case("cortex-m4", "v7m")
     .Case("cortex-m0", "v6m")
     .Default("");
 }
