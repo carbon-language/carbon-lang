@@ -7,33 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/Core/InputFiles.h"
 #include "lld/Core/Atom.h"
-#include "lld/Core/DefinedAtom.h"
-#include "lld/Core/UndefinedAtom.h"
+#include "lld/Core/NativeReader.h"
+#include "lld/Core/NativeWriter.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/YamlWriter.h"
-#include "lld/Core/NativeReader.h"
-#include "lld/Core/NativeWriter.h"
-#include "lld/Core/Platform.h"
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FileSystem.h"
 
 #include <vector>
 
