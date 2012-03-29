@@ -165,6 +165,15 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   return StringRef(StrPtr, OS.tell());
 }
 
+/// getSelectorName - Return selector name. This is used for debugging
+/// info.
+StringRef CGDebugInfo::getSelectorName(Selector S) {
+  const std::string &SName = S.getAsString();
+  char *StrPtr = DebugInfoNames.Allocate<char>(SName.size());
+  memcpy(StrPtr, SName.data(), SName.size());
+  return StringRef(StrPtr, SName.size());
+}
+
 /// getClassName - Get class name including template argument list.
 StringRef 
 CGDebugInfo::getClassName(const RecordDecl *RD) {
@@ -1318,13 +1327,11 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     SourceLocation Loc = PD->getLocation();
     llvm::DIFile PUnit = getOrCreateFile(Loc);
     unsigned PLine = getLineNumber(Loc);
-    ObjCMethodDecl *GDecl = PD->getGetterMethodDecl();
-    ObjCMethodDecl *SDecl = PD->getSetterMethodDecl();
     llvm::MDNode *PropertyNode =
       DBuilder.createObjCProperty(PD->getName(),
 				  PUnit, PLine,
-				  GDecl ? getObjCMethodName(GDecl) : "",
-				  SDecl ? getObjCMethodName(SDecl) : "",
+                                  getSelectorName(PD->getGetterName()),
+                                  getSelectorName(PD->getSetterName()),
                                   PD->getPropertyAttributes(),
 				  getOrCreateType(PD->getType(), PUnit));
     EltTys.push_back(PropertyNode);
@@ -1381,13 +1388,11 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 	  SourceLocation Loc = PD->getLocation();
 	  llvm::DIFile PUnit = getOrCreateFile(Loc);
 	  unsigned PLine = getLineNumber(Loc);
-	  ObjCMethodDecl *GDecl = PD->getGetterMethodDecl();
-	  ObjCMethodDecl *SDecl = PD->getSetterMethodDecl();
 	  PropertyNode =
 	    DBuilder.createObjCProperty(PD->getName(),
 					PUnit, PLine,
-					GDecl ? getObjCMethodName(GDecl) : "",
-					SDecl ? getObjCMethodName(SDecl) : "",
+                                        getSelectorName(PD->getGetterName()),
+                                        getSelectorName(PD->getSetterName()),
 					PD->getPropertyAttributes(),
 					getOrCreateType(PD->getType(),PUnit));
         }
