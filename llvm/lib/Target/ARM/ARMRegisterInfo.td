@@ -314,7 +314,8 @@ def TuplesOE2D : RegisterTuples<[dsub_0, dsub_1],
 def DPair : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
                           128, (interleave QPR, TuplesOE2D)> {
   // Allocate starting at non-VFP2 registers D16-D31 first.
-  let AltOrders = [(rotl DPair, 16)];
+  // Prefer even-odd pairs as they are easier to copy.
+  let AltOrders = [(add (rotl QPR, 8), (rotl DPair, 16))];
   let AltOrderSelect = [{ return 1; }];
 }
 
