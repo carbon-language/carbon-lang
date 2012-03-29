@@ -2136,7 +2136,6 @@ SBTarget::SetModuleLoadAddress (lldb::SBModule module, int64_t slide_offset)
 {
     SBError sb_error;
     
-    char path[PATH_MAX];
     TargetSP target_sp(GetSP());
     if (target_sp)
     {
