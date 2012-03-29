@@ -33,14 +33,6 @@ else (NOT DEFINED LLVM_MAIN_SRC_DIR)
   set(POLLY_LIB_DIR "${LLVM_LIBS_DIR}")
 endif (NOT DEFINED LLVM_MAIN_SRC_DIR)
 
-MESSAGE(${TARGET_TRIPLE})
-if (${TARGET_TRIPLE} MATCHES "^x86_64*")
-  set(EAT_ERR_ON_X86 " ")
-else (${TARGET_TRIPLE} MATCHES "^x86_64*")
-  # Don't fail the command line
-  set(EAT_ERR_ON_X86 "|| echo \"error is eaten\"")
-endif (${TARGET_TRIPLE} MATCHES "^x86_64*")
-
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
