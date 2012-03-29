@@ -666,7 +666,7 @@ static bool isDeclaration(const GlobalValue &V) {
 /// them to either the defined or undefined lists.
 bool LTOModule::parseSymbols(std::string &errMsg) {
   // add functions
-  for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
+  for (Module::iterator f = _module->begin(), e = _module->end(); f != e; ++f) {
     if (isDeclaration(*f))
       addPotentialUndefinedSymbol(f);
     else
@@ -697,8 +697,8 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
   }
 
   // make symbols for all undefines
-  for (StringMap<NameAndAttributes>::iterator it=_undefines.begin();
-       it != _undefines.end(); ++it) {
+  for (StringMap<NameAndAttributes>::iterator it=_undefines.begin(),
+         e = _undefines.end(); it != e; ++it) {
     // if this symbol also has a definition, then don't make an undefine
     // because it is a tentative definition
     if (_defines.count(it->getKey()) == 0) {
