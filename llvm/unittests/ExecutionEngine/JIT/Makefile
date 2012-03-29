@@ -13,7 +13,8 @@ LINK_COMPONENTS := asmparser bitreader bitwriter core jit native support
 
 include $(LEVEL)/Makefile.config
 
-SOURCES := JITEventListenerTest.cpp
+SOURCES := JITEventListenerTest.cpp JITMemoryManagerTest.cpp JITTest.cpp MultiJITTest.cpp
+
 
 ifeq ($(USE_INTEL_JITEVENTS), 1)
   # Build the Intel JIT Events interface tests
