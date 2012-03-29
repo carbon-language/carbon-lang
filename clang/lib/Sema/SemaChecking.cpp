@@ -637,8 +637,8 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
   } else {
     SubExprs.push_back(TheCall->getArg(3)); // Order
     SubExprs.push_back(TheCall->getArg(1)); // Val1
-    SubExprs.push_back(TheCall->getArg(2)); // Val2
     SubExprs.push_back(TheCall->getArg(4)); // OrderFail
+    SubExprs.push_back(TheCall->getArg(2)); // Val2
   }
 
   return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
