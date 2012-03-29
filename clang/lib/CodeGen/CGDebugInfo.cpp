@@ -165,15 +165,6 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   return StringRef(StrPtr, OS.tell());
 }
 
-/// getSelectorName - Return selector name. This is used for debugging
-/// info.
-StringRef CGDebugInfo::getSelectorName(Selector S) {
-  const std::string &SName = S.getAsString();
-  char *StrPtr = DebugInfoNames.Allocate<char>(SName.size());
-  memcpy(StrPtr, SName.data(), SName.size());
-  return StringRef(StrPtr, SName.size());
-}
-
 /// getClassName - Get class name including template argument list.
 StringRef 
 CGDebugInfo::getClassName(const RecordDecl *RD) {
@@ -1324,11 +1315,18 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   for (ObjCContainerDecl::prop_iterator I = ID->prop_begin(),
          E = ID->prop_end(); I != E; ++I) {
     const ObjCPropertyDecl *PD = *I;
+    SourceLocation Loc = PD->getLocation();
+    llvm::DIFile PUnit = getOrCreateFile(Loc);
+    unsigned PLine = getLineNumber(Loc);
+    ObjCMethodDecl *GDecl = PD->getGetterMethodDecl();
+    ObjCMethodDecl *SDecl = PD->getSetterMethodDecl();
     llvm::MDNode *PropertyNode =
       DBuilder.createObjCProperty(PD->getName(),
-                                  getSelectorName(PD->getGetterName()),
-                                  getSelectorName(PD->getSetterName()),
-                                  PD->getPropertyAttributes());
+				  PUnit, PLine,
+				  GDecl ? getObjCMethodName(GDecl) : "",
+				  SDecl ? getObjCMethodName(SDecl) : "",
+                                  PD->getPropertyAttributes(),
+				  getOrCreateType(PD->getType(), PUnit));
     EltTys.push_back(PropertyNode);
   }
 
@@ -1380,11 +1378,18 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       if (ObjCPropertyImplDecl *PImpD = 
           ImpD->FindPropertyImplIvarDecl(Field->getIdentifier())) {
         if (ObjCPropertyDecl *PD = PImpD->getPropertyDecl()) {
-          PropertyNode =
-            DBuilder.createObjCProperty(PD->getName(),
-                                        getSelectorName(PD->getGetterName()),
-                                        getSelectorName(PD->getSetterName()),
-                                        PD->getPropertyAttributes());
+	  SourceLocation Loc = PD->getLocation();
+	  llvm::DIFile PUnit = getOrCreateFile(Loc);
+	  unsigned PLine = getLineNumber(Loc);
+	  ObjCMethodDecl *GDecl = PD->getGetterMethodDecl();
+	  ObjCMethodDecl *SDecl = PD->getSetterMethodDecl();
+	  PropertyNode =
+	    DBuilder.createObjCProperty(PD->getName(),
+					PUnit, PLine,
+					GDecl ? getObjCMethodName(GDecl) : "",
+					SDecl ? getObjCMethodName(SDecl) : "",
+					PD->getPropertyAttributes(),
+					getOrCreateType(PD->getType(),PUnit));
         }
       }
     }
