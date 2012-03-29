@@ -306,7 +306,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     if (Reg.getSubRegs().empty())
      continue;
     // getSubRegs() orders by SubRegIndex. We want a topological order.
-    SetVector<CodeGenRegister*> SR;
+    SetVector<const CodeGenRegister*> SR;
     Reg.addSubRegsPreOrder(SR, RegBank);
     OS << "  /* " << Reg.getName() << "_SubRegsSet */ ";
     for (unsigned j = 0, je = SR.size(); j != je; ++j)
@@ -351,7 +351,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << "/* " << Reg->getName() << "_SubRegsSet */ " << SubRegIndex
          << ", ";
       // FIXME not very nice to recalculate this
-      SetVector<CodeGenRegister*> SR;
+      SetVector<const CodeGenRegister*> SR;
       Reg->addSubRegsPreOrder(SR, RegBank);
       SubRegIndex += SR.size() + 1;
     } else

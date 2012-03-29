@@ -110,11 +110,11 @@ namespace llvm {
     }
 
     // Add sub-registers to OSet following a pre-order defined by the .td file.
-    void addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet,
+    void addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
                             CodeGenRegBank&) const;
 
     // List of super-registers in topological order, small to large.
-    typedef std::vector<CodeGenRegister*> SuperRegList;
+    typedef std::vector<const CodeGenRegister*> SuperRegList;
 
     // Get the list of super-registers.
     // This is only valid after computeDerivedInfo has visited all registers.

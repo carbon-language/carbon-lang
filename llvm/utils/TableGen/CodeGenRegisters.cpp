@@ -231,7 +231,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
 }
 
 void
-CodeGenRegister::addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet,
+CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
                                     CodeGenRegBank &RegBank) const {
   assert(SubRegsComplete && "Must precompute sub-registers");
   std::vector<Record*> Indices = TheDef->getValueAsListOfDefs("SubRegIndices");
@@ -1095,7 +1095,7 @@ CodeGenRegBank::getRegClassForRegister(Record *R) {
 }
 
 BitVector CodeGenRegBank::computeCoveredRegisters(ArrayRef<Record*> Regs) {
-  SetVector<CodeGenRegister*> Set;
+  SetVector<const CodeGenRegister*> Set;
 
   // First add Regs with all sub-registers.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -1110,7 +1110,7 @@ BitVector CodeGenRegBank::computeCoveredRegisters(ArrayRef<Record*> Regs) {
   for (unsigned i = 0; i != Set.size(); ++i) {
     const CodeGenRegister::SuperRegList &SR = Set[i]->getSuperRegs();
     for (unsigned j = 0, e = SR.size(); j != e; ++j) {
-      CodeGenRegister *Super = SR[j];
+      const CodeGenRegister *Super = SR[j];
       if (!Super->CoveredBySubRegs || Set.count(Super))
         continue;
       // This new super-register is covered by its sub-registers.
