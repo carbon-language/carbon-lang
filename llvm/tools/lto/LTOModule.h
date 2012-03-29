@@ -4,10 +4,10 @@
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file declares the LTOModule class. 
+// This file declares the LTOModule class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,11 +41,10 @@ namespace llvm {
 struct LTOModule {
 private:
   typedef llvm::StringMap<uint8_t> StringSet;
-    
-  struct NameAndAttributes { 
-    enum name_type { IsFunction, IsData };
-    const char*            name;
-    lto_symbol_attributes  attributes;
+
+  struct NameAndAttributes {
+    const char  *name;
+    uint32_t     attributes;
   };
 
   llvm::OwningPtr<llvm::Module>           _module;
@@ -53,7 +52,7 @@ private:
   std::vector<NameAndAttributes>          _symbols;
 
   // _defines and _undefines only needed to disambiguate tentative definitions
-  StringSet                               _defines;    
+  StringSet                               _defines;
   llvm::StringMap<NameAndAttributes>      _undefines;
   std::vector<const char*>                _asm_undefines;
   llvm::MCContext                         _context;
@@ -70,10 +69,10 @@ public:
 
   /// isBitcodeFileForTarget - Returns 'true' if the file or memory contents
   /// is LLVM bitcode for the specified triple.
-  static bool isBitcodeFileForTarget(const void *mem, 
+  static bool isBitcodeFileForTarget(const void *mem,
                                      size_t length,
                                      const char *triplePrefix);
-  static bool isBitcodeFileForTarget(const char *path, 
+  static bool isBitcodeFileForTarget(const char *path,
                                      const char *triplePrefix);
 
   /// makeLTOModule - Create an LTOModule. N.B. These methods take ownership
@@ -109,17 +108,15 @@ public:
   /// index.
   lto_symbol_attributes getSymbolAttributes(uint32_t index) {
     if (index < _symbols.size())
-      return _symbols[index].attributes;
-    else
-      return lto_symbol_attributes(0);
+      return lto_symbol_attributes(_symbols[index].attributes);
+    return lto_symbol_attributes(0);
   }
 
   /// getSymbolName - Get the name of the symbol at the specified index.
   const char *getSymbolName(uint32_t index) {
     if (index < _symbols.size())
       return _symbols[index].name;
-    else
-      return NULL;
+    return NULL;
   }
 
   /// getLLVVMModule - Return the Module.
