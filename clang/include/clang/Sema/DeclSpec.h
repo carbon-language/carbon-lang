@@ -1655,6 +1655,10 @@ public:
         Context != FileContext)
       return false;
 
+    // Special names can't have direct initializers.
+    if (Name.getKind() != UnqualifiedId::IK_Identifier)
+      return false;
+
     switch (Context) {
     case FileContext:
     case BlockContext:

@@ -72,17 +72,16 @@ namespace ctor_error {
     Ctor(x[5]); // expected-error{{incomplete type}}
 
     Ctor(UnknownType *); // expected-error{{unknown type name 'UnknownType'}}
+    void operator+(UnknownType*); // expected-error{{unknown type name 'UnknownType'}}
   };
 
   Ctor::Ctor (x) = { 0 }; // \
     // expected-error{{qualified reference to 'Ctor' is a constructor name}}
 
-  // FIXME: These diagnostics are terrible.
   Ctor::Ctor(UnknownType *) {} // \
-    // expected-error{{'Ctor' cannot be the name of a variable or data member}} \
-    // expected-error{{use of undeclared identifier 'UnknownType'}} \
-    // expected-error{{expected expression}} \
-    // expected-error{{expected ';' after top level declarator}}
+    // expected-error{{unknown type name 'UnknownType'}}
+  void Ctor::operator+(UnknownType*) {} // \
+    // expected-error{{unknown type name 'UnknownType'}}
 }
 
 // PR11109 must appear at the end of the source file
