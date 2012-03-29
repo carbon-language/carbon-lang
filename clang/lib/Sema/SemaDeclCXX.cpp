@@ -4416,7 +4416,8 @@ bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
   }
 
   // C++11 [class.ctor]p5:
-  // -- any direct or virtual base class [...] has class type M [...] and
+  // -- any direct or virtual base class, or non-static data member with no
+  //    brace-or-equal-initializer, has class type M (or array thereof) and
   //    either M has no default constructor or overload resolution as applied
   //    to M's default constructor results in an ambiguity or in a function
   //    that is deleted or inaccessible
@@ -4425,8 +4426,9 @@ bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
   //    overload resolution, as applied to B's corresponding special member,
   //    results in an ambiguity or a function that is deleted or inaccessible
   //    from the defaulted special member
-  // FIXME: in-class initializers should be handled here
-  if (CSM != Sema::CXXDestructor) {
+  if (CSM != Sema::CXXDestructor &&
+      !(CSM == Sema::CXXDefaultConstructor &&
+        Field && Field->hasInClassInitializer())) {
     Sema::SpecialMemberOverloadResult *SMOR = lookupIn(Class);
     if (!SMOR->hasSuccess())
       return true;
@@ -4521,6 +4523,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
         FieldRecord->isAnonymousStructOrUnion()) {
       bool AllVariantFieldsAreConst = true;
 
+      // FIXME: Handle anonymous unions declared within anonymous unions.
       for (CXXRecordDecl::field_iterator UI = FieldRecord->field_begin(),
                                          UE = FieldRecord->field_end();
            UI != UE; ++UI) {
@@ -4540,70 +4543,13 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
           FieldRecord->field_begin() != FieldRecord->field_end())
         return true;
 
-      // Don't try to initialize the anonymous union
+      // Don't check the implicit member of the anonymous union type.
       // This is technically non-conformant, but sanity demands it.
       return false;
     }
 
-    // When checking a constructor, the field's destructor must be accessible
-    // and not deleted.
-    if (IsConstructor) {
-      CXXDestructorDecl *FieldDtor = S.LookupDestructor(FieldRecord);
-      if (FieldDtor->isDeleted())
-        return true;
-      if (S.CheckDestructorAccess(Loc, FieldDtor, S.PDiag()) !=
-          Sema::AR_accessible)
-        return true;
-    }
-
-    // Check that the corresponding member of the field is accessible,
-    // unique, and non-deleted. We don't do this if it has an explicit
-    // initialization when default-constructing.
-    if (!(CSM == Sema::CXXDefaultConstructor && FD->hasInClassInitializer())) {
-      Sema::SpecialMemberOverloadResult *SMOR = lookupIn(FieldRecord);
-      if (!SMOR->hasSuccess())
-        return true;
-
-      CXXMethodDecl *FieldMember = SMOR->getMethod();
-
-      // We need the corresponding member of a union to be trivial so that
-      // we can safely process all members simultaneously.
-      if (inUnion() && !FieldMember->isTrivial())
-        return true;
-
-      if (IsConstructor) {
-        CXXConstructorDecl *FieldCtor = cast<CXXConstructorDecl>(FieldMember);
-        if (S.CheckConstructorAccess(Loc, FieldCtor, FieldCtor->getAccess(),
-                                     S.PDiag()) != Sema::AR_accessible)
-        return true;
-
-        // For a move operation, the corresponding operation must actually
-        // be a move operation (and not a copy selected by overload
-        // resolution) unless we are working on a trivially copyable class.
-        if (IsMove && !FieldCtor->isMoveConstructor() &&
-            !FieldRecord->isTriviallyCopyable())
-          return true;
-      } else if (CSM == Sema::CXXDestructor) {
-        CXXDestructorDecl *FieldDtor = S.LookupDestructor(FieldRecord);
-        if (FieldDtor->isDeleted())
-          return true;
-        if (S.CheckDestructorAccess(Loc, FieldDtor, S.PDiag()) !=
-            Sema::AR_accessible)
-          return true;
-      } else {
-        assert(IsAssignment && "unexpected kind of special member");
-        if (S.CheckDirectMemberAccess(Loc, FieldMember, S.PDiag())
-              != Sema::AR_accessible)
-          return true;
-
-        // -- for the move assignment operator, a non-static data member with a
-        //    type that does not have a move assignment operator and is not
-        //    trivially copyable.
-        if (IsMove && !FieldMember->isMoveAssignmentOperator() &&
-            !FieldRecord->isTriviallyCopyable())
-          return true;
-      }
-    }
+    if (shouldDeleteForClassSubobject(FieldRecord, FD))
+      return true;
   } else if (IsAssignment && FieldType.isConstQualified()) {
     // C++11 [class.copy]p23:
     // -- a non-static data member of const non-class type (or array thereof)
