@@ -181,7 +181,7 @@ if __name__ == '__main__':
     import sys
     # This script is being run from the command line, create a debugger in case we are
     # going to use any debugger functions in our function.
-    for file in sys.argv:
+    for file in sys.argv[1:]:
         print '#----------------------------------------------------------------------'
         print "# GDB remote log file: '%s'" % file
         print '#----------------------------------------------------------------------'
