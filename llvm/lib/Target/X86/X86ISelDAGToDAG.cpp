@@ -1908,23 +1908,22 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
   return true;
 }
 
-/// getFusedLdStOpcode - Get the appropriate X86 opcode for an in memory 
-/// increment or decrement. Opc should be X86ISD::DEC or X86ISD:INC.
+/// getFusedLdStOpcode - Get the appropriate X86 opcode for an in memory
+/// increment or decrement. Opc should be X86ISD::DEC or X86ISD::INC.
 static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   if (Opc == X86ISD::DEC) {
     if (LdVT == MVT::i64) return X86::DEC64m;
     if (LdVT == MVT::i32) return X86::DEC32m;
     if (LdVT == MVT::i16) return X86::DEC16m;
     if (LdVT == MVT::i8)  return X86::DEC8m;
-    assert(0 && "unrecognized size for LdVT");
-  }
-  else {
+  } else {
+    assert(Opc == X86ISD::INC && "unrecognized opcode");
     if (LdVT == MVT::i64) return X86::INC64m;
     if (LdVT == MVT::i32) return X86::INC32m;
     if (LdVT == MVT::i16) return X86::INC16m;
     if (LdVT == MVT::i8)  return X86::INC8m;
-    assert(0 && "unrecognized size for LdVT");
   }
+  llvm_unreachable("unrecognized size for LdVT");
 }
 
 SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
