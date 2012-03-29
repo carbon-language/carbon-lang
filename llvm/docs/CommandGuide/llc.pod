@@ -45,7 +45,7 @@ Print a summary of command line options.
 =item B<-O>=I<uint>
 
 Generate code at different optimization levels. These correspond to the I<-O0>,
-I<-O1>, I<-O2>, I<-O3>, and I<-O4> optimization levels used by B<llvm-gcc> and
+I<-O1>, I<-O2>, and I<-O3> optimization levels used by B<llvm-gcc> and
 B<clang>.
 
 =item B<-mtriple>=I<target triple>
