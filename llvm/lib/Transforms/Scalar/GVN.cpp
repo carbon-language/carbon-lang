@@ -2328,7 +2328,14 @@ bool GVN::performPRE(Function &F) {
           CurInst->mayReadFromMemory() || CurInst->mayHaveSideEffects() ||
           isa<DbgInfoIntrinsic>(CurInst))
         continue;
-      
+
+      // Don't do PRE on compares. The PHI would prevent CodeGenPrepare from
+      // sinking the compare again, and it would force the code generator to
+      // move the i1 from processor flags or predicate registers into a general
+      // purpose register.
+      if (isa<CmpInst>(CurInst))
+        continue;
+
       // We don't currently value number ANY inline asm calls.
       if (CallInst *CallI = dyn_cast<CallInst>(CurInst))
         if (CallI->isInlineAsm())
