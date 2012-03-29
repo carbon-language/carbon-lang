@@ -27,9 +27,9 @@
 // Use macro to describe if specific function should be
 // intercepted on a given platform.
 #if !defined(_WIN32)
-# define ASAN_INTERCEPT_STRTOLL 1
+# define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 1
 #else
-# define ASAN_INTERCEPT_STRTOLL 0
+# define ASAN_INTERCEPT_ATOLL_AND_STRTOLL 0
 #endif
 
 #if !defined(__APPLE__)
@@ -89,8 +89,11 @@ size_t strnlen(const char *s, size_t maxlen);
 # endif
 
 // stdlib.h
+int atoi(const char *nptr);
+long atol(const char *nptr);  // NOLINT
 long strtol(const char *nptr, char **endptr, int base);  // NOLINT
-# if ASAN_INTERCEPT_STRTOLL
+# if ASAN_INTERCEPT_ATOLL_AND_STRTOLL
+long long atoll(const char *nptr);  // NOLINT
 long long strtoll(const char *nptr, char **endptr, int base);  // NOLINT
 # endif
 
@@ -677,7 +680,53 @@ static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
   CHECK(*endptr >= nptr);
 }
 
-# if ASAN_INTERCEPT_STRTOLL
+INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
+            char **endptr, int base) {
+  ENSURE_ASAN_INITED();
+  if (!FLAG_replace_str) {
+    return REAL(strtol)(nptr, endptr, base);
+  }
+  char *real_endptr;
+  long result = REAL(strtol)(nptr, &real_endptr, base);  // NOLINT
+  if (endptr != NULL) {
+    *endptr = real_endptr;
+  }
+  if (IsValidStrtolBase(base)) {
+    FixRealStrtolEndptr(nptr, &real_endptr);
+    ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
+  }
+  return result;
+}
+
+INTERCEPTOR(int, atoi, const char *nptr) {
+  ENSURE_ASAN_INITED();
+  if (!FLAG_replace_str) {
+    return REAL(atoi)(nptr);
+  }
+  char *real_endptr;
+  // "man atoi" tells that behavior of atoi(nptr) is the same as
+  // strtol(nptr, NULL, 10), i.e. it sets errno to ERANGE if the
+  // parsed integer can't be stored in *long* type (even if it's
+  // different from int). So, we just imitate this behavior.
+  int result = REAL(strtol)(nptr, &real_endptr, 10);
+  FixRealStrtolEndptr(nptr, &real_endptr);
+  ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
+  return result;
+}
+
+INTERCEPTOR(long, atol, const char *nptr) {  // NOLINT
+  ENSURE_ASAN_INITED();
+  if (!FLAG_replace_str) {
+    return REAL(atol)(nptr);
+  }
+  char *real_endptr;
+  long result = REAL(strtol)(nptr, &real_endptr, 10);  // NOLINT
+  FixRealStrtolEndptr(nptr, &real_endptr);
+  ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
+  return result;
+}
+
+#if ASAN_INTERCEPT_ATOLL_AND_STRTOLL
 INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
             char **endptr, int base) {
   ENSURE_ASAN_INITED();
@@ -698,25 +747,19 @@ INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
   }
   return result;
 }
-#endif  // ASAN_INTERCEPT_STRTOLL
 
-INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
-            char **endptr, int base) {
+INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (!FLAG_replace_str) {
-    return REAL(strtol)(nptr, endptr, base);
+    return REAL(atoll)(nptr);
   }
   char *real_endptr;
-  long result = REAL(strtol)(nptr, &real_endptr, base);  // NOLINT
-  if (endptr != NULL) {
-    *endptr = real_endptr;
-  }
-  if (IsValidStrtolBase(base)) {
-    FixRealStrtolEndptr(nptr, &real_endptr);
-    ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
-  }
+  long long result = REAL(strtoll)(nptr, &real_endptr, 10);  // NOLINT
+  FixRealStrtolEndptr(nptr, &real_endptr);
+  ASAN_READ_RANGE(nptr, (real_endptr - nptr) + 1);
   return result;
 }
+#endif  // ASAN_INTERCEPT_ATOLL_AND_STRTOLL
 
 #if defined(_WIN32)
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
@@ -777,8 +820,11 @@ void InitializeAsanInterceptors() {
   CHECK(INTERCEPT_FUNCTION(strnlen));
 #endif
 
+  CHECK(INTERCEPT_FUNCTION(atoi));
+  CHECK(INTERCEPT_FUNCTION(atol));
   CHECK(INTERCEPT_FUNCTION(strtol));
-#if ASAN_INTERCEPT_STRTOLL
+#if ASAN_INTERCEPT_ATOLL_AND_STRTOLL
+  CHECK(INTERCEPT_FUNCTION(atoll));
   CHECK(INTERCEPT_FUNCTION(strtoll));
 #endif
 

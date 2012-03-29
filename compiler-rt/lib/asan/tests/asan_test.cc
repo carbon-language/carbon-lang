@@ -986,10 +986,13 @@ TEST(AddressSanitizer, StrLenOOBTest) {
   free(heap_string);
 }
 
-static inline char* MallocAndMemsetString(size_t size) {
+static inline char* MallocAndMemsetString(size_t size, char ch) {
   char *s = Ident((char*)malloc(size));
-  memset(s, 'z', size);
+  memset(s, ch, size);
   return s;
+}
+static inline char* MallocAndMemsetString(size_t size) {
+  return MallocAndMemsetString(size, 'z');
 }
 
 #ifndef __APPLE__
@@ -1347,6 +1350,47 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   EXPECT_DEATH(strcat(str + 10, str), OverlapErrorMessage("strcat"));
 
   free(str);
+}
+
+void CallAtoi(const char *nptr) {
+  Ident(atoi(nptr));
+}
+void CallAtol(const char *nptr) {
+  Ident(atol(nptr));
+}
+void CallAtoll(const char *nptr) {
+  Ident(atoll(nptr));
+}
+typedef void(*PointerToCallAtoi)(const char*);
+
+void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
+  char *array = MallocAndMemsetString(10, '1');
+  // Invalid pointer to the string.
+  EXPECT_DEATH(Atoi(array + 11), RightOOBErrorMessage(1));
+  EXPECT_DEATH(Atoi(array - 1), LeftOOBErrorMessage(1));
+  // Die if a buffer doesn't have terminating NULL.
+  EXPECT_DEATH(Atoi(array), RightOOBErrorMessage(0));
+  // Make last symbol a terminating NULL or other non-digit.
+  array[9] = '\0';
+  Atoi(array);
+  array[9] = 'a';
+  Atoi(array);
+  Atoi(array + 9);
+  // Sometimes we need to detect overflow if no digits are found.
+  memset(array, ' ', 10);
+  EXPECT_DEATH(Atoi(array), RightOOBErrorMessage(0));
+  array[9] = '-';
+  EXPECT_DEATH(Atoi(array), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Atoi(array + 9), RightOOBErrorMessage(0));
+  array[8] = '-';
+  Atoi(array);
+  delete array;
+}
+
+TEST(AddressSanitizer, AtoiAndFriendsOOBTest) {
+  RunAtoiOOBTest(&CallAtoi);
+  RunAtoiOOBTest(&CallAtol);
+  RunAtoiOOBTest(&CallAtoll);
 }
 
 void CallStrtol(const char *nptr, char **endptr, int base) {
