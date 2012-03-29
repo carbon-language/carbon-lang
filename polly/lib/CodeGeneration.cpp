@@ -33,6 +33,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/CommandLine.h"
@@ -1223,6 +1224,17 @@ void ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap,
   }
 }
 
+static void clearDomtree(Function *F, DominatorTree &DT) {
+  DomTreeNode *N = DT.getNode(&F->getEntryBlock());
+  std::vector<BasicBlock*> Nodes;
+  for (po_iterator<DomTreeNode*> I = po_begin(N), E = po_end(N); I != E; ++I)
+    Nodes.push_back(I->getBlock());
+
+  for (std::vector<BasicBlock*>::iterator I = Nodes.begin(), E = Nodes.end();
+       I != E; ++I)
+    DT.eraseNode(*I);
+}
+
 void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   Value *Stride, *LB, *UB, *IV;
   BasicBlock::iterator LoopBody;
@@ -1250,6 +1262,9 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
 
   ClastVars.erase(For->iterator);
   updateWithValueMap(VMap, /* reverse */ true);
+
+  clearDomtree((*LoopBody).getParent()->getParent(),
+               P->getAnalysis<DominatorTree>());
 
   Builder.SetInsertPoint(AfterLoop);
 }
