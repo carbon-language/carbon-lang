@@ -96,18 +96,18 @@ void structAtomicStore() {
   // CHECK: @structAtomicStore
   struct foo f = {0};
   __atomic_store(&bigAtomic, f, 5);
-  // CHECK: call void @__atomic_store(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %3, i32 5)
+  // CHECK: call void @__atomic_store(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), 
 }
 void structAtomicLoad() {
   // CHECK: @structAtomicLoad
   struct foo f = __atomic_load(&bigAtomic, 5);
-  // CHECK: call void @__atomic_load(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %0, i32 5)
+  // CHECK: call void @__atomic_load(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), 
 }
 struct foo structAtomicExchange() {
   // CHECK: @structAtomicExchange
   struct foo f = {0};
   return __atomic_exchange(&bigAtomic, f, 5);
-  // CHECK: call void @__atomic_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %3, i8* %4, i32 5)
+  // CHECK: call void @__atomic_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), 
 }
 int structAtomicCmpExchange() {
   // CHECK: @structAtomicCmpExchange
@@ -115,5 +115,5 @@ int structAtomicCmpExchange() {
   struct foo g = {0};
   g.big[12] = 12;
   return __atomic_compare_exchange_strong(&bigAtomic, &f, g, 5, 5);
-  // CHECK: call zeroext i1 @__atomic_compare_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), i8* %4, i8* %5, i32 5, i32 5)
+  // CHECK: call zeroext i1 @__atomic_compare_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), 
 }
