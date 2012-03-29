@@ -5689,19 +5689,20 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   }
   // Also, for possibility of 'super' metadata class not having been defined yet.
   if (!rootClass) {
+    ObjCInterfaceDecl *SuperClass = CDecl->getSuperClass();
     Result += "\n";
     Result += "extern \"C\" ";
-    if (CDecl->getSuperClass()->getImplementation())
+    if (SuperClass->getImplementation())
       Result += "__declspec(dllexport) ";
     else
       Result += "__declspec(dllimport) ";
 
     Result += "struct _class_t "; 
     Result += VarName;
-    Result += CDecl->getSuperClass()->getNameAsString();
+    Result += SuperClass->getNameAsString();
     Result += ";\n";
     
-    if (metaclass) {
+    if (metaclass && RootClass != SuperClass) {
       Result += "extern \"C\" ";
       if (RootClass->getImplementation())
         Result += "__declspec(dllexport) ";
