@@ -3217,16 +3217,14 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
        e = Ivars.end(); i != e; i++) {
     ObjCIvarDecl *IvarDecl = (*i);
     Result += "\n";
-    Result += "extern \"C\" ";
     if (LangOpts.MicrosoftExt)
       Result += "__declspec(allocate(\".objc_ivar$B\")) ";
+    Result += "extern \"C\" ";
     if (LangOpts.MicrosoftExt && 
         IvarDecl->getAccessControl() != ObjCIvarDecl::Private &&
-        IvarDecl->getAccessControl() != ObjCIvarDecl::Package) {
-      const ObjCInterfaceDecl *CDecl = IvarDecl->getContainingInterface();
-      if (CDecl->getImplementation())
-        Result += "__declspec(dllexport) ";
-    }
+        IvarDecl->getAccessControl() != ObjCIvarDecl::Package)
+        Result += "__declspec(dllimport) ";
+
     Result += "unsigned long ";
     WriteInternalIvarName(CDecl, IvarDecl, Result);
     Result += ";";
@@ -5440,7 +5438,7 @@ static void WriteModernMetadataDeclarations(ASTContext *Context, std::string &Re
   Result += "};\n";
   
   Result += "extern \"C\" __declspec(dllimport) struct objc_cache _objc_empty_cache;\n";
-  
+  Result += "#pragma warning(disable:4273)\n";
   meta_data_declared = true;
 }
 
@@ -5682,6 +5680,9 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
     Result += "extern \"C\" ";
     if (CDecl->getImplementation())
       Result += "__declspec(dllexport) ";
+    else
+      Result += "__declspec(dllimport) ";
+    
     Result += "struct _class_t OBJC_CLASS_$_";
     Result += CDecl->getNameAsString();
     Result += ";\n";
@@ -5692,6 +5693,9 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
     Result += "extern \"C\" ";
     if (CDecl->getSuperClass()->getImplementation())
       Result += "__declspec(dllexport) ";
+    else
+      Result += "__declspec(dllimport) ";
+
     Result += "struct _class_t "; 
     Result += VarName;
     Result += CDecl->getSuperClass()->getNameAsString();
@@ -5701,6 +5705,9 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
       Result += "extern \"C\" ";
       if (RootClass->getImplementation())
         Result += "__declspec(dllexport) ";
+      else
+        Result += "__declspec(dllimport) ";
+
       Result += "struct _class_t "; 
       Result += VarName;
       Result += RootClass->getNameAsString();
@@ -5708,7 +5715,8 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
     }
   }
   
-  Result += "\n__declspec(dllexport) struct _class_t "; Result += VarName; Result += CDecl->getNameAsString();
+  Result += "\nextern \"C\" __declspec(dllexport) struct _class_t "; 
+  Result += VarName; Result += CDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__DATA,__objc_data\"))) = {\n";
   Result += "\t";
   if (metaclass) {
@@ -5807,6 +5815,8 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
   Result += "extern \"C\" ";
   if (ClassDecl->getImplementation())
     Result += "__declspec(dllexport) ";
+  else
+    Result += "__declspec(dllimport) ";
   
   Result += "struct _class_t ";
   Result += "OBJC_CLASS_$_"; Result += ClassName;
@@ -5921,9 +5931,9 @@ static void Write_IvarOffsetVar(ASTContext *Context,
     if (!Context->getLangOpts().MicrosoftExt ||
         IvarDecl->getAccessControl() == ObjCIvarDecl::Private ||
         IvarDecl->getAccessControl() == ObjCIvarDecl::Package)
-      Result += "unsigned long int "; 
+      Result += "extern \"C\" unsigned long int "; 
     else
-      Result += "__declspec(dllexport) unsigned long int ";
+      Result += "extern \"C\" __declspec(dllexport) unsigned long int ";
     WriteInternalIvarName(CDecl, IvarDecl, Result);
     Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
     Result += " = ";
