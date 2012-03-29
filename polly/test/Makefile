@@ -48,6 +48,7 @@ lit.site.cfg: FORCE
 	     -e "s#@POLLY_BINARY_DIR@#$(PROJ_OBJ_DIR)/..#g" \
 	     -e "s#@TARGET_TRIPLE@#$(TARGET_TRIPLE)#g" \
 	     -e "s#@LLVM_SHLIBEXT@#$(SHLIBEXT)#g" \
+             -e "s#@POLLY_LIB_DIR@#$(LibDir)#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 
 clean::
