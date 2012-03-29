@@ -25,55 +25,7 @@ using namespace llvm::object;
 
 namespace llvm {
 class RuntimeDyldMachO : public RuntimeDyldImpl {
-
-  // For each symbol, keep a list of relocations based on it. Anytime
-  // its address is reassigned (the JIT re-compiled the function, e.g.),
-  // the relocations get re-resolved.
-  // The symbol (or section) the relocation is sourced from is the Key
-  // in the relocation list where it's stored.
-  struct RelocationEntry {
-    unsigned    SectionID;  // Section the relocation is contained in.
-    uint64_t    Offset;     // Offset into the section for the relocation.
-    uint32_t    Data;       // Second word of the raw macho relocation entry.
-    int64_t     Addend;     // Addend encoded in the instruction itself, if any,
-                            // plus the offset into the source section for
-                            // the symbol once the relocation is resolvable.
-
-    RelocationEntry(unsigned id, uint64_t offset, uint32_t data, int64_t addend)
-      : SectionID(id), Offset(offset), Data(data), Addend(addend) {}
-  };
-  typedef SmallVector<RelocationEntry, 4> RelocationList;
-
-  // For each section, keep a list of referrers in that section that are clients
-  // of relocations in other sections.  Whenever a relocation gets created,
-  // create a corresponding referrer.  Whenever relocations are re-resolved,
-  // re-resolve the referrers' relocations as well.
-  struct Referrer {
-    unsigned    SectionID;  // Section whose RelocationList contains the relocation.
-    uint32_t    Index;      // Index of the RelocatonEntry in that RelocationList.
-
-    Referrer(unsigned id, uint32_t index)
-      : SectionID(id), Index(index) {}
-  };
-  typedef SmallVector<Referrer, 4> ReferrerList;
-
-  // Relocations to sections already loaded. Indexed by SectionID which is the
-  // source of the address. The target where the address will be writen is
-  // SectionID/Offset in the relocation itself.
-  IndexedMap<RelocationList> Relocations;
-  // Referrers corresponding to Relocations.
-  IndexedMap<ReferrerList> Referrers;
-  // Relocations to symbols that are not yet resolved. Must be external
-  // relocations by definition. Indexed by symbol name.
-  StringMap<RelocationList> UnresolvedRelocations;
-
-  bool resolveRelocation(uint8_t *LocalAddress,
-                         uint64_t FinalAddress,
-                         uint64_t Value,
-                         bool isPCRel,
-                         unsigned Type,
-                         unsigned Size,
-                         int64_t Addend);
+protected:
   bool resolveI386Relocation(uint8_t *LocalAddress,
                              uint64_t FinalAddress,
                              uint64_t Value,
@@ -96,35 +48,21 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
                             unsigned Size,
                             int64_t Addend);
 
-  bool loadSegment32(const MachOObject *Obj,
-                     const MachOObject::LoadCommandInfo *SegmentLCI,
-                     const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-  bool loadSegment64(const MachOObject *Obj,
-                     const MachOObject::LoadCommandInfo *SegmentLCI,
-                     const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-  bool processSymbols32(const MachOObject *Obj,
-                      SmallVectorImpl<unsigned> &SectionMap,
-                      SmallVectorImpl<StringRef> &SymbolNames,
-                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-  bool processSymbols64(const MachOObject *Obj,
-                      SmallVectorImpl<unsigned> &SectionMap,
-                      SmallVectorImpl<StringRef> &SymbolNames,
-                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-
-  void resolveSymbol(StringRef Name);
+  virtual void processRelocationRef(const ObjRelocationInfo &Rel,
+                                    const ObjectFile &Obj,
+                                    ObjSectionToIDMap &ObjSectionToID,
+                                    LocalSymbolMap &Symbols, StubMap &Stubs);
 
 public:
+  virtual void resolveRelocation(uint8_t *LocalAddress,
+                                 uint64_t FinalAddress,
+                                 uint64_t Value,
+                                 uint32_t Type,
+                                 int64_t Addend);
+                                 
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
-  bool loadObject(MemoryBuffer *InputBuffer);
-
-  void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
-
-  static bool isKnownFormat(const MemoryBuffer *InputBuffer);
-
-  bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const {
-    return isKnownFormat(InputBuffer);
-  }
+  bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const;
 };
 
 } // end namespace llvm
