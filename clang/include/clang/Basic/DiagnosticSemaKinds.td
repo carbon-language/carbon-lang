@@ -3270,6 +3270,9 @@ def warn_err_new_delete_object_array : Warning<
 def err_arc_autoreleasing_var : Error<
   "%select{__block variables|global variables|fields|ivars}0 cannot have "
   "__autoreleasing ownership">;
+def err_arc_autoreleasing_capture : Error<
+  "cannot capture __autoreleasing variable in a "
+  "%select{block|lambda by copy}0">;
 def err_arc_thread_ownership : Error<
   "thread-local variable has non-trivial ownership: type is %0">;
 def err_arc_indirect_no_ownership : Error<

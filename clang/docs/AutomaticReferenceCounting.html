@@ -1006,7 +1006,9 @@ operation has a weak-unavailable type.</p>
 <h1>Storage duration of <tt>__autoreleasing</tt> objects</h1>
 
 <p>A program is ill-formed if it declares an <tt>__autoreleasing</tt>
-object of non-automatic storage duration.</p>
+object of non-automatic storage duration.  A program is ill-formed
+if it captures an <tt>__autoreleasing</tt> object in a block or,
+unless by reference, in a C++11 lambda.</p>
 
 <div class="rationale"><p>Rationale: autorelease pools are tied to the
 current thread and scope by their nature.  While it is possible to

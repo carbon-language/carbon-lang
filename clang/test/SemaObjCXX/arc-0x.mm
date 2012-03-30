@@ -30,3 +30,24 @@ void deduction(id obj) {
   } @catch (auto e) { // expected-error {{'auto' not allowed in exception declaration}}
   }
 }
+
+// rdar://problem/11068137
+void test1a() {
+  __autoreleasing id p; // expected-note 2 {{'p' declared here}}
+  (void) [&p] {};
+  (void) [p] {}; // expected-error {{cannot capture __autoreleasing variable in a lambda by copy}}
+  (void) [=] { (void) p; }; // expected-error {{cannot capture __autoreleasing variable in a lambda by copy}}
+}
+void test1b() {
+  __autoreleasing id v;
+  __autoreleasing id &p = v; // expected-note 2 {{'p' declared here}}
+  (void) [&p] {};
+  (void) [p] {}; // expected-error {{cannot capture __autoreleasing variable in a lambda by copy}}
+  (void) [=] { (void) p; }; // expected-error {{cannot capture __autoreleasing variable in a lambda by copy}}
+}
+void test1c() {
+  __autoreleasing id v; // expected-note {{'v' declared here}}
+  __autoreleasing id &p = v;
+  (void) ^{ (void) p; };
+  (void) ^{ (void) v; }; // expected-error {{cannot capture __autoreleasing variable in a block}}
+}

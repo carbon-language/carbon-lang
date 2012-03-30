@@ -10087,6 +10087,17 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
         return true;
       }
 
+      // Forbid the block-capture of autoreleasing variables.
+      if (CaptureType.getObjCLifetime() == Qualifiers::OCL_Autoreleasing) {
+        if (BuildAndDiagnose) {
+          Diag(Loc, diag::err_arc_autoreleasing_capture)
+            << /*block*/ 0;
+          Diag(Var->getLocation(), diag::note_previous_decl)
+            << Var->getDeclName();
+        }
+        return true;
+      }
+
       if (HasBlocksAttr || CaptureType->isReferenceType()) {
         // Block capture by reference does not change the capture or
         // declaration reference types.
@@ -10178,6 +10189,16 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
       if (const ReferenceType *RefType = CaptureType->getAs<ReferenceType>()){
         if (!RefType->getPointeeType()->isFunctionType())
           CaptureType = RefType->getPointeeType();
+      }
+
+      // Forbid the lambda copy-capture of autoreleasing variables.
+      if (CaptureType.getObjCLifetime() == Qualifiers::OCL_Autoreleasing) {
+        if (BuildAndDiagnose) {
+          Diag(Loc, diag::err_arc_autoreleasing_capture) << /*lambda*/ 1;
+          Diag(Var->getLocation(), diag::note_previous_decl)
+            << Var->getDeclName();
+        }
+        return true;
       }
     }
 
