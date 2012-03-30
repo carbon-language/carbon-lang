@@ -31,10 +31,11 @@
 
 @implementation rdar10902015
 
-struct S {};
+struct S { int x; };
 
 -(void)mm:(struct S*)s {
   rdar10902015 *i = 0;
+  s->x = 0;
 }
 @end
 
@@ -46,7 +47,10 @@ struct S {};
 // CHECK-WITH-WEAK: ObjCClassRef=Foo:8:8
 
 // RUN: c-index-test -cursor-at=%s:20:10 %s | FileCheck -check-prefix=CHECK-METHOD %s
-// CHECK-METHOD: ObjCInstanceMethodDecl=name:20:7
+// CHECK-METHOD: 20:7 ObjCInstanceMethodDecl=name:20:7 Extent=[20:1 - 20:12]
 
 // RUN: c-index-test -cursor-at=%s:37:17 %s | FileCheck -check-prefix=CHECK-IN-IMPL %s
 // CHECK-IN-IMPL: VarDecl=i:37:17
+
+// RUN: c-index-test -cursor-at=%s:38:6 -cursor-at=%s:40:11 %s | FileCheck -check-prefix=CHECK-MEMBERREF %s
+// CHECK-MEMBERREF: 38:6 MemberRefExpr=x:34:16 SingleRefName=[38:6 - 38:7] RefName=[38:6 - 38:7] Extent=[38:3 - 38:7]

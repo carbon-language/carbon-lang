@@ -1439,7 +1439,19 @@ static int inspect_cursor_at(int argc, const char **argv) {
       if (I + 1 == Repeats) {
         CXCompletionString completionString = clang_getCursorCompletionString(
                                                                         Cursor);
+        CXSourceLocation CursorLoc = clang_getCursorLocation(Cursor);
+        CXString Spelling;
+        const char *cspell;
+        unsigned line, column;
+        clang_getSpellingLocation(CursorLoc, 0, &line, &column, 0);
+        printf("%d:%d ", line, column);
         PrintCursor(Cursor);
+        PrintCursorExtent(Cursor);
+        Spelling = clang_getCursorSpelling(Cursor);
+        cspell = clang_getCString(Spelling);
+        if (cspell && strlen(cspell) != 0)
+          printf(" Spelling=%s", cspell);
+        clang_disposeString(Spelling);
         if (completionString != NULL) {
           printf("\nCompletion string: ");
           print_completion_string(completionString, stdout);
