@@ -46,3 +46,12 @@ int main ()
  return 0;
 }
 
+/* rdar://problem/11068137 */
+@interface Test2
+@property (assign) id prop;
+@end
+void test2(NSObject<NSFastEnumeration> *collection) {
+  Test2 *obj;
+  for (obj.prop in collection) { /* expected-error {{selector element is not a valid lvalue}} */
+  }
+}

@@ -1079,10 +1079,18 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 /// x can be an arbitrary l-value expression.  Bind it up as a
 /// full-expression.
 StmtResult Sema::ActOnForEachLValueExpr(Expr *E) {
+  // Reduce placeholder expressions here.  Note that this rejects the
+  // use of pseudo-object l-values in this position.
+  ExprResult result = CheckPlaceholderExpr(E);
+  if (result.isInvalid()) return StmtError();
+  E = result.take();
+
   CheckImplicitConversions(E);
-  ExprResult Result = MaybeCreateExprWithCleanups(E);
-  if (Result.isInvalid()) return StmtError();
-  return Owned(static_cast<Stmt*>(Result.get()));
+
+  result = MaybeCreateExprWithCleanups(E);
+  if (result.isInvalid()) return StmtError();
+
+  return Owned(static_cast<Stmt*>(result.take()));
 }
 
 ExprResult
