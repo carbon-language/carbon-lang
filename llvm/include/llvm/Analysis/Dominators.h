@@ -359,8 +359,19 @@ public:
 
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
                                const DomTreeNodeBase<NodeT> *B) const {
+    // A node trivially dominates itself.
+    if (B == A)
+      return true;
+
+    // An unreachable node is dominated by anything.
+    if (!isReachableFromEntry(B))
+      return true;
+
+    // And dominates nothing.
+    if (!isReachableFromEntry(A))
+      return false;
+
     const DomTreeNodeBase<NodeT> *IDom;
-    if (A == 0 || B == 0) return false;
     while ((IDom = B->getIDom()) != 0 && IDom != A && IDom != B)
       B = IDom;   // Walk up the tree
     return IDom != 0;
@@ -369,10 +380,14 @@ public:
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
-  bool isReachableFromEntry(const NodeT* A) {
+  bool isReachableFromEntry(const NodeT* A) const {
     assert(!this->isPostDominator() &&
            "This is not implemented for post dominators");
-    return dominates(&A->getParent()->front(), A);
+    return isReachableFromEntry(getNode(const_cast<NodeT *>(A)));
+  }
+
+  inline bool isReachableFromEntry(const DomTreeNodeBase<NodeT> *A) const {
+    return A;
   }
 
   /// dominates - Returns true iff A dominates B.  Note that this is not a
@@ -380,10 +395,16 @@ public:
   ///
   inline bool dominates(const DomTreeNodeBase<NodeT> *A,
                         const DomTreeNodeBase<NodeT> *B) {
+    // A node trivially dominates itself.
     if (B == A)
-      return true;  // A node trivially dominates itself.
+      return true;
 
-    if (A == 0 || B == 0)
+    // An unreachable node is dominated by anything.
+    if (!isReachableFromEntry(B))
+      return true;
+
+    // And dominates nothing.
+    if (!isReachableFromEntry(A))
       return false;
 
     // Compare the result of the tree walk and the dfs numbers, if expensive

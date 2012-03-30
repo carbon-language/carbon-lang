@@ -88,8 +88,13 @@ bool DominatorTree::dominates(const Instruction *Def,
   const BasicBlock *UseBB = User->getParent();
   const BasicBlock *DefBB = Def->getParent();
 
-  assert(isReachableFromEntry(DefBB) && isReachableFromEntry(UseBB) &&
-         "We only handle reachable blocks");
+  // Any unreachable use is dominated, even if Def == User.
+  if (!isReachableFromEntry(UseBB))
+    return true;
+
+  // Unreachable definitions don't dominate anything.
+  if (!isReachableFromEntry(DefBB))
+    return false;
 
   // An instruction doesn't dominate a use in itself.
   if (Def == User)
@@ -119,8 +124,13 @@ bool DominatorTree::dominates(const Instruction *Def,
                               const BasicBlock *UseBB) const {
   const BasicBlock *DefBB = Def->getParent();
 
-  assert(isReachableFromEntry(DefBB) && isReachableFromEntry(UseBB) &&
-         "We only handle reachable blocks");
+  // Any unreachable use is dominated, even if DefBB == UseBB.
+  if (!isReachableFromEntry(UseBB))
+    return true;
+
+  // Unreachable definitions don't dominate anything.
+  if (!isReachableFromEntry(DefBB))
+    return false;
 
   if (DefBB == UseBB)
     return false;

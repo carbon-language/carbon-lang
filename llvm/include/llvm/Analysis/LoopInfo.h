@@ -762,7 +762,8 @@ public:
          InvBlockTraits::child_begin(BB), E = InvBlockTraits::child_end(BB);
          I != E; ++I) {
       typename InvBlockTraits::NodeType *N = *I;
-      if (DT.dominates(BB, N))   // If BB dominates its predecessor...
+      // If BB dominates its predecessor...
+      if (DT.dominates(BB, N) && DT.isReachableFromEntry(N))
           TodoStack.push_back(N);
     }
 
