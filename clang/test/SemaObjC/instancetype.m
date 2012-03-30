@@ -143,7 +143,7 @@ void test_instancetype_narrow_method_search() {
 
 @implementation Subclass4
 + (id)alloc {
-  return self; // expected-warning{{incompatible pointer types returning 'Class' from a function with result type 'Subclass4 *'}}
+  return self; // expected-warning{{incompatible pointer types casting 'Class' to type 'Subclass4 *'}}
 }
 
 - (Subclass3 *)init { return 0; } // don't complain: we lost the related return type
@@ -166,12 +166,12 @@ void test_instancetype_inherited() {
 @implementation Subclass2
 - (instancetype)initSubclass2 {
   Subclass1 *sc1 = [[Subclass1 alloc] init];
-  return sc1; // expected-warning{{incompatible pointer types returning 'Subclass1 *' from a function with result type 'Subclass2 *'}}
+  return sc1; // expected-warning{{incompatible pointer types casting 'Subclass1 *' to type 'Subclass2 *'}}
 }
 - (void)methodOnSubclass2 {}
 - (id)self {
   Subclass1 *sc1 = [[Subclass1 alloc] init];
-  return sc1; // expected-warning{{incompatible pointer types returning 'Subclass1 *' from a function with result type 'Subclass2 *'}}
+  return sc1; // expected-warning{{incompatible pointer types casting 'Subclass1 *' to type 'Subclass2 *'}}
 }
 @end
 
