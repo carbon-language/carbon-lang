@@ -230,3 +230,16 @@ namespace PR10660 {
     template <> friend class B; // expected-error{{extraneous 'template<>' in declaration of class 'B'}}
   };
 }
+
+namespace rdar11147355 {
+  template <class T> 
+  struct A {
+    template <class U> class B;
+    template <class S> template <class U> friend class A<S>::B; 
+  };
+  
+  template <class S> template <class U> class A<S>::B {
+  }; 
+  
+  A<double>::B<double>  ab;
+}
