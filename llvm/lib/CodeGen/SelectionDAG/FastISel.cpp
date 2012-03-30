@@ -599,7 +599,18 @@ bool FastISel::SelectCall(const User *I) {
     if (!Reg)
       Reg = lookUpRegForValue(Address);
 
-    if (!Reg && isa<Instruction>(Address) &&
+    // If we have a VLA that has a "use" in a metadata node that's then used
+    // here but it has no other uses, then we have a problem. E.g.,
+    //
+    //   int foo (const int *x) {
+    //     char a[*x];
+    //     return 0;
+    //   }
+    //
+    // If we assign 'a' a vreg and fast isel later on has to use the selection
+    // DAG isel, it will want to copy the value to the vreg. However, there are
+    // no uses, which goes counter to what selection DAG isel expects.
+    if (!Reg && !Address->use_empty() && isa<Instruction>(Address) &&
         (!isa<AllocaInst>(Address) ||
          !FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(Address))))
       Reg = FuncInfo.InitializeRegForValue(Address);
