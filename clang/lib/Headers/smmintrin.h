@@ -332,6 +332,12 @@ _mm_packus_epi32(__m128i __V1, __m128i __V2)
 /* SSE4 Multiple Packed Sums of Absolute Difference.  */
 #define _mm_mpsadbw_epu8(X, Y, M) __builtin_ia32_mpsadbw128((X), (Y), (M))
 
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_minpos_epu16(__m128i __V)
+{
+  return (__m128i) __builtin_ia32_phminposuw128((__v8hi)__V);
+}
+
 /* These definitions are normally in nmmintrin.h, but gcc puts them in here
    so we'll do the same.  */
 #ifdef __SSE4_2__

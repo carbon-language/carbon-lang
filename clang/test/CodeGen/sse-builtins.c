@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -ffreestanding -triple i386-apple-darwin9 -target-cpu pentium4 -target-feature +sse4.1 -g -emit-llvm %s -o - | FileCheck %s
 
 #include <emmintrin.h>
+#include <smmintrin.h>
 
 __m128 test_loadl_pi(__m128 x, void* y) {
   // CHECK: define {{.*}} @test_loadl_pi
@@ -101,4 +102,8 @@ __m128i test_loadl_epi64(void* y) {
   // CHECK: define {{.*}} @test_loadl_epi64
   // CHECK: load i64* {{.*}}, align 1{{$}}
   return _mm_loadl_epi64(y);
+}
+
+__m128i test_mm_minpos_epu16(__m128i x) {
+  return _mm_minpos_epu16(x);
 }

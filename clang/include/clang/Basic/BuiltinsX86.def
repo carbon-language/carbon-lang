@@ -346,6 +346,7 @@ BUILTIN(__builtin_ia32_ptestz128, "iV2LLiV2LLi", "")
 BUILTIN(__builtin_ia32_ptestc128, "iV2LLiV2LLi", "")
 BUILTIN(__builtin_ia32_ptestnzc128, "iV2LLiV2LLi", "")
 BUILTIN(__builtin_ia32_mpsadbw128, "V16cV16cV16ci", "")
+BUILTIN(__builtin_ia32_phminposuw128, "V8sV8s", "")
 
 // SSE 4.2
 BUILTIN(__builtin_ia32_pcmpistrm128, "V16cV16cV16cIc", "")
