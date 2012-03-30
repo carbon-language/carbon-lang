@@ -264,6 +264,10 @@ static void printRegister(raw_ostream &OS, const CodeGenRegister *Reg) {
   OS << getQualifiedName(Reg->TheDef);
 }
 
+static void printSimpleValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
+  OS << getEnumName(VT);
+}
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -547,25 +551,14 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       AllocatableRegs.insert(Order.begin(), Order.end());
   }
 
-  OS << "namespace {     // Register classes...\n";
-
-  // Emit the ValueType arrays for each RegisterClass
-  for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
-    const CodeGenRegisterClass &RC = *RegisterClasses[rc];
-
-    // Give the register class a legal C name if it's anonymous.
-    std::string Name = RC.getName() + "VTs";
-
-    // Emit the register list now.
-    OS << "  // " << Name
-       << " Register Class Value Types...\n"
-       << "  const MVT::SimpleValueType " << Name
-       << "[] = {\n    ";
-    for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
-      OS << getEnumName(RC.VTs[i]) << ", ";
-    OS << "MVT::Other\n  };\n\n";
-  }
-  OS << "}  // end anonymous namespace\n\n";
+  // Build a shared array of value types.
+  SequenceToOffsetTable<std::vector<MVT::SimpleValueType> > VTSeqs;
+  for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc)
+    VTSeqs.add(RegisterClasses[rc]->VTs);
+  VTSeqs.layout();
+  OS << "\nstatic const MVT::SimpleValueType VTLists[] = {\n";
+  VTSeqs.emit(OS, printSimpleValueType, "MVT::Other");
+  OS << "};\n";
 
   // Now that all of the structs have been emitted, emit the instances.
   if (!RegisterClasses.empty()) {
@@ -692,7 +685,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << RegisterClasses[i]->getName() << "RegClass = {\n    "
          << '&' << Target.getName() << "MCRegisterClasses[" << RC.getName()
          << "RegClassID],\n    "
-         << RC.getName() << "VTs,\n    "
+         << "VTLists + " << VTSeqs.get(RC.VTs) << ",\n    "
          << RC.getName() << "SubclassMask,\n    ";
       if (RC.getSuperClasses().empty())
         OS << "NullRegClasses,\n    ";
