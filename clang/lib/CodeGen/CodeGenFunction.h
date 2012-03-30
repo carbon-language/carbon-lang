@@ -2392,17 +2392,17 @@ public:
 
   /// CreateStaticVarDecl - Create a zero-initialized LLVM global for
   /// a static local variable.
-  llvm::GlobalVariable *CreateStaticVarDecl(const VarDecl &D,
-                                            const char *Separator,
-                                       llvm::GlobalValue::LinkageTypes Linkage);
+  llvm::Constant *CreateStaticVarDecl(const VarDecl &D,
+                                      const char *Separator,
+                                      llvm::GlobalValue::LinkageTypes Linkage);
 
-  /// AddInitializerToStaticVarDecl - Add the initializer for 'D' to the
-  /// global variable that has already been created for it.  If the initializer
-  /// has a different type than GV does, this may free GV and return a different
-  /// one.  Otherwise it just returns GV.
-  llvm::GlobalVariable *
-  AddInitializerToStaticVarDecl(const VarDecl &D,
-                                llvm::GlobalVariable *GV);
+  /// AddInitializerToStaticVarDecl - Add the initializer for 'D' to
+  /// the global variable that has already been created for it.  If
+  /// the initializer has a different type than GV does, this may
+  /// force the underlying variable to change.  Otherwise it just
+  /// returns it.
+  llvm::Constant *
+  AddInitializerToStaticVarDecl(const VarDecl &D, llvm::Constant *GV);
 
 
   /// EmitCXXGlobalVarDeclInit - Create the initializer for a C++
@@ -2420,7 +2420,7 @@ public:
   /// possible to prove that an initialization will be done exactly
   /// once, e.g. with a static local variable or a static data member
   /// of a class template.
-  void EmitCXXGuardedInit(const VarDecl &D, llvm::GlobalVariable *DeclPtr,
+  void EmitCXXGuardedInit(const VarDecl &D, llvm::Constant *addr,
                           bool PerformInit);
 
   /// GenerateCXXGlobalInitFunc - Generates code for initializing global

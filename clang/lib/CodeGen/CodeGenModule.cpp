@@ -197,8 +197,9 @@ bool CodeGenModule::isTargetDarwin() const {
   return getContext().getTargetInfo().getTriple().isOSDarwin();
 }
 
-void CodeGenModule::Error(SourceLocation loc, StringRef error) {
-  unsigned diagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error, error);
+void CodeGenModule::Error(SourceLocation loc, const Twine &error) {
+  unsigned diagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
+                                               error.str());
   getDiags().Report(Context.getFullLoc(loc), diagID);
 }
 

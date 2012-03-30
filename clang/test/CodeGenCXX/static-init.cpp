@@ -3,6 +3,7 @@
 // CHECK: @_ZZ1hvE1i = internal global i32 0, align 4
 // CHECK: @base_req = global [4 x i8] c"foo\00", align 1
 
+// CHECK: @_ZZN5test31BC1EvE1u = internal global { i8, [3 x i8] } { i8 97, [3 x i8] undef }, align 4
 // CHECK: @_ZZN5test1L6getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
 // CHECK: @_ZZ2h2vE1i = linkonce_odr global i32 0
 // CHECK: @_ZGVZ2h2vE1i = linkonce_odr global i64 0
@@ -128,4 +129,24 @@ namespace test2 {
   // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
   // CHECK:   store i32 [[T0]], i32* @_ZZN5test21BD1EvE1y,
   // CHECK:   call void @__cxa_guard_release(i64* @_ZGVZN5test21BD1EvE1y)
+}
+
+// This shouldn't error out.
+namespace test3 {
+  struct A {
+    A();
+    ~A();
+  };
+
+  struct B : virtual A {
+    B();
+    ~B();
+  };
+
+  B::B() {
+    union U { char x; int i; };
+    static U u = { 'a' };
+  }
+  // CHECK: define void @_ZN5test31BC1Ev(
+  // CHECK: define void @_ZN5test31BC2Ev(
 }

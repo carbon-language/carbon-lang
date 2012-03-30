@@ -246,8 +246,9 @@ public:
   /// The variable may be:
   ///   - a static local variable
   ///   - a static data member of a class template instantiation
+  /// In either case, it will be a (possibly casted) llvm::GlobalVariable.
   virtual void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
-                               llvm::GlobalVariable *DeclPtr, bool PerformInit);
+                               llvm::Constant *addr, bool PerformInit);
 
 };
 

@@ -169,7 +169,24 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
   return ContextName + Separator + D.getNameAsString();
 }
 
-llvm::GlobalVariable *
+/// We wanted to make a variable of one type, but the variable already
+/// exists with another.  Is that type good enough?
+///
+/// The problem we're working around here is that giving a global
+/// variable an initializer can require changing its type in some
+/// convoluted circumstances.
+static bool isExistingVarAdequate(CodeGenModule &CGM,
+                                  llvm::Type *existing, llvm::Type *desired) {
+  // Equality makes for a good fast path.
+  if (existing == desired) return true;
+
+  // Otherwise, just require them to have the same size.
+  return (CGM.getTargetData().getTypeStoreSize(existing)
+            == CGM.getTargetData().getTypeStoreSize(desired));
+}
+                                   
+
+llvm::Constant *
 CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
                                      const char *Separator,
                                      llvm::GlobalValue::LinkageTypes Linkage) {
@@ -184,20 +201,27 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
     Name = GetStaticDeclName(*this, D, Separator);
 
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
+  unsigned addrspace = CGM.getContext().getTargetAddressSpace(Ty);
 
   // In C++, there are strange possibilities here involving the
   // double-emission of constructors and destructors.
   if (CGM.getLangOpts().CPlusPlus) {
     llvm::GlobalValue *value = CGM.getModule().getNamedValue(Name);
-    if (value && isa<llvm::GlobalVariable>(value) &&
-        value->getType() ==
-          LTy->getPointerTo(CGM.getContext().getTargetAddressSpace(Ty)))
-      return cast<llvm::GlobalVariable>(value);
+    if (value && isa<llvm::GlobalVariable>(value)) {
+      // Check that the type is compatible with the type we want.  The
+      // simple equality check isn't good enough because initializers
+      // can force the changing of a type (e.g.  with unions).
+      if (value->getType()->getAddressSpace() == addrspace &&
+          isExistingVarAdequate(CGM, value->getType()->getElementType(), LTy))
+        return llvm::ConstantExpr::getBitCast(value,
+                                              LTy->getPointerTo(addrspace));
+    }
 
     if (value) {
       CGM.Error(D.getLocation(),
-              "problem emitting static variable: already present as "
-              "different kind of symbol");
+                "problem emitting static variable '" + Name +
+                "': already present as different kind of symbol");
+
       // Fall through and implicitly give it a uniqued name.
     }
   }
@@ -207,7 +231,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
                              Ty.isConstant(getContext()), Linkage,
                              CGM.EmitNullConstant(D.getType()), Name, 0,
                              D.isThreadSpecified(),
-                             CGM.getContext().getTargetAddressSpace(Ty));
+                             addrspace);
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
   if (Linkage != llvm::GlobalValue::InternalLinkage)
     GV->setVisibility(CurFn->getVisibility());
@@ -222,80 +246,85 @@ static bool hasNontrivialDestruction(QualType T) {
   return RD && !RD->hasTrivialDestructor();
 }
 
-/// AddInitializerToStaticVarDecl - Add the initializer for 'D' to the
-/// global variable that has already been created for it.  If the initializer
-/// has a different type than GV does, this may free GV and return a different
-/// one.  Otherwise it just returns GV.
-llvm::GlobalVariable *
+/// AddInitializerToStaticVarDecl - Add the initializer for 'D' to
+/// the global variable that has already been created for it.  If
+/// the initializer has a different type than GV does, this may
+/// force the underlying variable to change.  Otherwise it just
+/// returns it.
+///
+/// The argument must be a (potentially casted) global variable,
+/// and the result will be one, too.
+llvm::Constant *
 CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
-                                               llvm::GlobalVariable *GV) {
-  llvm::Constant *Init = CGM.EmitConstantInit(D, this);
+                                               llvm::Constant *addr) {
+  llvm::Constant *init = CGM.EmitConstantInit(D, this);
+
+  llvm::GlobalVariable *var =
+    cast<llvm::GlobalVariable>(addr->stripPointerCasts());
 
   // If constant emission failed, then this should be a C++ static
   // initializer.
-  if (!Init) {
+  if (!init) {
     if (!getContext().getLangOpts().CPlusPlus)
       CGM.ErrorUnsupported(D.getInit(), "constant l-value expression");
     else if (Builder.GetInsertBlock()) {
       // Since we have a static initializer, this global variable can't
       // be constant.
-      GV->setConstant(false);
+      var->setConstant(false);
 
-      EmitCXXGuardedInit(D, GV, /*PerformInit*/true);
+      EmitCXXGuardedInit(D, addr, /*PerformInit*/true);
     }
-    return GV;
+    return addr;
   }
 
   // The initializer may differ in type from the global. Rewrite
   // the global to match the initializer.  (We have to do this
   // because some types, like unions, can't be completely represented
   // in the LLVM type system.)
-  if (GV->getType()->getElementType() != Init->getType()) {
-    llvm::GlobalVariable *OldGV = GV;
-
-    GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(),
-                                  OldGV->isConstant(),
-                                  OldGV->getLinkage(), Init, "",
-                                  /*InsertBefore*/ OldGV,
-                                  D.isThreadSpecified(),
-                           CGM.getContext().getTargetAddressSpace(D.getType()));
-    GV->setVisibility(OldGV->getVisibility());
+  if (var->getType()->getElementType() != init->getType()) {
+    llvm::GlobalVariable *newVar
+      = new llvm::GlobalVariable(CGM.getModule(), init->getType(),
+                                 var->isConstant(),
+                                 var->getLinkage(), init, "",
+                                 /*InsertBefore*/ var,
+                                 D.isThreadSpecified(),
+                                 var->getType()->getAddressSpace());
+    newVar->setVisibility(var->getVisibility());
 
     // Steal the name of the old global
-    GV->takeName(OldGV);
+    newVar->takeName(var);
 
     // Replace all uses of the old global with the new global
-    llvm::Constant *NewPtrForOldDecl =
-    llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
-    OldGV->replaceAllUsesWith(NewPtrForOldDecl);
+    addr = llvm::ConstantExpr::getBitCast(newVar, addr->getType());
+    var->replaceAllUsesWith(addr);
 
     // Erase the old global, since it is no longer used.
-    OldGV->eraseFromParent();
+    var->eraseFromParent();
+    var = newVar;
   }
 
-  GV->setConstant(CGM.isTypeConstant(D.getType(), true));
-  GV->setInitializer(Init);
+  var->setConstant(CGM.isTypeConstant(D.getType(), true));
+  var->setInitializer(init);
 
   if (hasNontrivialDestruction(D.getType())) {
     // We have a constant initializer, but a nontrivial destructor. We still
     // need to perform a guarded "initialization" in order to register the
     // destructor.
-    EmitCXXGuardedInit(D, GV, /*PerformInit*/false);
+    EmitCXXGuardedInit(D, addr, /*PerformInit*/false);
   }
 
-  return GV;
+  return addr;
 }
 
 void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
                                       llvm::GlobalValue::LinkageTypes Linkage) {
-  llvm::Value *&DMEntry = LocalDeclMap[&D];
-  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
 
-  llvm::GlobalVariable *GV = CreateStaticVarDecl(D, ".", Linkage);
+  llvm::Constant *addr = CreateStaticVarDecl(D, ".", Linkage);
 
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
-  DMEntry = GV;
+  assert(!LocalDeclMap.count(&D) && "Decl already exists in localdeclmap!");
+  LocalDeclMap[&D] = addr;
 
   // We can't have a VLA here, but we can have a pointer to a VLA,
   // even though that doesn't really make any sense.
@@ -305,40 +334,34 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
 
   // Local static block variables must be treated as globals as they may be
   // referenced in their RHS initializer block-literal expresion.
-  CGM.setStaticLocalDeclAddress(&D, GV);
+  CGM.setStaticLocalDeclAddress(&D, addr);
 
   // If this value has an initializer, emit it.
+  // This can leave us with a casted pointer.
   if (D.getInit())
-    GV = AddInitializerToStaticVarDecl(D, GV);
+    addr = AddInitializerToStaticVarDecl(D, addr);
 
-  GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
+  llvm::GlobalVariable *var =
+    cast<llvm::GlobalVariable>(addr->stripPointerCasts());
+  var->setAlignment(getContext().getDeclAlign(&D).getQuantity());
 
   if (D.hasAttr<AnnotateAttr>())
-    CGM.AddGlobalAnnotations(&D, GV);
+    CGM.AddGlobalAnnotations(&D, var);
 
   if (const SectionAttr *SA = D.getAttr<SectionAttr>())
-    GV->setSection(SA->getName());
+    var->setSection(SA->getName());
 
   if (D.hasAttr<UsedAttr>())
-    CGM.AddUsedGlobal(GV);
+    CGM.AddUsedGlobal(var);
 
-  // We may have to cast the constant because of the initializer
-  // mismatch above.
-  //
-  // FIXME: It is really dangerous to store this in the map; if anyone
-  // RAUW's the GV uses of this constant will be invalid.
-  llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
-  llvm::Type *LPtrTy =
-    LTy->getPointerTo(CGM.getContext().getTargetAddressSpace(D.getType()));
-  llvm::Constant *CastedVal = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
-  DMEntry = CastedVal;
-  CGM.setStaticLocalDeclAddress(&D, CastedVal);
+  LocalDeclMap[&D] = addr;
+  CGM.setStaticLocalDeclAddress(&D, addr);
 
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(D.getLocation());
-    DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(GV), &D);
+    DI->EmitGlobalVariable(var, &D);
   }
 }
 

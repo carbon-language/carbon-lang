@@ -123,7 +123,7 @@ public:
                        llvm::Value *&AllocPtr, CharUnits &CookieSize);
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
-                       llvm::GlobalVariable *DeclPtr, bool PerformInit);
+                       llvm::Constant *addr, bool PerformInit);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1064,7 +1064,7 @@ namespace {
 /// just special-case it at particular places.
 void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
                                     const VarDecl &D,
-                                    llvm::GlobalVariable *GV,
+                                    llvm::Constant *varAddr,
                                     bool PerformInit) {
   CGBuilderTy &Builder = CGF.Builder;
 
@@ -1075,9 +1075,14 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
 
   llvm::IntegerType *guardTy;
 
+  // Find the underlying global variable for linkage purposes.
+  // This may not have the right type for actual evaluation purposes.
+  llvm::GlobalVariable *var =
+    cast<llvm::GlobalVariable>(varAddr->stripPointerCasts());
+
   // If we have a global variable with internal linkage and thread-safe statics
   // are disabled, we can just let the guard variable be of type i8.
-  bool useInt8GuardVariable = !threadsafe && GV->hasInternalLinkage();
+  bool useInt8GuardVariable = !threadsafe && var->hasInternalLinkage();
   if (useInt8GuardVariable) {
     guardTy = CGF.Int8Ty;
   } else {
@@ -1103,9 +1108,10 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
         existingGuard->getType() == guardPtrTy) {
       guard = cast<llvm::GlobalVariable>(existingGuard); // okay
     } else {
-      CGM.Error(D.getLocation(),
-              "problem emitting guard for static variable: "
-              "already present as different kind of symbol");
+      CGM.Error(D.getLocation(), "problem emitting static variable '"
+                                 + guardName.str() +
+                "': already present as different kind of symbol");
+
       // Fall through and implicitly give it a uniqued name.
     }
   }
@@ -1113,10 +1119,10 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   if (!guard) {
     // Just absorb linkage and visibility from the variable.
     guard = new llvm::GlobalVariable(CGM.getModule(), guardTy,
-                                     false, GV->getLinkage(),
+                                     false, var->getLinkage(),
                                      llvm::ConstantInt::get(guardTy, 0),
                                      guardName.str());
-    guard->setVisibility(GV->getVisibility());
+    guard->setVisibility(var->getVisibility());
   }
     
   // Test whether the variable has completed initialization.
@@ -1196,7 +1202,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   }
 
   // Emit the initializer and add a global destructor if appropriate.
-  CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
+  CGF.EmitCXXGlobalVarDeclInit(D, varAddr, PerformInit);
 
   if (threadsafe) {
     // Pop the guard-abort cleanup if we pushed one.
