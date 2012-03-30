@@ -10,10 +10,12 @@ class AnonymousTestCase(TestBase):
     mydir = os.path.join("lang", "c", "blocks")
     lines = []
 
+    @unittest2.expectedFailure
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
+    @unittest2.expectedFailure
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
