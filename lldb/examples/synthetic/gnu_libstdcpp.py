@@ -89,6 +89,7 @@ class StdListSynthProvider:
 
 	def get_child_at_index(self,index):
 		logger = Logger.Logger()
+		logger >> "Fetching child " + str(index)
 		if index < 0:
 			return None;
 		if index >= self.num_children():
@@ -190,6 +191,7 @@ class StdVectorSynthProvider:
 
 	def get_child_at_index(self,index):
 		logger = Logger.Logger()
+		logger >> "Retrieving child " + str(index)
 		if index < 0:
 			return None;
 		if index >= self.num_children():
@@ -257,13 +259,19 @@ class StdMapSynthProvider:
 			
 			map_type = self.valobj.GetType()
 			if map_type.IsReferenceType():
+				logger >> "Dereferencing type"
 				map_type = map_type.GetDereferencedType()
 			
 			map_arg_0 = str(map_type.GetTemplateArgumentType(0).GetName())
 			map_arg_1 = str(map_type.GetTemplateArgumentType(1).GetName())
 			
+			logger >> "map has args " + str(map_arg_0) + " and " + str(map_arg_1)
+			
 			map_arg_0,fixed_0 = self.fixup_class_name(map_arg_0)
 			map_arg_1,fixed_1 = self.fixup_class_name(map_arg_1)
+			
+			logger >> "arg_0 has become: " + str(map_arg_0) + " (fixed: " + str(fixed_0) + ")"
+			logger >> "arg_1 has become: " + str(map_arg_1) + " (fixed: " + str(fixed_1) + ")"
 			
 			# HACK: this is related to the above issue with the typename for std::string
 			# being shortened by clang - the changes to typename display and searching to honor
@@ -281,7 +289,11 @@ class StdMapSynthProvider:
 			else:
 				map_arg_type = map_arg_type + ">"
 			
+			logger >> "final contents datatype is: " + str(map_arg_type)
+			
 			self.data_type = self.valobj.GetTarget().FindFirstType(map_arg_type)
+			
+			logger >> "and the SBType is: " + str(self.data_type)
 			
 			# from libstdc++ implementation of _M_root for rbtree
 			self.Mroot = self.Mheader.GetChildMemberWithName('_M_parent')

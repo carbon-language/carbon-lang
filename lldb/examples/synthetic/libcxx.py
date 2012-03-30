@@ -97,6 +97,7 @@ class stdvector_SynthProvider:
 
 	def get_child_at_index(self,index):
 		logger = Logger.Logger()
+		logger >> "Retrieving child " + str(index)
 		if index < 0:
 			return None;
 		if index >= self.num_children():
@@ -272,6 +273,7 @@ class stdlist_SynthProvider:
 
 	def get_child_at_index(self,index):
 		logger = Logger.Logger()
+		logger >> "Fetching child " + str(index)
 		if index < 0:
 			return None;
 		if index >= self.num_children():
@@ -509,11 +511,13 @@ class stdmap_SynthProvider:
 
 	def get_child_at_index(self,index):
 		logger = Logger.Logger()
+		logger >> "Retrieving child " + str(index)
 		if index < 0:
 			return None
 		if index >= self.num_children():
 			return None;
 		if self.garbage:
+			logger >> "Returning None since this tree is garbage"
 			return None
 		try:
 			iterator = stdmap_iterator(self.root_node,max_count=self.num_children())
@@ -524,6 +528,7 @@ class stdmap_SynthProvider:
 			need_to_skip = (index > 0)
 			current = iterator.advance(index)
 			if current == None:
+				logger >> "Tree is garbage - returning None"
 				self.garbage = True
 				return None
 			if self.get_data_type():
@@ -538,13 +543,14 @@ class stdmap_SynthProvider:
 				else:
 					# FIXME we need to have accessed item 0 before accessing any other item!
 					if self.skip_size == None:
+						logger >> "You asked for item > 0 before asking for item == 0, too bad - I have no clue"
 						return None
 					return current.CreateChildAtOffset('[' + str(index) + ']',self.skip_size,self.data_type)
 			else:
-				print "foo"
+				logger >> "Unable to infer data-type - returning None (should mark tree as garbage here?)"
 				return None
 		except Exception as err:
-			print err
+			logger >> "Hit an exception: " + str(err)
 			return None
 
 # Just an example: the actual summary is produced by a summary string: size=${svar%#}
