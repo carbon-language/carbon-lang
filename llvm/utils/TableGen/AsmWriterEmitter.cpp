@@ -16,6 +16,7 @@
 #include "AsmWriterInst.h"
 #include "CodeGenTarget.h"
 #include "StringToOffsetTable.h"
+#include "SequenceToOffsetTable.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -462,12 +463,12 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 static void
 emitRegisterNameString(raw_ostream &O, StringRef AltName,
   const std::vector<CodeGenRegister*> &Registers) {
-  StringToOffsetTable StringTable;
-  O << "  static const unsigned RegAsmOffset" << AltName << "[] = {\n    ";
+  SequenceToOffsetTable<std::string> StringTable;
+  SmallVector<std::string, 4> AsmNames(Registers.size());
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = *Registers[i];
+    std::string &AsmName = AsmNames[i];
 
-    std::string AsmName;
     // "NoRegAltName" is special. We don't need to do a lookup for that,
     // as it's just a reference to the default register name.
     if (AltName == "" || AltName == "NoRegAltName") {
@@ -495,8 +496,17 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
         AsmName = AltNames[Idx];
       }
     }
+    StringTable.add(AsmName);
+  }
 
-    O << StringTable.GetOrAddStringOffset(AsmName);
+  StringTable.layout();
+  O << "  static const char AsmStrs" << AltName << "[] = {\n";
+  StringTable.emit(O, printChar);
+  O << "  };\n\n";
+
+  O << "  static const unsigned RegAsmOffset" << AltName << "[] = {\n    ";
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    O << StringTable.get(AsmNames[i]);
     if (((i + 1) % 14) == 0)
       O << ",\n    ";
     else
@@ -506,10 +516,6 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
   O << "0\n"
     << "  };\n"
     << "\n";
-
-  O << "  const char *AsmStrs" << AltName << " =\n";
-  StringTable.EmitString(O);
-  O << ";\n";
 }
 
 void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {

@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <vector>
 #include <cassert>
+#include <cctype>
 
 namespace llvm {
 
@@ -119,6 +120,19 @@ public:
     }
   }
 };
+
+// Helper function for SequenceToOffsetTable<string>.
+static inline void printChar(raw_ostream &OS, char C) {
+  unsigned char UC(C);
+  if (isalnum(UC) || ispunct(UC)) {
+    OS << '\'';
+    if (C == '\\' || C == '\'')
+      OS << '\\';
+    OS << C << '\'';
+  } else {
+    OS << unsigned(UC);
+  }
+}
 
 } // end namespace llvm
 
