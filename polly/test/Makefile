@@ -31,6 +31,7 @@ ifdef VG
   LIT_ARGS += "--vg"
 endif
 
+all:: polly-test
 
 polly-test:: lit.site.cfg polly-lib
 	@ echo '--- Running polly tests for $(TARGET_TRIPLE) ---'
