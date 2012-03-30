@@ -1130,6 +1130,8 @@ _func:
         moveq r1, #12
         movne.w r1, #12
         mov.w r6, #450
+        it lo
+        movlo r1, #-1
 
         @ alias for mvn
 	mov r3, #-3
@@ -1149,7 +1151,8 @@ _func:
 @ CHECK: moveq	r1, #12                 @ encoding: [0x0c,0x21]
 @ CHECK: movne.w r1, #12                @ encoding: [0x4f,0xf0,0x0c,0x01]
 @ CHECK: mov.w	r6, #450                @ encoding: [0x4f,0xf4,0xe1,0x76]
-
+@ CHECK: it	lo                      @ encoding: [0x38,0xbf]
+@ CHECK: movlo.w	r1, #-1         @ encoding: [0x4f,0xf0,0xff,0x31]
 @ CHECK: mvn	r3, #2                  @ encoding: [0x6f,0xf0,0x02,0x03]
 
 @------------------------------------------------------------------------------
