@@ -102,7 +102,7 @@ void ConstStructBuilder::AppendVTablePointer(BaseSubobject Base,
     llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Indices);
 
   // Add the vtable at the start of the object.
-  AppendBytes(CharUnits::Zero(), VTableAddressPoint);
+  AppendBytes(Base.getBaseOffset(), VTableAddressPoint);
 }
 
 void ConstStructBuilder::
