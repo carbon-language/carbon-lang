@@ -106,6 +106,25 @@ void testBlocks() {
   myBlock(3);
 }
 
+// Test NSMapInsert. 
+@interface NSMapTable : NSObject <NSCopying, NSCoding, NSFastEnumeration>
+@end
+extern void *NSMapGet(NSMapTable *table, const void *key);
+extern void NSMapInsert(NSMapTable *table, const void *key, const void *value);
+extern void NSMapInsertKnownAbsent(NSMapTable *table, const void *key, const void *value);
+char *strdup(const char *s);
+
+NSString * radar11152419(NSString *string1, NSMapTable *map) {
+    const char *strkey = "key";
+    NSString *string = ( NSString *)NSMapGet(map, strkey);
+    if (!string) {
+        string = [string1 copy];
+        NSMapInsert(map, strdup(strkey), (void*)string); // no warning
+        NSMapInsertKnownAbsent(map, strdup(strkey), (void*)string); // no warning
+    }
+    return string;
+}
+
 // Test that we handle pointer escaping through OSAtomicEnqueue.
 typedef volatile struct {
  void *opaque1;

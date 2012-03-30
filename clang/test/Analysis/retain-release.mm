@@ -111,6 +111,7 @@ typedef struct _NSZone NSZone;
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
 - (id)retain;
+- (id)copy;
 - (oneway void)release;
 - (id)autorelease;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
@@ -345,5 +346,23 @@ int rdar10553686_positive(void)
   [bar release];
   [bar retain]; // expected-warning {{used after it is released}}
   return 0;
+}
+
+@interface NSMapTable : NSObject <NSCopying, NSCoding, NSFastEnumeration>
+@end
+extern void *NSMapGet(NSMapTable *table, const void *key);
+extern void NSMapInsert(NSMapTable *table, const void *key, const void *value);
+extern void NSMapInsertKnownAbsent(NSMapTable *table, const void *key, const void *value);
+char *strdup(const char *s);
+
+NSString * radar11152419(NSString *string1, NSString *key1, NSMapTable *map) {
+    NSString *string = ( NSString *)NSMapGet(map, key1);
+    if (!string) {
+        string = [string1 copy];
+        NSString *key = [key1 copy];
+        NSMapInsert(map, (void*) key, (void*)string); // no warning
+        NSMapInsertKnownAbsent(map, (void*)key, (void*)string); // no warning
+    }
+    return string;
 }
 

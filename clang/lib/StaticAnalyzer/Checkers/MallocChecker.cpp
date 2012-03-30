@@ -1262,6 +1262,11 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
       return false;
     }
 
+    // Whitelist NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
+    // be deallocated by NSMapRemove.
+    if (FName.startswith("NS") && (FName.find("Insert") != StringRef::npos))
+      return false;
+
     // Otherwise, assume that the function does not free memory.
     // Most system calls, do not free the memory.
     return true;

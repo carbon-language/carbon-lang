@@ -245,9 +245,13 @@ static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
       // in buffer.
       // - Many CF containers allow objects to escape through custom
       // allocators/deallocators upon container construction.
+      // - NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
+      // be deallocated by NSMapRemove.
       if (FName == "pthread_setspecific" ||
           FName == "funopen" ||
           FName.endswith("NoCopy") ||
+          (FName.startswith("NS") &&
+            (FName.find("Insert") != StringRef::npos)) ||
           Call.isCFCGAllowingEscape(FName))
         return;
     }

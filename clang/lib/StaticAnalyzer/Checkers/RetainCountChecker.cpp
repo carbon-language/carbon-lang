@@ -993,6 +993,13 @@ const RetainSummary * RetainSummaryManager::getSummary(const FunctionDecl *FD) {
       // libdispatch finalizers.
       ScratchArgs = AF.add(ScratchArgs, 1, StopTracking);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+    } else if (FName.startswith("NS") &&
+                (FName.find("Insert") != StringRef::npos)) {
+      // Whitelist NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
+      // be deallocated by NSMapRemove. (radar://11152419)
+      ScratchArgs = AF.add(ScratchArgs, 1, StopTracking);
+      ScratchArgs = AF.add(ScratchArgs, 2, StopTracking);
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
     }
 
     // Did we get a summary?

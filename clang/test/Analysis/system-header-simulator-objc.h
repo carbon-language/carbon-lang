@@ -39,6 +39,7 @@ typedef struct _NSZone NSZone;
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
 - (id)retain;
+- (id)copy;
 - (oneway void)release;
 - (id)autorelease;
 - (id)init;
