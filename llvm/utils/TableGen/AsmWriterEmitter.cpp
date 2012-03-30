@@ -705,68 +705,6 @@ static void EmitGetMapOperandNumber(raw_ostream &O) {
   O << "}\n\n";
 }
 
-void AsmWriterEmitter::EmitRegIsInRegClass(raw_ostream &O) {
-  CodeGenTarget Target(Records);
-
-  // Enumerate the register classes.
-  ArrayRef<CodeGenRegisterClass*> RegisterClasses =
-    Target.getRegBank().getRegClasses();
-
-  O << "namespace { // Register classes\n";
-  O << "  enum RegClass {\n";
-
-  // Emit the register enum value for each RegisterClass.
-  for (unsigned I = 0, E = RegisterClasses.size(); I != E; ++I) {
-    if (I != 0) O << ",\n";
-    O << "    RC_" << RegisterClasses[I]->getName();
-  }
-
-  O << "\n  };\n";
-  O << "} // end anonymous namespace\n\n";
-
-  // Emit a function that returns 'true' if a regsiter is part of a particular
-  // register class. I.e., RAX is part of GR64 on X86.
-  O << "static bool regIsInRegisterClass"
-    << "(unsigned RegClass, unsigned Reg) {\n";
-
-  // Emit the switch that checks if a register belongs to a particular register
-  // class.
-  O << "  switch (RegClass) {\n";
-  O << "  default: break;\n";
-
-  for (unsigned I = 0, E = RegisterClasses.size(); I != E; ++I) {
-    const CodeGenRegisterClass &RC = *RegisterClasses[I];
-
-    // Give the register class a legal C name if it's anonymous.
-    std::string Name = RC.getName();
-    O << "  case RC_" << Name << ":\n";
-  
-    // Emit the register list now.
-    unsigned IE = RC.getOrder().size();
-    if (IE == 1) {
-      O << "    if (Reg == " << getQualifiedName(RC.getOrder()[0]) << ")\n";
-      O << "      return true;\n";
-    } else {
-      O << "    switch (Reg) {\n";
-      O << "    default: break;\n";
-
-      for (unsigned II = 0; II != IE; ++II) {
-        Record *Reg = RC.getOrder()[II];
-        O << "    case " << getQualifiedName(Reg) << ":\n";
-      }
-
-      O << "      return true;\n";
-      O << "    }\n";
-    }
-
-    O << "    break;\n";
-  }
-
-  O << "  }\n\n";
-  O << "  return false;\n";
-  O << "}\n\n";
-}
-
 static unsigned CountNumOperands(StringRef AsmString) {
   unsigned NumOps = 0;
   std::pair<StringRef, StringRef> ASM = AsmString.split(' ');
@@ -809,8 +747,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   O << "\n#ifdef PRINT_ALIAS_INSTR\n";
   O << "#undef PRINT_ALIAS_INSTR\n\n";
-
-  EmitRegIsInRegClass(O);
 
   // Emit the method that prints the alias instruction.
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
@@ -877,9 +813,9 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
             if (!IAP->isOpMapped(ROName)) {
               IAP->addOperand(ROName, i);
-              Cond = std::string("regIsInRegisterClass(RC_") +
-                CGA->ResultOperands[i].getRecord()->getName() +
-                ", MI->getOperand(" + llvm::utostr(i) + ").getReg())";
+              Cond = std::string("MRI.getRegClass(") + Target.getName() + "::" +
+                CGA->ResultOperands[i].getRecord()->getName() + "RegClassID)"
+                ".contains(MI->getOperand(" + llvm::utostr(i) + ").getReg())";
               IAP->addCond(Cond);
             } else {
               Cond = std::string("MI->getOperand(") +
