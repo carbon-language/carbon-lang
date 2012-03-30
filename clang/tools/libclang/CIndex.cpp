@@ -4425,6 +4425,10 @@ CXCursor clang_getCanonicalCursor(CXCursor C) {
   
   return C;
 }
+
+int clang_Cursor_getObjCSelectorIndex(CXCursor cursor) {
+  return cxcursor::getSelectorIdentifierIndexAndLoc(cursor).first;
+}
   
 unsigned clang_getNumOverloadedDecls(CXCursor C) {
   if (C.kind != CXCursor_OverloadedDeclRef)

@@ -3001,6 +3001,20 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
  */
 CINDEX_LINKAGE CXCursor clang_getCanonicalCursor(CXCursor);
 
+
+/**
+ * \brief If the cursor points to a selector identifier in a objc method or
+ * message expression, this returns the selector index.
+ *
+ * After getting a cursor with \see clang_getCursor, this can be called to
+ * determine if the location points to a selector identifier.
+ *
+ * \returns The selector index if the cursor is an objc method or message
+ * expression and the cursor is pointing to a selector identifier, or -1
+ * otherwise.
+ */
+CINDEX_LINKAGE int clang_Cursor_getObjCSelectorIndex(CXCursor);
+
 /**
  * @}
  */
