@@ -157,7 +157,7 @@ _mm256_blendv_epi8(__m256i __V1, __m256i __V2, __m256i __M)
 #define _mm256_blend_epi16(V1, V2, M) __extension__ ({ \
   __m256i __V1 = (V1); \
   __m256i __V2 = (V2); \
-  (__m256i)__builtin_ia32_pblendw256((__v16hi)__V1, (__v16hi)__V2, M); })
+  (__m256i)__builtin_ia32_pblendw256((__v16hi)__V1, (__v16hi)__V2, (M)); })
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_cmpeq_epi8(__m256i a, __m256i b)

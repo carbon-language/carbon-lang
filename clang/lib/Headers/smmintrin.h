@@ -57,21 +57,34 @@
 #define _mm_floor_ss(X, Y)   _mm_round_ss((X), (Y), _MM_FROUND_FLOOR)
 #define _mm_floor_sd(X, Y)   _mm_round_sd((X), (Y), _MM_FROUND_FLOOR)
 
-#define _mm_round_ps(X, Y)      __builtin_ia32_roundps((X), (Y))
-#define _mm_round_ss(X, Y, M)   __builtin_ia32_roundss((X), (Y), (M))
-#define _mm_round_pd(X, M)      __builtin_ia32_roundpd((X), (M))
-#define _mm_round_sd(X, Y, M)   __builtin_ia32_roundsd((X), (Y), (M))
+#define _mm_round_ps(X, M) __extension__ ({ \
+  __m128 __X = (X); \
+  (__m128) __builtin_ia32_roundps((__v4sf)__X, (M)); })
+
+#define _mm_round_ss(X, Y, M) __extension__ ({ \
+  __m128 __X = (X); \
+  __m128 __Y = (Y); \
+  (__m128) __builtin_ia32_roundss((__v4sf)__X, (__v4sf)__Y, (M)); })
+
+#define _mm_round_pd(X, M) __extension__ ({ \
+  __m128d __X = (X); \
+  (__m128d) __builtin_ia32_roundpd((__v2df)__X, (M)); })
+
+#define _mm_round_sd(X, Y, M) __extension__ ({ \
+  __m128d __X = (X); \
+  __m128d __Y = (Y); \
+  (__m128d) __builtin_ia32_roundsd((__v2df)__X, (__v2df)__Y, (M)); })
 
 /* SSE4 Packed Blending Intrinsics.  */
 #define _mm_blend_pd(V1, V2, M) __extension__ ({ \
   __m128d __V1 = (V1); \
   __m128d __V2 = (V2); \
-  (__m128d) __builtin_ia32_blendpd ((__v2df)__V1, (__v2df)__V2, M); })
+  (__m128d) __builtin_ia32_blendpd ((__v2df)__V1, (__v2df)__V2, (M)); })
 
 #define _mm_blend_ps(V1, V2, M) __extension__ ({ \
   __m128 __V1 = (V1); \
   __m128 __V2 = (V2); \
-  (__m128) __builtin_ia32_blendps ((__v4sf)__V1, (__v4sf)__V2, M); })
+  (__m128) __builtin_ia32_blendps ((__v4sf)__V1, (__v4sf)__V2, (M)); })
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_blendv_pd (__m128d __V1, __m128d __V2, __m128d __M)
@@ -97,7 +110,7 @@ _mm_blendv_epi8 (__m128i __V1, __m128i __V2, __m128i __M)
 #define _mm_blend_epi16(V1, V2, M) __extension__ ({ \
   __m128i __V1 = (V1); \
   __m128i __V2 = (V2); \
-  (__m128i) __builtin_ia32_pblendw128 ((__v8hi)__V1, (__v8hi)__V2, M); })
+  (__m128i) __builtin_ia32_pblendw128 ((__v8hi)__V1, (__v8hi)__V2, (M)); })
 
 /* SSE4 Dword Multiply Instructions.  */
 static __inline__  __m128i __attribute__((__always_inline__, __nodebug__))
@@ -113,8 +126,15 @@ _mm_mul_epi32 (__m128i __V1, __m128i __V2)
 }
 
 /* SSE4 Floating Point Dot Product Instructions.  */
-#define _mm_dp_ps(X, Y, M) __builtin_ia32_dpps ((X), (Y), (M))
-#define _mm_dp_pd(X, Y, M) __builtin_ia32_dppd ((X), (Y), (M))
+#define _mm_dp_ps(X, Y, M) __extension__ ({ \
+  __m128 __X = (X); \
+  __m128 __Y = (Y); \
+  (__m128) __builtin_ia32_dpps((__v4sf)__X, (__v4sf)__Y, (M)); })
+
+#define _mm_dp_pd(X, Y, M) __extension__ ({\
+  __m128d __X = (X); \
+  __m128d __Y = (Y); \
+  (__m128d) __builtin_ia32_dppd((__v2df)__X, (__v2df)__Y, (M)); })
 
 /* SSE4 Streaming Load Hint Instruction.  */
 static __inline__  __m128i __attribute__((__always_inline__, __nodebug__))
@@ -195,14 +215,14 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
                                              
 /* Insert int into packed integer array at index.  */
 #define _mm_insert_epi8(X, I, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
-                                                   __a[N] = I;               \
+                                                   __a[(N)] = (I);             \
                                                    __a;}))
 #define _mm_insert_epi32(X, I, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
-                                                    __a[N] = I;             \
+                                                    __a[(N)] = (I);           \
                                                     __a;}))
 #ifdef __x86_64__
 #define _mm_insert_epi64(X, I, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
-                                                    __a[N] = I;             \
+                                                    __a[(N)] = (I);           \
                                                     __a;}))
 #endif /* __x86_64__ */
 
@@ -210,12 +230,12 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
  * as a zero extended value, so it is unsigned.
  */
 #define _mm_extract_epi8(X, N) (__extension__ ({ __v16qi __a = (__v16qi)(X); \
-                                                 (unsigned char)__a[N];}))
+                                                 (unsigned char)__a[(N)];}))
 #define _mm_extract_epi32(X, N) (__extension__ ({ __v4si __a = (__v4si)(X); \
-                                                  (unsigned)__a[N];}))
+                                                  (unsigned)__a[(N)];}))
 #ifdef __x86_64__
 #define _mm_extract_epi64(X, N) (__extension__ ({ __v2di __a = (__v2di)(X); \
-                                                  __a[N];}))
+                                                  __a[(N)];}))
 #endif /* __x86_64 */
 
 /* SSE4 128-bit Packed Integer Comparisons.  */
@@ -330,7 +350,10 @@ _mm_packus_epi32(__m128i __V1, __m128i __V2)
 }
 
 /* SSE4 Multiple Packed Sums of Absolute Difference.  */
-#define _mm_mpsadbw_epu8(X, Y, M) __builtin_ia32_mpsadbw128((X), (Y), (M))
+#define _mm_mpsadbw_epu8(X, Y, M) __extension__ ({ \
+  __m128i __X = (X); \
+  __m128i __Y = (Y); \
+  (__m128i) __builtin_ia32_mpsadbw128((__v16qi)__X, (__v16qi)__Y, (M)); })
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_minpos_epu16(__m128i __V)

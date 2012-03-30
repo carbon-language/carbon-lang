@@ -105,5 +105,49 @@ __m128i test_loadl_epi64(void* y) {
 }
 
 __m128i test_mm_minpos_epu16(__m128i x) {
+  // CHECK: define {{.*}} @test_mm_minpos_epu16
+  // CHECK: @llvm.x86.sse41.phminposuw
   return _mm_minpos_epu16(x);
+}
+
+__m128i test_mm_mpsadbw_epu8(__m128i x, __m128i y) {
+  // CHECK: define {{.*}} @test_mm_mpsadbw_epu8
+  // CHECK: @llvm.x86.sse41.mpsadbw
+  return _mm_mpsadbw_epu8(x, y, 1);
+}
+
+__m128 test_mm_dp_ps(__m128 x, __m128 y) {
+  // CHECK: define {{.*}} @test_mm_dp_ps
+  // CHECK: @llvm.x86.sse41.dpps
+  return _mm_dp_ps(x, y, 2);
+}
+
+__m128d test_mm_dp_pd(__m128d x, __m128d y) {
+  // CHECK: define {{.*}} @test_mm_dp_pd
+  // CHECK: @llvm.x86.sse41.dppd
+  return _mm_dp_pd(x, y, 2);
+}
+
+__m128 test_mm_round_ps(__m128 x) {
+  // CHECK: define {{.*}} @test_mm_round_ps
+  // CHECK: @llvm.x86.sse41.round.ps
+  return _mm_round_ps(x, 2);
+}
+
+__m128 test_mm_round_ss(__m128 x, __m128 y) {
+  // CHECK: define {{.*}} @test_mm_round_ss
+  // CHECK: @llvm.x86.sse41.round.ss
+  return _mm_round_ss(x, y, 2);
+}
+
+__m128d test_mm_round_pd(__m128d x) {
+  // CHECK: define {{.*}} @test_mm_round_pd
+  // CHECK: @llvm.x86.sse41.round.pd
+  return _mm_round_pd(x, 2);
+}
+
+__m128d test_mm_round_sd(__m128d x, __m128d y) {
+  // CHECK: define {{.*}} @test_mm_round_sd
+  // CHECK: @llvm.x86.sse41.round.sd
+  return _mm_round_sd(x, y, 2);
 }
