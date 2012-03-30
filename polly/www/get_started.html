@@ -135,9 +135,16 @@ make
 
 <h3> Test Polly</h3>
 
-To check if Polly works correctly you can run <em>make polly-test</em> for the
+<p>To check if Polly works correctly you can run <em>make polly-test</em> for the
 cmake build or <em>make polly-test -C tools/polly/test/</em> for the autoconf
 build.
+
+<p>If you get something like <em>"... libisl.so.9: cannot open shared object file .."</em>,
+it is because you installed cloog to a non-standard path, and libisl/libcloog
+could not be found. To solve this issue, you need to append the path of parent
+directory of libisl/libcloog, i.e. ${CLOOG_INSTALL}/lib, to LD_LIBRARY_PATH by:
+
+<pre>export LD_LBIRARY_PATH=$LD_LIBRARY_PATH;${CLOOG_INSTALL}/lib</pre>
 
 <h2> Optional Features </h2>
 
