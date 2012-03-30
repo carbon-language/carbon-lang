@@ -59,8 +59,21 @@ enum Fixups {
   // fixup_arm_thumb_br - 12-bit fixup for Thumb B instructions.
   fixup_arm_thumb_br,
 
-  // fixup_arm_bl - Fixup for ARM BL instructions.
-  fixup_arm_bl,
+  // The following fixups handle the ARM BL instructions. These can be
+  // conditionalised; however, the ARM ELF ABI requires a different relocation
+  // in that case: R_ARM_JUMP24 instead of R_ARM_CALL. The difference is that
+  // R_ARM_CALL is allowed to change the instruction to a BLX inline, which has
+  // no conditional version; R_ARM_JUMP24 would have to insert a veneer.
+  //
+  // MachO does not draw a distinction between the two cases, so it will treat
+  // fixup_arm_uncondbl and fixup_arm_condbl as identical fixups.
+
+  // fixup_arm_uncondbl - Fixup for unconditional ARM BL instructions.
+  fixup_arm_uncondbl,
+
+  // fixup_arm_condbl - Fixup for ARM BL instructions with nontrivial
+  // conditionalisation.
+  fixup_arm_condbl,
 
   // fixup_arm_blx - Fixup for ARM BLX instructions.
   fixup_arm_blx,

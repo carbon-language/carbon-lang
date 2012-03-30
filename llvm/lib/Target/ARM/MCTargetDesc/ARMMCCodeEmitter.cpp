@@ -597,8 +597,12 @@ uint32_t ARMMCCodeEmitter::
 getARMBLTargetOpValue(const MCInst &MI, unsigned OpIdx,
                           SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand MO = MI.getOperand(OpIdx);
-  if (MO.isExpr())
-    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_bl, Fixups);
+  if (MO.isExpr()) {
+    if (HasConditionalBranch(MI))
+      return ::getBranchTargetOpValue(MI, OpIdx, 
+                                      ARM::fixup_arm_condbl, Fixups);
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_uncondbl, Fixups);
+  }
 
   return MO.getImm() >> 2;
 }

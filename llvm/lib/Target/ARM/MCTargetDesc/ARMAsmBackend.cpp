@@ -78,7 +78,8 @@ public:
 { "fixup_t2_condbranch",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_uncondbranch",   0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_bl",            0,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_uncondbl",      0,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_condbl",        0,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_blx",           0,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_bl",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_blx",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
@@ -128,7 +129,8 @@ public:
     if (A && ((unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_blx ||
               (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl ||
               (unsigned)Fixup.getKind() == ARM::fixup_arm_blx ||
-              (unsigned)Fixup.getKind() == ARM::fixup_arm_bl))
+              (unsigned)Fixup.getKind() == ARM::fixup_arm_uncondbl ||
+              (unsigned)Fixup.getKind() == ARM::fixup_arm_condbl))
       IsResolved = false;
   }
 
@@ -366,7 +368,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 
   case ARM::fixup_arm_condbranch:
   case ARM::fixup_arm_uncondbranch:
-  case ARM::fixup_arm_bl:
+  case ARM::fixup_arm_uncondbl:
+  case ARM::fixup_arm_condbl:
   case ARM::fixup_arm_blx:
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
@@ -577,7 +580,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:
-  case ARM::fixup_arm_bl:
+  case ARM::fixup_arm_uncondbl:
+  case ARM::fixup_arm_condbl:
   case ARM::fixup_arm_blx:
   case ARM::fixup_arm_condbranch:
   case ARM::fixup_arm_uncondbranch:

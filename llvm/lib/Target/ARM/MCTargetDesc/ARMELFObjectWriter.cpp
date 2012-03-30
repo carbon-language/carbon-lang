@@ -178,7 +178,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
         break;
       }
       break;
-    case ARM::fixup_arm_bl:
+    case ARM::fixup_arm_uncondbl:
     case ARM::fixup_arm_blx:
     case ARM::fixup_arm_uncondbranch:
       switch (Modifier) {
@@ -190,6 +190,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
         break;
       }
       break;
+    case ARM::fixup_arm_condbl:
     case ARM::fixup_arm_condbranch:
       Type = ELF::R_ARM_JUMP24;
       break;
