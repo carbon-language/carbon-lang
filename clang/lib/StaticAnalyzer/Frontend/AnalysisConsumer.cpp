@@ -104,6 +104,10 @@ public:
   /// Time the analyzes time of each translation unit.
   static llvm::Timer* TUTotalTimer;
 
+  /// The information about analyzed functions shared throughout the
+  /// translation unit.
+  FunctionSummariesTy FunctionSummaries;
+
   AnalysisConsumer(const Preprocessor& pp,
                    const std::string& outdir,
                    const AnalyzerOptions& opts,
@@ -449,7 +453,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   if (!Mgr->getCFG(D))
     return;
 
-  ExprEngine Eng(*Mgr, ObjCGCEnabled, VisitedCallees);
+  ExprEngine Eng(*Mgr, ObjCGCEnabled, VisitedCallees, &FunctionSummaries);
 
   // Set the graph auditor.
   OwningPtr<ExplodedNode::Auditor> Auditor;

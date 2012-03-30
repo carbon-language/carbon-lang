@@ -67,7 +67,8 @@ static inline Selector GetNullarySelector(const char* name, ASTContext &Ctx) {
 //===----------------------------------------------------------------------===//
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
-                       SetOfDecls *VisitedCallees)
+                       SetOfDecls *VisitedCallees,
+                       FunctionSummariesTy *FS)
   : AMgr(mgr),
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
     Engine(*this, VisitedCallees),
@@ -81,7 +82,7 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
     currentStmt(NULL), currentStmtIdx(0), currentBuilderContext(0),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
-    ObjCGCEnabled(gcEnabled), BR(mgr, *this) {
+    ObjCGCEnabled(gcEnabled), BR(mgr, *this), FunctionSummaries(FS) {
   
   if (mgr.shouldEagerlyTrimExplodedGraph()) {
     // Enable eager node reclaimation when constructing the ExplodedGraph.  
@@ -1046,9 +1047,12 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
     // Check if we stopped at the top level function or not.
     // Root node should have the location context of the top most function.
     const LocationContext *CalleeLC = pred->getLocation().getLocationContext();
+    const LocationContext *CalleeSF = CalleeLC->getCurrentStackFrame();
     const LocationContext *RootLC =
                         (*G.roots_begin())->getLocation().getLocationContext();
-    if (RootLC->getCurrentStackFrame() != CalleeLC->getCurrentStackFrame()) {
+    if (RootLC->getCurrentStackFrame() != CalleeSF) {
+      FunctionSummaries->markReachedMaxBlockCount(CalleeSF->getDecl());
+
       // Re-run the call evaluation without inlining it, by storing the
       // no-inlining policy in the state and enqueuing the new work item on
       // the list. Replay should almost never fail. Use the stats to catch it

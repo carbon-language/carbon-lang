@@ -32,6 +32,31 @@ namespace ento {
 
 typedef llvm::SmallPtrSet<const Decl*,24> SetOfDecls;
 
+class FunctionSummariesTy {
+  struct FunctionSummary {
+    /// True if this function has reached a max block count while inlined from
+    /// at least one call site.
+    bool MayReachMaxBlockCount;
+    FunctionSummary() : MayReachMaxBlockCount(false) {}
+  };
+
+  typedef llvm::DenseMap<const Decl*, FunctionSummary> MapTy;
+  MapTy Map;
+
+public:
+  void markReachedMaxBlockCount(const Decl* D) {
+    Map[D].MayReachMaxBlockCount = true;
+  }
+
+  bool hasReachedMaxBlockCount(const Decl* D) {
+  MapTy::const_iterator I = Map.find(D);
+    if (I != Map.end())
+      return I->second.MayReachMaxBlockCount;
+    return false;
+  }
+
+};
+
 class AnalysisManager : public BugReporterData {
   virtual void anchor();
   AnalysisDeclContextManager AnaCtxMgr;

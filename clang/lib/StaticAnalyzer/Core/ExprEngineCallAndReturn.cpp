@@ -137,6 +137,9 @@ bool ExprEngine::shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred) {
         == AMgr.InlineMaxStackDepth)
     return false;
 
+  if (FunctionSummaries->hasReachedMaxBlockCount(FD))
+    return false;
+
   if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
     return false;
 
