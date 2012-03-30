@@ -2060,3 +2060,21 @@ Instead we could generate:
 The trick is to match "fetch_and_add(X, -C) == C".
 
 //===---------------------------------------------------------------------===//
+
+unsigned t(unsigned a, unsigned b) {
+  return a <= b ? 5 : -5;
+}
+
+We generate:
+	movl	$5, %ecx
+	cmpl	%esi, %edi
+	movl	$-5, %eax
+	cmovbel	%ecx, %eax
+
+GCC:
+	cmpl	%edi, %esi
+	sbbl	%eax, %eax
+	andl	$-10, %eax
+	addl	$5, %eax
+
+//===---------------------------------------------------------------------===//
