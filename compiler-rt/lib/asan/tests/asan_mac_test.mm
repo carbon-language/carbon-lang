@@ -205,3 +205,21 @@ void TestGCDGroupAsync() {
   });
   dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 }
+
+@interface FixedArray : NSObject {
+  int items[10];
+}
+@end
+
+@implementation FixedArray
+-(int) access: (int)index {
+  return items[index];
+}
+@end
+
+void TestOOBNSObjects() {
+  id anObject = [FixedArray new];
+  [anObject access:1];
+  [anObject access:11];
+  [anObject release];
+}

@@ -2023,6 +2023,10 @@ TEST(AddressSanitizerMac, CFStringCreateCopy) {
   EXPECT_EQ(str, str2);
 }
 
+TEST(AddressSanitizerMac, NSObjectOOB) {
+  // Make sure that our allocators are used for NSObjects.
+  EXPECT_DEATH(TestOOBNSObjects(), "heap-buffer-overflow");
+}
 #endif  // __APPLE__
 
 // Test that instrumentation of stack allocations takes into account

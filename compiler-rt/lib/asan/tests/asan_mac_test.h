@@ -13,4 +13,5 @@ extern "C" {
   void TestGCDSourceEvent();
   void TestGCDSourceCancel();
   void TestGCDGroupAsync();
+  void TestOOBNSObjects();
 }
