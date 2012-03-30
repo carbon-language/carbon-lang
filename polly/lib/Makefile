@@ -18,6 +18,9 @@ USEDLIBS = pollyexchange.a
 DIRS += Analysis
 USEDLIBS += pollyanalysis.a
 
+DIRS += CodeGen
+USEDLIBS += pollycodegen.a
+
 # This needs to  be added after the files that use it, otherwise some functions
 # from pollysupport are not available. They will be eliminated if they are
 # not used at the time of linking pollysupport.a
@@ -45,6 +48,17 @@ $(LibDir)/libpollyanalysis.a : $(LibDir)/.dir $(PROJ_OBJ_DIR)/Analysis/$(BuildMo
       $(CP) $(PROJ_SRC_DIR)/Analysis/Makefile Analysis/Makefile; \
     fi; \
     ($(MAKE) -C Analysis $@ ) || exit 1; \
+  fi
+
+$(LibDir)/libpollycodegen.a : $(LibDir)/.dir $(PROJ_OBJ_DIR)/CodeGen/$(BuildMode)/.dir \
+                               $(PROJ_SRC_DIR)/CodeGen/*
+	$(Verb) if [ -d $(PROJ_SRC_DIR)/CodeGen ]; then\
+    if ([ ! -f CodeGen/Makefile ] || \
+        command test CodeGen/Makefile -ot $(PROJ_SRC_DIR)/CodeGen/Makefile ); then \
+      $(MKDIR) CodeGen; \
+      $(CP) $(PROJ_SRC_DIR)/CodeGen/Makefile CodeGen/Makefile; \
+    fi; \
+    ($(MAKE) -C CodeGen $@ ) || exit 1; \
   fi
 
 $(LibDir)/libpollyexchange.a : $(LibDir)/.dir $(PROJ_OBJ_DIR)/Exchange/$(BuildMode)/.dir \

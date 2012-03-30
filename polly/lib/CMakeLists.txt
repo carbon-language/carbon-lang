@@ -1,4 +1,5 @@
 add_subdirectory(Analysis)
+add_subdirectory(CodeGen)
 add_subdirectory(Exchange)
 add_subdirectory(Support)
 add_subdirectory(JSON)
@@ -12,6 +13,7 @@ endif (SCOPLIB_FOUND)
 
 set(LLVM_USED_LIBS
   PollyAnalysis
+  PollyCodeGen
   PollyExchange
   PollySupport
   PollyJSON
@@ -20,12 +22,10 @@ set(LLVM_USED_LIBS
 add_polly_library(LLVMPolly
   Cloog.cpp
   CodePreparation.cpp
-  CodeGeneration.cpp
   DeadCodeElimination.cpp
   IndependentBlocks.cpp
   IndVarSimplify.cpp
   MayAliasSet.cpp
-  LoopGenerators.cpp
   Pocc.cpp
   RegionSimplify.cpp
   RegisterPasses.cpp
@@ -35,6 +35,7 @@ add_polly_library(LLVMPolly
 
 add_dependencies(LLVMPolly
   PollyAnalysis
+  PollyCodeGen
   PollyExchange
   PollySupport
   PollyJSON
