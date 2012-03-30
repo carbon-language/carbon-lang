@@ -19,6 +19,8 @@
 
 typedef __SIZE_TYPE__ size_t;
 
+int memcmp(const void *, const void *, size_t);
+void *memcpy(void *, const void *, size_t);
 char *strcat(char *, const char *);
 char *strcpy(char *, const char *);
 char *strdup(const char *);
