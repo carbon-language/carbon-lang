@@ -96,3 +96,45 @@ bb:
   tail call void @foo() nounwind
   ret void
 }
+
+; Make sure codegenprep is duplicating ret instructions to enable tail calls.
+; rdar://11140249
+define i32 @t8(i32 %x) nounwind ssp {
+entry:
+; CHECKT2D: t8:
+; CHECKT2D-NOT: push
+; CHECKT2D-NOT
+  %and = and i32 %x, 1
+  %tobool = icmp eq i32 %and, 0
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+; CHECKT2D: bne.w _a
+  %call = tail call i32 @a(i32 %x) nounwind
+  br label %return
+
+if.end:                                           ; preds = %entry
+  %and1 = and i32 %x, 2
+  %tobool2 = icmp eq i32 %and1, 0
+  br i1 %tobool2, label %if.end5, label %if.then3
+
+if.then3:                                         ; preds = %if.end
+; CHECKT2D: bne.w _b
+  %call4 = tail call i32 @b(i32 %x) nounwind
+  br label %return
+
+if.end5:                                          ; preds = %if.end
+; CHECKT2D: b.w _c
+  %call6 = tail call i32 @c(i32 %x) nounwind
+  br label %return
+
+return:                                           ; preds = %if.end5, %if.then3, %if.then
+  %retval.0 = phi i32 [ %call, %if.then ], [ %call4, %if.then3 ], [ %call6, %if.end5 ]
+  ret i32 %retval.0
+}
+
+declare i32 @a(i32)
+
+declare i32 @b(i32)
+
+declare i32 @c(i32)

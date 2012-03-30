@@ -1990,7 +1990,7 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
 }
 
 bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
-  if (!EnableARMTailCalls)
+  if (!EnableARMTailCalls && !Subtarget->supportsTailCall())
     return false;
 
   if (!CI->isTailCall())
