@@ -6857,6 +6857,7 @@ processInstruction(MCInst &Inst,
     // instead of T3. For compatibility with the system 'as'. Make sure the
     // wide encoding wasn't explicit.
     if (Inst.getOperand(0).getReg() != Inst.getOperand(1).getReg() ||
+        !isARMLowRegister(Inst.getOperand(0).getReg()) ||
         (unsigned)Inst.getOperand(2).getImm() > 255 ||
         ((!inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR) ||
         (inITBlock() && Inst.getOperand(5).getReg() != 0)) ||
