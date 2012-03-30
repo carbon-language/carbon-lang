@@ -851,6 +851,7 @@ void ASTStmtWriter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
 
 void ASTStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
+  Record.push_back(E->SetterAndMethodRefFlags.getInt());
   Record.push_back(E->isImplicitProperty());
   if (E->isImplicitProperty()) {
     Writer.AddDeclRef(E->getImplicitPropertyGetter(), Record);

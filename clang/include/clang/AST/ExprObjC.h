@@ -510,7 +510,18 @@ private:
   /// if the bool is false, this is an explicit property reference;
   /// the pointer is an ObjCPropertyDecl and Setter is always null.
   llvm::PointerIntPair<NamedDecl*, 1, bool> PropertyOrGetter;
-  ObjCMethodDecl *Setter;
+
+  /// \brief Indicates whether the property reference will result in a message
+  /// to the getter, the setter, or both.
+  /// This applies to both implicit and explicit property references.
+  enum MethodRefFlags {
+    MethodRef_None = 0,
+    MethodRef_Getter = 0x1,
+    MethodRef_Setter = 0x2
+  };
+
+  /// \brief Contains the Setter method pointer and MethodRefFlags bit flags.
+  llvm::PointerIntPair<ObjCMethodDecl *, 2, unsigned> SetterAndMethodRefFlags;
 
   // FIXME: Maybe we should store the property identifier here,
   // because it's not rederivable from the other data when there's an
@@ -533,7 +544,7 @@ public:
            /*TypeDependent=*/false, base->isValueDependent(),
            base->isInstantiationDependent(),
            base->containsUnexpandedParameterPack()),
-      PropertyOrGetter(PD, false), Setter(0),
+      PropertyOrGetter(PD, false), SetterAndMethodRefFlags(),
       IdLoc(l), ReceiverLoc(), Receiver(base) {
     assert(t->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
@@ -544,7 +555,7 @@ public:
     : Expr(ObjCPropertyRefExprClass, t, VK, OK,
            /*TypeDependent=*/false, false, st->isInstantiationDependentType(),
            st->containsUnexpandedParameterPack()),
-      PropertyOrGetter(PD, false), Setter(0),
+      PropertyOrGetter(PD, false), SetterAndMethodRefFlags(),
       IdLoc(l), ReceiverLoc(sl), Receiver(st.getTypePtr()) {
     assert(t->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
@@ -555,7 +566,7 @@ public:
     : Expr(ObjCPropertyRefExprClass, T, VK, OK, false,
            Base->isValueDependent(), Base->isInstantiationDependent(),
            Base->containsUnexpandedParameterPack()),
-      PropertyOrGetter(Getter, true), Setter(Setter),
+      PropertyOrGetter(Getter, true), SetterAndMethodRefFlags(Setter, 0),
       IdLoc(IdLoc), ReceiverLoc(), Receiver(Base) {
     assert(T->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
@@ -565,7 +576,7 @@ public:
                       SourceLocation IdLoc,
                       SourceLocation SuperLoc, QualType SuperTy)
     : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false, false, false),
-      PropertyOrGetter(Getter, true), Setter(Setter),
+      PropertyOrGetter(Getter, true), SetterAndMethodRefFlags(Setter, 0),
       IdLoc(IdLoc), ReceiverLoc(SuperLoc), Receiver(SuperTy.getTypePtr()) {
     assert(T->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
@@ -575,7 +586,7 @@ public:
                       SourceLocation IdLoc,
                       SourceLocation ReceiverLoc, ObjCInterfaceDecl *Receiver)
     : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false, false, false),
-      PropertyOrGetter(Getter, true), Setter(Setter),
+      PropertyOrGetter(Getter, true), SetterAndMethodRefFlags(Setter, 0),
       IdLoc(IdLoc), ReceiverLoc(ReceiverLoc), Receiver(Receiver) {
     assert(T->isSpecificPlaceholderType(BuiltinType::PseudoObject));
   }
@@ -598,7 +609,7 @@ public:
 
   ObjCMethodDecl *getImplicitPropertySetter() const {
     assert(isImplicitProperty());
-    return Setter;
+    return SetterAndMethodRefFlags.getPointer();
   }
 
   Selector getGetterSelector() const {
@@ -611,6 +622,28 @@ public:
     if (isImplicitProperty())
       return getImplicitPropertySetter()->getSelector();
     return getExplicitProperty()->getSetterName();
+  }
+
+  /// \brief True if the property reference will result in a message to the
+  /// getter.
+  /// This applies to both implicit and explicit property references.
+  bool isMessagingGetter() const {
+    return SetterAndMethodRefFlags.getInt() & MethodRef_Getter;
+  }
+
+  /// \brief True if the property reference will result in a message to the
+  /// setter.
+  /// This applies to both implicit and explicit property references.
+  bool isMessagingSetter() const {
+    return SetterAndMethodRefFlags.getInt() & MethodRef_Setter;
+  }
+
+  void setIsMessagingGetter(bool val = true) {
+    setMethodRefFlag(MethodRef_Getter, val);
+  }
+
+  void setIsMessagingSetter(bool val = true) {
+    setMethodRefFlag(MethodRef_Setter, val);
   }
 
   const Expr *getBase() const { 
@@ -689,15 +722,19 @@ public:
 
 private:
   friend class ASTStmtReader;
-  void setExplicitProperty(ObjCPropertyDecl *D) {
+  friend class ASTStmtWriter;
+  void setExplicitProperty(ObjCPropertyDecl *D, unsigned methRefFlags) {
     PropertyOrGetter.setPointer(D);
     PropertyOrGetter.setInt(false);
-    Setter = 0;
+    SetterAndMethodRefFlags.setPointer(0);
+    SetterAndMethodRefFlags.setInt(methRefFlags);
   }
-  void setImplicitProperty(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter) {
+  void setImplicitProperty(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
+                           unsigned methRefFlags) {
     PropertyOrGetter.setPointer(Getter);
     PropertyOrGetter.setInt(true);
-    this->Setter = Setter;
+    SetterAndMethodRefFlags.setPointer(Setter);
+    SetterAndMethodRefFlags.setInt(methRefFlags);
   }
   void setBase(Expr *Base) { Receiver = Base; }
   void setSuperReceiver(QualType T) { Receiver = T.getTypePtr(); }
@@ -705,6 +742,15 @@ private:
 
   void setLocation(SourceLocation L) { IdLoc = L; }
   void setReceiverLocation(SourceLocation Loc) { ReceiverLoc = Loc; }
+
+  void setMethodRefFlag(MethodRefFlags flag, bool val) {
+    unsigned f = SetterAndMethodRefFlags.getInt();
+    if (val)
+      f |= flag;
+    else
+      f &= ~flag;
+    SetterAndMethodRefFlags.setInt(f);
+  }
 };
   
 /// ObjCSubscriptRefExpr - used for array and dictionary subscripting.

@@ -686,6 +686,14 @@ void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
 
   if (Node->isSuperReceiver())
     OS << " super";
+
+  OS << " Messaging=";
+  if (Node->isMessagingGetter() && Node->isMessagingSetter())
+    OS << "Getter&Setter";
+  else if (Node->isMessagingGetter())
+    OS << "Getter";
+  else if (Node->isMessagingSetter())
+    OS << "Setter";
 }
 
 void StmtDumper::VisitObjCSubscriptRefExpr(ObjCSubscriptRefExpr *Node) {

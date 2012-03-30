@@ -41,6 +41,17 @@ struct S { int x; };
 }
 @end
 
+@interface Test2
+-(int)implicitProp;
+-(void)setImplicitProp:(int)x;
+@end
+
+void foo1(Test2 *test2) {
+  int x = test2.implicitProp;
+  test2.implicitProp = x;
+  ++test2.implicitProp;
+}
+
 // RUN: c-index-test -cursor-at=%s:4:28 -cursor-at=%s:5:28 %s | FileCheck -check-prefix=CHECK-PROP %s
 // CHECK-PROP: ObjCPropertyDecl=foo1:4:26
 // CHECK-PROP: ObjCPropertyDecl=foo2:5:27
@@ -54,6 +65,10 @@ struct S { int x; };
 // RUN: c-index-test -cursor-at=%s:37:17 %s | FileCheck -check-prefix=CHECK-IN-IMPL %s
 // CHECK-IN-IMPL: VarDecl=i:37:17
 
-// RUN: c-index-test -cursor-at=%s:38:6 -cursor-at=%s:40:11 %s | FileCheck -check-prefix=CHECK-MEMBERREF %s
+// RUN: c-index-test -cursor-at=%s:38:6 -cursor-at=%s:40:11 \
+// RUN:   -cursor-at=%s:50:20 -cursor-at=%s:51:15 -cursor-at=%s:52:20 %s | FileCheck -check-prefix=CHECK-MEMBERREF %s
 // CHECK-MEMBERREF: 38:6 MemberRefExpr=x:34:16 SingleRefName=[38:6 - 38:7] RefName=[38:6 - 38:7] Extent=[38:3 - 38:7]
 // CHECK-MEMBERREF: 40:9 MemberRefExpr=name:23:21 Extent=[40:3 - 40:13] Spelling=name
+// CHECK-MEMBERREF: 50:17 MemberRefExpr=implicitProp:45:7 Extent=[50:11 - 50:29] Spelling=implicitProp
+// CHECK-MEMBERREF: 51:9 MemberRefExpr=setImplicitProp::46:8 Extent=[51:3 - 51:21]
+// CHECK-MEMBERREF: 52:11 MemberRefExpr=setImplicitProp::46:8 Extent=[52:5 - 52:23]

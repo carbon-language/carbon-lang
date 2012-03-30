@@ -2901,8 +2901,17 @@ static Decl *getDeclFromExpr(Stmt *E) {
     return ME->getMemberDecl();
   if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
     return RE->getDecl();
-  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E))
-    return PRE->isExplicitProperty() ? PRE->getExplicitProperty() : 0;
+  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E)) {
+    if (PRE->isExplicitProperty())
+      return PRE->getExplicitProperty();
+    // It could be messaging both getter and setter as in:
+    // ++myobj.myprop;
+    // in which case prefer to associate the setter since it is less obvious
+    // from inspecting the source that the setter is going to get called.
+    if (PRE->isMessagingSetter())
+      return PRE->getImplicitPropertySetter();
+    return PRE->getImplicitPropertyGetter();
+  }
   if (PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E))
     return getDeclFromExpr(POE->getSyntacticForm());
   if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E))

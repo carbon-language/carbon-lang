@@ -887,13 +887,15 @@ void ASTStmtReader::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
 
 void ASTStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
+  unsigned MethodRefFlags = Record[Idx++];
   bool Implicit = Record[Idx++] != 0;
   if (Implicit) {
     ObjCMethodDecl *Getter = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
     ObjCMethodDecl *Setter = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
-    E->setImplicitProperty(Getter, Setter);
+    E->setImplicitProperty(Getter, Setter, MethodRefFlags);
   } else {
-    E->setExplicitProperty(ReadDeclAs<ObjCPropertyDecl>(Record, Idx));
+    E->setExplicitProperty(ReadDeclAs<ObjCPropertyDecl>(Record, Idx),
+                           MethodRefFlags);
   }
   E->setLocation(ReadSourceLocation(Record, Idx));
   E->setReceiverLocation(ReadSourceLocation(Record, Idx));
