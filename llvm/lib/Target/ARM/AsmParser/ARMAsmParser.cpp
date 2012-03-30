@@ -6850,6 +6850,31 @@ processInstruction(MCInst &Inst,
       return true;
     }
     break;
+  case ARM::t2ADDri:
+  case ARM::t2SUBri: {
+    // If the destination and first source operand are the same, and
+    // the flags are compatible with the current IT status, use encoding T2
+    // instead of T3. For compatibility with the system 'as'. Make sure the
+    // wide encoding wasn't explicit.
+    if (Inst.getOperand(0).getReg() != Inst.getOperand(1).getReg() ||
+        (unsigned)Inst.getOperand(2).getImm() > 255 ||
+        ((!inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR) ||
+        (inITBlock() && Inst.getOperand(5).getReg() != 0)) ||
+        (static_cast<ARMOperand*>(Operands[3])->isToken() &&
+         static_cast<ARMOperand*>(Operands[3])->getToken() == ".w"))
+      break;
+    MCInst TmpInst;
+    TmpInst.setOpcode(Inst.getOpcode() == ARM::t2ADDri ?
+                      ARM::tADDi8 : ARM::tSUBi8);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(5));
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(3));
+    TmpInst.addOperand(Inst.getOperand(4));
+    Inst = TmpInst;
+    return true;
+  }
   case ARM::t2ADDrr: {
     // If the destination and first source operand are the same, and
     // there's no setting of the flags, use encoding T2 instead of T3.
