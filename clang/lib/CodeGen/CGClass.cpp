@@ -731,6 +731,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
 
   EHScopeStack::stable_iterator CleanupDepth = EHStack.stable_begin();
 
+  // TODO: in restricted cases, we can emit the vbase initializers of
+  // a complete ctor and then delegate to the base ctor.
+
   // Emit the constructor prologue, i.e. the base and member
   // initializers.
   EmitCtorPrologue(Ctor, CtorType, Args);

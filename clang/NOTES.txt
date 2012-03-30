@@ -101,3 +101,14 @@ only if the non-reachability is not due to macro or template
 metaprogramming.
 
 //===---------------------------------------------------------------------===//
+
+We can still apply a modified version of the constructor/destructor
+delegation optimization in cases of virtual inheritance where:
+  - there is no function-try-block,
+  - the constructor signature is not variadic, and
+  - the parameter variables can safely be copied and repassed
+    to the base constructor because either
+    - they have not had their addresses taken by the vbase initializers or
+    - they were passed indirectly.
+
+//===---------------------------------------------------------------------===//
