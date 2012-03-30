@@ -133,9 +133,7 @@ private:
   unsigned RAReg;                             // Return address register
   const MCRegisterClass *Classes;             // Pointer to the regclass array
   unsigned NumClasses;                        // Number of entries in the array
-  const uint16_t *Overlaps;                   // Pointer to the overlaps array
-  const uint16_t *SubRegs;                    // Pointer to the subregs array
-  const uint16_t *SuperRegs;                  // Pointer to the superregs array
+  const uint16_t *RegLists;                   // Pointer to the reglists array
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
                                               // array.
   unsigned NumSubRegIndices;                  // Number of subreg indices.
@@ -150,17 +148,14 @@ public:
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
                           const MCRegisterClass *C, unsigned NC,
-                          const uint16_t *O, const uint16_t *Sub,
-                          const uint16_t *Super,
+                          const uint16_t *RL,
                           const uint16_t *SubIndices,
                           unsigned NumIndices) {
     Desc = D;
     NumRegs = NR;
     RAReg = RA;
     Classes = C;
-    Overlaps = O;
-    SubRegs = Sub;
-    SuperRegs = Super;
+    RegLists = RL;
     NumClasses = NC;
     SubRegIndices = SubIndices;
     NumSubRegIndices = NumIndices;
@@ -220,7 +215,7 @@ public:
   ///
   const uint16_t *getAliasSet(unsigned RegNo) const {
     // The Overlaps set always begins with Reg itself.
-    return Overlaps + get(RegNo).Overlaps + 1;
+    return RegLists + get(RegNo).Overlaps + 1;
   }
 
   /// getOverlaps - Return a list of registers that overlap Reg, including
@@ -229,7 +224,7 @@ public:
   /// These are exactly the registers in { x | regsOverlap(x, Reg) }.
   ///
   const uint16_t *getOverlaps(unsigned RegNo) const {
-    return Overlaps + get(RegNo).Overlaps;
+    return RegLists + get(RegNo).Overlaps;
   }
 
   /// getSubRegisters - Return the list of registers that are sub-registers of
@@ -238,7 +233,7 @@ public:
   /// relations. e.g. X86::RAX's sub-register list is EAX, AX, AL, AH.
   ///
   const uint16_t *getSubRegisters(unsigned RegNo) const {
-    return SubRegs + get(RegNo).SubRegs;
+    return RegLists + get(RegNo).SubRegs;
   }
 
   /// getSubReg - Returns the physical register number of sub-register "Index"
@@ -274,7 +269,7 @@ public:
   /// relations. e.g. X86::AL's super-register list is AX, EAX, RAX.
   ///
   const uint16_t *getSuperRegisters(unsigned RegNo) const {
-    return SuperRegs + get(RegNo).SuperRegs;
+    return RegLists + get(RegNo).SuperRegs;
   }
 
   /// getName - Return the human-readable symbolic target-specific name for the
