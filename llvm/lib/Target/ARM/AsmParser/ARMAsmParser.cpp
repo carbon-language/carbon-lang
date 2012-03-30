@@ -782,8 +782,9 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
-    // Negation must be representable as an so_imm and be non-zero.
-    return Value && ARM_AM::getSOImmVal(-Value) != -1;
+    // Only use this when not representable as a plain so_imm.
+    return ARM_AM::getSOImmVal(Value) == -1 &&
+      ARM_AM::getSOImmVal(-Value) != -1;
   }
   bool isT2SOImm() const {
     if (!isImm()) return false;
@@ -804,8 +805,9 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
-    // Negation must be representable as a t2_so_imm and be non-zero.
-    return Value && ARM_AM::getT2SOImmVal(-Value) != -1;
+    // Only use this when not representable as a plain so_imm.
+    return ARM_AM::getT2SOImmVal(Value) == -1 &&
+      ARM_AM::getT2SOImmVal(-Value) != -1;
   }
   bool isSetEndImm() const {
     if (!isImm()) return false;
