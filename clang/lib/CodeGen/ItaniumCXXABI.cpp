@@ -1096,7 +1096,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
 
   // There are strange possibilities here involving the
   // double-emission of constructors and destructors.
-  llvm::GlobalVariable *guard = nullptr;
+  llvm::GlobalVariable *guard = 0;
   if (llvm::GlobalValue *existingGuard 
         = CGM.getModule().getNamedValue(guardName.str())) {
     if (isa<llvm::GlobalVariable>(existingGuard) &&
