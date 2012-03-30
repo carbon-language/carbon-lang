@@ -733,7 +733,7 @@ public:
   llvm::Constant *EmitNullConstantForBase(const CXXRecordDecl *Record);
 
   /// Error - Emit a general error that something can't be done.
-  void Error(SourceLocation loc, const Twine &error);
+  void Error(SourceLocation loc, StringRef error);
 
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
