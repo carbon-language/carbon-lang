@@ -4,6 +4,7 @@ clang_CXIndex_getGlobalOptions
 clang_CXIndex_setGlobalOptions
 clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
+clang_Cursor_getSpellingNameRange
 clang_Cursor_getTranslationUnit
 clang_Cursor_isNull
 clang_IndexAction_create

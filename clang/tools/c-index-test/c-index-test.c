@@ -171,7 +171,8 @@ static void PrintRange(CXSourceRange R, const char *str) {
   if (!begin_file || !end_file)
     return;
 
-  printf(" %s=", str);
+  if (str)
+    printf(" %s=", str);
   PrintExtent(stdout, begin_line, begin_column, end_line, end_column);
 }
 
@@ -1449,8 +1450,19 @@ static int inspect_cursor_at(int argc, const char **argv) {
         PrintCursorExtent(Cursor);
         Spelling = clang_getCursorSpelling(Cursor);
         cspell = clang_getCString(Spelling);
-        if (cspell && strlen(cspell) != 0)
-          printf(" Spelling=%s", cspell);
+        if (cspell && strlen(cspell) != 0) {
+          unsigned pieceIndex;
+          CXSourceRange range, extent;
+          extent = clang_getCursorExtent(Cursor);
+          printf(" Spelling=%s (", cspell);
+          for (pieceIndex = 0; ; ++pieceIndex) {
+            range = clang_Cursor_getSpellingNameRange(Cursor, pieceIndex, 0);
+            if (clang_Range_isNull(range))
+              break;
+            PrintRange(range, 0);
+          }
+          printf(")");
+        }
         clang_disposeString(Spelling);
         if (completionString != NULL) {
           printf("\nCompletion string: ");
