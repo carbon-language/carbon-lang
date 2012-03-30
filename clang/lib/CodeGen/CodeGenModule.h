@@ -280,6 +280,7 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::GlobalVariable*> ConstantStringMap;
   llvm::DenseMap<const Decl*, llvm::Constant *> StaticLocalDeclMap;
+  llvm::DenseMap<const Decl*, llvm::GlobalVariable*> StaticLocalDeclGuardMap;
   
   llvm::DenseMap<QualType, llvm::Constant *> AtomicSetterHelperFnMap;
   llvm::DenseMap<QualType, llvm::Constant *> AtomicGetterHelperFnMap;
@@ -403,6 +404,14 @@ public:
   void setStaticLocalDeclAddress(const VarDecl *D, 
                                  llvm::Constant *C) {
     StaticLocalDeclMap[D] = C;
+  }
+
+  llvm::GlobalVariable *getStaticLocalDeclGuardAddress(const VarDecl *D) {
+    return StaticLocalDeclGuardMap[D];
+  }
+  void setStaticLocalDeclGuardAddress(const VarDecl *D, 
+                                      llvm::GlobalVariable *C) {
+    StaticLocalDeclGuardMap[D] = C;
   }
 
   llvm::Constant *getAtomicSetterHelperFnMap(QualType Ty) {
