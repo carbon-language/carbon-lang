@@ -21,6 +21,7 @@ include "OptParser.td"
 def CompileOnly_Group     : OptionGroup<"<CompileOnly group>">;
 
 def I_Group               : OptionGroup<"<I group>">, Group<CompileOnly_Group>;
+def L_Group               : OptionGroup<"<L group>">, Group<CompileOnly_Group>;
 def M_Group               : OptionGroup<"<M group>">, Group<CompileOnly_Group>;
 def T_Group               : OptionGroup<"<T group>">;
 def O_Group               : OptionGroup<"<O group>">, Group<CompileOnly_Group>;
@@ -765,7 +766,7 @@ def static_libgcc : Flag<"-static-libgcc">;
 def static_libstdcxx : Flag<"-static-libstdc++">;
 def static : Flag<"-static">, Flags<[NoArgumentUnused]>;
 def std_default_EQ : Joined<"-std-default=">;
-def std_EQ : Joined<"-std=">;
+def std_EQ : Joined<"-std=">, Group<L_Group>;
 def stdlib_EQ : Joined<"-stdlib=">;
 def sub__library : JoinedOrSeparate<"-sub_library">;
 def sub__umbrella : JoinedOrSeparate<"-sub_umbrella">;
