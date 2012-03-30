@@ -169,7 +169,8 @@ ClangASTImporter::CompleteDecl (clang::Decl *decl)
             tag_decl->setCompleteDefinition(true);
         }
     }
-    else {
+    else
+    {
         assert (0 && "CompleteDecl called on a Decl that can't be completed");
     }
 }

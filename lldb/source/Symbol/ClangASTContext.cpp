@@ -101,7 +101,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
                 clang::TagDecl *tag_decl = tag_type->getDecl();
                 if (tag_decl)
                 {
-                    if (tag_decl->getDefinition())
+                    if (tag_decl->isCompleteDefinition())
                         return true;
                     
                     if (!allow_completion)
@@ -5413,7 +5413,11 @@ ClangASTContext::GetPointerBitSize ()
 }
 
 bool
-ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t clang_type, clang_type_t *dynamic_pointee_type)
+ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
+                                        clang_type_t clang_type,
+                                        clang_type_t *dynamic_pointee_type,
+                                        bool check_cplusplus,
+                                        bool check_objc)
 {
     QualType pointee_qual_type;
     if (clang_type)
@@ -5424,7 +5428,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
         switch (type_class)
         {
             case clang::Type::Builtin:
-                if (cast<clang::BuiltinType>(qual_type)->getKind() == clang::BuiltinType::ObjCId)
+                if (check_objc && cast<clang::BuiltinType>(qual_type)->getKind() == clang::BuiltinType::ObjCId)
                 {
                     if (dynamic_pointee_type)
                         *dynamic_pointee_type = clang_type;
@@ -5433,9 +5437,13 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                 break;
 
             case clang::Type::ObjCObjectPointer:
-                if (dynamic_pointee_type)
-                    *dynamic_pointee_type = cast<ObjCObjectPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
-                return true;
+                if (check_objc)
+                {
+                    if (dynamic_pointee_type)
+                        *dynamic_pointee_type = cast<ObjCObjectPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
+                    return true;
+                }
+                break;
 
             case clang::Type::Pointer:
                 pointee_qual_type = cast<PointerType>(qual_type)->getPointeeType();
@@ -5512,6 +5520,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                     break;
 
                 case clang::Type::Record:
+                    if (check_cplusplus)
                     {
                         CXXRecordDecl *cxx_record_decl = pointee_qual_type->getAsCXXRecordDecl();
                         if (cxx_record_decl)
@@ -5522,7 +5531,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                             // time, memory and slow down debugging. If we have a complete
                             // type, then answer the question definitively, else we
                             // just say that a C++ class can possibly be dynamic...
-                            if (cxx_record_decl->getDefinition())
+                            if (cxx_record_decl->isCompleteDefinition())
                             {
                                 success = cxx_record_decl->isDynamicClass();
                             }
@@ -5545,9 +5554,13 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                     
                 case clang::Type::ObjCObject:
                 case clang::Type::ObjCInterface:
-                    if (dynamic_pointee_type)
-                        *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
-                    return true;
+                    if (check_objc)
+                    {
+                        if (dynamic_pointee_type)
+                            *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
+                        return true;
+                    }
+                    break;
 
                 default:
                     break;
@@ -5563,121 +5576,11 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
 bool
 ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_type_t clang_type, clang_type_t *dynamic_pointee_type)
 {
-    QualType pointee_qual_type;
-    if (clang_type)
-    {
-        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
-        bool success = false;
-        switch (type_class)
-        {
-            case clang::Type::Pointer:
-                pointee_qual_type = cast<PointerType>(qual_type)->getPointeeType();
-                success = true;
-                break;
-
-            case clang::Type::LValueReference:
-            case clang::Type::RValueReference:
-                pointee_qual_type = cast<ReferenceType>(qual_type)->getPointeeType();
-                success = true;
-                break;
-
-            case clang::Type::Typedef:
-                return ClangASTContext::IsPossibleCPlusPlusDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
-
-            case clang::Type::Elaborated:
-                return ClangASTContext::IsPossibleCPlusPlusDynamicType (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
-
-            default:
-                break;
-        }
-        
-        if (success)
-        {
-            // Check to make sure what we are pointing too is a possible dynamic C++ type
-            // We currently accept any "void *" (in case we have a class that has been
-            // watered down to an opaque pointer) and virtual C++ classes.
-            const clang::Type::TypeClass pointee_type_class = pointee_qual_type->getTypeClass();
-            switch (pointee_type_class)
-            {
-            case clang::Type::Builtin:
-                switch (cast<clang::BuiltinType>(pointee_qual_type)->getKind())
-                {
-                    case clang::BuiltinType::UnknownAny:
-                    case clang::BuiltinType::Void:
-                        if (dynamic_pointee_type)
-                            *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
-                        return true;
-
-                    case clang::BuiltinType::NullPtr:  
-                    case clang::BuiltinType::Bool:
-                    case clang::BuiltinType::Char_U:
-                    case clang::BuiltinType::UChar:
-                    case clang::BuiltinType::WChar_U:
-                    case clang::BuiltinType::Char16:
-                    case clang::BuiltinType::Char32:
-                    case clang::BuiltinType::UShort:
-                    case clang::BuiltinType::UInt:
-                    case clang::BuiltinType::ULong:
-                    case clang::BuiltinType::ULongLong:
-                    case clang::BuiltinType::UInt128:
-                    case clang::BuiltinType::Char_S:
-                    case clang::BuiltinType::SChar:
-                    case clang::BuiltinType::WChar_S:
-                    case clang::BuiltinType::Short:
-                    case clang::BuiltinType::Int:
-                    case clang::BuiltinType::Long:
-                    case clang::BuiltinType::LongLong:
-                    case clang::BuiltinType::Int128:
-                    case clang::BuiltinType::Float:
-                    case clang::BuiltinType::Double:
-                    case clang::BuiltinType::LongDouble:
-                    case clang::BuiltinType::Dependent:
-                    case clang::BuiltinType::Overload:
-                    case clang::BuiltinType::ObjCId:
-                    case clang::BuiltinType::ObjCClass:
-                    case clang::BuiltinType::ObjCSel:
-                    case clang::BuiltinType::BoundMember:
-                    case clang::BuiltinType::Half:          
-                    case clang::BuiltinType::ARCUnbridgedCast:          
-                    case clang::BuiltinType::PseudoObject:
-                        break;
-                }
-                break;
-            case clang::Type::Record:
-                {
-                    CXXRecordDecl *cxx_record_decl = pointee_qual_type->getAsCXXRecordDecl();
-                    if (cxx_record_decl)
-                    {
-                        if (GetCompleteQualType (ast, pointee_qual_type))
-                        {
-                            success = cxx_record_decl->isDynamicClass();
-                        }
-                        else
-                        {
-                            // We failed to get the complete type, so we have to 
-                            // treat this as a void * which we might possibly be
-                            // able to complete
-                            success = true;
-                        }
-                        if (success)
-                        {
-                            if (dynamic_pointee_type)
-                                *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
-                            return true;
-                        }
-                    }
-                }
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
-    if (dynamic_pointee_type)
-        *dynamic_pointee_type = NULL;
-    return false;
+    return IsPossibleDynamicType (ast,
+                                  clang_type,
+                                  dynamic_pointee_type,
+                                  true,     // Check for dynamic C++ types
+                                  false);   // Check for dynamic ObjC types
 }
 
 bool
@@ -6371,7 +6274,7 @@ ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
         
     if (clang::TagDecl *tag_decl = llvm::dyn_cast<clang::TagDecl>(decl))
     {
-        if (tag_decl->getDefinition())
+        if (tag_decl->isCompleteDefinition())
             return true;
         
         if (!tag_decl->hasExternalLexicalStorage())

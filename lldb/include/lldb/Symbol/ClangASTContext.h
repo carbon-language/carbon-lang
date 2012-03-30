@@ -829,7 +829,9 @@ public:
     static bool
     IsPossibleDynamicType (clang::ASTContext *ast, 
                            lldb::clang_type_t clang_type, 
-                           lldb::clang_type_t *dynamic_pointee_type = NULL);
+                           lldb::clang_type_t *dynamic_pointee_type = NULL,
+                           bool cplusplus = true,
+                           bool objc = true);
 
     static bool
     IsCStringType (lldb::clang_type_t clang_type, uint32_t &length);

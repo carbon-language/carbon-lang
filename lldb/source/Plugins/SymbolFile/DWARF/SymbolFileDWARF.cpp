@@ -79,23 +79,23 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static inline bool
-child_requires_parent_class_union_or_struct_to_be_completed (dw_tag_t tag)
-{
-    switch (tag)
-    {
-    default:
-        break;
-    case DW_TAG_subprogram:
-    case DW_TAG_inlined_subroutine:
-    case DW_TAG_class_type:
-    case DW_TAG_structure_type:
-    case DW_TAG_union_type:
-        return true;
-    }
-    return false;
-}
-
+//static inline bool
+//child_requires_parent_class_union_or_struct_to_be_completed (dw_tag_t tag)
+//{
+//    switch (tag)
+//    {
+//    default:
+//        break;
+//    case DW_TAG_subprogram:
+//    case DW_TAG_inlined_subroutine:
+//    case DW_TAG_class_type:
+//    case DW_TAG_structure_type:
+//    case DW_TAG_union_type:
+//        return true;
+//    }
+//    return false;
+//}
+//
 static AccessType
 DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
 {
@@ -1874,23 +1874,23 @@ SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry
                                                               DW_TAG_value_to_name(die->Tag()), 
                                                               die->GetName(this, cu), 
                                                               decl_ctx_die->GetOffset());
-
-                Type *parent_type = ResolveTypeUID (cu, decl_ctx_die, assert_not_being_parsed);
-                if (child_requires_parent_class_union_or_struct_to_be_completed(die->Tag()))
-                {
-                    if (log)
-                        GetObjectFile()->GetModule()->LogMessage (log.get(), 
-                                                                  "SymbolFileDWARF::ResolveTypeUID (die = 0x%8.8x) %s '%s' resolve parent full type for 0x%8.8x since die is a function", 
-                                                                  die->GetOffset(), 
-                                                                  DW_TAG_value_to_name(die->Tag()), 
-                                                                  die->GetName(this, cu), 
-                                                                  decl_ctx_die->GetOffset());
-                    // Ask the type to complete itself if it already hasn't since if we
-                    // want a function (method or static) from a class, the class must 
-                    // create itself and add it's own methods and class functions.
-                    if (parent_type)
-                        parent_type->GetClangFullType();
-                }
+//
+//                Type *parent_type = ResolveTypeUID (cu, decl_ctx_die, assert_not_being_parsed);
+//                if (child_requires_parent_class_union_or_struct_to_be_completed(die->Tag()))
+//                {
+//                    if (log)
+//                        GetObjectFile()->GetModule()->LogMessage (log.get(), 
+//                                                                  "SymbolFileDWARF::ResolveTypeUID (die = 0x%8.8x) %s '%s' resolve parent full type for 0x%8.8x since die is a function", 
+//                                                                  die->GetOffset(), 
+//                                                                  DW_TAG_value_to_name(die->Tag()), 
+//                                                                  die->GetName(this, cu), 
+//                                                                  decl_ctx_die->GetOffset());
+//                    // Ask the type to complete itself if it already hasn't since if we
+//                    // want a function (method or static) from a class, the class must 
+//                    // create itself and add it's own methods and class functions.
+//                    if (parent_type)
+//                        parent_type->GetClangFullType();
+//                }
             }
             break;
 
@@ -1963,7 +1963,6 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
         {
             LayoutInfo layout_info;
             
-            ast.StartTagDeclarationDefinition (clang_type);
             {
                 if (die->HasChildren())
                 {
@@ -1971,7 +1970,12 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                     LanguageType class_language = eLanguageTypeUnknown;
                     bool is_objc_class = ClangASTContext::IsObjCClassType (clang_type);
                     if (is_objc_class)
+                    {
                         class_language = eLanguageTypeObjC;
+                        // For objective C we don't start the definition when
+                        // the class is created.
+                        ast.StartTagDeclarationDefinition (clang_type);
+                    }
                     
                     int tag_decl_kind = -1;
                     AccessType default_accessibility = eAccessNone;
@@ -5076,7 +5080,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                        unique_ast_entry);
                     
                     if (!is_forward_declaration)
-                    {                    
+                    {
+                        // Always start the definition for a class type so that
+                        // if the class has child classes or types that require
+                        // the class to be created for use as their decl contexts
+                        // the class will be ready to accept these child definitions.
                         if (die->HasChildren() == false)
                         {
                             // No children for this struct/union/class, lets finish it
@@ -5085,6 +5093,17 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                         else if (clang_type_was_created)
                         {
+                            // Start the definition if the class is not objective C since
+                            // the underlying decls respond to isCompleteDefinition(). Objective
+                            // C decls dont' respond to isCompleteDefinition() so we can't
+                            // start the declaration definition right away. For C++ classs/union/structs
+                            // we want to start the definition in case the class is needed as the
+                            // declaration context for a contained class or type without the need
+                            // to complete that type..
+                            
+                            if (class_language != eLanguageTypeObjC)
+                                ast.StartTagDeclarationDefinition (clang_type);
+
                             // Leave this as a forward declaration until we need
                             // to know the details of the type. lldb_private::Type
                             // will automatically call the SymbolFile virtual function

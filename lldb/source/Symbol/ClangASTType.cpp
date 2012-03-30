@@ -1202,7 +1202,7 @@ ClangASTType::IsDefined (clang_type_t clang_type)
     {
         clang::TagDecl *tag_decl = tag_type->getDecl();
         if (tag_decl)
-            return tag_decl->getDefinition() != NULL;
+            return tag_decl->isCompleteDefinition();
         return false;
     }
     else

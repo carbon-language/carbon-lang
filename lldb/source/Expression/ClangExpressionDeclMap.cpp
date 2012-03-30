@@ -3267,7 +3267,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
         return;
     }
      
-    if (add_method && ClangASTContext::IsAggregateType(copied_type))
+    if (add_method && ClangASTContext::IsAggregateType(copied_type) && ClangASTContext::GetCompleteType (parser_ast_context, copied_type))
     {
         void *args[1];
         
