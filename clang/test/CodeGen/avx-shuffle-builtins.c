@@ -33,6 +33,13 @@ __m128 test_mm_permute_ps(__m128 a) {
   return _mm_permute_ps(a, 0x1b);
 }
 
+// Test case for PR12401
+__m128 test_mm_permute_ps2(__m128 a) {
+  // Check if the mask is correct
+  // CHECK: shufflevector{{.*}}<i32 2, i32 1, i32 2, i32 3>
+  return _mm_permute_ps(a, 0xe6);
+}
+
 __m256 test_mm256_permute_ps(__m256 a) {
   // Check if the mask is correct
   // CHECK: shufflevector{{.*}}<i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4>

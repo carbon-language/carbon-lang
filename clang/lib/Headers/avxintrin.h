@@ -274,7 +274,7 @@ _mm256_permutevar_ps(__m256 a, __m256i c)
   __m128 __A = (A); \
   (__m128)__builtin_shufflevector((__v4sf)__A, (__v4sf) _mm_setzero_ps(), \
                                    (C) & 0x3, ((C) & 0xc) >> 2, \
-                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 8); })
+                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 6); })
 
 #define _mm256_permute_ps(A, C) __extension__ ({ \
   __m256 __A = (A); \
