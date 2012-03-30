@@ -142,7 +142,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
                     
                     if (!allow_completion)
                         return false;
-                    
+
                     if (class_interface_decl->hasExternalLexicalStorage())
                     {
                         if (ast)
@@ -5185,14 +5185,6 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
             cxx_record_decl->completeDefinition();
             
             return true;
-        }
-        
-        const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type);
-        
-        if (objc_class_type)
-        {
-            // ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-            // class_interface_decl->completeDefinition();
         }
         
         const EnumType *enum_type = dyn_cast<EnumType>(qual_type.getTypePtr());
