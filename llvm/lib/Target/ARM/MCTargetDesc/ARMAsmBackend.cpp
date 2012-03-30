@@ -469,7 +469,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
       Value = -Value;
       isAdd = false;
     }
+    // The value has the low 4 bits encoded in [3:0] and the high 4 in [11:8].
     assert ((Value < 256) && "Out of range pc-relative fixup value!");
+    Value = (Value & 0xf) | ((Value & 0xf0) << 4);
     return Value | (isAdd << 23);
   }
   case ARM::fixup_arm_pcrel_10:
