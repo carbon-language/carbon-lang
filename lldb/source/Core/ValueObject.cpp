@@ -275,7 +275,7 @@ ClangASTType
 ValueObject::MaybeCalculateCompleteType ()
 {
     ClangASTType ret(GetClangASTImpl(), GetClangTypeImpl());
-    
+        
     if (m_did_calculate_complete_objc_class_type)
     {
         if (m_override_type.IsValid())
@@ -349,7 +349,10 @@ ValueObject::MaybeCalculateCompleteType ()
         m_override_type = complete_class;
     }
     
-    return m_override_type;
+    if (m_override_type.IsValid())
+        return m_override_type;
+    else
+        return ret;
 }
 
 clang::ASTContext *

@@ -51,8 +51,13 @@ ValueObjectRegisterContext::GetClangTypeImpl ()
 ConstString
 ValueObjectRegisterContext::GetTypeName()
 {
-    ConstString empty_type_name;
-    return empty_type_name;
+    return ConstString();
+}
+
+ConstString
+ValueObjectRegisterContext::GetQualifiedTypeName()
+{
+    return ConstString();
 }
 
 uint32_t
@@ -147,6 +152,12 @@ ValueObjectRegisterSet::GetClangTypeImpl ()
 
 ConstString
 ValueObjectRegisterSet::GetTypeName()
+{
+    return ConstString();
+}
+
+ConstString
+ValueObjectRegisterSet::GetQualifiedTypeName()
 {
     return ConstString();
 }

@@ -42,6 +42,9 @@ public:
 
     virtual ConstString
     GetTypeName();
+    
+    virtual ConstString
+    GetQualifiedTypeName();
 
     virtual uint32_t
     CalculateNumChildren();
@@ -89,6 +92,9 @@ public:
 
     virtual ConstString
     GetTypeName();
+    
+    virtual ConstString
+    GetQualifiedTypeName();
 
     virtual uint32_t
     CalculateNumChildren();
