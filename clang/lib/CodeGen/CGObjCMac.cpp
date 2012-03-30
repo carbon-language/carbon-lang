@@ -1914,7 +1914,7 @@ struct _objc__method_prototype_list *class_methods
 See EmitProtocolExtension().
 */
 llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
-  llvm::GlobalVariable *&Entry = Protocols[PD->getIdentifier()];
+  llvm::GlobalVariable *Entry = Protocols[PD->getIdentifier()];
 
   // Early exit if a defining object has already been generated.
   if (Entry && Entry->hasInitializer())
@@ -1997,6 +1997,8 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
+
+    Protocols[PD->getIdentifier()] = Entry;
   }
   CGM.AddUsedGlobal(Entry);
 
@@ -5552,7 +5554,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
 
 llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   const ObjCProtocolDecl *PD) {
-  llvm::GlobalVariable *&Entry = Protocols[PD->getIdentifier()];
+  llvm::GlobalVariable *Entry = Protocols[PD->getIdentifier()];
 
   // Early exit if a defining object has already been generated.
   if (Entry && Entry->hasInitializer())
@@ -5649,6 +5651,8 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     Entry->setAlignment(
       CGM.getTargetData().getABITypeAlignment(ObjCTypes.ProtocolnfABITy));
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
+
+    Protocols[PD->getIdentifier()] = Entry;
   }
   Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(Entry);
