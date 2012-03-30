@@ -469,21 +469,17 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 
     for (unsigned I = 0, N = Bases.size(); I != N; ++I) {
       BaseInfo &Base = Bases[I];
-      // Build the base class subobject at the appropriately-offset location
-      // within this object.
-      NextFieldOffsetInChars -= Base.Offset;
 
       bool IsPrimaryBase = Layout.getPrimaryBase() == Base.Decl;
       Build(Val.getStructBase(Base.Index), Base.Decl, IsPrimaryBase,
             VTable, VTableClass, Offset + Base.Offset);
-
-      NextFieldOffsetInChars += Base.Offset;
     }
   }
 
   unsigned FieldNo = 0;
   const FieldDecl *LastFD = 0;
   bool IsMsStruct = RD->hasAttr<MsStructAttr>();
+  uint64_t OffsetBits = CGM.getContext().toBits(Offset);
 
   for (RecordDecl::field_iterator Field = RD->field_begin(),
        FieldEnd = RD->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
@@ -516,10 +512,10 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 
     if (!Field->isBitField()) {
       // Handle non-bitfield members.
-      AppendField(*Field, Layout.getFieldOffset(FieldNo), EltInit);
+      AppendField(*Field, Layout.getFieldOffset(FieldNo) + OffsetBits, EltInit);
     } else {
       // Otherwise we have a bitfield.
-      AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
+      AppendBitField(*Field, Layout.getFieldOffset(FieldNo) + OffsetBits,
                      cast<llvm::ConstantInt>(EltInit));
     }
   }
