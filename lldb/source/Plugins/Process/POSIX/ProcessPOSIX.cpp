@@ -292,7 +292,7 @@ ProcessPOSIX::DoDestroy()
         // limbo).
         m_exit_now = true;
 
-        if (kill(m_monitor->GetPID(), SIGKILL) && error.Success())
+        if ((m_monitor == NULL || kill(m_monitor->GetPID(), SIGKILL)) && error.Success())
         {
             error.SetErrorToErrno();
             return error;
