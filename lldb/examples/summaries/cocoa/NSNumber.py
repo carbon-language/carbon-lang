@@ -191,7 +191,7 @@ def GetSummary_Impl(valobj):
 			wrapper = NSUntaggedNumber_SummaryProvider(valobj, class_data.sys_params)
 	else:
 		wrapper = NSUnknownNumber_SummaryProvider(valobj, class_data.sys_params)
-		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
+		statistics.metric_hit('unknown_class',valobj.GetName() + " seen as " + name_string)
 	return wrapper;
 
 

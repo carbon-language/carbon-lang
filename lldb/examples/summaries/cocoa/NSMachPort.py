@@ -86,7 +86,7 @@ def GetSummary_Impl(valobj):
 		statistics.metric_hit('code_notrun',valobj)
 	else:
 		wrapper = NSMachPortUnknown_SummaryProvider(valobj, class_data.sys_params)
-		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
+		statistics.metric_hit('unknown_class',valobj.GetName() + " seen as " + name_string)
 	return wrapper;
 
 def NSMachPort_SummaryProvider (valobj,dict):

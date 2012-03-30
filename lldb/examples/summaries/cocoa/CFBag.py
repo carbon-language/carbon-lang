@@ -96,7 +96,7 @@ def GetSummary_Impl(valobj):
 			statistics.metric_hit('code_notrun',valobj)
 			return wrapper
 	wrapper = CFBagUnknown_SummaryProvider(valobj, class_data.sys_params)
-	statistics.metric_hit('unknown_class',str(valobj) + " seen as " + actual_name)
+	statistics.metric_hit('unknown_class',valobj.GetName() + " seen as " + actual_name)
 	return wrapper;
 
 def CFBag_SummaryProvider (valobj,dict):

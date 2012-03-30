@@ -136,7 +136,7 @@ def GetSummary_Impl(valobj):
 	else:
 		wrapper = CFBitVectorUnknown_SummaryProvider(valobj, class_data.sys_params)
 		print name_string
-		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
+		statistics.metric_hit('unknown_class',valobj.GetName() + " seen as " + name_string)
 	return wrapper;
 
 def CFBitVector_SummaryProvider (valobj,dict):
