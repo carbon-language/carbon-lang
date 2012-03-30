@@ -2944,6 +2944,8 @@ static SourceLocation getLocationFromExpr(Expr *E) {
     return Ivar->getLocation();
   if (SizeOfPackExpr *SizeOfPack = dyn_cast<SizeOfPackExpr>(E))
     return SizeOfPack->getPackLoc();
+  if (ObjCPropertyRefExpr *PropRef = dyn_cast<ObjCPropertyRefExpr>(E))
+    return PropRef->getLocation();
   
   return E->getLocStart();
 }

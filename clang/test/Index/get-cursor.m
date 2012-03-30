@@ -36,6 +36,8 @@ struct S { int x; };
 -(void)mm:(struct S*)s {
   rdar10902015 *i = 0;
   s->x = 0;
+  Test1 *test1;
+  test1.name = 0;
 }
 @end
 
@@ -54,3 +56,4 @@ struct S { int x; };
 
 // RUN: c-index-test -cursor-at=%s:38:6 -cursor-at=%s:40:11 %s | FileCheck -check-prefix=CHECK-MEMBERREF %s
 // CHECK-MEMBERREF: 38:6 MemberRefExpr=x:34:16 SingleRefName=[38:6 - 38:7] RefName=[38:6 - 38:7] Extent=[38:3 - 38:7]
+// CHECK-MEMBERREF: 40:9 MemberRefExpr=name:23:21 Extent=[40:3 - 40:13] Spelling=name
