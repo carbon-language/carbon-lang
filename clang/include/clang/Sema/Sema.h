@@ -660,7 +660,17 @@ public:
   /// This is used for determining parameter types of other objects and is
   /// utterly meaningless on other types of special members.
   class SpecialMemberOverloadResult : public llvm::FastFoldingSetNode {
+  public:
+    enum Kind {
+      NoMemberOrDeleted,
+      Ambiguous,
+      SuccessNonConst,
+      SuccessConst
+    };
+
+  private:
     llvm::PointerIntPair<CXXMethodDecl*, 2> Pair;
+
   public:
     SpecialMemberOverloadResult(const llvm::FoldingSetNodeID &ID)
       : FastFoldingSetNode(ID)
@@ -669,15 +679,11 @@ public:
     CXXMethodDecl *getMethod() const { return Pair.getPointer(); }
     void setMethod(CXXMethodDecl *MD) { Pair.setPointer(MD); }
 
-    bool hasSuccess() const { return Pair.getInt() & 0x1; }
-    void setSuccess(bool B) {
-      Pair.setInt(unsigned(B) | hasConstParamMatch() << 1);
-    }
+    Kind getKind() const { return static_cast<Kind>(Pair.getInt()); }
+    void setKind(Kind K) { Pair.setInt(K); }
 
-    bool hasConstParamMatch() const { return Pair.getInt() & 0x2; }
-    void setConstParamMatch(bool B) {
-      Pair.setInt(B << 1 | unsigned(hasSuccess()));
-    }
+    bool hasSuccess() const { return getKind() >= SuccessNonConst; }
+    bool hasConstParamMatch() const { return getKind() == SuccessConst; }
   };
 
   /// \brief A cache of special member function overload resolution results
@@ -2421,6 +2427,7 @@ public:
   bool CanUseDecl(NamedDecl *D);
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
                          const ObjCInterfaceDecl *UnknownObjCClass=0);
+  void NoteDeletedFunction(FunctionDecl *FD);
   std::string getDeletedOrUnavailableSuffix(const FunctionDecl *FD);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,
                                         ObjCMethodDecl *Getter,
@@ -3127,7 +3134,8 @@ public:
 
   /// \brief Determine if a special member function should have a deleted
   /// definition when it is defaulted.
-  bool ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM);
+  bool ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
+                                 bool Diagnose = false);
 
   /// \brief Declare the implicit default constructor for the given class.
   ///

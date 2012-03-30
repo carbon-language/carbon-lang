@@ -87,9 +87,9 @@ private:
   ~PrivateDestructor() noexcept;
 };
 
-struct InheritsPrivateDestructor : PrivateDestructor {}; // expected-note{{defined here}}
-struct ContainsPrivateDestructor { // expected-note{{defined here}}
-  PrivateDestructor pd;
+struct InheritsPrivateDestructor : PrivateDestructor {}; // expected-note{{base class 'PrivateDestructor' has an inaccessible destructor}}
+struct ContainsPrivateDestructor {
+  PrivateDestructor pd; // expected-note{{field 'pd' has an inaccessible destructor}}
 };
 
 struct NonTrivialCopyOnly {

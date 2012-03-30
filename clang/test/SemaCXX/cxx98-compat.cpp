@@ -214,10 +214,8 @@ namespace CopyCtorIssues {
     Ambiguous(const Ambiguous &, int = 0); // expected-note {{candidate}}
     Ambiguous(const Ambiguous &, double = 0); // expected-note {{candidate}}
   };
-  struct Deleted { // expected-note {{here}}
-    // Copy ctor implicitly defined as deleted because Private's copy ctor is
-    // inaccessible.
-    Private p;
+  struct Deleted {
+    Private p; // expected-note {{implicitly deleted}}
   };
 
   const Private &a = Private(); // expected-warning {{copying variable of type 'CopyCtorIssues::Private' when binding a reference to a temporary would invoke an inaccessible constructor in C++98}}

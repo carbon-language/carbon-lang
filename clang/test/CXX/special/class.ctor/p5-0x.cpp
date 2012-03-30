@@ -2,9 +2,9 @@
 
 struct DefaultedDefCtor1 {};
 struct DefaultedDefCtor2 { DefaultedDefCtor2() = default; };
-struct DeletedDefCtor { DeletedDefCtor() = delete; DeletedDefCtor(int); };
+struct DeletedDefCtor { DeletedDefCtor() = delete; DeletedDefCtor(int); }; // expected-note {{explicitly marked deleted here}}
 class PrivateDefCtor { PrivateDefCtor() = default; public: PrivateDefCtor(int); };
-struct DeletedDtor { ~DeletedDtor() = delete; };
+struct DeletedDtor { ~DeletedDtor() = delete; }; // expected-note 4{{explicitly marked deleted here}}
 class PrivateDtor { ~PrivateDtor() = default; };
 class Friend {
   Friend() = default; ~Friend() = default;
@@ -21,7 +21,7 @@ int n;
 
 // - X is a union-like class that has a variant member with a non-trivial
 // default constructor,
-union Deleted1a { UserProvidedDefCtor u; }; // expected-note {{defined here}}
+union Deleted1a { UserProvidedDefCtor u; }; // expected-note {{default constructor of union 'Deleted1a' is implicitly deleted because field 'u' has a non-trivial default constructor}}
 Deleted1a d1a; // expected-error {{implicitly-deleted default constructor}}
 union NotDeleted1a { DefaultedDefCtor1 nu; };
 NotDeleted1a nd1a;
@@ -30,13 +30,15 @@ NotDeleted1b nd1b;
 
 // - any non-static data member with no brace-or-equal-initializer is of
 // reference type,
-class Deleted2a {  // expected-note {{defined here}}
-  Deleted2a() = default;  // expected-note {{declared here}}
+class Deleted2a {
+  // FIXME: We should explain that the function was implicitly deleted as a
+  // result of being defaulted, and why.
+  Deleted2a() = default;  // expected-note 4{{explicitly marked deleted here}}
   int &a; 
 }; 
 Deleted2a d2a; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted2b { // expected-note {{here}}
-  int &&b;
+struct Deleted2b {
+  int &&b; // expected-note {{default constructor of 'Deleted2b' is implicitly deleted because field 'b' of reference type 'int &&' would not be initialized}}
 };
 Deleted2b d2b; // expected-error {{deleted default constructor}}
 class NotDeleted2a { int &a = n; };
@@ -49,13 +51,13 @@ NotDeleted2c nd2c;
 // - any non-variant non-static data member of const qualified type (or array
 // thereof) with no brace-or-equal-initializer does not have a user-provided
 // default constructor,
-class Deleted3a { const int a; }; // expected-note {{here}} \
+class Deleted3a { const int a; }; // expected-note {{because field 'a' of const-qualified type 'const int' would not be initialized}} \
                                      expected-warning {{does not declare any constructor}} \
                                      expected-note {{will never be initialized}}
 Deleted3a d3a; // expected-error {{implicitly-deleted default constructor}}
-class Deleted3b { const DefaultedDefCtor1 a[42]; }; // expected-note {{here}}
+class Deleted3b { const DefaultedDefCtor1 a[42]; }; // expected-note {{because field 'a' of const-qualified type 'const DefaultedDefCtor1' would not be initialized}}
 Deleted3b d3b; // expected-error {{implicitly-deleted default constructor}}
-class Deleted3c { const DefaultedDefCtor2 a; }; // expected-note {{defined here}}
+class Deleted3c { const DefaultedDefCtor2 a; }; // expected-note {{because field 'a' of const-qualified type 'const DefaultedDefCtor2' would not be initialized}}
 Deleted3c d3c; // expected-error {{implicitly-deleted default constructor}}
 class NotDeleted3a { const int a = 0; };
 NotDeleted3a nd3a;
@@ -74,14 +76,21 @@ NotDeleted3g nd3g;
 
 // - X is a union and all of its variant members are of const-qualified type (or
 // array thereof),
-union Deleted4a { const int a; const int b; const UserProvidedDefCtor c; }; // expected-note {{here}}
+union Deleted4a {
+  const int a;
+  const int b;
+  const UserProvidedDefCtor c; // expected-note {{because field 'c' has a non-trivial default constructor}}
+};
 Deleted4a d4a; // expected-error {{implicitly-deleted default constructor}}
 union NotDeleted4a { const int a; int b; };
 NotDeleted4a nd4a;
 
 // - X is a non-union class and all members of any anonymous union member are of
 // const-qualified type (or array thereof),
-struct Deleted5a { union { const int a; }; union { int b; }; }; // expected-note {{here}}
+struct Deleted5a {
+  union { const int a; }; // expected-note {{because all data members of an anonymous union member are const-qualified}}
+  union { int b; };
+};
 Deleted5a d5a; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted5a { union { const int a; int b; }; union { const int c; int d; }; };
 NotDeleted5a nd5a;
@@ -91,17 +100,17 @@ NotDeleted5a nd5a;
 // M has no default constructor or overload resolution as applied to M's default
 // constructor results in an ambiguity or in a function that is deleted or
 // inaccessible from the defaulted default constructor, or
-struct Deleted6a : Deleted2a {}; // expected-note {{here}}
+struct Deleted6a : Deleted2a {}; // expected-note {{because base class 'Deleted2a' has a deleted default constructor}}
 Deleted6a d6a; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted6b : virtual Deleted2a {}; // expected-note {{here}}
+struct Deleted6b : virtual Deleted2a {}; // expected-note {{because base class 'Deleted2a' has a deleted default constructor}}
 Deleted6b d6b; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted6c { Deleted2a a; }; // expected-note {{here}}
+struct Deleted6c { Deleted2a a; }; // expected-note {{because field 'a' has a deleted default constructor}}
 Deleted6c d6c; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted6d { DeletedDefCtor a; }; // expected-note {{here}}
+struct Deleted6d { DeletedDefCtor a; }; // expected-note {{because field 'a' has a deleted default constructor}}
 Deleted6d d6d; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted6a { DeletedDefCtor a = 0; };
 NotDeleted6a nd6a;
-struct Deleted6e { PrivateDefCtor a; }; // expected-note {{here}}
+struct Deleted6e { PrivateDefCtor a; }; // expected-note {{because field 'a' has an inaccessible default constructor}}
 Deleted6e d6e; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted6b { PrivateDefCtor a = 0; };
 NotDeleted6b nd6b;
@@ -111,21 +120,21 @@ NotDeleted6c nd6c;
 // - any direct or virtual base class or non-static data member has a type with
 // a destructor that is deleted or inaccessible from the defaulted default
 // constructor.
-struct Deleted7a : DeletedDtor {}; // expected-note {{here}}
+struct Deleted7a : DeletedDtor {}; // expected-note {{because base class 'DeletedDtor' has a deleted destructor}}
 Deleted7a d7a; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7b : virtual DeletedDtor {}; // expected-note {{here}}
+struct Deleted7b : virtual DeletedDtor {}; // expected-note {{because base class 'DeletedDtor' has a deleted destructor}}
 Deleted7b d7b; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7c { DeletedDtor a; }; // expected-note {{here}}
+struct Deleted7c { DeletedDtor a; }; // expected-note {{because field 'a' has a deleted destructor}}
 Deleted7c d7c; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7d { DeletedDtor a = {}; }; // expected-note {{here}}
+struct Deleted7d { DeletedDtor a = {}; }; // expected-note {{because field 'a' has a deleted destructor}}
 Deleted7d d7d; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7e : PrivateDtor {}; // expected-note {{here}}
+struct Deleted7e : PrivateDtor {}; // expected-note {{base class 'PrivateDtor' has an inaccessible destructor}}
 Deleted7e d7e; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7f : virtual PrivateDtor {}; // expected-note {{here}}
+struct Deleted7f : virtual PrivateDtor {}; // expected-note {{base class 'PrivateDtor' has an inaccessible destructor}}
 Deleted7f d7f; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7g { PrivateDtor a; }; // expected-note {{here}}
+struct Deleted7g { PrivateDtor a; }; // expected-note {{field 'a' has an inaccessible destructor}}
 Deleted7g d7g; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted7h { PrivateDtor a = {}; }; // expected-note {{here}}
+struct Deleted7h { PrivateDtor a = {}; }; // expected-note {{field 'a' has an inaccessible destructor}}
 Deleted7h d7h; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted7i : Friend {};
 NotDeleted7i d7i;

@@ -82,7 +82,7 @@ InaccessibleMoveBase::InaccessibleMoveBase(InaccessibleMoveBase&&) = default; //
 // -- any direct or virtual base class or non-static data member of a type with
 //    a destructor that is deleted or inaccessible
 struct NoAccessDtor {
-  NoAccessDtor(NoAccessDtor&&);
+  NoAccessDtor(NoAccessDtor&&); // expected-note{{copy constructor is implicitly deleted because 'NoAccessDtor' has a user-declared move constructor}}
 private:
   ~NoAccessDtor();
   friend struct HasAccessDtor;
@@ -100,7 +100,7 @@ struct HasAccessDtor {
 };
 HasAccessDtor::HasAccessDtor(HasAccessDtor&&) = default;
 
-struct HasNoAccessDtorBase : NoAccessDtor { // expected-note{{here}}
+struct HasNoAccessDtorBase : NoAccessDtor { // expected-note{{copy constructor of 'HasNoAccessDtorBase' is implicitly deleted because base class 'NoAccessDtor' has a deleted copy constructor}}
 };
 extern HasNoAccessDtorBase HNADBa;
 HasNoAccessDtorBase HNADBb(HNADBa); // expected-error{{implicitly-deleted copy constructor}}

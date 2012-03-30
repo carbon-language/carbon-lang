@@ -6,18 +6,18 @@ struct A { // expected-note 2{{candidate}}
 int a = A().n; // expected-error {{no matching constructor}}
 
 struct B {
-  B() = delete; // expected-note {{here}}
+  B() = delete; // expected-note 2{{here}}
   int n;
 };
 int b = B().n; // expected-error {{call to deleted}}
 
-struct C { // expected-note {{here}}
-  B b;
+struct C {
+  B b; // expected-note {{deleted default constructor}}
 };
 int c = C().b.n; // expected-error {{call to implicitly-deleted default}}
 
-struct D { // expected-note {{defined here}}
-  D() = default; // expected-note {{declared here}}
+struct D {
+  D() = default; // expected-note {{here}}
   B b;
 };
 int d = D().b.n; // expected-error {{call to implicitly-deleted default}}
@@ -34,8 +34,8 @@ struct F {
 };
 int f = F().n; // ok
 
-union G { // expected-note {{here}}
-  F f;
+union G {
+  F f; // expected-note {{non-trivial default constructor}}
 };
 int g = G().f.n; // expected-error {{call to implicitly-deleted default}}
 
@@ -46,8 +46,8 @@ private:
 };
 int h = H().n; // expected-error {{private constructor}}
 
-struct I { // expected-note {{here}}
-  H h;
+struct I {
+  H h; // expected-note {{inaccessible default constructor}}
 };
 int i = I().h.n; // expected-error {{call to implicitly-deleted default}}
 
@@ -59,8 +59,8 @@ struct J {
 int j1 = J().n; // ok
 int j2 = J().f(); // ok
 
-union K { // expected-note 2{{here}}
-  J j;
+union K {
+  J j; // expected-note 2{{non-trivial default constructor}}
   int m;
 };
 int k1 = K().j.n; // expected-error {{call to implicitly-deleted default}}

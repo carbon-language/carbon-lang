@@ -7,16 +7,16 @@ struct NonTrivial {
 // A defaulted copy constructor for a class X is defined as deleted if X has:
 
 // -- a variant member with a non-trivial corresponding constructor
-union DeletedNTVariant { // expected-note{{here}}
-  NonTrivial NT;
+union DeletedNTVariant {
+  NonTrivial NT; // expected-note{{copy constructor of union 'DeletedNTVariant' is implicitly deleted because field 'NT' has a non-trivial copy constructor}}
   DeletedNTVariant();
 };
 DeletedNTVariant DVa;
 DeletedNTVariant DVb(DVa); // expected-error{{call to implicitly-deleted copy constructor}}
 
-struct DeletedNTVariant2 { // expected-note{{here}}
+struct DeletedNTVariant2 {
   union {
-    NonTrivial NT;
+    NonTrivial NT; // expected-note{{copy constructor of union 'DeletedNTVariant2' is implicitly deleted because field 'NT' has a non-trivial copy constructor}}
   };
   DeletedNTVariant2();
 };
@@ -34,8 +34,8 @@ private:
   friend struct HasAccess;
 };
 
-struct HasNoAccess { // expected-note{{here}}
-  NoAccess NA;
+struct HasNoAccess {
+  NoAccess NA; // expected-note{{copy constructor of 'HasNoAccess' is implicitly deleted because field 'NA' has an inaccessible copy constructor}}
 };
 HasNoAccess HNAa;
 HasNoAccess HNAb(HNAa); // expected-error{{call to implicitly-deleted copy constructor}}
@@ -55,16 +55,16 @@ struct Ambiguity {
   Ambiguity(volatile Ambiguity&);
 };
 
-struct IsAmbiguous { // expected-note{{here}}
+struct IsAmbiguous {
   NonConst NC;
-  Ambiguity A;
+  Ambiguity A; // expected-note 2{{copy constructor of 'IsAmbiguous' is implicitly deleted because field 'A' has multiple copy constructors}}
   IsAmbiguous();
 };
 IsAmbiguous IAa;
 IsAmbiguous IAb(IAa); // expected-error{{call to implicitly-deleted copy constructor}}
 
-struct Deleted { // expected-note{{here}}
-  IsAmbiguous IA;
+struct Deleted {
+  IsAmbiguous IA; // expected-note{{copy constructor of 'Deleted' is implicitly deleted because field 'IA' has a deleted copy constructor}}
 };
 Deleted Da;
 Deleted Db(Da); // expected-error{{call to implicitly-deleted copy constructor}}
@@ -72,17 +72,17 @@ Deleted Db(Da); // expected-error{{call to implicitly-deleted copy constructor}}
 // -- a direct or virtual base class B that cannot be copied because overload
 //    resolution results in an ambiguity or a function that is deleted or
 //    inaccessible
-struct AmbiguousCopyBase : Ambiguity { // expected-note {{here}}
+struct AmbiguousCopyBase : Ambiguity { // expected-note 2{{copy constructor of 'AmbiguousCopyBase' is implicitly deleted because base class 'Ambiguity' has multiple copy constructors}}
   NonConst NC;
 };
 extern AmbiguousCopyBase ACBa;
 AmbiguousCopyBase ACBb(ACBa); // expected-error {{deleted copy constructor}}
 
-struct DeletedCopyBase : AmbiguousCopyBase {}; // expected-note {{here}}
+struct DeletedCopyBase : AmbiguousCopyBase {}; // expected-note {{copy constructor of 'DeletedCopyBase' is implicitly deleted because base class 'AmbiguousCopyBase' has a deleted copy constructor}}
 extern DeletedCopyBase DCBa;
 DeletedCopyBase DCBb(DCBa); // expected-error {{deleted copy constructor}}
 
-struct InaccessibleCopyBase : NoAccess {}; // expected-note {{here}}
+struct InaccessibleCopyBase : NoAccess {}; // expected-note {{copy constructor of 'InaccessibleCopyBase' is implicitly deleted because base class 'NoAccess' has an inaccessible copy constructor}}
 extern InaccessibleCopyBase ICBa;
 InaccessibleCopyBase ICBb(ICBa); // expected-error {{deleted copy constructor}}
 
@@ -94,8 +94,8 @@ private:
   friend struct HasAccessDtor;
 };
 
-struct HasNoAccessDtor { // expected-note{{here}}
-  NoAccessDtor NAD;
+struct HasNoAccessDtor {
+  NoAccessDtor NAD; // expected-note{{copy constructor of 'HasNoAccessDtor' is implicitly deleted because field 'NAD' has an inaccessible destructor}}
   HasNoAccessDtor();
   ~HasNoAccessDtor();
 };
@@ -108,14 +108,14 @@ struct HasAccessDtor {
 HasAccessDtor HADa;
 HasAccessDtor HADb(HADa);
 
-struct HasNoAccessDtorBase : NoAccessDtor { // expected-note{{here}}
+struct HasNoAccessDtorBase : NoAccessDtor { // expected-note{{copy constructor of 'HasNoAccessDtorBase' is implicitly deleted because base class 'NoAccessDtor' has an inaccessible destructor}}
 };
 extern HasNoAccessDtorBase HNADBa;
 HasNoAccessDtorBase HNADBb(HNADBa); // expected-error{{implicitly-deleted copy constructor}}
 
 // -- a non-static data member of rvalue reference type
-struct RValue { // expected-note{{here}}
-  int && ri = 1;
+struct RValue {
+  int && ri = 1; // expected-note{{copy constructor of 'RValue' is implicitly deleted because field 'ri' is of rvalue reference type 'int &&'}}
 };
 RValue RVa;
 RValue RVb(RVa); // expected-error{{call to implicitly-deleted copy constructor}}

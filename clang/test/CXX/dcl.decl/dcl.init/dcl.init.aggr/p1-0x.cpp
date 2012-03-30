@@ -8,7 +8,7 @@ private:
 protected:
   struct Inner { int m; };
 public:
-  bool &br;
+  bool &br; // expected-note {{default constructor of 'Aggr' is implicitly deleted because field 'br' of reference type 'bool &' would not be initialized}}
 };
 bool b;
 Aggr ag = { b };
@@ -54,7 +54,7 @@ struct NonAggr5 : Aggr { // expected-note 3 {{candidate constructor}}
 };
 NonAggr5 na5 = { b }; // expected-error {{no matching constructor for initialization of 'NonAggr5'}}
 template<typename...BaseList>
-struct MaybeAggr5a : BaseList... {}; // expected-note {{defined here}}
+struct MaybeAggr5a : BaseList... {}; // expected-note {{default constructor of 'MaybeAggr5a<Aggr>' is implicitly deleted because base class 'Aggr' has a deleted default constructor}}
 MaybeAggr5a<> ma5a0 = {}; // ok
 MaybeAggr5a<Aggr> ma5a1 = {}; // expected-error {{call to implicitly-deleted default constructor of 'MaybeAggr5a<Aggr>'}}
 

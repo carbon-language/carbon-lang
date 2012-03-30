@@ -108,6 +108,25 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
     return Result;
 }
 
+/// \brief Emit a note explaining that this function is deleted or unavailable.
+void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
+  CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Decl);
+
+  if (Method && Method->isImplicit()) {
+    CXXSpecialMember CSM = getSpecialMember(Method);
+    // It is possible for us to no longer be able to determine why the special
+    // member function was deleted, due to a field or base class having acquired
+    // a new special member function by the addition of a default argument.
+    // FIXME: Add a test and a special-case diagnostic for this.
+    if (CSM != CXXInvalid &&
+        ShouldDeleteSpecialMember(Method, CSM, /*Diagnose=*/true))
+      return;
+  }
+
+  Diag(Decl->getLocation(), diag::note_unavailable_here)
+    << 1 << Decl->isDeleted();
+}
+
 /// \brief Determine whether the use of this declaration is valid, and
 /// emit any corresponding diagnostics.
 ///
@@ -151,7 +170,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isDeleted()) {
       Diag(Loc, diag::err_deleted_function_use);
-      Diag(D->getLocation(), diag::note_unavailable_here) << 1 << true;
+      NoteDeletedFunction(FD);
       return true;
     }
   }

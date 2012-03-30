@@ -2821,6 +2821,37 @@ def warn_cxx98_compat_friend_redefinition : Warning<
   "friend function %0 would be implicitly redefined in C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 
+def note_deleted_dtor_no_operator_delete : Note<
+  "virtual destructor requires an unambiguous, accessible 'operator delete'">;
+def note_deleted_special_member_class_subobject : Note<
+  "%select{default constructor|copy constructor|move constructor|"
+  "copy assignment operator|move assignment operator|destructor}0 of "
+  "%select{||||union }4%1 is implicitly deleted because "
+  "%select{base class %3|field %3}2 has "
+  "%select{no|a deleted|multiple|an inaccessible|a non-trivial}4 "
+  "%select{%select{default constructor|copy constructor|move constructor|copy "
+  "assignment operator|move assignment operator|destructor}0|destructor}5"
+  "%select{||s||}4">;
+def note_deleted_default_ctor_uninit_field : Note<
+  "default constructor of %0 is implicitly deleted because field %1 of "
+  "%select{reference|const-qualified}3 type %2 would not be initialized">;
+def note_deleted_default_ctor_all_const : Note<
+  "default constructor of %0 is implicitly deleted because all "
+  "%select{data members|data members of an anonymous union member}1"
+  " are const-qualified">;
+def note_deleted_copy_ctor_rvalue_reference : Note<
+  "copy constructor of %0 is implicitly deleted because field %1 is of "
+  "rvalue reference type %2">;
+def note_deleted_copy_user_declared_move : Note<
+  "copy %select{constructor|assignment operator}0 is implicitly deleted because"
+  " %1 has a user-declared move %select{constructor|assignment operator}2">;
+def note_deleted_assign_field : Note<
+  "%select{copy|move}0 assignment operator of %0 is implicitly deleted "
+  "because field %1 is of %select{reference|const-qualified}3 type %2">;
+def note_deleted_move_assign_virtual_base : Note<
+  "move assignment operator of %0 is implicitly deleted because it has a "
+  "virtual base class %1">;
+
 // This should eventually be an error.
 def warn_undefined_internal : Warning<
   "%select{function|variable}0 %q1 has internal linkage but is not defined">,
