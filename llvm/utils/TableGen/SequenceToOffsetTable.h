@@ -103,9 +103,7 @@ public:
 
   /// emit - Print out the table as the body of an array initializer.
   /// Use the Print function to print elements.
-  void emit(raw_ostream &OS,
-            void (*Print)(raw_ostream&, ElemT),
-            const char *Term = "0") const {
+  void emit(raw_ostream &OS, void (*Print)(raw_ostream&, ElemT)) const {
     assert(Entries && "Call layout() before emit()");
     for (typename SeqMap::const_iterator I = Seqs.begin(), E = Seqs.end();
          I != E; ++I) {
@@ -115,7 +113,7 @@ public:
         Print(OS, *SI);
         OS << ", ";
       }
-      OS << Term << ",\n";
+      OS << "0,\n";
     }
   }
 };
