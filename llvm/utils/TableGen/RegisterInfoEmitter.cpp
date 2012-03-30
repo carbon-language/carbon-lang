@@ -16,6 +16,7 @@
 #include "RegisterInfoEmitter.h"
 #include "CodeGenTarget.h"
 #include "CodeGenRegisters.h"
+#include "SequenceToOffsetTable.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -259,6 +260,10 @@ public:
   }
 };
 
+static void printRegister(raw_ostream &OS, const CodeGenRegister *Reg) {
+  OS << getQualifiedName(Reg->TheDef);
+}
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -270,98 +275,78 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "\n#ifdef GET_REGINFO_MC_DESC\n";
   OS << "#undef GET_REGINFO_MC_DESC\n";
 
+  const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
   std::map<const CodeGenRegister*, CodeGenRegister::Set> Overlaps;
   RegBank.computeOverlaps(Overlaps);
+
+  // The lists of sub-registers, super-registers, and overlaps all go in the
+  // same array. That allows us to share suffixes.
+  typedef std::vector<const CodeGenRegister*> RegVec;
+  SmallVector<RegVec, 4> SubRegLists(Regs.size());
+  SmallVector<RegVec, 4> OverlapLists(Regs.size());
+  SequenceToOffsetTable<RegVec, CodeGenRegister::Less> RegSeqs;
+
+  // Precompute register lists for the SequenceToOffsetTable.
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister *Reg = Regs[i];
+
+    // Compute the ordered sub-register list.
+    SetVector<const CodeGenRegister*> SR;
+    Reg->addSubRegsPreOrder(SR, RegBank);
+    RegVec &SubRegList = SubRegLists[i];
+    SubRegList.assign(SR.begin(), SR.end());
+    RegSeqs.add(SubRegList);
+
+    // Super-registers are already computed.
+    const RegVec &SuperRegList = Reg->getSuperRegs();
+    RegSeqs.add(SuperRegList);
+
+    // The list of overlaps doesn't need to have any particular order, except
+    // Reg itself must be the first element. Pick an ordering that has one of
+    // the other lists as a suffix.
+    RegVec &OverlapList = OverlapLists[i];
+    const RegVec &Suffix = SubRegList.size() > SuperRegList.size() ?
+                           SubRegList : SuperRegList;
+    CodeGenRegister::Set Omit(Suffix.begin(), Suffix.end());
+
+    // First element is Reg itself.
+    OverlapList.push_back(Reg);
+    Omit.insert(Reg);
+
+    // Any elements not in Suffix.
+    const CodeGenRegister::Set &OSet = Overlaps[Reg];
+    std::set_difference(OSet.begin(), OSet.end(),
+                        Omit.begin(), Omit.end(),
+                        std::back_inserter(OverlapList));
+
+    // Finally, Suffix itself.
+    OverlapList.insert(OverlapList.end(), Suffix.begin(), Suffix.end());
+    RegSeqs.add(OverlapList);
+  }
+
+  // Compute the final layout of the sequence table.
+  RegSeqs.layout();
 
   OS << "namespace llvm {\n\n";
 
   const std::string &TargetName = Target.getName();
 
-  const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
-
-  OS << "extern const uint16_t " << TargetName << "RegOverlaps[] = {\n";
-
-  // Emit an overlap list for all registers.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister *Reg = Regs[i];
-    const CodeGenRegister::Set &O = Overlaps[Reg];
-    // Move Reg to the front so TRI::getAliasSet can share the list.
-    OS << "  /* " << Reg->getName() << "_Overlaps */ "
-       << getQualifiedName(Reg->TheDef) << ", ";
-    for (CodeGenRegister::Set::const_iterator I = O.begin(), E = O.end();
-         I != E; ++I)
-      if (*I != Reg)
-        OS << getQualifiedName((*I)->TheDef) << ", ";
-    OS << "0,\n";
-  }
-  OS << "};\n\n";
-
-  OS << "extern const uint16_t " << TargetName << "SubRegsSet[] = {\n";
-  // Emit the empty sub-registers list
-  OS << "  /* Empty_SubRegsSet */ 0,\n";
-  // Loop over all of the registers which have sub-registers, emitting the
-  // sub-registers list to memory.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = *Regs[i];
-    if (Reg.getSubRegs().empty())
-     continue;
-    // getSubRegs() orders by SubRegIndex. We want a topological order.
-    SetVector<const CodeGenRegister*> SR;
-    Reg.addSubRegsPreOrder(SR, RegBank);
-    OS << "  /* " << Reg.getName() << "_SubRegsSet */ ";
-    for (unsigned j = 0, je = SR.size(); j != je; ++j)
-      OS << getQualifiedName(SR[j]->TheDef) << ", ";
-    OS << "0,\n";
-  }
-  OS << "};\n\n";
-
-  OS << "extern const uint16_t " << TargetName << "SuperRegsSet[] = {\n";
-  // Emit the empty super-registers list
-  OS << "  /* Empty_SuperRegsSet */ 0,\n";
-  // Loop over all of the registers which have super-registers, emitting the
-  // super-registers list to memory.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = *Regs[i];
-    const CodeGenRegister::SuperRegList &SR = Reg.getSuperRegs();
-    if (SR.empty())
-      continue;
-    OS << "  /* " << Reg.getName() << "_SuperRegsSet */ ";
-    for (unsigned j = 0, je = SR.size(); j != je; ++j)
-      OS << getQualifiedName(SR[j]->TheDef) << ", ";
-    OS << "0,\n";
-  }
+  // Emit the shared table of register lists.
+  OS << "extern const uint16_t " << TargetName << "RegLists[] = {\n";
+  RegSeqs.emit(OS, printRegister);
   OS << "};\n\n";
 
   OS << "extern const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
   OS << "  { \"NOREG\", 0, 0, 0 },\n";
 
-  // Now that register alias and sub-registers sets have been emitted, emit the
-  // register descriptors now.
-  unsigned OverlapsIndex = 0;
-  unsigned SubRegIndex = 1; // skip 1 for empty set
-  unsigned SuperRegIndex = 1; // skip 1 for empty set
+  // Emit the register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister *Reg = Regs[i];
-    OS << "  { \"";
-    OS << Reg->getName() << "\", /* " << Reg->getName() << "_Overlaps */ "
-       << OverlapsIndex << ", ";
-    OverlapsIndex += Overlaps[Reg].size() + 1;
-    if (!Reg->getSubRegs().empty()) {
-      OS << "/* " << Reg->getName() << "_SubRegsSet */ " << SubRegIndex
-         << ", ";
-      // FIXME not very nice to recalculate this
-      SetVector<const CodeGenRegister*> SR;
-      Reg->addSubRegsPreOrder(SR, RegBank);
-      SubRegIndex += SR.size() + 1;
-    } else
-      OS << "/* Empty_SubRegsSet */ 0, ";
-    if (!Reg->getSuperRegs().empty()) {
-      OS << "/* " << Reg->getName() << "_SuperRegsSet */ " << SuperRegIndex;
-      SuperRegIndex += Reg->getSuperRegs().size() + 1;
-    } else
-      OS << "/* Empty_SuperRegsSet */ 0";
-    OS << " },\n";
+    OS << "  { \"" << Reg->getName() << "\", "
+       << RegSeqs.get(OverlapLists[i]) << ", "
+       << RegSeqs.get(SubRegLists[i]) << ", "
+       << RegSeqs.get(Reg->getSuperRegs()) << " },\n";
   }
   OS << "};\n\n";      // End of register descriptors...
 
@@ -464,8 +449,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n";
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
-     << RegisterClasses.size() << ", " << TargetName << "RegOverlaps, "
-     << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet, ";
+     << RegisterClasses.size() << ", " << TargetName << "RegLists, ";
   if (SubRegIndices.size() != 0)
     OS << "(uint16_t*)" << TargetName << "SubRegTable, "
        << SubRegIndices.size() << ");\n\n";
@@ -889,9 +873,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the constructor of the class...
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
-  OS << "extern const uint16_t " << TargetName << "RegOverlaps[];\n";
-  OS << "extern const uint16_t " << TargetName << "SubRegsSet[];\n";
-  OS << "extern const uint16_t " << TargetName << "SuperRegsSet[];\n";
+  OS << "extern const uint16_t " << TargetName << "RegLists[];\n";
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";
@@ -904,8 +886,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA,\n                     " << TargetName
      << "MCRegisterClasses, " << RegisterClasses.size() << ",\n"
-     << "                     " << TargetName << "RegOverlaps, "
-     << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet,\n"
+     << "                     " << TargetName << "RegLists,\n"
      << "                     ";
   if (SubRegIndices.size() != 0)
     OS << "get" << TargetName << "SubRegTable(), "
