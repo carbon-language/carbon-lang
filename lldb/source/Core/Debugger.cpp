@@ -183,12 +183,8 @@ Debugger::TestDebuggerRefCount ()
 void
 Debugger::Initialize ()
 {
-    if (g_shared_debugger_refcount == 0)
-    {
+    if (g_shared_debugger_refcount++ == 0)
         lldb_private::Initialize();
-    }
-    g_shared_debugger_refcount++;
-
 }
 
 void
@@ -245,7 +241,7 @@ DebuggerSP
 Debugger::CreateInstance (lldb::LogOutputCallback log_callback, void *baton)
 {
     DebuggerSP debugger_sp (new Debugger(log_callback, baton));
-    // Scope for locker
+    if (g_shared_debugger_refcount > 0)
     {
         Mutex::Locker locker (GetDebuggerListMutex ());
         GetDebuggerList().push_back(debugger_sp);
@@ -261,15 +257,18 @@ Debugger::Destroy (DebuggerSP &debugger_sp)
         
     debugger_sp->Clear();
 
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList ();
-    DebuggerList::iterator pos, end = debugger_list.end();
-    for (pos = debugger_list.begin (); pos != end; ++pos)
+    if (g_shared_debugger_refcount > 0)
     {
-        if ((*pos).get() == debugger_sp.get())
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        DebuggerList &debugger_list = GetDebuggerList ();
+        DebuggerList::iterator pos, end = debugger_list.end();
+        for (pos = debugger_list.begin (); pos != end; ++pos)
         {
-            debugger_list.erase (pos);
-            return;
+            if ((*pos).get() == debugger_sp.get())
+            {
+                debugger_list.erase (pos);
+                return;
+            }
         }
     }
 }
@@ -279,16 +278,19 @@ Debugger::FindDebuggerWithInstanceName (const ConstString &instance_name)
 {
     DebuggerSP debugger_sp;
    
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList();
-    DebuggerList::iterator pos, end = debugger_list.end();
-
-    for (pos = debugger_list.begin(); pos != end; ++pos)
+    if (g_shared_debugger_refcount > 0)
     {
-        if ((*pos).get()->m_instance_name == instance_name)
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        DebuggerList &debugger_list = GetDebuggerList();
+        DebuggerList::iterator pos, end = debugger_list.end();
+
+        for (pos = debugger_list.begin(); pos != end; ++pos)
         {
-            debugger_sp = *pos;
-            break;
+            if ((*pos).get()->m_instance_name == instance_name)
+            {
+                debugger_sp = *pos;
+                break;
+            }
         }
     }
     return debugger_sp;
@@ -298,14 +300,17 @@ TargetSP
 Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 {
     TargetSP target_sp;
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList();
-    DebuggerList::iterator pos, end = debugger_list.end();
-    for (pos = debugger_list.begin(); pos != end; ++pos)
+    if (g_shared_debugger_refcount > 0)
     {
-        target_sp = (*pos)->GetTargetList().FindTargetWithProcessID (pid);
-        if (target_sp)
-            break;
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        DebuggerList &debugger_list = GetDebuggerList();
+        DebuggerList::iterator pos, end = debugger_list.end();
+        for (pos = debugger_list.begin(); pos != end; ++pos)
+        {
+            target_sp = (*pos)->GetTargetList().FindTargetWithProcessID (pid);
+            if (target_sp)
+                break;
+        }
     }
     return target_sp;
 }
@@ -314,14 +319,17 @@ TargetSP
 Debugger::FindTargetWithProcess (Process *process)
 {
     TargetSP target_sp;
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList();
-    DebuggerList::iterator pos, end = debugger_list.end();
-    for (pos = debugger_list.begin(); pos != end; ++pos)
+    if (g_shared_debugger_refcount > 0)
     {
-        target_sp = (*pos)->GetTargetList().FindTargetWithProcess (process);
-        if (target_sp)
-            break;
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        DebuggerList &debugger_list = GetDebuggerList();
+        DebuggerList::iterator pos, end = debugger_list.end();
+        for (pos = debugger_list.begin(); pos != end; ++pos)
+        {
+            target_sp = (*pos)->GetTargetList().FindTargetWithProcess (process);
+            if (target_sp)
+                break;
+        }
     }
     return target_sp;
 }
@@ -736,8 +744,12 @@ Debugger::GetAsyncErrorStream ()
 uint32_t
 Debugger::GetNumDebuggers()
 {
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    return GetDebuggerList().size();
+    if (g_shared_debugger_refcount > 0)
+    {
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        return GetDebuggerList().size();
+    }
+    return 0;
 }
 
 lldb::DebuggerSP
@@ -745,12 +757,15 @@ Debugger::GetDebuggerAtIndex (uint32_t index)
 {
     DebuggerSP debugger_sp;
     
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList();
-    
-    if (index < debugger_list.size())
-        debugger_sp = debugger_list[index];
+    if (g_shared_debugger_refcount > 0)
+    {
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        DebuggerList &debugger_list = GetDebuggerList();
         
+        if (index < debugger_list.size())
+            debugger_sp = debugger_list[index];
+    }
+
     return debugger_sp;
 }
 
@@ -759,15 +774,18 @@ Debugger::FindDebuggerWithID (lldb::user_id_t id)
 {
     DebuggerSP debugger_sp;
 
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList();
-    DebuggerList::iterator pos, end = debugger_list.end();
-    for (pos = debugger_list.begin(); pos != end; ++pos)
+    if (g_shared_debugger_refcount > 0)
     {
-        if ((*pos).get()->GetID() == id)
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        DebuggerList &debugger_list = GetDebuggerList();
+        DebuggerList::iterator pos, end = debugger_list.end();
+        for (pos = debugger_list.begin(); pos != end; ++pos)
         {
-            debugger_sp = *pos;
-            break;
+            if ((*pos).get()->GetID() == id)
+            {
+                debugger_sp = *pos;
+                break;
+            }
         }
     }
     return debugger_sp;
