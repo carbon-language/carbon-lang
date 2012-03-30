@@ -872,29 +872,18 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
-    char backtrace_path[] = "/tmp/lldb-backtrace-tmp-XXXXXX";
-    int backtrace_fd = ::mkstemp (backtrace_path);
-    if (backtrace_fd != -1)
+    if (max_frames > 0)
     {
         std::vector<void *> frame_buffer (max_frames, NULL);
-        int count = ::backtrace (&frame_buffer[0], frame_buffer.size());
-        ::backtrace_symbols_fd (&frame_buffer[0], count, backtrace_fd);
-        
-        const off_t buffer_size = ::lseek(backtrace_fd, 0, SEEK_CUR);
-
-        if (::lseek(backtrace_fd, 0, SEEK_SET) == 0)
+        int num_frames = ::backtrace (&frame_buffer[0], frame_buffer.size());
+        char** strs = ::backtrace_symbols (&frame_buffer[0], num_frames);
+        if (strs)
         {
-            char *buffer = (char *)::malloc (buffer_size);
-            if (buffer)
-            {
-                ssize_t bytes_read = ::read (backtrace_fd, buffer, buffer_size);
-                if (bytes_read > 0)
-                    strm.Write(buffer, bytes_read);
-                ::free (buffer);
-            }
+            // Start at 1 to skip the "Host::Backtrace" frame
+            for (int i = 1; i < num_frames; ++i)
+                strm.Printf("%s\n", strs[i]);
+            ::free (strs);
         }
-        ::close (backtrace_fd);
-        ::unlink (backtrace_path);
     }
 }
 
