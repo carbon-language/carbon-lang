@@ -1903,8 +1903,10 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
     return Map.GetOrCreateValue(String);
   }
 
-  // Otherwise, convert the UTF8 literals into a byte string.
-  SmallVector<UTF16, 128> ToBuf(NumBytes);
+  // Otherwise, convert the UTF8 literals into a string of shorts.
+  IsUTF16 = true;
+
+  SmallVector<UTF16, 128> ToBuf(NumBytes + 1); // +1 for ending nulls.
   const UTF8 *FromPtr = (UTF8 *)String.data();
   UTF16 *ToPtr = &ToBuf[0];
 
@@ -1915,28 +1917,11 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
   // ConvertUTF8toUTF16 returns the length in ToPtr.
   StringLength = ToPtr - &ToBuf[0];
 
-  // Render the UTF-16 string into a byte array and convert to the target byte
-  // order.
-  //
-  // FIXME: This isn't something we should need to do here.
-  SmallString<128> AsBytes;
-  AsBytes.reserve(StringLength * 2);
-  for (unsigned i = 0; i != StringLength; ++i) {
-    unsigned short Val = ToBuf[i];
-    if (TargetIsLSB) {
-      AsBytes.push_back(Val & 0xFF);
-      AsBytes.push_back(Val >> 8);
-    } else {
-      AsBytes.push_back(Val >> 8);
-      AsBytes.push_back(Val & 0xFF);
-    }
-  }
-  // Append one extra null character, the second is automatically added by our
-  // caller.
-  AsBytes.push_back(0);
-
-  IsUTF16 = true;
-  return Map.GetOrCreateValue(StringRef(AsBytes.data(), AsBytes.size()));
+  // Add an explicit null.
+  *ToPtr = 0;
+  return Map.
+    GetOrCreateValue(StringRef(reinterpret_cast<const char *>(ToBuf.data()),
+                               (StringLength + 1) * 2));
 }
 
 static llvm::StringMapEntry<llvm::Constant*> &
@@ -1990,8 +1975,15 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     llvm::ConstantInt::get(Ty, 0x07C8);
 
   // String pointer.
-  llvm::Constant *C = llvm::ConstantDataArray::getString(VMContext,
-                                                         Entry.getKey());
+  llvm::Constant *C = 0;
+  if (isUTF16) {
+    ArrayRef<uint16_t> Arr =
+      llvm::makeArrayRef<uint16_t>((uint16_t*)Entry.getKey().data(),
+                                   Entry.getKey().size() / 2);
+    C = llvm::ConstantDataArray::get(VMContext, Arr);
+  } else {
+    C = llvm::ConstantDataArray::getString(VMContext, Entry.getKey());
+  }
 
   llvm::GlobalValue::LinkageTypes Linkage;
   if (isUTF16)
@@ -2016,7 +2008,13 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
     GV->setAlignment(Align.getQuantity());
   }
+
+  // String.
   Fields[2] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+
+  if (isUTF16)
+    // Cast the UTF16 string to the correct type.
+    Fields[2] = llvm::ConstantExpr::getBitCast(Fields[2], Int8PtrTy);
 
   // String length.
   Ty = getTypes().ConvertType(getContext().LongTy);
