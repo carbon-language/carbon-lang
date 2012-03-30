@@ -31,12 +31,16 @@ ifdef VG
   LIT_ARGS += "--vg"
 endif
 
-polly-test:: lit.site.cfg
+
+polly-test:: lit.site.cfg polly-lib
 	@ echo '--- Running polly tests for $(TARGET_TRIPLE) ---'
 	@ $(PYTHON) $(LLVM_SRC_ROOT)/utils/lit/lit.py \
 	  $(LIT_ARGS) $(TESTARGS) $(TESTDIRS)
 
 FORCE:
+
+polly-lib: FORCE
+	$(MAKE) -C ../lib || exit 1;
 
 lit.site.cfg: FORCE
 	@echo "Making Polly 'lit.site.cfg' file..."
