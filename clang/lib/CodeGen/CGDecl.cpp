@@ -184,6 +184,24 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
     Name = GetStaticDeclName(*this, D, Separator);
 
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
+
+  // In C++, there are strange possibilities here involving the
+  // double-emission of constructors and destructors.
+  if (CGM.getLangOpts().CPlusPlus) {
+    llvm::GlobalValue *value = CGM.getModule().getNamedValue(Name);
+    if (value && isa<llvm::GlobalVariable>(value) &&
+        value->getType() ==
+          LTy->getPointerTo(CGM.getContext().getTargetAddressSpace(Ty)))
+      return cast<llvm::GlobalVariable>(value);
+
+    if (value) {
+      CGM.Error(D.getLocation(),
+              "problem emitting static variable: already present as "
+              "different kind of symbol");
+      // Fall through and implicitly give it a uniqued name.
+    }
+  }
+    
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,

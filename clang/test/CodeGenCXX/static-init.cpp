@@ -79,3 +79,53 @@ namespace union_static_local {
     c::main();
   }
 }
+
+// rdar://problem/11091093
+//   Static variables should be consistent across constructor
+//   or destructor variants.
+namespace test2 {
+  struct A {
+    A();
+    ~A();
+  };
+
+  struct B : virtual A {
+    B();
+    ~B();
+  };
+
+  // If we ever implement this as a delegate ctor call, just change
+  // this to take variadic arguments or something.
+  extern int foo();
+  B::B() {
+    static int x = foo();
+  }
+  // CHECK: define void @_ZN5test21BC1Ev
+  // CHECK:   load atomic i8* bitcast (i64* @_ZGVZN5test21BC1EvE1x to i8*) acquire,
+  // CHECK:   call i32 @__cxa_guard_acquire(i64* @_ZGVZN5test21BC1EvE1x)
+  // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
+  // CHECK:   store i32 [[T0]], i32* @_ZZN5test21BC1EvE1x,
+  // CHECK:   call void @__cxa_guard_release(i64* @_ZGVZN5test21BC1EvE1x)
+
+  // CHECK: define void @_ZN5test21BC2Ev
+  // CHECK:   load atomic i8* bitcast (i64* @_ZGVZN5test21BC1EvE1x to i8*) acquire,
+  // CHECK:   call i32 @__cxa_guard_acquire(i64* @_ZGVZN5test21BC1EvE1x)
+  // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
+  // CHECK:   store i32 [[T0]], i32* @_ZZN5test21BC1EvE1x,
+  // CHECK:   call void @__cxa_guard_release(i64* @_ZGVZN5test21BC1EvE1x)
+
+  // This is just for completeness, because we actually emit this
+  // using a delegate dtor call.
+  B::~B() {
+    static int y = foo();
+  }
+  // CHECK: define void @_ZN5test21BD1Ev(
+  // CHECK:   call void @_ZN5test21BD2Ev(
+
+  // CHECK: define void @_ZN5test21BD2Ev(
+  // CHECK:   load atomic i8* bitcast (i64* @_ZGVZN5test21BD1EvE1y to i8*) acquire,
+  // CHECK:   call i32 @__cxa_guard_acquire(i64* @_ZGVZN5test21BD1EvE1y)
+  // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
+  // CHECK:   store i32 [[T0]], i32* @_ZZN5test21BD1EvE1y,
+  // CHECK:   call void @__cxa_guard_release(i64* @_ZGVZN5test21BD1EvE1y)
+}
