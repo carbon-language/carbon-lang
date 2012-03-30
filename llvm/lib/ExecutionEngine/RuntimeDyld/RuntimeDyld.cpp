@@ -26,44 +26,289 @@ RuntimeDyldImpl::~RuntimeDyldImpl() {}
 
 namespace llvm {
 
-void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
-                                      uint8_t *EndAddress) {
-  // FIXME: DEPRECATED in favor of by-section allocation.
-  // Allocate memory for the function via the memory manager.
-  uintptr_t Size = EndAddress - StartAddress + 1;
-  uintptr_t AllocSize = Size;
-  uint8_t *Mem = MemMgr->startFunctionBody(Name.data(), AllocSize);
-  assert(Size >= (uint64_t)(EndAddress - StartAddress + 1) &&
-         "Memory manager failed to allocate enough memory!");
-  // Copy the function payload into the memory block.
-  memcpy(Mem, StartAddress, Size);
-  MemMgr->endFunctionBody(Name.data(), Mem, Mem + Size);
-  // Remember where we put it.
-  unsigned SectionID = Sections.size();
-  Sections.push_back(sys::MemoryBlock(Mem, Size));
+namespace {
+  // Helper for extensive error checking in debug builds.
+  error_code Check(error_code Err) {
+    if (Err) {
+      report_fatal_error(Err.message());
+    }
+    return Err;
+  }
+} // end anonymous namespace
 
-  // Default the assigned address for this symbol to wherever this
-  // allocated it.
-  SymbolTable[Name] = SymbolLoc(SectionID, 0);
-  DEBUG(dbgs() << "    allocated to [" << Mem << ", " << Mem + Size << "]\n");
-}
 
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
+  // First, resolve relocations assotiated with external symbols.
+  resolveSymbols();
+
   // Just iterate over the sections we have and resolve all the relocations
   // in them. Gross overkill, but it gets the job done.
   for (int i = 0, e = Sections.size(); i != e; ++i) {
-    reassignSectionAddress(i, SectionLoadAddress[i]);
+    reassignSectionAddress(i, Sections[i].LoadAddress);
   }
 }
 
 void RuntimeDyldImpl::mapSectionAddress(void *LocalAddress,
                                         uint64_t TargetAddress) {
-  assert(SectionLocalMemToID.count(LocalAddress) &&
-         "Attempting to remap address of unknown section!");
-  unsigned SectionID = SectionLocalMemToID[LocalAddress];
-  reassignSectionAddress(SectionID, TargetAddress);
+  for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
+    if (Sections[i].Address == LocalAddress) {
+      reassignSectionAddress(i, TargetAddress);
+      return;
+    }
+  }
+  llvm_unreachable("Attempting to remap address of unknown section!");
 }
+
+bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
+  // FIXME: ObjectFile don't modify MemoryBuffer.
+  //        It should use const MemoryBuffer as parameter.
+  ObjectFile *obj
+    = ObjectFile::createObjectFile(const_cast<MemoryBuffer*>(InputBuffer));
+
+  Arch = (Triple::ArchType)obj->getArch();
+
+  LocalSymbolMap LocalSymbols;     // Functions and data symbols from the
+                                   // object file.
+  ObjSectionToIDMap LocalSections; // Used sections from the object file
+
+  error_code err;
+  // Parse symbols
+  DEBUG(dbgs() << "Parse symbols:\n");
+  for (symbol_iterator i = obj->begin_symbols(), e = obj->end_symbols();
+       i != e; i.increment(err)) {
+    Check(err);
+    object::SymbolRef::Type SymType;
+    StringRef Name;
+    Check(i->getType(SymType));
+    Check(i->getName(Name));
+
+    if (SymType == object::SymbolRef::ST_Function ||
+        SymType == object::SymbolRef::ST_Data) {
+      uint64_t FileOffset;
+      uint32_t flags;
+      StringRef sData;
+      section_iterator si = obj->end_sections();
+      Check(i->getFileOffset(FileOffset));
+      Check(i->getFlags(flags));
+      Check(i->getSection(si));
+      if (si == obj->end_sections()) continue;
+      Check(si->getContents(sData));
+      const uint8_t* SymPtr = (const uint8_t*)InputBuffer->getBufferStart() +
+                              (uintptr_t)FileOffset;
+      uintptr_t SectOffset = (uintptr_t)(SymPtr - (const uint8_t*)sData.begin());
+      unsigned SectionID
+        = findOrEmitSection(*si,
+                          SymType == object::SymbolRef::ST_Function,
+                          LocalSections);
+      bool isGlobal = flags & SymbolRef::SF_Global;
+      LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
+      DEBUG(dbgs() << "\tFileOffset: " << format("%p", (uintptr_t)FileOffset)
+                   << " flags: " << flags
+                   << " SID: " << SectionID
+                   << " Offset: " << format("%p", SectOffset));
+      if (isGlobal)
+        SymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
+    }
+    DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name << "\n");
+  }
+
+  // Parse and proccess relocations
+  DEBUG(dbgs() << "Parse relocations:\n");
+  for (section_iterator si = obj->begin_sections(),
+       se = obj->end_sections(); si != se; si.increment(err)) {
+    Check(err);
+    bool isFirstRelocation = true;
+    unsigned SectionID = 0;
+    StubMap Stubs;
+
+    for (relocation_iterator i = si->begin_relocations(),
+         e = si->end_relocations(); i != e; i.increment(err)) {
+      Check(err);
+
+      // If it's first relocation in this section, find its SectionID
+      if (isFirstRelocation) {
+        SectionID = findOrEmitSection(*si, true, LocalSections);
+        DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
+        isFirstRelocation = false;
+      }
+
+      ObjRelocationInfo RI;
+      RI.SectionID = SectionID;
+      Check(i->getAdditionalInfo(RI.AdditionalInfo));
+      Check(i->getOffset(RI.Offset));
+      Check(i->getSymbol(RI.Symbol));
+      Check(i->getType(RI.Type));
+
+      DEBUG(dbgs() << "\t\tAddend: " << RI.AdditionalInfo
+                   << " Offset: " << format("%p", (uintptr_t)RI.Offset)
+                   << " Type: " << (uint32_t)(RI.Type & 0xffffffffL)
+                   << "\n");
+      processRelocationRef(RI, *obj, LocalSections, LocalSymbols, Stubs);
+    }
+  }
+  return false;
+}
+
+unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
+                                      bool IsCode) {
+
+  unsigned StubBufSize = 0,
+           StubSize = getMaxStubSize();
+  error_code err;
+  if (StubSize > 0) {
+    for (relocation_iterator i = Section.begin_relocations(),
+         e = Section.end_relocations(); i != e; i.increment(err))
+      StubBufSize += StubSize;
+  }
+  StringRef data;
+  uint64_t Alignment64;
+  Check(Section.getContents(data));
+  Check(Section.getAlignment(Alignment64));
+
+  unsigned Alignment = (unsigned)Alignment64 & 0xffffffffL;
+  unsigned DataSize = data.size();
+  unsigned Allocate = DataSize + StubBufSize;
+  unsigned SectionID = Sections.size();
+  const char *pData = data.data();
+  uint8_t *Addr = IsCode
+    ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID)
+    : MemMgr->allocateDataSection(Allocate, Alignment, SectionID);
+
+  memcpy(Addr, pData, DataSize);
+  DEBUG(dbgs() << "emitSection SectionID: " << SectionID
+               << " obj addr: " << format("%p", pData)
+               << " new addr: " << format("%p", Addr)
+               << " DataSize: " << DataSize
+               << " StubBufSize: " << StubBufSize
+               << " Allocate: " << Allocate
+               << "\n");
+  Sections.push_back(SectionEntry(Addr, Allocate, DataSize,(uintptr_t)pData));
+  return SectionID;
+}
+
+unsigned RuntimeDyldImpl::findOrEmitSection(const SectionRef &Section,
+                                            bool IsCode,
+                                            ObjSectionToIDMap &LocalSections) {
+
+  unsigned SectionID = 0;
+  ObjSectionToIDMap::iterator i = LocalSections.find(Section);
+  if (i != LocalSections.end())
+    SectionID = i->second;
+  else {
+    SectionID = emitSection(Section, IsCode);
+    LocalSections[Section] = SectionID;
+  }
+  return SectionID;
+}
+
+void RuntimeDyldImpl::AddRelocation(const RelocationValueRef &Value,
+                                   unsigned SectionID, uintptr_t Offset,
+                                   uint32_t RelType) {
+  DEBUG(dbgs() << "AddRelocation SymNamePtr: " << format("%p", Value.SymbolName)
+               << " SID: " << Value.SectionID
+               << " Addend: " << format("%p", Value.Addend)
+               << " Offset: " << format("%p", Offset)
+               << " RelType: " << format("%x", RelType)
+               << "\n");
+
+  if (Value.SymbolName == 0) {
+    Relocations[Value.SectionID].push_back(RelocationEntry(
+      SectionID,
+      Offset,
+      RelType,
+      Value.Addend));
+  } else
+    SymbolRelocations[Value.SymbolName].push_back(RelocationEntry(
+      SectionID,
+      Offset,
+      RelType,
+      Value.Addend));
+}
+
+uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
+  // TODO: There is only ARM far stub now. We should add the Thumb stub,
+  // and stubs for branches Thumb - ARM and ARM - Thumb.
+  if (Arch == Triple::arm) {
+    uint32_t *StubAddr = (uint32_t*)Addr;
+    *StubAddr = 0xe51ff004; // ldr pc,<label>
+    return (uint8_t*)++StubAddr;
+  }
+  else
+    return Addr;
+}
+
+// Assign an address to a symbol name and resolve all the relocations
+// associated with it.
+void RuntimeDyldImpl::reassignSectionAddress(unsigned SectionID,
+                                             uint64_t Addr) {
+  // The address to use for relocation resolution is not
+  // the address of the local section buffer. We must be doing
+  // a remote execution environment of some sort. Re-apply any
+  // relocations referencing this section with the given address.
+  //
+  // Addr is a uint64_t because we can't assume the pointer width
+  // of the target is the same as that of the host. Just use a generic
+  // "big enough" type.
+  Sections[SectionID].LoadAddress = Addr;
+  DEBUG(dbgs() << "Resolving relocations Section #" << SectionID
+          << "\t" << format("%p", (uint8_t *)Addr)
+          << "\n");
+  resolveRelocationList(Relocations[SectionID], Addr);
+}
+
+void RuntimeDyldImpl::resolveRelocationEntry(const RelocationEntry &RE,
+                                             uint64_t Value) {
+    uint8_t *Target = Sections[RE.SectionID].Address + RE.Offset;
+    DEBUG(dbgs() << "\tSectionID: " << RE.SectionID
+          << " + " << RE.Offset << " (" << format("%p", Target) << ")"
+          << " Data: " << RE.Data
+          << " Addend: " << RE.Addend
+          << "\n");
+
+    resolveRelocation(Target, Sections[RE.SectionID].LoadAddress + RE.Offset,
+                      Value, RE.Data, RE.Addend);
+}
+
+void RuntimeDyldImpl::resolveRelocationList(const RelocationList &Relocs,
+                                            uint64_t Value) {
+  for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
+    resolveRelocationEntry(Relocs[i], Value);
+  }
+}
+
+// resolveSymbols - Resolve any relocations to the specified symbols if
+// we know where it lives.
+void RuntimeDyldImpl::resolveSymbols() {
+  StringMap<RelocationList>::iterator i = SymbolRelocations.begin(),
+                                      e = SymbolRelocations.end();
+  for (; i != e; i++) {
+    StringRef Name = i->first();
+    RelocationList &Relocs = i->second;
+    StringMap<SymbolLoc>::const_iterator Loc = SymbolTable.find(Name);
+    if (Loc == SymbolTable.end()) {
+      // This is an external symbol, try to get it address from
+      // MemoryManager.
+      uint8_t *Addr = (uint8_t*) MemMgr->getPointerToNamedFunction(Name.data(),
+                                                                   true);
+      DEBUG(dbgs() << "Resolving relocations Name: " << Name
+              << "\t" << format("%p", Addr)
+              << "\n");
+      resolveRelocationList(Relocs, (uintptr_t)Addr);
+    } else {
+      // Change the relocation to be section relative rather than symbol
+      // relative and move it to the resolved relocation list.
+      DEBUG(dbgs() << "Resolving symbol '" << Name << "'\n");
+      for (int i = 0, e = Relocs.size(); i != e; ++i) {
+        RelocationEntry Entry = Relocs[i];
+        Entry.Addend += Loc->second.second;
+        Relocations[Loc->second.first].push_back(Entry);
+      }
+      Relocs.clear();
+    }
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 // RuntimeDyld class implementation

@@ -45,17 +45,6 @@ public:
   virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                        unsigned SectionID) = 0;
 
-  // Allocate ActualSize bytes, or more, for the named function. Return
-  // a pointer to the allocated memory and update Size to reflect how much
-  // memory was acutally allocated.
-  virtual uint8_t *startFunctionBody(const char *Name, uintptr_t &Size) = 0;
-
-  // Mark the end of the function, including how much of the allocated
-  // memory was actually used.
-  virtual void endFunctionBody(const char *Name, uint8_t *FunctionStart,
-                               uint8_t *FunctionEnd) = 0;
-
-  
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) = 0;
 };
