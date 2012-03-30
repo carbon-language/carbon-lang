@@ -319,6 +319,7 @@ namespace {
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Exp);
     Stmt *RewriteObjCNumericLiteralExpr(ObjCNumericLiteral *Exp);
+    Stmt *RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
@@ -2550,6 +2551,111 @@ Stmt *RewriteModernObjC::RewriteObjCNumericLiteralExpr(ObjCNumericLiteral *Exp) 
   QualType castType =
     getSimpleFunctionType(returnType, &ArgTypes[0], ArgTypes.size(),
                           NumericMethod->isVariadic());
+  castType = Context->getPointerType(castType);
+  cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
+                                  cast);
+  
+  // Don't forget the parens to enforce the proper binding.
+  ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
+  
+  const FunctionType *FT = msgSendType->getAs<FunctionType>();
+  CallExpr *CE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
+                                        MsgExprs.size(),
+                                        FT->getResultType(), VK_RValue,
+                                        EndLoc);
+  ReplaceStmt(Exp, CE);
+  return CE;
+}
+
+Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
+  // synthesize declaration of helper functions needed in this routine.
+  if (!SelGetUidFunctionDecl)
+    SynthSelGetUidFunctionDecl();
+  // use objc_msgSend() for all.
+  if (!MsgSendFunctionDecl)
+    SynthMsgSendFunctionDecl();
+  if (!GetClassFunctionDecl)
+    SynthGetClassFunctionDecl();
+  
+  FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
+  SourceLocation StartLoc = Exp->getLocStart();
+  SourceLocation EndLoc = Exp->getLocEnd();
+  
+  // Synthesize a call to objc_msgSend().
+  SmallVector<Expr*, 32> MsgExprs;
+  SmallVector<Expr*, 4> ClsExprs;
+  QualType argType = Context->getPointerType(Context->CharTy);
+  QualType expType = Exp->getType();
+  
+  // Create a call to objc_getClass("NSArray"). It will be th 1st argument.
+  ObjCInterfaceDecl *Class = 
+    expType->getPointeeType()->getAs<ObjCObjectType>()->getInterface();
+  
+  IdentifierInfo *clsName = Class->getIdentifier();
+  ClsExprs.push_back(StringLiteral::Create(*Context,
+                                           clsName->getName(),
+                                           StringLiteral::Ascii, false,
+                                           argType, SourceLocation()));
+  CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                               &ClsExprs[0],
+                                               ClsExprs.size(), 
+                                               StartLoc, EndLoc);
+  MsgExprs.push_back(Cls);
+  
+  // Create a call to sel_registerName("arrayWithObjects:count:").
+  // it will be the 2nd argument.
+  SmallVector<Expr*, 4> SelExprs;
+  ObjCMethodDecl *ArrayMethod = Exp->getArrayWithObjectsMethod();
+  SelExprs.push_back(StringLiteral::Create(*Context,
+                                           ArrayMethod->getSelector().getAsString(),
+                                           StringLiteral::Ascii, false,
+                                           argType, SourceLocation()));
+  CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
+                                                  &SelExprs[0], SelExprs.size(),
+                                                  StartLoc, EndLoc);
+  MsgExprs.push_back(SelExp);
+  
+  unsigned NumElements = Exp->getNumElements();
+  
+  // FIXME. Incomplete.
+  InitListExpr *ILE =
+    new (Context) InitListExpr(*Context, SourceLocation(),
+                               Exp->getElements(), NumElements,
+                               SourceLocation());
+  MsgExprs.push_back(ILE);
+  unsigned UnsignedIntSize = 
+    static_cast<unsigned>(Context->getTypeSize(Context->UnsignedIntTy));
+  
+  Expr *count = IntegerLiteral::Create(*Context,
+                                       llvm::APInt(UnsignedIntSize, NumElements),
+                                       Context->UnsignedIntTy,
+                                       SourceLocation());
+  MsgExprs.push_back(count);
+  
+  
+  SmallVector<QualType, 4> ArgTypes;
+  ArgTypes.push_back(Context->getObjCIdType());
+  ArgTypes.push_back(Context->getObjCSelType());
+  for (ObjCMethodDecl::param_iterator PI = ArrayMethod->param_begin(),
+       E = ArrayMethod->param_end(); PI != E; ++PI)
+    ArgTypes.push_back((*PI)->getType());
+  
+  QualType returnType = Exp->getType();
+  // Get the type, we will need to reference it in a couple spots.
+  QualType msgSendType = MsgSendFlavor->getType();
+  
+  // Create a reference to the objc_msgSend() declaration.
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(MsgSendFlavor, false, msgSendType,
+                                               VK_LValue, SourceLocation());
+  
+  CastExpr *cast = NoTypeInfoCStyleCastExpr(Context,
+                                            Context->getPointerType(Context->VoidTy),
+                                            CK_BitCast, DRE);
+  
+  // Now do the "normal" pointer to function cast.
+  QualType castType =
+  getSimpleFunctionType(returnType, &ArgTypes[0], ArgTypes.size(),
+                        ArrayMethod->isVariadic());
   castType = Context->getPointerType(castType);
   cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
                                   cast);
@@ -4861,7 +4967,9 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   
   if (ObjCNumericLiteral *NumericLitExpr = dyn_cast<ObjCNumericLiteral>(S))
     return RewriteObjCNumericLiteralExpr(NumericLitExpr);
-
+  
+  if (ObjCArrayLiteral *ArrayLitExpr = dyn_cast<ObjCArrayLiteral>(S))
+    return RewriteObjCArrayLiteralExpr(ArrayLitExpr);
 
   if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
 #if 0
