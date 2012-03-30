@@ -708,7 +708,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
-  StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
+  StartObjCMethod(OMD, IMP->getClassInterface(), OMD->getLocStart());
 
   generateObjCGetterBody(IMP, PID, AtomicHelperFn);
 
@@ -1216,7 +1216,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
-  StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
+  StartObjCMethod(OMD, IMP->getClassInterface(), OMD->getLocStart());
 
   generateObjCSetterBody(IMP, PID, AtomicHelperFn);
 
