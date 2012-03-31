@@ -1452,11 +1452,10 @@ static int inspect_cursor_at(int argc, const char **argv) {
         cspell = clang_getCString(Spelling);
         if (cspell && strlen(cspell) != 0) {
           unsigned pieceIndex;
-          CXSourceRange range, extent;
-          extent = clang_getCursorExtent(Cursor);
           printf(" Spelling=%s (", cspell);
           for (pieceIndex = 0; ; ++pieceIndex) {
-            range = clang_Cursor_getSpellingNameRange(Cursor, pieceIndex, 0);
+            CXSourceRange range =
+              clang_Cursor_getSpellingNameRange(Cursor, pieceIndex, 0);
             if (clang_Range_isNull(range))
               break;
             PrintRange(range, 0);
