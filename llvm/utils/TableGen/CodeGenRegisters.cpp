@@ -88,6 +88,26 @@ const std::string &CodeGenRegister::getName() const {
   return TheDef->getName();
 }
 
+// Merge two RegUnitLists maintining the order and removing duplicates.
+// Overwrites MergedRU in the process.
+static void mergeRegUnits(CodeGenRegister::RegUnitList &MergedRU,
+                          const CodeGenRegister::RegUnitList &RRU)
+{
+  CodeGenRegister::RegUnitList LRU = MergedRU;
+  MergedRU.clear();
+  for (CodeGenRegister::RegUnitList::const_iterator
+         RI = RRU.begin(), RE = RRU.end(), LI = LRU.begin(), LE = LRU.end();
+       RI != RE || LI != LE;) {
+
+    CodeGenRegister::RegUnitList::const_iterator &NextI =
+      (RI != RE && (LI == LE || *RI < *LI)) ? RI : LI;
+
+    if (MergedRU.empty() || *NextI != MergedRU.back())
+      MergedRU.push_back(*NextI);
+    ++NextI;
+  }
+}
+
 const CodeGenRegister::SubRegMap &
 CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   // Only compute this map once.
@@ -226,6 +246,34 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
          ++SI)
       if (Orphans.erase(SI->second))
         SubRegs[RegBank.getCompositeSubRegIndex(Idx, SI->first)] = SI->second;
+  }
+
+  // Initialize RegUnitList. A register with no subregisters creates its own
+  // unit. Otherwise, it inherits all its subregister's units. Because
+  // getSubRegs is called recursively, this processes the register hierarchy in
+  // postorder.
+  //
+  // TODO: We currently assume all register units correspond to a named "leaf"
+  // register. We should also unify register units for ad-hoc register
+  // aliases. This can be done by iteratively merging units for aliasing
+  // registers using a worklist.
+  assert(RegUnits.empty() && "Should only initialize RegUnits once");
+  if (SubRegs.empty()) {
+    RegUnits.push_back(RegBank.newRegUnit());
+  }
+  else {
+    for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
+         I != E; ++I) {
+      // Strangely a register may have itself as a subreg (self-cycle) e.g. XMM.
+      CodeGenRegister *SR = I->second;
+      if (SR == this) {
+        if (RegUnits.empty())
+          RegUnits.push_back(RegBank.newRegUnit());
+        continue;
+      }
+      // Merge the subregister's units into this register's RegUnits.
+      mergeRegUnits(RegUnits, SR->RegUnits);
+    }
   }
   return SubRegs;
 }
@@ -659,6 +707,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
 
   // Precompute all sub-register maps now all the registers are known.
   // This will create Composite entries for all inferred sub-register indices.
+  NumRegUnits = 0;
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     Registers[i]->getSubRegs(*this);
 

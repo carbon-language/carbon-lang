@@ -123,6 +123,13 @@ namespace llvm {
       return SuperRegs;
     }
 
+    // List of register units in ascending order.
+    typedef SmallVector<unsigned, 16> RegUnitList;
+
+    // Get the list of register units.
+    // This is only valid after getSubRegs() completes.
+    const RegUnitList &getRegUnits() const { return RegUnits; }
+
     // Order CodeGenRegister pointers by EnumValue.
     struct Less {
       bool operator()(const CodeGenRegister *A,
@@ -139,6 +146,7 @@ namespace llvm {
     bool SubRegsComplete;
     SubRegMap SubRegs;
     SuperRegList SuperRegs;
+    RegUnitList RegUnits;
   };
 
 
@@ -307,6 +315,7 @@ namespace llvm {
     // Registers.
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
+    unsigned NumRegUnits;
 
     // Register classes.
     std::vector<CodeGenRegisterClass*> RegClasses;
@@ -354,6 +363,8 @@ namespace llvm {
 
     // Find a register from its Record def.
     CodeGenRegister *getReg(Record*);
+
+    unsigned newRegUnit() { return NumRegUnits++; }
 
     ArrayRef<CodeGenRegisterClass*> getRegClasses() const {
       return RegClasses;
