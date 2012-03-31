@@ -148,7 +148,6 @@ bool InternalizePass::runOnModule(Module &M) {
   // won't find them.  (see MachineModuleInfo.)
   ExternalNames.insert("llvm.global_ctors");
   ExternalNames.insert("llvm.global_dtors");
-  ExternalNames.insert("llvm.noinline");
   ExternalNames.insert("llvm.global.annotations");
 
   // Mark all global variables with initializers that are not in the api as
