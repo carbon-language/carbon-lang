@@ -3,6 +3,8 @@
 // RUN: diff %t %s.result
 // DISABLE: mingw32
 
+#define nil (void *)0
+
 @interface NSObject
 -init;
 @end

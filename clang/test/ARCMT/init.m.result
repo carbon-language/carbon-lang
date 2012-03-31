@@ -3,6 +3,8 @@
 // RUN: diff %t %s.result
 // DISABLE: mingw32
 
+#define nil (void *)0
+
 @interface NSObject
 -init;
 @end
@@ -16,7 +18,7 @@
 
 @implementation A
 -(id) init {
-  self = [self init];
+  if (!(self = [self init])) return nil;
   id a;
   [a init];
   a = [[A alloc] init];
@@ -25,7 +27,7 @@
 }
 
 -(id) init2 {
-  self = [super init];
+  if (!(self = [super init])) return nil;
   return self;
 }
 
