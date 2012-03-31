@@ -20,12 +20,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
-
 #include "llvm-c/lto.h"
-
 #include <vector>
 #include <string>
-
 
 // Forward references to llvm classes.
 namespace llvm {
@@ -35,9 +32,9 @@ namespace llvm {
   class Value;
 }
 
-//
-// C++ class which implements the opaque lto_module_t type.
-//
+//===----------------------------------------------------------------------===//
+/// LTOModule - C++ class which implements the opaque lto_module_t type.
+///
 struct LTOModule {
 private:
   typedef llvm::StringMap<uint8_t> StringSet;

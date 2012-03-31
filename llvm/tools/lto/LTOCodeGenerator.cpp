@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LTOModule.h"
 #include "LTOCodeGenerator.h"
+#include "LTOModule.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Linker.h"
