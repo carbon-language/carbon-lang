@@ -61,9 +61,9 @@ IBOutletCollectionInfo::IBOutletCollectionInfo(
     IBCollInfo.objcClass = 0;
 }
 
-AttrListInfo::AttrListInfo(const Decl *D,
-                           IndexingContext &IdxCtx,
-                           ScratchAlloc &SA) : ref_cnt(0) {
+AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
+  : SA(IdxCtx), ref_cnt(0) {
+
   if (!D->hasAttrs())
     return;
 
@@ -113,19 +113,11 @@ AttrListInfo::AttrListInfo(const Decl *D,
     CXAttrs.push_back(&Attrs[i]);
 }
 
-AttrListInfo::AttrListInfo(const AttrListInfo &other) {
-  assert(other.ref_cnt == 0 &&
-         "Should not copy an AttrListInfo that is ref-counted");
-  ref_cnt = 0;
-
-  Attrs = other.Attrs;
-  IBCollAttrs = other.IBCollAttrs;
-
-  for (unsigned i = 0, e = IBCollAttrs.size(); i != e; ++i)
-    CXAttrs.push_back(&IBCollAttrs[i]);
-
-  for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
-    CXAttrs.push_back(&Attrs[i]);
+IntrusiveRefCntPtr<AttrListInfo>
+AttrListInfo::create(const Decl *D, IndexingContext &IdxCtx) {
+  ScratchAlloc SA(IdxCtx);
+  AttrListInfo *attrs = SA.allocate<AttrListInfo>();
+  return new (attrs) AttrListInfo(D, IdxCtx);
 }
 
 IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
@@ -281,9 +273,8 @@ bool IndexingContext::handleDecl(const NamedDecl *D,
   DInfo.loc = getIndexLoc(Loc);
   DInfo.isImplicit = D->isImplicit();
 
-  AttrListInfo AttrList(D, *this, SA);
-  DInfo.attributes = AttrList.getAttrs();
-  DInfo.numAttributes = AttrList.getNumAttrs();
+  DInfo.attributes = DInfo.EntInfo.attributes;
+  DInfo.numAttributes = DInfo.EntInfo.numAttributes;
 
   getContainerInfo(D->getDeclContext(), DInfo.SemanticContainer);
   DInfo.semanticContainer = &DInfo.SemanticContainer;
@@ -443,9 +434,10 @@ bool IndexingContext::handleObjCProtocol(const ObjCProtocolDecl *D) {
 }
 
 bool IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
+  ScratchAlloc SA(*this);
+
   ObjCCategoryDeclInfo CatDInfo(/*isImplementation=*/false);
   EntityInfo ClassEntity;
-  ScratchAlloc SA(*this);
   const ObjCInterfaceDecl *IFaceD = D->getClassInterface();
   SourceLocation ClassLoc = D->getLocation();
   SourceLocation CategoryLoc = D->IsClassExtension() ? ClassLoc
@@ -474,10 +466,11 @@ bool IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
 }
 
 bool IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
+  ScratchAlloc SA(*this);
+
   const ObjCCategoryDecl *CatD = D->getCategoryDecl();
   ObjCCategoryDeclInfo CatDInfo(/*isImplementation=*/true);
   EntityInfo ClassEntity;
-  ScratchAlloc SA(*this);
   const ObjCInterfaceDecl *IFaceD = CatD->getClassInterface();
   SourceLocation ClassLoc = D->getLocation();
   SourceLocation CategoryLoc = D->getCategoryNameLoc();
@@ -522,10 +515,11 @@ bool IndexingContext::handleSynthesizedObjCMethod(const ObjCMethodDecl *D,
 }
 
 bool IndexingContext::handleObjCProperty(const ObjCPropertyDecl *D) {
+  ScratchAlloc SA(*this);
+
   ObjCPropertyDeclInfo DInfo;
   EntityInfo GetterEntity;
   EntityInfo SetterEntity;
-  ScratchAlloc SA(*this);
 
   DInfo.ObjCPropDeclInfo.declInfo = &DInfo;
 
@@ -846,11 +840,9 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
   EntityInfo.lang = CXIdxEntityLang_C;
 
   if (D->hasAttrs()) {
-    AttrListInfo *attrs = SA.allocate<AttrListInfo>();
-    new (attrs) AttrListInfo(D, *this, SA);
-    EntityInfo.AttrList = attrs;
-    EntityInfo.attributes = attrs->getAttrs();
-    EntityInfo.numAttributes = attrs->getNumAttrs();
+    EntityInfo.AttrList = AttrListInfo::create(D, *this);
+    EntityInfo.attributes = EntityInfo.AttrList->getAttrs();
+    EntityInfo.numAttributes = EntityInfo.AttrList->getNumAttrs();
   }
 
   if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {

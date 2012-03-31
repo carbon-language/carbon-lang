@@ -25,8 +25,23 @@ namespace clang {
 
 namespace cxindex {
   class IndexingContext;
-  class ScratchAlloc;
   class AttrListInfo;
+
+class ScratchAlloc {
+  IndexingContext &IdxCtx;
+
+public:
+  explicit ScratchAlloc(IndexingContext &indexCtx);
+  ScratchAlloc(const ScratchAlloc &SA);
+
+  ~ScratchAlloc();
+
+  const char *toCStr(StringRef Str);
+  const char *copyCStr(StringRef Str);
+
+  template <typename T>
+  T *allocate();
+};
 
 struct EntityInfo : public CXIdxEntityInfo {
   const NamedDecl *Dcl;
@@ -229,16 +244,20 @@ struct IBOutletCollectionInfo : public AttrInfo {
 };
 
 class AttrListInfo {
+  ScratchAlloc SA;
+
   SmallVector<AttrInfo, 2> Attrs;
   SmallVector<IBOutletCollectionInfo, 2> IBCollAttrs;
   SmallVector<CXIdxAttrInfo *, 2> CXAttrs;
   unsigned ref_cnt;
 
+  AttrListInfo(const AttrListInfo&); // DO NOT IMPLEMENT
+  void operator=(const AttrListInfo&); // DO NOT IMPLEMENT
 public:
-  AttrListInfo(const Decl *D,
-               IndexingContext &IdxCtx,
-               ScratchAlloc &SA);
-  AttrListInfo(const AttrListInfo &other);
+  AttrListInfo(const Decl *D, IndexingContext &IdxCtx);
+
+  static IntrusiveRefCntPtr<AttrListInfo> create(const Decl *D,
+                                                 IndexingContext &IdxCtx);
 
   const CXIdxAttrInfo *const *getAttrs() const {
     if (CXAttrs.empty())
@@ -488,28 +507,23 @@ private:
   static bool shouldIgnoreIfImplicit(const Decl *D);
 };
 
-class ScratchAlloc {
-  IndexingContext &IdxCtx;
+inline ScratchAlloc::ScratchAlloc(IndexingContext &idxCtx) : IdxCtx(idxCtx) {
+  ++IdxCtx.StrAdapterCount;
+}
+inline ScratchAlloc::ScratchAlloc(const ScratchAlloc &SA) : IdxCtx(SA.IdxCtx) {
+  ++IdxCtx.StrAdapterCount;
+}
 
-public:
-  explicit ScratchAlloc(IndexingContext &indexCtx) : IdxCtx(indexCtx) {
-    ++IdxCtx.StrAdapterCount;
-  }
+inline ScratchAlloc::~ScratchAlloc() {
+  --IdxCtx.StrAdapterCount;
+  if (IdxCtx.StrAdapterCount == 0)
+    IdxCtx.StrScratch.Reset();
+}
 
-  ~ScratchAlloc() {
-    --IdxCtx.StrAdapterCount;
-    if (IdxCtx.StrAdapterCount == 0)
-      IdxCtx.StrScratch.Reset();
-  }
-
-  const char *toCStr(StringRef Str);
-  const char *copyCStr(StringRef Str);
-
-  template <typename T>
-  T *allocate() {
-    return IdxCtx.StrScratch.Allocate<T>();
-  }
-};
+template <typename T>
+inline T *ScratchAlloc::allocate() {
+  return IdxCtx.StrScratch.Allocate<T>();
+}
 
 }} // end clang::cxindex
 
