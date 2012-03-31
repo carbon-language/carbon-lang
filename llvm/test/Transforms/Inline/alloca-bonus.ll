@@ -90,12 +90,12 @@ define void @outer4(i32 %A) {
   ret void
 }
 
-; %D poisons this call, scalar-repl can't handle that instruction. However, we
+; %B poisons this call, scalar-repl can't handle that instruction. However, we
 ; still want to detect that the icmp and branch *can* be handled.
 define void @inner4(i32 *%ptr, i32 %A) {
   %B = getelementptr i32* %ptr, i32 %A
-  %E = icmp eq i32* %ptr, null
-  br i1 %E, label %bb.true, label %bb.false
+  %C = icmp eq i32* %ptr, null
+  br i1 %C, label %bb.true, label %bb.false
 bb.true:
   ; This block musn't be counted in the inline cost.
   %t1 = load i32* %ptr
