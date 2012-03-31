@@ -88,7 +88,7 @@ const std::string &CodeGenRegister::getName() const {
   return TheDef->getName();
 }
 
-// Merge two RegUnitLists maintining the order and removing duplicates.
+// Merge two RegUnitLists maintaining the order and removing duplicates.
 // Overwrites MergedRU in the process.
 static void mergeRegUnits(CodeGenRegister::RegUnitList &MergedRU,
                           const CodeGenRegister::RegUnitList &RRU)
