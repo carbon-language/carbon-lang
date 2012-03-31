@@ -14,6 +14,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
@@ -161,7 +162,6 @@ public:
   RetTy visitBranchInst(BranchInst &I)            { DELEGATE(TerminatorInst);}
   RetTy visitSwitchInst(SwitchInst &I)            { DELEGATE(TerminatorInst);}
   RetTy visitIndirectBrInst(IndirectBrInst &I)    { DELEGATE(TerminatorInst);}
-  RetTy visitInvokeInst(InvokeInst &I)            { DELEGATE(TerminatorInst);}
   RetTy visitResumeInst(ResumeInst &I)            { DELEGATE(TerminatorInst);}
   RetTy visitUnreachableInst(UnreachableInst &I)  { DELEGATE(TerminatorInst);}
   RetTy visitICmpInst(ICmpInst &I)                { DELEGATE(CmpInst);}
@@ -187,7 +187,6 @@ public:
   RetTy visitIntToPtrInst(IntToPtrInst &I)        { DELEGATE(CastInst);}
   RetTy visitBitCastInst(BitCastInst &I)          { DELEGATE(CastInst);}
   RetTy visitSelectInst(SelectInst &I)            { DELEGATE(Instruction);}
-  RetTy visitCallInst(CallInst     &I)            { DELEGATE(Instruction);}
   RetTy visitVAArgInst(VAArgInst   &I)            { DELEGATE(UnaryInstruction);}
   RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction);}
   RetTy visitInsertElementInst(InsertElementInst &I) { DELEGATE(Instruction);}
@@ -195,6 +194,15 @@ public:
   RetTy visitExtractValueInst(ExtractValueInst &I){ DELEGATE(UnaryInstruction);}
   RetTy visitInsertValueInst(InsertValueInst &I)  { DELEGATE(Instruction); }
   RetTy visitLandingPadInst(LandingPadInst &I)    { DELEGATE(Instruction); }
+
+  // Call and Invoke are slightly different as they delegate first through
+  // a generic CallSite visitor.
+  RetTy visitCallInst(CallInst &I) {
+    return static_cast<SubClass*>(this)->visitCallSite(&I);
+  }
+  RetTy visitInvokeInst(InvokeInst &I) {
+    return static_cast<SubClass*>(this)->visitCallSite(&I);
+  }
 
   // Next level propagators: If the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
@@ -205,6 +213,19 @@ public:
   RetTy visitCmpInst(CmpInst &I)                  { DELEGATE(Instruction);}
   RetTy visitTerminatorInst(TerminatorInst &I)    { DELEGATE(Instruction);}
   RetTy visitUnaryInstruction(UnaryInstruction &I){ DELEGATE(Instruction);}
+
+  // Provide a special visitor for a 'callsite' that visits both calls and
+  // invokes. When unimplemented, properly delegates to either the terminator or
+  // regular instruction visitor.
+  RetTy visitCallSite(CallSite CS) {
+    assert(CS);
+    Instruction &I = *CS.getInstruction();
+    if (CS.isCall())
+      DELEGATE(Instruction);
+
+    assert(CS.isInvoke());
+    DELEGATE(TerminatorInst);
+  }
 
   // If the user wants a 'default' case, they can choose to override this
   // function.  If this function is not overloaded in the user's subclass, then
