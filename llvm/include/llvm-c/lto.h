@@ -31,20 +31,20 @@
 
 typedef enum {
     LTO_SYMBOL_ALIGNMENT_MASK              = 0x0000001F, /* log2 of alignment */
-    LTO_SYMBOL_PERMISSIONS_MASK            = 0x000000E0,    
-    LTO_SYMBOL_PERMISSIONS_CODE            = 0x000000A0,    
-    LTO_SYMBOL_PERMISSIONS_DATA            = 0x000000C0,    
-    LTO_SYMBOL_PERMISSIONS_RODATA          = 0x00000080,    
-    LTO_SYMBOL_DEFINITION_MASK             = 0x00000700,    
-    LTO_SYMBOL_DEFINITION_REGULAR          = 0x00000100,    
-    LTO_SYMBOL_DEFINITION_TENTATIVE        = 0x00000200,    
-    LTO_SYMBOL_DEFINITION_WEAK             = 0x00000300,    
-    LTO_SYMBOL_DEFINITION_UNDEFINED        = 0x00000400,    
+    LTO_SYMBOL_PERMISSIONS_MASK            = 0x000000E0,
+    LTO_SYMBOL_PERMISSIONS_CODE            = 0x000000A0,
+    LTO_SYMBOL_PERMISSIONS_DATA            = 0x000000C0,
+    LTO_SYMBOL_PERMISSIONS_RODATA          = 0x00000080,
+    LTO_SYMBOL_DEFINITION_MASK             = 0x00000700,
+    LTO_SYMBOL_DEFINITION_REGULAR          = 0x00000100,
+    LTO_SYMBOL_DEFINITION_TENTATIVE        = 0x00000200,
+    LTO_SYMBOL_DEFINITION_WEAK             = 0x00000300,
+    LTO_SYMBOL_DEFINITION_UNDEFINED        = 0x00000400,
     LTO_SYMBOL_DEFINITION_WEAKUNDEF        = 0x00000500,
-    LTO_SYMBOL_SCOPE_MASK                  = 0x00003800,    
-    LTO_SYMBOL_SCOPE_INTERNAL              = 0x00000800,    
-    LTO_SYMBOL_SCOPE_HIDDEN                = 0x00001000,    
-    LTO_SYMBOL_SCOPE_PROTECTED             = 0x00002000,    
+    LTO_SYMBOL_SCOPE_MASK                  = 0x00003800,
+    LTO_SYMBOL_SCOPE_INTERNAL              = 0x00000800,
+    LTO_SYMBOL_SCOPE_HIDDEN                = 0x00001000,
+    LTO_SYMBOL_SCOPE_PROTECTED             = 0x00002000,
     LTO_SYMBOL_SCOPE_DEFAULT               = 0x00001800,
     LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800
 } lto_symbol_attributes;
@@ -95,7 +95,7 @@ lto_module_is_object_file(const char* path);
  * Checks if a file is a loadable object compiled for requested target.
  */
 extern bool
-lto_module_is_object_file_for_target(const char* path, 
+lto_module_is_object_file_for_target(const char* path,
                                      const char* target_triple_prefix);
 
 
@@ -110,7 +110,7 @@ lto_module_is_object_file_in_memory(const void* mem, size_t length);
  * Checks if a buffer is a loadable object compiled for requested target.
  */
 extern bool
-lto_module_is_object_file_in_memory_for_target(const void* mem, size_t length, 
+lto_module_is_object_file_in_memory_for_target(const void* mem, size_t length,
                                               const char* target_triple_prefix);
 
 
@@ -271,7 +271,7 @@ lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path);
 /**
  * Generates code for all added modules into one native object file.
  * On success returns a pointer to a generated mach-o/ELF buffer and
- * length set to the buffer size.  The buffer is owned by the 
+ * length set to the buffer size.  The buffer is owned by the
  * lto_code_gen_t and will be freed when lto_codegen_dispose()
  * is called, or lto_codegen_compile() is called again.
  * On failure, returns NULL (check lto_get_error_message() for details).
@@ -292,6 +292,7 @@ lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
  */
 extern void
 lto_codegen_debug_options(lto_code_gen_t cg, const char *);
+
 #ifdef __cplusplus
 }
 #endif

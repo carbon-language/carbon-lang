@@ -159,7 +159,7 @@ bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model) {
 }
 
 /// lto_codegen_set_cpu - Sets the cpu to generate code for.
-void lto_codegen_set_cpu(lto_code_gen_t cg, const char* cpu) {
+void lto_codegen_set_cpu(lto_code_gen_t cg, const char *cpu) {
   return cg->setCpu(cpu);
 }
 
@@ -170,7 +170,7 @@ void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char *path) {
 
 /// lto_codegen_set_assembler_args - Sets extra arguments that libLTO should
 /// pass to the assembler.
-void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char** args,
+void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
                                     int nargs) {
   // In here only for backwards compatibility. We use MC now.
 }
@@ -179,14 +179,14 @@ void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char** args,
 /// that must exist in the final generated code. If a function is not listed
 /// there, it might be inlined into every usage and optimized away.
 void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
-                                          const char* symbol) {
+                                          const char *symbol) {
   cg->addMustPreserveSymbol(symbol);
 }
 
 /// lto_codegen_write_merged_modules - Writes a new file at the specified path
 /// that contains the merged contents of all modules added so far. Returns true
 /// on error (check lto_get_error_message() for details).
-bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path) {
+bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
   return cg->writeMergedModules(path, sLastErrorString);
 }
 
@@ -196,20 +196,19 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path) {
 /// object and will be freed when lto_codegen_dispose() is called, or
 /// lto_codegen_compile() is called again. On failure, returns NULL (check
 /// lto_get_error_message() for details).
-extern const void*
-lto_codegen_compile(lto_code_gen_t cg, size_t* length) {
+const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
   return cg->compile(length, sLastErrorString);
 }
 
-extern bool
-lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name)
-{
+/// lto_codegen_compile_to_file - Generates code for all added modules into one
+/// native object file. The name of the file is written to name. Returns true on
+/// error.
+bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
   return cg->compile_to_file(name, sLastErrorString);
 }
 
 /// lto_codegen_debug_options - Used to pass extra options to the code
 /// generator.
-extern void
-lto_codegen_debug_options(lto_code_gen_t cg, const char * opt) {
+void lto_codegen_debug_options(lto_code_gen_t cg, const char *opt) {
   cg->setCodeGenDebugOptions(opt);
 }
