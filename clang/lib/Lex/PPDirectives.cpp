@@ -1549,10 +1549,9 @@ void Preprocessor::HandleIncludeMacrosDirective(SourceLocation HashLoc,
 /// definition has just been read.  Lex the rest of the arguments and the
 /// closing ), updating MI with what we learn.  Return true if an error occurs
 /// parsing the arg list.
-bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
+bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI, Token &Tok) {
   SmallVector<IdentifierInfo*, 32> Arguments;
 
-  Token Tok;
   while (1) {
     LexUnexpandedToken(Tok);
     switch (Tok.getKind()) {
@@ -1671,7 +1670,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   } else if (Tok.is(tok::l_paren)) {
     // This is a function-like macro definition.  Read the argument list.
     MI->setIsFunctionLike();
-    if (ReadMacroDefinitionArgList(MI)) {
+    if (ReadMacroDefinitionArgList(MI, LastTok)) {
       // Forget about MI.
       ReleaseMacroInfo(MI);
       // Throw away the rest of the line.
