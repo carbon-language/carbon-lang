@@ -20,11 +20,10 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Config/config.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
@@ -33,6 +32,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -45,9 +46,8 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Config/config.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
@@ -65,15 +65,14 @@ const char* LTOCodeGenerator::getVersionString() {
 }
 
 LTOCodeGenerator::LTOCodeGenerator()
-    : _context(getGlobalContext()),
-      _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
-      _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
-      _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-      _nativeObjectFile(NULL)
-{
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmPrinters();
+  : _context(getGlobalContext()),
+    _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
+    _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
+    _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
+    _nativeObjectFile(NULL) {
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
 }
 
 LTOCodeGenerator::~LTOCodeGenerator() {
@@ -85,8 +84,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
     free(*I);
 }
 
-bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg)
-{
+bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg) {
   bool ret = _linker.LinkInModule(mod->getLLVVMModule(), &errMsg);
 
   const std::vector<const char*> &undefs = mod->getAsmUndefinedRefs();
@@ -96,45 +94,39 @@ bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg)
   return ret;
 }
 
+bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug,
+                                    std::string& errMsg) {
+  switch (debug) {
+  case LTO_DEBUG_MODEL_NONE:
+    _emitDwarfDebugInfo = false;
+    return false;
 
-bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug, std::string& errMsg)
-{
-    switch (debug) {
-        case LTO_DEBUG_MODEL_NONE:
-            _emitDwarfDebugInfo = false;
-            return false;
-
-        case LTO_DEBUG_MODEL_DWARF:
-            _emitDwarfDebugInfo = true;
-            return false;
-    }
-    llvm_unreachable("Unknown debug format!");
+  case LTO_DEBUG_MODEL_DWARF:
+    _emitDwarfDebugInfo = true;
+    return false;
+  }
+  llvm_unreachable("Unknown debug format!");
 }
-
 
 bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
-                                       std::string& errMsg)
-{
-    switch (model) {
-        case LTO_CODEGEN_PIC_MODEL_STATIC:
-        case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-        case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-            _codeModel = model;
-            return false;
-    }
-    llvm_unreachable("Unknown PIC model!");
+                                       std::string& errMsg) {
+  switch (model) {
+  case LTO_CODEGEN_PIC_MODEL_STATIC:
+  case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
+  case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
+    _codeModel = model;
+    return false;
+  }
+  llvm_unreachable("Unknown PIC model!");
 }
 
-void LTOCodeGenerator::setCpu(const char* mCpu)
-{
+void LTOCodeGenerator::setCpu(const char* mCpu) {
   _mCpu = mCpu;
 }
 
-void LTOCodeGenerator::addMustPreserveSymbol(const char* sym)
-{
-    _mustPreserveSymbols[sym] = 1;
+void LTOCodeGenerator::addMustPreserveSymbol(const char* sym) {
+  _mustPreserveSymbols[sym] = 1;
 }
-
 
 bool LTOCodeGenerator::writeMergedModules(const char *path,
                                           std::string &errMsg) {
@@ -169,9 +161,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   return false;
 }
 
-
-bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg)
-{
+bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
   // make unique temp .o file to put generated object file
   sys::PathWithStatus uniqueObjPath("lto-llvm.o");
   if ( uniqueObjPath.createTemporaryFileOnDisk(false, &errMsg) ) {
@@ -185,12 +175,14 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg)
   tool_output_file objFile(uniqueObjPath.c_str(), errMsg);
   if (!errMsg.empty())
     return true;
+
   genResult = this->generateObjectFile(objFile.os(), errMsg);
   objFile.os().close();
   if (objFile.os().has_error()) {
     objFile.os().clear_error();
     return true;
   }
+
   objFile.keep();
   if ( genResult ) {
     uniqueObjPath.eraseFromDisk();
@@ -202,8 +194,7 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg)
   return false;
 }
 
-const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
-{
+const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
   const char *name;
   if (compile_to_file(&name, errMsg))
     return NULL;
@@ -229,48 +220,48 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
   return _nativeObjectFile->getBufferStart();
 }
 
-bool LTOCodeGenerator::determineTarget(std::string& errMsg)
-{
-    if ( _target == NULL ) {
-        std::string Triple = _linker.getModule()->getTargetTriple();
-        if (Triple.empty())
-          Triple = sys::getDefaultTargetTriple();
+bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
+  if ( _target == NULL ) {
+    std::string Triple = _linker.getModule()->getTargetTriple();
+    if (Triple.empty())
+      Triple = sys::getDefaultTargetTriple();
 
-        // create target machine from info for merged modules
-        const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
-        if ( march == NULL )
-            return true;
+    // create target machine from info for merged modules
+    const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
+    if ( march == NULL )
+      return true;
 
-        // The relocation model is actually a static member of TargetMachine
-        // and needs to be set before the TargetMachine is instantiated.
-        Reloc::Model RelocModel = Reloc::Default;
-        switch( _codeModel ) {
-        case LTO_CODEGEN_PIC_MODEL_STATIC:
-            RelocModel = Reloc::Static;
-            break;
-        case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-            RelocModel = Reloc::PIC_;
-            break;
-        case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-            RelocModel = Reloc::DynamicNoPIC;
-            break;
-        }
-
-        // construct LTOModule, hand over ownership of module and target
-        SubtargetFeatures Features;
-        Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
-        std::string FeatureStr = Features.getString();
-        TargetOptions Options;
-        _target = march->createTargetMachine(Triple, _mCpu, FeatureStr, Options,
-                                             RelocModel);
+    // The relocation model is actually a static member of TargetMachine and
+    // needs to be set before the TargetMachine is instantiated.
+    Reloc::Model RelocModel = Reloc::Default;
+    switch( _codeModel ) {
+    case LTO_CODEGEN_PIC_MODEL_STATIC:
+      RelocModel = Reloc::Static;
+      break;
+    case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
+      RelocModel = Reloc::PIC_;
+      break;
+    case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
+      RelocModel = Reloc::DynamicNoPIC;
+      break;
     }
-    return false;
+
+    // construct LTOModule, hand over ownership of module and target
+    SubtargetFeatures Features;
+    Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
+    std::string FeatureStr = Features.getString();
+    TargetOptions Options;
+    _target = march->createTargetMachine(Triple, _mCpu, FeatureStr, Options,
+                                         RelocModel);
+  }
+  return false;
 }
 
-void LTOCodeGenerator::applyRestriction(GlobalValue &GV,
-                                     std::vector<const char*> &mustPreserveList,
-                                        SmallPtrSet<GlobalValue*, 8> &asmUsed,
-                                        Mangler &mangler) {
+void LTOCodeGenerator::
+applyRestriction(GlobalValue &GV,
+                 std::vector<const char*> &mustPreserveList,
+                 SmallPtrSet<GlobalValue*, 8> &asmUsed,
+                 Mangler &mangler) {
   SmallString<64> Buffer;
   mangler.getNameWithPrefix(Buffer, &GV, false);
 
@@ -291,7 +282,7 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
 
   for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i)
     if (GlobalValue *GV =
-          dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
+        dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
       UsedValues.insert(GV);
 }
 
@@ -304,7 +295,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createVerifierPass());
 
   // mark which symbols can not be internalized
-  MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL);
+  MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(),NULL);
   Mangler mangler(Context, *_target->getTargetData());
   std::vector<const char*> mustPreserveList;
   SmallPtrSet<GlobalValue*, 8> asmUsed;
@@ -354,62 +345,62 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 /// Optimize merged modules using various IPO passes
 bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
                                           std::string &errMsg) {
-    if ( this->determineTarget(errMsg) )
-        return true;
+  if ( this->determineTarget(errMsg) )
+    return true;
 
-    // mark which symbols can not be internalized
-    this->applyScopeRestrictions();
+  // mark which symbols can not be internalized
+  this->applyScopeRestrictions();
 
-    Module* mergedModule = _linker.getModule();
+  Module* mergedModule = _linker.getModule();
 
-    // if options were requested, set them
-    if ( !_codegenOptions.empty() )
-        cl::ParseCommandLineOptions(_codegenOptions.size(),
-                                    const_cast<char **>(&_codegenOptions[0]));
+  // if options were requested, set them
+  if ( !_codegenOptions.empty() )
+    cl::ParseCommandLineOptions(_codegenOptions.size(),
+                                const_cast<char **>(&_codegenOptions[0]));
 
-    // Instantiate the pass manager to organize the passes.
-    PassManager passes;
+  // Instantiate the pass manager to organize the passes.
+  PassManager passes;
 
-    // Start off with a verification pass.
-    passes.add(createVerifierPass());
+  // Start off with a verification pass.
+  passes.add(createVerifierPass());
 
-    // Add an appropriate TargetData instance for this module...
-    passes.add(new TargetData(*_target->getTargetData()));
+  // Add an appropriate TargetData instance for this module...
+  passes.add(new TargetData(*_target->getTargetData()));
 
-    PassManagerBuilder().populateLTOPassManager(passes, /*Internalize=*/ false,
-                                                !DisableInline);
+  PassManagerBuilder().populateLTOPassManager(passes, /*Internalize=*/ false,
+                                              !DisableInline);
 
-    // Make sure everything is still good.
-    passes.add(createVerifierPass());
+  // Make sure everything is still good.
+  passes.add(createVerifierPass());
 
-    FunctionPassManager *codeGenPasses = new FunctionPassManager(mergedModule);
+  FunctionPassManager *codeGenPasses = new FunctionPassManager(mergedModule);
 
-    codeGenPasses->add(new TargetData(*_target->getTargetData()));
+  codeGenPasses->add(new TargetData(*_target->getTargetData()));
 
-    formatted_raw_ostream Out(out);
+  formatted_raw_ostream Out(out);
 
-    if (_target->addPassesToEmitFile(*codeGenPasses, Out,
-                                     TargetMachine::CGFT_ObjectFile,
-                                     CodeGenOpt::Aggressive)) {
-      errMsg = "target file type not supported";
-      return true;
-    }
+  if (_target->addPassesToEmitFile(*codeGenPasses, Out,
+                                   TargetMachine::CGFT_ObjectFile,
+                                   CodeGenOpt::Aggressive)) {
+    errMsg = "target file type not supported";
+    return true;
+  }
 
-    // Run our queue of passes all at once now, efficiently.
-    passes.run(*mergedModule);
+  // Run our queue of passes all at once now, efficiently.
+  passes.run(*mergedModule);
 
-    // Run the code generator, and write assembly file
-    codeGenPasses->doInitialization();
+  // Run the code generator, and write assembly file
+  codeGenPasses->doInitialization();
 
-    for (Module::iterator
-           it = mergedModule->begin(), e = mergedModule->end(); it != e; ++it)
-      if (!it->isDeclaration())
-        codeGenPasses->run(*it);
+  for (Module::iterator
+         it = mergedModule->begin(), e = mergedModule->end(); it != e; ++it)
+    if (!it->isDeclaration())
+      codeGenPasses->run(*it);
 
-    codeGenPasses->doFinalization();
-    delete codeGenPasses;
+  codeGenPasses->doFinalization();
+  delete codeGenPasses;
 
-    return false; // success
+  return false; // success
 }
 
 /// setCodeGenDebugOptions - Set codegen debugging options to aid in debugging
