@@ -647,6 +647,20 @@ namespace {
       // FIXME: We may want to vectorize non-constant shuffles also.
     }
 
+    // The powi intrinsic is special because only the first argument is
+    // vectorized, the second arguments must be equal.
+    CallInst *CI = dyn_cast<CallInst>(I);
+    Function *FI;
+    if (CI && (FI = CI->getCalledFunction()) &&
+        FI->getIntrinsicID() == Intrinsic::powi) {
+
+      Value *A1I = CI->getArgOperand(1),
+            *A1J = cast<CallInst>(J)->getArgOperand(1);
+      const SCEV *A1ISCEV = SE->getSCEV(A1I),
+                 *A1JSCEV = SE->getSCEV(A1J);
+      return (A1ISCEV == A1JSCEV);
+    }
+
     return true;
   }
 
@@ -1518,19 +1532,27 @@ namespace {
         ReplacedOperands[o] = getReplacementPointerInput(Context, I, J, o,
                                 FlipMemInputs);
         continue;
-      } else if (isa<CallInst>(I) && o == NumOperands-1) {
+      } else if (isa<CallInst>(I)) {
         Function *F = cast<CallInst>(I)->getCalledFunction();
         unsigned IID = F->getIntrinsicID();
-        BasicBlock &BB = *I->getParent();
-
-        Module *M = BB.getParent()->getParent();
-        Type *ArgType = I->getType();
-        Type *VArgType = getVecTypeForPair(ArgType);
-
-        // FIXME: is it safe to do this here?
-        ReplacedOperands[o] = Intrinsic::getDeclaration(M,
-          (Intrinsic::ID) IID, VArgType);
-        continue;
+        if (o == NumOperands-1) {
+          BasicBlock &BB = *I->getParent();
+  
+          Module *M = BB.getParent()->getParent();
+          Type *ArgType = I->getType();
+          Type *VArgType = getVecTypeForPair(ArgType);
+  
+          // FIXME: is it safe to do this here?
+          ReplacedOperands[o] = Intrinsic::getDeclaration(M,
+            (Intrinsic::ID) IID, VArgType);
+          continue;
+        } else if (IID == Intrinsic::powi && o == 1) {
+          // The second argument of powi is a single integer and we've already
+          // checked that both arguments are equal. As a result, we just keep
+          // I's second argument.
+          ReplacedOperands[o] = I->getOperand(o);
+          continue;
+        }
       } else if (isa<ShuffleVectorInst>(I) && o == NumOperands-1) {
         ReplacedOperands[o] = getReplacementShuffleMask(Context, I, J);
         continue;
