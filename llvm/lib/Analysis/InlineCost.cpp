@@ -266,7 +266,7 @@ bool CallAnalyzer::visitAlloca(AllocaInst &I) {
   // FIXME: Check whether inlining will turn a dynamic alloca into a static
   // alloca, and handle that case.
 
-  // We will happily inline tatic alloca instructions or dynamic alloca
+  // We will happily inline static alloca instructions or dynamic alloca
   // instructions in always-inline situations.
   if (AlwaysInline || I.isStaticAlloca())
     return Base::visitAlloca(I);
