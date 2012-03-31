@@ -302,6 +302,7 @@ class stdlist_SynthProvider:
 
 	def update(self):
 		logger = Logger.Logger()
+		self.count = None
 		try:
 			impl = self.valobj.GetChildMemberWithName('__end_')
 			self.node_address = self.valobj.AddressOf().GetValueAsUnsigned(0)
@@ -309,7 +310,6 @@ class stdlist_SynthProvider:
 			self.tail = impl.GetChildMemberWithName('__prev_')
 			self.data_type = self.extract_type()
 			self.data_size = self.data_type.GetByteSize()
-			self.count = None
 		except:
 			pass
 
@@ -441,6 +441,7 @@ class stdmap_SynthProvider:
 
 	def update(self):
 		logger = Logger.Logger()
+		self.count = None
 		try:
 			# we will set this to True if we find out that discovering a node in the map takes more steps than the overall size of the RB tree
 			# if this gets set to True, then we will merrily return None for any child from that moment on
@@ -452,7 +453,6 @@ class stdmap_SynthProvider:
 			self.data_type = None
 			self.data_size = None
 			self.skip_size = None
-			self.count = None
 		except:
 			pass
 

@@ -117,6 +117,8 @@ class StdListSynthProvider:
 
 	def update(self):
 		logger = Logger.Logger()
+		# preemptively setting this to None - we might end up changing our mind later
+		self.count = None
 		try:
 			impl = self.valobj.GetChildMemberWithName('_M_impl')
 			node = impl.GetChildMemberWithName('_M_node')
@@ -125,7 +127,6 @@ class StdListSynthProvider:
 			self.prev = node.GetChildMemberWithName('_M_prev')
 			self.data_type = self.extract_type()
 			self.data_size = self.data_type.GetByteSize()
-			self.count = None
 		except:
 			pass
 
@@ -204,6 +205,8 @@ class StdVectorSynthProvider:
 
 	def update(self):
 		logger = Logger.Logger()
+		# preemptively setting this to None - we might end up changing our mind later
+		self.count = None
 		try:
 			impl = self.valobj.GetChildMemberWithName('_M_impl')
 			self.start = impl.GetChildMemberWithName('_M_start')
@@ -248,8 +251,9 @@ class StdMapSynthProvider:
 
 	def update(self):
 		logger = Logger.Logger()
+		# preemptively setting this to None - we might end up changing our mind later
+		self.count = None
 		try:
-			self.count = None
 			# we will set this to True if we find out that discovering a node in the map takes more steps than the overall size of the RB tree
 			# if this gets set to True, then we will merrily return None for any child from that moment on
 			self.garbage = False
