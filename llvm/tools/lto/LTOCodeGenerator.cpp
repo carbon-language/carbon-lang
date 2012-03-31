@@ -4,10 +4,10 @@
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Link Time Optimization library. This library is 
+// This file implements the Link Time Optimization library. This library is
 // intended to be used by linker to optimize code at link time.
 //
 //===----------------------------------------------------------------------===//
@@ -64,7 +64,7 @@ const char* LTOCodeGenerator::getVersionString() {
 #endif
 }
 
-LTOCodeGenerator::LTOCodeGenerator() 
+LTOCodeGenerator::LTOCodeGenerator()
     : _context(getGlobalContext()),
       _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
@@ -95,7 +95,7 @@ bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg)
 
   return ret;
 }
-    
+
 
 bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug, std::string& errMsg)
 {
@@ -103,7 +103,7 @@ bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug, std::string& errMsg)
         case LTO_DEBUG_MODEL_NONE:
             _emitDwarfDebugInfo = false;
             return false;
-            
+
         case LTO_DEBUG_MODEL_DWARF:
             _emitDwarfDebugInfo = true;
             return false;
@@ -112,7 +112,7 @@ bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug, std::string& errMsg)
 }
 
 
-bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model, 
+bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
                                        std::string& errMsg)
 {
     switch (model) {
@@ -141,7 +141,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   if (determineTarget(errMsg))
     return true;
 
-  // mark which symbols can not be internalized 
+  // mark which symbols can not be internalized
   applyScopeRestrictions();
 
   // create output file
@@ -153,7 +153,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
     errMsg += path;
     return true;
   }
-    
+
   // write bitcode to it
   WriteBitcodeToFile(_linker.getModule(), Out.os());
   Out.os().close();
@@ -164,7 +164,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
     Out.os().clear_error();
     return true;
   }
-  
+
   Out.keep();
   return false;
 }
@@ -290,7 +290,7 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
   if (Inits == 0) return;
 
   for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i)
-    if (GlobalValue *GV = 
+    if (GlobalValue *GV =
           dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
       UsedValues.insert(GV);
 }
@@ -303,7 +303,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   PassManager passes;
   passes.add(createVerifierPass());
 
-  // mark which symbols can not be internalized 
+  // mark which symbols can not be internalized
   MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL);
   Mangler mangler(Context, *_target->getTargetData());
   std::vector<const char*> mustPreserveList;
@@ -312,7 +312,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f)
     applyRestriction(*f, mustPreserveList, asmUsed, mangler);
-  for (Module::global_iterator v = mergedModule->global_begin(), 
+  for (Module::global_iterator v = mergedModule->global_begin(),
          e = mergedModule->global_end(); v !=  e; ++v)
     applyRestriction(*v, mustPreserveList, asmUsed, mangler);
   for (Module::alias_iterator a = mergedModule->alias_begin(),
@@ -347,24 +347,24 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 
   // apply scope restrictions
   passes.run(*mergedModule);
-  
+
   _scopeRestrictionsDone = true;
 }
 
 /// Optimize merged modules using various IPO passes
 bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
                                           std::string &errMsg) {
-    if ( this->determineTarget(errMsg) ) 
+    if ( this->determineTarget(errMsg) )
         return true;
 
-    // mark which symbols can not be internalized 
+    // mark which symbols can not be internalized
     this->applyScopeRestrictions();
 
     Module* mergedModule = _linker.getModule();
 
     // if options were requested, set them
     if ( !_codegenOptions.empty() )
-        cl::ParseCommandLineOptions(_codegenOptions.size(), 
+        cl::ParseCommandLineOptions(_codegenOptions.size(),
                                     const_cast<char **>(&_codegenOptions[0]));
 
     // Instantiate the pass manager to organize the passes.
@@ -375,7 +375,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
     // Add an appropriate TargetData instance for this module...
     passes.add(new TargetData(*_target->getTargetData()));
-    
+
     PassManagerBuilder().populateLTOPassManager(passes, /*Internalize=*/ false,
                                                 !DisableInline);
 
