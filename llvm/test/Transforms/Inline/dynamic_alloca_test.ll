@@ -3,33 +3,38 @@
 ; Functions with dynamic allocas can only be inlined into functions that
 ; already have dynamic allocas.
 
-; RUN: opt < %s -inline -S | \
-; RUN:   grep llvm.stacksave
-; RUN: opt < %s -inline -S | not grep callee
-
+; RUN: opt < %s -inline -S | FileCheck %s
 
 declare void @ext(i32*)
 
 define internal void @callee(i32 %N) {
-        %P = alloca i32, i32 %N         ; <i32*> [#uses=1]
-        call void @ext( i32* %P )
-        ret void
+  %P = alloca i32, i32 %N
+  call void @ext(i32* %P)
+  ret void
 }
 
 define void @foo(i32 %N) {
-; <label>:0
-        %P = alloca i32, i32 %N         ; <i32*> [#uses=1]
-        call void @ext( i32* %P )
-        br label %Loop
+; CHECK: @foo
+; CHECK: alloca i32, i32 %{{.*}}
+; CHECK: call i8* @llvm.stacksave()
+; CHECK: alloca i32, i32 %{{.*}}
+; CHECK: call void @ext
+; CHECK: call void @llvm.stackrestore
+; CHECK: ret
 
-Loop:           ; preds = %Loop, %0
-        %count = phi i32 [ 0, %0 ], [ %next, %Loop ]            ; <i32> [#uses=2]
-        %next = add i32 %count, 1               ; <i32> [#uses=1]
-        call void @callee( i32 %N )
-        %cond = icmp eq i32 %count, 100000              ; <i1> [#uses=1]
-        br i1 %cond, label %out, label %Loop
+entry:
+  %P = alloca i32, i32 %N
+  call void @ext(i32* %P)
+  br label %loop
 
-out:            ; preds = %Loop
-        ret void
+loop:
+  %count = phi i32 [ 0, %entry ], [ %next, %loop ]
+  %next = add i32 %count, 1
+  call void @callee(i32 %N)
+  %cond = icmp eq i32 %count, 100000
+  br i1 %cond, label %out, label %loop
+
+out:
+  ret void
 }
 
