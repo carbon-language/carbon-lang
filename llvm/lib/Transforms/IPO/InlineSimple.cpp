@@ -40,10 +40,7 @@ namespace {
     }
     static char ID; // Pass identification, replacement for typeid
     InlineCost getInlineCost(CallSite CS) {
-      return CA.getInlineCost(CS);
-    }
-    float getInlineFudgeFactor(CallSite CS) {
-      return CA.getInlineFudgeFactor(CS);
+      return CA.getInlineCost(CS, getInlineThreshold(CS));
     }
     void resetCachedCostInfo(Function *Caller) {
       CA.resetCachedCostInfo(Caller);

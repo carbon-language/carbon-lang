@@ -50,6 +50,52 @@ bool llvm::callIsSmall(const Function *F) {
   return false;
 }
 
+bool llvm::isInstructionFree(const Instruction *I, const TargetData *TD) {
+  if (isa<PHINode>(I))
+    return true;
+
+  // If a GEP has all constant indices, it will probably be folded with
+  // a load/store.
+  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I))
+    return GEP->hasAllConstantIndices();
+
+  if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+    switch (II->getIntrinsicID()) {
+    default:
+      return false;
+    case Intrinsic::dbg_declare:
+    case Intrinsic::dbg_value:
+    case Intrinsic::invariant_start:
+    case Intrinsic::invariant_end:
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+    case Intrinsic::objectsize:
+    case Intrinsic::ptr_annotation:
+    case Intrinsic::var_annotation:
+      // These intrinsics don't count as size.
+      return true;
+    }
+  }
+
+  if (const CastInst *CI = dyn_cast<CastInst>(I)) {
+    // Noop casts, including ptr <-> int,  don't count.
+    if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || isa<PtrToIntInst>(CI))
+      return true;
+    // trunc to a native type is free (assuming the target has compare and
+    // shift-right of the same width).
+    if (TD && isa<TruncInst>(CI) &&
+        TD->isLegalInteger(TD->getTypeSizeInBits(CI->getType())))
+      return true;
+    // Result of a cmp instruction is often extended (to be used by other
+    // cmp instructions, logical or return instructions). These are usually
+    // nop on most sane targets.
+    if (isa<CmpInst>(CI->getOperand(0)))
+      return true;
+  }
+
+  return false;
+}
+
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
@@ -58,27 +104,11 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
-    if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
+    if (isInstructionFree(II, TD))
+      continue;
 
     // Special handling for calls.
     if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
-      if (const IntrinsicInst *IntrinsicI = dyn_cast<IntrinsicInst>(II)) {
-        switch (IntrinsicI->getIntrinsicID()) {
-        default: break;
-        case Intrinsic::dbg_declare:
-        case Intrinsic::dbg_value:
-        case Intrinsic::invariant_start:
-        case Intrinsic::invariant_end:
-        case Intrinsic::lifetime_start:
-        case Intrinsic::lifetime_end:
-        case Intrinsic::objectsize:
-        case Intrinsic::ptr_annotation:
-        case Intrinsic::var_annotation:
-          // These intrinsics don't count as size.
-          continue;
-        }
-      }
-
       ImmutableCallSite CS(cast<Instruction>(II));
 
       if (const Function *F = CS.getCalledFunction()) {
@@ -114,28 +144,6 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
 
     if (isa<ExtractElementInst>(II) || II->getType()->isVectorTy())
       ++NumVectorInsts;
-
-    if (const CastInst *CI = dyn_cast<CastInst>(II)) {
-      // Noop casts, including ptr <-> int,  don't count.
-      if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) ||
-          isa<PtrToIntInst>(CI))
-        continue;
-      // trunc to a native type is free (assuming the target has compare and
-      // shift-right of the same width).
-      if (isa<TruncInst>(CI) && TD &&
-          TD->isLegalInteger(TD->getTypeSizeInBits(CI->getType())))
-        continue;
-      // Result of a cmp instruction is often extended (to be used by other
-      // cmp instructions, logical or return instructions). These are usually
-      // nop on most sane targets.
-      if (isa<CmpInst>(CI->getOperand(0)))
-        continue;
-    } else if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(II)){
-      // If a GEP has all constant indices, it will probably be folded with
-      // a load/store.
-      if (GEPI->hasAllConstantIndices())
-        continue;
-    }
 
     ++NumInsts;
   }

@@ -1,5 +1,7 @@
 ; RUN: opt -inline < %s -S -o - -inline-threshold=10 | FileCheck %s
 
+target datalayout = "p:32:32"
+
 define i32 @outer1() {
 ; CHECK: @outer1
 ; CHECK-NOT: call

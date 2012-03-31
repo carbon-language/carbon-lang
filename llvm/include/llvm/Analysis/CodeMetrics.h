@@ -20,8 +20,12 @@
 namespace llvm {
   class BasicBlock;
   class Function;
+  class Instruction;
   class TargetData;
   class Value;
+
+  /// \brief Check whether an instruction is likely to be "free" when lowered.
+  bool isInstructionFree(const Instruction *I, const TargetData *TD = 0);
 
   /// \brief Check whether a call will lower to something small.
   ///

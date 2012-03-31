@@ -59,10 +59,7 @@ namespace {
       // We still have to check the inline cost in case there are reasons to
       // not inline which trump the always-inline attribute such as setjmp and
       // indirectbr.
-      return CA.getInlineCost(CS);
-    }
-    float getInlineFudgeFactor(CallSite CS) {
-      return CA.getInlineFudgeFactor(CS);
+      return CA.getInlineCost(CS, getInlineThreshold(CS));
     }
     void resetCachedCostInfo(Function *Caller) {
       CA.resetCachedCostInfo(Caller);

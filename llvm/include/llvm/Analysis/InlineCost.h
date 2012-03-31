@@ -16,6 +16,7 @@
 
 #include "llvm/Function.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include <cassert>
@@ -25,162 +26,105 @@
 namespace llvm {
 
   class CallSite;
-  template<class PtrType, unsigned SmallSize>
-  class SmallPtrSet;
   class TargetData;
 
   namespace InlineConstants {
     // Various magic constants used to adjust heuristics.
     const int InstrCost = 5;
-    const int IndirectCallBonus = -100;
+    const int IndirectCallThreshold = 100;
     const int CallPenalty = 25;
     const int LastCallToStaticBonus = -15000;
     const int ColdccPenalty = 2000;
     const int NoreturnPenalty = 10000;
   }
 
-  /// InlineCost - Represent the cost of inlining a function. This
-  /// supports special values for functions which should "always" or
-  /// "never" be inlined. Otherwise, the cost represents a unitless
-  /// amount; smaller values increase the likelihood of the function
-  /// being inlined.
+  /// \brief Represents the cost of inlining a function.
+  ///
+  /// This supports special values for functions which should "always" or
+  /// "never" be inlined. Otherwise, the cost represents a unitless amount;
+  /// smaller values increase the likelihood of the function being inlined.
+  ///
+  /// Objects of this type also provide the adjusted threshold for inlining
+  /// based on the information available for a particular callsite. They can be
+  /// directly tested to determine if inlining should occur given the cost and
+  /// threshold for this cost metric.
   class InlineCost {
-    enum Kind {
-      Value,
-      Always,
-      Never
+    enum CostKind {
+      CK_Variable,
+      CK_Always,
+      CK_Never
     };
 
-    // This is a do-it-yourself implementation of
-    //   int Cost : 30;
-    //   unsigned Type : 2;
-    // We used to use bitfields, but they were sometimes miscompiled (PR3822).
-    enum { TYPE_BITS = 2 };
-    enum { COST_BITS = unsigned(sizeof(unsigned)) * CHAR_BIT - TYPE_BITS };
-    unsigned TypedCost; // int Cost : COST_BITS; unsigned Type : TYPE_BITS;
+    const int      Cost : 30; // The inlining cost if neither always nor never.
+    const unsigned Kind : 2;  // The type of cost, one of CostKind above.
 
-    Kind getType() const {
-      return Kind(TypedCost >> COST_BITS);
-    }
+    /// \brief The adjusted threshold against which this cost should be tested.
+    const int Threshold;
 
-    int getCost() const {
-      // Sign-extend the bottom COST_BITS bits.
-      return (int(TypedCost << TYPE_BITS)) >> TYPE_BITS;
-    }
+    // Trivial constructor, interesting logic in the factory functions below.
+    InlineCost(int Cost, CostKind Kind, int Threshold)
+      : Cost(Cost), Kind(Kind), Threshold(Threshold) {}
 
-    InlineCost(int C, int T) {
-      TypedCost = (unsigned(C << TYPE_BITS) >> TYPE_BITS) | (T << COST_BITS);
-      assert(getCost() == C && "Cost exceeds InlineCost precision");
-    }
   public:
-    static InlineCost get(int Cost) { return InlineCost(Cost, Value); }
-    static InlineCost getAlways() { return InlineCost(0, Always); }
-    static InlineCost getNever() { return InlineCost(0, Never); }
+    static InlineCost get(int Cost, int Threshold) {
+      InlineCost Result(Cost, CK_Variable, Threshold);
+      assert(Result.Cost == Cost && "Cost exceeds InlineCost precision");
+      return Result;
+    }
+    static InlineCost getAlways() {
+      return InlineCost(0, CK_Always, 0);
+    }
+    static InlineCost getNever() {
+      return InlineCost(0, CK_Never, 0);
+    }
 
-    bool isVariable() const { return getType() == Value; }
-    bool isAlways() const { return getType() == Always; }
-    bool isNever() const { return getType() == Never; }
+    /// \brief Test whether the inline cost is low enough for inlining.
+    operator bool() const {
+      if (isAlways()) return true;
+      if (isNever()) return false;
+      return Cost < Threshold;
+    }
 
-    /// getValue() - Return a "variable" inline cost's amount. It is
+    bool isVariable() const { return Kind == CK_Variable; }
+    bool isAlways() const   { return Kind == CK_Always; }
+    bool isNever() const    { return Kind == CK_Never; }
+
+    /// getCost() - Return a "variable" inline cost's amount. It is
     /// an error to call this on an "always" or "never" InlineCost.
-    int getValue() const {
-      assert(getType() == Value && "Invalid access of InlineCost");
-      return getCost();
+    int getCost() const {
+      assert(Kind == CK_Variable && "Invalid access of InlineCost");
+      return Cost;
+    }
+
+    /// \brief Get the cost delta from the threshold for inlining.
+    /// Only valid if the cost is of the variable kind. Returns a negative
+    /// value if the cost is too high to inline.
+    int getCostDelta() const {
+      return Threshold - getCost();
     }
   };
 
   /// InlineCostAnalyzer - Cost analyzer used by inliner.
   class InlineCostAnalyzer {
-    struct ArgInfo {
-    public:
-      unsigned ConstantWeight;
-      unsigned AllocaWeight;
-
-      ArgInfo(unsigned CWeight, unsigned AWeight)
-        : ConstantWeight(CWeight), AllocaWeight(AWeight)
-          {}
-    };
-
-    struct FunctionInfo {
-      CodeMetrics Metrics;
-
-      /// ArgumentWeights - Each formal argument of the function is inspected to
-      /// see if it is used in any contexts where making it a constant or alloca
-      /// would reduce the code size.  If so, we add some value to the argument
-      /// entry here.
-      std::vector<ArgInfo> ArgumentWeights;
-
-      /// PointerArgPairWeights - Weights to use when giving an inline bonus to
-      /// a call site due to correlated pairs of pointers.
-      DenseMap<std::pair<unsigned, unsigned>, unsigned> PointerArgPairWeights;
-
-      /// countCodeReductionForConstant - Figure out an approximation for how
-      /// many instructions will be constant folded if the specified value is
-      /// constant.
-      unsigned countCodeReductionForConstant(const CodeMetrics &Metrics,
-                                             Value *V);
-
-      /// countCodeReductionForAlloca - Figure out an approximation of how much
-      /// smaller the function will be if it is inlined into a context where an
-      /// argument becomes an alloca.
-      unsigned countCodeReductionForAlloca(const CodeMetrics &Metrics,
-                                           Value *V);
-
-      /// countCodeReductionForPointerPair - Count the bonus to apply to an
-      /// inline call site where a pair of arguments are pointers and one
-      /// argument is a constant offset from the other. The idea is to
-      /// recognize a common C++ idiom where a begin and end iterator are
-      /// actually pointers, and many operations on the pair of them will be
-      /// constants if the function is called with arguments that have
-      /// a constant offset.
-      void countCodeReductionForPointerPair(
-          const CodeMetrics &Metrics,
-          DenseMap<Value *, unsigned> &PointerArgs,
-          Value *V, unsigned ArgIdx);
-
-      /// analyzeFunction - Add information about the specified function
-      /// to the current structure.
-      void analyzeFunction(Function *F, const TargetData *TD);
-
-      /// NeverInline - Returns true if the function should never be
-      /// inlined into any caller.
-      bool NeverInline();
-    };
-
-    // The Function* for a function can be changed (by ArgumentPromotion);
-    // the ValueMap will update itself when this happens.
-    ValueMap<const Function *, FunctionInfo> CachedFunctionInfo;
-
     // TargetData if available, or null.
     const TargetData *TD;
 
-    int CountBonusForConstant(Value *V, Constant *C = NULL);
-    int ConstantFunctionBonus(CallSite CS, Constant *C);
-    int getInlineSize(CallSite CS, Function *Callee);
-    int getInlineBonuses(CallSite CS, Function *Callee);
   public:
     InlineCostAnalyzer(): TD(0) {}
 
     void setTargetData(const TargetData *TData) { TD = TData; }
 
-    /// getInlineCost - The heuristic used to determine if we should inline the
-    /// function call or not.
+    /// \brief Get an InlineCost object representing the cost of inlining this
+    /// callsite.
     ///
-    InlineCost getInlineCost(CallSite CS);
-    /// getCalledFunction - The heuristic used to determine if we should inline
-    /// the function call or not.  The callee is explicitly specified, to allow
-    /// you to calculate the cost of inlining a function via a pointer.  The
-    /// result assumes that the inlined version will always be used.  You should
-    /// weight it yourself in cases where this callee will not always be called.
-    InlineCost getInlineCost(CallSite CS, Function *Callee);
-
-    /// getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
-    /// higher threshold to determine if the function call should be inlined.
-    float getInlineFudgeFactor(CallSite CS);
+    /// Note that threshold is passed into this function. Only costs below the
+    /// threshold are computed with any accuracy. The threshold can be used to
+    /// bound the computation necessary to determine whether the cost is
+    /// sufficiently low to warrant inlining.
+    InlineCost getInlineCost(CallSite CS, int Threshold);
 
     /// resetCachedFunctionInfo - erase any cached cost info for this function.
     void resetCachedCostInfo(Function* Caller) {
-      CachedFunctionInfo[Caller] = FunctionInfo();
     }
 
     /// growCachedCostInfo - update the cached cost info for Caller after Callee
