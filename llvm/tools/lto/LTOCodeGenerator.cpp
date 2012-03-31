@@ -51,23 +51,18 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
-
-
 using namespace llvm;
 
 static cl::opt<bool> DisableInline("disable-inlining",
   cl::desc("Do not run the inliner pass"));
 
-
-const char* LTOCodeGenerator::getVersionString()
-{
+const char* LTOCodeGenerator::getVersionString() {
 #ifdef LLVM_VERSION_INFO
-    return PACKAGE_NAME " version " PACKAGE_VERSION ", " LLVM_VERSION_INFO;
+  return PACKAGE_NAME " version " PACKAGE_VERSION ", " LLVM_VERSION_INFO;
 #else
-    return PACKAGE_NAME " version " PACKAGE_VERSION;
+  return PACKAGE_NAME " version " PACKAGE_VERSION;
 #endif
 }
-
 
 LTOCodeGenerator::LTOCodeGenerator() 
     : _context(getGlobalContext()),
@@ -81,13 +76,14 @@ LTOCodeGenerator::LTOCodeGenerator()
     InitializeAllAsmPrinters();
 }
 
-LTOCodeGenerator::~LTOCodeGenerator()
-{
-    delete _target;
-    delete _nativeObjectFile;
+LTOCodeGenerator::~LTOCodeGenerator() {
+  delete _target;
+  delete _nativeObjectFile;
+
+  for (std::vector<const char*>::iterator I = _codegenOptions.begin(),
+         E = _codegenOptions.end(); I != E; ++I)
+    free(*I);
 }
-
-
 
 bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg)
 {
@@ -416,16 +412,15 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
     return false; // success
 }
 
-
-/// Optimize merged modules using various IPO passes
-void LTOCodeGenerator::setCodeGenDebugOptions(const char* options)
-{
-    for (std::pair<StringRef, StringRef> o = getToken(options);
-         !o.first.empty(); o = getToken(o.second)) {
-        // ParseCommandLineOptions() expects argv[0] to be program name.
-        // Lazily add that.
-        if ( _codegenOptions.empty() ) 
-            _codegenOptions.push_back("libLTO");
-        _codegenOptions.push_back(strdup(o.first.str().c_str()));
-    }
+/// setCodeGenDebugOptions - Set codegen debugging options to aid in debugging
+/// LTO problems.
+void LTOCodeGenerator::setCodeGenDebugOptions(const char *options) {
+  for (std::pair<StringRef, StringRef> o = getToken(options);
+       !o.first.empty(); o = getToken(o.second)) {
+    // ParseCommandLineOptions() expects argv[0] to be program name. Lazily add
+    // that.
+    if ( _codegenOptions.empty() )
+      _codegenOptions.push_back(strdup("libLTO"));
+    _codegenOptions.push_back(strdup(o.first.str().c_str()));
+  }
 }
