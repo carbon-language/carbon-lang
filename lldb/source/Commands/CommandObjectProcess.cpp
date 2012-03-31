@@ -880,6 +880,7 @@ public:
                 {
                     result.AppendError(error.AsCString("Remote connect failed"));
                     result.SetStatus (eReturnStatusFailed);
+                    target_sp->DeleteCurrentProcess();
                     return false;
                 }
             }
