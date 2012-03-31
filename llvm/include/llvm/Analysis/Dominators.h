@@ -346,16 +346,7 @@ public:
     return dominates(A, B);
   }
 
-  inline bool properlyDominates(const NodeT *A, const NodeT *B) {
-    if (A == B)
-      return false;
-
-    // Cast away the const qualifiers here. This is ok since
-    // this function doesn't actually return the values returned
-    // from getNode.
-    return dominates(getNode(const_cast<NodeT *>(A)),
-                     getNode(const_cast<NodeT *>(B)));
-  }
+  bool properlyDominates(const NodeT *A, const NodeT *B);
 
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
                                const DomTreeNodeBase<NodeT> *B) const {
@@ -429,16 +420,7 @@ public:
     return dominatedBySlowTreeWalk(A, B);
   }
 
-  inline bool dominates(const NodeT *A, const NodeT *B) {
-    if (A == B)
-      return true;
-
-    // Cast away the const qualifiers here. This is ok since
-    // this function doesn't actually return the values returned
-    // from getNode.
-    return dominates(getNode(const_cast<NodeT *>(A)),
-                     getNode(const_cast<NodeT *>(B)));
-  }
+  bool dominates(const NodeT *A, const NodeT *B);
 
   NodeT *getRoot() const {
     assert(this->Roots.size() == 1 && "Should always have entry node!");
@@ -703,6 +685,32 @@ public:
     }
   }
 };
+
+// These two functions are declare out of line as a workaround for building
+// with old (< r147295) versions of clang because of pr11642.
+template<class NodeT>
+bool DominatorTreeBase<NodeT>::dominates(const NodeT *A, const NodeT *B) {
+  if (A == B)
+    return true;
+
+  // Cast away the const qualifiers here. This is ok since
+  // this function doesn't actually return the values returned
+  // from getNode.
+  return dominates(getNode(const_cast<NodeT *>(A)),
+                   getNode(const_cast<NodeT *>(B)));
+}
+template<class NodeT>
+bool
+DominatorTreeBase<NodeT>::properlyDominates(const NodeT *A, const NodeT *B) {
+  if (A == B)
+    return false;
+
+  // Cast away the const qualifiers here. This is ok since
+  // this function doesn't actually return the values returned
+  // from getNode.
+  return dominates(getNode(const_cast<NodeT *>(A)),
+                   getNode(const_cast<NodeT *>(B)));
+}
 
 EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
