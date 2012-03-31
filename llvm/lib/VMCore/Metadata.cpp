@@ -205,11 +205,11 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
     ID.AddPointer(Vals[i]);
 
   void *InsertPoint;
-  MDNode *N = NULL;
-  
-  if ((N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)))
+  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (N || !Insert)
     return N;
-    
+
   bool isFunctionLocal = false;
   switch (FL) {
   case FL_Unknown:

@@ -90,13 +90,20 @@ TEST_F(MDNodeTest, Simple) {
   MDNode *n1 = MDNode::get(Context, V);
   Value *const c1 = n1;
   MDNode *n2 = MDNode::get(Context, c1);
+  Value *const c2 = n2;
   MDNode *n3 = MDNode::get(Context, V);
+  MDNode *n4 = MDNode::getIfExists(Context, V);
+  MDNode *n5 = MDNode::getIfExists(Context, c1);
+  MDNode *n6 = MDNode::getIfExists(Context, c2);
   EXPECT_NE(n1, n2);
 #ifdef ENABLE_MDNODE_UNIQUING
   EXPECT_EQ(n1, n3);
 #else
   (void) n3;
 #endif
+  EXPECT_EQ(n4, n1);
+  EXPECT_EQ(n5, n2);
+  EXPECT_EQ(n6, (Value*)0);
 
   EXPECT_EQ(3u, n1->getNumOperands());
   EXPECT_EQ(s1, n1->getOperand(0));
