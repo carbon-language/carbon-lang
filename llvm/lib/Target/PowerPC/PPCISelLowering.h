@@ -95,7 +95,9 @@ namespace llvm {
       EXTSW_32,
 
       /// CALL - A direct function call.
-      CALL_Darwin, CALL_SVR4,
+      /// CALL_NOP_SVR4 is a call with the special  NOP which follows 64-bit
+      /// SVR4 calls.
+      CALL_Darwin, CALL_SVR4, CALL_NOP_SVR4,
 
       /// NOP - Special NOP which follows 64-bit SVR4 calls.
       NOP,

@@ -89,10 +89,22 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
   let Uses = [RM] in {
     def BL8_ELF  : IForm<18, 0, 1,
                          (outs), (ins calltarget:$func, variable_ops), 
-                         "bl $func", BrB, []>;  // See Pat patterns below.                            
+                         "bl $func", BrB, []>;  // See Pat patterns below.
+
+    let isCodeGenOnly = 1 in
+    def BL8_NOP_ELF  : IForm_and_DForm_4_zero<18, 0, 1, 24,
+                             (outs), (ins calltarget:$func, variable_ops), 
+                             "bl $func\n\tnop", BrB, []>;
+
     def BLA8_ELF : IForm<18, 1, 1,
                          (outs), (ins aaddr:$func, variable_ops),
                          "bla $func", BrB, [(PPCcall_SVR4 (i64 imm:$func))]>;
+
+    let isCodeGenOnly = 1 in
+    def BLA8_NOP_ELF : IForm_and_DForm_4_zero<18, 1, 1, 24,
+                             (outs), (ins aaddr:$func, variable_ops),
+                             "bla $func\n\tnop", BrB,
+                             [(PPCcall_nop_SVR4 (i64 imm:$func))]>;
   }
   let Uses = [X11, CTR8, RM] in {
     def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
@@ -111,8 +123,14 @@ def : Pat<(PPCcall_Darwin (i64 texternalsym:$dst)),
 
 def : Pat<(PPCcall_SVR4 (i64 tglobaladdr:$dst)),
           (BL8_ELF tglobaladdr:$dst)>;
+def : Pat<(PPCcall_nop_SVR4 (i64 tglobaladdr:$dst)),
+          (BL8_NOP_ELF tglobaladdr:$dst)>;
+
 def : Pat<(PPCcall_SVR4 (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
+def : Pat<(PPCcall_nop_SVR4 (i64 texternalsym:$dst)),
+          (BL8_NOP_ELF texternalsym:$dst)>;
+
 def : Pat<(PPCnop),
           (NOP)>;
 

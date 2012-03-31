@@ -51,6 +51,36 @@ class PPC970_Unit_VALU     { bits<3> PPC970_Unit = 5;   }
 class PPC970_Unit_VPERM    { bits<3> PPC970_Unit = 6;   }
 class PPC970_Unit_BRU      { bits<3> PPC970_Unit = 7;   }
 
+// Two joined instructions; used to emit two adjacent instructions as one.
+// The itinerary from the first instruction is used for scheduling and
+// classification.
+class I2<bits<6> opcode1, bits<6> opcode2, dag OOL, dag IOL, string asmstr,
+         InstrItinClass itin>
+        : Instruction {
+  field bits<64> Inst;
+
+  bit PPC64 = 0;  // Default value, override with isPPC64
+
+  let Namespace = "PPC";
+  let Inst{0-5} = opcode1;
+  let Inst{32-37} = opcode2;
+  let OutOperandList = OOL;
+  let InOperandList = IOL;
+  let AsmString = asmstr;
+  let Itinerary = itin;
+
+  bits<1> PPC970_First = 0;
+  bits<1> PPC970_Single = 0;
+  bits<1> PPC970_Cracked = 0;
+  bits<3> PPC970_Unit = 0;
+
+  /// These fields correspond to the fields in PPCInstrInfo.h.  Any changes to
+  /// these must be reflected there!  See comments there for what these are.
+  let TSFlags{0}   = PPC970_First;
+  let TSFlags{1}   = PPC970_Single;
+  let TSFlags{2}   = PPC970_Cracked;
+  let TSFlags{5-3} = PPC970_Unit;
+}
 
 // 1.7.1 I-Form
 class IForm<bits<6> opcode, bit aa, bit lk, dag OOL, dag IOL, string asmstr,
@@ -160,6 +190,35 @@ class DForm_4<bits<6> opcode, dag OOL, dag IOL, string asmstr,
 class DForm_4_zero<bits<6> opcode, dag OOL, dag IOL, string asmstr,
                    InstrItinClass itin, list<dag> pattern>
   : DForm_1<opcode, OOL, IOL, asmstr, itin, pattern> {
+  let A = 0;
+  let Addr = 0;
+}
+
+class IForm_and_DForm_1<bits<6> opcode1, bit aa, bit lk, bits<6> opcode2,
+            dag OOL, dag IOL, string asmstr,
+            InstrItinClass itin, list<dag> pattern>
+         : I2<opcode1, opcode2, OOL, IOL, asmstr, itin> {
+  bits<5>  A;
+  bits<21> Addr;
+
+  let Pattern = pattern;
+  bits<24> LI;
+
+  let Inst{6-29}  = LI;
+  let Inst{30}    = aa;
+  let Inst{31}    = lk;
+
+  let Inst{38-42}  = A;
+  let Inst{43-47} = Addr{20-16}; // Base Reg
+  let Inst{48-63} = Addr{15-0};  // Displacement
+}
+
+// This is used to emit BL8+NOP.
+class IForm_and_DForm_4_zero<bits<6> opcode1, bit aa, bit lk, bits<6> opcode2,
+            dag OOL, dag IOL, string asmstr,
+            InstrItinClass itin, list<dag> pattern>
+         :  IForm_and_DForm_1<opcode1, aa, lk, opcode2,
+                              OOL, IOL, asmstr, itin, pattern> {
   let A = 0;
   let Addr = 0;
 }

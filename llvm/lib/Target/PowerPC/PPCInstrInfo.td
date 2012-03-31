@@ -116,6 +116,9 @@ def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
 def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                             SDNPVariadic]>;
+def PPCcall_nop_SVR4  : SDNode<"PPCISD::CALL_NOP_SVR4", SDT_PPCCall,
+                               [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                                SDNPVariadic]>;
 def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInGlue, SDNPOutGlue]>;
 def PPCload   : SDNode<"PPCISD::LOAD", SDTypeProfile<1, 1, []>,
                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;

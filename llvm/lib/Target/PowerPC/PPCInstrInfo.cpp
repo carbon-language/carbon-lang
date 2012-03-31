@@ -51,7 +51,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
   if (Directive == PPC::DIR_440) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
-    return new PPCHazardRecognizer440(II, DAG);
+    return new PPCScoreboardHazardRecognizer(II, DAG);
   }
 
   return TargetInstrInfoImpl::CreateTargetHazardRecognizer(TM, DAG);
@@ -684,6 +684,9 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case PPC::GC_LABEL:
   case PPC::DBG_VALUE:
     return 0;
+  case PPC::BL8_NOP_ELF:
+  case PPC::BLA8_NOP_ELF:
+    return 8;
   default:
     return 4; // PowerPC instructions are all 4 bytes
   }

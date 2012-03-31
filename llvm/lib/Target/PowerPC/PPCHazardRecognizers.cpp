@@ -22,15 +22,27 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// PowerPC 440 Hazard Recognizer
-void PPCHazardRecognizer440::EmitInstruction(SUnit *SU) {
+// PowerPC Scoreboard Hazard Recognizer
+void PPCScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
   const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
-  if (!MCID) {
+  if (!MCID)
     // This is a PPC pseudo-instruction.
     return;
-  }
 
   ScoreboardHazardRecognizer::EmitInstruction(SU);
+}
+
+ScheduleHazardRecognizer::HazardType
+PPCScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
+  return ScoreboardHazardRecognizer::getHazardType(SU, Stalls);
+}
+
+void PPCScoreboardHazardRecognizer::AdvanceCycle() {
+  ScoreboardHazardRecognizer::AdvanceCycle();
+}
+
+void PPCScoreboardHazardRecognizer::Reset() {
+  ScoreboardHazardRecognizer::Reset();
 }
 
 //===----------------------------------------------------------------------===//
@@ -61,7 +73,6 @@ void PPCHazardRecognizer440::EmitInstruction(SUnit *SU) {
 
 PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetInstrInfo &tii)
   : TII(tii) {
-  LastWasBL8_ELF = false;
   EndDispatchGroup();
 }
 
@@ -132,15 +143,6 @@ getHazardType(SUnit *SU, int Stalls) {
     return NoHazard;
 
   unsigned Opcode = MI->getOpcode();
-
-  // If the last instruction was a BL8_ELF, then the NOP must follow it
-  // directly (this is strong requirement from the linker due to the ELF ABI).
-  // We return only Hazard (and not NoopHazard) because if the NOP is necessary
-  // then it will already be in the instruction stream (it is not always
-  // necessary; tail calls, for example, do not need it).
-  if (LastWasBL8_ELF && Opcode != PPC::NOP)
-    return Hazard;
-
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType =
     GetInstrType(Opcode, isFirst, isSingle, isCracked,
@@ -199,8 +201,6 @@ void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
     return;
 
   unsigned Opcode = MI->getOpcode();
-  LastWasBL8_ELF = (Opcode == PPC::BL8_ELF);
-
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType =
     GetInstrType(Opcode, isFirst, isSingle, isCracked,
@@ -240,7 +240,6 @@ void PPCHazardRecognizer970::AdvanceCycle() {
 }
 
 void PPCHazardRecognizer970::Reset() {
-  LastWasBL8_ELF = false;
   EndDispatchGroup();
 }
 
