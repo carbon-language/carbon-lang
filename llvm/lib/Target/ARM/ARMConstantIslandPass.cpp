@@ -346,11 +346,19 @@ void ARMConstantIslands::verify() {
     assert(BBInfo[MBBId].Offset % (1u << Align) == 0);
     assert(!MBBId || BBInfo[MBBId - 1].postOffset() <= BBInfo[MBBId].Offset);
   }
+  DEBUG(dbgs() << "Verifying " << CPUsers.size() << " CP users.\n");
   for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
     CPUser &U = CPUsers[i];
     unsigned UserOffset = getUserOffset(U);
-    assert(isCPEntryInRange(U.MI, UserOffset, U.CPEMI, U.getMaxDisp(),
-                            U.NegOk) && "Constant pool entry out of range!");
+    if (isCPEntryInRange(U.MI, UserOffset, U.CPEMI, U.getMaxDisp(), U.NegOk,
+                         /* DoDump = */ true)) {
+      DEBUG(dbgs() << "OK\n");
+      continue;
+    }
+    DEBUG(dbgs() << "Out of range.\n");
+    dumpBBs();
+    DEBUG(MF->dump());
+    llvm_unreachable("Constant pool entry out of range!");
   }
 #endif
 }
@@ -1742,6 +1750,7 @@ bool ARMConstantIslands::optimizeThumb2Instructions() {
 
     // FIXME: Check if offset is multiple of scale if scale is not 4.
     if (isCPEntryInRange(U.MI, UserOffset, U.CPEMI, MaxOffs, false, true)) {
+      DEBUG(dbgs() << "Shrink: " << *U.MI);
       U.MI->setDesc(TII->get(NewOpc));
       MachineBasicBlock *MBB = U.MI->getParent();
       BBInfo[MBB->getNumber()].Size -= 2;
@@ -1783,6 +1792,7 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
       unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
       MachineBasicBlock *DestBB = Br.MI->getOperand(0).getMBB();
       if (isBBInRange(Br.MI, DestBB, MaxOffs)) {
+        DEBUG(dbgs() << "Shrink branch: " << *Br.MI);
         Br.MI->setDesc(TII->get(NewOpc));
         MachineBasicBlock *MBB = Br.MI->getParent();
         BBInfo[MBB->getNumber()].Size -= 2;
@@ -1826,6 +1836,7 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
               CmpMI->getOperand(1).getImm() == 0 &&
               isARMLowRegister(Reg)) {
             MachineBasicBlock *MBB = Br.MI->getParent();
+            DEBUG(dbgs() << "Fold: " << *CmpMI << " and: " << *Br.MI);
             MachineInstr *NewBR =
               BuildMI(*MBB, CmpMI, Br.MI->getDebugLoc(), TII->get(NewOpc))
               .addReg(Reg).addMBB(DestBB,Br.MI->getOperand(0).getTargetFlags());
@@ -1942,11 +1953,14 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
       if (!OptOk)
         continue;
 
+      DEBUG(dbgs() << "Shrink JT: " << *MI << "     addr: " << *AddrMI
+                   << "      lea: " << *LeaMI);
       unsigned Opc = ByteOk ? ARM::t2TBB_JT : ARM::t2TBH_JT;
       MachineInstr *NewJTMI = BuildMI(MBB, MI->getDebugLoc(), TII->get(Opc))
         .addReg(IdxReg, getKillRegState(IdxRegKill))
         .addJumpTableIndex(JTI, JTOP.getTargetFlags())
         .addImm(MI->getOperand(JTOpIdx+1).getImm());
+      DEBUG(dbgs() << "BB#" << MBB->getNumber() << ": " << *NewJTMI);
       // FIXME: Insert an "ALIGN" instruction to ensure the next instruction
       // is 2-byte aligned. For now, asm printer will fix it up.
       unsigned NewSize = TII->GetInstSizeInBytes(NewJTMI);
