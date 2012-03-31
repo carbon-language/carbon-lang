@@ -80,7 +80,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
   delete _target;
   delete _nativeObjectFile;
 
-  for (std::vector<const char*>::iterator I = _codegenOptions.begin(),
+  for (std::vector<char*>::iterator I = _codegenOptions.begin(),
          E = _codegenOptions.end(); I != E; ++I)
     free(*I);
 }

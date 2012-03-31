@@ -65,7 +65,7 @@ private:
     StringSet                   _mustPreserveSymbols;
     StringSet                   _asmUndefinedRefs;
     llvm::MemoryBuffer*         _nativeObjectFile;
-    std::vector<const char*>    _codegenOptions;
+    std::vector<char*>          _codegenOptions;
     std::string                 _mCpu;
     std::string                 _nativeObjectPath;
 };
