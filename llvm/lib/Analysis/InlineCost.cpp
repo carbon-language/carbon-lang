@@ -1012,13 +1012,3 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, int Threshold) {
 
   return llvm::InlineCost::get(CA.getCost(), CA.getThreshold());
 }
-
-/// growCachedCostInfo - update the cached cost info for Caller after Callee has
-/// been inlined.
-void
-InlineCostAnalyzer::growCachedCostInfo(Function *Caller, Function *Callee) {
-}
-
-/// clear - empty the cache of inline costs
-void InlineCostAnalyzer::clear() {
-}

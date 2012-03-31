@@ -61,19 +61,10 @@ namespace {
       // indirectbr.
       return CA.getInlineCost(CS, getInlineThreshold(CS));
     }
-    void resetCachedCostInfo(Function *Caller) {
-      CA.resetCachedCostInfo(Caller);
-    }
-    void growCachedCostInfo(Function* Caller, Function* Callee) {
-      CA.growCachedCostInfo(Caller, Callee);
-    }
     virtual bool doFinalization(CallGraph &CG) {
       return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/true);
     }
     virtual bool doInitialization(CallGraph &CG);
-    void releaseMemory() {
-      CA.clear();
-    }
   };
 }
 

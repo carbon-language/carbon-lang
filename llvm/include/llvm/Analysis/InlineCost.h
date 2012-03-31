@@ -122,18 +122,6 @@ namespace llvm {
     /// bound the computation necessary to determine whether the cost is
     /// sufficiently low to warrant inlining.
     InlineCost getInlineCost(CallSite CS, int Threshold);
-
-    /// resetCachedFunctionInfo - erase any cached cost info for this function.
-    void resetCachedCostInfo(Function* Caller) {
-    }
-
-    /// growCachedCostInfo - update the cached cost info for Caller after Callee
-    /// has been inlined. If Callee is NULL it means a dead call has been
-    /// eliminated.
-    void growCachedCostInfo(Function* Caller, Function* Callee);
-
-    /// clear - empty the cache of inline costs
-    void clear();
   };
 
   /// callIsSmall - If a call is likely to lower to a single target instruction,
