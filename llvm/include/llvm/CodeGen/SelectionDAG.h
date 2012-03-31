@@ -654,7 +654,7 @@ public:
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                   MachinePointerInfo PtrInfo, bool isVolatile,
                   bool isNonTemporal, bool isInvariant, unsigned Alignment,
-                  const MDNode *TBAAInfo = 0);
+                  const MDNode *TBAAInfo = 0, const MDNode *Ranges = 0);
   SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                      SDValue Chain, SDValue Ptr, MachinePointerInfo PtrInfo,
                      EVT MemVT, bool isVolatile,
@@ -667,7 +667,8 @@ public:
                   SDValue Chain, SDValue Ptr, SDValue Offset,
                   MachinePointerInfo PtrInfo, EVT MemVT,
                   bool isVolatile, bool isNonTemporal, bool isInvariant,
-                  unsigned Alignment, const MDNode *TBAAInfo = 0);
+                  unsigned Alignment, const MDNode *TBAAInfo = 0,
+                  const MDNode *Ranges = 0);
   SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                   EVT VT, DebugLoc dl,
                   SDValue Chain, SDValue Ptr, SDValue Offset,

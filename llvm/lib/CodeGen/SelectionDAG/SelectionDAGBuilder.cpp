@@ -3215,6 +3215,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
   bool isInvariant = I.getMetadata("invariant.load") != 0;
   unsigned Alignment = I.getAlignment();
   const MDNode *TBAAInfo = I.getMetadata(LLVMContext::MD_tbaa);
+  const MDNode *Ranges = I.getMetadata(LLVMContext::MD_range);
 
   SmallVector<EVT, 4> ValueVTs;
   SmallVector<uint64_t, 4> Offsets;
@@ -3262,7 +3263,8 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
                             DAG.getConstant(Offsets[i], PtrVT));
     SDValue L = DAG.getLoad(ValueVTs[i], getCurDebugLoc(), Root,
                             A, MachinePointerInfo(SV, Offsets[i]), isVolatile,
-                            isNonTemporal, isInvariant, Alignment, TBAAInfo);
+                            isNonTemporal, isInvariant, Alignment, TBAAInfo,
+                            Ranges);
 
     Values[i] = L;
     Chains[ChainI] = L.getValue(1);

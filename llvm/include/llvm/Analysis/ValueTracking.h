@@ -24,7 +24,8 @@ namespace llvm {
   class APInt;
   class TargetData;
   class StringRef;
-  
+  class MDNode;
+
   /// ComputeMaskedBits - Determine which of the bits specified in Mask are
   /// known to be either zero or one and return them in the KnownZero/KnownOne
   /// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
@@ -38,7 +39,9 @@ namespace llvm {
   void ComputeMaskedBits(Value *V, const APInt &Mask, APInt &KnownZero,
                          APInt &KnownOne, const TargetData *TD = 0,
                          unsigned Depth = 0);
-  
+  void computeMaskedBitsLoad(const MDNode &Ranges, const APInt &Mask,
+                             APInt &KnownZero);
+
   /// ComputeSignBit - Determine whether the sign bit is known to be zero or
   /// one.  Convenience wrapper around ComputeMaskedBits.
   void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,

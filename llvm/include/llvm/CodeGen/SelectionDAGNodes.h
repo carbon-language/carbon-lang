@@ -933,6 +933,9 @@ public:
   /// Returns the TBAAInfo that describes the dereference.
   const MDNode *getTBAAInfo() const { return MMO->getTBAAInfo(); }
 
+  /// Returns the Ranges that describes the dereference.
+  const MDNode *getRanges() const { return MMO->getRanges(); }
+
   /// getMemoryVT - Return the type of the in-memory value.
   EVT getMemoryVT() const { return MemoryVT; }
 

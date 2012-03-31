@@ -197,8 +197,8 @@ static void ComputeMaskedBitsMul(Value *Op0, Value *Op1, bool NSW,
     KnownOne.setBit(BitWidth - 1);
 }
 
-static void computeMaskedBitsLoad(const MDNode &Ranges, const APInt &Mask,
-                                  APInt &KnownZero) {
+void llvm::computeMaskedBitsLoad(const MDNode &Ranges, const APInt &Mask,
+                                 APInt &KnownZero) {
   unsigned BitWidth = Mask.getBitWidth();
   unsigned NumRanges = Ranges.getNumOperands() / 2;
   assert(NumRanges >= 1);

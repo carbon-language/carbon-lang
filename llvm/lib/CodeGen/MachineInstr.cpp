@@ -381,10 +381,11 @@ MachinePointerInfo MachinePointerInfo::getStack(int64_t Offset) {
 
 MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
                                      uint64_t s, unsigned int a,
-                                     const MDNode *TBAAInfo)
+                                     const MDNode *TBAAInfo,
+                                     const MDNode *Ranges)
   : PtrInfo(ptrinfo), Size(s),
     Flags((f & ((1 << MOMaxBits) - 1)) | ((Log2_32(a) + 1) << MOMaxBits)),
-    TBAAInfo(TBAAInfo) {
+    TBAAInfo(TBAAInfo), Ranges(Ranges) {
   assert((PtrInfo.V == 0 || isa<PointerType>(PtrInfo.V->getType())) &&
          "invalid pointer value");
   assert(getBaseAlignment() == a && "Alignment is not a power of 2!");

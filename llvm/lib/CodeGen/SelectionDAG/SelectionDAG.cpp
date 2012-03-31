@@ -1889,11 +1889,13 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     return;
   }
   case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(Op);
     if (ISD::isZEXTLoad(Op.getNode())) {
-      LoadSDNode *LD = cast<LoadSDNode>(Op);
       EVT VT = LD->getMemoryVT();
       unsigned MemBits = VT.getScalarType().getSizeInBits();
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits) & Mask;
+    } else if (const MDNode *Ranges = LD->getRanges()) {
+      computeMaskedBitsLoad(*Ranges, Mask, KnownZero);
     }
     return;
   }
@@ -4170,7 +4172,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                       SDValue Ptr, SDValue Offset,
                       MachinePointerInfo PtrInfo, EVT MemVT,
                       bool isVolatile, bool isNonTemporal, bool isInvariant,
-                      unsigned Alignment, const MDNode *TBAAInfo) {
+                      unsigned Alignment, const MDNode *TBAAInfo,
+                      const MDNode *Ranges) {
   assert(Chain.getValueType() == MVT::Other && 
         "Invalid chain type");
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
@@ -4192,7 +4195,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   MachineFunction &MF = getMachineFunction();
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Alignment,
-                            TBAAInfo);
+                            TBAAInfo, Ranges);
   return getLoad(AM, ExtType, VT, dl, Chain, Ptr, Offset, MemVT, MMO);
 }
 
@@ -4248,11 +4251,12 @@ SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
                               MachinePointerInfo PtrInfo,
                               bool isVolatile, bool isNonTemporal,
                               bool isInvariant, unsigned Alignment, 
-                              const MDNode *TBAAInfo) {
+                              const MDNode *TBAAInfo,
+                              const MDNode *Ranges) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, dl, Chain, Ptr, Undef,
-                 PtrInfo, VT, isVolatile, isNonTemporal, isInvariant, Alignment, 
-                 TBAAInfo);
+                 PtrInfo, VT, isVolatile, isNonTemporal, isInvariant, Alignment,
+                 TBAAInfo, Ranges);
 }
 
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,

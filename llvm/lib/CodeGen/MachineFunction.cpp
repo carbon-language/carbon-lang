@@ -195,9 +195,10 @@ MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
 MachineMemOperand *
 MachineFunction::getMachineMemOperand(MachinePointerInfo PtrInfo, unsigned f,
                                       uint64_t s, unsigned base_alignment,
-                                      const MDNode *TBAAInfo) {
+                                      const MDNode *TBAAInfo,
+                                      const MDNode *Ranges) {
   return new (Allocator) MachineMemOperand(PtrInfo, f, s, base_alignment,
-                                           TBAAInfo);
+                                           TBAAInfo, Ranges);
 }
 
 MachineMemOperand *
