@@ -113,14 +113,6 @@ bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
   llvm_unreachable("Unknown PIC model!");
 }
 
-void LTOCodeGenerator::setCpu(const char* mCpu) {
-  _mCpu = mCpu;
-}
-
-void LTOCodeGenerator::addMustPreserveSymbol(const char* sym) {
-  _mustPreserveSymbols[sym] = 1;
-}
-
 bool LTOCodeGenerator::writeMergedModules(const char *path,
                                           std::string &errMsg) {
   if (determineTarget(errMsg))

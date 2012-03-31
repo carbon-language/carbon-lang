@@ -42,8 +42,13 @@ struct LTOCodeGenerator {
   bool addModule(struct LTOModule*, std::string &errMsg);
   bool setDebugInfo(lto_debug_model, std::string &errMsg);
   bool setCodePICModel(lto_codegen_model, std::string &errMsg);
-  void setCpu(const char *cpu);
-  void addMustPreserveSymbol(const char *sym);
+
+  void setCpu(const char* mCpu) { _mCpu = mCpu; }
+
+  void addMustPreserveSymbol(const char* sym) {
+    _mustPreserveSymbols[sym] = 1;
+  }
+
   bool writeMergedModules(const char *path, std::string &errMsg);
   bool compile_to_file(const char **name, std::string &errMsg);
   const void *compile(size_t *length, std::string &errMsg);
