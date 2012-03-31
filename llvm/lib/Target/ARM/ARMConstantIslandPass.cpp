@@ -209,8 +209,9 @@ namespace {
       }
       /// getMaxDisp - Returns the maximum displacement supported by MI.
       /// Correct for unknown alignment.
+      /// Conservatively subtract 2 bytes to handle weird alignment effects.
       unsigned getMaxDisp() const {
-        return KnownAlignment ? MaxDisp : MaxDisp - 2;
+        return (KnownAlignment ? MaxDisp : MaxDisp - 2) - 2;
       }
     };
 
@@ -350,7 +351,9 @@ void ARMConstantIslands::verify() {
   for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
     CPUser &U = CPUsers[i];
     unsigned UserOffset = getUserOffset(U);
-    if (isCPEntryInRange(U.MI, UserOffset, U.CPEMI, U.getMaxDisp(), U.NegOk,
+    // Verify offset using the real max displacement without the safety
+    // adjustment.
+    if (isCPEntryInRange(U.MI, UserOffset, U.CPEMI, U.getMaxDisp()+2, U.NegOk,
                          /* DoDump = */ true)) {
       DEBUG(dbgs() << "OK\n");
       continue;
