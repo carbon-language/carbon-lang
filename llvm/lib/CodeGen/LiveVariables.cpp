@@ -14,7 +14,7 @@
 // the instruction, but are never used after the instruction (i.e., they are
 // killed).
 //
-// This class computes live variables using are sparse implementation based on
+// This class computes live variables using a sparse implementation based on
 // the machine code SSA form.  This class computes live variable information for
 // each virtual and _register allocatable_ physical register in a function.  It
 // uses the dominance properties of SSA form to efficiently compute live
