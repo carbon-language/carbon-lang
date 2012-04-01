@@ -545,6 +545,9 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
                       "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
 
+def : Pat<(prefetch xoaddr:$dst, (i32 0), imm, (i32 1)),
+          (DCBT xoaddr:$dst)>;
+
 // Atomic operations
 let usesCustomInserter = 1 in {
   let Defs = [CR0] in {

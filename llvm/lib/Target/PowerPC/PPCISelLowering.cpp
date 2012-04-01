@@ -389,6 +389,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
 
+  if (TM.getSubtarget<PPCSubtarget>().has64BitSupport())
+    setOperationAction(ISD::PREFETCH, MVT::Other, Legal);
+
   setOperationAction(ISD::ATOMIC_LOAD,  MVT::i32, Expand);
   setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Expand);
 
