@@ -20,11 +20,10 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/ImmutableList.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/ImmutableSet.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
-#include <list>
 
 namespace clang {
 
@@ -50,7 +49,7 @@ class BugType;
 
 /// This class provides an interface through which checkers can create
 /// individual bug reports.
-class BugReport {
+class BugReport : public llvm::ilist_node<BugReport> {
 public:  
   class NodeResolver {
     virtual void anchor();
@@ -208,13 +207,38 @@ public:
   virtual void Profile(llvm::FoldingSetNodeID& hash) const;
 };
 
+} // end ento namespace
+} // end clang namespace
+
+namespace llvm {
+  template<> struct ilist_traits<clang::ento::BugReport>
+    : public ilist_default_traits<clang::ento::BugReport> {
+    clang::ento::BugReport *createSentinel() const {
+      return static_cast<clang::ento::BugReport *>(&Sentinel);
+    }
+    void destroySentinel(clang::ento::BugReport *) const {}
+
+    clang::ento::BugReport *provideInitialHead() const {
+      return createSentinel();
+    }
+    clang::ento::BugReport *ensureHead(clang::ento::BugReport *) const {
+      return createSentinel();
+    }
+  private:
+    mutable ilist_half_node<clang::ento::BugReport> Sentinel;
+  };
+}
+
+namespace clang {
+namespace ento {
+
 //===----------------------------------------------------------------------===//
 // BugTypes (collections of related reports).
 //===----------------------------------------------------------------------===//
 
 class BugReportEquivClass : public llvm::FoldingSetNode {
   /// List of *owned* BugReport objects.
-  std::list<BugReport*> Reports;
+  llvm::ilist<BugReport> Reports;
 
   friend class BugReporter;
   void AddReport(BugReport* R) { Reports.push_back(R); }
@@ -224,36 +248,17 @@ public:
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
     assert(!Reports.empty());
-    (*Reports.begin())->Profile(ID);
+    Reports.front().Profile(ID);
   }
 
-  class iterator {
-    std::list<BugReport*>::iterator impl;
-  public:
-    iterator(std::list<BugReport*>::iterator i) : impl(i) {}
-    iterator &operator++() { ++impl; return *this; }
-    bool operator==(const iterator &I) const { return I.impl == impl; }
-    bool operator!=(const iterator &I) const { return I.impl != impl; }
-    BugReport* operator*() const { return *impl; }
-    BugReport* operator->() const { return *impl; }
-  };
+  typedef llvm::ilist<BugReport>::iterator iterator;
+  typedef llvm::ilist<BugReport>::const_iterator const_iterator;
 
-  class const_iterator {
-    std::list<BugReport*>::const_iterator impl;
-  public:
-    const_iterator(std::list<BugReport*>::const_iterator i) : impl(i) {}
-    const_iterator &operator++() { ++impl; return *this; }
-    bool operator==(const const_iterator &I) const { return I.impl == impl; }
-    bool operator!=(const const_iterator &I) const { return I.impl != impl; }
-    const BugReport* operator*() const { return *impl; }
-    const BugReport* operator->() const { return *impl; }
-  };
+  iterator begin() { return Reports.begin(); }
+  iterator end() { return Reports.end(); }
 
-  iterator begin() { return iterator(Reports.begin()); }
-  iterator end() { return iterator(Reports.end()); }
-
-  const_iterator begin() const { return const_iterator(Reports.begin()); }
-  const_iterator end() const { return const_iterator(Reports.end()); }
+  const_iterator begin() const { return Reports.begin(); }
+  const_iterator end() const { return Reports.end(); }
 };
 
 //===----------------------------------------------------------------------===//

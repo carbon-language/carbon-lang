@@ -14,8 +14,9 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "clang/AST/DeclCXX.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace ento;

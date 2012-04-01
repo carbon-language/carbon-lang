@@ -2026,9 +2026,7 @@ void ExprEngine::ViewGraph(bool trim) {
     // Iterate through the reports and get their nodes.
     for (BugReporter::EQClasses_iterator
            EI = BR.EQClasses_begin(), EE = BR.EQClasses_end(); EI != EE; ++EI) {
-      BugReportEquivClass& EQ = *EI;
-      const BugReport &R = **EQ.begin();
-      ExplodedNode *N = const_cast<ExplodedNode*>(R.getErrorNode());
+      ExplodedNode *N = const_cast<ExplodedNode*>(EI->begin()->getErrorNode());
       if (N) Src.push_back(N);
     }
 

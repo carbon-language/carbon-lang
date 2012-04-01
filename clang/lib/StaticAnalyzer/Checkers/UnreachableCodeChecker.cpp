@@ -24,7 +24,7 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 
 // The number of CFGBlock pointers we want to reserve memory for. This is used
 // once for each function we analyze.

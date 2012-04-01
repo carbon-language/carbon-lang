@@ -1383,10 +1383,7 @@ PathDiagnosticLocation BugReport::getLocation(const SourceManager &SM) const {
 // Methods for BugReporter and subclasses.
 //===----------------------------------------------------------------------===//
 
-BugReportEquivClass::~BugReportEquivClass() {
-  for (iterator I=begin(), E=end(); I!=E; ++I) delete *I;
-}
-
+BugReportEquivClass::~BugReportEquivClass() { }
 GRBugReporter::~GRBugReporter() { }
 BugReporterData::~BugReporterData() {}
 
@@ -1809,17 +1806,17 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
 
   BugReportEquivClass::iterator I = EQ.begin(), E = EQ.end();
   assert(I != E);
-  BugReport *R = *I;
-  BugType& BT = R->getBugType();
+  BugType& BT = I->getBugType();
 
   // If we don't need to suppress any of the nodes because they are
   // post-dominated by a sink, simply add all the nodes in the equivalence class
   // to 'Nodes'.  Any of the reports will serve as a "representative" report.
   if (!BT.isSuppressOnSink()) {
+    BugReport *R = I;
     for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
       const ExplodedNode *N = I->getErrorNode();
       if (N) {
-        R = *I;
+        R = I;
         bugReports.push_back(R);
       }
     }
@@ -1835,8 +1832,7 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
   BugReport *exampleReport = 0;
 
   for (; I != E; ++I) {
-    R = *I;
-    const ExplodedNode *errorNode = R->getErrorNode();
+    const ExplodedNode *errorNode = I->getErrorNode();
 
     if (!errorNode)
       continue;
@@ -1846,9 +1842,9 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
     }
     // No successors?  By definition this nodes isn't post-dominated by a sink.
     if (errorNode->succ_empty()) {
-      bugReports.push_back(R);
+      bugReports.push_back(I);
       if (!exampleReport)
-        exampleReport = R;
+        exampleReport = I;
       continue;
     }
 
@@ -1872,9 +1868,9 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
         if (Succ->succ_empty()) {
           // If we found an end-of-path node that is not a sink.
           if (!Succ->isSink()) {
-            bugReports.push_back(R);
+            bugReports.push_back(I);
             if (!exampleReport)
-              exampleReport = R;
+              exampleReport = I;
             WL.clear();
             break;
           }
