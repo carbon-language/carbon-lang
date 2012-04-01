@@ -216,7 +216,7 @@ struct __tuple_convertible_imp : public false_type {};
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
 struct __tuple_convertible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
-                               is_constructible<_Up0, _Tp0>::value &&
+                               is_convertible<_Tp0, _Up0>::value &&
                                __tuple_convertible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
@@ -231,6 +231,33 @@ struct __tuple_convertible
 template <class _Tp, class _Up>
 struct __tuple_convertible<_Tp, _Up, true, true>
     : public __tuple_convertible_imp<tuple_size<typename remove_reference<_Tp>::type>::value ==
+                                     tuple_size<_Up>::value,
+             typename __make_tuple_types<_Tp>::type, typename __make_tuple_types<_Up>::type>
+{};
+
+// __tuple_constructible
+
+template <bool, class _Tp, class _Up>
+struct __tuple_constructible_imp : public false_type {};
+
+template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
+struct __tuple_constructible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
+    : public integral_constant<bool,
+                               is_constructible<_Up0, _Tp0>::value &&
+                               __tuple_constructible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
+
+template <>
+struct __tuple_constructible_imp<true, __tuple_types<>, __tuple_types<> >
+    : public true_type {};
+
+template <class _Tp, class _Up, bool = __tuple_like<typename remove_reference<_Tp>::type>::value,
+                                bool = __tuple_like<_Up>::value>
+struct __tuple_constructible
+    : public false_type {};
+
+template <class _Tp, class _Up>
+struct __tuple_constructible<_Tp, _Up, true, true>
+    : public __tuple_constructible_imp<tuple_size<typename remove_reference<_Tp>::type>::value ==
                                      tuple_size<_Up>::value,
              typename __make_tuple_types<_Tp>::type, typename __make_tuple_types<_Up>::type>
 {};

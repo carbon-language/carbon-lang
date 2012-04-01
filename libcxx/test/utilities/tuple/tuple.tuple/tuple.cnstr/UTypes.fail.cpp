@@ -14,14 +14,36 @@
 // template <class... UTypes>
 //   explicit tuple(UTypes&&... u);
 
+/*
+    This is testing an extension whereby only Types having an explicit conversion
+    from UTypes are bound by the explicit tuple constructor.
+*/
+
 #include <tuple>
 #include <cassert>
 
-#include "../MoveOnly.h"
+class MoveOnly
+{
+    MoveOnly(const MoveOnly&);
+    MoveOnly& operator=(const MoveOnly&);
+
+    int data_;
+public:
+    explicit MoveOnly(int data = 1) : data_(data) {}
+    MoveOnly(MoveOnly&& x)
+        : data_(x.data_) {x.data_ = 0;}
+    MoveOnly& operator=(MoveOnly&& x)
+        {data_ = x.data_; x.data_ = 0; return *this;}
+
+    int get() const {return data_;}
+
+    bool operator==(const MoveOnly& x) const {return data_ == x.data_;}
+    bool operator< (const MoveOnly& x) const {return data_ <  x.data_;}
+};
 
 int main()
 {
     {
-        std::tuple<MoveOnly> t = MoveOnly(0);
+        std::tuple<MoveOnly> t = 1;
     }
 }

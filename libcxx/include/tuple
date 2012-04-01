@@ -552,7 +552,7 @@ public:
                ) {}
 
     template <class ..._Up,
-              class = typename enable_if
+              typename enable_if
                       <
                          sizeof...(_Up) <= sizeof...(_Tp) &&
                          __tuple_convertible
@@ -562,8 +562,40 @@ public:
                                      sizeof...(_Up) < sizeof...(_Tp) ?
                                         sizeof...(_Up) :
                                         sizeof...(_Tp)>::type
-                         >::value
-                      >::type
+                         >::value,
+                         bool
+                      >::type = false
+             >
+        _LIBCPP_INLINE_VISIBILITY
+        tuple(_Up&&... __u)
+            : base_(typename __make_tuple_indices<sizeof...(_Up)>::type(),
+                    typename __make_tuple_types<tuple, sizeof...(_Up)>::type(),
+                    typename __make_tuple_indices<sizeof...(_Tp), sizeof...(_Up)>::type(),
+                    typename __make_tuple_types<tuple, sizeof...(_Tp), sizeof...(_Up)>::type(),
+                    _VSTD::forward<_Up>(__u)...) {}
+
+    template <class ..._Up,
+              typename enable_if
+                      <
+                         sizeof...(_Up) <= sizeof...(_Tp) &&
+                         __tuple_constructible
+                         <
+                            tuple<_Up...>,
+                            typename __make_tuple_types<tuple,
+                                     sizeof...(_Up) < sizeof...(_Tp) ?
+                                        sizeof...(_Up) :
+                                        sizeof...(_Tp)>::type
+                         >::value &&
+                         !__tuple_convertible
+                         <
+                            tuple<_Up...>,
+                            typename __make_tuple_types<tuple,
+                                     sizeof...(_Up) < sizeof...(_Tp) ?
+                                        sizeof...(_Up) :
+                                        sizeof...(_Tp)>::type
+                         >::value,
+                         bool
+                      >::type =false
              >
         _LIBCPP_INLINE_VISIBILITY
         explicit
@@ -598,12 +630,26 @@ public:
                     _VSTD::forward<_Up>(__u)...) {}
 
     template <class _Tuple,
-              class = typename enable_if
+              typename enable_if
                       <
-                         __tuple_convertible<_Tuple, tuple>::value
-                      >::type
+                         __tuple_convertible<_Tuple, tuple>::value,
+                         bool
+                      >::type = false
              >
         _LIBCPP_INLINE_VISIBILITY
+        tuple(_Tuple&& __t)
+            : base_(_VSTD::forward<_Tuple>(__t)) {}
+
+    template <class _Tuple,
+              typename enable_if
+                      <
+                         __tuple_constructible<_Tuple, tuple>::value &&
+                         !__tuple_convertible<_Tuple, tuple>::value,
+                         bool
+                      >::type = false
+             >
+        _LIBCPP_INLINE_VISIBILITY
+        explicit
         tuple(_Tuple&& __t)
             : base_(_VSTD::forward<_Tuple>(__t)) {}
 

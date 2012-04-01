@@ -20,7 +20,6 @@
 int main()
 {
     {
-        std::tuple<int> t = 2;
-        assert(std::get<0>(t) == 2);
+        std::tuple<int*> t = 0;
     }
 }
