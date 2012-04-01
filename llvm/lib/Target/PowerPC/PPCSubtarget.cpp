@@ -147,9 +147,10 @@ bool PPCSubtarget::enablePostRAScheduler(
            TargetSubtargetInfo::AntiDepBreakMode& Mode,
            RegClassVector& CriticalPathRCs) const {
   if (DarwinDirective == PPC::DIR_440 || DarwinDirective == PPC::DIR_A2)
-    return false;
+    Mode = TargetSubtargetInfo::ANTIDEP_ALL;
+  else
+    Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
 
-  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
 
   if (isPPC64())
