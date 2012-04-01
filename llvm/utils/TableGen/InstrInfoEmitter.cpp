@@ -14,7 +14,7 @@
 
 #include "InstrInfoEmitter.h"
 #include "CodeGenTarget.h"
-#include "StringToOffsetTable.h"
+#include "SequenceToOffsetTable.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -214,20 +214,27 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
                OperandInfoIDs, OS);
   OS << "};\n\n";
 
-  OS << "extern const unsigned " << TargetName <<"InstrNameIndices[] = {\n    ";
-  StringToOffsetTable StringTable;
+  // Build an array of instruction names
+  SequenceToOffsetTable<std::string> InstrNames;
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     const CodeGenInstruction *Instr = NumberedInstructions[i];
-    OS << StringTable.GetOrAddStringOffset(Instr->TheDef->getName()) << "U, ";
+    InstrNames.add(Instr->TheDef->getName());
+  }
+
+  InstrNames.layout();
+  OS << "extern const char " << TargetName << "InstrNameData[] = {\n";
+  InstrNames.emit(OS, printChar);
+  OS << "};\n\n";
+
+  OS << "extern const unsigned " << TargetName <<"InstrNameIndices[] = {";
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     if (i % 8 == 0)
       OS << "\n    ";
+    const CodeGenInstruction *Instr = NumberedInstructions[i];
+    OS << InstrNames.get(Instr->TheDef->getName()) << "U, ";
   }
 
   OS << "\n};\n\n";
-
-  OS << "const char *" << TargetName << "InstrNameData =\n";
-  StringTable.EmitString(OS);
-  OS << ";\n\n";
 
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << TargetName
@@ -259,7 +266,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "namespace llvm {\n";
   OS << "extern const MCInstrDesc " << TargetName << "Insts[];\n";
   OS << "extern const unsigned " << TargetName << "InstrNameIndices[];\n";
-  OS << "extern const char *" << TargetName << "InstrNameData;\n";
+  OS << "extern const char " << TargetName << "InstrNameData[];\n";
   OS << ClassName << "::" << ClassName << "(int SO, int DO)\n"
      << "  : TargetInstrInfoImpl(SO, DO) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, "
