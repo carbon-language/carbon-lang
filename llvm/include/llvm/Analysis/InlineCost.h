@@ -49,59 +49,54 @@ namespace llvm {
   /// directly tested to determine if inlining should occur given the cost and
   /// threshold for this cost metric.
   class InlineCost {
-    enum CostKind {
-      CK_Variable,
-      CK_Always,
-      CK_Never
+    enum SentinelValues {
+      AlwaysInlineCost = INT_MIN,
+      NeverInlineCost = INT_MAX
     };
 
-    const int      Cost : 30; // The inlining cost if neither always nor never.
-    const unsigned Kind : 2;  // The type of cost, one of CostKind above.
+    /// \brief The estimated cost of inlining this callsite.
+    const int Cost;
 
-    /// \brief The adjusted threshold against which this cost should be tested.
+    /// \brief The adjusted threshold against which this cost was computed.
     const int Threshold;
 
     // Trivial constructor, interesting logic in the factory functions below.
-    InlineCost(int Cost, CostKind Kind, int Threshold)
-      : Cost(Cost), Kind(Kind), Threshold(Threshold) {}
+    InlineCost(int Cost, int Threshold)
+      : Cost(Cost), Threshold(Threshold) {}
 
   public:
     static InlineCost get(int Cost, int Threshold) {
-      InlineCost Result(Cost, CK_Variable, Threshold);
-      assert(Result.Cost == Cost && "Cost exceeds InlineCost precision");
-      return Result;
+      assert(Cost > AlwaysInlineCost && "Cost crosses sentinel value");
+      assert(Cost < NeverInlineCost && "Cost crosses sentinel value");
+      return InlineCost(Cost, Threshold);
     }
     static InlineCost getAlways() {
-      return InlineCost(0, CK_Always, 0);
+      return InlineCost(AlwaysInlineCost, 0);
     }
     static InlineCost getNever() {
-      return InlineCost(0, CK_Never, 0);
+      return InlineCost(NeverInlineCost, 0);
     }
 
     /// \brief Test whether the inline cost is low enough for inlining.
     operator bool() const {
-      if (isAlways()) return true;
-      if (isNever()) return false;
       return Cost < Threshold;
     }
 
-    bool isVariable() const { return Kind == CK_Variable; }
-    bool isAlways() const   { return Kind == CK_Always; }
-    bool isNever() const    { return Kind == CK_Never; }
+    bool isAlways() const   { return Cost == AlwaysInlineCost; }
+    bool isNever() const    { return Cost == NeverInlineCost; }
+    bool isVariable() const { return !isAlways() && !isNever(); }
 
-    /// getCost() - Return a "variable" inline cost's amount. It is
-    /// an error to call this on an "always" or "never" InlineCost.
+    /// \brief Get the inline cost estimate.
+    /// It is an error to call this on an "always" or "never" InlineCost.
     int getCost() const {
-      assert(Kind == CK_Variable && "Invalid access of InlineCost");
+      assert(isVariable() && "Invalid access of InlineCost");
       return Cost;
     }
 
     /// \brief Get the cost delta from the threshold for inlining.
     /// Only valid if the cost is of the variable kind. Returns a negative
     /// value if the cost is too high to inline.
-    int getCostDelta() const {
-      return Threshold - getCost();
-    }
+    int getCostDelta() const { return Threshold - getCost(); }
   };
 
   /// InlineCostAnalyzer - Cost analyzer used by inliner.
