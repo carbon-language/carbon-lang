@@ -296,6 +296,10 @@ namespace llvm {
     /// overriding enterRegion() or exitRegion().
     virtual void schedule() = 0;
 
+    /// finalizeSchedule - Allow targets to perform final scheduling actions at
+    /// the level of the whole MachineFunction. By default does nothing.
+    virtual void finalizeSchedule() {}
+
     virtual void dumpNode(const SUnit *SU) const;
 
     /// Return a label for a DAG node that points to an instruction.

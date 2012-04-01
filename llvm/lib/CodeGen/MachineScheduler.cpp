@@ -227,6 +227,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     assert(RemainingCount == 0 && "Instruction count mismatch!");
     Scheduler->finishBlock();
   }
+  Scheduler->finalizeSchedule();
   DEBUG(LIS->print(dbgs()));
   return true;
 }
