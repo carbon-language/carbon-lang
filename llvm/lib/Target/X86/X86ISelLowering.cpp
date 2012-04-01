@@ -14000,13 +14000,14 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
         return SDValue();
 
       // Validate that X, Y, and Mask are BIT_CONVERTS, and see through them.
-      if (Mask.getOpcode() != ISD::BITCAST ||
-          X.getOpcode() != ISD::BITCAST ||
-          Y.getOpcode() != ISD::BITCAST)
-        return SDValue();
-
       // Look through mask bitcast.
-      Mask = Mask.getOperand(0);
+      if (Mask.getOpcode() == ISD::BITCAST)
+        Mask = Mask.getOperand(0);
+      if (X.getOpcode() == ISD::BITCAST)
+        X = X.getOperand(0);
+      if (Y.getOpcode() == ISD::BITCAST)
+        Y = Y.getOperand(0);
+
       EVT MaskVT = Mask.getValueType();
 
       // Validate that the Mask operand is a vector sra node.
@@ -14027,8 +14028,6 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
       // Now we know we at least have a plendvb with the mask val.  See if
       // we can form a psignb/w/d.
       // psign = x.type == y.type == mask.type && y = sub(0, x);
-      X = X.getOperand(0);
-      Y = Y.getOperand(0);
       if (Y.getOpcode() == ISD::SUB && Y.getOperand(1) == X &&
           ISD::isBuildVectorAllZeros(Y.getOperand(0).getNode()) &&
           X.getValueType() == MaskVT && Y.getValueType() == MaskVT) {
