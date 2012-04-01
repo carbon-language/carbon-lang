@@ -283,12 +283,11 @@ BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P):
 
 Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
                                    ValueMapT &GlobalMap) {
-  const Instruction *Inst = dyn_cast<Instruction>(Old);
-
-  if (!Inst)
+  // We assume constants never change.
+  // This avoids map lookups for many calls to this function.
+  if (isa<Constant>(Old))
     return const_cast<Value*>(Old);
 
-  // OldOperand was redefined outside of this BasicBlock.
   if (GlobalMap.count(Old)) {
     Value *New = GlobalMap[Old];
 
@@ -299,17 +298,22 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     return New;
   }
 
-  // OldOperand was recalculated within this BasicBlock.
   if (BBMap.count(Old)) {
     return BBMap[Old];
   }
 
-  // OldOperand is SCoP invariant.
-  if (!Statement.getParent()->getRegion().contains(Inst->getParent()))
-    return const_cast<Value*>(Old);
+  // 'Old' is within the original SCoP, but was not rewritten.
+  //
+  // Such values appear, if they only calculate information already available in
+  // the polyhedral description (e.g.  an induction variable increment). They
+  // can be safely ignored.
+  if (const Instruction *Inst = dyn_cast<Instruction>(Old))
+    if (Statement.getParent()->getRegion().contains(Inst->getParent()))
+      return NULL;
 
-  // We could not find any valid new operand.
-  return NULL;
+  // Everything else is probably a scop-constant value defined as global,
+  // function parameter or an instruction not within the scop.
+  return const_cast<Value*>(Old);
 }
 
 void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
