@@ -524,7 +524,7 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
 let mayLoad = 1 in
 def LHAU8 : DForm_1a<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp,
                             ptr_rc:$rA),
-                    "lhau $rD, $disp($rA)", LdStGeneral,
+                    "lhau $rD, $disp($rA)", LdStLoad,
                     []>, RegConstraint<"$rA = $ea_result">,
                     NoEncode<"$ea_result">;
 // NO LWAU!
@@ -534,38 +534,38 @@ def LHAU8 : DForm_1a<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp
 // Zero extending loads.
 let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LBZ8 : DForm_1<34, (outs G8RC:$rD), (ins memri:$src),
-                  "lbz $rD, $src", LdStGeneral,
+                  "lbz $rD, $src", LdStLoad,
                   [(set G8RC:$rD, (zextloadi8 iaddr:$src))]>;
 def LHZ8 : DForm_1<40, (outs G8RC:$rD), (ins memri:$src),
-                  "lhz $rD, $src", LdStGeneral,
+                  "lhz $rD, $src", LdStLoad,
                   [(set G8RC:$rD, (zextloadi16 iaddr:$src))]>;
 def LWZ8 : DForm_1<32, (outs G8RC:$rD), (ins memri:$src),
-                  "lwz $rD, $src", LdStGeneral,
+                  "lwz $rD, $src", LdStLoad,
                   [(set G8RC:$rD, (zextloadi32 iaddr:$src))]>, isPPC64;
 
 def LBZX8 : XForm_1<31,  87, (outs G8RC:$rD), (ins memrr:$src),
-                   "lbzx $rD, $src", LdStGeneral,
+                   "lbzx $rD, $src", LdStLoad,
                    [(set G8RC:$rD, (zextloadi8 xaddr:$src))]>;
 def LHZX8 : XForm_1<31, 279, (outs G8RC:$rD), (ins memrr:$src),
-                   "lhzx $rD, $src", LdStGeneral,
+                   "lhzx $rD, $src", LdStLoad,
                    [(set G8RC:$rD, (zextloadi16 xaddr:$src))]>;
 def LWZX8 : XForm_1<31,  23, (outs G8RC:$rD), (ins memrr:$src),
-                   "lwzx $rD, $src", LdStGeneral,
+                   "lwzx $rD, $src", LdStLoad,
                    [(set G8RC:$rD, (zextloadi32 xaddr:$src))]>;
                    
                    
 // Update forms.
 let mayLoad = 1 in {
 def LBZU8 : DForm_1<35, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
-                    "lbzu $rD, $addr", LdStGeneral,
+                    "lbzu $rD, $addr", LdStLoad,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
 def LHZU8 : DForm_1<41, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
-                    "lhzu $rD, $addr", LdStGeneral,
+                    "lhzu $rD, $addr", LdStLoad,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
 def LWZU8 : DForm_1<33, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
-                    "lwzu $rD, $addr", LdStGeneral,
+                    "lwzu $rD, $addr", LdStLoad,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
 }
@@ -613,24 +613,24 @@ def : Pat<(PPCload xaddr:$src),
 let PPC970_Unit = 2 in {
 // Truncating stores.                       
 def STB8 : DForm_1<38, (outs), (ins G8RC:$rS, memri:$src),
-                   "stb $rS, $src", LdStGeneral,
+                   "stb $rS, $src", LdStStore,
                    [(truncstorei8 G8RC:$rS, iaddr:$src)]>;
 def STH8 : DForm_1<44, (outs), (ins G8RC:$rS, memri:$src),
-                   "sth $rS, $src", LdStGeneral,
+                   "sth $rS, $src", LdStStore,
                    [(truncstorei16 G8RC:$rS, iaddr:$src)]>;
 def STW8 : DForm_1<36, (outs), (ins G8RC:$rS, memri:$src),
-                   "stw $rS, $src", LdStGeneral,
+                   "stw $rS, $src", LdStStore,
                    [(truncstorei32 G8RC:$rS, iaddr:$src)]>;
 def STBX8 : XForm_8<31, 215, (outs), (ins G8RC:$rS, memrr:$dst),
-                   "stbx $rS, $dst", LdStGeneral,
+                   "stbx $rS, $dst", LdStStore,
                    [(truncstorei8 G8RC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
 def STHX8 : XForm_8<31, 407, (outs), (ins G8RC:$rS, memrr:$dst),
-                   "sthx $rS, $dst", LdStGeneral,
+                   "sthx $rS, $dst", LdStStore,
                    [(truncstorei16 G8RC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
 def STWX8 : XForm_8<31, 151, (outs), (ins G8RC:$rS, memrr:$dst),
-                   "stwx $rS, $dst", LdStGeneral,
+                   "stwx $rS, $dst", LdStStore,
                    [(truncstorei32 G8RC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
 // Normal 8-byte stores.
@@ -647,14 +647,14 @@ let PPC970_Unit = 2 in {
 
 def STBU8 : DForm_1a<38, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
-                    "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
+                    "stbu $rS, $ptroff($ptrreg)", LdStStore,
                     [(set ptr_rc:$ea_res,
                           (pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, 
                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
 def STHU8 : DForm_1a<45, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
-                    "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
+                    "sthu $rS, $ptroff($ptrreg)", LdStStore,
                     [(set ptr_rc:$ea_res,
                         (pre_truncsti16 G8RC:$rS, ptr_rc:$ptrreg, 
                                         iaddroff:$ptroff))]>,

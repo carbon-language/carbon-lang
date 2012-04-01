@@ -50,7 +50,8 @@ def BrMCRX       : InstrItinClass;
 def LdStDCBA     : InstrItinClass;
 def LdStDCBF     : InstrItinClass;
 def LdStDCBI     : InstrItinClass;
-def LdStGeneral  : InstrItinClass;
+def LdStLoad     : InstrItinClass;
+def LdStStore    : InstrItinClass;
 def LdStDSS      : InstrItinClass;
 def LdStICBI     : InstrItinClass;
 def LdStUX       : InstrItinClass;
@@ -150,8 +151,8 @@ include "PPCScheduleG5.td"
 //    dcbf       LdStDCBF
 //    dcbi       LdStDCBI
 //    dcbst      LdStDCBF
-//    dcbt       LdStGeneral
-//    dcbtst     LdStGeneral
+//    dcbt       LdStLoad
+//    dcbtst     LdStLoad
 //    dcbz       LdStDCBF
 //    divd       IntDivD
 //    divdu      IntDivD
@@ -160,9 +161,9 @@ include "PPCScheduleG5.td"
 //    dss        LdStDSS
 //    dst        LdStDSS
 //    dstst      LdStDSS
-//    eciwx      LdStGeneral
-//    ecowx      LdStGeneral
-//    eieio      LdStGeneral
+//    eciwx      LdStLoad
+//    ecowx      LdStLoad
+//    eieio      LdStLoad
 //    eqv        IntGeneral
 //    extsb      IntGeneral
 //    extsh      IntGeneral
@@ -202,10 +203,10 @@ include "PPCScheduleG5.td"
 //    fsubs      FPGeneral
 //    icbi       LdStICBI
 //    isync      SprISYNC
-//    lbz        LdStGeneral
-//    lbzu       LdStGeneral
+//    lbz        LdStLoad
+//    lbzu       LdStLoad
 //    lbzux      LdStUX
-//    lbzx       LdStGeneral
+//    lbzx       LdStLoad
 //    ld         LdStLD
 //    ldarx      LdStLDARX
 //    ldu        LdStLD
@@ -223,11 +224,11 @@ include "PPCScheduleG5.td"
 //    lhau       LdStLHA
 //    lhaux      LdStLHA
 //    lhax       LdStLHA
-//    lhbrx      LdStGeneral
-//    lhz        LdStGeneral
-//    lhzu       LdStGeneral
+//    lhbrx      LdStLoad
+//    lhz        LdStLoad
+//    lhzu       LdStLoad
 //    lhzux      LdStUX
-//    lhzx       LdStGeneral
+//    lhzx       LdStLoad
 //    lmw        LdStLMW
 //    lswi       LdStLMW
 //    lswx       LdStLMW
@@ -242,11 +243,11 @@ include "PPCScheduleG5.td"
 //    lwarx      LdStLWARX
 //    lwaux      LdStLHA
 //    lwax       LdStLHA
-//    lwbrx      LdStGeneral
-//    lwz        LdStGeneral
-//    lwzu       LdStGeneral
+//    lwbrx      LdStLoad
+//    lwz        LdStLoad
+//    lwzu       LdStLoad
 //    lwzux      LdStUX
-//    lwzx       LdStGeneral
+//    lwzx       LdStLoad
 //    mcrf       BrMCR
 //    mcrfs      FPGeneral
 //    mcrxr      BrMCRX
@@ -307,10 +308,10 @@ include "PPCScheduleG5.td"
 //    srawi      IntShift
 //    srd        IntRotateD
 //    srw        IntGeneral
-//    stb        LdStGeneral
-//    stbu       LdStGeneral
-//    stbux      LdStGeneral
-//    stbx       LdStGeneral
+//    stb        LdStStore
+//    stbu       LdStStore
+//    stbux      LdStStore
+//    stbx       LdStStore
 //    std        LdStSTD
 //    stdcx.     LdStSTDCX
 //    stdu       LdStSTD
@@ -325,11 +326,11 @@ include "PPCScheduleG5.td"
 //    stfsu      LdStUX
 //    stfsux     LdStUX
 //    stfsx      LdStUX
-//    sth        LdStGeneral
-//    sthbrx     LdStGeneral
-//    sthu       LdStGeneral
-//    sthux      LdStGeneral
-//    sthx       LdStGeneral
+//    sth        LdStStore
+//    sthbrx     LdStStore
+//    sthu       LdStStore
+//    sthux      LdStStore
+//    sthx       LdStStore
 //    stmw       LdStLMW
 //    stswi      LdStLMW
 //    stswx      LdStLMW
@@ -338,12 +339,12 @@ include "PPCScheduleG5.td"
 //    stvewx     LdStSTVEBX
 //    stvx       LdStSTVEBX
 //    stvxl      LdStSTVEBX
-//    stw        LdStGeneral
-//    stwbrx     LdStGeneral
+//    stw        LdStStore
+//    stwbrx     LdStStore
 //    stwcx.     LdStSTWCX
-//    stwu       LdStGeneral
-//    stwux      LdStGeneral
-//    stwx       LdStGeneral
+//    stwu       LdStStore
+//    stwux      LdStStore
+//    stwx       LdStStore
 //    subf       IntGeneral
 //    subfc      IntGeneral
 //    subfe      IntGeneral
