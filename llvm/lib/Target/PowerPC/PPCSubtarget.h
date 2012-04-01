@@ -40,6 +40,7 @@ namespace PPC {
     DIR_7400,
     DIR_750, 
     DIR_970, 
+    DIR_A2,
     DIR_64  
   };
 }

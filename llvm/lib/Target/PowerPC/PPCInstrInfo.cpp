@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -49,7 +50,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   const TargetMachine *TM,
   const ScheduleDAG *DAG) const {
   unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
-  if (Directive == PPC::DIR_440) {
+  if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
     return new PPCScoreboardHazardRecognizer(II, DAG);
   }
@@ -65,14 +66,14 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
 
   // Most subtargets use a PPC970 recognizer.
-  if (Directive != PPC::DIR_440) {
+  if (Directive != PPC::DIR_440 && Directive != PPC::DIR_A2) {
     const TargetInstrInfo *TII = TM.getInstrInfo();
     assert(TII && "No InstrInfo?");
 
     return new PPCHazardRecognizer970(*TII);
   }
 
-  return TargetInstrInfoImpl::CreateTargetPostRAHazardRecognizer(II, DAG);
+  return new PPCScoreboardHazardRecognizer(II, DAG);
 }
 unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const {

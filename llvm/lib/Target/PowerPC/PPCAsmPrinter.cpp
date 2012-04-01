@@ -450,6 +450,7 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
     "ppc7400",
     "ppc750",
     "ppc970",
+    "ppcA2",
     "ppc64"
   };
 
