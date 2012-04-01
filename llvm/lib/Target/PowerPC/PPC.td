@@ -90,7 +90,8 @@ def : Processor<"g5", G5Itineraries,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"a2",  PPCA2Itineraries, [DirectiveA2, FeatureBookE,
                                           FeatureFSqrt, FeatureSTFIWX,
-                                          Feature64Bit /*, Feature64BitRegs */]>;
+                                          Feature64Bit
+                                      /*, Feature64BitRegs */]>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
 def : Processor<"ppc64", G5Itineraries,
                   [Directive64, FeatureAltivec,
