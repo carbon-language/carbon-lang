@@ -552,7 +552,7 @@ bool Inliner::removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly) {
   // Note that it doesn't matter that we are iterating over a non-stable order
   // here to do this, it doesn't matter which order the functions are deleted
   // in.
-  std::sort(FunctionsToRemove.begin(), FunctionsToRemove.end());
+  array_pod_sort(FunctionsToRemove.begin(), FunctionsToRemove.end());
   FunctionsToRemove.erase(std::unique(FunctionsToRemove.begin(),
                                       FunctionsToRemove.end()),
                           FunctionsToRemove.end());
