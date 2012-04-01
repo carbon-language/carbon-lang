@@ -240,8 +240,8 @@ protected:
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
-                             Value *BaseAddress, const Value *OldOperand,
-                             ValueMapT &BBMap, ValueMapT &GlobalMap);
+                             Value *BaseAddress, ValueMapT &BBMap,
+                             ValueMapT &GlobalMap);
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
@@ -372,8 +372,8 @@ std::vector<Value*> BlockGenerator::getMemoryAccessIndex(
 }
 
 Value *BlockGenerator::getNewAccessOperand(
-  __isl_keep isl_map *NewAccessRelation, Value *BaseAddress, const Value
-  *OldOperand, ValueMapT &BBMap, ValueMapT &GlobalMap) {
+  __isl_keep isl_map *NewAccessRelation, Value *BaseAddress,
+  ValueMapT &BBMap, ValueMapT &GlobalMap) {
   std::vector<Value*> IndexArray = getMemoryAccessIndex(NewAccessRelation,
                                                         BaseAddress,
                                                         BBMap, GlobalMap);
@@ -399,7 +399,7 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
     NewPointer = getNewValue(Pointer, BBMap, GlobalMap);
   } else {
     Value *BaseAddress = const_cast<Value*>(Access.getBaseAddr());
-    NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, Pointer,
+    NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress,
                                      BBMap, GlobalMap);
   }
 
