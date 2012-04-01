@@ -78,3 +78,48 @@ entry:
   %add = add nsw i32 1, %call
   ret i32 %add
 }
+
+define i32 @inner5(i8* %addr) alwaysinline {
+entry:
+  indirectbr i8* %addr, [ label %one, label %two ]
+
+one:
+  ret i32 42
+
+two:
+  ret i32 44
+}
+define i32 @outer5(i32 %x) {
+; CHECK: @outer5
+; CHECK: call i32 @inner5
+; CHECK: ret
+
+  %cmp = icmp slt i32 %x, 42
+  %addr = select i1 %cmp, i8* blockaddress(@inner5, %one), i8* blockaddress(@inner5, %two)
+  %call = call i32 @inner5(i8* %addr)
+  ret i32 %call
+}
+
+define void @inner6(i32 %x) alwaysinline {
+entry:
+  %icmp = icmp slt i32 %x, 0
+  br i1 %icmp, label %return, label %bb
+
+bb:
+  %sub = sub nsw i32 %x, 1
+  call void @inner6(i32 %sub)
+  ret void
+
+return:
+  ret void
+}
+define void @outer6() {
+; CHECK: @outer6
+; CHECK: call void @inner6(i32 42)
+; CHECK: ret
+
+entry:
+  call void @inner6(i32 42)
+  ret void
+}
+
