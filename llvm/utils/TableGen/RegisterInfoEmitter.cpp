@@ -118,11 +118,11 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
   OS << "#endif // GET_REGINFO_ENUM\n\n";
 }
 
-void
-RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
-                                    const std::vector<CodeGenRegister*> &Regs,
-                                    bool isCtor) {
 
+void
+RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
+                                       const std::vector<CodeGenRegister*> &Regs,
+                                          bool isCtor) {
   // Collect all information about dwarf register numbers
   typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
@@ -148,38 +148,52 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
     for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
       I->second.push_back(-1);
 
+  std::string Namespace = Regs[0]->TheDef->getValueAsString("Namespace");
+
+  OS << "// " << Namespace << " Dwarf<->LLVM register mappings.\n";
+
   // Emit reverse information about the dwarf register numbers.
   for (unsigned j = 0; j < 2; ++j) {
-    OS << "  switch (";
-    if (j == 0)
-      OS << "DwarfFlavour";
-    else
-      OS << "EHFlavour";
-    OS << ") {\n"
-     << "  default:\n"
-     << "    llvm_unreachable(\"Unknown DWARF flavour\");\n";
-
     for (unsigned i = 0, e = maxLength; i != e; ++i) {
-      OS << "  case " << i << ":\n";
-      for (DwarfRegNumsMapTy::iterator
-             I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
-        int DwarfRegNo = I->second[i];
-        if (DwarfRegNo < 0)
-          continue;
-        OS << "    ";
-        if (!isCtor)
-          OS << "RI->";
-        OS << "mapDwarfRegToLLVMReg(" << DwarfRegNo << ", "
-           << getQualifiedName(I->first) << ", ";
-        if (j == 0)
-          OS << "false";
-        else
-          OS << "true";
-        OS << " );\n";
+      OS << "extern const MCRegisterInfo::DwarfLLVMRegPair " << Namespace;
+      OS << (j == 0 ? "DwarfFlavour" : "EHFlavour");
+      OS << i << "Dwarf2L[]";
+
+      if (!isCtor) {
+        OS << " = {\n";
+
+        // Store the mapping sorted by the LLVM reg num so lookup can be done
+        // with a binary search.
+        std::map<uint64_t, Record*> Dwarf2LMap;
+        for (DwarfRegNumsMapTy::iterator
+               I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
+          int DwarfRegNo = I->second[i];
+          if (DwarfRegNo < 0)
+            continue;
+          Dwarf2LMap[DwarfRegNo] = I->first;
+        }
+
+        for (std::map<uint64_t, Record*>::iterator
+               I = Dwarf2LMap.begin(), E = Dwarf2LMap.end(); I != E; ++I)
+          OS << "  { " << I->first << "U, " << getQualifiedName(I->second)
+             << " },\n";
+
+        OS << "};\n";
+      } else {
+        OS << ";\n";
       }
-      OS << "    break;\n";
+
+      // We have to store the size in a const global, it's used in multiple
+      // places.
+      OS << "extern const unsigned " << Namespace
+         << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i << "Dwarf2LSize";
+      if (!isCtor)
+        OS << " = sizeof(" << Namespace
+           << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i
+           << "Dwarf2L)/sizeof(MCRegisterInfo::DwarfLLVMRegPair);\n\n";
+      else
+        OS << ";\n\n";
     }
-    OS << "  }\n";
   }
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -195,6 +209,93 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
 
   // Emit information about the dwarf register numbers.
   for (unsigned j = 0; j < 2; ++j) {
+    for (unsigned i = 0, e = maxLength; i != e; ++i) {
+      OS << "extern const MCRegisterInfo::DwarfLLVMRegPair " << Namespace;
+      OS << (j == 0 ? "DwarfFlavour" : "EHFlavour");
+      OS << i << "L2Dwarf[]";
+      if (!isCtor) {
+        OS << " = {\n";
+        // Store the mapping sorted by the Dwarf reg num so lookup can be done
+        // with a binary search.
+        for (DwarfRegNumsMapTy::iterator
+               I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
+          int RegNo = I->second[i];
+          if (RegNo == -1) // -1 is the default value, don't emit a mapping.
+            continue;
+
+          OS << "  { " << getQualifiedName(I->first) << ", " << RegNo
+             << "U },\n";
+        }
+        OS << "};\n";
+      } else {
+        OS << ";\n";
+      }
+
+      // We have to store the size in a const global, it's used in multiple
+      // places.
+      OS << "extern const unsigned " << Namespace
+         << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i << "L2DwarfSize";
+      if (!isCtor)
+        OS << " = sizeof(" << Namespace
+           << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i
+           << "L2Dwarf)/sizeof(MCRegisterInfo::DwarfLLVMRegPair);\n\n";
+      else
+        OS << ";\n\n";
+    }
+  }
+}
+
+void
+RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
+                                    const std::vector<CodeGenRegister*> &Regs,
+                                    bool isCtor) {
+  // Emit the initializer so the tables from EmitRegMappingTables get wired up
+  // to the MCRegisterInfo object.
+  unsigned maxLength = 0;
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *Reg = Regs[i]->TheDef;
+    maxLength = std::max((size_t)maxLength,
+                         Reg->getValueAsListOfInts("DwarfNumbers").size());
+  }
+
+  if (!maxLength)
+    return;
+
+  std::string Namespace = Regs[0]->TheDef->getValueAsString("Namespace");
+
+  // Emit reverse information about the dwarf register numbers.
+  for (unsigned j = 0; j < 2; ++j) {
+    OS << "  switch (";
+    if (j == 0)
+      OS << "DwarfFlavour";
+    else
+      OS << "EHFlavour";
+    OS << ") {\n"
+     << "  default:\n"
+     << "    llvm_unreachable(\"Unknown DWARF flavour\");\n";
+
+    for (unsigned i = 0, e = maxLength; i != e; ++i) {
+      OS << "  case " << i << ":\n";
+      OS << "    ";
+      if (!isCtor)
+        OS << "RI->";
+      std::string Tmp;
+      raw_string_ostream(Tmp) << Namespace
+                              << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i
+                              << "Dwarf2L";
+      OS << "mapDwarfRegsToLLVMRegs(" << Tmp << ", " << Tmp << "Size, ";
+      if (j == 0)
+          OS << "false";
+        else
+          OS << "true";
+      OS << ");\n";
+      OS << "    break;\n";
+    }
+    OS << "  }\n";
+  }
+
+  // Emit information about the dwarf register numbers.
+  for (unsigned j = 0; j < 2; ++j) {
     OS << "  switch (";
     if (j == 0)
       OS << "DwarfFlavour";
@@ -206,24 +307,19 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
 
     for (unsigned i = 0, e = maxLength; i != e; ++i) {
       OS << "  case " << i << ":\n";
-      // Sort by name to get a stable order.
-      for (DwarfRegNumsMapTy::iterator
-             I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
-        int RegNo = I->second[i];
-        if (RegNo == -1) // -1 is the default value, don't emit a mapping.
-          continue;
-
-        OS << "    ";
-        if (!isCtor)
-          OS << "RI->";
-        OS << "mapLLVMRegToDwarfReg(" << getQualifiedName(I->first) << ", "
-           <<  RegNo << ", ";
-        if (j == 0)
+      OS << "    ";
+      if (!isCtor)
+        OS << "RI->";
+      std::string Tmp;
+      raw_string_ostream(Tmp) << Namespace
+                              << (j == 0 ? "DwarfFlavour" : "EHFlavour") << i
+                              << "L2Dwarf";
+      OS << "mapLLVMRegsToDwarfRegs(" << Tmp << ", " << Tmp << "Size, ";
+      if (j == 0)
           OS << "false";
         else
           OS << "true";
-        OS << " );\n";
-      }
+      OS << ");\n";
       OS << "    break;\n";
     }
     OS << "  }\n";
@@ -447,6 +543,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "SubRegTable() {\n  return (const uint16_t *)" << TargetName
        << "SubRegTable;\n}\n\n";
   }
+
+  EmitRegMappingTables(OS, Regs, false);
 
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
@@ -871,6 +969,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";
+
+  EmitRegMappingTables(OS, Regs, true);
 
   OS << ClassName << "::\n" << ClassName
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour)\n"

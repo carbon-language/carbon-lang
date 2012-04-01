@@ -50,6 +50,9 @@ public:
 private:
   void EmitRegMapping(raw_ostream &o,
                       const std::vector<CodeGenRegister*> &Regs, bool isCtor);
+  void EmitRegMappingTables(raw_ostream &o,
+                            const std::vector<CodeGenRegister*> &Regs,
+                            bool isCtor);
   void EmitRegClasses(raw_ostream &OS, CodeGenTarget &Target);
 };
 
