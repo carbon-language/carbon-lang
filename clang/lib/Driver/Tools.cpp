@@ -3619,6 +3619,9 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
 
   assert(Inputs.size() == 1 && "Unexpected number of inputs!");
 
+  // Silence warning about unused --serialize-diagnostics
+  Args.ClaimAllArgs(options::OPT__serialize_diags);
+
   types::ID InputType = Inputs[0].getType();
   const Arg *A;
   if ((A = Args.getLastArg(options::OPT_traditional)))
