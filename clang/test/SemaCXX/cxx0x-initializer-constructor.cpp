@@ -38,7 +38,7 @@ namespace std {
 namespace objects {
 
   struct X1 { X1(int); };
-  struct X2 { explicit X2(int); }; // expected-note 2 {{candidate constructor}}
+  struct X2 { explicit X2(int); }; // expected-note {{constructor declared here}}
 
   template <int N>
   struct A {
@@ -94,7 +94,7 @@ namespace objects {
     { X1 x{0}; }
     { X1 x = {0}; }
     { X2 x{0}; }
-    { X2 x = {0}; } // expected-error {{no matching constructor}}
+    { X2 x = {0}; } // expected-error {{constructor is explicit}}
   }
 
   struct C {
@@ -153,9 +153,9 @@ namespace objects {
     G(std::initializer_list<int>, T ...);  // expected-note 3 {{not viable}}
   };
 
-  struct H { // expected-note 8 {{not viable}}
-    explicit H(int, int); // expected-note 3 {{not viable}}
-    H(int, void*); // expected-note 4 {{not viable}}
+  struct H { // expected-note 6 {{not viable}}
+    explicit H(int, int); // expected-note 3 {{not viable}} expected-note {{declared here}}
+    H(int, void*); // expected-note 3 {{not viable}}
   };
 
   void edge_cases() {
@@ -191,7 +191,7 @@ namespace objects {
     H h1{1, nullptr};
     H h2 = {1, nullptr};
     H h3{1, 1};
-    H h4 = {1, 1}; // expected-error {{no matching constructor}}
+    H h4 = {1, 1}; // expected-error {{constructor is explicit}}
   };
 }
 
@@ -258,4 +258,12 @@ namespace PR12257_PR12241 {
 
   // 4 levels: init list, gen_pair, command_map via init list, command_pair
   const std::initializer_list<generator_pair> y = {{{{1, 2}}}};
+}
+
+namespace PR12120 {
+  struct A { explicit A(int); A(float); }; // expected-note {{declared here}}
+  A a = { 0 }; // expected-error {{constructor is explicit}}
+
+  struct B { explicit B(short); B(long); }; // expected-note 2 {{candidate}}
+  B b = { 0 }; // expected-error {{ambiguous}}
 }

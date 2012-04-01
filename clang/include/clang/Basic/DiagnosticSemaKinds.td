@@ -1189,6 +1189,10 @@ def warn_cxx98_compat_temp_copy : Warning<
   "an inaccessible constructor|find no viable constructor|find ambiguous "
   "constructors|invoke a deleted constructor}0 in C++98">,
   InGroup<CXX98CompatBindToTemporaryCopy>, DefaultIgnore;
+def err_selected_explicit_constructor : Error<
+  "chosen constructor is explicit in copy-initialization">;
+def note_constructor_declared_here : Note<
+  "constructor declared here">;
 
 // C++11 decltype
 def err_decltype_in_declarator : Error<

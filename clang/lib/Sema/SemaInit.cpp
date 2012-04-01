@@ -2465,6 +2465,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_VariableLengthArrayHasInitializer:
   case FK_PlaceholderType:
   case FK_InitListElementCopyFailure:
+  case FK_ExplicitConstructor:
     return false;
 
   case FK_ReferenceInitOverloadFailed:
@@ -2896,7 +2897,7 @@ static void TryConstructorInitialization(Sema &S,
 
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
-  bool AllowExplicit = Kind.AllowExplicit();
+  bool AllowExplicit = Kind.AllowExplicit() || InitListSyntax;
   bool CopyInitialization = Kind.getKind() == InitializationKind::IK_Copy;
 
   //   - Otherwise, if T is a class type, constructors are considered. The
@@ -2961,10 +2962,18 @@ static void TryConstructorInitialization(Sema &S,
     return;
   }
 
+  // C++11 [over.match.list]p1:
+  //   In copy-list-initialization, if an explicit constructor is chosen, the
+  //   initializer is ill-formed.
+  CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
+  if (InitListSyntax && !Kind.AllowExplicit() && CtorDecl->isExplicit()) {
+    Sequence.SetFailed(InitializationSequence::FK_ExplicitConstructor);
+    return;
+  }
+
   // Add the constructor initialization step. Any cv-qualification conversion is
   // subsumed by the initialization.
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
-  CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
   Sequence.AddConstructorInitializationStep(CtorDecl,
                                             Best->FoundDecl.getAccess(),
                                             DestType, HadMultipleCandidates,
@@ -5729,6 +5738,18 @@ bool InitializationSequence::Diagnose(Sema &S,
     }
     break;
   }
+
+  case FK_ExplicitConstructor: {
+    S.Diag(Kind.getLocation(), diag::err_selected_explicit_constructor)
+      << Args[0]->getSourceRange();
+    OverloadCandidateSet::iterator Best;
+    OverloadingResult Ovl
+      = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best);
+    assert(Ovl == OR_Success && "Inconsistent overload resolution");
+    CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
+    S.Diag(CtorDecl->getLocation(), diag::note_constructor_declared_here);
+    break;
+  }
   }
 
   PrintInitLocationNote(S, Entity);
@@ -5842,6 +5863,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case FK_InitListElementCopyFailure:
       OS << "copy construction of initializer list element failed";
+      break;
+
+    case FK_ExplicitConstructor:
+      OS << "list copy initialization chose explicit constructor";
       break;
     }
     OS << '\n';
