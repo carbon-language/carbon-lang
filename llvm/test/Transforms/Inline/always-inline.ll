@@ -40,3 +40,41 @@ define void @outer2(i32 %N) {
   call void @inner2( i32 %N )
   ret void
 }
+
+declare i32 @a() returns_twice
+declare i32 @b() returns_twice
+
+define i32 @inner3() alwaysinline {
+entry:
+  %call = call i32 @a() returns_twice
+  %add = add nsw i32 1, %call
+  ret i32 %add
+}
+define i32 @outer3() {
+entry:
+; CHECK: @outer3
+; CHECK-NOT: call i32 @a
+; CHECK: ret
+
+  %call = call i32 @inner3()
+  %add = add nsw i32 1, %call
+  ret i32 %add
+}
+
+define i32 @inner4() alwaysinline returns_twice {
+entry:
+  %call = call i32 @b() returns_twice
+  %add = add nsw i32 1, %call
+  ret i32 %add
+}
+
+define i32 @outer4() {
+entry:
+; CHECK: @outer4
+; CHECK: call i32 @b()
+; CHECK: ret
+
+  %call = call i32 @inner4() returns_twice
+  %add = add nsw i32 1, %call
+  ret i32 %add
+}

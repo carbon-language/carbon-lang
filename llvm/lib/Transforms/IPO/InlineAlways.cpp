@@ -83,7 +83,7 @@ static bool isInlineViable(Function &F) {
 
       // Disallow calls which expose returns-twice to a function not previously
       // attributed as such.
-      if (ReturnsTwice && CS.isCall() &&
+      if (!ReturnsTwice && CS.isCall() &&
           cast<CallInst>(CS.getInstruction())->canReturnTwice())
         return false;
     }
