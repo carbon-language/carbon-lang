@@ -281,6 +281,7 @@ namespace llvm {
     bool SelectAddressRegImmShift(SDValue N, SDValue &Disp, SDValue &Base,
                                   SelectionDAG &DAG) const;
 
+    Sched::Preference getSchedulingPreference(SDNode *N) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

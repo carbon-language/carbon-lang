@@ -5837,3 +5837,12 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
     return MVT::i32;
   }
 }
+
+Sched::Preference PPCTargetLowering::getSchedulingPreference(SDNode *N) const {
+  unsigned Directive = PPCSubTarget.getDarwinDirective();
+  if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2)
+    return Sched::ILP;
+
+  return TargetLowering::getSchedulingPreference(N);
+}
+
