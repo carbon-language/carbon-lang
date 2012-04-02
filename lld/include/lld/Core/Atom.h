@@ -21,10 +21,6 @@ namespace llvm {
 namespace lld {
 
 class File;
-class DefinedAtom;
-class UndefinedAtom;
-class SharedLibraryAtom;
-class AbsoluteAtom;
 
 ///
 /// The linker has a Graph Theory model of linking. An object file is seen
@@ -52,33 +48,22 @@ public:
   
   /// definition - Whether this atom is a definition or represents an undefined
   /// symbol.
-  virtual Definition definition() const = 0;
-  
-  /// definedAtom - like dynamic_cast, if atom is definitionRegular
-  /// returns atom cast to DefinedAtom*, else returns nullptr;
-  virtual const DefinedAtom* definedAtom() const { return nullptr; }
+  Definition definition() const { return _definition; };
 
-  /// undefinedAtom - like dynamic_cast, if atom is definitionUndefined
-  /// returns atom cast to UndefinedAtom*, else returns nullptr;
-  virtual const UndefinedAtom* undefinedAtom() const { return nullptr; }
-  
-  /// sharedLibraryAtom - like dynamic_cast, if atom is definitionSharedLibrary
-  /// returns atom cast to SharedLibraryAtom*, else returns nullptr;
-  virtual const SharedLibraryAtom* sharedLibraryAtom() const { return nullptr; }
-  
-  /// absoluteAtom - like dynamic_cast, if atom is definitionAbsolute
-  /// returns atom cast to AbsoluteAtom*, else returns nullptr;
-  virtual const AbsoluteAtom* absoluteAtom() const { return nullptr; }
+  static inline bool classof(const Atom *a) { return true; }
   
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
-  Atom() {}
+  Atom(Definition def) : _definition(def) {}
   
   /// The memory for Atom objects is always managed by the owning File
   /// object.  Therefore, no one but the owning File object should call
   /// delete on an Atom.  In fact, some File objects may bulk allocate
   /// an array of Atoms, so they cannot be individually deleted by anyone.
   virtual ~Atom() {}
+
+private:
+  Definition _definition;
 };
 
 } // namespace lld

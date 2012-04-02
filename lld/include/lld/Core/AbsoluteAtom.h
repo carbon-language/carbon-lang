@@ -18,21 +18,15 @@ namespace lld {
 /// It exists to represent content at fixed addresses in memory.
 class AbsoluteAtom : public Atom {
 public:
-  virtual Definition definition() const {
-    return Atom::definitionAbsolute;
-  }
-
-  /// like dynamic_cast, if atom is definitionAbsolute
-  /// returns atom cast to AbsoluteAtom*, else returns nullptr
-  virtual const AbsoluteAtom* absoluteAtom() const { 
-    return this;
-  }
-  
   virtual uint64_t value() const = 0;
   
-  
+  static inline bool classof(const Atom *a) {
+    return a->definition() == definitionAbsolute;
+  }
+  static inline bool classof(const AbsoluteAtom *) { return true; }
+
 protected:
-           AbsoluteAtom() {}
+  AbsoluteAtom() : Atom(definitionAbsolute) {}
   virtual ~AbsoluteAtom() {}
 };
 

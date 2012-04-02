@@ -22,16 +22,6 @@ namespace lld {
 /// It exists to represent a symbol which will be bound at runtime.
 class SharedLibraryAtom : public Atom {
 public:
-  virtual Definition definition() const {
-    return Atom::definitionSharedLibrary;
-  }
-
-  /// like dynamic_cast, if atom is definitionSharedLibrary
-  /// returns atom cast to SharedLibraryAtom*, else returns nullptr
-  virtual const SharedLibraryAtom* sharedLibraryAtom() const { 
-    return this;
-  }
-
   /// Returns shared library name used to load it at runtime.
   /// On linux that is the DT_NEEDED name.
   /// On Darwin it is the LC_DYLIB_LOAD dylib name.
@@ -40,9 +30,14 @@ public:
   /// Returns if shared library symbol can be missing at runtime and if
   /// so the loader should silently resolve address of symbol to be nullptr.
   virtual bool canBeNullAtRuntime() const = 0;
+
+  static inline bool classof(const Atom *a) {
+    return a->definition() == definitionSharedLibrary;
+  }
+  static inline bool classof(const SharedLibraryAtom *) { return true; }
   
 protected:
-           SharedLibraryAtom() {}
+  SharedLibraryAtom() : Atom(definitionSharedLibrary) {}
   virtual ~SharedLibraryAtom() {}
 };
 

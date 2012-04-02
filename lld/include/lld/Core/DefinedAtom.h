@@ -88,15 +88,6 @@ class File;
 ///
 class DefinedAtom : public Atom {
 public:
-  /// Whether this atom is defined or a proxy for an undefined symbol
-  virtual Definition definition() const {
-    return Atom::definitionRegular;
-  }
-
-  virtual const DefinedAtom* definedAtom() const { 
-    return this; 
-  }
-
   /// The scope in which this atom is acessible to other atoms.
   enum Scope {
     scopeTranslationUnit,  ///< Accessible only to atoms in the same translation
@@ -293,11 +284,15 @@ public:
   /// Returns an iterator to the end of this Atom's References
   virtual reference_iterator referencesEnd() const = 0;
  
+  static inline bool classof(const Atom *a) {
+    return a->definition() == definitionRegular;
+  }
+  static inline bool classof(const DefinedAtom *) { return true; }
  
 protected:
   /// DefinedAtom is an abstract base class.  
   /// Only subclasses can access constructor.
-  DefinedAtom() { }
+  DefinedAtom() : Atom(definitionRegular) { }
   
   /// The memory for DefinedAtom objects is always managed by the owning File
   /// object.  Therefore, no one but the owning File object should call

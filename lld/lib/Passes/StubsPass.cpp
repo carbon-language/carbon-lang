@@ -21,6 +21,7 @@
 #include "lld/Core/Reference.h"
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Casting.h"
 
 namespace lld {
 
@@ -47,8 +48,8 @@ void StubsPass::perform() {
         if ( target->definition() == Atom::definitionSharedLibrary ) {
           // Calls to shared libraries go through stubs.
           replaceCalleeWithStub = true;
-        }
-        else if ( const DefinedAtom* defTarget = target->definedAtom() ) {
+        } else if (const DefinedAtom* defTarget =
+                     llvm::dyn_cast<DefinedAtom>(target)) {
           if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
             // Calls to interposable functions in same linkage unit 
             // must also go through a stub.

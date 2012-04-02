@@ -15,6 +15,7 @@
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/UndefinedAtom.h"
 
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
@@ -33,7 +34,7 @@ public:
     if ( _liveAtoms.count(atom) )
       return false;
    // don't remove if marked never-dead-strip
-    if ( const DefinedAtom* defAtom = atom->definedAtom() ) {
+    if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(atom)) {
       if ( defAtom->deadStrip() == DefinedAtom::deadStripNever )
         return false;
     }
@@ -194,7 +195,7 @@ void Resolver::resolveUndefines() {
       std::vector<const Atom *> tents;
       for (std::vector<const Atom *>::iterator ait = _atoms.begin();
            ait != _atoms.end(); ++ait) {
-        if ( const DefinedAtom* defAtom = (*ait)->definedAtom() ) {
+        if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(*ait)) {
           if ( defAtom->merge() == DefinedAtom::mergeAsTentative )
             tents.push_back(defAtom);
         }
@@ -206,7 +207,8 @@ void Resolver::resolveUndefines() {
         llvm::StringRef tentName = (*dit)->name();
         const Atom *curAtom = _symbolTable.findByName(tentName);
         assert(curAtom != nullptr);
-        if ( const DefinedAtom* curDefAtom = curAtom->definedAtom() ) {
+        if (const DefinedAtom* curDefAtom =
+              llvm::dyn_cast<DefinedAtom>(curAtom)) {
           if (curDefAtom->merge() == DefinedAtom::mergeAsTentative )
             _inputFiles.searchLibraries(tentName, searchDylibs, 
                                         true, true, *this);
@@ -221,7 +223,7 @@ void Resolver::resolveUndefines() {
 // to the new defined atom
 void Resolver::updateReferences() {
   for (auto ait = _atoms.begin(); ait != _atoms.end(); ++ait) {
-    if ( const DefinedAtom* defAtom = (*ait)->definedAtom() ) {
+    if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(*ait)) {
       for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
                                                         rit != end; ++rit) {
         const Reference* ref = *rit;
@@ -259,7 +261,7 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   WhyLiveBackChain thisChain;
   thisChain.previous = previous;
   thisChain.referer = &atom;
-  if ( const DefinedAtom* defAtom = atom.definedAtom() ) {
+  if ( const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(&atom)) {
     for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
                                                         rit != end; ++rit) {
       const Reference* ref = *rit;
@@ -342,7 +344,7 @@ void Resolver::removeCoalescedAwayAtoms() {
 void Resolver::checkDylibSymbolCollisions() {
   for (std::vector<const Atom *>::const_iterator it = _atoms.begin();
        it != _atoms.end(); ++it) {
-    const DefinedAtom* defAtom = (*it)->definedAtom();
+    const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(*it);
     if (defAtom == nullptr)
       continue;
     if ( defAtom->merge() != DefinedAtom::mergeAsTentative ) 
@@ -389,25 +391,23 @@ void Resolver::resolve() {
 }
 
 void Resolver::MergedFile::addAtom(const Atom& atom) {
-  if ( const DefinedAtom* defAtom = atom.definedAtom() ) {
+  if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(&atom)) {
     _definedAtoms._atoms.push_back(defAtom);
-  }
-  else if ( const UndefinedAtom* undefAtom = atom.undefinedAtom() ) {
+  } else if (const UndefinedAtom* undefAtom =
+               llvm::dyn_cast<UndefinedAtom>(&atom)) {
     _undefinedAtoms._atoms.push_back(undefAtom);
-  }
-  else if ( const SharedLibraryAtom* slAtom = atom.sharedLibraryAtom() ) {
+  } else if (const SharedLibraryAtom* slAtom =
+               llvm::dyn_cast<SharedLibraryAtom>(&atom)) {
     _sharedLibraryAtoms._atoms.push_back(slAtom);
-  }
-  else if ( const AbsoluteAtom* abAtom = atom.absoluteAtom() ) {
+  } else if (const AbsoluteAtom* abAtom = llvm::dyn_cast<AbsoluteAtom>(&atom)) {
     _absoluteAtoms._atoms.push_back(abAtom);
-  }
-  else {
+  } else {
     assert(0 && "atom has unknown definition kind");
   }
 }
 
 void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
-  for(std::vector<const Atom*>::iterator it=all.begin(); it != all.end(); ++it) {
+  for(std::vector<const Atom*>::iterator it=all.begin(); it != all.end(); ++it){
     this->addAtom(**it);
   }
 }

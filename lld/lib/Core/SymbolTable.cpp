@@ -20,6 +20,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #include <algorithm>
@@ -160,8 +161,10 @@ void SymbolTable::addByName(const Atom & newAtom) {
         }
         break;
       case NCR_DupUndef: {
-          const UndefinedAtom* existingUndef = existing->undefinedAtom();
-          const UndefinedAtom* newUndef = newAtom.undefinedAtom();
+          const UndefinedAtom* existingUndef =
+            llvm::dyn_cast<UndefinedAtom>(existing);
+          const UndefinedAtom* newUndef =
+            llvm::dyn_cast<UndefinedAtom>(&newAtom);
           assert(existingUndef != nullptr);
           assert(newUndef != nullptr);
           if ( existingUndef->canBeNull() == newUndef->canBeNull() ) {
@@ -176,8 +179,10 @@ void SymbolTable::addByName(const Atom & newAtom) {
         }
         break;
       case NCR_DupShLib: {
-          const SharedLibraryAtom* existingShLib = existing->sharedLibraryAtom();
-          const SharedLibraryAtom* newShLib = newAtom.sharedLibraryAtom();
+          const SharedLibraryAtom* existingShLib =
+            llvm::dyn_cast<SharedLibraryAtom>(existing);
+          const SharedLibraryAtom* newShLib =
+            llvm::dyn_cast<SharedLibraryAtom>(&newAtom);
           assert(existingShLib != nullptr);
           assert(newShLib != nullptr);
           if ( (existingShLib->canBeNullAtRuntime() 

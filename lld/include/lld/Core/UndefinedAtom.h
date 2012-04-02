@@ -18,16 +18,6 @@ namespace lld {
 /// It exists as a place holder for a future atom.
 class UndefinedAtom : public Atom {
 public:
-  virtual Definition definition() const {
-    return Atom::definitionUndefined;
-  }
-
-  /// like dynamic_cast, if atom is definitionUndefined
-  /// returns atom cast to UndefinedAtom*, else returns nullptr
-  virtual const UndefinedAtom* undefinedAtom() const { 
-    return this;
-  }
-
   /// Whether this undefined symbol needs to be resolved,
   /// or whether it can just evaluate to nullptr.
   /// This concept is often called "weak", but that term
@@ -61,9 +51,13 @@ public:
   
   virtual CanBeNull canBeNull() const = 0;
   
+  static inline bool classof(const Atom *a) {
+    return a->definition() == definitionUndefined;
+  }
+  static inline bool classof(const UndefinedAtom *) { return true; }
    
 protected:
-           UndefinedAtom() {}
+  UndefinedAtom() : Atom(definitionUndefined) {}
   virtual ~UndefinedAtom() {}
 };
 
