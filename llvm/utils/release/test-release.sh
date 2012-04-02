@@ -35,6 +35,7 @@ do_objc="yes"
 do_64bit="yes"
 do_debug="no"
 do_asserts="no"
+do_compare="yes"
 BuildDir="`pwd`"
 
 function usage() {
@@ -54,6 +55,7 @@ function usage() {
     echo " -disable-objc     Disable ObjC build. [default: enable]"
     echo " -test-debug       Test the debug build. [default: no]"
     echo " -test-asserts     Test with asserts on. [default: no]"
+    echo " -no-compare-files Don't test that phase 2 and 3 files are identical."
 }
 
 while [ $# -gt 0 ]; do
@@ -107,6 +109,9 @@ while [ $# -gt 0 ]; do
             ;;
         -test-asserts | --test-asserts )
             do_asserts="yes"
+            ;;
+        -no-compare-files | --no-compare-files )
+            do_compare="no"
             ;;
         -help | --help | -h | --h | -\? )
             usage
@@ -403,7 +408,7 @@ for Flavor in $Flavors ; do
 
     # Test clang
     if [ "$do_clang" = "yes" ]; then
-        ############################################################################
+        ########################################################################
         # Phase 2: Build llvmCore with newly built clang from phase 1.
         c_compiler=$llvmCore_phase1_installdir/bin/clang
         cxx_compiler=$llvmCore_phase1_installdir/bin/clang++
@@ -413,7 +418,7 @@ for Flavor in $Flavors ; do
         build_llvmCore 2 $Flavor \
             $llvmCore_phase2_objdir
 
-        ############################################################################
+        ########################################################################
         # Phase 3: Build llvmCore with newly built clang from phase 2.
         c_compiler=$llvmCore_phase2_installdir/bin/clang
         cxx_compiler=$llvmCore_phase2_installdir/bin/clang++
@@ -423,21 +428,26 @@ for Flavor in $Flavors ; do
         build_llvmCore 3 $Flavor \
             $llvmCore_phase3_objdir
 
-        ############################################################################
+        ########################################################################
         # Testing: Test phase 3
         echo "# Testing - built with clang"
         test_llvmCore 3 $Flavor $llvmCore_phase3_objdir
 
-        ############################################################################
-        # Compare .o files between Phase2 and Phase3 and report which ones differ.
-        echo
-        echo "# Comparing Phase 2 and Phase 3 files"
-        for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
-            p3=`echo $o | sed -e 's,Phase2,Phase3,'`
-            if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
-                echo "file `basename $o` differs between phase 2 and phase 3"
+        ########################################################################
+        # Compare .o files between Phase2 and Phase3 and report which ones
+        # differ.
+        if [ "$do_compare" = "yes" ]; then
+            if [ "$Flavor" = "Release" -o "$Flavor" = "Release-64" ]; then
+                echo
+                echo "# Comparing Phase 2 and Phase 3 files"
+                for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
+                    p3=`echo $o | sed -e 's,Phase2,Phase3,'`
+                    if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
+                        echo "file `basename $o` differs between phase 2 and phase 3"
+                    fi
+                done
             fi
-        done
+        fi
     fi
 
     # Test dragonegg
@@ -450,7 +460,7 @@ for Flavor in $Flavors ; do
         cxx_compiler="$gxx_compiler"
         build_dragonegg 1 $Flavor $llvmCore_phase1_installdir $dragonegg_phase1_objdir
 
-        ############################################################################
+        ########################################################################
         # Phase 2: Build llvmCore with newly built dragonegg from phase 1.
         c_compiler="$gcc_compiler -fplugin=$dragonegg_phase1_objdir/dragonegg.so"
         cxx_compiler="$gxx_compiler -fplugin=$dragonegg_phase1_objdir/dragonegg.so"
@@ -461,7 +471,7 @@ for Flavor in $Flavors ; do
             $llvmCore_de_phase2_objdir
         build_dragonegg 2 $Flavor $llvmCore_de_phase2_installdir $dragonegg_phase2_objdir
 
-        ############################################################################
+        ########################################################################
         # Phase 3: Build llvmCore with newly built clang from phase 2.
         c_compiler="$gcc_compiler -fplugin=$dragonegg_phase2_objdir/dragonegg.so"
         cxx_compiler="$gxx_compiler -fplugin=$dragonegg_phase2_objdir/dragonegg.so"
@@ -472,14 +482,14 @@ for Flavor in $Flavors ; do
             $llvmCore_de_phase3_objdir
         build_dragonegg 3 $Flavor $llvmCore_de_phase3_installdir $dragonegg_phase3_objdir
 
-        ############################################################################
+        ########################################################################
         # Testing: Test phase 3
         c_compiler="$gcc_compiler -fplugin=$dragonegg_phase3_objdir/dragonegg.so"
         cxx_compiler="$gxx_compiler -fplugin=$dragonegg_phase3_objdir/dragonegg.so"
         echo "# Testing - built with dragonegg"
         test_llvmCore 3 $Flavor $llvmCore_de_phase3_objdir
 
-        ############################################################################
+        ########################################################################
         # Compare .o files between Phase2 and Phase3 and report which ones differ.
         echo
         echo "# Comparing Phase 2 and Phase 3 files"
