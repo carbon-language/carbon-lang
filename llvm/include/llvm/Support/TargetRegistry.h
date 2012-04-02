@@ -104,6 +104,7 @@ namespace llvm {
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
                                                   const MCAsmInfo &MAI,
+                                                  const MCInstrInfo &MII,
                                                   const MCRegisterInfo &MRI,
                                                   const MCSubtargetInfo &STI);
     typedef MCCodeEmitter *(*MCCodeEmitterCtorTy)(const MCInstrInfo &II,
@@ -393,11 +394,12 @@ namespace llvm {
 
     MCInstPrinter *createMCInstPrinter(unsigned SyntaxVariant,
                                        const MCAsmInfo &MAI,
+                                       const MCInstrInfo &MII,
                                        const MCRegisterInfo &MRI,
                                        const MCSubtargetInfo &STI) const {
       if (!MCInstPrinterCtorFn)
         return 0;
-      return MCInstPrinterCtorFn(*this, SyntaxVariant, MAI, MRI, STI);
+      return MCInstPrinterCtorFn(*this, SyntaxVariant, MAI, MII, MRI, STI);
     }
 
 

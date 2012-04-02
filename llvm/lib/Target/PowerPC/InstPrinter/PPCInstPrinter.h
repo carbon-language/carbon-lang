@@ -24,9 +24,9 @@ class PPCInstPrinter : public MCInstPrinter {
   // 0 -> AIX, 1 -> Darwin.
   unsigned SyntaxVariant;
 public:
-  PPCInstPrinter(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
-                 unsigned syntaxVariant)
-    : MCInstPrinter(MAI, MRI), SyntaxVariant(syntaxVariant) {}
+  PPCInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
+                 const MCRegisterInfo &MRI, unsigned syntaxVariant)
+    : MCInstPrinter(MAI, MII, MRI), SyntaxVariant(syntaxVariant) {}
   
   bool isDarwinSyntax() const {
     return SyntaxVariant == 1;

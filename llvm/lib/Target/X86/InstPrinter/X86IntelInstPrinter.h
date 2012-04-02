@@ -23,8 +23,9 @@ class MCOperand;
   
 class X86IntelInstPrinter : public MCInstPrinter {
 public:
-  X86IntelInstPrinter(const MCAsmInfo &MAI, const MCRegisterInfo &MRI)
-    : MCInstPrinter(MAI, MRI) {}
+  X86IntelInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
+                      const MCRegisterInfo &MRI)
+    : MCInstPrinter(MAI, MII, MRI) {}
 
   virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
   virtual void printInst(const MCInst *MI, raw_ostream &OS, StringRef Annot);

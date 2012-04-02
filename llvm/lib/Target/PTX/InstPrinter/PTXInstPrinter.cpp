@@ -28,9 +28,10 @@ using namespace llvm;
 #include "PTXGenAsmWriter.inc"
 
 PTXInstPrinter::PTXInstPrinter(const MCAsmInfo &MAI,
+                               const MCInstrInfo &MII,
                                const MCRegisterInfo &MRI,
                                const MCSubtargetInfo &STI) :
-  MCInstPrinter(MAI, MRI) {
+  MCInstPrinter(MAI, MII, MRI) {
   // Initialize the set of available features.
   setAvailableFeatures(STI.getFeatureBits());
 }

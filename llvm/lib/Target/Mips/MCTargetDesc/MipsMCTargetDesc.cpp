@@ -78,9 +78,10 @@ static MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
                                               unsigned SyntaxVariant,
                                               const MCAsmInfo &MAI,
+                                              const MCInstrInfo &MII,
                                               const MCRegisterInfo &MRI,
                                               const MCSubtargetInfo &STI) {
-  return new MipsInstPrinter(MAI, MRI);
+  return new MipsInstPrinter(MAI, MII, MRI);
 }
 
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,

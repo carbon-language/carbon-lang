@@ -260,8 +260,9 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
   OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-                              AsmPrinterVariant, *AsmInfo, *MRI, *STI));
+  OwningPtr<MCInstPrinter>
+    IP(TheTarget->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *InstrInfo,
+                                      *MRI, *STI));
 
   if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
     errs() << "error: couldn't initialize disassembler for target "

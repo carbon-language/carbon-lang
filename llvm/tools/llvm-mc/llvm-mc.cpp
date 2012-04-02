@@ -416,7 +416,7 @@ static int AssembleInput(const char *ProgName) {
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (FileType == OFT_AssemblyFile) {
     MCInstPrinter *IP =
-      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MRI, *STI);
+      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MCII, *MRI, *STI);
     MCCodeEmitter *CE = 0;
     MCAsmBackend *MAB = 0;
     if (ShowEncoding) {

@@ -36,8 +36,9 @@ class MCContext;
 class MCAsmInfo;
 class MCAsmLexer;
 class MCDisassembler;
-class MCInstPrinter;
 class MCInst;
+class MCInstPrinter;
+class MCInstrInfo;
 class MCParsedAsmOperand;
 class MCRegisterInfo;
 class MCStreamer;
@@ -137,6 +138,8 @@ struct EDDisassembler {
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
   /// The subtarget information for the target architecture
   llvm::OwningPtr<const llvm::MCSubtargetInfo> STI;
+  // The instruction information for the target architecture.
+  llvm::OwningPtr<const llvm::MCInstrInfo> MII;
   // The register information for the target architecture.
   llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
   /// The disassembler for the target architecture

@@ -62,10 +62,11 @@ static MCCodeGenInfo *createPTXMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 static MCInstPrinter *createPTXMCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
+                                             const MCInstrInfo &MII,
                                              const MCRegisterInfo &MRI,
                                              const MCSubtargetInfo &STI) {
   assert(SyntaxVariant == 0 && "We only have one syntax variant");
-  return new PTXInstPrinter(MAI, MRI, STI);
+  return new PTXInstPrinter(MAI, MII, MRI, STI);
 }
 
 extern "C" void LLVMInitializePTXTargetMC() {

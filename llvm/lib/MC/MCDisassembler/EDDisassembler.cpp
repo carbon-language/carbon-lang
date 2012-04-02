@@ -22,6 +22,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -165,11 +166,16 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
     return;
     
   InstInfos = Disassembler->getEDInfo();
-  
+
+  MII.reset(Tgt->createMCInstrInfo());
+
+  if (!MII)
+    return;
+
   InstString.reset(new std::string);
   InstStream.reset(new raw_string_ostream(*InstString));
   InstPrinter.reset(Tgt->createMCInstPrinter(LLVMSyntaxVariant, *AsmInfo,
-                                             *MRI, *STI));
+                                             *MII, *MRI, *STI));
   
   if (!InstPrinter)
     return;

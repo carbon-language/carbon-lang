@@ -172,6 +172,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter =
       getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI,
+                                      *getInstrInfo(),
                                       Context->getRegisterInfo(), STI);
 
     // Create a code emitter if asked to show the encoding.

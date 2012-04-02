@@ -36,9 +36,10 @@ static unsigned translateShiftImm(unsigned imm) {
 
 
 ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI,
+                               const MCInstrInfo &MII,
                                const MCRegisterInfo &MRI,
                                const MCSubtargetInfo &STI) :
-  MCInstPrinter(MAI, MRI) {
+  MCInstPrinter(MAI, MII, MRI) {
   // Initialize the set of available features.
   setAvailableFeatures(STI.getFeatureBits());
 }

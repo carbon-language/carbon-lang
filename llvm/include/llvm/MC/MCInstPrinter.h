@@ -14,6 +14,7 @@ namespace llvm {
 class MCInst;
 class raw_ostream;
 class MCAsmInfo;
+class MCInstrInfo;
 class MCRegisterInfo;
 class StringRef;
 
@@ -26,6 +27,7 @@ protected:
   /// assembly emission is disable.
   raw_ostream *CommentStream;
   const MCAsmInfo &MAI;
+  const MCInstrInfo &MII;
   const MCRegisterInfo &MRI;
 
   /// The current set of available features.
@@ -34,8 +36,9 @@ protected:
   /// Utility function for printing annotations.
   void printAnnotation(raw_ostream &OS, StringRef Annot);
 public:
-  MCInstPrinter(const MCAsmInfo &mai, const MCRegisterInfo &mri)
-    : CommentStream(0), MAI(mai), MRI(mri), AvailableFeatures(0) {}
+  MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
+                const MCRegisterInfo &mri)
+    : CommentStream(0), MAI(mai), MII(mii), MRI(mri), AvailableFeatures(0) {}
 
   virtual ~MCInstPrinter();
 
