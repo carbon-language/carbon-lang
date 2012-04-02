@@ -17,14 +17,14 @@
 #include "MCTargetDesc/PPCPredicates.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-#define GET_INSTRUCTION_NAME
 #include "PPCGenAsmWriter.inc"
 
 StringRef PPCInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return getInstructionName(Opcode);
+  return MII.getName(Opcode);
 }
 
 void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {

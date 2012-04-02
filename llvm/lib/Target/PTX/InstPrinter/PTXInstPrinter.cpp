@@ -18,13 +18,13 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-#define GET_INSTRUCTION_NAME
 #include "PTXGenAsmWriter.inc"
 
 PTXInstPrinter::PTXInstPrinter(const MCAsmInfo &MAI,
@@ -37,7 +37,7 @@ PTXInstPrinter::PTXInstPrinter(const MCAsmInfo &MAI,
 }
 
 StringRef PTXInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return getInstructionName(Opcode);
+  return MII.getName(Opcode);
 }
 
 void PTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {

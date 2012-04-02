@@ -18,11 +18,11 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-#define GET_INSTRUCTION_NAME
 #include "ARMGenAsmWriter.inc"
 
 /// translateShiftImm - Convert shift immediate from 0-31 to 1-32 for printing.
@@ -45,7 +45,7 @@ ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI,
 }
 
 StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return getInstructionName(Opcode);
+  return MII.getName(Opcode);
 }
 
 void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
