@@ -19,6 +19,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -133,6 +134,11 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
+
+  // Turn on accelerator tables for Darwin.
+  if (Triple(M->getTargetTriple()).isOSDarwin())
+    DwarfAccelTables = true;
+  
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
     beginModule(M);
