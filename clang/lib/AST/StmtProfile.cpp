@@ -1083,6 +1083,14 @@ void StmtProfiler::VisitDecl(const Decl *D) {
       return;
     }
 
+    if (const TemplateTypeParmDecl *TTP =
+          dyn_cast<TemplateTypeParmDecl>(D)) {
+      ID.AddInteger(TTP->getDepth());
+      ID.AddInteger(TTP->getIndex());
+      ID.AddBoolean(TTP->isParameterPack());
+      return;
+    }
+
     if (const TemplateTemplateParmDecl *TTP =
           dyn_cast<TemplateTemplateParmDecl>(D)) {
       ID.AddInteger(TTP->getDepth());
