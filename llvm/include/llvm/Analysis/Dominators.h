@@ -185,6 +185,18 @@ void Calculate(DominatorTreeBase<typename GraphTraits<N>::NodeType>& DT,
 
 template<class NodeT>
 class DominatorTreeBase : public DominatorBase<NodeT> {
+  bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
+                               const DomTreeNodeBase<NodeT> *B) const {
+    assert(A != B);
+    assert(isReachableFromEntry(B));
+    assert(isReachableFromEntry(A));
+
+    const DomTreeNodeBase<NodeT> *IDom;
+    while ((IDom = B->getIDom()) != 0 && IDom != A && IDom != B)
+      B = IDom;   // Walk up the tree
+    return IDom != 0;
+  }
+
 protected:
   typedef DenseMap<NodeT*, DomTreeNodeBase<NodeT>*> DomTreeNodeMapType;
   DomTreeNodeMapType DomTreeNodes;
@@ -347,27 +359,6 @@ public:
   }
 
   bool properlyDominates(const NodeT *A, const NodeT *B);
-
-  bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
-                               const DomTreeNodeBase<NodeT> *B) const {
-    // A node trivially dominates itself.
-    if (B == A)
-      return true;
-
-    // An unreachable node is dominated by anything.
-    if (!isReachableFromEntry(B))
-      return true;
-
-    // And dominates nothing.
-    if (!isReachableFromEntry(A))
-      return false;
-
-    const DomTreeNodeBase<NodeT> *IDom;
-    while ((IDom = B->getIDom()) != 0 && IDom != A && IDom != B)
-      B = IDom;   // Walk up the tree
-    return IDom != 0;
-  }
-
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
