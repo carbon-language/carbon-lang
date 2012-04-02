@@ -29,6 +29,8 @@ our $llvm_dstroot_zip = "$SRCROOT/llvm.zip";
 our @archs = split (/\s+/, $ENV{ARCHS});
 my $os_release = 11;
 
+my $original_env_path = $ENV{PATH};
+
 our %llvm_config_info = (
  'Debug'         => { configure_options => '--disable-optimized --disable-assertions', make_options => 'DEBUG_SYMBOLS=1'},
  'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions' , make_options => 'DEBUG_SYMBOLS=1'},
@@ -273,7 +275,7 @@ sub build_llvm
 						close (SCRIPT);
 					   	chmod($script_mode, $script_prog_path);
 					}
-					my $new_path = "$ENV{PATH}:$llvm_dstroot_arch_bin";
+					my $new_path = "$original_env_path:$llvm_dstroot_arch_bin";
 					print "Setting new environment PATH = '$new_path'\n";
 			        $ENV{PATH} = $new_path;
 				}
