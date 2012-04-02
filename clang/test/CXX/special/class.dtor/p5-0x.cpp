@@ -90,15 +90,15 @@ class D1 {
 public:
   virtual ~D1() = default;
 } d1; // ok
-struct D2 : D1 { // expected-note {{deleted here}}
+struct D2 : D1 { // expected-note {{virtual destructor requires an unambiguous, accessible 'operator delete'}}
   // implicitly-virtual destructor
 } d2; // expected-error {{deleted function}}
-struct D3 {
-  virtual ~D3() = default; // expected-note {{deleted here}}
+struct D3 { // expected-note {{virtual destructor requires an unambiguous, accessible 'operator delete'}}
+  virtual ~D3() = default; // expected-note {{explicitly defaulted function was implicitly deleted here}}
   void operator delete(void*, double = 0.0);
   void operator delete(void*, char = 0);
 } d3; // expected-error {{deleted function}}
-struct D4 {
-  virtual ~D4() = default; // expected-note {{deleted here}}
+struct D4 { // expected-note {{virtual destructor requires an unambiguous, accessible 'operator delete'}}
+  virtual ~D4() = default; // expected-note {{implicitly deleted here}}
   void operator delete(void*) = delete;
 } d4; // expected-error {{deleted function}}

@@ -31,11 +31,9 @@ NotDeleted1b nd1b;
 // - any non-static data member with no brace-or-equal-initializer is of
 // reference type,
 class Deleted2a {
-  // FIXME: We should explain that the function was implicitly deleted as a
-  // result of being defaulted, and why.
-  Deleted2a() = default;  // expected-note 4{{explicitly marked deleted here}}
-  int &a; 
-}; 
+  Deleted2a() = default;  // expected-note 4{{implicitly deleted here}}
+  int &a; // expected-note 4{{because field 'a' of reference type 'int &' would not be initialized}}
+};
 Deleted2a d2a; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted2b {
   int &&b; // expected-note {{default constructor of 'Deleted2b' is implicitly deleted because field 'b' of reference type 'int &&' would not be initialized}}

@@ -8237,7 +8237,8 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
 
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_deleted)
-      << FnKind << FnDesc << Fn->isDeleted();
+      << FnKind << FnDesc
+      << (Fn->isDeleted() ? (Fn->isDeletedAsWritten() ? 1 : 2) : 0);
     MaybeEmitInheritedConstructorNote(S, Fn);
     return;
   }
@@ -10086,9 +10087,11 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           << getSpecialMember(Method)
           << BinaryOperator::getOpcodeStr(Opc)
           << getDeletedOrUnavailableSuffix(Best->Function);
-        
-        if (Method->getParent()->isLambda()) {
-          Diag(Method->getParent()->getLocation(), diag::note_lambda_decl);
+
+        if (getSpecialMember(Method) != CXXInvalid) {
+          // The user probably meant to call this special member. Just
+          // explain why it's deleted.
+          NoteDeletedFunction(Method);
           return ExprError();
         }
       } else {

@@ -25,10 +25,10 @@ struct HasCopyAssignment {
   HasCopyAssignment & operator =(const HasCopyAssignment &) noexcept(false);
 };
 
-struct HasMoveConstructor { // expected-note {{implicit copy assignment}}
+struct HasMoveConstructor {
   ThrowingCopy tc;
   HasMoveConstructor() noexcept;
-  HasMoveConstructor(HasMoveConstructor &&) noexcept;
+  HasMoveConstructor(HasMoveConstructor &&) noexcept; // expected-note {{deleted because 'HasMoveConstructor' has a user-declared move constructor}}
 };
 
 struct HasMoveAssignment { // expected-note {{implicit copy constructor}}

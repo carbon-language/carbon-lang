@@ -112,15 +112,18 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
 void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
   CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Decl);
 
-  if (Method && Method->isImplicit()) {
+  if (Method && Method->isDeleted() && !Method->isDeletedAsWritten()) {
+    // If the method was explicitly defaulted, point at that declaration.
+    if (!Method->isImplicit())
+      Diag(Decl->getLocation(), diag::note_implicitly_deleted);
+
+    // Try to diagnose why this special member function was implicitly
+    // deleted. This might fail, if that reason no longer applies.
     CXXSpecialMember CSM = getSpecialMember(Method);
-    // It is possible for us to no longer be able to determine why the special
-    // member function was deleted, due to a field or base class having acquired
-    // a new special member function by the addition of a default argument.
-    // FIXME: Add a test and a special-case diagnostic for this.
-    if (CSM != CXXInvalid &&
-        ShouldDeleteSpecialMember(Method, CSM, /*Diagnose=*/true))
-      return;
+    if (CSM != CXXInvalid)
+      ShouldDeleteSpecialMember(Method, CSM, /*Diagnose=*/true);
+
+    return;
   }
 
   Diag(Decl->getLocation(), diag::note_unavailable_here)

@@ -4636,6 +4636,13 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     return true;
   }
 
+  // For an anonymous struct or union, the copy and assignment special members
+  // will never be used, so skip the check. For an anonymous union declared at
+  // namespace scope, the constructor and destructor are used.
+  if (CSM != CXXDefaultConstructor && CSM != CXXDestructor &&
+      RD->isAnonymousStructOrUnion())
+    return false;
+
   // C++11 [class.copy]p7, p18:
   //   If the class definition declares a move constructor or move assignment
   //   operator, an implicitly declared copy constructor or copy assignment
@@ -4667,6 +4674,9 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     }
   }
 
+  // Do access control from the special member function
+  ContextRAII MethodContext(*this, MD);
+
   // C++11 [class.dtor]p5:
   // -- for a virtual destructor, lookup of the non-array deallocation function
   //    results in an ambiguity or in a function that is deleted or inaccessible
@@ -4681,16 +4691,6 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
       return true;
     }
   }
-
-  // For an anonymous struct or union, the copy and assignment special members
-  // will never be used, so skip the check. For an anonymous union declared at
-  // namespace scope, the constructor and destructor are used.
-  if (CSM != CXXDefaultConstructor && CSM != CXXDestructor &&
-      RD->isAnonymousStructOrUnion())
-    return false;
-
-  // Do access control from the special member function
-  ContextRAII MethodContext(*this, MD);
 
   SpecialMemberDeletionInfo SMI(*this, MD, CSM, Diagnose);
 
