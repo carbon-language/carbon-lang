@@ -12,21 +12,18 @@
 // template<class IntType = int>
 // class discrete_distribution
 
-// discrete_distribution(initializer_list<double> wl);
+// discrete_distribution();
 
 #include <random>
 #include <cassert>
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::discrete_distribution<> D;
-        D d = {1., 2.};
+        D d;
         std::vector<double> p = d.probabilities();
-        assert(p.size() == 2);
+        assert(p.size() == 1);
         assert(p[0] == 1);
-        assert(p[1] == 2);
     }
-#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }
