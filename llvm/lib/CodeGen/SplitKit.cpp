@@ -14,10 +14,10 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "SplitKit.h"
-#include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"

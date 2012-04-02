@@ -14,11 +14,11 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "RegAllocBase.h"
-#include "LiveRangeEdit.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"

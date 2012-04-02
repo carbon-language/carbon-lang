@@ -31,7 +31,6 @@
 
 #define DEBUG_TYPE "regalloc"
 
-#include "LiveRangeEdit.h"
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
@@ -40,6 +39,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/RegAllocPBQP.h"
 #include "llvm/CodeGen/MachineDominators.h"
