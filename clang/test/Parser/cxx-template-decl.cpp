@@ -11,10 +11,8 @@ template < ;            // expected-error {{parse error}} \
 // expected-warning {{declaration does not declare anything}}
 template <template X> struct Err1; // expected-error {{expected '<' after 'template'}} \
 // expected-error{{extraneous}}
-template <template <typename> > struct Err2;       // expected-error {{expected 'class' before '>'}} \
-// expected-error{{extraneous}}
-template <template <typename> Foo> struct Err3;    // expected-error {{expected 'class' before 'Foo'}} \
-// expected-error{{extraneous}}
+template <template <typename> > struct Err2;       // expected-error {{expected 'class' before '>'}}
+template <template <typename> Foo> struct Err3;    // expected-error {{expected 'class' before 'Foo'}}
 
 // Template function declarations
 template <typename T> void foo();

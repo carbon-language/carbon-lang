@@ -540,12 +540,17 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
 
   // Generate a meaningful error if the user forgot to put class before the
   // identifier, comma, or greater.
-  if (!Tok.is(tok::kw_class)) {
-    Diag(Tok.getLocation(), diag::err_expected_class_before)
-      << PP.getSpelling(Tok);
-    return 0;
-  }
-  ConsumeToken();
+  if (Tok.is(tok::kw_typename) || Tok.is(tok::kw_struct)) {
+    Diag(Tok.getLocation(), diag::err_expected_class_instead)
+      << PP.getSpelling(Tok)
+      << FixItHint::CreateReplacement(Tok.getLocation(), "class");
+    ConsumeToken();
+  } else if (!Tok.is(tok::kw_class))
+      Diag(Tok.getLocation(), diag::err_expected_class_before)
+        << PP.getSpelling(Tok)
+        << FixItHint::CreateInsertion(Tok.getLocation(), "class ");
+  else 
+    ConsumeToken();
 
   // Parse the ellipsis, if given.
   SourceLocation EllipsisLoc;
