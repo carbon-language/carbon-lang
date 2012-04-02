@@ -552,12 +552,12 @@ void Filter::emit(raw_ostream &o, unsigned &Indentation) const {
     // encoding bits do not match exactly.
     if (!DefaultCase) { ++Indentation; ++Indentation; }
 
-    bool finished = filterIterator->second->emit(o, Indentation);
+    filterIterator->second->emit(o, Indentation);
     // For top level default case, there's no need for a break statement.
     if (Owner->isTopLevel() && DefaultCase)
       break;
-    if (!finished)
-      o.indent(Indentation) << "break;\n";
+    
+    o.indent(Indentation) << "break;\n";
 
     if (!DefaultCase) { --Indentation; --Indentation; }
   }
