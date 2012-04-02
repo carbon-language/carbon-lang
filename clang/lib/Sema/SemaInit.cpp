@@ -5745,6 +5745,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     OverloadCandidateSet::iterator Best;
     OverloadingResult Ovl
       = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best);
+    (void)Ovl;
     assert(Ovl == OR_Success && "Inconsistent overload resolution");
     CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
     S.Diag(CtorDecl->getLocation(), diag::note_constructor_declared_here);
