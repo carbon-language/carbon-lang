@@ -12,3 +12,20 @@ define void @pull_bitcast (<4 x i8>* %pA, <4 x i8>* %pB) {
   store <4 x i8> %C, <4 x i8>* %pA
   ret void
 }
+
+; CHECK: multi_use_swizzle
+; CHECK: mov
+; CHECK-NEXT: shuf
+; CHECK-NEXT: shuf
+; CHECK-NEXT: shuf
+; CHECK-NEXT: xor
+; CHECK-NEXT: ret
+define <4 x i32> @multi_use_swizzle (<4 x i32>* %pA, <4 x i32>* %pB) {
+  %A = load <4 x i32>* %pA
+  %B = load <4 x i32>* %pB
+  %S = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 1, i32 1, i32 5, i32 6>
+  %S1 = shufflevector <4 x i32> %S, <4 x i32> undef, <4 x i32> <i32 1, i32 3, i32 2, i32 2>
+  %S2 = shufflevector <4 x i32> %S, <4 x i32> undef, <4 x i32> <i32 2, i32 1, i32 0, i32 2>
+  %R = xor <4 x i32> %S1, %S2
+  ret <4 x i32> %R
+}

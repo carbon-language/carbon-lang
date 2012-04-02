@@ -7792,6 +7792,14 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     SmallVector<int, 8> NewMask;
     ShuffleVectorSDNode *OtherSV = cast<ShuffleVectorSDNode>(N0);
 
+    // If the source shuffle has more than one user then do not try to optimize
+    // it because it may generate a more complex shuffle node. However, if the
+    // source shuffle is also a swizzle (a single source shuffle), our
+    // transformation is still likely to reduce the number of shuffles and only
+    // generate a simple shuffle node.
+    if (N0.getOperand(1).getOpcode() != ISD::UNDEF && !N0.hasOneUse())
+      return SDValue();
+
     EVT InVT = N0.getValueType();
     int InNumElts = InVT.getVectorNumElements();
 
@@ -7808,7 +7816,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
       NewMask.push_back(Idx);
     }
-
+    assert(NewMask.size() == VT.getVectorNumElements() && "Invalid mask size");
     return DAG.getVectorShuffle(VT, N->getDebugLoc(), OtherSV->getOperand(0),
                                 OtherSV->getOperand(1), &NewMask[0]);
   }
