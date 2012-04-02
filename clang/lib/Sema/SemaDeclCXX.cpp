@@ -6290,9 +6290,9 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     return UD;
   }
 
-  // Constructor inheriting using decls get special treatment.
+  // The normal rules do not apply to inheriting constructor declarations.
   if (NameInfo.getName().getNameKind() == DeclarationName::CXXConstructorName) {
-    if (CheckInheritedConstructorUsingDecl(UD))
+    if (CheckInheritingConstructorUsingDecl(UD))
       UD->setInvalidDecl();
     return UD;
   }
@@ -6362,11 +6362,8 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 }
 
 /// Additional checks for a using declaration referring to a constructor name.
-bool Sema::CheckInheritedConstructorUsingDecl(UsingDecl *UD) {
-  if (UD->isTypeName()) {
-    // FIXME: Cannot specify typename when specifying constructor
-    return true;
-  }
+bool Sema::CheckInheritingConstructorUsingDecl(UsingDecl *UD) {
+  assert(!UD->isTypeName() && "expecting a constructor name");
 
   const Type *SourceType = UD->getQualifier()->getAsType();
   assert(SourceType &&
@@ -6381,6 +6378,8 @@ bool Sema::CheckInheritedConstructorUsingDecl(UsingDecl *UD) {
     CanQualType BaseType = BaseIt->getType()->getCanonicalTypeUnqualified();
     if (CanonicalSourceType == BaseType)
       break;
+    if (BaseIt->getType()->isDependentType())
+      break;
   }
 
   if (BaseIt == BaseE) {
@@ -6392,7 +6391,8 @@ bool Sema::CheckInheritedConstructorUsingDecl(UsingDecl *UD) {
     return true;
   }
 
-  BaseIt->setInheritConstructors();
+  if (!CurContext->isDependentContext())
+    BaseIt->setInheritConstructors();
 
   return false;
 }
@@ -7041,7 +7041,6 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
         Context.getCanonicalType(CtorIt->getType()).getTypePtr());
   }
 
-  Scope *S = getScopeForContext(ClassDecl);
   DeclarationName CreatedCtorName =
       Context.DeclarationNames.getCXXConstructorName(
           ClassDecl->getTypeForDecl()->getCanonicalTypeUnqualified());
@@ -7063,10 +7062,12 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
                                       CtorE = BaseDecl->ctor_end();
          CtorIt != CtorE; ++CtorIt) {
       // Find the using declaration for inheriting this base's constructors.
+      // FIXME: Don't perform name lookup just to obtain a source location!
       DeclarationName Name =
           Context.DeclarationNames.getCXXConstructorName(CanonicalBase);
-      UsingDecl *UD = dyn_cast_or_null<UsingDecl>(
-          LookupSingleName(S, Name,SourceLocation(), LookupUsingDeclName));
+      LookupResult Result(*this, Name, SourceLocation(), LookupUsingDeclName);
+      LookupQualifiedName(Result, CurContext);
+      UsingDecl *UD = Result.getAsSingle<UsingDecl>();
       SourceLocation UsingLoc = UD ? UD->getLocation() :
                                      ClassDecl->getLocation();
 
@@ -7177,7 +7178,6 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
         NewCtor->setParams(ParamDecls);
         NewCtor->setInheritedConstructor(BaseCtor);
 
-        PushOnScopeChains(NewCtor, S, false);
         ClassDecl->addDecl(NewCtor);
         result.first->second.second = NewCtor;
       }

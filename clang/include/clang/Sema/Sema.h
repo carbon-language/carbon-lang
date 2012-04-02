@@ -2978,7 +2978,7 @@ public:
                                    bool IsTypeName,
                                    SourceLocation TypenameLoc);
 
-  bool CheckInheritedConstructorUsingDecl(UsingDecl *UD);
+  bool CheckInheritingConstructorUsingDecl(UsingDecl *UD);
 
   Decl *ActOnUsingDeclaration(Scope *CurScope,
                               AccessSpecifier AS,

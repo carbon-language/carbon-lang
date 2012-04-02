@@ -118,7 +118,7 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         //
         // We therefore do not perform any name lookup if the result would
         // refer to a member of an unknown specialization.
-        if (!isClassName)
+        if (!isClassName && !IsCtorOrDtorName)
           return ParsedType();
         
         // We know from the grammar that this name refers to a type,

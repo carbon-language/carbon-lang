@@ -1856,6 +1856,12 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   if (NewUD->isInvalidDecl())
     return NewUD;
 
+  if (NameInfo.getName().getNameKind() == DeclarationName::CXXConstructorName) {
+    if (SemaRef.CheckInheritingConstructorUsingDecl(NewUD))
+      NewUD->setInvalidDecl();
+    return NewUD;
+  }
+
   bool isFunctionScope = Owner->isFunctionOrMethod();
 
   // Process the shadow decls.

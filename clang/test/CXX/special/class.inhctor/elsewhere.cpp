@@ -29,3 +29,29 @@ struct I1 : B1 {
 struct D1 : I1 {
   using B1::B1; // expected-error {{'B1' is not a direct base of 'D1', can not inherit constructors}}
 };
+
+template<typename T> struct A {};
+
+template<typename T> struct B : A<bool>, A<char> {
+  using A<T>::A; // expected-error {{'A<double>::', which is not a base class of 'B<double>'}}
+};
+B<bool> bb;
+B<char> bc;
+B<double> bd; // expected-note {{here}}
+
+template<typename T> struct C : A<T> {
+  using A<bool>::A; // expected-error {{'A<bool>::', which is not a base class of 'C<char>'}}
+};
+C<bool> cb;
+C<char> cc; // expected-note {{here}}
+
+template<typename T> struct D : A<T> {};
+template<typename T> struct E : D<T> {
+  using A<bool>::A; // expected-error {{'A<bool>' is not a direct base of 'E<bool>', can not inherit}}
+};
+E<bool> eb; // expected-note {{here}}
+
+template<typename T> struct F : D<bool> {
+  using A<T>::A; // expected-error {{'A<bool>' is not a direct base of 'F<bool>'}}
+};
+F<bool> fb; // expected-note {{here}}
