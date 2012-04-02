@@ -32,6 +32,7 @@ namespace lldb_private {
 /// files), and a line table.
 //----------------------------------------------------------------------
 class CompileUnit :
+    public STD_ENABLE_SHARED_FROM_THIS(CompileUnit),
     public ModuleChild,
     public FileSpec,
     public UserID,
@@ -105,6 +106,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
+    virtual
     ~CompileUnit();
 
     //------------------------------------------------------------------

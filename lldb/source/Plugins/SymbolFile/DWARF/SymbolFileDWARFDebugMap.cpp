@@ -481,7 +481,8 @@ SymbolFileDWARFDebugMap::ParseCompileUnitAtIndex(uint32_t cu_idx)
 
     if (cu_idx < cu_count)
     {
-        if (m_compile_unit_infos[cu_idx].oso_compile_unit_sp.get() == NULL && m_compile_unit_infos[cu_idx].symbol_file_supported)
+        if (m_compile_unit_infos[cu_idx].oso_compile_unit_sp.get() == NULL &&
+            m_compile_unit_infos[cu_idx].symbol_file_supported)
         {
             SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (cu_idx);
             if (oso_dwarf)
@@ -508,8 +509,8 @@ SymbolFileDWARFDebugMap::ParseCompileUnitAtIndex(uint32_t cu_idx)
                                                                                             eLanguageTypeUnknown));
 
                     // Let our symbol vendor know about this compile unit
-                    m_obj_file->GetModule()->GetSymbolVendor()->SetCompileUnitAtIndex (m_compile_unit_infos[cu_idx].oso_compile_unit_sp, 
-                                                                                       cu_idx);
+                    m_obj_file->GetModule()->GetSymbolVendor()->SetCompileUnitAtIndex (cu_idx,
+                                                                                       m_compile_unit_infos[cu_idx].oso_compile_unit_sp);
                 }
             }
         }
@@ -1101,18 +1102,19 @@ void
 SymbolFileDWARFDebugMap::SetCompileUnit (SymbolFileDWARF *oso_dwarf, const CompUnitSP &cu_sp)
 {
     const uint32_t cu_count = GetNumCompileUnits();
-    for (uint32_t i=0; i<cu_count; ++i)
+    for (uint32_t cu_idx=0; cu_idx<cu_count; ++cu_idx)
     {
-        if (m_compile_unit_infos[i].oso_symbol_vendor &&
-            m_compile_unit_infos[i].oso_symbol_vendor->GetSymbolFile() == oso_dwarf)
+        if (m_compile_unit_infos[cu_idx].oso_symbol_vendor &&
+            m_compile_unit_infos[cu_idx].oso_symbol_vendor->GetSymbolFile() == oso_dwarf)
         {
-            if (m_compile_unit_infos[i].oso_compile_unit_sp)
+            if (m_compile_unit_infos[cu_idx].oso_compile_unit_sp)
             {
-                assert (m_compile_unit_infos[i].oso_compile_unit_sp.get() == cu_sp.get());
+                assert (m_compile_unit_infos[cu_idx].oso_compile_unit_sp.get() == cu_sp.get());
             }
             else
             {
-                m_compile_unit_infos[i].oso_compile_unit_sp = cu_sp;
+                m_compile_unit_infos[cu_idx].oso_compile_unit_sp = cu_sp;
+                m_obj_file->GetModule()->GetSymbolVendor()->SetCompileUnitAtIndex(cu_idx, cu_sp);
             }
         }
     }

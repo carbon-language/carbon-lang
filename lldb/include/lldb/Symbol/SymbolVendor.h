@@ -140,8 +140,8 @@ public:
     GetNumCompileUnits();
 
     virtual bool
-    SetCompileUnitAtIndex (lldb::CompUnitSP& cu,
-                           uint32_t index);
+    SetCompileUnitAtIndex (uint32_t cu_idx,
+                           const lldb::CompUnitSP &cu_sp);
 
     virtual lldb::CompUnitSP
     GetCompileUnitAtIndex(uint32_t idx);

@@ -100,7 +100,7 @@ SymbolVendor::AddSymbolFileRepresentation(const ObjectFileSP &objfile_sp)
 }
 
 bool
-SymbolVendor::SetCompileUnitAtIndex (CompUnitSP& cu, uint32_t idx)
+SymbolVendor::SetCompileUnitAtIndex (uint32_t idx, const CompUnitSP &cu_sp)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
@@ -115,8 +115,14 @@ SymbolVendor::SetCompileUnitAtIndex (CompUnitSP& cu, uint32_t idx)
             // we don't have a race condition, or have a second parse of the same
             // compile unit.
             assert(m_compile_units[idx].get() == NULL);
-            m_compile_units[idx] = cu;
+            m_compile_units[idx] = cu_sp;
             return true;
+        }
+        else
+        {
+            // This should NOT happen, and if it does, we want to crash and know
+            // about it
+            assert (idx < num_compile_units);
         }
     }
     return false;
