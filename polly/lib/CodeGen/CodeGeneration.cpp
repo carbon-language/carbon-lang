@@ -1080,20 +1080,21 @@ void ClastStmtCodeGen::codegen(const clast_assignment *a) {
   ClastVars[a->LHS] = V;
 }
 
-void ClastStmtCodeGen::codegen(const clast_assignment *a, ScopStmt *Statement,
-                               unsigned Dimension, int vectorDim,
+void ClastStmtCodeGen::codegen(const clast_assignment *A, ScopStmt *Stmt,
+                               unsigned Dim, int VectorDim,
                                std::vector<ValueMapT> *VectorVMap) {
-  Value *RHS = ExpGen.codegen(a->RHS, getIntPtrTy());
-
-  assert(!a->LHS && "Statement assignments do not have left hand side");
   const PHINode *PN;
-  PN = Statement->getInductionVariableForDimension(Dimension);
-  const Value *V = PN;
+  Value *RHS;
+
+  assert(!A->LHS && "Statement assignments do not have left hand side");
+
+  RHS = ExpGen.codegen(A->RHS, getIntPtrTy());
+  PN = Stmt->getInductionVariableForDimension(Dim);
 
   if (VectorVMap)
-    (*VectorVMap)[vectorDim][V] = RHS;
+    (*VectorVMap)[VectorDim][PN] = RHS;
 
-  ValueMap[V] = RHS;
+  ValueMap[PN] = RHS;
 }
 
 void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
