@@ -4,10 +4,10 @@
 
 define <4 x i32> @t00(<4 x i32>* %a0) nounwind ssp {
 entry:
-; CHECK: movaps  ({{%rdi|%rcx}}), %xmm0
-; CHECK: movaps  %xmm0, %xmm1
-; CHECK-NEXT: movss   %xmm2, %xmm1
-; CHECK-NEXT: shufps  $36, %xmm1, %xmm0
+; CHECK: movaps  ({{%rdi|%rcx}}), %[[XMM0:xmm[0-9]+]]
+; CHECK: movaps  %[[XMM0]], %[[XMM1:xmm[0-9]+]]
+; CHECK-NEXT: movss   %xmm{{[0-9]+}}, %[[XMM1]]
+; CHECK-NEXT: shufps  $36, %[[XMM1]], %[[XMM0]]
   %0 = load <4 x i32>* undef, align 16
   %1 = load <4 x i32>* %a0, align 16
   %2 = shufflevector <4 x i32> %1, <4 x i32> %0, <4 x i32> <i32 0, i32 1, i32 2, i32 4>

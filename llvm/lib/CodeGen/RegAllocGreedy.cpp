@@ -428,13 +428,13 @@ void RAGreedy::enqueue(LiveInterval *LI) {
       Prio |= (1u << 30);
   }
 
-  Queue.push(std::make_pair(Prio, Reg));
+  Queue.push(std::make_pair(Prio, ~Reg));
 }
 
 LiveInterval *RAGreedy::dequeue() {
   if (Queue.empty())
     return 0;
-  LiveInterval *LI = &LIS->getInterval(Queue.top().second);
+  LiveInterval *LI = &LIS->getInterval(~Queue.top().second);
   Queue.pop();
   return LI;
 }

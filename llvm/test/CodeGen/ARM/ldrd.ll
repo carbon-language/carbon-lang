@@ -44,8 +44,7 @@ entry:
 ; BASIC: str
 ; GREEDY: @f
 ; GREEDY: %bb
-; GREEDY: ldr
-; GREEDY: ldr
+; GREEDY: ldrd
 ; GREEDY: str
 define void @f(i32* nocapture %a, i32* nocapture %b, i32 %n) nounwind {
 entry:
