@@ -44,10 +44,6 @@ ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI,
   setAvailableFeatures(STI.getFeatureBits());
 }
 
-StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return MII.getName(Opcode);
-}
-
 void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << getRegisterName(RegNo);
 }

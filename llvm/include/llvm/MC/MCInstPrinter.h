@@ -52,7 +52,7 @@ public:
 
   /// getOpcodeName - Return the name of the specified opcode enum (e.g.
   /// "MOV32ri") or empty if we can't resolve it.
-  virtual StringRef getOpcodeName(unsigned Opcode) const;
+  StringRef getOpcodeName(unsigned Opcode) const;
 
   /// printRegName - Print the assembler register name.
   virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;

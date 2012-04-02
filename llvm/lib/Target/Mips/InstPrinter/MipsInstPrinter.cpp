@@ -62,10 +62,6 @@ const char* Mips::MipsFCCToString(Mips::CondCode CC) {
   llvm_unreachable("Impossible condition code!");
 }
 
-StringRef MipsInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return MII.getName(Opcode);
-}
-
 void MipsInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << '$' << StringRef(getRegisterName(RegNo)).lower();
 }

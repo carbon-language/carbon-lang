@@ -41,9 +41,6 @@ void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   if (CommentStream)
     EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
 }
-StringRef X86IntelInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return MII.getName(Opcode);
-}
 
 void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
                                      raw_ostream &O) {

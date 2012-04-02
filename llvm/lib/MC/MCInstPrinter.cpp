@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -20,7 +21,7 @@ MCInstPrinter::~MCInstPrinter() {
 /// getOpcodeName - Return the name of the specified opcode enum (e.g.
 /// "MOV32ri") or empty if we can't resolve it.
 StringRef MCInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return "";
+  return MII.getName(Opcode);
 }
 
 void MCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {

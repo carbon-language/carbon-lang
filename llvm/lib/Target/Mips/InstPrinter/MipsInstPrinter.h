@@ -85,7 +85,6 @@ public:
   void printInstruction(const MCInst *MI, raw_ostream &O);
   static const char *getRegisterName(unsigned RegNo);
 
-  virtual StringRef getOpcodeName(unsigned Opcode) const;
   virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
   virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
 

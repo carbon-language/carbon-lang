@@ -23,10 +23,6 @@ using namespace llvm;
 
 #include "PPCGenAsmWriter.inc"
 
-StringRef PPCInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return MII.getName(Opcode);
-}
-
 void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << getRegisterName(RegNo);
 }

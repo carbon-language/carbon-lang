@@ -50,10 +50,6 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
     EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
 }
 
-StringRef X86ATTInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return MII.getName(Opcode);
-}
-
 void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
                                    raw_ostream &O) {
   switch (MI->getOperand(Op).getImm()) {

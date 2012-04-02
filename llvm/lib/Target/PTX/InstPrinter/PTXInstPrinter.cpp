@@ -36,10 +36,6 @@ PTXInstPrinter::PTXInstPrinter(const MCAsmInfo &MAI,
   setAvailableFeatures(STI.getFeatureBits());
 }
 
-StringRef PTXInstPrinter::getOpcodeName(unsigned Opcode) const {
-  return MII.getName(Opcode);
-}
-
 void PTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   // Decode the register number into type and offset
   unsigned RegSpace  = RegNo & 0x7;
