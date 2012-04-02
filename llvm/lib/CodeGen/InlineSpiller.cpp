@@ -655,7 +655,7 @@ void InlineSpiller::analyzeSiblingValues() {
         if (OrigVNI->def != VNI->def)
           DefMI = traceSiblingValue(Reg, VNI, OrigVNI);
       }
-      if (DefMI && Edit->checkRematerializable(VNI, DefMI, TII, AA)) {
+      if (DefMI && Edit->checkRematerializable(VNI, DefMI, AA)) {
         DEBUG(dbgs() << "Value " << PrintReg(Reg) << ':' << VNI->id << '@'
                      << VNI->def << " may remat from " << *DefMI);
       }
@@ -856,7 +856,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   SibValueMap::const_iterator SibI = SibValues.find(ParentVNI);
   if (SibI != SibValues.end())
     RM.OrigMI = SibI->second.DefMI;
-  if (!Edit->canRematerializeAt(RM, UseIdx, false, LIS)) {
+  if (!Edit->canRematerializeAt(RM, UseIdx, false)) {
     markValueUsed(&VirtReg, ParentVNI);
     DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
     return false;
@@ -883,12 +883,12 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   }
 
   // Alocate a new register for the remat.
-  LiveInterval &NewLI = Edit->createFrom(Original, LIS, VRM);
+  LiveInterval &NewLI = Edit->createFrom(Original);
   NewLI.markNotSpillable();
 
   // Finally we can rematerialize OrigMI before MI.
   SlotIndex DefIdx = Edit->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
-                                           LIS, TII, TRI);
+                                           TRI);
   DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t'
                << *LIS.getInstructionFromIndex(DefIdx));
 
@@ -913,7 +913,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
 /// and trim the live ranges after.
 void InlineSpiller::reMaterializeAll() {
   // analyzeSiblingValues has already tested all relevant defining instructions.
-  if (!Edit->anyRematerializable(LIS, TII, AA))
+  if (!Edit->anyRematerializable(AA))
     return;
 
   UsedValues.clear();
@@ -954,7 +954,7 @@ void InlineSpiller::reMaterializeAll() {
   if (DeadDefs.empty())
     return;
   DEBUG(dbgs() << "Remat created " << DeadDefs.size() << " dead defs.\n");
-  Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII, RegsToSpill);
+  Edit->eliminateDeadDefs(DeadDefs, RegsToSpill);
 
   // Get rid of deleted and empty intervals.
   for (unsigned i = RegsToSpill.size(); i != 0; --i) {
@@ -966,7 +966,7 @@ void InlineSpiller::reMaterializeAll() {
     LiveInterval &LI = LIS.getInterval(Reg);
     if (!LI.empty())
       continue;
-    Edit->eraseVirtReg(Reg, LIS);
+    Edit->eraseVirtReg(Reg);
     RegsToSpill.erase(RegsToSpill.begin() + (i - 1));
   }
   DEBUG(dbgs() << RegsToSpill.size() << " registers to spill after remat.\n");
@@ -1181,7 +1181,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
-    LiveInterval &NewLI = Edit->createFrom(Reg, LIS, VRM);
+    LiveInterval &NewLI = Edit->createFrom(Reg);
     NewLI.markNotSpillable();
 
     if (RI.Reads)
@@ -1244,7 +1244,7 @@ void InlineSpiller::spillAll() {
   // Hoisted spills may cause dead code.
   if (!DeadDefs.empty()) {
     DEBUG(dbgs() << "Eliminating " << DeadDefs.size() << " dead defs\n");
-    Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII, RegsToSpill);
+    Edit->eliminateDeadDefs(DeadDefs, RegsToSpill);
   }
 
   // Finally delete the SnippetCopies.
@@ -1260,7 +1260,7 @@ void InlineSpiller::spillAll() {
 
   // Delete all spilled registers.
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    Edit->eraseVirtReg(RegsToSpill[i], LIS);
+    Edit->eraseVirtReg(RegsToSpill[i]);
 }
 
 void InlineSpiller::spill(LiveRangeEdit &edit) {
@@ -1289,5 +1289,5 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   if (!RegsToSpill.empty())
     spillAll();
 
-  Edit->calculateRegClassAndHint(MF, LIS, Loops);
+  Edit->calculateRegClassAndHint(MF, Loops);
 }

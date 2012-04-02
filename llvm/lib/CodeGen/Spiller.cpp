@@ -116,7 +116,7 @@ protected:
       }
 
       // Create a new vreg & interval for this instr.
-      LiveInterval *newLI = &LRE.create(*lis, *vrm);
+      LiveInterval *newLI = &LRE.create();
       newLI->weight = HUGE_VALF;
 
       // Update the reg operands & kill flags.

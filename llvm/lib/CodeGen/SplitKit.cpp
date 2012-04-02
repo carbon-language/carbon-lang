@@ -351,7 +351,7 @@ void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
 
   // We don't need an AliasAnalysis since we will only be performing
   // cheap-as-a-copy remats anyway.
-  Edit->anyRematerializable(LIS, TII, 0);
+  Edit->anyRematerializable(0);
 }
 
 void SplitEditor::dump() const {
@@ -436,8 +436,8 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
 
   // Attempt cheap-as-a-copy rematerialization.
   LiveRangeEdit::Remat RM(ParentVNI);
-  if (Edit->canRematerializeAt(RM, UseIdx, true, LIS)) {
-    Def = Edit->rematerializeAt(MBB, I, LI->reg, RM, LIS, TII, TRI, Late);
+  if (Edit->canRematerializeAt(RM, UseIdx, true)) {
+    Def = Edit->rematerializeAt(MBB, I, LI->reg, RM, TRI, Late);
     ++NumRemats;
   } else {
     // Can't remat, just insert a copy from parent.
@@ -456,11 +456,11 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
 unsigned SplitEditor::openIntv() {
   // Create the complement as index 0.
   if (Edit->empty())
-    Edit->create(LIS, VRM);
+    Edit->create();
 
   // Create the open interval.
   OpenIdx = Edit->size();
-  Edit->create(LIS, VRM);
+  Edit->create();
   return OpenIdx;
 }
 
@@ -1033,7 +1033,7 @@ void SplitEditor::deleteRematVictims() {
   if (Dead.empty())
     return;
 
-  Edit->eliminateDeadDefs(Dead, LIS, VRM, TII);
+  Edit->eliminateDeadDefs(Dead);
 }
 
 void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
@@ -1108,7 +1108,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     SmallVector<LiveInterval*, 8> dups;
     dups.push_back(li);
     for (unsigned j = 1; j != NumComp; ++j)
-      dups.push_back(&Edit->create(LIS, VRM));
+      dups.push_back(&Edit->create());
     ConEQ.Distribute(&dups[0], MRI);
     // The new intervals all map back to i.
     if (LRMap)
@@ -1116,7 +1116,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
   }
 
   // Calculate spill weight and allocation hints for new intervals.
-  Edit->calculateRegClassAndHint(VRM.getMachineFunction(), LIS, SA.Loops);
+  Edit->calculateRegClassAndHint(VRM.getMachineFunction(), SA.Loops);
 
   assert(!LRMap || LRMap->size() == Edit->size());
 }

@@ -187,7 +187,7 @@ void RABasic::spillReg(LiveInterval& VirtReg, unsigned PhysReg,
     unassign(SpilledVReg, PhysReg);
 
     // Spill the extracted interval.
-    LiveRangeEdit LRE(SpilledVReg, SplitVRegs);
+    LiveRangeEdit LRE(SpilledVReg, SplitVRegs, *MF, *LIS, VRM);
     spiller().spill(LRE);
   }
   // After extracting segments, the query's results are invalid. But keep the
@@ -287,7 +287,7 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   DEBUG(dbgs() << "spilling: " << VirtReg << '\n');
   if (!VirtReg.isSpillable())
     return ~0u;
-  LiveRangeEdit LRE(VirtReg, SplitVRegs);
+  LiveRangeEdit LRE(VirtReg, SplitVRegs, *MF, *LIS, VRM);
   spiller().spill(LRE);
 
   // The live virtual register requesting allocation was spilled, so tell
