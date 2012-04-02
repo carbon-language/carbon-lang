@@ -156,7 +156,7 @@ class NSUntaggedNumber_SummaryProvider:
 			data_double = struct.unpack('d', struct.pack('Q', data_plain))[0]
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(double)' + str(data_double)
-		statistics.metric_hit('unknown_class',str(valobj.GetName())) + " had unknown data_type " + str(data_type))
+		statistics.metric_hit('unknown_class',str(valobj.GetName()) + " had unknown data_type " + str(data_type))
 		return 'absurd: dt = ' + str(data_type)
 
 
