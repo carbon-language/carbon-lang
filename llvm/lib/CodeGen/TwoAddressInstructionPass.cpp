@@ -1248,7 +1248,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   // re-schedule this MI below it.
   if (RescheduleMIBelowKill(mbbi, mi, nmi, regB)) {
     ++NumReSchedDowns;
-    return true;
+    return false;
   }
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
@@ -1270,7 +1270,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   // re-schedule it before this MI if it's legal.
   if (RescheduleKillAboveMI(mbbi, mi, nmi, regB)) {
     ++NumReSchedUps;
-    return true;
+    return false;
   }
 
   // If this is an instruction with a load folded into it, try unfolding
