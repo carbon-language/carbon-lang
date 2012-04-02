@@ -2712,8 +2712,8 @@ public:
 
     result_type operator()();
 
-    static constexpr result_type min() {return _Min;}
-    static constexpr result_type max() {return _Max;}
+    static _LIBCPP_CONSTEXPR result_type min() {return _Min;}
+    static _LIBCPP_CONSTEXPR result_type max() {return _Max;}
 
     friend __rs_default __rs_get();
 };

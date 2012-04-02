@@ -3374,9 +3374,9 @@ public:
     static const result_type _Max = 0xFFFFFFFFu;
 
     _LIBCPP_INLINE_VISIBILITY
-    static constexpr result_type min() { return _Min;}
+    static _LIBCPP_CONSTEXPR result_type min() { return _Min;}
     _LIBCPP_INLINE_VISIBILITY
-    static constexpr result_type max() { return _Max;}
+    static _LIBCPP_CONSTEXPR result_type max() { return _Max;}
 
     // constructors
     explicit random_device(const string& __token = "/dev/urandom");

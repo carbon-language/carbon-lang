@@ -384,7 +384,9 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #ifdef _LIBCPP_HAS_NO_CONSTEXPR
-#define constexpr const
+#define _LIBCPP_CONSTEXPR
+#else
+#define _LIBCPP_CONSTEXPR constexpr
 #endif
 
 #ifndef __has_feature
