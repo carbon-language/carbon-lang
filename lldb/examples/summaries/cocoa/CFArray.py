@@ -166,16 +166,16 @@ class NSArray_SynthProvider:
 		
 		if name_string == '__NSArrayI':
 			wrapper = NSArrayI_SynthProvider(self.valobj, dict, class_data.sys_params)
-			statistics.metric_hit('code_notrun',self.valobj)
+			statistics.metric_hit('code_notrun',valobj.GetName())
 		elif name_string == '__NSArrayM':
 			wrapper = NSArrayM_SynthProvider(self.valobj, dict, class_data.sys_params)
-			statistics.metric_hit('code_notrun',self.valobj)
+			statistics.metric_hit('code_notrun',valobj.GetName()))
 		elif name_string == '__NSCFArray':
 			wrapper = NSArrayCF_SynthProvider(self.valobj, dict, class_data.sys_params)
-			statistics.metric_hit('code_notrun',self.valobj)
+			statistics.metric_hit('code_notrun',valobj.GetName()))
 		else:
 			wrapper = NSArrayKVC_SynthProvider(self.valobj, dict, class_data.sys_params)
-			statistics.metric_hit('unknown_class',str(self.valobj) + " seen as " + name_string)
+			statistics.metric_hit('unknown_class',str(valobj.GetName())) + " seen as " + name_string)
 		return wrapper;
 
 def CFArray_SummaryProvider (valobj,dict):
