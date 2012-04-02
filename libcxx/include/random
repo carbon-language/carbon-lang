@@ -1659,7 +1659,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 template <class _Sseq, class _Engine>
 struct __is_seed_sequence
 {
-    static const bool value =
+    static _LIBCPP_CONSTEXPR const bool value =
               !is_convertible<_Sseq, typename _Engine::result_type>::value &&
               !is_same<typename remove_cv<_Sseq>::type, _Engine>::value;
 };
@@ -1837,24 +1837,24 @@ public:
 private:
     result_type __x_;
 
-    static const result_type _Mp = result_type(~0);
+    static _LIBCPP_CONSTEXPR const result_type _Mp = result_type(~0);
 
     static_assert(__m == 0 || __a < __m, "linear_congruential_engine invalid parameters");
     static_assert(__m == 0 || __c < __m, "linear_congruential_engine invalid parameters");
 public:
-    static const result_type _Min = __c == 0u ? 1u: 0u;
-    static const result_type _Max = __m - 1u;
+    static _LIBCPP_CONSTEXPR const result_type _Min = __c == 0u ? 1u: 0u;
+    static _LIBCPP_CONSTEXPR const result_type _Max = __m - 1u;
     static_assert(_Min < _Max,           "linear_congruential_engine invalid parameters");
 
     // engine characteristics
-    static const/*expr*/ result_type multiplier = __a;
-    static const/*expr*/ result_type increment = __c;
-    static const/*expr*/ result_type modulus = __m;
+    static _LIBCPP_CONSTEXPR const result_type multiplier = __a;
+    static _LIBCPP_CONSTEXPR const result_type increment = __c;
+    static _LIBCPP_CONSTEXPR const result_type modulus = __m;
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type min() {return _Min;}
+    static _LIBCPP_CONSTEXPR result_type min() {return _Min;}
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type max() {return _Max;}
-    static const/*expr*/ result_type default_seed = 1u;
+    static _LIBCPP_CONSTEXPR result_type max() {return _Max;}
+    static _LIBCPP_CONSTEXPR const result_type default_seed = 1u;
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -2074,7 +2074,7 @@ private:
 
     static_assert(  0 <  __m, "mersenne_twister_engine invalid parameters");
     static_assert(__m <= __n, "mersenne_twister_engine invalid parameters");
-    static const result_type _Dt = numeric_limits<result_type>::digits;
+    static _LIBCPP_CONSTEXPR const result_type _Dt = numeric_limits<result_type>::digits;
     static_assert(__w <= _Dt, "mersenne_twister_engine invalid parameters");
     static_assert(  2 <= __w, "mersenne_twister_engine invalid parameters");
     static_assert(__r <= __w, "mersenne_twister_engine invalid parameters");
@@ -2083,9 +2083,9 @@ private:
     static_assert(__t <= __w, "mersenne_twister_engine invalid parameters");
     static_assert(__l <= __w, "mersenne_twister_engine invalid parameters");
 public:
-    static const result_type _Min = 0;
-    static const result_type _Max = __w == _Dt ? result_type(~0) :
-                                   (result_type(1) << __w) - result_type(1);
+    static _LIBCPP_CONSTEXPR const result_type _Min = 0;
+    static _LIBCPP_CONSTEXPR const result_type _Max = __w == _Dt ? result_type(~0) :
+                                                      (result_type(1) << __w) - result_type(1);
     static_assert(_Min < _Max, "mersenne_twister_engine invalid parameters");
     static_assert(__a <= _Max, "mersenne_twister_engine invalid parameters");
     static_assert(__b <= _Max, "mersenne_twister_engine invalid parameters");
@@ -2094,24 +2094,24 @@ public:
     static_assert(__f <= _Max, "mersenne_twister_engine invalid parameters");
 
     // engine characteristics
-    static const/*expr*/ size_t word_size = __w;
-    static const/*expr*/ size_t state_size = __n;
-    static const/*expr*/ size_t shift_size = __m;
-    static const/*expr*/ size_t mask_bits = __r;
-    static const/*expr*/ result_type xor_mask = __a;
-    static const/*expr*/ size_t tempering_u = __u;
-    static const/*expr*/ result_type tempering_d = __d;
-    static const/*expr*/ size_t tempering_s = __s;
-    static const/*expr*/ result_type tempering_b = __b;
-    static const/*expr*/ size_t tempering_t = __t;
-    static const/*expr*/ result_type tempering_c = __c;
-    static const/*expr*/ size_t tempering_l = __l;
-    static const/*expr*/ result_type initialization_multiplier = __f;
+    static _LIBCPP_CONSTEXPR const size_t word_size = __w;
+    static _LIBCPP_CONSTEXPR const size_t state_size = __n;
+    static _LIBCPP_CONSTEXPR const size_t shift_size = __m;
+    static _LIBCPP_CONSTEXPR const size_t mask_bits = __r;
+    static _LIBCPP_CONSTEXPR const result_type xor_mask = __a;
+    static _LIBCPP_CONSTEXPR const size_t tempering_u = __u;
+    static _LIBCPP_CONSTEXPR const result_type tempering_d = __d;
+    static _LIBCPP_CONSTEXPR const size_t tempering_s = __s;
+    static _LIBCPP_CONSTEXPR const result_type tempering_b = __b;
+    static _LIBCPP_CONSTEXPR const size_t tempering_t = __t;
+    static _LIBCPP_CONSTEXPR const result_type tempering_c = __c;
+    static _LIBCPP_CONSTEXPR const size_t tempering_l = __l;
+    static _LIBCPP_CONSTEXPR const result_type initialization_multiplier = __f;
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type min() { return _Min; }
+    static _LIBCPP_CONSTEXPR result_type min() { return _Min; }
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type max() { return _Max; }
-    static const/*expr*/ result_type default_seed = 5489u;
+    static _LIBCPP_CONSTEXPR result_type max() { return _Max; }
+    static _LIBCPP_CONSTEXPR const result_type default_seed = 5489u;
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -2462,26 +2462,26 @@ private:
     result_type  __c_;
     size_t      __i_;
 
-    static const result_type _Dt = numeric_limits<result_type>::digits;
+    static _LIBCPP_CONSTEXPR const result_type _Dt = numeric_limits<result_type>::digits;
     static_assert(  0 <  __w, "subtract_with_carry_engine invalid parameters");
     static_assert(__w <= _Dt, "subtract_with_carry_engine invalid parameters");
     static_assert(  0 <  __s, "subtract_with_carry_engine invalid parameters");
     static_assert(__s <  __r, "subtract_with_carry_engine invalid parameters");
 public:
-    static const result_type _Min = 0;
-    static const result_type _Max = __w == _Dt ? result_type(~0) :
-                                   (result_type(1) << __w) - result_type(1);
+    static _LIBCPP_CONSTEXPR const result_type _Min = 0;
+    static _LIBCPP_CONSTEXPR const result_type _Max = __w == _Dt ? result_type(~0) :
+                                                      (result_type(1) << __w) - result_type(1);
     static_assert(_Min < _Max, "subtract_with_carry_engine invalid parameters");
 
     // engine characteristics
-    static const/*expr*/ size_t word_size = __w;
-    static const/*expr*/ size_t short_lag = __s;
-    static const/*expr*/ size_t long_lag = __r;
+    static _LIBCPP_CONSTEXPR const size_t word_size = __w;
+    static _LIBCPP_CONSTEXPR const size_t short_lag = __s;
+    static _LIBCPP_CONSTEXPR const size_t long_lag = __r;
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type min() { return _Min; }
+    static _LIBCPP_CONSTEXPR result_type min() { return _Min; }
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type max() { return _Max; }
-    static const/*expr*/ result_type default_seed = 19780503u;
+    static _LIBCPP_CONSTEXPR result_type max() { return _Max; }
+    static _LIBCPP_CONSTEXPR const result_type default_seed = 19780503u;
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -2733,17 +2733,21 @@ public:
     typedef typename _Engine::result_type result_type;
 
     // engine characteristics
-    static const/*expr*/ size_t block_size = __p;
-    static const/*expr*/ size_t used_block = __r;
+    static _LIBCPP_CONSTEXPR const size_t block_size = __p;
+    static _LIBCPP_CONSTEXPR const size_t used_block = __r;
 
-    // Temporary work around for lack of constexpr
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
     static const result_type _Min = _Engine::_Min;
     static const result_type _Max = _Engine::_Max;
+#else
+    static _LIBCPP_CONSTEXPR const result_type _Min = _Engine::min();
+    static _LIBCPP_CONSTEXPR const result_type _Max = _Engine::max();
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type min() { return _Engine::min(); }
+    static _LIBCPP_CONSTEXPR result_type min() { return _Engine::min(); }
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type max() { return _Engine::max(); }
+    static _LIBCPP_CONSTEXPR result_type max() { return _Engine::max(); }
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -2889,12 +2893,12 @@ class _LIBCPP_VISIBLE independent_bits_engine
     template <class _UI, _UI _R0, size_t _Wp, size_t _Mp>
     class __get_n
     {
-        static const size_t _Dt = numeric_limits<_UI>::digits;
-        static const size_t _Np = _Wp / _Mp + (_Wp % _Mp != 0);
-        static const size_t _W0 = _Wp / _Np;
-        static const _UI _Y0 = _W0 >= _Dt ? 0 : (_R0 >> _W0) << _W0;
+        static _LIBCPP_CONSTEXPR const size_t _Dt = numeric_limits<_UI>::digits;
+        static _LIBCPP_CONSTEXPR const size_t _Np = _Wp / _Mp + (_Wp % _Mp != 0);
+        static _LIBCPP_CONSTEXPR const size_t _W0 = _Wp / _Np;
+        static _LIBCPP_CONSTEXPR const _UI _Y0 = _W0 >= _Dt ? 0 : (_R0 >> _W0) << _W0;
     public:
-        static const size_t value = _R0 - _Y0 > _Y0 / _Np ? _Np + 1 : _Np;
+        static _LIBCPP_CONSTEXPR const size_t value = _R0 - _Y0 > _Y0 / _Np ? _Np + 1 : _Np;
     };
 public:
     // types
@@ -2903,7 +2907,7 @@ public:
 private:
     _Engine __e_;
 
-    static const result_type _Dt = numeric_limits<result_type>::digits;
+    static _LIBCPP_CONSTEXPR const result_type _Dt = numeric_limits<result_type>::digits;
     static_assert(  0 <  __w, "independent_bits_engine invalid parameters");
     static_assert(__w <= _Dt, "independent_bits_engine invalid parameters");
 
@@ -2914,36 +2918,40 @@ private:
                 result_type,
                 _Engine_result_type
         >::type _Working_result_type;
-    // Temporary work around for lack of constexpr
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
     static const _Working_result_type _Rp = _Engine::_Max - _Engine::_Min
-                                                         + _Working_result_type(1);
-    static const size_t __m = __log2<_Working_result_type, _Rp>::value;
-    static const size_t __n = __get_n<_Working_result_type, _Rp, __w, __m>::value;
-    static const size_t __w0 = __w / __n;
-    static const size_t __n0 = __n - __w % __n;
-    static const size_t _WDt = numeric_limits<_Working_result_type>::digits;
-    static const size_t _EDt = numeric_limits<_Engine_result_type>::digits;
-    static const _Working_result_type __y0 = __w0 >= _WDt ? 0 :
-                                                   (_Rp >> __w0) << __w0;
-    static const _Working_result_type __y1 = __w0 >= _WDt - 1 ? 0 :
-                                                   (_Rp >> (__w0+1)) << (__w0+1);
-    static const _Engine_result_type __mask0 = __w0 > 0 ?
+                                          + _Working_result_type(1);
+#else
+    static _LIBCPP_CONSTEXPR const _Working_result_type _Rp = _Engine::max() - _Engine::min()
+                                                            + _Working_result_type(1);
+#endif
+    static _LIBCPP_CONSTEXPR const size_t __m = __log2<_Working_result_type, _Rp>::value;
+    static _LIBCPP_CONSTEXPR const size_t __n = __get_n<_Working_result_type, _Rp, __w, __m>::value;
+    static _LIBCPP_CONSTEXPR const size_t __w0 = __w / __n;
+    static _LIBCPP_CONSTEXPR const size_t __n0 = __n - __w % __n;
+    static _LIBCPP_CONSTEXPR const size_t _WDt = numeric_limits<_Working_result_type>::digits;
+    static _LIBCPP_CONSTEXPR const size_t _EDt = numeric_limits<_Engine_result_type>::digits;
+    static _LIBCPP_CONSTEXPR const _Working_result_type __y0 = __w0 >= _WDt ? 0 :
+                                                               (_Rp >> __w0) << __w0;
+    static _LIBCPP_CONSTEXPR const _Working_result_type __y1 = __w0 >= _WDt - 1 ? 0 :
+                                                               (_Rp >> (__w0+1)) << (__w0+1);
+    static _LIBCPP_CONSTEXPR const _Engine_result_type __mask0 = __w0 > 0 ?
                                 _Engine_result_type(~0) >> (_EDt - __w0) :
                                 _Engine_result_type(0);
-    static const _Engine_result_type __mask1 = __w0 < _EDt - 1 ?
+    static _LIBCPP_CONSTEXPR const _Engine_result_type __mask1 = __w0 < _EDt - 1 ?
                                 _Engine_result_type(~0) >> (_EDt - (__w0 + 1)) :
                                 _Engine_result_type(~0);
 public:
-    static const result_type _Min = 0;
-    static const result_type _Max = __w == _Dt ? result_type(~0) :
-                                   (result_type(1) << __w) - result_type(1);
+    static _LIBCPP_CONSTEXPR const result_type _Min = 0;
+    static _LIBCPP_CONSTEXPR const result_type _Max = __w == _Dt ? result_type(~0) :
+                                                      (result_type(1) << __w) - result_type(1);
     static_assert(_Min < _Max, "independent_bits_engine invalid parameters");
 
     // engine characteristics
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type min() { return _Min; }
+    static _LIBCPP_CONSTEXPR result_type min() { return _Min; }
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type max() { return _Max; }
+    static _LIBCPP_CONSTEXPR result_type max() { return _Max; }
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -3121,23 +3129,23 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
 template <uint64_t _Xp, uint64_t _Yp>
 struct __ugcd
 {
-    static const uint64_t value = __ugcd<_Yp, _Xp % _Yp>::value;
+    static _LIBCPP_CONSTEXPR const uint64_t value = __ugcd<_Yp, _Xp % _Yp>::value;
 };
 
 template <uint64_t _Xp>
 struct __ugcd<_Xp, 0>
 {
-    static const uint64_t value = _Xp;
+    static _LIBCPP_CONSTEXPR const uint64_t value = _Xp;
 };
 
 template <uint64_t _Np, uint64_t _Dp>
 class __uratio
 {
     static_assert(_Dp != 0, "__uratio divide by 0");
-    static const uint64_t __gcd = __ugcd<_Np, _Dp>::value;
+    static _LIBCPP_CONSTEXPR const uint64_t __gcd = __ugcd<_Np, _Dp>::value;
 public:
-    static const uint64_t num = _Np / __gcd;
-    static const uint64_t den = _Dp / __gcd;
+    static _LIBCPP_CONSTEXPR const uint64_t num = _Np / __gcd;
+    static _LIBCPP_CONSTEXPR const uint64_t den = _Dp / __gcd;
 
     typedef __uratio<num, den> type;
 };
@@ -3157,17 +3165,22 @@ private:
 
 public:
     // engine characteristics
-    static const/*expr*/ size_t table_size = __k;
+    static _LIBCPP_CONSTEXPR const size_t table_size = __k;
 
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
     static const result_type _Min = _Engine::_Min;
     static const result_type _Max = _Engine::_Max;
+#else
+    static _LIBCPP_CONSTEXPR const result_type _Min = _Engine::min();
+    static _LIBCPP_CONSTEXPR const result_type _Max = _Engine::max();
+#endif
     static_assert(_Min < _Max, "shuffle_order_engine invalid parameters");
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type min() { return _Min; }
+    static _LIBCPP_CONSTEXPR result_type min() { return _Min; }
     _LIBCPP_INLINE_VISIBILITY
-    static const/*expr*/ result_type max() { return _Max; }
+    static _LIBCPP_CONSTEXPR result_type max() { return _Max; }
 
-    static const unsigned long long _Rp = _Max - _Min + 1ull;
+    static _LIBCPP_CONSTEXPR const unsigned long long _Rp = _Max - _Min + 1ull;
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -3370,8 +3383,8 @@ public:
     typedef unsigned result_type;
 
     // generator characteristics
-    static const result_type _Min = 0;
-    static const result_type _Max = 0xFFFFFFFFu;
+    static _LIBCPP_CONSTEXPR const result_type _Min = 0;
+    static _LIBCPP_CONSTEXPR const result_type _Max = 0xFFFFFFFFu;
 
     _LIBCPP_INLINE_VISIBILITY
     static _LIBCPP_CONSTEXPR result_type min() { return _Min;}
@@ -3522,13 +3535,17 @@ generate_canonical(_URNG& __g)
 {
     const size_t _Dt = numeric_limits<_RealType>::digits;
     const size_t __b = _Dt < __bits ? _Dt : __bits;
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
     const size_t __logR = __log2<uint64_t, _URNG::_Max - _URNG::_Min + uint64_t(1)>::value;
+#else
+    const size_t __logR = __log2<uint64_t, _URNG::max() - _URNG::min() + uint64_t(1)>::value;
+#endif
     const size_t __k = __b / __logR + (__b % __logR != 0) + (__b == 0);
-    const _RealType _Rp = _URNG::_Max - _URNG::_Min + _RealType(1);
+    const _RealType _Rp = _URNG::max() - _URNG::min() + _RealType(1);
     _RealType __base = _Rp;
-    _RealType _Sp = __g() - _URNG::_Min;
+    _RealType _Sp = __g() - _URNG::min();
     for (size_t __i = 1; __i < __k; ++__i, __base *= _Rp)
-        _Sp += (__g() - _URNG::_Min) * __base;
+        _Sp += (__g() - _URNG::min()) * __base;
     return _Sp / __base;
 }
 

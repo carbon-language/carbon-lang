@@ -32,12 +32,14 @@ private:
     static_assert(Min < Max, "rand1 invalid parameters");
 public:
 
-    // Temporary work around for lack of constexpr
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
+    // Workaround for lack of constexpr in C++03
     static const result_type _Min = Min;
     static const result_type _Max = Max;
+#endif
 
-    static const/*expr*/ result_type min() {return Min;}
-    static const/*expr*/ result_type max() {return Max;}
+    static _LIBCPP_CONSTEXPR result_type min() {return Min;}
+    static _LIBCPP_CONSTEXPR result_type max() {return Max;}
 
     explicit rand1(result_type sd = Min) : x_(sd)
     {
