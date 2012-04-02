@@ -72,7 +72,9 @@ public:
 
     Apple,
     PC,
-    SCEI
+    SCEI,
+    BGP,
+    BGQ
   };
   enum OSType {
     UnknownOS,
@@ -95,7 +97,8 @@ public:
     Haiku,
     Minix,
     RTEMS,
-    NativeClient
+    NativeClient,
+    CNK         // BG/P Compute-Node Kernel
   };
   enum EnvironmentType {
     UnknownEnvironment,

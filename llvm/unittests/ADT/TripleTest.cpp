@@ -87,6 +87,24 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::Linux, T.getOS());
   EXPECT_EQ(Triple::GNU, T.getEnvironment());
 
+  T = Triple("powerpc-bgp-linux");
+  EXPECT_EQ(Triple::ppc, T.getArch());
+  EXPECT_EQ(Triple::BGP, T.getVendor());
+  EXPECT_EQ(Triple::Linux, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
+  T = Triple("powerpc-bgp-cnk");
+  EXPECT_EQ(Triple::ppc, T.getArch());
+  EXPECT_EQ(Triple::BGP, T.getVendor());
+  EXPECT_EQ(Triple::CNK, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
+  T = Triple("powerpc64-bgq-linux");
+  EXPECT_EQ(Triple::ppc64, T.getArch());
+  EXPECT_EQ(Triple::BGQ, T.getVendor());
+  EXPECT_EQ(Triple::Linux, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
   T = Triple("powerpc-dunno-notsure");
   EXPECT_EQ(Triple::ppc, T.getArch());
   EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
