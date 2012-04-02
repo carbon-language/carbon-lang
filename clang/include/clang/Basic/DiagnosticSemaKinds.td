@@ -2852,9 +2852,6 @@ def note_deleted_copy_user_declared_move : Note<
 def note_deleted_assign_field : Note<
   "%select{copy|move}0 assignment operator of %0 is implicitly deleted "
   "because field %1 is of %select{reference|const-qualified}3 type %2">;
-def note_deleted_move_assign_virtual_base : Note<
-  "move assignment operator of %0 is implicitly deleted because it has a "
-  "virtual base class %1">;
 
 // This should eventually be an error.
 def warn_undefined_internal : Warning<

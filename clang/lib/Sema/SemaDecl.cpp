@@ -4651,8 +4651,9 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
 
     if (unsigned Idx = NearMatch->second) {
       ParmVarDecl *FDParam = FD->getParamDecl(Idx-1);
-      SemaRef.Diag(FDParam->getTypeSpecStartLoc(),
-             diag::note_member_def_close_param_match)
+      SourceLocation Loc = FDParam->getTypeSpecStartLoc();
+      if (Loc.isInvalid()) Loc = FD->getLocation();
+      SemaRef.Diag(Loc, diag::note_member_def_close_param_match)
           << Idx << FDParam->getType() << NewFD->getParamDecl(Idx-1)->getType();
     } else if (Correction) {
       SemaRef.Diag(FD->getLocation(), diag::note_previous_decl)
