@@ -278,11 +278,26 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
 
   // Build an aggregate string, and build a table of offsets into it.
-  StringToOffsetTable StringTable;
+  SequenceToOffsetTable<std::string> StringTable;
 
   /// OpcodeInfo - This encodes the index of the string to use for the first
   /// chunk of the output as well as indices used for operand printing.
   std::vector<unsigned> OpcodeInfo;
+
+  // Add all strings to the string table upfront so it can generate an optimized
+  // representation.
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+    AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
+    if (AWI != 0 &&
+        AWI->Operands[0].OperandType == AsmWriterOperand::isLiteralTextOperand &&
+        !AWI->Operands[0].Str.empty()) {
+      std::string Str = AWI->Operands[0].Str;
+      UnescapeString(Str);
+      StringTable.add(Str);
+    }
+  }
+
+  StringTable.layout();
 
   unsigned MaxStringIdx = 0;
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
@@ -295,11 +310,11 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
                         AsmWriterOperand::isLiteralTextOperand ||
                AWI->Operands[0].Str.empty()) {
       // Something handled by the asmwriter printer, but with no leading string.
-      Idx = StringTable.GetOrAddStringOffset("");
+      Idx = StringTable.get("");
     } else {
       std::string Str = AWI->Operands[0].Str;
       UnescapeString(Str);
-      Idx = StringTable.GetOrAddStringOffset(Str);
+      Idx = StringTable.get(Str);
       MaxStringIdx = std::max(MaxStringIdx, Idx);
 
       // Nuke the string from the operand list.  It is now handled!
@@ -374,9 +389,9 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "  };\n\n";
 
   // Emit the string itself.
-  O << "  const char *const AsmStrs = \n";
-  StringTable.EmitString(O);
-  O << ";\n\n";
+  O << "  const char AsmStrs[] = {\n";
+  StringTable.emit(O, printChar);
+  O << "  };\n\n";
 
   O << "  O << \"\\t\";\n\n";
 
