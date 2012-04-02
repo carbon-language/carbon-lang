@@ -399,6 +399,18 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
 
   NameAndAttributes &info = _undefines[entry.getKey().data()];
 
+  if (info.symbol == 0) {
+    // If we haven't seen this symbol before, save it and we may see it again.
+    StringMap<NameAndAttributes>::value_type
+      &asm_entry = _asm_defines.GetOrCreateValue(name);
+    NameAndAttributes &asm_info = _asm_defines[asm_entry.getKey().data()];
+    asm_info.name = name;
+    asm_info.attributes = scope;
+    asm_info.isFunction = false;
+    asm_info.symbol = 0;
+    return;
+  }
+
   if (info.isFunction)
     addDefinedFunctionSymbol(cast<Function>(info.symbol));
   else
@@ -451,6 +463,20 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl, bool isFunc) {
   // we already have the symbol
   if (entry.getValue().name)
     return;
+
+  StringMap<NameAndAttributes>::value_type &asm_entry =
+    _asm_defines.GetOrCreateValue(name);
+
+  if (asm_entry.getValue().name != 0) {
+    if (isFunc)
+      addDefinedFunctionSymbol(cast<Function>(decl));
+    else
+      addDefinedDataSymbol(decl);
+
+    _symbols.back().attributes &= ~LTO_SYMBOL_SCOPE_MASK;
+    _symbols.back().attributes |= asm_entry.getValue().attributes;
+    return;
+  }
 
   NameAndAttributes info;
 
