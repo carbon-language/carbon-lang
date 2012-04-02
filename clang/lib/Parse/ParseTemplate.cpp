@@ -1174,7 +1174,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
     FD = FunTmpl->getTemplatedDecl();
   else
     FD = cast<FunctionDecl>(LMT.D);
-  
+
   // To restore the context after late parsing.
   Sema::ContextRAII GlobalSavedContext(Actions, Actions.CurContext);
 
@@ -1242,7 +1242,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
                                    FunctionTemplate->getTemplatedDecl());
   if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(LMT.D))
     Actions.ActOnStartOfFunctionDef(getCurScope(), Function);
-  
+
 
   if (Tok.is(tok::kw_try)) {
     ParseFunctionTryBlock(LMT.D, FnScope);
