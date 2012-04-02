@@ -2024,12 +2024,12 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   OS << "namespace {\n";
   OS << "  struct OperandMatchEntry {\n";
   OS << "    static const char *const MnemonicTable;\n";
-  OS << "    unsigned OperandMask;\n";
-  OS << "    unsigned Mnemonic;\n";
-  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
-               << " Class;\n";
+  OS << "    uint32_t OperandMask;\n";
+  OS << "    uint32_t Mnemonic;\n";
   OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
-               << " RequiredFeatures;\n\n";
+               << " RequiredFeatures;\n";
+  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
+               << " Class;\n\n";
   OS << "    StringRef getMnemonic() const {\n";
   OS << "      return StringRef(MnemonicTable + Mnemonic + 1,\n";
   OS << "                       MnemonicTable[Mnemonic]);\n";
@@ -2080,10 +2080,7 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
     // Store a pascal-style length byte in the mnemonic.
     std::string LenMnemonic = char(II.Mnemonic.size()) + II.Mnemonic.str();
     OS << ", " << StringTable.GetOrAddStringOffset(LenMnemonic, false)
-       << " /* " << II.Mnemonic << " */";
-
-    OS << ", " << OMI.CI->Name
-       << ", ";
+       << " /* " << II.Mnemonic << " */, ";
 
     // Write the required features mask.
     if (!II.RequiredFeatures.empty()) {
@@ -2093,6 +2090,9 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
       }
     } else
       OS << "0";
+
+    OS << ", " << OMI.CI->Name;
+
     OS << " },\n";
   }
   OS << "};\n\n";
@@ -2321,14 +2321,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "namespace {\n";
   OS << "  struct MatchEntry {\n";
   OS << "    static const char *const MnemonicTable;\n";
+  OS << "    uint32_t Mnemonic;\n";
   OS << "    uint16_t Opcode;\n";
-  OS << "    unsigned Mnemonic;\n";
   OS << "    " << getMinimalTypeForRange(Info.Matchables.size())
                << " ConvertFn;\n";
-  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
-               << " Classes[" << MaxNumOperands << "];\n";
   OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
                << " RequiredFeatures;\n";
+  OS << "    " << getMinimalTypeForRange(Info.Classes.size())
+               << " Classes[" << MaxNumOperands << "];\n";
   OS << "    uint8_t AsmVariantID;\n\n";
   OS << "    StringRef getMnemonic() const {\n";
   OS << "      return StringRef(MnemonicTable + Mnemonic + 1,\n";
@@ -2363,18 +2363,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
     // Store a pascal-style length byte in the mnemonic.
     std::string LenMnemonic = char(II.Mnemonic.size()) + II.Mnemonic.str();
-    OS << "  { " << Target.getName() << "::"
+    OS << "  { " << StringTable.GetOrAddStringOffset(LenMnemonic, false)
+       << " /* " << II.Mnemonic << " */, "
+       << Target.getName() << "::"
        << II.getResultInst()->TheDef->getName() << ", "
-       << StringTable.GetOrAddStringOffset(LenMnemonic, false)
-       << " /* " << II.Mnemonic << " */"
-       << ", " << II.ConversionFnKind << ", { ";
-    for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
-      MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
-
-      if (i) OS << ", ";
-      OS << Op.Class->Name;
-    }
-    OS << " }, ";
+       << II.ConversionFnKind << ", ";
 
     // Write the required features mask.
     if (!II.RequiredFeatures.empty()) {
@@ -2384,7 +2377,15 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
       }
     } else
       OS << "0";
-    OS << ", " << II.AsmVariantID;
+
+    OS << ", { ";
+    for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
+      MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
+
+      if (i) OS << ", ";
+      OS << Op.Class->Name;
+    }
+    OS << " }, " << II.AsmVariantID;
     OS << "},\n";
   }
 
