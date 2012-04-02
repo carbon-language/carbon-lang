@@ -686,7 +686,7 @@ public:
   }
 };
 
-// These two functions are declare out of line as a workaround for building
+// These two functions are declared out of line as a workaround for building
 // with old (< r147295) versions of clang because of pr11642.
 template<class NodeT>
 bool DominatorTreeBase<NodeT>::dominates(const NodeT *A, const NodeT *B) {
