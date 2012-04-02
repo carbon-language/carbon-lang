@@ -446,7 +446,16 @@ unsigned PPCTargetLowering::getByValTypeAlignment(Type *Ty) const {
   // Darwin passes everything on 4 byte boundary.
   if (TM.getSubtarget<PPCSubtarget>().isDarwin())
     return 4;
-  // FIXME SVR4 TBD
+
+  // 16byte and wider vectors are passed on 16byte boundary.
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+    if (VTy->getBitWidth() >= 128)
+      return 16;
+
+  // The rest is 8 on PPC64 and 4 on PPC32 boundary.
+   if (PPCSubTarget.isPPC64())
+     return 8;
+
   return 4;
 }
 
