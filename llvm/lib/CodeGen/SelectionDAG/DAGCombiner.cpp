@@ -5342,7 +5342,8 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   // fold (bitconvert (fneg x)) -> (xor (bitconvert x), signbit)
   // fold (bitconvert (fabs x)) -> (and (bitconvert x), (not signbit))
   // This often reduces constant pool loads.
-  if ((N0.getOpcode() == ISD::FNEG || N0.getOpcode() == ISD::FABS) &&
+  if (((N0.getOpcode() == ISD::FNEG && !TLI.isFNegFree(VT)) ||
+       (N0.getOpcode() == ISD::FABS && !TLI.isFAbsFree(VT))) &&
       N0.getNode()->hasOneUse() && VT.isInteger() && !VT.isVector()) {
     SDValue NewConv = DAG.getNode(ISD::BITCAST, N0.getDebugLoc(), VT,
                                   N0.getOperand(0));
@@ -5993,7 +5994,7 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
 
   // Transform fneg(bitconvert(x)) -> bitconvert(x^sign) to avoid loading
   // constant pool values.
-  if (N0.getOpcode() == ISD::BITCAST &&
+  if (!TLI.isFNegFree(VT) && N0.getOpcode() == ISD::BITCAST &&
       !VT.isVector() &&
       N0.getNode()->hasOneUse() &&
       N0.getOperand(0).getValueType().isInteger()) {
@@ -6029,7 +6030,8 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
 
   // Transform fabs(bitconvert(x)) -> bitconvert(x&~sign) to avoid loading
   // constant pool values.
-  if (N0.getOpcode() == ISD::BITCAST && N0.getNode()->hasOneUse() &&
+  if (!TLI.isFAbsFree(VT) && 
+      N0.getOpcode() == ISD::BITCAST && N0.getNode()->hasOneUse() &&
       N0.getOperand(0).getValueType().isInteger() &&
       !N0.getOperand(0).getValueType().isVector()) {
     SDValue Int = N0.getOperand(0);
