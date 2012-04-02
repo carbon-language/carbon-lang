@@ -34,7 +34,7 @@ namespace {
 
   class MipsELFObjectWriter : public MCELFObjectTargetWriter {
   public:
-    MipsELFObjectWriter(uint8_t OSABI);
+    MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI);
 
     virtual ~MipsELFObjectWriter();
 
@@ -52,15 +52,23 @@ namespace {
   };
 }
 
-MipsELFObjectWriter::MipsELFObjectWriter(uint8_t OSABI)
-  : MCELFObjectTargetWriter(/*Is64Bit*/ false, OSABI, ELF::EM_MIPS,
+MipsELFObjectWriter::MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI)
+  : MCELFObjectTargetWriter(_is64Bit, OSABI, ELF::EM_MIPS,
                             /*HasRelocationAddend*/ false) {}
 
 MipsELFObjectWriter::~MipsELFObjectWriter() {}
 
-// FIXME: get the real EABI Version from the Triple.
+// FIXME: get the real EABI Version from the Subtarget class.
 unsigned MipsELFObjectWriter::getEFlags() const {
-  return ELF::EF_MIPS_NOREORDER | ELF::EF_MIPS_ARCH_32R2;
+
+  // FIXME: We can't tell if we are PIC (dynamic) or CPIC (static)
+  unsigned Flag = ELF::EF_MIPS_NOREORDER;
+
+  if (is64Bit())
+    Flag |= ELF::EF_MIPS_ARCH_64R2;
+  else
+    Flag |= ELF::EF_MIPS_ARCH_32R2;
+  return Flag;
 }
 
 const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
@@ -232,8 +240,10 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
     Relocs[--I] = R->Reloc;
 }
 
-MCObjectWriter *llvm::createMipsELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
-                                                bool IsLittleEndian) {
-  MCELFObjectTargetWriter *MOTW = new MipsELFObjectWriter(OSABI);
+MCObjectWriter *llvm::createMipsELFObjectWriter(raw_ostream &OS,
+                                                uint8_t OSABI,
+                                                bool IsLittleEndian,
+                                                bool Is64Bit) {
+  MCELFObjectTargetWriter *MOTW = new MipsELFObjectWriter(Is64Bit, OSABI);
   return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

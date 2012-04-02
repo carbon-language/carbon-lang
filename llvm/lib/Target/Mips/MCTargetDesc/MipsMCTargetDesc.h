@@ -39,12 +39,15 @@ MCCodeEmitter *createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
                                          const MCSubtargetInfo &STI,
                                          MCContext &Ctx);
 
-MCAsmBackend *createMipsAsmBackendEB(const Target &T, StringRef TT);
-MCAsmBackend *createMipsAsmBackendEL(const Target &T, StringRef TT);
+MCAsmBackend *createMipsAsmBackendEB32(const Target &T, StringRef TT);
+MCAsmBackend *createMipsAsmBackendEL32(const Target &T, StringRef TT);
+MCAsmBackend *createMipsAsmBackendEB64(const Target &T, StringRef TT);
+MCAsmBackend *createMipsAsmBackendEL64(const Target &T, StringRef TT);
 
 MCObjectWriter *createMipsELFObjectWriter(raw_ostream &OS,
                                           uint8_t OSABI,
-                                          bool IsLittleEndian);
+                                          bool IsLittleEndian,
+                                          bool Is64Bit);
 } // End llvm namespace
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

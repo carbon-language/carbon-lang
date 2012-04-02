@@ -67,13 +67,15 @@ namespace {
 class MipsAsmBackend : public MCAsmBackend {
   Triple::OSType OSType;
   bool IsLittle; // Big or little endian
+  bool Is64Bit;  // 32 or 64 bit words
 
 public:
-  MipsAsmBackend(const Target &T,  Triple::OSType _OSType, bool _isLittle) :
-    MCAsmBackend(), OSType(_OSType), IsLittle(_isLittle) {}
+  MipsAsmBackend(const Target &T,  Triple::OSType _OSType,
+                 bool _isLittle, bool _is64Bit)
+    :MCAsmBackend(), OSType(_OSType), IsLittle(_isLittle), Is64Bit(_is64Bit) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMipsELFObjectWriter(OS, OSType, IsLittle);
+    return createMipsELFObjectWriter(OS, OSType, IsLittle, Is64Bit);
   }
 
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
@@ -208,17 +210,28 @@ public:
   bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     return true;
   }
-};
+}; // class MipsAsmBackend
 
 } // namespace
 
 // MCAsmBackend
-MCAsmBackend *llvm::createMipsAsmBackendEL(const Target &T, StringRef TT) {
+MCAsmBackend *llvm::createMipsAsmBackendEL32(const Target &T, StringRef TT) {
   return new MipsAsmBackend(T, Triple(TT).getOS(),
-                            /*IsLittle*/true);
+                            /*IsLittle*/true, /*Is64Bit*/false);
 }
 
-MCAsmBackend *llvm::createMipsAsmBackendEB(const Target &T, StringRef TT) {
+MCAsmBackend *llvm::createMipsAsmBackendEB32(const Target &T, StringRef TT) {
   return new MipsAsmBackend(T, Triple(TT).getOS(),
-                            /*IsLittle*/false);
+                            /*IsLittle*/false, /*Is64Bit*/false);
 }
+
+MCAsmBackend *llvm::createMipsAsmBackendEL64(const Target &T, StringRef TT) {
+  return new MipsAsmBackend(T, Triple(TT).getOS(),
+                            /*IsLittle*/true, /*Is64Bit*/true);
+}
+
+MCAsmBackend *llvm::createMipsAsmBackendEB64(const Target &T, StringRef TT) {
+  return new MipsAsmBackend(T, Triple(TT).getOS(),
+                            /*IsLittle*/false, /*Is64Bit*/true);
+}
+
