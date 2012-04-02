@@ -44,3 +44,6 @@ N: Jeffrey Yasskin
 E: jyasskin@gmail.com
 E: jyasskin@google.com
 D: Linux fixes.
+
+N: Jonathan Sauer
+D: Minor patches, mostly related to constexpr
