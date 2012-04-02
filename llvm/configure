@@ -16371,7 +16371,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
     ac_save_CXXFLAGS=$CXXFLAGS
-    CXXFLAGS+=" -pedantic"
+    CXXFLAGS="$CXXFLAGS -pedantic"
     if test "$cross_compiling" = yes; then
   ac_cv_huge_val_sanity=yes
 else
