@@ -400,14 +400,23 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
   NameAndAttributes &info = _undefines[entry.getKey().data()];
 
   if (info.symbol == 0) {
-    // If we haven't seen this symbol before, save it and we may see it again.
-    StringMap<NameAndAttributes>::value_type
-      &asm_entry = _asm_defines.GetOrCreateValue(name);
-    NameAndAttributes &asm_info = _asm_defines[asm_entry.getKey().data()];
-    asm_info.name = name;
-    asm_info.attributes = scope;
-    asm_info.isFunction = false;
-    asm_info.symbol = 0;
+    // FIXME: This is trying to take care of module ASM like this:
+    //
+    //   module asm ".zerofill __FOO, __foo, _bar_baz_qux, 0"
+    //
+    // but is gross and its mother dresses it funny. Have the ASM parser give us
+    // more details for this type of situation so that we're not guessing so
+    // much.
+
+    // fill information structure
+    info.name = name;
+    info.attributes =
+      LTO_SYMBOL_PERMISSIONS_DATA | LTO_SYMBOL_DEFINITION_REGULAR | scope;
+    info.isFunction = false;
+    info.symbol = 0;
+
+    // add to table of symbols
+    _symbols.push_back(info);
     return;
   }
 
@@ -463,20 +472,6 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl, bool isFunc) {
   // we already have the symbol
   if (entry.getValue().name)
     return;
-
-  StringMap<NameAndAttributes>::value_type &asm_entry =
-    _asm_defines.GetOrCreateValue(name);
-
-  if (asm_entry.getValue().name != 0) {
-    if (isFunc)
-      addDefinedFunctionSymbol(cast<Function>(decl));
-    else
-      addDefinedDataSymbol(decl);
-
-    _symbols.back().attributes &= ~LTO_SYMBOL_SCOPE_MASK;
-    _symbols.back().attributes |= asm_entry.getValue().attributes;
-    return;
-  }
 
   NameAndAttributes info;
 

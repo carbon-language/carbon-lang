@@ -53,7 +53,6 @@ private:
   // _defines and _undefines only needed to disambiguate tentative definitions
   StringSet                               _defines;
   llvm::StringMap<NameAndAttributes>      _undefines;
-  llvm::StringMap<NameAndAttributes>      _asm_defines;
   std::vector<const char*>                _asm_undefines;
   llvm::MCContext                         _context;
 
