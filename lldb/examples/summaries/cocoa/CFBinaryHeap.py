@@ -10,6 +10,7 @@ import lldb
 import ctypes
 import objc_runtime
 import metrics
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -25,6 +26,7 @@ class CFBinaryHeapRef_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -35,15 +37,18 @@ class CFBinaryHeapRef_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	# 8 bytes on i386
 	# 16 bytes on x64
 	# most probably 2 pointers
 	def offset(self):
+		logger = Logger.Logger()
 		return 2 * self.sys_params.pointer_size
 
 	def length(self):
+		logger = Logger.Logger()
 		size = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -55,14 +60,17 @@ class CFBinaryHeapUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def length(self):
+		logger = Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)CFBinaryHeapGetCount(" + stream.GetData() + " )");
@@ -72,6 +80,7 @@ class CFBinaryHeapUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
+	logger = Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -79,6 +88,9 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	actual_name = class_data.class_name()
+	
+	logger >> "name string got was " + str(name_string) + " but actual name is " + str(actual_name)
+	
 	if class_data.is_cftype():
 		# CFBinaryHeap does not expose an actual NSWrapper type, so we have to check that this is
 		# an NSCFType and then check we are a pointer-to CFBinaryHeap
@@ -96,6 +108,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def CFBinaryHeap_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -104,6 +117,7 @@ def CFBinaryHeap_SummaryProvider (valobj,dict):
 			summary = provider.length();
 		except:
 			summary = None
+		logger >> "summary got from provider: " + str(summary)
 		# for some reason, one needs to clear some bits for the count
 		# to be correct when using CF(Mutable)BagRef on x64
 		# the bit mask was derived through experimentation

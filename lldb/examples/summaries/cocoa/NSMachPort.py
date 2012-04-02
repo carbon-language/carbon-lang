@@ -10,6 +10,7 @@ import lldb
 import ctypes
 import objc_runtime
 import metrics
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -25,6 +26,7 @@ class NSMachPortKnown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -35,18 +37,21 @@ class NSMachPortKnown_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	# one pointer is the ISA
 	# then we have one other internal pointer, plus
 	# 4 bytes worth of flags. hence, these values
 	def offset(self):
+		logger = Logger.Logger()
 		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
 
 	def port(self):
+		logger = Logger.Logger()
 		vport = self.valobj.CreateChildAtOffset("port",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -58,14 +63,17 @@ class NSMachPortUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def port(self):
+		logger = Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("port","(int)[" + stream.GetData() + " machPort]")
@@ -75,12 +83,15 @@ class NSMachPortUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
+	logger = Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		return wrapper
 	
 	name_string = class_data.class_name()
+	logger >> "class name is: " + str(name_string)
+
 	if name_string == 'NSMachPort':
 		wrapper = NSMachPortKnown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
@@ -90,6 +101,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def NSMachPort_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -98,6 +110,7 @@ def NSMachPort_SummaryProvider (valobj,dict):
 			summary = provider.port();
 		except:
 			summary = None
+		logger >> "got summary " + str(summary)
 		if summary == None:
 			summary = '<variable is not NSMachPort>'
 		if isinstance(summary, basestring):

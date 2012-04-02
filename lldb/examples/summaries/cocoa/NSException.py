@@ -10,6 +10,7 @@ import objc_runtime
 import metrics
 import CFString
 import lldb
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -22,6 +23,7 @@ class NSKnownException_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.id):
@@ -29,14 +31,18 @@ class NSKnownException_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def offset_name(self):
+		logger = Logger.Logger()
 		return self.sys_params.pointer_size
 	def offset_reason(self):
+		logger = Logger.Logger()
 		return 2*self.sys_params.pointer_size
 
 	def description(self):
+		logger = Logger.Logger()
 		name_ptr = self.valobj.CreateChildAtOffset("name",
 							self.offset_name(),
 							self.sys_params.types_cache.id)
@@ -50,14 +56,17 @@ class NSUnknownException_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def description(self):
+		logger = Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		name_vo = self.valobj.CreateValueFromExpression("name","(NSString*)[" + stream.GetData() + " name]");
@@ -68,12 +77,15 @@ class NSUnknownException_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
+	logger = Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		return wrapper
 	
 	name_string = class_data.class_name()
+	logger >> "class name is: " + str(name_string)
+
 	if name_string == 'NSException':
 		wrapper = NSKnownException_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
@@ -83,6 +95,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def NSException_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -91,6 +104,7 @@ def NSException_SummaryProvider (valobj,dict):
 			summary = provider.description();
 		except:
 			summary = None
+		logger >> "got summary " + str(summary)
 		if summary == None:
 			summary = '<variable is not NSException>'
 		return str(summary)

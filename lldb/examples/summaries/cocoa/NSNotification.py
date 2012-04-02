@@ -10,6 +10,7 @@ import objc_runtime
 import metrics
 import CFString
 import lldb
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -22,6 +23,7 @@ class NSConcreteNotification_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.id):
@@ -29,13 +31,16 @@ class NSConcreteNotification_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	# skip the ISA and go to the name pointer
 	def offset(self):
+		logger = Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def name(self):
+		logger = Logger.Logger()
 		string_ptr = self.valobj.CreateChildAtOffset("name",
 							self.offset(),
 							self.sys_params.types_cache.id)
@@ -47,14 +52,17 @@ class NSNotificationUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update()
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def name(self):
+		logger = Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		name_vo = self.valobj.CreateValueFromExpression("name","(NSString*)[" + stream.GetData() + " name]")
@@ -64,12 +72,15 @@ class NSNotificationUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
+	logger = Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		return wrapper
 	
 	name_string = class_data.class_name()
+	logger >> "class name is: " + str(name_string)
+
 	if name_string == 'NSConcreteNotification':
 		wrapper = NSConcreteNotification_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
@@ -79,6 +90,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def NSNotification_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -87,6 +99,7 @@ def NSNotification_SummaryProvider (valobj,dict):
 			summary = provider.name();
 		except:
 			summary = None
+		logger >> "got summary " + str(summary)
 		if summary == None:
 			summary = '<variable is not NSNotification>'
 		return str(summary)

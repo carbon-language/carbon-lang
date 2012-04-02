@@ -14,6 +14,7 @@ import struct
 import time
 import datetime
 import CFString
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -28,11 +29,13 @@ python_epoch = time.gmtime(0).tm_year
 osx_epoch = datetime.date(2001,1,1).timetuple()
 
 def mkgmtime(t):
-    return time.mktime(t)-time.timezone
+	logger = Logger.Logger()
+	return time.mktime(t)-time.timezone
 
 osx_epoch = mkgmtime(osx_epoch)
 
 def osx_to_python_time(osx):
+	logger = Logger.Logger()
 	if python_epoch <= 2001:
 		return osx + osx_epoch
 	else:
@@ -40,10 +43,12 @@ def osx_to_python_time(osx):
 
 # represent a struct_time as a string in the format used by Xcode
 def xcode_format_time(X):
+	logger = Logger.Logger()
 	return time.strftime('%Y-%m-%d %H:%M:%S %Z',X)
 
 # represent a count-since-epoch as a string in the format used by Xcode
 def xcode_format_count(X):
+	logger = Logger.Logger()
 	return xcode_format_time(time.localtime(X))
 
 # despite the similary to synthetic children providers, these classes are not
@@ -54,6 +59,7 @@ class NSTaggedDate_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, info_bits, data, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
@@ -62,9 +68,11 @@ class NSTaggedDate_SummaryProvider:
 		self.data = ((data << 8) | (info_bits << 4))
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def value(self):
+		logger = Logger.Logger()
 		# the value of the date-time object is wrapped into the pointer value
 		# unfortunately, it is made as a time-delta after Jan 1 2001 midnight GMT
 		# while all Python knows about is the "epoch", which is a platform-dependent
@@ -78,6 +86,7 @@ class NSUntaggedDate_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.double):
@@ -85,12 +94,15 @@ class NSUntaggedDate_SummaryProvider:
 		self.update()
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def offset(self):
+		logger = Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def value(self):
+		logger = Logger.Logger()
 		value = self.valobj.CreateChildAtOffset("value",
 							self.offset(),
 							self.sys_params.types_cache.double)
@@ -102,6 +114,7 @@ class NSCalendarDate_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.double):
@@ -109,12 +122,15 @@ class NSCalendarDate_SummaryProvider:
 		self.update()
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def offset(self):
+		logger = Logger.Logger()
 		return 2*self.sys_params.pointer_size
 
 	def value(self):
+		logger = Logger.Logger()
 		value = self.valobj.CreateChildAtOffset("value",
 							self.offset(),
 							self.sys_params.types_cache.double)
@@ -126,6 +142,7 @@ class NSTimeZoneClass_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.voidptr):
@@ -133,12 +150,15 @@ class NSTimeZoneClass_SummaryProvider:
 		self.update()
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def offset(self):
+		logger = Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def timezone(self):
+		logger = Logger.Logger()
 		tz_string = self.valobj.CreateChildAtOffset("tz_name",
 							self.offset(),
 							self.sys_params.types_cache.voidptr)
@@ -149,13 +169,16 @@ class NSUnknownDate_SummaryProvider:
 		pass
 
 	def __init__(self, valobj):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.update()
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def value(self):
+		logger = Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		expr = "(NSString*)[" + stream.GetData() + " description]"
@@ -165,12 +188,15 @@ class NSUnknownDate_SummaryProvider:
 		return '<variable is not NSDate>'
 
 def GetSummary_Impl(valobj):
+	logger = Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		return wrapper
 	
 	name_string = class_data.class_name()
+	logger >> "class name is: " + str(name_string)
+
 	if name_string == 'NSDate' or name_string == '__NSDate' or name_string == '__NSTaggedDate':
 		if class_data.is_tagged():
 			wrapper = NSTaggedDate_SummaryProvider(valobj,class_data.info_bits(),class_data.value(), class_data.sys_params)
@@ -191,6 +217,7 @@ def GetSummary_Impl(valobj):
 
 
 def NSDate_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -205,6 +232,7 @@ def NSDate_SummaryProvider (valobj,dict):
 	return 'Summary Unavailable'
 
 def NSTimeZone_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -213,6 +241,7 @@ def NSTimeZone_SummaryProvider (valobj,dict):
 			summary = provider.timezone();
 		except:
 			summary = None
+		logger >> "got summary " + str(summary)
 		if summary == None:
 			summary = '<variable is not NSTimeZone>'
 		return str(summary)
@@ -220,6 +249,7 @@ def NSTimeZone_SummaryProvider (valobj,dict):
 
 
 def CFAbsoluteTime_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	try:
 		value_double = struct.unpack('d', struct.pack('Q', valobj.GetValueAsUnsigned(0)))[0]
 		return xcode_format_count(osx_to_python_time(value_double))

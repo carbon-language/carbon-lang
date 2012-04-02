@@ -10,6 +10,7 @@ import lldb
 import ctypes
 import objc_runtime
 import metrics
+import Logger
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -25,6 +26,7 @@ class NSCFDictionary_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -35,6 +37,7 @@ class NSCFDictionary_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	# empirically determined on both 32 and 64bit desktop Mac OS X
@@ -42,12 +45,14 @@ class NSCFDictionary_SummaryProvider:
 	# the description of __CFDictionary is not readily available so most
 	# of this is guesswork, plain and simple
 	def offset(self):
+		logger = Logger.Logger()
 		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
 
 	def num_children(self):
+		logger = Logger.Logger()
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -59,6 +64,7 @@ class NSDictionaryI_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -69,13 +75,16 @@ class NSDictionaryI_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
+		logger = Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def num_children(self):
+		logger = Logger.Logger()
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -95,6 +104,7 @@ class NSDictionaryM_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -105,6 +115,7 @@ class NSDictionaryM_SummaryProvider:
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	# we just need to skip the ISA and the count immediately follows
@@ -112,6 +123,7 @@ class NSDictionaryM_SummaryProvider:
 		return self.sys_params.pointer_size
 
 	def num_children(self):
+		logger = Logger.Logger()
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -131,14 +143,17 @@ class NSDictionaryUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
+		logger = Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
+		logger = Logger.Logger()
 		self.adjust_for_architecture();
 
 	def num_children(self):
+		logger = Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)[" + stream.GetData() + " count]");
@@ -148,12 +163,16 @@ class NSDictionaryUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
+	logger = Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		return wrapper
 	
 	name_string = class_data.class_name()
+	
+	logger >> "class name is: " + str(name_string)
+	
 	if name_string == '__NSCFDictionary':
 		wrapper = NSCFDictionary_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
@@ -169,6 +188,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def CFDictionary_SummaryProvider (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -177,6 +197,7 @@ def CFDictionary_SummaryProvider (valobj,dict):
 			summary = provider.num_children();
 		except:
 			summary = None
+		logger >> "got summary " + str(summary)
 		if summary == None:
 			return '<variable is not NSDictionary>'
 		if isinstance(summary,basestring):
@@ -185,6 +206,7 @@ def CFDictionary_SummaryProvider (valobj,dict):
 	return 'Summary Unavailable'
 
 def CFDictionary_SummaryProvider2 (valobj,dict):
+	logger = Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):
@@ -193,6 +215,7 @@ def CFDictionary_SummaryProvider2 (valobj,dict):
 			summary = provider.num_children();
 		except:
 			summary = None
+		logger >> "got summary " + str(summary)
 		if summary == None:
 			summary = '<variable is not CFDictionary>'
 		if isinstance(summary,basestring):
