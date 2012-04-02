@@ -52,7 +52,13 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
-    
+
+    bool
+    IsExternal();
+
+    bool
+    IsSynthetic();
+
     %pythoncode %{
         def get_instructions_from_current_target (self):
             return self.GetInstructions (target)
@@ -77,6 +83,13 @@ public:
         
         __swig_getmethods__["instructions"] = get_instructions_from_current_target
         if _newclass: x = property(get_instructions_from_current_target, None)
+
+        __swig_getmethods__["external"] = IsExternal
+        if _newclass: x = property(IsExternal, None)
+
+        __swig_getmethods__["synthetic"] = IsSynthetic
+        if _newclass: x = property(IsSynthetic, None)
+
         
     %}
 

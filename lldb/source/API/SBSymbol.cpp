@@ -199,3 +199,20 @@ SBSymbol::GetType ()
         return m_opaque_ptr->GetType();
     return eSymbolTypeInvalid;
 }
+
+bool
+SBSymbol::IsExternal()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->IsExternal();
+    return false;
+}
+
+bool
+SBSymbol::IsSynthetic()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->IsSynthetic();
+    return false;
+}
+
