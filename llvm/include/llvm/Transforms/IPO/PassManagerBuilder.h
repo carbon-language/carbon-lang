@@ -131,8 +131,9 @@ public:
   /// populateModulePassManager - This sets up the primary pass manager.
   void populateModulePassManager(PassManagerBase &MPM);
   void populateLTOPassManager(PassManagerBase &PM, bool Internalize,
-                              bool RunInliner);
+                              bool RunInliner, bool DisableGVNLoadPRE = false);
 };
+
 /// Registers a function for adding a standard set of passes.  This should be
 /// used by optimizer plugins to allow all front ends to transparently use
 /// them.  Create a static instance of this class in your plugin, providing a
@@ -143,5 +144,6 @@ struct RegisterStandardPasses {
     PassManagerBuilder::addGlobalExtension(Ty, Fn);
   }
 };
+
 } // end namespace llvm
 #endif

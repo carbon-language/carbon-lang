@@ -207,7 +207,8 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 
 void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
                                                 bool Internalize,
-                                                bool RunInliner) {
+                                                bool RunInliner,
+                                                bool DisableGVNLoadPRE) {
   // Provide AliasAnalysis services for optimizations.
   addInitialAliasAnalysisPasses(PM);
 
@@ -263,9 +264,9 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   PM.add(createFunctionAttrsPass()); // Add nocapture.
   PM.add(createGlobalsModRefPass()); // IP alias analysis.
 
-  PM.add(createLICMPass());      // Hoist loop invariants.
-  PM.add(createGVNPass());       // Remove redundancies.
-  PM.add(createMemCpyOptPass()); // Remove dead memcpys.
+  PM.add(createLICMPass());                 // Hoist loop invariants.
+  PM.add(createGVNPass(DisableGVNLoadPRE)); // Remove redundancies.
+  PM.add(createMemCpyOptPass());            // Remove dead memcpys.
   // Nuke dead stores.
   PM.add(createDeadStoreEliminationPass());
 

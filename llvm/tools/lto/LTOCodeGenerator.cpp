@@ -49,6 +49,9 @@ using namespace llvm;
 static cl::opt<bool> DisableInline("disable-inlining",
   cl::desc("Do not run the inliner pass"));
 
+static cl::opt<bool> DisableGVNLoadPRE("disable-gvn-loadpre",
+  cl::desc("Do not run the GVN load PRE pass"));
+
 const char* LTOCodeGenerator::getVersionString() {
 #ifdef LLVM_VERSION_INFO
   return PACKAGE_NAME " version " PACKAGE_VERSION ", " LLVM_VERSION_INFO;
@@ -353,7 +356,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.add(new TargetData(*_target->getTargetData()));
 
   PassManagerBuilder().populateLTOPassManager(passes, /*Internalize=*/ false,
-                                              !DisableInline);
+                                              !DisableInline,
+                                              DisableGVNLoadPRE);
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());
