@@ -1349,6 +1349,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-emit-pch");
     } else if (JA.getType() == types::TY_RewrittenObjC) {
       CmdArgs.push_back("-rewrite-objc");
+    } else if (JA.getType() == types::TY_RewrittenLegacyObjC) {
+      CmdArgs.push_back("-rewrite-objc");
       IsRewriter = true;
     } else {
       assert(JA.getType() == types::TY_PP_Asm &&
