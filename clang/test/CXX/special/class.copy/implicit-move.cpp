@@ -28,7 +28,7 @@ struct HasCopyAssignment {
 struct HasMoveConstructor {
   ThrowingCopy tc;
   HasMoveConstructor() noexcept;
-  HasMoveConstructor(HasMoveConstructor &&) noexcept; // expected-note {{deleted because 'HasMoveConstructor' has a user-declared move constructor}}
+  HasMoveConstructor(HasMoveConstructor &&) noexcept; // expected-note {{copy assignment operator is implicitly deleted because 'HasMoveConstructor' has a user-declared move constructor}}
 };
 
 struct HasMoveAssignment { // expected-note {{implicit copy constructor}}

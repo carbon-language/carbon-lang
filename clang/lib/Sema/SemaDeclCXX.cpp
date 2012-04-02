@@ -4668,7 +4668,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     if (UserDeclaredMove) {
       Diag(UserDeclaredMove->getLocation(),
            diag::note_deleted_copy_user_declared_move)
-        << (CSM == CXXMoveAssignment) << RD
+        << (CSM == CXXCopyAssignment) << RD
         << UserDeclaredMove->isMoveAssignmentOperator();
       return true;
     }
