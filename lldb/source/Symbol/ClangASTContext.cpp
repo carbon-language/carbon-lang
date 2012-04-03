@@ -717,209 +717,199 @@ clang_type_t
 ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name, uint32_t dw_ate, uint32_t bit_size)
 {
     ASTContext *ast = getASTContext();
-
-    #define streq(a,b) strcmp(a,b) == 0
+    
+#define streq(a,b) strcmp(a,b) == 0
     assert (ast != NULL);
     if (ast)
     {
         switch (dw_ate)
         {
-        default:
-            break;
-
-        case DW_ATE_address:
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->VoidPtrTy))
-                return ast->VoidPtrTy.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_boolean:
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->BoolTy))
-                return ast->BoolTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
-                return ast->UnsignedCharTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
-                return ast->UnsignedShortTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedIntTy))
-                return ast->UnsignedIntTy.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_lo_user:
-            // This has been seen to mean DW_AT_complex_integer
-            if (type_name)
-            {
-                if (::strstr(type_name, "complex"))
-                {
-                    clang_type_t complex_int_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("int", DW_ATE_signed, bit_size/2);
-                    return ast->getComplexType (QualType::getFromOpaquePtr(complex_int_clang_type)).getAsOpaquePtr();
-                }
-            }
-            break;
-            
-        case DW_ATE_complex_float:
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->FloatComplexTy))
-                return ast->FloatComplexTy.getAsOpaquePtr();
-            else if (QualTypeMatchesBitSize (bit_size, ast, ast->DoubleComplexTy))
-                return ast->DoubleComplexTy.getAsOpaquePtr();
-            else if (QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleComplexTy))
-                return ast->LongDoubleComplexTy.getAsOpaquePtr();
-            else 
-            {
-                clang_type_t complex_float_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("float", DW_ATE_float, bit_size/2);
-                return ast->getComplexType (QualType::getFromOpaquePtr(complex_float_clang_type)).getAsOpaquePtr();
-            }
-            break;
-
-        case DW_ATE_float:
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->FloatTy))
-                return ast->FloatTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->DoubleTy))
-                return ast->DoubleTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleTy))
-                return ast->LongDoubleTy.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_signed:
-            if (type_name)
-            {
-                if (strstr(type_name, "long long"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->LongLongTy))
-                        return ast->LongLongTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "long"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->LongTy))
-                        return ast->LongTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "short"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->ShortTy))
-                        return ast->ShortTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "char"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
-                        return ast->CharTy.getAsOpaquePtr();
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
-                        return ast->SignedCharTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "int"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->IntTy))
-                        return ast->IntTy.getAsOpaquePtr();
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->Int128Ty))
-                        return ast->Int128Ty.getAsOpaquePtr();
-                }
-                else if (streq(type_name, "wchar_t"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy))
-                        return ast->WCharTy.getAsOpaquePtr();
-                }
-                else if (streq(type_name, "void"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->VoidTy))
-                        return ast->VoidTy.getAsOpaquePtr();
-                }
-            }
-            // We weren't able to match up a type name, just search by size
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
-                return ast->CharTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->ShortTy))
-                return ast->ShortTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->IntTy))
-                return ast->IntTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->LongTy))
-                return ast->LongTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->LongLongTy))
-                return ast->LongLongTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->Int128Ty))
-                return ast->Int128Ty.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_signed_char:
-            if (type_name)
-            {
-                if (streq(type_name, "signed char"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
-                        return ast->SignedCharTy.getAsOpaquePtr();
-                }
-            }
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
-                return ast->CharTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
-                return ast->SignedCharTy.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_unsigned:
-            if (type_name)
-            {
-                if (strstr(type_name, "long long"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongLongTy))
-                        return ast->UnsignedLongLongTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "long"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongTy))
-                        return ast->UnsignedLongTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "short"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
-                        return ast->UnsignedShortTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "char"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
-                        return ast->UnsignedCharTy.getAsOpaquePtr();
-                }
-                else if (strstr(type_name, "int"))
-                {
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedIntTy))
-                        return ast->UnsignedIntTy.getAsOpaquePtr();
-                    if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedInt128Ty))
-                        return ast->UnsignedInt128Ty.getAsOpaquePtr();
-                }
-            }
-            // We weren't able to match up a type name, just search by size
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
-                return ast->UnsignedCharTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
-                return ast->UnsignedShortTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedIntTy))
-                return ast->UnsignedIntTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongTy))
-                return ast->UnsignedLongTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongLongTy))
-                return ast->UnsignedLongLongTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedInt128Ty))
-                return ast->UnsignedInt128Ty.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_unsigned_char:
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
-                return ast->UnsignedCharTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
-                return ast->UnsignedShortTy.getAsOpaquePtr();
-            break;
-
-        case DW_ATE_imaginary_float:
-            break;
+            default:
+                break;
                 
-        case DW_ATE_UTF:
-            if (type_name)
-            {
-                if (streq(type_name, "char16_t"))
+            case DW_ATE_address:
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->VoidPtrTy))
+                    return ast->VoidPtrTy.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_boolean:
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->BoolTy))
+                    return ast->BoolTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
+                    return ast->UnsignedCharTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
+                    return ast->UnsignedShortTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedIntTy))
+                    return ast->UnsignedIntTy.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_lo_user:
+                // This has been seen to mean DW_AT_complex_integer
+                if (type_name)
                 {
-                    return ast->Char16Ty.getAsOpaquePtr();
+                    if (::strstr(type_name, "complex"))
+                    {
+                        clang_type_t complex_int_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("int", DW_ATE_signed, bit_size/2);
+                        return ast->getComplexType (QualType::getFromOpaquePtr(complex_int_clang_type)).getAsOpaquePtr();
+                    }
                 }
-                else if (streq(type_name, "char32_t"))
+                break;
+                
+            case DW_ATE_complex_float:
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->FloatComplexTy))
+                    return ast->FloatComplexTy.getAsOpaquePtr();
+                else if (QualTypeMatchesBitSize (bit_size, ast, ast->DoubleComplexTy))
+                    return ast->DoubleComplexTy.getAsOpaquePtr();
+                else if (QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleComplexTy))
+                    return ast->LongDoubleComplexTy.getAsOpaquePtr();
+                else 
                 {
-                    return ast->Char32Ty.getAsOpaquePtr();
+                    clang_type_t complex_float_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("float", DW_ATE_float, bit_size/2);
+                    return ast->getComplexType (QualType::getFromOpaquePtr(complex_float_clang_type)).getAsOpaquePtr();
                 }
-            }
-            break;
+                break;
+                
+            case DW_ATE_float:
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->FloatTy))
+                    return ast->FloatTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->DoubleTy))
+                    return ast->DoubleTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleTy))
+                    return ast->LongDoubleTy.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_signed:
+                if (type_name)
+                {
+                    if (streq(type_name, "wchar_t") &&
+                        QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy))
+                        return ast->WCharTy.getAsOpaquePtr();
+                    if (streq(type_name, "void") &&
+                        QualTypeMatchesBitSize (bit_size, ast, ast->VoidTy))
+                        return ast->VoidTy.getAsOpaquePtr();
+                    if (strstr(type_name, "long long") &&
+                        QualTypeMatchesBitSize (bit_size, ast, ast->LongLongTy))
+                        return ast->LongLongTy.getAsOpaquePtr();
+                    if (strstr(type_name, "long") &&
+                        QualTypeMatchesBitSize (bit_size, ast, ast->LongTy))
+                        return ast->LongTy.getAsOpaquePtr();
+                    if (strstr(type_name, "short") &&
+                        QualTypeMatchesBitSize (bit_size, ast, ast->ShortTy))
+                        return ast->ShortTy.getAsOpaquePtr();
+                    if (strstr(type_name, "char"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
+                            return ast->CharTy.getAsOpaquePtr();
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
+                            return ast->SignedCharTy.getAsOpaquePtr();
+                    }
+                    if (strstr(type_name, "int"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->IntTy))
+                            return ast->IntTy.getAsOpaquePtr();
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->Int128Ty))
+                            return ast->Int128Ty.getAsOpaquePtr();
+                    }
+                }
+                // We weren't able to match up a type name, just search by size
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
+                    return ast->CharTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->ShortTy))
+                    return ast->ShortTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->IntTy))
+                    return ast->IntTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->LongTy))
+                    return ast->LongTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->LongLongTy))
+                    return ast->LongLongTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->Int128Ty))
+                    return ast->Int128Ty.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_signed_char:
+                if (type_name)
+                {
+                    if (streq(type_name, "signed char"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
+                            return ast->SignedCharTy.getAsOpaquePtr();
+                    }
+                }
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
+                    return ast->CharTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->SignedCharTy))
+                    return ast->SignedCharTy.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_unsigned:
+                if (type_name)
+                {
+                    if (strstr(type_name, "long long"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongLongTy))
+                            return ast->UnsignedLongLongTy.getAsOpaquePtr();
+                    }
+                    else if (strstr(type_name, "long"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongTy))
+                            return ast->UnsignedLongTy.getAsOpaquePtr();
+                    }
+                    else if (strstr(type_name, "short"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
+                            return ast->UnsignedShortTy.getAsOpaquePtr();
+                    }
+                    else if (strstr(type_name, "char"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
+                            return ast->UnsignedCharTy.getAsOpaquePtr();
+                    }
+                    else if (strstr(type_name, "int"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedIntTy))
+                            return ast->UnsignedIntTy.getAsOpaquePtr();
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedInt128Ty))
+                            return ast->UnsignedInt128Ty.getAsOpaquePtr();
+                    }
+                }
+                // We weren't able to match up a type name, just search by size
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
+                    return ast->UnsignedCharTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
+                    return ast->UnsignedShortTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedIntTy))
+                    return ast->UnsignedIntTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongTy))
+                    return ast->UnsignedLongTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongLongTy))
+                    return ast->UnsignedLongLongTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedInt128Ty))
+                    return ast->UnsignedInt128Ty.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_unsigned_char:
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
+                    return ast->UnsignedCharTy.getAsOpaquePtr();
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
+                    return ast->UnsignedShortTy.getAsOpaquePtr();
+                break;
+                
+            case DW_ATE_imaginary_float:
+                break;
+                
+            case DW_ATE_UTF:
+                if (type_name)
+                {
+                    if (streq(type_name, "char16_t"))
+                    {
+                        return ast->Char16Ty.getAsOpaquePtr();
+                    }
+                    else if (streq(type_name, "char32_t"))
+                    {
+                        return ast->Char32Ty.getAsOpaquePtr();
+                    }
+                }
+                break;
         }
     }
     // This assert should fire for anything that we don't catch above so we know
