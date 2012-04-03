@@ -81,6 +81,13 @@ public:
         m_default_mm_ap->setPoisonMemory (poison);
     }
 
+    virtual void *getPointerToNamedFunction(const std::string &Name,
+                                            bool AbortOnFailure = true)
+    {
+        return m_default_mm_ap->getPointerToNamedFunction(Name,
+                                                          AbortOnFailure);
+    }
+
     //------------------------------------------------------------------
     /// Passthrough interface stub
     //------------------------------------------------------------------
