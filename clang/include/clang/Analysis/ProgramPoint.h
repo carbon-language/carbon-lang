@@ -19,6 +19,7 @@
 #include "clang/Analysis/CFG.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/StringRef.h"
@@ -55,39 +56,25 @@ public:
               EpsilonKind};
 
 private:
-  std::pair<uintptr_t, const void *> Data;
+  llvm::PointerIntPair<const void *, 2, unsigned> Data1;
+  llvm::PointerIntPair<const void *, 2, unsigned> Data2;
 
   // The LocationContext could be NULL to allow ProgramPoint to be used in
   // context insensitive analysis.
-  uintptr_t L;
+  llvm::PointerIntPair<const LocationContext *, 2, unsigned> L;
+
   const ProgramPointTag *Tag;
 
   ProgramPoint();
-  
-  static uintptr_t mangleUpperKindBits(Kind K, const void *p) {
-    uintptr_t tmp = (uintptr_t) p;
-    uintptr_t k_int = (uintptr_t) K;
-    k_int >>= 3;
-    assert((k_int & 0x3) == k_int);
-    tmp |= k_int;
-    return tmp;
-  }
-  
-  static uintptr_t mangleLowerKindBits(Kind K, const void *p) {
-    uintptr_t tmp = (uintptr_t) p;
-    uintptr_t k_int = (uintptr_t) K;
-    k_int &= 0x7;
-    tmp |= k_int;
-    return tmp;
-  }
   
 protected:
   ProgramPoint(const void *P,
                Kind k,
                const LocationContext *l,
                const ProgramPointTag *tag = 0)
-    : Data(mangleUpperKindBits(k, P), static_cast<const void*>(NULL)),
-      L(mangleLowerKindBits(k, l)),
+    : Data1(P, ((unsigned) k) & 0x3),
+      Data2(0, (((unsigned) k) >> 2) & 0x3),
+      L(l, (((unsigned) k) >> 4) & 0x3),
       Tag(tag) {
         assert(getKind() == k);
         assert(getLocationContext() == l);
@@ -99,34 +86,37 @@ protected:
                Kind k,
                const LocationContext *l,
                const ProgramPointTag *tag = 0)
-    : Data(mangleUpperKindBits(k, P1), P2),
-      L(mangleLowerKindBits(k, l)),
+    : Data1(P1, ((unsigned) k) & 0x3),
+      Data2(P2, (((unsigned) k) >> 2) & 0x3),
+      L(l, (((unsigned) k) >> 4) & 0x3),
       Tag(tag) {}
 
 protected:
-  const void *getData1() const {
-    return (void*) (Data.first & ~((uintptr_t) 0x3));
-  }
-
-  const void *getData2() const { return Data.second; }
-  void setData2(const void *d) { Data.second = d; }
+  const void *getData1() const { return Data1.getPointer(); }
+  const void *getData2() const { return Data2.getPointer(); }
+  void setData2(const void *d) { Data2.setPointer(d); }
 
 public:
   /// Create a new ProgramPoint object that is the same as the original
   /// except for using the specified tag value.
   ProgramPoint withTag(const ProgramPointTag *tag) const {
-    return ProgramPoint(getData1(), Data.second, getKind(),
+    return ProgramPoint(getData1(), getData2(), getKind(),
                         getLocationContext(), tag);
   }
 
   Kind getKind() const {
-    return (Kind) (((Data.first & 0x3) << 3) | (L & 0x7));
+    unsigned x = L.getInt();
+    x <<= 2;
+    x |= Data2.getInt();
+    x <<= 2;
+    x |= Data1.getInt();
+    return (Kind) x;
   }
 
   const ProgramPointTag *getTag() const { return Tag; }
 
   const LocationContext *getLocationContext() const {
-    return (LocationContext*) (L & ~((uintptr_t) 0x7));
+    return L.getPointer();
   }
 
   // For use with DenseMap.  This hash is probably slow.
@@ -139,17 +129,23 @@ public:
   static bool classof(const ProgramPoint*) { return true; }
 
   bool operator==(const ProgramPoint & RHS) const {
-    return Data == RHS.Data && L == RHS.L && Tag == RHS.Tag;
+    return Data1 == Data1 &&
+           Data2 == RHS.Data2 &&
+           L == RHS.L &&
+           Tag == RHS.Tag;
   }
 
   bool operator!=(const ProgramPoint &RHS) const {
-    return Data != RHS.Data || L != RHS.L || Tag != RHS.Tag;
+    return Data1 != RHS.Data1 ||
+           Data2 != RHS.Data2 ||
+           L != RHS.L ||
+           Tag != RHS.Tag;
   }
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getKind());
     ID.AddPointer(getData1());
-    ID.AddPointer(Data.second);
+    ID.AddPointer(getData2());
     ID.AddPointer(getLocationContext());
     ID.AddPointer(Tag);
   }
@@ -157,7 +153,6 @@ public:
   static ProgramPoint getProgramPoint(const Stmt *S, ProgramPoint::Kind K,
                                       const LocationContext *LC,
                                       const ProgramPointTag *tag);
-
 };
 
 class BlockEntrance : public ProgramPoint {
