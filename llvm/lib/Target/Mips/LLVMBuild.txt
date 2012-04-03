@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = AsmParser InstPrinter MCTargetDesc TargetInfo
+subdirectories = AsmParser Disassembler InstPrinter MCTargetDesc TargetInfo
 
 [component_0]
 type = TargetGroup
@@ -24,6 +24,7 @@ name = Mips
 parent = Target
 has_asmparser = 1
 has_asmprinter = 1
+has_disassembler = 1
 has_jit = 1
 
 [component_1]
