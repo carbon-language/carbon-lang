@@ -31,13 +31,13 @@ import commands
 import optparse
 import os
 import plistlib
-#import pprint # pp = pprint.PrettyPrinter(indent=4); pp.pprint(command_args)
+import pprint # pp = pprint.PrettyPrinter(indent=4); pp.pprint(command_args)
 import re
 import shlex
 import sys
 import time
 import uuid
-
+import symbolication
 
 PARSE_MODE_NORMAL = 0
 PARSE_MODE_THREAD = 1
@@ -45,7 +45,7 @@ PARSE_MODE_IMAGES = 2
 PARSE_MODE_THREGS = 3
 PARSE_MODE_SYSTEM = 4
 
-class CrashLog:
+class CrashLog(symbolication.Symbolicator):
     """Class that does parses darwin crash logs"""
     thread_state_regex = re.compile('^Thread ([0-9]+) crashed with')
     thread_regex = re.compile('^Thread ([0-9]+)([^:]*):(.*)')
@@ -86,20 +86,18 @@ class CrashLog:
     
     class Frame:
         """Class that represents a stack frame in a thread in a darwin crash log"""
-        def __init__(self, index, pc, details):
-            self.index = index
+        def __init__(self, index, pc, description):
             self.pc = pc
-            self.sym_ctx = None
-            self.details = details
+            self.description = description
+            self.index = index
         
         def __str__(self):
-            return "[%2u] %#16.16x %s" % (self.index, self.pc, self.details)
-        
-        def dump(self, prefix):
-            print "%s%s" % (prefix, self)
-        
+            if self.description:
+                return "[%3u] 0x%16.16x %s" % (self.index, self.pc, self.description)
+            else:
+                return "[%3u] 0x%16.16x" % (self.index, self.pc)        
     
-    class Image:
+    class DarwinImage(symbolication.Image):
         """Class that represents a binary images in a darwin crash log"""
         dsymForUUIDBinary = os.path.expanduser('~rc/bin/dsymForUUID')
         if not os.path.exists(dsymForUUIDBinary):
@@ -107,43 +105,13 @@ class CrashLog:
             
         dwarfdump_uuid_regex = re.compile('UUID: ([-0-9a-fA-F]+) \(([^\(]+)\) .*')
         
-        def __init__(self, text_addr_lo, text_addr_hi, ident, version, uuid, path):
-            self.text_addr_lo = text_addr_lo
-            self.text_addr_hi = text_addr_hi
-            self.ident = ident
+        def __init__(self, text_addr_lo, text_addr_hi, identifier, version, uuid, path):
+            symbolication.Image.__init__(self, path, uuid);
+            self.add_section (symbolication.Section(text_addr_lo, text_addr_hi, "__TEXT"))
+            self.identifier = identifier
             self.version = version
-            self.arch = None
-            self.uuid = uuid
-            self.path = path
-            self.resolved_path = None
-            self.dsym = None
-            self.module = None
         
-        def dump(self, prefix):
-            print "%s%s" % (prefix, self)
-        
-        def __str__(self):
-            return "%#16.16x %s %s" % (self.text_addr_lo, self.uuid, self.get_resolved_path())
-        
-        def get_resolved_path(self):
-            if self.resolved_path:
-                return self.resolved_path
-            elif self.path:
-                return self.path
-            return None
-
-        def get_resolved_path_basename(self):
-            path = self.get_resolved_path()
-            if path:
-                return os.path.basename(path)
-            return None
-
-        def dsym_basename(self):
-            if self.dsym:
-                return os.path.basename(self.dsym)
-            return None
-        
-        def fetch_symboled_executable_and_dsym(self):
+        def locate_module_and_debug_symbols(self):
             if self.resolved_path:
                 # Don't load a module twice...
                 return 0
@@ -159,7 +127,7 @@ class CrashLog:
                             if 'DBGArchitecture' in plist:
                                 self.arch = plist['DBGArchitecture']
                             if 'DBGDSYMPath' in plist:
-                                self.dsym = os.path.realpath(plist['DBGDSYMPath'])
+                                self.symfile = os.path.realpath(plist['DBGDSYMPath'])
                             if 'DBGSymbolRichExecutable' in plist:
                                 self.resolved_path = os.path.expanduser (plist['DBGSymbolRichExecutable'])
             if not self.resolved_path and os.path.exists(self.path):
@@ -181,79 +149,21 @@ class CrashLog:
                 print 'ok'
                 if self.path != self.resolved_path:
                     print '  exe = "%s"' % self.resolved_path 
-                if self.dsym:
-                    print ' dsym = "%s"' % self.dsym
+                if self.symfile:
+                    print ' dsym = "%s"' % self.symfile
                 return 1
             else:
                 return 0
         
-        def load_module(self):
-            if not lldb.target:
-                return 'error: no target'
-            if self.module:
-                text_section = self.module.FindSection ("__TEXT")
-                if text_section:
-                    error = lldb.target.SetSectionLoadAddress (text_section, self.text_addr_lo)
-                    if error.Success():
-                        #print 'Success: loaded %s.__TEXT = 0x%x' % (self.get_resolved_path_basename(), self.text_addr_lo)
-                        return None
-                    else:
-                        return 'error: %s' % error.GetCString()
-                else:
-                    return 'error: unable to find "__TEXT" section in "%s"' % self.get_resolved_path()
-            else:
-                return 'error: invalid module'
-        
-        def create_target(self):
-            if self.fetch_symboled_executable_and_dsym ():
-                resolved_path = self.get_resolved_path();
-                path_spec = lldb.SBFileSpec (resolved_path)
-                #result.PutCString ('plist[%s] = %s' % (uuid, self.plist))
-                error = lldb.SBError()
-                lldb.target = lldb.debugger.CreateTarget (resolved_path, self.arch, None, False, error);
-                if lldb.target:
-                    self.module = lldb.target.FindModule (path_spec)
-                    if self.module:
-                        err = self.load_module()
-                        if err:
-                            print err
-                        else:
-                            return None
-                    else:
-                        return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
-                else:
-                    return 'error: unable to create target for (%s) "%s"' % (self.arch, resolved_path)
-            else:
-                return 'error: unable to locate main executable (%s) "%s"' % (self.arch, self.path)
-        
-        def add_target_module(self):
-            if lldb.target:
-                # Check for the module by UUID first in case it has been already loaded in LLDB
-                self.module = lldb.target.AddModule (None, None, str(self.uuid))
-                if not self.module:
-                    if self.fetch_symboled_executable_and_dsym ():
-                        resolved_path = self.get_resolved_path();
-                        path_spec = lldb.SBFileSpec (resolved_path)
-                        #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (resolved_path, self.arch, self.uuid)
-                        self.module = lldb.target.AddModule (resolved_path, self.arch, self.uuid)
-                if self.module:
-                    err = self.load_module()
-                    if err:
-                        print err;
-                    else:
-                        return None
-                else:
-                    return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
-            else:
-                return 'error: invalid target'
+    
         
     def __init__(self, path):
         """CrashLog constructor that take a path to a darwin crash log file"""
+        symbolication.Symbolicator.__init__(self);
         self.path = os.path.expanduser(path);
         self.info_lines = list()
         self.system_profile = list()
         self.threads = list()
-        self.images = list()
         self.idents = list() # A list of the required identifiers for doing all stack backtraces
         self.crashed_thread_idx = -1
         self.version = -1
@@ -357,22 +267,22 @@ class CrashLog:
             elif parse_mode == PARSE_MODE_IMAGES:
                 image_match = self.image_regex_uuid.search (line)
                 if image_match:
-                    image = CrashLog.Image (int(image_match.group(1),0), 
-                                            int(image_match.group(2),0), 
-                                            image_match.group(3).strip(), 
-                                            image_match.group(4).strip(), 
-                                            image_match.group(5), 
-                                            image_match.group(6))
+                    image = CrashLog.DarwinImage (int(image_match.group(1),0), 
+                                                  int(image_match.group(2),0), 
+                                                  image_match.group(3).strip(), 
+                                                  image_match.group(4).strip(), 
+                                                  image_match.group(5), 
+                                                  image_match.group(6))
                     self.images.append (image)
                 else:
                     image_match = self.image_regex_no_uuid.search (line)
                     if image_match:
-                        image = CrashLog.Image (int(image_match.group(1),0), 
-                                                int(image_match.group(2),0), 
-                                                image_match.group(3).strip(), 
-                                                image_match.group(4).strip(), 
-                                                None,
-                                                image_match.group(5))
+                        image = CrashLog.DarwinImage (int(image_match.group(1),0), 
+                                                      int(image_match.group(2),0), 
+                                                      image_match.group(3).strip(), 
+                                                      image_match.group(4).strip(), 
+                                                      None,
+                                                      image_match.group(5))
                         self.images.append (image)
                     else:
                         print "error: image regex failed for: %s" % line
@@ -396,97 +306,35 @@ class CrashLog:
         for image in self.images:
             image.dump('  ')
     
-    def find_image_with_identifier(self, ident):
+    def find_image_with_identifier(self, identifier):
         for image in self.images:
-            if image.ident == ident:
+            if image.identifier == identifier:
                 return image
         return None
     
     def create_target(self):
-        if not self.images:
-            return 'error: no images in crash log'
-        exe_path = self.images[0].get_resolved_path()
-        err = self.images[0].create_target ()
-        if not err:
-            return None # success
+        #print 'crashlog.create_target()...'
+        target = symbolication.Symbolicator.create_target(self)
+        if target:
+            return target
         # We weren't able to open the main executable as, but we can still symbolicate
+        print 'crashlog.create_target()...2'
         if self.idents:
             for ident in self.idents:
                 image = self.find_image_with_identifier (ident)
                 if image:
-                    err = image.create_target ()
-                    if not err:
-                        return None # success
+                    target = image.create_target ()
+                    if target:
+                        return target # success
+        print 'crashlog.create_target()...3'
         for image in self.images:
-            err = image.create_target ()
-            if not err:
-                return None # success
-        return 'error: unable to locate any executables from the crash log'
+            target = image.create_target ()
+            if target:
+                return target # success
+        print 'crashlog.create_target()...4'
+        print 'error: unable to locate any executables from the crash log'
+        return None
 
-def disassemble_instructions (instructions, pc, options, non_zeroeth_frame):
-    lines = list()
-    pc_index = -1
-    comment_column = 50
-    for inst_idx, inst in enumerate(instructions):
-        inst_pc = inst.GetAddress().GetLoadAddress(lldb.target);
-        if pc == inst_pc:
-            pc_index = inst_idx
-        mnemonic = inst.GetMnemonic (lldb.target)
-        operands =  inst.GetOperands (lldb.target)
-        comment =  inst.GetComment (lldb.target)
-        #data = inst.GetData (lldb.target)
-        lines.append ("%#16.16x: %8s %s" % (inst_pc, mnemonic, operands))
-        if comment:
-            line_len = len(lines[-1])
-            if line_len < comment_column:
-                lines[-1] += ' ' * (comment_column - line_len)
-                lines[-1] += "; %s" % comment
-
-    if pc_index >= 0:
-        # If we are disassembling the non-zeroeth frame, we need to backup the PC by 1
-        if non_zeroeth_frame and pc_index > 0:
-            pc_index = pc_index - 1
-        if options.disassemble_before == -1:
-            start_idx = 0
-        else:
-            start_idx = pc_index - options.disassemble_before
-        if start_idx < 0:
-            start_idx = 0
-        if options.disassemble_before == -1:
-            end_idx = inst_idx
-        else:
-            end_idx = pc_index + options.disassemble_after
-        if end_idx > inst_idx:
-            end_idx = inst_idx
-        for i in range(start_idx, end_idx+1):
-            if i == pc_index:
-                print ' -> ', lines[i]
-            else:
-                print '    ', lines[i]
-
-def print_module_section_data (section):
-    print section
-    section_data = section.GetSectionData()
-    if section_data:
-        ostream = lldb.SBStream()
-        section_data.GetDescription (ostream, section.GetFileAddress())
-        print ostream.GetData()
-
-def print_module_section (section, depth):
-    print section
-            
-    if depth > 0:
-        num_sub_sections = section.GetNumSubSections()
-        for sect_idx in range(num_sub_sections):
-            print_module_section (section.GetSubSectionAtIndex(sect_idx), depth - 1)
-
-def print_module_sections (module, depth):
-    for sect in module.section_iter():
-        print_module_section (sect, depth)
-
-def print_module_symbols (module):
-    for sym in module:
-        print sym
 
 def usage():
     print "Usage: lldb-symbolicate.py [-n name] executable-image"
@@ -538,6 +386,8 @@ be disassembled and lookups can be performed using the addresses found in the cr
     if args:
         for crash_log_file in args:
             crash_log = CrashLog(crash_log_file)
+            
+            #pp = pprint.PrettyPrinter(indent=4); pp.pprint(args)
             if crash_log.error:
                 print crash_log.error
                 return
@@ -547,14 +397,12 @@ be disassembled and lookups can be performed using the addresses found in the cr
                 print 'error: no images in crash log'
                 return
 
-            err = crash_log.create_target ()
-            if err:
-                print err
+            target = crash_log.create_target ()
+            if not target:
                 return
-                
-            exe_module = lldb.target.GetModuleAtIndex(0)
+            exe_module = target.GetModuleAtIndex(0)
             images_to_load = list()
-            loaded_image_paths = list()
+            loaded_images = list()
             if options.load_all_images:
                 # --load-all option was specified, load everything up
                 for image in crash_log.images:
@@ -562,171 +410,52 @@ be disassembled and lookups can be performed using the addresses found in the cr
             else:
                 # Only load the images found in stack frames for the crashed threads
                 for ident in crash_log.idents:
-                    image = crash_log.find_image_with_identifier (ident)
-                    if image:
-                        images_to_load.append(image)
+                    images = crash_log.find_images_with_identifier (ident)
+                    if images:
+                        for image in images:
+                            images_to_load.append(image)
                     else:
                         print 'error: can\'t find image for identifier "%s"' % ident
             
             for image in images_to_load:
-                if image.path in loaded_image_paths:
+                if image in loaded_images:
                     print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
                 else:
-                    err = image.add_target_module ()
+                    err = image.add_module (target)
                     if err:
                         print err
                     else:
-                        loaded_image_paths.append(image.path)
+                        print 'loaded %s' % image
+                        loaded_images.append(image)
             
-            for line in crash_log.info_lines:
-                print line
-            
-            # Reconstruct inlined frames for all threads for anything that has debug info
-            for thread in crash_log.threads:
-                if options.crashed_only and thread.did_crash() == False:
-                    continue
-                # start a new frame list that we will fixup for each thread
-                new_thread_frames = list()
-                # Iterate through all concrete frames for a thread and resolve
-                # any parent frames of inlined functions
-                for frame_idx, frame in enumerate(thread.frames):
-                    # Resolve the frame's pc into a section + offset address 'pc_addr'
-                    pc_addr = lldb.target.ResolveLoadAddress (frame.pc)
-                    # Check to see if we were able to resolve the address
-                    if pc_addr:
-                        # We were able to resolve the frame's PC into a section offset
-                        # address.
-
-                        # Resolve the frame's PC value into a symbol context. A symbol
-                        # context can resolve a module, compile unit, function, block,
-                        # line table entry and/or symbol. If the frame has a block, then
-                        # we can look for inlined frames, which are represented by blocks
-                        # that have inlined information in them
-                        frame.sym_ctx = lldb.target.ResolveSymbolContextForAddress (pc_addr, lldb.eSymbolContextEverything);
-
-                        # dump if the verbose option was specified
-                        if options.verbose:
-                            print "frame.pc = %#16.16x (file_addr = %#16.16x)" % (frame.pc, pc_addr.GetFileAddress())
-                            print "frame.pc_addr = ", pc_addr
-                            print "frame.sym_ctx = "
-                            print frame.sym_ctx
-                            print
-
-                        # Append the frame we already had from the crash log to the new
-                        # frames list
-                        new_thread_frames.append(frame)
-
-                        new_frame = CrashLog.Frame (frame.index, -1, None)
-
-                        # Try and use the current frame's symbol context to calculate a 
-                        # parent frame for an inlined function. If the curent frame is
-                        # inlined, it will return a valid symbol context for the parent 
-                        # frame of the current inlined function
-                        parent_pc_addr = lldb.SBAddress()
-                        new_frame.sym_ctx = frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
-
-                        # See if we were able to reconstruct anything?
-                        while new_frame.sym_ctx:
-                            # We have a parent frame of an inlined frame, create a new frame
-                            # Convert the section + offset 'parent_pc_addr' to a load address 
-                            new_frame.pc = parent_pc_addr.GetLoadAddress(lldb.target)
-                            # push the new frame onto the new frame stack
-                            new_thread_frames.append (new_frame)
-                            # dump if the verbose option was specified
-                            if options.verbose:
-                                print "new_frame.pc = %#16.16x (%s)" % (new_frame.pc, parent_pc_addr)
-                                print "new_frame.sym_ctx = "
-                                print new_frame.sym_ctx
-                                print
-                            # Create another new frame in case we have multiple inlined frames
-                            prev_new_frame = new_frame
-                            new_frame = CrashLog.Frame (frame.index, -1, None)
-                            # Swap the addresses so we can try another inlined lookup
-                            pc_addr = parent_pc_addr;
-                            new_frame.sym_ctx = prev_new_frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
-                # Replace our thread frames with our new list that includes parent
-                # frames for inlined functions
-                thread.frames = new_thread_frames
-            # Now iterate through all threads and display our richer stack backtraces
             for thread in crash_log.threads:
                 this_thread_crashed = thread.did_crash()
                 if options.crashed_only and this_thread_crashed == False:
                     continue
                 print "%s" % thread
-                prev_frame_index = -1
+                #prev_frame_index = -1
                 for frame_idx, frame in enumerate(thread.frames):
-                    details = '          %s' % frame.details
-                    module = frame.sym_ctx.GetModule()
-                    instructions = None
-                    if module:
-                        module_basename = module.GetFileSpec().GetFilename();
-                        function_start_load_addr = -1
-                        function_name = None
-                        function = frame.sym_ctx.GetFunction()
-                        block = frame.sym_ctx.GetBlock()
-                        line_entry = frame.sym_ctx.GetLineEntry()
-                        symbol = frame.sym_ctx.GetSymbol()
-                        inlined_block = block.GetContainingInlinedBlock();
-                        disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
-                        if inlined_block:
-                            function_name = inlined_block.GetInlinedName();
-                            block_range_idx = inlined_block.GetRangeIndexForBlockAddress (lldb.target.ResolveLoadAddress (frame.pc))
-                            if block_range_idx < lldb.UINT32_MAX:
-                                block_range_start_addr = inlined_block.GetRangeStartAddress (block_range_idx)
-                                function_start_load_addr = block_range_start_addr.GetLoadAddress (lldb.target)
-                            else:
-                                function_start_load_addr = frame.pc
-                            if disassemble:
-                                instructions = function.GetInstructions(lldb.target)
-                        elif function:
-                            function_name = function.GetName()
-                            function_start_load_addr = function.GetStartAddress().GetLoadAddress (lldb.target)
-                            if disassemble:
-                                instructions = function.GetInstructions(lldb.target)
-                        elif symbol:
-                            function_name = symbol.GetName()
-                            function_start_load_addr = symbol.GetStartAddress().GetLoadAddress (lldb.target)
-                            if disassemble:
-                                instructions = symbol.GetInstructions(lldb.target)
-
-                        if function_name:
-                            # Print the function or symbol name and annotate if it was inlined
-                            inline_suffix = ''
-                            if inlined_block: 
-                                inline_suffix = '[inlined] '
-                            else:
-                                inline_suffix = '          '
-                            if options.show_images:
-                                details = "%s%s`%s" % (inline_suffix, module_basename, function_name)
-                            else:
-                                details = "%s" % (function_name)
-                            # Dump the offset from the current function or symbol if it is non zero
-                            function_offset = frame.pc - function_start_load_addr
-                            if function_offset > 0:
-                                details += " + %u" % (function_offset)
-                            elif function_offset < 0:
-                                defaults += " %i (invalid negative offset, file a bug) " % function_offset
-                            # Print out any line information if any is available
-                            if line_entry.GetFileSpec():
-                                details += ' at %s' % line_entry.GetFileSpec().GetFilename()
-                                details += ':%u' % line_entry.GetLine ()
-                                column = line_entry.GetColumn()
-                                if column > 0:
-                                    details += ':%u' % column
-
-
-                    # Only print out the concrete frame index if it changes.
-                    # if prev_frame_index != frame.index:
-                    #     print "[%2u] %#16.16x %s" % (frame.index, frame.pc, details)
-                    # else:
-                    #     print "     %#16.16x %s" % (frame.pc, details)
-                    print "[%2u] %#16.16x %s" % (frame.index, frame.pc, details)
-                    prev_frame_index = frame.index
-                    if instructions:
-                        print
-                        disassemble_instructions (instructions, frame.pc, options, frame.index > 0)
-                        print
-
+                    disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
+                    symbolicated_frame_addresses = crash_log.symbolicate (frame.pc)
+                    if symbolicated_frame_addresses:
+                        symbolicated_frame_address_idx = 0
+                        for symbolicated_frame_address in symbolicated_frame_addresses:
+                            print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
+                            
+                            if symbolicated_frame_address_idx == 0:
+                                if disassemble:
+                                    instructions = symbolicated_frame_address.get_instructions()
+                                    if instructions:
+                                        print
+                                        symbolication.disassemble_instructions (target, 
+                                                                                instructions, 
+                                                                                frame.pc, 
+                                                                                options.disassemble_before, 
+                                                                                options.disassemble_after, frame.index > 0)
+                                        print
+                            symbolicated_frame_address_idx += 1
+                    else:
+                        print frame
                 print                
 
             if options.dump_image_list:
@@ -734,11 +463,10 @@ be disassembled and lookups can be performed using the addresses found in the cr
                 for image in crash_log.images:
                     print image
 
-
 if __name__ == '__main__':
     # Create a new debugger instance
     lldb.debugger = lldb.SBDebugger.Create()
-    SymbolicateCrashLog (sys.argv)
+    SymbolicateCrashLog (sys.argv[1:])
 elif lldb.debugger:
     lldb.debugger.HandleCommand('command script add -f crashlog.Symbolicate crashlog')
     print '"crashlog" command installed, type "crashlog --help" for detailed help'
