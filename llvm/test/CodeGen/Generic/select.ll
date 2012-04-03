@@ -185,3 +185,11 @@ define i32 @checkFoldGEP(%Domain* %D, i64 %idx) {
         ret i32 %reg820
 }
 
+; Test case for scalarising a 1 element vselect
+;
+define <1 x i32> @checkScalariseVSELECT(<1 x i32> %a, <1 x i32> %b) {
+        %cond = icmp uge <1 x i32> %a, %b
+        %s = select <1 x i1> %cond, <1 x i32> %a, <1 x i32> %b
+        ret <1 x i32> %s
+}
+

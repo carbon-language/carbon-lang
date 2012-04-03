@@ -58,6 +58,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::LOAD:           R = ScalarizeVecRes_LOAD(cast<LoadSDNode>(N));break;
   case ISD::SCALAR_TO_VECTOR:  R = ScalarizeVecRes_SCALAR_TO_VECTOR(N); break;
   case ISD::SIGN_EXTEND_INREG: R = ScalarizeVecRes_InregOp(N); break;
+  case ISD::VSELECT:           R = ScalarizeVecRes_VSELECT(N); break;
   case ISD::SELECT:            R = ScalarizeVecRes_SELECT(N); break;
   case ISD::SELECT_CC:         R = ScalarizeVecRes_SELECT_CC(N); break;
   case ISD::SETCC:             R = ScalarizeVecRes_SETCC(N); break;
@@ -224,6 +225,38 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SCALAR_TO_VECTOR(SDNode *N) {
   if (InOp.getValueType() != EltVT)
     return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), EltVT, InOp);
   return InOp;
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_VSELECT(SDNode *N) {
+  SDValue Cond = GetScalarizedVector(N->getOperand(0));
+  SDValue LHS = GetScalarizedVector(N->getOperand(1));
+  TargetLowering::BooleanContent ScalarBool = TLI.getBooleanContents(false);
+  TargetLowering::BooleanContent VecBool = TLI.getBooleanContents(true);
+  if (ScalarBool != VecBool) {
+    EVT CondVT = Cond.getValueType();
+    switch (ScalarBool) {
+      default: llvm_unreachable("Unknown boolean content enum");
+      case TargetLowering::UndefinedBooleanContent:
+        break;
+      case TargetLowering::ZeroOrOneBooleanContent:
+        assert(VecBool == TargetLowering::UndefinedBooleanContent ||
+               VecBool == TargetLowering::ZeroOrNegativeOneBooleanContent);
+        // Vector read from all ones, scalar expects a single 1 so mask.
+        Cond = DAG.getNode(ISD::AND, N->getDebugLoc(), CondVT,
+                           Cond, DAG.getConstant(1, CondVT));
+        break;
+      case TargetLowering::ZeroOrNegativeOneBooleanContent:
+        assert(VecBool == TargetLowering::UndefinedBooleanContent ||
+               VecBool == TargetLowering::ZeroOrOneBooleanContent);
+        // Vector reads from a one, scalar from all ones so sign extend.
+        Cond = DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), CondVT,
+                           Cond, DAG.getValueType(MVT::i1));
+        break;
+    }
+  }
+  return DAG.getNode(ISD::SELECT, N->getDebugLoc(),
+                     LHS.getValueType(), Cond, LHS,
+                     GetScalarizedVector(N->getOperand(2)));
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
