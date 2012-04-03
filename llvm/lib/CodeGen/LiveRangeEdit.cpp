@@ -33,8 +33,10 @@ void LiveRangeEdit::Delegate::anchor() { }
 
 LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg) {
   unsigned VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
-  VRM->grow();
-  VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
+  if (VRM) {
+    VRM->grow();
+    VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
+  }
   LiveInterval &LI = LIS.getOrCreateInterval(VReg);
   newRegs_.push_back(&LI);
   return LI;
@@ -270,8 +272,6 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       delegate_->LRE_WillShrinkVirtReg(LI->reg);
     if (!LIS.shrinkToUses(LI, &Dead))
       continue;
-    if (!VRM)
-      continue;
     
     // Don't create new intervals for a register being spilled.
     // The new intervals would have to be spilled anyway so its not worth it.
@@ -295,7 +295,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     if (NumComp <= 1)
       continue;
     ++NumFracRanges;
-    bool IsOriginal = VRM->getOriginal(LI->reg) == LI->reg;
+    bool IsOriginal = VRM && VRM->getOriginal(LI->reg) == LI->reg;
     DEBUG(dbgs() << NumComp << " components: " << *LI << '\n');
     SmallVector<LiveInterval*, 8> Dups(1, LI);
     for (unsigned i = 1; i != NumComp; ++i) {

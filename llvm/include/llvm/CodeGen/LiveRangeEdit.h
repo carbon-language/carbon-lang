@@ -94,6 +94,11 @@ public:
   /// @param parent The register being spilled or split.
   /// @param newRegs List to receive any new registers created. This needn't be
   ///                empty initially, any existing registers are ignored.
+  /// @param MF The MachineFunction the live range edit is taking place in.
+  /// @param lis The collection of all live intervals in this function.
+  /// @param vrm Map of virtual registers to physical registers for this
+  ///            function.  If NULL, no virtual register map updates will
+  ///            be done.  This could be the case if called before Regalloc.
   LiveRangeEdit(LiveInterval &parent,
                 SmallVectorImpl<LiveInterval*> &newRegs,
                 MachineFunction &MF,
