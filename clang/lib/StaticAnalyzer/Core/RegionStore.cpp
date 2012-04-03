@@ -1194,14 +1194,23 @@ SVal RegionStoreManager::getBindingForFieldOrElementCommon(Store store,
 
   // At this point we have already checked in either getBindingForElement or
   // getBindingForField if 'R' has a direct binding.
-
   RegionBindings B = GetRegionBindings(store);
+  
+  // Record whether or not we see a symbolic index.  That can completely
+  // be out of scope of our lookup.
+  bool hasSymbolicIndex = false;
 
   while (superR) {
     if (const Optional<SVal> &D =
         getBindingForDerivedDefaultValue(B, superR, R, Ty))
       return *D;
 
+    if (const ElementRegion *ER = dyn_cast<ElementRegion>(superR)) {
+      NonLoc index = ER->getIndex();
+      if (!index.isConstant())
+        hasSymbolicIndex = true;
+    }
+    
     // If our super region is a field or element itself, walk up the region
     // hierarchy to see if there is a default value installed in an ancestor.
     if (const SubRegion *SR = dyn_cast<SubRegion>(superR)) {
@@ -1220,7 +1229,7 @@ SVal RegionStoreManager::getBindingForFieldOrElementCommon(Store store,
     return getLazyBinding(lazyBindingRegion, lazyBindingStore);
 
   if (R->hasStackNonParametersStorage()) {
-    if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+    if (isa<ElementRegion>(R)) {
       // Currently we don't reason specially about Clang-style vectors.  Check
       // if superR is a vector and if so return Unknown.
       if (const TypedValueRegion *typedSuperR = 
@@ -1228,13 +1237,15 @@ SVal RegionStoreManager::getBindingForFieldOrElementCommon(Store store,
         if (typedSuperR->getValueType()->isVectorType())
           return UnknownVal();
       }
-      
-      // FIXME: We also need to take ElementRegions with symbolic indexes into
-      // account.
-      if (!ER->getIndex().isConstant())
-        return UnknownVal();
     }
 
+    // FIXME: We also need to take ElementRegions with symbolic indexes into
+    // account.  This case handles both directly accessing an ElementRegion
+    // with a symbolic offset, but also fields within an element with
+    // a symbolic offset.
+    if (hasSymbolicIndex)
+      return UnknownVal();
+    
     return UndefinedVal();
   }
 
