@@ -1088,8 +1088,9 @@ void ClastStmtCodeGen::codegen(const clast_assignment *A, ScopStmt *Stmt,
 
   assert(!A->LHS && "Statement assignments do not have left hand side");
 
-  RHS = ExpGen.codegen(A->RHS, getIntPtrTy());
   PN = Stmt->getInductionVariableForDimension(Dim);
+  RHS = ExpGen.codegen(A->RHS, Builder.getInt64Ty());
+  RHS = Builder.CreateTruncOrBitCast(RHS, PN->getType());
 
   if (VectorVMap)
     (*VectorVMap)[VectorDim][PN] = RHS;

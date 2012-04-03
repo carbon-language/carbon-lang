@@ -45,20 +45,20 @@ for.end6:                                         ; preds = %for.cond
   ret i32 0
 }
 
-; WITHCONST:  %4 = sext i32 %2 to i64
-; WITHCONST:  %p_mul_coeff = mul i64 16, %4
+; WITHCONST:  [[REG1:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
+; WITHCONST:  %p_mul_coeff = mul i64 16, [[REG1]]
 ; WITHCONST:  %p_sum_coeff = add i64 5, %p_mul_coeff
-; WITHCONST:  %5 = sext i32 %3 to i64
-; WITHCONST:  %p_mul_coeff6 = mul i64 2, %5
+; WITHCONST:  [[REG2:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
+; WITHCONST:  %p_mul_coeff6 = mul i64 2, [[REG2]]
 ; WITHCONST:  %p_sum_coeff7 = add i64 %p_sum_coeff, %p_mul_coeff6
 ; WITHCONST:  %p_newarrayidx_ = getelementptr [1040 x i32]* @A, i64 0, i64 %p_sum_coeff7
 ; WITHCONST:  store i32 100, i32* %p_newarrayidx_
 
-; WITHOUTCONST:  %4 = sext i32 %2 to i64
-; WITHOUTCONST:  %p_mul_coeff = mul i64 16, %4
+; WITHOUTCONST:  [[REG1:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
+; WITHOUTCONST:  %p_mul_coeff = mul i64 16, [[REG1]]
 ; WITHOUTCONST:  %p_sum_coeff = add i64 0, %p_mul_coeff
-; WITHOUTCONST:  %5 = sext i32 %3 to i64
-; WITHOUTCONST:  %p_mul_coeff6 = mul i64 2, %5
+; WITHOUTCONST:  [[REG2:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
+; WITHOUTCONST:  %p_mul_coeff6 = mul i64 2, [[REG2]]
 ; WITHOUTCONST:  %p_sum_coeff7 = add i64 %p_sum_coeff, %p_mul_coeff6
 ; WITHOUTCONST:  %p_newarrayidx_ = getelementptr [1040 x i32]* @A, i64 0, i64 %p_sum_coeff7
 ; WITHOUTCONST:  store i32 100, i32* %p_newarrayidx_
