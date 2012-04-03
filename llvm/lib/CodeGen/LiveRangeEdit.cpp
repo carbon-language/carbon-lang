@@ -286,7 +286,6 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     }
     
     if (BeingSpilled) continue;
-    if (!VRM) continue;
 
     // LI may have been separated, create new intervals.
     LI->RenumberValues(LIS);
