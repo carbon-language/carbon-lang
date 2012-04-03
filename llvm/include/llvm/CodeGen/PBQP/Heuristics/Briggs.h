@@ -418,6 +418,12 @@ namespace PBQP {
         unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
 
         nd.numDenied = 0;
+        const Vector& nCosts = getGraph().getNodeCosts(nItr);
+        for (unsigned i = 1; i < nCosts.getLength(); ++i) {
+          if (nCosts[i] == std::numeric_limits<PBQPNum>::infinity())
+            ++nd.numDenied;
+        }
+
         nd.numSafe = numRegs;
         nd.unsafeDegrees.resize(numRegs, 0);
 
