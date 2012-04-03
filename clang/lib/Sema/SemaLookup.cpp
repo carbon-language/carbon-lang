@@ -25,6 +25,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclLookups.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
@@ -2875,25 +2876,15 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     Result.getSema().ForceDeclarationOfImplicitMembers(Class);
 
   // Enumerate all of the results in this context.
-  llvm::SmallVector<DeclContext *, 2> Contexts;
-  Ctx->collectAllContexts(Contexts);
-  for (unsigned I = 0, N = Contexts.size(); I != N; ++I) {
-    DeclContext *CurCtx = Contexts[I];
-    for (DeclContext::decl_iterator D = CurCtx->decls_begin(),
-                                 DEnd = CurCtx->decls_end();
-         D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D)) {
+  for (DeclContext::all_lookups_iterator L = Ctx->lookups_begin(),
+                                      LEnd = Ctx->lookups_end();
+       L != LEnd; ++L) {
+    for (DeclContext::lookup_result R = *L; R.first != R.second; ++R.first) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*R.first)) {
         if ((ND = Result.getAcceptableDecl(ND))) {
           Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
           Visited.add(ND);
         }
-      }
-      
-      // Visit transparent contexts and inline namespaces inside this context.
-      if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
-        if (InnerCtx->isTransparentContext() || InnerCtx->isInlineNamespace())
-          LookupVisibleDecls(InnerCtx, Result, QualifiedNameLookup, InBaseClass,
-                             Consumer, Visited);
       }
     }
   }

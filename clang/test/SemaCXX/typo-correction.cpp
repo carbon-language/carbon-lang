@@ -183,3 +183,10 @@ class ClashTool {
         getExprAs<ConstructExpr>(); // expected-error{{use of undeclared identifier 'ConstructExpr'; did you mean 'clash::ConstructExpr'?}}
   }
 };
+
+namespace test1 {
+  struct S {
+    struct Foobar *f;  // expected-note{{'Foobar' declared here}}
+  };
+  test1::FooBar *b;  // expected-error{{no type named 'FooBar' in namespace 'test1'; did you mean 'Foobar'?}}
+}

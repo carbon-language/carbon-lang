@@ -146,3 +146,8 @@ namespace PR6830 {
     Z(foo::X()).Work();
   }
 }
+
+namespace pr12339 {
+  extern "C" void i;
+  pr12339::FOO  // expected-error{{no type named 'FOO' in namespace 'pr12339'}}
+}  // expected-error{{expected unqualified-id}}

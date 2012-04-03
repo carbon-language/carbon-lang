@@ -76,9 +76,12 @@ class Crash {
   void GetCart(int count) const;
 };
 // This out-of-line definition was fine...
-void Crash::cart(int count) const {} // expected-error {{out-of-line definition of 'cart' does not match any declaration in 'Crash'}}
+void Crash::cart(int count) const {} // expected-error {{out-of-line definition of 'cart' does not match any declaration in 'Crash'}} \
+                                     // expected-note {{'cart' declared here}} \
+                                     // expected-note {{previous definition is here}}
 // ...while this one crashed clang
-void Crash::chart(int count) const {} // expected-error {{out-of-line definition of 'chart' does not match any declaration in 'Crash'}}
+void Crash::chart(int count) const {} // expected-error {{out-of-line definition of 'chart' does not match any declaration in 'Crash'; did you mean 'cart'?}} \
+                                      // expected-error {{redefinition of 'cart'}}
 
 class TestConst {
  public:

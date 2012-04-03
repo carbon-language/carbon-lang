@@ -1438,6 +1438,14 @@ public:
   /// replaced with D.
   void makeDeclVisibleInContext(NamedDecl *D);
 
+  /// all_lookups_iterator - An iterator that provides a view over the results
+  /// of looking up every possible name.
+  class all_lookups_iterator;
+
+  all_lookups_iterator lookups_begin() const;
+
+  all_lookups_iterator lookups_end() const;
+
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
   typedef UsingDirectiveDecl * const * udir_iterator;

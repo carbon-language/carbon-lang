@@ -514,14 +514,6 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
         return false;
     }
   }
-   
-  // Skip out-of-line declarations and definitions.
-  // NOTE: Unless it's an Objective-C property, method, or ivar, where
-  // the contexts can be messy.
-  if (!ND->getDeclContext()->Equals(ND->getLexicalDeclContext()) &&
-      !(isa<ObjCPropertyDecl>(ND) || isa<ObjCIvarDecl>(ND) ||
-        isa<ObjCMethodDecl>(ND)))
-    return false;
 
   if (Filter == &ResultBuilder::IsNestedNameSpecifier ||
       ((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
@@ -904,7 +896,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
 
   if (Hiding && CheckHiddenResult(R, CurContext, Hiding))
     return;
-      
+
   // Make sure that any given declaration only shows up in the result set once.
   if (!AllDeclsFound.insert(R.Declaration->getCanonicalDecl()))
     return;
