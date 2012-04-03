@@ -206,8 +206,11 @@ move_if_noexcept(_Tp& __x) _NOEXCEPT
 }
 
 struct _LIBCPP_VISIBLE piecewise_construct_t { };
-//constexpr
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
 extern const piecewise_construct_t piecewise_construct;// = piecewise_construct_t();
+#else
+constexpr piecewise_construct_t piecewise_construct = piecewise_construct_t();
+#endif
 
 template <class _T1, class _T2>
 struct _LIBCPP_VISIBLE pair
@@ -221,7 +224,7 @@ struct _LIBCPP_VISIBLE pair
     // pair(const pair&) = default;
     // pair(pair&&) = default;
 
-    _LIBCPP_INLINE_VISIBILITY pair() : first(), second() {}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR pair() : first(), second() {}
 
     _LIBCPP_INLINE_VISIBILITY pair(const _T1& __x, const _T2& __y)
         : first(__x), second(__y) {}

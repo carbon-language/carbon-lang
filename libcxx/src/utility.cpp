@@ -11,6 +11,8 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
 const piecewise_construct_t piecewise_construct = {};
+#endif
 
 _LIBCPP_END_NAMESPACE_STD
