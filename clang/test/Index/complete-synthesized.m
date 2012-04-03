@@ -43,4 +43,4 @@
 // CHECK: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
 // CHECK-NOT: prop2
 // CHECK-NOT: prop3
-// CHECK: ObjCIvarDecl:{ResultType double}{TypedText _prop4} (37)
+// CHECK: ObjCIvarDecl:{ResultType double}{TypedText _prop4} (35)

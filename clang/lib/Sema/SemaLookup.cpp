@@ -38,14 +38,14 @@
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/ADT/edit_distance.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <algorithm>
+#include <iterator>
 #include <limits>
 #include <list>
-#include <set>
-#include <vector>
-#include <iterator>
-#include <utility>
-#include <algorithm>
 #include <map>
+#include <set>
+#include <utility>
+#include <vector>
 
 using namespace clang;
 using namespace sema;
@@ -2984,7 +2984,7 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     if (IFace->getImplementation()) {
       ShadowContextRAII Shadow(Visited);
       LookupVisibleDecls(IFace->getImplementation(), Result,
-                         QualifiedNameLookup, true, Consumer, Visited);
+                         QualifiedNameLookup, InBaseClass, Consumer, Visited);
     }
   } else if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Ctx)) {
     for (ObjCProtocolDecl::protocol_iterator I = Protocol->protocol_begin(),
