@@ -18,7 +18,7 @@
 #if !defined(NO_XPC_SERVICES)
 #define __XPC_PRIVATE_H__
 #include <xpc/xpc.h>
-#include "LauncherXPCService.h"
+#include "launcherXPCService/LauncherXPCService.h"
 #endif
 
 #include <asl.h>
@@ -249,7 +249,7 @@ AcceptPIDFromInferior (void *arg)
         char pid_str[256];
         ::memset (pid_str, 0, sizeof(pid_str));
         ConnectionStatus status;
-        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), NULL, status, NULL);
+        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), 0, status, NULL);
         if (pid_str_len > 0)
         {
             int pid = atoi (pid_str);
@@ -1824,7 +1824,6 @@ Host::SystemLog (SystemLogType type, const char *format, va_list args)
         int asl_level;
         switch (type)
         {
-            default:
             case eSystemLogError:
                 asl_level = ASL_LEVEL_ERR;
                 break;
