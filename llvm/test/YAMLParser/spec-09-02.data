@@ -1,0 +1,14 @@
+# RUN: yaml-bench -canonical %s |& FileCheck %s
+#
+# Indent trimming is not yet implemented.
+# XFAIL: *
+
+ "as space
+ trimmed
+
+ specific
+
+ escaped	\
+ none"
+
+# CHECK: !!str "as space trimmed\nspecific\nescaped\tnone"

@@ -1,0 +1,7 @@
+# RUN: yaml-bench -canonical %s |& FileCheck %s
+
+%YAML 1.1
+%YAML 1.1
+foo
+
+# CHECK: error

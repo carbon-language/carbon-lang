@@ -1,0 +1,21 @@
+# RUN: yaml-bench -canonical %s |& FileCheck %s
+#
+# Not quite sure why this doesn't fail.
+# XFAIL: *
+
+---
+--- ||| : foo
+... >>>: bar
+---
+[
+---
+,
+... ,
+{
+--- :
+... # Nested
+}
+]
+...
+
+# CHECK: error

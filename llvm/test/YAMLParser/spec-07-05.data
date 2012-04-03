@@ -1,0 +1,10 @@
+# RUN: yaml-bench -canonical %s |& FileCheck %s
+#
+# We don't currently parse TAG directives.
+# XFAIL: *
+
+%TAG ! !foo
+%TAG ! !foo
+bar
+
+# CHECK: error
