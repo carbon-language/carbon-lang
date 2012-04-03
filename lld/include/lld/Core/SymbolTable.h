@@ -46,10 +46,10 @@ public:
 
   /// @brief add atom to symbol table
   void add(const SharedLibraryAtom &);
-  
+
   /// @brief add atom to symbol table
   void add(const AbsoluteAtom &);
-  
+
   /// @brief checks if name is in symbol table and if so atom is not
   ///        UndefinedAtom
   bool isDefined(StringRef sym);
@@ -79,12 +79,12 @@ private:
   };
 	typedef llvm::DenseMap<StringRef, const Atom *,
                                            StringRefMappingInfo> NameToAtom;
-  
+
   struct AtomMappingInfo {
     static const DefinedAtom * getEmptyKey() { return nullptr; }
     static const DefinedAtom * getTombstoneKey() { return (DefinedAtom*)(-1); }
     static unsigned getHashValue(const DefinedAtom * const Val);
-    static bool isEqual(const DefinedAtom * const LHS, 
+    static bool isEqual(const DefinedAtom * const LHS,
                         const DefinedAtom * const RHS);
   };
   typedef llvm::DenseSet<const DefinedAtom*, AtomMappingInfo> AtomContentSet;

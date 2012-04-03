@@ -28,7 +28,7 @@ class File;
 /// The linker has a Graph Theory model of linking. An object file is seen
 /// as a set of Atoms with References to other Atoms.  Each Atom is a node
 /// and each Reference is an edge. An Atom can be a DefinedAtom which has
-/// content or a UndefinedAtom which is a placeholder and represents an 
+/// content or a UndefinedAtom which is a placeholder and represents an
 /// undefined symbol (extern declaration).
 ///
 class Atom {
@@ -53,11 +53,11 @@ public:
   Definition definition() const { return _definition; };
 
   static inline bool classof(const Atom *a) { return true; }
-  
+
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
   Atom(Definition def) : _definition(def) {}
-  
+
   /// The memory for Atom objects is always managed by the owning File
   /// object.  Therefore, no one but the owning File object should call
   /// delete on an Atom.  In fact, some File objects may bulk allocate

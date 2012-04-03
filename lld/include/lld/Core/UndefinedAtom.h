@@ -25,37 +25,37 @@ public:
   enum CanBeNull {
     /// Normal symbols must be resolved at build time
     canBeNullNever,
-    
+
     /// This symbol can be missing at runtime and will evalute to nullptr.
     /// That is, the static linker still must find a definition (usually
     /// is some shared library), but at runtime, the dynamic loader
     /// will allow the symbol to be missing and resolved to nullptr.
     ///
     /// On Darwin this is generated using a function prototype with
-    /// __attribute__((weak_import)).  
+    /// __attribute__((weak_import)).
     /// On linux this is generated using a function prototype with
     ///  __attribute__((weak)).
     canBeNullAtRuntime,
-    
-    
+
+
     /// This symbol can be missing at build time.
     /// That is, the static linker will not error if a definition for
-    /// this symbol is not found at build time. Instead, the linker 
+    /// this symbol is not found at build time. Instead, the linker
     /// will build an executable that lets the dynamic loader find the
-    /// symbol at runtime.  
+    /// symbol at runtime.
     /// This feature is not supported on Darwin.
     /// On linux this is generated using a function prototype with
     ///  __attribute__((weak)).
     canBeNullAtBuildtime
   };
-  
+
   virtual CanBeNull canBeNull() const = 0;
-  
+
   static inline bool classof(const Atom *a) {
     return a->definition() == definitionUndefined;
   }
   static inline bool classof(const UndefinedAtom *) { return true; }
-   
+
 protected:
   UndefinedAtom() : Atom(definitionUndefined) {}
   virtual ~UndefinedAtom() {}

@@ -104,7 +104,7 @@ static const ScopeMapping scopeMappings[] = {
   { "static", DefinedAtom::scopeTranslationUnit },
   { nullptr,  DefinedAtom::scopeGlobal }
 };
-  
+
 DefinedAtom::Scope KeyValues::scope(const char* s)
 {
   for (const ScopeMapping* p = scopeMappings; p->string != nullptr; ++p) {

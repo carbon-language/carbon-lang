@@ -28,7 +28,7 @@ public:
   static const char* const                loadNameKeyword;
   static const char* const                valueKeyword;
   static const char* const                fixupsKeyword;
- 
+
   static const char* const                definitionKeyword;
   static const Atom::Definition           definitionDefault;
   static Atom::Definition                 definition(const char*);
@@ -38,7 +38,7 @@ public:
   static const DefinedAtom::Scope         scopeDefault;
   static DefinedAtom::Scope               scope(const char*);
   static const char*                      scope(DefinedAtom::Scope);
-  
+
   static const char* const                contentTypeKeyword;
   static const DefinedAtom::ContentType   contentTypeDefault;
   static DefinedAtom::ContentType         contentType(const char*);

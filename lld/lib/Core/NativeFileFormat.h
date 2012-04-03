@@ -19,21 +19,21 @@ namespace lld {
 // Overview:
 //
 // The number one design goal of this file format is enable the linker to
-// read object files into in-memory Atom objects extremely quickly.  
-// The second design goal is to enable future modifications to the 
-// Atom attribute model.  
+// read object files into in-memory Atom objects extremely quickly.
+// The second design goal is to enable future modifications to the
+// Atom attribute model.
 //
-// The llvm native object file format is not like traditional object file 
+// The llvm native object file format is not like traditional object file
 // formats (e.g. ELF, COFF, mach-o).  There is no symbol table and no
-// sections.  Instead the file is essentially an array of archived Atoms. 
+// sections.  Instead the file is essentially an array of archived Atoms.
 // It is *not* serialized Atoms which would require deserialization into
 // in memory objects.  Instead it is an array of read-only info about each
 // Atom.  The NativeReader bulk creates in-memory Atoms which just have
 // an ivar which points to the read-only info for that Atom. No additional
 // processing is done to construct the in-memory Atoms. All Atom attribute
-// getter methods are virtual calls which dig up the info they need from the 
+// getter methods are virtual calls which dig up the info they need from the
 // ivar data.
-// 
+//
 // To support the gradual evolution of Atom attributes, the Atom read-only
 // data is versioned. The NativeReader chooses which in-memory Atom class
 // to use based on the version. What this means is that if new attributes
@@ -41,16 +41,16 @@ namespace lld {
 // read-only atom info struct needs to be defined.  Then, all the existing
 // native reader atom classes need to be modified to do their best effort
 // to map their old style read-only data to the new Atom model.  At some point
-// some classes to support old versions may be dropped. 
+// some classes to support old versions may be dropped.
 //
 //
 // Details:
 //
-// The native object file format consists of a header that specifies the 
+// The native object file format consists of a header that specifies the
 // endianness of the file and the architecture along with a list of "chunks"
 // in the file.  A Chunk is simply a tagged range of the file.  There is
-// one chunk for the array of atom infos.  There is another chunk for the 
-// string pool, and another for the content pool.  
+// one chunk for the array of atom infos.  There is another chunk for the
+// string pool, and another for the content pool.
 //
 // It turns out there most atoms have very similar sets of attributes, only
 // the name and content attribute vary. To exploit this fact to reduce the file
@@ -98,7 +98,7 @@ enum NativeChunkSignatures {
   NCS_TargetsTable = 9,
   NCS_AddendsTable = 10,
   NCS_Content = 11,
-}; 
+};
 
 //
 // The 16-bytes at the start of a native object file
@@ -214,10 +214,10 @@ struct NativeReferenceIvarsV2 {
 
 //
 // The NCS_TargetsTable chunk contains an array of uint32_t entries.
-// The C++ class Reference has a target() method that returns a 
+// The C++ class Reference has a target() method that returns a
 // pointer to another Atom.  We can't have pointers in object files,
 // so instead  NativeReferenceIvarsV1 contains an index to the target.
-// The index is into this NCS_TargetsTable of uint32_t entries.  
+// The index is into this NCS_TargetsTable of uint32_t entries.
 // The values in this table are the index of the (target) atom in this file.
 // For DefinedAtoms the value is from 0 to NCS_DefinedAtomsV1.elementCount.
 // For UndefinedAtoms the value is from NCS_DefinedAtomsV1.elementCount to
@@ -230,7 +230,7 @@ struct NativeReferenceIvarsV2 {
 // If we allocated space for addends directly in NativeReferenceIvarsV1
 // it would double the size of that struct.  But since addends are rare,
 // we instead just keep a pool of addends and have NativeReferenceIvarsV1
-// (if it needs an addend) just store the index (into the pool) of the 
+// (if it needs an addend) just store the index (into the pool) of the
 // addend it needs.
 //
 

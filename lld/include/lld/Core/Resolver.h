@@ -81,7 +81,7 @@ private:
   class MergedFile : public File {
   public:
     MergedFile() : File("<linker-internal>") { }
-    
+
 
 
   virtual const atom_collection<DefinedAtom>& defined() const {
@@ -96,10 +96,10 @@ private:
   virtual const atom_collection<AbsoluteAtom>& absolute() const {
       return _absoluteAtoms;
   }
- 
+
   void addAtoms(std::vector<const Atom*>& atoms);
 
-  virtual void addAtom(const Atom& atom);  
+  virtual void addAtom(const Atom& atom);
 
   private:
     atom_collection_vector<DefinedAtom>         _definedAtoms;
@@ -107,9 +107,9 @@ private:
     atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;
     atom_collection_vector<AbsoluteAtom>        _absoluteAtoms;
   };
-  
-  
-  
+
+
+
   Platform&                     _platform;
   const InputFiles&             _inputFiles;
   SymbolTable                   _symbolTable;

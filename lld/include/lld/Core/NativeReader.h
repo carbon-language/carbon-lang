@@ -17,19 +17,19 @@
 #include <memory>
 #include <vector>
 
-namespace llvm { 
+namespace llvm {
   class MemoryBuffer;
   class StringRef;
 }
 
 namespace lld {
-  /// parseNativeObjectFileOrSTDIN - Open the specified native object file (use 
+  /// parseNativeObjectFileOrSTDIN - Open the specified native object file (use
   /// stdin if the path is "-") and instantiate into an lld::File object.
   error_code parseNativeObjectFileOrSTDIN( StringRef path
                                          , std::unique_ptr<File> &result);
 
 
-  /// parseNativeObjectFile - Parse the specified native object file 
+  /// parseNativeObjectFile - Parse the specified native object file
   /// (in a buffer) and instantiate into an lld::File object.
   error_code parseNativeObjectFile( std::unique_ptr<llvm::MemoryBuffer> &mb
                                   , StringRef path

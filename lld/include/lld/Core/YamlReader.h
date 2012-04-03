@@ -28,8 +28,8 @@ class File;
 
 namespace yaml {
 
-  /// parseObjectTextFileOrSTDIN - Open the specified YAML file (use stdin if 
-  /// the path is "-") and parse into lld::File object(s) and append each to 
+  /// parseObjectTextFileOrSTDIN - Open the specified YAML file (use stdin if
+  /// the path is "-") and parse into lld::File object(s) and append each to
   /// the specified vector<File*>.
   error_code parseObjectTextFileOrSTDIN( StringRef path
                                        , Platform&

@@ -29,15 +29,15 @@ void StubsPass::perform() {
   // Skip this pass if output format uses text relocations instead of stubs.
   if ( !_platform.noTextRelocs() )
     return;
-  
+
   // Use map so all call sites to same shlib symbol use same stub.
   llvm::DenseMap<const Atom*, const DefinedAtom*> targetToStub;
-  
+
   // Scan all references in all atoms.
-  for(auto ait=_file.definedAtomsBegin(), aend=_file.definedAtomsEnd(); 
+  for(auto ait=_file.definedAtomsBegin(), aend=_file.definedAtomsEnd();
                                                       ait != aend; ++ait) {
     const DefinedAtom* atom = *ait;
-    for (auto rit=atom->referencesBegin(), rend=atom->referencesEnd(); 
+    for (auto rit=atom->referencesBegin(), rend=atom->referencesEnd();
                                                       rit != rend; ++rit) {
       const Reference* ref = *rit;
       // Look at call-sites.
@@ -51,7 +51,7 @@ void StubsPass::perform() {
         } else if (const DefinedAtom* defTarget =
                      dyn_cast<DefinedAtom>(target)) {
           if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
-            // Calls to interposable functions in same linkage unit 
+            // Calls to interposable functions in same linkage unit
             // must also go through a stub.
             assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
             replaceCalleeWithStub = true;
@@ -79,12 +79,12 @@ void StubsPass::perform() {
       }
     }
   }
-  
+
   // add all created stubs to file
   for (auto it=targetToStub.begin(), end=targetToStub.end(); it != end; ++it) {
     _file.addAtom(*it->second);
   }
-  
+
 
 }
 

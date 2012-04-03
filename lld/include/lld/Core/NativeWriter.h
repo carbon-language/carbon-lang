@@ -14,7 +14,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 
-namespace llvm { 
+namespace llvm {
   class StringRef;
 }
 

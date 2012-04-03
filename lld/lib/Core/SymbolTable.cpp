@@ -41,7 +41,7 @@ void SymbolTable::add(const UndefinedAtom &atom) {
 void SymbolTable::add(const SharedLibraryAtom &atom) {
   this->addByName(atom);
 }
-  
+
 void SymbolTable::add(const AbsoluteAtom &atom) {
   this->addByName(atom);
 }
@@ -118,7 +118,7 @@ static MergeResolution mergeCases[4][4] = {
   }
 };
 
-static MergeResolution mergeSelect(DefinedAtom::Merge first, 
+static MergeResolution mergeSelect(DefinedAtom::Merge first,
                                    DefinedAtom::Merge second) {
   return mergeCases[first][second];
 }
@@ -130,7 +130,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
     _nameTable[name] = &newAtom;
-  } 
+  }
   else {
     // Name is already in symbol table and associated with another atom.
     bool useNew = true;
@@ -144,7 +144,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
       case NCR_DupDef:
         assert(existing->definition() == Atom::definitionRegular);
         assert(newAtom.definition() == Atom::definitionRegular);
-        switch ( mergeSelect(((DefinedAtom*)existing)->merge(), 
+        switch ( mergeSelect(((DefinedAtom*)existing)->merge(),
                             ((DefinedAtom*)(&newAtom))->merge()) ) {
           case MCR_First:
             useNew = false;
@@ -173,7 +173,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
           else {
             useNew = (newUndef->canBeNull() < existingUndef->canBeNull());
             // give platform a change to override which to use
-            _platform.undefineCanBeNullMismatch(*existingUndef, 
+            _platform.undefineCanBeNullMismatch(*existingUndef,
                                                  *newUndef, useNew);
           }
         }
@@ -185,7 +185,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
             dyn_cast<SharedLibraryAtom>(&newAtom);
           assert(existingShLib != nullptr);
           assert(newShLib != nullptr);
-          if ( (existingShLib->canBeNullAtRuntime() 
+          if ( (existingShLib->canBeNullAtRuntime()
                   == newShLib->canBeNullAtRuntime()) &&
                existingShLib->loadName().equals(newShLib->loadName()) ) {
             useNew = false;
@@ -229,7 +229,7 @@ unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom * const at
 }
 
 
-bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l, 
+bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
                                          const DefinedAtom * const r) {
   if ( l == r )
     return true;

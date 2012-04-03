@@ -35,7 +35,7 @@ public:
     return a->definition() == definitionSharedLibrary;
   }
   static inline bool classof(const SharedLibraryAtom *) { return true; }
-  
+
 protected:
   SharedLibraryAtom() : Atom(definitionSharedLibrary) {}
   virtual ~SharedLibraryAtom() {}

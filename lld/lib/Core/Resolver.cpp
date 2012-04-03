@@ -24,11 +24,11 @@
 
 namespace lld {
 
-/// This is used as a filter function to std::remove_if to dead strip atoms.  
+/// This is used as a filter function to std::remove_if to dead strip atoms.
 class NotLive {
 public:
        NotLive(const llvm::DenseSet<const Atom*>& la) : _liveAtoms(la) { }
-  
+
   bool operator()(const Atom *atom) const {
     // don't remove if live
     if ( _liveAtoms.count(atom) )
@@ -41,13 +41,13 @@ public:
     // do remove this atom
     return true;
   }
-  
+
 private:
   const llvm::DenseSet<const Atom*> _liveAtoms;
 };
 
 
-/// This is used as a filter function to std::remove_if to coalesced atoms.  
+/// This is used as a filter function to std::remove_if to coalesced atoms.
 class AtomCoalescedAway {
 public:
   AtomCoalescedAway(SymbolTable &sym) : _symbolTable(sym) {}
@@ -93,7 +93,7 @@ void Resolver::doFile(const File &file) {
 void Resolver::doUndefinedAtom(const class UndefinedAtom& atom) {
   // add to list of known atoms
   _atoms.push_back(&atom);
-  
+
   // tell symbol table
   _symbolTable.add(atom);
 }
@@ -106,7 +106,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
 
   // add to list of known atoms
   _atoms.push_back(&atom);
-  
+
   // adjust scope (e.g. force some globals to be hidden)
   _platform.adjustScope(atom);
 
@@ -137,21 +137,21 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
 void Resolver::doSharedLibraryAtom(const SharedLibraryAtom& atom) {
   // add to list of known atoms
   _atoms.push_back(&atom);
-  
+
   // tell symbol table
   _symbolTable.add(atom);
 }
-  
+
 void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
   // add to list of known atoms
   _atoms.push_back(&atom);
-  
+
   // tell symbol table
   _symbolTable.add(atom);
 }
 
 
-  
+
 // utility to add a vector of atoms
 void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
   for (std::vector<const DefinedAtom *>::const_iterator it = newAtoms.begin();
@@ -209,7 +209,7 @@ void Resolver::resolveUndefines() {
         assert(curAtom != nullptr);
         if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
           if (curDefAtom->merge() == DefinedAtom::mergeAsTentative )
-            _inputFiles.searchLibraries(tentName, searchDylibs, 
+            _inputFiles.searchLibraries(tentName, searchDylibs,
                                         true, true, *this);
         }
       }
@@ -346,7 +346,7 @@ void Resolver::checkDylibSymbolCollisions() {
     const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*it);
     if (defAtom == nullptr)
       continue;
-    if ( defAtom->merge() != DefinedAtom::mergeAsTentative ) 
+    if ( defAtom->merge() != DefinedAtom::mergeAsTentative )
       continue;
     assert(defAtom->scope() != DefinedAtom::scopeTranslationUnit);
     // See if any shared library also has symbol which
