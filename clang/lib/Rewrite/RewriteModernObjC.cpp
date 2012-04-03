@@ -329,6 +329,7 @@ namespace {
     Stmt *RewriteBreakStmt(BreakStmt *S);
     Stmt *RewriteContinueStmt(ContinueStmt *S);
     void RewriteCastExpr(CStyleCastExpr *CE);
+    void RewriteLinkageSpec(LinkageSpecDecl *LSD);
     
     // Block rewriting.
     void RewriteBlocksInFunctionProtoType(QualType funcType, NamedDecl *D);
@@ -672,6 +673,7 @@ void RewriteModernObjC::HandleTopLevelSingleDecl(Decl *D) {
     if (PD->isThisDeclarationADefinition())
       RewriteProtocolDecl(PD);
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
+    RewriteLinkageSpec(LSD);
     // Recurse into linkage specifications
     for (DeclContext::decl_iterator DI = LSD->decls_begin(),
                                  DIEnd = LSD->decls_end();
@@ -691,6 +693,12 @@ void RewriteModernObjC::HandleTopLevelSingleDecl(Decl *D) {
             ++DI;
           } while (DI != DIEnd);
           RewriteForwardClassDecl(DG);
+          continue;
+        }
+        else {
+          // Keep track of all interface declarations seen.
+          ObjCInterfacesSeen.push_back(IFace);
+          ++DI;
           continue;
         }
       }
@@ -1056,6 +1064,22 @@ RewriteModernObjC::RewriteForwardProtocolDecl(const llvm::SmallVector<Decl*, 8> 
     llvm_unreachable("Invalid SourceLocation");
   // FIXME: handle forward protocol that are declared across multiple lines.
   ReplaceText(LocStart, 0, "// ");
+}
+
+void 
+RewriteModernObjC::RewriteLinkageSpec(LinkageSpecDecl *LSD) {
+  SourceLocation LocStart = LSD->getExternLoc();
+  if (LocStart.isInvalid())
+    llvm_unreachable("Invalid extern SourceLocation");
+  
+  ReplaceText(LocStart, 0, "// ");
+  if (!LSD->hasBraces())
+    return;
+  // FIXME. We don't rewrite well if '{' is not on same line as 'extern'.
+  SourceLocation LocRBrace = LSD->getRBraceLoc();
+  if (LocRBrace.isInvalid())
+    llvm_unreachable("Invalid rbrace SourceLocation");
+  ReplaceText(LocRBrace, 0, "// ");
 }
 
 void RewriteModernObjC::RewriteTypeIntoString(QualType T, std::string &ResultStr,
