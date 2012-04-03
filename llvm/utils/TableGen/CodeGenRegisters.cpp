@@ -91,21 +91,11 @@ const std::string &CodeGenRegister::getName() const {
 // Merge two RegUnitLists maintaining the order and removing duplicates.
 // Overwrites MergedRU in the process.
 static void mergeRegUnits(CodeGenRegister::RegUnitList &MergedRU,
-                          const CodeGenRegister::RegUnitList &RRU)
-{
+                          const CodeGenRegister::RegUnitList &RRU) {
   CodeGenRegister::RegUnitList LRU = MergedRU;
   MergedRU.clear();
-  for (CodeGenRegister::RegUnitList::const_iterator
-         RI = RRU.begin(), RE = RRU.end(), LI = LRU.begin(), LE = LRU.end();
-       RI != RE || LI != LE;) {
-
-    CodeGenRegister::RegUnitList::const_iterator &NextI =
-      (RI != RE && (LI == LE || *RI < *LI)) ? RI : LI;
-
-    if (MergedRU.empty() || *NextI != MergedRU.back())
-      MergedRU.push_back(*NextI);
-    ++NextI;
-  }
+  std::set_union(LRU.begin(), LRU.end(), RRU.begin(), RRU.end(),
+                 std::inserter(MergedRU, MergedRU.begin()));
 }
 
 const CodeGenRegister::SubRegMap &
