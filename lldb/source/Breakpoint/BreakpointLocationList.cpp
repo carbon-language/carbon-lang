@@ -21,12 +21,12 @@ using namespace lldb;
 using namespace lldb_private;
 
 BreakpointLocationList::BreakpointLocationList(Breakpoint &owner) :
+    m_owner (owner),
     m_locations(),
     m_address_to_location (),
     m_mutex (Mutex::eMutexTypeRecursive),
-    m_new_location_recorder (NULL),
-    m_owner (owner),
-    m_next_id (0)
+    m_next_id (0),
+    m_new_location_recorder (NULL)
 {
 }
 
