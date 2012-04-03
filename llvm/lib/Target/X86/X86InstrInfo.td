@@ -374,6 +374,11 @@ def SSECC : Operand<i8> {
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
+def AVXCC : Operand<i8> {
+  let PrintMethod = "printSSECC";
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
 class ImmSExtAsmOperandClass : AsmOperandClass {
   let SuperClasses = [ImmAsmOperand];
   let RenderMethod = "addImmOperands";

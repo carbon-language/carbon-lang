@@ -19,7 +19,6 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
-#include "InstPrinter/X86IntelInstPrinter.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -265,8 +264,8 @@ void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 void X86AsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op,
                                raw_ostream &O) {
   unsigned char value = MI->getOperand(Op).getImm();
-  assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {
+  default: llvm_unreachable("Invalid ssecc argument!");
   case    0: O << "eq"; break;
   case    1: O << "lt"; break;
   case    2: O << "le"; break;

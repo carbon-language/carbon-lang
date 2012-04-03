@@ -600,6 +600,774 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x03]
           vcmpunordsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
 
+// CHECK: vcmpps  $8, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x08]
+          vcmpeq_uqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $9, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x09]
+          vcmpngeps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $10, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x0a]
+          vcmpngtps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $11, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x0b]
+          vcmpfalseps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $12, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x0c]
+          vcmpneq_oqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $13, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x0d]
+          vcmpgeps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $14, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x0e]
+          vcmpgtps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $15, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x0f]
+          vcmptrueps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $16, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x10]
+          vcmpeq_osps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $17, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x11]
+          vcmplt_oqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $18, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x12]
+          vcmple_oqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $19, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x13]
+          vcmpunord_sps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $20, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x14]
+          vcmpneq_usps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $21, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x15]
+          vcmpnlt_uqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $22, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x16]
+          vcmpnle_uqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $23, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x17]
+          vcmpord_sps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $24, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x18]
+          vcmpeq_usps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $25, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x19]
+          vcmpnge_uqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $26, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x1a]
+          vcmpngt_uqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $27, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x1b]
+          vcmpfalse_osps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $28, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x1c]
+          vcmpneq_osps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $29, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x1d]
+          vcmpge_oqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $30, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x1e]
+          vcmpgt_oqps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $31, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc2,0xeb,0x1f]
+          vcmptrue_usps   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpps  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x08]
+          vcmpeq_uqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $9, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x09]
+          vcmpngeps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $10, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x0a]
+          vcmpngtps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $11, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x0b]
+          vcmpfalseps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $12, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x0c]
+          vcmpneq_oqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $13, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x0d]
+          vcmpgeps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $14, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xc8,0xc2,0x54,0xcb,0xfc,0x0e]
+          vcmpgtps   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpps  $15, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x0f]
+          vcmptrueps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $16, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x10]
+          vcmpeq_osps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $17, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x11]
+          vcmplt_oqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $18, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x12]
+          vcmple_oqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $19, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x13]
+          vcmpunord_sps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $20, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x14]
+          vcmpneq_usps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $21, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x15]
+          vcmpnlt_uqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $22, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xc8,0xc2,0x54,0xcb,0xfc,0x16]
+          vcmpnle_uqps   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpps  $23, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x17]
+          vcmpord_sps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $24, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x18]
+          vcmpeq_usps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $25, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x19]
+          vcmpnge_uqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $26, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x1a]
+          vcmpngt_uqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $27, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x1b]
+          vcmpfalse_osps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $28, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x1c]
+          vcmpneq_osps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $29, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x1d]
+          vcmpge_oqps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpps  $30, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xc8,0xc2,0x54,0xcb,0xfc,0x1e]
+          vcmpgt_oqps   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpps  $31, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc2,0x6c,0xcb,0xfc,0x1f]
+          vcmptrue_usps   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $8, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x08]
+          vcmpeq_uqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $9, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x09]
+          vcmpngepd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $10, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x0a]
+          vcmpngtpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $11, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x0b]
+          vcmpfalsepd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $12, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x0c]
+          vcmpneq_oqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $13, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x0d]
+          vcmpgepd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $14, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x0e]
+          vcmpgtpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $15, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x0f]
+          vcmptruepd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $16, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x10]
+          vcmpeq_ospd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $17, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x11]
+          vcmplt_oqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $18, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x12]
+          vcmple_oqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $19, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x13]
+          vcmpunord_spd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $20, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x14]
+          vcmpneq_uspd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $21, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x15]
+          vcmpnlt_uqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $22, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x16]
+          vcmpnle_uqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $23, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x17]
+          vcmpord_spd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $24, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x18]
+          vcmpeq_uspd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $25, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x19]
+          vcmpnge_uqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $26, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x1a]
+          vcmpngt_uqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $27, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x1b]
+          vcmpfalse_ospd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $28, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x1c]
+          vcmpneq_ospd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $29, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x1d]
+          vcmpge_oqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $30, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x1e]
+          vcmpgt_oqpd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $31, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xeb,0x1f]
+          vcmptrue_uspd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmppd  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x08]
+          vcmpeq_uqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $9, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x09]
+          vcmpngepd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $10, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x0a]
+          vcmpngtpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $11, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x0b]
+          vcmpfalsepd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $12, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x0c]
+          vcmpneq_oqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $13, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x0d]
+          vcmpgepd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $14, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xc9,0xc2,0x54,0xcb,0xfc,0x0e]
+          vcmpgtpd   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmppd  $15, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x0f]
+          vcmptruepd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $16, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x10]
+          vcmpeq_ospd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $17, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x11]
+          vcmplt_oqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $18, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x12]
+          vcmple_oqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $19, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x13]
+          vcmpunord_spd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $20, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x14]
+          vcmpneq_uspd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $21, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x15]
+          vcmpnlt_uqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $22, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xc9,0xc2,0x54,0xcb,0xfc,0x16]
+          vcmpnle_uqpd   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmppd  $23, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x17]
+          vcmpord_spd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $24, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x18]
+          vcmpeq_uspd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $25, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x19]
+          vcmpnge_uqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $26, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x1a]
+          vcmpngt_uqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $27, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x1b]
+          vcmpfalse_ospd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $28, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x1c]
+          vcmpneq_ospd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $29, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x1d]
+          vcmpge_oqpd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmppd  $30, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xc9,0xc2,0x54,0xcb,0xfc,0x1e]
+          vcmpgt_oqpd   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmppd  $31, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc2,0x6c,0xcb,0xfc,0x1f]
+          vcmptrue_uspd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $8, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x08]
+          vcmpeq_uqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $9, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x09]
+          vcmpngess   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $10, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x0a]
+          vcmpngtss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $11, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x0b]
+          vcmpfalsess   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $12, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x0c]
+          vcmpneq_oqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $13, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x0d]
+          vcmpgess   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $14, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x0e]
+          vcmpgtss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $15, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x0f]
+          vcmptruess   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $16, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x10]
+          vcmpeq_osss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $17, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x11]
+          vcmplt_oqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $18, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x12]
+          vcmple_oqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $19, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x13]
+          vcmpunord_sss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $20, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x14]
+          vcmpneq_usss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $21, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x15]
+          vcmpnlt_uqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $22, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x16]
+          vcmpnle_uqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $23, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x17]
+          vcmpord_sss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $24, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x18]
+          vcmpeq_usss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $25, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x19]
+          vcmpnge_uqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $26, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x1a]
+          vcmpngt_uqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $27, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x1b]
+          vcmpfalse_osss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $28, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x1c]
+          vcmpneq_osss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $29, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x1d]
+          vcmpge_oqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $30, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x1e]
+          vcmpgt_oqss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $31, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1a,0xc2,0xeb,0x1f]
+          vcmptrue_usss   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpss  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x08]
+          vcmpeq_uqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $9, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x09]
+          vcmpngess   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $10, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x0a]
+          vcmpngtss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $11, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x0b]
+          vcmpfalsess   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $12, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x0c]
+          vcmpneq_oqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $13, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x0d]
+          vcmpgess   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $14, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xca,0xc2,0x54,0xcb,0xfc,0x0e]
+          vcmpgtss   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpss  $15, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x0f]
+          vcmptruess   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $16, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x10]
+          vcmpeq_osss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $17, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x11]
+          vcmplt_oqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $18, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x12]
+          vcmple_oqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $19, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x13]
+          vcmpunord_sss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $20, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x14]
+          vcmpneq_usss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $21, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x15]
+          vcmpnlt_uqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $22, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xca,0xc2,0x54,0xcb,0xfc,0x16]
+          vcmpnle_uqss   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpss  $23, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x17]
+          vcmpord_sss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $24, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x18]
+          vcmpeq_usss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $25, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x19]
+          vcmpnge_uqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $26, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x1a]
+          vcmpngt_uqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $27, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x1b]
+          vcmpfalse_osss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $28, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x1c]
+          vcmpneq_osss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $29, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x1d]
+          vcmpge_oqss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpss  $30, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xca,0xc2,0x54,0xcb,0xfc,0x1e]
+          vcmpgt_oqss   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpss  $31, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1a,0xc2,0x6c,0xcb,0xfc,0x1f]
+          vcmptrue_usss   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $8, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x08]
+          vcmpeq_uqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $9, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x09]
+          vcmpngesd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $10, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x0a]
+          vcmpngtsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $11, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x0b]
+          vcmpfalsesd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $12, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x0c]
+          vcmpneq_oqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $13, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x0d]
+          vcmpgesd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $14, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x0e]
+          vcmpgtsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $15, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x0f]
+          vcmptruesd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $16, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x10]
+          vcmpeq_ossd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $17, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x11]
+          vcmplt_oqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $18, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x12]
+          vcmple_oqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $19, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x13]
+          vcmpunord_ssd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $20, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x14]
+          vcmpneq_ussd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $21, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x15]
+          vcmpnlt_uqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $22, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x16]
+          vcmpnle_uqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $23, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x17]
+          vcmpord_ssd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $24, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x18]
+          vcmpeq_ussd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $25, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x19]
+          vcmpnge_uqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $26, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x1a]
+          vcmpngt_uqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $27, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x1b]
+          vcmpfalse_ossd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $28, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x1c]
+          vcmpneq_ossd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $29, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x1d]
+          vcmpge_oqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $30, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x1e]
+          vcmpgt_oqsd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $31, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xc2,0xeb,0x1f]
+          vcmptrue_ussd   %xmm11, %xmm12, %xmm13
+
+// CHECK: vcmpsd  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x08]
+          vcmpeq_uqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $9, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x09]
+          vcmpngesd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $10, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x0a]
+          vcmpngtsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $11, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x0b]
+          vcmpfalsesd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $12, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x0c]
+          vcmpneq_oqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $13, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x0d]
+          vcmpgesd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $14, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xcb,0xc2,0x54,0xcb,0xfc,0x0e]
+          vcmpgtsd   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpsd  $15, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x0f]
+          vcmptruesd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $16, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x10]
+          vcmpeq_ossd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $17, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x11]
+          vcmplt_oqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $18, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x12]
+          vcmple_oqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $19, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x13]
+          vcmpunord_ssd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $20, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x14]
+          vcmpneq_ussd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $21, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x15]
+          vcmpnlt_uqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $22, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xcb,0xc2,0x54,0xcb,0xfc,0x16]
+          vcmpnle_uqsd   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpsd  $23, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x17]
+          vcmpord_ssd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $24, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x18]
+          vcmpeq_ussd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $25, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x19]
+          vcmpnge_uqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $26, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x1a]
+          vcmpngt_uqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $27, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x1b]
+          vcmpfalse_ossd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $28, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x1c]
+          vcmpneq_ossd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $29, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x1d]
+          vcmpge_oqsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vcmpsd  $30, -4(%rbx,%rcx,8), %xmm6, %xmm2
+// CHECK: encoding: [0xc5,0xcb,0xc2,0x54,0xcb,0xfc,0x1e]
+          vcmpgt_oqsd   -4(%rbx,%rcx,8), %xmm6, %xmm2
+
+// CHECK: vcmpsd  $31, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x1f]
+          vcmptrue_ussd   -4(%rbx,%rcx,8), %xmm12, %xmm13
+
 // CHECK: vucomiss  %xmm11, %xmm12
 // CHECK: encoding: [0xc4,0x41,0x78,0x2e,0xe3]
           vucomiss  %xmm11, %xmm12
