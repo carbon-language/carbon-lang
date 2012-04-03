@@ -29,3 +29,15 @@ define <4 x i32> @multi_use_swizzle (<4 x i32>* %pA, <4 x i32>* %pB) {
   %R = xor <4 x i32> %S1, %S2
   ret <4 x i32> %R
 }
+
+; CHECK: pull_bitcast2
+; CHECK: xorl
+; CHECK: ret
+define <4 x i8> @pull_bitcast2 (<4 x i8>* %pA, <4 x i8>* %pB, <4 x i8>* %pC) {
+  %A = load <4 x i8>* %pA
+  store <4 x i8> %A, <4 x i8>* %pC
+  %B = load <4 x i8>* %pB
+  %C = xor <4 x i8> %A, %B
+  store <4 x i8> %C, <4 x i8>* %pA
+  ret <4 x i8> %C
+}
