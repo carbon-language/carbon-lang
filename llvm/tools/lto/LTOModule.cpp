@@ -491,7 +491,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl, bool isFunc) {
 namespace {
   class RecordStreamer : public MCStreamer {
   public:
-    enum State { NeverSeen, Global, Defined, DefinedGlobal, Used};
+    enum State { NeverSeen, Global, Defined, DefinedGlobal, Used };
 
   private:
     StringMap<State> Symbols;
@@ -580,14 +580,16 @@ namespace {
 
     RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
 
-    virtual void ChangeSection(const MCSection *Section) {}
-    virtual void InitSections() {}
+    virtual void EmitInstruction(const MCInst &Inst) {
+      // Scan for values.
+      for (unsigned i = Inst.getNumOperands(); i--; )
+        if (Inst.getOperand(i).isExpr())
+          AddValueSymbols(Inst.getOperand(i).getExpr());
+    }
     virtual void EmitLabel(MCSymbol *Symbol) {
       Symbol->setSection(*getCurrentSection());
       markDefined(*Symbol);
     }
-    virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
-    virtual void EmitThumbFunc(MCSymbol *Func) {}
     virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);
@@ -596,20 +598,26 @@ namespace {
       if (Attribute == MCSA_Global)
         markGlobal(*Symbol);
     }
-    virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
-    virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
-    virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {}
-    virtual void EmitCOFFSymbolStorageClass(int StorageClass) {}
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
                               unsigned Size , unsigned ByteAlignment) {
       markDefined(*Symbol);
     }
-    virtual void EmitCOFFSymbolType(int Type) {}
-    virtual void EndCOFFSymbolDef() {}
     virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                   unsigned ByteAlignment) {
       markDefined(*Symbol);
     }
+
+    // Noop calls.
+    virtual void ChangeSection(const MCSection *Section) {}
+    virtual void InitSections() {}
+    virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
+    virtual void EmitThumbFunc(MCSymbol *Func) {}
+    virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
+    virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
+    virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {}
+    virtual void EmitCOFFSymbolStorageClass(int StorageClass) {}
+    virtual void EmitCOFFSymbolType(int Type) {}
+    virtual void EndCOFFSymbolDef() {}
     virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
     virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                        unsigned ByteAlignment) {}
@@ -632,13 +640,6 @@ namespace {
                                           const MCSymbol *LastLabel,
                                           const MCSymbol *Label,
                                           unsigned PointerSize) {}
-
-    virtual void EmitInstruction(const MCInst &Inst) {
-      // Scan for values.
-      for (unsigned i = Inst.getNumOperands(); i--; )
-        if (Inst.getOperand(i).isExpr())
-          AddValueSymbols(Inst.getOperand(i).getExpr());
-    }
     virtual void FinishImpl() {}
   };
 } // end anonymous namespace
