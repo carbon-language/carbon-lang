@@ -291,9 +291,10 @@ void PPC64CompilationCallback() {
 }
 #endif
 
-extern "C" void *PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
-                                         unsigned *OrigCallAddrPlus4,
-                                         bool is64Bit) {
+extern "C" {
+static void* LLVM_ATTRIBUTE_USED PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
+                                                         unsigned *OrigCallAddrPlus4,
+                                                         bool is64Bit) {
   // Adjust the pointer to the address of the call instruction in the stub
   // emitted by emitFunctionStub, rather than the instruction after it.
   unsigned *StubCallAddr = StubCallAddrPlus4 - 1;
@@ -336,6 +337,7 @@ extern "C" void *PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
   // after calling the target function in a place that is easy to get on the
   // stack after we restore all regs.
   return Target;
+}
 }
 
 
