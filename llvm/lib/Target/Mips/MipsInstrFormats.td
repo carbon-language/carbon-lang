@@ -45,8 +45,6 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 
   let Namespace = "Mips";
 
-  let Size = 4;
-
   bits<6> Opcode = 0;
 
   // Top 6 bits are the 'opcode' field
@@ -66,10 +64,6 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 
   // TSFlags layout should be kept in sync with MipsInstrInfo.h.
   let TSFlags{3-0}   = FormBits;
-
-  let DecoderNamespace = "Mips";
-
-  field bits<32> SoftFail = 0;
 }
 
 // Mips Pseudo Instructions Format
