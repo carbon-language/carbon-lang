@@ -43,14 +43,22 @@ class AppleTypesTestCase(TestBase):
         # Get the executable module at index 0.
         exe_module = target.GetModuleAtIndex(0)
 
-        debug_str_section = exe_module.FindSection("__debug_str")
-        self.assertTrue(debug_str_section)
-        print "__debug_str section:", debug_str_section
+        dwarf_section = exe_module.FindSection("__DWARF")
+        self.assertTrue(dwarf_section)
+        print "__DWARF section:", dwarf_section
+        print "Number of sub-sections: %d" % dwarf_section.GetNumSubSections()
+        INDENT = ' ' * 4
+        for subsec in dwarf_section:
+            print INDENT + str(subsec)
+
+        debug_str_sub_section = dwarf_section.FindSubSection("__debug_str")
+        self.assertTrue(debug_str_sub_section)
+        print "__debug_str sub-section:", debug_str_sub_section
 
         # Find our __apple_types section by name.
-        apple_types_section = exe_module.FindSection("__apple_types")
-        self.assertTrue(apple_types_section)
-        print "__apple_types section:", apple_types_section
+        apple_types_sub_section = dwarf_section.FindSubSection("__apple_types")
+        self.assertTrue(apple_types_sub_section)
+        print "__apple_types sub-section:", apple_types_sub_section
 
 
 if __name__ == '__main__':
