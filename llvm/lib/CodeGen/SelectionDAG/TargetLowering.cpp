@@ -2432,8 +2432,16 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
 
   if (N0 == N1) {
     // We can always fold X == X for integer setcc's.
-    if (N0.getValueType().isInteger())
-      return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
+    if (N0.getValueType().isInteger()) {
+      switch (getBooleanContents(N0.getValueType().isVector())) {
+      default: llvm_unreachable ("Unknown boolean content.");
+      case UndefinedBooleanContent: 
+      case ZeroOrOneBooleanContent: 
+        return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
+      case ZeroOrNegativeOneBooleanContent:
+        return DAG.getConstant(ISD::isTrueWhenEqual(Cond) ? -1 : 0, VT);
+      }
+    }
     unsigned UOF = ISD::getUnorderedFlavor(Cond);
     if (UOF == 2)   // FP operators that are undefined on NaNs.
       return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
