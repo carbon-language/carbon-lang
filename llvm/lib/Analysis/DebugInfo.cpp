@@ -787,6 +787,9 @@ void DISubprogram::print(raw_ostream &OS) const {
   if (isDefinition())
     OS << " [def] ";
 
+  if (getScopeLineNumber() != getLineNumber())
+    OS << " [Scope: " << getScopeLineNumber() << "] ";
+
   OS << "\n";
 }
 

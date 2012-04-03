@@ -445,6 +445,7 @@ namespace llvm {
     /// @param Ty            Function type.
     /// @param isLocalToUnit True if this function is not externally visible..
     /// @param isDefinition  True if this is a function definition.
+    /// @param ScopeLine     Set to the beginning of the scope this starts
     /// @param Flags         e.g. is this function prototyped or not.
     ///                      This flags are used to emit dwarf attributes.
     /// @param isOptimized   True if optimization is ON.
@@ -455,6 +456,7 @@ namespace llvm {
                                 DIFile File, unsigned LineNo,
                                 DIType Ty, bool isLocalToUnit,
                                 bool isDefinition,
+                                unsigned ScopeLine,
                                 unsigned Flags = 0,
                                 bool isOptimized = false,
                                 Function *Fn = 0,

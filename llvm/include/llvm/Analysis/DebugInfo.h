@@ -519,6 +519,7 @@ namespace llvm {
     DICompositeType getContainingType() const {
       return getFieldAs<DICompositeType>(13);
     }
+
     unsigned isArtificial() const    { 
       if (getVersion() <= llvm::LLVMDebugVersion8)
         return getUnsignedField(14); 
@@ -566,6 +567,11 @@ namespace llvm {
 
       return getFieldAs<DIFile>(6).getDirectory(); 
     }
+
+    /// getScopeLineNumber - Get the beginning of the scope of the
+    /// function, not necessarily where the name of the program
+    /// starts.
+    unsigned getScopeLineNumber() const { return getUnsignedField(20); }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
