@@ -4,4 +4,5 @@ void foo() {
   int x;
 }
 // CHECK: ... Statistics Collected ...
+// CHECK:100 AnalysisConsumer - The % of reachable basic blocks.
 // CHECK:The # of times RemoveDeadBindings is called

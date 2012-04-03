@@ -90,10 +90,6 @@ class ExprEngine : public SubEngine {
   ///  destructor is called before the rest of the ExprEngine is destroyed.
   GRBugReporter BR;
 
-  /// The information about functions shared by the whole translation unit.
-  /// (This data is owned by AnalysisConsumer.)
-  FunctionSummariesTy *FunctionSummaries;
-
 public:
   ExprEngine(AnalysisManager &mgr, bool gcEnabled, SetOfDecls *VisitedCallees,
              FunctionSummariesTy *FS);

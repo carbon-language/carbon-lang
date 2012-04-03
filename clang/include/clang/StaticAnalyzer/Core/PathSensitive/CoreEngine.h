@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/FunctionSummary.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/WorkList.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -83,6 +84,10 @@ private:
   /// AnalysisConsumer. It can be null.
   SetOfDecls *AnalyzedCallees;
 
+  /// The information about functions shared by the whole translation unit.
+  /// (This data is owned by AnalysisConsumer.)
+  FunctionSummariesTy *FunctionSummaries;
+
   void generateNode(const ProgramPoint &Loc,
                     ProgramStateRef State,
                     ExplodedNode *Pred);
@@ -104,11 +109,13 @@ private:
 public:
   /// Construct a CoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  CoreEngine(SubEngine& subengine, SetOfDecls *VisitedCallees)
+  CoreEngine(SubEngine& subengine, SetOfDecls *VisitedCallees,
+             FunctionSummariesTy *FS)
     : SubEng(subengine), G(new ExplodedGraph()),
       WList(WorkList::makeBFS()),
       BCounterFactory(G->getAllocator()),
-      AnalyzedCallees(VisitedCallees) {}
+      AnalyzedCallees(VisitedCallees),
+      FunctionSummaries(FS){}
 
   ~CoreEngine() {
     delete WList;

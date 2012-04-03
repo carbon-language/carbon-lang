@@ -174,6 +174,11 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
     assert (Entry->succ_size() == 1 &&
             "Entry block must have 1 successor.");
 
+    // Mark the entry block as visited.
+    FunctionSummaries->markVisitedBasicBlock(Entry->getBlockID(),
+                                             L->getDecl(),
+                                             L->getCFG()->getNumBlockIDs());
+
     // Get the solitary successor.
     const CFGBlock *Succ = *(Entry->succ_begin());
 
@@ -280,6 +285,12 @@ void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
   const CFGBlock *Blk = L.getDst();
   NodeBuilderContext BuilderCtx(*this, Blk, Pred);
 
+  // Mark this block as visited.
+  const LocationContext *LC = Pred->getLocationContext();
+  FunctionSummaries->markVisitedBasicBlock(Blk->getBlockID(),
+                                           LC->getDecl(),
+                                           LC->getCFG()->getNumBlockIDs());
+
   // Check if we are entering the EXIT block.
   if (Blk == &(L.getLocationContext()->getCFG()->getExit())) {
 
@@ -312,10 +323,11 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
                                        ExplodedNode *Pred) {
 
   // Increment the block counter.
+  const LocationContext *LC = Pred->getLocationContext();
+  unsigned BlockId = L.getBlock()->getBlockID();
   BlockCounter Counter = WList->getBlockCounter();
-  Counter = BCounterFactory.IncrementCount(Counter, 
-                             Pred->getLocationContext()->getCurrentStackFrame(),
-                                           L.getBlock()->getBlockID());
+  Counter = BCounterFactory.IncrementCount(Counter, LC->getCurrentStackFrame(),
+                                           BlockId);
   WList->setBlockCounter(Counter);
 
   // Process the entrance of the block.

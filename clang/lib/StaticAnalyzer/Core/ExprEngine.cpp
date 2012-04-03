@@ -71,7 +71,7 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
                        FunctionSummariesTy *FS)
   : AMgr(mgr),
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
-    Engine(*this, VisitedCallees),
+    Engine(*this, VisitedCallees, FS),
     G(Engine.getGraph()),
     StateMgr(getContext(), mgr.getStoreManagerCreator(),
              mgr.getConstraintManagerCreator(), G.getAllocator(),
@@ -82,7 +82,7 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
     currentStmt(NULL), currentStmtIdx(0), currentBuilderContext(0),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
-    ObjCGCEnabled(gcEnabled), BR(mgr, *this), FunctionSummaries(FS) {
+    ObjCGCEnabled(gcEnabled), BR(mgr, *this) {
   
   if (mgr.shouldEagerlyTrimExplodedGraph()) {
     // Enable eager node reclaimation when constructing the ExplodedGraph.  
@@ -1051,7 +1051,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
     const LocationContext *RootLC =
                         (*G.roots_begin())->getLocation().getLocationContext();
     if (RootLC->getCurrentStackFrame() != CalleeSF) {
-      FunctionSummaries->markReachedMaxBlockCount(CalleeSF->getDecl());
+      Engine.FunctionSummaries->markReachedMaxBlockCount(CalleeSF->getDecl());
 
       // Re-run the call evaluation without inlining it, by storing the
       // no-inlining policy in the state and enqueuing the new work item on

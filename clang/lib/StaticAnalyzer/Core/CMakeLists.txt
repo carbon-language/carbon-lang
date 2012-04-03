@@ -22,6 +22,7 @@ add_clang_library(clangStaticAnalyzerCore
   ExprEngineCXX.cpp
   ExprEngineCallAndReturn.cpp
   ExprEngineObjC.cpp
+  FunctionSummary.cpp
   HTMLDiagnostics.cpp
   MemRegion.cpp
   ObjCMessage.cpp

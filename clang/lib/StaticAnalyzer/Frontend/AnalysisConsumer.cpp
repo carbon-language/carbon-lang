@@ -53,6 +53,9 @@ static ExplodedNode::Auditor* CreateUbiViz();
 
 STATISTIC(NumFunctionTopLevel, "The # of functions at top level.");
 STATISTIC(NumFunctionsAnalyzed, "The # of functions analysed (as top level).");
+STATISTIC(NumBlocksInAnalyzedFunctions,
+                     "The # of basic blocks in the analyzed functions.");
+STATISTIC(PercentReachableBlocks, "The % of reachable basic blocks.");
 
 //===----------------------------------------------------------------------===//
 // Special PathDiagnosticConsumers.
@@ -122,6 +125,13 @@ public:
   }
 
   ~AnalysisConsumer() {
+    // Count how many basic blocks we have not covered.
+    NumBlocksInAnalyzedFunctions = FunctionSummaries.getTotalNumBasicBlocks();
+    if (NumBlocksInAnalyzedFunctions > 0)
+      PercentReachableBlocks =
+        (FunctionSummaries.getTotalNumVisitedBasicBlocks() * 100) /
+          NumBlocksInAnalyzedFunctions;
+
     if (Opts.PrintStats)
       delete TUTotalTimer;
   }
