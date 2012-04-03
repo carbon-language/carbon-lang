@@ -67,13 +67,13 @@ ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD OpenBSD))
     # Include everything from the .a's into the shared library.
     LLVMLibsOptions := -Wl,--whole-archive $(LLVMLibsOptions) \
                        -Wl,--no-whole-archive
+    # Add soname to the library.
+    LLVMLibsOptions += -Wl,--soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ifeq ($(HOST_OS),Linux)
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
-    # Add soname to the library.
-    LLVMLibsOptions += -Wl,--soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ifeq ($(HOST_OS),SunOS)
