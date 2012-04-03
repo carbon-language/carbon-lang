@@ -4500,14 +4500,7 @@ namespace {
 class DifferentNameValidatorCCC : public CorrectionCandidateCallback {
  public:
   DifferentNameValidatorCCC(CXXRecordDecl *Parent)
-      : ExpectedParent(Parent ? Parent->getCanonicalDecl() : 0) {
-    // Don't allow any additional qualification.
-    // FIXME: It would be nice to perform this additional qualification. 
-    // However, DiagnoseInvalidRedeclaration is unable to handle the 
-    // qualification, because it doesn't know how to pass the corrected
-    // nested-name-specifier through to ActOnFunctionDeclarator.
-    AllowAddedQualifier = false;
-  }
+      : ExpectedParent(Parent ? Parent->getCanonicalDecl() : 0) {}
 
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     if (candidate.getEditDistance() == 0)
@@ -4596,12 +4589,11 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
     // TODO: Refactor ActOnFunctionDeclarator so that we can call only the
     // pieces need to verify the typo-corrected C++ declaraction and hopefully
     // eliminate the need for the parameter pack ExtraArgs.
-    Result = SemaRef.ActOnFunctionDeclarator(ExtraArgs.S, ExtraArgs.D,
-                                             NewFD->getDeclContext(),
-                                             NewFD->getTypeSourceInfo(),
-                                             Previous,
-                                             ExtraArgs.TemplateParamLists,
-                                             ExtraArgs.AddToScope);
+    Result = SemaRef.ActOnFunctionDeclarator(
+        ExtraArgs.S, ExtraArgs.D,
+        Correction.getCorrectionDecl()->getDeclContext(),
+        NewFD->getTypeSourceInfo(), Previous, ExtraArgs.TemplateParamLists,
+        ExtraArgs.AddToScope);
     if (Trap.hasErrorOccurred()) {
       // Pretend the typo correction never occurred
       ExtraArgs.D.SetIdentifier(Name.getAsIdentifierInfo(),

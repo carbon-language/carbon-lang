@@ -3815,7 +3815,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // Determine whether we are going to search in the various namespaces for
   // corrections.
   bool SearchNamespaces
-    = getLangOpts().CPlusPlus && CCC.AllowAddedQualifier && 
+    = getLangOpts().CPlusPlus &&
       (IsUnqualifiedLookup || (QualifiedDC && QualifiedDC->isNamespace()));
   
   if (IsUnqualifiedLookup || SearchNamespaces) {
