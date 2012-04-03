@@ -437,16 +437,14 @@ for Flavor in $Flavors ; do
         # Compare .o files between Phase2 and Phase3 and report which ones
         # differ.
         if [ "$do_compare" = "yes" ]; then
-            if [ "$Flavor" = "Release" -o "$Flavor" = "Release-64" ]; then
-                echo
-                echo "# Comparing Phase 2 and Phase 3 files"
-                for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
-                    p3=`echo $o | sed -e 's,Phase2,Phase3,'`
-                    if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
-                        echo "file `basename $o` differs between phase 2 and phase 3"
-                    fi
-                done
-            fi
+            echo
+            echo "# Comparing Phase 2 and Phase 3 files"
+            for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
+                p3=`echo $o | sed -e 's,Phase2,Phase3,'`
+                if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
+                    echo "file `basename $o` differs between phase 2 and phase 3"
+                fi
+            done
         fi
     fi
 
