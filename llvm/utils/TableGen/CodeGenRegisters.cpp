@@ -95,7 +95,7 @@ static void mergeRegUnits(CodeGenRegister::RegUnitList &MergedRU,
   CodeGenRegister::RegUnitList LRU = MergedRU;
   MergedRU.clear();
   std::set_union(LRU.begin(), LRU.end(), RRU.begin(), RRU.end(),
-                 std::inserter(MergedRU, MergedRU.begin()));
+                 std::back_inserter(MergedRU));
 }
 
 const CodeGenRegister::SubRegMap &
