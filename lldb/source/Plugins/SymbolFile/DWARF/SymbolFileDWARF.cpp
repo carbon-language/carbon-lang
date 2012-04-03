@@ -1480,7 +1480,7 @@ SymbolFileDWARF::ParseChildMembers
         switch (tag)
         {
         case DW_TAG_member:
-        case DW_TAG_APPLE_property:
+        case DW_TAG_APPLE_Property:
             {
                 DWARFDebugInfoEntry::Attributes attributes;
                 const size_t num_attributes = die->GetAttributes (this, 
