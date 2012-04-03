@@ -53,15 +53,15 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_language (language),
     m_transformed_text (),
     m_desired_type (desired_type),
+    m_enforce_valid_object (false),
     m_cplusplus (false),
     m_objectivec (false),
+    m_static_method(false),
     m_needs_object_ptr (false),
     m_const_object (false),
-    m_static_method(false),
     m_target (NULL),
     m_evaluated_statically (false),
-    m_const_result (),
-    m_enforce_valid_object (false)
+    m_const_result ()
 {
     switch (m_language)
     {
