@@ -578,8 +578,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
-  OS << "#include \"llvm/Target/TargetRegisterInfo.h\"\n";
-  OS << "#include <string>\n\n";
+  OS << "#include \"llvm/Target/TargetRegisterInfo.h\"\n\n";
 
   OS << "namespace llvm {\n\n";
 
@@ -812,19 +811,18 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit extra information about registers.
   const std::string &TargetName = Target.getName();
-  OS << "\n  static const TargetRegisterInfoDesc "
-     << TargetName << "RegInfoDesc[] = "
-     << "{ // Extra Descriptors\n";
-  OS << "    { 0, 0 },\n";
+  OS << "\nstatic const TargetRegisterInfoDesc "
+     << TargetName << "RegInfoDesc[] = { // Extra Descriptors\n";
+  OS << "  { 0, 0 },\n";
 
   const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister &Reg = *Regs[i];
-    OS << "    { ";
+    OS << "  { ";
     OS << Reg.CostPerUse << ", "
        << int(AllocatableRegs.count(Reg.TheDef)) << " },\n";
   }
-  OS << "  };\n";      // End of register descriptors...
+  OS << "};\n";      // End of register descriptors...
 
 
   // Calculate the mapping of subregister+index pairs to physical registers.
@@ -833,7 +831,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit SubRegIndex names, skipping 0
   ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
-  OS << "\n  static const char *const " << TargetName
+  OS << "\nstatic const char *const " << TargetName
      << "SubRegIndexTable[] = { \"";
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
     OS << SubRegIndices[i]->getName();

@@ -477,7 +477,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
 static void
 emitRegisterNameString(raw_ostream &O, StringRef AltName,
-  const std::vector<CodeGenRegister*> &Registers) {
+                       const std::vector<CodeGenRegister*> &Registers) {
   SequenceToOffsetTable<std::string> StringTable;
   SmallVector<std::string, 4> AsmNames(Registers.size());
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
@@ -525,7 +525,7 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
       O << "\n    ";
     O << StringTable.get(AsmNames[i]) << ", ";
   }
-  O << "  };\n"
+  O << "\n  };\n"
     << "\n";
 }
 
