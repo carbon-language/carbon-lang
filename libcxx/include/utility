@@ -206,7 +206,7 @@ move_if_noexcept(_Tp& __x) _NOEXCEPT
 }
 
 struct _LIBCPP_VISIBLE piecewise_construct_t { };
-#ifdef _LIBCPP_HAS_NO_CONSTEXPR
+#if defined(_LIBCPP_HAS_NO_CONSTEXPR) || defined(_LIBCPP_BUILDING_UTILITY)
 extern const piecewise_construct_t piecewise_construct;// = piecewise_construct_t();
 #else
 constexpr piecewise_construct_t piecewise_construct = piecewise_construct_t();
