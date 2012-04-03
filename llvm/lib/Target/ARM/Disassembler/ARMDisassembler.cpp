@@ -9,8 +9,6 @@
 
 #define DEBUG_TYPE "arm-disassembler"
 
-#include "ARM.h"
-#include "ARMSubtarget.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
@@ -20,6 +18,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/ErrorHandling.h"
