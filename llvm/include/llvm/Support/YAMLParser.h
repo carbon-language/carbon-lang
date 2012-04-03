@@ -113,7 +113,6 @@ public:
   };
 
   Node(unsigned int Type, OwningPtr<Document>&, StringRef Anchor);
-  virtual ~Node();
 
   /// @brief Get the value of the anchor attached to this node. If it does not
   ///        have one, getAnchor().size() will be 0.
@@ -207,25 +206,6 @@ private:
                                 , StringRef::size_type Start
                                 , SmallVectorImpl<char> &Storage) const;
 };
-
-static bool getAs(const ScalarNode *SN, bool &Result) {
-  SmallString<4> Storage;
-  StringRef Value = SN->getValue(Storage);
-  if (Value == "true")
-    Result = true;
-  else if (Value == "false")
-    Result = false;
-  else
-    return false;
-  return true;
-}
-
-template<class T>
-typename enable_if_c<std::numeric_limits<T>::is_integer, bool>::type
-getAs(const ScalarNode *SN, T &Result) {
-  SmallString<4> Storage;
-  return !SN->getValue(Storage).getAsInteger(0, Result);
-}
 
 /// @brief A key and value pair. While not technically a Node under the YAML
 ///        representation graph, it is easier to treat them this way.

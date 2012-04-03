@@ -133,6 +133,7 @@ struct Token : ilist_node<Token> {
 }
 }
 
+namespace llvm {
 template<>
 struct ilist_sentinel_traits<Token> {
   Token *createSentinel() const {
@@ -163,6 +164,7 @@ struct ilist_node_traits<Token> {
 
   BumpPtrAllocator Alloc;
 };
+}
 
 typedef ilist<Token> TokenQueueT;
 
@@ -1563,8 +1565,6 @@ Node::Node(unsigned int Type, OwningPtr<Document> &D, StringRef A)
   SMLoc Start = SMLoc::getFromPointer(peekNext().Range.begin());
   SourceRange = SMRange(Start, Start);
 }
-
-Node::~Node() {}
 
 Token &Node::peekNext() {
   return Doc->peekNext();
