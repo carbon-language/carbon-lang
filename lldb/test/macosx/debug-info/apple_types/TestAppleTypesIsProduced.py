@@ -22,11 +22,25 @@ class AppleTypesTestCase(TestBase):
             self.skipTest("clang compiler only test")
 
         self.buildDefault()
-        self.apple_types()
+        self.apple_types(dot_o=True)
 
-    def apple_types(self):
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_debug_info_for_apple_types_dsym(self):
+        """Test that __apple_types section does get produced by dsymutil.
+           This is supposed to succeed even with rdar://problem/11166975."""
+
+        if not self.getCompiler().endswith('clang'):
+            self.skipTest("clang compiler only test")
+
+        self.buildDsym()
+        self.apple_types(dot_o=False)
+
+    def apple_types(self, dot_o):
         """Test that __apple_types section does get produced by clang."""
-        exe = os.path.join(os.getcwd(), "main.o")
+        if dot_o:
+            exe = os.path.join(os.getcwd(), "main.o")
+        else:
+            exe = os.path.join(os.getcwd(), "a.out.dSYM/Contents/Resources/DWARF/a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -59,6 +73,11 @@ class AppleTypesTestCase(TestBase):
         apple_types_sub_section = dwarf_section.FindSubSection("__apple_types")
         self.assertTrue(apple_types_sub_section)
         print "__apple_types sub-section:", apple_types_sub_section
+
+        # These other three all important subsections should also be present.
+        self.assertTrue(dwarf_section.FindSubSection("__apple_names") and
+                        dwarf_section.FindSubSection("__apple_namespac") and
+                        dwarf_section.FindSubSection("__apple_objc"))
 
 
 if __name__ == '__main__':
