@@ -51,7 +51,7 @@ size_t
 SBStream::GetSize()
 {
     if (m_is_file || m_opaque_ap.get() == NULL)
-        return NULL;
+        return 0;
     
     return static_cast<StreamString *>(m_opaque_ap.get())->GetSize();
 }
