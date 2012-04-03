@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include <algorithm>
 
 using namespace clang;
@@ -155,6 +156,8 @@ MacroArgs::getPreExpArgument(unsigned Arg, const MacroInfo *MI,
   std::vector<Token> &Result = PreExpArgTokens[Arg];
   if (!Result.empty()) return Result;
 
+  SaveAndRestore<bool> PreExpandingMacroArgs(PP.InMacroArgPreExpansion, true);
+
   const Token *AT = getUnexpArgument(Arg);
   unsigned NumToks = getArgLength(AT)+1;  // Include the EOF.
 
@@ -177,6 +180,8 @@ MacroArgs::getPreExpArgument(unsigned Arg, const MacroInfo *MI,
   // will not otherwise be popped until the next token is lexed.  The problem is
   // that the token may be lexed sometime after the vector of tokens itself is
   // destroyed, which would be badness.
+  if (PP.InCachingLexMode())
+    PP.ExitCachingLexMode();
   PP.RemoveTopOfLexerStack();
   return Result;
 }

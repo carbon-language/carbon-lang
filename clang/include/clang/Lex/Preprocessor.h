@@ -124,6 +124,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief Whether we have already loaded macros from the external source.
   mutable bool ReadMacrosFromExternalSource : 1;
 
+  /// \brief True if we are pre-expanding macro arguments.
+  bool InMacroArgPreExpansion;
+
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   mutable IdentifierTable Identifiers;

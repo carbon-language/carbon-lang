@@ -135,6 +135,7 @@ void Preprocessor::Initialize(const TargetInfo &Target) {
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   InMacroArgs = false;
+  InMacroArgPreExpansion = false;
   NumCachedTokenLexers = 0;
   
   CachedLexPos = 0;
