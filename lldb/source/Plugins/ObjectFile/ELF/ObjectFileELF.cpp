@@ -861,15 +861,15 @@ ObjectFileELF::ParseDynamicSymbols()
 
     user_id_t dyn_id = GetSectionIndexByType(SHT_DYNAMIC);
     if (!dyn_id)
-        return NULL;
+        return 0;
 
     SectionList *section_list = GetSectionList();
     if (!section_list)
-        return NULL;
+        return 0;
 
     Section *dynsym = section_list->FindSectionByID(dyn_id).get();
     if (!dynsym)
-        return NULL;
+        return 0;
 
     ELFDynamic symbol;
     DataExtractor dynsym_data;
