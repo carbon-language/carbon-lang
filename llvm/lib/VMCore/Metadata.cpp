@@ -551,16 +551,15 @@ getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
          getContext().pImpl->MetadataStore.count(this) &&
          "Shouldn't have called this");
   const LLVMContextImpl::MDMapTy &Info =
-  getContext().pImpl->MetadataStore.find(this)->second;
+    getContext().pImpl->MetadataStore.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
-  
+  Result.reserve(Info.size());
   Result.append(Info.begin(), Info.end());
-  
+
   // Sort the resulting array so it is stable.
   if (Result.size() > 1)
     array_pod_sort(Result.begin(), Result.end());
 }
-
 
 /// clearMetadataHashEntries - Clear all hashtable-based metadata from
 /// this instruction.
