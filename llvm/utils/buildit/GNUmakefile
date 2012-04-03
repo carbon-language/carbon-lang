@@ -79,7 +79,7 @@ EmbeddedSim:
 
 Embedded:
 	ARM_PLATFORM=`xcodebuild -version -sdk iphoneos PlatformPath` && \
-	$(MAKE) DSTROOT=$(DSTROOT)$$ARM_PLATFORM install
+	$(MAKE) DSTROOT=$(DSTROOT)$$ARM_PLATFORM/Developer install
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
