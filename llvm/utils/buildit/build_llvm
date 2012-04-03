@@ -117,7 +117,7 @@ elif [ "$IOS_SIM_BUILD" = yes ]; then
   configure_opts="--enable-targets=x86 --host=i686-apple-darwin_sim \
                   --build=i686-apple-darwin10"
 else
-  configure_opts="--enable-targets=arm,x86,cbe"
+  configure_opts="--enable-targets=arm,x86"
 fi
 
 if [ \! -f Makefile.config ]; then
