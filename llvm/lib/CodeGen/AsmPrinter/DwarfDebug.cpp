@@ -1200,7 +1200,7 @@ static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
   if (SP.Verify()) {
     // Check for number of operands since the compatibility is
     // cheap here.
-    if (Scope->getNumOperands() > 19)
+    if (SP->getNumOperands() > 19)
       return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
     else
       return DebugLoc::get(SP.getLineNumber(), 0, SP);
