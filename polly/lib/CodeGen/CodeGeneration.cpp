@@ -88,8 +88,6 @@ typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
 
-class IslGenerator;
-
 class IslGenerator {
 public:
   IslGenerator(IRBuilder<> &Builder, std::vector<Value *> &IVS) :
