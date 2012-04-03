@@ -358,7 +358,7 @@ ParseLangArgs
     // inlining enabled.
     //
     // FIXME: This is affected by other options (-fno-inline).
-    Opts.NoInlineDefine = !Opt;
+    Opts.NoInline = !Opt;
 
 //    unsigned SSP = getLastArgIntValue(Args, OPT_stack_protector, 0, Diags);
 //    switch (SSP) {
