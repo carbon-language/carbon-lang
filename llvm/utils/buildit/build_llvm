@@ -120,11 +120,21 @@ else
   configure_opts="--enable-targets=arm,x86"
 fi
 
+if [ "$ARM_HOSTED_BUILD" != yes ]; then
+  if [ $SDKROOT ]; then
+    CPPFLAGS="$CPPFLAGS -isysroot $SDKROOT"
+  fi
+  for host in $HOSTS; do
+    CPPFLAGS="$CPPFLAGS -arch $host"
+  done
+fi
+
 if [ \! -f Makefile.config ]; then
   $SRC_DIR/configure --prefix=$DEST_DIR$DEST_ROOT $configure_opts \
     --enable-assertions=$LLVM_ASSERTIONS \
     --enable-optimized=$LLVM_OPTIMIZED \
     --disable-bindings \
+    CPPFLAGS="$CPPFLAGS" \
     || exit 1
 fi
 
