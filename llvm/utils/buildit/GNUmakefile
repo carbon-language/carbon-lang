@@ -46,9 +46,6 @@ else
 LLVM_OPTIMIZED := yes
 endif
 
-# Default to not install libLTO.dylib.
-INSTALL_LIBLTO := no
-
 # Default to do a native build, not a cross-build for an ARM host or simulator.
 ARM_HOSTED_BUILD := no
 IOS_SIM_BUILD := no
@@ -66,7 +63,7 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
-	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
+	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) \
 	    $(ARM_HOSTED_BUILD) $(IOS_SIM_BUILD) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 

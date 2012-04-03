@@ -42,21 +42,17 @@ LLVM_ASSERTIONS="$7"
 # build.
 LLVM_OPTIMIZED="$8"
 
-# The ninth parameter is a yes/no that indicates whether libLTO.dylib
-# should be installed.
-INSTALL_LIBLTO="$9"
-
 # A yes/no parameter that controls whether to cross-build for an ARM host.
-ARM_HOSTED_BUILD="${10}"
+ARM_HOSTED_BUILD="$9"
 
 # A yes/no parameter that controls whether to cross-build for the iOS simulator
-IOS_SIM_BUILD="${11}"
+IOS_SIM_BUILD="${10}"
 
 # The version number of the submission, e.g. 1007.
-LLVM_SUBMIT_VERSION="${12}"
+LLVM_SUBMIT_VERSION="${11}"
 
 # The subversion number of the submission, e.g. 03.
-LLVM_SUBMIT_SUBVERSION="${13}"
+LLVM_SUBMIT_SUBVERSION="${12}"
 
 # The current working directory is where the build will happen. It may already
 # contain a partial result of an interrupted build, in which case this script
@@ -297,34 +293,11 @@ find obj-* -name \*.\[chy\] -o -name \*.cpp -print \
     | cpio -pdml $SYM_DIR/src || exit 1
 
 ################################################################################
-# Install and strip libLTO.dylib
+# Remove libLTO.dylib and lto.h.  Those are installed by clang.
 
 cd $DEST_DIR$DEST_ROOT
-if [ "$INSTALL_LIBLTO" = "yes" ]; then
-  DT_HOME="$DEST_DIR/Developer/usr"
-  mkdir -p $DT_HOME/lib
-  mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
-
-  # Save a copy of the unstripped dylib
-  mkdir -p $SYM_DIR/Developer/usr/lib
-  cp $DT_HOME/lib/libLTO.dylib $SYM_DIR/Developer/usr/lib/libLTO.dylib
-
-  # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
-  # PPC objects!
-  $STRIP -arch all -Sl $DT_HOME/lib/libLTO.dylib
-
-  if [ "x$DISABLE_USR_LINKS" == "x" ]; then
-    # Add a symlink in /usr/lib for B&I.
-    mkdir -p $DEST_DIR/usr/lib/
-    (cd $DEST_DIR/usr/lib && \
-      ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib)
-  fi
-else
-  rm -f lib/libLTO.dylib
-fi
+rm -f lib/libLTO.dylib
 rm -f lib/libLTO.a lib/libLTO.la
-
-# Omit lto.h from the result.  Clang will supply.
 find $DEST_DIR$DEST_ROOT -name lto.h -delete
 
 ################################################################################
