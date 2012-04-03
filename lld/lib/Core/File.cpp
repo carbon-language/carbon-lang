@@ -8,13 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/File.h"
+#include "lld/Core/LLVM.h"
 
 namespace lld {
 
 File::~File() {}
 
-llvm::StringRef File::translationUnitSource() const {
-  return llvm::StringRef();
+StringRef File::translationUnitSource() const {
+  return StringRef();
 }
 
 

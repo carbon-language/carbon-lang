@@ -10,6 +10,8 @@
 #ifndef LLD_CORE_ATOM_H_
 #define LLD_CORE_ATOM_H_
 
+#include "lld/Core/LLVM.h"
+
 #include "llvm/Support/DataTypes.h"
 
 #include <cassert>
@@ -43,9 +45,9 @@ public:
   virtual const class File& file() const = 0;
 
   /// name - The name of the atom. For a function atom, it is the (mangled)
-  /// name of the function. 
-  virtual llvm::StringRef name() const = 0;
-  
+  /// name of the function.
+  virtual StringRef name() const = 0;
+
   /// definition - Whether this atom is a definition or represents an undefined
   /// symbol.
   Definition definition() const { return _definition; };

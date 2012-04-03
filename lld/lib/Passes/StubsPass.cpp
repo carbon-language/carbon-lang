@@ -16,12 +16,12 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/Casting.h"
 
 namespace lld {
 
@@ -49,7 +49,7 @@ void StubsPass::perform() {
           // Calls to shared libraries go through stubs.
           replaceCalleeWithStub = true;
         } else if (const DefinedAtom* defTarget =
-                     llvm::dyn_cast<DefinedAtom>(target)) {
+                     dyn_cast<DefinedAtom>(target)) {
           if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
             // Calls to interposable functions in same linkage unit 
             // must also go through a stub.

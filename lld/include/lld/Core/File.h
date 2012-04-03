@@ -39,7 +39,7 @@ public:
 
   /// For error messages and debugging, this returns the path to the file
   /// which was used to create this object (e.g. "/tmp/foo.o").
-  llvm::StringRef path() const  {
+  StringRef path() const  {
     return _path;
   }
 
@@ -47,7 +47,7 @@ public:
   /// file which this (File) object represents.  This information is usually 
   /// parsed out of the DWARF debug information. If the source file cannot 
   /// be ascertained, this method returns the empty string.
-  virtual llvm::StringRef translationUnitSource() const;
+  virtual StringRef translationUnitSource() const;
 
 protected:
   template <typename T> class atom_iterator; // forward reference
@@ -118,7 +118,7 @@ public:
 
 protected:
   /// only subclasses of File can be instantiated 
-  File(llvm::StringRef p) : _path(p) {}
+  File(StringRef p) : _path(p) {}
 
 
   /// Different object file readers may instantiate and manage atoms with
@@ -207,7 +207,7 @@ protected:
   
 
 private:
-  llvm::StringRef _path;
+  StringRef _path;
 };
 
 } // namespace lld

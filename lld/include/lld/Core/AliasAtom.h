@@ -18,7 +18,7 @@ namespace lld {
 
 class AliasAtom : public Atom {
 public:
-  AliasAtom(llvm::StringRef nm, const Atom &target,  Atom::Scope scope)
+  AliasAtom(StringRef nm, const Atom &target,  Atom::Scope scope)
     : Atom( target.definition()
           , Atom::combineNever
           , scope
@@ -38,16 +38,16 @@ public:
     return _aliasOf.file();
   }
 
-  virtual bool translationUnitSource(llvm::StringRef &path) const {
+  virtual bool translationUnitSource(StringRef &path) const {
     return _aliasOf.translationUnitSource(path);
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _name;
   }
 
 private:
-  const llvm::StringRef _name;
+  const StringRef _name;
   const Atom &_aliasOf;
 };
 

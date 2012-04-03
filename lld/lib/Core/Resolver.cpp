@@ -11,11 +11,11 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/Platform.h"
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/UndefinedAtom.h"
 
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
@@ -34,7 +34,7 @@ public:
     if ( _liveAtoms.count(atom) )
       return false;
    // don't remove if marked never-dead-strip
-    if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(atom)) {
+    if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom)) {
       if ( defAtom->deadStrip() == DefinedAtom::deadStripNever )
         return false;
     }
@@ -176,7 +176,7 @@ void Resolver::resolveUndefines() {
     _symbolTable.undefines(undefines);
     for (std::vector<const Atom *>::iterator it = undefines.begin();
          it != undefines.end(); ++it) {
-      llvm::StringRef undefName = (*it)->name();
+      StringRef undefName = (*it)->name();
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName)) {
         _inputFiles.searchLibraries(undefName, true, true, false, *this);
@@ -195,7 +195,7 @@ void Resolver::resolveUndefines() {
       std::vector<const Atom *> tents;
       for (std::vector<const Atom *>::iterator ait = _atoms.begin();
            ait != _atoms.end(); ++ait) {
-        if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(*ait)) {
+        if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*ait)) {
           if ( defAtom->merge() == DefinedAtom::mergeAsTentative )
             tents.push_back(defAtom);
         }
@@ -204,11 +204,10 @@ void Resolver::resolveUndefines() {
            dit != tents.end(); ++dit) {
         // load for previous tentative may also have loaded
         // this tentative, so check again
-        llvm::StringRef tentName = (*dit)->name();
+        StringRef tentName = (*dit)->name();
         const Atom *curAtom = _symbolTable.findByName(tentName);
         assert(curAtom != nullptr);
-        if (const DefinedAtom* curDefAtom =
-              llvm::dyn_cast<DefinedAtom>(curAtom)) {
+        if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
           if (curDefAtom->merge() == DefinedAtom::mergeAsTentative )
             _inputFiles.searchLibraries(tentName, searchDylibs, 
                                         true, true, *this);
@@ -223,7 +222,7 @@ void Resolver::resolveUndefines() {
 // to the new defined atom
 void Resolver::updateReferences() {
   for (auto ait = _atoms.begin(); ait != _atoms.end(); ++ait) {
-    if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(*ait)) {
+    if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*ait)) {
       for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
                                                         rit != end; ++rit) {
         const Reference* ref = *rit;
@@ -261,7 +260,7 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   WhyLiveBackChain thisChain;
   thisChain.previous = previous;
   thisChain.referer = &atom;
-  if ( const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(&atom)) {
+  if ( const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(&atom)) {
     for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
                                                         rit != end; ++rit) {
       const Reference* ref = *rit;
@@ -287,7 +286,7 @@ void Resolver::deadStripOptimize() {
   // add -exported_symbols_list, -init, and -u entries to live roots
   for (Platform::UndefinesIterator uit = _platform.initialUndefinesBegin();
        uit != _platform.initialUndefinesEnd(); ++uit) {
-    llvm::StringRef sym = *uit;
+    StringRef sym = *uit;
     const Atom *symAtom = _symbolTable.findByName(sym);
     assert(symAtom->definition() != Atom::definitionUndefined);
     _deadStripRoots.insert(symAtom);
@@ -344,7 +343,7 @@ void Resolver::removeCoalescedAwayAtoms() {
 void Resolver::checkDylibSymbolCollisions() {
   for (std::vector<const Atom *>::const_iterator it = _atoms.begin();
        it != _atoms.end(); ++it) {
-    const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(*it);
+    const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*it);
     if (defAtom == nullptr)
       continue;
     if ( defAtom->merge() != DefinedAtom::mergeAsTentative ) 
@@ -359,7 +358,7 @@ void Resolver::checkDylibSymbolCollisions() {
 
 // get "main" atom for linkage unit
 const Atom *Resolver::entryPoint() {
-  llvm::StringRef symbolName = _platform.entryPointName();
+  StringRef symbolName = _platform.entryPointName();
   if (symbolName != nullptr)
     return _symbolTable.findByName(symbolName);
 
@@ -391,15 +390,14 @@ void Resolver::resolve() {
 }
 
 void Resolver::MergedFile::addAtom(const Atom& atom) {
-  if (const DefinedAtom* defAtom = llvm::dyn_cast<DefinedAtom>(&atom)) {
+  if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(&atom)) {
     _definedAtoms._atoms.push_back(defAtom);
-  } else if (const UndefinedAtom* undefAtom =
-               llvm::dyn_cast<UndefinedAtom>(&atom)) {
+  } else if (const UndefinedAtom* undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
     _undefinedAtoms._atoms.push_back(undefAtom);
   } else if (const SharedLibraryAtom* slAtom =
-               llvm::dyn_cast<SharedLibraryAtom>(&atom)) {
+               dyn_cast<SharedLibraryAtom>(&atom)) {
     _sharedLibraryAtoms._atoms.push_back(slAtom);
-  } else if (const AbsoluteAtom* abAtom = llvm::dyn_cast<AbsoluteAtom>(&atom)) {
+  } else if (const AbsoluteAtom* abAtom = dyn_cast<AbsoluteAtom>(&atom)) {
     _absoluteAtoms._atoms.push_back(abAtom);
   } else {
     assert(0 && "atom has unknown definition kind");

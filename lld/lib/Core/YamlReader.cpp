@@ -13,6 +13,7 @@
 #include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryAtom.h"
@@ -385,9 +386,9 @@ public:
     return _file;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     if (_name == nullptr)
-      return llvm::StringRef();
+      return StringRef();
     else
       return _name;
   }
@@ -420,7 +421,7 @@ public:
     return _sectionChoice;
   }
 
-  virtual llvm::StringRef customSectionName() const {
+  virtual StringRef customSectionName() const {
     return _sectionName;
   }
     
@@ -440,11 +441,11 @@ public:
     return _isAlias;
   }
   
- llvm::ArrayRef<uint8_t> rawContent() const {
+ ArrayRef<uint8_t> rawContent() const {
     if (_content != nullptr)
-      return llvm::ArrayRef<uint8_t>(*_content);
+      return ArrayRef<uint8_t>(*_content);
     else
-      return llvm::ArrayRef<uint8_t>();
+      return ArrayRef<uint8_t>();
   }
  
   virtual uint64_t ordinal() const {
@@ -519,7 +520,7 @@ public:
     return _file;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _name;
   }
 
@@ -548,11 +549,11 @@ public:
     return _file;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _name;
   }
 
-  virtual llvm::StringRef loadName() const {
+  virtual StringRef loadName() const {
     return _loadName;
   }
 
@@ -580,7 +581,7 @@ public:
     return _file;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _name;
   }
 
@@ -765,12 +766,12 @@ void YAMLAtomState::setRefName(const char *n) {
 }
 
 void YAMLAtomState::setAlign2(const char *s) {
-  if (llvm::StringRef(s).getAsInteger(10, _alignment.powerOf2))
+  if (StringRef(s).getAsInteger(10, _alignment.powerOf2))
     _alignment.powerOf2 = 1;
 }
 
 void YAMLAtomState::setFixupKind(const char *s) {
-  _ref._kind = _platform.kindFromString(llvm::StringRef(s));
+  _ref._kind = _platform.kindFromString(StringRef(s));
 }
 
 void YAMLAtomState::setFixupTarget(const char *s) {
@@ -797,9 +798,9 @@ void YAMLAtomState::addFixup(YAMLFile *f) {
 
 /// parseObjectText - Parse the specified YAML formatted MemoryBuffer
 /// into lld::File object(s) and append each to the specified vector<File*>.
-llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
-                                , Platform& platform
-                                , std::vector<const File *> &result) {
+error_code parseObjectText( llvm::MemoryBuffer *mb
+                          , Platform& platform
+                          , std::vector<const File *> &result) {
   std::vector<const YAML::Entry *> entries;
   YAML::parse(mb, entries);
 
@@ -912,7 +913,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveAtom = true;
         } 
         else if (strcmp(entry->key, KeyValues::sizeKeyword) == 0) {
-          llvm::StringRef val = entry->value;
+          StringRef val = entry->value;
           if (val.getAsInteger(0, atomState._size))
             return make_error_code(yaml_reader_error::illegal_value);
           haveAtom = true;
@@ -934,7 +935,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
         }
         else if (strcmp(entry->key, KeyValues::valueKeyword) == 0) {
           llvm::APInt Val;
-          llvm::StringRef(entry->value).getAsInteger(0, Val);
+          StringRef(entry->value).getAsInteger(0, Val);
           atomState._value = Val.getZExtValue();
           haveAtom = true;
         }
@@ -954,7 +955,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveFixup = true;
         } 
         else if (strcmp(entry->key, KeyValues::fixupsOffsetKeyword) == 0) {
-          if (llvm::StringRef(entry->value).getAsInteger(0,
+          if (StringRef(entry->value).getAsInteger(0,
                atomState._ref._offsetInAtom))
             return make_error_code(yaml_reader_error::illegal_value);
           haveFixup = true;
@@ -964,7 +965,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveFixup = true;
         }
         else if (strcmp(entry->key, KeyValues::fixupsAddendKeyword) == 0) {
-          llvm::StringRef Addend(entry->value);
+          StringRef Addend(entry->value);
           if (Addend.getAsInteger(0, atomState._ref._addend))
             return make_error_code(yaml_reader_error::illegal_value);
           haveFixup = true;
@@ -987,17 +988,15 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
 //
 // Fill in vector<File*> from path to input text file.
 //
-llvm::error_code parseObjectTextFileOrSTDIN(llvm::StringRef path
-                                          , Platform&  platform
-                                          , std::vector<const File*>& result) {
-  llvm::OwningPtr<llvm::MemoryBuffer> mb;
-  llvm::error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
-  if ( ec ) 
-      return ec;
-      
+error_code parseObjectTextFileOrSTDIN( StringRef path
+                                     , Platform&  platform
+                                     , std::vector<const File*>& result) {
+  OwningPtr<llvm::MemoryBuffer> mb;
+  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb))
+    return ec;
+
   return parseObjectText(mb.get(), platform, result);
 }
-
 
 } // namespace yaml
 } // namespace lld

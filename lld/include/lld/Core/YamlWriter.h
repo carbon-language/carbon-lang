@@ -10,6 +10,8 @@
 #ifndef LLD_CORE_YAML_WRITER_H_
 #define LLD_CORE_YAML_WRITER_H_
 
+#include "lld/Core/LLVM.h"
+
 #include "llvm/Support/raw_ostream.h"
 
 namespace lld {
@@ -21,7 +23,7 @@ namespace yaml {
 
   /// writeObjectText - writes the lld::File object as in YAML
   /// format to the specified stream.
-  void writeObjectText(const lld::File &, Platform &, llvm::raw_ostream &);
+  void writeObjectText(const lld::File &, Platform &, raw_ostream &);
 
 } // namespace yaml
 } // namespace lld

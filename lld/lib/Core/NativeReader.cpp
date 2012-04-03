@@ -40,8 +40,8 @@ public:
   
   virtual uint64_t ordinal() const; 
   
-  virtual llvm::StringRef name() const;
   
+  virtual StringRef name() const;
   virtual uint64_t size() const {
     return _ivarData->contentSize;
   }
@@ -71,7 +71,7 @@ public:
     return (DefinedAtom::SectionChoice)(attributes().sectionChoice);
   }
 
-  virtual llvm::StringRef customSectionName() const;
+  virtual StringRef customSectionName() const;
       
   virtual DefinedAtom::DeadStripKind deadStrip() const {
      return (DefinedAtom::DeadStripKind)(attributes().deadStrip);
@@ -89,8 +89,8 @@ public:
      return (attributes().alias != 0);
   }
   
-  virtual llvm::ArrayRef<uint8_t> rawContent() const;
   
+  virtual ArrayRef<uint8_t> rawContent() const;
   virtual reference_iterator referencesBegin() const;
   
   virtual reference_iterator referencesEnd() const;
@@ -119,7 +119,7 @@ public:
         : _file(&f), _ivarData(ivarData) { } 
 
   virtual const File& file() const;
-  virtual llvm::StringRef name() const;
+  virtual StringRef name() const;
   
   virtual CanBeNull canBeNull() const {
     return (CanBeNull)(_ivarData->flags & 0x3);
@@ -143,8 +143,8 @@ public:
         : _file(&f), _ivarData(ivarData) { } 
 
   virtual const File& file() const;
-  virtual llvm::StringRef name() const;
-  virtual llvm::StringRef loadName() const;
+  virtual StringRef name() const;
+  virtual StringRef loadName() const;
   
   virtual bool canBeNullAtRuntime() const {
     return (_ivarData->flags & 0x1);
@@ -167,7 +167,7 @@ public:
         : _file(&f), _ivarData(ivarData) { } 
 
   virtual const File& file() const;
-  virtual llvm::StringRef name() const;
+  virtual StringRef name() const;
   
   virtual uint64_t value() const {
     return _ivarData->value;
@@ -228,9 +228,9 @@ public:
 
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transfered to the resulting File object.
-  static llvm::error_code make(std::unique_ptr<llvm::MemoryBuffer> mb,
-                               llvm::StringRef path,
-                               std::unique_ptr<File> &result) {
+  static error_code make(std::unique_ptr<llvm::MemoryBuffer> mb,
+                         StringRef path,
+                         std::unique_ptr<File> &result) {
     const uint8_t* const base = 
                        reinterpret_cast<const uint8_t*>(mb->getBufferStart());
     const NativeFileHeader* const header = 
@@ -251,7 +251,7 @@ public:
     
     // process each chunk
     for(uint32_t i=0; i < header->chunkCount; ++i) {
-      llvm::error_code ec;
+      error_code ec;
       const NativeChunk* chunk = &chunks[i];
       // sanity check chunk is within file
       if ( chunk->fileOffset > fileSize )
@@ -343,8 +343,8 @@ private:
   friend class NativeReferenceV1;
   
   // instantiate array of DefinedAtoms from v1 ivar data in file
-  llvm::error_code processDefinedAtomsV1(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processDefinedAtomsV1(const uint8_t *base,
+                                   const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeDefinedAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -373,16 +373,16 @@ private:
   }
   
   // set up pointers to attributes array
-  llvm::error_code processAttributesV1(const uint8_t* base, 
-                                       const NativeChunk* chunk) {
+  error_code processAttributesV1(const uint8_t *base,
+                                 const NativeChunk *chunk) {
     this->_attributes = base + chunk->fileOffset;
     this->_attributesMaxOffset = chunk->fileSize;
     return make_error_code(native_reader_error::success);
   }
   
   // instantiate array of UndefinedAtoms from v1 ivar data in file
-  llvm::error_code processUndefinedAtomsV1(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processUndefinedAtomsV1(const uint8_t *base,
+                                     const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeUndefinedAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -412,8 +412,8 @@ private:
   
   
   // instantiate array of ShareLibraryAtoms from v1 ivar data in file
-  llvm::error_code processSharedLibraryAtomsV1(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processSharedLibraryAtomsV1(const uint8_t *base,
+                                         const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeSharedLibraryAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -443,8 +443,8 @@ private:
   
  
    // instantiate array of AbsoluteAtoms from v1 ivar data in file
-  llvm::error_code processAbsoluteAtomsV1(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processAbsoluteAtomsV1(const uint8_t *base,
+                                    const NativeChunk *chunk) {
     const size_t atomSize = sizeof(NativeAbsoluteAtomV1);
     size_t atomsArraySize = chunk->elementCount * atomSize;
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
@@ -476,8 +476,8 @@ private:
  
   
   // instantiate array of Referemces from v1 ivar data in file
-  llvm::error_code processReferencesV1(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processReferencesV1(const uint8_t *base,
+                                 const NativeChunk *chunk) {
     if ( chunk->elementCount == 0 )
       return make_error_code(native_reader_error::success);
     const size_t refSize = sizeof(NativeReferenceV1);
@@ -508,8 +508,8 @@ private:
   }
   
   // set up pointers to target table
-  llvm::error_code processTargetsTable(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processTargetsTable(const uint8_t *base,
+                                 const NativeChunk *chunk) {
     const uint32_t* targetIndexes = reinterpret_cast<const uint32_t*>
                                                   (base + chunk->fileOffset);
     this->_targetsTableCount = chunk->elementCount;
@@ -553,8 +553,8 @@ private:
   
   
   // set up pointers to addend pool in file
-  llvm::error_code processAddendsTable(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processAddendsTable(const uint8_t *base,
+                                 const NativeChunk *chunk) {
     this->_addends = reinterpret_cast<const Reference::Addend*>
                                                   (base + chunk->fileOffset);
     this->_addendsMaxIndex = chunk->elementCount;
@@ -562,24 +562,24 @@ private:
   }
   
   // set up pointers to string pool in file
-  llvm::error_code processStrings(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processStrings(const uint8_t *base,
+                            const NativeChunk *chunk) {
     this->_strings = reinterpret_cast<const char*>(base + chunk->fileOffset);
     this->_stringsMaxOffset = chunk->fileSize;
     return make_error_code(native_reader_error::success);
   }
   
   // set up pointers to content area in file
-  llvm::error_code processContent(const uint8_t* base, 
-                                                const NativeChunk* chunk) {
+  error_code processContent(const uint8_t *base,
+                            const NativeChunk *chunk) {
     this->_contentStart = base + chunk->fileOffset;
     this->_contentEnd = base + chunk->fileOffset + chunk->fileSize;
     return make_error_code(native_reader_error::success);
   }
   
-  llvm::StringRef string(uint32_t offset) const {
+  StringRef string(uint32_t offset) const {
     assert(offset < _stringsMaxOffset);
-    return llvm::StringRef(&_strings[offset]);
+    return StringRef(&_strings[offset]);
   }
   
   Reference::Addend addend(uint32_t index) const {
@@ -618,8 +618,8 @@ private:
  
   
   // private constructor, only called by make()
-  NativeFile(std::unique_ptr<llvm::MemoryBuffer> mb, llvm::StringRef path) :
-    lld::File(path), 
+  NativeFile(std::unique_ptr<llvm::MemoryBuffer> mb, StringRef path) :
+    File(path),
     _buffer(std::move(mb)),  // NativeFile now takes ownership of buffer
     _header(nullptr),
     _targetsTable(nullptr),
@@ -704,7 +704,7 @@ inline uint64_t NativeDefinedAtomV1:: ordinal() const {
   return p - _file->_definedAtoms._arrayStart;
 }
 
-inline llvm::StringRef NativeDefinedAtomV1::name() const {
+inline StringRef NativeDefinedAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 
@@ -712,15 +712,15 @@ inline const NativeAtomAttributesV1& NativeDefinedAtomV1::attributes() const {
   return _file->attribute(_ivarData->attributesOffset);
 }
 
-inline llvm::ArrayRef<uint8_t> NativeDefinedAtomV1::rawContent() const {
+inline ArrayRef<uint8_t> NativeDefinedAtomV1::rawContent() const {
   if ( this->contentType() == DefinedAtom::typeZeroFill )
-    return llvm::ArrayRef<uint8_t>();
+    return ArrayRef<uint8_t>();
   const uint8_t* p = _file->content(_ivarData->contentOffset,
                                     _ivarData->contentSize);
-   return llvm::ArrayRef<uint8_t>(p, _ivarData->contentSize);
+   return ArrayRef<uint8_t>(p, _ivarData->contentSize);
 }
 
-inline llvm::StringRef NativeDefinedAtomV1::customSectionName() const {
+inline StringRef NativeDefinedAtomV1::customSectionName() const {
   uint32_t offset = attributes().sectionNameOffset;
   return _file->string(offset);
 }
@@ -752,7 +752,7 @@ inline const class File& NativeUndefinedAtomV1::file() const {
   return *_file;
 }
 
-inline llvm::StringRef NativeUndefinedAtomV1::name() const {
+inline StringRef NativeUndefinedAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 
@@ -763,11 +763,11 @@ inline const class File& NativeSharedLibraryAtomV1::file() const {
   return *_file;
 }
 
-inline llvm::StringRef NativeSharedLibraryAtomV1::name() const {
+inline StringRef NativeSharedLibraryAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 
-inline llvm::StringRef NativeSharedLibraryAtomV1::loadName() const {
+inline StringRef NativeSharedLibraryAtomV1::loadName() const {
   return _file->string(_ivarData->loadNameOffset);
 }
 
@@ -777,7 +777,7 @@ inline const class File& NativeAbsoluteAtomV1::file() const {
   return *_file;
 }
 
-inline llvm::StringRef NativeAbsoluteAtomV1::name() const {
+inline StringRef NativeAbsoluteAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 
@@ -803,9 +803,9 @@ inline void NativeReferenceV1::setTarget(const Atom* newAtom) {
 //
 // Instantiate an lld::File from the given native object file buffer
 //
-llvm::error_code parseNativeObjectFile(std::unique_ptr<llvm::MemoryBuffer> mb,
-                                       llvm::StringRef path,
-                                       std::unique_ptr<File> &result) {
+error_code parseNativeObjectFile(std::unique_ptr<llvm::MemoryBuffer> mb,
+                                 StringRef path,
+                                 std::unique_ptr<File> &result) {
   return NativeFile::make(std::move(mb), path, result);
 }
 
@@ -814,11 +814,11 @@ llvm::error_code parseNativeObjectFile(std::unique_ptr<llvm::MemoryBuffer> mb,
 //
 // Instantiate an lld::File from the given native object file path
 //
-llvm::error_code parseNativeObjectFileOrSTDIN(llvm::StringRef path,
-                                              std::unique_ptr<File>& result) {
-  llvm::OwningPtr<llvm::MemoryBuffer> mb;
-  llvm::error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
-  if ( ec ) 
+error_code parseNativeObjectFileOrSTDIN(StringRef path,
+                                        std::unique_ptr<File>& result) {
+  OwningPtr<llvm::MemoryBuffer> mb;
+  error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
+  if ( ec )
       return ec;
 
   return parseNativeObjectFile( std::unique_ptr<llvm::MemoryBuffer>(mb.take())

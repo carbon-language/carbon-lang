@@ -10,6 +10,8 @@
 #ifndef LLD_CORE_SYMBOL_TABLE_H_
 #define LLD_CORE_SYMBOL_TABLE_H_
 
+#include "lld/Core/LLVM.h"
+
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -50,10 +52,10 @@ public:
   
   /// @brief checks if name is in symbol table and if so atom is not
   ///        UndefinedAtom
-  bool isDefined(llvm::StringRef sym);
+  bool isDefined(StringRef sym);
 
   /// @brief returns atom in symbol table for specified name (or nullptr)
-  const Atom *findByName(llvm::StringRef sym);
+  const Atom *findByName(StringRef sym);
 
   /// @brief returns vector of remaining UndefinedAtoms
   void undefines(std::vector<const Atom *>&);
@@ -68,14 +70,14 @@ private:
   typedef llvm::DenseMap<const Atom *, const Atom *> AtomToAtom;
 
   struct StringRefMappingInfo {
-    static llvm::StringRef getEmptyKey() { return llvm::StringRef(); }
-    static llvm::StringRef getTombstoneKey() { return llvm::StringRef(" ", 0); }
-    static unsigned getHashValue(llvm::StringRef const val) {
+    static StringRef getEmptyKey() { return StringRef(); }
+    static StringRef getTombstoneKey() { return StringRef(" ", 0); }
+    static unsigned getHashValue(StringRef const val) {
                                                return llvm::HashString(val); }
-    static bool isEqual(llvm::StringRef const lhs, 
-                        llvm::StringRef const rhs) { return lhs.equals(rhs); }
+    static bool isEqual(StringRef const lhs,
+                        StringRef const rhs) { return lhs.equals(rhs); }
   };
-	typedef llvm::DenseMap<llvm::StringRef, const Atom *, 
+	typedef llvm::DenseMap<StringRef, const Atom *,
                                            StringRefMappingInfo> NameToAtom;
   
   struct AtomMappingInfo {

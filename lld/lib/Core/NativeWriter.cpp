@@ -58,7 +58,7 @@ public:
   }
 
   // write the lld::File in native format to the specified stream
-  void write(llvm::raw_ostream& out) {
+  void write(raw_ostream &out) {
     assert( out.tell() == 0 );
     out.write((char*)_headerBuffer, _headerBufferSize);
     
@@ -323,7 +323,7 @@ private:
   }
   
   // check if name is already in pool or append and return offset
-  uint32_t getSharedLibraryNameOffset(llvm::StringRef name) {
+  uint32_t getSharedLibraryNameOffset(StringRef name) {
     assert( ! name.empty() );
     // look to see if this library name was used by another atom
     for(NameToOffsetVector::iterator it = _sharedLibraryNames.begin(); 
@@ -338,7 +338,7 @@ private:
   }
   
   // append atom name to string pool and return offset
-  uint32_t getNameOffset(llvm::StringRef name) {
+  uint32_t getNameOffset(StringRef name) {
     if ( name.empty() )
       return 0;
     uint32_t result = _stringPool.size();
@@ -352,7 +352,7 @@ private:
     if ( atom.contentType() == DefinedAtom::typeZeroFill ) 
       return 0;
     uint32_t result = _contentPool.size();
-    llvm::ArrayRef<uint8_t> cont = atom.rawContent();
+    ArrayRef<uint8_t> cont = atom.rawContent();
     _contentPool.insert(_contentPool.end(), cont.begin(), cont.end());
     return result;
   }
@@ -377,7 +377,7 @@ private:
     // if section based on content, then no custom section name available
     if ( atom.sectionChoice() == DefinedAtom::sectionBasedOnContent )
       return 0;
-    llvm::StringRef name = atom.customSectionName();
+    StringRef name = atom.customSectionName();
     assert( ! name.empty() );
     // look to see if this section name was used by another atom
     for(NameToOffsetVector::iterator it=_sectionNames.begin(); 
@@ -495,8 +495,8 @@ private:
     return result;
   }
  
-  void writeAddendTable(llvm::raw_ostream& out) {
     // Build table of addends  
+  void writeAddendTable(raw_ostream &out) {
     uint32_t maxAddendIndex = _addendsTableIndex.size();
     std::vector<Reference::Addend> addends(maxAddendIndex);
     for (AddendToIndex::iterator it = _addendsTableIndex.begin(); 
@@ -510,7 +510,7 @@ private:
     out.write((char*)&addends[0], maxAddendIndex*sizeof(Reference::Addend));
   }
 
-  typedef std::vector<std::pair<llvm::StringRef, uint32_t> > NameToOffsetVector;
+  typedef std::vector<std::pair<StringRef, uint32_t> > NameToOffsetVector;
 
   typedef llvm::DenseMap<const Atom*, uint32_t> TargetToIndex;
   typedef llvm::DenseMap<Reference::Addend, uint32_t> AddendToIndex;
@@ -542,18 +542,20 @@ private:
 
 /// writeNativeObjectFile - writes the lld::File object in native object
 /// file format to the specified stream.
-int writeNativeObjectFile(const lld::File &file, llvm::raw_ostream &out) {
-  NativeWriter  writer(file);
+int writeNativeObjectFile(const File &file, raw_ostream &out) {
+  NativeWriter writer(file);
   writer.write(out);
   return 0;
 }
 
 /// writeNativeObjectFile - writes the lld::File object in native object
 /// file format to the specified file path.
-int writeNativeObjectFile(const lld::File& file, llvm::StringRef path) {
+int writeNativeObjectFile(const File &file, StringRef path) {
   std::string errorInfo;
-  llvm::raw_fd_ostream out(path.data(), errorInfo, llvm::raw_fd_ostream::F_Binary);
-  if ( !errorInfo.empty() )
+  llvm::raw_fd_ostream out( path.data()
+                          , errorInfo
+                          , llvm::raw_fd_ostream::F_Binary);
+  if (!errorInfo.empty())
     return -1;
   return writeNativeObjectFile(file, out);
 }

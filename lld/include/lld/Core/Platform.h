@@ -40,7 +40,7 @@ public:
                              std::vector<const DefinedAtom *>&) = 0;
 
   /// @brief give platform a chance to resolve platform-specific undefs
-  virtual bool getPlatformAtoms(llvm::StringRef undefined,
+  virtual bool getPlatformAtoms(StringRef undefined,
                                 std::vector<const DefinedAtom *>&) = 0;
 
   /// @brief resolver should remove unreferenced atoms
@@ -53,11 +53,11 @@ public:
   virtual bool getImplicitDeadStripRoots(std::vector<const DefinedAtom *>&) = 0;
 
   /// @brief return entry point for output file (e.g. "main") or nullptr
-  virtual llvm::StringRef entryPointName() = 0;
+  virtual StringRef entryPointName() = 0;
 
   /// @brief for iterating must-be-defined symbols ("main" or -u command line
   ///        option)
-  typedef llvm::StringRef const *UndefinesIterator;
+  typedef StringRef const *UndefinesIterator;
   virtual UndefinesIterator  initialUndefinesBegin() const = 0;
   virtual UndefinesIterator  initialUndefinesEnd() const = 0;
 
@@ -66,10 +66,10 @@ public:
   virtual bool searchSharedLibrariesToOverrideTentativeDefinitions() = 0;
 
   /// @brief if platform allows symbol to remain undefined (e.g. -r)
-  virtual bool allowUndefinedSymbol(llvm::StringRef name) = 0;
+  virtual bool allowUndefinedSymbol(StringRef name) = 0;
 
   /// @brief for debugging dead code stripping, -why_live
-  virtual bool printWhyLive(llvm::StringRef name) = 0;
+  virtual bool printWhyLive(StringRef name) = 0;
 
   /// When core linking finds a duplicate definition, the platform
   /// can either print an error message and terminate or return with
@@ -104,11 +104,11 @@ public:
 
   /// Converts a reference kind string to a in-memory numeric value.
   /// For use with parsing YAML encoded object files.
-  virtual Reference::Kind kindFromString(llvm::StringRef) = 0;
+  virtual Reference::Kind kindFromString(StringRef) = 0;
 
   /// Converts an in-memory reference kind value to a string.
   /// For use with writing YAML encoded object files.
-  virtual llvm::StringRef kindToString(Reference::Kind) = 0;
+  virtual StringRef kindToString(Reference::Kind) = 0;
 
   /// If true, the linker will use stubs and GOT entries for
   /// references to shared library symbols. If false, the linker

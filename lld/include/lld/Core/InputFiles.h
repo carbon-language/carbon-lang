@@ -39,7 +39,7 @@ public:
   virtual void forEachInitialAtom(Handler &) const = 0;
 
   /// @brief searches libraries for name
-  virtual bool searchLibraries(  llvm::StringRef name
+  virtual bool searchLibraries(  StringRef name
                                , bool searchDylibs
                                , bool searchArchives
                                , bool dataSymbolOnly

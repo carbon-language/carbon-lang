@@ -115,7 +115,7 @@ public:
      return _refNames.count(atom);
   }
   
-  llvm::StringRef refName(const Atom* atom) {
+  StringRef refName(const Atom *atom) {
      return _refNames.find(atom)->second;
   }
   
@@ -139,7 +139,7 @@ public:
     : _file(file), _platform(platform), _rnb(rnb), _firstAtom(true) { }
 
 
-  void write(llvm::raw_ostream& out) {
+  void write(raw_ostream &out) {
     // write header 
     out << "---\n";
     
@@ -169,7 +169,7 @@ public:
   }
 
   
-  void writeDefinedAtom(const DefinedAtom &atom, llvm::raw_ostream& out) {
+  void writeDefinedAtom(const DefinedAtom &atom, raw_ostream &out) {
     if ( _firstAtom ) {
       out << "atoms:\n";
       _firstAtom = false;
@@ -297,7 +297,7 @@ public:
             << ":"
             << spacePadding(KeyValues::contentKeyword)
             << "[ ";
-      llvm::ArrayRef<uint8_t> arr = atom.rawContent();
+      ArrayRef<uint8_t> arr = atom.rawContent();
       bool needComma = false;
       for (unsigned int i=0; i < arr.size(); ++i) {
         if ( needComma )
@@ -334,7 +334,7 @@ public:
             << "\n";
       const Atom* target = ref->target();
       if (target != nullptr) {
-        llvm::StringRef refName = target->name();
+        StringRef refName = target->name();
         if ( _rnb.hasRefName(target) )
           refName = _rnb.refName(target);
         assert(!refName.empty());
@@ -357,7 +357,7 @@ public:
   }
     
 
-  void writeUndefinedAtom(const UndefinedAtom &atom, llvm::raw_ostream& out) {
+  void writeUndefinedAtom(const UndefinedAtom &atom, raw_ostream &out) {
     if ( _firstAtom ) {
       out  << "atoms:\n";
       _firstAtom = false;
@@ -391,7 +391,7 @@ public:
     }
   }
 
-  void writeSharedLibraryAtom(const SharedLibraryAtom& atom, llvm::raw_ostream& out) {
+  void writeSharedLibraryAtom(const SharedLibraryAtom &atom, raw_ostream &out) {
     if ( _firstAtom ) {
       out  << "atoms:\n";
       _firstAtom = false;
@@ -434,7 +434,7 @@ public:
     }
    }
    
-  void writeAbsoluteAtom(const AbsoluteAtom& atom, llvm::raw_ostream& out) {
+  void writeAbsoluteAtom(const AbsoluteAtom &atom, raw_ostream &out) {
      if ( _firstAtom ) {
       out << "atoms:\n";
       _firstAtom = false;
@@ -497,8 +497,7 @@ private:
 /// writeObjectText - writes the lld::File object as in YAML
 /// format to the specified stream.
 ///
-void writeObjectText(const File& file, Platform& platform, 
-                      llvm::raw_ostream &out) {
+void writeObjectText(const File &file, Platform &platform, raw_ostream &out) {
   // Figure what ref-name labels are needed
   RefNameBuilder rnb(file);
   

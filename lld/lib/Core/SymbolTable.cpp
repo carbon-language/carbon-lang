@@ -13,6 +13,7 @@
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/Platform.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SharedLibraryAtom.h"
@@ -20,7 +21,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMapInfo.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #include <algorithm>
@@ -125,7 +125,7 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
 
 
 void SymbolTable::addByName(const Atom & newAtom) {
-  llvm::StringRef name = newAtom.name();
+  StringRef name = newAtom.name();
   const Atom *existing = this->findByName(name);
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
@@ -162,9 +162,9 @@ void SymbolTable::addByName(const Atom & newAtom) {
         break;
       case NCR_DupUndef: {
           const UndefinedAtom* existingUndef =
-            llvm::dyn_cast<UndefinedAtom>(existing);
+            dyn_cast<UndefinedAtom>(existing);
           const UndefinedAtom* newUndef =
-            llvm::dyn_cast<UndefinedAtom>(&newAtom);
+            dyn_cast<UndefinedAtom>(&newAtom);
           assert(existingUndef != nullptr);
           assert(newUndef != nullptr);
           if ( existingUndef->canBeNull() == newUndef->canBeNull() ) {
@@ -180,9 +180,9 @@ void SymbolTable::addByName(const Atom & newAtom) {
         break;
       case NCR_DupShLib: {
           const SharedLibraryAtom* existingShLib =
-            llvm::dyn_cast<SharedLibraryAtom>(existing);
+            dyn_cast<SharedLibraryAtom>(existing);
           const SharedLibraryAtom* newShLib =
-            llvm::dyn_cast<SharedLibraryAtom>(&newAtom);
+            dyn_cast<SharedLibraryAtom>(&newAtom);
           assert(existingShLib != nullptr);
           assert(newShLib != nullptr);
           if ( (existingShLib->canBeNullAtRuntime() 
@@ -217,7 +217,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
 unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom * const atom) {
   unsigned hash = atom->size();
   if ( atom->contentType() != DefinedAtom::typeZeroFill ) {
-    llvm::ArrayRef<uint8_t> content = atom->rawContent();
+    ArrayRef<uint8_t> content = atom->rawContent();
     for (unsigned int i=0; i < content.size(); ++i) {
       hash = hash * 33 + content[i];
     }
@@ -241,13 +241,13 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
     return false;
   if ( r == getTombstoneKey() )
     return false;
-    
+
   if ( l->contentType() != r->contentType() )
     return false;
   if ( l->size() != r->size() )
     return false;
-  llvm::ArrayRef<uint8_t> lc = l->rawContent();
-  llvm::ArrayRef<uint8_t> rc = r->rawContent();
+  ArrayRef<uint8_t> lc = l->rawContent();
+  ArrayRef<uint8_t> rc = r->rawContent();
   return lc.equals(rc);
 }
 
@@ -265,14 +265,14 @@ void SymbolTable::addByContent(const DefinedAtom & newAtom) {
 
 
 
-const Atom *SymbolTable::findByName(llvm::StringRef sym) {
+const Atom *SymbolTable::findByName(StringRef sym) {
   NameToAtom::iterator pos = _nameTable.find(sym);
   if (pos == _nameTable.end())
     return nullptr;
   return pos->second;
 }
 
-bool SymbolTable::isDefined(llvm::StringRef sym) {
+bool SymbolTable::isDefined(StringRef sym) {
   const Atom *atom = this->findByName(sym);
   if (atom == nullptr)
     return false;

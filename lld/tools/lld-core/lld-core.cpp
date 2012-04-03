@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/Atom.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/NativeReader.h"
 #include "lld/Core/NativeWriter.h"
 #include "lld/Core/Pass.h"
@@ -29,11 +30,11 @@
 
 using namespace lld;
 
-static void error(llvm::Twine message) {
+static void error(Twine message) {
   llvm::errs() << "lld-core: " << message << ".\n";
 }
 
-static bool error(llvm::error_code ec) {
+static bool error(error_code ec) {
   if (ec) {
     error(ec.message());
     return true;
@@ -59,8 +60,8 @@ public:
     return _file;
   }
 
-  virtual llvm::StringRef name() const {
-    return llvm::StringRef();
+  virtual StringRef name() const {
+    return StringRef();
   }
   
   virtual uint64_t ordinal() const {
@@ -95,8 +96,8 @@ public:
     return DefinedAtom::sectionBasedOnContent;
   }
     
-  virtual llvm::StringRef customSectionName() const {
-    return llvm::StringRef();
+  virtual StringRef customSectionName() const {
+    return StringRef();
   }
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
@@ -114,8 +115,8 @@ public:
     return false;
   }
   
-  virtual llvm::ArrayRef<uint8_t> rawContent() const {
-    return llvm::ArrayRef<uint8_t>();
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>();
   }
   
   virtual reference_iterator referencesBegin() const {
@@ -158,8 +159,8 @@ public:
     return _file;
   }
 
-  virtual llvm::StringRef name() const {
-    return llvm::StringRef();
+  virtual StringRef name() const {
+    return StringRef();
   }
   
   virtual uint64_t ordinal() const {
@@ -194,8 +195,8 @@ public:
     return DefinedAtom::sectionBasedOnContent;
   }
     
-  virtual llvm::StringRef customSectionName() const {
-    return llvm::StringRef();
+  virtual StringRef customSectionName() const {
+    return StringRef();
   }
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
@@ -213,8 +214,8 @@ public:
     return false;
   }
   
-  virtual llvm::ArrayRef<uint8_t> rawContent() const {
-    return llvm::ArrayRef<uint8_t>();
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>();
   }
   
   virtual reference_iterator referencesBegin() const {
@@ -263,7 +264,7 @@ public:
   }
 
   // give platform a chance to resolve platform-specific undefs
-  virtual bool getPlatformAtoms(llvm::StringRef undefined,
+  virtual bool getPlatformAtoms(StringRef undefined,
                                 std::vector<const DefinedAtom *>&) {
     return false;
   }
@@ -284,12 +285,12 @@ public:
   }
 
   // return entry point for output file (e.g. "main") or nullptr
-  virtual llvm::StringRef entryPointName() {
+  virtual StringRef entryPointName() {
     return nullptr;
   }
 
   // for iterating must-be-defined symbols ("main" or -u command line option)
-  typedef llvm::StringRef const *UndefinesIterator;
+  typedef StringRef const *UndefinesIterator;
   virtual UndefinesIterator initialUndefinesBegin() const {
     return nullptr;
   }
@@ -307,19 +308,19 @@ public:
   }
 
   // if platform allows symbol to remain undefined (e.g. -r)
-  virtual bool allowUndefinedSymbol(llvm::StringRef name) {
+  virtual bool allowUndefinedSymbol(StringRef name) {
     return true;
   }
 
   // for debugging dead code stripping, -why_live
-  virtual bool printWhyLive(llvm::StringRef name) {
+  virtual bool printWhyLive(StringRef name) {
     return false;
   }
 
-  virtual const Atom& handleMultipleDefinitions(const Atom& def1, 
+  virtual const Atom& handleMultipleDefinitions(const Atom& def1,
                                                 const Atom& def2) {
     llvm::report_fatal_error("symbol '" 
-                            + llvm::Twine(def1.name()) 
+                            + Twine(def1.name())
                             + "' multiply defined");
   }
 
@@ -352,7 +353,7 @@ public:
 
   static const KindMapping _s_kindMappings[]; 
   
-  virtual Reference::Kind kindFromString(llvm::StringRef kindName) {
+  virtual Reference::Kind kindFromString(StringRef kindName) {
     for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
       if ( kindName.equals(p->string) )
         return p->value;
@@ -363,12 +364,12 @@ public:
     return k;
   }
   
-  virtual llvm::StringRef kindToString(Reference::Kind value) {
+  virtual StringRef kindToString(Reference::Kind value) {
     for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
       if ( value == p->value)
         return p->string;
     }
-    return llvm::StringRef("???");
+    return StringRef("???");
   }
 
   virtual bool noTextRelocs() {
@@ -459,7 +460,7 @@ public:
     }
   }
 
-  virtual bool searchLibraries(llvm::StringRef name, bool searchDylibs,
+  virtual bool searchLibraries(StringRef name, bool searchDylibs,
                                bool searchArchives, bool dataSymbolOnly,
                                InputFiles::Handler &) const {
     return false;
@@ -539,7 +540,7 @@ int main(int argc, char *argv[]) {
 
   // make unique temp .o file to put generated object file
   int fd;
-  llvm::SmallString<128> tempPath;
+  SmallString<128> tempPath;
   llvm::sys::fs::unique_file("temp%%%%%.o", fd, tempPath);
   llvm::raw_fd_ostream  binaryOut(fd, /*shouldClose=*/true);
   

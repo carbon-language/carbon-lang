@@ -23,11 +23,11 @@ namespace lld {
 
   /// writeNativeObjectFile - writes the lld::File object in native object
   /// file format to the specified file path.
-  int writeNativeObjectFile(const lld::File &, llvm::StringRef path);
+  int writeNativeObjectFile(const lld::File &, StringRef path);
 
   /// writeNativeObjectFile - writes the lld::File object in native object
   /// file format to the specified stream.
-  int writeNativeObjectFile(const lld::File &, llvm::raw_ostream &);
+  int writeNativeObjectFile(const lld::File &, raw_ostream &);
 
 } // namespace lld
 

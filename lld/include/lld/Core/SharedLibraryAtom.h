@@ -25,7 +25,7 @@ public:
   /// Returns shared library name used to load it at runtime.
   /// On linux that is the DT_NEEDED name.
   /// On Darwin it is the LC_DYLIB_LOAD dylib name.
-  virtual llvm::StringRef loadName() const = 0;
+  virtual StringRef loadName() const = 0;
 
   /// Returns if shared library symbol can be missing at runtime and if
   /// so the loader should silently resolve address of symbol to be nullptr.

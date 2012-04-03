@@ -33,12 +33,12 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/Casting.h"
 
 namespace lld {
 
@@ -58,7 +58,7 @@ void GOTPass::perform() {
       if ( _platform.isGOTAccess(ref->kind(), canBypassGOT) ) {
         const Atom* target = ref->target();
         assert(target != nullptr);
-        const DefinedAtom* defTarget = llvm::dyn_cast<DefinedAtom>(target);
+        const DefinedAtom* defTarget = dyn_cast<DefinedAtom>(target);
         bool replaceTargetWithGOTAtom = false;
         if ( target->definition() == Atom::definitionSharedLibrary ) {
           // Accesses to shared library symbols must go through GOT.

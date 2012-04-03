@@ -247,7 +247,7 @@ public:
   
   /// rawContent - returns a reference to the raw (unrelocated) bytes of 
   /// this Atom's content.
-  virtual llvm::ArrayRef<uint8_t> rawContent() const = 0;
+  virtual ArrayRef<uint8_t> rawContent() const = 0;
   
   /// This class abstracts iterating over the sequence of References
   /// in an Atom.  Concrete instances of DefinedAtom must implement
