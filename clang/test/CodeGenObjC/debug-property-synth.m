@@ -16,4 +16,5 @@ int main() {
   return 0;
 }
 
-// CHECK:       .loc    2 10 0
+// FIXME: Make this test ir files.
+// CHECK:       .loc    2 6 0

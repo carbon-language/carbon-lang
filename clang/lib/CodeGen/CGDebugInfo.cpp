@@ -1969,9 +1969,11 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
+  // Use the location of the declaration.
+  SourceLocation Loc = D->getLocation();
   
   unsigned Flags = 0;
-  llvm::DIFile Unit = getOrCreateFile(CurLoc);
+  llvm::DIFile Unit = getOrCreateFile(Loc);
   llvm::DIDescriptor FDContext(Unit);
   llvm::DIArray TParamsArray;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -2015,17 +2017,16 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (!Name.empty() && Name[0] == '\01')
     Name = Name.substr(1);
 
-  // It is expected that CurLoc is set before using EmitFunctionStart.
-  // Usually, CurLoc points to the left bracket location of compound
-  // statement representing function body.
-  unsigned LineNo = getLineNumber(CurLoc);
+  unsigned LineNo = getLineNumber(Loc);
   if (D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
+
   llvm::DISubprogram SPDecl = getFunctionDeclaration(D);
   llvm::DISubprogram SP =
     DBuilder.createFunction(FDContext, Name, LinkageName, Unit,
                             LineNo, getOrCreateFunctionType(D, FnType, Unit),
                             Fn->hasInternalLinkage(), true/*definition*/,
+                            getLineNumber(CurLoc),
                             Flags, CGM.getLangOpts().Optimize, Fn,
                             TParamsArray, SPDecl);
 
