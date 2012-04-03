@@ -144,7 +144,7 @@ it is because you installed cloog to a non-standard path, and libisl/libcloog
 could not be found. To solve this issue, you need to append the path of parent
 directory of libisl/libcloog, i.e. ${CLOOG_INSTALL}/lib, to LD_LIBRARY_PATH by:
 
-<pre>export LD_LBIRARY_PATH=$LD_LIBRARY_PATH;${CLOOG_INSTALL}/lib</pre>
+<pre>export LD_LBIRARY_PATH=$LD_LIBRARY_PATH:${CLOOG_INSTALL}/lib</pre>
 
 <h2> Optional Features </h2>
 
