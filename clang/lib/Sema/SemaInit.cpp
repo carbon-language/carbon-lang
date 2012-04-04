@@ -4807,7 +4807,8 @@ InitializationSequence::Perform(Sema &S,
                                   move(Args));
     }
     assert(Kind.getKind() == InitializationKind::IK_Copy ||
-           Kind.isExplicitCast());
+           Kind.isExplicitCast() || 
+           Kind.getKind() == InitializationKind::IK_DirectList);
     return ExprResult(Args.release()[0]);
   }
 
