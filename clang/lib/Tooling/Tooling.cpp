@@ -24,6 +24,7 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "llvm/Support/FileSystem.h"
 
 namespace clang {
 namespace tooling {
@@ -235,7 +236,8 @@ void ToolInvocation::addFileMappingsTo(SourceManager &Sources) {
 ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
     : Files((FileSystemOptions())) {
-  StringRef BaseDirectory(::getenv("PWD"));
+  llvm::SmallString<1024> BaseDirectory;
+  llvm::sys::fs::current_path(BaseDirectory);
   for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
     llvm::SmallString<1024> File(getAbsolutePath(
         SourcePaths[I], BaseDirectory));
