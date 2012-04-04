@@ -504,6 +504,47 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   }
 }
 
+// Handle -mfpu=.
+//
+// FIXME: Centralize feature selection, defaulting shouldn't be also in the
+// frontend target.
+static void addFPUArgs(const Driver &D, const Arg *A, const ArgList &Args,
+                       ArgStringList &CmdArgs) {
+  StringRef FPU = A->getValue(Args);
+
+  // Set the target features based on the FPU.
+  if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
+    // Disable any default FPU support.
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-vfp2");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-vfp3");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-neon");
+  } else if (FPU == "vfp3-d16" || FPU == "vfpv3-d16") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+vfp3");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+d16");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-neon");
+  } else if (FPU == "vfp") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+vfp2");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-neon");
+  } else if (FPU == "vfp3" || FPU == "vfpv3") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+vfp3");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-neon");
+  } else if (FPU == "neon") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+neon");
+  } else
+    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+}
+
 // Handle -mfpmath=.
 static void addFPMathArgs(const Driver &D, const Arg *A, const ArgList &Args,
                           ArgStringList &CmdArgs) {
@@ -664,44 +705,8 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   }
 
   // Honor -mfpu=.
-  //
-  // FIXME: Centralize feature selection, defaulting shouldn't be also in the
-  // frontend target.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ)) {
-    StringRef FPU = A->getValue(Args);
-
-    // Set the target features based on the FPU.
-    if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
-      // Disable any default FPU support.
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-vfp2");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-vfp3");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "vfp3-d16" || FPU == "vfpv3-d16") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+vfp3");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+d16");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "vfp") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+vfp2");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "vfp3" || FPU == "vfpv3") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+vfp3");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "neon") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+neon");
-    } else
-      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-  }
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
+    addFPUArgs(D, A, Args,CmdArgs);
 
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
@@ -2671,44 +2676,8 @@ void ClangAs::AddARMTargetArgs(const ArgList &Args,
   CmdArgs.push_back(getARMTargetCPU(Args, Triple));
 
   // Honor -mfpu=.
-  //
-  // FIXME: Centralize feature selection, defaulting shouldn't be also in the
-  // frontend target.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ)) {
-    StringRef FPU = A->getValue(Args);
-
-    // Set the target features based on the FPU.
-    if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
-      // Disable any default FPU support.
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-vfp2");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-vfp3");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "vfp3-d16" || FPU == "vfpv3-d16") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+vfp3");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+d16");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "vfp") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+vfp2");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "vfp3" || FPU == "vfpv3") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+vfp3");
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
-    } else if (FPU == "neon") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("+neon");
-    } else
-      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-  }
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
+    addFPUArgs(D, A, Args,CmdArgs);
 
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
