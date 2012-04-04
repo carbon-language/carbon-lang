@@ -2359,13 +2359,14 @@ def err_template_arg_field : Error<
 def err_template_arg_method : Error<
   "non-type template argument refers to non-static member function %0">;
 def err_template_arg_function_not_extern : Error<
-  "non-template argument refers to function %0 with internal linkage">;
+  "non-type template argument refers to function %0 with internal linkage">;
 def err_template_arg_object_not_extern : Error<
-  "non-template argument refers to object %0 that does not have external "
+  "non-type template argument refers to object %0 that does not have external "
   "linkage">;
 def note_template_arg_internal_object : Note<
-  "non-template argument refers to %select{function|object}0 here">;
-def note_template_arg_refers_here : Note<"non-template argument refers here">;
+  "non-type template argument refers to %select{function|object}0 here">;
+def note_template_arg_refers_here : Note<
+  "non-type template argument refers here">;
 def err_template_arg_not_object_or_func : Error<
   "non-type template argument does not refer to an object or function">;
 def err_template_arg_not_pointer_to_member_form : Error<
