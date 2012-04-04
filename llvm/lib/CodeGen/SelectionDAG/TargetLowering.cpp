@@ -2434,7 +2434,6 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     // We can always fold X == X for integer setcc's.
     if (N0.getValueType().isInteger()) {
       switch (getBooleanContents(N0.getValueType().isVector())) {
-      default: llvm_unreachable ("Unknown boolean content.");
       case UndefinedBooleanContent: 
       case ZeroOrOneBooleanContent: 
         return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
