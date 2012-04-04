@@ -1,5 +1,9 @@
-; RUN: llc -march=mipsel -relocation-model=pic < %s | FileCheck %s -check-prefix=CHECK-PIC
-; RUN: llc -march=mipsel -relocation-model=static < %s | FileCheck %s -check-prefix=CHECK-STATIC
+; RUN: llc -march=mipsel -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-O32
+; RUN: llc -march=mipsel -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-O32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N64
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
 
 @reg = common global i8* null, align 4
 
@@ -8,14 +12,30 @@ entry:
   ret i8* %x
 }
 
-; CHECK-PIC: lw  $[[R0:[0-9]+]], %got($tmp[[T0:[0-9]+]])($gp)
-; CHECK-PIC: addiu ${{[0-9]+}}, $[[R0]], %lo($tmp[[T0]])
-; CHECK-PIC: lw  $[[R1:[0-9]+]], %got($tmp[[T1:[0-9]+]])($gp)
-; CHECK-PIC: addiu ${{[0-9]+}}, $[[R1]], %lo($tmp[[T1]])
-; CHECK-STATIC: lui  $[[R2:[0-9]+]], %hi($tmp[[T0:[0-9]+]])
-; CHECK-STATIC: addiu ${{[0-9]+}}, $[[R2]], %lo($tmp[[T0]])
-; CHECK-STATIC: lui   $[[R3:[0-9]+]], %hi($tmp[[T1:[0-9]+]])
-; CHECK-STATIC: addiu ${{[0-9]+}}, $[[R3]], %lo($tmp[[T1]])
+; PIC-O32: lw  $[[R0:[0-9]+]], %got($tmp[[T0:[0-9]+]])
+; PIC-O32: addiu ${{[0-9]+}}, $[[R0]], %lo($tmp[[T0]])
+; PIC-O32: lw  $[[R1:[0-9]+]], %got($tmp[[T1:[0-9]+]])
+; PIC-O32: addiu ${{[0-9]+}}, $[[R1]], %lo($tmp[[T1]])
+; STATIC-O32: lui  $[[R2:[0-9]+]], %hi($tmp[[T2:[0-9]+]])
+; STATIC-O32: addiu ${{[0-9]+}}, $[[R2]], %lo($tmp[[T2]])
+; STATIC-O32: lui   $[[R3:[0-9]+]], %hi($tmp[[T3:[0-9]+]])
+; STATIC-O32: addiu ${{[0-9]+}}, $[[R3]], %lo($tmp[[T3]])
+; PIC-N32: lw  $[[R0:[0-9]+]], %got_page($tmp[[T0:[0-9]+]])
+; PIC-N32: addiu ${{[0-9]+}}, $[[R0]], %got_ofst($tmp[[T0]])
+; PIC-N32: lw  $[[R1:[0-9]+]], %got_page($tmp[[T1:[0-9]+]])
+; PIC-N32: addiu ${{[0-9]+}}, $[[R1]], %got_ofst($tmp[[T1]])
+; STATIC-N32: lui  $[[R2:[0-9]+]], %hi($tmp[[T2:[0-9]+]])
+; STATIC-N32: addiu ${{[0-9]+}}, $[[R2]], %lo($tmp[[T2]])
+; STATIC-N32: lui   $[[R3:[0-9]+]], %hi($tmp[[T3:[0-9]+]])
+; STATIC-N32: addiu ${{[0-9]+}}, $[[R3]], %lo($tmp[[T3]])
+; PIC-N64: ld  $[[R0:[0-9]+]], %got_page($tmp[[T0:[0-9]+]])
+; PIC-N64: daddiu ${{[0-9]+}}, $[[R0]], %got_ofst($tmp[[T0]])
+; PIC-N64: ld  $[[R1:[0-9]+]], %got_page($tmp[[T1:[0-9]+]])
+; PIC-N64: daddiu ${{[0-9]+}}, $[[R1]], %got_ofst($tmp[[T1]])
+; STATIC-N64: ld  $[[R2:[0-9]+]], %got_page($tmp[[T2:[0-9]+]])
+; STATIC-N64: daddiu ${{[0-9]+}}, $[[R2]], %got_ofst($tmp[[T2]])
+; STATIC-N64: ld  $[[R3:[0-9]+]], %got_page($tmp[[T3:[0-9]+]])
+; STATIC-N64: daddiu ${{[0-9]+}}, $[[R3]], %got_ofst($tmp[[T3]])
 define void @f() nounwind {
 entry:
   %call = tail call i8* @dummy(i8* blockaddress(@f, %baz))
