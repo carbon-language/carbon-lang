@@ -43,5 +43,9 @@
 
 // Check that --serialize-diagnostics does not cause an "argument unused" error.
 // RUN: %clang -target i386-apple-darwin10 \
-// RUN:   -Werror -Wall -Wno-comment -fapple-kext \
-// RUN:   --serialize-diagnostics %t.dia -c %s
+// RUN:   -Werror -Wall -Wno-comment -fapple-kext -### \
+// RUN:   --serialize-diagnostics %t.dia -c %s 2>&1 | \
+// RUN:   FileCheck --check-prefix=CHECK-UNUSED %s
+
+// CHECK-UNUSED-NOT: argument unused
+// CHECK-UNUSED: cc1plus
