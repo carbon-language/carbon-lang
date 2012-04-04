@@ -501,11 +501,6 @@ those operations and the ARMv6 scalar versions.
 
 //===---------------------------------------------------------------------===//
 
-ARM::MOVCCr is commutable (by flipping the condition). But we need to implement
-ARMInstrInfo::commuteInstruction() to support it.
-
-//===---------------------------------------------------------------------===//
-
 Split out LDR (literal) from normal ARM LDR instruction. Also consider spliting
 LDR into imm12 and so_reg forms. This allows us to clean up some code. e.g.
 ARMLoadStoreOptimizer does not need to look at LDR (literal) and LDR (so_reg)

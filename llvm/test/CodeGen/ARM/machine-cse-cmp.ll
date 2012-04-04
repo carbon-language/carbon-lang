@@ -10,7 +10,7 @@ entry:
 ; CHECK: cmp
 ; CHECK: moveq
 ; CHECK-NOT: cmp
-; CHECK: moveq
+; CHECK: mov{{eq|ne}}
     %tmp1 = icmp eq i32 %cond1, 0
     %tmp2 = select i1 %tmp1, i32 %x1, i32 %x2
     %tmp3 = select i1 %tmp1, i32 %x2, i32 %x3

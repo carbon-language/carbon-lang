@@ -139,6 +139,8 @@ public:
 
   MachineInstr *duplicate(MachineInstr *Orig, MachineFunction &MF) const;
 
+  MachineInstr *commuteInstruction(MachineInstr*, bool=false) const;
+
   virtual bool produceSameValue(const MachineInstr *MI0,
                                 const MachineInstr *MI1,
                                 const MachineRegisterInfo *MRI) const;

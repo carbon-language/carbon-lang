@@ -1500,6 +1500,29 @@ int llvm::getMatchingCondBranchOpcode(int Opc) {
   llvm_unreachable("Unknown unconditional branch opcode!");
 }
 
+/// commuteInstruction - Handle commutable instructions.
+MachineInstr *
+ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
+  switch (MI->getOpcode()) {
+  case ARM::MOVCCr:
+  case ARM::t2MOVCCr: {
+    // MOVCC can be commuted by inverting the condition.
+    unsigned PredReg = 0;
+    ARMCC::CondCodes CC = getInstrPredicate(MI, PredReg);
+    // MOVCC AL can't be inverted. Shouldn't happen.
+    if (CC == ARMCC::AL || PredReg != ARM::CPSR)
+      return NULL;
+    MI = TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
+    if (!MI)
+      return NULL;
+    // After swapping the MOVCC operands, also invert the condition.
+    MI->getOperand(MI->findFirstPredOperandIdx())
+      .setImm(ARMCC::getOppositeCondition(CC));
+    return MI;
+  }
+  }
+  return TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
+}
 
 /// Map pseudo instructions that imply an 'S' bit onto real opcodes. Whether the
 /// instruction is encoded with an 'S' bit is determined by the optional CPSR

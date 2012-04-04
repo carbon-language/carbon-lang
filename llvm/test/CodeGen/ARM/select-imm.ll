@@ -64,7 +64,7 @@ define i32 @t4(i32 %a, i32 %b, i32 %x) nounwind {
 entry:
 ; ARM: t4:
 ; ARM: ldr
-; ARM: movlt
+; ARM: mov{{lt|ge}}
 
 ; ARMT2: t4:
 ; ARMT2: movwlt [[R0:r[0-9]+]], #65365
