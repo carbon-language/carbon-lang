@@ -1543,7 +1543,7 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   EVT ValTy = Op.getValueType();
   bool HasGotOfst = (GV->hasInternalLinkage() ||
                      (GV->hasLocalLinkage() && !isa<Function>(GV)));
-  unsigned GotFlag = HasMips64 ?
+  unsigned GotFlag = IsN64 ?
                      (HasGotOfst ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT_DISP) :
                      (HasGotOfst ? MipsII::MO_GOT : MipsII::MO_GOT16);
   SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, GotFlag);
@@ -1555,8 +1555,8 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
   if (!HasGotOfst)
     return ResNode;
   SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0,
-                                            HasMips64 ? MipsII::MO_GOT_OFST :
-                                                        MipsII::MO_ABS_LO);
+                                            IsN64 ? MipsII::MO_GOT_OFST :
+                                                    MipsII::MO_ABS_LO);
   SDValue Lo = DAG.getNode(MipsISD::Lo, dl, ValTy, GALo);
   return DAG.getNode(ISD::ADD, dl, ValTy, ResNode, Lo);
 }
