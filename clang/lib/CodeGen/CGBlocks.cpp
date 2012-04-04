@@ -1850,7 +1850,8 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
   // int32_t __size;
   types.push_back(Int32Ty);
 
-  bool HasCopyAndDispose = getContext().BlockRequiresCopying(Ty);
+  bool HasCopyAndDispose =
+       (Ty->isObjCRetainableType()) || getContext().getBlockVarCopyInits(D);
   if (HasCopyAndDispose) {
     /// void *__copy_helper;
     types.push_back(Int8PtrTy);
