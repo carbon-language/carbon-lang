@@ -78,6 +78,7 @@ std::string escape(StringRef Input);
 class Stream {
 public:
   Stream(StringRef Input, SourceMgr &);
+  ~Stream();
 
   document_iterator begin();
   document_iterator end();

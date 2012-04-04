@@ -1523,6 +1523,8 @@ Stream::Stream(StringRef Input, SourceMgr &SM)
   : scanner(new Scanner(Input, SM))
   , CurrentDoc(0) {}
 
+Stream::~Stream() {}
+
 bool Stream::failed() { return scanner->failed(); }
 
 void Stream::printError(Node *N, const Twine &Msg) {
