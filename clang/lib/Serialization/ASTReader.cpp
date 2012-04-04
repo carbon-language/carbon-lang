@@ -3898,9 +3898,9 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     ExceptionSpecificationType EST =
         static_cast<ExceptionSpecificationType>(Record[Idx++]);
     EPI.ExceptionSpecType = EST;
+    SmallVector<QualType, 2> Exceptions;
     if (EST == EST_Dynamic) {
       EPI.NumExceptions = Record[Idx++];
-      SmallVector<QualType, 2> Exceptions;
       for (unsigned I = 0; I != EPI.NumExceptions; ++I)
         Exceptions.push_back(readType(*Loc.F, Record, Idx));
       EPI.Exceptions = Exceptions.data();
