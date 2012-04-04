@@ -6,3 +6,6 @@
 // FIXME: Make the above easier.
 
 invalid; // CHECK: C++ requires
+
+// FIXME: JSON doesn't like path separator '\', on Win32 hosts.
+// XFAIL: mingw32,win32
