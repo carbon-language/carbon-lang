@@ -652,6 +652,9 @@ def warn_arc_perform_selector_leaks : Warning<
   InGroup<DiagGroup<"arc-performSelector-leaks">>;
 def err_gc_weak_property_strong_type : Error<
   "weak attribute declared on a __strong type property in GC mode">;
+def warn_receiver_is_weak : Warning <
+  "weak receiver may be unpredictably null in ARC mode">,
+  InGroup<DiagGroup<"receiver-is-weak">>, DefaultIgnore;
 
 def error_synthesized_ivar_yet_not_supported : Error<
   "instance variable synthesis not yet supported"

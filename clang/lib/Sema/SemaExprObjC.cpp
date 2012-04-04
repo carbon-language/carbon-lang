@@ -2232,6 +2232,11 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   }
 
   if (getLangOpts().ObjCAutoRefCount) {
+    if (Receiver &&
+        (Receiver->IgnoreParenImpCasts()->getType().getObjCLifetime() 
+          == Qualifiers::OCL_Weak))
+      Diag(Receiver->getLocStart(), diag::warn_receiver_is_weak);
+    
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&
         (SuperLoc.isValid() || isSelfExpr(Receiver))) {
