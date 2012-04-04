@@ -1380,7 +1380,6 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
-  DEBUG(dbgs() << "Machine Function\n");
   const TargetMachine &TM = MF.getTarget();
   MRI = &MF.getRegInfo();
   TII = TM.getInstrInfo();
