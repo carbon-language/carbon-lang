@@ -348,7 +348,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
   }
 
   if (cu_relative_offset)
-    OS << format(" => {0x%8.8"PRIx64"}", (uvalue + (cu ? cu->getOffset() : 0)));
+    OS << format(" => {0x%8.8" PRIx64 "}", uvalue + (cu ? cu->getOffset() : 0));
 }
 
 const char*
