@@ -673,7 +673,10 @@ void RewriteModernObjC::HandleTopLevelSingleDecl(Decl *D) {
     if (PD->isThisDeclarationADefinition())
       RewriteProtocolDecl(PD);
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
-    RewriteLinkageSpec(LSD);
+    // FIXME. This will not work in all situations and leaving it out
+    // is harmless.
+    // RewriteLinkageSpec(LSD);
+    
     // Recurse into linkage specifications
     for (DeclContext::decl_iterator DI = LSD->decls_begin(),
                                  DIEnd = LSD->decls_end();
