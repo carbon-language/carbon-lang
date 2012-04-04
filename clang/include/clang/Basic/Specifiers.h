@@ -40,6 +40,7 @@ namespace clang {
     TST_char16,       // C++0x char16_t
     TST_char32,       // C++0x char32_t
     TST_int,
+    TST_int128,
     TST_half,         // OpenCL half, ARM NEON __fp16
     TST_float,
     TST_double,

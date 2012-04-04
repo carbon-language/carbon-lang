@@ -707,6 +707,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw_int:
   case tok::kw_long:
   case tok::kw___int64:
+  case tok::kw___int128:
   case tok::kw_restrict:
   case tok::kw_short:
   case tok::kw_signed:
@@ -1038,6 +1039,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
   case tok::kw_int:
   case tok::kw_long:
   case tok::kw___int64:
+  case tok::kw___int128:
   case tok::kw_signed:
   case tok::kw_unsigned:
   case tok::kw_half:

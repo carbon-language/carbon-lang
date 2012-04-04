@@ -264,6 +264,7 @@ bool Declarator::isDeclarationOfFunction() const {
     case TST_float:
     case TST_half:
     case TST_int:
+    case TST_int128:
     case TST_struct:
     case TST_union:
     case TST_unknown_anytype:
@@ -379,6 +380,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_char16:      return "char16_t";
   case DeclSpec::TST_char32:      return "char32_t";
   case DeclSpec::TST_int:         return "int";
+  case DeclSpec::TST_int128:      return "__int128";
   case DeclSpec::TST_half:        return "half";
   case DeclSpec::TST_float:       return "float";
   case DeclSpec::TST_double:      return "double";
@@ -818,7 +820,7 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
   if (TypeSpecSign != TSS_unspecified) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
-    else if (TypeSpecType != TST_int  &&
+    else if (TypeSpecType != TST_int  && TypeSpecType != TST_int128 &&
              TypeSpecType != TST_char && TypeSpecType != TST_wchar) {
       Diag(D, TSSLoc, diag::err_invalid_sign_spec)
         << getSpecifierName((TST)TypeSpecType);

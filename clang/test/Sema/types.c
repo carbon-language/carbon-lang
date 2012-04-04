@@ -19,7 +19,21 @@ int b() {
   int __int128_t;
   int __uint128_t;
 }
+// __int128 is a keyword
+int c() {
+  __int128 i;
+  unsigned __int128 j;
+  long unsigned __int128 k; // expected-error {{'long __int128' is invalid}}
+  int __int128; // expected-error {{cannot combine with previous}} expected-warning {{does not declare anything}}
+}
+// __int128_t is __int128; __uint128_t is unsigned __int128.
+typedef __int128 check_int_128; // expected-note {{here}}
+typedef __int128_t check_int_128; // expected-note {{here}} expected-warning {{redefinition}}
+typedef int check_int_128; // expected-error {{different types ('int' vs '__int128_t' (aka '__int128'))}}
 
+typedef unsigned __int128 check_uint_128; // expected-note {{here}}
+typedef __uint128_t check_uint_128; // expected-note {{here}} expected-warning {{redefinition}}
+typedef int check_uint_128; // expected-error {{different types ('int' vs '__uint128_t' (aka 'unsigned __int128'))}}
 
 // Array type merging should convert array size to whatever matches the target
 // pointer size.

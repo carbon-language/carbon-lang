@@ -44,7 +44,9 @@
 #include <stdexcept>
 #include <streambuf>
 #include <string>
-#include <strstream> 
+#if __has_include(<strstream>)
+#include <strstream>
+#endif
 #include <typeinfo>
 #include <utility>
 #include <valarray>

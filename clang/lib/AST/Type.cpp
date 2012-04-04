@@ -1428,13 +1428,13 @@ const char *BuiltinType::getName(const PrintingPolicy &Policy) const {
   case Int:               return "int";
   case Long:              return "long";
   case LongLong:          return "long long";
-  case Int128:            return "__int128_t";
+  case Int128:            return "__int128";
   case UChar:             return "unsigned char";
   case UShort:            return "unsigned short";
   case UInt:              return "unsigned int";
   case ULong:             return "unsigned long";
   case ULongLong:         return "unsigned long long";
-  case UInt128:           return "__uint128_t";
+  case UInt128:           return "unsigned __int128";
   case Half:              return "half";
   case Float:             return "float";
   case Double:            return "double";
