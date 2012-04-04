@@ -336,7 +336,8 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
         }
       }
     }
-    
+
+    (void) NeedComma; // Silence dead store warning.
     if (!NeedBracket)
       Out << "]";
   }
