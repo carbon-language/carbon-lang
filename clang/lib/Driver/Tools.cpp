@@ -4845,7 +4845,6 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getArch() == llvm::Triple::x86)
     CmdArgs.push_back("--32");
 
-
   // Set byte order explicitly
   if (getToolChain().getArchName() == "mips")
     CmdArgs.push_back("-EB");
