@@ -706,7 +706,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    addFPUArgs(D, A, Args,CmdArgs);
+    addFPUArgs(D, A, Args, CmdArgs);
 
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
@@ -2677,7 +2677,7 @@ void ClangAs::AddARMTargetArgs(const ArgList &Args,
 
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    addFPUArgs(D, A, Args,CmdArgs);
+    addFPUArgs(D, A, Args, CmdArgs);
 
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
