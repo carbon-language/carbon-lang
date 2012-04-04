@@ -134,8 +134,7 @@ public:
     unsigned FromReg;
     unsigned ToReg;
 
-    bool operator==(unsigned Reg) const { return FromReg == Reg; }
-    bool operator<(unsigned Reg) const { return FromReg < Reg; }
+    bool operator<(DwarfLLVMRegPair RHS) const { return FromReg < RHS.FromReg; }
   };
 private:
   const MCRegisterDesc *Desc;                 // Pointer to the descriptor array
@@ -315,7 +314,8 @@ public:
     const DwarfLLVMRegPair *M = isEH ? EHL2DwarfRegs : L2DwarfRegs;
     unsigned Size = isEH ? EHL2DwarfRegsSize : L2DwarfRegsSize;
 
-    const DwarfLLVMRegPair *I = std::lower_bound(M, M+Size, RegNum);
+    DwarfLLVMRegPair Key = { RegNum, 0 };
+    const DwarfLLVMRegPair *I = std::lower_bound(M, M+Size, Key);
     if (I == M+Size || I->FromReg != RegNum)
       return -1;
     return I->ToReg;
@@ -327,7 +327,8 @@ public:
     const DwarfLLVMRegPair *M = isEH ? EHDwarf2LRegs : Dwarf2LRegs;
     unsigned Size = isEH ? EHDwarf2LRegsSize : Dwarf2LRegsSize;
 
-    const DwarfLLVMRegPair *I = std::lower_bound(M, M+Size, RegNum);
+    DwarfLLVMRegPair Key = { RegNum, 0 };
+    const DwarfLLVMRegPair *I = std::lower_bound(M, M+Size, Key);
     assert(I != M+Size && I->FromReg == RegNum && "Invalid RegNum");
     return I->ToReg;
   }
