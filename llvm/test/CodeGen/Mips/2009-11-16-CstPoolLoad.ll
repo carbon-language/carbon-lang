@@ -1,10 +1,23 @@
-; RUN: llc < %s | FileCheck %s
-target datalayout = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-n32"
-target triple = "mips-unknown-linux"
+; RUN: llc -march=mipsel -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-O32
+; RUN: llc -march=mipsel -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-O32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N64
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
 
 define float @h() nounwind readnone {
 entry:
-; CHECK: lw $2, %got($CPI0_0)($gp)
-; CHECK: lwc1 $f0, %lo($CPI0_0)($2)
+; PIC-O32: lw  $[[R0:[0-9]+]], %got($CPI0_0)
+; PIC-O32: lwc1 $f0, %lo($CPI0_0)($[[R0]])
+; STATIC-O32: lui  $[[R0:[0-9]+]], %hi($CPI0_0)
+; STATIC-O32: lwc1 $f0, %lo($CPI0_0)($[[R0]])
+; PIC-N32: lw  $[[R0:[0-9]+]], %got_page($CPI0_0)
+; PIC-N32: lwc1 $f0, %got_ofst($CPI0_0)($[[R0]])
+; STATIC-N32: lui  $[[R0:[0-9]+]], %hi($CPI0_0)
+; STATIC-N32: lwc1 $f0, %lo($CPI0_0)($[[R0]])
+; PIC-N64: ld  $[[R0:[0-9]+]], %got_page($CPI0_0)
+; PIC-N64: lwc1 $f0, %got_ofst($CPI0_0)($[[R0]])
+; STATIC-N64: ld  $[[R0:[0-9]+]], %got_page($CPI0_0)
+; STATIC-N64: lwc1 $f0, %got_ofst($CPI0_0)($[[R0]])
   ret float 0x400B333340000000
 }

@@ -1724,8 +1724,8 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
   } else {
     EVT ValTy = Op.getValueType();
-    unsigned GOTFlag = IsN64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
-    unsigned OFSTFlag = IsN64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
+    unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
+    unsigned OFSTFlag = HasMips64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
     SDValue CP = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
                                            N->getOffset(), GOTFlag);
     CP = DAG.getNode(MipsISD::Wrapper, dl, ValTy, GetGlobalReg(DAG, ValTy), CP);
