@@ -123,6 +123,7 @@ public:
         bool m_use_one_liner;
         std::string m_one_liner;
         bool m_stop_on_error;
+        std::string m_function_name;
     };
 
 private:
