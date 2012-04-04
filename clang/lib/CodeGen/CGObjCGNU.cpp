@@ -2121,15 +2121,16 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       // Get the existing variable, if one exists.
       llvm::GlobalVariable *offset = TheModule.getNamedGlobal(Name);
       if (offset) {
-          offset->setInitializer(offsetValue);
-          // If this is the real definition, change its linkage type so that
-          // different modules will use this one, rather than their private
-          // copy.
-          offset->setLinkage(llvm::GlobalValue::ExternalLinkage);
+        offset->setInitializer(offsetValue);
+        // If this is the real definition, change its linkage type so that
+        // different modules will use this one, rather than their private
+        // copy.
+        offset->setLinkage(llvm::GlobalValue::ExternalLinkage);
       } else {
-          // Add a new alias if there isn't one already.
-          offset = new llvm::GlobalVariable(TheModule, offsetValue->getType(),
-                  false, llvm::GlobalValue::ExternalLinkage, offsetValue, Name);
+        // Add a new alias if there isn't one already.
+        offset = new llvm::GlobalVariable(TheModule, offsetValue->getType(),
+                false, llvm::GlobalValue::ExternalLinkage, offsetValue, Name);
+        (void) offset; // Silence dead store warning.
       }
       ++ivarIndex;
   }
