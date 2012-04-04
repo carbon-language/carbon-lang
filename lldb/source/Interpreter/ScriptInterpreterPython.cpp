@@ -381,15 +381,22 @@ ScriptInterpreterPython::RestoreTerminalState ()
 void
 ScriptInterpreterPython::LeaveSession ()
 {
-    PyObject *sysmod = PyImport_AddModule ("sys");
-    PyObject *sysdict = PyModule_GetDict (sysmod);
-
-    if (m_new_sysout && sysmod && sysdict)
+    // checking that we have a valid thread state - since we use our own threading and locking
+    // in some (rare) cases during cleanup Python may end up believing we have no thread state
+    // and PyImport_AddModule will crash if that is the case - since that seems to only happen
+    // when destroying the SBDebugger, we can make do without clearing up stdout and stderr
+    if (PyThreadState_Get())
     {
-        if (m_old_sysout)
-            PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_old_sysout);
-        if (m_old_syserr)
-            PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_old_syserr);
+        PyObject *sysmod = PyImport_AddModule ("sys");
+        PyObject *sysdict = PyModule_GetDict (sysmod);
+
+        if (m_new_sysout && sysmod && sysdict)
+        {
+            if (m_old_sysout)
+                PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_old_sysout);
+            if (m_old_syserr)
+                PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_old_syserr);
+        }
     }
 
     m_session_is_active = false;
