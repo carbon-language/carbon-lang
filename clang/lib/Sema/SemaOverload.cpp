@@ -4301,6 +4301,16 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
               ImplicitConversionSequence::Worse)
         Result = ICS;
     }
+
+    // For an empty list, we won't have computed any conversion sequence.
+    // Introduce the identity conversion sequence.
+    if (From->getNumInits() == 0) {
+      Result.setStandard();
+      Result.Standard.setAsIdentityConversion();
+      Result.Standard.setFromType(ToType);
+      Result.Standard.setAllToTypes(ToType);
+    }
+
     Result.setListInitializationSequence();
     Result.setStdInitializerListElement(toStdInitializerList);
     return Result;

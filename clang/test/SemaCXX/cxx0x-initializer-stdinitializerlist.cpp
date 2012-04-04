@@ -166,3 +166,12 @@ namespace Decay {
     for( auto s : {"A", "BB", "CCC", "DDD"}) { }
   }
 }
+
+namespace PR12436 {
+  struct X {
+    template<typename T>
+    X(std::initializer_list<int>, T);
+  };
+  
+  X x({}, 17);
+}
