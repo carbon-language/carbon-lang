@@ -68,6 +68,21 @@ void ReachableCode::computeReachableBlocks() {
   }
 }
 
+static const Expr *LookThroughTransitiveAssignments(const Expr *Ex) {
+  while (Ex) {
+    const BinaryOperator *BO =
+      dyn_cast<BinaryOperator>(Ex->IgnoreParenCasts());
+    if (!BO)
+      break;
+    if (BO->getOpcode() == BO_Assign) {
+      Ex = BO->getRHS();
+      continue;
+    }
+    break;
+  }
+  return Ex;
+}
+
 namespace {
 class DeadStoreObs : public LiveVariables::Observer {
   const CFG &cfg;
@@ -200,17 +215,18 @@ public:
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
           // Special case: check for assigning null to a pointer.
           //  This is a common form of defensive programming.
+          const Expr *RHS = LookThroughTransitiveAssignments(B->getRHS());
+          
           QualType T = VD->getType();
           if (T->isPointerType() || T->isObjCObjectPointerType()) {
-            if (B->getRHS()->isNullPointerConstant(Ctx,
-                                              Expr::NPC_ValueDependentIsNull))
+            if (RHS->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNull))
               return;
           }
 
-          Expr *RHS = B->getRHS()->IgnoreParenCasts();
+          RHS = RHS->IgnoreParenCasts();
           // Special case: self-assignments.  These are often used to shut up
           //  "unused variable" compiler warnings.
-          if (DeclRefExpr *RhsDR = dyn_cast<DeclRefExpr>(RHS))
+          if (const DeclRefExpr *RhsDR = dyn_cast<DeclRefExpr>(RHS))
             if (VD == dyn_cast<VarDecl>(RhsDR->getDecl()))
               return;
 
@@ -252,9 +268,14 @@ public:
           if (V->getType()->getAs<ReferenceType>())
             return;
             
-          if (Expr *E = V->getInit()) {
-            while (ExprWithCleanups *exprClean = dyn_cast<ExprWithCleanups>(E))
+          if (const Expr *E = V->getInit()) {
+            while (const ExprWithCleanups *exprClean =
+                    dyn_cast<ExprWithCleanups>(E))
               E = exprClean->getSubExpr();
+            
+            // Look through transitive assignments, e.g.:
+            // int x = y = 0;
+            E = LookThroughTransitiveAssignments(E);
             
             // Don't warn on C++ objects (yet) until we can show that their
             // constructors/destructors don't have side effects.
@@ -275,8 +296,9 @@ public:
               if (E->isEvaluatable(Ctx))
                 return;
 
-              if (DeclRefExpr *DRE=dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
-                if (VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+              if (const DeclRefExpr *DRE =
+                  dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
+                if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
                   // Special case: check for initialization from constant
                   //  variables.
                   //

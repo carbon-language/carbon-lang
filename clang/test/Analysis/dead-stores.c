@@ -526,3 +526,25 @@ void rdar8405222() {
     rdar8405222_aux(i);
 }
 
+// Look through chains of assignements, e.g.: int x = y = 0, when employing
+// silencing heuristics.
+int radar11185138_foo() {
+  int x, y;
+  x = y = 0; // expected-warning {{never read}}
+  return y;
+}
+
+int rdar11185138_bar() {
+  int y;
+  int x = y = 0; // no-warning
+  x = 2;
+  y = 2;
+  return x + y;
+}
+
+int *radar11185138_baz() {
+  int *x, *y;
+  x = y = 0; // no-warning
+  return y;
+}
+
