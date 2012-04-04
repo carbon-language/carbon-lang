@@ -3550,10 +3550,10 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     return true;
   }
 
-  NamedDecl *Entity = 0;
+  NamedDecl *Entity = DRE->getDecl();
 
   // Cannot refer to non-static data members
-  if (FieldDecl *Field = dyn_cast<FieldDecl>(DRE->getDecl())) {
+  if (FieldDecl *Field = dyn_cast<FieldDecl>(Entity)) {
     S.Diag(Arg->getLocStart(), diag::err_template_arg_field)
       << Field << Arg->getSourceRange();
     S.Diag(Param->getLocation(), diag::note_template_param_here);
@@ -3561,28 +3561,44 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   }
 
   // Cannot refer to non-static member functions
-  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(DRE->getDecl()))
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Entity)) {
     if (!Method->isStatic()) {
       S.Diag(Arg->getLocStart(), diag::err_template_arg_method)
         << Method << Arg->getSourceRange();
       S.Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
     }
+  }
 
-  // Functions must have external linkage.
-  if (FunctionDecl *Func = dyn_cast<FunctionDecl>(DRE->getDecl())) {
-    if (!isExternalLinkage(Func->getLinkage())) {
-      S.Diag(Arg->getLocStart(),
-             diag::err_template_arg_function_not_extern)
-        << Func << Arg->getSourceRange();
-      S.Diag(Func->getLocation(), diag::note_template_arg_internal_object)
-        << true;
-      return true;
-    }
+  FunctionDecl *Func = dyn_cast<FunctionDecl>(Entity);
+  VarDecl *Var = dyn_cast<VarDecl>(Entity);
 
-    // Okay: we've named a function with external linkage.
-    Entity = Func;
+  // A non-type template argument must refer to an object or function.
+  if (!Func && !Var) {
+    // We found something, but we don't know specifically what it is.
+    S.Diag(Arg->getLocStart(), diag::err_template_arg_not_object_or_func)
+      << Arg->getSourceRange();
+    S.Diag(DRE->getDecl()->getLocation(), diag::note_template_arg_refers_here);
+    return true;
+  }
 
+  // Address / reference template args must have external linkage in C++98.
+  if (Entity->getLinkage() == InternalLinkage) {
+    S.Diag(Arg->getLocStart(), S.getLangOpts().CPlusPlus0x ?
+             diag::warn_cxx98_compat_template_arg_object_internal :
+             diag::ext_template_arg_object_internal)
+      << !Func << Entity << Arg->getSourceRange();
+    S.Diag(Entity->getLocation(), diag::note_template_arg_internal_object)
+      << !Func;
+  } else if (Entity->getLinkage() == NoLinkage) {
+    S.Diag(Arg->getLocStart(), diag::err_template_arg_object_no_linkage)
+      << !Func << Entity << Arg->getSourceRange();
+    S.Diag(Entity->getLocation(), diag::note_template_arg_internal_object)
+      << !Func;
+    return true;
+  }
+
+  if (Func) {
     // If the template parameter has pointer type, the function decays.
     if (ParamType->isPointerType() && !AddressTaken)
       ArgType = S.Context.getPointerType(Func->getType());
@@ -3605,16 +3621,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
 
       ArgType = Func->getType();
     }
-  } else if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
-    if (!isExternalLinkage(Var->getLinkage())) {
-      S.Diag(Arg->getLocStart(),
-             diag::err_template_arg_object_not_extern)
-        << Var << Arg->getSourceRange();
-      S.Diag(Var->getLocation(), diag::note_template_arg_internal_object)
-        << true;
-      return true;
-    }
-
+  } else {
     // A value of reference type is not an object.
     if (Var->getType()->isReferenceType()) {
       S.Diag(Arg->getLocStart(),
@@ -3624,8 +3631,14 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
       return true;
     }
 
-    // Okay: we've named an object with external linkage
-    Entity = Var;
+    // A template argument must have static storage duration.
+    // FIXME: Ensure this works for thread_local as well as __thread.
+    if (Var->isThreadSpecified()) {
+      S.Diag(Arg->getLocStart(), diag::err_template_arg_thread_local)
+        << Arg->getSourceRange();
+      S.Diag(Var->getLocation(), diag::note_template_arg_refers_here);
+      return true;
+    }
 
     // If the template parameter has pointer type, we must have taken
     // the address of this object.
@@ -3672,13 +3685,6 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
         S.Diag(Param->getLocation(), diag::note_template_param_here);
       }
     }
-  } else {
-    // We found something else, but we don't know specifically what it is.
-    S.Diag(Arg->getLocStart(),
-           diag::err_template_arg_not_object_or_func)
-      << Arg->getSourceRange();
-    S.Diag(DRE->getDecl()->getLocation(), diag::note_template_arg_refers_here);
-    return true;
   }
 
   bool ObjCLifetimeConversion;

@@ -153,3 +153,20 @@ namespace test11 {
   template void f<char>(A<char,cmp> &);
   // CHECK: @_ZN6test111fIcEEvRNS_1AIT_L_ZNS_3cmpEccEEE(
 }
+
+namespace test12 {
+  // Make sure we can mangle non-type template args with internal linkage.
+  static int f();
+  const int n = 10;
+  template<typename T, T v> void test() {}
+  void use() {
+    // CHECK: define internal void @_ZN6test124testIFivEXadL_ZNS_L1fEvEEEEvv(
+    test<int(), &f>();
+    // CHECK: define internal void @_ZN6test124testIRFivEXadL_ZNS_L1fEvEEEEvv(
+    test<int(&)(), f>();
+    // CHECK: define internal void @_ZN6test124testIPKiXadL_ZNS_L1nEEEEEvv(
+    test<const int*, &n>();
+    // CHECK: define internal void @_ZN6test124testIRKiXadL_ZNS_L1nEEEEEvv(
+    test<const int&, n>();
+  }
+}

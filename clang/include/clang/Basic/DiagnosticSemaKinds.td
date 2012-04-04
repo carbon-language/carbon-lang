@@ -2361,11 +2361,18 @@ def err_template_arg_field : Error<
   "non-type template argument refers to non-static data member %0">;
 def err_template_arg_method : Error<
   "non-type template argument refers to non-static member function %0">;
-def err_template_arg_function_not_extern : Error<
-  "non-type template argument refers to function %0 with internal linkage">;
-def err_template_arg_object_not_extern : Error<
-  "non-type template argument refers to object %0 that does not have external "
-  "linkage">;
+def err_template_arg_object_no_linkage : Error<
+  "non-type template argument refers to %select{function|object}0 %1 that "
+  "does not have linkage">;
+def warn_cxx98_compat_template_arg_object_internal : Warning<
+  "non-type template argument referring to %select{function|object}0 %1 with "
+  "internal linkage is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+def ext_template_arg_object_internal : ExtWarn<
+  "non-type template argument referring to %select{function|object}0 %1 with "
+  "internal linkage is a C++11 extension">, InGroup<CXX11>;
+def err_template_arg_thread_local : Error<
+  "non-type template argument refers to thread-local object">;
 def note_template_arg_internal_object : Note<
   "non-type template argument refers to %select{function|object}0 here">;
 def note_template_arg_refers_here : Note<

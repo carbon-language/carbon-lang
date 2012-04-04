@@ -291,3 +291,11 @@ namespace LiteralUCNs {
   const char *s1 = "foo\u0031"; // expected-warning {{specifying character '1' with a universal character name is incompatible with C++98}}
   const wchar_t *s2 = L"bar\u0085"; // expected-warning {{universal character name referring to a control character is incompatible with C++98}}
 }
+
+namespace NonTypeTemplateArgs {
+  template<typename T, T v> struct S {};
+  const int k = 5; // expected-note {{here}}
+  static void f() {} // expected-note {{here}}
+  S<const int&, k> s1; // expected-warning {{non-type template argument referring to object 'k' with internal linkage is incompatible with C++98}}
+  S<void(&)(), f> s2; // expected-warning {{non-type template argument referring to function 'f' with internal linkage is incompatible with C++98}}
+}
