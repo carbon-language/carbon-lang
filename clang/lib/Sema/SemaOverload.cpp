@@ -4433,6 +4433,8 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     else if (NumInits == 0) {
       Result.setStandard();
       Result.Standard.setAsIdentityConversion();
+      Result.Standard.setFromType(ToType);
+      Result.Standard.setAllToTypes(ToType);
     }
     Result.setListInitializationSequence();
     return Result;
