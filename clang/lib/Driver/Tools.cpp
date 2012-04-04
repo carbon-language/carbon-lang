@@ -1079,7 +1079,7 @@ shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
 /// Objective-C exceptions.
 static void addExceptionArgs(const ArgList &Args, types::ID InputType,
                              const llvm::Triple &Triple,
-                             bool KernelOrKext, bool IsRewriter,
+                             bool KernelOrKext,
                              unsigned objcABIVersion,
                              ArgStringList &CmdArgs) {
   if (KernelOrKext) {
@@ -2364,7 +2364,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add exception args.
   addExceptionArgs(Args, InputType, getToolChain().getTriple(),
-                   KernelOrKext, IsRewriter, objcABIVersion, CmdArgs);
+                   KernelOrKext, objcABIVersion, CmdArgs);
 
   if (getToolChain().UseSjLjExceptions())
     CmdArgs.push_back("-fsjlj-exceptions");
