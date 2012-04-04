@@ -235,7 +235,6 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSELECT(SDNode *N) {
   if (ScalarBool != VecBool) {
     EVT CondVT = Cond.getValueType();
     switch (ScalarBool) {
-      default: llvm_unreachable("Unknown boolean content enum");
       case TargetLowering::UndefinedBooleanContent:
         break;
       case TargetLowering::ZeroOrOneBooleanContent:
