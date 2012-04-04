@@ -669,8 +669,7 @@ static void EmitGetMapOperandNumber(raw_ostream &O) {
   O << "         I = OpMap.begin(), E = OpMap.end(); I != E; ++I)\n";
   O << "    if (I->first == Name)\n";
   O << "      return I->second;\n";
-  O << "  assert(false && \"Operand not in map!\");\n";
-  O << "  return 0;\n";
+  O << "  llvm_unreachable(\"Operand not in map!\");\n";
   O << "}\n\n";
 }
 
