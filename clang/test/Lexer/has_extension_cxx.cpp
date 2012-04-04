@@ -39,3 +39,11 @@ int has_reference_qualified_functions();
 #if __has_extension(cxx_rvalue_references)
 int has_rvalue_references();
 #endif
+
+#if __has_extension(cxx_local_type_template_args)
+int has_local_type_template_args();
+#else
+int no_local_type_template_args();
+#endif
+
+// CHECK: has_local_type_template_args

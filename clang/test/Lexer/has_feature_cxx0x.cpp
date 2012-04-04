@@ -253,3 +253,12 @@ int no_user_literals();
 
 // CHECK-0X: has_user_literals
 // CHECK-NO-0X: no_user_literals
+
+#if __has_feature(cxx_local_type_template_args)
+int has_local_type_template_args();
+#else
+int no_local_type_template_args();
+#endif
+
+// CHECK-0X: has_local_type_template_args
+// CHECK-NO-0X: no_local_type_template_args
