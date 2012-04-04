@@ -17,7 +17,7 @@
 #ifdef _LIBCPP_VERSION
 #include <memory>
 #define STD_SHARED_PTR(T) std::shared_ptr<T>
-#define STD_WEAK_PTR(T) std::shared_ptr<T>
+#define STD_WEAK_PTR(T) std::weak_ptr<T>
 #define STD_ENABLE_SHARED_FROM_THIS(T) std::enable_shared_from_this<T>
 #define STD_STATIC_POINTER_CAST(T,V) std::static_pointer_cast<T>(V)
 #else
