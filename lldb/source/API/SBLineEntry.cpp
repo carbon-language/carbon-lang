@@ -75,8 +75,9 @@ SBLineEntry::GetStartAddress () const
     if (log)
     {
         StreamString sstr;
-        if (sb_address.get())
-            sb_address->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
+        const Address *addr = sb_address.get();
+        if (addr)
+            addr->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
         log->Printf ("SBLineEntry(%p)::GetStartAddress () => SBAddress (%p): %s", 
                      m_opaque_ap.get(), sb_address.get(), sstr.GetData());
     }
@@ -97,8 +98,9 @@ SBLineEntry::GetEndAddress () const
     if (log)
     {
         StreamString sstr;
-        if (sb_address.get())
-            sb_address->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
+        const Address *addr = sb_address.get();
+        if (addr)
+            addr->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
         log->Printf ("SBLineEntry(%p)::GetEndAddress () => SBAddress (%p): %s", 
                      m_opaque_ap.get(), sb_address.get(), sstr.GetData());
     }

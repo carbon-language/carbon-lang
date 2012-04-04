@@ -139,7 +139,7 @@ protected:
 
 private:
 
-    std::auto_ptr<lldb_private::AddressImpl> m_opaque_ap;
+    std::auto_ptr<lldb_private::Address> m_opaque_ap;
 };
 
 
