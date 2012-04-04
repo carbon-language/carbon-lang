@@ -658,13 +658,19 @@ lldb::ThreadSP
 ExecutionContextRef::GetThreadSP () const
 {
     lldb::ThreadSP thread_sp (m_thread_wp.lock());
-    if (!thread_sp && m_tid != LLDB_INVALID_THREAD_ID)
+    if (m_tid != LLDB_INVALID_THREAD_ID)
     {
-        lldb::ProcessSP process_sp(GetProcessSP());
-        if (process_sp)
+        // We check if the thread has been destroyed in cases where clients
+        // might still have shared pointer to a thread, but the thread is
+        // not valid anymore (not part of the process)
+        if (!thread_sp || !thread_sp->IsValid())
         {
-            thread_sp = process_sp->GetThreadList().FindThreadByID(m_tid);
-            m_thread_wp = thread_sp;
+            lldb::ProcessSP process_sp(GetProcessSP());
+            if (process_sp)
+            {
+                thread_sp = process_sp->GetThreadList().FindThreadByID(m_tid);
+                m_thread_wp = thread_sp;
+            }
         }
     }
     return thread_sp;

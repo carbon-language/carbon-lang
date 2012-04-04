@@ -758,6 +758,15 @@ public:
                          uint32_t source_lines_before,
                          uint32_t source_lines_after);
 
+    // We need a way to verify that even though we have a thread in a shared
+    // pointer that the object itself is still valid. Currently this won't be
+    // the case if DestroyThread() was called. DestroyThread is called when
+    // a thread has been removed from the Process' thread list.
+    bool
+    IsValid () const
+    {
+        return m_destroy_called;
+    }
 protected:
 
     friend class ThreadPlan;
