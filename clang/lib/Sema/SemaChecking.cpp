@@ -1176,7 +1176,6 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
              "promotion from float to double is the only expected cast here");
       Cast->setSubExpr(0);
       TheCall->setArg(NumArgs-1, CastArg);
-      OrigArg = CastArg;
     }
   }
   

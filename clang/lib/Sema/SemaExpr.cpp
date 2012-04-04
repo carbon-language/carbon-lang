@@ -3610,8 +3610,6 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
           << FixItHint::CreateRemoval(
                                     SourceRange(Args[0]->getLocStart(),
                                                 Args[NumArgs-1]->getLocEnd()));
-
-        NumArgs = 0;
       }
 
       return Owned(new (Context) CallExpr(Context, Fn, 0, 0, Context.VoidTy,

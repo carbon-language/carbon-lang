@@ -5776,7 +5776,6 @@ static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
     S.Diag(Corrected.getCorrectionDecl()->getLocation(),
          diag::note_namespace_defined_here) << CorrectedQuotedStr;
 
-    Ident = Corrected.getCorrectionAsIdentifierInfo();
     R.addDecl(Corrected.getCorrectionDecl());
     return true;
   }

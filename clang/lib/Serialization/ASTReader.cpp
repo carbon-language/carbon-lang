@@ -3350,7 +3350,6 @@ bool ASTReader::ParseLanguageOptions(
     unsigned Length = Record[Idx++];
     LangOpts.CurrentModule.assign(Record.begin() + Idx, 
                                   Record.begin() + Idx + Length);
-    Idx += Length;
     return Listener->ReadLanguageOptions(LangOpts);
   }
 
