@@ -504,6 +504,23 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   }
 }
 
+// Handle -mfpmath=.
+static void addFPMathArgs(const Driver &D, const Arg *A, const ArgList &Args,
+                          ArgStringList &CmdArgs) {
+  StringRef FPMath = A->getValue(Args);
+  
+  // Set the target features based on the FPMath.
+  if (FPMath == "neon") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+neonfp");
+  } else if (FPMath == "vfp" || FPMath == "vfp2" || FPMath == "vfp3" ||
+             FPMath == "vfp4") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-neonfp");
+  } else
+    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+}
+
 void Clang::AddARMTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs,
                              bool KernelOrKext) const {
@@ -685,6 +702,10 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     } else
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
+
+  // Honor -mfpmath=.
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
+    addFPMathArgs(D, A, Args, CmdArgs);
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
@@ -2688,6 +2709,10 @@ void ClangAs::AddARMTargetArgs(const ArgList &Args,
     } else
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
+
+  // Honor -mfpmath=.
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
+    addFPMathArgs(D, A, Args, CmdArgs);
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,

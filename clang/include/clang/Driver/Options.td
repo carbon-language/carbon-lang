@@ -606,6 +606,7 @@ def mcpu_EQ : Joined<"-mcpu=">, Group<m_Group>;
 def mdynamic_no_pic : Joined<"-mdynamic-no-pic">, Group<m_Group>, Flags<[NoArgumentUnused]>;
 def mfix_and_continue : Flag<"-mfix-and-continue">, Group<clang_ignored_m_Group>;
 def mfloat_abi_EQ : Joined<"-mfloat-abi=">, Group<m_Group>;
+def mfpmath_EQ : Joined<"-mfpmath=">, Group<m_Group>;
 def mfpu_EQ : Joined<"-mfpu=">, Group<m_Group>;
 def mglobal_merge : Flag<"-mglobal-merge">, Group<m_Group>;
 def mhard_float : Flag<"-mhard-float">, Group<m_Group>;
