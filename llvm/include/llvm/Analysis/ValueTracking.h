@@ -36,11 +36,9 @@ namespace llvm {
   /// where V is a vector, the mask, known zero, and known one values are the
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
-  void ComputeMaskedBits(Value *V, const APInt &Mask, APInt &KnownZero,
-                         APInt &KnownOne, const TargetData *TD = 0,
-                         unsigned Depth = 0);
-  void computeMaskedBitsLoad(const MDNode &Ranges, const APInt &Mask,
-                             APInt &KnownZero);
+  void ComputeMaskedBits(Value *V,  APInt &KnownZero, APInt &KnownOne,
+                         const TargetData *TD = 0, unsigned Depth = 0);
+  void computeMaskedBitsLoad(const MDNode &Ranges, APInt &KnownZero);
 
   /// ComputeSignBit - Determine whether the sign bit is known to be zero or
   /// one.  Convenience wrapper around ComputeMaskedBits.

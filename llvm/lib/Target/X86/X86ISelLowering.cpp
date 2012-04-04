@@ -8099,8 +8099,8 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
         unsigned BitWidth = Op0.getValueSizeInBits();
         unsigned AndBitWidth = And.getValueSizeInBits();
         if (BitWidth > AndBitWidth) {
-          APInt Mask = APInt::getAllOnesValue(BitWidth), Zeros, Ones;
-          DAG.ComputeMaskedBits(Op0, Mask, Zeros, Ones);
+          APInt Zeros, Ones;
+          DAG.ComputeMaskedBits(Op0, Zeros, Ones);
           if (Zeros.countLeadingOnes() < BitWidth - AndBitWidth)
             return SDValue();
         }
@@ -12620,11 +12620,11 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 
 void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
-                                                       const APInt &Mask,
                                                        APInt &KnownZero,
                                                        APInt &KnownOne,
                                                        const SelectionDAG &DAG,
                                                        unsigned Depth) const {
+  unsigned BitWidth = KnownZero.getBitWidth();
   unsigned Opc = Op.getOpcode();
   assert((Opc >= ISD::BUILTIN_OP_END ||
           Opc == ISD::INTRINSIC_WO_CHAIN ||
@@ -12633,7 +12633,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
          "Should use MaskedValueIsZero if you don't know whether Op"
          " is a target node!");
 
-  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);   // Don't know anything.
+  KnownZero = KnownOne = APInt(BitWidth, 0);   // Don't know anything.
   switch (Opc) {
   default: break;
   case X86ISD::ADD:
@@ -12652,8 +12652,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
       break;
     // Fallthrough
   case X86ISD::SETCC:
-    KnownZero |= APInt::getHighBitsSet(Mask.getBitWidth(),
-                                       Mask.getBitWidth() - 1);
+    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     break;
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IntId = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
@@ -12678,8 +12677,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
         case Intrinsic::x86_sse2_pmovmskb_128:  NumLoBits = 16; break;
         case Intrinsic::x86_avx2_pmovmskb:      NumLoBits = 32; break;
       }
-      KnownZero = APInt::getHighBitsSet(Mask.getBitWidth(),
-                                        Mask.getBitWidth() - NumLoBits);
+      KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - NumLoBits);
       break;
     }
     }

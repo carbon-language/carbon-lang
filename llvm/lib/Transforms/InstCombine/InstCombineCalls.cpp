@@ -361,8 +361,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     uint32_t BitWidth = IT->getBitWidth();
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
-    ComputeMaskedBits(II->getArgOperand(0), APInt::getAllOnesValue(BitWidth),
-                      KnownZero, KnownOne);
+    ComputeMaskedBits(II->getArgOperand(0), KnownZero, KnownOne);
     unsigned TrailingZeros = KnownOne.countTrailingZeros();
     APInt Mask(APInt::getLowBitsSet(BitWidth, TrailingZeros));
     if ((Mask & KnownZero) == Mask)
@@ -380,8 +379,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     uint32_t BitWidth = IT->getBitWidth();
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
-    ComputeMaskedBits(II->getArgOperand(0), APInt::getAllOnesValue(BitWidth),
-                      KnownZero, KnownOne);
+    ComputeMaskedBits(II->getArgOperand(0), KnownZero, KnownOne);
     unsigned LeadingZeros = KnownOne.countLeadingZeros();
     APInt Mask(APInt::getHighBitsSet(BitWidth, LeadingZeros));
     if ((Mask & KnownZero) == Mask)
@@ -394,17 +392,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
     IntegerType *IT = cast<IntegerType>(II->getArgOperand(0)->getType());
     uint32_t BitWidth = IT->getBitWidth();
-    APInt Mask = APInt::getSignBit(BitWidth);
     APInt LHSKnownZero(BitWidth, 0);
     APInt LHSKnownOne(BitWidth, 0);
-    ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
+    ComputeMaskedBits(LHS, LHSKnownZero, LHSKnownOne);
     bool LHSKnownNegative = LHSKnownOne[BitWidth - 1];
     bool LHSKnownPositive = LHSKnownZero[BitWidth - 1];
 
     if (LHSKnownNegative || LHSKnownPositive) {
       APInt RHSKnownZero(BitWidth, 0);
       APInt RHSKnownOne(BitWidth, 0);
-      ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
+      ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
       bool RHSKnownNegative = RHSKnownOne[BitWidth - 1];
       bool RHSKnownPositive = RHSKnownZero[BitWidth - 1];
       if (LHSKnownNegative && RHSKnownNegative) {
@@ -488,14 +485,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::umul_with_overflow: {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
     unsigned BitWidth = cast<IntegerType>(LHS->getType())->getBitWidth();
-    APInt Mask = APInt::getAllOnesValue(BitWidth);
 
     APInt LHSKnownZero(BitWidth, 0);
     APInt LHSKnownOne(BitWidth, 0);
-    ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
+    ComputeMaskedBits(LHS, LHSKnownZero, LHSKnownOne);
     APInt RHSKnownZero(BitWidth, 0);
     APInt RHSKnownOne(BitWidth, 0);
-    ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
+    ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
 
     // Get the largest possible values for each operand.
     APInt LHSMax = ~LHSKnownZero;

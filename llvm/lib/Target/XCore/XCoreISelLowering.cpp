@@ -1363,8 +1363,8 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       APInt KnownZero, KnownOne;
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
-      DAG.ComputeMaskedBits(N2, Mask, KnownZero, KnownOne);
-      if (KnownZero == Mask) {
+      DAG.ComputeMaskedBits(N2, KnownZero, KnownOne);
+      if ((KnownZero & Mask) == Mask) {
         SDValue Carry = DAG.getConstant(0, VT);
         SDValue Result = DAG.getNode(ISD::ADD, dl, VT, N0, N2);
         SDValue Ops [] = { Carry, Result };
@@ -1386,8 +1386,8 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       APInt KnownZero, KnownOne;
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
-      DAG.ComputeMaskedBits(N2, Mask, KnownZero, KnownOne);
-      if (KnownZero == Mask) {
+      DAG.ComputeMaskedBits(N2, KnownZero, KnownOne);
+      if ((KnownZero & Mask) == Mask) {
         SDValue Borrow = N2;
         SDValue Result = DAG.getNode(ISD::SUB, dl, VT,
                                      DAG.getConstant(0, VT), N2);
@@ -1402,8 +1402,8 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       APInt KnownZero, KnownOne;
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
-      DAG.ComputeMaskedBits(N2, Mask, KnownZero, KnownOne);
-      if (KnownZero == Mask) {
+      DAG.ComputeMaskedBits(N2, KnownZero, KnownOne);
+      if ((KnownZero & Mask) == Mask) {
         SDValue Borrow = DAG.getConstant(0, VT);
         SDValue Result = DAG.getNode(ISD::SUB, dl, VT, N0, N2);
         SDValue Ops [] = { Borrow, Result };
@@ -1521,21 +1521,19 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
 }
 
 void XCoreTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
-                                                         const APInt &Mask,
                                                          APInt &KnownZero,
                                                          APInt &KnownOne,
                                                          const SelectionDAG &DAG,
                                                          unsigned Depth) const {
-  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
+  KnownZero = KnownOne = APInt(KnownZero.getBitWidth(), 0);
   switch (Op.getOpcode()) {
   default: break;
   case XCoreISD::LADD:
   case XCoreISD::LSUB:
     if (Op.getResNo() == 0) {
       // Top bits of carry / borrow are clear.
-      KnownZero = APInt::getHighBitsSet(Mask.getBitWidth(),
-                                        Mask.getBitWidth() - 1);
-      KnownZero &= Mask;
+      KnownZero = APInt::getHighBitsSet(KnownZero.getBitWidth(),
+                                        KnownZero.getBitWidth() - 1);
     }
     break;
   }

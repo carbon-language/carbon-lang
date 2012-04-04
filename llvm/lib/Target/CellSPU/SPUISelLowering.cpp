@@ -3158,7 +3158,6 @@ SPUTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 //! Compute used/known bits for a SPU operand
 void
 SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
-                                                  const APInt &Mask,
                                                   APInt &KnownZero,
                                                   APInt &KnownOne,
                                                   const SelectionDAG &DAG,

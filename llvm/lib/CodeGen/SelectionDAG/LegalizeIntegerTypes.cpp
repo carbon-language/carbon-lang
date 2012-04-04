@@ -1362,7 +1362,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   APInt HighBitMask = APInt::getHighBitsSet(ShBits, ShBits - Log2_32(NVTBits));
   APInt KnownZero, KnownOne;
-  DAG.ComputeMaskedBits(N->getOperand(1), HighBitMask, KnownZero, KnownOne);
+  DAG.ComputeMaskedBits(N->getOperand(1), KnownZero, KnownOne);
 
   // If we don't know anything about the high bits, exit.
   if (((KnownZero|KnownOne) & HighBitMask) == 0)

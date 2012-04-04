@@ -1452,16 +1452,14 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   if (VT.isInteger() && !VT.isVector()) {
     APInt LHSZero, LHSOne;
     APInt RHSZero, RHSOne;
-    APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
-    DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
+    DAG.ComputeMaskedBits(N0, LHSZero, LHSOne);
 
     if (LHSZero.getBoolValue()) {
-      DAG.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
+      DAG.ComputeMaskedBits(N1, RHSZero, RHSOne);
 
       // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
       // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
-      if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
-          (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
+      if ((RHSZero & ~LHSZero) == ~LHSZero || (LHSZero & ~RHSZero) == ~RHSZero)
         return DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N1);
     }
   }
@@ -1547,16 +1545,14 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
   APInt RHSZero, RHSOne;
-  APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
-  DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
+  DAG.ComputeMaskedBits(N0, LHSZero, LHSOne);
 
   if (LHSZero.getBoolValue()) {
-    DAG.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
+    DAG.ComputeMaskedBits(N1, RHSZero, RHSOne);
 
     // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
     // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
-    if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
-        (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
+    if ((RHSZero & ~LHSZero) == ~LHSZero || (LHSZero & ~RHSZero) == ~RHSZero)
       return CombineTo(N, DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N1),
                        DAG.getNode(ISD::CARRY_FALSE,
                                    N->getDebugLoc(), MVT::Glue));
@@ -3835,8 +3831,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::CTLZ &&
       N1C->getAPIntValue() == Log2_32(VT.getSizeInBits())) {
     APInt KnownZero, KnownOne;
-    APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
-    DAG.ComputeMaskedBits(N0.getOperand(0), Mask, KnownZero, KnownOne);
+    DAG.ComputeMaskedBits(N0.getOperand(0), KnownZero, KnownOne);
 
     // If any of the input bits are KnownOne, then the input couldn't be all
     // zeros, thus the result of the srl will always be zero.
@@ -3844,7 +3839,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
 
     // If all of the bits input the to ctlz node are known to be zero, then
     // the result of the ctlz is "32" and the result of the shift is one.
-    APInt UnknownBits = ~KnownZero & Mask;
+    APInt UnknownBits = ~KnownZero;
     if (UnknownBits == 0) return DAG.getConstant(1, VT);
 
     // Otherwise, check to see if there is exactly one bit input to the ctlz.
@@ -4439,8 +4434,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                           std::min(Op.getValueSizeInBits(),
                                    VT.getSizeInBits()));
     APInt KnownZero, KnownOne;
-    DAG.ComputeMaskedBits(Op, TruncatedBits, KnownZero, KnownOne);
-    if (TruncatedBits == KnownZero) {
+    DAG.ComputeMaskedBits(Op, KnownZero, KnownOne);
+    if (TruncatedBits == (KnownZero & TruncatedBits)) {
       if (VT.bitsGT(Op.getValueType()))
         return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, Op);
       if (VT.bitsLT(Op.getValueType()))

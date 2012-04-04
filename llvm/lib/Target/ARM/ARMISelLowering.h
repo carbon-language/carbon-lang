@@ -315,7 +315,6 @@ namespace llvm {
                                             SelectionDAG &DAG) const;
 
     virtual void computeMaskedBitsForTargetNode(const SDValue Op,
-                                                const APInt &Mask,
                                                 APInt &KnownZero,
                                                 APInt &KnownOne,
                                                 const SelectionDAG &DAG,

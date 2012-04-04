@@ -377,8 +377,8 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
 
   APInt LKZ, LKO, RKZ, RKO;
-  CurDAG->ComputeMaskedBits(Op0, APInt::getAllOnesValue(32), LKZ, LKO);
-  CurDAG->ComputeMaskedBits(Op1, APInt::getAllOnesValue(32), RKZ, RKO);
+  CurDAG->ComputeMaskedBits(Op0, LKZ, LKO);
+  CurDAG->ComputeMaskedBits(Op1, RKZ, RKO);
 
   unsigned TargetMask = LKZ.getZExtValue();
   unsigned InsertMask = RKZ.getZExtValue();

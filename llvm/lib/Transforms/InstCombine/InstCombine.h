@@ -291,9 +291,9 @@ public:
     return 0;  // Don't do anything with FI
   }
       
-  void ComputeMaskedBits(Value *V, const APInt &Mask, APInt &KnownZero,
+  void ComputeMaskedBits(Value *V, APInt &KnownZero,
                          APInt &KnownOne, unsigned Depth = 0) const {
-    return llvm::ComputeMaskedBits(V, Mask, KnownZero, KnownOne, TD, Depth);
+    return llvm::ComputeMaskedBits(V, KnownZero, KnownOne, TD, Depth);
   }
   
   bool MaskedValueIsZero(Value *V, const APInt &Mask, 

@@ -416,9 +416,8 @@ void Lint::visitMemoryReference(Instruction &I,
 
     if (Align != 0) {
       unsigned BitWidth = TD->getTypeSizeInBits(Ptr->getType());
-      APInt Mask = APInt::getAllOnesValue(BitWidth),
-                   KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-      ComputeMaskedBits(Ptr, Mask, KnownZero, KnownOne, TD);
+      APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+      ComputeMaskedBits(Ptr, KnownZero, KnownOne, TD);
       Assert1(!(KnownOne & APInt::getLowBitsSet(BitWidth, Log2_32(Align))),
               "Undefined behavior: Memory reference address is misaligned", &I);
     }
@@ -476,9 +475,8 @@ static bool isZero(Value *V, TargetData *TD) {
   if (isa<UndefValue>(V)) return true;
 
   unsigned BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-  APInt Mask = APInt::getAllOnesValue(BitWidth),
-               KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  ComputeMaskedBits(V, Mask, KnownZero, KnownOne, TD);
+  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+  ComputeMaskedBits(V, KnownZero, KnownOne, TD);
   return KnownZero.isAllOnesValue();
 }
 

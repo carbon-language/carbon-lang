@@ -832,22 +832,19 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// be zero. Op is expected to be a target specific node. Used by DAG
 /// combiner.
 void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
-                                                         const APInt &Mask,
                                                          APInt &KnownZero,
                                                          APInt &KnownOne,
                                                          const SelectionDAG &DAG,
                                                          unsigned Depth) const {
   APInt KnownZero2, KnownOne2;
-  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);   // Don't know anything.
+  KnownZero = KnownOne = APInt(KnownZero.getBitWidth(), 0);
 
   switch (Op.getOpcode()) {
   default: break;
   case SPISD::SELECT_ICC:
   case SPISD::SELECT_FCC:
-    DAG.ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne,
-                          Depth+1);
-    DAG.ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero2, KnownOne2,
-                          Depth+1);
+    DAG.ComputeMaskedBits(Op.getOperand(1), KnownZero, KnownOne, Depth+1);
+    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
 

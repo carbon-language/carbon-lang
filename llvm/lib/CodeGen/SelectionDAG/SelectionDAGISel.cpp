@@ -508,7 +508,6 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
 
   Worklist.push_back(CurDAG->getRoot().getNode());
 
-  APInt Mask;
   APInt KnownZero;
   APInt KnownOne;
 
@@ -539,8 +538,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
       continue;
 
     unsigned NumSignBits = CurDAG->ComputeNumSignBits(Src);
-    Mask = APInt::getAllOnesValue(SrcVT.getSizeInBits());
-    CurDAG->ComputeMaskedBits(Src, Mask, KnownZero, KnownOne);
+    CurDAG->ComputeMaskedBits(Src, KnownZero, KnownOne);
     FuncInfo->AddLiveOutRegInfo(DestReg, NumSignBits, KnownZero, KnownOne);
   } while (!Worklist.empty());
 }
@@ -1444,7 +1442,7 @@ bool SelectionDAGISel::CheckOrMask(SDValue LHS, ConstantSDNode *RHS,
   APInt NeededMask = DesiredMask & ~ActualMask;
 
   APInt KnownZero, KnownOne;
-  CurDAG->ComputeMaskedBits(LHS, NeededMask, KnownZero, KnownOne);
+  CurDAG->ComputeMaskedBits(LHS, KnownZero, KnownOne);
 
   // If all the missing bits in the or are already known to be set, match!
   if ((NeededMask & KnownOne) == NeededMask)

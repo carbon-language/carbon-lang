@@ -860,14 +860,10 @@ bool PPCTargetLowering::SelectAddressRegReg(SDValue N, SDValue &Base,
     APInt LHSKnownZero, LHSKnownOne;
     APInt RHSKnownZero, RHSKnownOne;
     DAG.ComputeMaskedBits(N.getOperand(0),
-                          APInt::getAllOnesValue(N.getOperand(0)
-                            .getValueSizeInBits()),
                           LHSKnownZero, LHSKnownOne);
 
     if (LHSKnownZero.getBoolValue()) {
       DAG.ComputeMaskedBits(N.getOperand(1),
-                            APInt::getAllOnesValue(N.getOperand(1)
-                              .getValueSizeInBits()),
                             RHSKnownZero, RHSKnownOne);
       // If all of the bits are known zero on the LHS or RHS, the add won't
       // carry.
@@ -922,10 +918,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
       APInt LHSKnownZero, LHSKnownOne;
-      DAG.ComputeMaskedBits(N.getOperand(0),
-                            APInt::getAllOnesValue(N.getOperand(0)
-                                                   .getValueSizeInBits()),
-                            LHSKnownZero, LHSKnownOne);
+      DAG.ComputeMaskedBits(N.getOperand(0), LHSKnownZero, LHSKnownOne);
 
       if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
@@ -1038,10 +1031,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
       APInt LHSKnownZero, LHSKnownOne;
-      DAG.ComputeMaskedBits(N.getOperand(0),
-                            APInt::getAllOnesValue(N.getOperand(0)
-                                                   .getValueSizeInBits()),
-                            LHSKnownZero, LHSKnownOne);
+      DAG.ComputeMaskedBits(N.getOperand(0), LHSKnownZero, LHSKnownOne);
       if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
@@ -5517,12 +5507,11 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
 //===----------------------------------------------------------------------===//
 
 void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
-                                                       const APInt &Mask,
                                                        APInt &KnownZero,
                                                        APInt &KnownOne,
                                                        const SelectionDAG &DAG,
                                                        unsigned Depth) const {
-  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
+  KnownZero = KnownOne = APInt(KnownZero.getBitWidth(), 0);
   switch (Op.getOpcode()) {
   default: break;
   case PPCISD::LBRX: {

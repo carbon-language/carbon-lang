@@ -3261,9 +3261,8 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
     unsigned BitWidth = getTypeSizeInBits(U->getType());
-    APInt Mask = APInt::getAllOnesValue(BitWidth);
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones);
+    ComputeMaskedBits(U->getValue(), Zeros, Ones);
     return Zeros.countTrailingOnes();
   }
 
@@ -3401,9 +3400,8 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
-    APInt Mask = APInt::getAllOnesValue(BitWidth);
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones, TD);
+    ComputeMaskedBits(U->getValue(), Zeros, Ones, TD);
     if (Ones == ~Zeros + 1)
       return setUnsignedRange(U, ConservativeResult);
     return setUnsignedRange(U,
@@ -3660,9 +3658,8 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       // knew about to reconstruct a low-bits mask value.
       unsigned LZ = A.countLeadingZeros();
       unsigned BitWidth = A.getBitWidth();
-      APInt AllOnes = APInt::getAllOnesValue(BitWidth);
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-      ComputeMaskedBits(U->getOperand(0), AllOnes, KnownZero, KnownOne, TD);
+      ComputeMaskedBits(U->getOperand(0), KnownZero, KnownOne, TD);
 
       APInt EffectiveMask = APInt::getLowBitsSet(BitWidth, BitWidth - LZ);
 

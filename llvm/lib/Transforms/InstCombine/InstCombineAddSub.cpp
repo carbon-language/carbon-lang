@@ -141,10 +141,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       // a sub and fuse this add with it.
       if (LHS->hasOneUse() && (XorRHS->getValue()+1).isPowerOf2()) {
         IntegerType *IT = cast<IntegerType>(I.getType());
-        APInt Mask = APInt::getAllOnesValue(IT->getBitWidth());
         APInt LHSKnownOne(IT->getBitWidth(), 0);
         APInt LHSKnownZero(IT->getBitWidth(), 0);
-        ComputeMaskedBits(XorLHS, Mask, LHSKnownZero, LHSKnownOne);
+        ComputeMaskedBits(XorLHS, LHSKnownZero, LHSKnownOne);
         if ((XorRHS->getValue() | LHSKnownZero).isAllOnesValue())
           return BinaryOperator::CreateSub(ConstantExpr::getAdd(XorRHS, CI),
                                            XorLHS);
@@ -202,14 +201,13 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
   // A+B --> A|B iff A and B have no bits set in common.
   if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
-    APInt Mask = APInt::getAllOnesValue(IT->getBitWidth());
     APInt LHSKnownOne(IT->getBitWidth(), 0);
     APInt LHSKnownZero(IT->getBitWidth(), 0);
-    ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
+    ComputeMaskedBits(LHS, LHSKnownZero, LHSKnownOne);
     if (LHSKnownZero != 0) {
       APInt RHSKnownOne(IT->getBitWidth(), 0);
       APInt RHSKnownZero(IT->getBitWidth(), 0);
-      ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
+      ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
       
       // No bits in common -> bitwise or.
       if ((LHSKnownZero|RHSKnownZero).isAllOnesValue())
