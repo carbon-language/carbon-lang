@@ -547,17 +547,23 @@ static void addFPUArgs(const Driver &D, const Arg *A, const ArgList &Args,
 
 // Handle -mfpmath=.
 static void addFPMathArgs(const Driver &D, const Arg *A, const ArgList &Args,
-                          ArgStringList &CmdArgs) {
+                          ArgStringList &CmdArgs, StringRef CPU) {
   StringRef FPMath = A->getValue(Args);
   
   // Set the target features based on the FPMath.
   if (FPMath == "neon") {
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("+neonfp");
+    
+    if (CPU != "cortex-a8" && CPU != "cortex-a9" && CPU != "cortex-a9-mp")    
+      D.Diag(diag::err_drv_invalid_feature) << "-mfpmath=neon" << CPU;
+    
   } else if (FPMath == "vfp" || FPMath == "vfp2" || FPMath == "vfp3" ||
              FPMath == "vfp4") {
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("-neonfp");
+
+    // FIXME: Add warnings when disabling a feature not present for a given CPU.    
   } else
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
@@ -710,7 +716,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
-    addFPMathArgs(D, A, Args, CmdArgs);
+    addFPMathArgs(D, A, Args, CmdArgs, getARMTargetCPU(Args, Triple));
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
@@ -2681,7 +2687,7 @@ void ClangAs::AddARMTargetArgs(const ArgList &Args,
 
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
-    addFPMathArgs(D, A, Args, CmdArgs);
+    addFPMathArgs(D, A, Args, CmdArgs, getARMTargetCPU(Args, Triple));
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,

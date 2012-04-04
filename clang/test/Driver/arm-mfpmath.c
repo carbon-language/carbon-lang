@@ -23,3 +23,7 @@
 // RUN: %clang -target arm-apple-darwin10 -mfpmath=foo %s -### -c -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ERROR %s
 // CHECK-ERROR: clang compiler does not support '-mfpmath=foo'
+
+// RUN: %clang -target arm-apple-darwin10 -mcpu=arm1136j-s -mfpmath=neon %s -### -c -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MCPU-ERROR %s
+// CHECK-MCPU-ERROR: error: invalid feature '-mfpmath=neon' for CPU 'arm1136j-s'
