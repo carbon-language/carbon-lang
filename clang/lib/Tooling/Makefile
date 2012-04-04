@@ -1,4 +1,4 @@
-##===- tools/Makefile --------------------------------------*- Makefile -*-===##
+##===- clang/lib/Tooling/Makefile ---------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,10 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ..
-DIRS := driver libclang c-index-test arcmt-test c-arcmt-test diagtool \
-        clang-check
-
-include $(CLANG_LEVEL)/../../Makefile.config
+CLANG_LEVEL := ../..
+LIBRARYNAME := clangTooling
 
 include $(CLANG_LEVEL)/Makefile
