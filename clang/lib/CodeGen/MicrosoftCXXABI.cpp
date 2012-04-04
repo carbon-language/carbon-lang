@@ -78,6 +78,13 @@ public:
   //     delete[] p;
   //   }
   // Whereas it prints "104" and "104" if you give A a destructor.
+  void ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
+                       const CXXDeleteExpr *expr,
+                       QualType ElementType, llvm::Value *&NumElements,
+                       llvm::Value *&AllocPtr, CharUnits &CookieSize) {
+    CGF.CGM.ErrorUnsupported(expr, "don't know how to handle array cookies "
+                                   "in the Microsoft C++ ABI");
+  }
 };
 
 }
