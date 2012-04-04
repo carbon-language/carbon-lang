@@ -125,6 +125,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -134,6 +135,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_init</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>6</integer>
@@ -201,6 +204,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -210,6 +214,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_assign</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>12</integer>
@@ -277,6 +283,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:      <key>message</key>
@@ -286,6 +293,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_assign_transitive</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>19</integer>
@@ -353,6 +362,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK:      <key>message</key>
@@ -415,6 +425,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -424,6 +435,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_cond</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>24</integer>
@@ -559,6 +572,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -568,6 +582,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_cond_transitive</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>31</integer>
@@ -669,6 +685,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -678,6 +695,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_field</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>38</integer>
@@ -779,6 +798,7 @@ void rdar8331641(int x) {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count</string>
 // CHECK:      <key>message</key>
@@ -928,6 +948,7 @@ void rdar8331641(int x) {
 // CHECK:       <key>col</key><integer>1</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Object leaked: object allocated and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK:      <key>message</key>
@@ -937,6 +958,8 @@ void rdar8331641(int x) {
 // CHECK:    <key>description</key><string>Potential leak of an object stored into &apos;value&apos;</string>
 // CHECK:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK:    <key>type</key><string>Leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>rdar8331641</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>58</integer>

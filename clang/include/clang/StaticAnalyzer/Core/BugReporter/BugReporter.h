@@ -69,6 +69,7 @@ protected:
   friend class BugReportEquivClass;
 
   BugType& BT;
+  const Decl *DeclWithIssue;
   std::string ShortDescription;
   std::string Description;
   PathDiagnosticLocation Location;
@@ -103,16 +104,16 @@ protected:
 
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
-    : BT(bt), Description(desc), ErrorNode(errornode),
+    : BT(bt), DeclWithIssue(0), Description(desc), ErrorNode(errornode),
       ConfigurationChangeToken(0) {}
 
   BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
-    : BT(bt), ShortDescription(shortDesc), Description(desc),
+    : BT(bt), DeclWithIssue(0), ShortDescription(shortDesc), Description(desc),
       ErrorNode(errornode), ConfigurationChangeToken(0) {}
 
   BugReport(BugType& bt, StringRef desc, PathDiagnosticLocation l)
-    : BT(bt), Description(desc), Location(l), ErrorNode(0),
+    : BT(bt), DeclWithIssue(0), Description(desc), Location(l), ErrorNode(0),
       ConfigurationChangeToken(0) {}
 
   /// \brief Create a BugReport with a custom uniqueing location.
@@ -124,7 +125,8 @@ public:
   /// the allocation site, rather then the location where the bug is reported.
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode,
             PathDiagnosticLocation LocationToUnique)
-    : BT(bt), Description(desc), UniqueingLocation(LocationToUnique),
+    : BT(bt), DeclWithIssue(0), Description(desc),
+      UniqueingLocation(LocationToUnique),
       ErrorNode(errornode), ConfigurationChangeToken(0) {}
 
   virtual ~BugReport();
@@ -150,6 +152,16 @@ public:
 
   unsigned getConfigurationChangeToken() const {
     return ConfigurationChangeToken;
+  }
+  
+  /// Return the canonical declaration, be it a method or class, where
+  /// this issue semantically occurred.
+  const Decl *getDeclWithIssue() const;
+  
+  /// Specifically set the Decl where an issue occurred.  This isn't necessary
+  /// for BugReports that cover a path as it will be automatically inferred.
+  void setDeclWithIssue(const Decl *declWithIssue) {
+    DeclWithIssue = declWithIssue;
   }
   
   /// \brief This allows for addition of meta data to the diagnostic.
@@ -345,34 +357,41 @@ public:
   /// reports.
   void EmitReport(BugReport *R);
 
-  void EmitBasicReport(StringRef BugName, StringRef BugStr,
+  void EmitBasicReport(const Decl *DeclWithIssue,
+                       StringRef BugName, StringRef BugStr,
                        PathDiagnosticLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
-  void EmitBasicReport(StringRef BugName, StringRef BugCategory,
+  void EmitBasicReport(const Decl *DeclWithIssue,
+                       StringRef BugName, StringRef BugCategory,
                        StringRef BugStr, PathDiagnosticLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
 
-  void EmitBasicReport(StringRef BugName, StringRef BugStr,
+  void EmitBasicReport(const Decl *DeclWithIssue,
+                       StringRef BugName, StringRef BugStr,
                        PathDiagnosticLocation Loc) {
-    EmitBasicReport(BugName, BugStr, Loc, 0, 0);
+    EmitBasicReport(DeclWithIssue, BugName, BugStr, Loc, 0, 0);
   }
 
-  void EmitBasicReport(StringRef BugName, StringRef BugCategory,
+  void EmitBasicReport(const Decl *DeclWithIssue,
+                       StringRef BugName, StringRef BugCategory,
                        StringRef BugStr, PathDiagnosticLocation Loc) {
-    EmitBasicReport(BugName, BugCategory, BugStr, Loc, 0, 0);
+    EmitBasicReport(DeclWithIssue, BugName, BugCategory, BugStr, Loc, 0, 0);
   }
 
-  void EmitBasicReport(StringRef BugName, StringRef BugStr,
-                       PathDiagnosticLocation Loc, SourceRange R) {
-    EmitBasicReport(BugName, BugStr, Loc, &R, 1);
+  void EmitBasicReport(const Decl *DeclWithIssue,
+                       StringRef BugName, StringRef BugStr,
+                       PathDiagnosticLocation Loc,
+                       SourceRange R) {
+    EmitBasicReport(DeclWithIssue, BugName, BugStr, Loc, &R, 1);
   }
 
-  void EmitBasicReport(StringRef BugName, StringRef Category,
+  void EmitBasicReport(const Decl *DeclWithIssue,
+                       StringRef BugName, StringRef Category,
                        StringRef BugStr, PathDiagnosticLocation Loc,
                        SourceRange R) {
-    EmitBasicReport(BugName, Category, BugStr, Loc, &R, 1);
+    EmitBasicReport(DeclWithIssue, BugName, Category, BugStr, Loc, &R, 1);
   }
 
   static bool classof(const BugReporter* R) { return true; }

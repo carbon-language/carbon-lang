@@ -1241,6 +1241,18 @@ BugReport::~BugReport() {
   }
 }
 
+const Decl *BugReport::getDeclWithIssue() const {
+  if (DeclWithIssue)
+    return DeclWithIssue;
+  
+  const ExplodedNode *N = getErrorNode();
+  if (!N)
+    return 0;
+  
+  const LocationContext *LC = N->getLocationContext();
+  return LC->getCurrentStackFrame()->getDecl();
+}
+
 void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
   hash.AddPointer(&BT);
   hash.AddString(Description);
@@ -1952,7 +1964,8 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   BugType& BT = exampleReport->getBugType();
 
   OwningPtr<PathDiagnostic>
-    D(new PathDiagnostic(exampleReport->getBugType().getName(),
+    D(new PathDiagnostic(exampleReport->getDeclWithIssue(),
+                         exampleReport->getBugType().getName(),
                          !PD || PD->useVerboseDescription()
                          ? exampleReport->getDescription() 
                          : exampleReport->getShortDescription(),
@@ -2005,21 +2018,24 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
     PathDiagnosticPiece *piece = new PathDiagnosticEventPiece(
                                  exampleReport->getLocation(getSourceManager()),
                                  exampleReport->getDescription());
+    for ( ; Beg != End; ++Beg)
+      piece->addRange(*Beg);
 
-    for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
     D->getActivePath().push_back(piece);
   }
 
   PD->HandlePathDiagnostic(D.take());
 }
 
-void BugReporter::EmitBasicReport(StringRef name, StringRef str,
+void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
+                                  StringRef name, StringRef str,
                                   PathDiagnosticLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
-  EmitBasicReport(name, "", str, Loc, RBeg, NumRanges);
+  EmitBasicReport(DeclWithIssue, name, "", str, Loc, RBeg, NumRanges);
 }
 
-void BugReporter::EmitBasicReport(StringRef name,
+void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
+                                  StringRef name,
                                   StringRef category,
                                   StringRef str, PathDiagnosticLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
@@ -2027,6 +2043,7 @@ void BugReporter::EmitBasicReport(StringRef name,
   // 'BT' is owned by BugReporter.
   BugType *BT = getBugTypeForName(name, category);
   BugReport *R = new BugReport(*BT, str, Loc);
+  R->setDeclWithIssue(DeclWithIssue);
   for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
   EmitReport(R);
 }

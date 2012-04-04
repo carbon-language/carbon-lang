@@ -232,6 +232,8 @@ void test_has_bug() {
 // CHECK:    <key>description</key><string>Division by zero</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Division by zero</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>foo</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>14</integer>
@@ -352,6 +354,8 @@ void test_has_bug() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>has_bug</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>19</integer>
@@ -362,3 +366,4 @@ void test_has_bug() {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
+

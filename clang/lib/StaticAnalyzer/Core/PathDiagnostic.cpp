@@ -55,13 +55,16 @@ PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
 PathDiagnosticCallPiece::~PathDiagnosticCallPiece() {}
 PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
 PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
-PathDiagnostic::PathDiagnostic() : path(pathImpl) {}
+
+
 PathPieces::~PathPieces() {}
 PathDiagnostic::~PathDiagnostic() {}
 
-PathDiagnostic::PathDiagnostic(StringRef bugtype, StringRef desc,
+PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,
+                               StringRef bugtype, StringRef desc,
                                StringRef category)
-  : BugType(StripTrailingDots(bugtype)),
+  : DeclWithIssue(declWithIssue),
+    BugType(StripTrailingDots(bugtype)),
     Desc(StripTrailingDots(desc)),
     Category(StripTrailingDots(category)),
     path(pathImpl) {}

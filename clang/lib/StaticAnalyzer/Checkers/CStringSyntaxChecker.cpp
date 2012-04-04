@@ -157,7 +157,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
         os << "U";
       os << "se a safer 'strlcat' API";
 
-      BR.EmitBasicReport("Anti-pattern in the argument", "C String API",
+      BR.EmitBasicReport(FD, "Anti-pattern in the argument", "C String API",
                          os.str(), Loc, &R, 1);
     }
   }

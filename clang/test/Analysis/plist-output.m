@@ -148,6 +148,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -157,6 +158,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_init</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>6</integer>
@@ -224,6 +227,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -233,6 +237,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_assign</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>12</integer>
@@ -300,6 +306,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:      <key>message</key>
@@ -309,6 +316,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_assign_transitive</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>19</integer>
@@ -376,6 +385,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK:      <key>message</key>
@@ -438,6 +448,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -447,6 +458,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_cond</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>24</integer>
@@ -582,6 +595,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -591,6 +605,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_cond_transitive</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>32</integer>
@@ -692,6 +708,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -701,6 +718,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_null_field</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>39</integer>
@@ -904,6 +923,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -913,6 +933,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_assumptions</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>51</integer>
@@ -1014,6 +1036,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Assuming &apos;p&apos; is null</string>
 // CHECK:      <key>message</key>
@@ -1110,6 +1133,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -1119,6 +1143,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_cond_assign</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>59</integer>
@@ -1288,6 +1314,7 @@ int test_cond_assign() {
 // CHECK:         </dict>
 // CHECK:        </array>
 // CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
@@ -1297,6 +1324,8 @@ int test_cond_assign() {
 // CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK:   <key>issue_context_kind</key><string>Objective-C method</string>
+// CHECK:   <key>issue_context</key><string>test</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>78</integer>
@@ -1307,5 +1336,4 @@ int test_cond_assign() {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
-
 

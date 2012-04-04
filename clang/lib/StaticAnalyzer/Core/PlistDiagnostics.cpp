@@ -145,10 +145,9 @@ static void EmitRange(raw_ostream &o, const SourceManager &SM,
   Indent(o, indent) << "</array>\n";
 }
 
-static raw_ostream &EmitString(raw_ostream &o,
-                                     const std::string& s) {
+static raw_ostream &EmitString(raw_ostream &o, StringRef s) {
   o << "<string>";
-  for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I) {
+  for (StringRef::const_iterator I = s.begin(), E = s.end(); I != E; ++I) {
     char c = *I;
     switch (c) {
     default:   o << c; break;
@@ -252,7 +251,7 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   // FIXME: Really use a short string.
   Indent(o, indent) << "<key>message</key>\n";
   EmitString(o, P.getString()) << '\n';
-
+  
   // Finish up.
   --indent;
   Indent(o, indent); o << "</dict>\n";
@@ -447,6 +446,38 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     EmitString(o, D->getCategory()) << '\n';
     o << "   <key>type</key>";
     EmitString(o, D->getBugType()) << '\n';
+    
+    // Output information about the semantic context where
+    // the issue occurred.
+    if (const Decl *DeclWithIssue = D->getDeclWithIssue()) {
+      // FIXME: handle blocks, which have no name.
+      if (const NamedDecl *ND = dyn_cast<NamedDecl>(DeclWithIssue)) {
+        StringRef declKind;
+        switch (ND->getKind()) {
+          case Decl::CXXRecord:
+            declKind = "C++ class";
+            break;
+          case Decl::CXXMethod:
+            declKind = "C++ method";
+            break;
+          case Decl::ObjCMethod:
+            declKind = "Objective-C method";
+            break;
+          case Decl::Function:
+            declKind = "function";
+            break;
+          default:
+            break;
+        }
+        if (!declKind.empty()) {
+          const std::string &declName = ND->getDeclName().getAsString();
+          o << "  <key>issue_context_kind</key>";
+          EmitString(o, declKind) << '\n';
+          o << "  <key>issue_context</key>";
+          EmitString(o, declName) << '\n';
+        }
+      }
+    }
 
     // Output the location of the bug.
     o << "  <key>location</key>\n";

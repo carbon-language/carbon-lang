@@ -70,7 +70,8 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
       PathDiagnosticLocation::createBegin(MethDerived,
                                           BR.getSourceManager());
 
-    BR.EmitBasicReport("Incompatible instance method return type",
+    BR.EmitBasicReport(MethDerived,
+                       "Incompatible instance method return type",
                        os.str(), MethDLoc);
   }
 }

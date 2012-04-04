@@ -74,7 +74,7 @@ void NSErrorMethodChecker::checkASTDecl(const ObjCMethodDecl *D,
         "error occurred";
     PathDiagnosticLocation L =
       PathDiagnosticLocation::create(D, BR.getSourceManager());
-    BR.EmitBasicReport("Bad return type when passing NSError**",
+    BR.EmitBasicReport(D, "Bad return type when passing NSError**",
                        "Coding conventions (Apple)", err, L);
   }
 }
@@ -122,7 +122,7 @@ void CFErrorFunctionChecker::checkASTDecl(const FunctionDecl *D,
         "error occurred";
     PathDiagnosticLocation L =
       PathDiagnosticLocation::create(D, BR.getSourceManager());
-    BR.EmitBasicReport("Bad return type when passing CFErrorRef*",
+    BR.EmitBasicReport(D, "Bad return type when passing CFErrorRef*",
                        "Coding conventions (Apple)", err, L);
   }
 }

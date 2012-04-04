@@ -306,6 +306,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>diagnosticTest</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>14</integer>
@@ -465,6 +467,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>myArrayAllocation</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>21</integer>
@@ -862,6 +866,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>reallocDiagnostics</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>28</integer>
@@ -1258,6 +1264,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_wrapper</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>45</integer>
@@ -1775,6 +1783,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Use of memory after it is freed</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Use-after-free</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_double_action_call</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>61</integer>
@@ -2346,6 +2356,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>reallocIntra</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>76</integer>
@@ -2611,6 +2623,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>use_ret</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>86</integer>
@@ -2785,6 +2799,8 @@ void LeakedSymbol(int in) {
 // CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
 // CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>LeakedSymbol</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>97</integer>
@@ -2795,3 +2811,4 @@ void LeakedSymbol(int in) {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
+

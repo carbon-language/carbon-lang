@@ -63,7 +63,8 @@ void WalkAST::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) {
     SourceRange R = ArgEx->getSourceRange();
     PathDiagnosticLocation ELoc =
       PathDiagnosticLocation::createBegin(E, BR.getSourceManager(), AC);
-    BR.EmitBasicReport("Potential unintended use of sizeof() on pointer type",
+    BR.EmitBasicReport(AC->getDecl(),
+                       "Potential unintended use of sizeof() on pointer type",
                        "Logic",
                        "The code calls sizeof() on a pointer type. "
                        "This can produce an unexpected result.",
