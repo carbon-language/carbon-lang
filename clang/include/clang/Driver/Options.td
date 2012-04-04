@@ -264,6 +264,7 @@ def emit_llvm : Flag<"-emit-llvm">,
 def exported__symbols__list : Separate<"-exported_symbols_list">;
 def e : JoinedOrSeparate<"-e">;
 def fPIC : Flag<"-fPIC">, Group<f_Group>;
+def fno_PIC : Flag<"-fno-PIC">, Group<f_Group>;
 def fPIE : Flag<"-fPIE">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def fno_PIE : Flag<"-fno-PIE">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def faccess_control : Flag<"-faccess-control">, Group<f_Group>;
@@ -497,6 +498,7 @@ def fpack_struct_EQ : Joined<"-fpack-struct=">, Group<f_Group>;
 def fpascal_strings : Flag<"-fpascal-strings">, Group<f_Group>;
 def fpch_preprocess : Flag<"-fpch-preprocess">, Group<f_Group>;
 def fpic : Flag<"-fpic">, Group<f_Group>;
+def fno_pic : Flag<"-fno-pic">, Group<f_Group>;
 def fpie : Flag<"-fpie">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def fno_pie : Flag<"-fno-pie">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def fprofile_arcs : Flag<"-fprofile-arcs">, Group<f_Group>;

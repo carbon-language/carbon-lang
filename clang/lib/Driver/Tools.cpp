@@ -1477,7 +1477,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                      Args.hasArg(options::OPT_fPIE) ||
                      Args.hasArg(options::OPT_fpie));
   bool PICDisabled = (Args.hasArg(options::OPT_mkernel) ||
-                      Args.hasArg(options::OPT_static));
+                      Args.hasArg(options::OPT_static) ||
+                      Args.hasArg(options::OPT_fno_PIC) ||
+                      Args.hasArg(options::OPT_fno_pic) ||
+                      Args.hasArg(options::OPT_fno_PIE) ||
+                      Args.hasArg(options::OPT_fno_pie));
   const char *Model = getToolChain().GetForcedPicModel();
   if (!Model) {
     if (Args.hasArg(options::OPT_mdynamic_no_pic))
