@@ -15,7 +15,7 @@ B(_Pragma("clang diagnostic ignored \"-Wparentheses\""))
 // This should be ignored..
 INACTIVE(_Pragma("clang diagnostic ignored \"-Wconversion\""))
 
-#define IGNORE_CONV _Pragma("clang diagnostic ignored \"-Wconversion\"")
+#define IGNORE_CONV _Pragma("clang diagnostic ignored \"-Wconversion\"") _Pragma("clang diagnostic ignored \"-Wconversion\"")
 
 // ..as should this.
 INACTIVE(IGNORE_CONV)
