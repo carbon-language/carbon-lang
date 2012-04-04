@@ -67,11 +67,9 @@ int memcmp(const void *a1, const void *a2, size_t size);
 void* memmove(void *to, const void *from, size_t size);
 void* memcpy(void *to, const void *from, size_t size);
 void* memset(void *block, int c, size_t size);
-# if defined(__APPLE__)
 char* strchr(const char *str, int c);
+# if defined(__APPLE__)
 char* index(const char *string, int c);
-# elif defined(_WIN32)
-char* strchr(const char *s, char c);
 # endif
 char* strcat(char *to, const char* from);  // NOLINT
 char* strcpy(char *to, const char* from);  // NOLINT
