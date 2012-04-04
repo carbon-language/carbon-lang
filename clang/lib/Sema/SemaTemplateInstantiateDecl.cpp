@@ -2661,8 +2661,13 @@ void Sema::InstantiateStaticDataMemberDefinition(
   Consumer.HandleCXXStaticMemberVarInstantiation(Var);
 
   // If we already have a definition, we're done.
-  if (Var->getDefinition())
+  if (VarDecl *Def = Var->getDefinition()) {
+    // We may be explicitly instantiating something we've already implicitly
+    // instantiated.
+    Def->setTemplateSpecializationKind(Var->getTemplateSpecializationKind(),
+                                       PointOfInstantiation);
     return;
+  }
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst)
