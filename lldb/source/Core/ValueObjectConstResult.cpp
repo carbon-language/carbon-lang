@@ -261,9 +261,9 @@ ValueObjectConstResult::ValueObjectConstResult (
     const Value &value,
     const ConstString &name) :
     ValueObject (exe_scope),
+    m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0),
-    m_clang_ast (clang_ast),
     m_impl(this)
 {
     m_value = value;
