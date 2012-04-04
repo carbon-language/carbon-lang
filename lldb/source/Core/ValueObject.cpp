@@ -671,6 +671,14 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
         return false;
     
     m_is_getting_summary = true;
+    
+    // this is a hot path in code and we prefer to avoid setting this string all too often also clearing out other
+    // information that we might care to see in a crash log. might be useful in very specific situations though.
+    /*Host::SetCrashDescriptionWithFormat("Trying to fetch a summary for %s %s. Summary provider's description is %s",
+                                        GetTypeName().GetCString(),
+                                        GetName().GetCString(),
+                                        summary_ptr->GetDescription().c_str());*/
+    
     if (UpdateValueIfNeeded (false))
     {
         if (summary_ptr)
@@ -3928,7 +3936,6 @@ ValueObject::ClearUserVisibleData(uint32_t clear_mask)
     
     if ((clear_mask & eClearUserVisibleDataItemsSummary) == eClearUserVisibleDataItemsSummary)
     {
-        m_is_getting_summary = false;
         m_summary_str.clear();
     }
     

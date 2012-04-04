@@ -966,7 +966,6 @@ public:
     {
         m_type_summary_sp = format;
         ClearUserVisibleData(eClearUserVisibleDataItemsSummary);
-        m_is_getting_summary = false;
     }
     
     void
