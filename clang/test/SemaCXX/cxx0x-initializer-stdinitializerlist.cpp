@@ -150,3 +150,19 @@ namespace PR12119 {
     g({il, {2, 3}});
   }
 }
+
+namespace Decay {
+  template<typename T>
+  void f(std::initializer_list<T>) {
+    T x = 1; // expected-error{{cannot initialize a variable of type 'const char *' with an rvalue of type 'int'}}
+  }
+
+  void g() {
+    f({"A", "BB", "CCC"}); // expected-note{{in instantiation of function template specialization 'Decay::f<const char *>' requested here}}
+
+    auto x = { "A", "BB", "CCC" };
+    std::initializer_list<const char *> *il = &x;
+
+    for( auto s : {"A", "BB", "CCC", "DDD"}) { }
+  }
+}
