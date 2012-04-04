@@ -3655,8 +3655,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT__serialize_diags);
 
   types::ID InputType = Inputs[0].getType();
-  const Arg *A;
-  if ((A = Args.getLastArg(options::OPT_traditional)))
+  if (const Arg *A = Args.getLastArg(options::OPT_traditional))
     D.Diag(diag::err_drv_argument_only_allowed_with)
       << A->getAsString(Args) << "-E";
 
