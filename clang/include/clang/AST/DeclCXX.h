@@ -621,7 +621,7 @@ class CXXRecordDecl : public RecordDecl {
            "queried lambda property of non-lambda class");
     return static_cast<LambdaDefinitionData &>(*DefinitionData);
   }
-
+  
   /// \brief The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
   ///
@@ -1503,6 +1503,13 @@ public:
     return getLambdaData().ContextDecl;    
   }
   
+  /// \brief Set the mangling number and context declaration for a lambda
+  /// class.
+  void setLambdaMangling(unsigned ManglingNumber, Decl *ContextDecl) {
+    getLambdaData().ManglingNumber = ManglingNumber;
+    getLambdaData().ContextDecl = ContextDecl;
+  }
+
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be
   /// dependent.

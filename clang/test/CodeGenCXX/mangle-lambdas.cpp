@@ -150,6 +150,8 @@ void use_func_template() {
   func_template<int>();
 }
 
+// CHECK: define linkonce_odr void @_Z1fIZZNK23TestNestedInstantiationclEvENKUlvE_clEvEUlvE_EvT_
+
 struct Members {
   int x = [] { return 1; }() + [] { return 2; }();
   int y = [] { return 3; }();
@@ -163,6 +165,20 @@ void test_Members() {
   // CHECK: call i32 @_ZNK7Members1yMUlvE_clEv
   Members members;
   // CHECK: ret void
+}
+
+template<typename P> void f(P) { }
+
+struct TestNestedInstantiation {
+   void operator()() const {
+     []() -> void {
+       return f([]{});
+     }();
+   }
+};
+
+void test_NestedInstantiation() {
+  TestNestedInstantiation()();
 }
 
 // Check the linkage of the lambdas used in test_Members.

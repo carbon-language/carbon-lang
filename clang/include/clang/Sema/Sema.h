@@ -3700,7 +3700,10 @@ public:
                                        SourceRange IntroducerRange,
                                        TypeSourceInfo *MethodType,
                                        SourceLocation EndLoc,
-                                       llvm::ArrayRef<ParmVarDecl *> Params);
+                                       llvm::ArrayRef<ParmVarDecl *> Params,
+                                       llvm::Optional<unsigned> ManglingNumber 
+                                         = llvm::Optional<unsigned>(),
+                                       Decl *ContextDecl = 0);
   
   /// \brief Introduce the scope for a lambda expression.
   sema::LambdaScopeInfo *enterLambdaScope(CXXMethodDecl *CallOperator,
@@ -3733,9 +3736,6 @@ public:
   /// was successfully completed.
   ExprResult ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                              Scope *CurScope, 
-                             llvm::Optional<unsigned> ManglingNumber 
-                               = llvm::Optional<unsigned>(),
-                             Decl *ContextDecl = 0,
                              bool IsInstantiation = false);
 
   /// \brief Define the "body" of the conversion from a lambda object to a 
