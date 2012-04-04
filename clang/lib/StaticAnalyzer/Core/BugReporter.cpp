@@ -1960,9 +1960,6 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 
   if (!bugReports.empty())
     GeneratePathDiagnostic(*D.get(), bugReports);
-
-  if (IsCachedDiagnostic(exampleReport, D.get()))
-    return;
   
   // Get the meta data.
   const BugReport::ExtraTextList &Meta =
@@ -1977,24 +1974,23 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   llvm::tie(Beg, End) = exampleReport->getRanges();
   DiagnosticsEngine &Diag = getDiagnostic();
   
-  // Search the description for '%', as that will be interpretted as a
-  // format character by FormatDiagnostics.
-  StringRef desc = exampleReport->getShortDescription();
-  unsigned ErrorDiag;
-  {
+  if (!IsCachedDiagnostic(exampleReport, D.get())) {
+    // Search the description for '%', as that will be interpretted as a
+    // format character by FormatDiagnostics.
+    StringRef desc = exampleReport->getShortDescription();
+
     SmallString<512> TmpStr;
     llvm::raw_svector_ostream Out(TmpStr);
-    for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I)
+    for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I) {
       if (*I == '%')
         Out << "%%";
       else
         Out << *I;
+    }
     
     Out.flush();
-    ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning, TmpStr);
-  }        
+    unsigned ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning, TmpStr);
 
-  {
     DiagnosticBuilder diagBuilder = Diag.Report(
       exampleReport->getLocation(getSourceManager()).asLocation(), ErrorDiag);
     for (BugReport::ranges_iterator I = Beg; I != End; ++I)
