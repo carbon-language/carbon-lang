@@ -1279,6 +1279,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Select the appropriate action.
   bool IsRewriter = false;
+  bool IsModernRewriter = false;
+  
   if (isa<AnalyzeJobAction>(JA)) {
     assert(JA.getType() == types::TY_Plist && "Invalid output type.");
     CmdArgs.push_back("-analyze");
@@ -1349,6 +1351,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-emit-pch");
     } else if (JA.getType() == types::TY_RewrittenObjC) {
       CmdArgs.push_back("-rewrite-objc");
+      IsModernRewriter = true;
     } else if (JA.getType() == types::TY_RewrittenLegacyObjC) {
       CmdArgs.push_back("-rewrite-objc");
       IsRewriter = true;
@@ -2226,7 +2229,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   ObjCRuntime objCRuntime;
   unsigned objcABIVersion = 0;
   bool NeXTRuntimeIsDefault
-    = (IsRewriter || getToolChain().getTriple().isOSDarwin());
+    = (IsRewriter || IsModernRewriter ||
+       getToolChain().getTriple().isOSDarwin());
   if (Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
                    NeXTRuntimeIsDefault)) {
     objCRuntime.setKind(ObjCRuntime::NeXT);
@@ -2260,8 +2264,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   } else {
     // Otherwise, determine if we are using the non-fragile ABI.
-    bool NonFragileABIIsDefault
-      = (!IsRewriter && getToolChain().IsObjCNonFragileABIDefault());
+    bool NonFragileABIIsDefault = 
+      (IsModernRewriter || 
+       (!IsRewriter && getToolChain().IsObjCNonFragileABIDefault()));
     if (Args.hasFlag(options::OPT_fobjc_nonfragile_abi,
                      options::OPT_fno_objc_nonfragile_abi,
                      NonFragileABIIsDefault)) {
@@ -2341,7 +2346,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fobjc-infer-related-result-type is the default, except in the Objective-C
   // rewriter.
-  if (IsRewriter)
+  if (IsRewriter || IsModernRewriter)
     CmdArgs.push_back("-fno-objc-infer-related-result-type");
 
   // Handle -fobjc-gc and -fobjc-gc-only. They are exclusive, and -fobjc-gc-only
