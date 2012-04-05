@@ -149,7 +149,9 @@ protected:
   OwningPtr<Document> &Doc;
   SMRange SourceRange;
 
-  virtual ~Node();
+  void operator delete(void *) throw() {}
+
+  virtual ~Node() {}
 
 private:
   unsigned int TypeID;
@@ -168,9 +170,6 @@ public:
   static inline bool classof(const Node *N) {
     return N->getType() == NK_Null;
   }
-
-protected:
-  virtual ~NullNode();
 };
 
 /// @brief A scalar node is an opaque datum that can be presented as a
@@ -204,9 +203,6 @@ public:
   static inline bool classof(const Node *N) {
     return N->getType() == NK_Scalar;
   }
-
-protected:
-  virtual ~ScalarNode();
 
 private:
   StringRef Value;
@@ -254,9 +250,6 @@ public:
   static inline bool classof(const Node *N) {
     return N->getType() == NK_KeyValue;
   }
-
-protected:
-  virtual ~KeyValueNode();
 
 private:
   Node *Key;
@@ -374,9 +367,6 @@ public:
     return N->getType() == NK_Mapping;
   }
 
-protected:
-  virtual ~MappingNode();
-
 private:
   MappingType Type;
   bool IsAtBeginning;
@@ -440,9 +430,6 @@ public:
     return N->getType() == NK_Sequence;
   }
 
-protected:
-  virtual ~SequenceNode();
-
 private:
   SequenceType SeqType;
   bool IsAtBeginning;
@@ -467,9 +454,6 @@ public:
   static inline bool classof(const Node *N) {
     return N->getType() == NK_Alias;
   }
-
-protected:
-  virtual ~AliasNode();
 
 private:
   StringRef Name;
