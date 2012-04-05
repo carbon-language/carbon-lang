@@ -393,7 +393,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   // Issue a message saying that the method was skipped.
   PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
                                      N->getLocationContext());
-  return new PathDiagnosticEventPiece(L, "No method actually called "
+  return new PathDiagnosticEventPiece(L, "No method is called "
       "because the receiver is nil");
 }
 
