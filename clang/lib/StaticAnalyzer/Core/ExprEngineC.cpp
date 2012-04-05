@@ -375,7 +375,12 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       // Recover some path-sensitivity if a scalar value evaluated to
       // UnknownVal.
       if (InitVal.isUnknown()) {
-        InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx, LC,
+	QualType Ty = InitEx->getType();
+	if (InitEx->isLValue()) {
+	  Ty = getContext().getPointerType(Ty);
+	}
+
+        InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx, LC, Ty,
                                  currentBuilderContext->getCurrentBlockCount());
       }
       B.takeNodes(N);

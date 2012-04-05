@@ -568,3 +568,13 @@ struct PR11146::Entry {
 void PR11146::baz() {
   (void) &Entry::x;
 }
+
+// Test symbolicating a reference.  In this example, the
+// analyzer (originally) didn't know how to handle x[index - index2],
+// returning an UnknownVal.  The conjured symbol wasn't a location,
+// and would result in a crash.
+void rdar10924675(unsigned short x[], int index, int index2) {
+  unsigned short &y = x[index - index2];
+  if (y == 0)
+    return;
+}
