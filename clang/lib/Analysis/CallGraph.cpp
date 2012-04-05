@@ -125,7 +125,8 @@ void CallGraph::addToCallGraph(Decl* D, bool IsGlobal) {
 
   // Process all the calls by this function as well.
   CGBuilder builder(this, D, Node);
-  builder.Visit(D->getBody());
+  if (Stmt *Body = D->getBody())
+    builder.Visit(Body);
 }
 
 void CallGraph::addToCallGraph(TranslationUnitDecl *TU) {

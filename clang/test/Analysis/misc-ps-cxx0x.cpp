@@ -68,3 +68,8 @@ void test2() {
   *p = 0xDEADBEEF;  // no-warning
 }
 
+// Do not crash on the following when constructing the
+// callgraph.
+struct RDar11178609 {
+  ~RDar11178609() = delete;
+};
