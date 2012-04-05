@@ -34,7 +34,8 @@ class ObjCContainersChecker : public Checker< check::PreStmt<CallExpr>,
   mutable OwningPtr<BugType> BT;
   inline void initBugType() const {
     if (!BT)
-      BT.reset(new BugType("CFArray API", "Core Foundation/Objective-C"));
+      BT.reset(new BugType("CFArray API",
+                           categories::CoreFoundationObjectiveC));
   }
 
   inline SymbolRef getArraySym(const Expr *E, CheckerContext &C) const {

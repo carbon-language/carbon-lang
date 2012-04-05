@@ -1620,7 +1620,7 @@ namespace {
   class CFRefBug : public BugType {
   protected:
     CFRefBug(StringRef name)
-    : BugType(name, "Memory (Core Foundation/Objective-C)") {}
+    : BugType(name, categories::MemoryCoreFoundationObjectiveC) {}
   public:
 
     // FIXME: Eventually remove.

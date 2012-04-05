@@ -67,7 +67,7 @@ static inline void LazyInitialize(OwningPtr<BugType> &BT,
                                   const char *name) {
   if (BT)
     return;
-  BT.reset(new BugType(name, "Unix API"));
+  BT.reset(new BugType(name, categories::UnixAPI));
 }
 
 //===----------------------------------------------------------------------===//

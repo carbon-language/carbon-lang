@@ -2028,13 +2028,6 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 }
 
 void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
-                                  StringRef name, StringRef str,
-                                  PathDiagnosticLocation Loc,
-                                  SourceRange* RBeg, unsigned NumRanges) {
-  EmitBasicReport(DeclWithIssue, name, "", str, Loc, RBeg, NumRanges);
-}
-
-void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
                                   StringRef name,
                                   StringRef category,
                                   StringRef str, PathDiagnosticLocation Loc,

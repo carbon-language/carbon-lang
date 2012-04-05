@@ -143,7 +143,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     PathDiagnosticLocation CELoc =
         PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
     BR.EmitBasicReport(AC->getDecl(),
-                       OsName.str(), "Core Foundation/Objective-C",
+                       OsName.str(), categories::CoreFoundationObjectiveC,
                        Os.str(), CELoc, &R, 1);
   }
 

@@ -72,6 +72,7 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
 
     BR.EmitBasicReport(MethDerived,
                        "Incompatible instance method return type",
+                       categories::CoreFoundationObjectiveC,
                        os.str(), MethDLoc);
   }
 }

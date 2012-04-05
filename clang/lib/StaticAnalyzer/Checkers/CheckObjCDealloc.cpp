@@ -179,7 +179,8 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
     llvm::raw_string_ostream os(buf);
     os << "Objective-C class '" << *D << "' lacks a 'dealloc' instance method";
 
-    BR.EmitBasicReport(D, name, os.str(), DLoc);
+    BR.EmitBasicReport(D, name, categories::CoreFoundationObjectiveC,
+                       os.str(), DLoc);
     return;
   }
 
@@ -196,7 +197,8 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
 
-    BR.EmitBasicReport(MD, name, os.str(), DLoc);
+    BR.EmitBasicReport(MD, name, categories::CoreFoundationObjectiveC,
+                       os.str(), DLoc);
     return;
   }
 
@@ -236,9 +238,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
     bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
     if (scan_ivar_release(MD->getBody(), ID, PD, RS, SelfII, Ctx)
        != requiresRelease) {
-      const char *name;
-      const char* category = "Memory (Core Foundation/Objective-C)";
-
+      const char *name = 0;
       std::string buf;
       llvm::raw_string_ostream os(buf);
 
@@ -263,7 +263,8 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
       PathDiagnosticLocation SDLoc =
         PathDiagnosticLocation::createBegin((*I), BR.getSourceManager());
 
-      BR.EmitBasicReport(MD, name, category, os.str(), SDLoc);
+      BR.EmitBasicReport(MD, name, categories::CoreFoundationObjectiveC,
+                         os.str(), SDLoc);
     }
   }
 }

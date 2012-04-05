@@ -83,7 +83,7 @@ class InitSelfBug : public BugType {
   const std::string desc;
 public:
   InitSelfBug() : BugType("Missing \"self = [(super or self) init...]\"",
-                          "Core Foundation/Objective-C") {}
+                          categories::CoreFoundationObjectiveC) {}
 };
 
 } // end anonymous namespace

@@ -358,33 +358,14 @@ public:
   void EmitReport(BugReport *R);
 
   void EmitBasicReport(const Decl *DeclWithIssue,
-                       StringRef BugName, StringRef BugStr,
-                       PathDiagnosticLocation Loc,
-                       SourceRange* RangeBeg, unsigned NumRanges);
-
-  void EmitBasicReport(const Decl *DeclWithIssue,
                        StringRef BugName, StringRef BugCategory,
                        StringRef BugStr, PathDiagnosticLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
-
-
-  void EmitBasicReport(const Decl *DeclWithIssue,
-                       StringRef BugName, StringRef BugStr,
-                       PathDiagnosticLocation Loc) {
-    EmitBasicReport(DeclWithIssue, BugName, BugStr, Loc, 0, 0);
-  }
 
   void EmitBasicReport(const Decl *DeclWithIssue,
                        StringRef BugName, StringRef BugCategory,
                        StringRef BugStr, PathDiagnosticLocation Loc) {
     EmitBasicReport(DeclWithIssue, BugName, BugCategory, BugStr, Loc, 0, 0);
-  }
-
-  void EmitBasicReport(const Decl *DeclWithIssue,
-                       StringRef BugName, StringRef BugStr,
-                       PathDiagnosticLocation Loc,
-                       SourceRange R) {
-    EmitBasicReport(DeclWithIssue, BugName, BugStr, Loc, &R, 1);
   }
 
   void EmitBasicReport(const Decl *DeclWithIssue,
