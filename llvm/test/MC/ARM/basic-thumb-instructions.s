@@ -59,12 +59,16 @@ _func:
         add sp, sp, #4
         add r2, sp, #8
         add r2, sp, #1020
+	add sp, sp, #-8
+	add sp, #-8
 
 @ CHECK: add	sp, #4                  @ encoding: [0x01,0xb0]
 @ CHECK: add	sp, #508                @ encoding: [0x7f,0xb0]
 @ CHECK: add	sp, #4                  @ encoding: [0x01,0xb0]
 @ CHECK: add	r2, sp, #8              @ encoding: [0x02,0xaa]
 @ CHECK: add	r2, sp, #1020           @ encoding: [0xff,0xaa]
+@ CHECK: sub	sp, #8                  @ encoding: [0x82,0xb0]
+@ CHECK: sub	sp, #8                  @ encoding: [0x82,0xb0]
 
 
 @------------------------------------------------------------------------------

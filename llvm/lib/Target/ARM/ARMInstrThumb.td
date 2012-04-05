@@ -91,6 +91,12 @@ def t_imm0_508s4 : Operand<i32> {
   let ParserMatchClass = t_imm0_508s4_asmoperand;
   let OperandType = "OPERAND_IMMEDIATE";
 }
+// Alias use only, so no printer is necessary.
+def t_imm0_508s4_neg_asmoperand: AsmOperandClass { let Name = "Imm0_508s4Neg"; }
+def t_imm0_508s4_neg : Operand<i32> {
+  let ParserMatchClass = t_imm0_508s4_neg_asmoperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
 
 // Define Thumb specific addressing modes.
 
@@ -344,6 +350,11 @@ def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
   let Inst{6-0} = imm;
   let DecoderMethod = "DecodeThumbAddSPImm";
 }
+
+def : tInstAlias<"add${p} sp, $imm",
+                 (tSUBspi SP, t_imm0_508s4_neg:$imm, pred:$p)>;
+def : tInstAlias<"add${p} sp, sp, $imm",
+                 (tSUBspi SP, t_imm0_508s4_neg:$imm, pred:$p)>;
 
 // Can optionally specify SP as a three operand instruction.
 def : tInstAlias<"add${p} sp, sp, $imm",

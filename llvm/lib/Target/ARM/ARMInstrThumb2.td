@@ -96,14 +96,19 @@ def t2_so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
 }
 
 /// imm0_4095 predicate - True if the 32-bit immediate is in the range [0.4095].
-def imm0_4095 : Operand<i32>,
-                ImmLeaf<i32, [{
+def imm0_4095_asmoperand: ImmAsmOperand { let Name = "Imm0_4095"; }
+def imm0_4095 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 4096;
-}]>;
+}]> {
+  let ParserMatchClass = imm0_4095_asmoperand;
+}
 
-def imm0_4095_neg : PatLeaf<(i32 imm), [{
+def imm0_4095_neg_asmoperand: AsmOperandClass { let Name = "Imm0_4095Neg"; }
+def imm0_4095_neg : Operand<i32>, PatLeaf<(i32 imm), [{
  return (uint32_t)(-N->getZExtValue()) < 4096;
-}], imm_neg_XFORM>;
+}], imm_neg_XFORM> {
+  let ParserMatchClass = imm0_4095_neg_asmoperand;
+}
 
 def imm0_255_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)(-N->getZExtValue()) < 255;
@@ -3968,6 +3973,19 @@ def : t2InstAlias<"add${s}${p} $Rdn, $Rm",
 def : t2InstAlias<"add${s}${p} $Rdn, $ShiftedRm",
                   (t2ADDrs GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_reg:$ShiftedRm,
                            pred:$p, cc_out:$s)>;
+
+// add w/ negative immediates is just a sub.
+def : t2InstAlias<"add${s}${p} $Rd, $Rn, $imm",
+        (t2SUBri GPRnopc:$Rd, GPRnopc:$Rn, t2_so_imm_neg:$imm, pred:$p,
+                 cc_out:$s)>;
+def : t2InstAlias<"add${p} $Rd, $Rn, $imm",
+           (t2SUBri12 GPRnopc:$Rd, GPR:$Rn, imm0_4095_neg:$imm, pred:$p)>;
+def : t2InstAlias<"add${s}${p} $Rdn, $imm",
+      (t2SUBri GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_imm_neg:$imm, pred:$p,
+               cc_out:$s)>;
+def : t2InstAlias<"add${p} $Rdn, $imm",
+           (t2SUBri12 GPRnopc:$Rdn, GPRnopc:$Rdn, imm0_4095_neg:$imm, pred:$p)>;
+
 
 // Aliases for SUB without the ".w" optional width specifier.
 def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $imm",
