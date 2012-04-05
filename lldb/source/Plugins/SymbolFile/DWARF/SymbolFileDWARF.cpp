@@ -1565,28 +1565,53 @@ SymbolFileDWARF::ParseChildMembers
                             }
                         }
                     }
-                    
-                    ConstString fixed_getter;
-                    ConstString fixed_setter;
-                    
-                    if (prop_getter_name && prop_getter_name[0] == '-')
+                                        
+                    if (prop_name)
                     {
-                        ObjCLanguageRuntime::ParseMethodName (prop_getter_name,
-                                                              NULL,
-                                                              &fixed_getter,
-                                                              NULL,
-                                                              NULL);
-                        prop_getter_name = fixed_getter.GetCString();
-                    }
-                    
-                    if (prop_setter_name && prop_setter_name[0] == '-')
-                    {
-                        ObjCLanguageRuntime::ParseMethodName (prop_setter_name,
-                                                              NULL,
-                                                              &fixed_setter,
-                                                              NULL,
-                                                              NULL);
-                        prop_setter_name = fixed_setter.GetCString();
+                        ConstString fixed_getter;
+                        ConstString fixed_setter;
+
+                        // Check if the property getter/setter were provided as full
+                        // names.  We want basenames, so we extract them.
+                        
+                        if (prop_getter_name && prop_getter_name[0] == '-')
+                        {
+                            ObjCLanguageRuntime::ParseMethodName (prop_getter_name,
+                                                                  NULL,
+                                                                  &fixed_getter,
+                                                                  NULL,
+                                                                  NULL);
+                            prop_getter_name = fixed_getter.GetCString();
+                        }
+                        
+                        if (prop_setter_name && prop_setter_name[0] == '-')
+                        {
+                            ObjCLanguageRuntime::ParseMethodName (prop_setter_name,
+                                                                  NULL,
+                                                                  &fixed_setter,
+                                                                  NULL,
+                                                                  NULL);
+                            prop_setter_name = fixed_setter.GetCString();
+                        }
+                        
+                        // If the names haven't been provided, they need to be
+                        // filled in.
+                        
+                        if (!prop_getter_name)
+                        {
+                            prop_getter_name = prop_name;
+                        }
+                        if (!prop_setter_name && prop_name[0] && !(prop_attributes & DW_APPLE_PROPERTY_readonly))
+                        {
+                            StreamString ss;
+                            
+                            ss.Printf("set%c%s:",
+                                      toupper(prop_name[0]),
+                                      &prop_name[1]);
+                            
+                            fixed_setter.SetCString(ss.GetData());
+                            prop_setter_name = fixed_setter.GetCString();
+                        }
                     }
                     
                     // Clang has a DWARF generation bug where sometimes it

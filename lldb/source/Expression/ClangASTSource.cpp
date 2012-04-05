@@ -648,6 +648,86 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
     if (!interface_decl)
         return;
     
+    do
+    {
+        Decl *original_decl = NULL;
+        ASTContext *original_ctx = NULL;
+        
+        m_ast_importer->ResolveDeclOrigin(interface_decl, &original_decl, &original_ctx);
+        
+        if (!original_decl)
+            break;
+            
+        ObjCInterfaceDecl *original_interface_decl = dyn_cast<ObjCInterfaceDecl>(original_decl);
+        
+        Selector original_selector;
+                
+        if (decl_name.isObjCZeroArgSelector())
+        {
+            IdentifierInfo *ident = &original_ctx->Idents.get(decl_name.getAsString());
+            original_selector = original_ctx->Selectors.getSelector(0, &ident);
+        }
+        else if (decl_name.isObjCOneArgSelector())
+        {
+            const std::string &decl_name_string = decl_name.getAsString();
+            std::string decl_name_string_without_colon(decl_name_string.c_str(), decl_name_string.length() - 1);
+            IdentifierInfo *ident = &original_ctx->Idents.get(decl_name_string_without_colon.c_str());
+            original_selector = original_ctx->Selectors.getSelector(1, &ident);
+        }
+        else
+        {
+            SmallVector<IdentifierInfo *, 4> idents;
+            
+            clang::Selector sel = decl_name.getObjCSelector();
+            
+            int num_args = sel.getNumArgs();
+            
+            for (unsigned i = 0;
+                 i != num_args;
+                 ++i)
+            {
+                idents.push_back(&original_ctx->Idents.get(sel.getNameForSlot(i)));
+            }
+            
+            original_selector = original_ctx->Selectors.getSelector(num_args, idents.data());
+        }
+        
+        DeclarationName original_decl_name(original_selector);
+                
+        ObjCInterfaceDecl::lookup_result result = original_interface_decl->lookup(original_decl_name);
+        
+        if (result.first == result.second)
+            break;
+        
+        if (!*result.first)
+            break;
+        
+        ObjCMethodDecl *result_method = dyn_cast<ObjCMethodDecl>(*result.first);
+        
+        if (!result_method)
+            break;
+        
+        Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &result_method->getASTContext(), result_method);
+        
+        if (!copied_decl)
+            continue;
+        
+        ObjCMethodDecl *copied_method_decl = dyn_cast<ObjCMethodDecl>(copied_decl);
+        
+        if (!copied_method_decl)
+            continue;
+        
+        if (log)
+        {
+            ASTDumper dumper((Decl*)copied_method_decl);
+            log->Printf("  CAS::FOMD[%d] found (in debug info) %s", current_id, dumper.GetCString());
+        }
+        
+        context.AddNamedDecl(copied_method_decl);
+        
+        return;
+    } while (0);
+    
     StreamString ss;
         
     if (decl_name.isObjCZeroArgSelector())

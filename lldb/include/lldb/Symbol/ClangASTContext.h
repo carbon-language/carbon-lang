@@ -195,6 +195,12 @@ public:
 
     lldb::clang_type_t
     GetCStringType(bool is_const);
+    
+    lldb::clang_type_t
+    GetVoidType();
+    
+    lldb::clang_type_t
+    GetVoidType(clang::ASTContext *ast);
 
     lldb::clang_type_t
     GetVoidPtrType(bool is_const);

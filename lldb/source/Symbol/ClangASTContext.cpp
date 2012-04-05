@@ -973,6 +973,18 @@ ClangASTContext::GetCStringType (bool is_const)
 }
 
 clang_type_t
+ClangASTContext::GetVoidType()
+{
+    return GetVoidType(getASTContext());
+}
+
+clang_type_t
+ClangASTContext::GetVoidType(ASTContext *ast)
+{
+    return ast->VoidTy.getAsOpaquePtr();
+}
+
+clang_type_t
 ClangASTContext::GetVoidPtrType (bool is_const)
 {
     return GetVoidPtrType(getASTContext(), is_const);
@@ -2424,8 +2436,6 @@ ClangASTContext::AddObjCClassProperty
                         std::string property_setter_no_colon(property_setter_name, strlen(property_setter_name) - 1);
                         clang::IdentifierInfo *setter_ident = &identifier_table->get(property_setter_no_colon.c_str());
                         setter_sel = ast->Selectors.getSelector(1, &setter_ident);
-                        property_decl->setSetterName(setter_sel);
-                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_setter);
                     }
                     else if (!(property_attributes & DW_APPLE_PROPERTY_readonly))
                     {
@@ -2435,19 +2445,21 @@ ClangASTContext::AddObjCClassProperty
                         clang::IdentifierInfo *setter_ident = &identifier_table->get(setter_sel_string.c_str());
                         setter_sel = ast->Selectors.getSelector(1, &setter_ident);
                     }
+                    property_decl->setSetterName(setter_sel);
+                    property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_setter);
                     
                     if (property_getter_name != NULL)
                     {
                         clang::IdentifierInfo *getter_ident = &identifier_table->get(property_getter_name);
                         getter_sel = ast->Selectors.getSelector(0, &getter_ident);
-                        property_decl->setGetterName(getter_sel);
-                        property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_getter);
                     }
                     else
                     {
                         clang::IdentifierInfo *getter_ident = &identifier_table->get(property_name);
                         getter_sel = ast->Selectors.getSelector(0, &getter_ident);
                     }
+                    property_decl->setGetterName(getter_sel);
+                    property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_getter);
                         
                     if (ivar_decl)
                         property_decl->setPropertyIvarDecl (ivar_decl);
