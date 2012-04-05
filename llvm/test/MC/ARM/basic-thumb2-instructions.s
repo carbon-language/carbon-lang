@@ -1268,6 +1268,7 @@ _func:
         msr  spsr_fc, r0
         msr  SPSR_fsxc, r5
         msr  cpsr_fsxc, r8
+        msr  cpsr, r3
 
 @ CHECK: msr	APSR_nzcvq, r1          @ encoding: [0x81,0xf3,0x00,0x88]
 @ CHECK: msr	APSR_g, r2              @ encoding: [0x82,0xf3,0x00,0x84]
@@ -1283,6 +1284,7 @@ _func:
 @ CHECK: msr	SPSR_fc, r0             @ encoding: [0x90,0xf3,0x00,0x89]
 @ CHECK: msr	SPSR_fsxc, r5           @ encoding: [0x95,0xf3,0x00,0x8f]
 @ CHECK: msr	CPSR_fsxc, r8           @ encoding: [0x88,0xf3,0x00,0x8f]
+@ CHECK: msr	CPSR_fc, r3             @ encoding: [0x83,0xf3,0x00,0x89]
 
 
 @------------------------------------------------------------------------------
