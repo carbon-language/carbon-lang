@@ -37,6 +37,7 @@
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/ReadWriteLock.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -922,13 +923,13 @@ class ProcessInstanceInfoMatch
 public:
     ProcessInstanceInfoMatch () :
         m_match_info (),
-        m_name_match_type (lldb_private::eNameMatchIgnore),
+        m_name_match_type (eNameMatchIgnore),
         m_match_all_users (false)
     {
     }
 
     ProcessInstanceInfoMatch (const char *process_name, 
-                              lldb_private::NameMatchType process_name_match_type) :
+                              NameMatchType process_name_match_type) :
         m_match_info (),
         m_name_match_type (process_name_match_type),
         m_match_all_users (false)
@@ -960,14 +961,14 @@ public:
         m_match_all_users = b;
     }
 
-    lldb_private::NameMatchType 
+    NameMatchType
     GetNameMatchType () const
     {
         return m_name_match_type;
     }
 
     void
-    SetNameMatchType (lldb_private::NameMatchType name_match_type)
+    SetNameMatchType (NameMatchType name_match_type)
     {
         m_name_match_type = name_match_type;
     }
@@ -985,7 +986,7 @@ public:
 
 protected:
     ProcessInstanceInfo m_match_info;
-    lldb_private::NameMatchType m_name_match_type;
+    NameMatchType m_name_match_type;
     bool m_match_all_users;
 };
 
@@ -1295,6 +1296,15 @@ public:
     };
     
     typedef Range<lldb::addr_t, lldb::addr_t> LoadRange;
+    // We use a read/write lock to allow on or more clients to
+    // access the process state while the process is stopped (reader).
+    // We lock the write lock to control access to the process
+    // while it is running (readers, or clients that want the process
+    // stopped can block waiting for the process to stop, or just
+    // try to lock it to see if they can immediately access the stopped
+    // process. If the try read lock fails, then the process is running.
+    typedef ReadWriteLock::ReadLocker StopLocker;
+    typedef ReadWriteLock::WriteLocker RunLocker;
 
     // These two functions fill out the Broadcaster interface:
     
@@ -3133,7 +3143,13 @@ public:
     //------------------------------------------------------------------
     bool
     RemoveInvalidMemoryRange (const LoadRange &region);
-                              
+                         
+    ReadWriteLock &
+    GetRunLock ()
+    {
+        return m_run_lock;
+    }
+
 protected:
     //------------------------------------------------------------------
     // NextEventAction provides a way to register an action on the next
@@ -3215,6 +3231,11 @@ protected:
     }
 
     //------------------------------------------------------------------
+    // Type definitions
+    //------------------------------------------------------------------
+    typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection;
+
+    //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
     Target &                    m_target;               ///< The target that owns this process.
@@ -3225,7 +3246,7 @@ protected:
     Listener                    m_private_state_listener;     // This is the listener for the private state thread.
     Predicate<bool>             m_private_state_control_wait; /// This Predicate is used to signal that a control operation is complete.
     lldb::thread_t              m_private_state_thread;  // Thread ID for the thread that watches interal state events
-    ProcessModID                m_mod_id;              ///< Tracks the state of the process over stops and other alterations.
+    ProcessModID                m_mod_id;               ///< Tracks the state of the process over stops and other alterations.
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.
     int                         m_exit_status;          ///< The exit status of the process, or -1 if not set.
     std::string                 m_exit_string;          ///< A textual description of why a process exited.
@@ -3233,25 +3254,23 @@ protected:
     std::vector<Notifications>  m_notifications;        ///< The list of notifications that this process can deliver.
     std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;
-    BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend
-                                                        ///< to insert in the target.
+    BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend to insert in the target.
     std::auto_ptr<DynamicLoader> m_dyld_ap;
-    std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
-    std::auto_ptr<OperatingSystem>     m_os_ap;
+    std::auto_ptr<DynamicCheckerFunctions> m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
+    std::auto_ptr<OperatingSystem> m_os_ap;
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;
-    lldb_private::Communication m_stdio_communication;
-    lldb_private::Mutex         m_stdio_communication_mutex;
+    Communication 				m_stdio_communication;
+    Mutex        				m_stdio_communication_mutex;
     std::string                 m_stdout_data;
     std::string                 m_stderr_data;
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
-
-    typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
-    LanguageRuntimeCollection m_language_runtimes;
+    LanguageRuntimeCollection 	m_language_runtimes;
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
+    ReadWriteLock               m_run_lock;
 
     enum {
         eCanJITDontKnow= 0,

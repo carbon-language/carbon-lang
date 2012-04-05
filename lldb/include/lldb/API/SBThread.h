@@ -173,11 +173,7 @@ protected:
     SetThread (const lldb::ThreadSP& lldb_object_sp);
 
 private:
-    //------------------------------------------------------------------
-    // Classes that inherit from Thread can see and modify these
-    //------------------------------------------------------------------
-
-    lldb::ThreadWP m_opaque_wp;
+    lldb::ExecutionContextRefSP m_opaque_sp;
 };
 
 } // namespace lldb

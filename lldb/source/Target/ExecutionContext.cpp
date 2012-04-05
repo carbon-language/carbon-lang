@@ -534,10 +534,20 @@ ExecutionContextRef::operator =(const ExecutionContextRef &rhs)
 ExecutionContextRef &
 ExecutionContextRef::operator =(const ExecutionContext &exe_ctx)
 {
-    m_target_wp  = exe_ctx.GetTargetSP();
+    m_target_wp = exe_ctx.GetTargetSP();
     m_process_wp = exe_ctx.GetProcessSP();
-    SetThreadSP (exe_ctx.GetThreadSP());
-    SetFrameSP (exe_ctx.GetFrameSP());
+    lldb::ThreadSP thread_sp (exe_ctx.GetThreadSP());
+    m_thread_wp = thread_sp;
+    if (thread_sp)
+        m_tid = thread_sp->GetID();
+    else
+        m_tid = LLDB_INVALID_THREAD_ID;
+    lldb::StackFrameSP frame_sp (exe_ctx.GetFrameSP());
+    m_frame_wp = frame_sp;
+    if (frame_sp)
+        m_stack_id = frame_sp->GetStackID();
+    else
+        m_stack_id.Clear();
     return *this;
 }
 
@@ -546,10 +556,8 @@ ExecutionContextRef::Clear()
 {
     m_target_wp.reset();
     m_process_wp.reset();
-    m_thread_wp.reset();
-    m_frame_wp.reset();
-    m_tid = LLDB_INVALID_THREAD_ID;
-    m_stack_id.Clear();
+    ClearThread();
+    ClearFrame();
 }
 
 ExecutionContextRef::~ExecutionContextRef()
@@ -565,27 +573,52 @@ ExecutionContextRef::SetTargetSP (const lldb::TargetSP &target_sp)
 void
 ExecutionContextRef::SetProcessSP (const lldb::ProcessSP &process_sp)
 {
-    m_process_wp = process_sp;
+    if (process_sp)
+    {
+        m_process_wp = process_sp;
+        SetTargetSP (process_sp->GetTarget().shared_from_this());
+    }
+    else
+    {
+        m_process_wp.reset();
+        m_target_wp.reset();
+    }
 }
 
 void
 ExecutionContextRef::SetThreadSP (const lldb::ThreadSP &thread_sp)
 {
-    m_thread_wp = thread_sp;
     if (thread_sp)
+    {
+        m_thread_wp = thread_sp;
         m_tid = thread_sp->GetID();
+        SetProcessSP (thread_sp->GetProcess());
+    }
     else
-        m_tid = LLDB_INVALID_THREAD_ID;
+    {
+        ClearThread();
+        m_process_wp.reset();
+        m_target_wp.reset();
+    }
 }
 
 void
 ExecutionContextRef::SetFrameSP (const lldb::StackFrameSP &frame_sp)
 {
-    m_frame_wp = frame_sp;
     if (frame_sp)
+    {
+        m_frame_wp = frame_sp;
         m_stack_id = frame_sp->GetStackID();
+        SetThreadSP (frame_sp->GetThread());
+    }
     else
-        m_stack_id.Clear();
+    {
+        ClearFrame();
+        ClearThread();
+        m_process_wp.reset();
+        m_target_wp.reset();
+    }
+
 }
 
 void
@@ -630,27 +663,38 @@ void
 ExecutionContextRef::SetProcessPtr (Process *process)
 {
     if (process)
-        m_process_wp = process->shared_from_this();
+    {
+        SetProcessSP(process->shared_from_this());
+    }
     else
+    {
         m_process_wp.reset();
+        m_target_wp.reset();
+    }
 }
 
 void
 ExecutionContextRef::SetThreadPtr (Thread *thread)
 {
     if (thread)
-        m_thread_wp = thread->shared_from_this();
+    {
+        SetThreadSP (thread->shared_from_this());
+    }
     else
-        m_thread_wp.reset();
+    {
+        ClearThread();
+        m_process_wp.reset();
+        m_target_wp.reset();
+    }
 }
 
 void
 ExecutionContextRef::SetFramePtr (StackFrame *frame)
 {
     if (frame)
-        m_frame_wp = frame->shared_from_this();
+        SetFrameSP (frame->shared_from_this());
     else
-        m_frame_wp.reset();
+        Clear();
 }
 
 

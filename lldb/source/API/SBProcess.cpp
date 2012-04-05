@@ -134,28 +134,37 @@ SBProcess::RemoteLaunch (char const **argv,
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        if (process_sp->GetState() == eStateConnected)
+        Process::StopLocker stop_locker;
+        
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
         {
-            if (stop_at_entry)
-                launch_flags |= eLaunchFlagStopAtEntry;
-            ProcessLaunchInfo launch_info (stdin_path, 
-                                           stdout_path,
-                                           stderr_path,
-                                           working_directory,
-                                           launch_flags);
-            Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
-            if (exe_module)
-                launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
-            if (argv)
-                launch_info.GetArguments().AppendArguments (argv);
-            if (envp)
-                launch_info.GetEnvironmentEntries ().SetArguments (envp);
-            error.SetError (process_sp->Launch (launch_info));
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            if (process_sp->GetState() == eStateConnected)
+            {
+                if (stop_at_entry)
+                    launch_flags |= eLaunchFlagStopAtEntry;
+                ProcessLaunchInfo launch_info (stdin_path, 
+                                               stdout_path,
+                                               stderr_path,
+                                               working_directory,
+                                               launch_flags);
+                Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
+                if (exe_module)
+                    launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
+                if (argv)
+                    launch_info.GetArguments().AppendArguments (argv);
+                if (envp)
+                    launch_info.GetEnvironmentEntries ().SetArguments (envp);
+                error.SetError (process_sp->Launch (launch_info));
+            }
+            else
+            {
+                error.SetErrorString ("must be in eStateConnected to call RemoteLaunch");
+            }
         }
         else
         {
-            error.SetErrorString ("must be in eStateConnected to call RemoteLaunch");
+            error.SetErrorString ("process is running");
         }
     }
     else
@@ -178,16 +187,25 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        if (process_sp->GetState() == eStateConnected)
+        Process::StopLocker stop_locker;
+        
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
         {
-            ProcessAttachInfo attach_info;
-            attach_info.SetProcessID (pid);
-            error.SetError (process_sp->Attach (attach_info));            
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            if (process_sp->GetState() == eStateConnected)
+            {
+                ProcessAttachInfo attach_info;
+                attach_info.SetProcessID (pid);
+                error.SetError (process_sp->Attach (attach_info));            
+            }
+            else
+            {
+                error.SetErrorString ("must be in eStateConnected to call RemoteAttachToProcessWithID");
+            }
         }
         else
         {
-            error.SetErrorString ("must be in eStateConnected to call RemoteAttachToProcessWithID");
+            error.SetErrorString ("process is running");
         }
     }
     else
@@ -215,8 +233,10 @@ SBProcess::GetNumThreads ()
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
+        Process::StopLocker stop_locker;
+        
+        const bool can_update = stop_locker.TryLock(&process_sp->GetRunLock());
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        const bool can_update = true;
         num_threads = process_sp->GetThreadList().GetSize(can_update);
     }
 
@@ -413,8 +433,10 @@ SBProcess::GetThreadAtIndex (size_t index)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
+        Process::StopLocker stop_locker;
+        const bool can_update = stop_locker.TryLock(&process_sp->GetRunLock());
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        thread_sp = process_sp->GetThreadList().GetThreadAtIndex(index);
+        thread_sp = process_sp->GetThreadList().GetThreadAtIndex(index, can_update);
         sb_thread.SetThread (thread_sp);
     }
 
@@ -703,7 +725,9 @@ SBProcess::GetThreadByID (tid_t tid)
     if (process_sp)
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        thread_sp = process_sp->GetThreadList().FindThreadByID (tid);
+        Process::StopLocker stop_locker;
+        const bool can_update = stop_locker.TryLock(&process_sp->GetRunLock());
+        thread_sp = process_sp->GetThreadList().FindThreadByID (tid, can_update);
         sb_thread.SetThread (thread_sp);
     }
 
@@ -795,10 +819,16 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
     
     if (process_sp)
     {
-        Error error;
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        bytes_read = process_sp->ReadMemory (addr, dst, dst_len, error);
-        sb_error.SetError (error);
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            bytes_read = process_sp->ReadMemory (addr, dst, dst_len, sb_error.ref());
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
     else
     {
@@ -829,10 +859,16 @@ SBProcess::ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBE
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Error error;
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        bytes_read = process_sp->ReadCStringFromMemory (addr, (char *)buf, size, error);
-        sb_error.SetError (error);
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            bytes_read = process_sp->ReadCStringFromMemory (addr, (char *)buf, size, sb_error.ref());
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
     else
     {
@@ -844,20 +880,26 @@ SBProcess::ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBE
 uint64_t
 SBProcess::ReadUnsignedFromMemory (addr_t addr, uint32_t byte_size, lldb::SBError &sb_error)
 {
+    uint64_t value = 0;
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Error error;
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        uint64_t value = process_sp->ReadUnsignedIntegerFromMemory (addr, byte_size, 0, error);
-        sb_error.SetError (error);
-        return value;
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            value = process_sp->ReadUnsignedIntegerFromMemory (addr, byte_size, 0, sb_error.ref());
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
     else
     {
         sb_error.SetErrorString ("SBProcess is invalid");
     }
-    return 0;
+    return value;
 }
 
 lldb::addr_t
@@ -867,10 +909,16 @@ SBProcess::ReadPointerFromMemory (addr_t addr, lldb::SBError &sb_error)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Error error;
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        ptr = process_sp->ReadPointerFromMemory (addr, error);
-        sb_error.SetError (error);
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            ptr = process_sp->ReadPointerFromMemory (addr, sb_error.ref());
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
     else
     {
@@ -900,10 +948,16 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
 
     if (process_sp)
     {
-        Error error;
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        bytes_written = process_sp->WriteMemory (addr, src, src_len, error);
-        sb_error.SetError (error);
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            bytes_written = process_sp->WriteMemory (addr, src, src_len, sb_error.ref());
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
 
     if (log)
@@ -957,8 +1011,16 @@ SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        return process_sp->LoadImage (*sb_image_spec, sb_error.ref());
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            return process_sp->LoadImage (*sb_image_spec, sb_error.ref());
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
     return LLDB_INVALID_IMAGE_TOKEN;
 }
@@ -970,8 +1032,16 @@ SBProcess::UnloadImage (uint32_t image_token)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (process_sp->UnloadImage (image_token));
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            sb_error.SetError (process_sp->UnloadImage (image_token));
+        }
+        else
+        {
+            sb_error.SetErrorString("process is running");
+        }
     }
     else
         sb_error.SetErrorString("invalid process");

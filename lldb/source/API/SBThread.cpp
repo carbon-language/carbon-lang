@@ -43,18 +43,19 @@ using namespace lldb_private;
 // Constructors
 //----------------------------------------------------------------------
 SBThread::SBThread () :
-    m_opaque_wp ()
+    m_opaque_sp (new ExecutionContextRef())
 {
 }
 
 SBThread::SBThread (const ThreadSP& lldb_object_sp) :
-    m_opaque_wp (lldb_object_sp)
+    m_opaque_sp (new ExecutionContextRef(lldb_object_sp))
 {
 }
 
 SBThread::SBThread (const SBThread &rhs) :
-    m_opaque_wp (rhs.m_opaque_wp)
+    m_opaque_sp (new ExecutionContextRef(*rhs.m_opaque_sp))
 {
+    
 }
 
 //----------------------------------------------------------------------
@@ -65,7 +66,7 @@ const lldb::SBThread &
 SBThread::operator = (const SBThread &rhs)
 {
     if (this != &rhs)
-        m_opaque_wp = rhs.m_opaque_wp;
+        *m_opaque_sp = *rhs.m_opaque_sp;
     return *this;
 }
 
@@ -79,13 +80,13 @@ SBThread::~SBThread()
 bool
 SBThread::IsValid() const
 {
-    return !m_opaque_wp.expired();
+    return m_opaque_sp->GetThreadSP().get() != NULL;
 }
 
 void
 SBThread::Clear ()
 {
-    m_opaque_wp.reset();
+    m_opaque_sp->Clear();
 }
 
 
@@ -95,13 +96,17 @@ SBThread::GetStopReason()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     StopReason reason = eStopReasonInvalid;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
-        if (stop_info_sp)
-            reason =  stop_info_sp->GetStopReason();
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
+            if (stop_info_sp)
+                reason =  stop_info_sp->GetStopReason();
+        }
     }
 
     if (log)
@@ -114,42 +119,46 @@ SBThread::GetStopReason()
 size_t
 SBThread::GetStopReasonDataCount ()
 {
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
-        if (stop_info_sp)
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            StopReason reason = stop_info_sp->GetStopReason();
-            switch (reason)
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
+            if (stop_info_sp)
             {
-            case eStopReasonInvalid:
-            case eStopReasonNone:
-            case eStopReasonTrace:
-            case eStopReasonPlanComplete:
-                // There is no data for these stop reasons.
-                return 0;
-
-            case eStopReasonBreakpoint:
+                StopReason reason = stop_info_sp->GetStopReason();
+                switch (reason)
                 {
-                    break_id_t site_id = stop_info_sp->GetValue();
-                    lldb::BreakpointSiteSP bp_site_sp (exe_ctx.GetProcessPtr()->GetBreakpointSiteList().FindByID (site_id));
-                    if (bp_site_sp)
-                        return bp_site_sp->GetNumberOfOwners () * 2;
-                    else
-                        return 0; // Breakpoint must have cleared itself...
+                case eStopReasonInvalid:
+                case eStopReasonNone:
+                case eStopReasonTrace:
+                case eStopReasonPlanComplete:
+                    // There is no data for these stop reasons.
+                    return 0;
+
+                case eStopReasonBreakpoint:
+                    {
+                        break_id_t site_id = stop_info_sp->GetValue();
+                        lldb::BreakpointSiteSP bp_site_sp (exe_ctx.GetProcessPtr()->GetBreakpointSiteList().FindByID (site_id));
+                        if (bp_site_sp)
+                            return bp_site_sp->GetNumberOfOwners () * 2;
+                        else
+                            return 0; // Breakpoint must have cleared itself...
+                    }
+                    break;
+
+                case eStopReasonWatchpoint:
+                    return 1;
+
+                case eStopReasonSignal:
+                    return 1;
+
+                case eStopReasonException:
+                    return 1;
                 }
-                break;
-
-            case eStopReasonWatchpoint:
-                return 1;
-
-            case eStopReasonSignal:
-                return 1;
-
-            case eStopReasonException:
-                return 1;
             }
         }
     }
@@ -159,58 +168,63 @@ SBThread::GetStopReasonDataCount ()
 uint64_t
 SBThread::GetStopReasonDataAtIndex (uint32_t idx)
 {
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        Thread *thread = exe_ctx.GetThreadPtr();
-        StopInfoSP stop_info_sp = thread->GetStopInfo ();
-        if (stop_info_sp)
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            StopReason reason = stop_info_sp->GetStopReason();
-            switch (reason)
-            {
-            case eStopReasonInvalid:
-            case eStopReasonNone:
-            case eStopReasonTrace:
-            case eStopReasonPlanComplete:
-                // There is no data for these stop reasons.
-                return 0;
 
-            case eStopReasonBreakpoint:
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            Thread *thread = exe_ctx.GetThreadPtr();
+            StopInfoSP stop_info_sp = thread->GetStopInfo ();
+            if (stop_info_sp)
+            {
+                StopReason reason = stop_info_sp->GetStopReason();
+                switch (reason)
                 {
-                    break_id_t site_id = stop_info_sp->GetValue();
-                    lldb::BreakpointSiteSP bp_site_sp (exe_ctx.GetProcessPtr()->GetBreakpointSiteList().FindByID (site_id));
-                    if (bp_site_sp)
+                case eStopReasonInvalid:
+                case eStopReasonNone:
+                case eStopReasonTrace:
+                case eStopReasonPlanComplete:
+                    // There is no data for these stop reasons.
+                    return 0;
+
+                case eStopReasonBreakpoint:
                     {
-                        uint32_t bp_index = idx / 2;
-                        BreakpointLocationSP bp_loc_sp (bp_site_sp->GetOwnerAtIndex (bp_index));
-                        if (bp_loc_sp)
+                        break_id_t site_id = stop_info_sp->GetValue();
+                        lldb::BreakpointSiteSP bp_site_sp (exe_ctx.GetProcessPtr()->GetBreakpointSiteList().FindByID (site_id));
+                        if (bp_site_sp)
                         {
-                            if (bp_index & 1)
+                            uint32_t bp_index = idx / 2;
+                            BreakpointLocationSP bp_loc_sp (bp_site_sp->GetOwnerAtIndex (bp_index));
+                            if (bp_loc_sp)
                             {
-                                // Odd idx, return the breakpoint location ID
-                                return bp_loc_sp->GetID();
-                            }
-                            else
-                            {
-                                // Even idx, return the breakpoint ID
-                                return bp_loc_sp->GetBreakpoint().GetID();
+                                if (bp_index & 1)
+                                {
+                                    // Odd idx, return the breakpoint location ID
+                                    return bp_loc_sp->GetID();
+                                }
+                                else
+                                {
+                                    // Even idx, return the breakpoint ID
+                                    return bp_loc_sp->GetBreakpoint().GetID();
+                                }
                             }
                         }
+                        return LLDB_INVALID_BREAK_ID;
                     }
-                    return LLDB_INVALID_BREAK_ID;
+                    break;
+
+                case eStopReasonWatchpoint:
+                    return stop_info_sp->GetValue();
+
+                case eStopReasonSignal:
+                    return stop_info_sp->GetValue();
+
+                case eStopReasonException:
+                    return stop_info_sp->GetValue();
                 }
-                break;
-
-            case eStopReasonWatchpoint:
-                return stop_info_sp->GetValue();
-
-            case eStopReasonSignal:
-                return stop_info_sp->GetValue();
-
-            case eStopReasonException:
-                return stop_info_sp->GetValue();
             }
         }
     }
@@ -222,94 +236,99 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
-        if (stop_info_sp)
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            const char *stop_desc = stop_info_sp->GetDescription();
-            if (stop_desc)
+
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
+            if (stop_info_sp)
             {
-                if (log)
-                    log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => \"%s\"", 
-                                 exe_ctx.GetThreadPtr(), stop_desc);
-                if (dst)
-                    return ::snprintf (dst, dst_len, "%s", stop_desc);
-                else
-                {
-                    // NULL dst passed in, return the length needed to contain the description
-                    return ::strlen (stop_desc) + 1; // Include the NULL byte for size
-                }
-            }
-            else
-            {
-                size_t stop_desc_len = 0;
-                switch (stop_info_sp->GetStopReason())
-                {
-                case eStopReasonTrace:
-                case eStopReasonPlanComplete:
-                    {
-                        static char trace_desc[] = "step";
-                        stop_desc = trace_desc;
-                        stop_desc_len = sizeof(trace_desc); // Include the NULL byte for size
-                    }
-                    break;
-
-                case eStopReasonBreakpoint:
-                    {
-                        static char bp_desc[] = "breakpoint hit";
-                        stop_desc = bp_desc;
-                        stop_desc_len = sizeof(bp_desc); // Include the NULL byte for size
-                    }
-                    break;
-
-                case eStopReasonWatchpoint:
-                    {
-                        static char wp_desc[] = "watchpoint hit";
-                        stop_desc = wp_desc;
-                        stop_desc_len = sizeof(wp_desc); // Include the NULL byte for size
-                    }
-                    break;
-
-                case eStopReasonSignal:
-                    {
-                        stop_desc = exe_ctx.GetProcessPtr()->GetUnixSignals ().GetSignalAsCString (stop_info_sp->GetValue());
-                        if (stop_desc == NULL || stop_desc[0] == '\0')
-                        {
-                            static char signal_desc[] = "signal";
-                            stop_desc = signal_desc;
-                            stop_desc_len = sizeof(signal_desc); // Include the NULL byte for size
-                        }
-                    }
-                    break;
-
-                case eStopReasonException:
-                    {
-                        char exc_desc[] = "exception";
-                        stop_desc = exc_desc;
-                        stop_desc_len = sizeof(exc_desc); // Include the NULL byte for size
-                    }
-                    break;          
-
-                default:
-                    break;
-                }
-                
-                if (stop_desc && stop_desc[0])
+                const char *stop_desc = stop_info_sp->GetDescription();
+                if (stop_desc)
                 {
                     if (log)
-                        log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'", 
+                        log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => \"%s\"", 
                                      exe_ctx.GetThreadPtr(), stop_desc);
-
                     if (dst)
-                        return ::snprintf (dst, dst_len, "%s", stop_desc) + 1; // Include the NULL byte
+                        return ::snprintf (dst, dst_len, "%s", stop_desc);
+                    else
+                    {
+                        // NULL dst passed in, return the length needed to contain the description
+                        return ::strlen (stop_desc) + 1; // Include the NULL byte for size
+                    }
+                }
+                else
+                {
+                    size_t stop_desc_len = 0;
+                    switch (stop_info_sp->GetStopReason())
+                    {
+                    case eStopReasonTrace:
+                    case eStopReasonPlanComplete:
+                        {
+                            static char trace_desc[] = "step";
+                            stop_desc = trace_desc;
+                            stop_desc_len = sizeof(trace_desc); // Include the NULL byte for size
+                        }
+                        break;
 
-                    if (stop_desc_len == 0)
-                        stop_desc_len = ::strlen (stop_desc) + 1; // Include the NULL byte
-                        
-                    return stop_desc_len;
+                    case eStopReasonBreakpoint:
+                        {
+                            static char bp_desc[] = "breakpoint hit";
+                            stop_desc = bp_desc;
+                            stop_desc_len = sizeof(bp_desc); // Include the NULL byte for size
+                        }
+                        break;
+
+                    case eStopReasonWatchpoint:
+                        {
+                            static char wp_desc[] = "watchpoint hit";
+                            stop_desc = wp_desc;
+                            stop_desc_len = sizeof(wp_desc); // Include the NULL byte for size
+                        }
+                        break;
+
+                    case eStopReasonSignal:
+                        {
+                            stop_desc = exe_ctx.GetProcessPtr()->GetUnixSignals ().GetSignalAsCString (stop_info_sp->GetValue());
+                            if (stop_desc == NULL || stop_desc[0] == '\0')
+                            {
+                                static char signal_desc[] = "signal";
+                                stop_desc = signal_desc;
+                                stop_desc_len = sizeof(signal_desc); // Include the NULL byte for size
+                            }
+                        }
+                        break;
+
+                    case eStopReasonException:
+                        {
+                            char exc_desc[] = "exception";
+                            stop_desc = exc_desc;
+                            stop_desc_len = sizeof(exc_desc); // Include the NULL byte for size
+                        }
+                        break;          
+
+                    default:
+                        break;
+                    }
+                    
+                    if (stop_desc && stop_desc[0])
+                    {
+                        if (log)
+                            log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'", 
+                                         exe_ctx.GetThreadPtr(), stop_desc);
+
+                        if (dst)
+                            return ::snprintf (dst, dst_len, "%s", stop_desc) + 1; // Include the NULL byte
+
+                        if (stop_desc_len == 0)
+                            stop_desc_len = ::strlen (stop_desc) + 1; // Include the NULL byte
+                            
+                        return stop_desc_len;
+                    }
                 }
             }
         }
@@ -323,14 +342,18 @@ SBValue
 SBThread::GetStopReturnValue ()
 {
     ValueObjectSP return_valobj_sp;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
-        if (stop_info_sp)
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            StopInfoSP stop_info_sp = exe_ctx.GetThreadPtr()->GetStopInfo ();
+            if (stop_info_sp)
+            {
+                return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
+            }
         }
     }
     
@@ -347,14 +370,14 @@ SBThread::GetStopReturnValue ()
 void
 SBThread::SetThread (const ThreadSP& lldb_object_sp)
 {
-    m_opaque_wp = lldb_object_sp;
+    m_opaque_sp->SetThreadSP (lldb_object_sp);
 }
 
 
 lldb::tid_t
 SBThread::GetThreadID () const
 {
-    ThreadSP thread_sp(m_opaque_wp.lock());
+    ThreadSP thread_sp(m_opaque_sp->GetThreadSP());
     if (thread_sp)
         return thread_sp->GetID();
     return LLDB_INVALID_THREAD_ID;
@@ -363,7 +386,7 @@ SBThread::GetThreadID () const
 uint32_t
 SBThread::GetIndexID () const
 {
-    ThreadSP thread_sp(m_opaque_wp.lock());
+    ThreadSP thread_sp(m_opaque_sp->GetThreadSP());
     if (thread_sp)
         return thread_sp->GetIndexID();
     return LLDB_INVALID_INDEX32;
@@ -373,11 +396,15 @@ const char *
 SBThread::GetName () const
 {
     const char *name = NULL;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        name = exe_ctx.GetThreadPtr()->GetName();
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            name = exe_ctx.GetThreadPtr()->GetName();
+        }
     }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -391,11 +418,15 @@ const char *
 SBThread::GetQueueName () const
 {
     const char *name = NULL;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        name = exe_ctx.GetThreadPtr()->GetQueueName();
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            name = exe_ctx.GetThreadPtr()->GetQueueName();
+        }
     }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -411,7 +442,7 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
 
     if (log)
         log->Printf ("SBThread(%p)::StepOver (stop_other_threads='%s')", exe_ctx.GetThreadPtr(), 
@@ -464,7 +495,7 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
 
     if (log)
         log->Printf ("SBThread(%p)::StepInto (stop_other_threads='%s')", exe_ctx.GetThreadPtr(),
@@ -514,7 +545,7 @@ SBThread::StepOut ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
 
     if (log)
         log->Printf ("SBThread(%p)::StepOut ()", exe_ctx.GetThreadPtr());
@@ -553,7 +584,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     StackFrameSP frame_sp (sb_frame.GetFrameSP());
     if (log)
     {
@@ -595,7 +626,7 @@ SBThread::StepInstruction (bool step_over)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
 
 
     if (log)
@@ -624,7 +655,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
 
     if (log)
         log->Printf ("SBThread(%p)::RunToAddress (addr=0x%llx)", exe_ctx.GetThreadPtr(), addr);
@@ -662,7 +693,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     char path[PATH_MAX];
     
-    ExecutionContext exe_ctx (m_opaque_wp);    
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     StackFrameSP frame_sp (sb_frame.GetFrameSP());
 
     if (log)
@@ -815,7 +846,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
 bool
 SBThread::Suspend()
 {
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
         exe_ctx.GetThreadPtr()->SetResumeState (eStateSuspended);
@@ -827,7 +858,7 @@ SBThread::Suspend()
 bool
 SBThread::Resume ()
 {
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
         exe_ctx.GetThreadPtr()->SetResumeState (eStateRunning);
@@ -839,7 +870,7 @@ SBThread::Resume ()
 bool
 SBThread::IsSuspended()
 {
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
         return exe_ctx.GetThreadPtr()->GetResumeState () == eStateSuspended;
     return false;
@@ -851,7 +882,7 @@ SBThread::GetProcess ()
 
     SBProcess sb_process;
     ProcessSP process_sp;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
         // Have to go up to the target so we can get a shared pointer to our process...
@@ -876,11 +907,15 @@ SBThread::GetNumFrames ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t num_frames = 0;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        num_frames = exe_ctx.GetThreadPtr()->GetStackFrameCount();
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            num_frames = exe_ctx.GetThreadPtr()->GetStackFrameCount();
+        }
     }
 
     if (log)
@@ -896,12 +931,16 @@ SBThread::GetFrameAtIndex (uint32_t idx)
 
     SBFrame sb_frame;
     StackFrameSP frame_sp;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        frame_sp = exe_ctx.GetThreadPtr()->GetStackFrameAtIndex (idx);
-        sb_frame.SetFrameSP (frame_sp);
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            frame_sp = exe_ctx.GetThreadPtr()->GetStackFrameAtIndex (idx);
+            sb_frame.SetFrameSP (frame_sp);
+        }
     }
 
     if (log)
@@ -922,12 +961,16 @@ SBThread::GetSelectedFrame ()
 
     SBFrame sb_frame;
     StackFrameSP frame_sp;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        frame_sp = exe_ctx.GetThreadPtr()->GetSelectedFrame ();
-        sb_frame.SetFrameSP (frame_sp);
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            frame_sp = exe_ctx.GetThreadPtr()->GetSelectedFrame ();
+            sb_frame.SetFrameSP (frame_sp);
+        }
     }
 
     if (log)
@@ -948,16 +991,20 @@ SBThread::SetSelectedFrame (uint32_t idx)
 
     SBFrame sb_frame;
     StackFrameSP frame_sp;
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        Thread *thread = exe_ctx.GetThreadPtr();
-        frame_sp = thread->GetStackFrameAtIndex (idx);
-        if (frame_sp)
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            thread->SetSelectedFrame (frame_sp.get());
-            sb_frame.SetFrameSP (frame_sp);
+            Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
+            Thread *thread = exe_ctx.GetThreadPtr();
+            frame_sp = thread->GetStackFrameAtIndex (idx);
+            if (frame_sp)
+            {
+                thread->SetSelectedFrame (frame_sp.get());
+                sb_frame.SetFrameSP (frame_sp);
+            }
         }
     }
 
@@ -975,13 +1022,13 @@ SBThread::SetSelectedFrame (uint32_t idx)
 bool
 SBThread::operator == (const SBThread &rhs) const
 {
-    return m_opaque_wp.lock().get() == rhs.m_opaque_wp.lock().get();
+    return m_opaque_sp->GetThreadSP().get() == rhs.m_opaque_sp->GetThreadSP().get();
 }
 
 bool
 SBThread::operator != (const SBThread &rhs) const
 {
-    return m_opaque_wp.lock().get() != rhs.m_opaque_wp.lock().get();
+    return m_opaque_sp->GetThreadSP().get() != rhs.m_opaque_sp->GetThreadSP().get();
 }
 
 bool
@@ -989,7 +1036,7 @@ SBThread::GetDescription (SBStream &description) const
 {
     Stream &strm = description.ref();
 
-    ExecutionContext exe_ctx (m_opaque_wp);
+    ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
         strm.Printf("SBThread: tid = 0x%4.4llx", exe_ctx.GetThreadPtr()->GetID());

@@ -267,6 +267,7 @@ namespace lldb {
     typedef STD_SHARED_PTR(lldb_private::Disassembler) DisassemblerSP;
     typedef STD_SHARED_PTR(lldb_private::DynamicLoader) DynamicLoaderSP;
     typedef STD_SHARED_PTR(lldb_private::Event) EventSP;
+    typedef STD_SHARED_PTR(lldb_private::ExecutionContextRef) ExecutionContextRefSP;
     typedef STD_SHARED_PTR(lldb_private::TypeCategoryImpl) TypeCategoryImplSP;
     typedef STD_SHARED_PTR(lldb_private::Function) FunctionSP;
     typedef STD_SHARED_PTR(lldb_private::InlineFunctionInfo) InlineFunctionInfoSP;

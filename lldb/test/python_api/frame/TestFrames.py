@@ -212,7 +212,7 @@ class FrameAPITestCase(TestBase):
         self.assertTrue(frameOutOfC)
 
         # The latest two frames should not be equal.
-        self.assertFalse(frameEntered.IsEqual(frameNow))
+        self.assertFalse(frameOutOfC.IsEqual(frameNow))
 
 
 if __name__ == '__main__':

@@ -43,8 +43,11 @@ class FrameUtilsTestCase(TestBase):
 
         import lldbutil
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+        self.assertTrue (thread)
         frame0 = thread.GetFrameAtIndex(0)
+        self.assertTrue (frame0)
         frame1 = thread.GetFrameAtIndex(1)
+        self.assertTrue (frame1)
         parent = lldbutil.get_parent_frame(frame0)
         self.assertTrue(parent and parent.GetFrameID() == frame1.GetFrameID())
         frame0_args = lldbutil.get_args_as_string(frame0)

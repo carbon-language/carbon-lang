@@ -329,6 +329,20 @@ public:
         return m_stack_id.IsValid();
     }
 
+    void
+    ClearThread ()
+    {
+        m_thread_wp.reset();
+        m_tid = LLDB_INVALID_THREAD_ID;
+    }
+    
+    void
+    ClearFrame ()
+    {
+        m_stack_id.Clear();
+        m_frame_wp.reset();
+    }
+
 protected:
     //------------------------------------------------------------------
     // Member variables

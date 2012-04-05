@@ -19,7 +19,6 @@ namespace lldb {
 class SBFrame
 {
 public:
-    typedef STD_SHARED_PTR(lldb_private::StackFrameImpl) StackFrameImplSP;
     SBFrame ();
 
     SBFrame (const lldb::SBFrame &rhs);
@@ -224,7 +223,7 @@ protected:
     void
     SetFrameSP (const lldb::StackFrameSP &lldb_object_sp);
 
-    StackFrameImplSP m_opaque_sp;
+    lldb::ExecutionContextRefSP m_opaque_sp;
 };
 
 } // namespace lldb

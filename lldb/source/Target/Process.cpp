@@ -788,7 +788,8 @@ Process::Process(Target &target, Listener &listener) :
     m_allocated_memory_cache (*this),
     m_should_detach (false),
     m_next_event_action_ap(),
-    m_can_jit(eCanJITDontKnow)
+    m_can_jit(eCanJITDontKnow),
+    m_run_lock ()
 {
     UpdateInstanceName();
     
@@ -1265,7 +1266,28 @@ Process::SetPublicState (StateType new_state)
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf("Process::SetPublicState (%s)", StateAsCString(new_state));
+    const StateType old_state = m_public_state.GetValue();
     m_public_state.SetValue (new_state);
+    if (!IsHijackedForEvent(eBroadcastBitStateChanged))
+    {
+        const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
+        const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
+        if (old_state_is_stopped != new_state_is_stopped)
+        {
+            if (new_state_is_stopped)
+            {
+                if (log)
+                    log->Printf("Process::SetPublicState (%s) -- unlocking run lock", StateAsCString(new_state));
+                m_run_lock.WriteUnlock();
+            }
+            else
+            {
+                if (log)
+                    log->Printf("Process::SetPublicState (%s) -- locking run lock", StateAsCString(new_state));
+                m_run_lock.WriteLock();
+            }
+        }
+    }
 }
 
 StateType
@@ -1287,6 +1309,20 @@ Process::SetPrivateState (StateType new_state)
 
     const StateType old_state = m_private_state.GetValueNoLock ();
     state_changed = old_state != new_state;
+    // This code is left commented out in case we ever need to control
+    // the private process state with another run lock. Right now it doesn't
+    // seem like we need to do this, but if we ever do, we can uncomment and
+    // use this code.
+//    const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
+//    const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
+//    if (old_state_is_stopped != new_state_is_stopped)
+//    {
+//        if (new_state_is_stopped)
+//            m_private_run_lock.WriteUnlock();
+//        else
+//            m_private_run_lock.WriteLock();
+//    }
+
     if (state_changed)
     {
         m_private_state.SetValueNoLock (new_state);
