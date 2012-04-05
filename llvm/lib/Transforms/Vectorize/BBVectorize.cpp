@@ -141,7 +141,7 @@ namespace {
   struct BBVectorize : public BasicBlockPass {
     static char ID; // Pass identification, replacement for typeid
 
-    VectorizeConfig Config;
+    const VectorizeConfig Config;
 
     BBVectorize(const VectorizeConfig &C = VectorizeConfig())
       : BasicBlockPass(ID), Config(C) {
