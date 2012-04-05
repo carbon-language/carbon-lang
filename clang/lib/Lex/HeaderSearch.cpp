@@ -305,8 +305,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
 
     // If the framework dir doesn't exist, we fail.
     // FIXME: It's probably more efficient to query this with FileMgr.getDir.
-    bool Exists;
-    if (llvm::sys::fs::exists(FrameworkName.str(), Exists) || !Exists)
+    if (!llvm::sys::fs::exists(FrameworkName.str()))
       return 0;
 
     // Otherwise, if it does, remember that this is the right direntry for this
