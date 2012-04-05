@@ -1327,10 +1327,14 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     SourceLocation Loc = PD->getLocation();
     llvm::DIFile PUnit = getOrCreateFile(Loc);
     unsigned PLine = getLineNumber(Loc);
+    ObjCMethodDecl *Getter = PD->getGetterMethodDecl();
+    ObjCMethodDecl *Setter = PD->getSetterMethodDecl();
     llvm::MDNode *PropertyNode =
       DBuilder.createObjCProperty(PD->getName(),
 				  PUnit, PLine,
+                                  (Getter && Getter->isImplicit()) ? "" :
                                   getSelectorName(PD->getGetterName()),
+                                  (Setter && Setter->isImplicit()) ? "" :
                                   getSelectorName(PD->getSetterName()),
                                   PD->getPropertyAttributes(),
 				  getOrCreateType(PD->getType(), PUnit));
@@ -1388,13 +1392,17 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 	  SourceLocation Loc = PD->getLocation();
 	  llvm::DIFile PUnit = getOrCreateFile(Loc);
 	  unsigned PLine = getLineNumber(Loc);
-	  PropertyNode =
-	    DBuilder.createObjCProperty(PD->getName(),
-					PUnit, PLine,
+          ObjCMethodDecl *Getter = PD->getGetterMethodDecl();
+          ObjCMethodDecl *Setter = PD->getSetterMethodDecl();
+          PropertyNode =
+            DBuilder.createObjCProperty(PD->getName(),
+                                        PUnit, PLine,
+                                        (Getter && Getter->isImplicit()) ? "" :
                                         getSelectorName(PD->getGetterName()),
+                                        (Setter && Setter->isImplicit()) ? "" :
                                         getSelectorName(PD->getSetterName()),
-					PD->getPropertyAttributes(),
-					getOrCreateType(PD->getType(),PUnit));
+                                        PD->getPropertyAttributes(),
+                                        getOrCreateType(PD->getType(), PUnit));
         }
       }
     }
