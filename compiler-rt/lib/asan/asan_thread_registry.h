@@ -39,6 +39,7 @@ class AsanThreadRegistry {
   void SetCurrent(AsanThread *t);
 
   int GetCurrentTidOrMinusOne() {
+    if (!inited_) return 0;
     AsanThread *t = GetCurrent();
     return t ? t->tid() : -1;
   }
@@ -69,6 +70,7 @@ class AsanThreadRegistry {
   AsanStats accumulated_stats_;
   int n_threads_;
   AsanLock mu_;
+  bool inited_;
 };
 
 // Returns a single instance of registry.

@@ -37,6 +37,8 @@ void AsanThreadRegistry::Init() {
   main_thread_summary_.set_thread(&main_thread_);
   RegisterThread(&main_thread_);
   SetCurrent(&main_thread_);
+  // At this point only one thread exists.
+  inited_ = true;
 }
 
 void AsanThreadRegistry::RegisterThread(AsanThread *thread) {
