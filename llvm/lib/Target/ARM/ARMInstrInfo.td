@@ -1331,10 +1331,10 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{4} = 0;
     let Inst{3-0} = shift{3-0};
   }
-  def rsr : AsI1<opcod, (outs GPR:$Rd),
-                (ins GPR:$Rn, so_reg_reg:$shift),
+  def rsr : AsI1<opcod, (outs GPRnopc:$Rd),
+                (ins GPRnopc:$Rn, so_reg_reg:$shift),
                 DPSoRegRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
-              [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_reg_reg:$shift, CPSR))]>,
+              [(set GPRnopc:$Rd, CPSR, (opnode GPRnopc:$Rn, so_reg_reg:$shift, CPSR))]>,
                Requires<[IsARM]> {
     bits<4> Rd;
     bits<4> Rn;
@@ -1368,7 +1368,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                                                     cc_out:$s)>,
      Requires<[IsARM]>;
   def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsr")) GPR:$Rdn, GPR:$Rdn,
+     (!cast<Instruction>(!strconcat(baseOpc, "rsr")) GPRnopc:$Rdn, GPRnopc:$Rdn,
                                                     so_reg_reg:$shift, pred:$p,
                                                     cc_out:$s)>,
      Requires<[IsARM]>;
