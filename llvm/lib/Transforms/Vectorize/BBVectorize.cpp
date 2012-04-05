@@ -144,6 +144,12 @@ namespace {
       initializeBBVectorizePass(*PassRegistry::getPassRegistry());
     }
 
+    BBVectorize(Pass *P) : BasicBlockPass(ID) {
+      AA = &P->getAnalysis<AliasAnalysis>();
+      SE = &P->getAnalysis<ScalarEvolution>();
+      TD = P->getAnalysisIfAvailable<TargetData>();
+    }
+
     typedef std::pair<Value *, Value *> ValuePair;
     typedef std::pair<ValuePair, size_t> ValuePairWithDepth;
     typedef std::pair<ValuePair, ValuePair> VPPair; // A ValuePair pair
@@ -280,11 +286,7 @@ namespace {
                      Instruction *&InsertionPt,
                      Instruction *I, Instruction *J);
 
-    virtual bool runOnBasicBlock(BasicBlock &BB) {
-      AA = &getAnalysis<AliasAnalysis>();
-      SE = &getAnalysis<ScalarEvolution>();
-      TD = getAnalysisIfAvailable<TargetData>();
-
+    bool vectorizeBB(BasicBlock &BB) {
       bool changed = false;
       // Iterate a sufficient number of times to merge types of size 1 bit,
       // then 2 bits, then 4, etc. up to half of the target vector width of the
@@ -302,6 +304,14 @@ namespace {
 
       DEBUG(dbgs() << "BBV: done!\n");
       return changed;
+    }
+
+    virtual bool runOnBasicBlock(BasicBlock &BB) {
+      AA = &getAnalysis<AliasAnalysis>();
+      SE = &getAnalysis<ScalarEvolution>();
+      TD = getAnalysisIfAvailable<TargetData>();
+
+      return vectorizeBB(BB);
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -1861,3 +1871,7 @@ BasicBlockPass *llvm::createBBVectorizePass() {
   return new BBVectorize();
 }
 
+bool llvm::vectorizeBasicBlock(Pass *P, BasicBlock &BB) {
+  BBVectorize BBVectorizer(P);
+  return BBVectorizer.vectorizeBB(BB);
+}
