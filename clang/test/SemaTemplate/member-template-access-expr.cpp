@@ -60,7 +60,7 @@ struct X1 {
 
 void test_X1(X1 x1) {
   float *fp1 = x1.f1<>(17);
-  float *fp2 = x1.f1<int>(3.14);
+  float *fp2 = x1.f1<int>(3.14); // expected-warning {{implicit conversion turns literal floating-point number into integer}}
   int *ip1 = x1.f1(17);
   float *ip2 = x1.f1(3.14);
   

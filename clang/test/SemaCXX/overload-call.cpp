@@ -233,7 +233,7 @@ float* intref(const int&);
 
 void intref_test() {
   float* ir1 = intref(5);
-  float* ir2 = intref(5.5);
+  float* ir2 = intref(5.5); // expected-warning{{implicit conversion turns literal floating-point number into integer}}
 }
 
 void derived5(C&); // expected-note{{candidate function not viable: cannot bind base class object of type 'A' to derived class reference 'C &' for 1st argument}}

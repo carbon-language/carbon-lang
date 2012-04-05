@@ -86,7 +86,9 @@ double double_array[3] = { 1.0, 2.0 };
 struct {
   int x;
   float y;
-} designated_inits[3] = { [0].y = 17, [2].x = 12.3, 3.5 };
+} designated_inits[3] = { [0].y = 17,
+                          [2].x = 12.3, // expected-warning {{implicit conversion turns literal floating-point number into integer}}
+                          3.5 };
 
 // TypesCompatibleExpr
 typedef typeof(__builtin_types_compatible_p(float, double)) types_compatible;
