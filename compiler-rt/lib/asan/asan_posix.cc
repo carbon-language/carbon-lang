@@ -34,6 +34,8 @@
 // since most of the stuff here is inlinable.
 #include <algorithm>
 
+static const size_t kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
+
 namespace __asan {
 
 static void MaybeInstallSigaction(int signum,
@@ -44,6 +46,7 @@ static void MaybeInstallSigaction(int signum,
   REAL(memset)(&sigact, 0, sizeof(sigact));
   sigact.sa_sigaction = handler;
   sigact.sa_flags = SA_SIGINFO;
+  if (FLAG_use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
   CHECK(0 == REAL(sigaction)(signum, &sigact, 0));
 }
 
@@ -63,7 +66,40 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   ShowStatsAndAbort();
 }
 
+void SetAlternateSignalStack() {
+  stack_t altstack, oldstack;
+  CHECK(0 == sigaltstack(NULL, &oldstack));
+  // If the alternate stack is already in place, do nothing.
+  if ((oldstack.ss_flags & SS_DISABLE) == 0) return;
+  // TODO(glider): the mapped stack should have the MAP_STACK flag in the
+  // future. It is not required by man 2 sigaltstack now (they're using
+  // malloc()).
+  void* base = AsanMmapSomewhereOrDie(kAltStackSize, __FUNCTION__);
+  altstack.ss_sp = base;
+  altstack.ss_flags = 0;
+  altstack.ss_size = kAltStackSize;
+  CHECK(0 == sigaltstack(&altstack, NULL));
+  if (FLAG_v > 0) {
+    Report("Alternative stack for T%d set: [%p,%p)\n",
+           asanThreadRegistry().GetCurrentTidOrMinusOne(),
+           altstack.ss_sp, (char*)altstack.ss_sp + altstack.ss_size);
+  }
+}
+
+void UnsetAlternateSignalStack() {
+  stack_t altstack, oldstack;
+  altstack.ss_sp = NULL;
+  altstack.ss_flags = SS_DISABLE;
+  altstack.ss_size = 0;
+  CHECK(0 == sigaltstack(&altstack, &oldstack));
+  AsanUnmapOrDie(oldstack.ss_sp, oldstack.ss_size);
+}
+
 void InstallSignalHandlers() {
+  // Set the alternate signal stack for the main thread.
+  // This will cause SetAlternateSignalStack to be called twice, but the stack
+  // will be actually set only once.
+  if (FLAG_use_sigaltstack) SetAlternateSignalStack();
   MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
 }

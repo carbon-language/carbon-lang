@@ -262,6 +262,14 @@ uintptr_t GetThreadSelf() {
   return GetCurrentThreadId();
 }
 
+void SetAlternateSignalStack() {
+  // FIXME: Decide what to do on Windows.
+}
+
+void UnsetAlternateSignalStack() {
+  // FIXME: Decide what to do on Windows.
+}
+
 void InstallSignalHandlers() {
   // FIXME: Decide what to do on Windows.
 }

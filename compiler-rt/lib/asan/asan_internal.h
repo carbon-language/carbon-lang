@@ -181,6 +181,8 @@ size_t AsanWrite(int fd, const void *buf, size_t count);
 int AsanClose(int fd);
 
 bool AsanInterceptsSignal(int signum);
+void SetAlternateSignalStack();
+void UnsetAlternateSignalStack();
 void InstallSignalHandlers();
 int GetPid();
 uintptr_t GetThreadSelf();
@@ -249,6 +251,7 @@ extern int    FLAG_exitcode;
 extern bool   FLAG_allow_user_poisoning;
 extern int    FLAG_sleep_before_dying;
 extern bool   FLAG_handle_segv;
+extern bool   FLAG_use_sigaltstack;
 
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().

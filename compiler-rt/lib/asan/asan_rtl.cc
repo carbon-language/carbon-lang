@@ -39,6 +39,7 @@ int    FLAG_report_globals;
 size_t FLAG_malloc_context_size = kMallocContextSize;
 uintptr_t FLAG_large_malloc;
 bool   FLAG_handle_segv;
+bool   FLAG_use_sigaltstack;
 bool   FLAG_replace_str;
 bool   FLAG_replace_intrin;
 bool   FLAG_replace_cfallocator;  // Used on Mac only.
@@ -442,6 +443,7 @@ void __asan_init() {
   FLAG_poison_shadow = IntFlagValue(options, "poison_shadow=", 1);
   FLAG_report_globals = IntFlagValue(options, "report_globals=", 1);
   FLAG_handle_segv = IntFlagValue(options, "handle_segv=", ASAN_NEEDS_SEGV);
+  FLAG_use_sigaltstack = IntFlagValue(options, "use_sigaltstack=", 0);
   FLAG_symbolize = IntFlagValue(options, "symbolize=", 1);
   FLAG_demangle = IntFlagValue(options, "demangle=", 1);
   FLAG_debug = IntFlagValue(options, "debug=", 0);
@@ -470,7 +472,6 @@ void __asan_init() {
   InitializeAsanInterceptors();
 
   ReplaceSystemMalloc();
-  InstallSignalHandlers();
 
   if (FLAG_v) {
     Printf("|| `[%p, %p]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);
@@ -516,6 +517,8 @@ void __asan_init() {
     AsanDumpProcessMap();
     AsanDie();
   }
+
+  InstallSignalHandlers();
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.
