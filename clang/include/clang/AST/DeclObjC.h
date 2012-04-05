@@ -901,14 +901,14 @@ public:
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupMethod(Selector Sel, bool isInstance,
-                               bool noCategoryLookup= false) const;
+                               bool shallowCategoryLookup= false) const;
   ObjCMethodDecl *lookupInstanceMethod(Selector Sel,
-                                       bool noCategoryLookup = false) const {
-    return lookupMethod(Sel, true/*isInstance*/, noCategoryLookup);
+                            bool shallowCategoryLookup = false) const {
+    return lookupMethod(Sel, true/*isInstance*/, shallowCategoryLookup);
   }
   ObjCMethodDecl *lookupClassMethod(Selector Sel,
-                                    bool noCategoryLookup = false) const {
-    return lookupMethod(Sel, false/*isInstance*/, noCategoryLookup);
+                     bool shallowCategoryLookup = false) const {
+    return lookupMethod(Sel, false/*isInstance*/, shallowCategoryLookup);
   }
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 

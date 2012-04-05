@@ -51,3 +51,24 @@
 
 @implementation NSObject (FooConformance)
 @end
+
+// rdar://11186449
+// Don't warn when a category does not implemented a method imported
+// by its protocol because another category has its declaration and
+// that category will implement it.
+@interface NSOrderedSet @end
+
+@interface NSOrderedSet(CoolectionImplements)
+- (unsigned char)containsObject:(id)object;
+@end
+
+@protocol Collection
+- (unsigned char)containsObject:(id)object;
+@end
+
+@interface NSOrderedSet (CollectionConformance) <Collection>
+@end
+
+@implementation NSOrderedSet (CollectionConformance)
+@end
+

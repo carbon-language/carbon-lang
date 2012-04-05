@@ -1537,7 +1537,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             // uses the protocol.
             if (ObjCMethodDecl *MethodInClass =
                   IDecl->lookupInstanceMethod(method->getSelector(), 
-                                              true /*noCategoryLookup*/))
+                                              true /*shallowCategoryLookup*/))
               if (C || MethodInClass->isSynthesized())
                 continue;
             unsigned DIAG = diag::warn_unimplemented_protocol_method;
@@ -1561,7 +1561,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
         (!Super || !Super->lookupClassMethod(method->getSelector()))) {
       // See above comment for instance method lookups.
       if (C && IDecl->lookupClassMethod(method->getSelector(), 
-                                        true /*noCategoryLookup*/))
+                                        true /*shallowCategoryLookup*/))
         continue;
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
       if (Diags.getDiagnosticLevel(DIAG, ImpLoc) !=
