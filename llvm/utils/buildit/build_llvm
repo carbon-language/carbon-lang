@@ -120,9 +120,8 @@ if [ "$ARM_HOSTED_BUILD" != yes ]; then
   if [ $SDKROOT ]; then
     CPPFLAGS="$CPPFLAGS -isysroot $SDKROOT"
   fi
-  for host in $HOSTS; do
-    CPPFLAGS="$CPPFLAGS -arch $host"
-  done
+  for host in $HOSTS; do :; done
+  CPPFLAGS="$CPPFLAGS -arch $host"
 fi
 
 if [ \! -f Makefile.config ]; then
