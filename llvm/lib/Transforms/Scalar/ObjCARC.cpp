@@ -4073,7 +4073,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         if (!UserInst)
           continue;
         // FIXME: dominates should return true for unreachable UserInst.
-        if (!DT->isReachableFromEntry(UserInst->getParent()) ||
+        if (DT->isReachableFromEntry(UserInst->getParent()) &&
             DT->dominates(Inst, UserInst)) {
           Changed = true;
           Instruction *Replacement = Inst;
