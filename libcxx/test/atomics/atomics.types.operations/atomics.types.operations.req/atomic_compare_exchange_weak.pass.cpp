@@ -34,7 +34,7 @@ test()
         assert(t == T(1));
         assert(std::atomic_compare_exchange_weak(&a, &t, T(3)) == false);
         assert(a == T(2));
-        assert(t == T(3));
+        assert(t == T(2));
     }
     {
         typedef std::atomic<T> A;
@@ -46,7 +46,7 @@ test()
         assert(t == T(1));
         assert(std::atomic_compare_exchange_weak(&a, &t, T(3)) == false);
         assert(a == T(2));
-        assert(t == T(3));
+        assert(t == T(2));
     }
 }
 

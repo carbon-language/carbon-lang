@@ -78,8 +78,9 @@ int main()
         assert(obj.compare_exchange_weak(x, true,
                                          std::memory_order_seq_cst) == false);
         assert(obj == false);
-        assert(x == true);
+        assert(x == false);
         obj.store(true);
+        x = true;
         assert(obj.compare_exchange_weak(x, false,
                                          std::memory_order_seq_cst,
                                          std::memory_order_seq_cst) == true);
@@ -93,7 +94,7 @@ int main()
         assert(obj.compare_exchange_strong(x, true,
                                          std::memory_order_seq_cst) == false);
         assert(obj == false);
-        assert(x == true);
+        assert(x == false);
         x = true;
         obj.store(true);
         assert(obj.compare_exchange_strong(x, false,
@@ -132,8 +133,9 @@ int main()
         assert(obj.compare_exchange_weak(x, true,
                                          std::memory_order_seq_cst) == false);
         assert(obj == false);
-        assert(x == true);
+        assert(x == false);
         obj.store(true);
+        x = true;
         assert(obj.compare_exchange_weak(x, false,
                                          std::memory_order_seq_cst,
                                          std::memory_order_seq_cst) == true);
@@ -147,7 +149,7 @@ int main()
         assert(obj.compare_exchange_strong(x, true,
                                          std::memory_order_seq_cst) == false);
         assert(obj == false);
-        assert(x == true);
+        assert(x == false);
         x = true;
         obj.store(true);
         assert(obj.compare_exchange_strong(x, false,

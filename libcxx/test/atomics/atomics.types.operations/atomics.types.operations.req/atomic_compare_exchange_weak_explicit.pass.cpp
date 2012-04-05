@@ -39,7 +39,7 @@ test()
         assert(std::atomic_compare_exchange_weak_explicit(&a, &t, T(3),
                std::memory_order_seq_cst, std::memory_order_seq_cst) == false);
         assert(a == T(2));
-        assert(t == T(3));
+        assert(t == T(2));
     }
     {
         typedef std::atomic<T> A;
@@ -53,7 +53,7 @@ test()
         assert(std::atomic_compare_exchange_weak_explicit(&a, &t, T(3),
                std::memory_order_seq_cst, std::memory_order_seq_cst) == false);
         assert(a == T(2));
-        assert(t == T(3));
+        assert(t == T(2));
     }
 }
 

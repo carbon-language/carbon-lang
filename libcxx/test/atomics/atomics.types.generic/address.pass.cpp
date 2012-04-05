@@ -96,14 +96,14 @@ do_test()
     assert(x == T(3));
     assert(obj.compare_exchange_weak(x, T(1)) == false);
     assert(obj == T(2));
-    assert(x == T(1));
+    assert(x == T(2));
     x = T(2);
     assert(obj.compare_exchange_strong(x, T(1)) == true);
     assert(obj == T(1));
     assert(x == T(2));
     assert(obj.compare_exchange_strong(x, T(0)) == false);
     assert(obj == T(1));
-    assert(x == T(0));
+    assert(x == T(1));
     assert((obj = T(0)) == T(0));
     assert(obj == T(0));
     obj = T(2*sizeof(X));
