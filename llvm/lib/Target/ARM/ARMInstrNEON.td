@@ -3634,7 +3634,7 @@ multiclass N2VShL_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
 }
 multiclass N2VShR_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
                        InstrItinClass itin, string OpcodeStr, string Dt,
-                       SDNode OpNode> {
+                       string baseOpc, SDNode OpNode> {
   // 64-bit vector types.
   def v8i8  : N2VDSh<op24, op23, op11_8, 0, op4, N2RegVShRFrm, itin, shr_imm8,
                      OpcodeStr, !strconcat(Dt, "8"), v8i8, OpNode> {
@@ -3668,6 +3668,33 @@ multiclass N2VShR_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
   def v2i64 : N2VQSh<op24, op23, op11_8, 1, op4, N2RegVShRFrm, itin, shr_imm64,
                      OpcodeStr, !strconcat(Dt, "64"), v2i64, OpNode>;
                              // imm6 = xxxxxx
+
+  // Aliases for two-operand forms (source and dest regs the same).
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "8 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v8i8"))
+                          DPR:$Vdn, DPR:$Vdn, shr_imm8:$imm, pred:$p)>;
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "16 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v4i16"))
+                          DPR:$Vdn, DPR:$Vdn, shr_imm16:$imm, pred:$p)>;
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "32 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v2i32"))
+                          DPR:$Vdn, DPR:$Vdn, shr_imm32:$imm, pred:$p)>;
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "64 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v1i64"))
+                          DPR:$Vdn, DPR:$Vdn, shr_imm64:$imm, pred:$p)>;
+
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "8 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v16i8"))
+                          QPR:$Vdn, QPR:$Vdn, shr_imm8:$imm, pred:$p)>;
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "16 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v8i16"))
+                          QPR:$Vdn, QPR:$Vdn, shr_imm16:$imm, pred:$p)>;
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "32 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v4i32"))
+                          QPR:$Vdn, QPR:$Vdn, shr_imm32:$imm, pred:$p)>;
+  def : NEONInstAlias<!strconcat(OpcodeStr, "${p}.", Dt, "64 $Vdn, $imm"),
+                      (!cast<Instruction>(!strconcat(baseOpc, "v2i64"))
+                          QPR:$Vdn, QPR:$Vdn, shr_imm64:$imm, pred:$p)>;
 }
 
 // Neon Shift-Accumulate vector operations,
@@ -4606,8 +4633,10 @@ defm VSHLu    : N3VInt_QHSDSh<1, 0, 0b0100, 0, N3RegVShFrm,
 defm VSHLi    : N2VShL_QHSD<0, 1, 0b0101, 1, IIC_VSHLiD, "vshl", "i", NEONvshl>;
 
 //   VSHR     : Vector Shift Right (Immediate)
-defm VSHRs    : N2VShR_QHSD<0, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "s",NEONvshrs>;
-defm VSHRu    : N2VShR_QHSD<1, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "u",NEONvshru>;
+defm VSHRs    : N2VShR_QHSD<0, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "s", "VSHRs",
+                            NEONvshrs>;
+defm VSHRu    : N2VShR_QHSD<1, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "u", "VSHRu",
+                            NEONvshru>;
 
 //   VSHLL    : Vector Shift Left Long
 defm VSHLLs   : N2VLSh_QHS<0, 1, 0b1010, 0, 0, 1, "vshll", "s", NEONvshlls>;
@@ -4641,8 +4670,10 @@ defm VRSHLu   : N3VInt_QHSDSh<1, 0, 0b0101, 0, N3RegVShFrm,
                             IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q, IIC_VSHLi4Q,
                             "vrshl", "u", int_arm_neon_vrshiftu>;
 //   VRSHR    : Vector Rounding Shift Right
-defm VRSHRs   : N2VShR_QHSD<0,1,0b0010,1, IIC_VSHLi4D, "vrshr", "s",NEONvrshrs>;
-defm VRSHRu   : N2VShR_QHSD<1,1,0b0010,1, IIC_VSHLi4D, "vrshr", "u",NEONvrshru>;
+defm VRSHRs   : N2VShR_QHSD<0,1,0b0010,1, IIC_VSHLi4D, "vrshr", "s", "VRSHRs",
+                            NEONvrshrs>;
+defm VRSHRu   : N2VShR_QHSD<1,1,0b0010,1, IIC_VSHLi4D, "vrshr", "u", "VRSHRu",
+                            NEONvrshru>;
 
 //   VRSHRN   : Vector Rounding Shift Right and Narrow
 defm VRSHRN   : N2VNSh_HSD<0, 1, 0b1000, 0, 1, 1, IIC_VSHLi4D, "vrshrn", "i",
