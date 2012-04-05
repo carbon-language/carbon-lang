@@ -46,10 +46,13 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-static cl::opt<bool> DisableInline("disable-inlining",
+static cl::opt<bool> EnableInternalizing("enable-internalizing", cl::init(false),
+  cl::desc("Internalize functions during LTO"));
+
+static cl::opt<bool> DisableInline("disable-inlining", cl::init(false),
   cl::desc("Do not run the inliner pass"));
 
-static cl::opt<bool> DisableGVNLoadPRE("disable-gvn-loadpre",
+static cl::opt<bool> DisableGVNLoadPRE("disable-gvn-loadpre", cl::init(false),
   cl::desc("Do not run the GVN load PRE pass"));
 
 const char* LTOCodeGenerator::getVersionString() {
@@ -275,6 +278,14 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
 }
 
 void LTOCodeGenerator::applyScopeRestrictions() {
+  // Internalize only if specifically asked for. Otherwise, global symbols which
+  // exist in the final image, but which are used outside of that image
+  // (e.g. bundling) may be removed. This also happens when a function is used
+  // only in inline asm. LLVM doesn't recognize that as a "use", so it could be
+  // stripped.
+  if (!EnableInternalizing)
+    return;
+
   if (_scopeRestrictionsDone) return;
   Module *mergedModule = _linker.getModule();
 
