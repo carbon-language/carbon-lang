@@ -4568,8 +4568,28 @@ static QualType checkConditionalPointerCompatibility(Sema &S, ExprResult &LHS,
     rhptee = RHSTy->castAs<PointerType>()->getPointeeType();
   }
 
-  if (!S.Context.typesAreCompatible(lhptee.getUnqualifiedType(),
-                                    rhptee.getUnqualifiedType())) {
+  // C99 6.5.15p6: If both operands are pointers to compatible types or to
+  // differently qualified versions of compatible types, the result type is
+  // a pointer to an appropriately qualified version of the composite
+  // type.
+
+  // Only CVR-qualifiers exist in the standard, and the differently-qualified
+  // clause doesn't make sense for our extensions. E.g. address space 2 should
+  // be incompatible with address space 3: they may live on different devices or
+  // anything.
+  Qualifiers lhQual = lhptee.getQualifiers();
+  Qualifiers rhQual = rhptee.getQualifiers();
+
+  unsigned MergedCVRQual = lhQual.getCVRQualifiers() | rhQual.getCVRQualifiers();
+  lhQual.removeCVRQualifiers();
+  rhQual.removeCVRQualifiers();
+
+  lhptee = S.Context.getQualifiedType(lhptee.getUnqualifiedType(), lhQual);
+  rhptee = S.Context.getQualifiedType(rhptee.getUnqualifiedType(), rhQual);
+
+  QualType CompositeTy = S.Context.mergeTypes(lhptee, rhptee);
+
+  if (CompositeTy.isNull()) {
     S.Diag(Loc, diag::warn_typecheck_cond_incompatible_pointers)
       << LHSTy << RHSTy << LHS.get()->getSourceRange()
       << RHS.get()->getSourceRange();
@@ -4583,16 +4603,12 @@ static QualType checkConditionalPointerCompatibility(Sema &S, ExprResult &LHS,
   }
 
   // The pointer types are compatible.
-  // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
-  // differently qualified versions of compatible types, the result type is
-  // a pointer to an appropriately qualified version of the *composite*
-  // type.
-  // FIXME: Need to calculate the composite type.
-  // FIXME: Need to add qualifiers
+  QualType ResultTy = CompositeTy.withCVRQualifiers(MergedCVRQual);
+  ResultTy = S.Context.getPointerType(ResultTy);
 
-  LHS = S.ImpCastExprToType(LHS.take(), LHSTy, CK_BitCast);
-  RHS = S.ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
-  return LHSTy;
+  LHS = S.ImpCastExprToType(LHS.take(), ResultTy, CK_BitCast);
+  RHS = S.ImpCastExprToType(RHS.take(), ResultTy, CK_BitCast);
+  return ResultTy;
 }
 
 /// \brief Return the resulting type when the operands are both block pointers.
