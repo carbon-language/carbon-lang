@@ -125,13 +125,6 @@ public:
   }
 
   ~AnalysisConsumer() {
-    // Count how many basic blocks we have not covered.
-    NumBlocksInAnalyzedFunctions = FunctionSummaries.getTotalNumBasicBlocks();
-    if (NumBlocksInAnalyzedFunctions > 0)
-      PercentReachableBlocks =
-        (FunctionSummaries.getTotalNumVisitedBasicBlocks() * 100) /
-          NumBlocksInAnalyzedFunctions;
-
     if (Opts.PrintStats)
       delete TUTotalTimer;
   }
@@ -383,6 +376,14 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   Mgr.reset(NULL);
 
   if (TUTotalTimer) TUTotalTimer->stopTimer();
+
+  // Count how many basic blocks we have not covered.
+  NumBlocksInAnalyzedFunctions = FunctionSummaries.getTotalNumBasicBlocks();
+  if (NumBlocksInAnalyzedFunctions > 0)
+    PercentReachableBlocks =
+      (FunctionSummaries.getTotalNumVisitedBasicBlocks() * 100) /
+        NumBlocksInAnalyzedFunctions;
+
 }
 
 static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
