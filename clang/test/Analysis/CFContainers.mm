@@ -198,3 +198,7 @@ void TestConst(CFArrayRef A, CFIndex sIndex, void* x[]) {
   const void *s1 = CFArrayGetValueAtIndex(B, 2);
 
 }
+
+void TestNullArray() {
+  CFArrayGetValueAtIndex(0, 0);
+}

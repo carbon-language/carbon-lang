@@ -40,7 +40,6 @@ class ObjCContainersChecker : public Checker< check::PreStmt<CallExpr>,
   inline SymbolRef getArraySym(const Expr *E, CheckerContext &C) const {
     SVal ArrayRef = C.getState()->getSVal(E, C.getLocationContext());
     SymbolRef ArraySym = ArrayRef.getAsSymbol();
-    assert(ArraySym);
     return ArraySym;
   }
 
@@ -120,8 +119,12 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
     // Retrieve the size.
     // Find out if we saw this array symbol before and have information about it.
     const Expr *ArrayExpr = CE->getArg(0);
-    const DefinedSVal *Size =
-                            State->get<ArraySizeMap>(getArraySym(ArrayExpr, C));
+    SymbolRef ArraySym = getArraySym(ArrayExpr, C);
+    if (!ArraySym)
+      return;
+
+    const DefinedSVal *Size = State->get<ArraySizeMap>(ArraySym);
+
     if (!Size)
       return;
 
