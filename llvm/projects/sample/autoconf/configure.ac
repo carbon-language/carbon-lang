@@ -167,6 +167,11 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Linux"
     llvm_cv_platform_type="Unix" ;;
+  *-*-gnu*)
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="GNU"
+    llvm_cv_platform_type="Unix" ;;
   *-*-solaris*)
     llvm_cv_link_all_option="-Wl,-z,allextract"
     llvm_cv_no_link_all_option="-Wl,-z,defaultextract"
@@ -236,6 +241,8 @@ AC_CACHE_CHECK([type of operating system we're going to target],
     llvm_cv_target_os_type="Interix" ;;
   *-*-linux*)
     llvm_cv_target_os_type="Linux" ;;
+  *-*-gnu*)
+    llvm_cv_target_os_type="GNU" ;;
   *-*-solaris*)
     llvm_cv_target_os_type="SunOS" ;;
   *-*-auroraux*)
