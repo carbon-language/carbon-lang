@@ -727,12 +727,40 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   OS << '"';
   static char Hex[] = "0123456789ABCDEF";
 
+  unsigned LastSlashX = Str->getLength();
   for (unsigned I = 0, N = Str->getLength(); I != N; ++I) {
     switch (uint32_t Char = Str->getCodeUnit(I)) {
     default:
-      // FIXME: Is this the best way to print wchar_t?
+      // FIXME: Convert UTF-8 back to codepoints before rendering.
+
+      // Convert UTF-16 surrogate pairs back to codepoints before rendering.
+      // Leave invalid surrogates alone; we'll use \x for those.
+      if (Str->getKind() == StringLiteral::UTF16 && I != N - 1 &&
+          Char >= 0xd800 && Char <= 0xdbff) {
+        uint32_t Trail = Str->getCodeUnit(I + 1);
+        if (Trail >= 0xdc00 && Trail <= 0xdfff) {
+          Char = 0x10000 + ((Char - 0xd800) << 10) + (Trail - 0xdc00);
+          ++I;
+        }
+      }
+
       if (Char > 0xff) {
-        assert(Char <= 0x10ffff && "invalid unicode codepoint");
+        // If this is a wide string, output characters over 0xff using \x
+        // escapes. Otherwise, this is a UTF-16 or UTF-32 string, and Char is a
+        // codepoint: use \x escapes for invalid codepoints.
+        if (Str->getKind() == StringLiteral::Wide ||
+            (Char >= 0xd800 && Char <= 0xdfff) || Char >= 0x110000) {
+          // FIXME: Is this the best way to print wchar_t?
+          OS << "\\x";
+          int Shift = 28;
+          while ((Char >> Shift) == 0)
+            Shift -= 4;
+          for (/**/; Shift >= 0; Shift -= 4)
+            OS << Hex[(Char >> Shift) & 15];
+          LastSlashX = I;
+          break;
+        }
+
         if (Char > 0xffff)
           OS << "\\U00"
              << Hex[(Char >> 20) & 15]
@@ -745,13 +773,26 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
            << Hex[(Char >>  0) & 15];
         break;
       }
+
+      // If we used \x... for the previous character, and this character is a
+      // hexadecimal digit, prevent it being slurped as part of the \x.
+      if (LastSlashX + 1 == I) {
+        switch (Char) {
+          case '0': case '1': case '2': case '3': case '4':
+          case '5': case '6': case '7': case '8': case '9':
+          case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+          case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+            OS << "\"\"";
+        }
+      }
+
       if (Char <= 0xff && isprint(Char))
         OS << (char)Char;
       else  // Output anything hard as an octal escape.
         OS << '\\'
-        << (char)('0'+ ((Char >> 6) & 7))
-        << (char)('0'+ ((Char >> 3) & 7))
-        << (char)('0'+ ((Char >> 0) & 7));
+           << (char)('0' + ((Char >> 6) & 7))
+           << (char)('0' + ((Char >> 3) & 7))
+           << (char)('0' + ((Char >> 0) & 7));
       break;
     // Handle some common non-printable cases to make dumps prettier.
     case '\\': OS << "\\\\"; break;
