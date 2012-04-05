@@ -3,9 +3,9 @@
 
 struct A {
   void *operator new(size_t) {
-    return this; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
+    return this; // expected-error {{invalid use of 'this' outside of a non-static member function}}
   }
   void *operator new[](size_t) {
-    return this; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
+    return this; // expected-error {{invalid use of 'this' outside of a non-static member function}}
   }
 };

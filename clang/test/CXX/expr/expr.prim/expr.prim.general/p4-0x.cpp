@@ -2,9 +2,9 @@
 
 struct S {
   S *p = this; // ok
-  decltype(this) q; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
+  decltype(this) q; // expected-error {{invalid use of 'this' outside of a non-static member function}}
 
-  int arr[sizeof(this)]; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
+  int arr[sizeof(this)]; // expected-error {{invalid use of 'this' outside of a non-static member function}}
   int sz = sizeof(this); // ok
 };
 

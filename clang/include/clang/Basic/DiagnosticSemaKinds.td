@@ -3769,7 +3769,7 @@ def warn_null_in_comparison_operation : Warning<
   InGroup<DiagGroup<"null-arithmetic">>;
 
 def err_invalid_this_use : Error<
-  "invalid use of 'this' outside of a nonstatic member function">;
+  "invalid use of 'this' outside of a non-static member function">;
 def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
 def err_invalid_qualified_function_type : Error<
@@ -3785,7 +3785,10 @@ def err_ref_qualifier_overload : Error<
   "without a ref-qualifier|with ref-qualifier '&'|with ref-qualifier '&&'}1">;
 
 def err_invalid_non_static_member_use : Error<
-  "invalid use of nonstatic data member %0">;
+  "invalid use of non-static data member %0">;
+def err_nested_non_static_member_use : Error<
+  "%select{call to non-static member function|use of non-static data member}0 "
+  "%2 of %1 from nested type %3">;
 def warn_cxx98_compat_non_static_member_use : Warning<
   "use of non-static data member %0 in an unevaluated context is "
   "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;

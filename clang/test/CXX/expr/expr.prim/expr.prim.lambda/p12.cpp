@@ -27,7 +27,7 @@ struct ReachingThis {
 
       static void static_bar() {
         (void)[this](){}; // expected-error{{'this' cannot be captured in this context}}
-        (void)[&](){i = 7; }; // expected-error{{invalid use of nonstatic data member 'i'}}
+        (void)[&](){i = 7; }; // expected-error{{invalid use of member 'i' in static member function}}
       }
     };
   }

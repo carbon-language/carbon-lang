@@ -7,16 +7,18 @@ public:
 
   static void sm() {
     sx = 0;
-    this->x = 0; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
+    this->x = 0; // expected-error {{invalid use of 'this' outside of a non-static member function}}
     x = 0; // expected-error {{invalid use of member 'x' in static member function}}
   }
 
   class NestedC {
   public:
     NestedC(int);
-    void m() {
+    void f() {
       sx = 0;
-      x = 0; // expected-error {{invalid use of nonstatic data member 'x'}}
+      x = 0; // expected-error {{use of non-static data member 'x' of 'C' from nested type 'NestedC'}}
+      sm();
+      m(); // expected-error {{call to non-static member function 'm' of 'C' from nested type 'NestedC'}}
     }
   };
 
@@ -186,7 +188,7 @@ struct S {
 };
 
 void f() {
-    S::c; // expected-error {{invalid use of nonstatic data member}}
+    S::c; // expected-error {{invalid use of non-static data member}}
 }
 }
 

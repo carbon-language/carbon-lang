@@ -28,7 +28,7 @@ void g(int x, int y = x); // expected-error {{default argument references parame
 void g2(int x, int y, int z = x + y); // expected-error {{default argument references parameter 'x'}} expected-error {{default argument references parameter 'y'}}
 
 class X {
-  void f(X* x = this); // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
+  void f(X* x = this); // expected-error{{invalid use of 'this' outside of a non-static member function}}
 
   void g() { 
     int f(X* x = this); // expected-error{{default argument references 'this'}}
@@ -55,7 +55,7 @@ void C::h() {
 // C++ [dcl.fct.default]p9
 struct Y { 
   int a; 
-  int mem1(int i = a); // expected-error{{invalid use of nonstatic data member 'a'}}
+  int mem1(int i = a); // expected-error{{invalid use of non-static data member 'a'}}
   int mem2(int i = b); // OK; use Y::b 
   int mem3(int i);
   int mem4(int i);
@@ -64,8 +64,8 @@ struct Y {
     int mem5(int i = b, // OK; use Y::b
              int j = c, // OK; use Y::Nested::c
              int k = j, // expected-error{{default argument references parameter 'j'}}
-             int l = a,  // expected-error{{invalid use of nonstatic data member 'a'}}
-             Nested* self = this, // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
+             int l = a,  // expected-error{{invalid use of non-static data member 'a'}}
+             Nested* self = this, // expected-error{{invalid use of 'this' outside of a non-static member function}}
              int m); // expected-error{{missing default argument on parameter 'm'}}
     static int c;
     Nested(int i = 42);
@@ -78,7 +78,7 @@ struct Y {
 
 int Y::mem3(int i = b) { return i; } // OK; use X::b
 
-int Y::mem4(int i = a) // expected-error{{invalid use of nonstatic data member 'a'}}
+int Y::mem4(int i = a) // expected-error{{invalid use of non-static data member 'a'}}
 { return i; }
 
 

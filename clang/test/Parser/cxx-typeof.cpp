@@ -9,5 +9,5 @@ static void test() {
 // Part of rdar://problem/8347416;  from the gcc test suite.
 struct S {
   int i;
-  __typeof(S::i) foo(); // expected-error {{invalid use of nonstatic data member 'i'}}
+  __typeof(S::i) foo(); // expected-error {{invalid use of non-static data member 'i'}}
 };
