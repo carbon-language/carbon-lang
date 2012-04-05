@@ -559,10 +559,10 @@ struct __atomic_base  // false
 
     _LIBCPP_INLINE_VISIBILITY
     bool is_lock_free() const volatile
-        {return __atomic_is_lock_free(_Tp());}
+        {return __atomic_is_lock_free(sizeof(_Tp));}
     _LIBCPP_INLINE_VISIBILITY
     bool is_lock_free() const
-        {return __atomic_is_lock_free(_Tp());}
+        {return __atomic_is_lock_free(sizeof(_Tp));}
     _LIBCPP_INLINE_VISIBILITY
     void store(_Tp __d, memory_order __m = memory_order_seq_cst) volatile
         {__atomic_store(&__a_, __d, __m);}
