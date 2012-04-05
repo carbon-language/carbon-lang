@@ -1093,12 +1093,15 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   if (!MI->isDebugValue()) {
     DebugLoc DL = MI->getDebugLoc();
     if (DL != PrevInstLoc && (!DL.isUnknown() || UnknownLocations)) {
-      unsigned Flags = DWARF2_FLAG_IS_STMT;
+      unsigned Flags = 0;
       PrevInstLoc = DL;
       if (DL == PrologEndLoc) {
         Flags |= DWARF2_FLAG_PROLOGUE_END;
         PrologEndLoc = DebugLoc();
       }
+      if (PrologEndLoc.isUnknown())
+        Flags |= DWARF2_FLAG_IS_STMT;
+
       if (!DL.isUnknown()) {
         const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
         recordSourceLine(DL.getLine(), DL.getCol(), Scope, Flags);
@@ -1378,7 +1381,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                                        MF->getFunction()->getContext());
     recordSourceLine(FnStartDL.getLine(), FnStartDL.getCol(),
                      FnStartDL.getScope(MF->getFunction()->getContext()),
-                     DWARF2_FLAG_IS_STMT);
+                     0);
   }
 }
 
