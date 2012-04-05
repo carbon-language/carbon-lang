@@ -11,9 +11,13 @@ namespace C { } // expected-note {{previous definition is here}}
 namespace C = N; // expected-error {{redefinition of 'C'}}
 
 int i;
-namespace D = i; // expected-error {{expected namespace name}}
+namespace D =
+i; // expected-error {{expected namespace name}}
 
-namespace E = N::Foo; // expected-error {{expected namespace name}}
+namespace E1 = N::
+Foo; // expected-error {{expected namespace name}}
+namespace E2 = N::
+X; // expected-error {{expected namespace name}}
 
 namespace F {
   namespace A { namespace B { } } // expected-note {{candidate found by name lookup is 'F::A::B'}}

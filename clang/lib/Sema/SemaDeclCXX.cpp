@@ -6742,7 +6742,7 @@ Decl *Sema::ActOnNamespaceAliasDef(Scope *S,
 
   if (R.empty()) {
     if (!TryNamespaceTypoCorrection(*this, R, S, SS, IdentLoc, Ident)) {
-      Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
+      Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();
       return 0;
     }
   }
