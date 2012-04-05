@@ -20,10 +20,73 @@ class BasicBlock;
 class BasicBlockPass;
 
 //===----------------------------------------------------------------------===//
+/// @brief Vectorize configuration.
+struct VectorizeConfig {
+  //===--------------------------------------------------------------------===//
+  // Target architecture related parameters
+
+  /// @brief The size of the native vector registers.
+  unsigned VectorBits;
+
+  /// @brief Don't try to vectorize integer values.
+  bool NoInts;
+
+  /// @brief Don't try to vectorize floating-point values.
+  bool NoFloats;
+
+  /// @brief Don't try to vectorize casting (conversion) operations.
+  bool NoCasts;
+
+  /// @brief Don't try to vectorize floating-point math intrinsics.
+  bool NoMath;
+
+  /// @brief Don't try to vectorize the fused-multiply-add intrinsic.
+  bool NoFMA;
+
+  /// @brief Don't try to vectorize loads and stores.
+  bool NoMemOps;
+
+  /// @brief Only generate aligned loads and stores.
+  bool AlignedOnly;
+
+  //===--------------------------------------------------------------------===//
+  // Misc parameters
+
+  /// @brief The required chain depth for vectorization.
+  unsigned ReqChainDepth;
+
+  /// @brief The maximum search distance for instruction pairs.
+  unsigned SearchLimit;
+
+  /// @brief The maximum number of candidate pairs with which to use a full
+  ///        cycle check.
+  unsigned MaxCandPairsForCycleCheck;
+
+  /// @brief Replicating one element to a pair breaks the chain.
+  bool SplatBreaksChain;
+
+  /// @brief The maximum number of pairable instructions per group.
+  unsigned MaxInsts;
+
+  /// @brief The maximum number of pairing iterations.
+  unsigned MaxIter;
+
+  /// @brief Don't boost the chain-depth contribution of loads and stores.
+  bool NoMemOpBoost;
+
+  /// @brief Use a fast instruction dependency analysis.
+  bool FastDep;
+
+  /// @brief Initialize the VectorizeConfig from command line options.
+  VectorizeConfig();
+};
+
+//===----------------------------------------------------------------------===//
 //
 // BBVectorize - A basic-block vectorization pass.
 //
-BasicBlockPass *createBBVectorizePass();
+BasicBlockPass *
+createBBVectorizePass(const VectorizeConfig &C = VectorizeConfig());
 
 //===----------------------------------------------------------------------===//
 /// @brief Vectorize the BasicBlock.
@@ -35,7 +98,8 @@ BasicBlockPass *createBBVectorizePass();
 ///
 /// @return True if the BB is changed, false otherwise.
 ///
-bool vectorizeBasicBlock(Pass *P, BasicBlock &BB);
+bool vectorizeBasicBlock(Pass *P, BasicBlock &BB,
+                         const VectorizeConfig &C = VectorizeConfig());
 
 } // End llvm namespace
 
