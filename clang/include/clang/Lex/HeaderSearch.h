@@ -120,6 +120,12 @@ public:
 /// HeaderSearch - This class encapsulates the information needed to find the
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
 class HeaderSearch {
+  /// This structure is used to record entries in our framework cache.
+  struct FrameworkCacheEntry {
+    /// The directory entry which should be used for the cached framework.
+    const DirectoryEntry *Directory;
+  };
+
   FileManager &FileMgr;
   DiagnosticsEngine &Diags;
   /// #include search path information.  Requests for #include "x" search the
@@ -152,8 +158,7 @@ class HeaderSearch {
 
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
-  llvm::StringMap<const DirectoryEntry *, llvm::BumpPtrAllocator>
-    FrameworkMap;
+  llvm::StringMap<FrameworkCacheEntry, llvm::BumpPtrAllocator> FrameworkMap;
 
   /// IncludeAliases - maps include file names (including the quotes or
   /// angle brackets) to other include file names.  This is used to support the
@@ -331,7 +336,7 @@ public:
   /// LookupFrameworkCache - Look up the specified framework name in our
   /// framework cache, returning the DirectoryEntry it is in if we know,
   /// otherwise, return null.
-  const DirectoryEntry *&LookupFrameworkCache(StringRef FWName) {
+  FrameworkCacheEntry &LookupFrameworkCache(StringRef FWName) {
     return FrameworkMap.GetOrCreateValue(FWName).getValue();
   }
 

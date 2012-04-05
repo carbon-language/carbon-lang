@@ -275,12 +275,12 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   if (SlashPos == StringRef::npos) return 0;
 
   // Find out if this is the home for the specified framework, by checking
-  // HeaderSearch.  Possible answer are yes/no and unknown.
-  const DirectoryEntry *&FrameworkDirCache =
+  // HeaderSearch.  Possible answers are yes/no and unknown.
+  HeaderSearch::FrameworkCacheEntry &CacheEntry =
     HS.LookupFrameworkCache(Filename.substr(0, SlashPos));
 
   // If it is known and in some other directory, fail.
-  if (FrameworkDirCache && FrameworkDirCache != getFrameworkDir())
+  if (CacheEntry.Directory && CacheEntry.Directory != getFrameworkDir())
     return 0;
 
   // Otherwise, construct the path to this framework dir.
@@ -298,9 +298,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
 
-  // If the cache entry is still unresolved, query to see if the cache entry is
-  // still unresolved.  If so, check its existence now.
-  if (FrameworkDirCache == 0) {
+  // If the cache entry was unresolved, populate it now.
+  if (CacheEntry.Directory == 0) {
     HS.IncrementFrameworkLookupCount();
 
     // If the framework dir doesn't exist, we fail.
@@ -310,7 +309,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
 
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
-    FrameworkDirCache = getFrameworkDir();
+    CacheEntry.Directory = getFrameworkDir();
   }
 
   if (RelativePath != NULL) {
@@ -561,26 +560,25 @@ LookupSubframeworkHeader(StringRef Filename,
        FrameworkPos[DotFrameworkLen] != '\\'))
     return 0;
 
-  SmallString<1024> FrameworkName(ContextName,
-                                        FrameworkPos+DotFrameworkLen+1);
+  SmallString<1024> FrameworkName(ContextName, FrameworkPos+DotFrameworkLen+1);
 
   // Append Frameworks/HIToolbox.framework/
   FrameworkName += "Frameworks/";
   FrameworkName.append(Filename.begin(), Filename.begin()+SlashPos);
   FrameworkName += ".framework/";
 
-  llvm::StringMapEntry<const DirectoryEntry *> &CacheLookup =
+  llvm::StringMapEntry<FrameworkCacheEntry> &CacheLookup =
     FrameworkMap.GetOrCreateValue(Filename.substr(0, SlashPos));
 
   // Some other location?
-  if (CacheLookup.getValue() &&
+  if (CacheLookup.getValue().Directory &&
       CacheLookup.getKeyLength() == FrameworkName.size() &&
       memcmp(CacheLookup.getKeyData(), &FrameworkName[0],
              CacheLookup.getKeyLength()) != 0)
     return 0;
 
   // Cache subframework.
-  if (CacheLookup.getValue() == 0) {
+  if (CacheLookup.getValue().Directory == 0) {
     ++NumSubFrameworkLookups;
 
     // If the framework dir doesn't exist, we fail.
@@ -589,7 +587,7 @@ LookupSubframeworkHeader(StringRef Filename,
 
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
-    CacheLookup.setValue(Dir);
+    CacheLookup.getValue().Directory = Dir;
   }
 
   const FileEntry *FE = 0;
