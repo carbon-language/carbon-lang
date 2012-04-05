@@ -17,7 +17,11 @@
 ; CHECK: movls
 ; CHECK-NOT: mov
 
+; This is really an LSR test: Make sure that cmp is using the incremented
+; induction variable.
 ; CHECK: %if.end8
+; CHECK: add{{(s|\.w)?}} [[IV:r[0-9]+]], {{.*}}#1
+; CHECK: cmp [[IV]], #
 
 define i32 @f(i32* nocapture %a, i32 %Pref) nounwind ssp {
 entry:

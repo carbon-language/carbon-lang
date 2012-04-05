@@ -1282,10 +1282,19 @@ static bool isLegalUse(const TargetLowering::AddrMode &AM,
     // If we have low-level target information, ask the target if it can fold an
     // integer immediate on an icmp.
     if (AM.BaseOffs != 0) {
-      if (TLI) return TLI->isLegalICmpImmediate(-(uint64_t)AM.BaseOffs);
-      return false;
+      if (!TLI)
+        return false;
+      // We have one of:
+      // ICmpZero     BaseReg + Offset => ICmp BaseReg, -Offset
+      // ICmpZero -1*ScaleReg + Offset => ICmp ScaleReg, Offset
+      // Offs is the ICmp immediate.
+      int64_t Offs = AM.BaseOffs;
+      if (AM.Scale == 0)
+        Offs = -(uint64_t)Offs; // The cast does the right thing with INT64_MIN.
+      return TLI->isLegalICmpImmediate(Offs);
     }
 
+    // ICmpZero BaseReg + -1*ScaleReg => ICmp BaseReg, ScaleReg
     return true;
 
   case LSRUse::Basic:
