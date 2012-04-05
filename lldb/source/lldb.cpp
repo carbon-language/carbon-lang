@@ -101,7 +101,6 @@ lldb_private::Initialize ()
         UnwindAssembly_x86::Initialize();
         EmulateInstructionARM::Initialize ();
         ObjectFilePECOFF::Initialize ();
-        DynamicLoaderPOSIXDYLD::Initialize ();
         PlatformFreeBSD::Initialize();
         PlatformLinux::Initialize();
 #if defined (__APPLE__)
@@ -124,6 +123,8 @@ lldb_private::Initialize ()
         PlatformRemoteiOS::Initialize();
         PlatformMacOSX::Initialize();
         PlatformiOSSimulator::Initialize();
+#else
+        DynamicLoaderPOSIXDYLD::Initialize ();
 #endif
 #if defined (__linux__)
         //----------------------------------------------------------------------
@@ -177,7 +178,6 @@ lldb_private::Terminate ()
     UnwindAssemblyInstEmulation::Terminate();
     EmulateInstructionARM::Terminate ();
     ObjectFilePECOFF::Terminate ();
-    DynamicLoaderPOSIXDYLD::Terminate ();
     PlatformFreeBSD::Terminate();
     PlatformLinux::Terminate();
 #if defined (__APPLE__)
@@ -197,6 +197,8 @@ lldb_private::Terminate ()
     PlatformMacOSX::Terminate();
     PlatformRemoteiOS::Terminate();
     PlatformiOSSimulator::Terminate();
+#else
+    DynamicLoaderPOSIXDYLD::Terminate ();
 #endif
 
     Debugger::SettingsTerminate ();
