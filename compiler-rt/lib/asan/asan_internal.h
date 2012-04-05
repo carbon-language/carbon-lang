@@ -187,6 +187,7 @@ void InstallSignalHandlers();
 int GetPid();
 uintptr_t GetThreadSelf();
 int AtomicInc(int *a);
+uint16_t AtomicExchange(uint16_t *a, uint16_t new_val);
 
 // Wrapper for TLS/TSD.
 void AsanTSDInit(void (*destructor)(void *tsd));

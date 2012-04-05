@@ -234,6 +234,10 @@ int AtomicInc(int *a) {
   return InterlockedExchangeAdd((LONG*)a, 1) + 1;
 }
 
+uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
+  return InterlockedExchange16(a, new_val);
+}
+
 const char* AsanGetEnv(const char* name) {
   static char env_buffer[32767] = {};
 

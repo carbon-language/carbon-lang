@@ -152,6 +152,10 @@ int AtomicInc(int *a) {
 #endif
 }
 
+uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
+  return __sync_lock_test_and_set(a, new_val);
+}
+
 void SortArray(uintptr_t *array, size_t size) {
   std::sort(array, array + size);
 }

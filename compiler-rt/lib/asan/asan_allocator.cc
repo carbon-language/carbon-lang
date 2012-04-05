@@ -704,18 +704,22 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
 
   // Printf("Deallocate %p\n", ptr);
   AsanChunk *m = PtrToChunk((uintptr_t)ptr);
-  if (m->chunk_state == CHUNK_QUARANTINE) {
+
+  // Flip the state atomically to avoid race on double-free.
+  uint16_t old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
+
+  if (old_chunk_state == CHUNK_QUARANTINE) {
     Report("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
     stack->PrintStack();
     Describe((uintptr_t)ptr, 1);
     ShowStatsAndAbort();
-  } else if (m->chunk_state != CHUNK_ALLOCATED) {
+  } else if (old_chunk_state != CHUNK_ALLOCATED) {
     Report("ERROR: AddressSanitizer attempting free on address which was not"
            " malloc()-ed: %p\n", ptr);
     stack->PrintStack();
     ShowStatsAndAbort();
   }
-  CHECK(m->chunk_state == CHUNK_ALLOCATED);
+  CHECK(old_chunk_state == CHUNK_ALLOCATED);
   CHECK(m->free_tid == AsanThread::kInvalidTid);
   CHECK(m->alloc_tid >= 0);
   AsanThread *t = asanThreadRegistry().GetCurrent();
@@ -731,7 +735,7 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
   thread_stats.freed += m->used_size;
   thread_stats.freed_by_size[m->SizeClass()]++;
 
-  m->chunk_state = CHUNK_QUARANTINE;
+  CHECK(m->chunk_state == CHUNK_QUARANTINE);
   if (t) {
     AsanThreadLocalMallocStorage *ms = &t->malloc_storage();
     CHECK(!m->next);
