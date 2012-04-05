@@ -111,7 +111,7 @@ ifeq ($(HOST_OS),Darwin)
     # extra options to override libtool defaults 
 	LLVMLibsOptions += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
 	LLVMLibsOptions += -framework Foundation -framework CoreFoundation
-	LLVMLibsOptions += -framework CoreServices -framework Carbon
+	LLVMLibsOptions += -framework CoreServices -framework Carbon -framework Security
 	LLVMLibsOptions += -framework DebugSymbols $(PYTHON_BUILD_FLAGS) -lobjc
 	LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/resources/lldb-framework-exports" 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
