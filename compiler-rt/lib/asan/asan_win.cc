@@ -235,7 +235,16 @@ int AtomicInc(int *a) {
 }
 
 uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
-  return InterlockedExchange16(a, new_val);
+  // InterlockedExchange16 seems unavailable on some MSVS installations.
+  // Everybody stand back, I pretend to know inline assembly!
+  // FIXME: I assume VC is smart enough to save/restore eax/ecx?
+  __asm {
+    mov eax, a
+    mov cx, new_val
+    xchg [eax], cx
+    mov new_val, cx
+  }
+  return new_val;
 }
 
 const char* AsanGetEnv(const char* name) {
