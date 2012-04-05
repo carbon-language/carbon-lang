@@ -149,7 +149,7 @@ protected:
   OwningPtr<Document> &Doc;
   SMRange SourceRange;
 
-  ~Node();
+  virtual ~Node();
 
 private:
   unsigned int TypeID;
@@ -170,7 +170,7 @@ public:
   }
 
 protected:
-  ~NullNode();
+  virtual ~NullNode();
 };
 
 /// @brief A scalar node is an opaque datum that can be presented as a
@@ -206,7 +206,7 @@ public:
   }
 
 protected:
-  ~ScalarNode();
+  virtual ~ScalarNode();
 
 private:
   StringRef Value;
@@ -256,7 +256,7 @@ public:
   }
 
 protected:
-  ~KeyValueNode();
+  virtual ~KeyValueNode();
 
 private:
   Node *Key;
@@ -375,7 +375,7 @@ public:
   }
 
 protected:
-  ~MappingNode();
+  virtual ~MappingNode();
 
 private:
   MappingType Type;
@@ -441,7 +441,7 @@ public:
   }
 
 protected:
-  ~SequenceNode();
+  virtual ~SequenceNode();
 
 private:
   SequenceType SeqType;
@@ -469,7 +469,7 @@ public:
   }
 
 protected:
-  ~AliasNode();
+  virtual ~AliasNode();
 
 private:
   StringRef Name;
