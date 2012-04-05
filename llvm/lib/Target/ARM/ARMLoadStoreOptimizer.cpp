@@ -1172,6 +1172,10 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       BaseReg, false, BaseUndef, false, OffUndef,
                       Pred, PredReg, TII, isT2);
         NewBBI = llvm::prior(MBBI);
+        // Be extra careful for thumb2. t2LDRi8 can't reference a zero offset,
+        // so adjust and use t2LDRi12 here for that.
+        if (isT2 && NewOpc == ARM::t2LDRi8 && OffImm+4 >= 0)
+          NewOpc = ARM::t2LDRi12;
         InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
                       EvenReg, EvenDeadKill, false,
                       BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
@@ -1193,6 +1197,10 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       BaseReg, false, BaseUndef, false, OffUndef,
                       Pred, PredReg, TII, isT2);
         NewBBI = llvm::prior(MBBI);
+        // Be extra careful for thumb2. t2STRi8 can't reference a zero offset,
+        // so adjust and use t2STRi12 here for that.
+        if (isT2 && NewOpc == ARM::t2STRi8 && OffImm+4 >= 0)
+          NewOpc = ARM::t2STRi12;
         InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc,
                       OddReg, OddDeadKill, OddUndef,
                       BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
