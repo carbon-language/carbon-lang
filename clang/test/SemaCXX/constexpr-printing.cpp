@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -verify
+// RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -verify -triple x86_64-linux-gnu
 
 struct S;
 constexpr int extract(const S &s);
