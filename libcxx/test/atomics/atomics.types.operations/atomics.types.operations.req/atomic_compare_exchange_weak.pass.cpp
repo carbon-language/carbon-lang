@@ -55,10 +55,6 @@ struct A
     int i;
 
     explicit A(int d = 0) : i(d) {}
-    A(const A& a) : i(a.i) {}
-    A(const volatile A& a) : i(a.i) {}
-
-    void operator=(const volatile A& a) volatile {i = a.i;}
 
     friend bool operator==(const A& x, const A& y)
         {return x.i == y.i;}
