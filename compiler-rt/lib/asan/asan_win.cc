@@ -241,7 +241,7 @@ uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
   __asm {
     mov eax, a
     mov cx, new_val
-    xchg [eax], cx
+    xchg [eax], cx  ; NOLINT
     mov new_val, cx
   }
   return new_val;
