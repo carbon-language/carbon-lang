@@ -2471,6 +2471,10 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
       }
 
+      // If RHS is a legal immediate value for a compare instruction, we need
+      // to be careful about increasing register pressure needlessly.
+      bool LegalRHSImm = false;
+
       if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N1)) {
         if (ConstantSDNode *LHSR = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
           // Turn (X+C1) == C2 --> X == C2-C1
@@ -2505,25 +2509,33 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                            Cond);
           }
         }
+
+        // Could RHSC fold directly into a compare?
+        if (RHSC->getValueType(0).getSizeInBits() <= 64)
+          LegalRHSImm = isLegalICmpImmediate(RHSC->getSExtValue());
       }
 
       // Simplify (X+Z) == X -->  Z == 0
-      if (N0.getOperand(0) == N1)
-        return DAG.getSetCC(dl, VT, N0.getOperand(1),
-                        DAG.getConstant(0, N0.getValueType()), Cond);
-      if (N0.getOperand(1) == N1) {
-        if (DAG.isCommutativeBinOp(N0.getOpcode()))
-          return DAG.getSetCC(dl, VT, N0.getOperand(0),
-                          DAG.getConstant(0, N0.getValueType()), Cond);
-        else if (N0.getNode()->hasOneUse()) {
-          assert(N0.getOpcode() == ISD::SUB && "Unexpected operation!");
-          // (Z-X) == X  --> Z == X<<1
-          SDValue SH = DAG.getNode(ISD::SHL, dl, N1.getValueType(),
-                                     N1,
+      // Don't do this if X is an immediate that can fold into a cmp
+      // instruction and X+Z has other uses. It could be an induction variable
+      // chain, and the transform would increase register pressure.
+      if (!LegalRHSImm || N0.getNode()->hasOneUse()) {
+        if (N0.getOperand(0) == N1)
+          return DAG.getSetCC(dl, VT, N0.getOperand(1),
+                              DAG.getConstant(0, N0.getValueType()), Cond);
+        if (N0.getOperand(1) == N1) {
+          if (DAG.isCommutativeBinOp(N0.getOpcode()))
+            return DAG.getSetCC(dl, VT, N0.getOperand(0),
+                                DAG.getConstant(0, N0.getValueType()), Cond);
+          else if (N0.getNode()->hasOneUse()) {
+            assert(N0.getOpcode() == ISD::SUB && "Unexpected operation!");
+            // (Z-X) == X  --> Z == X<<1
+            SDValue SH = DAG.getNode(ISD::SHL, dl, N1.getValueType(), N1,
                        DAG.getConstant(1, getShiftAmountTy(N1.getValueType())));
-          if (!DCI.isCalledByLegalizer())
-            DCI.AddToWorklist(SH.getNode());
-          return DAG.getSetCC(dl, VT, N0.getOperand(0), SH, Cond);
+            if (!DCI.isCalledByLegalizer())
+              DCI.AddToWorklist(SH.getNode());
+            return DAG.getSetCC(dl, VT, N0.getOperand(0), SH, Cond);
+          }
         }
       }
     }
