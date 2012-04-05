@@ -103,10 +103,6 @@ SymbolRef SVal::getAsSymbol() const {
   if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
     return X->getSymbol();
 
-  if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
-    if (SymbolRef Y = X->getSymbol())
-      return Y;
-
   return getAsLocSymbol();
 }
 
