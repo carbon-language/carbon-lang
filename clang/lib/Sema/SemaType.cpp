@@ -26,6 +26,7 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Lookup.h"
@@ -977,6 +978,25 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         TypeQuals && Result->isReferenceType()) {
       TypeQuals &= ~DeclSpec::TQ_const;
       TypeQuals &= ~DeclSpec::TQ_volatile;
+    }
+
+    // C90 6.5.3 constraints: "The same type qualifier shall not appear more
+    // than once in the same specifier-list or qualifier-list, either directly
+    // or via one or more typedefs."
+    if (!S.getLangOpts().C99 && !S.getLangOpts().CPlusPlus 
+        && TypeQuals & Result.getCVRQualifiers()) {
+      if (TypeQuals & DeclSpec::TQ_const && Result.isConstQualified()) {
+        S.Diag(DS.getConstSpecLoc(), diag::ext_duplicate_declspec) 
+          << "const";
+      }
+
+      if (TypeQuals & DeclSpec::TQ_volatile && Result.isVolatileQualified()) {
+        S.Diag(DS.getVolatileSpecLoc(), diag::ext_duplicate_declspec) 
+          << "volatile";
+      }
+
+      // C90 doesn't have restrict, so it doesn't force us to produce a warning
+      // in this case.
     }
 
     Qualifiers Quals = Qualifiers::fromCVRMask(TypeQuals);
