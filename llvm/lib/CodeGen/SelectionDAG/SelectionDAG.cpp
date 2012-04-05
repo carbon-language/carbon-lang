@@ -62,6 +62,7 @@ static SDVTList makeVTList(const EVT *VTs, unsigned NumVTs) {
 static const fltSemantics *EVTToAPFloatSemantics(EVT VT) {
   switch (VT.getSimpleVT().SimpleTy) {
   default: llvm_unreachable("Unknown FP format");
+  case MVT::f16:     return &APFloat::IEEEhalf;
   case MVT::f32:     return &APFloat::IEEEsingle;
   case MVT::f64:     return &APFloat::IEEEdouble;
   case MVT::f80:     return &APFloat::x87DoubleExtended;
@@ -1042,7 +1043,7 @@ SDValue SelectionDAG::getConstantFP(double Val, EVT VT, bool isTarget) {
     return getConstantFP(APFloat((float)Val), VT, isTarget);
   else if (EltVT==MVT::f64)
     return getConstantFP(APFloat(Val), VT, isTarget);
-  else if (EltVT==MVT::f80 || EltVT==MVT::f128) {
+  else if (EltVT==MVT::f80 || EltVT==MVT::f128 || EltVT==MVT::f16) {
     bool ignored;
     APFloat apf = APFloat(Val);
     apf.convert(*EVTToAPFloatSemantics(EltVT), APFloat::rmNearestTiesToEven,
