@@ -18,7 +18,8 @@ DIRS := ABI/MacOSX-arm ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm \
 	DynamicLoader/Static Platform Process/gdb-remote Instruction/ARM \
 	UnwindAssembly/InstEmulation UnwindAssembly/x86 \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
-	LanguageRuntime/ObjC/AppleObjCRuntime
+	LanguageRuntime/ObjC/AppleObjCRuntime \
+	DynamicLoader/POSIX-DYLD
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += Process/MacOSX-Kernel
@@ -31,11 +32,11 @@ DIRS += Process/mach-core
 endif
 
 ifeq ($(HOST_OS),Linux)
-DIRS += Process/Linux Process/POSIX DynamicLoader/POSIX-DYLD
+DIRS += Process/Linux Process/POSIX
 endif
 
 ifeq ($(HOST_OS),FreeBSD)
-DIRS += Process/FreeBSD Process/POSIX DynamicLoader/POSIX-DYLD
+DIRS += Process/FreeBSD Process/POSIX
 endif
 
 include $(LLDB_LEVEL)/Makefile
