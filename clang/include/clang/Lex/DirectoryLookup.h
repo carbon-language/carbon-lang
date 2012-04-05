@@ -145,17 +145,23 @@ public:
   /// \param SuggestedModule If non-null, and the file found is semantically
   /// part of a known module, this will be set to the module that should
   /// be imported instead of preprocessing/parsing the file found.
+  ///
+  /// \param InUserSpecifiedSystemHeader [out] If the file is found, set to true
+  /// if the file is located in a framework that has been user-specified to be
+  /// treated as a system framework.
   const FileEntry *LookupFile(StringRef Filename, HeaderSearch &HS,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              Module **SuggestedModule) const;
+                              Module **SuggestedModule,
+                              bool &InUserSpecifiedSystemHeader) const;
 
 private:
   const FileEntry *DoFrameworkLookup(
       StringRef Filename, HeaderSearch &HS,
       SmallVectorImpl<char> *SearchPath,
       SmallVectorImpl<char> *RelativePath,
-      Module **SuggestedModule) const;
+      Module **SuggestedModule,
+      bool &InUserSpecifiedSystemHeader) const;
 
 };
 

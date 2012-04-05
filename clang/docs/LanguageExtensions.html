@@ -30,6 +30,7 @@
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
 <li><a href="#deprecated">Messages on <tt>deprecated</tt> and <tt>unavailable</tt> attributes</a></li>
 <li><a href="#attributes-on-enumerators">Attributes on enumerators</a></li>
+<li><a href="#user_specified_system_framework">'User-Specified' System Frameworks</a></li>
 <li><a href="#availability">Availability attribute</a></li>
 <li><a href="#checking_language_features">Checks for Standard Language Features</a>
   <ul>
@@ -624,6 +625,34 @@ initializer, like so:</p>
 individual enumerators.</p>
 
 <p>Query for this feature with <tt>__has_extension(enumerator_attributes)</tt>.</p>
+
+<!-- ======================================================================= -->
+<h2 id="user_specified_system_framework">'User-Specified' System Frameworks</h2>
+<!-- ======================================================================= -->
+
+<p>Clang provides a mechanism by which frameworks can be built in such a way
+that they will always be treated as being 'system frameworks', even if they are
+not present in a system framework directory. This can be useful to system
+framework developers who want to be able to test building other applications
+with development builds of their framework, including the manner in which the
+compiler changes warning behavior for system headers.</p>
+
+<p>Framework developers can opt-in to this mechanism by creating a
+'.system_framework' file at the top-level of their framework. That is, the
+framework should have contents like:</p>
+
+<pre>
+ .../TestFramework.framework
+ .../TestFramework.framework/.system_framework
+ .../TestFramework.framework/Headers
+ .../TestFramework.framework/Headers/TestFramework.h
+ ...
+</pre>
+
+<p>Clang will treat the presence of this file as an indicator that the framework
+should be treated as a system framework, regardless of how it was found in the
+framework search path. For consistency, we recommend that such files never be
+included in installed versions of the framework.</p>
 
 <!-- ======================================================================= -->
 <h2 id="availability">Availability attribute</h2

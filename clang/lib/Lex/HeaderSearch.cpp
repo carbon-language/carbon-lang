@@ -204,7 +204,10 @@ const FileEntry *DirectoryLookup::LookupFile(
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    Module **SuggestedModule) const {
+    Module **SuggestedModule,
+    bool &InUserSpecifiedSystemFramework) const {
+  InUserSpecifiedSystemFramework = false;
+
   SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
@@ -239,7 +242,7 @@ const FileEntry *DirectoryLookup::LookupFile(
 
   if (isFramework())
     return DoFrameworkLookup(Filename, HS, SearchPath, RelativePath,
-                             SuggestedModule);
+                             SuggestedModule, InUserSpecifiedSystemFramework);
 
   assert(isHeaderMap() && "Unknown directory lookup");
   const FileEntry * const Result = getHeaderMap()->LookupFile(
@@ -266,7 +269,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    Module **SuggestedModule) const 
+    Module **SuggestedModule,
+    bool &InUserSpecifiedSystemFramework) const
 {
   FileManager &FileMgr = HS.getFileMgr();
 
@@ -303,14 +307,26 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     HS.IncrementFrameworkLookupCount();
 
     // If the framework dir doesn't exist, we fail.
-    // FIXME: It's probably more efficient to query this with FileMgr.getDir.
-    if (!llvm::sys::fs::exists(FrameworkName.str()))
-      return 0;
+    const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName.str());
+    if (Dir == 0) return 0;
 
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
     CacheEntry.Directory = getFrameworkDir();
+
+    // If this is a user search directory, check if the framework has been
+    // user-specified as a system framework.
+    if (getDirCharacteristic() == SrcMgr::C_User) {
+      SmallString<1024> SystemFrameworkMarker(FrameworkName);
+      SystemFrameworkMarker += ".system_framework";
+      if (llvm::sys::fs::exists(SystemFrameworkMarker.str())) {
+        CacheEntry.IsUserSpecifiedSystemFramework = true;
+      }
+    }
   }
+
+  // Set the 'user-specified system framework' flag.
+  InUserSpecifiedSystemFramework = CacheEntry.IsUserSpecifiedSystemFramework;
 
   if (RelativePath != NULL) {
     RelativePath->clear();
@@ -476,9 +492,10 @@ const FileEntry *HeaderSearch::LookupFile(
 
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
+    bool InUserSpecifiedSystemFramework = false;
     const FileEntry *FE =
       SearchDirs[i].LookupFile(Filename, *this, SearchPath, RelativePath,
-                               SuggestedModule);
+                               SuggestedModule, InUserSpecifiedSystemFramework);
     if (!FE) continue;
 
     CurDir = &SearchDirs[i];
@@ -486,6 +503,12 @@ const FileEntry *HeaderSearch::LookupFile(
     // This file is a system header or C++ unfriendly if the dir is.
     HeaderFileInfo &HFI = getFileInfo(FE);
     HFI.DirInfo = CurDir->getDirCharacteristic();
+
+    // If the directory characteristic is User but this framework was
+    // user-specified to be treated as a system framework, promote the
+    // characteristic.
+    if (HFI.DirInfo == SrcMgr::C_User && InUserSpecifiedSystemFramework)
+      HFI.DirInfo = SrcMgr::C_System;
 
     // If this file is found in a header map and uses the framework style of
     // includes, then this header is part of a framework we're building.
