@@ -3244,6 +3244,8 @@ class AAI<bits<8> op27_20, bits<8> op11_4, string opc,
   let Inst{19-16} = Rn;
   let Inst{15-12} = Rd;
   let Inst{3-0}   = Rm;
+  
+  let Unpredictable{11-8} = 0b1111;
 }
 
 // Saturating add/subtract
