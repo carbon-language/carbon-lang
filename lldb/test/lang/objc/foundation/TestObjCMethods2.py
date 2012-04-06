@@ -61,29 +61,29 @@ class FoundationTestCase2(TestBase):
         self.MyString_dump()
 
     @dsym_test
-	def test_NSError_po_with_dsym(self):
-		"""Test that po of the result of an unknown method doesn't require a cast."""
-		self.buildDsym()
-		self.NSError_po()
+    def test_NSError_po_with_dsym(self):
+        """Test that po of the result of an unknown method doesn't require a cast."""
+        self.buildDsym()
+        self.NSError_po()
 
     @dwarf_test
-	def test_NSError_po_with_dwarf(self):
-		"""Test that po of the result of an unknown method doesn't require a cast."""
-		self.buildDsym()
-		self.NSError_po()
-		
+    def test_NSError_po_with_dwarf(self):
+        """Test that po of the result of an unknown method doesn't require a cast."""
+        self.buildDsym()
+        self.NSError_po()
+        
     @dsym_test
-	def test_NSError_p_with_dsym(self):
-		"""Test that p of the result of an unknown method does require a cast."""
-		self.buildDsym()
-		self.NSError_p()
+    def test_NSError_p_with_dsym(self):
+        """Test that p of the result of an unknown method does require a cast."""
+        self.buildDsym()
+        self.NSError_p()
 
     @dwarf_test
-	def test_NSError_p_with_dwarf(self):
-		"""Test that p of the result of an unknown method does require a cast."""
-		self.buildDsym()
-		self.NSError_p()
-				
+    def test_NSError_p_with_dwarf(self):
+        """Test that p of the result of an unknown method does require a cast."""
+        self.buildDsym()
+        self.NSError_p()
+                
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -209,9 +209,9 @@ class FoundationTestCase2(TestBase):
             patterns = ["\(MyString\) \$.* = ", "\(MyBase\)", "\(NSObject\)", "\(Class\)"])
         self.runCmd("process continue")
 
-	def NSError_po(self):
-		"""Test that po of the result of an unknown method doesn't require a cast."""
-		exe = os.path.join(os.getcwd(), "a.out")
+    def NSError_po(self):
+        """Test that po of the result of an unknown method doesn't require a cast."""
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
         
         line = self.lines[4]
@@ -226,9 +226,9 @@ class FoundationTestCase2(TestBase):
             patterns = ["\(id\) \$.* = ", "Error Domain=Hello", "Code=35", "be completed."])
         self.runCmd("process continue")
 
-	def NSError_p(self):
-		"""Test that p of the result of an unknown method does require a cast."""
-		exe = os.path.join(os.getcwd(), "a.out")
+    def NSError_p(self):
+        """Test that p of the result of an unknown method does require a cast."""
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
         
         line = self.lines[4]
