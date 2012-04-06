@@ -422,17 +422,16 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     if (AFI->getGPRCalleeSavedArea1Size()) MBBI++;
   }
 
-  if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND ||
-      RetOpcode == ARM::TCRETURNri || RetOpcode == ARM::TCRETURNriND) {
+  if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNri) {
     // Tail call return: adjust the stack pointer and jump to callee.
     MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
 
     // Jump to label or value in register.
-    if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND) {
-      unsigned TCOpcode = (RetOpcode == ARM::TCRETURNdi)
-        ? (STI.isThumb() ? ARM::tTAILJMPd : ARM::TAILJMPd)
-        : (STI.isThumb() ? ARM::tTAILJMPdND : ARM::TAILJMPdND);
+    if (RetOpcode == ARM::TCRETURNdi) {
+      unsigned TCOpcode = STI.isThumb() ?
+               (STI.isTargetIOS() ? ARM::tTAILJMPd : ARM::tTAILJMPdND) :
+               ARM::TAILJMPd;
       MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(TCOpcode));
       if (JumpTarget.isGlobal())
         MIB.addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
@@ -448,10 +447,6 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     } else if (RetOpcode == ARM::TCRETURNri) {
       BuildMI(MBB, MBBI, dl,
               TII.get(STI.isThumb() ? ARM::tTAILJMPr : ARM::TAILJMPr)).
-        addReg(JumpTarget.getReg(), RegState::Kill);
-    } else if (RetOpcode == ARM::TCRETURNriND) {
-      BuildMI(MBB, MBBI, dl,
-              TII.get(STI.isThumb() ? ARM::tTAILJMPrND : ARM::TAILJMPrND)).
         addReg(JumpTarget.getReg(), RegState::Kill);
     }
 
@@ -648,9 +643,7 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
   DebugLoc DL = MI->getDebugLoc();
   unsigned RetOpcode = MI->getOpcode();
   bool isTailCall = (RetOpcode == ARM::TCRETURNdi ||
-                     RetOpcode == ARM::TCRETURNdiND ||
-                     RetOpcode == ARM::TCRETURNri ||
-                     RetOpcode == ARM::TCRETURNriND);
+                     RetOpcode == ARM::TCRETURNri);
 
   SmallVector<unsigned, 4> Regs;
   unsigned i = CSI.size();

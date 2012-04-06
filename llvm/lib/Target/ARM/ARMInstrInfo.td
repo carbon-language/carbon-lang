@@ -2026,45 +2026,22 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 
 // Tail calls.
 
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
-  // IOS versions.
-  let Uses = [SP] in {
-    def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsIOS]>;
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [SP] in {
+  def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
+                              IIC_Br, []>;
 
-    def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsIOS]>;
+  def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                              IIC_Br, []>;
 
-    def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst, variable_ops),
-                   4, IIC_Br, [],
-                   (Bcc br_target:$dst, (ops 14, zero_reg))>,
-                   Requires<[IsARM, IsIOS]>;
+  def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst, variable_ops),
+                                 4, IIC_Br, [],
+                                 (Bcc br_target:$dst, (ops 14, zero_reg))>,
+                                 Requires<[IsARM]>;
 
-    def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                   4, IIC_Br, [],
-                   (BX GPR:$dst)>,
-                   Requires<[IsARM, IsIOS]>;
-
-  }
-
-  // Non-IOS versions (the difference is R9).
-  let Uses = [SP] in {
-    def TCRETURNdiND : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsNotIOS]>;
-
-    def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsNotIOS]>;
-
-    def TAILJMPdND : ARMPseudoExpand<(outs), (ins brtarget:$dst, variable_ops),
-                   4, IIC_Br, [],
-                   (Bcc br_target:$dst, (ops 14, zero_reg))>,
-                   Requires<[IsARM, IsNotIOS]>;
-
-    def TAILJMPrND : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                     4, IIC_Br, [],
-                     (BX GPR:$dst)>,
-                     Requires<[IsARM, IsNotIOS]>;
-  }
+  def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
+                                 4, IIC_Br, [],
+                                 (BX GPR:$dst)>,
+                                 Requires<[IsARM]>;
 }
 
 // Secure Monitor Call is a system instruction.
@@ -4829,24 +4806,10 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 // TODO: add,sub,and, 3-instr forms?
 
-// Tail calls
-def : ARMPat<(ARMtcret tcGPR:$dst),
-          (TCRETURNri tcGPR:$dst)>, Requires<[IsIOS]>;
-
-def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
-          (TCRETURNdi texternalsym:$dst)>, Requires<[IsIOS]>;
-
-def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
-          (TCRETURNdi texternalsym:$dst)>, Requires<[IsIOS]>;
-
-def : ARMPat<(ARMtcret tcGPR:$dst),
-          (TCRETURNriND tcGPR:$dst)>, Requires<[IsNotIOS]>;
-
-def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
-          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotIOS]>;
-
-def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
-          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotIOS]>;
+// Tail calls. These patterns also apply to Thumb mode.
+def : Pat<(ARMtcret tcGPR:$dst), (TCRETURNri tcGPR:$dst)>;
+def : Pat<(ARMtcret (i32 tglobaladdr:$dst)), (TCRETURNdi texternalsym:$dst)>;
+def : Pat<(ARMtcret (i32 texternalsym:$dst)), (TCRETURNdi texternalsym:$dst)>;
 
 // Direct calls
 def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>,
