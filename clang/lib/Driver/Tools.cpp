@@ -5032,6 +5032,12 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-march");
       CmdArgs.push_back(CPUName);
     }
+
+    if (getToolChain().getArch() == llvm::Triple::mips ||
+        getToolChain().getArch() == llvm::Triple::mips64)
+      CmdArgs.push_back("-EB");
+    else
+      CmdArgs.push_back("-EL");
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
