@@ -35,7 +35,7 @@
 
 namespace llvm {
 
-template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
+template<typename KeyT, typename ValueT, typename Config>
 class ValueMapCallbackVH;
 
 template<typename DenseMapT, typename KeyT>
@@ -72,13 +72,11 @@ struct ValueMapConfig {
 };
 
 /// See the file comment.
-template<typename KeyT, typename ValueT, typename Config = ValueMapConfig<KeyT>,
-         typename ValueInfoT = DenseMapInfo<ValueT> >
+template<typename KeyT, typename ValueT, typename Config =ValueMapConfig<KeyT> >
 class ValueMap {
-  friend class ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT>;
-  typedef ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT> ValueMapCVH;
-  typedef DenseMap<ValueMapCVH, ValueT, DenseMapInfo<ValueMapCVH>,
-                   ValueInfoT> MapT;
+  friend class ValueMapCallbackVH<KeyT, ValueT, Config>;
+  typedef ValueMapCallbackVH<KeyT, ValueT, Config> ValueMapCVH;
+  typedef DenseMap<ValueMapCVH, ValueT, DenseMapInfo<ValueMapCVH> > MapT;
   typedef typename Config::ExtraData ExtraData;
   MapT Map;
   ExtraData Data;
@@ -190,11 +188,11 @@ private:
 
 // This CallbackVH updates its ValueMap when the contained Value changes,
 // according to the user's preferences expressed through the Config object.
-template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
+template<typename KeyT, typename ValueT, typename Config>
 class ValueMapCallbackVH : public CallbackVH {
-  friend class ValueMap<KeyT, ValueT, Config, ValueInfoT>;
+  friend class ValueMap<KeyT, ValueT, Config>;
   friend struct DenseMapInfo<ValueMapCallbackVH>;
-  typedef ValueMap<KeyT, ValueT, Config, ValueInfoT> ValueMapT;
+  typedef ValueMap<KeyT, ValueT, Config> ValueMapT;
   typedef typename llvm::remove_pointer<KeyT>::type KeySansPointerT;
 
   ValueMapT *Map;
@@ -244,9 +242,9 @@ public:
   }
 };
 
-template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
-struct DenseMapInfo<ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT> > {
-  typedef ValueMapCallbackVH<KeyT, ValueT, Config, ValueInfoT> VH;
+template<typename KeyT, typename ValueT, typename Config>
+struct DenseMapInfo<ValueMapCallbackVH<KeyT, ValueT, Config> > {
+  typedef ValueMapCallbackVH<KeyT, ValueT, Config> VH;
   typedef DenseMapInfo<KeyT> PointerInfo;
 
   static inline VH getEmptyKey() {

@@ -30,8 +30,7 @@ class GVMaterializer;
 class LLVMContext;
 class StructType;
 template<typename T> struct DenseMapInfo;
-template<typename KeyT, typename ValueT, 
-         typename KeyInfoT, typename ValueInfoT> class DenseMap;
+template<typename KeyT, typename ValueT, typename KeyInfoT> class DenseMap;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module> {
@@ -299,8 +298,8 @@ public:
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
 
   
-  typedef DenseMap<StructType*, unsigned, DenseMapInfo<StructType*>,
-                   DenseMapInfo<unsigned> > NumeredTypesMapTy;
+  typedef DenseMap<StructType*, unsigned, DenseMapInfo<StructType*> >
+                   NumeredTypesMapTy;
 
   /// findUsedStructTypes - Walk the entire module and find all of the
   /// struct types that are in use, returning them in a vector.

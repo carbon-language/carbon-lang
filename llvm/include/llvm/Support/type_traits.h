@@ -66,7 +66,7 @@ struct isPodLike {
 // std::pair's are pod-like if their elements are.
 template<typename T, typename U>
 struct isPodLike<std::pair<T, U> > {
-  static const bool value = isPodLike<T>::value & isPodLike<U>::value;
+  static const bool value = isPodLike<T>::value && isPodLike<U>::value;
 };
   
 

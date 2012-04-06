@@ -30,12 +30,11 @@ namespace llvm {
 
 template<typename KeyT, typename ValueT,
          typename KeyInfoT = DenseMapInfo<KeyT>,
-         typename ValueInfoT = DenseMapInfo<ValueT>, bool IsConst = false>
+         bool IsConst = false>
 class DenseMapIterator;
 
 template<typename KeyT, typename ValueT,
-         typename KeyInfoT = DenseMapInfo<KeyT>,
-         typename ValueInfoT = DenseMapInfo<ValueT> >
+         typename KeyInfoT = DenseMapInfo<KeyT> >
 class DenseMap {
   typedef std::pair<KeyT, ValueT> BucketT;
   unsigned NumBuckets;
@@ -80,7 +79,7 @@ public:
 
   typedef DenseMapIterator<KeyT, ValueT, KeyInfoT> iterator;
   typedef DenseMapIterator<KeyT, ValueT,
-                           KeyInfoT, ValueInfoT, true> const_iterator;
+                           KeyInfoT, true> const_iterator;
   inline iterator begin() {
     // When the map is empty, avoid the overhead of AdvancePastEmptyBuckets().
     return empty() ? end() : iterator(Buckets, Buckets+NumBuckets);
@@ -256,7 +255,7 @@ public:
 private:
   void CopyFrom(const DenseMap& other) {
     if (NumBuckets != 0 &&
-        (!isPodLike<KeyInfoT>::value || !isPodLike<ValueInfoT>::value)) {
+        (!isPodLike<KeyT>::value || !isPodLike<ValueT>::value)) {
       const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
       for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
         if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
@@ -285,7 +284,7 @@ private:
 
     Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT) * NumBuckets));
 
-    if (isPodLike<KeyInfoT>::value && isPodLike<ValueInfoT>::value)
+    if (isPodLike<KeyT>::value && isPodLike<ValueT>::value)
       memcpy(Buckets, other.Buckets, NumBuckets * sizeof(BucketT));
     else
       for (size_t i = 0; i < NumBuckets; ++i) {
@@ -502,12 +501,12 @@ public:
 };
 
 template<typename KeyT, typename ValueT,
-         typename KeyInfoT, typename ValueInfoT, bool IsConst>
+         typename KeyInfoT, bool IsConst>
 class DenseMapIterator {
   typedef std::pair<KeyT, ValueT> Bucket;
   typedef DenseMapIterator<KeyT, ValueT,
-                           KeyInfoT, ValueInfoT, true> ConstIterator;
-  friend class DenseMapIterator<KeyT, ValueT, KeyInfoT, ValueInfoT, true>;
+                           KeyInfoT, true> ConstIterator;
+  friend class DenseMapIterator<KeyT, ValueT, KeyInfoT, true>;
 public:
   typedef ptrdiff_t difference_type;
   typedef typename conditional<IsConst, const Bucket, Bucket>::type value_type;
@@ -528,7 +527,7 @@ public:
   // const_iterator and the default copy constructor is used.
   // Otherwise this is a copy constructor for iterator.
   DenseMapIterator(const DenseMapIterator<KeyT, ValueT,
-                                          KeyInfoT, ValueInfoT, false>& I)
+                                          KeyInfoT, false>& I)
     : Ptr(I.Ptr), End(I.End) {}
 
   reference operator*() const {
@@ -566,9 +565,9 @@ private:
   }
 };
   
-template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
+template<typename KeyT, typename ValueT, typename KeyInfoT>
 static inline size_t
-capacity_in_bytes(const DenseMap<KeyT, ValueT, KeyInfoT, ValueInfoT> &X) {
+capacity_in_bytes(const DenseMap<KeyT, ValueT, KeyInfoT> &X) {
   return X.getMemorySize();
 }
 
