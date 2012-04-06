@@ -988,8 +988,11 @@ void CallAnalyzer::dump() {
 }
 
 InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, int Threshold) {
-  Function *Callee = CS.getCalledFunction();
+  return getInlineCost(CS, CS.getCalledFunction(), Threshold);
+}
 
+InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
+                                             int Threshold) {
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.

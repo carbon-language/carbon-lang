@@ -117,6 +117,15 @@ namespace llvm {
     /// bound the computation necessary to determine whether the cost is
     /// sufficiently low to warrant inlining.
     InlineCost getInlineCost(CallSite CS, int Threshold);
+    /// getCalledFunction - The heuristic used to determine if we should inline
+    /// the function call or not.  The callee is explicitly specified, to allow
+    /// you to calculate the cost of inlining a function via a pointer.  This
+    /// behaves exactly as the version with no explicit callee parameter in all
+    /// other respects.
+    //
+    //  Note: This is used by out-of-tree passes, please do not remove without
+    //  adding a replacement API.
+    InlineCost getInlineCost(CallSite CS, Function *Callee, int Threshold);
   };
 
   /// callIsSmall - If a call is likely to lower to a single target instruction,
