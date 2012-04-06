@@ -8616,9 +8616,9 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
 bool ARMTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
   // Thumb2 and ARM modes can use cmn for negative immediates.
   if (!Subtarget->isThumb())
-    return ARM_AM::getSOImmVal(std::abs(Imm)) != -1;
+    return ARM_AM::getSOImmVal(llvm::abs64(Imm)) != -1;
   if (Subtarget->isThumb2())
-    return ARM_AM::getT2SOImmVal(std::abs(Imm)) != -1;
+    return ARM_AM::getT2SOImmVal(llvm::abs64(Imm)) != -1;
   // Thumb1 doesn't have cmn, and only 8-bit immediates.
   return Imm >= 0 && Imm <= 255;
 }
