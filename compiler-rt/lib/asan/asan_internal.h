@@ -263,6 +263,7 @@ enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 void NORETURN AsanDie();
 void SleepForSeconds(int seconds);
 void NORETURN Exit(int exitcode);
+void NORETURN Abort();
 int Atexit(void (*function)(void));
 
 #define CHECK(cond) do { if (!(cond)) { \

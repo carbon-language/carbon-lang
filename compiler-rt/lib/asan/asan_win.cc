@@ -299,6 +299,10 @@ void Exit(int exitcode) {
   _exit(exitcode);
 }
 
+void Abort() {
+  abort();
+}
+
 int Atexit(void (*function)(void)) {
   return atexit(function);
 }
