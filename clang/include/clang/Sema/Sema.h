@@ -1378,7 +1378,7 @@ public:
 
   /// Push the parameters of D, which must be a function, into scope.
   void ActOnReenterFunctionContext(Scope* S, Decl* D);
-  void ActOnExitFunctionContext() { PopDeclContext(); }
+  void ActOnExitFunctionContext();
 
   DeclContext *getFunctionLevelDeclContext();
 

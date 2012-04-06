@@ -735,9 +735,18 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
   ParseScope ClassScope(this, ScopeFlags, !AlreadyHasClassScope);
   ParseScopeFlags ClassScopeFlags(this, ScopeFlags, AlreadyHasClassScope);
 
+  // Enter the scope of nested classes
+  if (!AlreadyHasClassScope)
+    Actions.ActOnStartDelayedMemberDeclarations(getCurScope(),
+                                                Class.TagOrTemplate);
+
   for (unsigned i = 0, ni = Class.LateParsedDeclarations.size(); i < ni; ++i) {
     Class.LateParsedDeclarations[i]->ParseLexedAttributes();
   }
+
+  if (!AlreadyHasClassScope)
+    Actions.ActOnFinishDelayedMemberDeclarations(getCurScope(),
+                                                 Class.TagOrTemplate);
 }
 
 

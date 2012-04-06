@@ -872,7 +872,13 @@ void Sema::ActOnReenterFunctionContext(Scope* S, Decl *D) {
   if (!FD)
     return;
 
-  PushDeclContext(S, FD);
+  // Same implementation as PushDeclContext, but enters the context
+  // from the lexical parent, rather than the top-level class.
+  assert(CurContext == FD->getLexicalParent() &&
+    "The next DeclContext should be lexically contained in the current one.");
+  CurContext = FD;
+  S->setEntity(CurContext);
+
   for (unsigned P = 0, NumParams = FD->getNumParams(); P < NumParams; ++P) {
     ParmVarDecl *Param = FD->getParamDecl(P);
     // If the parameter has an identifier, then add it to the scope
@@ -881,6 +887,15 @@ void Sema::ActOnReenterFunctionContext(Scope* S, Decl *D) {
       IdResolver.AddDecl(Param);
     }
   }
+}
+
+
+void Sema::ActOnExitFunctionContext() {
+  // Same implementation as PopDeclContext, but returns to the lexical parent,
+  // rather than the top-level class.
+  assert(CurContext && "DeclContext imbalance!");
+  CurContext = CurContext->getLexicalParent();
+  assert(CurContext && "Popped translation unit!");
 }
 
 
