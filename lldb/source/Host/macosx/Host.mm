@@ -1407,7 +1407,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         }
     });
     
-    xpc_connection_set_finalizer_f (conn, xpc_release);
+        xpc_connection_set_finalizer_f (conn, xpc_finalizer_t(xpc_release));
 	xpc_connection_resume (conn);
     xpc_object_t message = xpc_dictionary_create (nil, nil, 0);
     
