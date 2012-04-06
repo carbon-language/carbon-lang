@@ -7,6 +7,7 @@ Contents
    :maxdepth: 2
 
    intro
+   design
 
 Indices and tables
 ==================
