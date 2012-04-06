@@ -1542,7 +1542,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
                       ProgramPoint::PostLValueKind);
   else {
     Bldr.takeNodes(Pred);
-    evalLoad(Dst, M, Pred, state, L);
+    evalLoad(Dst, M, M, Pred, state, L);
     Bldr.addNodes(Dst);
   }
 }
@@ -1611,7 +1611,7 @@ void ExprEngine::evalStore(ExplodedNodeSet &Dst, const Expr *AssignE,
 
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
-  evalLocation(Tmp, LocationE, Pred, state, location, tag, false);
+  evalLocation(Tmp, AssignE, LocationE, Pred, state, location, tag, false);
 
   if (Tmp.empty())
     return;
@@ -1623,15 +1623,17 @@ void ExprEngine::evalStore(ExplodedNodeSet &Dst, const Expr *AssignE,
     evalBind(Dst, StoreE, *NI, location, Val, false);
 }
 
-void ExprEngine::evalLoad(ExplodedNodeSet &Dst, const Expr *Ex,
-                            ExplodedNode *Pred,
-                            ProgramStateRef state, SVal location,
-                            const ProgramPointTag *tag, QualType LoadTy) {
+void ExprEngine::evalLoad(ExplodedNodeSet &Dst,
+                          const Expr *NodeEx,
+                          const Expr *BoundEx,
+                          ExplodedNode *Pred,
+                          ProgramStateRef state,
+                          SVal location,
+                          const ProgramPointTag *tag,
+                          QualType LoadTy)
+{
   assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
-
-  if (isa<loc::ObjCPropRef>(location)) {
-    assert(false);
-  }
+  assert(!isa<loc::ObjCPropRef>(location));
 
   // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
@@ -1644,30 +1646,36 @@ void ExprEngine::evalLoad(ExplodedNodeSet &Dst, const Expr *Ex,
       static SimpleProgramPointTag
              loadReferenceTag("ExprEngine : Load Reference");
       ExplodedNodeSet Tmp;
-      evalLoadCommon(Tmp, Ex, Pred, state, location, &loadReferenceTag,
+      evalLoadCommon(Tmp, NodeEx, BoundEx, Pred, state,
+                     location, &loadReferenceTag,
                      getContext().getPointerType(RT->getPointeeType()));
 
       // Perform the load from the referenced value.
       for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end() ; I!=E; ++I) {
         state = (*I)->getState();
-        location = state->getSVal(Ex, (*I)->getLocationContext());
-        evalLoadCommon(Dst, Ex, *I, state, location, tag, LoadTy);
+        location = state->getSVal(BoundEx, (*I)->getLocationContext());
+        evalLoadCommon(Dst, NodeEx, BoundEx, *I, state, location, tag, LoadTy);
       }
       return;
     }
   }
 
-  evalLoadCommon(Dst, Ex, Pred, state, location, tag, LoadTy);
+  evalLoadCommon(Dst, NodeEx, BoundEx, Pred, state, location, tag, LoadTy);
 }
 
-void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex,
-                                  ExplodedNode *Pred,
-                                  ProgramStateRef state, SVal location,
-                                  const ProgramPointTag *tag, QualType LoadTy) {
-
+void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst,
+                                const Expr *NodeEx,
+                                const Expr *BoundEx,
+                                ExplodedNode *Pred,
+                                ProgramStateRef state,
+                                SVal location,
+                                const ProgramPointTag *tag,
+                                QualType LoadTy) {
+  assert(NodeEx);
+  assert(BoundEx);
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
-  evalLocation(Tmp, Ex, Pred, state, location, tag, true);
+  evalLocation(Tmp, NodeEx, BoundEx, Pred, state, location, tag, true);
   if (Tmp.empty())
     return;
 
@@ -1682,24 +1690,30 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex,
 
     if (location.isUnknown()) {
       // This is important.  We must nuke the old binding.
-      Bldr.generateNode(Ex, *NI, state->BindExpr(Ex, LCtx, UnknownVal()),
-                        false, tag, ProgramPoint::PostLoadKind);
+      Bldr.generateNode(NodeEx, *NI,
+                        state->BindExpr(BoundEx, LCtx, UnknownVal()),
+                        false, tag,
+                        ProgramPoint::PostLoadKind);
     }
     else {
       if (LoadTy.isNull())
-        LoadTy = Ex->getType();
+        LoadTy = BoundEx->getType();
       SVal V = state->getSVal(cast<Loc>(location), LoadTy);
-      Bldr.generateNode(Ex, *NI, state->bindExprAndLocation(Ex, LCtx,
-                                                            location, V),
+      Bldr.generateNode(NodeEx, *NI,
+                        state->bindExprAndLocation(BoundEx, LCtx, location, V),
                         false, tag, ProgramPoint::PostLoadKind);
     }
   }
 }
 
-void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
-                                ExplodedNode *Pred,
-                                ProgramStateRef state, SVal location,
-                                const ProgramPointTag *tag, bool isLoad) {
+void ExprEngine::evalLocation(ExplodedNodeSet &Dst,
+                              const Stmt *NodeEx,
+                              const Stmt *BoundEx,
+                              ExplodedNode *Pred,
+                              ProgramStateRef state,
+                              SVal location,
+                              const ProgramPointTag *tag,
+                              bool isLoad) {
   StmtNodeBuilder BldrTop(Pred, Dst, *currentBuilderContext);
   // Early checks for performance reason.
   if (location.isUnknown()) {
@@ -1721,12 +1735,11 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
     
     // FIXME: why is 'tag' not used instead of etag?
     static SimpleProgramPointTag etag("ExprEngine: Location");
-
-    Bldr.generateNode(S, Pred, state, false, &etag);
+    Bldr.generateNode(NodeEx, Pred, state, false, &etag);
   }
   ExplodedNodeSet Tmp;
-  getCheckerManager().runCheckersForLocation(Tmp, Src, location, isLoad, S,
-                                             *this);
+  getCheckerManager().runCheckersForLocation(Tmp, Src, location, isLoad,
+                                             NodeEx, BoundEx, *this);
   BldrTop.addNodes(Tmp);
 }
 

@@ -92,7 +92,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     // null dereferences, and so on.
     ExplodedNodeSet Tmp;
     SVal location = LeftV;
-    evalLoad(Tmp, LHS, *it, state, location);
+    evalLoad(Tmp, B, LHS, *it, state, location);
     
     for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E;
          ++I) {
@@ -189,7 +189,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       ExplodedNode *subExprNode = *I;
       ProgramStateRef state = subExprNode->getState();
       const LocationContext *LCtx = subExprNode->getLocationContext();
-      evalLoad(Dst, CastE, subExprNode, state, state->getSVal(Ex, LCtx));
+      evalLoad(Dst, CastE, CastE, subExprNode, state, state->getSVal(Ex, LCtx));
     }
     return;
   }
@@ -693,7 +693,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
   
   // Perform a load.
   ExplodedNodeSet Tmp;
-  evalLoad(Tmp, Ex, Pred, state, loc);
+  evalLoad(Tmp, U, Ex, Pred, state, loc);
   
   ExplodedNodeSet Dst2;
   StmtNodeBuilder Bldr(Tmp, Dst2, *currentBuilderContext);
@@ -762,7 +762,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     // Perform the store.
     Bldr.takeNodes(*I);
     ExplodedNodeSet Dst3;
-    evalStore(Dst3, NULL, U, *I, state, loc, Result);
+    evalStore(Dst3, U, U, *I, state, loc, Result);
     Bldr.addNodes(Dst3);
   }
   Dst.insert(Dst2);

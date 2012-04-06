@@ -87,7 +87,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   
   ExplodedNodeSet dstLocation;
   Bldr.takeNodes(Pred);
-  evalLocation(dstLocation, elem, Pred, state, elementV, NULL, false);
+  evalLocation(dstLocation, S, elem, Pred, state, elementV, NULL, false);
   Bldr.addNodes(dstLocation);
   
   for (ExplodedNodeSet::iterator NI = dstLocation.begin(),

@@ -95,7 +95,7 @@ void rdar8331641(int x) {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>6</integer>
-// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -174,7 +174,7 @@ void rdar8331641(int x) {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>12</integer>
-// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -253,7 +253,7 @@ void rdar8331641(int x) {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>19</integer>
-// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -395,7 +395,7 @@ void rdar8331641(int x) {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>24</integer>
-// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -542,7 +542,7 @@ void rdar8331641(int x) {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>31</integer>
-// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -655,7 +655,7 @@ void rdar8331641(int x) {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>38</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>

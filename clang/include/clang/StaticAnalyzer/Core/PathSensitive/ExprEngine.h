@@ -440,8 +440,13 @@ public:
   // be the same as Pred->state, and when 'location' may not be the
   // same as state->getLValue(Ex).
   /// Simulate a read of the result of Ex.
-  void evalLoad(ExplodedNodeSet &Dst, const Expr *Ex, ExplodedNode *Pred,
-                ProgramStateRef St, SVal location, const ProgramPointTag *tag = 0,
+  void evalLoad(ExplodedNodeSet &Dst,
+                const Expr *NodeEx,  /* Eventually will be a CFGStmt */
+                const Expr *BoundExpr,
+                ExplodedNode *Pred,
+                ProgramStateRef St,
+                SVal location,
+                const ProgramPointTag *tag = 0,
                 QualType LoadTy = QualType());
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
@@ -450,13 +455,21 @@ public:
                  ExplodedNode *Pred, ProgramStateRef St, SVal TargetLV, SVal Val,
                  const ProgramPointTag *tag = 0);
 private:
-  void evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex, ExplodedNode *Pred,
-                      ProgramStateRef St, SVal location, const ProgramPointTag *tag,
+  void evalLoadCommon(ExplodedNodeSet &Dst,
+                      const Expr *NodeEx,  /* Eventually will be a CFGStmt */
+                      const Expr *BoundEx,
+                      ExplodedNode *Pred,
+                      ProgramStateRef St,
+                      SVal location,
+                      const ProgramPointTag *tag,
                       QualType LoadTy);
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
-  void evalLocation(ExplodedNodeSet &Dst, const Stmt *S, ExplodedNode *Pred,
+  void evalLocation(ExplodedNodeSet &Dst,
+                    const Stmt *NodeEx, /* This will eventually be a CFGStmt */
+                    const Stmt *BoundEx,
+                    ExplodedNode *Pred,
                     ProgramStateRef St, SVal location,
                     const ProgramPointTag *tag, bool isLoad);
 

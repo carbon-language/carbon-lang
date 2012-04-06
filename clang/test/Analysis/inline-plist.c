@@ -23,6 +23,7 @@ void test_has_bug() {
   has_bug(0);
 }
 
+
 // CHECK: <?xml version="1.0" encoding="UTF-8"?>
 // CHECK: <plist version="1.0">
 // CHECK: <dict>
@@ -314,7 +315,7 @@ void test_has_bug() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>19</integer>
-// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -366,4 +367,3 @@ void test_has_bug() {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
-

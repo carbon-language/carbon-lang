@@ -120,8 +120,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
       dyn_cast_or_null<TypedValueRegion>(location.getAsRegion())) {
     LoadTy = TR->getValueType();
   }
-  Eng.evalLoad(Tmp, theValueExpr, Pred,
-                  state, location, &OSAtomicLoadTag, LoadTy);
+  Eng.evalLoad(Tmp, CE, theValueExpr, Pred,
+               state, location, &OSAtomicLoadTag, LoadTy);
 
   if (Tmp.empty()) {
     // If no nodes were generated, other checkers must have generated sinks. 
@@ -172,8 +172,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
         val = svalBuilder.evalCast(val,R->getValueType(), newValueExpr->getType());
       }
 
-      Eng.evalStore(TmpStore, NULL, theValueExpr, N,
-                       stateEqual, location, val, &OSAtomicStoreTag);
+      Eng.evalStore(TmpStore, CE, theValueExpr, N,
+                    stateEqual, location, val, &OSAtomicStoreTag);
 
       if (TmpStore.empty()) {
         // If no nodes were generated, other checkers must have generated sinks. 
