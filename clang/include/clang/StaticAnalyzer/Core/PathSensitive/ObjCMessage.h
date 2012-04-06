@@ -278,6 +278,7 @@ public:
            if (StrInStrNoCase(FName, "InsertValue") != StringRef::npos||
                StrInStrNoCase(FName, "AddValue") != StringRef::npos ||
                StrInStrNoCase(FName, "SetValue") != StringRef::npos ||
+               StrInStrNoCase(FName, "WithData") != StringRef::npos ||
                StrInStrNoCase(FName, "AppendValue") != StringRef::npos||
                StrInStrNoCase(FName, "SetAttribute") != StringRef::npos) {
          return true;

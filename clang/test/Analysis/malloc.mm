@@ -136,3 +136,21 @@ static inline void radar11111210(OSQueueHead *pool) {
     OSAtomicEnqueue(pool, newItem, 4);
 }
 
+// Pointer might escape through CGDataProviderCreateWithData (radar://11187558).
+typedef struct CGDataProvider *CGDataProviderRef;
+typedef void (*CGDataProviderReleaseDataCallback)(void *info, const void *data,
+    size_t size);
+extern CGDataProviderRef CGDataProviderCreateWithData(void *info,
+    const void *data, size_t size,
+    CGDataProviderReleaseDataCallback releaseData)
+    __attribute__((visibility("default")));
+void *calloc(size_t, size_t);
+
+static void releaseDataCallback (void *info, const void *data, size_t size) {
+#pragma unused (info, size)
+  free((void*)data);
+}
+void testCGDataProviderCreateWithData() { 
+  void* b = calloc(8, 8);
+  CGDataProviderRef p = CGDataProviderCreateWithData(0, b, 8*8, releaseDataCallback);
+}
