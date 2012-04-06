@@ -358,14 +358,37 @@ ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool na
 
     uint32_t total_matches = 0;
     collection::const_iterator pos, end = m_modules.end();
-    for (pos = m_modules.begin(); pos != end; ++pos)
+    if (sc.module_sp)
     {
-        if (sc.module_sp.get() == NULL || sc.module_sp.get() == (*pos).get())
-            total_matches += (*pos)->FindTypes (sc, name, name_is_fully_qualified, max_matches, types);
+        // The symbol context "sc" contains a module so we want to search that
+        // one first if it is in our list...
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            if (sc.module_sp.get() == (*pos).get())
+            {
+                total_matches += (*pos)->FindTypes (sc, name, name_is_fully_qualified, max_matches, types);
 
-        if (total_matches >= max_matches)
-            break;
+                if (total_matches >= max_matches)
+                    break;
+            }
+        }
     }
+    
+    if (total_matches < max_matches)
+    {
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            // Search the module if the module is not equal to the one in the symbol
+            // context "sc". If "sc" contains a empty module shared pointer, then
+            // the comparisong will always be true (valid_module_ptr != NULL).
+            if (sc.module_sp.get() != (*pos).get())
+                total_matches += (*pos)->FindTypes (sc, name, name_is_fully_qualified, max_matches, types);
+            
+            if (total_matches >= max_matches)
+                break;
+        }
+    }
+    
     return total_matches;
 }
 
