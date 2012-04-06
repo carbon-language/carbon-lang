@@ -1974,112 +1974,119 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
 /// dominated by 'Root'.  Exploit this, for example by replacing 'LHS' with
 /// 'RHS' everywhere in the scope.  Returns whether a change was made.
 bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
-  if (LHS == RHS) return false;
-  assert(LHS->getType() == RHS->getType() && "Equal but types differ!");
-
-  // Don't try to propagate equalities between constants.
-  if (isa<Constant>(LHS) && isa<Constant>(RHS))
-    return false;
-
-  // Prefer a constant on the right-hand side, or an Argument if no constants.
-  if (isa<Constant>(LHS) || (isa<Argument>(LHS) && !isa<Constant>(RHS)))
-    std::swap(LHS, RHS);
-  assert((isa<Argument>(LHS) || isa<Instruction>(LHS)) && "Unexpected value!");
-
-  // If there is no obvious reason to prefer the left-hand side over the right-
-  // hand side, ensure the longest lived term is on the right-hand side, so the
-  // shortest lived term will be replaced by the longest lived.  This tends to
-  // expose more simplifications.
-  uint32_t LVN = VN.lookup_or_add(LHS);
-  if ((isa<Argument>(LHS) && isa<Argument>(RHS)) ||
-      (isa<Instruction>(LHS) && isa<Instruction>(RHS))) {
-    // Move the 'oldest' value to the right-hand side, using the value number as
-    // a proxy for age.
-    uint32_t RVN = VN.lookup_or_add(RHS);
-    if (LVN < RVN) {
-      std::swap(LHS, RHS);
-      LVN = RVN;
-    }
-  }
-  assert((!isa<Instruction>(RHS) ||
-          DT->properlyDominates(cast<Instruction>(RHS)->getParent(), Root)) &&
-         "Instruction doesn't dominate scope!");
-
-  // If value numbering later deduces that an instruction in the scope is equal
-  // to 'LHS' then ensure it will be turned into 'RHS'.
-  addToLeaderTable(LVN, RHS, Root);
-
-  // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.  As
-  // LHS always has at least one use that is not dominated by Root, this will
-  // never do anything if LHS has only one use.
+  SmallVector<std::pair<Value*, Value*>, 4> Worklist;
+  Worklist.push_back(std::make_pair(LHS, RHS));
   bool Changed = false;
-  if (!LHS->hasOneUse()) {
-    unsigned NumReplacements = replaceAllDominatedUsesWith(LHS, RHS, Root);
-    Changed |= NumReplacements > 0;
-    NumGVNEqProp += NumReplacements;
-  }
 
-  // Now try to deduce additional equalities from this one.  For example, if the
-  // known equality was "(A != B)" == "false" then it follows that A and B are
-  // equal in the scope.  Only boolean equalities with an explicit true or false
-  // RHS are currently supported.
-  if (!RHS->getType()->isIntegerTy(1))
-    // Not a boolean equality - bail out.
-    return Changed;
-  ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
-  if (!CI)
-    // RHS neither 'true' nor 'false' - bail out.
-    return Changed;
-  // Whether RHS equals 'true'.  Otherwise it equals 'false'.
-  bool isKnownTrue = CI->isAllOnesValue();
-  bool isKnownFalse = !isKnownTrue;
+  while (!Worklist.empty()) {
+    std::pair<Value*, Value*> Item = Worklist.pop_back_val();
+    LHS = Item.first; RHS = Item.second;
 
-  // If "A && B" is known true then both A and B are known true.  If "A || B"
-  // is known false then both A and B are known false.
-  Value *A, *B;
-  if ((isKnownTrue && match(LHS, m_And(m_Value(A), m_Value(B)))) ||
-      (isKnownFalse && match(LHS, m_Or(m_Value(A), m_Value(B))))) {
-    Changed |= propagateEquality(A, RHS, Root);
-    Changed |= propagateEquality(B, RHS, Root);
-    return Changed;
-  }
+    if (LHS == RHS) continue;
+    assert(LHS->getType() == RHS->getType() && "Equality but unequal types!");
 
-  // If we are propagating an equality like "(A == B)" == "true" then also
-  // propagate the equality A == B.  When propagating a comparison such as
-  // "(A >= B)" == "true", replace all instances of "A < B" with "false".
-  if (ICmpInst *Cmp = dyn_cast<ICmpInst>(LHS)) {
-    Value *Op0 = Cmp->getOperand(0), *Op1 = Cmp->getOperand(1);
+    // Don't try to propagate equalities between constants.
+    if (isa<Constant>(LHS) && isa<Constant>(RHS)) continue;
 
-    // If "A == B" is known true, or "A != B" is known false, then replace
-    // A with B everywhere in the scope.
-    if ((isKnownTrue && Cmp->getPredicate() == CmpInst::ICMP_EQ) ||
-        (isKnownFalse && Cmp->getPredicate() == CmpInst::ICMP_NE))
-      Changed |= propagateEquality(Op0, Op1, Root);
+    // Prefer a constant on the right-hand side, or an Argument if no constants.
+    if (isa<Constant>(LHS) || (isa<Argument>(LHS) && !isa<Constant>(RHS)))
+      std::swap(LHS, RHS);
+    assert((isa<Argument>(LHS) || isa<Instruction>(LHS)) && "Unexpected value!");
 
-    // If "A >= B" is known true, replace "A < B" with false everywhere.
-    CmpInst::Predicate NotPred = Cmp->getInversePredicate();
-    Constant *NotVal = ConstantInt::get(Cmp->getType(), isKnownFalse);
-    // Since we don't have the instruction "A < B" immediately to hand, work out
-    // the value number that it would have and use that to find an appropriate
-    // instruction (if any).
-    uint32_t NextNum = VN.getNextUnusedValueNumber();
-    uint32_t Num = VN.lookup_or_add_cmp(Cmp->getOpcode(), NotPred, Op0, Op1);
-    // If the number we were assigned was brand new then there is no point in
-    // looking for an instruction realizing it: there cannot be one!
-    if (Num < NextNum) {
-      Value *NotCmp = findLeader(Root, Num);
-      if (NotCmp && isa<Instruction>(NotCmp)) {
-        unsigned NumReplacements =
-          replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
-        Changed |= NumReplacements > 0;
-        NumGVNEqProp += NumReplacements;
+    // If there is no obvious reason to prefer the left-hand side over the right-
+    // hand side, ensure the longest lived term is on the right-hand side, so the
+    // shortest lived term will be replaced by the longest lived.  This tends to
+    // expose more simplifications.
+    uint32_t LVN = VN.lookup_or_add(LHS);
+    if ((isa<Argument>(LHS) && isa<Argument>(RHS)) ||
+        (isa<Instruction>(LHS) && isa<Instruction>(RHS))) {
+      // Move the 'oldest' value to the right-hand side, using the value number as
+      // a proxy for age.
+      uint32_t RVN = VN.lookup_or_add(RHS);
+      if (LVN < RVN) {
+        std::swap(LHS, RHS);
+        LVN = RVN;
       }
     }
-    // Ensure that any instruction in scope that gets the "A < B" value number
-    // is replaced with false.
-    addToLeaderTable(Num, NotVal, Root);
+    assert((!isa<Instruction>(RHS) ||
+            DT->properlyDominates(cast<Instruction>(RHS)->getParent(), Root)) &&
+           "Instruction doesn't dominate scope!");
 
-    return Changed;
+    // If value numbering later deduces that an instruction in the scope is equal
+    // to 'LHS' then ensure it will be turned into 'RHS'.
+    addToLeaderTable(LVN, RHS, Root);
+
+    // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.  As
+    // LHS always has at least one use that is not dominated by Root, this will
+    // never do anything if LHS has only one use.
+    if (!LHS->hasOneUse()) {
+      unsigned NumReplacements = replaceAllDominatedUsesWith(LHS, RHS, Root);
+      Changed |= NumReplacements > 0;
+      NumGVNEqProp += NumReplacements;
+    }
+
+    // Now try to deduce additional equalities from this one.  For example, if the
+    // known equality was "(A != B)" == "false" then it follows that A and B are
+    // equal in the scope.  Only boolean equalities with an explicit true or false
+    // RHS are currently supported.
+    if (!RHS->getType()->isIntegerTy(1))
+      // Not a boolean equality - bail out.
+      continue;
+    ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
+    if (!CI)
+      // RHS neither 'true' nor 'false' - bail out.
+      continue;
+    // Whether RHS equals 'true'.  Otherwise it equals 'false'.
+    bool isKnownTrue = CI->isAllOnesValue();
+    bool isKnownFalse = !isKnownTrue;
+
+    // If "A && B" is known true then both A and B are known true.  If "A || B"
+    // is known false then both A and B are known false.
+    Value *A, *B;
+    if ((isKnownTrue && match(LHS, m_And(m_Value(A), m_Value(B)))) ||
+        (isKnownFalse && match(LHS, m_Or(m_Value(A), m_Value(B))))) {
+      Worklist.push_back(std::make_pair(A, RHS));
+      Worklist.push_back(std::make_pair(B, RHS));
+      continue;
+    }
+
+    // If we are propagating an equality like "(A == B)" == "true" then also
+    // propagate the equality A == B.  When propagating a comparison such as
+    // "(A >= B)" == "true", replace all instances of "A < B" with "false".
+    if (ICmpInst *Cmp = dyn_cast<ICmpInst>(LHS)) {
+      Value *Op0 = Cmp->getOperand(0), *Op1 = Cmp->getOperand(1);
+
+      // If "A == B" is known true, or "A != B" is known false, then replace
+      // A with B everywhere in the scope.
+      if ((isKnownTrue && Cmp->getPredicate() == CmpInst::ICMP_EQ) ||
+          (isKnownFalse && Cmp->getPredicate() == CmpInst::ICMP_NE))
+        Worklist.push_back(std::make_pair(Op0, Op1));
+
+      // If "A >= B" is known true, replace "A < B" with false everywhere.
+      CmpInst::Predicate NotPred = Cmp->getInversePredicate();
+      Constant *NotVal = ConstantInt::get(Cmp->getType(), isKnownFalse);
+      // Since we don't have the instruction "A < B" immediately to hand, work out
+      // the value number that it would have and use that to find an appropriate
+      // instruction (if any).
+      uint32_t NextNum = VN.getNextUnusedValueNumber();
+      uint32_t Num = VN.lookup_or_add_cmp(Cmp->getOpcode(), NotPred, Op0, Op1);
+      // If the number we were assigned was brand new then there is no point in
+      // looking for an instruction realizing it: there cannot be one!
+      if (Num < NextNum) {
+        Value *NotCmp = findLeader(Root, Num);
+        if (NotCmp && isa<Instruction>(NotCmp)) {
+          unsigned NumReplacements =
+            replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
+          Changed |= NumReplacements > 0;
+          NumGVNEqProp += NumReplacements;
+        }
+      }
+      // Ensure that any instruction in scope that gets the "A < B" value number
+      // is replaced with false.
+      addToLeaderTable(Num, NotVal, Root);
+
+      continue;
+    }
   }
 
   return Changed;
