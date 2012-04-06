@@ -836,9 +836,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   default:
     llvm_unreachable("ARMCodeEmitter::emitPseudoInstruction");
   case ARM::BX_CALL:
-  case ARM::BMOVPCRX_CALL:
-  case ARM::BXr9_CALL:
-  case ARM::BMOVPCRXr9_CALL: {
+  case ARM::BMOVPCRX_CALL: {
     // First emit mov lr, pc
     unsigned Binary = 0x01a0e00f;
     Binary |= II->getPredicate(&MI) << ARMII::CondShift;

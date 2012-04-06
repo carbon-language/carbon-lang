@@ -1266,7 +1266,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   // Darwin call instructions are just normal call instructions with different
   // clobber semantics (they clobber R9).
-  case ARM::BXr9_CALL:
   case ARM::BX_CALL: {
     {
       MCInst TmpInst;
@@ -1288,7 +1287,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::tBXr9_CALL:
   case ARM::tBX_CALL: {
     {
       MCInst TmpInst;
@@ -1311,7 +1309,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::BMOVPCRXr9_CALL:
   case ARM::BMOVPCRX_CALL: {
     {
       MCInst TmpInst;
@@ -1339,7 +1336,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::BMOVPCBr9_CALL:
   case ARM::BMOVPCB_CALL: {
     {
       MCInst TmpInst;
@@ -1367,7 +1363,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::t2BMOVPCBr9_CALL:
   case ARM::t2BMOVPCB_CALL: {
     {
       MCInst TmpInst;

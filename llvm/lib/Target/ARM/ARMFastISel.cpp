@@ -2111,13 +2111,10 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
 }
 
 unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
-
-  // iOS needs the r9 versions of the opcodes.
-  bool isiOS = Subtarget->isTargetIOS();
   if (isThumb2) {
-    return isiOS ? ARM::tBLr9 : ARM::tBL;
+    return ARM::tBL;
   } else  {
-    return isiOS ? ARM::BLr9 : ARM::BL;
+    return ARM::BL;
   }
 }
 
@@ -2176,8 +2173,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call, BLr9 for iOS, BL otherwise.
-  // TODO: Turn this into the table of arm call ops.
+  // Issue the call.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(NULL);
   if (isThumb2)
@@ -2302,8 +2298,7 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call, BLr9 for iOS, BL otherwise.
-  // TODO: Turn this into the table of arm call ops.
+  // Issue the call.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(GV);
   // Explicitly adding the predicate here.

@@ -3276,37 +3276,19 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                  Requires<[IsThumb2, IsIOS]>;
 }
 
-let isCall = 1,
-  // On non-IOS platforms R9 is callee-saved.
-  Defs = [LR], Uses = [SP] in {
+let isCall = 1, Defs = [LR], Uses = [SP] in {
   // mov lr, pc; b if callee is marked noreturn to avoid confusing the
   // return stack predictor.
   def t2BMOVPCB_CALL : tPseudoInst<(outs),
                                    (ins t_bltarget:$func, variable_ops),
                                6, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
-                        Requires<[IsThumb, IsNotIOS]>;
-}
-
-let isCall = 1,
-  // On IOS R9 is call-clobbered.
-  // R7 is marked as a use to prevent frame-pointer assignments from being
-  // moved above / below calls.
-  Defs = [LR], Uses = [R7, SP] in {
-  // mov lr, pc; b if callee is marked noreturn to avoid confusing the
-  // return stack predictor.
-  def t2BMOVPCBr9_CALL : tPseudoInst<(outs),
-                                     (ins t_bltarget:$func, variable_ops),
-                               6, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
-                        Requires<[IsThumb, IsIOS]>;
+                        Requires<[IsThumb]>;
 }
 
 // Direct calls
 def : T2Pat<(ARMcall_nolink texternalsym:$func),
             (t2BMOVPCB_CALL texternalsym:$func)>,
-      Requires<[IsThumb, IsNotIOS]>;
-def : T2Pat<(ARMcall_nolink texternalsym:$func),
-            (t2BMOVPCBr9_CALL texternalsym:$func)>,
-      Requires<[IsThumb, IsIOS]>;
+      Requires<[IsThumb]>;
 
 // IT block
 let Defs = [ITSTATE] in
