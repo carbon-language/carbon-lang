@@ -101,7 +101,6 @@ public:
   /// declaration, which is either an external declaration or a
   /// template declaration.
   TemplateArgument(Decl *D) : Kind(Declaration) {
-    // FIXME: Need to be sure we have the "canonical" declaration!
     TypeOrValue = reinterpret_cast<uintptr_t>(D);
   }
 

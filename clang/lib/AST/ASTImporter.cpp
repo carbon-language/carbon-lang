@@ -325,6 +325,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     return IsSameValue(*Arg1.getAsIntegral(), *Arg2.getAsIntegral());
       
   case TemplateArgument::Declaration:
+    if (!Arg1.getAsDecl() || !Arg2.getAsDecl())
+      return !Arg1.getAsDecl() && !Arg2.getAsDecl();
     return Context.IsStructurallyEquivalent(Arg1.getAsDecl(), Arg2.getAsDecl());
       
   case TemplateArgument::Template:

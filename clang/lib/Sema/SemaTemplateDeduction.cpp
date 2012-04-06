@@ -1586,8 +1586,7 @@ DeduceTemplateArguments(Sema &S,
 
   case TemplateArgument::Declaration:
     if (Arg.getKind() == TemplateArgument::Declaration &&
-        Param.getAsDecl()->getCanonicalDecl() ==
-          Arg.getAsDecl()->getCanonicalDecl())
+        isSameDeclaration(Param.getAsDecl(), Arg.getAsDecl()))
       return Sema::TDK_Success;
 
     Info.FirstArg = Param;
@@ -1858,8 +1857,7 @@ static bool isSameTemplateArg(ASTContext &Context,
              Context.getCanonicalType(Y.getAsType());
 
     case TemplateArgument::Declaration:
-      return X.getAsDecl()->getCanonicalDecl() ==
-             Y.getAsDecl()->getCanonicalDecl();
+      return isSameDeclaration(X.getAsDecl(), Y.getAsDecl());
 
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
@@ -1925,7 +1923,7 @@ getTrivialTemplateArgumentLoc(Sema &S,
   case TemplateArgument::Declaration: {
     Expr *E
       = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
-    .takeAs<Expr>();
+          .takeAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
 
@@ -4410,7 +4408,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
   switch (TemplateArg.getKind()) {
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
-    case TemplateArgument::Declaration:
+  case TemplateArgument::Declaration:
     break;
 
   case TemplateArgument::Type:

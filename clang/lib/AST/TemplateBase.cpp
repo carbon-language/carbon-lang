@@ -80,9 +80,13 @@ bool TemplateArgument::isDependent() const {
     return true;
 
   case Declaration:
-    if (DeclContext *DC = dyn_cast<DeclContext>(getAsDecl()))
-      return DC->isDependentContext();
-    return getAsDecl()->getDeclContext()->isDependentContext();
+    if (Decl *D = getAsDecl()) {
+      if (DeclContext *DC = dyn_cast<DeclContext>(D))
+        return DC->isDependentContext();
+      return D->getDeclContext()->isDependentContext();
+    }
+      
+    return false;
 
   case Integral:
     // Never dependent
@@ -118,10 +122,13 @@ bool TemplateArgument::isInstantiationDependent() const {
     return true;
     
   case Declaration:
-    if (DeclContext *DC = dyn_cast<DeclContext>(getAsDecl()))
-      return DC->isDependentContext();
-    return getAsDecl()->getDeclContext()->isDependentContext();
-    
+    if (Decl *D = getAsDecl()) {
+      if (DeclContext *DC = dyn_cast<DeclContext>(D))
+        return DC->isDependentContext();
+      return D->getDeclContext()->isDependentContext();
+    }
+    return false;
+      
   case Integral:
     // Never dependent
     return false;
@@ -322,16 +329,14 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
   }
     
   case Declaration: {
-    bool Unnamed = true;
     if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getAsDecl())) {
       if (ND->getDeclName()) {
-        Unnamed = false;
         Out << *ND;
+      } else {
+        Out << "<anonymous>";
       }
-    }
-    
-    if (Unnamed) {
-      Out << "<anonymous>";
+    } else {
+      Out << "nullptr";
     }
     break;
   }
@@ -488,7 +493,9 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     return DB << Arg.getAsType();
       
   case TemplateArgument::Declaration:
-    return DB << Arg.getAsDecl();
+    if (Decl *D = Arg.getAsDecl())
+      return DB << D;
+    return DB << "nullptr";
       
   case TemplateArgument::Integral:
     return DB << Arg.getAsIntegral()->toString(10);

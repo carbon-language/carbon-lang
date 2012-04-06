@@ -1113,15 +1113,21 @@ ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
     type = argExpr->getType();
 
   } else if (arg.getKind() == TemplateArgument::Declaration) {
-    ValueDecl *VD = cast<ValueDecl>(arg.getAsDecl());
+    ValueDecl *VD;
+    if (Decl *D = arg.getAsDecl()) {
+      VD = cast<ValueDecl>(D);
 
-    // Find the instantiation of the template argument.  This is
-    // required for nested templates.
-    VD = cast_or_null<ValueDecl>(
-                       getSema().FindInstantiatedDecl(loc, VD, TemplateArgs));
-    if (!VD)
-      return ExprError();
-
+      // Find the instantiation of the template argument.  This is
+      // required for nested templates.
+      VD = cast_or_null<ValueDecl>(
+             getSema().FindInstantiatedDecl(loc, VD, TemplateArgs));
+      if (!VD)
+        return ExprError();
+    } else {
+      // Propagate NULL template argument.
+      VD = 0;
+    }
+    
     // Derive the type we want the substituted decl to have.  This had
     // better be non-dependent, or these checks will have serious problems.
     if (parm->isExpandedParameterPack()) {

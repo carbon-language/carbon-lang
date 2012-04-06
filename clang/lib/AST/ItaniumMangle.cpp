@@ -3118,12 +3118,22 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
   case TemplateArgument::Declaration: {
     assert(P && "Missing template parameter for declaration argument");
     //  <expr-primary> ::= L <mangled-name> E # external name
-
+    //  <expr-primary> ::= L <type> 0 E
     // Clang produces AST's where pointer-to-member-function expressions
     // and pointer-to-function expressions are represented as a declaration not
     // an expression. We compensate for it here to produce the correct mangling.
-    NamedDecl *D = cast<NamedDecl>(A.getAsDecl());
     const NonTypeTemplateParmDecl *Parameter = cast<NonTypeTemplateParmDecl>(P);
+
+    // Handle NULL pointer arguments.
+    if (!A.getAsDecl()) {
+      Out << "L";
+      mangleType(Parameter->getType());
+      Out << "0E";
+      break;
+    }
+    
+
+    NamedDecl *D = cast<NamedDecl>(A.getAsDecl());
     bool compensateMangling = !Parameter->getType()->isReferenceType();
     if (compensateMangling) {
       Out << 'X';

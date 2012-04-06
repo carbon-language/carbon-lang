@@ -320,7 +320,8 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
       break;
         
     case TemplateArgument::Declaration: {
-      visitDeclRef(A.getAsDecl());
+      if (Decl *D = A.getAsDecl())
+        visitDeclRef(D);
       break;
     }
     case TemplateArgument::Integral: {

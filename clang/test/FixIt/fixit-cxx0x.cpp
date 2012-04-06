@@ -104,3 +104,7 @@ namespace TestMisplacedEllipsisRecovery {
 template<template<typename> ...Foo, // expected-error {{template template parameter requires 'class' after the parameter list}}
          template<template<template<typename>>>> // expected-error 3 {{template template parameter requires 'class' after the parameter list}}
 void func();
+
+template<int *ip> struct IP { }; // expected-note{{declared here}}
+IP<0> ip0; // expected-error{{null non-type template argument must be cast to template parameter type 'int *'}}
+

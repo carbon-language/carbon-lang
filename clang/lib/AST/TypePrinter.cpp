@@ -264,8 +264,9 @@ void TypePrinter::printRValueReference(const RValueReferenceType *T,
 
 void TypePrinter::printMemberPointer(const MemberPointerType *T, 
                                      std::string &S) { 
-  std::string C;
-  print(QualType(T->getClass(), 0), C);
+  PrintingPolicy InnerPolicy(Policy);
+  Policy.SuppressTag = true;
+  std::string C = QualType(T->getClass(), 0).getAsString(InnerPolicy);
   C += "::*";
   S = C + S;
   
