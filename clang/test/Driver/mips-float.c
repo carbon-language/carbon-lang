@@ -40,20 +40,3 @@
 // RUN:     -target mips-linux-gnu -mfloat-abi=single \
 // RUN:   | FileCheck --check-prefix=CHECK-ABI-SINGLE %s
 // CHECK-ABI-SINGLE: "-target-feature" "+single-float"
-//
-// Let's check float ABI related macros.
-//
-// -mfloat-abi=hard
-// RUN: %clang -c %s -dM -E 2>&1 \
-// RUN:     -target mips-linux-gnu -mfloat-abi=hard \
-// RUN:   | grep "#define __mips_hard_float 1"
-//
-// -mfloat-abi=soft
-// RUN: %clang -c %s -dM -E 2>&1 \
-// RUN:     -target mips-linux-gnu -mfloat-abi=soft \
-// RUN:   | grep "#define __mips_soft_float 1"
-//
-// -mfloat-abi=single
-// RUN: %clang -c %s -dM -E 2>&1 \
-// RUN:     -target mips-linux-gnu -mfloat-abi=single \
-// RUN:   | grep "#define __mips_single_float 1"

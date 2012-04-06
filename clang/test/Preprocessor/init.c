@@ -849,6 +849,23 @@
 // MIPS64EL:#define _mips 1
 // MIPS64EL:#define mips 1
 //
+// Check MIPS float ABI macros
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding \
+// RUN:   -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-FABI-HARD %s
+// MIPS-FABI-HARD:#define __mips_hard_float 1
+//
+// RUN: %clang_cc1 -target-feature +soft-float -E -dM -ffreestanding \
+// RUN:   -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-FABI-SOFT %s
+// MIPS-FABI-SOFT:#define __mips_soft_float 1
+//
+// RUN: %clang_cc1 -target-feature +single-float -E -dM -ffreestanding \
+// RUN:   -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-FABI-SINGLE %s
+// MIPS-FABI-SINGLE:#define __mips_single_float 1
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
 //
 // MSP430:#define MSP430 1
