@@ -1650,12 +1650,18 @@ def err_attribute_argument_out_of_range : Error<
   "%plural{0:no parameters to index into|"
   "1:can only be 1, since there is one parameter|"
   ":must be between 1 and %2}2">;
-def err_attribute_argument_not_lockable : Error<
+def warn_attribute_argument_not_lockable : Warning<
   "%0 attribute requires arguments whose type is annotated "
-  "with 'lockable' attribute">;
-def err_attribute_decl_not_lockable : Error<
+  "with 'lockable' attribute; type here is '%1'">,
+  InGroup<ThreadSafety>, DefaultIgnore;
+def warn_attribute_decl_not_lockable : Warning<
   "%0 attribute can only be applied in a context annotated "
-  "with 'lockable' attribute">;
+  "with 'lockable' attribute">,
+  InGroup<ThreadSafety>, DefaultIgnore;
+def warn_attribute_argument_not_class : Warning<
+  "%0 attribute requires arguments that are class type or point to"
+  " class type; type here is '%1'">,
+  InGroup<ThreadSafety>, DefaultIgnore;   
 def warn_unlock_but_no_lock : Warning<
   "unlocking '%0' that was not locked">,
   InGroup<ThreadSafety>, DefaultIgnore;
