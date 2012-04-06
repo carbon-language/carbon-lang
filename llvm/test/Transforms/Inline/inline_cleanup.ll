@@ -165,6 +165,7 @@ define void @PR12470_outer() {
 ; instructions. Check that we don't crash and we produce a function with a single
 ; return instruction due to merging the returns of the inlined function.
 ; CHECK: define void @PR12470_outer
+; CHECK-NOT: call
 ; CHECK: ret void
 ; CHECK-NOT: ret void
 ; CHECK: }
