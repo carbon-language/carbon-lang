@@ -241,3 +241,14 @@ Test37 *instantiate_init() {
 // CHECK: call i8* @objc_autoreleaseReturnValue
 template Test37* instantiate_init<int>();
 
+// Just make sure that the AST invariants hold properly here,
+// i.e. that we don't crash.
+// The block should get bound in the full-expression outside
+// the statement-expression.
+template <class T> class Test38 {
+  void test(T x) {
+    ^{ (void) x; }, ({ x; });
+  }
+};
+// CHECK: define weak_odr void @_ZN6Test38IiE4testEi(
+template class Test38<int>;

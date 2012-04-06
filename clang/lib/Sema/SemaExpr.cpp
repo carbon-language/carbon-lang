@@ -8567,6 +8567,9 @@ void Sema::ActOnStartStmtExpr() {
 }
 
 void Sema::ActOnStmtExprError() {
+  // Note that function is also called by TreeTransform when leaving a
+  // StmtExpr scope without rebuilding anything.
+
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
 }

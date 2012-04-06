@@ -6736,14 +6736,20 @@ TreeTransform<Derived>::TransformAddrLabelExpr(AddrLabelExpr *E) {
 template<typename Derived>
 ExprResult 
 TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E) {
+  SemaRef.ActOnStartStmtExpr();
   StmtResult SubStmt
     = getDerived().TransformCompoundStmt(E->getSubStmt(), true);
-  if (SubStmt.isInvalid())
+  if (SubStmt.isInvalid()) {
+    SemaRef.ActOnStmtExprError();
     return ExprError();
+  }
 
   if (!getDerived().AlwaysRebuild() &&
-      SubStmt.get() == E->getSubStmt())
+      SubStmt.get() == E->getSubStmt()) {
+    // Calling this an 'error' is unintuitive, but it does the right thing.
+    SemaRef.ActOnStmtExprError();
     return SemaRef.MaybeBindToTemporary(E);
+  }
 
   return getDerived().RebuildStmtExpr(E->getLParenLoc(),
                                       SubStmt.get(),
