@@ -5164,6 +5164,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     else if (ToolChain.getArch() == llvm::Triple::mips ||
              ToolChain.getArch() == llvm::Triple::mipsel)
       CmdArgs.push_back("/lib/ld.so.1");
+    else if (ToolChain.getArch() == llvm::Triple::mips64 ||
+             ToolChain.getArch() == llvm::Triple::mips64el)
+      CmdArgs.push_back("/lib64/ld.so.1");
     else if (ToolChain.getArch() == llvm::Triple::ppc)
       CmdArgs.push_back("/lib/ld.so.1");
     else if (ToolChain.getArch() == llvm::Triple::ppc64)
