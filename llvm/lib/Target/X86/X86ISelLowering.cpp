@@ -5847,7 +5847,7 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
     // input vectors to use as shuffle operands (recorded in InputUsed).
     // If building a suitable shuffle vector proves too hard, then bail
     // out with useBuildVector set.
-    int InputUsed[2] = { -1U, -1U }; // Not yet discovered.
+    int InputUsed[2] = { -1, -1 }; // Not yet discovered.
     unsigned LaneStart = l * NumLaneElems;
     for (unsigned i = 0; i != NumLaneElems; ++i) {
       // The mask element.  This indexes into the input.
