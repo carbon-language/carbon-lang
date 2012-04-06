@@ -1045,6 +1045,9 @@ ClangASTContext::AreTypesSame (ASTContext *ast,
                                clang_type_t type2,
                                bool ignore_qualifiers)
 {
+    if (type1 == type2)
+        return true;
+
     QualType type1_qual = QualType::getFromOpaquePtr(type1);
     QualType type2_qual = QualType::getFromOpaquePtr(type2);
     
