@@ -20,8 +20,16 @@ public:
 
 // The global dtor needs the right calling conv with -fno-use-cxa-atexit
 // rdar://7817590
-// Checked at end of file.
 bar baz;
+
+// PR9593
+// Make sure atexit(3) is used for global dtors.
+
+// CHECK:      call [[BAR:%.*]]* @_ZN3barC1Ev(
+// CHECK-NEXT: call i32 @atexit(void ()* @__dtor_baz)
+
+// CHECK: define internal void @__dtor_baz()
+// CHECK: call [[BAR]]* @_ZN3barD1Ev([[BAR]]* @baz)
 
 // Destructors and constructors must return this.
 namespace test1 {
@@ -357,5 +365,5 @@ namespace test8 {
   // CHECK:   call void @_ZN5test21CD0Ev(
   // CHECK:   ret void
 
-// CHECK: @_GLOBAL__D_a()
-// CHECK: call %class.bar* @_ZN3barD1Ev(%class.bar* @baz)
+// CH_ECK: @_GLOBAL__D_a()
+// CH_ECK: call %class.bar* @_ZN3barD1Ev(%class.bar* @baz)

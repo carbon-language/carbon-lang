@@ -12,7 +12,7 @@ struct C { void *field; };
 
 struct D { ~D(); };
 
-// CHECK: @__dso_handle = external unnamed_addr global i8*
+// CHECK: @__dso_handle = external unnamed_addr global i8
 // CHECK: @c = global %struct.C zeroinitializer, align 8
 
 // It's okay if we ever implement the IR-generation optimization to remove this.
@@ -24,18 +24,18 @@ struct D { ~D(); };
 // CHECK: @_ZN6PR59741bE = global %"struct.PR5974::B"* bitcast (i8* getelementptr (i8* bitcast (%"struct.PR5974::C"* @_ZN6PR59741cE to i8*), i64 4) to %"struct.PR5974::B"*), align 8
 
 // CHECK: call void @_ZN1AC1Ev(%struct.A* @a)
-// CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @a, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
+// CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @a, i32 0, i32 0), i8* @__dso_handle)
 A a;
 
 // CHECK: call void @_ZN1BC1Ev(%struct.B* @b)
-// CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.B*)* @_ZN1BD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.B* @b, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
+// CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.B*)* @_ZN1BD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.B* @b, i32 0, i32 0), i8* @__dso_handle)
 B b;
 
 // PR6205: this should not require a global initializer
 // CHECK-NOT: call void @_ZN1CC1Ev(%struct.C* @c)
 C c;
 
-// CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.D*)* @_ZN1DD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.D* @d, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
+// CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.D*)* @_ZN1DD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.D* @d, i32 0, i32 0), i8* @__dso_handle)
 D d;
 
 // <rdar://problem/7458115>

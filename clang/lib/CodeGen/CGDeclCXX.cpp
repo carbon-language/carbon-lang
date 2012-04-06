@@ -145,37 +145,109 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, Alignment, T);
 }
 
-void
-CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
-                                               llvm::Constant *DeclPtr) {
-  // Generate a global destructor entry if not using __cxa_atexit.
-  if (!CGM.getCodeGenOpts().CXAAtExit) {
-    CGM.AddCXXDtorEntry(DtorFn, DeclPtr);
+/// Register a global destructor using __cxa_atexit.
+static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
+                                        llvm::Constant *dtor,
+                                        llvm::Constant *addr) {
+  // We're assuming that the destructor function is something we can
+  // reasonably call with the default CC.  Go ahead and cast it to the
+  // right prototype.
+  llvm::Type *dtorTy =
+    llvm::FunctionType::get(CGF.VoidTy, CGF.Int8PtrTy, false)->getPointerTo();
+
+  // extern "C" int __cxa_atexit(void (*f)(void *), void *p, void *d);
+  llvm::Type *paramTys[] = { dtorTy, CGF.Int8PtrTy, CGF.Int8PtrTy };
+  llvm::FunctionType *atexitTy =
+    llvm::FunctionType::get(CGF.IntTy, paramTys, false);
+
+  // Fetch the actual function.
+  llvm::Constant *atexit =
+    CGF.CGM.CreateRuntimeFunction(atexitTy, "__cxa_atexit");
+  if (llvm::Function *fn = dyn_cast<llvm::Function>(atexit))
+    fn->setDoesNotThrow();
+
+  // Create a variable that binds the atexit to this shared object.
+  llvm::Constant *handle =
+    CGF.CGM.CreateRuntimeVariable(CGF.Int8Ty, "__dso_handle");
+
+  llvm::Value *args[] = {
+    llvm::ConstantExpr::getBitCast(dtor, dtorTy),
+    llvm::ConstantExpr::getBitCast(addr, CGF.Int8PtrTy),
+    handle
+  };
+  CGF.Builder.CreateCall(atexit, args);
+}
+
+static llvm::Function *
+CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
+                                   llvm::FunctionType *ty,
+                                   const Twine &name);
+
+/// Create a stub function, suitable for being passed to atexit,
+/// which passes the given address to the given destructor function.
+static llvm::Constant *createAtExitStub(CodeGenModule &CGM,
+                                        llvm::Constant *dtor,
+                                        llvm::Constant *addr) {
+  // Get the destructor function type, void(*)(void).
+  llvm::FunctionType *ty = llvm::FunctionType::get(CGM.VoidTy, false);
+  llvm::Function *fn =
+    CreateGlobalInitOrDestructFunction(CGM, ty,
+                                       Twine("__dtor_", addr->getName()));
+
+  CodeGenFunction CGF(CGM);
+
+  CGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, fn,
+                    CGM.getTypes().arrangeNullaryFunction(),
+                    FunctionArgList(), SourceLocation());
+
+  llvm::CallInst *call = CGF.Builder.CreateCall(dtor, addr);
+ 
+ // Make sure the call and the callee agree on calling convention.
+  if (llvm::Function *dtorFn =
+        dyn_cast<llvm::Function>(dtor->stripPointerCasts()))
+    call->setCallingConv(dtorFn->getCallingConv());
+
+  CGF.FinishFunction();
+
+  return fn;
+}
+
+/// Register a global destructor using atexit.
+static void emitGlobalDtorWithAtExit(CodeGenFunction &CGF,
+                                     llvm::Constant *dtor,
+                                     llvm::Constant *addr) {
+  // Create a function which calls the destructor.
+  llvm::Constant *dtorStub = createAtExitStub(CGF.CGM, dtor, addr);
+
+  // extern "C" int atexit(void (*f)(void));
+  llvm::FunctionType *atexitTy =
+    llvm::FunctionType::get(CGF.IntTy, dtorStub->getType(), false);
+
+  llvm::Constant *atexit =
+    CGF.CGM.CreateRuntimeFunction(atexitTy, "atexit");
+  if (llvm::Function *atexitFn = dyn_cast<llvm::Function>(atexit))
+    atexitFn->setDoesNotThrow();
+
+  CGF.Builder.CreateCall(atexit, dtorStub);
+}
+
+void CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *dtor,
+                                                    llvm::Constant *addr) {
+  // Use __cxa_atexit if available.
+  if (CGM.getCodeGenOpts().CXAAtExit) {
+    emitGlobalDtorWithCXAAtExit(*this, dtor, addr);
     return;
   }
 
-  // Get the destructor function type
-  llvm::Type *DtorFnTy = llvm::FunctionType::get(VoidTy, Int8PtrTy, false);
-  DtorFnTy = llvm::PointerType::getUnqual(DtorFnTy);
+  // In Apple kexts, we want to add a global destructor entry.
+  // FIXME: shouldn't this be guarded by some variable?
+  if (CGM.getContext().getLangOpts().AppleKext) {
+    // Generate a global destructor entry.
+    CGM.AddCXXDtorEntry(dtor, addr);
+  }
 
-  llvm::Type *Params[] = { DtorFnTy, Int8PtrTy, Int8PtrTy };
-
-  // Get the __cxa_atexit function type
-  // extern "C" int __cxa_atexit ( void (*f)(void *), void *p, void *d );
-  llvm::FunctionType *AtExitFnTy =
-    llvm::FunctionType::get(ConvertType(getContext().IntTy), Params, false);
-
-  llvm::Constant *AtExitFn = CGM.CreateRuntimeFunction(AtExitFnTy,
-                                                       "__cxa_atexit");
-  if (llvm::Function *Fn = dyn_cast<llvm::Function>(AtExitFn))
-    Fn->setDoesNotThrow();
-
-  llvm::Constant *Handle = CGM.CreateRuntimeVariable(Int8PtrTy,
-                                                     "__dso_handle");
-  llvm::Value *Args[3] = { llvm::ConstantExpr::getBitCast(DtorFn, DtorFnTy),
-                           llvm::ConstantExpr::getBitCast(DeclPtr, Int8PtrTy),
-                           llvm::ConstantExpr::getBitCast(Handle, Int8PtrTy) };
-  Builder.CreateCall(AtExitFn, Args);
+  // Otherwise, we just use atexit.
+  emitGlobalDtorWithAtExit(*this, dtor, addr);
 }
 
 void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,

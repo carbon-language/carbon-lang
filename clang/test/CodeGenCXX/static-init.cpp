@@ -17,7 +17,7 @@ void f() {
   // CHECK: load atomic i8* bitcast (i64* @_ZGVZ1fvE1a to i8*) acquire, align 1
   // CHECK: call i32 @__cxa_guard_acquire
   // CHECK: call void @_ZN1AC1Ev
-  // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @_ZZ1fvE1a, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
+  // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @_ZZ1fvE1a, i32 0, i32 0), i8* @__dso_handle)
   // CHECK: call void @__cxa_guard_release
   static A a;
 }
