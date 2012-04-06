@@ -1,5 +1,9 @@
 ; RUN: llc -march=mipsel -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-O32
 ; RUN: llc -march=mipsel -relocation-model=static -mtriple=mipsel-linux-gnu < %s | FileCheck %s -check-prefix=STATIC-O32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=static  -mtriple=mipsel-linux-gnu < %s | FileCheck %s -check-prefix=STATIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N64
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
 
 @s1 = internal unnamed_addr global i32 8, align 4
 @g1 = external global i32
