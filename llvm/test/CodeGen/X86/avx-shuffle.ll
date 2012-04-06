@@ -147,3 +147,18 @@ entry:
   %shuffle.i = shufflevector <4 x float> %1, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 4>
   ret <8 x float> %shuffle.i
 }
+
+; PR12413
+; CHECK: vpshufb
+; CHECK: vpshufb
+; CHECK: vpshufb
+; CHECK: vpshufb
+define <32 x i8> @shuf(<32 x i8> %inval1, <32 x i8> %inval2) {
+entry:
+ %0 = shufflevector <32 x i8> %inval1, <32 x i8> %inval2, <32 x i32> <i32 0,
+i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32
+22, i32 24, i32 26, i32 28, i32 30, i32 32, i32 34, i32 36, i32 38, i32 40, i32
+42, i32 44, i32 46, i32 48, i32 50, i32 52, i32 54, i32 56, i32 58, i32 60, i32
+62>
+ ret <32 x i8> %0
+}
