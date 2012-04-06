@@ -5836,96 +5836,79 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   unsigned NumElems = VT.getVectorNumElements();
   unsigned NumLaneElems = NumElems / 2;
 
-  int MinRange[2][2] = { { static_cast<int>(NumElems),
-                           static_cast<int>(NumElems) },
-                         { static_cast<int>(NumElems),
-                           static_cast<int>(NumElems) } };
-  int MaxRange[2][2] = { { -1, -1 }, { -1, -1 } };
-
-  // Collect used ranges for each source in each lane
-  for (unsigned l = 0; l < 2; ++l) {
-    unsigned LaneStart = l*NumLaneElems;
-    for (unsigned i = 0; i != NumLaneElems; ++i) {
-      int Idx = SVOp->getMaskElt(i+LaneStart);
-      if (Idx < 0)
-        continue;
-
-      int Input = 0;
-      if (Idx >= (int)NumElems) {
-        Idx -= NumElems;
-        Input = 1;
-      }
-
-      if (Idx > MaxRange[l][Input])
-        MaxRange[l][Input] = Idx;
-      if (Idx < MinRange[l][Input])
-        MinRange[l][Input] = Idx;
-    }
-  }
-
-  // Make sure each range is 128-bits
-  int ExtractIdx[2][2] = { { -1, -1 }, { -1, -1 } };
-  for (unsigned l = 0; l < 2; ++l) {
-    for (unsigned Input = 0; Input < 2; ++Input) {
-      if (MinRange[l][Input] == (int)NumElems && MaxRange[l][Input] < 0)
-        continue;
-
-      if (MinRange[l][Input] >= 0 && MaxRange[l][Input] < (int)NumLaneElems)
-        ExtractIdx[l][Input] = 0;
-      else if (MinRange[l][Input] >= (int)NumLaneElems &&
-               MaxRange[l][Input] < (int)NumElems)
-        ExtractIdx[l][Input] = NumLaneElems;
-      else
-        return SDValue();
-    }
-  }
-
   DebugLoc dl = SVOp->getDebugLoc();
   MVT EltVT = VT.getVectorElementType().getSimpleVT();
-  EVT NVT = MVT::getVectorVT(EltVT, NumElems/2);
+  EVT NVT = MVT::getVectorVT(EltVT, NumLaneElems);
+  SDValue Shufs[2];
 
-  SDValue Ops[2][2];
+  SmallVector<int, 16> Mask;
   for (unsigned l = 0; l < 2; ++l) {
-    for (unsigned Input = 0; Input < 2; ++Input) {
-      if (ExtractIdx[l][Input] >= 0)
-        Ops[l][Input] = Extract128BitVector(SVOp->getOperand(Input),
-                                DAG.getConstant(ExtractIdx[l][Input], MVT::i32),
-                                                DAG, dl);
-      else
-        Ops[l][Input] = DAG.getUNDEF(NVT);
-    }
-  }
+    // Build a shuffle mask for the output, discovering on the fly which
+    // input vectors to use as shuffle operands (recorded in InputUsed).
+    // If building a suitable shuffle vector proves too hard, then bail
+    // out with useBuildVector set.
+    int InputUsed[2] = { -1U, -1U }; // Not yet discovered.
+    unsigned LaneStart = l * NumLaneElems;
+    for (unsigned i = 0; i != NumLaneElems; ++i) {
+      // The mask element.  This indexes into the input.
+      int Idx = SVOp->getMaskElt(i+LaneStart);
+      if (Idx < 0) {
+        // the mask element does not index into any input vector.
+        Mask.push_back(-1);
+        continue;
+      }
 
-  // Generate 128-bit shuffles
-  SmallVector<int, 16> Mask1, Mask2;
-  for (unsigned i = 0; i != NumLaneElems; ++i) {
-    int Elt = SVOp->getMaskElt(i);
-    if (Elt >= (int)NumElems) {
-      Elt %= NumLaneElems;
-      Elt += NumLaneElems;
-    } else if (Elt >= 0) {
-      Elt %= NumLaneElems;
-    }
-    Mask1.push_back(Elt);
-  }
-  for (unsigned i = NumLaneElems; i != NumElems; ++i) {
-    int Elt = SVOp->getMaskElt(i);
-    if (Elt >= (int)NumElems) {
-      Elt %= NumLaneElems;
-      Elt += NumLaneElems;
-    } else if (Elt >= 0) {
-      Elt %= NumLaneElems;
-    }
-    Mask2.push_back(Elt);
-  }
+      // The input vector this mask element indexes into.
+      int Input = Idx / NumLaneElems;
 
-  SDValue Shuf1 = DAG.getVectorShuffle(NVT, dl, Ops[0][0], Ops[0][1], &Mask1[0]);
-  SDValue Shuf2 = DAG.getVectorShuffle(NVT, dl, Ops[1][0], Ops[1][1], &Mask2[0]);
+      // Turn the index into an offset from the start of the input vector.
+      Idx -= Input * NumLaneElems;
+
+      // Find or create a shuffle vector operand to hold this input.
+      unsigned OpNo;
+      for (OpNo = 0; OpNo < array_lengthof(InputUsed); ++OpNo) {
+        if (InputUsed[OpNo] == Input)
+          // This input vector is already an operand.
+          break;
+        if (InputUsed[OpNo] < 0) {
+          // Create a new operand for this input vector.
+          InputUsed[OpNo] = Input;
+          break;
+        }
+      }
+
+      if (OpNo >= array_lengthof(InputUsed)) {
+        // More than two input vectors used! Give up.
+        return SDValue();
+      }
+
+      // Add the mask index for the new shuffle vector.
+      Mask.push_back(Idx + OpNo * NumLaneElems);
+    }
+
+    if (InputUsed[0] < 0) {
+      // No input vectors were used! The result is undefined.
+      Shufs[l] = DAG.getUNDEF(NVT);
+    } else {
+      SDValue Op0 = Extract128BitVector(SVOp->getOperand(InputUsed[0] / 2),
+                   DAG.getConstant((InputUsed[0] % 2) * NumLaneElems, MVT::i32),
+                                   DAG, dl);
+      // If only one input was used, use an undefined vector for the other.
+      SDValue Op1 = (InputUsed[1] < 0) ? DAG.getUNDEF(NVT) :
+        Extract128BitVector(SVOp->getOperand(InputUsed[1] / 2),
+                   DAG.getConstant((InputUsed[1] % 2) * NumLaneElems, MVT::i32),
+                                   DAG, dl);
+      // At least one input vector was used. Create a new shuffle vector.
+      Shufs[l] = DAG.getVectorShuffle(NVT, dl, Op0, Op1, &Mask[0]);
+    }
+
+    Mask.clear();
+  }
 
   // Concatenate the result back
-  SDValue V = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Shuf1,
+  SDValue V = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Shufs[0],
                                  DAG.getConstant(0, MVT::i32), DAG, dl);
-  return Insert128BitVector(V, Shuf2, DAG.getConstant(NumElems/2, MVT::i32),
+  return Insert128BitVector(V, Shufs[1],DAG.getConstant(NumLaneElems, MVT::i32),
                             DAG, dl);
 }
 
