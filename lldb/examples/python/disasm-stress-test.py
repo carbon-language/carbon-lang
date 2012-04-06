@@ -80,7 +80,7 @@ class SequentialInstructionProvider:
         self.m_value += self.m_skip
         return ret
     def GetNumInstructions(self):
-        return self.m_last / self.m_skip
+        return (self.m_last - self.m_start) / self.m_skip
     def __iter__(self):
         return self
     def next(self):
