@@ -134,37 +134,28 @@ SBProcess::RemoteLaunch (char const **argv,
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Process::StopLocker stop_locker;
-        
-        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        if (process_sp->GetState() == eStateConnected)
         {
-            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-            if (process_sp->GetState() == eStateConnected)
-            {
-                if (stop_at_entry)
-                    launch_flags |= eLaunchFlagStopAtEntry;
-                ProcessLaunchInfo launch_info (stdin_path, 
-                                               stdout_path,
-                                               stderr_path,
-                                               working_directory,
-                                               launch_flags);
-                Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
-                if (exe_module)
-                    launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
-                if (argv)
-                    launch_info.GetArguments().AppendArguments (argv);
-                if (envp)
-                    launch_info.GetEnvironmentEntries ().SetArguments (envp);
-                error.SetError (process_sp->Launch (launch_info));
-            }
-            else
-            {
-                error.SetErrorString ("must be in eStateConnected to call RemoteLaunch");
-            }
+            if (stop_at_entry)
+                launch_flags |= eLaunchFlagStopAtEntry;
+            ProcessLaunchInfo launch_info (stdin_path, 
+                                           stdout_path,
+                                           stderr_path,
+                                           working_directory,
+                                           launch_flags);
+            Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
+            if (exe_module)
+                launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
+            if (argv)
+                launch_info.GetArguments().AppendArguments (argv);
+            if (envp)
+                launch_info.GetEnvironmentEntries ().SetArguments (envp);
+            error.SetError (process_sp->Launch (launch_info));
         }
         else
         {
-            error.SetErrorString ("process is running");
+            error.SetErrorString ("must be in eStateConnected to call RemoteLaunch");
         }
     }
     else
@@ -187,25 +178,16 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Process::StopLocker stop_locker;
-        
-        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        if (process_sp->GetState() == eStateConnected)
         {
-            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-            if (process_sp->GetState() == eStateConnected)
-            {
-                ProcessAttachInfo attach_info;
-                attach_info.SetProcessID (pid);
-                error.SetError (process_sp->Attach (attach_info));            
-            }
-            else
-            {
-                error.SetErrorString ("must be in eStateConnected to call RemoteAttachToProcessWithID");
-            }
+            ProcessAttachInfo attach_info;
+            attach_info.SetProcessID (pid);
+            error.SetError (process_sp->Attach (attach_info));            
         }
         else
         {
-            error.SetErrorString ("process is running");
+            error.SetErrorString ("must be in eStateConnected to call RemoteAttachToProcessWithID");
         }
     }
     else
@@ -827,6 +809,8 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
         }
         else
         {
+            if (log)
+                log->Printf ("SBProcess(%p)::ReadMemory() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }
@@ -867,6 +851,9 @@ SBProcess::ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBE
         }
         else
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBProcess(%p)::ReadCStringFromMemory() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }
@@ -892,6 +879,9 @@ SBProcess::ReadUnsignedFromMemory (addr_t addr, uint32_t byte_size, lldb::SBErro
         }
         else
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBProcess(%p)::ReadUnsignedFromMemory() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }
@@ -917,6 +907,9 @@ SBProcess::ReadPointerFromMemory (addr_t addr, lldb::SBError &sb_error)
         }
         else
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBProcess(%p)::ReadPointerFromMemory() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }
@@ -956,6 +949,8 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
         }
         else
         {
+            if (log)
+                log->Printf ("SBProcess(%p)::WriteMemory() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1019,6 +1014,9 @@ SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
         }
         else
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBProcess(%p)::LoadImage() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1040,6 +1038,9 @@ SBProcess::UnloadImage (uint32_t image_token)
         }
         else
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBProcess(%p)::UnloadImage() => error: process is running", process_sp.get());
             sb_error.SetErrorString("process is running");
         }
     }

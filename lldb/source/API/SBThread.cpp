@@ -107,6 +107,11 @@ SBThread::GetStopReason()
             if (stop_info_sp)
                 reason =  stop_info_sp->GetStopReason();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetStopReason() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
 
     if (log)
@@ -160,6 +165,12 @@ SBThread::GetStopReasonDataCount ()
                     return 1;
                 }
             }
+        }
+        else
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBThread(%p)::GetStopReasonDataCount() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
     return 0;
@@ -226,6 +237,12 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
                     return stop_info_sp->GetValue();
                 }
             }
+        }
+        else
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBThread(%p)::GetStopReasonDataAtIndex() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
     return 0;
@@ -332,6 +349,12 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                 }
             }
         }
+        else
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBThread(%p)::GetStopDescription() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
     if (dst)
         *dst = 0;
@@ -341,6 +364,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 SBValue
 SBThread::GetStopReturnValue ()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ValueObjectSP return_valobj_sp;
     ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
@@ -355,9 +379,13 @@ SBThread::GetStopReturnValue ()
                 return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
             }
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetStopReturnValue() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBThread(%p)::GetStopReturnValue () => %s", exe_ctx.GetThreadPtr(), 
                                                                   return_valobj_sp.get() 
@@ -395,6 +423,7 @@ SBThread::GetIndexID () const
 const char *
 SBThread::GetName () const
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *name = NULL;
     ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
@@ -405,9 +434,13 @@ SBThread::GetName () const
             Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
             name = exe_ctx.GetThreadPtr()->GetName();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetName() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBThread(%p)::GetName () => %s", exe_ctx.GetThreadPtr(), name ? name : "NULL");
 
@@ -419,6 +452,7 @@ SBThread::GetQueueName () const
 {
     const char *name = NULL;
     ExecutionContext exe_ctx (m_opaque_sp.get());
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (exe_ctx.HasThreadScope())
     {
         Process::StopLocker stop_locker;
@@ -427,9 +461,13 @@ SBThread::GetQueueName () const
             Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
             name = exe_ctx.GetThreadPtr()->GetQueueName();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetQueueName() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBThread(%p)::GetQueueName () => %s", exe_ctx.GetThreadPtr(), name ? name : "NULL");
 
@@ -846,25 +884,51 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
 bool
 SBThread::Suspend()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx (m_opaque_sp.get());
+    bool result = false;
     if (exe_ctx.HasThreadScope())
     {
-        exe_ctx.GetThreadPtr()->SetResumeState (eStateSuspended);
-        return true;
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            exe_ctx.GetThreadPtr()->SetResumeState (eStateSuspended);
+            result = true;
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::Suspend() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
-    return false;
+    if (log)
+        log->Printf ("SBThread(%p)::Suspend() => %i", exe_ctx.GetThreadPtr(), result);
+    return result;
 }
 
 bool
 SBThread::Resume ()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx (m_opaque_sp.get());
+    bool result = false;
     if (exe_ctx.HasThreadScope())
     {
-        exe_ctx.GetThreadPtr()->SetResumeState (eStateRunning);
-        return true;
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            exe_ctx.GetThreadPtr()->SetResumeState (eStateRunning);
+            result = true;
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::Resume() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
-    return false;
+    if (log)
+        log->Printf ("SBThread(%p)::Resume() => %i", exe_ctx.GetThreadPtr(), result);
+    return result;
 }
 
 bool
@@ -916,6 +980,11 @@ SBThread::GetNumFrames ()
             Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
             num_frames = exe_ctx.GetThreadPtr()->GetStackFrameCount();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetNumFrames() => error: process is running", exe_ctx.GetThreadPtr());
+        }
     }
 
     if (log)
@@ -940,6 +1009,11 @@ SBThread::GetFrameAtIndex (uint32_t idx)
             Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
             frame_sp = exe_ctx.GetThreadPtr()->GetStackFrameAtIndex (idx);
             sb_frame.SetFrameSP (frame_sp);
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetFrameAtIndex() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
 
@@ -970,6 +1044,11 @@ SBThread::GetSelectedFrame ()
             Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
             frame_sp = exe_ctx.GetThreadPtr()->GetSelectedFrame ();
             sb_frame.SetFrameSP (frame_sp);
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetSelectedFrame() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
 
@@ -1005,6 +1084,11 @@ SBThread::SetSelectedFrame (uint32_t idx)
                 thread->SetSelectedFrame (frame_sp.get());
                 sb_frame.SetFrameSP (frame_sp);
             }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::SetSelectedFrame() => error: process is running", exe_ctx.GetThreadPtr());
         }
     }
 

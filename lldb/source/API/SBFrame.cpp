@@ -104,7 +104,7 @@ SBFrame::IsValid() const
 SBSymbolContext
 SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 {
-
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBSymbolContext sb_sym_ctx;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -117,9 +117,13 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_sym_ctx.SetSymbolContext(&frame->GetSymbolContext (resolve_scope));
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetSymbolContext () => error: process is running", frame);
+        }
     }
 
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbolContext (resolve_scope=0x%8.8x) => SBSymbolContext(%p)", 
                      frame, resolve_scope, sb_sym_ctx.get());
@@ -130,6 +134,7 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 SBModule
 SBFrame::GetModule () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBModule sb_module;
     ModuleSP module_sp;
     ExecutionContext exe_ctx(m_opaque_sp.get());
@@ -144,9 +149,13 @@ SBFrame::GetModule () const
             module_sp = frame->GetSymbolContext (eSymbolContextModule).module_sp;
             sb_module.SetSP (module_sp);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetModule () => error: process is running", frame);
+        }
     }
 
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBModule(%p)", 
                      frame, module_sp.get());
@@ -157,6 +166,7 @@ SBFrame::GetModule () const
 SBCompileUnit
 SBFrame::GetCompileUnit () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBCompileUnit sb_comp_unit;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -169,10 +179,14 @@ SBFrame::GetCompileUnit () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_comp_unit.reset (frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetCompileUnit () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::GetModule () => SBCompileUnit(%p)", 
+        log->Printf ("SBFrame(%p)::GetCompileUnit () => SBCompileUnit(%p)", 
                      frame, sb_comp_unit.get());
 
     return sb_comp_unit;
@@ -181,6 +195,7 @@ SBFrame::GetCompileUnit () const
 SBFunction
 SBFrame::GetFunction () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBFunction sb_function;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -193,8 +208,12 @@ SBFrame::GetFunction () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_function.reset(frame->GetSymbolContext (eSymbolContextFunction).function);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetFunction () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFunction () => SBFunction(%p)", 
                      frame, sb_function.get());
@@ -205,6 +224,7 @@ SBFrame::GetFunction () const
 SBSymbol
 SBFrame::GetSymbol () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBSymbol sb_symbol;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -217,8 +237,12 @@ SBFrame::GetSymbol () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_symbol.reset(frame->GetSymbolContext (eSymbolContextSymbol).symbol);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetSymbol () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbol () => SBSymbol(%p)", 
                      frame, sb_symbol.get());
@@ -228,6 +252,7 @@ SBFrame::GetSymbol () const
 SBBlock
 SBFrame::GetBlock () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBBlock sb_block;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -240,8 +265,12 @@ SBFrame::GetBlock () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_block.SetPtr (frame->GetSymbolContext (eSymbolContextBlock).block);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetBlock () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
                      frame, sb_block.GetPtr());
@@ -255,6 +284,7 @@ SBFrame::GetFrameBlock () const
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
     Target *target = exe_ctx.GetTargetPtr();
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (frame && target)
     {
         Process::StopLocker stop_locker;
@@ -263,8 +293,12 @@ SBFrame::GetFrameBlock () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_block.SetPtr(frame->GetFrameBlock ());
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetFrameBlock () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
                      frame, sb_block.GetPtr());
@@ -274,6 +308,7 @@ SBFrame::GetFrameBlock () const
 SBLineEntry
 SBFrame::GetLineEntry () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBLineEntry sb_line_entry;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -286,8 +321,12 @@ SBFrame::GetLineEntry () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_line_entry.SetLineEntry (frame->GetSymbolContext (eSymbolContextLineEntry).line_entry);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetLineEntry () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetLineEntry () => SBLineEntry(%p)", 
                      frame, sb_line_entry.get());
@@ -314,6 +353,7 @@ SBFrame::GetFrameID () const
 addr_t
 SBFrame::GetPC () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -326,9 +366,13 @@ SBFrame::GetPC () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetPC () => error: process is running", frame);
+        }
     }
 
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetPC () => 0x%llx", frame, addr);
 
@@ -338,6 +382,7 @@ SBFrame::GetPC () const
 bool
 SBFrame::SetPC (addr_t new_pc)
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     bool ret_val = false;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -350,9 +395,13 @@ SBFrame::SetPC (addr_t new_pc)
             Mutex::Locker api_locker (target->GetAPIMutex());
             ret_val = frame->GetRegisterContext()->SetPC (new_pc);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::SetPC () => error: process is running", frame);
+        }
     }
 
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::SetPC (new_pc=0x%llx) => %i", 
                      frame, new_pc, ret_val);
@@ -363,6 +412,7 @@ SBFrame::SetPC (addr_t new_pc)
 addr_t
 SBFrame::GetSP () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -375,8 +425,12 @@ SBFrame::GetSP () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             addr = frame->GetRegisterContext()->GetSP();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetSP () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", frame, addr);
 
@@ -387,6 +441,7 @@ SBFrame::GetSP () const
 addr_t
 SBFrame::GetFP () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     addr_t addr = LLDB_INVALID_ADDRESS;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -399,9 +454,13 @@ SBFrame::GetFP () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             addr = frame->GetRegisterContext()->GetFP();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetFP () => error: process is running", frame);
+        }
     }
 
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFP () => 0x%llx", frame, addr);
     return addr;
@@ -411,6 +470,7 @@ SBFrame::GetFP () const
 SBAddress
 SBFrame::GetPCAddress () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBAddress sb_addr;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -423,8 +483,12 @@ SBFrame::GetPCAddress () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             sb_addr.SetAddress (&frame->GetFrameCodeAddress());
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetPCAddress () => error: process is running", frame);
+        }
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetPCAddress () => SBAddress(%p)", frame, sb_addr.get());
     return sb_addr;
@@ -445,12 +509,8 @@ SBFrame::GetValueForVariablePath (const char *var_path)
     Target *target = exe_ctx.GetTargetPtr();
     if (frame && target)
     {
-        Process::StopLocker stop_locker;
-        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
-        {
-            lldb::DynamicValueType  use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
-            sb_value = GetValueForVariablePath (var_path, use_dynamic);
-        }
+        lldb::DynamicValueType  use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
+        sb_value = GetValueForVariablePath (var_path, use_dynamic);
     }
     return sb_value;
 }
@@ -477,6 +537,12 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
                                                                               error));
             sb_value.SetSP(value_sp);
         }
+        else
+        {
+            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBFrame(%p)::GetValueForVariablePath () => error: process is running", frame);
+        }
     }
     return sb_value;
 }
@@ -500,6 +566,7 @@ SBFrame::FindVariable (const char *name)
 SBValue
 SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     VariableSP var_sp;
     SBValue sb_value;
     ValueObjectSP value_sp;
@@ -536,9 +603,13 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
                 sb_value.SetSP(value_sp);
             }
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::FindVariable () => error: process is running", frame);
+        }
     }
     
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariable (name=\"%s\") => SBValue(%p)", 
                      frame, name, value_sp.get());
@@ -564,6 +635,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
 SBValue
 SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueType use_dynamic)
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBValue sb_value;
     ValueObjectSP value_sp;
     ExecutionContext exe_ctx(m_opaque_sp.get());
@@ -674,9 +746,13 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                 break;
             }
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::FindValue () => error: process is running", frame);
+        }
     }
     
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariableInScope (name=\"%s\", value_type=%i) => SBValue(%p)", 
                      frame, name, value_type, value_sp.get());
@@ -730,6 +806,7 @@ SBFrame::GetThread () const
 const char *
 SBFrame::Disassemble () const
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *disassembly = NULL;
     ExecutionContext exe_ctx(m_opaque_sp.get());
     StackFrame *frame = exe_ctx.GetFramePtr();
@@ -742,8 +819,12 @@ SBFrame::Disassemble () const
             Mutex::Locker api_locker (target->GetAPIMutex());
             disassembly = frame->Disassemble();
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::Disassemble () => error: process is running", frame);
+        }            
     }
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBFrame(%p)::Disassemble () => %s", frame, disassembly);
@@ -846,6 +927,11 @@ SBFrame::GetVariables (bool arguments,
                 }
             }
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetVariables () => error: process is running", frame);
+        }            
     }
 
     if (log)
@@ -882,10 +968,15 @@ SBFrame::GetRegisters ()
                 }
             }
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::GetRegisters () => error: process is running", frame);
+        }            
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::Registers () => SBValueList(%p)", frame, value_list.get());
+        log->Printf ("SBFrame(%p)::GetRegisters () => SBValueList(%p)", frame, value_list.get());
 
     return value_list;
 }
@@ -906,6 +997,13 @@ SBFrame::GetDescription (SBStream &description)
             Mutex::Locker api_locker (target->GetAPIMutex());
             frame->DumpUsingSettingsFormat (&strm);
         }
+        else
+        {
+            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBFrame(%p)::GetDescription () => error: process is running", frame);
+        }            
+
     }
     else
         strm.PutCString ("No value");
@@ -975,6 +1073,11 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
             expr_result.SetSP(expr_value_sp);
             Host::SetCrashDescription (NULL);
         }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame(%p)::EvaluateExpression () => error: process is running", frame);
+        }            
     }
 
 #ifndef LLDB_DISABLE_PYTHON
@@ -1010,6 +1113,13 @@ SBFrame::IsInlined()
             if (block)
                 return block->GetContainingInlinedBlock () != NULL;
         }
+        else
+        {
+            LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBFrame(%p)::IsInlined () => error: process is running", frame);
+        }            
+
     }
     return false;
 }
@@ -1048,6 +1158,13 @@ SBFrame::GetFunctionName()
                 if (sc.symbol)
                     name = sc.symbol->GetName().GetCString();
             }
+        }
+        else
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBFrame(%p)::GetFunctionName() => error: process is running", frame);
+
         }
     }
     return name;
