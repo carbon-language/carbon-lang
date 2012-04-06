@@ -22,8 +22,6 @@
 #include "asan_thread_registry.h"
 #include "interception/interception.h"
 
-#include <new>
-
 // Use macro to describe if specific function should be
 // intercepted on a given platform.
 #if !defined(_WIN32)
@@ -322,33 +320,6 @@ char *internal_strncpy(char *dst, const char *src, size_t n) {
 
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
-
-#define OPERATOR_NEW_BODY \
-  GET_STACK_TRACE_HERE_FOR_MALLOC;\
-  return asan_memalign(0, size, &stack);
-
-#ifdef ANDROID
-void *operator new(size_t size) { OPERATOR_NEW_BODY; }
-void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
-#else
-void *operator new(size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
-void *operator new[](size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
-void *operator new(size_t size, std::nothrow_t const&) throw()
-{ OPERATOR_NEW_BODY; }
-void *operator new[](size_t size, std::nothrow_t const&) throw()
-{ OPERATOR_NEW_BODY; }
-#endif
-
-#define OPERATOR_DELETE_BODY \
-  GET_STACK_TRACE_HERE_FOR_FREE(ptr);\
-  asan_free(ptr, &stack);
-
-void operator delete(void *ptr) throw() { OPERATOR_DELETE_BODY; }
-void operator delete[](void *ptr) throw() { OPERATOR_DELETE_BODY; }
-void operator delete(void *ptr, std::nothrow_t const&) throw()
-{ OPERATOR_DELETE_BODY; }
-void operator delete[](void *ptr, std::nothrow_t const&) throw()
-{ OPERATOR_DELETE_BODY;}
 
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   AsanThread *t = (AsanThread*)arg;

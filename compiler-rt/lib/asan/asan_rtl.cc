@@ -484,6 +484,7 @@ void __asan_init() {
   InitializeAsanInterceptors();
 
   ReplaceSystemMalloc();
+  ReplaceOperatorsNewAndDelete();
 
   if (FLAG_v) {
     Printf("|| `[%p, %p]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);

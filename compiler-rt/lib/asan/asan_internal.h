@@ -155,6 +155,7 @@ void NORETURN ShowStatsAndAbort();
 // asan_globals.cc
 bool DescribeAddrIfGlobal(uintptr_t addr);
 
+void ReplaceOperatorsNewAndDelete();
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 

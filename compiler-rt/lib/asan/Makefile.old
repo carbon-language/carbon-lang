@@ -192,6 +192,7 @@ LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_mac$(SUFF).o \
 	    $(BIN)/asan_malloc_linux$(SUFF).o \
 	    $(BIN)/asan_malloc_mac$(SUFF).o \
+	    $(BIN)/asan_new_delete$(SUFF).o \
 	    $(BIN)/asan_poisoning$(SUFF).o  \
 	    $(BIN)/asan_posix$(SUFF).o  \
 	    $(BIN)/asan_printf$(SUFF).o  \
