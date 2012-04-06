@@ -472,6 +472,16 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
 
 DisassemblerLLVMC::~DisassemblerLLVMC()
 {
+    if (m_disasm_context)
+    {
+        ::LLVMDisasmDispose(m_disasm_context);
+        m_disasm_context = NULL;
+    }
+    if (m_alternate_disasm_context)
+    {
+        ::LLVMDisasmDispose(m_alternate_disasm_context);
+        m_alternate_disasm_context = NULL;
+    }
 }
 
 size_t
