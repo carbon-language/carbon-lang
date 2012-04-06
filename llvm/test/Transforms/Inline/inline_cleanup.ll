@@ -163,7 +163,7 @@ if.end5:
 define void @PR12470_outer() {
 ; This previously crashed during inliner cleanup and folding inner return
 ; instructions. Check that we don't crash and we produce a function with a single
-; crash.
+; return instruction due to merging the returns of the inlined function.
 ; CHECK: define void @PR12470_outer
 ; CHECK: ret void
 ; CHECK-NOT: ret void
