@@ -101,6 +101,6 @@ namespace TestMisplacedEllipsisRecovery {
   int g = me.g(ifn, kfn);
 }
 
-template<template<typename> ...Foo, // expected-error {{template template parameters require 'class' after the parameter list}}
-         template<template<template<typename>>>> // expected-error 3 {{template template parameters require 'class' after the parameter list}}
+template<template<typename> ...Foo, // expected-error {{template template parameter requires 'class' after the parameter list}}
+         template<template<template<typename>>>> // expected-error 3 {{template template parameter requires 'class' after the parameter list}}
 void func();
