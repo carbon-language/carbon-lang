@@ -87,7 +87,10 @@ extern "C" {
   void __asan_handle_no_return() ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
 // User code should use macro instead of functions.
-#if defined(__has_feature) && __has_feature(address_sanitizer)
+#if !defined(__has_feature)
+#define __has_feature(x) 0
+#endif
+#if __has_feature(address_sanitizer)
 #define ASAN_POISON_MEMORY_REGION(addr, size) \
   __asan_poison_memory_region((addr), (size))
 #define ASAN_UNPOISON_MEMORY_REGION(addr, size) \
