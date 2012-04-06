@@ -3,14 +3,29 @@
 // rdar://10803676
 
 void *sel_registerName(const char *);
+typedef unsigned long NSUInteger;
+typedef long NSInteger;
+typedef signed char BOOL;
 
 @interface NSNumber
 + (NSNumber *)numberWithChar:(char)value;
++ (NSNumber *)numberWithUnsignedChar:(unsigned char)value;
++ (NSNumber *)numberWithShort:(short)value;
++ (NSNumber *)numberWithUnsignedShort:(unsigned short)value;
 + (NSNumber *)numberWithInt:(int)value;
++ (NSNumber *)numberWithUnsignedInt:(unsigned int)value;
++ (NSNumber *)numberWithLong:(long)value;
++ (NSNumber *)numberWithUnsignedLong:(unsigned long)value;
++ (NSNumber *)numberWithLongLong:(long long)value;
++ (NSNumber *)numberWithUnsignedLongLong:(unsigned long long)value;
++ (NSNumber *)numberWithFloat:(float)value;
++ (NSNumber *)numberWithDouble:(double)value;
++ (NSNumber *)numberWithBool:(BOOL)value;
++ (NSNumber *)numberWithInteger:(NSInteger)value ;
++ (NSNumber *)numberWithUnsignedInteger:(NSUInteger)value ;
 @end
 
 @protocol NSCopying @end
-typedef unsigned long NSUInteger;
 
 @interface NSDictionary
 + (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
@@ -33,5 +48,8 @@ int main() {
 NSArray *array = @[ @"Hello", NSUserName(), [NSDate date], [NSNumber numberWithInt:42]];
 
 NSDictionary *dictionary = @{ @"name" : NSUserName(), @"date" : [NSDate date], @"process" : @"processInfo"};
+
+NSDictionary *dict = @{ @"name":@666, @"man":@__objc_yes, @"date":@1.3 };
+
 }
 
