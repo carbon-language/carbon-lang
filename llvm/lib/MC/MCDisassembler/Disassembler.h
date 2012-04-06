@@ -28,7 +28,9 @@ class MCContext;
 class MCAsmInfo;
 class MCDisassembler;
 class MCInstPrinter; 
+class MCInstrInfo;
 class MCRegisterInfo;
+class MCSubtargetInfo;
 class Target;
 
 //
@@ -61,6 +63,10 @@ private:
   llvm::OwningPtr<const llvm::MCAsmInfo> MAI;
   // The register information for the target architecture.
   llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
+  // The subtarget information for the target architecture.
+  llvm::OwningPtr<const llvm::MCSubtargetInfo> MSI;
+  // The instruction information for the target architecture.
+  llvm::OwningPtr<const llvm::MCInstrInfo> MII;
   // The assembly context for creating symbols and MCExprs.
   llvm::OwningPtr<const llvm::MCContext> Ctx;
   // The disassembler for the target architecture.
@@ -78,6 +84,8 @@ public:
                     LLVMSymbolLookupCallback symbolLookUp,
                     const Target *theTarget, const MCAsmInfo *mAI,
                     const MCRegisterInfo *mRI,
+                    const MCSubtargetInfo *mSI,
+                    const MCInstrInfo *mII,
                     llvm::MCContext *ctx, const MCDisassembler *disAsm,
                     MCInstPrinter *iP) : TripleName(tripleName),
                     DisInfo(disInfo), TagType(tagType), GetOpInfo(getOpInfo),
@@ -85,6 +93,8 @@ public:
                     CommentStream(CommentsToEmit) {
     MAI.reset(mAI);
     MRI.reset(mRI);
+    MSI.reset(mSI);
+    MII.reset(mII);
     Ctx.reset(ctx);
     DisAsm.reset(disAsm);
     IP.reset(iP);
