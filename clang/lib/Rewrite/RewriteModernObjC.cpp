@@ -2608,6 +2608,48 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   SourceLocation StartLoc = Exp->getLocStart();
   SourceLocation EndLoc = Exp->getLocEnd();
   
+  // Build the expression: __NSArray_literal(int, ...).arr
+  QualType IntQT = Context->IntTy;
+  QualType NSArrayFType =
+    getSimpleFunctionType(Context->VoidTy, &IntQT, 1, true);
+  std::string NSArrayFName("__NSArray_literal");
+  FunctionDecl *NSArrayFD = SynthBlockInitFunctionDecl(NSArrayFName);
+  DeclRefExpr *NSArrayDRE = 
+    new (Context) DeclRefExpr(NSArrayFD, false, NSArrayFType, VK_RValue,
+                              SourceLocation());
+
+  SmallVector<Expr*, 16> InitExprs;
+  unsigned NumElements = Exp->getNumElements();
+  unsigned UnsignedIntSize = 
+    static_cast<unsigned>(Context->getTypeSize(Context->UnsignedIntTy));
+  Expr *count = IntegerLiteral::Create(*Context,
+                                       llvm::APInt(UnsignedIntSize, NumElements),
+                                       Context->UnsignedIntTy, SourceLocation());
+  InitExprs.push_back(count);
+  for (unsigned i = 0; i < NumElements; i++)
+    InitExprs.push_back(Exp->getElement(i));
+  Expr *NSArrayCallExpr = 
+    new (Context) CallExpr(*Context, NSArrayDRE, &InitExprs[0], InitExprs.size(),
+                           NSArrayFType, VK_LValue, SourceLocation());
+  
+  FieldDecl *ARRFD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                                    SourceLocation(),
+                                    &Context->Idents.get("arr"),
+                                    Context->getPointerType(Context->VoidPtrTy), 0,
+                                    /*BitWidth=*/0, /*Mutable=*/true,
+                                    /*HasInit=*/false);
+  MemberExpr *ArrayLiteralME = 
+    new (Context) MemberExpr(NSArrayCallExpr, false, ARRFD, 
+                             SourceLocation(),
+                             ARRFD->getType(), VK_LValue,
+                             OK_Ordinary);
+  QualType ConstIdT = Context->getObjCIdType().withConst();
+  CStyleCastExpr * ArrayLiteralObjects = 
+    NoTypeInfoCStyleCastExpr(Context, 
+                             Context->getPointerType(ConstIdT),
+                             CK_BitCast,
+                             ArrayLiteralME);
+  
   // Synthesize a call to objc_msgSend().
   SmallVector<Expr*, 32> MsgExprs;
   SmallVector<Expr*, 4> ClsExprs;
@@ -2642,22 +2684,14 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
                                                   StartLoc, EndLoc);
   MsgExprs.push_back(SelExp);
   
-  unsigned NumElements = Exp->getNumElements();
+  // (const id [])objects
+  MsgExprs.push_back(ArrayLiteralObjects);
   
-  // FIXME. Incomplete.
-  InitListExpr *ILE =
-    new (Context) InitListExpr(*Context, SourceLocation(),
-                               Exp->getElements(), NumElements,
-                               SourceLocation());
-  MsgExprs.push_back(ILE);
-  unsigned UnsignedIntSize = 
-    static_cast<unsigned>(Context->getTypeSize(Context->UnsignedIntTy));
-  
-  Expr *count = IntegerLiteral::Create(*Context,
-                                       llvm::APInt(UnsignedIntSize, NumElements),
-                                       Context->UnsignedIntTy,
-                                       SourceLocation());
-  MsgExprs.push_back(count);
+  // (NSUInteger)cnt
+  Expr *cnt = IntegerLiteral::Create(*Context,
+                                     llvm::APInt(UnsignedIntSize, NumElements),
+                                     Context->UnsignedIntTy, SourceLocation());
+  MsgExprs.push_back(cnt);
   
   
   SmallVector<QualType, 4> ArgTypes;
@@ -5477,6 +5511,24 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#define __block\n";
     Preamble += "#define __weak\n";
   }
+  
+  // Declarations required for modern objective-c array and dictionary literals.
+  Preamble += "\n#include <stdarg.h>\n";
+  Preamble += "struct __NSArray_literal {\n";
+  Preamble += "  void * *arr;\n";
+  Preamble += "  __NSArray_literal (unsigned int count, ...) {\n";
+  Preamble += "\tva_list marker;\n";
+  Preamble += "\tva_start(marker, count);\n";
+  Preamble += "\tarr = new void *[count];\n";
+  Preamble += "\tfor (unsigned i = 0; i < count; i++)\n";
+  Preamble += "\t  arr[i] = va_arg(marker, void *);\n";
+  Preamble += "\tva_end( marker );\n";
+  Preamble += "  };\n";
+  Preamble += "  ~__NSArray_literal() {\n";
+  Preamble += "\tdelete[] arr;\n";
+  Preamble += "  }\n";
+  Preamble += "};\n";
+  
   // NOTE! Windows uses LLP64 for 64bit mode. So, cast pointer to long long
   // as this avoids warning in any 64bit/32bit compilation model.
   Preamble += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((long long) &((TYPE *)0)->MEMBER)\n";
