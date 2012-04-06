@@ -788,8 +788,8 @@ Process::Process(Target &target, Listener &listener) :
     m_allocated_memory_cache (*this),
     m_should_detach (false),
     m_next_event_action_ap(),
-    m_can_jit(eCanJITDontKnow),
-    m_run_lock ()
+    m_run_lock (),
+    m_can_jit(eCanJITDontKnow)
 {
     UpdateInstanceName();
     
