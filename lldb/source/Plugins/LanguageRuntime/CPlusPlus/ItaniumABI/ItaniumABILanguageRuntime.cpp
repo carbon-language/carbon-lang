@@ -116,11 +116,14 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                         class_type_or_name.SetName (class_name);
                         const bool exact_match = true;
                         TypeList class_types;
-                        uint32_t num_matches = target->GetImages().FindTypes2 (sc, 
-                                                                               ConstString(class_name),
-                                                                               exact_match,
-                                                                               UINT32_MAX,
-                                                                               class_types);
+                        
+                        uint32_t num_matches = target->GetImages().FindTypes (sc,
+                                                                              ConstString(class_name),
+                                                                              exact_match,
+                                                                              UINT32_MAX,
+                                                                              class_types);
+                        
+                        lldb::TypeSP type_sp;
                         if (num_matches == 0)
                         {
                             if (log)
@@ -129,7 +132,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                         }
                         if (num_matches == 1)
                         {
-                            lldb::TypeSP type_sp(class_types.GetTypeAtIndex(0));
+                            type_sp = class_types.GetTypeAtIndex(0);
                             if (log)
                                 log->Printf ("0x%16.16llx: static-type = '%s' has dynamic type: uid={0x%llx}, type-name='%s'\n",
                                              original_ptr,
@@ -141,73 +144,105 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                         }
                         else if (num_matches > 1)
                         {
-                            for (size_t i = 0; i < num_matches; i++)
+                            size_t i;
+                            if (log)
                             {
-                                lldb::TypeSP type_sp(class_types.GetTypeAtIndex(i));
-                                if (type_sp)
+                                for (i = 0; i < num_matches; i++)
                                 {
-                                    if (log)
-                                        log->Printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types: uid={0x%llx}, type-name='%s'\n",
-                                                     original_ptr,
-                                                     in_value.GetTypeName().AsCString(),
-                                                     type_sp->GetID(),
-                                                     type_sp->GetName().GetCString());
-
-//                                    if (ClangASTContext::IsCXXClassType(type_sp->GetClangFullType()))
-//                                    {
-//                                        // There can only be one type with a given name,
-//                                        // so we've just found duplicate definitions, and this
-//                                        // one will do as well as any other.
-//                                        // We don't consider something to have a dynamic type if
-//                                        // it is the same as the static type.  So compare against
-//                                        // the value we were handed:
-//                                        
-//                                        clang::ASTContext *in_ast_ctx = in_value.GetClangAST ();
-//                                        clang::ASTContext *this_ast_ctx = type_sp->GetClangAST ();
-//                                        if (in_ast_ctx != this_ast_ctx
-//                                            || !ClangASTContext::AreTypesSame (in_ast_ctx, 
-//                                                                               in_value.GetClangType(),
-//                                                                               type_sp->GetClangFullType()))
-//                                        {
-//                                            class_type_or_name.SetTypeSP (this_type);
-//                                            return true;
-//                                        }
-//                                        return false;
-//                                    }
+                                    type_sp = class_types.GetTypeAtIndex(i);
+                                    if (type_sp)
+                                    {
+                                        if (log)
+                                            log->Printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types: uid={0x%llx}, type-name='%s'\n",
+                                                         original_ptr,
+                                                         in_value.GetTypeName().AsCString(),
+                                                         type_sp->GetID(),
+                                                         type_sp->GetName().GetCString());
+                                    }
                                 }
                             }
-                            return false;
-                        }
+
+                            for (i = 0; i < num_matches; i++)
+                            {
+                                type_sp = class_types.GetTypeAtIndex(i);
+                                if (type_sp)
+                                {
+                                    if (ClangASTContext::IsCXXClassType(type_sp->GetClangFullType()))
+                                    {
+                                        if (log)
+                                            log->Printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types, picking this one: uid={0x%llx}, type-name='%s'\n",
+                                                         original_ptr,
+                                                         in_value.GetTypeName().AsCString(),
+                                                         type_sp->GetID(),
+                                                         type_sp->GetName().GetCString());
+                                        class_type_or_name.SetTypeSP(type_sp);
+                                        break;
+                                    }
+                                }
+                            }
                             
-                        // The offset_to_top is two pointers above the address.
-                        Address offset_to_top_address = address_point_address;
-                        int64_t slide = -2 * ((int64_t) target->GetArchitecture().GetAddressByteSize());
-                        offset_to_top_address.Slide (slide);
-                        
-                        Error error;
-                        lldb::addr_t offset_to_top_location = offset_to_top_address.GetLoadAddress(target);
-                        
-                        size_t bytes_read = process->ReadMemory (offset_to_top_location, 
-                                                                 memory_buffer, 
-                                                                 address_byte_size, 
-                                                                 error);
-                                                                 
-                        if (!error.Success() || (bytes_read != address_byte_size))
-                        {
-                            return false;
+                            if (i == num_matches)
+                            {
+                                if (log)
+                                    log->Printf ("0x%16.16llx: static-type = '%s' has multiple matching dynamic types, didn't find a C++ match\n",
+                                                 original_ptr,
+                                                 in_value.GetTypeName().AsCString());
+                                return false;
+                            }
                         }
-                        
-                        offset_ptr = 0;
-                        int64_t offset_to_top = data.GetMaxS64(&offset_ptr, process->GetAddressByteSize());
-                        
-                        // So the dynamic type is a value that starts at offset_to_top
-                        // above the original address.
-                        lldb::addr_t dynamic_addr = original_ptr + offset_to_top;
-                        if (!target->GetSectionLoadList().ResolveLoadAddress (dynamic_addr, dynamic_address))
+
+                        // There can only be one type with a given name,
+                        // so we've just found duplicate definitions, and this
+                        // one will do as well as any other.
+                        // We don't consider something to have a dynamic type if
+                        // it is the same as the static type.  So compare against
+                        // the value we were handed.
+                        if (type_sp)
                         {
-                            dynamic_address.SetRawAddress(dynamic_addr);
+                            clang::ASTContext *in_ast_ctx = in_value.GetClangAST ();
+                            clang::ASTContext *this_ast_ctx = type_sp->GetClangAST ();
+                            if (in_ast_ctx == this_ast_ctx)
+                            {
+                                if (ClangASTContext::AreTypesSame (in_ast_ctx,
+                                                                   in_value.GetClangType(),
+                                                                   type_sp->GetClangFullType()))
+                                {
+                                    // The dynamic type we found was the same type,
+                                    // so we don't have a dynamic type here...
+                                    return false;
+                                }
+                            }
+
+                            // The offset_to_top is two pointers above the address.
+                            Address offset_to_top_address = address_point_address;
+                            int64_t slide = -2 * ((int64_t) target->GetArchitecture().GetAddressByteSize());
+                            offset_to_top_address.Slide (slide);
+                            
+                            Error error;
+                            lldb::addr_t offset_to_top_location = offset_to_top_address.GetLoadAddress(target);
+                            
+                            size_t bytes_read = process->ReadMemory (offset_to_top_location, 
+                                                                     memory_buffer, 
+                                                                     address_byte_size, 
+                                                                     error);
+                                                                     
+                            if (!error.Success() || (bytes_read != address_byte_size))
+                            {
+                                return false;
+                            }
+                            
+                            offset_ptr = 0;
+                            int64_t offset_to_top = data.GetMaxS64(&offset_ptr, process->GetAddressByteSize());
+                            
+                            // So the dynamic type is a value that starts at offset_to_top
+                            // above the original address.
+                            lldb::addr_t dynamic_addr = original_ptr + offset_to_top;
+                            if (!target->GetSectionLoadList().ResolveLoadAddress (dynamic_addr, dynamic_address))
+                            {
+                                dynamic_address.SetRawAddress(dynamic_addr);
+                            }
+                            return true;
                         }
-                        return true;
                     }
                 }
             }

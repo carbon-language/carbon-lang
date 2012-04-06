@@ -352,7 +352,7 @@ ModuleList::FindModule (const UUID &uuid)
 
 
 uint32_t
-ModuleList::FindTypes2 (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, uint32_t max_matches, TypeList& types)
+ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, uint32_t max_matches, TypeList& types)
 {
     Mutex::Locker locker(m_modules_mutex);
 

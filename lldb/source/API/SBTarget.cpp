@@ -1958,7 +1958,7 @@ SBTarget::FindTypes (const char* type)
         SymbolContext sc;
         TypeList type_list;
         
-        uint32_t num_matches = images.FindTypes2 (sc,
+        uint32_t num_matches = images.FindTypes (sc,
                                                  name_const,
                                                  exact_match,
                                                  UINT32_MAX,

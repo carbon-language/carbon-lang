@@ -465,7 +465,7 @@ public:
             }
             if (type_list.GetSize() == 0)
             {
-                target->GetImages().FindTypes2 (sc, 
+                target->GetImages().FindTypes (sc, 
                                                lookup_type_name, 
                                                exact_match, 
                                                1, 

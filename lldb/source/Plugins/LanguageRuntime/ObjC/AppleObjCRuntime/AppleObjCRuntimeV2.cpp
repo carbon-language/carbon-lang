@@ -350,7 +350,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             TypeList class_types;
             SymbolContext sc;
             const bool exact_match = true;
-            uint32_t num_matches = target.GetImages().FindTypes2 (sc,
+            uint32_t num_matches = target.GetImages().FindTypes (sc,
                                                                  class_type_or_name.GetName(),
                                                                  exact_match,
                                                                  UINT32_MAX,

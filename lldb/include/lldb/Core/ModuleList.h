@@ -340,7 +340,7 @@ public:
     ///     The number of matches added to \a type_list.
     //------------------------------------------------------------------
     uint32_t
-    FindTypes2 (const SymbolContext& sc,
+    FindTypes (const SymbolContext& sc,
                const ConstString &name,
                bool name_is_fully_qualified,
                uint32_t max_matches,

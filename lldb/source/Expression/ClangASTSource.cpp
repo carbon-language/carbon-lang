@@ -245,7 +245,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
             ModuleList &module_list = m_target->GetImages();
 
             bool exact_match = false;
-            module_list.FindTypes2 (null_sc, name, exact_match, UINT32_MAX, types);
+            module_list.FindTypes (null_sc, name, exact_match, UINT32_MAX, types);
             
             for (uint32_t ti = 0, te = types.GetSize();
                  ti != te && !found;
@@ -598,7 +598,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
         if (module_sp && namespace_decl)
             module_sp->FindTypesInNamespace(null_sc, name, &namespace_decl, 1, types);
         else 
-            m_target->GetImages().FindTypes2(null_sc, name, exact_match, 1, types);
+            m_target->GetImages().FindTypes(null_sc, name, exact_match, 1, types);
         
         if (types.GetSize())
         {
