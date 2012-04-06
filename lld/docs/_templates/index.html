@@ -3,42 +3,9 @@
 {% block body %}
 <h1>lld: a linker for LLVM</h1>
 
-<p>
-  lld is a new set of moduler code for creating linker tools.
-</p>
-
-<h2 id="goals">Features and Goals</h2>
-<p><b>End-User Features:</b></p>
-<ul>
-  <li>Compatible with existing linker options</li>
-  <li>Reads standard Object Files (e.g. ELF, mach-o, PE/COFF)</li>
-  <li>Writes standard Executable Files (e.g. ELF, mach-o, PE)</li>
-  <li>Fast link times</li>
-  <li>Minimal memory use</li>
-  <li>Remove clang's reliance on "the system linker"</li>
-  <li>Uses the LLVM 'BSD' License</li>
-</ul>
-
-<p><b>Applications:</b></p>
-<ul>
-  <li>Modular design</li>
-  <li>Support cross linking</li>
-  <li>Easy to add new CPU support</li>
-  <li>Can be built as static tool or library</li>
-</ul>
-
-<p><b>Design and Implementation:</b></p>
-<ul>
-  <li>Extensive unit tests</li>
-  <li>Internal linker model can be dumped/read to textual format</li>
-  <li>Internal linker model can be dumped/read to new native format</li>
-  <li>Native format designed to be fast to read and write</li>
-  <li>Additional linking features can be plugged in as "passes"</li>
-  <li>OS specific and CPU specific code factored out</li>
-</ul>
-
 For more information, see the <a href="{{pathto('intro')}}">introduction</a>
-available as part of the <i>lld</i> documentation below.
+and <a href="{{pathto('design')}}">design</a> available as part of the <i>lld</i>
+documentation below.
 
 <h2>Documentation</h2>
 <table class="contentstable" align="center" style="margin-left: 30px">
@@ -60,7 +27,7 @@ available as part of the <i>lld</i> documentation below.
 <p>lld is available in the LLVM SVN repository:
   <tt>svn co
     <a href="http://llvm.org/svn/llvm-project/lld/trunk">
-      http://llvm.org/svn/llvm-project/lnt/trunk</a></tt>.</p>
+      http://llvm.org/svn/llvm-project/lld/trunk</a></tt>.</p>
 
 <p>lld is also available via the read-only git mirror:
   <tt>git clone

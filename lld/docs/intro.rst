@@ -9,9 +9,9 @@ lld is a new set of modular code for creating linker tools.
 
    * Compatible with existing linker options
 
-   * Reads standard Object Files (e.g. ELF, mach-o, PE/COFF)
+   * Reads standard Object Files (e.g. ELF, Mach-O, PE/COFF)
 
-   * Writes standard Executable Files (e.g. ELF, mach-o, PE)
+   * Writes standard Executable Files (e.g. ELF, Mach-O, PE)
 
    * Fast link times
 
@@ -19,7 +19,7 @@ lld is a new set of modular code for creating linker tools.
 
    * Remove clang's reliance on "the system linker"
 
-   * Uses the LLVM 'BSD' License
+   * Uses the LLVM `"UIUC" BSD-Style license`__.
 
  * Applications:
 
@@ -62,3 +62,5 @@ Current Status
 --------------
 
 lld is in its very early stages of development.
+
+__ http://llvm.org/docs/DeveloperPolicy.html#license
