@@ -52,7 +52,6 @@ if target.IsValid() == False:
 def ResetLogFile(log_file):
     if log_file != sys.stdout:
         log_file.seek(0)
-        log_file.truncate(0)
 
 def PrintByteArray(log_file, byte_array):
     for byte in byte_array:
