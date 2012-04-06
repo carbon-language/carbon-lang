@@ -1,6 +1,6 @@
 #include "nonnull.h"
 
-// RUN: %clang_cc1 -fblocks -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fblocks -fsyntax-only -verify -Wno-objc-root-class %s
 
 @class NSObject;
 

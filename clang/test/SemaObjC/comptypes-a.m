@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wmethod-signatures -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -Wmethod-signatures -verify -pedantic -Wno-objc-root-class %s
 typedef signed char BOOL;
 typedef int NSInteger;
 

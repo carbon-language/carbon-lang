@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,experimental.deadcode.IdempotentOperations,experimental.core.CastToStruct,experimental.security.ReturnPtrRange,experimental.security.ArrayBound -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -DTEST_64 -analyze -analyzer-checker=core,experimental.deadcode.IdempotentOperations,experimental.core.CastToStruct,experimental.security.ReturnPtrRange,experimental.security.ArrayBound -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,experimental.deadcode.IdempotentOperations,experimental.core.CastToStruct,experimental.security.ReturnPtrRange,experimental.security.ArrayBound -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -DTEST_64 -analyze -analyzer-checker=core,experimental.deadcode.IdempotentOperations,experimental.core.CastToStruct,experimental.security.ReturnPtrRange,experimental.security.ArrayBound -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks -Wno-objc-root-class %s
 
 typedef long unsigned int size_t;
 void *memcpy(void *, const void *, size_t);

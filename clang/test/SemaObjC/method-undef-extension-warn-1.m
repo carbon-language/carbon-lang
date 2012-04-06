@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface MyClass // expected-note {{required for direct or indirect protocol 'P'}}
 @end

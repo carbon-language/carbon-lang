@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin8 %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
-// RUN: %clang_cc1 -triple thumbv6-apple-ios4.0 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region -Wno-objc-root-class %s 2>&1 | FileCheck -check-prefix=darwin8 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region -Wno-objc-root-class %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple thumbv6-apple-ios4.0 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region -Wno-objc-root-class %s 2>&1 | FileCheck -check-prefix=darwin9 %s
 
 @interface MyClass {}
 - (void *)voidPtrM;

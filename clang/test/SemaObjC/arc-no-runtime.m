@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-arc -verify %s
+// RUN: %clang_cc1 -fobjc-arc -verify -Wno-objc-root-class %s
 
 // rdar://problem/9150784
 void test(void) {

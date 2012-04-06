@@ -444,6 +444,13 @@ def note_receiver_is_id : Note<
   "receiver is treated with 'id' type for purpose of method lookup">;
 def note_suppressed_class_declare : Note<
   "class with specified objc_requires_property_definitions attribute is declared here">;
+def err_objc_root_class_subclass : Error<
+  "objc_root_class attribute may only be specified on a root class declaration">;
+def warn_objc_root_class_missing : Warning<
+	"class %0 defined without specifying a base class">,
+  InGroup<ObjCRootClass>, DefaultIgnore;
+def note_objc_needs_superclass : Note<
+  "add a super class to fix this problem">;
 def warn_dup_category_def : Warning<
   "duplicate definition of category %1 on interface %0">;
 def err_conflicting_super_class : Error<"conflicting super class name %0">;

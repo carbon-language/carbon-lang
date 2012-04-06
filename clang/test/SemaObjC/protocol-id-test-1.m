@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify %s
+// RUN: %clang_cc1 -verify -Wno-objc-root-class %s
 
 @interface FF
 - (void) Meth;

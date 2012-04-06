@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-apple-darwin9  %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-apple-darwin9 -Wno-objc-root-class %s
 // FIXME: must also compile as Objective-C++ 
 
 // <rdar://problem/6487662>

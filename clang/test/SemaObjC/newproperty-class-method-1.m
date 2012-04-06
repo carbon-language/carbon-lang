@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only
+// RUN: %clang_cc1 -verify -fsyntax-only -Wno-objc-root-class %s
 
 void abort(void);
 

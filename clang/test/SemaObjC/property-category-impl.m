@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
 /* This test is for categories which don't implement the accessors but some accessors are
    implemented in their base class implementation. In this case,no warning must be issued.

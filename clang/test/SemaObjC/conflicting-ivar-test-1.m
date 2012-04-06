@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-fragile-abi -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fobjc-fragile-abi -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface INTF 
 {

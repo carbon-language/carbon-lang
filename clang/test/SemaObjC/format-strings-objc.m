@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -Wformat-nonliteral -fsyntax-only -fblocks -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -Wformat-nonliteral -fsyntax-only -fblocks -verify -Wno-objc-root-class %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

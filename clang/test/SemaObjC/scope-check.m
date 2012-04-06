@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fobjc-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fobjc-exceptions -Wno-objc-root-class %s
 
 @class A, B, C;
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wduplicate-method-match -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wduplicate-method-match -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface Subclass
 {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 // rdar://5986251
 
 @protocol SomeProtocol

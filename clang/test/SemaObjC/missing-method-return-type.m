@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wmissing-method-return-type -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wmissing-method-return-type -fsyntax-only -verify -Wno-objc-root-class %s
 // rdar://9615045
 
 @interface I

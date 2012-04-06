@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region -verify -Wno-objc-root-class %s
 
 typedef struct Foo { int x; } Bar;
 

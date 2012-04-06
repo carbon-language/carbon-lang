@@ -24,6 +24,7 @@
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/DenseSet.h"
 
 using namespace clang;
@@ -2371,11 +2372,39 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
       AtomicPropertySetterGetterRules(IC, IDecl);
       DiagnoseOwningPropertyGetterSynthesis(IC);
   
-      if (LangOpts.ObjCNonFragileABI2)
+      bool HasRootClassAttr = IDecl->hasAttr<ObjCRootClassAttr>();
+      if (IDecl->getSuperClass() == NULL) {
+        // This class has no superclass, so check that it has been marked with
+        // __attribute((objc_root_class)).
+        if (!HasRootClassAttr) {
+          SourceLocation DeclLoc(IDecl->getLocation());
+          SourceLocation SuperClassLoc(PP.getLocForEndOfToken(DeclLoc));
+          Diag(DeclLoc, diag::warn_objc_root_class_missing)
+            << IDecl->getIdentifier();
+          // See if NSObject is in the current scope, and if it is, suggest
+          // adding " : NSObject " to the class declaration.
+          NamedDecl *IF = LookupSingleName(TUScope,
+                                           NSAPIObj->getNSClassId(NSAPI::ClassId_NSObject),
+                                           DeclLoc, LookupOrdinaryName);
+          ObjCInterfaceDecl *NSObjectDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+          if (NSObjectDecl && NSObjectDecl->getDefinition()) {
+            Diag(SuperClassLoc, diag::note_objc_needs_superclass)
+              << FixItHint::CreateInsertion(SuperClassLoc, " : NSObject ");
+          } else {
+            Diag(SuperClassLoc, diag::note_objc_needs_superclass);
+          }
+        }
+      } else if (HasRootClassAttr) {
+        // Complain that only root classes may have this attribute.
+        Diag(IDecl->getLocation(), diag::err_objc_root_class_subclass);
+      }
+
+      if (LangOpts.ObjCNonFragileABI2) {
         while (IDecl->getSuperClass()) {
           DiagnoseDuplicateIvars(IDecl, IDecl->getSuperClass());
           IDecl = IDecl->getSuperClass();
         }
+      }
     }
     SetIvarInitializers(IC);
   } else if (ObjCCategoryImplDecl* CatImplClass =

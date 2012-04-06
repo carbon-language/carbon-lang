@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify
+// RUN: %clang_cc1 -verify -Wno-objc-root-class %s
 
 @interface Foo 
 {

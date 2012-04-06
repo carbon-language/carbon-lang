@@ -161,6 +161,7 @@ void Parser::CheckNestedObjCContexts(SourceLocation AtLoc)
 ///     __attribute__((deprecated))
 ///     __attribute__((unavailable))
 ///     __attribute__((objc_exception)) - used by NSException on 64-bit
+///     __attribute__((objc_root_class))
 ///
 Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                               ParsedAttributes &attrs) {

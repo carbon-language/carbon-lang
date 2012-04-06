@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fms-extensions
+// RUN: %clang_cc1 -verify -fms-extensions -Wno-objc-root-class %s
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 typedef struct _NSRange { } NSRange;
 

@@ -1,10 +1,10 @@
 // Test that infinite loop in rdar://10418538 was fixed.
 
 // Without PCH
-// RUN: %clang_cc1 -fsyntax-only -verify -include %s -include %s %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class -include %s -include %s %s
 
 // With PCH
-// RUN: %clang_cc1 -fsyntax-only -verify %s -chain-include %s -chain-include %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s -chain-include %s -chain-include %s
 
 #ifndef HEADER1
 #define HEADER1

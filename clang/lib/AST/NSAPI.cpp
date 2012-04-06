@@ -18,6 +18,7 @@ NSAPI::NSAPI(ASTContext &ctx)
 
 IdentifierInfo *NSAPI::getNSClassId(NSClassIdKindKind K) const {
   static const char *ClassName[NumClassIds] = {
+    "NSObject",
     "NSString",
     "NSArray",
     "NSMutableArray",

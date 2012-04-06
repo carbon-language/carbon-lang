@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
 @protocol P1
 - (void) P1proto;  // expected-note {{method 'P1proto' declared here}}

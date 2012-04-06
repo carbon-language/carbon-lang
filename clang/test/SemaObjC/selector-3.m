@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -Wselector -verify %s
+// RUN: %clang_cc1  -fsyntax-only -Wselector -verify -Wno-objc-root-class %s
 // rdar://8851684
 
 @interface Foo

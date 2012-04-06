@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -Wduplicate-method-arg -verify %s
+// RUN: %clang_cc1  -fsyntax-only -Wduplicate-method-arg -verify -Wno-objc-root-class %s
 
 // rdar://8877730
 

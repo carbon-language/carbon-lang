@@ -25,6 +25,7 @@ public:
   ASTContext &getASTContext() const { return Ctx; }
 
   enum NSClassIdKindKind {
+    ClassId_NSObject,
     ClassId_NSString,
     ClassId_NSArray,
     ClassId_NSMutableArray,
@@ -32,7 +33,7 @@ public:
     ClassId_NSMutableDictionary,
     ClassId_NSNumber
   };
-  static const unsigned NumClassIds = 6;
+  static const unsigned NumClassIds = 7;
 
   enum NSStringMethodKind {
     NSStr_stringWithString,

@@ -1,12 +1,12 @@
 // Objective-C recovery
 // RUN: cp %s %t
-// RUN: %clang_cc1 -Wmissing-method-return-type -fixit -x objective-c %t
-// RUN: %clang_cc1 -fsyntax-only -pedantic -Wmissing-method-return-type -Werror -x objective-c %t
+// RUN: %clang_cc1 -Wmissing-method-return-type -fixit -x objective-c -Wno-objc-root-class %t
+// RUN: %clang_cc1 -fsyntax-only -pedantic -Wmissing-method-return-type -Werror -x objective-c -Wno-objc-root-class %t
 
 // Objective-C++ recovery
 // RUN: cp %s %t
-// RUN: %clang_cc1 -Wmissing-method-return-type -fixit -x objective-c++ %t
-// RUN: %clang_cc1 -fsyntax-only -pedantic -Wmissing-method-return-type -Werror -x objective-c++ %t
+// RUN: %clang_cc1 -Wmissing-method-return-type -fixit -x objective-c++ -Wno-objc-root-class %t
+// RUN: %clang_cc1 -fsyntax-only -pedantic -Wmissing-method-return-type -Werror -x objective-c++ -Wno-objc-root-class %t
 // rdar://9615045
 
 @interface I

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s -verify -fblocks
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -Wno-objc-root-class %s
 // test for block type safety.
 
 @interface Super  @end

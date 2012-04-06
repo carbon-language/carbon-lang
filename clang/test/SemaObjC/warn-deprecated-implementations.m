@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wdeprecated-implementations -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdeprecated-implementations -verify -Wno-objc-root-class %s
 // rdar://8973810
 
 @protocol P

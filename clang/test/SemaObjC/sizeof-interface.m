@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only %s
+// RUN: %clang_cc1 -verify -fsyntax-only -Wno-objc-root-class %s
 
 @class I0; // expected-note 2{{forward declaration of class here}}
 

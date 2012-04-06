@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -Wunused-parameter -verify %s
+// RUN: %clang_cc1  -fsyntax-only -Wunused-parameter -verify -Wno-objc-root-class %s
 
 @interface INTF
 - (void) correct_use_of_unused: (void *) notice : (id)another_arg;

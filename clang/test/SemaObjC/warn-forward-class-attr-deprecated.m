@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 // rdar://10290322
 
 @class ABGroupImportFilesScope; // expected-note {{forward declaration of class here}}

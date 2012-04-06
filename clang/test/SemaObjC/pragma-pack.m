@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-apple-darwin9 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple i686-apple-darwin9 -fsyntax-only -verify -Wno-objc-root-class %s
 
 // Make sure pragma pack works inside ObjC methods.  <rdar://problem/10893316>
 @interface X

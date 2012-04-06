@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -pedantic -fsyntax-only -verify %s
+// RUN: %clang_cc1 -pedantic -fsyntax-only -verify -Wno-objc-root-class %s
 typedef signed char BOOL;
 
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties -verify -Wno-objc-root-class %s
 
 @interface NSString @end
 

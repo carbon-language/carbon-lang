@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface A {
   int X __attribute__((deprecated));

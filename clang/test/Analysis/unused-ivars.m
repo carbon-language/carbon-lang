@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -analyze -analyzer-checker=osx.cocoa.UnusedIvars %s -verify
+// RUN: %clang_cc1 -fblocks -analyze -analyzer-checker=osx.cocoa.UnusedIvars -verify -Wno-objc-root-class %s
 
 //===--- BEGIN: Delta-debugging reduced headers. --------------------------===//
 

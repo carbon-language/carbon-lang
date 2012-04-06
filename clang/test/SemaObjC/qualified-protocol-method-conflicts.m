@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -Woverriding-method-mismatch -fsyntax-only -verify %s
+// RUN: %clang_cc1  -Woverriding-method-mismatch -fsyntax-only -verify -Wno-objc-root-class %s
 // rdar://6191214
 
 @protocol Xint

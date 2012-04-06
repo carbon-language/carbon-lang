@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -Wundeclared-selector -verify %s
+// RUN: %clang_cc1  -fsyntax-only -Wundeclared-selector -verify -Wno-objc-root-class %s
 
 typedef struct objc_selector *SEL;
 

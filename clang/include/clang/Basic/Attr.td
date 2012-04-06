@@ -452,6 +452,11 @@ def ObjCReturnsInnerPointer : Attr {
   let Subjects = [ObjCMethod];
 }
 
+def ObjCRootClass : Attr {
+  let Spellings = ["objc_root_class"];
+  let Subjects = [ObjCInterface];
+}
+
 def Overloadable : Attr {
   let Spellings = ["overloadable"];
 }
@@ -534,10 +539,12 @@ def Unavailable : InheritableAttr {
 
 def ArcWeakrefUnavailable : InheritableAttr {
   let Spellings = ["objc_arc_weak_reference_unavailable"];
+  let Subjects = [ObjCInterface];
 }
 
 def ObjCRequiresPropertyDefs : InheritableAttr {
   let Spellings = ["objc_requires_property_definitions"];
+  let Subjects = [ObjCInterface];
 }
 
 def Unused : InheritableAttr {

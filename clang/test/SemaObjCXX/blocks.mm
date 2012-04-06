@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -Wno-objc-root-class %s
 @protocol NSObject;
 
 void bar(id(^)(void));
