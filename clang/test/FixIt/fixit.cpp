@@ -200,7 +200,7 @@ template<class T> typedef Mystery<T>::type getMysteriousThing() { // \
   return Mystery<T>::get();
 }
 
-template<template<typename> Foo, // expected-error {{template template parameters require 'class' after the argument list}}
-         template<typename> typename Bar, // expected-error {{template template parameters require 'class' after the argument list}}
-         template<typename> struct Baz> // expected-error {{template template parameters require 'class' after the argument list}}
+template<template<typename> Foo, // expected-error {{template template parameters require 'class' after the parameter list}}
+         template<typename> typename Bar, // expected-error {{template template parameters require 'class' after the parameter list}}
+         template<typename> struct Baz> // expected-error {{template template parameters require 'class' after the parameter list}}
 void func();

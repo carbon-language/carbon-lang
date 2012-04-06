@@ -479,8 +479,8 @@ def err_unknown_template_name : Error<
   "unknown template name %0">;
 def err_expected_comma_greater : Error<
   "expected ',' or '>' in template-parameter-list">;
-def err_expected_class_on_template_template_param : Error<
-  "template template parameters require 'class' after the argument list">;
+def err_class_on_template_template_param : Error<
+  "template template parameter requires 'class' after the parameter list">;
 def err_template_spec_syntax_non_template : Error<
   "identifier followed by '<' indicates a class template specialization but "
   "%0 %select{does not refer to a template|refers to a function "
