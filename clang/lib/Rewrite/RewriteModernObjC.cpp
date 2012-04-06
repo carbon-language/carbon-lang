@@ -320,6 +320,7 @@ namespace {
     Stmt *RewriteObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Exp);
     Stmt *RewriteObjCNumericLiteralExpr(ObjCNumericLiteral *Exp);
     Stmt *RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp);
+    Stmt *RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
@@ -464,8 +465,11 @@ namespace {
     bool BufferContainsPPDirectives(const char *startBuf, const char *endBuf);
     
     void convertToUnqualifiedObjCType(QualType &T) {
-      if (T->isObjCQualifiedIdType())
-        T = Context->getObjCIdType();
+      if (T->isObjCQualifiedIdType()) {
+        bool isConst = T.isConstQualified();
+        T = isConst ? Context->getObjCIdType().withConst() 
+                    : Context->getObjCIdType();
+      }
       else if (T->isObjCQualifiedClassType())
         T = Context->getObjCClassType();
       else if (T->isObjCObjectPointerType() &&
@@ -2608,11 +2612,11 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   SourceLocation StartLoc = Exp->getLocStart();
   SourceLocation EndLoc = Exp->getLocEnd();
   
-  // Build the expression: __NSArray_literal(int, ...).arr
+  // Build the expression: __NSContainer_literal(int, ...).arr
   QualType IntQT = Context->IntTy;
   QualType NSArrayFType =
     getSimpleFunctionType(Context->VoidTy, &IntQT, 1, true);
-  std::string NSArrayFName("__NSArray_literal");
+  std::string NSArrayFName("__NSContainer_literal");
   FunctionDecl *NSArrayFD = SynthBlockInitFunctionDecl(NSArrayFName);
   DeclRefExpr *NSArrayDRE = 
     new (Context) DeclRefExpr(NSArrayFD, false, NSArrayFType, VK_RValue,
@@ -2717,6 +2721,181 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   QualType castType =
   getSimpleFunctionType(returnType, &ArgTypes[0], ArgTypes.size(),
                         ArrayMethod->isVariadic());
+  castType = Context->getPointerType(castType);
+  cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
+                                  cast);
+  
+  // Don't forget the parens to enforce the proper binding.
+  ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
+  
+  const FunctionType *FT = msgSendType->getAs<FunctionType>();
+  CallExpr *CE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
+                                        MsgExprs.size(),
+                                        FT->getResultType(), VK_RValue,
+                                        EndLoc);
+  ReplaceStmt(Exp, CE);
+  return CE;
+}
+
+Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral *Exp) {
+  // synthesize declaration of helper functions needed in this routine.
+  if (!SelGetUidFunctionDecl)
+    SynthSelGetUidFunctionDecl();
+  // use objc_msgSend() for all.
+  if (!MsgSendFunctionDecl)
+    SynthMsgSendFunctionDecl();
+  if (!GetClassFunctionDecl)
+    SynthGetClassFunctionDecl();
+  
+  FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
+  SourceLocation StartLoc = Exp->getLocStart();
+  SourceLocation EndLoc = Exp->getLocEnd();
+  
+  // Build the expression: __NSContainer_literal(int, ...).arr
+  QualType IntQT = Context->IntTy;
+  QualType NSDictFType =
+    getSimpleFunctionType(Context->VoidTy, &IntQT, 1, true);
+  std::string NSDictFName("__NSContainer_literal");
+  FunctionDecl *NSDictFD = SynthBlockInitFunctionDecl(NSDictFName);
+  DeclRefExpr *NSDictDRE = 
+    new (Context) DeclRefExpr(NSDictFD, false, NSDictFType, VK_RValue,
+                              SourceLocation());
+  
+  SmallVector<Expr*, 16> KeyExprs;
+  SmallVector<Expr*, 16> ValueExprs;
+  
+  unsigned NumElements = Exp->getNumElements();
+  unsigned UnsignedIntSize = 
+    static_cast<unsigned>(Context->getTypeSize(Context->UnsignedIntTy));
+  Expr *count = IntegerLiteral::Create(*Context,
+                                       llvm::APInt(UnsignedIntSize, NumElements),
+                                       Context->UnsignedIntTy, SourceLocation());
+  KeyExprs.push_back(count);
+  ValueExprs.push_back(count);
+  for (unsigned i = 0; i < NumElements; i++) {
+    ObjCDictionaryElement Element = Exp->getKeyValueElement(i);
+    KeyExprs.push_back(Element.Key);
+    ValueExprs.push_back(Element.Value);
+  }
+  
+  // (const id [])objects
+  Expr *NSValueCallExpr = 
+    new (Context) CallExpr(*Context, NSDictDRE, &ValueExprs[0], ValueExprs.size(),
+                           NSDictFType, VK_LValue, SourceLocation());
+  
+  FieldDecl *ARRFD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                                       SourceLocation(),
+                                       &Context->Idents.get("arr"),
+                                       Context->getPointerType(Context->VoidPtrTy), 0,
+                                       /*BitWidth=*/0, /*Mutable=*/true,
+                                       /*HasInit=*/false);
+  MemberExpr *DictLiteralValueME = 
+    new (Context) MemberExpr(NSValueCallExpr, false, ARRFD, 
+                             SourceLocation(),
+                             ARRFD->getType(), VK_LValue,
+                             OK_Ordinary);
+  QualType ConstIdT = Context->getObjCIdType().withConst();
+  CStyleCastExpr * DictValueObjects = 
+    NoTypeInfoCStyleCastExpr(Context, 
+                             Context->getPointerType(ConstIdT),
+                             CK_BitCast,
+                             DictLiteralValueME);
+  // (const id <NSCopying> [])keys
+  Expr *NSKeyCallExpr = 
+    new (Context) CallExpr(*Context, NSDictDRE, &KeyExprs[0], KeyExprs.size(),
+                           NSDictFType, VK_LValue, SourceLocation());
+  
+  MemberExpr *DictLiteralKeyME = 
+    new (Context) MemberExpr(NSKeyCallExpr, false, ARRFD, 
+                             SourceLocation(),
+                             ARRFD->getType(), VK_LValue,
+                             OK_Ordinary);
+  
+  CStyleCastExpr * DictKeyObjects = 
+    NoTypeInfoCStyleCastExpr(Context, 
+                             Context->getPointerType(ConstIdT),
+                             CK_BitCast,
+                             DictLiteralKeyME);
+  
+  
+  
+  // Synthesize a call to objc_msgSend().
+  SmallVector<Expr*, 32> MsgExprs;
+  SmallVector<Expr*, 4> ClsExprs;
+  QualType argType = Context->getPointerType(Context->CharTy);
+  QualType expType = Exp->getType();
+  
+  // Create a call to objc_getClass("NSArray"). It will be th 1st argument.
+  ObjCInterfaceDecl *Class = 
+  expType->getPointeeType()->getAs<ObjCObjectType>()->getInterface();
+  
+  IdentifierInfo *clsName = Class->getIdentifier();
+  ClsExprs.push_back(StringLiteral::Create(*Context,
+                                           clsName->getName(),
+                                           StringLiteral::Ascii, false,
+                                           argType, SourceLocation()));
+  CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                               &ClsExprs[0],
+                                               ClsExprs.size(), 
+                                               StartLoc, EndLoc);
+  MsgExprs.push_back(Cls);
+  
+  // Create a call to sel_registerName("arrayWithObjects:count:").
+  // it will be the 2nd argument.
+  SmallVector<Expr*, 4> SelExprs;
+  ObjCMethodDecl *DictMethod = Exp->getDictWithObjectsMethod();
+  SelExprs.push_back(StringLiteral::Create(*Context,
+                                           DictMethod->getSelector().getAsString(),
+                                           StringLiteral::Ascii, false,
+                                           argType, SourceLocation()));
+  CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
+                                                  &SelExprs[0], SelExprs.size(),
+                                                  StartLoc, EndLoc);
+  MsgExprs.push_back(SelExp);
+  
+  // (const id [])objects
+  MsgExprs.push_back(DictValueObjects);
+  
+  // (const id <NSCopying> [])keys
+  MsgExprs.push_back(DictKeyObjects);
+  
+  // (NSUInteger)cnt
+  Expr *cnt = IntegerLiteral::Create(*Context,
+                                     llvm::APInt(UnsignedIntSize, NumElements),
+                                     Context->UnsignedIntTy, SourceLocation());
+  MsgExprs.push_back(cnt);
+  
+  
+  SmallVector<QualType, 8> ArgTypes;
+  ArgTypes.push_back(Context->getObjCIdType());
+  ArgTypes.push_back(Context->getObjCSelType());
+  for (ObjCMethodDecl::param_iterator PI = DictMethod->param_begin(),
+       E = DictMethod->param_end(); PI != E; ++PI) {
+    QualType T = (*PI)->getType();
+    if (const PointerType* PT = T->getAs<PointerType>()) {
+      QualType PointeeTy = PT->getPointeeType();
+      convertToUnqualifiedObjCType(PointeeTy);
+      T = Context->getPointerType(PointeeTy);
+    }
+    ArgTypes.push_back(T);
+  }
+  
+  QualType returnType = Exp->getType();
+  // Get the type, we will need to reference it in a couple spots.
+  QualType msgSendType = MsgSendFlavor->getType();
+  
+  // Create a reference to the objc_msgSend() declaration.
+  DeclRefExpr *DRE = new (Context) DeclRefExpr(MsgSendFlavor, false, msgSendType,
+                                               VK_LValue, SourceLocation());
+  
+  CastExpr *cast = NoTypeInfoCStyleCastExpr(Context,
+                                            Context->getPointerType(Context->VoidTy),
+                                            CK_BitCast, DRE);
+  
+  // Now do the "normal" pointer to function cast.
+  QualType castType =
+  getSimpleFunctionType(returnType, &ArgTypes[0], ArgTypes.size(),
+                        DictMethod->isVariadic());
   castType = Context->getPointerType(castType);
   cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
                                   cast);
@@ -5031,6 +5210,10 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   
   if (ObjCArrayLiteral *ArrayLitExpr = dyn_cast<ObjCArrayLiteral>(S))
     return RewriteObjCArrayLiteralExpr(ArrayLitExpr);
+  
+  if (ObjCDictionaryLiteral *DictionaryLitExpr = 
+        dyn_cast<ObjCDictionaryLiteral>(S))
+    return RewriteObjCDictionaryLiteralExpr(DictionaryLitExpr);
 
   if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
 #if 0
@@ -5514,9 +5697,9 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   
   // Declarations required for modern objective-c array and dictionary literals.
   Preamble += "\n#include <stdarg.h>\n";
-  Preamble += "struct __NSArray_literal {\n";
+  Preamble += "struct __NSContainer_literal {\n";
   Preamble += "  void * *arr;\n";
-  Preamble += "  __NSArray_literal (unsigned int count, ...) {\n";
+  Preamble += "  __NSContainer_literal (unsigned int count, ...) {\n";
   Preamble += "\tva_list marker;\n";
   Preamble += "\tva_start(marker, count);\n";
   Preamble += "\tarr = new void *[count];\n";
@@ -5524,7 +5707,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "\t  arr[i] = va_arg(marker, void *);\n";
   Preamble += "\tva_end( marker );\n";
   Preamble += "  };\n";
-  Preamble += "  ~__NSArray_literal() {\n";
+  Preamble += "  __NSContainer_literal() {\n";
   Preamble += "\tdelete[] arr;\n";
   Preamble += "  }\n";
   Preamble += "};\n";
