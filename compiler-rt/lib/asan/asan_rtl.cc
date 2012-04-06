@@ -229,9 +229,9 @@ static NOINLINE void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
 // -------------------------- Run-time entry ------------------- {{{1
 // exported functions
 #define ASAN_REPORT_ERROR(type, is_write, size)                     \
-NOINLINE ASAN_INTERFACE_ATTRIBUTE                                   \
-extern "C" void __asan_report_ ## type ## size(uintptr_t addr);     \
-extern "C" void __asan_report_ ## type ## size(uintptr_t addr) {    \
+extern "C" NOINLINE ASAN_INTERFACE_ATTRIBUTE                        \
+void __asan_report_ ## type ## size(uintptr_t addr);                \
+void __asan_report_ ## type ## size(uintptr_t addr) {               \
   GET_CALLER_PC_BP_SP;                                              \
   __asan_report_error(pc, bp, sp, addr, is_write, size);            \
 }
