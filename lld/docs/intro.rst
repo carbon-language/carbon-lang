@@ -37,7 +37,7 @@ lld is a new set of modular code for creating linker tools.
 
    * Internal linker model can be dumped/read to textual format
 
-   * Internal linker model can be dumped/read to new native format
+   * Internal linker model can be dumped/read to a new native format
 
    * Native format designed to be fast to read and write
 
