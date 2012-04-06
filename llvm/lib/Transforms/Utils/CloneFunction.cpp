@@ -200,7 +200,6 @@ namespace {
     const Function *OldFunc;
     ValueToValueMapTy &VMap;
     bool ModuleLevelChanges;
-    SmallVectorImpl<ReturnInst*> &Returns;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
     const TargetData *TD;
@@ -208,13 +207,12 @@ namespace {
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
                           ValueToValueMapTy &valueMap,
                           bool moduleLevelChanges,
-                          SmallVectorImpl<ReturnInst*> &returns,
                           const char *nameSuffix, 
                           ClonedCodeInfo *codeInfo,
                           const TargetData *td)
     : NewFunc(newFunc), OldFunc(oldFunc),
       VMap(valueMap), ModuleLevelChanges(moduleLevelChanges),
-      Returns(returns), NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td) {
+      NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td) {
     }
 
     /// CloneBlock - The specified block is found to be reachable, clone it and
@@ -352,9 +350,6 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
     CodeInfo->ContainsDynamicAllocas |= hasStaticAllocas && 
       BB != &BB->getParent()->front();
   }
-  
-  if (ReturnInst *RI = dyn_cast<ReturnInst>(NewBB->getTerminator()))
-    Returns.push_back(RI);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
@@ -381,7 +376,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 #endif
 
   PruningFunctionCloner PFC(NewFunc, OldFunc, VMap, ModuleLevelChanges,
-                            Returns, NameSuffix, CodeInfo, TD);
+                            NameSuffix, CodeInfo, TD);
 
   // Clone the entry block, and anything recursively reachable from it.
   std::vector<const BasicBlock*> CloneWorklist;
@@ -536,6 +531,13 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     // available after forming the full basic block. That may leave some here,
     // and we still want to prune the dead code as early as possible.
     ConstantFoldTerminator(I);
+
+    // Track all of the newly-inserted returns.
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(I->getTerminator())) {
+      Returns.push_back(RI);
+      ++I;
+      continue;
+    }
 
     BranchInst *BI = dyn_cast<BranchInst>(I->getTerminator());
     if (!BI || BI->isConditional()) { ++I; continue; }
