@@ -92,6 +92,20 @@
 // CHECK-64-TO-32: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-unknown-linux -m32 \
+// RUN:     -gcc-toolchain %S/Inputs/multilib_64bit_linux_tree/usr \
+// RUN:     --sysroot=%S/Inputs/multilib_32bit_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-64-TO-32-SYSROOT %s
+// CHECK-64-TO-32-SYSROOT: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-64-TO-32-SYSROOT: "{{.*}}/usr/lib/gcc/x86_64-unknown-linux/4.6.0/32/crtbegin.o"
+// CHECK-64-TO-32-SYSROOT: "-L{{[^"]*}}/Inputs/multilib_64bit_linux_tree/usr/lib/gcc/x86_64-unknown-linux/4.6.0/32"
+// CHECK-64-TO-32-SYSROOT: "-L[[SYSROOT]]/lib/../lib32"
+// CHECK-64-TO-32-SYSROOT: "-L[[SYSROOT]]/usr/lib/../lib32"
+// CHECK-64-TO-32-SYSROOT: "-L{{[^"]*}}/Inputs/multilib_64bit_linux_tree/usr/lib/gcc/x86_64-unknown-linux/4.6.0"
+// CHECK-64-TO-32-SYSROOT: "-L[[SYSROOT]]/lib"
+// CHECK-64-TO-32-SYSROOT: "-L[[SYSROOT]]/usr/lib"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux -m32 \
 // RUN:     -ccc-install-dir %S/Inputs/fake_install_tree/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
