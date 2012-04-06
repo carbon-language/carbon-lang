@@ -532,13 +532,6 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     // and we still want to prune the dead code as early as possible.
     ConstantFoldTerminator(I);
 
-    // Track all of the newly-inserted returns.
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(I->getTerminator())) {
-      Returns.push_back(RI);
-      ++I;
-      continue;
-    }
-
     BranchInst *BI = dyn_cast<BranchInst>(I->getTerminator());
     if (!BI || BI->isConditional()) { ++I; continue; }
     
@@ -566,4 +559,13 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     
     // Do not increment I, iteratively merge all things this block branches to.
   }
+
+  // Make a final pass over the basic blocks from theh old function to gather
+  // any return instructions which survived folding. We have to do this here
+  // because we can iteratively remove and merge returns above.
+  for (Function::iterator I = cast<BasicBlock>(VMap[&OldFunc->getEntryBlock()]),
+                          E = NewFunc->end();
+       I != E; ++I)
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(I->getTerminator()))
+      Returns.push_back(RI);
 }

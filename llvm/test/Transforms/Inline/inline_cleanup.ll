@@ -174,3 +174,40 @@ entry:
   call void @PR12470_inner(i16 signext 1)
   ret void
 }
+
+define void @crasher_inner() nounwind uwtable {
+entry:
+  br i1 false, label %for.end28, label %for.body6
+
+for.body6:
+  br i1 undef, label %for.body6, label %for.cond12.for.inc26_crit_edge
+
+for.cond12.for.inc26_crit_edge:
+  br label %for.body6.1
+
+for.end28:
+  ret void
+
+for.body6.1:
+  br i1 undef, label %for.body6.1, label %for.cond12.for.inc26_crit_edge.1
+
+for.cond12.for.inc26_crit_edge.1:
+  br label %for.body6.2
+
+for.body6.2:
+  br i1 undef, label %for.body6.2, label %for.cond12.for.inc26_crit_edge.2
+
+for.cond12.for.inc26_crit_edge.2:
+  br label %for.end28
+}
+
+define void @crasher_outer() {
+; CHECK: @crasher_outer
+; CHECK-NOT: call
+; CHECK: ret void
+; CHECK-NOT: ret
+; CHECK: }
+entry:
+  tail call void @crasher_inner()
+  ret void
+}
