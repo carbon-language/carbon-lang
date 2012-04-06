@@ -4812,10 +4812,9 @@ def : Pat<(ARMtcret (i32 tglobaladdr:$dst)), (TCRETURNdi texternalsym:$dst)>;
 def : Pat<(ARMtcret (i32 texternalsym:$dst)), (TCRETURNdi texternalsym:$dst)>;
 
 // Direct calls
-def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>,
-      Requires<[IsARM]>;
+def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>;
 def : ARMPat<(ARMcall_nolink texternalsym:$func),
-             (BMOVPCB_CALL texternalsym:$func)>, Requires<[IsARM]>;
+             (BMOVPCB_CALL texternalsym:$func)>;
 
 // zextload i1 -> zextload i8
 def : ARMPat<(zextloadi1 addrmode_imm12:$addr), (LDRBi12 addrmode_imm12:$addr)>;
