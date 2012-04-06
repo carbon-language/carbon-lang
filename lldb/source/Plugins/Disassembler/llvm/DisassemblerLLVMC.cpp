@@ -34,8 +34,8 @@ public:
                       const lldb_private::Address &address, 
                       lldb_private::AddressClass addr_class) :
         Instruction(address, addr_class),
-        m_disasm(disasm),
         m_is_valid(false),
+        m_disasm(disasm),
         m_no_comments(true),
         m_comment_stream(),
         m_does_branch(eLazyBoolCalculate)
