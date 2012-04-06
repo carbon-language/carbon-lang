@@ -5824,7 +5824,8 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   DenseMap<unsigned, SmallVector<MachineBasicBlock*, 2> > CallSiteNumToLPad;
   unsigned MaxCSNum = 0;
   MachineModuleInfo &MMI = MF->getMMI();
-  for (MachineFunction::iterator BB = MF->begin(), E = MF->end(); BB != E; ++BB) {
+  for (MachineFunction::iterator BB = MF->begin(), E = MF->end(); BB != E;
+       ++BB) {
     if (!BB->isLandingPad()) continue;
 
     // FIXME: We should assert that the EH_LABEL is the first MI in the landing

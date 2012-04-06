@@ -851,7 +851,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   // If this BB loops back to itself, conservatively avoid narrowing the
   // first instruction that does partial flag update.
   bool IsSelfLoop = MBB.isSuccessor(&MBB);
-  MachineBasicBlock::instr_iterator MII = MBB.instr_begin(), E = MBB.instr_end();
+  MachineBasicBlock::instr_iterator MII = MBB.instr_begin(),E = MBB.instr_end();
   MachineBasicBlock::instr_iterator NextMII;
   for (; MII != E; MII = NextMII) {
     NextMII = llvm::next(MII);

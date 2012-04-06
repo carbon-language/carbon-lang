@@ -2344,7 +2344,8 @@ bool ARMFastISel::ARMIsMemCpySmall(uint64_t Len) {
   return Len <= 16;
 }
 
-bool ARMFastISel::ARMTryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len) {
+bool ARMFastISel::ARMTryEmitSmallMemCpy(Address Dest, Address Src,
+                                        uint64_t Len) {
   // Make sure we don't bloat code by inlining very large memcpy's.
   if (!ARMIsMemCpySmall(Len))
     return false;
