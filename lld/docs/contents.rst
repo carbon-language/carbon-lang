@@ -8,6 +8,8 @@ Contents
 
    intro
    design
+   development
+   sphinx_intro
 
 Indices and tables
 ==================

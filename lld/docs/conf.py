@@ -146,7 +146,7 @@ html_additional_pages = {'index': 'index.html'}
 #html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
-html_show_sourcelink = False
+html_show_sourcelink = True
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 #html_show_sphinx = True
@@ -243,3 +243,9 @@ texinfo_documents = [
 
 # FIXME: Define intersphinx configration.
 intersphinx_mapping = {}
+
+
+# -- Options for extensions ----------------------------------------------------
+
+# Enable this if you want TODOs to show up in the generated documentation.
+#todo_include_todos = False
