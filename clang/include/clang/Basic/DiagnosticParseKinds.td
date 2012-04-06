@@ -117,7 +117,6 @@ def ext_gnu_case_range : Extension<"use of GNU case range extension">,
   InGroup<GNU>;
 
 // Generic errors.
-def err_parse_error : Error<"parse error">;
 def err_expected_expression : Error<"expected expression">;
 def err_expected_type : Error<"expected a type">;
 def err_expected_external_declaration : Error<"expected external declaration">;
@@ -506,6 +505,7 @@ def err_explicit_instantiation_with_definition : Error<
 def err_enum_template : Error<"enumeration cannot be a template">;
 def err_explicit_instantiation_enum : Error<
     "enumerations cannot be explicitly instantiated">;
+def err_expected_template_parameter : Error<"expected template parameter">;
 
 def err_missing_dependent_template_keyword : Error<
   "use 'template' keyword to treat '%0' as a dependent template name">;

@@ -6,7 +6,7 @@ template  x;            // expected-error {{C++ requires a type specifier for al
                         // expected-error {{does not refer}}
 export template x;      // expected-error {{expected '<' after 'template'}}
 export template<class T> class x0; // expected-warning {{exported templates are unsupported}}
-template < ;            // expected-error {{parse error}} \
+template < ;            // expected-error {{expected template parameter}} \
 // expected-error{{expected ',' or '>' in template-parameter-list}} \
 // expected-warning {{declaration does not declare anything}}
 template <template X> struct Err1; // expected-error {{expected '<' after 'template'}} \

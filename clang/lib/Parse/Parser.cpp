@@ -1111,7 +1111,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
-      Diag(Tok, diag::err_parse_error);
+      Diag(Tok, diag::err_expected_semi_declaration);
       // Skip to end of block or statement
       SkipUntil(tok::semi, true);
       if (Tok.is(tok::semi))
@@ -1681,9 +1681,9 @@ bool Parser::BalancedDelimiterTracker::diagnoseMissingClose() {
   assert(!P.Tok.is(Close) && "Should have consumed closing delimiter");
   
   const char *LHSName = "unknown";
-  diag::kind DID = diag::err_parse_error;
+  diag::kind DID;
   switch (Close) {
-  default: break;
+  default: llvm_unreachable("Unexpected balanced token");
   case tok::r_paren : LHSName = "("; DID = diag::err_expected_rparen; break;
   case tok::r_brace : LHSName = "{"; DID = diag::err_expected_rbrace; break;
   case tok::r_square: LHSName = "["; DID = diag::err_expected_rsquare; break;
