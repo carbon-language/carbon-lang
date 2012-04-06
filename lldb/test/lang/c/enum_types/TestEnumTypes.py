@@ -10,6 +10,7 @@ class EnumTypesTestCase(TestBase):
     mydir = os.path.join("lang", "c", "enum_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test 'image lookup -t days' and check for correct display."""
         self.buildDsym()
@@ -17,6 +18,7 @@ class EnumTypesTestCase(TestBase):
 
     # rdar://problem/8394746
     # 'image lookup -t days' returns nothing with dwarf debug format.
+    @dwarf_test
     def test_with_dwarf(self):
         """Test 'image lookup -t days' and check for correct display."""
         self.buildDwarf()

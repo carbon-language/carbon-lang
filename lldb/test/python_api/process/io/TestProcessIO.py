@@ -11,12 +11,14 @@ class ProcessIOTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_put_stdin_with_dsym(self):
         """Exercise SBProcess.PutSTDIN()."""
         self.buildDsym()
         self.put_stdin()
 
     @python_api_test
+    @dwarf_test
     def test_put_stdin_with_dwarf(self):
         """Exercise SBProcess.PutSTDIN()."""
         self.buildDwarf()

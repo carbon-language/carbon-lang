@@ -12,6 +12,7 @@ class Rdar10967107TestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "rdar-10967107")
 
+    @dsym_test
     def test_cfrange_diff_cfgregoriandate_with_dsym(self):
         """Test that CoreFoundation classes CFGregorianDate and CFRange are not improperly uniqued."""
         d = {'EXE': self.exe_name}
@@ -19,6 +20,7 @@ class Rdar10967107TestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.cfrange_diff_cfgregoriandate(self.exe_name)
 
+    @dwarf_test
     def test_cfrange_diff_cfgregoriandate_with_dwarf(self):
         """Test that CoreFoundation classes CFGregorianDate and CFRange are not improperly uniqued."""
         d = {'EXE': self.exe_name}

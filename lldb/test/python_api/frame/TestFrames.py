@@ -15,12 +15,14 @@ class FrameAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_get_arg_vals_for_call_stack_with_dsym(self):
         """Exercise SBFrame.GetVariables() API to get argument vals."""
         self.buildDsym()
         self.do_get_arg_vals()
 
     @python_api_test
+    @dwarf_test
     def test_get_arg_vals_for_call_stack_with_dwarf(self):
         """Exercise SBFrame.GetVariables() API to get argument vals."""
         self.buildDwarf()

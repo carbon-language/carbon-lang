@@ -14,12 +14,14 @@ class DynamicValueTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_get_dynamic_vals_with_dsym(self):
         """Test fetching C++ dynamic values from pointers & references."""
         self.buildDsym()
         self.do_get_dynamic_vals()
 
     @python_api_test
+    @dwarf_test
     def test_get_dynamic_vals_with_dwarf(self):
         """Test fetching C++ dynamic values from pointers & references."""
         self.buildDwarf()

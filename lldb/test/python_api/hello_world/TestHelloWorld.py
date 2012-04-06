@@ -11,6 +11,7 @@ class HelloWorldTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
 
@@ -21,6 +22,7 @@ class HelloWorldTestCase(TestBase):
         self.hello_world_python()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
 
@@ -32,6 +34,7 @@ class HelloWorldTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_attach_to_process_with_id_api(self):
         """Create target, spawn a process, and attach to it with process id.
 
@@ -42,6 +45,7 @@ class HelloWorldTestCase(TestBase):
         self.hello_world_attach_with_id_api()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_attach_to_process_with_id_api(self):
         """Create target, spawn a process, and attach to it with process id.
 
@@ -53,6 +57,7 @@ class HelloWorldTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_attach_to_process_with_name_api(self):
         """Create target, spawn a process, and attach to it with process name.
 
@@ -63,6 +68,7 @@ class HelloWorldTestCase(TestBase):
         self.hello_world_attach_with_name_api()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_attach_to_process_with_name_api(self):
         """Create target, spawn a process, and attach to it with process name.
 

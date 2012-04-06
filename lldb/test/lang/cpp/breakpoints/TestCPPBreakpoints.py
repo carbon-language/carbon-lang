@@ -12,11 +12,13 @@ class CPPBreakpointTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "breakpoints")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDsym()
         self.cpp_breakpoints()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDwarf()

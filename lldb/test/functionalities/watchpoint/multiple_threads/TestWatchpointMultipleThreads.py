@@ -12,12 +12,14 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
     mydir = os.path.join("functionalities", "watchpoint", "multiple_threads")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_watchpoint_multiple_threads_with_dsym(self):
         """Test that lldb watchpoint works for multiple threads."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_multiple_threads()
 
+    @dwarf_test
     def test_watchpoint_multiple_threads_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads."""
         self.buildDwarf(dictionary=self.d)

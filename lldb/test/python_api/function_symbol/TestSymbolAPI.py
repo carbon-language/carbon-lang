@@ -14,12 +14,14 @@ class SymbolAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym(self):
         """Exercise some SBSymbol and SBAddress APIs."""
         self.buildDsym()
         self.symbol_and_address_api()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf(self):
         """Exercise some SBSymbol and SBAddress APIs."""
         self.buildDwarf()

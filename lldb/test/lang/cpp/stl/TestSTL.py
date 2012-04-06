@@ -15,6 +15,7 @@ class STLTestCase(TestBase):
     # rdar://problem/10400981
     @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test some expressions involving STL data types."""
         self.buildDsym()
@@ -22,18 +23,21 @@ class STLTestCase(TestBase):
 
     # rdar://problem/10400981
     @unittest2.expectedFailure
+    @dwarf_test
     def test_with_dwarf(self):
         """Test some expressions involving STL data types."""
         self.buildDwarf()
         self.step_stl_exprs()
 
     @python_api_test
+    @dsym_test
     def test_SBType_template_aspects_with_dsym(self):
         """Test APIs for getting template arguments from an SBType."""
         self.buildDsym()
         self.sbtype_template_apis()
 
     @python_api_test
+    @dwarf_test
     def test_SBType_template_aspects_with_dwarf(self):
         """Test APIs for getting template arguments from an SBType."""
         self.buildDwarf()

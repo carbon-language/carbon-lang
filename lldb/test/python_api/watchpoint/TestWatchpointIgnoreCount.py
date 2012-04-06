@@ -22,12 +22,14 @@ class WatchpointIgnoreCountTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_set_watch_ignore_count_with_dsym(self):
         """Test SBWatchpoint.SetIgnoreCount() API."""
         self.buildDsym()
         self.do_watchpoint_ignore_count()
 
     @python_api_test
+    @dwarf_test
     def test_set_watch_ignore_count_with_dwarf(self):
         """Test SBWatchpoint.SetIgnoreCount() API."""
         self.buildDwarf()

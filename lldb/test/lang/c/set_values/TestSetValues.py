@@ -10,11 +10,13 @@ class SetValuesTestCase(TestBase):
     mydir = os.path.join("lang", "c", "set_values")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test settings and readings of program variables."""
         self.buildDsym()
         self.set_values()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test settings and readings of program variables."""
         self.buildDwarf()

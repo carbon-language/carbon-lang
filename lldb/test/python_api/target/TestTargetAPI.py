@@ -14,6 +14,7 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_find_global_variables_with_dsym(self):
         """Exercise SBTaget.FindGlobalVariables() API."""
         d = {'EXE': 'a.out'}
@@ -29,6 +30,7 @@ class TargetAPITestCase(TestBase):
     # the inferior process does not exist yet.  The radar has been updated.
     #@unittest232.skip("segmentation fault -- skipping")
     @python_api_test
+    @dwarf_test
     def test_find_global_variables_with_dwarf(self):
         """Exercise SBTarget.FindGlobalVariables() API."""
         d = {'EXE': 'b.out'}
@@ -38,6 +40,7 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_find_functions_with_dsym(self):
         """Exercise SBTaget.FindFunctions() API."""
         d = {'EXE': 'a.out'}
@@ -46,6 +49,7 @@ class TargetAPITestCase(TestBase):
         self.find_functions('a.out')
 
     @python_api_test
+    @dwarf_test
     def test_find_functions_with_dwarf(self):
         """Exercise SBTarget.FindFunctions() API."""
         d = {'EXE': 'b.out'}
@@ -55,12 +59,14 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_get_description_with_dsym(self):
         """Exercise SBTaget.GetDescription() API."""
         self.buildDsym()
         self.get_description()
 
     @python_api_test
+    @dwarf_test
     def test_get_description_with_dwarf(self):
         """Exercise SBTarget.GetDescription() API."""
         self.buildDwarf()
@@ -68,12 +74,14 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_launch_new_process_and_redirect_stdout_with_dsym(self):
         """Exercise SBTaget.Launch() API."""
         self.buildDsym()
         self.launch_new_process_and_redirect_stdout()
 
     @python_api_test
+    @dwarf_test
     def test_launch_new_process_and_redirect_stdout_with_dwarf(self):
         """Exercise SBTarget.Launch() API."""
         self.buildDwarf()
@@ -81,12 +89,14 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_resolve_symbol_context_with_address_with_dsym(self):
         """Exercise SBTaget.ResolveSymbolContextForAddress() API."""
         self.buildDsym()
         self.resolve_symbol_context_with_address()
 
     @python_api_test
+    @dwarf_test
     def test_resolve_symbol_context_with_address_with_dwarf(self):
         """Exercise SBTarget.ResolveSymbolContextForAddress() API."""
         self.buildDwarf()

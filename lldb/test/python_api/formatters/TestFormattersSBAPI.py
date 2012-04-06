@@ -11,6 +11,7 @@ class SBFormattersAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_formatters_api(self):
         """Test Python APIs for working with formatters"""
         self.buildDsym()
@@ -18,6 +19,7 @@ class SBFormattersAPITestCase(TestBase):
         self.formatters()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_formatters_api(self):
         """Test Python APIs for working with formatters"""
         self.buildDwarf()

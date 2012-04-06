@@ -9,10 +9,12 @@ class ForwardDeclTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "forward-decl")
 
+    @dsym_test
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
+    @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()

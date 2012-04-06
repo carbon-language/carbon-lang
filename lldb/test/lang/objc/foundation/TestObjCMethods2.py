@@ -12,61 +12,73 @@ class FoundationTestCase2(TestBase):
 
     mydir = os.path.join("lang", "objc", "foundation")
 
+    @dsym_test
     def test_more_expr_commands_with_dsym(self):
         """More expression commands for objective-c."""
         self.buildDsym()
         self.more_expr_objc()
 
+    @dwarf_test
     def test_more_expr_commands_with_dwarf(self):
         """More expression commands for objective-c."""
         self.buildDwarf()
         self.more_expr_objc()
 
+    @dsym_test
     def test_NSArray_expr_commands_with_dsym(self):
         """Test expression commands for NSArray."""
         self.buildDsym()
         self.NSArray_expr()
 
+    @dwarf_test
     def test_NSArray_expr_commands_with_dwarf(self):
         """Test expression commands for NSArray."""
         self.buildDwarf()
         self.NSArray_expr()
 
+    @dsym_test
     def test_NSString_expr_commands_with_dsym(self):
         """Test expression commands for NSString."""
         self.buildDsym()
         self.NSString_expr()
 
+    @dwarf_test
     def test_NSString_expr_commands_with_dwarf(self):
         """Test expression commands for NSString."""
         self.buildDwarf()
         self.NSString_expr()
 
+    @dsym_test
     def test_MyString_dump_with_dsym(self):
         """Test dump of a known Objective-C object by dereferencing it."""
         self.buildDsym()
         self.MyString_dump()
 
+    @dwarf_test
     def test_MyString_dump_with_dwarf(self):
         """Test dump of a known Objective-C object by dereferencing it."""
         self.buildDwarf()
         self.MyString_dump()
 
+    @dsym_test
 	def test_NSError_po_with_dsym(self):
 		"""Test that po of the result of an unknown method doesn't require a cast."""
 		self.buildDsym()
 		self.NSError_po()
 
+    @dwarf_test
 	def test_NSError_po_with_dwarf(self):
 		"""Test that po of the result of an unknown method doesn't require a cast."""
 		self.buildDsym()
 		self.NSError_po()
 		
+    @dsym_test
 	def test_NSError_p_with_dsym(self):
 		"""Test that p of the result of an unknown method does require a cast."""
 		self.buildDsym()
 		self.NSError_p()
 
+    @dwarf_test
 	def test_NSError_p_with_dwarf(self):
 		"""Test that p of the result of an unknown method does require a cast."""
 		self.buildDsym()

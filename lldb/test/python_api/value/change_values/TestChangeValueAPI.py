@@ -14,6 +14,7 @@ class ChangeValueAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_change_value_with_dsym(self):
         """Exercise the SBValue::SetValueFromCString API."""
         d = {'EXE': self.exe_name}
@@ -22,6 +23,7 @@ class ChangeValueAPITestCase(TestBase):
         self.change_value_api(self.exe_name)
 
     @python_api_test
+    @dwarf_test
     def test_change_value_with_dwarf(self):
         """Exercise the SBValue::SetValueFromCString API."""
         d = {'EXE': self.exe_name}

@@ -10,22 +10,26 @@ class FunctionTypesTestCase(TestBase):
     mydir = os.path.join("lang", "c", "function_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test 'callback' has function ptr type, then break on the function."""
         self.buildDsym()
         self.function_types()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test 'callback' has function ptr type, then break on the function."""
         self.buildDwarf()
         self.function_types()
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_pointers_with_dsym(self):
         """Test that a function pointer to 'printf' works and can be called."""
         self.buildDsym()
         self.function_pointers()
     
+    @dwarf_test
     def test_pointers_with_dwarf(self):
         """Test that a function pointer to 'printf' works and can be called."""
         self.buildDwarf()

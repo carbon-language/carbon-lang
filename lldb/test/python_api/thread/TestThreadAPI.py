@@ -14,12 +14,14 @@ class ThreadAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_get_process_with_dsym(self):
         """Test Python SBThread.GetProcess() API."""
         self.buildDsym()
         self.get_process()
 
     @python_api_test
+    @dwarf_test
     def test_get_process_with_dwarf(self):
         """Test Python SBThread.GetProcess() API."""
         self.buildDwarf()
@@ -27,12 +29,14 @@ class ThreadAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_get_stop_description_with_dsym(self):
         """Test Python SBThread.GetStopDescription() API."""
         self.buildDsym()
         self.get_stop_description()
 
     @python_api_test
+    @dwarf_test
     def test_get_stop_description_with_dwarf(self):
         """Test Python SBThread.GetStopDescription() API."""
         self.buildDwarf()
@@ -40,6 +44,7 @@ class ThreadAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_run_to_address_with_dsym(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
@@ -49,6 +54,7 @@ class ThreadAPITestCase(TestBase):
         self.run_to_address(self.exe_name)
 
     @python_api_test
+    @dwarf_test
     def test_run_to_address_with_dwarf(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
@@ -59,6 +65,7 @@ class ThreadAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_step_out_of_malloc_into_function_b_with_dsym(self):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
         # We build a different executable than the default buildDsym() does.
@@ -68,6 +75,7 @@ class ThreadAPITestCase(TestBase):
         self.step_out_of_malloc_into_function_b(self.exe_name)
 
     @python_api_test
+    @dwarf_test
     def test_step_out_of_malloc_into_function_b_with_dwarf(self):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
         # We build a different executable than the default buildDwarf() does.
@@ -78,6 +86,7 @@ class ThreadAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_step_over_3_times_with_dsym(self):
         """Test Python SBThread.StepOver() API."""
         # We build a different executable than the default buildDsym() does.
@@ -87,6 +96,7 @@ class ThreadAPITestCase(TestBase):
         self.step_over_3_times(self.exe_name)
 
     @python_api_test
+    @dwarf_test
     def test_step_over_3_times_with_dwarf(self):
         """Test Python SBThread.StepOver() API."""
         # We build a different executable than the default buildDwarf() does.

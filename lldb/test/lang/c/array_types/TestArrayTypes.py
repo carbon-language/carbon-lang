@@ -10,6 +10,7 @@ class ArrayTypesTestCase(TestBase):
     mydir = os.path.join("lang", "c", "array_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test 'frame variable var_name' on some variables with array types."""
         self.buildDsym()
@@ -17,17 +18,20 @@ class ArrayTypesTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test    
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to inspect variables with array types."""
         self.buildDsym()
         self.array_types_python()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test 'frame variable var_name' on some variables with array types."""
         self.buildDwarf()
         self.array_types()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to inspect variables with array types."""
         self.buildDwarf()

@@ -12,12 +12,14 @@ class TestObjCIvarOffsets(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Test printing ObjC objects that use unbacked properties"""
         self.buildDsym()
         self.objc_ivar_offsets()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Test printing ObjC objects that use unbacked properties"""
         self.buildDwarf()

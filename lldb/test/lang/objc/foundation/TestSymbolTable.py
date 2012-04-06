@@ -25,12 +25,14 @@ class FoundationSymtabTestCase(TestBase):
                     ]
 
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Test symbol table access with Python APIs."""
         self.buildDsym()
         self.symtab_access_python()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Test symbol table access with Python APIs."""
         self.buildDwarf()

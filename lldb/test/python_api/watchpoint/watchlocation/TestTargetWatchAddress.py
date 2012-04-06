@@ -24,12 +24,14 @@ class TargetWatchAddressAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_watch_address_with_dsym(self):
         """Exercise SBTarget.WatchAddress() API to set a watchpoint."""
         self.buildDsym()
         self.do_set_watchaddress()
 
     @python_api_test
+    @dwarf_test
     def test_watch_address_with_dwarf(self):
         """Exercise SBTarget.WatchAddress() API to set a watchpoint."""
         self.buildDwarf()

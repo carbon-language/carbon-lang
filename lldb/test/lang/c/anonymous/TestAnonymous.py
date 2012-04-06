@@ -9,10 +9,12 @@ class AnonymousTestCase(TestBase):
 
     mydir = os.path.join("lang", "c", "anonymous")
 
+    @dsym_test
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
+    @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()

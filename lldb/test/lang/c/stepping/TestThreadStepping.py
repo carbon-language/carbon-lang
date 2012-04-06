@@ -13,11 +13,13 @@ class ThreadSteppingTestCase(TestBase):
     mydir = os.path.join("lang", "c", "stepping")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_step_out_with_dsym_and_run_command(self):
         """Exercise thread step-out and frame select followed by thread step-out."""
         self.buildDwarf()
         self.thread_step_out()
 
+    @dwarf_test
     def test_step_out_with_dwarf_and_run_command(self):
         """Exercise thread step-out and frame select followed by thread step-out."""
         self.buildDwarf()

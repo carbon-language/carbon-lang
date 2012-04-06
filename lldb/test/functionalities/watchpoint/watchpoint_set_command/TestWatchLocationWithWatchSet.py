@@ -12,12 +12,14 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
     mydir = os.path.join("functionalities", "watchpoint", "watchpoint_set_command")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_watchlocation_with_dsym_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -x size' option."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.watchlocation_using_watchpoint_set()
 
+    @dwarf_test
     def test_watchlocation_with_dwarf_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -x size' option."""
         self.buildDwarf(dictionary=self.d)

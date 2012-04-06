@@ -9,18 +9,22 @@ class HiddenIvarsTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "hidden-ivars")
 
+    @dsym_test
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
+    @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
 
+    @dsym_test
     def test_frame_variable_with_dsym(self):
         self.buildDsym()
         self.frame_var()
 
+    @dwarf_test
     def test_frame_variable_with_dwarf(self):
         self.buildDwarf()
         self.frame_var()

@@ -15,6 +15,7 @@ class ValueAsLinkedListTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym(self):
         """Exercise SBValue API linked_list_iter."""
         d = {'EXE': self.exe_name}
@@ -23,6 +24,7 @@ class ValueAsLinkedListTestCase(TestBase):
         self.linked_list_api(self.exe_name)
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf(self):
         """Exercise SBValue API linked_list_iter."""
         d = {'EXE': self.exe_name}

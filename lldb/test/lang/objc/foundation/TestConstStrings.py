@@ -14,12 +14,14 @@ class ConstStringTestCase(TestBase):
     mydir = os.path.join("lang", "objc", "foundation")
     d = {'OBJC_SOURCES': 'const-strings.m'}
 
+    @dsym_test
     def test_break_with_dsym(self):
         """Test constant string generation amd comparison by the expression parser."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(self.d)
         self.objc_const_strings()
 
+    @dwarf_test
     def test_break_with_dwarf(self):
         """Test constant string generation amd comparison by the expression parser."""
         self.buildDwarf(dictionary=self.d)

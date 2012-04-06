@@ -9,11 +9,13 @@ class ObjCSelfTestCase(TestBase):
     mydir = os.path.join("lang", "objc", "self")
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that the appropriate member variables are available when stopped in Objective-C class and instance methods"""
         self.buildDsym()
         self.self_commands()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that the appropriate member variables are available when stopped in Objective-C class and instance methods"""
         self.buildDwarf()

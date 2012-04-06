@@ -12,6 +12,7 @@ class PrintObjTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "print-obj")
 
+    @dsym_test
     def test_print_obj_with_dsym(self):
         """Test "print object" where another thread blocks the print object from making progress."""
         d = {'EXE': 'a.out'}
@@ -19,6 +20,7 @@ class PrintObjTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.print_obj('a.out')
 
+    @dwarf_test
     def test_print_obj_with_dwarf(self):
         """Test "print object" where another thread blocks the print object from making progress."""
         d = {'EXE': 'b.out'}

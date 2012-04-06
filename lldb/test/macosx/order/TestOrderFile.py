@@ -13,12 +13,14 @@ class OrderFileTestCase(TestBase):
     mydir = os.path.join("macosx", "order")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test debug symbols follow the correct order by the order file."""
         self.buildDsym()
         self.order_file()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dwarf_test
     def test_with_dwarf(self):
         """Test debug symbols follow the correct order by the order file."""
         self.buildDwarf()

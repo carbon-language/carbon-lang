@@ -13,11 +13,13 @@ class UnsignedTypesTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "unsigned_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test that variables with unsigned types display correctly."""
         self.buildDsym()
         self.unsigned_types()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test that variables with unsigned types display correctly."""
         self.buildDwarf()

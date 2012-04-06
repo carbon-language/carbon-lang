@@ -10,11 +10,13 @@ class GlobalVariablesTestCase(TestBase):
     mydir = os.path.join("lang", "c", "global_variables")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test 'frame variable -s -a' which omits args and shows scopes."""
         self.buildDsym()
         self.global_variables()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test 'frame variable -s -a' which omits args and shows scopes."""
         self.buildDwarf()

@@ -12,11 +12,13 @@ class UniqueTypesTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "unique-types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test for unique types of std::vector<long> and std::vector<short>."""
         self.buildDsym()
         self.unique_types()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test for unique types of std::vector<long> and std::vector<short>."""
         self.buildDwarf()

@@ -11,6 +11,7 @@ class ClassTypesTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "class_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test 'frame variable this' when stopped on a class constructor."""
         self.buildDsym()
@@ -18,6 +19,7 @@ class ClassTypesTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
         self.buildDsym()
@@ -26,12 +28,14 @@ class ClassTypesTestCase(TestBase):
     # rdar://problem/8378863
     # "frame variable this" returns
     # error: unable to find any variables named 'this'
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test 'frame variable this' when stopped on a class constructor."""
         self.buildDwarf()
         self.class_types()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
         self.buildDwarf()
@@ -40,6 +44,7 @@ class ClassTypesTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     # rdar://problem/8557478
     # test/class_types test failures: runCmd: expr this->m_c_int
+    @dsym_test
     def test_with_dsym_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDsym()
@@ -47,6 +52,7 @@ class ClassTypesTestCase(TestBase):
 
     # rdar://problem/8557478
     # test/class_types test failures: runCmd: expr this->m_c_int
+    @dwarf_test
     def test_with_dwarf_and_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()

@@ -9,21 +9,25 @@ class TestRealDefinition(TestBase):
 
     mydir = os.path.join("lang", "objc", "real-definition")
 
+    @dsym_test
     def test_frame_var_after_stop_at_interface_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
         self.buildDsym()
         self.stop_at_interface()
 
+    @dwarf_test
     def test_frame_var_after_stop_at_interface_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
         self.buildDwarf()
         self.stop_at_interface()
 
+    @dsym_test
     def test_frame_var_after_stop_at_implementation_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
         self.buildDsym()
         self.stop_at_implementation()
 
+    @dwarf_test
     def test_frame_var_after_stop_at_implementation_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
         self.buildDwarf()

@@ -13,11 +13,13 @@ class FoundationTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "foundation")
 
+    @dsym_test
     def test_break_with_dsym(self):
         """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
         self.buildDsym()
         self.break_on_objc_methods()
 
+    @dwarf_test
     def test_break_with_dwarf(self):
         """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
         self.buildDwarf()
@@ -26,6 +28,7 @@ class FoundationTestCase(TestBase):
     #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
+    @dsym_test
     def test_data_type_and_expr_with_dsym(self):
         """Lookup objective-c data types and evaluate expressions."""
         self.buildDsym()
@@ -34,17 +37,20 @@ class FoundationTestCase(TestBase):
     #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
+    @dwarf_test
     def test_data_type_and_expr_with_dwarf(self):
         """Lookup objective-c data types and evaluate expressions."""
         self.buildDwarf()
         self.data_type_and_expr_objc()
 
     @python_api_test
+    @dsym_test
     def test_print_ivars_correctly_with_dsym (self):
         self.buildDsym()
         self.print_ivars_correctly()
 
     @python_api_test
+    @dwarf_test
     def test_print_ivars_correctly_with_dwarf (self):
         self.buildDwarf()
         self.print_ivars_correctly()

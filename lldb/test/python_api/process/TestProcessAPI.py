@@ -14,12 +14,14 @@ class ProcessAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_read_memory_with_dsym(self):
         """Test Python SBProcess.ReadMemory() API."""
         self.buildDsym()
         self.read_memory()
 
     @python_api_test
+    @dwarf_test
     def test_read_memory_with_dwarf(self):
         """Test Python SBProcess.ReadMemory() API."""
         self.buildDwarf()
@@ -27,12 +29,14 @@ class ProcessAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_write_memory_with_dsym(self):
         """Test Python SBProcess.WriteMemory() API."""
         self.buildDsym()
         self.write_memory()
 
     @python_api_test
+    @dwarf_test
     def test_write_memory_with_dwarf(self):
         """Test Python SBProcess.WriteMemory() API."""
         self.buildDwarf()
@@ -40,12 +44,14 @@ class ProcessAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_access_my_int_with_dsym(self):
         """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
         self.buildDsym()
         self.access_my_int()
 
     @python_api_test
+    @dwarf_test
     def test_access_my_int_with_dwarf(self):
         """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
         self.buildDwarf()

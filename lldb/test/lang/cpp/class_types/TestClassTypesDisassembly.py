@@ -12,11 +12,13 @@ class IterateFrameAndDisassembleTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "class_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.buildDsym()
         self.disassemble_call_stack()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.buildDwarf()
@@ -24,12 +26,14 @@ class IterateFrameAndDisassembleTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.buildDsym()
         self.disassemble_call_stack_python()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.buildDwarf()

@@ -12,6 +12,7 @@ class MethodReturningBOOLTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "radar-9691614")
 
+    @dsym_test
     def test_method_ret_BOOL_with_dsym(self):
         """Test that objective-c method returning BOOL works correctly."""
         d = {'EXE': self.exe_name}
@@ -19,6 +20,7 @@ class MethodReturningBOOLTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.objc_method_ret_BOOL(self.exe_name)
 
+    @dwarf_test
     def test_method_ret_BOOL_with_dwarf(self):
         """Test that objective-c method returning BOOL works correctly."""
         d = {'EXE': self.exe_name}

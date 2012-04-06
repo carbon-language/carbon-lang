@@ -22,12 +22,14 @@ class WatchpointIteratorTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_watch_iter_with_dsym(self):
         """Exercise SBTarget.watchpoint_iter() API to iterate on the available watchpoints."""
         self.buildDsym()
         self.do_watchpoint_iter()
 
     @python_api_test
+    @dwarf_test
     def test_watch_iter_with_dwarf(self):
         """Exercise SBTarget.watchpoint_iter() API to iterate on the available watchpoints."""
         self.buildDwarf()

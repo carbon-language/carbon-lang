@@ -14,12 +14,14 @@ class InlinedFrameAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_stop_at_outer_inline_with_dsym(self):
         """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
         self.buildDsym()
         self.do_stop_at_outer_inline()
 
     @python_api_test
+    @dwarf_test
     def test_stop_at_outer_inline_with_dwarf(self):
         """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
         self.buildDwarf()

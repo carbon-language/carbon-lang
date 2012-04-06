@@ -13,12 +13,14 @@ class NamespaceTestCase(TestBase):
 
     # rdar://problem/8668674
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDsym()
         self.namespace_variable_commands()
 
     # rdar://problem/8668674
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDwarf()

@@ -13,12 +13,14 @@ class TestObjCBuiltinTypes(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
 
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Test expression parser respect for ObjC built-in types."""
         self.buildDsym()
         self.objc_builtin_types()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Test expression parser respect for ObjC built-in types."""
         self.buildDwarf()

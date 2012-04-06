@@ -9,21 +9,25 @@ class SharedLibTestCase(TestBase):
 
     mydir = os.path.join("lang", "c", "shared_lib")
 
+    @dsym_test
     def test_expr_with_dsym(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
         self.buildDsym()
         self.expr()
 
+    @dwarf_test
     def test_expr_with_dwarf(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
         self.buildDwarf()
         self.expr()
 
+    @dsym_test
     def test_frame_variable_with_dsym(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
         self.buildDsym()
         self.frame_var()
 
+    @dwarf_test
     def test_frame_variable_with_dwarf(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
         self.buildDwarf()

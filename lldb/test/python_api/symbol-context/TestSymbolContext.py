@@ -14,12 +14,14 @@ class SymbolContextAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym(self):
         """Exercise SBSymbolContext API extensively."""
         self.buildDsym()
         self.symbol_context()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf(self):
         """Exercise SBSymbolContext API extensively."""
         self.buildDwarf()

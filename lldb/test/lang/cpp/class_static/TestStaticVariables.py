@@ -12,11 +12,13 @@ class StaticVariableTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "class_static")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that file and class static variables display correctly."""
         self.buildDsym()
         self.static_variable_commands()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that file and class static variables display correctly."""
         self.buildDwarf()
@@ -26,6 +28,7 @@ class StaticVariableTestCase(TestBase):
     #rdar://problem/9980907
     @expectedFailureClang
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Test Python APIs on file and class static variables."""
         self.buildDsym()
@@ -34,6 +37,7 @@ class StaticVariableTestCase(TestBase):
     #rdar://problem/9980907
     @expectedFailureClang
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Test Python APIs on file and class static variables."""
         self.buildDwarf()

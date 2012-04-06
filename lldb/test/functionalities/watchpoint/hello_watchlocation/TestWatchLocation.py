@@ -13,12 +13,14 @@ class HelloWatchLocationTestCase(TestBase):
     mydir = os.path.join("functionalities", "watchpoint", "hello_watchlocation")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_hello_watchlocation_with_dsym(self):
         """Test watching a location with '-x size' option."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_watchlocation()
 
+    @dwarf_test
     def test_hello_watchlocation_with_dwarf(self):
         """Test watching a location with '-x size' option."""
         self.buildDwarf(dictionary=self.d)

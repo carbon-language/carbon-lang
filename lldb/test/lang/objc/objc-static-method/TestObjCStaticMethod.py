@@ -12,8 +12,8 @@ class TestObjCStaticMethod(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-
     #<rdar://problem/9745789> "expression" can't call functions in class methods
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Test calling functions in static methods."""
         self.buildDsym()
@@ -21,6 +21,7 @@ class TestObjCStaticMethod(TestBase):
 
     @python_api_test
     #<rdar://problem/9745789> "expression" can't call functions in class methods
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Test calling functions in static methods."""
         self.buildDwarf()

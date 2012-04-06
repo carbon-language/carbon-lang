@@ -12,10 +12,12 @@ class LogTestCase(TestBase):
     mydir = "logging"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym (self):
         self.buildDsym ()
         self.command_log_tests ("dsym")
 
+    @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.command_log_tests ("dwarf")

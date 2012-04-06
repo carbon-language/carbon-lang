@@ -54,11 +54,13 @@ class FoundationDisassembleTestCase(TestBase):
                 self.runCmd('disassemble -n "%s"' % func)
         
 
+    @dsym_test
     def test_simple_disasm_with_dsym(self):
         """Test the lldb 'disassemble' command"""
         self.buildDsym()
         self.do_simple_disasm()
 
+    @dwarf_test
     def test_simple_disasm_with_dwarf(self):
         """Test the lldb 'disassemble' command"""
         self.buildDwarf()

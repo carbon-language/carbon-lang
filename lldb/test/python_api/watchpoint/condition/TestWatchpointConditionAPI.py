@@ -26,12 +26,14 @@ class WatchpointConditionAPITestCase(TestBase):
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_watchpoint_cond_api_with_dsym(self):
         """Test watchpoint condition API."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.watchpoint_condition_api()
 
+    @dwarf_test
     def test_watchpoint_cond_api_with_dwarf(self):
         """Test watchpoint condition API."""
         self.buildDwarf(dictionary=self.d)

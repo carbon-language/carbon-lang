@@ -13,11 +13,13 @@ class CPPBreakpointTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "exceptions")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test lldb exception breakpoint command for CPP."""
         self.buildDsym()
         self.cpp_exceptions()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test lldb exception breakpoint command for CPP."""
         self.buildDwarf()

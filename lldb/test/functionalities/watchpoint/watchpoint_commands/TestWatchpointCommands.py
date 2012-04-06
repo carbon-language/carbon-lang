@@ -26,12 +26,14 @@ class WatchpointCommandsTestCase(TestBase):
         self.d = {'C_SOURCES': self.source, 'EXE': self.exe_name}
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_rw_watchpoint_with_dsym(self):
         """Test read_write watchpoint and expect to stop two times."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.normal_read_write_watchpoint()
 
+    @dwarf_test
     def test_rw_watchpoint_with_dwarf(self):
         """Test read_write watchpoint and expect to stop two times."""
         self.buildDwarf(dictionary=self.d)
@@ -39,12 +41,14 @@ class WatchpointCommandsTestCase(TestBase):
         self.normal_read_write_watchpoint()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_rw_watchpoint_delete_with_dsym(self):
         """Test delete watchpoint and expect not to stop for watchpoint."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.delete_read_write_watchpoint()
 
+    @dwarf_test
     def test_rw_watchpoint_delete_with_dwarf(self):
         """Test delete watchpoint and expect not to stop for watchpoint."""
         self.buildDwarf(dictionary=self.d)
@@ -52,12 +56,14 @@ class WatchpointCommandsTestCase(TestBase):
         self.delete_read_write_watchpoint()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_rw_watchpoint_set_ignore_count_with_dsym(self):
         """Test watchpoint ignore count and expect to not to stop at all."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.ignore_read_write_watchpoint()
 
+    @dwarf_test
     def test_rw_watchpoint_set_ignore_count_with_dwarf(self):
         """Test watchpoint ignore count and expect to not to stop at all."""
         self.buildDwarf(dictionary=self.d)
@@ -65,12 +71,14 @@ class WatchpointCommandsTestCase(TestBase):
         self.ignore_read_write_watchpoint()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_rw_disable_after_first_stop_with_dsym(self):
         """Test read_write watchpoint but disable it after the first stop."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.read_write_watchpoint_disable_after_first_stop()
 
+    @dwarf_test
     def test_rw_disable_after_first_stop__with_dwarf(self):
         """Test read_write watchpoint but disable it after the first stop."""
         self.buildDwarf(dictionary=self.d)
@@ -78,12 +86,14 @@ class WatchpointCommandsTestCase(TestBase):
         self.read_write_watchpoint_disable_after_first_stop()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_rw_disable_then_enable_with_dsym(self):
         """Test read_write watchpoint, disable initially, then enable it."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.read_write_watchpoint_disable_then_enable()
 
+    @dwarf_test
     def test_rw_disable_then_enable_with_dwarf(self):
         """Test read_write watchpoint, disable initially, then enable it."""
         self.buildDwarf(dictionary=self.d)

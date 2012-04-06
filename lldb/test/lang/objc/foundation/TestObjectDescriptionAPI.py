@@ -15,6 +15,7 @@ class ObjectDescriptionAPITestCase(TestBase):
     # rdar://problem/10857337
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_find_global_variables_then_object_description_with_dsym(self):
         """Exercise SBTaget.FindGlobalVariables() API."""
         d = {'EXE': 'a.out'}
@@ -24,6 +25,7 @@ class ObjectDescriptionAPITestCase(TestBase):
 
     # rdar://problem/10857337
     @python_api_test
+    @dwarf_test
     def test_find_global_variables_then_object_description_with_dwarf(self):
         """Exercise SBTarget.FindGlobalVariables() API."""
         d = {'EXE': 'b.out'}

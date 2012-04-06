@@ -14,6 +14,7 @@ class TypeAndTypeListTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym(self):
         """Exercise SBType and SBTypeList API."""
         d = {'EXE': self.exe_name}
@@ -22,6 +23,7 @@ class TypeAndTypeListTestCase(TestBase):
         self.type_and_typelist_api(self.exe_name)
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf(self):
         """Exercise SBType and SBTypeList API."""
         d = {'EXE': self.exe_name}

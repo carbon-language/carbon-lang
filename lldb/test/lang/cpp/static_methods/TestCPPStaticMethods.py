@@ -9,11 +9,13 @@ class CPPStaticMethodsTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "static_methods")
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that static methods are properly distinguished from regular methods"""
         self.buildDsym()
         self.static_method_commands()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that static methods are properly distinguished from regular methods"""
         self.buildDwarf()

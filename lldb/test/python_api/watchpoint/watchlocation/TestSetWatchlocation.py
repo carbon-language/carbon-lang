@@ -24,12 +24,14 @@ class SetWatchlocationAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_watch_location_with_dsym(self):
         """Exercise SBValue.WatchPointee() API to set a watchpoint."""
         self.buildDsym()
         self.do_set_watchlocation()
 
     @python_api_test
+    @dwarf_test
     def test_watch_location_with_dwarf(self):
         """Exercise SBValue.WatchPointee() API to set a watchpoint."""
         self.buildDwarf()

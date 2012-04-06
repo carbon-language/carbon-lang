@@ -13,12 +13,14 @@ class SBDataAPICase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test the SBData APIs."""
         self.buildDsym()
         self.data_api()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test the SBData APIs."""
         self.buildDwarf()

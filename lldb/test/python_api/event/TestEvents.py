@@ -14,12 +14,14 @@ class EventAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_listen_for_and_print_event_with_dsym(self):
         """Exercise SBEvent API."""
         self.buildDsym()
         self.do_listen_for_and_print_event()
 
     @python_api_test
+    @dwarf_test
     def test_listen_for_and_print_event_with_dwarf(self):
         """Exercise SBEvent API."""
         self.buildDwarf()
@@ -27,12 +29,14 @@ class EventAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_wait_for_event_with_dsym(self):
         """Exercise SBListener.WaitForEvent() API."""
         self.buildDsym()
         self.do_wait_for_event()
 
     @python_api_test
+    @dwarf_test
     def test_wait_for_event_with_dwarf(self):
         """Exercise SBListener.WaitForEvent() API."""
         self.buildDwarf()
@@ -40,13 +44,15 @@ class EventAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_add_listener_to_broadcaster_dsym(self):
+    @dsym_test
+    def test_add_listener_to_broadcaster_with_dsym(self):
         """Exercise some SBBroadcaster APIs."""
         self.buildDsym()
         self.do_add_listener_to_broadcaster()
 
     @python_api_test
-    def test_add_listener_to_broadcaster_dwarf(self):
+    @dwarf_test
+    def test_add_listener_to_broadcaster_with_dwarf(self):
         """Exercise some SBBroadcaster APIs."""
         self.buildDwarf()
         self.do_add_listener_to_broadcaster()

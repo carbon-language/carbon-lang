@@ -22,11 +22,13 @@ class ObjcOptimizedTestCase(TestBase):
     mymethod = "description"
     method_spec = "-[%s %s]" % (myclass, mymethod)
 
+    @dsym_test
     def test_break_with_dsym(self):
         """Test 'expr member' continues to work for optimized build."""
         self.buildDsym()
         self.objc_optimized()
 
+    @dwarf_test
     def test_break_with_dwarf(self):
         """Test 'expr member' continues to work for optimized build."""
         self.buildDwarf()
