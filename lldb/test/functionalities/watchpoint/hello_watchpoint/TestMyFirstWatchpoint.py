@@ -11,12 +11,14 @@ class HelloWatchpointTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "watchpoint", "hello_watchpoint")
 
+    @dsym_test
     def test_hello_watchpoint_with_dsym_using_watchpoint_set(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_watchpoint()
 
+    @dwarf_test
     def test_hello_watchpoint_with_dwarf_using_watchpoint_set(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""
         self.buildDwarf(dictionary=self.d)

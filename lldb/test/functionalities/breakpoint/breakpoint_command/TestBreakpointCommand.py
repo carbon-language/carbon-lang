@@ -17,12 +17,14 @@ class BreakpointCommandTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f output.txt"])
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDsym()
         self.breakpoint_command_sequence()
         self.breakpoint_command_script_parameters ()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDwarf()

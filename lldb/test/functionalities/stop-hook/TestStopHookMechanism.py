@@ -13,11 +13,13 @@ class StopHookMechanismTestCase(TestBase):
     mydir = os.path.join("functionalities", "stop-hook")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test the stop-hook mechanism."""
         self.buildDsym()
         self.stop_hook_firing()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test the stop-hook mechanism."""
         self.buildDwarf()

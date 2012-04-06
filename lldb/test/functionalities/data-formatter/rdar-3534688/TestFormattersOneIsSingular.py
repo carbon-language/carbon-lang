@@ -13,12 +13,14 @@ class DataFormatterOneIsSingularTestCase(TestBase):
     mydir = os.path.join("functionalities", "data-formatter", "rdar-3534688")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_one_is_singular_with_dsym_and_run_command(self):
         """Test that 1 item is not as reported as 1 items."""
         self.buildDsym()
         self.oneness_data_formatter_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dwarf_test
     def test_one_is_singular_with_dwarf_and_run_command(self):
         """Test that 1 item is not as reported as 1 items."""
         self.buildDwarf()

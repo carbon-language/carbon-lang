@@ -396,6 +396,40 @@ def benchmarks_test(func):
     wrapper.__benchmarks_test__ = True
     return wrapper
 
+def dsym_test(func):
+    """Decorate the item as a dsym test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@dsym_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_dsym_test:
+                self.skipTest("dsym tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__dsym_test__ = True
+    return wrapper
+
+def dwarf_test(func):
+    """Decorate the item as a dwarf test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@dwarf_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_dwarf_test:
+                self.skipTest("dwarf tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__dwarf_test__ = True
+    return wrapper
+
 def expectedFailureClang(func):
     """Decorate the item as a Clang only expectedFailure."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):

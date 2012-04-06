@@ -13,11 +13,13 @@ class ExprDoesntDeadlockTestCase(TestBase):
     mydir = os.path.join("functionalities", "expr-doesnt-deadlock")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks - with dsym."""
         self.buildDsym()
         self.expr_doesnt_deadlock()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks."""
         self.buildDwarf()

@@ -13,12 +13,14 @@ class StopHookForMultipleThreadsTestCase(TestBase):
     mydir = os.path.join("functionalities", "stop-hook", "multiple_threads")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_stop_hook_multiple_threads_with_dsym(self):
         """Test that lldb stop-hook works for multiple threads."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.stop_hook_multiple_threads()
 
+    @dwarf_test
     def test_stop_hook_multiple_threads_with_dwarf(self):
         """Test that lldb stop-hook works for multiple threads."""
         self.buildDwarf(dictionary=self.d)

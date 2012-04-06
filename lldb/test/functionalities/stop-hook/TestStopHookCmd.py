@@ -18,11 +18,13 @@ class StopHookCmdTestCase(TestBase):
         self.runCmd("target stop-hook list", check=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test a sequence of target stop-hook commands."""
         self.buildDsym()
         self.stop_hook_cmd_sequence()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test a sequence of target stop-hook commands."""
         self.buildDwarf()

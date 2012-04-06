@@ -12,11 +12,13 @@ class DeadStripTestCase(TestBase):
     mydir = os.path.join("functionalities", "dead-strip")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test breakpoint works correctly with dead-code stripping."""
         self.buildDsym()
         self.dead_strip()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test breakpoint works correctly with dead-code stripping."""
         self.buildDwarf()

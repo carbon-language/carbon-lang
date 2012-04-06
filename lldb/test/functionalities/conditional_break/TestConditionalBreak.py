@@ -19,23 +19,27 @@ class ConditionalBreakTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_python(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
         self.buildDsym()
         self.do_conditional_break()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_python(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
         self.buildDwarf()
         self.do_conditional_break()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_command(self):
         """Simulate a user using lldb commands to break on c() if called from a()."""
         self.buildDsym()
         self.simulate_conditional_break_by_user()
 
+    @dwarf_test
     def test_with_dwarf_command(self):
         """Simulate a user using lldb commands to break on c() if called from a()."""
         self.buildDwarf()

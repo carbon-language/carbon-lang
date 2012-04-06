@@ -12,22 +12,26 @@ class PythonSynthDataFormatterTestCase(TestBase):
     mydir = os.path.join("functionalities", "data-formatter", "data-formatter-python-synth")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
         self.data_formatter_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_rdar10960550_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.rdar10960550_formatter_commands()
 
+    @dwarf_test
     def test_rdar10960550_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()

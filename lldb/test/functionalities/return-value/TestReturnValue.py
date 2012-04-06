@@ -15,6 +15,7 @@ class ReturnValueTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailurei386
     @python_api_test
+    @dsym_test
     def test_with_dsym_python(self):
         """Test getting return values from stepping out with dsyms."""
         self.buildDsym()
@@ -22,6 +23,7 @@ class ReturnValueTestCase(TestBase):
 
     @expectedFailurei386
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_python(self):
         """Test getting return values from stepping out."""
         self.buildDwarf()

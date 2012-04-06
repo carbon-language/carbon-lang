@@ -13,11 +13,13 @@ class MemoryReadTestCase(TestBase):
     mydir = os.path.join("functionalities", "memory", "read")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_memory_read_with_dsym(self):
         """Test the 'memory read' command with plain and vector formats."""
         self.buildDsym()
         self.memory_read_command()
 
+    @dwarf_test
     def test_memory_read_with_dwarf(self):
         """Test the 'memory read' command with plain and vector formats."""
         self.buildDwarf()

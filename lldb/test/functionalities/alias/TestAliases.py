@@ -12,10 +12,12 @@ class AliasTestCase(TestBase):
     mydir = os.path.join("functionalities", "alias")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym (self):
         self.buildDsym ()
         self.alias_tests ()
 
+    @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.alias_tests ()

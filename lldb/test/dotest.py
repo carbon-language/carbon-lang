@@ -74,6 +74,13 @@ just_do_python_api_test = False
 # By default, benchmarks tests are not run.
 just_do_benchmarks_test = False
 
+# By default, both dsym and dwarf tests are performed.
+# Use @dsym_test or @dwarf_test decorators, defined in lldbtest.py, to mark a test
+# as a dsym or dwarf test.  Use '-N dsym' or '-N dwarf' to exclude dsym or dwarf
+# tests from running.
+dont_do_dsym_test = False
+dont_do_dwarf_test = False
+
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
 blacklist = None
@@ -199,6 +206,8 @@ where options:
        inferior programs to be debugged
        suggestions: do not lump the -A arch1^arch2 together such that the -E
        option applies to only one of the architectures
+-N   : don't do test cases marked with the @dsym decorator by passing 'dsym' as the option arg, or
+       don't do test cases marked with the @dwarf decorator by passing 'dwarf' as the option arg
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
 +a   : just do lldb Python API tests
@@ -353,6 +362,8 @@ def parseOptionsAndInitTestdirs():
     global dont_do_python_api_test
     global just_do_python_api_test
     global just_do_benchmarks_test
+    global dont_do_dsym_test
+    global dont_do_dwarf_test
     global blacklist
     global blacklistConfig
     global configFile
@@ -422,6 +433,21 @@ def parseOptionsAndInitTestdirs():
                 usage()
             cflags_extras = sys.argv[index]
             os.environ["CFLAGS_EXTRAS"] = cflags_extras
+            index += 1
+        elif sys.argv[index].startswith('-N'):
+            # Increment by 1 to fetch 'dsym' or 'dwarf'.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            dont_do = sys.argv[index]
+            if dont_do.lower() == 'dsym':
+                dont_do_dsym_test = True
+            elif dont_do.lower() == 'dwarf':
+                dont_do_dwarf_test = True
+            else:
+                print "!!!"
+                print "Warning: -N only accepts either 'dsym' or 'dwarf' as the option arg; you passed in '%s'?" % dont_do
+                print "!!!"
             index += 1
         elif sys.argv[index].startswith('-a'):
             dont_do_python_api_test = True
@@ -995,10 +1021,12 @@ lldb.DBG = lldb.SBDebugger.Create()
 # Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
 lldb.blacklist = blacklist
 
-# Put dont/just_do_python_api_test in the lldb namespace.
+# Put all these test decorators in the lldb namespace.
 lldb.dont_do_python_api_test = dont_do_python_api_test
 lldb.just_do_python_api_test = just_do_python_api_test
 lldb.just_do_benchmarks_test = just_do_benchmarks_test
+lldb.dont_do_dsym_test = dont_do_dsym_test
+lldb.dont_do_dwarf_test = dont_do_dwarf_test
 
 # Do we need to skip build and cleanup?
 lldb.skip_build_and_cleanup = skip_build_and_cleanup

@@ -12,10 +12,12 @@ class BreakpointIDTestCase(TestBase):
     mydir = os.path.join("functionalities", "breakpoint", "breakpoint_ids")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym (self):
         self.buildDsym ()
         self.breakpoint_id_tests ()
 
+    @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.breakpoint_id_tests ()

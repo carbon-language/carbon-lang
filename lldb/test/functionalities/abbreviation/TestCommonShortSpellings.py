@@ -13,10 +13,12 @@ class CommonShortSpellingsTestCase(TestBase):
     mydir = os.path.join("functionalities", "abbreviation")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym (self):
         self.buildDsym ()
         self.run_abbrevs2 ()
 
+    @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.run_abbrevs2 ()

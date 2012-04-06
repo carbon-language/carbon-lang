@@ -13,11 +13,13 @@ class Radar9974002DataFormatterTestCase(TestBase):
     mydir = os.path.join("functionalities", "data-formatter", "rdar-9974002")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()

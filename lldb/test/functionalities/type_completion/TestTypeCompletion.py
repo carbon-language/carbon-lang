@@ -12,11 +12,13 @@ class TypeCompletionTestCase(TestBase):
     mydir = os.path.join("functionalities", "type_completion")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Check that types only get completed when necessary."""
         self.buildDsym()
         self.type_completion_commands()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Check that types only get completed when necessary."""
         self.buildDwarf()

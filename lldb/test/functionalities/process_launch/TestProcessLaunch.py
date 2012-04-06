@@ -12,11 +12,13 @@ class ProcessLaunchTestCase(TestBase):
     mydir = os.path.join("functionalities", "process_launch")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_io_with_dsym (self):
         """Test that process launch I/O redirection flags work properly."""
         self.buildDsym ()
         self.process_io_test ()
 
+    @dwarf_test
     def test_io_with_dwarf (self):
         """Test that process launch I/O redirection flags work properly."""
         self.buildDwarf ()
@@ -101,12 +103,14 @@ class ProcessLaunchTestCase(TestBase):
     d = {'CXX_SOURCES' : 'print_cwd.cpp'}
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_set_working_dir_with_dsym (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(self.d)
         self.my_working_dir_test()
 
+    @dwarf_test
     def test_set_working_dir_with_dwarf (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
         self.buildDwarf(dictionary=self.d)

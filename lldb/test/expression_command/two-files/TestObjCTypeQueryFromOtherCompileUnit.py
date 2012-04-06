@@ -20,11 +20,13 @@ class ObjCTypeQueryTestCase(TestBase):
                                 "// Set breakpoint here, then do 'expr (NSArray*)array_token'.")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """The expression parser's type search should be wider than the current compilation unit."""
         self.buildDsym()
         self.type_query_from_other_cu()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """The expression parser's type search should be wider than the current compilation unit."""
         self.buildDwarf()

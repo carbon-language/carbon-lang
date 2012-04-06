@@ -19,11 +19,13 @@ class ExprCommandCallFunctionTestCase(TestBase):
                                 '// Please test these expressions while stopped at this line:')
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test calling std::String member function."""
         self.buildDsym()
         self.call_function()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""
         self.buildDsym()

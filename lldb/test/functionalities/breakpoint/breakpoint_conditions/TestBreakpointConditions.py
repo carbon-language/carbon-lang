@@ -13,6 +13,7 @@ class BreakpointConditionsTestCase(TestBase):
     mydir = os.path.join("functionalities", "breakpoint", "breakpoint_conditions")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDsym()
@@ -20,17 +21,20 @@ class BreakpointConditionsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    @dsym_test
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDsym()
         self.breakpoint_conditions_python()
 
+    @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
 
     @python_api_test
+    @dwarf_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDwarf()

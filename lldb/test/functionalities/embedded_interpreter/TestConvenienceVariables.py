@@ -11,11 +11,13 @@ class ConvenienceVariablesCase(TestBase):
     mydir = os.path.join("functionalities", "embedded_interpreter")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
         self.buildDsym()
         self.convenience_variables()
 
+    @dwarf_test
     def test_with_dwarf_and_run_commands(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
         self.buildDwarf()

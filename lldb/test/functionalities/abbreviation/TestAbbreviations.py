@@ -65,10 +65,12 @@ class AbbreviationsTestCase(TestBase):
 
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym (self):
         self.buildDsym ()
         self.running_abbreviations ()
 
+    @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.running_abbreviations ()

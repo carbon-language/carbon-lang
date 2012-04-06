@@ -12,11 +12,13 @@ class BreakpointLocationsTestCase(TestBase):
     mydir = os.path.join("functionalities", "breakpoint", "breakpoint_locations")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test breakpoint enable/disable for a breakpoint ID with multiple locations."""
         self.buildDsym()
         self.breakpoint_locations_test()
 
+    @dwarf_test
     def test_with_dwarf(self):
         """Test breakpoint enable/disable for a breakpoint ID with multiple locations."""
         self.buildDwarf()
