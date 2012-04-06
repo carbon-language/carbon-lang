@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% set title = 'lld' %}
+{% block body %}
+<h1>lld - The LLVM Linker</h1>
+
+<p>
+  lld is LLVM's linker.
+</p>
+
+<h2>Documentation</h2>
+<table class="contentstable" align="center" style="margin-left: 30px">
+  <tr>
+    <td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("contents") }}">
+          Contents</a><br/>
+        <span class="linkdescr">for a complete overview</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("search") }}">
+          Search page</a><br/>
+        <span class="linkdescr">search the documentation</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("genindex") }}">
+          General Index</a><br/>
+        <span class="linkdescr">all functions, classes, terms</span></p>
+  </td></tr>
+</table>
+
+<h2>Source</h2>
+<p>lld is available in the LLVM SVN repository:
+  <tt>svn co
+    <a href="http://llvm.org/svn/llvm-project/lld/trunk">
+      http://llvm.org/svn/llvm-project/lnt/trunk</a></tt>.</p>
+
+<p>lld is also available via the read-only git mirror:
+  <tt>git clone
+    <a href="http://llvm.org/git/lld.git">
+      http://llvm.org/git/lld.git</a></tt>.</p>
+
+{% endblock %}
