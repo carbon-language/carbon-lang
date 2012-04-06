@@ -57,6 +57,12 @@ typedef struct {} NSFastEnumerationState;
 + (id)setWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
 - (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
 @end
+@interface NSOrderedSet : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
+@end
+@interface NSOrderedSet (NSOrderedSetCreation)
++ (id)orderedSetWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id)initWithObjects:(id)firstObj, ... __attribute__((sentinel(0,1)));
+@end
 @protocol P;
 @class C;
 
@@ -71,6 +77,7 @@ void f(id a, id<P> b, C* c, C<P> *d, FooType fooType, BarType barType) {
   [NSArray arrayWithObjects:@"Foo", "Bar", "Baz", nil]; // expected-warning 2 {{Argument to 'NSArray' method 'arrayWithObjects:' should be an Objective-C pointer type, not 'char *'}}
   [NSDictionary dictionaryWithObjectsAndKeys:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
   [NSSet setWithObjects:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSSet' method 'setWithObjects:' should be an Objective-C pointer type, not 'char *'}}
+  [NSOrderedSet orderedSetWithObjects:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSOrderedSet' method 'orderedSetWithObjects:' should be an Objective-C pointer type, not 'char *'}}
 
   [[[NSArray alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSArray' method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSDictionary' method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
@@ -79,6 +86,7 @@ void f(id a, id<P> b, C* c, C<P> *d, FooType fooType, BarType barType) {
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", fooType, nil] autorelease]; // no-warning
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", barType, nil] autorelease]; // expected-warning {{Argument to 'NSDictionary' method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'BarType'}}
   [[[NSSet alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSSet' method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
+  [[[NSOrderedSet alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSOrderedSet' method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
 }
 
 // This previously crashed the variadic argument checker.

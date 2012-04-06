@@ -485,6 +485,7 @@ class VariadicMethodTypeChecker : public Checker<check::PreObjCMessage> {
   mutable Selector arrayWithObjectsS;
   mutable Selector dictionaryWithObjectsAndKeysS;
   mutable Selector setWithObjectsS;
+  mutable Selector orderedSetWithObjectsS;
   mutable Selector initWithObjectsS;
   mutable Selector initWithObjectsAndKeysS;
   mutable OwningPtr<BugType> BT;
@@ -530,6 +531,11 @@ VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
     if (isReceiverClassOrSuperclass(Class, "NSSet") &&
         S == initWithObjectsS)
       return true;
+
+    // -[NSOrderedSet initWithObjects:]
+    if (isReceiverClassOrSuperclass(Class, "NSOrderedSet") &&
+        S == initWithObjectsS)
+      return true;
   } else {
     const ObjCInterfaceDecl *Class = msg.getReceiverInterface();
 
@@ -547,6 +553,11 @@ VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
     if (isReceiverClassOrSuperclass(Class, "NSSet") &&
         S == setWithObjectsS)
       return true;
+
+    // -[NSOrderedSet orderedSetWithObjects:]
+    if (isReceiverClassOrSuperclass(Class, "NSOrderedSet") &&
+        S == orderedSetWithObjectsS)
+      return true;
   }
 
   return false;
@@ -563,6 +574,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
     dictionaryWithObjectsAndKeysS = 
       GetUnarySelector("dictionaryWithObjectsAndKeys", Ctx);
     setWithObjectsS = GetUnarySelector("setWithObjects", Ctx);
+    orderedSetWithObjectsS = GetUnarySelector("orderedSetWithObjects", Ctx);
 
     initWithObjectsS = GetUnarySelector("initWithObjects", Ctx);
     initWithObjectsAndKeysS = GetUnarySelector("initWithObjectsAndKeys", Ctx);
