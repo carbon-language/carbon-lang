@@ -5725,6 +5725,19 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FDIV, N->getDebugLoc(), VT, N0, N1);
 
+  // fold (fdiv X, c2) -> fmul X, 1/c2 if there is no precision loss or if
+  // losing precision is acceptable.
+  if (N1CFP && VT != MVT::ppcf128) {
+    // Compute the reciprocal 1.0 / c2.
+    APFloat N1APF = N1CFP->getValueAPF();
+    APFloat Recip(N1APF.getSemantics(), 1); // 1.0
+    APFloat::opStatus st = Recip.divide(N1APF, APFloat::rmNearestTiesToEven);
+    // Only do the transform if the reciprocal is not too horrible (eg not NaN).
+    if (st == APFloat::opOK || (st == APFloat::opInexact &&
+                                DAG.getTarget().Options.UnsafeFPMath))
+      return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N0,
+                         DAG.getConstantFP(Recip, VT));
+  }
 
   // (fdiv (fneg X), (fneg Y)) -> (fdiv X, Y)
   if (char LHSNeg = isNegatibleForFree(N0, LegalOperations, TLI,

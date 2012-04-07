@@ -8,7 +8,7 @@ declare void @foo_int32x4_t(<4 x i32>)
 
 ; Test signed conversion.
 ; CHECK: t1
-; CHECK-NOT: vdiv
+; CHECK-NOT: {{vdiv|vmul}}
 define void @t1() nounwind {
 entry:
   %tmp = load i32* @iin, align 4, !tbaa !3
@@ -24,7 +24,7 @@ declare void @foo_float32x2_t(<2 x float>)
 
 ; Test unsigned conversion.
 ; CHECK: t2
-; CHECK-NOT: vdiv
+; CHECK-NOT: {{vdiv|vmul}}
 define void @t2() nounwind {
 entry:
   %tmp = load i32* @uin, align 4, !tbaa !3
@@ -38,7 +38,7 @@ entry:
 
 ; Test which should not fold due to non-power of 2.
 ; CHECK: t3
-; CHECK: vdiv
+; CHECK: {{vdiv|vmul}}
 define void @t3() nounwind {
 entry:
   %tmp = load i32* @iin, align 4, !tbaa !3
@@ -52,7 +52,7 @@ entry:
 
 ; Test which should not fold due to power of 2 out of range.
 ; CHECK: t4
-; CHECK: vdiv
+; CHECK: {{vdiv|vmul}}
 define void @t4() nounwind {
 entry:
   %tmp = load i32* @iin, align 4, !tbaa !3
@@ -66,7 +66,7 @@ entry:
 
 ; Test case where const is max power of 2 (i.e., 2^32).
 ; CHECK: t5
-; CHECK-NOT: vdiv
+; CHECK-NOT: {{vdiv|vmul}}
 define void @t5() nounwind {
 entry:
   %tmp = load i32* @iin, align 4, !tbaa !3
@@ -80,7 +80,7 @@ entry:
 
 ; Test quadword.
 ; CHECK: t6
-; CHECK-NOT: vdiv
+; CHECK-NOT: {{vdiv|vmul}}
 define void @t6() nounwind {
 entry:
   %tmp = load i32* @iin, align 4, !tbaa !3
