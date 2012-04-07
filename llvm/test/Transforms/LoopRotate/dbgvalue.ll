@@ -1,11 +1,13 @@
 ; RUN: opt -S -loop-rotate  %s  | FileCheck %s
 
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+
+define i32 @tak(i32 %x, i32 %y, i32 %z) nounwind ssp {
+; CHECK: define i32 @tak
 ; CHECK: entry
 ; CHECK-NEXT: call void @llvm.dbg.value(metadata !{i32 %x}
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
-
-define i32 @tak(i32 %x, i32 %y, i32 %z) nounwind ssp {
 entry:
   br label %tailrecurse
 
@@ -35,7 +37,45 @@ return:                                           ; preds = %if.end
   ret i32 %z.tr, !dbg !17
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+@channelColumns = external global i64
+@horzPlane = external global i8*, align 8
+
+define void @FindFreeHorzSeg(i64 %startCol, i64 %row, i64* %rowStart) {
+; Ensure that the loop increment basic block is rotated into the tail of the
+; body, even though it contains a debug intrinsic call.
+; CHECK: define void @FindFreeHorzSeg
+; CHECK: %dec = add
+; CHECK-NEXT: tail call void @llvm.dbg.value
+; CHECK-NEXT: br i1 %tobool, label %for.cond, label %for.end
+
+entry:
+  br label %for.cond
+
+for.cond:
+  %i.0 = phi i64 [ %startCol, %entry ], [ %dec, %for.inc ]
+  %cmp = icmp eq i64 %i.0, 0
+  br i1 %cmp, label %for.end, label %for.body
+
+for.body:
+  %0 = load i64* @channelColumns, align 8
+  %mul = mul i64 %0, %row
+  %add = add i64 %mul, %i.0
+  %1 = load i8** @horzPlane, align 8
+  %arrayidx = getelementptr inbounds i8* %1, i64 %add
+  %2 = load i8* %arrayidx, align 1
+  %tobool = icmp eq i8 %2, 0
+  br i1 %tobool, label %for.inc, label %for.end
+
+for.inc:
+  %dec = add i64 %i.0, -1
+  tail call void @llvm.dbg.value(metadata !{i64 %dec}, i64 0, metadata undef)
+  br label %for.cond
+
+for.end:
+  %add1 = add i64 %i.0, 1
+  store i64 %add1, i64* %rowStart, align 8
+  ret void
+}
 
 !llvm.dbg.sp = !{!0}
 

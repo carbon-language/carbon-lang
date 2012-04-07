@@ -1854,6 +1854,14 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   case Instruction::Call: {
    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
      switch (II->getIntrinsicID()) {
+       // These synthetic intrinsics have no side-effects, and just mark
+       // information about their operands.
+       // FIXME: There are other no-op synthetic instructions that potentially
+       // should be considered at least *safe* to speculate...
+       case Intrinsic::dbg_declare:
+       case Intrinsic::dbg_value:
+         return true;
+
        case Intrinsic::bswap:
        case Intrinsic::ctlz:
        case Intrinsic::ctpop:
