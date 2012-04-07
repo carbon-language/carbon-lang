@@ -1003,6 +1003,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
     } else if (A->getOption().matches(options::OPT_x)) {
       InputTypeArg = A;
       InputType = types::lookupTypeForTypeSpecifier(A->getValue(Args));
+      A->claim();
 
       // Follow gcc behavior and treat as linker input for invalid -x
       // options. Its not clear why we shouldn't just revert to unknown; but
