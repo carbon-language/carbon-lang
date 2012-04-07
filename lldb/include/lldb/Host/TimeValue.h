@@ -30,9 +30,9 @@ namespace lldb_private {
 class TimeValue
 {
 public:
-    static const uint32_t MicroSecPerSec = 1000000UL;
-    static const uint32_t NanoSecPerSec = 1000000000UL;
-    static const uint32_t NanoSecPerMicroSec = 1000U;
+    static const uint64_t MicroSecPerSec = 1000000UL;
+    static const uint64_t NanoSecPerSec = 1000000000UL;
+    static const uint64_t NanoSecPerMicroSec = 1000U;
 
     //------------------------------------------------------------------
     // Constructors and Destructors

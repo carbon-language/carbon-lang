@@ -38,12 +38,12 @@ TimeValue::TimeValue(const TimeValue& rhs) :
 }
 
 TimeValue::TimeValue(const struct timespec& ts) :
-    m_nano_seconds (ts.tv_sec * NanoSecPerSec + ts.tv_nsec)
+    m_nano_seconds ((uint64_t) ts.tv_sec * NanoSecPerSec + ts.tv_nsec)
 {
 }
 
 TimeValue::TimeValue(const struct timeval& tv) :
-    m_nano_seconds (tv.tv_sec * NanoSecPerSec + tv.tv_usec * NanoSecPerMicroSec)
+    m_nano_seconds ((uint64_t) tv.tv_sec * NanoSecPerSec + (uint64_t) tv.tv_usec * NanoSecPerMicroSec)
 {
 }
 
