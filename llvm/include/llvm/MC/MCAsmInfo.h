@@ -143,6 +143,10 @@ namespace llvm {
     /// symbol names.  This defaults to true.
     bool AllowPeriodsInName;
 
+    /// AllowUTF8 - This is true if the assembler accepts UTF-8 input.
+    // FIXME: Make this a more general encoding setting?
+    bool AllowUTF8;
+
     //===--- Data Emission Directives -------------------------------------===//
 
     /// ZeroDirective - this should be set to the directive used to get some
@@ -484,6 +488,9 @@ namespace llvm {
     }
     bool doesAllowPeriodsInName() const {
       return AllowPeriodsInName;
+    }
+    bool doesAllowUTF8() const {
+      return AllowUTF8;
     }
     const char *getZeroDirective() const {
       return ZeroDirective;

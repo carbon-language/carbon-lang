@@ -22,12 +22,13 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
-static bool isAcceptableChar(char C, bool AllowPeriod) {
+static bool isAcceptableChar(char C, bool AllowPeriod, bool AllowUTF8) {
   if ((C < 'a' || C > 'z') &&
       (C < 'A' || C > 'Z') &&
       (C < '0' || C > '9') &&
       C != '_' && C != '$' && C != '@' &&
-      !(AllowPeriod && C == '.'))
+      !(AllowPeriod && C == '.') &&
+      !(AllowUTF8 && (C & 0x80)))
     return false;
   return true;
 }
@@ -56,8 +57,9 @@ static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
   // If any of the characters in the string is an unacceptable character, force
   // quotes.
   bool AllowPeriod = MAI.doesAllowPeriodsInName();
+  bool AllowUTF8 = MAI.doesAllowUTF8();
   for (unsigned i = 0, e = Str.size(); i != e; ++i)
-    if (!isAcceptableChar(Str[i], AllowPeriod))
+    if (!isAcceptableChar(Str[i], AllowPeriod, AllowUTF8))
       return true;
   return false;
 }
@@ -74,8 +76,9 @@ static void appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
   }
 
   bool AllowPeriod = MAI.doesAllowPeriodsInName();
+  bool AllowUTF8 = MAI.doesAllowUTF8();
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    if (!isAcceptableChar(Str[i], AllowPeriod))
+    if (!isAcceptableChar(Str[i], AllowPeriod, AllowUTF8))
       MangleLetter(OutName, Str[i]);
     else
       OutName.push_back(Str[i]);
