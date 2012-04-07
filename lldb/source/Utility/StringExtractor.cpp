@@ -121,14 +121,10 @@ StringExtractor::GetHexS8 (int8_t fail_value)
     {
         char hi_nibble_char = m_packet[m_index];
         char lo_nibble_char = m_packet[m_index+1];
-
-        if (isxdigit(hi_nibble_char) && isxdigit(lo_nibble_char))
-        {
-            char hi_nibble = xdigit_to_sint (hi_nibble_char);
-            char lo_nibble = xdigit_to_sint (lo_nibble_char);
-            m_index += 2;
-            return (hi_nibble << 4) + lo_nibble;
-        }
+        char hi_nibble = xdigit_to_sint (hi_nibble_char);
+        char lo_nibble = xdigit_to_sint (lo_nibble_char);
+        m_index += 2;
+        return (hi_nibble << 4) + lo_nibble;
     }
     m_index = UINT32_MAX;
     return fail_value;
@@ -139,22 +135,19 @@ StringExtractor::GetHexS8 (int8_t fail_value)
 // string
 //----------------------------------------------------------------------
 uint8_t
-StringExtractor::GetHexU8 (uint8_t fail_value)
+StringExtractor::GetHexU8 (uint8_t fail_value, bool set_eof_on_fail)
 {
     if (GetNumHexASCIICharsAtFilePos(2))
     {
         uint8_t hi_nibble_char = m_packet[m_index];
         uint8_t lo_nibble_char = m_packet[m_index+1];
-
-        if (isxdigit(hi_nibble_char) && isxdigit(lo_nibble_char))
-        {
-            uint8_t hi_nibble = xdigit_to_uint (hi_nibble_char);
-            uint8_t lo_nibble = xdigit_to_uint (lo_nibble_char);
-            m_index += 2;
-            return (hi_nibble << 4) + lo_nibble;
-        }
+        uint8_t hi_nibble = xdigit_to_uint (hi_nibble_char);
+        uint8_t lo_nibble = xdigit_to_uint (lo_nibble_char);
+        m_index += 2;
+        return (hi_nibble << 4) + lo_nibble;
     }
-    m_index = UINT32_MAX;
+    if (set_eof_on_fail || m_index >= m_packet.size())
+        m_index = UINT32_MAX;
     return fail_value;
 }
 

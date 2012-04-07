@@ -93,7 +93,7 @@ public:
     GetHexS8 (int8_t fail_value = 0);
 
     uint8_t
-    GetHexU8 (uint8_t fail_value = 0);
+    GetHexU8 (uint8_t fail_value = 0, bool set_eof_on_fail = true);
 
     bool
     GetNameColonValue (std::string &name, std::string &value);
