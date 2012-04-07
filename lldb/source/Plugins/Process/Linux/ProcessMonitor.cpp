@@ -15,6 +15,7 @@
 #include <sys/ptrace.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/user.h>
 #include <sys/wait.h>
 
 // C++ Includes
