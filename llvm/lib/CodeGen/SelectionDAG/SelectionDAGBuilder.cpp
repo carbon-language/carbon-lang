@@ -2941,7 +2941,7 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
       setValue(&I, DAG.getUNDEF(VT)); // Vectors are not used.
       return;
     }
-    else if (RangeUse[0] < 2 && RangeUse[1] < 2) {
+    if (RangeUse[0] < 2 && RangeUse[1] < 2) {
       // Extract appropriate subvector and generate a vector shuffle
       for (int Input=0; Input < 2; ++Input) {
         SDValue &Src = Input == 0 ? Src1 : Src2;
