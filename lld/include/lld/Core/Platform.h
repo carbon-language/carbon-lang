@@ -11,12 +11,15 @@
 #define LLD_CORE_PLATFORM_H_
 
 #include "lld/Core/Reference.h"
-
+#include "lld/Core/LLVM.h"
 #include <vector>
 
 namespace lld {
 class Atom;
 class DefinedAtom;
+class UndefinedAtom;
+class SharedLibraryAtom;
+class File;
 
 
 /// The Platform class encapsulated plaform specific linking knowledge.
@@ -24,6 +27,8 @@ class DefinedAtom;
 /// Much of what it does is driving by platform specific linker options.
 class Platform {
 public:
+  virtual ~Platform();
+
   virtual void initialize() = 0;
 
   /// @brief tell platform object another file has been added
@@ -132,14 +137,37 @@ public:
   /// directly access the target.
   virtual void updateReferenceToGOT(const Reference*, bool targetIsNowGOT) = 0;
 
-  /// Create a platform specific atom which contains a stub/PLT entry
-  /// targeting the specified shared library atom.
-  virtual const DefinedAtom* makeStub(const Atom&, File&) = 0;
+  /// Returns a platform specific atom for a stub/PLT entry which will
+  /// jump to the specified atom.  May be called multiple times for the same
+  /// target atom, in which case this method should return the same stub
+  /// atom.  The platform needs to maintain a list of all stubs (and 
+  /// associated atoms) it has created for use by addStubAtoms().
+  virtual const DefinedAtom* getStub(const Atom &target, File&) = 0;
+
+  /// After the stubs Pass is done calling getStub(), the Pass will call
+  /// this method to add all the stub (and support) atoms to the master
+  /// file object.
+  virtual void addStubAtoms(File &file) = 0;
 
   /// Create a platform specific GOT atom.
   virtual const DefinedAtom* makeGOTEntry(const Atom&, File&) = 0;
-
+  
+  /// Write an executable file from the supplied file object to the 
+  /// supplied stream.
+  virtual void writeExecutable(const lld::File &, raw_ostream &out) = 0;
+  
+protected:
+  Platform();
 };
+
+
+
+///
+/// Creates a platform object for linking as done on Darwin (iOS/OSX).
+///
+extern Platform *createDarwinPlatform();
+
+
 
 } // namespace lld
 

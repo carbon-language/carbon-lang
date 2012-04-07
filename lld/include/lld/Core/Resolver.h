@@ -80,10 +80,11 @@ private:
 
   class MergedFile : public File {
   public:
-    MergedFile() : File("<linker-internal>") { }
+    MergedFile() : File("<linker-internal>"), _mainAtom(nullptr) { }
 
-
-
+  virtual const Atom *entryPoint() const {
+    return _mainAtom;
+  }
   virtual const atom_collection<DefinedAtom>& defined() const {
     return _definedAtoms;
   }
@@ -102,6 +103,8 @@ private:
   virtual void addAtom(const Atom& atom);
 
   private:
+    friend class Resolver;
+    const Atom*                                 _mainAtom;
     atom_collection_vector<DefinedAtom>         _definedAtoms;
     atom_collection_vector<UndefinedAtom>       _undefinedAtoms;
     atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;

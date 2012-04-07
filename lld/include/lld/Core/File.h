@@ -49,6 +49,12 @@ public:
   /// be ascertained, this method returns the empty string.
   virtual StringRef translationUnitSource() const;
 
+  /// Returns pointer to "main" atom, or nullptr. All object files can
+  /// use the default implementation which just returns nullptr.  
+  /// But the master merged File operated on by Passes, needs override
+  /// this and return the atom for "main". 
+  virtual const Atom *entryPoint() const; 
+
 protected:
   template <typename T> class atom_iterator; // forward reference
 public:
@@ -165,7 +171,8 @@ protected:
     const atom_collection<T>&   _collection;
     const void*                 _it;
   };
-
+  
+public:
   /// Must be implemented to return the atom_collection object for 
   /// all DefinedAtoms in this File.
   virtual const atom_collection<DefinedAtom>& defined() const = 0;
@@ -181,7 +188,8 @@ protected:
   /// Must be implemented to return the atom_collection object for 
   /// all AbsoluteAtoms in this File.
   virtual const atom_collection<AbsoluteAtom>& absolute() const = 0;
-
+  
+protected:
   /// This is a convenience class for File subclasses which manage their
   /// atoms as a simple std::vector<>.  
   template <typename T>

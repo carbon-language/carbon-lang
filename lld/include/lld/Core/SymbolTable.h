@@ -77,7 +77,7 @@ private:
     static bool isEqual(StringRef const lhs,
                         StringRef const rhs) { return lhs.equals(rhs); }
   };
-	typedef llvm::DenseMap<StringRef, const Atom *,
+  typedef llvm::DenseMap<StringRef, const Atom *,
                                            StringRefMappingInfo> NameToAtom;
 
   struct AtomMappingInfo {

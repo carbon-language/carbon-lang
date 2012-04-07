@@ -1,6 +1,7 @@
 set(LLVM_USED_LIBS
   lldCore
   lldPasses
+  lldDarwinPlatform
   )
 
 set(LLVM_LINK_COMPONENTS

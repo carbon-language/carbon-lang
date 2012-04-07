@@ -430,11 +430,13 @@ private:
   }
 
   uint32_t getTargetIndex(const Atom* target) {
+    if ( target == nullptr )
+      return NativeReferenceIvarsV1::noTarget;
     TargetToIndex::const_iterator pos = _targetsTableIndex.find(target);
     if ( pos != _targetsTableIndex.end() ) {
       return pos->second;
     }
-    uint32_t result = _targetsTableIndex.size();
+    uint32_t result = _targetsTableIndex.size(); 
     _targetsTableIndex[target] = result;
     return result;
   }

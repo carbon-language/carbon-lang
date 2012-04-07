@@ -9,7 +9,7 @@
 //
 // This linker pass transforms all GOT kind references to real references.
 // That is, in assembly you can write something like:
-//     movq	foo@GOTPCREL(%rip), %rax 
+//     movq foo@GOTPCREL(%rip), %rax 
 // which means you want to load a pointer to "foo" out of the GOT (global
 // Offsets Table). In the object file, the Atom containing this instruction
 // has a Reference whose target is an Atom named "foo" and the Reference

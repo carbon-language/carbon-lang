@@ -251,7 +251,7 @@ public:
 
   /// This class abstracts iterating over the sequence of References
   /// in an Atom.  Concrete instances of DefinedAtom must implement
-  /// the derefIterator() and incrementIterator methods.
+  /// the derefIterator() and incrementIterator() methods.
   class reference_iterator {
   public:
     reference_iterator(const DefinedAtom& a, const void* it)
@@ -283,6 +283,10 @@ public:
 
   /// Returns an iterator to the end of this Atom's References
   virtual reference_iterator referencesEnd() const = 0;
+
+  reference_iterator begin() const { return referencesBegin(); }
+  reference_iterator end() const { return referencesEnd(); }
+
 
   static inline bool classof(const Atom *a) {
     return a->definition() == definitionRegular;

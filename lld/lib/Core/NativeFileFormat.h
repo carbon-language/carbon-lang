@@ -193,12 +193,14 @@ struct NativeAbsoluteAtomIvarsV1 {
 // The NCS_ReferencesArrayV1 chunk contains an array of these structs
 //
 struct NativeReferenceIvarsV1 {
+  enum {
+    noTarget = 0xFFFF
+  };
   uint16_t  offsetInAtom;
    int16_t  kind;
   uint16_t  targetIndex;
   uint16_t  addendIndex;
 };
-
 
 
 //

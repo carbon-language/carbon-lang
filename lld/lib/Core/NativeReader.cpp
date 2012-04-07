@@ -20,6 +20,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 
 #include <vector>
+#include <memory>
 
 namespace lld {
 
@@ -202,6 +203,7 @@ public:
   virtual const Atom* target() const;
   virtual Addend addend() const;
   virtual void setTarget(const Atom* newAtom);
+  virtual void setAddend(Addend a);
 
 private:
   // Used in rare cases when Reference is modified,
@@ -606,15 +608,19 @@ private:
     return reinterpret_cast<const NativeReferenceV1*>(p);
   }
 
-  const Atom* target(uint32_t index) const {
+  const Atom* target(uint16_t index) const {
+    if ( index == NativeReferenceIvarsV1::noTarget )
+      return nullptr;
     assert(index < _targetsTableCount);
     return _targetsTable[index];
   }
 
-  void setTarget(uint32_t index, const Atom* newAtom) const {
+  void setTarget(uint16_t index, const Atom* newAtom) const {
+    assert(index != NativeReferenceIvarsV1::noTarget);
     assert(index > _targetsTableCount);
     _targetsTable[index] = newAtom;
   }
+  
 
 
   // private constructor, only called by make()
@@ -797,6 +803,10 @@ inline void NativeReferenceV1::setKind(Kind k) {
 
 inline void NativeReferenceV1::setTarget(const Atom* newAtom) {
   return _file->setTarget(_ivarData->targetIndex, newAtom);
+}
+
+inline void NativeReferenceV1::setAddend(Addend a) {
+  assert(0 && "setAddend() not supported");
 }
 
 

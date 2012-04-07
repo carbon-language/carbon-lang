@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
@@ -359,7 +360,7 @@ void Resolver::checkDylibSymbolCollisions() {
 // get "main" atom for linkage unit
 const Atom *Resolver::entryPoint() {
   StringRef symbolName = _platform.entryPointName();
-  if (symbolName != nullptr)
+  if ( !symbolName.empty() )
     return _symbolTable.findByName(symbolName);
 
   return nullptr;
@@ -387,6 +388,7 @@ void Resolver::resolve() {
   this->linkTimeOptimize();
   this->tweakAtoms();
   this->_result.addAtoms(_atoms);
+  this->_result._mainAtom = this->entryPoint();
 }
 
 void Resolver::MergedFile::addAtom(const Atom& atom) {

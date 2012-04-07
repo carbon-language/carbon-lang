@@ -58,6 +58,9 @@ public:
   /// Some relocations require a symbol and a value (e.g. foo + 4).
   virtual Addend addend() const = 0;
 
+  /// During linking, some optimzations may change addend value.
+  virtual void setAddend(Addend) = 0;
+
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
   Reference() {}

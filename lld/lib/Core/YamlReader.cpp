@@ -179,7 +179,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
       }
       break;
     case inSpaceBeforeValue:
-      if (isalnum(c) || (c == '-') || (c == '_')) {
+      if (isalnum(c) || (c == '-') || (c == '_') || (c == '/')) {
         p = &value[0];
         *p++ = c;
         state = inValue;
@@ -279,6 +279,10 @@ public:
 
   virtual Addend addend() const {
     return _addend;
+  }
+  
+  virtual void setAddend(Addend a) {
+    _addend = a;
   }
 
   virtual void setTarget(const Atom* newAtom) {
@@ -554,7 +558,10 @@ public:
   }
 
   virtual StringRef loadName() const {
-    return _loadName;
+    if ( _loadName == nullptr )
+      return StringRef();
+    else
+      return StringRef(_loadName);
   }
 
   virtual bool canBeNullAtRuntime() const {

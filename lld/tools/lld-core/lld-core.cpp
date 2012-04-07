@@ -286,7 +286,7 @@ public:
 
   // return entry point for output file (e.g. "main") or nullptr
   virtual StringRef entryPointName() {
-    return nullptr;
+    return StringRef();
   }
 
   // for iterating must-be-defined symbols ("main" or -u command line option)
@@ -403,14 +403,26 @@ public:
 
 
 
-  virtual const DefinedAtom* makeStub(const Atom& shlibAtom, File& file) {
-    return new TestingStubAtom(file, shlibAtom);
+  virtual const DefinedAtom *getStub(const Atom& shlibAtom, File& file) {
+    const DefinedAtom *result = new TestingStubAtom(file, shlibAtom);
+    _stubs.push_back(result);
+    return result;
   }
   
   virtual const DefinedAtom* makeGOTEntry(const Atom& shlibAtom, File& file) {
     return new TestingGOTAtom(file, shlibAtom);
   }
-
+  
+  virtual void addStubAtoms(File &file) {
+    for (const DefinedAtom *stub : _stubs) {
+      file.addAtom(*stub);
+    }
+  }
+  
+  virtual void writeExecutable(const lld::File &, raw_ostream &out) {
+  }
+private:
+  std::vector<const DefinedAtom*> _stubs;
 };
 
 
@@ -495,6 +507,20 @@ llvm::cl::opt<bool>
 gDoGotPass("got_pass", 
           llvm::cl::desc("Run pass to create GOT atoms"));
 
+enum PlatformChoice {
+  platformTesting, platformDarwin
+};
+
+llvm::cl::opt<PlatformChoice> 
+platformSelected("platform",
+  llvm::cl::desc("Select platform"),
+  llvm::cl::values(
+    clEnumValN(platformTesting, "none", "link for testing"),
+    clEnumValN(platformDarwin, "darwin", "link as darwin would"),
+    clEnumValEnd));
+    
+    
+    
 int main(int argc, char *argv[]) {
   // Print a stack trace if we signal out.
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -505,12 +531,20 @@ int main(int argc, char *argv[]) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
   // create platform for testing
-  TestingPlatform testingPlatform;
+  Platform* platform = NULL;
+  switch ( platformSelected ) {
+    case platformTesting:
+      platform = new TestingPlatform();
+      break;
+    case platformDarwin:
+      platform = createDarwinPlatform();
+      break;
+  }
   
   // read input YAML doc into object file(s)
   std::vector<const File *> files;
   if (error(yaml::parseObjectTextFileOrSTDIN(gInputFilePath, 
-                                            testingPlatform, files))) {
+                                            *platform, files))) {
     return 1;
   }
   
@@ -518,16 +552,16 @@ int main(int argc, char *argv[]) {
   TestingInputFiles inputFiles(files);
   
   // merge all atom graphs
-  Resolver resolver(testingPlatform, inputFiles);
+  Resolver resolver(*platform, inputFiles);
   resolver.resolve();
 
   // run passes
   if ( gDoGotPass ) {
-    GOTPass  addGot(resolver.resultFile(), testingPlatform);
+    GOTPass  addGot(resolver.resultFile(), *platform);
     addGot.perform();
   }
   if ( gDoStubsPass ) {
-    StubsPass  addStubs(resolver.resultFile(), testingPlatform);
+    StubsPass  addStubs(resolver.resultFile(), *platform);
     addStubs.perform();
   }
 
@@ -553,10 +587,20 @@ int main(int argc, char *argv[]) {
   // read native file
   std::unique_ptr<lld::File> natFile;
   if ( error(parseNativeObjectFileOrSTDIN(tempPath, natFile)) ) 
-	return 1;
-	
-  // write new atom graph out as YAML doc
-  yaml::writeObjectText(*natFile, testingPlatform, out);
+    return 1;
+
+  if ( platformSelected == platformTesting) {
+    // write new atom graph out as YAML doc
+    yaml::writeObjectText(resolver.resultFile() /* *natFile */, *platform, out);
+  }
+  else {
+    platform->writeExecutable(resolver.resultFile() /* *natFile */, out);
+    // HACK.  I don't see any way to set the 'executable' bit on files 
+    // in raw_fd_ostream or in llvm/Support.
+#if HAVE_SYS_STAT_H
+    ::chmod(outPath, 0777);
+#endif
+  }
 
   // delete temp .o file
   bool existed;

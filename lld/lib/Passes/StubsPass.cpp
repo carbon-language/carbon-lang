@@ -30,9 +30,6 @@ void StubsPass::perform() {
   if ( !_platform.noTextRelocs() )
     return;
 
-  // Use map so all call sites to same shlib symbol use same stub.
-  llvm::DenseMap<const Atom*, const DefinedAtom*> targetToStub;
-
   // Scan all references in all atoms.
   for(auto ait=_file.definedAtomsBegin(), aend=_file.definedAtomsEnd();
                                                       ait != aend; ++ait) {
@@ -48,7 +45,8 @@ void StubsPass::perform() {
         if ( target->definition() == Atom::definitionSharedLibrary ) {
           // Calls to shared libraries go through stubs.
           replaceCalleeWithStub = true;
-        } else if (const DefinedAtom* defTarget =
+        } 
+        else if (const DefinedAtom* defTarget =
                      dyn_cast<DefinedAtom>(target)) {
           if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
             // Calls to interposable functions in same linkage unit
@@ -58,34 +56,18 @@ void StubsPass::perform() {
           }
         }
         if ( replaceCalleeWithStub ) {
-          // Replace the reference's target with a stub.
-          const DefinedAtom* stub;
-          auto pos = targetToStub.find(target);
-          if ( pos == targetToStub.end() ) {
-            // This is no existing stub.  Create a new one.
-            stub = _platform.makeStub(*target, _file);
-            assert(stub != nullptr);
-            assert(stub->contentType() == DefinedAtom::typeStub);
-            targetToStub[target] = stub;
-          }
-          else {
-            // Reuse an existing stub.
-            stub = pos->second;
-            assert(stub != nullptr);
-          }
-          // Switch call site to reference stub atom.
+          // Ask platform to make stub and other support atoms.
+          const DefinedAtom* stub = _platform.getStub(*target, _file);
+          assert(stub != nullptr);
+          // Switch call site to reference stub atom instead.
           (const_cast<Reference*>(ref))->setTarget(stub);
-        }
+         }
       }
     }
   }
 
-  // add all created stubs to file
-  for (auto it=targetToStub.begin(), end=targetToStub.end(); it != end; ++it) {
-    _file.addAtom(*it->second);
-  }
-
-
+  // Tell platform to add all created stubs and support Atoms to file.
+  _platform.addStubAtoms(_file);
 }
 
 
