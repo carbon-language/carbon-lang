@@ -508,10 +508,10 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   if (!R.isSimple())
     INVALID(SimpleRegion, "Region not simple: " << R.getNameStr());
 
-  if (!allBlocksValid(Context))
+  if (!isValidExit(Context))
     return false;
 
-  if (!isValidExit(Context))
+  if (!allBlocksValid(Context))
     return false;
 
   DEBUG(dbgs() << "OK\n");
