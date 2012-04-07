@@ -787,38 +787,46 @@ static const char* getMipsABIFromArch(StringRef ArchName) {
     return "n64";
 }
 
-void Clang::AddMIPSTargetArgs(const ArgList &Args,
-                             ArgStringList &CmdArgs) const {
-  const Driver &D = getToolChain().getDriver();
-
+// Get CPU and ABI names. They are not independent
+// so we have to calculate them together.
+static void getMipsCPUAndABI(const ArgList &Args,
+                             const ToolChain &TC,
+                             StringRef &CPUName,
+                             StringRef &ABIName) {
   StringRef ArchName;
-  const char *CPUName;
 
-  // Set target cpu and architecture.
+  // Select target cpu and architecture.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
     CPUName = A->getValue(Args);
     ArchName = getMipsArchFromCPU(CPUName);
   }
   else {
-    ArchName = Args.MakeArgString(getToolChain().getArchName());
+    ArchName = Args.MakeArgString(TC.getArchName());
     if (!checkMipsArchName(ArchName))
-      D.Diag(diag::err_drv_invalid_arch_name) << ArchName;
+      TC.getDriver().Diag(diag::err_drv_invalid_arch_name) << ArchName;
     else
       CPUName = getMipsCPUFromArch(ArchName);
   }
-
-  CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(CPUName);
  
   // Select the ABI to use.
-  const char *ABIName = 0;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
     ABIName = A->getValue(Args);
   else 
     ABIName = getMipsABIFromArch(ArchName);
+}
+
+void Clang::AddMIPSTargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs) const {
+  const Driver &D = getToolChain().getDriver();
+  StringRef CPUName;
+  StringRef ABIName;
+  getMipsCPUAndABI(Args, getToolChain(), CPUName, ABIName);
+
+  CmdArgs.push_back("-target-cpu");
+  CmdArgs.push_back(CPUName.data());
 
   CmdArgs.push_back("-target-abi");
-  CmdArgs.push_back(ABIName);
+  CmdArgs.push_back(ABIName.data());
 
   // Select the float ABI as determined by -msoft-float, -mhard-float,
   // and -mfloat-abi=.
