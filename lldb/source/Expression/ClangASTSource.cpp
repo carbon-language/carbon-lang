@@ -1183,6 +1183,11 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
     BaseOffsetMap origin_base_offsets;
     BaseOffsetMap origin_virtual_base_offsets;
     
+    ClangASTContext::GetCompleteDecl(&origin_record->getASTContext(), const_cast<RecordDecl*>(origin_record.decl));
+    
+    if (!origin_record.decl->getDefinition())
+        return false;
+    
     const ASTRecordLayout &record_layout(origin_record->getASTContext().getASTRecordLayout(origin_record.decl));
     
     int field_idx = 0;
