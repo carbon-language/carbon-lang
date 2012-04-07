@@ -4584,7 +4584,7 @@ static void CheckCXX98CompatAccessibleCopy(Sema &S,
   switch (OR) {
   case OR_Success:
     S.CheckConstructorAccess(Loc, cast<CXXConstructorDecl>(Best->Function),
-                             Best->FoundDecl.getAccess(), Diag);
+                             Entity, Best->FoundDecl.getAccess(), Diag);
     // FIXME: Check default arguments as far as that's possible.
     break;
 

@@ -884,8 +884,13 @@ def note_access_natural : Note<
 def note_access_constrained_by_path : Note<
   "constrained by %select{|implicitly }1%select{private|protected}0"
   " inheritance here">;
-def note_access_protected_restricted : Note<
-  "object type %select{|%1 }0must derive from context type %2">;
+def note_access_protected_restricted_noobject : Note<
+  "must name member using the type of the current context %0">;
+def note_access_protected_restricted_ctordtor : Note<
+  "protected %select{constructor|destructor}0 can only be used to "
+  "%select{construct|destroy}0 a base class subobject">;
+def note_access_protected_restricted_object : Note<
+  "can only access this member on an object of type %0">;
 def warn_cxx98_compat_sfinae_access_control : Warning<
   "substitution failure due to access control is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore, NoSFINAE;

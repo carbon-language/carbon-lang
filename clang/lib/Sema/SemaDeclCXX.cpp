@@ -3344,7 +3344,8 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     CheckDestructorAccess(Base->getLocStart(), Dtor,
                           PDiag(diag::err_access_dtor_base)
                             << Base->getType()
-                            << Base->getSourceRange());
+                            << Base->getSourceRange(),
+                          Context.getTypeDeclType(ClassDecl));
     
     MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
     DiagnoseUseOfDecl(Dtor, Location);
@@ -6276,6 +6277,13 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   // where it's important for the sanity of two-phase lookup.
   if (!IsInstantiation)
     R.setHideTags(false);
+
+  // For the purposes of this lookup, we have a base object type
+  // equal to that of the current context.
+  if (CurContext->isRecord()) {
+    R.setBaseObjectType(
+                   Context.getTypeDeclType(cast<CXXRecordDecl>(CurContext)));
+  }
 
   LookupQualifiedName(R, LookupContext);
 

@@ -68,7 +68,7 @@ namespace test1 {
 
 namespace test2 {
   class A {
-    protected: int x; // expected-note 3 {{object type must derive}}
+    protected: int x; // expected-note 3 {{can only access this member on an object of type}}
     static int sx;
     static void test(A&);
   };
@@ -103,7 +103,7 @@ namespace test2 {
 namespace test3 {
   class B;
   class A {
-    protected: int x; // expected-note {{object type must derive}}
+    protected: int x; //expected-note {{declared protected}} // expected-note {{can only access this member on an object of type}}
     static int sx;
     static void test(B&);
   };
@@ -130,7 +130,7 @@ namespace test3 {
     (void) b.sx;
   }
   void D::test(B &b) {
-    (void) b.x;
+    (void) b.x; // expected-error {{'x' is a protected member}}
     (void) b.sx;
   }
 }
@@ -138,7 +138,7 @@ namespace test3 {
 namespace test4 {
   class C;
   class A {
-    protected: int x; // expected-note {{declared}} expected-note 2 {{object type must derive}}
+    protected: int x; // expected-note 2{{declared protected here}} expected-note{{member is declared here}}
     static int sx;    // expected-note 3{{member is declared here}}
     static void test(C&);
   };
@@ -215,7 +215,7 @@ namespace test6 {
   class Static {};
   class A {
   protected:
-    void foo(int); // expected-note 3 {{object type must derive}}
+    void foo(int); // expected-note 3 {{can only access this member on an object of type}}
     void foo(long);
     static void foo(Static);
 
@@ -253,7 +253,7 @@ namespace test7 {
   class Static {};
   class A {
     protected:
-    void foo(int); // expected-note 3 {{object type must derive}}
+    void foo(int); // expected-note 3 {{must name member using the type of the current context}}
     void foo(long);
     static void foo(Static);
 
@@ -291,7 +291,7 @@ namespace test8 {
   class Static {};
   class A {
     protected:
-    void foo(int); // expected-note 3 {{object type must derive}}
+    void foo(int); // expected-note 3 {{must name member using the type of the current context}}
     void foo(long);
     static void foo(Static);
 
@@ -329,7 +329,7 @@ namespace test8 {
 
 namespace test9 {
   class A { // expected-note {{member is declared here}}
-  protected: int foo(); // expected-note 4 {{declared}} expected-note 2 {{object type must derive}} expected-note {{object type 'test9::A' must derive}}
+  protected: int foo(); // expected-note 4 {{declared}} expected-note 2 {{can only access this member on an object of type}} expected-note {{member is declared here}}
   };
 
   class B : public A { // expected-note {{member is declared here}}
@@ -423,7 +423,7 @@ namespace test12 {
 // This friendship is not considered because a public member of A is
 // inaccessible in C.
 namespace test13 {
-  class A { protected: int foo(); }; // expected-note {{object type 'test13::D' must derive from context type 'test13::C'}}
+  class A { protected: int foo(); }; // expected-note {{can only access this member on an object of type}}
   class B : private virtual A {};
   class C : private B { friend void test(); };
   class D : public virtual A {};
@@ -432,4 +432,72 @@ namespace test13 {
     D d;
     d.A::foo(); // expected-error {{protected member}}
   }
+}
+
+// PR8058
+namespace test14 {
+  class A {
+  protected:
+    template <class T> void temp(T t); // expected-note {{must name member using the type of the current context}}
+
+    void nontemp(int); // expected-note {{must name member using the type of the current context}}
+
+    template <class T> void ovl_temp(T t); // expected-note {{must name member using the type of the current context}}
+    void ovl_temp(float);
+
+    void ovl_nontemp(int); // expected-note {{must name member using the type of the current context}}
+    void ovl_nontemp(float);
+
+    template <class T> void ovl_withtemp(T);
+    void ovl_withtemp(int); // expected-note {{must name member using the type of the current context}}
+  };
+
+  class B : public A {
+    void use() {
+      void (A::*ptr)(int);
+      ptr = &A::temp; // expected-error {{protected member}}
+      ptr = &A::nontemp; // expected-error {{protected member}}
+      ptr = &A::ovl_temp; // expected-error {{protected member}}
+      ptr = &A::ovl_nontemp; // expected-error {{protected member}}
+      ptr = &A::ovl_withtemp; // expected-error {{protected member}}
+    }
+  };
+}
+
+namespace test15 {
+  class A {
+  protected:
+    A(); // expected-note 2 {{protected constructor can only be used to construct a base class subobject}}
+    A(const A &); // expected-note {{protected constructor can only be used to construct a base class subobject}}
+    ~A(); // expected-note 3 {{protected destructor can only be used to destroy a base class subobject}}
+  };
+
+  class B : public A {
+    // The uses here are fine.
+    B() {}
+    B(int i) : A() {}
+    ~B() {}
+
+    // All these uses are bad.
+
+    void test0() {
+      A a; // expected-error {{protected constructor}} expected-error {{protected destructor}}
+    }
+
+    A *test1() {
+      return new A(); // expected-error {{protected constructor}}
+    }
+
+    void test2(A *a) {
+      delete a; // expected-error {{protected destructor}}
+    }
+
+    A test3(A *a) {
+      return *a; // expected-error {{protected constructor}}
+    }
+
+    void test4(A *a) {
+      a->~A(); // expected-error {{protected member}}
+    }
+  };
 }

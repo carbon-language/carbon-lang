@@ -2276,8 +2276,9 @@ static ExprResult BuildCXXCastArgument(Sema &S,
                                   CastLoc, ConstructorArgs))
       return ExprError();
 
-    S.CheckConstructorAccess(CastLoc, Constructor, Constructor->getAccess(),
-                             S.PDiag(diag::err_access_ctor));
+    S.CheckConstructorAccess(CastLoc, Constructor,
+                             InitializedEntity::InitializeTemporary(Ty),
+                             Constructor->getAccess());
     
     ExprResult Result
       = S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),

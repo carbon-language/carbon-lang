@@ -4105,11 +4105,13 @@ public:
                                       bool IsCopyBindingRefToTemp = false);
   AccessResult CheckConstructorAccess(SourceLocation Loc,
                                       CXXConstructorDecl *D,
+                                      const InitializedEntity &Entity,
                                       AccessSpecifier Access,
-                                      PartialDiagnostic PD);
+                                      const PartialDiagnostic &PDiag);
   AccessResult CheckDestructorAccess(SourceLocation Loc,
                                      CXXDestructorDecl *Dtor,
-                                     const PartialDiagnostic &PDiag);
+                                     const PartialDiagnostic &PDiag,
+                                     QualType objectType = QualType());
   AccessResult CheckDirectMemberAccess(SourceLocation Loc,
                                        NamedDecl *D,
                                        const PartialDiagnostic &PDiag);
