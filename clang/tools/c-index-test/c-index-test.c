@@ -2781,6 +2781,9 @@ typedef struct thread_info {
 void thread_runner(void *client_data_v) {
   thread_info *client_data = client_data_v;
   client_data->result = cindextest_main(client_data->argc, client_data->argv);
+#ifdef __CYGWIN__
+  fflush(stdout);  /* stdout is not flushed on Cygwin. */
+#endif
 }
 
 int main(int argc, const char **argv) {
