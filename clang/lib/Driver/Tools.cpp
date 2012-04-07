@@ -5029,17 +5029,21 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
              getToolChain().getArch() == llvm::Triple::mipsel ||
              getToolChain().getArch() == llvm::Triple::mips64 ||
              getToolChain().getArch() == llvm::Triple::mips64el) {
-    // Get Mips CPU name and pass it to 'as'.
-    const char *CPUName;
-    if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
-      CPUName = A->getValue(Args);
-    else
-      CPUName = getMipsCPUFromArch(getToolChain().getArchName());
+    StringRef CPUName;
+    StringRef ABIName;
+    getMipsCPUAndABI(Args, getToolChain(), CPUName, ABIName);
 
-    if (CPUName) {
-      CmdArgs.push_back("-march");
-      CmdArgs.push_back(CPUName);
-    }
+    CmdArgs.push_back("-march");
+    CmdArgs.push_back(CPUName.data());
+
+    // Convert ABI name to the GNU tools acceptable variant.
+    if (ABIName == "o32")
+      ABIName = "32";
+    else if (ABIName == "n64")
+      ABIName = "64";
+
+    CmdArgs.push_back("-mabi");
+    CmdArgs.push_back(ABIName.data());
 
     if (getToolChain().getArch() == llvm::Triple::mips ||
         getToolChain().getArch() == llvm::Triple::mips64)
