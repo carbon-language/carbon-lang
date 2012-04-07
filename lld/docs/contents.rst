@@ -9,6 +9,7 @@ Contents
    intro
    design
    development
+   open_projects
    sphinx_intro
 
 Indices and tables
