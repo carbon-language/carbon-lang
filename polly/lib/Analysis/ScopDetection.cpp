@@ -385,16 +385,22 @@ Region *ScopDetection::expandRegion(Region &R) {
     DetectionContext Context(*TmpRegion, *AA, false /*verifying*/);
     DEBUG(dbgs() << "\t\tTrying " << TmpRegion->getNameStr() << "\n");
 
+    // Stop the expansion if there is any invalid block.
     if (!allBlocksValid(Context))
       break;
 
     if (isValidExit(Context)) {
+      // If TmpRegion also has a valid exit, make it become the cadidate of the
+      // largest region as a valid SCoP.
       if (CurrentRegion != &R)
         delete CurrentRegion;
 
       CurrentRegion = TmpRegion;
     }
 
+    // Go on expand the region to find the largest region as a valid SCoP no
+    // matter it has a valid exit or not, because the expanded region may has
+    // a valid exit.
     Region *TmpRegion2 = TmpRegion->getExpandedRegion();
 
     if (TmpRegion != &R && TmpRegion != CurrentRegion)
