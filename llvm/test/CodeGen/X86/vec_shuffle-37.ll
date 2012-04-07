@@ -27,11 +27,11 @@ entry:
 define void @t02(<8 x i32>* %source, <2 x i32>* %dest) nounwind noinline {
 entry:
 ; CHECK: t02
-; CHECK: mov
-; CHECK-NEXT: mov
-; CHECK-NEXT: mov
-; CHECK-NEXT: mov
-; CHECK-NEXT: ret
+; CHECK: movaps
+; CHECK: shufps
+; CHECK: pshufd
+; CHECK: movq
+; CHECK: ret
   %0 = bitcast <8 x i32>* %source to <4 x i32>*
   %arrayidx = getelementptr inbounds <4 x i32>* %0, i64 3
   %tmp2 = load <4 x i32>* %arrayidx, align 16

@@ -7795,19 +7795,20 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   }
 
   // If this shuffle node is simply a swizzle of another shuffle node,
-  // optimize shuffle(shuffle(x, y), undef) -> shuffle(x, y).
+  // and it reverses the swizzle of the previous shuffle then we can
+  // optimize shuffle(shuffle(x, undef), undef) -> x.
   if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
       N1.getOpcode() == ISD::UNDEF) {
 
-    SmallVector<int, 8> NewMask;
     ShuffleVectorSDNode *OtherSV = cast<ShuffleVectorSDNode>(N0);
 
-    // If the source shuffle has more than one user then do not try to optimize
-    // it because it may generate a more complex shuffle node. However, if the
-    // source shuffle is also a swizzle (a single source shuffle), our
-    // transformation is still likely to reduce the number of shuffles and only
-    // generate a simple shuffle node.
-    if (N0.getOperand(1).getOpcode() != ISD::UNDEF && !N0.hasOneUse())
+    // Shuffle nodes can only reverse shuffles with a single non-undef value.
+    if (N0.getOperand(1).getOpcode() != ISD::UNDEF)
+      return SDValue();
+
+    // The incoming shuffle must be of the same type as the result of the current
+    // shuffle.
+    if (OtherSV->getOperand(0).getValueType() != VT)
       return SDValue();
 
     EVT InVT = N0.getValueType();
@@ -7824,11 +7825,12 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       if (Idx >= 0)
         Idx = OtherSV->getMaskElt(Idx);
 
-      NewMask.push_back(Idx);
+      // The combined shuffle must map each index to itself.
+      if (Idx != i && Idx != -1)
+        return SDValue();
     }
-    assert(NewMask.size() == VT.getVectorNumElements() && "Invalid mask size");
-    return DAG.getVectorShuffle(VT, N->getDebugLoc(), OtherSV->getOperand(0),
-                                OtherSV->getOperand(1), &NewMask[0]);
+
+    return OtherSV->getOperand(0);
   }
 
   return SDValue();

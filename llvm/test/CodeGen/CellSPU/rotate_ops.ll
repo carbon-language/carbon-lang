@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=cellspu -o %t1.s
-; RUN: grep rot          %t1.s | count 85
+; RUN: grep rot          %t1.s | count 86
 ; RUN: grep roth         %t1.s | count 8
 ; RUN: grep roti.*5      %t1.s | count 1
 ; RUN: grep roti.*27     %t1.s | count 1

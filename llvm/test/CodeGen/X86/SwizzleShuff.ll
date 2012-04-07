@@ -41,3 +41,28 @@ define <4 x i8> @pull_bitcast2 (<4 x i8>* %pA, <4 x i8>* %pB, <4 x i8>* %pC) {
   store <4 x i8> %C, <4 x i8>* %pA
   ret <4 x i8> %C
 }
+
+
+
+; CHECK: reverse_1
+; CHECK-NOT: shuf
+; CHECK: ret
+define <4 x i32> @reverse_1 (<4 x i32>* %pA, <4 x i32>* %pB) {
+  %A = load <4 x i32>* %pA
+  %B = load <4 x i32>* %pB
+  %S = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %S1 = shufflevector <4 x i32> %S, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  ret <4 x i32> %S1
+}
+
+
+; CHECK: no_reverse_shuff
+; CHECK: shuf
+; CHECK: ret
+define <4 x i32> @no_reverse_shuff (<4 x i32>* %pA, <4 x i32>* %pB) {
+  %A = load <4 x i32>* %pA
+  %B = load <4 x i32>* %pB
+  %S = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %S1 = shufflevector <4 x i32> %S, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 3, i32 2>
+  ret <4 x i32> %S1
+}
