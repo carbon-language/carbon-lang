@@ -155,4 +155,7 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   AssemblerDialect = AsmWriterFlavor;
 
   TextAlignFillValue = 0x90;
+
+  // Exceptions handling
+  ExceptionsType = ExceptionHandling::DwarfCFI;
 }
