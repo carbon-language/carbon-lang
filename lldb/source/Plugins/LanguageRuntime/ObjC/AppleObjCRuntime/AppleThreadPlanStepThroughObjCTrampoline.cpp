@@ -33,9 +33,8 @@ using namespace lldb_private;
 AppleThreadPlanStepThroughObjCTrampoline::AppleThreadPlanStepThroughObjCTrampoline
 (
     Thread &thread, 
-    AppleObjCTrampolineHandler *trampoline_handler, 
-    lldb::addr_t args_addr, 
-    lldb::addr_t object_addr,
+    AppleObjCTrampolineHandler *trampoline_handler,
+    ValueList &input_values,
     lldb::addr_t isa_addr,
     lldb::addr_t sel_addr,
     bool stop_others
@@ -46,11 +45,11 @@ AppleThreadPlanStepThroughObjCTrampoline::AppleThreadPlanStepThroughObjCTrampoli
                 eVoteNoOpinion, 
                 eVoteNoOpinion),
     m_trampoline_handler (trampoline_handler),
-    m_args_addr (args_addr),
-    m_object_addr (object_addr),
+    m_args_addr (LLDB_INVALID_ADDRESS),
+    m_input_values (input_values),
     m_isa_addr(isa_addr),
     m_sel_addr(sel_addr),
-    m_impl_function (trampoline_handler->GetLookupImplementationWrapperFunction()),
+    m_impl_function (NULL),
     m_stop_others (stop_others)
 {
     
@@ -66,12 +65,42 @@ AppleThreadPlanStepThroughObjCTrampoline::~AppleThreadPlanStepThroughObjCTrampol
 void
 AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 {
-    StreamString errors;
-    ExecutionContext exc_ctx;
-    m_thread.CalculateExecutionContext(exc_ctx);
-    m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
-    m_func_sp->SetPrivate(true);
-    m_thread.QueueThreadPlan (m_func_sp, false);
+//    StreamString errors;
+//    ExecutionContext exc_ctx;
+//    m_thread.CalculateExecutionContext(exc_ctx);
+//    m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
+//    m_func_sp->SetPrivate(true);
+//    m_thread.QueueThreadPlan (m_func_sp, false);
+    m_thread.GetProcess()->AddPreResumeAction (PreResumeInitializeClangFunction, (void *) this);
+}
+
+bool
+AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
+{
+    if (!m_func_sp)
+    {
+        StreamString errors;
+        m_args_addr = m_trampoline_handler->SetupDispatchFunction(m_thread, m_input_values);
+        
+        if (m_args_addr == LLDB_INVALID_ADDRESS)
+        {
+            return false;
+        }
+        m_impl_function = m_trampoline_handler->GetLookupImplementationWrapperFunction();
+        ExecutionContext exc_ctx;
+        m_thread.CalculateExecutionContext(exc_ctx);
+        m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
+        m_func_sp->SetPrivate(true);
+        m_thread.QueueThreadPlan (m_func_sp, false);
+    }
+    return true;
+}
+
+bool
+AppleThreadPlanStepThroughObjCTrampoline::PreResumeInitializeClangFunction(void *void_myself)
+{
+    AppleThreadPlanStepThroughObjCTrampoline *myself = static_cast<AppleThreadPlanStepThroughObjCTrampoline *>(void_myself);
+    return myself->InitializeClangFunction();
 }
 
 void
@@ -83,7 +112,7 @@ AppleThreadPlanStepThroughObjCTrampoline::GetDescription (Stream *s,
     else
     {
         s->Printf ("Stepping to implementation of ObjC method - obj: 0x%llx, isa: 0x%llx, sel: 0x%llx",
-        m_object_addr, m_isa_addr, m_sel_addr);
+        m_input_values.GetValueAtIndex(0)->GetScalar().ULongLong(), m_isa_addr, m_sel_addr);
     }
 }
                 

@@ -312,8 +312,10 @@ public:
     SetCurrentThreadForRun (int tid);
 
     lldb_private::LazyBool
-    SupportsAllocDeallocMemory () const
+    SupportsAllocDeallocMemory () // const
     {
+        // Uncomment this to have lldb pretend the debug server doesn't respond to alloc/dealloc memory packets.
+        // m_supports_alloc_dealloc_memory = lldb_private::eLazyBoolNo;
         return m_supports_alloc_dealloc_memory;
     }
 

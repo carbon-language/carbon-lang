@@ -60,7 +60,10 @@ public:
         bool is_super2;
         FixUpState fixedup;
     };
-    
+
+    lldb::addr_t
+    SetupDispatchFunction (Thread &thread, ValueList &dispatch_values);
+
 private:
     static const char *g_lookup_implementation_function_name;
     static const char *g_lookup_implementation_function_code;

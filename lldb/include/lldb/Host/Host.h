@@ -205,6 +205,16 @@ public:
     static lldb::tid_t
     GetCurrentThreadID ();
 
+    //------------------------------------------------------------------
+    /// Get the thread token (the one returned by ThreadCreate when the thread was created) for the
+    /// calling thread in the current process.
+    ///
+    /// @return
+    ///     The thread token for the calling thread in the current process.
+    //------------------------------------------------------------------
+    static lldb::thread_t
+    GetCurrentThread ();
+
     static const char *
     GetSignalAsCString (int signo);
 

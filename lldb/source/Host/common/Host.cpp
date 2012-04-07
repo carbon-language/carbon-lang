@@ -442,6 +442,12 @@ Host::GetCurrentThreadID()
 #endif
 }
 
+lldb::thread_t
+Host::GetCurrentThread ()
+{
+    return lldb::thread_t(pthread_self());
+}
+
 const char *
 Host::GetSignalAsCString (int signo)
 {

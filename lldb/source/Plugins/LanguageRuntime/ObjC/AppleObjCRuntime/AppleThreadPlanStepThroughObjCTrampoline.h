@@ -16,6 +16,7 @@
 // Project includes
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-enumerations.h"
+#include "lldb/Core/Value.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "AppleObjCTrampolineHandler.h"
 
@@ -30,8 +31,7 @@ public:
 	//------------------------------------------------------------------
 	AppleThreadPlanStepThroughObjCTrampoline(Thread &thread, 
                                              AppleObjCTrampolineHandler *trampoline_handler, 
-                                             lldb::addr_t args_addr, 
-                                             lldb::addr_t object_addr,
+                                             ValueList &values,
                                              lldb::addr_t isa_addr,
                                              lldb::addr_t sel_addr,
                                              bool stop_others);
@@ -63,6 +63,9 @@ public:
     virtual void
     DidPush();
     
+    static bool
+    PreResumeInitializeClangFunction(void *myself);
+
     virtual bool
     WillStop();
 
@@ -74,12 +77,16 @@ protected:
 	//------------------------------------------------------------------
 	
 private:
+    bool
+    InitializeClangFunction ();
+
 	//------------------------------------------------------------------
 	// For AppleThreadPlanStepThroughObjCTrampoline only
 	//------------------------------------------------------------------
     AppleObjCTrampolineHandler *m_trampoline_handler; // FIXME - ensure this doesn't go away on us?  SP maybe?
     lldb::addr_t m_args_addr;     // Stores the address for our step through function result structure.
-    lldb::addr_t m_object_addr;  // This is only for Description.
+    //lldb::addr_t m_object_addr;  // This is only for Description.
+    ValueList    m_input_values;
     lldb::addr_t m_isa_addr;     // isa_addr and sel_addr are the keys we will use to cache the implementation.
     lldb::addr_t m_sel_addr;
     lldb::ThreadPlanSP m_func_sp;       // This is the function call plan.  We fill it at start, then set it

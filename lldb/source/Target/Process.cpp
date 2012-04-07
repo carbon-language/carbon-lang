@@ -2793,14 +2793,22 @@ Process::Resume ()
         // to see if they are suppoed to start back up with a signal.
         if (m_thread_list.WillResume())
         {
-            m_mod_id.BumpResumeID();
-            error = DoResume();
-            if (error.Success())
+            // Last thing, do the PreResumeActions.
+            if (!RunPreResumeActions())
             {
-                DidResume();
-                m_thread_list.DidResume();
-                if (log)
-                    log->Printf ("Process thinks the process has resumed.");
+                error.SetErrorStringWithFormat ("Process::Resume PreResumeActions failed, not resuming.");
+            }
+            else
+            {
+                m_mod_id.BumpResumeID();
+                error = DoResume();
+                if (error.Success())
+                {
+                    DidResume();
+                    m_thread_list.DidResume();
+                    if (log)
+                        log->Printf ("Process thinks the process has resumed.");
+                }
             }
         }
         else
@@ -3074,7 +3082,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
 
 
 bool
-Process::StartPrivateStateThread ()
+Process::StartPrivateStateThread (bool force)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS));
 
@@ -3082,13 +3090,16 @@ Process::StartPrivateStateThread ()
     if (log)
         log->Printf ("Process::%s()%s ", __FUNCTION__, already_running ? " already running" : " starting private state thread");
 
-    if (already_running)
+    if (!force && already_running)
         return true;
 
     // Create a thread that watches our internal state and controls which
     // events make it to clients (into the DCProcess event queue).
     char thread_name[1024];
-    snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%llu)>", GetID());
+    if (already_running)
+        snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state-override(pid=%llu)>", GetID());
+    else
+        snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%llu)>", GetID());
     m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
     return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
 }
@@ -3834,7 +3845,7 @@ Process::UpdateInstanceName ()
 
 ExecutionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
-                        lldb::ThreadPlanSP &thread_plan_sp,        
+                        lldb::ThreadPlanSP &thread_plan_sp,
                         bool stop_others,
                         bool try_all_threads,
                         bool discard_on_error,
@@ -3896,7 +3907,20 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         selected_tid = LLDB_INVALID_THREAD_ID;
     }
 
-    thread->QueueThreadPlan(thread_plan_sp, true);
+    lldb::thread_t backup_private_state_thread = LLDB_INVALID_HOST_THREAD;
+    
+    if (Host::GetCurrentThread() == m_private_state_thread)
+    {
+        // Yikes, we are running on the private state thread!  So we can't call DoRunThreadPlan on this thread, since
+        // then nobody will be around to fetch internal events.
+        // The simplest thing to do is to spin up a temporary thread to handle private state thread events while
+        // we are doing the RunThreadPlan here.
+        backup_private_state_thread = m_private_state_thread;
+        printf ("Running thread plan on private state thread, spinning up another state thread to handle the events.\n");
+        StartPrivateStateThread(true);
+    }
+    
+    thread->QueueThreadPlan(thread_plan_sp, false); // This used to pass "true" does that make sense?
     
     Listener listener("lldb.process.listener.run-thread-plan");
     
@@ -4253,6 +4277,17 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         
     }  // END WAIT LOOP
     
+    // If we had to start up a temporary private state thread to run this thread plan, shut it down now.
+    if (IS_VALID_LLDB_HOST_THREAD(backup_private_state_thread))
+    {
+        StopPrivateStateThread();
+        lldb::thread_result_t thread_result;
+        Error error;
+        // Host::ThreadJoin(m_private_state_thread, &thread_result, &error);
+        m_private_state_thread = backup_private_state_thread;
+    }
+    
+    
     // Now do some processing on the results of the run:
     if (return_value == eExecutionInterrupted)
     {
@@ -4506,6 +4541,31 @@ Process::RemoveInvalidMemoryRange (const LoadRange &region)
     return m_memory_cache.RemoveInvalidRange(region.GetRangeBase(), region.GetByteSize());
 }
 
+void
+Process::AddPreResumeAction (PreResumeActionCallback callback, void *baton)
+{
+    m_pre_resume_actions.push_back(PreResumeCallbackAndBaton (callback, baton));
+}
+
+bool
+Process::RunPreResumeActions ()
+{
+    bool result = true;
+    while (!m_pre_resume_actions.empty())
+    {
+        struct PreResumeCallbackAndBaton action = m_pre_resume_actions.back();
+        m_pre_resume_actions.pop_back();
+        bool this_result = action.callback (action.baton);
+        if (result == true) result = this_result;
+    }
+    return result;
+}
+
+void
+Process::ClearPreResumeActions ()
+{
+    m_pre_resume_actions.clear();
+}
 
 //--------------------------------------------------------------
 // class Process::SettingsController

@@ -3143,7 +3143,27 @@ public:
     //------------------------------------------------------------------
     bool
     RemoveInvalidMemoryRange (const LoadRange &region);
-                         
+    
+    //------------------------------------------------------------------
+    // If the setup code of a thread plan needs to do work that might involve 
+    // calling a function in the target, it should not do that work directly
+    // in one of the thread plan functions (DidPush/WillResume) because
+    // such work needs to be handled carefully.  Instead, put that work in
+    // a PreResumeAction callback, and register it with the process.  It will
+    // get done before the actual "DoResume" gets called.
+    //------------------------------------------------------------------
+    
+    typedef bool (PreResumeActionCallback)(void *);
+
+    void
+    AddPreResumeAction (PreResumeActionCallback callback, void *baton);
+    
+    bool
+    RunPreResumeActions ();
+    
+    void
+    ClearPreResumeActions ();
+                              
     ReadWriteLock &
     GetRunLock ()
     {
@@ -3227,7 +3247,7 @@ protected:
     bool
     PrivateStateThreadIsValid () const
     {
-        return m_private_state_thread != LLDB_INVALID_HOST_THREAD;
+        return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
     }
 
     //------------------------------------------------------------------
@@ -3270,6 +3290,19 @@ protected:
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
     LanguageRuntimeCollection 	m_language_runtimes;
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
+    
+    struct PreResumeCallbackAndBaton
+    {
+        bool (*callback) (void *);
+        void *baton;
+        PreResumeCallbackAndBaton (PreResumeActionCallback in_callback, void *in_baton) :
+            callback (in_callback),
+            baton (in_baton)
+        {
+        }
+    };
+    
+    std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_run_lock;
 
     enum {
@@ -3291,7 +3324,7 @@ protected:
     SetPrivateState (lldb::StateType state);
 
     bool
-    StartPrivateStateThread ();
+    StartPrivateStateThread (bool force = false);
 
     void
     StopPrivateStateThread ();
