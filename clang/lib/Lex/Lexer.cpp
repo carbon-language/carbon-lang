@@ -1597,7 +1597,9 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
     // them.
     if (C != '_') {
       if (!isLexingRawMode())
-        Diag(CurPtr, diag::ext_reserved_user_defined_literal)
+        Diag(CurPtr, getLangOpts().MicrosoftMode ? 
+            diag::ext_ms_reserved_user_defined_literal :
+            diag::ext_reserved_user_defined_literal)
           << FixItHint::CreateInsertion(getSourceLocation(CurPtr), " ");
       return CurPtr;
     }
