@@ -28,23 +28,23 @@ struct VectorizeConfig {
   /// @brief The size of the native vector registers.
   unsigned VectorBits;
 
-  /// @brief Don't try to vectorize integer values.
-  bool NoInts;
+  /// @brief Vectorize integer values.
+  bool VectorizeInts;
 
-  /// @brief Don't try to vectorize floating-point values.
-  bool NoFloats;
+  /// @brief Vectorize floating-point values.
+  bool VectorizeFloats;
 
-  /// @brief Don't try to vectorize casting (conversion) operations.
-  bool NoCasts;
+  /// @brief Vectorize casting (conversion) operations.
+  bool VectorizeCasts;
 
-  /// @brief Don't try to vectorize floating-point math intrinsics.
-  bool NoMath;
+  /// @brief Vectorize floating-point math intrinsics.
+  bool VectorizeMath;
 
-  /// @brief Don't try to vectorize the fused-multiply-add intrinsic.
-  bool NoFMA;
+  /// @brief Vectorize the fused-multiply-add intrinsic.
+  bool VectorizeFMA;
 
-  /// @brief Don't try to vectorize loads and stores.
-  bool NoMemOps;
+  /// @brief Vectorize loads and stores.
+  bool VectorizeMemOps;
 
   /// @brief Only generate aligned loads and stores.
   bool AlignedOnly;

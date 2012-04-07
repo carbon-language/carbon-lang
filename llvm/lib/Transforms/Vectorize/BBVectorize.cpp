@@ -437,9 +437,9 @@ namespace {
       case Intrinsic::exp:
       case Intrinsic::exp2:
       case Intrinsic::pow:
-        return !Config.NoMath;
+        return Config.VectorizeMath;
       case Intrinsic::fma:
-        return !Config.NoFMA;
+        return Config.VectorizeFMA;
       }
     }
 
@@ -533,16 +533,16 @@ namespace {
     } else if (LoadInst *L = dyn_cast<LoadInst>(I)) {
       // Vectorize simple loads if possbile:
       IsSimpleLoadStore = L->isSimple();
-      if (!IsSimpleLoadStore || Config.NoMemOps)
+      if (!IsSimpleLoadStore || !Config.VectorizeMemOps)
         return false;
     } else if (StoreInst *S = dyn_cast<StoreInst>(I)) {
       // Vectorize simple stores if possbile:
       IsSimpleLoadStore = S->isSimple();
-      if (!IsSimpleLoadStore || Config.NoMemOps)
+      if (!IsSimpleLoadStore || !Config.VectorizeMemOps)
         return false;
     } else if (CastInst *C = dyn_cast<CastInst>(I)) {
       // We can vectorize casts, but not casts of pointer types, etc.
-      if (Config.NoCasts)
+      if (!Config.VectorizeCasts)
         return false;
 
       Type *SrcTy = C->getSrcTy();
@@ -582,10 +582,12 @@ namespace {
         !(VectorType::isValidElementType(T2) || T2->isVectorTy()))
       return false;
 
-    if (Config.NoInts && (T1->isIntOrIntVectorTy() || T2->isIntOrIntVectorTy()))
+    if (!Config.VectorizeInts
+        && (T1->isIntOrIntVectorTy() || T2->isIntOrIntVectorTy()))
       return false;
 
-    if (Config.NoFloats && (T1->isFPOrFPVectorTy() || T2->isFPOrFPVectorTy()))
+    if (!Config.VectorizeFloats
+        && (T1->isFPOrFPVectorTy() || T2->isFPOrFPVectorTy()))
       return false;
 
     if (T1->getPrimitiveSizeInBits() > Config.VectorBits/2 ||
@@ -1887,12 +1889,12 @@ llvm::vectorizeBasicBlock(Pass *P, BasicBlock &BB, const VectorizeConfig &C) {
 //===----------------------------------------------------------------------===//
 VectorizeConfig::VectorizeConfig() {
   VectorBits = ::VectorBits;
-  NoInts = ::NoInts;
-  NoFloats = ::NoFloats;
-  NoCasts = ::NoCasts;
-  NoMath = ::NoMath;
-  NoFMA = ::NoFMA;
-  NoMemOps = ::NoMemOps;
+  VectorizeInts = !::NoInts;
+  VectorizeFloats = !::NoFloats;
+  VectorizeCasts = !::NoCasts;
+  VectorizeMath = !::NoMath;
+  VectorizeFMA = !::NoFMA;
+  VectorizeMemOps = !::NoMemOps;
   AlignedOnly = ::AlignedOnly;
   ReqChainDepth= ::ReqChainDepth;
   SearchLimit = ::SearchLimit;
