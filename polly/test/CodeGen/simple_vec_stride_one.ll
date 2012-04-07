@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-vector -dce -S %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-codegen -enable-polly-vector -enable-polly-grouped-unroll -S %s | FileCheck -check-prefix=UNROLL %s
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze   %s | FileCheck -check-prefix=IMPORT %s
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen  %s -S  -enable-polly-vector | FileCheck -check-prefix=CODEGEN %s
 ; ModuleID = 'simple_vec_stride_one.s'
@@ -50,3 +51,21 @@ define i32 @main() nounwind {
 ; We do not generate optimal loads for this.
 ; CODEGEN: <4 x float>
 
+
+; UNROLL: %p_scevgep1.moved.to. = getelementptr [1024 x float]* @A, i64 0, i64 0
+; UNROLL: %p_scevgep1.moved.to.1 = getelementptr [1024 x float]* @A, i64 0, i64 1
+; UNROLL: %p_scevgep1.moved.to.2 = getelementptr [1024 x float]* @A, i64 0, i64 2
+; UNROLL: %p_scevgep1.moved.to.3 = getelementptr [1024 x float]* @A, i64 0, i64 3
+; UNROLL: %p_scevgep.moved.to. = getelementptr [1024 x float]* @B, i64 0, i64 0
+; UNROLL: %p_scevgep.moved.to.4 = getelementptr [1024 x float]* @B, i64 0, i64 1
+; UNROLL: %p_scevgep.moved.to.5 = getelementptr [1024 x float]* @B, i64 0, i64 2
+; UNROLL: %p_scevgep.moved.to.6 = getelementptr [1024 x float]* @B, i64 0, i64 3
+; UNROLL: %_p_scalar_ = load float* %p_scevgep1.moved.to.
+; UNROLL: %_p_scalar_7 = load float* %p_scevgep1.moved.to.1
+; UNROLL: %_p_scalar_8 = load float* %p_scevgep1.moved.to.2
+; UNROLL: %_p_scalar_9 = load float* %p_scevgep1.moved.to.3
+; UNROLL: store float %_p_scalar_, float* %p_scevgep.moved.to., align 4
+; UNROLL: store float %_p_scalar_7, float* %p_scevgep.moved.to.4, align 4
+; UNROLL: store float %_p_scalar_8, float* %p_scevgep.moved.to.5, align 4
+; UNROLL: store float %_p_scalar_9, float* %p_scevgep.moved.to.6, align 4
+; UNROLL: br label %polly.merge_new_and_old

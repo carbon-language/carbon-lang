@@ -84,6 +84,12 @@ Aligned("enable-polly-aligned",
        cl::value_desc("OpenMP code generation enabled if true"),
        cl::init(false), cl::ZeroOrMore);
 
+static cl::opt<bool>
+GroupedUnrolling("enable-polly-grouped-unroll",
+                 cl::desc("Perform grouped unrolling, but don't generate SIMD "
+                          "instuctions"), cl::Hidden, cl::init(false),
+                 cl::ZeroOrMore);
+
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
@@ -675,6 +681,14 @@ void VectorBlockGenerator::generateLoad(const LoadInst *Load,
                                         ValueMapT &VectorMap,
                                         VectorValueMapT &ScalarMaps) {
   Value *NewLoad;
+
+  if (GroupedUnrolling) {
+    for (int i = 0; i < getVectorWidth(); i++)
+      ScalarMaps[i][Load] = generateScalarLoad(Load, ScalarMaps[i],
+                                               GlobalMaps[i]);
+
+    return;
+  }
 
   MemoryAccess &Access = Statement.getAccessFor(Load);
 
