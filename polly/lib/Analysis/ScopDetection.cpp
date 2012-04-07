@@ -376,45 +376,53 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 }
 
 Region *ScopDetection::expandRegion(Region &R) {
-  Region *CurrentRegion = &R;
-  Region *TmpRegion = R.getExpandedRegion();
+  // Initial no valid region was found (greater than R)
+  Region *LastValidRegion = NULL;
+  Region *ExpandedRegion  = R.getExpandedRegion();
 
   DEBUG(dbgs() << "\tExpanding " << R.getNameStr() << "\n");
 
-  while (TmpRegion) {
-    DetectionContext Context(*TmpRegion, *AA, false /*verifying*/);
-    DEBUG(dbgs() << "\t\tTrying " << TmpRegion->getNameStr() << "\n");
+  while (ExpandedRegion) {
+    DetectionContext Context(*ExpandedRegion, *AA, false /* verifying */);
+    DEBUG(dbgs() << "\t\tTrying " << ExpandedRegion->getNameStr() << "\n");
 
-    // Stop the expansion if there is any invalid block.
-    if (!allBlocksValid(Context))
-      break;
-
+    // Check the exit first (cheap)
     if (isValidExit(Context)) {
-      // If TmpRegion also has a valid exit, make it become the cadidate of the
-      // largest region as a valid SCoP.
-      if (CurrentRegion != &R)
-        delete CurrentRegion;
+      // If the exit is valid check all blocks
+      //  - if true, a valid region was found => store it + keep expanding
+      //  - if false, .tbd. => stop  (should this really end the loop?)
+      if (!allBlocksValid(Context))
+        break;
 
-      CurrentRegion = TmpRegion;
+      // Delete unnecessary regions (allocated by getExpandedRegion)
+      if (LastValidRegion)
+        delete LastValidRegion;
+
+      // Store this region, because it is the greatest valid (encountered so far)
+      LastValidRegion = ExpandedRegion;
+
+      // Create and test the next greater region (if any)
+      ExpandedRegion = ExpandedRegion->getExpandedRegion();
+
+    } else {
+      // Create and test the next greater region (if any)
+      Region *TmpRegion = ExpandedRegion->getExpandedRegion();
+
+      // Delete unnecessary regions (allocated by getExpandedRegion)
+      delete ExpandedRegion;
+
+      ExpandedRegion = TmpRegion;
     }
-
-    // Go on expand the region to find the largest region as a valid SCoP no
-    // matter it has a valid exit or not, because the expanded region may has
-    // a valid exit.
-    Region *TmpRegion2 = TmpRegion->getExpandedRegion();
-
-    if (TmpRegion != &R && TmpRegion != CurrentRegion)
-      delete TmpRegion;
-
-    TmpRegion = TmpRegion2;
   }
 
-  if (&R == CurrentRegion)
-    return NULL;
+  DEBUG(
+  if (LastValidRegion)
+    dbgs() << "\tto " << LastValidRegion->getNameStr() << "\n";
+  else
+    dbgs() << "\tExpanding " << R.getNameStr() << " failed\n";
+  );
 
-  DEBUG(dbgs() << "\tto " << CurrentRegion->getNameStr() << "\n");
-
-  return CurrentRegion;
+  return LastValidRegion;
 }
 
 
