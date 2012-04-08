@@ -248,4 +248,4 @@ intersphinx_mapping = {}
 # -- Options for extensions ----------------------------------------------------
 
 # Enable this if you want TODOs to show up in the generated documentation.
-#todo_include_todos = False
+todo_include_todos = True
