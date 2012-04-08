@@ -417,17 +417,17 @@ USAGE: opt [options] &lt;input bitcode&gt;
 OPTIONS:
   Optimizations available:
 ...
-    -funcresolve    - Resolve Functions
-    -gcse           - Global Common Subexpression Elimination
-    -globaldce      - Dead Global Elimination
-    <b>-hello          - Hello World Pass</b>
-    -indvars        - Canonicalize Induction Variables
-    -inline         - Function Integration/Inlining
-    -instcombine    - Combine redundant instructions
+    -globalopt                - Global Variable Optimizer
+    -globalsmodref-aa         - Simple mod/ref analysis for globals
+    -gvn                      - Global Value Numbering
+    <b>-hello                    - Hello World Pass</b>
+    -indvars                  - Induction Variable Simplification
+    -inline                   - Function Integration/Inlining
+    -insert-edge-profiling    - Insert instrumentation for edge profiling
 ...
 </pre></div>
 
-<p>The pass name get added as the information string for your pass, giving some
+<p>The pass name gets added as the information string for your pass, giving some
 documentation to users of <tt>opt</tt>.  Now that you have a working pass, you
 would go ahead and make it do the cool transformations you want.  Once you get
 it all working and tested, it may become useful to find out how fast your pass
@@ -545,7 +545,7 @@ following signature:</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnModule(Module &amp;M) = 0;
+<b>virtual bool</b> runOnModule(Module &amp;M) = 0;
 </pre></div>
 
 <p>The <tt>runOnModule</tt> method performs the interesting work of the pass.
@@ -612,7 +612,7 @@ false if they didn't.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doInitialization(CallGraph &amp;CG);
+<b>virtual bool</b> doInitialization(CallGraph &amp;CG);
 </pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
@@ -633,7 +633,7 @@ fast).</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnSCC(CallGraphSCC &amp;SCC) = 0;
+<b>virtual bool</b> runOnSCC(CallGraphSCC &amp;SCC) = 0;
 </pre></div>
 
 <p>The <tt>runOnSCC</tt> method performs the interesting work of the pass, and
@@ -652,7 +652,7 @@ otherwise.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doFinalization(CallGraph &amp;CG);
+<b>virtual bool</b> doFinalization(CallGraph &amp;CG);
 </pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
@@ -704,7 +704,7 @@ should return true if they modified the program, or false if they didn't.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doInitialization(Module &amp;M);
+<b>virtual bool</b> doInitialization(Module &amp;M);
 </pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
@@ -732,7 +732,7 @@ free functions that it needs, adding prototypes to the module if necessary.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnFunction(Function &amp;F) = 0;
+<b>virtual bool</b> runOnFunction(Function &amp;F) = 0;
 </pre></div><p>
 
 <p>The <tt>runOnFunction</tt> method must be implemented by your subclass to do
@@ -751,7 +751,7 @@ be returned if the function is modified.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doFinalization(Module &amp;M);
+<b>virtual bool</b> doFinalization(Module &amp;M);
 </pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
@@ -790,7 +790,7 @@ program, or false if they didn't. </p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doInitialization(Loop *, LPPassManager &amp;LPM);
+<b>virtual bool</b> doInitialization(Loop *, LPPassManager &amp;LPM);
 </pre></div>
 
 <p>The <tt>doInitialization</tt> method is designed to do simple initialization 
@@ -811,7 +811,7 @@ information.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnLoop(Loop *, LPPassManager &amp;LPM) = 0;
+<b>virtual bool</b> runOnLoop(Loop *, LPPassManager &amp;LPM) = 0;
 </pre></div><p>
 
 <p>The <tt>runOnLoop</tt> method must be implemented by your subclass to do
@@ -829,7 +829,7 @@ should be used to update loop nest.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doFinalization();
+<b>virtual bool</b> doFinalization();
 </pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
@@ -869,7 +869,7 @@ methods should return true if they modified the program, or false if they didn n
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doInitialization(Region *, RGPassManager &amp;RGM);
+<b>virtual bool</b> doInitialization(Region *, RGPassManager &amp;RGM);
 </pre></div>
 
 <p>The <tt>doInitialization</tt> method is designed to do simple initialization
@@ -890,7 +890,7 @@ information.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnRegion(Region *, RGPassManager &amp;RGM) = 0;
+<b>virtual bool</b> runOnRegion(Region *, RGPassManager &amp;RGM) = 0;
 </pre></div><p>
 
 <p>The <tt>runOnRegion</tt> method must be implemented by your subclass to do
@@ -908,7 +908,7 @@ should be used to update region tree.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doFinalization();
+<b>virtual bool</b> doFinalization();
 </pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
@@ -957,7 +957,7 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the followi
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doInitialization(Function &amp;F);
+<b>virtual bool</b> doInitialization(Function &amp;F);
 </pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
@@ -978,7 +978,7 @@ fast).</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnBasicBlock(BasicBlock &amp;BB) = 0;
+<b>virtual bool</b> runOnBasicBlock(BasicBlock &amp;BB) = 0;
 </pre></div>
 
 <p>Override this function to do the work of the <tt>BasicBlockPass</tt>.  This
@@ -998,7 +998,7 @@ if the basic block is modified.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doFinalization(Function &amp;F);
+<b>virtual bool</b> doFinalization(Function &amp;F);
 </pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
@@ -1051,7 +1051,7 @@ data)</li>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> runOnMachineFunction(MachineFunction &amp;MF) = 0;
+<b>virtual bool</b> runOnMachineFunction(MachineFunction &amp;MF) = 0;
 </pre></div>
 
 <p><tt>runOnMachineFunction</tt> can be considered the main entry point of a
@@ -1104,7 +1104,7 @@ implement the virtual <tt>print</tt> method:</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual void</b> print(std::ostream &amp;O, <b>const</b> Module *M) <b>const</b>;
+<b>virtual void</b> print(std::ostream &amp;O, <b>const</b> Module *M) <b>const</b>;
 </pre></div>
 
 <p>The <tt>print</tt> method must be implemented by "analyses" in order to print
@@ -1154,7 +1154,7 @@ having any prerequisite passes, and invalidating <b>all</b> other passes.</p>
 <div>
 
 <div class="doc_code"><pre>
-  <b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;Info) <b>const</b>;
+<b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;Info) <b>const</b>;
 </pre></div>
 
 <p>By implementing the <tt>getAnalysisUsage</tt> method, the required and
@@ -1242,11 +1242,11 @@ the fact that it hacks on the CFG.
 <div>
 
 <div class="doc_code"><pre>
-  <i>// This example modifies the program, but does not modify the CFG</i>
-  <b>void</b> <a href="http://llvm.org/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
-    AU.setPreservesCFG();
-    AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1LoopInfo.html">LoopInfo</a>&gt;();
-  }
+<i>// This example modifies the program, but does not modify the CFG</i>
+<b>void</b> <a href="http://llvm.org/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
+  AU.setPreservesCFG();
+  AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1LoopInfo.html">LoopInfo</a>&gt;();
+}
 </pre></div>
 
 </div>
@@ -1268,10 +1268,10 @@ method.  It takes a single template argument that specifies which pass class you
 want, and returns a reference to that pass.  For example:</p>
 
 <div class="doc_code"><pre>
-   bool LICM::runOnFunction(Function &amp;F) {
-     LoopInfo &amp;LI = getAnalysis&lt;LoopInfo&gt;();
-     ...
-   }
+bool LICM::runOnFunction(Function &amp;F) {
+  LoopInfo &amp;LI = getAnalysis&lt;LoopInfo&gt;();
+  ...
+}
 </pre></div>
 
 <p>This method call returns a reference to the pass desired.  You may get a
@@ -1285,11 +1285,11 @@ A module level pass can use function level analysis info using this interface.
 For example:</p>
 
 <div class="doc_code"><pre>
-   bool ModuleLevelPass::runOnModule(Module &amp;M) {
-     ...
-     DominatorTree &amp;DT = getAnalysis&lt;DominatorTree&gt;(Func);
-     ...
-   }
+bool ModuleLevelPass::runOnModule(Module &amp;M) {
+  ...
+  DominatorTree &amp;DT = getAnalysis&lt;DominatorTree&gt;(Func);
+  ...
+}
 </pre></div>
 
 <p>In above example, runOnFunction for DominatorTree is called by pass manager
@@ -1302,11 +1302,11 @@ If your pass is capable of updating analyses if they exist (e.g.,
 if it is active.  For example:</p>
 
 <div class="doc_code"><pre>
-  ...
-  if (DominatorSet *DS = getAnalysisIfAvailable&lt;DominatorSet&gt;()) {
-    <i>// A DominatorSet is active.  This code will update it.</i>
-  }
-  ...
+...
+if (DominatorSet *DS = getAnalysisIfAvailable&lt;DominatorSet&gt;()) {
+  <i>// A DominatorSet is active.  This code will update it.</i>
+}
+...
 </pre></div>
 
 </div>
@@ -1405,7 +1405,7 @@ Unlike registration of passes, there is no command line argument to be specified
 for the Analysis Group Interface itself, because it is "abstract":</p>
 
 <div class="doc_code"><pre>
-  <b>static</b> RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; A("<i>Alias Analysis</i>");
+<b>static</b> RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; A("<i>Alias Analysis</i>");
 </pre></div>
 
 <p>Once the analysis is registered, passes can declare that they are valid
@@ -1416,10 +1416,9 @@ implementations of the interface by using the following code:</p>
   //<i> Declare that we implement the AliasAnalysis interface</i>
   INITIALIZE_AG_PASS(FancyAA, <a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, "<i>somefancyaa</i>",
                      "<i>A more complex alias analysis implementation</i>",
-                     false, // <i>Is CFG Only?</i>
-                     true,  // <i>Is Analysis?</i>
-                     false, // <i>Is default Analysis Group implementation?</i>
-                    );
+                     false,  // <i>Is CFG Only?</i>
+                     true,   // <i>Is Analysis?</i>
+                     false); // <i>Is default Analysis Group implementation?</i>
 }
 </pre></div>
 
@@ -1436,8 +1435,7 @@ this macro.</p>
                      "<i>Basic Alias Analysis (default AA impl)</i>",
                      false, // <i>Is CFG Only?</i>
                      true,  // <i>Is Analysis?</i>
-                     true, // <i>Is default Analysis Group implementation?</i>
-                    );
+                     true); // <i>Is default Analysis Group implementation?</i>
 }
 </pre></div>
 
@@ -1606,10 +1604,10 @@ we need to add the following <a
 href="#getAnalysisUsage"><tt>getAnalysisUsage</tt></a> method to our pass:</p>
 
 <div class="doc_code"><pre>
-    <i>// We don't modify the program, so we preserve all analyses</i>
-    <b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
-      AU.setPreservesAll();
-    }
+<i>// We don't modify the program, so we preserve all analyses</i>
+<b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
+  AU.setPreservesAll();
+}
 </pre></div>
 
 <p>Now when we run our pass, we get this output:</p>
@@ -1717,19 +1715,19 @@ machine passes.  Here we will describe how to <i>register</i> a register
 allocator machine pass.</p>
 
 <p>Implement your register allocator machine pass.  In your register allocator
-.cpp file add the following include;</p>
+<tt>.cpp</tt> file add the following include;</p>
 
 <div class="doc_code"><pre>
-  #include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/RegAllocRegistry.h"
 </pre></div>
 
 <p>Also in your register allocator .cpp file, define a creator function in the
 form; </p>
 
 <div class="doc_code"><pre>
-  FunctionPass *createMyRegisterAllocator() {
-    return new MyRegisterAllocator();
-  }
+FunctionPass *createMyRegisterAllocator() {
+  return new MyRegisterAllocator();
+}
 </pre></div>
 
 <p>Note that the signature of this function should match the type of
@@ -1737,9 +1735,9 @@ form; </p>
 "installing" declaration, in the form;</p>
 
 <div class="doc_code"><pre>
-  static RegisterRegAlloc myRegAlloc("myregalloc",
-    "  my register allocator help string",
-    createMyRegisterAllocator);
+static RegisterRegAlloc myRegAlloc("myregalloc",
+                                   "my register allocator help string",
+                                   createMyRegisterAllocator);
 </pre></div>
 
 <p>Note the two spaces prior to the help string produces a tidy result on the
@@ -1790,11 +1788,11 @@ MachinePassRegistry RegisterMyPasses::Registry;
 <p>And finally, declare the command line option for your passes.  Example:</p> 
 
 <div class="doc_code"><pre>
-  cl::opt&lt;RegisterMyPasses::FunctionPassCtor, false,
-          RegisterPassParser&lt;RegisterMyPasses&gt; &gt;
-  MyPassOpt("mypass",
-            cl::init(&amp;createDefaultMyPass),
-            cl::desc("my pass option help")); 
+cl::opt&lt;RegisterMyPasses::FunctionPassCtor, false,
+        RegisterPassParser&lt;RegisterMyPasses&gt; &gt;
+MyPassOpt("mypass",
+          cl::init(&amp;createDefaultMyPass),
+          cl::desc("my pass option help")); 
 </pre></div>
 
 <p>Here the command option is "mypass", with createDefaultMyPass as the default
