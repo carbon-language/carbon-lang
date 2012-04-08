@@ -448,6 +448,8 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
 }
 
 ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
+  OwningPtr<TargetMachine> TheTM(TM); // Take ownership.
+
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
   if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
@@ -468,7 +470,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
 
   // Unless the interpreter was explicitly selected or the JIT is not linked,
   // try making a JIT.
-  if ((WhichEngine & EngineKind::JIT) && TM) {
+  if ((WhichEngine & EngineKind::JIT) && TheTM) {
     Triple TT(M->getTargetTriple());
     if (!TM->getTarget().hasJIT()) {
       errs() << "WARNING: This target JIT is not designed for the host"
@@ -479,12 +481,12 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
     if (UseMCJIT && ExecutionEngine::MCJITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::MCJITCtor(M, ErrorStr, JMM,
-                                   AllocateGVsWithCode, TM);
+                                   AllocateGVsWithCode, TheTM.take());
       if (EE) return EE;
     } else if (ExecutionEngine::JITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::JITCtor(M, ErrorStr, JMM,
-                                 AllocateGVsWithCode, TM);
+                                 AllocateGVsWithCode, TheTM.take());
       if (EE) return EE;
     }
   }
