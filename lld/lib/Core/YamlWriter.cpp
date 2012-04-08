@@ -57,9 +57,7 @@ public:
         buildDuplicateNameMap(*atom);
 
       // Find references to unnamed atoms and create ref-names for them.
-      for (auto rit=atom->referencesBegin(), rend=atom->referencesEnd();
-                                                        rit != rend; ++rit) {
-        const Reference* ref = *rit;
+      for (const Reference *ref : *atom) {
         // create refname for any unnamed reference target
         if ( ref->target()->name().empty() ) {
           std::string Storage;
@@ -313,9 +311,7 @@ public:
     }
 
     bool wroteFirstFixup = false;
-    for (auto it=atom.referencesBegin(), end=atom.referencesEnd();
-                                                    it != end; ++it) {
-      const Reference* ref = *it;
+    for (const Reference *ref : atom) {
       if ( !wroteFirstFixup ) {
         out  << "      fixups:\n";
         wroteFirstFixup = true;

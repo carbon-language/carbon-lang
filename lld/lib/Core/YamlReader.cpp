@@ -456,13 +456,13 @@ public:
     return _ord;
   }
 
-  DefinedAtom::reference_iterator referencesBegin() const {
+  DefinedAtom::reference_iterator begin() const {
     uintptr_t index = _refStartIndex;
     const void* it = reinterpret_cast<const void*>(index);
     return reference_iterator(*this, it);
   }
 
-  DefinedAtom::reference_iterator referencesEnd() const {
+  DefinedAtom::reference_iterator end() const {
     uintptr_t index = _refEndIndex;
     const void* it = reinterpret_cast<const void*>(index);
     return reference_iterator(*this, it);

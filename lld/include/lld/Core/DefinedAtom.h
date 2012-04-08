@@ -279,14 +279,10 @@ public:
   };
 
   /// Returns an iterator to the beginning of this Atom's References
-  virtual reference_iterator referencesBegin() const = 0;
+  virtual reference_iterator begin() const = 0;
 
   /// Returns an iterator to the end of this Atom's References
-  virtual reference_iterator referencesEnd() const = 0;
-
-  reference_iterator begin() const { return referencesBegin(); }
-  reference_iterator end() const { return referencesEnd(); }
-
+  virtual reference_iterator end() const = 0;
 
   static inline bool classof(const Atom *a) {
     return a->definition() == definitionRegular;

@@ -31,12 +31,8 @@ void StubsPass::perform() {
     return;
 
   // Scan all references in all atoms.
-  for(auto ait=_file.definedAtomsBegin(), aend=_file.definedAtomsEnd();
-                                                      ait != aend; ++ait) {
-    const DefinedAtom* atom = *ait;
-    for (auto rit=atom->referencesBegin(), rend=atom->referencesEnd();
-                                                      rit != rend; ++rit) {
-      const Reference* ref = *rit;
+  for(const DefinedAtom *atom : _file.defined()) {
+    for (const Reference *ref : *atom) {
       // Look at call-sites.
       if ( _platform.isCallSite(ref->kind()) ) {
         const Atom* target = ref->target();

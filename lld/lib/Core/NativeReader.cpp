@@ -92,9 +92,9 @@ public:
 
   virtual ArrayRef<uint8_t> rawContent() const;
 
-  virtual reference_iterator referencesBegin() const;
+  virtual reference_iterator begin() const;
 
-  virtual reference_iterator referencesEnd() const;
+  virtual reference_iterator end() const;
 
   virtual const Reference* derefIterator(const void*) const;
 
@@ -731,13 +731,13 @@ inline StringRef NativeDefinedAtomV1::customSectionName() const {
   return _file->string(offset);
 }
 
-DefinedAtom::reference_iterator NativeDefinedAtomV1::referencesBegin() const {
+DefinedAtom::reference_iterator NativeDefinedAtomV1::begin() const {
   uintptr_t index = _ivarData->referencesStartIndex;
   const void* it = reinterpret_cast<const void*>(index);
   return reference_iterator(*this, it);
 }
 
-DefinedAtom::reference_iterator NativeDefinedAtomV1::referencesEnd() const {
+DefinedAtom::reference_iterator NativeDefinedAtomV1::end() const {
   uintptr_t index = _ivarData->referencesStartIndex+_ivarData->referencesCount;
   const void* it = reinterpret_cast<const void*>(index);
   return reference_iterator(*this, it);

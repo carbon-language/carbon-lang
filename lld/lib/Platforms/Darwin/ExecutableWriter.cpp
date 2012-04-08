@@ -556,9 +556,7 @@ void SectionChunk::write(raw_ostream &out) {
     ArrayRef<uint8_t> content = atomInfo.atom->rawContent();
     buffer.resize(content.size());
     ::memcpy(buffer.data(), content.data(), content.size());
-    for (auto rit=atomInfo.atom->referencesBegin(), 
-               rend=atomInfo.atom->referencesEnd(); rit != rend; ++rit) {
-      const Reference* ref = *rit;
+    for (const Reference *ref : *atomInfo.atom) {
       uint32_t offset = ref->offsetInAtom();
       uint64_t targetAddress = 0;
       if ( ref->target() != nullptr )

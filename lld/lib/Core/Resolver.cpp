@@ -175,9 +175,8 @@ void Resolver::resolveUndefines() {
     undefineGenCount = _symbolTable.size();
     std::vector<const Atom *> undefines;
     _symbolTable.undefines(undefines);
-    for (std::vector<const Atom *>::iterator it = undefines.begin();
-         it != undefines.end(); ++it) {
-      StringRef undefName = (*it)->name();
+    for ( const Atom *undefAtom : undefines ) {
+      StringRef undefName = undefAtom->name();
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName)) {
         _inputFiles.searchLibraries(undefName, true, true, false, *this);
@@ -194,18 +193,16 @@ void Resolver::resolveUndefines() {
     // search libraries for overrides of common symbols
     if (searchArchives || searchDylibs) {
       std::vector<const Atom *> tents;
-      for (std::vector<const Atom *>::iterator ait = _atoms.begin();
-           ait != _atoms.end(); ++ait) {
-        if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*ait)) {
+      for ( const Atom *tent : tents ) {
+        if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(tent)) {
           if ( defAtom->merge() == DefinedAtom::mergeAsTentative )
             tents.push_back(defAtom);
         }
       }
-      for (std::vector<const Atom *>::iterator dit = tents.begin();
-           dit != tents.end(); ++dit) {
+      for ( const Atom *tent : tents ) {
         // load for previous tentative may also have loaded
         // this tentative, so check again
-        StringRef tentName = (*dit)->name();
+        StringRef tentName = tent->name();
         const Atom *curAtom = _symbolTable.findByName(tentName);
         assert(curAtom != nullptr);
         if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
@@ -222,11 +219,9 @@ void Resolver::resolveUndefines() {
 // switch all references to undefined or coalesced away atoms
 // to the new defined atom
 void Resolver::updateReferences() {
-  for (auto ait = _atoms.begin(); ait != _atoms.end(); ++ait) {
-    if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*ait)) {
-      for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
-                                                        rit != end; ++rit) {
-        const Reference* ref = *rit;
+  for(const Atom *atom : _atoms) {
+    if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom)) {
+      for (const Reference *ref : *defAtom) {
         const Atom* newTarget = _symbolTable.replacement(ref->target());
         (const_cast<Reference*>(ref))->setTarget(newTarget);
       }
@@ -262,9 +257,7 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   thisChain.previous = previous;
   thisChain.referer = &atom;
   if ( const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(&atom)) {
-    for (auto rit=defAtom->referencesBegin(), end=defAtom->referencesEnd();
-                                                        rit != end; ++rit) {
-      const Reference* ref = *rit;
+    for (const Reference *ref : *defAtom) {
       this->markLive(*ref->target(), &thisChain);
     }
   }
@@ -299,12 +292,11 @@ void Resolver::deadStripOptimize() {
     this->addAtoms(platRootAtoms);
 
   // mark all roots as live, and recursively all atoms they reference
-  for (std::set<const Atom *>::iterator it = _deadStripRoots.begin();
-       it != _deadStripRoots.end(); ++it) {
+  for ( const Atom *dsrAtom : _deadStripRoots) {
     WhyLiveBackChain rootChain;
     rootChain.previous = nullptr;
-    rootChain.referer = *it;
-    this->markLive(**it, &rootChain);
+    rootChain.referer = dsrAtom;
+    this->markLive(*dsrAtom, &rootChain);
   }
 
   // now remove all non-live atoms from _atoms
@@ -342,9 +334,8 @@ void Resolver::removeCoalescedAwayAtoms() {
 // check for interactions between symbols defined in this linkage unit
 // and same symbol name in linked dynamic shared libraries
 void Resolver::checkDylibSymbolCollisions() {
-  for (std::vector<const Atom *>::const_iterator it = _atoms.begin();
-       it != _atoms.end(); ++it) {
-    const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(*it);
+  for ( const Atom *atom : _atoms ) {
+    const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom);
     if (defAtom == nullptr)
       continue;
     if ( defAtom->merge() != DefinedAtom::mergeAsTentative )
@@ -407,8 +398,8 @@ void Resolver::MergedFile::addAtom(const Atom& atom) {
 }
 
 void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
-  for(std::vector<const Atom*>::iterator it=all.begin(); it != all.end(); ++it){
-    this->addAtom(**it);
+  for ( const Atom *atom : all ) {
+    this->addAtom(*atom);
   }
 }
 

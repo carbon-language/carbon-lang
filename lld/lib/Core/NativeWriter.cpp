@@ -30,25 +30,17 @@ public:
     // reserve first byte for unnamed atoms
     _stringPool.push_back('\0');
     // visit all atoms
-    for(File::defined_iterator it=file.definedAtomsBegin(),
-                              end=file.definedAtomsEnd();
-                               it != end; ++it) {
-      this->addIVarsForDefinedAtom(**it);
+    for ( const DefinedAtom *defAtom : file.defined() ) {
+      this->addIVarsForDefinedAtom(*defAtom);
     }
-    for(File::undefined_iterator it=file.undefinedAtomsBegin(),
-                              end=file.undefinedAtomsEnd();
-                               it != end; ++it) {
-      this->addIVarsForUndefinedAtom(**it);
+    for ( const UndefinedAtom *undefAtom : file.undefined() ) {
+      this->addIVarsForUndefinedAtom(*undefAtom);
     }
-    for(File::shared_library_iterator it=file.sharedLibraryAtomsBegin(),
-                              end=file.sharedLibraryAtomsEnd();
-                               it != end; ++it) {
-      this->addIVarsForSharedLibraryAtom(**it);
+    for ( const SharedLibraryAtom *shlibAtom : file.sharedLibrary() ) {
+      this->addIVarsForSharedLibraryAtom(*shlibAtom);
     }
-    for(File::absolute_iterator it=file.absoluteAtomsBegin(),
-                              end=file.absoluteAtomsEnd();
-                               it != end; ++it) {
-      this->addIVarsForAbsoluteAtom(**it);
+    for ( const AbsoluteAtom *absAtom : file.absolute() ) {
+      this->addIVarsForAbsoluteAtom(*absAtom);
     }
 
 
@@ -412,9 +404,7 @@ private:
     count = 0;
     size_t startRefSize = _references.size();
     uint32_t result = startRefSize;
-    for (auto it=atom.referencesBegin(), end=atom.referencesEnd();
-                                                    it != end; ++it) {
-      const Reference* ref = *it;
+    for (const Reference *ref : atom) {
       NativeReferenceIvarsV1 nref;
       nref.offsetInAtom = ref->offsetInAtom();
       nref.kind = ref->kind();

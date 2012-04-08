@@ -126,13 +126,13 @@ public:
     return false;
   }
   
-  virtual DefinedAtom::reference_iterator referencesBegin() const {
+  virtual DefinedAtom::reference_iterator begin() const {
     uintptr_t index = 0;
     const void* it = reinterpret_cast<const void*>(index);
     return reference_iterator(*this, it);
   }
 
-  virtual DefinedAtom::reference_iterator referencesEnd() const {
+  virtual DefinedAtom::reference_iterator end() const {
     uintptr_t index = _references.size();
     const void* it = reinterpret_cast<const void*>(index);
     return reference_iterator(*this, it);

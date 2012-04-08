@@ -119,11 +119,11 @@ public:
     return ArrayRef<uint8_t>();
   }
   
-  virtual reference_iterator referencesBegin() const {
+  virtual reference_iterator begin() const {
     return reference_iterator(*this, nullptr);
   }
   
-  virtual reference_iterator referencesEnd() const {
+  virtual reference_iterator end() const {
     return reference_iterator(*this, nullptr);
   }
   
@@ -218,11 +218,11 @@ public:
     return ArrayRef<uint8_t>();
   }
   
-  virtual reference_iterator referencesBegin() const {
+  virtual reference_iterator begin() const {
     return reference_iterator(*this, nullptr);
   }
   
-  virtual reference_iterator referencesEnd() const {
+  virtual reference_iterator end() const {
     return reference_iterator(*this, nullptr);
   }
   
@@ -449,9 +449,7 @@ public:
 
   // InputFiles interface
   virtual void forEachInitialAtom(InputFiles::Handler& handler) const {
-    for (std::vector<const File *>::iterator fit = _files.begin();
-                                       fit != _files.end(); ++fit) {
-      const File* file = *fit;
+    for ( const File *file : _files ) {
       handler.doFile(*file);
       for(auto it=file->definedAtomsBegin(),end=file->definedAtomsEnd(); 
                                  it != end; ++it) {
