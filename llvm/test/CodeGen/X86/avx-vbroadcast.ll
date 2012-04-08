@@ -47,7 +47,7 @@ entry:
 ;;;; 128-bit versions
 
 ; CHECK: vbroadcastss (%
-define <4 x float> @E(float* %ptr) nounwind uwtable readnone ssp {
+define <4 x float> @e(float* %ptr) nounwind uwtable readnone ssp {
 entry:
   %q = load float* %ptr, align 4
   %vecinit.i = insertelement <4 x float> undef, float %q, i32 0
@@ -56,6 +56,19 @@ entry:
   %vecinit6.i = insertelement <4 x float> %vecinit4.i, float %q, i32 3
   ret <4 x float> %vecinit6.i
 }
+
+
+; CHECK: _e2
+; CHECK-NOT: vbroadcastss
+; CHECK: ret
+define <4 x float> @_e2(float* %ptr) nounwind uwtable readnone ssp {
+    %vecinit.i = insertelement <4 x float> undef, float      0xbf80000000000000, i32 0
+  %vecinit2.i = insertelement <4 x float> %vecinit.i, float  0xbf80000000000000, i32 1
+  %vecinit4.i = insertelement <4 x float> %vecinit2.i, float 0xbf80000000000000, i32 2
+  %vecinit6.i = insertelement <4 x float> %vecinit4.i, float 0xbf80000000000000, i32 3
+  ret <4 x float> %vecinit6.i
+}
+
 
 ; CHECK: vbroadcastss (%
 define <4 x i32> @F(i32* %ptr) nounwind uwtable readnone ssp {
@@ -71,7 +84,7 @@ entry:
 ; Unsupported vbroadcasts
 
 ; CHECK: _G
-; CHECK-NOT: vbroadcastsd (%
+; CHECK-NOT: broadcast (%
 ; CHECK: ret
 define <2 x i64> @G(i64* %ptr) nounwind uwtable readnone ssp {
 entry:
@@ -82,7 +95,7 @@ entry:
 }
 
 ; CHECK: _H
-; CHECK-NOT: vbroadcastss
+; CHECK-NOT: broadcast
 ; CHECK: ret
 define <4 x i32> @H(<4 x i32> %a) {
   %x = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
@@ -90,7 +103,7 @@ define <4 x i32> @H(<4 x i32> %a) {
 }
 
 ; CHECK: _I
-; CHECK-NOT: vbroadcastsd (%
+; CHECK-NOT: broadcast (%
 ; CHECK: ret
 define <2 x double> @I(double* %ptr) nounwind uwtable readnone ssp {
 entry:

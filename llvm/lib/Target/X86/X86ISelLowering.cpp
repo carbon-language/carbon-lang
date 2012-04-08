@@ -4852,41 +4852,41 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
   return SDValue();
 }
 
-/// isVectorBroadcast - Check if the node chain is suitable to be xformed to
-/// a vbroadcast node. We support two patterns:
-/// 1. A splat BUILD_VECTOR which uses a single scalar load.
+/// LowerVectorBroadcast - Attempt to use the vbroadcast instruction
+/// to generate a splat value for the following cases:
+/// 1. A splat BUILD_VECTOR which uses a single scalar load, or a constant.
 /// 2. A splat shuffle which uses a scalar_to_vector node which comes from
-/// a scalar load.
-/// The scalar load node is returned when a pattern is found,
+/// a scalar load, or a constant.
+/// The VBROADCAST node is returned when a pattern is found,
 /// or SDValue() otherwise.
-static SDValue isVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget) {
+static SDValue LowerVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget,
+                                 DebugLoc &dl, SelectionDAG &DAG) {
   if (!Subtarget->hasAVX())
     return SDValue();
 
   EVT VT = Op.getValueType();
-  SDValue V = Op;
 
-  if (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
-    V = V.getOperand(0);
-
-  //A suspected load to be broadcasted.
   SDValue Ld;
+  bool ConstSplatVal;
 
-  switch (V.getOpcode()) {
+  switch (Op.getOpcode()) {
     default:
       // Unknown pattern found.
       return SDValue();
 
     case ISD::BUILD_VECTOR: {
       // The BUILD_VECTOR node must be a splat.
-      if (!isSplatVector(V.getNode()))
+      if (!isSplatVector(Op.getNode()))
         return SDValue();
 
-      Ld = V.getOperand(0);
+      Ld = Op.getOperand(0);
+      ConstSplatVal = (Ld.getOpcode() == ISD::Constant ||
+                     Ld.getOpcode() == ISD::ConstantFP);
 
       // The suspected load node has several users. Make sure that all
       // of its users are from the BUILD_VECTOR node.
-      if (!Ld->hasNUsesOfValue(VT.getVectorNumElements(), 0))
+      // Constants may have multiple users.
+      if (!ConstSplatVal && !Ld->hasNUsesOfValue(VT.getVectorNumElements(), 0))
         return SDValue();
       break;
     }
@@ -4904,12 +4904,54 @@ static SDValue isVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget) {
         return SDValue();
 
       Ld = Sc.getOperand(0);
+      ConstSplatVal = (Ld.getOpcode() == ISD::Constant ||
+                     Ld.getOpcode() == ISD::ConstantFP);
 
       // The scalar_to_vector node and the suspected
       // load node must have exactly one user.
-      if (!Sc.hasOneUse() || !Ld.hasOneUse())
+      // Constants may have multiple users.
+      if (!ConstSplatVal && (!Sc.hasOneUse() || !Ld.hasOneUse()))
         return SDValue();
       break;
+    }
+  }
+
+  bool Is256 = VT.getSizeInBits() == 256;
+  bool Is128 = VT.getSizeInBits() == 128;
+
+  // Handle the broadcasting a single constant scalar from the constant pool
+  // into a vector. On Sandybridge it is still better to load a constant vector
+  // from the constant pool and not to broadcast it from a scalar.
+  if (ConstSplatVal && Subtarget->hasAVX2()) {
+    EVT CVT = Ld.getValueType();
+    assert(!CVT.isVector() && "Must not broadcast a vector type");
+    unsigned ScalarSize = CVT.getSizeInBits();
+
+    if ((Is256 && (ScalarSize == 32 || ScalarSize == 64)) ||
+        (Is128 && (ScalarSize == 32))) {
+
+      // This is the type of the load operation for the constant that we save
+      // in the constant pool. We can't load float values from the constant pool
+      // because the DAG has to be legal at this stage.
+      MVT LdTy = (ScalarSize == 32 ? MVT::i32 : MVT::i64);
+
+      const Constant *C = 0;
+      if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Ld))
+        C = CI->getConstantIntValue();
+      else if (ConstantFPSDNode *CF = dyn_cast<ConstantFPSDNode>(Ld))
+        C = CF->getConstantFPValue();
+
+      assert(C && "Invalid constant type");
+
+      SDValue CP = DAG.getConstantPool(C, LdTy);
+      unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
+      Ld = DAG.getLoad(LdTy, dl, DAG.getEntryNode(), CP,
+                         MachinePointerInfo::getConstantPool(),
+                         false, false, false, Alignment);
+
+      // Bitcast the loaded constant back to the requested type.
+      Ld = DAG.getNode(ISD::BITCAST, dl, CVT, Ld);
+      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
     }
   }
 
@@ -4921,28 +4963,26 @@ static SDValue isVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget) {
   if (Ld->hasAnyUseOfValue(1))
     return SDValue();
 
-  bool Is256 = VT.getSizeInBits() == 256;
-  bool Is128 = VT.getSizeInBits() == 128;
   unsigned ScalarSize = Ld.getValueType().getSizeInBits();
 
   // VBroadcast to YMM
   if (Is256 && (ScalarSize == 32 || ScalarSize == 64))
-    return Ld;
+    return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
   // VBroadcast to XMM
   if (Is128 && (ScalarSize == 32))
-    return Ld;
+    return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
   // The integer check is needed for the 64-bit into 128-bit so it doesn't match
   // double since there is vbroadcastsd xmm
   if (Subtarget->hasAVX2() && Ld.getValueType().isInteger()) {
     // VBroadcast to YMM
     if (Is256 && (ScalarSize == 8 || ScalarSize == 16))
-      return Ld;
+      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
     // VBroadcast to XMM
     if (Is128 && (ScalarSize ==  8 || ScalarSize == 16 || ScalarSize == 64))
-      return Ld;
+      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
   }
 
   // Unsupported broadcast.
@@ -4977,9 +5017,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return getOnesVector(VT, Subtarget->hasAVX2(), DAG, dl);
   }
 
-  SDValue LD = isVectorBroadcast(Op, Subtarget);
-  if (LD.getNode())
-    return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
+  SDValue Broadcast = LowerVectorBroadcast(Op, Subtarget, dl, DAG);
+  if (Broadcast.getNode())
+    return Broadcast;
 
   unsigned EVTBits = ExtVT.getSizeInBits();
 
@@ -6205,9 +6245,9 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     int Size = VT.getSizeInBits();
 
     // Use vbroadcast whenever the splat comes from a foldable load
-    SDValue LD = isVectorBroadcast(Op, Subtarget);
-    if (LD.getNode())
-      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
+    SDValue Broadcast = LowerVectorBroadcast(Op, Subtarget, dl, DAG);
+    if (Broadcast.getNode())
+      return Broadcast;
 
     // Handle splats by matching through known shuffle masks
     if ((Size == 128 && NumElem <= 4) ||
