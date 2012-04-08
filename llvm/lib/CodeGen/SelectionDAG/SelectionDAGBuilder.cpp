@@ -2893,13 +2893,13 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
     // Analyze the access pattern of the vector to see if we can extract
     // two subvectors and do the shuffle. The analysis is done by calculating
     // the range of elements the mask access on both vectors.
-    int MinRange[2] = { static_cast<int>(SrcNumElts+1),
-                        static_cast<int>(SrcNumElts+1)};
+    int MinRange[2] = { static_cast<int>(SrcNumElts),
+                        static_cast<int>(SrcNumElts)};
     int MaxRange[2] = {-1, -1};
 
     for (unsigned i = 0; i != MaskNumElts; ++i) {
       int Idx = Mask[i];
-      int Input = 0;
+      unsigned Input = 0;
       if (Idx < 0)
         continue;
 
@@ -2915,11 +2915,11 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
 
     // Check if the access is smaller than the vector size and can we find
     // a reasonable extract index.
-    int RangeUse[2] = { 2, 2 };  // 0 = Unused, 1 = Extract, 2 = Can not
-                                 // Extract.
+    int RangeUse[2] = { -1, -1 };  // 0 = Unused, 1 = Extract, -1 = Can not
+                                   // Extract.
     int StartIdx[2];  // StartIdx to extract from
-    for (int Input=0; Input < 2; ++Input) {
-      if (MinRange[Input] == (int)(SrcNumElts+1) && MaxRange[Input] == -1) {
+    for (unsigned Input = 0; Input < 2; ++Input) {
+      if (MinRange[Input] >= (int)SrcNumElts && MaxRange[Input] < 0) {
         RangeUse[Input] = 0; // Unused
         StartIdx[Input] = 0;
         continue;
@@ -2937,9 +2937,9 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
       setValue(&I, DAG.getUNDEF(VT)); // Vectors are not used.
       return;
     }
-    if (RangeUse[0] < 2 && RangeUse[1] < 2) {
+    if (RangeUse[0] >= 0 && RangeUse[1] >= 0) {
       // Extract appropriate subvector and generate a vector shuffle
-      for (int Input=0; Input < 2; ++Input) {
+      for (unsigned Input = 0; Input < 2; ++Input) {
         SDValue &Src = Input == 0 ? Src1 : Src2;
         if (RangeUse[Input] == 0)
           Src = DAG.getUNDEF(VT);
