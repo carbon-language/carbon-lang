@@ -44,3 +44,47 @@ define i32* @test4(i32 %n) {
   %A = alloca i32, i32 %n
   ret i32* %A
 }
+
+; Allocas which are only used by GEPs, bitcasts, and stores (transitively)
+; should be deleted.
+define void @test5() {
+; CHECK: @test5
+; CHECK-NOT: alloca
+; CHECK-NOT: store
+; CHECK: ret
+
+entry:
+  %a = alloca { i32 }
+  %b = alloca i32*
+  %a.1 = getelementptr { i32 }* %a, i32 0, i32 0
+  store i32 123, i32* %a.1
+  store i32* %a.1, i32** %b
+  %b.1 = bitcast i32** %b to i32*
+  store i32 123, i32* %b.1
+  %a.2 = getelementptr { i32 }* %a, i32 0, i32 0
+  store atomic i32 2, i32* %a.2 unordered, align 4
+  %a.3 = getelementptr { i32 }* %a, i32 0, i32 0
+  store atomic i32 3, i32* %a.3 release, align 4
+  %a.4 = getelementptr { i32 }* %a, i32 0, i32 0
+  store atomic i32 4, i32* %a.4 seq_cst, align 4
+  ret void
+}
+
+declare void @f(i32* %p)
+
+; Check that we don't delete allocas in some erroneous cases.
+define void @test6() {
+; CHECK: @test6
+; CHECK-NOT: ret
+; CHECK: alloca
+; CHECK-NEXT: alloca
+; CHECK: ret
+
+entry:
+  %a = alloca { i32 }
+  %b = alloca i32
+  %a.1 = getelementptr { i32 }* %a, i32 0, i32 0
+  store volatile i32 123, i32* %a.1
+  tail call void @f(i32* %b)
+  ret void
+}
