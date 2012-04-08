@@ -477,7 +477,7 @@ void ValueHandleBase::AddToExistingUseList(ValueHandleBase **List) {
   setPrevPtr(List);
   if (Next) {
     Next->setPrevPtr(&Next);
-    assert(VP == Next->VP && "Added to wrong list?");
+    assert(VP.getPointer() == Next->VP.getPointer() && "Added to wrong list?");
   }
 }
 
@@ -493,14 +493,14 @@ void ValueHandleBase::AddToExistingUseListAfter(ValueHandleBase *List) {
 
 /// AddToUseList - Add this ValueHandle to the use list for VP.
 void ValueHandleBase::AddToUseList() {
-  assert(VP && "Null pointer doesn't have a use list!");
+  assert(VP.getPointer() && "Null pointer doesn't have a use list!");
 
-  LLVMContextImpl *pImpl = VP->getContext().pImpl;
+  LLVMContextImpl *pImpl = VP.getPointer()->getContext().pImpl;
 
-  if (VP->HasValueHandle) {
+  if (VP.getPointer()->HasValueHandle) {
     // If this value already has a ValueHandle, then it must be in the
     // ValueHandles map already.
-    ValueHandleBase *&Entry = pImpl->ValueHandles[VP];
+    ValueHandleBase *&Entry = pImpl->ValueHandles[VP.getPointer()];
     assert(Entry != 0 && "Value doesn't have any handles?");
     AddToExistingUseList(&Entry);
     return;
@@ -514,10 +514,10 @@ void ValueHandleBase::AddToUseList() {
   DenseMap<Value*, ValueHandleBase*> &Handles = pImpl->ValueHandles;
   const void *OldBucketPtr = Handles.getPointerIntoBucketsArray();
 
-  ValueHandleBase *&Entry = Handles[VP];
+  ValueHandleBase *&Entry = Handles[VP.getPointer()];
   assert(Entry == 0 && "Value really did already have handles?");
   AddToExistingUseList(&Entry);
-  VP->HasValueHandle = true;
+  VP.getPointer()->HasValueHandle = true;
 
   // If reallocation didn't happen or if this was the first insertion, don't
   // walk the table.
@@ -529,14 +529,16 @@ void ValueHandleBase::AddToUseList() {
   // Okay, reallocation did happen.  Fix the Prev Pointers.
   for (DenseMap<Value*, ValueHandleBase*>::iterator I = Handles.begin(),
        E = Handles.end(); I != E; ++I) {
-    assert(I->second && I->first == I->second->VP && "List invariant broken!");
+    assert(I->second && I->first == I->second->VP.getPointer() &&
+           "List invariant broken!");
     I->second->setPrevPtr(&I->second);
   }
 }
 
 /// RemoveFromUseList - Remove this ValueHandle from its current use list.
 void ValueHandleBase::RemoveFromUseList() {
-  assert(VP && VP->HasValueHandle && "Pointer doesn't have a use list!");
+  assert(VP.getPointer() && VP.getPointer()->HasValueHandle &&
+         "Pointer doesn't have a use list!");
 
   // Unlink this from its use list.
   ValueHandleBase **PrevPtr = getPrevPtr();
@@ -552,11 +554,11 @@ void ValueHandleBase::RemoveFromUseList() {
   // If the Next pointer was null, then it is possible that this was the last
   // ValueHandle watching VP.  If so, delete its entry from the ValueHandles
   // map.
-  LLVMContextImpl *pImpl = VP->getContext().pImpl;
+  LLVMContextImpl *pImpl = VP.getPointer()->getContext().pImpl;
   DenseMap<Value*, ValueHandleBase*> &Handles = pImpl->ValueHandles;
   if (Handles.isPointerIntoBucketsArray(PrevPtr)) {
-    Handles.erase(VP);
-    VP->HasValueHandle = false;
+    Handles.erase(VP.getPointer());
+    VP.getPointer()->HasValueHandle = false;
   }
 }
 

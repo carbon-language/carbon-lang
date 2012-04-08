@@ -49,52 +49,61 @@ protected:
     Tracking,
     Weak
   };
-private:
 
+private:
   PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
   ValueHandleBase *Next;
-  Value *VP;
+
+  // A subclass may want to store some information along with the value
+  // pointer. Allow them to do this by making the value pointer a pointer-int
+  // pair. The 'setValPtrInt' and 'getValPtrInt' methods below give them this
+  // access.
+  PointerIntPair<Value*, 2> VP;
   
   explicit ValueHandleBase(const ValueHandleBase&); // DO NOT IMPLEMENT.
 public:
   explicit ValueHandleBase(HandleBaseKind Kind)
-    : PrevPair(0, Kind), Next(0), VP(0) {}
+    : PrevPair(0, Kind), Next(0), VP(0, 0) {}
   ValueHandleBase(HandleBaseKind Kind, Value *V)
-    : PrevPair(0, Kind), Next(0), VP(V) {
-    if (isValid(VP))
+    : PrevPair(0, Kind), Next(0), VP(V, 0) {
+    if (isValid(VP.getPointer()))
       AddToUseList();
   }
   ValueHandleBase(HandleBaseKind Kind, const ValueHandleBase &RHS)
     : PrevPair(0, Kind), Next(0), VP(RHS.VP) {
-    if (isValid(VP))
+    if (isValid(VP.getPointer()))
       AddToExistingUseList(RHS.getPrevPtr());
   }
   ~ValueHandleBase() {
-    if (isValid(VP))
+    if (isValid(VP.getPointer()))
       RemoveFromUseList();
   }
 
   Value *operator=(Value *RHS) {
-    if (VP == RHS) return RHS;
-    if (isValid(VP)) RemoveFromUseList();
-    VP = RHS;
-    if (isValid(VP)) AddToUseList();
+    if (VP.getPointer() == RHS) return RHS;
+    if (isValid(VP.getPointer())) RemoveFromUseList();
+    VP.setPointer(RHS);
+    if (isValid(VP.getPointer())) AddToUseList();
     return RHS;
   }
 
   Value *operator=(const ValueHandleBase &RHS) {
-    if (VP == RHS.VP) return RHS.VP;
-    if (isValid(VP)) RemoveFromUseList();
-    VP = RHS.VP;
-    if (isValid(VP)) AddToExistingUseList(RHS.getPrevPtr());
-    return VP;
+    if (VP.getPointer() == RHS.VP.getPointer()) return RHS.VP.getPointer();
+    if (isValid(VP.getPointer())) RemoveFromUseList();
+    VP.setPointer(RHS.VP.getPointer());
+    if (isValid(VP.getPointer())) AddToExistingUseList(RHS.getPrevPtr());
+    return VP.getPointer();
   }
 
   Value *operator->() const { return getValPtr(); }
   Value &operator*() const { return *getValPtr(); }
 
 protected:
-  Value *getValPtr() const { return VP; }
+  Value *getValPtr() const { return VP.getPointer(); }
+
+  void setValPtrInt(unsigned K) { VP.setInt(K); }
+  unsigned getValPtrInt() const { return VP.getInt(); }
+
   static bool isValid(Value *V) {
     return V &&
            V != DenseMapInfo<Value *>::getEmptyKey() &&
