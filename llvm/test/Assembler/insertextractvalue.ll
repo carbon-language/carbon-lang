@@ -1,6 +1,4 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
-; RUN: grep insertvalue %t | count 1
-; RUN: grep extractvalue %t | count 1
 
 ; CHECK:      @foo
 ; CHECK-NEXT: load
