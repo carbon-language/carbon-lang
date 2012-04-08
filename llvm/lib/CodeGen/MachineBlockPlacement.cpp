@@ -141,6 +141,14 @@ public:
     }
   }
 
+#ifndef NDEBUG
+  /// \brief Dump the blocks in this chain.
+  void dump() LLVM_ATTRIBUTE_USED {
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      (*I)->dump();
+  }
+#endif // NDEBUG
+
   /// \brief Count of predecessors within the loop currently being processed.
   ///
   /// This count is updated at each loop we process to represent the number of
