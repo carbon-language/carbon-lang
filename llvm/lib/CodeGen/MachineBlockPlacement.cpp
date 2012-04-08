@@ -438,7 +438,6 @@ MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
   for (SmallVectorImpl<MachineBasicBlock *>::iterator WBI = WorkList.begin(),
                                                       WBE = WorkList.end();
        WBI != WBE; ++WBI) {
-    assert(!BlockFilter || BlockFilter->count(*WBI));
     BlockChain &SuccChain = *BlockToChain[*WBI];
     if (&SuccChain == &Chain) {
       DEBUG(dbgs() << "    " << getBlockName(*WBI)
