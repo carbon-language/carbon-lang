@@ -740,6 +740,8 @@ static void LangOptsToArgs(const LangOptions &Opts, ToArgsList &Res) {
     Res.push_back("-fno-bitfield-type-alignment");
   if (Opts.PICLevel)
     Res.push_back("-pic-level", llvm::utostr(Opts.PICLevel));
+  if (Opts.PIELevel)
+    Res.push_back("-pie-level", llvm::utostr(Opts.PIELevel));
   if (Opts.ObjCGCBitmapPrint)
     Res.push_back("-print-ivar-layout");
   if (Opts.NoConstantCFStrings)
@@ -1897,6 +1899,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PackStruct = Args.getLastArgIntValue(OPT_fpack_struct, 0, Diags);
   Opts.PICLevel = Args.getLastArgIntValue(OPT_pic_level, 0, Diags);
+  Opts.PIELevel = Args.getLastArgIntValue(OPT_pie_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.DumpRecordLayoutsSimple = Args.hasArg(OPT_fdump_record_layouts_simple);
   Opts.DumpRecordLayouts = Opts.DumpRecordLayoutsSimple 

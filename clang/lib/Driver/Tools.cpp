@@ -1480,19 +1480,43 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // would do to enable flag_pic.
   //
   // FIXME: Centralize this code.
-  bool PICEnabled = (Args.hasArg(options::OPT_fPIC) ||
-                     Args.hasArg(options::OPT_fpic) ||
-                     Args.hasArg(options::OPT_fPIE) ||
-                     Args.hasArg(options::OPT_fpie));
-  bool PICDisabled = (Args.hasArg(options::OPT_mkernel) ||
-                      Args.hasArg(options::OPT_static) ||
-                      Args.hasArg(options::OPT_fno_PIC) ||
-                      Args.hasArg(options::OPT_fno_pic) ||
-                      Args.hasArg(options::OPT_fno_PIE) ||
-                      Args.hasArg(options::OPT_fno_pie));
+  Arg *LastPICArg = 0;
+  for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
+    if ((*I)->getOption().matches(options::OPT_fPIC) ||
+        (*I)->getOption().matches(options::OPT_fno_PIC) ||
+        (*I)->getOption().matches(options::OPT_fpic) ||
+        (*I)->getOption().matches(options::OPT_fno_pic) ||
+        (*I)->getOption().matches(options::OPT_fPIE) ||
+        (*I)->getOption().matches(options::OPT_fno_PIE) ||
+        (*I)->getOption().matches(options::OPT_fpie) ||
+        (*I)->getOption().matches(options::OPT_fno_pie)) {
+      LastPICArg = *I;
+      (*I)->claim();
+    }
+  }
+  bool PICDisabled = false;
+  bool PICEnabled = false;
+  bool PICForPIE = false;
+  if (LastPICArg) {
+    PICForPIE = (LastPICArg->getOption().matches(options::OPT_fPIE) ||
+                 LastPICArg->getOption().matches(options::OPT_fpie));
+    PICEnabled = (PICForPIE ||
+                  LastPICArg->getOption().matches(options::OPT_fPIC) ||
+                  LastPICArg->getOption().matches(options::OPT_fpic));
+    PICDisabled = !PICEnabled;
+  }
+  // Note that these flags are trump-cards. Regardless of the order w.r.t. the
+  // PIC or PIE options above, if these show up, PIC is disabled.
+  if (Args.hasArg(options::OPT_mkernel))
+    PICDisabled = true;
+  if (Args.hasArg(options::OPT_static))
+    PICDisabled = true;
+  bool DynamicNoPIC = Args.hasArg(options::OPT_mdynamic_no_pic);
+
+  // Select the relocation model.
   const char *Model = getToolChain().GetForcedPicModel();
   if (!Model) {
-    if (Args.hasArg(options::OPT_mdynamic_no_pic))
+    if (DynamicNoPIC)
       Model = "dynamic-no-pic";
     else if (PICDisabled)
       Model = "static";
@@ -1501,19 +1525,25 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       Model = getToolChain().GetDefaultRelocationModel();
   }
-  if (StringRef(Model) != "pic") {
+  StringRef ModelStr = Model ? Model : "";
+  if (Model && ModelStr != "pic") {
     CmdArgs.push_back("-mrelocation-model");
     CmdArgs.push_back(Model);
   }
 
-  // Infer the __PIC__ value.
-  //
-  // FIXME:  This isn't quite right on Darwin, which always sets
-  // __PIC__=2.
-  if (strcmp(Model, "pic") == 0 || strcmp(Model, "dynamic-no-pic") == 0) {
+  // Infer the __PIC__ and __PIE__ values.
+  if (ModelStr == "pic" && PICForPIE) {
+    CmdArgs.push_back("-pie-level");
+    CmdArgs.push_back((LastPICArg &&
+                       LastPICArg->getOption().matches(options::OPT_fPIE)) ?
+                      "2" : "1");
+  } else if (ModelStr == "pic" || ModelStr == "dynamic-no-pic") {
     CmdArgs.push_back("-pic-level");
-    CmdArgs.push_back(Args.hasArg(options::OPT_fPIC) ? "2" : "1");
+    CmdArgs.push_back(((ModelStr != "dynamic-no-pic" && LastPICArg &&
+                        LastPICArg->getOption().matches(options::OPT_fPIC)) ||
+                       getToolChain().getTriple().isOSDarwin()) ? "2" : "1");
   }
+
   if (!Args.hasFlag(options::OPT_fmerge_all_constants,
                     options::OPT_fno_merge_all_constants))
     CmdArgs.push_back("-fno-merge-all-constants");

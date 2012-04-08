@@ -528,6 +528,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__PIC__", Twine(PICLevel));
     Builder.defineMacro("__pic__", Twine(PICLevel));
   }
+  if (unsigned PIELevel = LangOpts.PIELevel) {
+    Builder.defineMacro("__PIE__", Twine(PIELevel));
+    Builder.defineMacro("__pie__", Twine(PIELevel));
+  }
 
   // Macros to control C99 numerics and <float.h>
   Builder.defineMacro("__FLT_EVAL_METHOD__", Twine(TI.getFloatEvalMethod()));

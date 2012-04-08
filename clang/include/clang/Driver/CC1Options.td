@@ -632,6 +632,8 @@ def fwrapv : Flag<"-fwrapv">,
   HelpText<"Treat signed integer overflow as two's complement">;
 def pic_level : Separate<"-pic-level">,
   HelpText<"Value for __PIC__">;
+def pie_level : Separate<"-pie-level">,
+  HelpText<"Value for __PIE__">;
 def pthread : Flag<"-pthread">,
   HelpText<"Support POSIX threads in generated code">;
 def fpack_struct : Separate<"-fpack-struct">,
