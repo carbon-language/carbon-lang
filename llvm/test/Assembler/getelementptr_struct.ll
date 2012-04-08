@@ -1,5 +1,7 @@
-; RUN: not llvm-as < %s >/dev/null |& grep {invalid getelementptr indices}
+; RUN: not llvm-as < %s >/dev/null |& FileCheck %s
 ; Test the case of a incorrect indices type into struct
+
+; CHECK: invalid getelementptr indices
 
 %RT = type { i8 , [10 x [20 x i32]], i8  }
 %ST = type { i32, double, %RT }

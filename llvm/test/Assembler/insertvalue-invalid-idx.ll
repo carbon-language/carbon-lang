@@ -1,7 +1,9 @@
-; RUN: not llvm-as < %s |& grep {invalid indices for insertvalue}
+; RUN: not llvm-as < %s |& FileCheck %s
+
+; CHECK: invalid indices for insertvalue
 
 define void @test() {
 entry:
-        insertvalue [0 x i32] undef, i32 0, 0
-        ret void
+  insertvalue [0 x i32] undef, i32 0, 0
+  ret void
 }
