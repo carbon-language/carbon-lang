@@ -263,6 +263,11 @@ TrapFuncName("trap-func", cl::Hidden,
   cl::init(""));
 
 static cl::opt<bool>
+EnablePIE("enable-pie",
+  cl::desc("Assume the creation of a position independent executable."),
+  cl::init(false));
+
+static cl::opt<bool>
 SegmentedStacks("segmented-stacks",
   cl::desc("Use segmented stacks if possible."),
   cl::init(false));
@@ -467,6 +472,7 @@ int main(int argc, char **argv) {
   Options.RealignStack = EnableRealignStack;
   Options.DisableJumpTables = DisableSwitchTables;
   Options.TrapFuncName = TrapFuncName;
+  Options.PositionIndependentExecutable = EnablePIE;
   Options.EnableSegmentedStacks = SegmentedStacks;
 
   std::auto_ptr<TargetMachine>

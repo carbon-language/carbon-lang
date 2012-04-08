@@ -82,7 +82,8 @@ TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
   // For variables, is internal different from hidden?
   bool isHidden = GV->hasHiddenVisibility();
 
-  if (getRelocationModel() == Reloc::PIC_) {
+  if (getRelocationModel() == Reloc::PIC_ &&
+      !Options.PositionIndependentExecutable) {
     if (isLocal || isHidden)
       return TLSModel::LocalDynamic;
     else
