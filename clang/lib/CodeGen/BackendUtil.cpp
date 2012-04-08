@@ -344,6 +344,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   Options.RealignStack = CodeGenOpts.StackRealignment;
   Options.DisableTailCalls = CodeGenOpts.DisableTailCalls;
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
+  Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,
