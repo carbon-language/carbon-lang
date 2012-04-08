@@ -2922,19 +2922,15 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
       if (MinRange[Input] == (int)(SrcNumElts+1) && MaxRange[Input] == -1) {
         RangeUse[Input] = 0; // Unused
         StartIdx[Input] = 0;
-      } else if (MaxRange[Input] - MinRange[Input] < (int)MaskNumElts) {
-        // Fits within range but we should see if we can find a good
-        // start index that is a multiple of the mask length.
-        if (MaxRange[Input] < (int)MaskNumElts) {
-          RangeUse[Input] = 1; // Extract from beginning of the vector
-          StartIdx[Input] = 0;
-        } else {
-          StartIdx[Input] = (MinRange[Input]/MaskNumElts)*MaskNumElts;
-          if (MaxRange[Input] - StartIdx[Input] < (int)MaskNumElts &&
-              StartIdx[Input] + MaskNumElts <= SrcNumElts)
-            RangeUse[Input] = 1; // Extract from a multiple of the mask length.
-        }
+        continue;
       }
+
+      // Find a good start index that is a multiple of the mask length. Then
+      // see if the rest of the elements are in range.
+      StartIdx[Input] = (MinRange[Input]/MaskNumElts)*MaskNumElts;
+      if (MaxRange[Input] - StartIdx[Input] < (int)MaskNumElts &&
+          StartIdx[Input] + MaskNumElts <= SrcNumElts)
+        RangeUse[Input] = 1; // Extract from a multiple of the mask length.
     }
 
     if (RangeUse[0] == 0 && RangeUse[1] == 0) {
