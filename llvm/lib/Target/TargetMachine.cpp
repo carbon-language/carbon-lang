@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/GlobalValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -72,6 +73,26 @@ CodeModel::Model TargetMachine::getCodeModel() const {
   if (!CodeGenInfo)
     return CodeModel::Default;
   return CodeGenInfo->getCodeModel();
+}
+
+TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
+  bool isLocal = GV->hasLocalLinkage();
+  bool isDeclaration = GV->isDeclaration();
+  // FIXME: what should we do for protected and internal visibility?
+  // For variables, is internal different from hidden?
+  bool isHidden = GV->hasHiddenVisibility();
+
+  if (getRelocationModel() == Reloc::PIC_) {
+    if (isLocal || isHidden)
+      return TLSModel::LocalDynamic;
+    else
+      return TLSModel::GeneralDynamic;
+  } else {
+    if (!isDeclaration || isHidden)
+      return TLSModel::LocalExec;
+    else
+      return TLSModel::InitialExec;
+  }
 }
 
 /// getOptLevel - Returns the optimization level: None, Less,

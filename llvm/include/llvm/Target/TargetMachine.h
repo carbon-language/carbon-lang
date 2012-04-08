@@ -24,6 +24,7 @@ namespace llvm {
 
 class InstrItineraryData;
 class JITCodeEmitter;
+class GlobalValue;
 class MCAsmInfo;
 class MCCodeGenInfo;
 class MCContext;
@@ -194,6 +195,10 @@ public:
   /// getCodeModel - Returns the code model. The choices are small, kernel,
   /// medium, large, and target default.
   CodeModel::Model getCodeModel() const;
+
+  /// getTLSModel - Returns the TLS model which should be used for the given
+  /// global variable.
+  TLSModel::Model getTLSModel(const GlobalValue *GV) const;
 
   /// getOptLevel - Returns the optimization level: None, Less,
   /// Default, or Aggressive.

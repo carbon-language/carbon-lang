@@ -64,17 +64,6 @@ namespace llvm {
     };
   }
 
-  // FIXME: should this be here?
-  namespace TLSModel {
-    enum Model {
-      GeneralDynamic,
-      LocalDynamic,
-      InitialExec,
-      LocalExec
-    };
-  }
-  TLSModel::Model getTLSModel(const GlobalValue *GV, Reloc::Model reloc);
-
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
