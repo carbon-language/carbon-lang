@@ -414,3 +414,12 @@ namespace InitFromConst {
     consume(a);
   }
 }
+
+namespace Null {
+  decltype(nullptr) null();
+  // CHECK: call {{.*}} @_ZN4Null4nullEv(
+  int *p = null();
+  struct S {};
+  // CHECK: call {{.*}} @_ZN4Null4nullEv(
+  int S::*q = null();
+}
