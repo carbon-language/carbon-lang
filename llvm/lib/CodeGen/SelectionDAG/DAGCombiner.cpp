@@ -7824,7 +7824,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         Idx = OtherSV->getMaskElt(Idx);
 
       // The combined shuffle must map each index to itself.
-      if (Idx != i && Idx != -1)
+      if ((unsigned)Idx != i && Idx != -1)
         return SDValue();
     }
 
