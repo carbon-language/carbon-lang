@@ -1,12 +1,12 @@
-// RUN: %clang -target i386-unknown-unknown -static -dM -E -o - %s \
-// RUN:   | FileCheck --check-prefix=CHECK-STATIC %s
-// CHECK-STATIC-NOT: #define __PIC__
-// CHECK-STATIC-NOT: #define __pic__
-// RUN: %clang -target i386-unknown-unknown -fpic -dM -E -o - %s \
-// RUN:   | FileCheck --check-prefix=CHECK-LOWERPIC %s
-// CHECK-LOWERPIC: #define __PIC__ 1
-// CHECK-LOWERPIC: #define __pic__ 1
-// RUN: %clang -target i386-unknown-unknown -fPIC -dM -E -o - %s \
-// RUN:   | FileCheck --check-prefix=CHECK-UPPERPIC %s
-// CHECK-UPPERPIC: #define __PIC__ 2
-// CHECK-UPPERPIC: #define __pic__ 2
+// RUN: %clang_cc1 -dM -E -o - %s \
+// RUN:   | FileCheck %s
+// CHECK-NOT: #define __PIC__
+// CHECK-NOT: #define __pic__
+// RUN: %clang_cc1 -pic-level 1 -dM -E -o - %s \
+// RUN:   | FileCheck --check-prefix=CHECK-PIC1 %s
+// CHECK-PIC1: #define __PIC__ 1
+// CHECK-PIC1: #define __pic__ 1
+// RUN: %clang_cc1 -pic-level 2 -dM -E -o - %s \
+// RUN:   | FileCheck --check-prefix=CHECK-PIC2 %s
+// CHECK-PIC2: #define __PIC__ 2
+// CHECK-PIC2: #define __pic__ 2
