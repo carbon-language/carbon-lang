@@ -17,9 +17,10 @@ lib/Core
   to map disk values to in-memory values.
 
 * The Platform interface needs to be refactored.  There should be less work
-  done in the platform.  Instead the Platform should just be a bunch of bool
-  methods which direct the Resolver in how to operate.  Subclasses of
-  Platform can set the bool values in their constructors.
+  done in the platform.  Instead the Platform should just be a bunch of
+  predicate member functcions which direct the Resolver in how to operate.
+  Subclasses of Platform can set the predicate values in their constructors. An
+  alternative to having the platform provide this directly is to have the
+  Platform return a LinkInfo object similar to MCAsmInfo and friends.
 
-* The YamlReader should be converted to use Michael's yaml parser once
-  that goes into LLVM.
+* The YamlReader should be converted to use LLVM's Support::YAMLParser.
