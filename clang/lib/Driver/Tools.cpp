@@ -2400,10 +2400,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fobjc-default-synthesize-properties");
   }
 
-  if (Args.hasFlag(options::OPT_fobjc_trace, options::OPT_fno_objc_trace,
-                   false))
-    CmdArgs.push_back("-fobjc-trace");
-
   // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.
   // NOTE: This logic is duplicated in ToolChains.cpp.
   bool ARC = isObjCAutoRefCount(Args);

@@ -322,11 +322,6 @@ private:
   /// Function used for non-object declared property setters.
   LazyRuntimeFunction SetStructPropertyFn;
 
-  /// Function called before message sends, when tracing
-  LazyRuntimeFunction TraceEnterFn;
-  /// Function called after  message sends, when tracing
-  LazyRuntimeFunction TraceExitFn;
-
   /// The version of the runtime that this class targets.  Must match the
   /// version in the runtime.
   int RuntimeVersion;
@@ -773,9 +768,6 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   SetStructPropertyFn.init(&CGM, "objc_setPropertyStruct", VoidTy, PtrTy, PtrTy, 
       PtrDiffTy, BoolTy, BoolTy, NULL);
 
-  TraceEnterFn.init(&CGM, "objc_trace_enter", VoidTy, IdTy, SelectorTy, NULL);
-  TraceExitFn.init(&CGM, "objc_trace_exit", VoidTy, IdTy, SelectorTy, NULL);
-
   // IMP type
   llvm::Type *IMPArgs[] = { IdTy, SelectorTy };
   IMPTy = llvm::PointerType::getUnqual(llvm::FunctionType::get(IdTy, IMPArgs,
@@ -1220,18 +1212,11 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   ActualArgs[0] = CallArg(RValue::get(Receiver), ASTIdTy, false);
 
   imp = EnforceType(Builder, imp, MSI.MessengerType);
-  if (CGM.getCodeGenOpts().ObjCTrace) {
-    Builder.CreateCall2(TraceEnterFn, Receiver, cmd);
-  }
 
   llvm::Instruction *call;
   RValue msgRet = CGF.EmitCall(MSI.CallInfo, imp, Return, ActualArgs,
       0, &call);
   call->setMetadata(msgSendMDKind, node);
-
-  if (CGM.getCodeGenOpts().ObjCTrace) {
-    Builder.CreateCall2(TraceExitFn, Receiver, cmd);
-  }
 
 
   if (!isPointerSizedReturn) {

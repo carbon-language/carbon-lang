@@ -249,8 +249,6 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
     Res.push_back("-mconstructor-aliases");
   if (Opts.ObjCAutoRefCountExceptions)
     Res.push_back("-fobjc-arc-eh");
-  if (Opts.ObjCTrace)
-    Res.push_back("-fobjc-trace");
   if (!Opts.DebugPass.empty()) {
     Res.push_back("-mdebug-pass", Opts.DebugPass);
   }
@@ -1111,7 +1109,6 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
   Opts.ObjCAutoRefCountExceptions = Args.hasArg(OPT_fobjc_arc_exceptions);
-  Opts.ObjCTrace = Args.hasArg(OPT_fobjc_trace);
   Opts.ObjCRuntimeHasARC = Args.hasArg(OPT_fobjc_runtime_has_arc);
   Opts.ObjCRuntimeHasTerminate = Args.hasArg(OPT_fobjc_runtime_has_terminate);
   Opts.CUDAIsDevice = Args.hasArg(OPT_fcuda_is_device);
