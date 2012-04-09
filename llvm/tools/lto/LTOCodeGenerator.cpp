@@ -347,15 +347,15 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   if ( this->determineTarget(errMsg) )
     return true;
 
-  // mark which symbols can not be internalized
-  this->applyScopeRestrictions();
-
   Module* mergedModule = _linker.getModule();
 
   // if options were requested, set them
   if ( !_codegenOptions.empty() )
     cl::ParseCommandLineOptions(_codegenOptions.size(),
                                 const_cast<char **>(&_codegenOptions[0]));
+
+  // mark which symbols can not be internalized
+  this->applyScopeRestrictions();
 
   // Instantiate the pass manager to organize the passes.
   PassManager passes;
