@@ -67,7 +67,7 @@ LTOCodeGenerator::LTOCodeGenerator()
   : _context(getGlobalContext()),
     _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
     _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
-    _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
+    _runInternalizePass(false), _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
     _nativeObjectFile(NULL) {
   InitializeAllTargets();
   InitializeAllTargetMCs();
@@ -366,7 +366,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Add an appropriate TargetData instance for this module...
   passes.add(new TargetData(*_target->getTargetData()));
 
-  PassManagerBuilder().populateLTOPassManager(passes, /*Internalize=*/ false,
+  PassManagerBuilder().populateLTOPassManager(passes,
+                                              _runInternalizePass,
                                               !DisableInline,
                                               DisableGVNLoadPRE);
 

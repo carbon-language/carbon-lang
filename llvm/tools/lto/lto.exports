@@ -27,6 +27,7 @@ lto_codegen_set_assembler_args
 lto_codegen_set_assembler_path
 lto_codegen_set_cpu
 lto_codegen_compile_to_file
+lto_codegen_whole_program_optimization
 LLVMCreateDisasm
 LLVMDisasmDispose
 LLVMDisasmInstruction

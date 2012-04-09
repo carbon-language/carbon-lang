@@ -251,13 +251,18 @@ lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
                                int nargs);
 
 /**
+ * Enables the internalize pass during LTO optimizations.
+ */
+extern void
+lto_codegen_whole_program_optimization(lto_code_gen_t cg);
+
+/**
  * Adds to a list of all global symbols that must exist in the final
  * generated code.  If a function is not listed, it might be
  * inlined into every usage and optimized away.
  */
 extern void
 lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const char* symbol);
-
 
 /**
  * Writes a new object file at the specified path that contains the
@@ -266,7 +271,6 @@ lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const char* symbol);
  */
 extern bool
 lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path);
-
 
 /**
  * Generates code for all added modules into one native object file.

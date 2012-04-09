@@ -54,6 +54,8 @@ struct LTOCodeGenerator {
   const void *compile(size_t *length, std::string &errMsg);
   void setCodeGenDebugOptions(const char *opts);
 
+  void enableInternalizePass() { _runInternalizePass = true; }
+
 private:
   bool generateObjectFile(llvm::raw_ostream &out, std::string &errMsg);
   void applyScopeRestrictions();
@@ -70,6 +72,7 @@ private:
   llvm::TargetMachine*        _target;
   bool                        _emitDwarfDebugInfo;
   bool                        _scopeRestrictionsDone;
+  bool                        _runInternalizePass;
   lto_codegen_model           _codeModel;
   StringSet                   _mustPreserveSymbols;
   StringSet                   _asmUndefinedRefs;
