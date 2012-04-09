@@ -460,8 +460,6 @@ def fobjc_arc_exceptions : Flag<"-fobjc-arc-exceptions">, Group<f_Group>;
 def fno_objc_arc_exceptions : Flag<"-fno-objc-arc-exceptions">, Group<f_Group>;
 def fobjc_atdefs : Flag<"-fobjc-atdefs">, Group<clang_ignored_f_Group>;
 def fobjc_call_cxx_cdtors : Flag<"-fobjc-call-cxx-cdtors">, Group<clang_ignored_f_Group>;
-def fobjc_default_synthesize_properties : 
-  Flag<"-fobjc-default-synthesize-properties">, Group<f_Group>;
 def fobjc_exceptions: Flag<"-fobjc-exceptions">, Group<f_Group>;
 
 def fobjc_gc_only : Flag<"-fobjc-gc-only">, Group<f_Group>;
