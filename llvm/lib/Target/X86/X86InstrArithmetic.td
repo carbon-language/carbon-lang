@@ -53,7 +53,7 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
                [(set AL, (mul AL, GR8:$src)),
-                (implicit EFLAGS)]>;     // AL,AH = AL*GR8
+                (implicit EFLAGS)], IIC_MUL8>;     // AL,AH = AL*GR8
 
 let Defs = [AX,DX,EFLAGS], Uses = [AX], neverHasSideEffects = 1 in
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src),
@@ -97,31 +97,32 @@ def MUL64m : RI<0xF7, MRM4m, (outs), (ins i64mem:$src),
 
 let neverHasSideEffects = 1 in {
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
-def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", []>;
-              // AL,AH = AL*GR8
+def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", [],
+              IIC_IMUL8>; // AL,AH = AL*GR8
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
-def IMUL16r : I<0xF7, MRM5r, (outs),  (ins GR16:$src), "imul{w}\t$src", []>,
-              OpSize;    // AX,DX = AX*GR16
+def IMUL16r : I<0xF7, MRM5r, (outs),  (ins GR16:$src), "imul{w}\t$src", [],
+              IIC_IMUL16_RR>, OpSize;    // AX,DX = AX*GR16
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
-def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", []>;
-              // EAX,EDX = EAX*GR32
+def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", [],
+              IIC_IMUL32_RR>; // EAX,EDX = EAX*GR32
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX] in
-def IMUL64r : RI<0xF7, MRM5r, (outs), (ins GR64:$src), "imul{q}\t$src", []>;
-              // RAX,RDX = RAX*GR64
+def IMUL64r : RI<0xF7, MRM5r, (outs), (ins GR64:$src), "imul{q}\t$src", [],
+              IIC_IMUL64_RR>; // RAX,RDX = RAX*GR64
 
 let mayLoad = 1 in {
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
-                "imul{b}\t$src", []>;    // AL,AH = AL*[mem8]
+                "imul{b}\t$src", [], IIC_IMUL8>;    // AL,AH = AL*[mem8]
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def IMUL16m : I<0xF7, MRM5m, (outs), (ins i16mem:$src),
-                "imul{w}\t$src", []>, OpSize; // AX,DX = AX*[mem16]
+                "imul{w}\t$src", [], IIC_IMUL16_MEM>, OpSize;
+                // AX,DX = AX*[mem16]
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
-                "imul{l}\t$src", []>;  // EAX,EDX = EAX*[mem32]
+                "imul{l}\t$src", [], IIC_IMUL32_MEM>;  // EAX,EDX = EAX*[mem32]
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX] in
 def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
-                 "imul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
+                 "imul{q}\t$src", [], IIC_IMUL64>;  // RAX,RDX = RAX*[mem64]
 }
 } // neverHasSideEffects
 
@@ -639,10 +640,11 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
 
 // BinOpRR - Instructions like "add reg, reg, reg".
 class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              dag outlist, list<dag> pattern, Format f = MRMDestReg>
+              dag outlist, list<dag> pattern, InstrItinClass itin,
+              Format f = MRMDestReg>
   : ITy<opcode, f, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-        mnemonic, "{$src2, $src1|$src1, $src2}", pattern>;
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern, itin>;
 
 // BinOpRR_R - Instructions like "add reg, reg, reg", where the pattern has
 // just a regclass (no eflags) as a result.
@@ -650,7 +652,8 @@ class BinOpRR_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                 SDNode opnode>
   : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst,
-                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))],
+                  IIC_BIN_NONMEM>;
 
 // BinOpRR_F - Instructions like "cmp reg, Reg", where the pattern has
 // just a EFLAGS as a result.
@@ -659,7 +662,7 @@ class BinOpRR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   : BinOpRR<opcode, mnemonic, typeinfo, (outs),
             [(set EFLAGS,
                   (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))],
-            f>;
+            IIC_BIN_NONMEM, f>;
 
 // BinOpRR_RF - Instructions like "add reg, reg, reg", where the pattern has
 // both a regclass and EFLAGS as a result.
@@ -667,7 +670,8 @@ class BinOpRR_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode>
   : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst, EFLAGS,
-                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))],
+                  IIC_BIN_NONMEM>;
 
 // BinOpRR_RFF - Instructions like "adc reg, reg, reg", where the pattern has
 // both a regclass and EFLAGS as a result, and has EFLAGS as input.
@@ -676,14 +680,14 @@ class BinOpRR_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst, EFLAGS,
                   (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2,
-                          EFLAGS))]>;
+                          EFLAGS))], IIC_BIN_NONMEM>;
 
 // BinOpRR_Rev - Instructions like "add reg, reg, reg" (reversed encoding).
 class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   : ITy<opcode, MRMSrcReg, typeinfo,
         (outs typeinfo.RegClass:$dst),
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-        mnemonic, "{$src2, $dst|$dst, $src2}", []> {
+        mnemonic, "{$src2, $dst|$dst, $src2}", [], IIC_BIN_NONMEM> {
   // The disassembler should know about this, but not the asmparser.
   let isCodeGenOnly = 1;
 }
@@ -692,7 +696,7 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
 class BinOpRR_F_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   : ITy<opcode, MRMSrcReg, typeinfo, (outs),
         (ins typeinfo.RegClass:$src1, typeinfo.RegClass:$src2),
-        mnemonic, "{$src2, $src1|$src1, $src2}", []> {
+        mnemonic, "{$src2, $src1|$src1, $src2}", [], IIC_BIN_NONMEM> {
   // The disassembler should know about this, but not the asmparser.
   let isCodeGenOnly = 1;
 }
@@ -702,7 +706,7 @@ class BinOpRM<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               dag outlist, list<dag> pattern>
   : ITy<opcode, MRMSrcMem, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.MemOperand:$src2),
-        mnemonic, "{$src2, $src1|$src1, $src2}", pattern, IIC_BIN_MEM>;
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern, IIC_BIN_NONMEM>;
 
 // BinOpRM_R - Instructions like "add reg, reg, [mem]".
 class BinOpRM_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
@@ -738,7 +742,7 @@ class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               Format f, dag outlist, list<dag> pattern>
   : ITy<opcode, f, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.ImmOperand:$src2),
-        mnemonic, "{$src2, $src1|$src1, $src2}", pattern> {
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern, IIC_BIN_NONMEM> {
   let ImmT = typeinfo.ImmEncoding;
 }
 
@@ -762,7 +766,6 @@ class BinOpRI_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst, EFLAGS, 
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
-
 // BinOpRI_RFF - Instructions like "adc reg, reg, imm".
 class BinOpRI_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode, Format f>
@@ -776,7 +779,7 @@ class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                Format f, dag outlist, list<dag> pattern>
   : ITy<opcode, f, typeinfo, outlist,
         (ins typeinfo.RegClass:$src1, typeinfo.Imm8Operand:$src2),
-        mnemonic, "{$src2, $src1|$src1, $src2}", pattern> {
+        mnemonic, "{$src2, $src1|$src1, $src2}", pattern, IIC_BIN_NONMEM> {
   let ImmT = Imm8; // Always 8-bit immediate.
 }
 
@@ -853,7 +856,6 @@ class BinOpMI_RMW<string mnemonic, X86TypeInfo typeinfo,
             [(store (opnode (typeinfo.VT (load addr:$dst)),
                             typeinfo.ImmOperator:$src), addr:$dst),
              (implicit EFLAGS)]>;
-
 // BinOpMI_RMW_FF - Instructions like "adc [mem], imm".
 class BinOpMI_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
@@ -1219,12 +1221,12 @@ let neverHasSideEffects = 1 in {
   let isCommutable = 1 in
   def rr : I<0xF6, MRMSrcReg, (outs RC:$dst1, RC:$dst2), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             []>, T8XD, VEX_4V;
+             [], IIC_MUL8>, T8XD, VEX_4V;
 
   let mayLoad = 1 in
   def rm : I<0xF6, MRMSrcMem, (outs RC:$dst1, RC:$dst2), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             []>, T8XD, VEX_4V;
+             [], IIC_MUL8>, T8XD, VEX_4V;
 }
 }
 
