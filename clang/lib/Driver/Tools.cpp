@@ -5259,6 +5259,15 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
        i != e; ++i)
     CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + *i));
 
+  // Tell the linker to load the plugin. This has to come before AddLinkerInputs
+  // as gold requires -plugin to come before any -plugin-opt that -Wl might
+  // forward.
+  if (D.IsUsingLTO(Args) || Args.hasArg(options::OPT_use_gold_plugin)) {
+    CmdArgs.push_back("-plugin");
+    std::string Plugin = ToolChain.getDriver().Dir + "/../lib/LLVMgold.so";
+    CmdArgs.push_back(Args.MakeArgString(Plugin));
+  }
+
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
 
   if (D.CCCIsCXX && !Args.hasArg(options::OPT_nostdlib)) {
@@ -5306,12 +5315,6 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
-
-  if (D.IsUsingLTO(Args) || Args.hasArg(options::OPT_use_gold_plugin)) {
-    CmdArgs.push_back("-plugin");
-    std::string Plugin = ToolChain.getDriver().Dir + "/../lib/LLVMgold.so";
-    CmdArgs.push_back(Args.MakeArgString(Plugin));
-  }
 
   C.addCommand(new Command(JA, *this, ToolChain.Linker.c_str(), CmdArgs));
 }
