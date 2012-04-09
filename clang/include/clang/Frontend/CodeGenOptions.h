@@ -82,6 +82,8 @@ public:
                                   /// use of the inline keyword.
   unsigned NoNaNsFPMath      : 1; /// Assume FP arguments, results not NaN.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
+  unsigned ObjCTrace          : 1; /// Emit tracing calls for visualising code
+                                   /// flow in Objective-C programs
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
   unsigned ObjCRuntimeHasARC : 1; /// The target runtime supports ARC natively
   unsigned ObjCRuntimeHasTerminate : 1; /// The ObjC runtime has objc_terminate

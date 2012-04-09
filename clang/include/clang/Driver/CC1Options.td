@@ -619,6 +619,8 @@ def print_ivar_layout : Flag<"-print-ivar-layout">,
   HelpText<"Enable Objective-C Ivar layout bitmap print trace">;
 def fobjc_fragile_abi : Flag<"-fobjc-fragile-abi">,
   HelpText<"Use Objective-C's fragile ABI">;
+def fobjc_trace : Flag<"-fobjc-trace">,
+  HelpText<"Enable tracing of Objective-C message sends">;
 def fno_objc_infer_related_result_type : Flag<
     "-fno-objc-infer-related-result-type">,
   HelpText<
