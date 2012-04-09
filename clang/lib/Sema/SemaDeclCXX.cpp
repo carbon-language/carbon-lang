@@ -3356,7 +3356,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
 
     // Bases are always records in a well-formed non-dependent class.
-    const RecordType *RT = VBase->getType()->getAs<RecordType>();
+    const RecordType *RT = VBase->getType()->castAs<RecordType>();
 
     // Ignore direct virtual bases.
     if (DirectVirtualBases.count(RT))
@@ -3373,7 +3373,8 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     assert(Dtor && "No dtor found for BaseClassDecl!");
     CheckDestructorAccess(ClassDecl->getLocation(), Dtor,
                           PDiag(diag::err_access_dtor_vbase)
-                            << VBase->getType());
+                            << VBase->getType(),
+                          Context.getTypeDeclType(ClassDecl));
 
     MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
     DiagnoseUseOfDecl(Dtor, Location);

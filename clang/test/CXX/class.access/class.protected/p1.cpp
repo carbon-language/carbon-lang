@@ -501,3 +501,19 @@ namespace test15 {
     }
   };
 }
+
+namespace test16 {
+  class A {
+  protected:
+    ~A();
+  };
+
+  class B : public virtual A {
+  public:
+    ~B() {}
+  };
+
+  class C : public B {
+    ~C() {}
+  };
+}
