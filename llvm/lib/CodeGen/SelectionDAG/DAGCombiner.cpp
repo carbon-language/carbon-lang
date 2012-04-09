@@ -2361,18 +2361,16 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // The type-legalizer generates this pattern when loading illegal
   // vector types from memory. In many cases this allows additional shuffle
   // optimizations.
-  if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG) {
+  if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
+      N0.getOperand(1).getOpcode() == ISD::UNDEF &&
+      N1.getOperand(1).getOpcode() == ISD::UNDEF) {
     ShuffleVectorSDNode *SVN0 = cast<ShuffleVectorSDNode>(N0);
     ShuffleVectorSDNode *SVN1 = cast<ShuffleVectorSDNode>(N1);
-    SDValue In0 = SVN0->getOperand(0);
-    SDValue In1 = SVN1->getOperand(0);
-    EVT In0Ty = In0.getValueType();
-    EVT In1Ty = In1.getValueType();
+
+    assert(N0.getOperand(0).getValueType() == N1.getOperand(1).getValueType() &&
+           "Inputs to shuffles are not the same type");
 
     unsigned NumElts = VT.getVectorNumElements();
-    // Check that both shuffles are swizzles.
-    bool SingleVecShuff = (N0.getOperand(1).getOpcode() == ISD::UNDEF &&
-                           N1.getOperand(1).getOpcode() == ISD::UNDEF);
 
     // Check that both shuffles use the same mask. The masks are known to be of
     // the same length because the result vector type is the same.
@@ -2386,14 +2384,15 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
       }
     }
 
-    if (SameMask && SingleVecShuff && In0Ty == In1Ty) {
-      SDValue Op = DAG.getNode(N->getOpcode(), N->getDebugLoc(), VT, In0, In1);
-      SDValue Shuff = DAG.getVectorShuffle(VT, N->getDebugLoc(), Op,
-                                          DAG.getUNDEF(VT), &SVN0->getMask()[0]);
+    if (SameMask) {
+      SDValue Op = DAG.getNode(N->getOpcode(), N->getDebugLoc(), VT,
+                               N0.getOperand(0), N1.getOperand(0));
       AddToWorkList(Op.getNode());
-      return Shuff;
+      return DAG.getVectorShuffle(VT, N->getDebugLoc(), Op,
+                                  DAG.getUNDEF(VT), &SVN0->getMask()[0]);
     }
   }
+
   return SDValue();
 }
 
