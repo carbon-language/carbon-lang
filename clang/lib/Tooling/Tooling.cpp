@@ -237,7 +237,10 @@ ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
     : Files((FileSystemOptions())) {
   llvm::SmallString<1024> BaseDirectory;
-  llvm::sys::fs::current_path(BaseDirectory);
+  if (const char *PWD = ::getenv("PWD"))
+    BaseDirectory = PWD;
+  else
+    llvm::sys::fs::current_path(BaseDirectory);
   for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
     llvm::SmallString<1024> File(getAbsolutePath(
         SourcePaths[I], BaseDirectory));
