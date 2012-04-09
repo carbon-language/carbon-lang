@@ -210,6 +210,12 @@ public:
     virtual bool
     StopNoticingNewThreads();    
 
+    GDBRemoteCommunicationClient &
+    GetGDBRemote()
+    {
+        return m_gdb_comm;
+    }
+
 protected:
     friend class ThreadGDBRemote;
     friend class GDBRemoteCommunicationClient;
@@ -274,12 +280,6 @@ protected:
 
     void
     BuildDynamicRegisterInfo (bool force);
-
-    GDBRemoteCommunicationClient &
-    GetGDBRemote()
-    {
-        return m_gdb_comm;
-    }
 
     void
     SetLastStopPacket (const StringExtractorGDBRemote &response)

@@ -89,6 +89,9 @@ public:
         m_namespace_decl = namespace_decl;
     }
 
+    std::string
+    GetQualifiedName () const;
+
 protected:
     clang::ASTContext  *m_ast;
     clang::NamespaceDecl *m_namespace_decl;

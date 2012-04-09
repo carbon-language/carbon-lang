@@ -53,6 +53,20 @@
 #include "ThreadGDBRemote.h"
 #include "StopInfoMachException.h"
 
+namespace lldb
+{
+    // Provide a function that can easily dump the packet history if we know a
+    // ProcessGDBRemote * value (which we can get from logs or from debugging).
+    // We need the function in the lldb namespace so it makes it into the final
+    // executable since the LLDB shared library only exports stuff in the lldb
+    // namespace. This allows you to attach with a debugger and call this
+    // function and get the packet history dumped to a file.
+    void
+    DumpProcessGDBRemotePacketHistory (void *p, const char *path)
+    {
+        ((ProcessGDBRemote *)p)->GetGDBRemote().DumpHistory (path);
+    }
+};
 
 
 #define DEBUGSERVER_BASENAME    "debugserver"

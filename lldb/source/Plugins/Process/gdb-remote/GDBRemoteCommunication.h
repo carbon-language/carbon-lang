@@ -17,7 +17,7 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-private.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Host/Mutex.h"
@@ -128,9 +128,136 @@ public:
                              const char *unix_socket_name,
                              lldb_private::ProcessLaunchInfo &launch_info); 
 
+    void
+    DumpHistory(const char *path);
     
 protected:
-    typedef std::list<std::string> packet_collection;
+
+    class History
+    {
+    public:
+        enum PacketType
+        {
+            ePacketTypeInvalid = 0,
+            ePacketTypeSend,
+            ePacketTypeRecv
+        };
+
+        struct Entry
+        {
+            Entry() :
+                packet(),
+                type (ePacketTypeInvalid),
+                bytes_transmitted (0),
+                packet_idx (0)
+            {
+            }
+            
+            void
+            Clear ()
+            {
+                packet.clear();
+                type = ePacketTypeInvalid;
+                bytes_transmitted = 0;
+                packet_idx = 0;
+                
+            }
+            std::string packet;
+            PacketType type;
+            uint32_t bytes_transmitted;
+            uint32_t packet_idx;
+        };
+
+        History (uint32_t size);
+        
+        ~History ();
+
+        // For single char packets for ack, nack and /x03
+        void
+        AddPacket (char packet_char,
+                   PacketType type,
+                   uint32_t bytes_transmitted)
+        {
+            const size_t size = m_packets.size();
+            if (size > 0)
+            {
+                const uint32_t idx = GetNextIndex();
+                m_packets[idx].packet.assign (1, packet_char);
+                m_packets[idx].type = type;
+                m_packets[idx].bytes_transmitted = bytes_transmitted;
+                m_packets[idx].packet_idx = m_total_packet_count;
+            }
+        }
+
+        void
+        AddPacket (const std::string &src,
+                   uint32_t src_len,
+                   PacketType type,
+                   uint32_t bytes_transmitted)
+        {
+            const size_t size = m_packets.size();
+            if (size > 0)
+            {
+                const uint32_t idx = GetNextIndex();
+                m_packets[idx].packet.assign (src, 0, src_len);
+                m_packets[idx].type = type;
+                m_packets[idx].bytes_transmitted = bytes_transmitted;
+                m_packets[idx].packet_idx = m_total_packet_count;
+            }
+        }
+        
+        void
+        Dump (lldb_private::Stream &strm) const;
+
+        void
+        Dump (lldb_private::Log *log) const;
+
+        bool
+        DidDumpToLog () const
+        {
+            return m_dumped_to_log;
+        }
+    
+protected:
+        uint32_t
+        GetFirstSavedPacketIndex () const
+        {
+            if (m_total_packet_count < m_packets.size())
+                return 0;
+            else
+                return m_curr_idx + 1;
+        }
+
+        uint32_t
+        GetNumPacketsInHistory () const
+        {
+            if (m_total_packet_count < m_packets.size())
+                return m_total_packet_count;
+            else
+                return (uint32_t)m_packets.size();
+        }
+
+        uint32_t
+        GetNextIndex()
+        {
+            ++m_total_packet_count;
+            const uint32_t idx = m_curr_idx;
+            m_curr_idx = NormalizeIndex(idx + 1);
+            return idx;
+        }
+
+        uint32_t
+        NormalizeIndex (uint32_t i) const
+        {
+            return i % m_packets.size();
+        }
+
+        
+        std::vector<Entry> m_packets;
+        uint32_t m_curr_idx;
+        uint32_t m_total_packet_count;
+        mutable bool m_dumped_to_log;
+    };
 
     size_t
     SendPacketNoLock (const char *payload, 
@@ -150,6 +277,7 @@ protected:
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
     lldb_private::Predicate<bool> m_public_is_running;
     lldb_private::Predicate<bool> m_private_is_running;
+    History m_history;
     bool m_send_acks;
     bool m_is_platform; // Set to true if this class represents a platform,
                         // false if this class represents a debug session for
