@@ -143,7 +143,12 @@ SBDebugger::Destroy (SBDebugger &debugger)
 void
 SBDebugger::MemoryPressureDetected ()
 {
-    ModuleList::RemoveOrphanSharedModules();    
+    // Since this function can be call asynchronously, we allow it to be
+    // non-mandatory. We have seen deadlocks with this function when called
+    // so we need to safeguard against this until we can determine what is
+    // causing the deadlocks.
+    const bool mandatory = false;
+    ModuleList::RemoveOrphanSharedModules(mandatory);
 }
 
 SBDebugger::SBDebugger () :
@@ -648,7 +653,8 @@ SBDebugger::DeleteTarget (lldb::SBTarget &target)
             result = m_opaque_sp->GetTargetList().DeleteTarget (target_sp);
             target_sp->Destroy();
             target.Clear();
-            ModuleList::RemoveOrphanSharedModules();
+            const bool mandatory = true;
+            ModuleList::RemoveOrphanSharedModules(mandatory);
         }
     }
 

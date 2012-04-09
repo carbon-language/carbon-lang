@@ -86,7 +86,8 @@ namespace lldb {
     void
     ClearModuleInfo (void)
     {
-        ModuleList::RemoveOrphanSharedModules();
+        const bool mandatory = true;
+        ModuleList::RemoveOrphanSharedModules(mandatory);
     }
     
     void

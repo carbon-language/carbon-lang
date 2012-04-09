@@ -520,7 +520,8 @@ public:
             // the global shared module list
             if (m_cleanup_option.GetOptionValue ())
             {
-                ModuleList::RemoveOrphanSharedModules();
+                const bool mandatory = true;
+                ModuleList::RemoveOrphanSharedModules(mandatory);
             }
             result.GetOutputStream().Printf("%u targets deleted.\n", (uint32_t)num_targets_to_delete);
             result.SetStatus(eReturnStatusSuccessFinishResult);

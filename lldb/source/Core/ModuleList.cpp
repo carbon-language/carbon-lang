@@ -112,9 +112,20 @@ ModuleList::Remove (const ModuleSP &module_sp)
 
 
 size_t
-ModuleList::RemoveOrphans ()
+ModuleList::RemoveOrphans (bool mandatory)
 {
-    Mutex::Locker locker(m_modules_mutex);
+    Mutex::Locker locker;
+    
+    if (mandatory)
+    {
+        locker.Reset (m_modules_mutex.GetMutex());
+    }
+    else
+    {
+        // Not mandatory, remove orphans if we can get the mutex
+        if (!locker.TryLock(m_modules_mutex.GetMutex()))
+            return 0;
+    }
     collection::iterator pos = m_modules.begin();
     size_t remove_count = 0;
     while (pos != m_modules.end())
@@ -587,9 +598,9 @@ ModuleList::FindSharedModules (const ModuleSpec &module_spec, ModuleList &matchi
 }
 
 uint32_t
-ModuleList::RemoveOrphanSharedModules ()
+ModuleList::RemoveOrphanSharedModules (bool mandatory)
 {
-    return GetSharedModuleList ().RemoveOrphans();    
+    return GetSharedModuleList ().RemoveOrphans(mandatory);
 }
 
 Error
