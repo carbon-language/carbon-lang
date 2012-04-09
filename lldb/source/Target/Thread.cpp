@@ -349,7 +349,7 @@ Thread::ShouldStop (Event* event_ptr)
         }
         else
         {
-            // If the current plan doesn't explain the stop, then, find one that
+            // If the current plan doesn't explain the stop, then find one that
             // does and let it handle the situation.
             ThreadPlan *plan_ptr = current_plan;
             while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
@@ -837,6 +837,17 @@ Thread::DiscardThreadPlans(bool force)
         }
 
     }
+}
+
+bool
+Thread::PlanIsBasePlan (ThreadPlan *plan_ptr)
+{
+    if (plan_ptr->IsBasePlan())
+        return true;
+    else if (m_plan_stack.size() == 0)
+        return false;
+    else
+       return m_plan_stack[0].get() == plan_ptr;
 }
 
 ThreadPlan *

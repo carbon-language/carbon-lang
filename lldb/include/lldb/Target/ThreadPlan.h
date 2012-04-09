@@ -334,10 +334,18 @@ public:
     virtual bool
     WillStop () = 0;
 
-    virtual bool
+    bool
     IsMasterPlan()
     {
-        return false;
+        return m_is_master_plan;
+    }
+    
+    bool
+    SetIsMasterPlan (bool value)
+    {
+        bool old_value = m_is_master_plan;
+        m_is_master_plan = value;
+        return old_value;
     }
 
     virtual bool
@@ -389,6 +397,12 @@ public:
     
     void
     SetPlanComplete ();
+    
+    virtual bool
+    IsBasePlan()
+    {
+        return false;
+    }
     
     lldb::ThreadPlanTracerSP &
     GetThreadPlanTracer()
@@ -474,6 +488,7 @@ private:
     bool m_plan_complete;
     bool m_plan_private;
     bool m_okay_to_discard;
+    bool m_is_master_plan;
     
     lldb::ThreadPlanTracerSP m_tracer_sp;
 

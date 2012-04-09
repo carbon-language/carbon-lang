@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 
@@ -28,6 +29,7 @@ namespace lldb_private {
 
 class ThreadPlanBase : public ThreadPlan
 {
+friend class Process;  // RunThreadPlan manages "stopper" base plans.
 public:
     virtual ~ThreadPlanBase ();
 
@@ -41,16 +43,17 @@ public:
     virtual bool MischiefManaged ();
     virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
 
-    virtual bool IsMasterPlan()
-    {
-        return true;
-    }
-
     virtual bool OkayToDiscard()
     {
         return false;
     }
 
+    virtual bool
+    IsBasePlan()
+    {
+        return true;
+    }
+    
 protected:
     ThreadPlanBase (Thread &thread);
 

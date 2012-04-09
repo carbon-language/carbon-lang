@@ -587,12 +587,8 @@ public:
 
 private:
     bool
-    PlanIsBasePlan (ThreadPlan *plan_ptr)
-    {
-        if (m_plan_stack.size() == 0)
-            return false;
-        return m_plan_stack[0].get() == plan_ptr;
-    }
+    PlanIsBasePlan (ThreadPlan *plan_ptr);
+    
 public:
 
     //------------------------------------------------------------------

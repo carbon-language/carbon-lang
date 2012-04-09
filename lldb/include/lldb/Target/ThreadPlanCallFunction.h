@@ -80,12 +80,6 @@ public:
     virtual bool
     MischiefManaged ();
 
-    virtual bool
-    IsMasterPlan()
-    {
-        return true;
-    }
-
     // To get the return value from a function call you must create a 
     // lldb::ValueSP that contains a valid clang type in its context and call
     // RequestReturnValue. The ValueSP will be stored and when the function is

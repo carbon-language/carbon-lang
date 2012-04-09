@@ -47,6 +47,7 @@ ThreadPlanBase::ThreadPlanBase (Thread &thread) :
 #endif
     new_tracer_sp->EnableTracing (m_thread.GetTraceEnabledState());
     SetThreadPlanTracer(new_tracer_sp);
+    SetIsMasterPlan (true);
 }
 
 ThreadPlanBase::~ThreadPlanBase ()

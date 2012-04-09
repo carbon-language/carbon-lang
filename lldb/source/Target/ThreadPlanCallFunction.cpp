@@ -52,6 +52,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_takedown_done (false),
     m_stop_address (LLDB_INVALID_ADDRESS)
 {
+    // Call function thread plans need to be master plans so that they can potentially stay on the stack when
+    // a breakpoint is hit during the function call.
+    SetIsMasterPlan (true);
     SetOkayToDiscard (discard_on_error);
 
     ProcessSP process_sp (thread.GetProcess());
@@ -172,6 +175,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_return_type (return_type),
     m_takedown_done (false)
 {
+    // Call function thread plans need to be master plans so that they can potentially stay on the stack when
+    // a breakpoint is hit during the function call.
+    SetIsMasterPlan (true);
     SetOkayToDiscard (discard_on_error);
     
     ProcessSP process_sp (thread.GetProcess());

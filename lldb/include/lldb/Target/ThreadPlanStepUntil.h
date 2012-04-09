@@ -35,12 +35,6 @@ public:
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
 
-    virtual bool
-    IsMasterPlan()
-    {
-        return true;
-    }
-
 protected:
     ThreadPlanStepUntil (Thread &thread,
                          lldb::addr_t *address_list,

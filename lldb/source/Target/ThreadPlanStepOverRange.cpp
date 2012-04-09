@@ -43,6 +43,9 @@ ThreadPlanStepOverRange::ThreadPlanStepOverRange
 ) :
     ThreadPlanStepRange (ThreadPlan::eKindStepOverRange, "Step range stepping over", thread, range, addr_context, stop_others)
 {
+    // Step over range plans can be master plans, since you could hit a breakpoint while stepping over, step around
+    // a bit, then continue to finish up the step over.
+    SetIsMasterPlan (true);
     SetOkayToDiscard (okay_to_discard);
 }
 
