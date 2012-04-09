@@ -7723,12 +7723,13 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     SmallVector<int, 8> NewMask;
     for (unsigned i = 0; i != NumElts; ++i) {
       int Idx = SVN->getMaskElt(i);
-      if (Idx < 0)
-        NewMask.push_back(Idx);
-      else if (Idx < (int)NumElts)
-        NewMask.push_back(Idx + NumElts);
-      else
-        NewMask.push_back(Idx - NumElts);
+      if (Idx >= 0) {
+        if (Idx < (int)NumElts)
+          Idx += NumElts;
+        else
+          Idx -= NumElts;
+      }
+      NewMask.push_back(Idx);
     }
     return DAG.getVectorShuffle(VT, N->getDebugLoc(), N1, DAG.getUNDEF(VT),
                                 &NewMask[0]);
