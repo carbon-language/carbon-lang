@@ -11,8 +11,7 @@ define i32 @f1() {
 ; X32:      movl %gs:i@NTPOFF, %eax
 ; X32-NEXT: ret
 ; X64: f1:
-; X64:      movabsq $i@TPOFF, %rax
-; X64-NEXT: movl %fs:(%rax), %eax
+; X64:      movl %fs:i@TPOFF, %eax
 ; X64-NEXT: ret
 
 entry:
@@ -27,7 +26,7 @@ define i32* @f2() {
 ; X32-NEXT: ret
 ; X64: f2:
 ; X64:      movq %fs:0, %rax
-; X64-NEXT: addq $i@TPOFF, %rax
+; X64-NEXT: leaq i@TPOFF(%rax), %rax
 ; X64-NEXT: ret
 
 entry:

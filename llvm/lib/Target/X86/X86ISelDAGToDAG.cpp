@@ -620,14 +620,14 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
 
   // Handle X86-64 rip-relative addresses.  We check this before checking direct
   // folding because RIP is preferable to non-RIP accesses.
-  if (Subtarget->is64Bit() &&
+  if (Subtarget->is64Bit() && N.getOpcode() == X86ISD::WrapperRIP &&
       // Under X86-64 non-small code model, GV (and friends) are 64-bits, so
       // they cannot be folded into immediate fields.
       // FIXME: This can be improved for kernel and other models?
-      (M == CodeModel::Small || M == CodeModel::Kernel) &&
-      // Base and index reg must be 0 in order to use %rip as base and lowering
-      // must allow RIP.
-      !AM.hasBaseOrIndexReg() && N.getOpcode() == X86ISD::WrapperRIP) {
+      (M == CodeModel::Small || M == CodeModel::Kernel)) {
+    // Base and index reg must be 0 in order to use %rip as base.
+    if (AM.hasBaseOrIndexReg())
+      return true;
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
       X86ISelAddressMode Backup = AM;
       AM.GV = G->getGlobal();
@@ -662,11 +662,12 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
   }
 
   // Handle the case when globals fit in our immediate field: This is true for
-  // X86-32 always and X86-64 when in -static -mcmodel=small mode.  In 64-bit
-  // mode, this results in a non-RIP-relative computation.
+  // X86-32 always and X86-64 when in -mcmodel=small mode.  In 64-bit
+  // mode, this only applies to a non-RIP-relative computation.
   if (!Subtarget->is64Bit() ||
-      ((M == CodeModel::Small || M == CodeModel::Kernel) &&
-       TM.getRelocationModel() == Reloc::Static)) {
+      M == CodeModel::Small || M == CodeModel::Kernel) {
+    assert(N.getOpcode() != X86ISD::WrapperRIP &&
+           "RIP-relative addressing already handled");
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
       AM.GV = G->getGlobal();
       AM.Disp += G->getOffset();
