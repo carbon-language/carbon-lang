@@ -1183,8 +1183,9 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
 /// TryInstructionTransform - For the case where an instruction has a single
 /// pair of tied register operands, attempt some transformations that may
 /// either eliminate the tied operands or improve the opportunities for
-/// coalescing away the register copy.  Returns true if the tied operands
-/// are eliminated altogether.
+/// coalescing away the register copy.  Returns true if no copy needs to be
+/// inserted to untie mi's operands (either because they were untied, or
+/// because mi was rescheduled, and will be visited again later).
 bool TwoAddressInstructionPass::
 TryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineBasicBlock::iterator &nmi,
@@ -1248,7 +1249,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   // re-schedule this MI below it.
   if (RescheduleMIBelowKill(mbbi, mi, nmi, regB)) {
     ++NumReSchedDowns;
-    return false;
+    return true;
   }
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
@@ -1270,7 +1271,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   // re-schedule it before this MI if it's legal.
   if (RescheduleKillAboveMI(mbbi, mi, nmi, regB)) {
     ++NumReSchedUps;
-    return false;
+    return true;
   }
 
   // If this is an instruction with a load folded into it, try unfolding
@@ -1594,19 +1595,19 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         MadeChange = true;
 
         DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);
-      }
 
-      // Rewrite INSERT_SUBREG as COPY now that we no longer need SSA form.
-      if (mi->isInsertSubreg()) {
-        // From %reg = INSERT_SUBREG %reg, %subreg, subidx
-        // To   %reg:subidx = COPY %subreg
-        unsigned SubIdx = mi->getOperand(3).getImm();
-        mi->RemoveOperand(3);
-        assert(mi->getOperand(0).getSubReg() == 0 && "Unexpected subreg idx");
-        mi->getOperand(0).setSubReg(SubIdx);
-        mi->RemoveOperand(1);
-        mi->setDesc(TII->get(TargetOpcode::COPY));
-        DEBUG(dbgs() << "\t\tconvert to:\t" << *mi);
+        // Rewrite INSERT_SUBREG as COPY now that we no longer need SSA form.
+        if (mi->isInsertSubreg()) {
+          // From %reg = INSERT_SUBREG %reg, %subreg, subidx
+          // To   %reg:subidx = COPY %subreg
+          unsigned SubIdx = mi->getOperand(3).getImm();
+          mi->RemoveOperand(3);
+          assert(mi->getOperand(0).getSubReg() == 0 && "Unexpected subreg idx");
+          mi->getOperand(0).setSubReg(SubIdx);
+          mi->RemoveOperand(1);
+          mi->setDesc(TII->get(TargetOpcode::COPY));
+          DEBUG(dbgs() << "\t\tconvert to:\t" << *mi);
+        }
       }
 
       // Clear TiedOperands here instead of at the top of the loop
