@@ -780,6 +780,8 @@ namespace llvm {
 
     // Utility functions to help LowerVECTOR_SHUFFLE
     SDValue LowerVECTOR_SHUFFLEv8i16(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const;
+    SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

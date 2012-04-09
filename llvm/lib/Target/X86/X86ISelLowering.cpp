@@ -4859,12 +4859,13 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 /// a scalar load, or a constant.
 /// The VBROADCAST node is returned when a pattern is found,
 /// or SDValue() otherwise.
-static SDValue LowerVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget,
-                                 DebugLoc &dl, SelectionDAG &DAG) {
+SDValue
+X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
   if (!Subtarget->hasAVX())
     return SDValue();
 
   EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
 
   SDValue Ld;
   bool ConstSplatVal;
@@ -4905,7 +4906,7 @@ static SDValue LowerVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget,
 
       Ld = Sc.getOperand(0);
       ConstSplatVal = (Ld.getOpcode() == ISD::Constant ||
-                     Ld.getOpcode() == ISD::ConstantFP);
+                       Ld.getOpcode() == ISD::ConstantFP);
 
       // The scalar_to_vector node and the suspected
       // load node must have exactly one user.
@@ -4930,11 +4931,6 @@ static SDValue LowerVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget,
     if ((Is256 && (ScalarSize == 32 || ScalarSize == 64)) ||
         (Is128 && (ScalarSize == 32))) {
 
-      // This is the type of the load operation for the constant that we save
-      // in the constant pool. We can't load float values from the constant pool
-      // because the DAG has to be legal at this stage.
-      MVT LdTy = (ScalarSize == 32 ? MVT::i32 : MVT::i64);
-
       const Constant *C = 0;
       if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Ld))
         C = CI->getConstantIntValue();
@@ -4943,14 +4939,12 @@ static SDValue LowerVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget,
 
       assert(C && "Invalid constant type");
 
-      SDValue CP = DAG.getConstantPool(C, LdTy);
+      SDValue CP = DAG.getConstantPool(C, getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
-      Ld = DAG.getLoad(LdTy, dl, DAG.getEntryNode(), CP,
+      Ld = DAG.getLoad(CVT, dl, DAG.getEntryNode(), CP,
                          MachinePointerInfo::getConstantPool(),
                          false, false, false, Alignment);
 
-      // Bitcast the loaded constant back to the requested type.
-      Ld = DAG.getNode(ISD::BITCAST, dl, CVT, Ld);
       return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
     }
   }
@@ -5017,7 +5011,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return getOnesVector(VT, Subtarget->hasAVX2(), DAG, dl);
   }
 
-  SDValue Broadcast = LowerVectorBroadcast(Op, Subtarget, dl, DAG);
+  SDValue Broadcast = LowerVectorBroadcast(Op, DAG);
   if (Broadcast.getNode())
     return Broadcast;
 
@@ -6226,10 +6220,8 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
                               getShuffleSHUFImmediate(SVOp), DAG);
 }
 
-static
-SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
-                               const TargetLowering &TLI,
-                               const X86Subtarget *Subtarget) {
+SDValue
+X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
@@ -6245,7 +6237,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     int Size = VT.getSizeInBits();
 
     // Use vbroadcast whenever the splat comes from a foldable load
-    SDValue Broadcast = LowerVectorBroadcast(Op, Subtarget, dl, DAG);
+    SDValue Broadcast = LowerVectorBroadcast(Op, DAG);
     if (Broadcast.getNode())
       return Broadcast;
 
@@ -6332,7 +6324,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Normalize the input vectors. Here splats, zeroed vectors, profitable
   // narrowing and commutation of operands should be handled. The actual code
   // doesn't include all of those, work in progress...
-  SDValue NewOp = NormalizeVectorShuffle(Op, DAG, *this, Subtarget);
+  SDValue NewOp = NormalizeVectorShuffle(Op, DAG);
   if (NewOp.getNode())
     return NewOp;
 
