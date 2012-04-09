@@ -2507,7 +2507,8 @@ public:
     
     /// Resolves successor for current case.
     BasicBlockTy *getCaseSuccessor() {
-      assert((Index < SI->getNumCases() || DefaultPseudoIndex) &&
+      assert((Index < SI->getNumCases() ||
+              Index == DefaultPseudoIndex) &&
              "Index out the number of cases.");
       return SI->getSuccessor(getSuccessorIndex());      
     }

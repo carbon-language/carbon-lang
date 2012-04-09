@@ -100,8 +100,8 @@ unsigned MBlazeELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
 long int MBlazeELFWriterInfo::computeRelocation(unsigned SymOffset,
                                                 unsigned RelOffset,
                                                 unsigned RelTy) const {
-  if (RelTy == ELF::R_MICROBLAZE_32_PCREL || ELF::R_MICROBLAZE_64_PCREL)
-    return SymOffset - (RelOffset + 4);
-
-  llvm_unreachable("computeRelocation unknown for this relocation type");
+  assert((RelTy == ELF::R_MICROBLAZE_32_PCREL ||
+          RelTy == ELF::R_MICROBLAZE_64_PCREL) &&
+         "computeRelocation unknown for this relocation type");
+  return SymOffset - (RelOffset + 4);
 }
