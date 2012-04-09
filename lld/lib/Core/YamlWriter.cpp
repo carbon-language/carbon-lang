@@ -48,10 +48,7 @@ public:
   RefNameBuilder(const File& file)
                 : _collisionCount(0), _unnamedCounter(0) {
     // visit all atoms
-    for(File::defined_iterator it=file.definedAtomsBegin(),
-                              end=file.definedAtomsEnd();
-                               it != end; ++it) {
-      const DefinedAtom* atom = *it;
+    for( const DefinedAtom *atom : file.defined() ) {
       // Build map of atoms names to detect duplicates
       if ( ! atom->name().empty() )
         buildDuplicateNameMap(*atom);
@@ -67,20 +64,14 @@ public:
         }
       }
     }
-    for(File::undefined_iterator it=file.undefinedAtomsBegin(),
-                              end=file.undefinedAtomsEnd();
-                               it != end; ++it) {
-      buildDuplicateNameMap(**it);
+    for( const UndefinedAtom *undefAtom : file.undefined() ) {
+      buildDuplicateNameMap(*undefAtom);
     }
-    for(File::shared_library_iterator it=file.sharedLibraryAtomsBegin(),
-                              end=file.sharedLibraryAtomsEnd();
-                               it != end; ++it) {
-      buildDuplicateNameMap(**it);
+    for( const SharedLibraryAtom *shlibAtom : file.sharedLibrary() ) {
+      buildDuplicateNameMap(*shlibAtom);
     }
-    for(File::absolute_iterator it=file.absoluteAtomsBegin(),
-                              end=file.absoluteAtomsEnd();
-                               it != end; ++it) {
-      buildDuplicateNameMap(**it);
+    for( const AbsoluteAtom *absAtom : file.absolute() ) {
+      buildDuplicateNameMap(*absAtom);
     }
 
 
@@ -142,25 +133,17 @@ public:
     out << "---\n";
 
     // visit all atoms
-    for(File::defined_iterator it=_file.definedAtomsBegin(),
-                              end=_file.definedAtomsEnd();
-                               it != end; ++it) {
-      writeDefinedAtom(**it, out);
+    for( const DefinedAtom *atom : _file.defined() ) {
+      writeDefinedAtom(*atom, out);
     }
-    for(File::undefined_iterator it=_file.undefinedAtomsBegin(),
-                              end=_file.undefinedAtomsEnd();
-                               it != end; ++it) {
-      writeUndefinedAtom(**it, out);
+    for( const UndefinedAtom *undefAtom : _file.undefined() ) {
+      writeUndefinedAtom(*undefAtom, out);
     }
-    for(File::shared_library_iterator it=_file.sharedLibraryAtomsBegin(),
-                              end=_file.sharedLibraryAtomsEnd();
-                               it != end; ++it) {
-      writeSharedLibraryAtom(**it, out);
+    for( const SharedLibraryAtom *shlibAtom : _file.sharedLibrary() ) {
+      writeSharedLibraryAtom(*shlibAtom, out);
     }
-    for(File::absolute_iterator it=_file.absoluteAtomsBegin(),
-                              end=_file.absoluteAtomsEnd();
-                               it != end; ++it) {
-      writeAbsoluteAtom(**it, out);
+    for( const AbsoluteAtom *absAtom : _file.absolute() ) {
+      writeAbsoluteAtom(*absAtom, out);
     }
 
     out << "...\n";

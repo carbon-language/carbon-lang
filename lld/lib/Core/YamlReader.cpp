@@ -606,8 +606,9 @@ private:
 
 
 void YAMLFile::bindTargetReferences() {
-    for (defined_iterator it = definedAtomsBegin(); it != definedAtomsEnd(); ++it) {
-      const YAMLDefinedAtom* atom = reinterpret_cast<const YAMLDefinedAtom*>(*it);
+    for (const DefinedAtom *defAtom : _definedAtoms) {
+      const YAMLDefinedAtom* atom = 
+                          reinterpret_cast<const YAMLDefinedAtom*>(defAtom);
       atom->bindTargetReferences();
     }
 }

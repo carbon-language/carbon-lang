@@ -71,46 +71,8 @@ public:
   /// For use interating over AbsoluteAtoms in this File.
   typedef atom_iterator<AbsoluteAtom> absolute_iterator;
 
-  /// Returns an iterator to the beginning of this File's DefinedAtoms
-  defined_iterator definedAtomsBegin() const {
-    return defined().begin();
-  }
-  
-  /// Returns an iterator to the end of this File's DefinedAtoms
-  defined_iterator definedAtomsEnd() const {
-    return defined().end();
-  }
-   
-  /// Returns an iterator to the beginning of this File's DefinedAtoms
-  undefined_iterator undefinedAtomsBegin() const {
-    return undefined().begin();
-  }
-  
-  /// Returns an iterator to the end of this File's UndefinedAtoms
-  undefined_iterator undefinedAtomsEnd() const {
-    return undefined().end();
-  }
-  
-  /// Returns an iterator to the beginning of this File's SharedLibraryAtoms
-  shared_library_iterator sharedLibraryAtomsBegin() const {
-    return sharedLibrary().begin();
-  }
 
-  /// Returns an iterator to the end of this File's SharedLibraryAtoms
-  shared_library_iterator sharedLibraryAtomsEnd() const {
-    return sharedLibrary().end();
-  }
 
-  /// Returns an iterator to the beginning of this File's AbsoluteAtoms
-  absolute_iterator absoluteAtomsBegin() const {
-    return absolute().begin();
-  }
-
-  /// Returns an iterator to the end of this File's AbsoluteAtoms
-  absolute_iterator absoluteAtomsEnd() const {
-    return absolute().end();
-  }
-  
   /// Note: this method is not const.  All File objects instantiated by reading
   /// an object file from disk are "const File*" objects and cannot be 
   /// modified.  This method can only be used with temporay File objects

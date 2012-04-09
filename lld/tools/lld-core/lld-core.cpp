@@ -451,21 +451,17 @@ public:
   virtual void forEachInitialAtom(InputFiles::Handler& handler) const {
     for ( const File *file : _files ) {
       handler.doFile(*file);
-      for(auto it=file->definedAtomsBegin(),end=file->definedAtomsEnd(); 
-                                 it != end; ++it) {
-        handler.doDefinedAtom(**it);
+      for( const DefinedAtom *atom : file->defined() ) {
+        handler.doDefinedAtom(*atom);
       }
-      for(auto it=file->undefinedAtomsBegin(), end=file->undefinedAtomsEnd(); 
-                                 it != end; ++it) {
-        handler.doUndefinedAtom(**it);
+      for( const UndefinedAtom *undefAtom : file->undefined() ) {
+        handler.doUndefinedAtom(*undefAtom);
       }
-      for(auto it=file->sharedLibraryAtomsBegin(), end=file->sharedLibraryAtomsEnd(); 
-                                 it != end; ++it) {
-        handler.doSharedLibraryAtom(**it);
+      for( const SharedLibraryAtom *shlibAtom : file->sharedLibrary() ) {
+        handler.doSharedLibraryAtom(*shlibAtom);
       }
-      for(auto it=file->absoluteAtomsBegin(),end=file->absoluteAtomsEnd(); 
-                                 it != end; ++it) {
-        handler.doAbsoluteAtom(**it);
+      for( const AbsoluteAtom *absAtom : file->absolute() ) {
+        handler.doAbsoluteAtom(*absAtom);
       }
     }
   }
