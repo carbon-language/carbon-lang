@@ -1079,8 +1079,12 @@ unsigned TargetLowering::getJumpTableEncoding() const {
 SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
                                                  SelectionDAG &DAG) const {
   // If our PIC model is GP relative, use the global offset table as the base.
-  if (getJumpTableEncoding() == MachineJumpTableInfo::EK_GPRel32BlockAddress)
+  unsigned JTEncoding = getJumpTableEncoding();
+
+  if ((JTEncoding == MachineJumpTableInfo::EK_GPRel64BlockAddress) ||
+      (JTEncoding == MachineJumpTableInfo::EK_GPRel32BlockAddress))
     return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy());
+
   return Table;
 }
 
