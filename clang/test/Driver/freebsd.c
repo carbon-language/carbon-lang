@@ -1,12 +1,14 @@
 // REQUIRES: ppc32-registered-target,ppc64-registered-target
-// RUN: %clang -no-canonical-prefixes -target powerpc-pc-freebsd8 %s \
+// RUN: %clang -ccc-clang-archs powerpc -no-canonical-prefixes \
+// RUN:   -target powerpc-pc-freebsd8 %s    \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd_tree -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PPC %s
 // CHECK-PPC: clang{{.*}}" "-cc1" "-triple" "powerpc-pc-freebsd8"
 // CHECK-PPC: ld{{.*}}" "--sysroot=[[SYSROOT:[^"]+]]"
 // CHECK-PPC: "--eh-frame-hdr" "-dynamic-linker" "{{.*}}ld-elf{{.*}}" "-o" "a.out" "{{.*}}crt1.o" "{{.*}}crti.o" "{{.*}}crtbegin.o" "-L[[SYSROOT]]/usr/lib" "{{.*}}.o" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "{{.*}}crtend.o" "{{.*}}crtn.o"
 //
-// RUN: %clang -no-canonical-prefixes -target powerpc64-pc-freebsd8 %s \
+// RUN: %clang  -ccc-clang-archs powerpc64 -no-canonical-prefixes \
+// RUN:   -target powerpc64-pc-freebsd8 %s                              \
 // RUN:   --sysroot=%S/Inputs/basic_freebsd64_tree -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PPC64 %s
 // CHECK-PPC64: clang{{.*}}" "-cc1" "-triple" "powerpc64-pc-freebsd8"
