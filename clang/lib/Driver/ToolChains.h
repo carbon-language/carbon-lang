@@ -459,6 +459,16 @@ class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_ELF {
 public:
   OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
+  virtual bool IsObjCNonFragileABIDefault() const { return true; }
+  virtual bool IsObjCLegacyDispatchDefault() const {
+    llvm::Triple::ArchType Arch = getTriple().getArch();
+    if (Arch == llvm::Triple::arm ||
+        Arch == llvm::Triple::x86 ||
+        Arch == llvm::Triple::x86_64)
+     return false;
+    return true;
+  }
+
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
 };
@@ -467,6 +477,16 @@ class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_ELF {
 public:
   FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
 
+  virtual bool IsObjCNonFragileABIDefault() const { return true; }
+  virtual bool IsObjCLegacyDispatchDefault() const {
+    llvm::Triple::ArchType Arch = getTriple().getArch();
+    if (Arch == llvm::Triple::arm ||
+        Arch == llvm::Triple::x86 ||
+        Arch == llvm::Triple::x86_64)
+     return false;
+    return true;
+  }
+
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
 };
@@ -474,6 +494,16 @@ public:
 class LLVM_LIBRARY_VISIBILITY NetBSD : public Generic_ELF {
 public:
   NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
+
+  virtual bool IsObjCNonFragileABIDefault() const { return true; }
+  virtual bool IsObjCLegacyDispatchDefault() const {
+    llvm::Triple::ArchType Arch = getTriple().getArch();
+    if (Arch == llvm::Triple::arm ||
+        Arch == llvm::Triple::x86 ||
+        Arch == llvm::Triple::x86_64)
+     return false;
+    return true;
+  }
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
