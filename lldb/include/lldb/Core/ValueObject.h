@@ -28,7 +28,6 @@
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackID.h"
-#include "lldb/Utility/PriorityPointerPair.h"
 #include "lldb/Utility/SharedCluster.h"
 
 namespace lldb_private {
