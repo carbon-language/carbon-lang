@@ -209,7 +209,7 @@ public:
       Parent->closeInsnRange(NewScope);
   }
 
-  /// dominates - Return true if current scope dominsates given lexical scope.
+  /// dominates - Return true if current scope dominates given lexical scope.
   bool dominates(const LexicalScope *S) const {
     if (S == this)
       return true;
