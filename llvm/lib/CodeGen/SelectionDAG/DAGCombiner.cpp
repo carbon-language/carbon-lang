@@ -7698,8 +7698,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
 
-  assert(N0.getValueType().getVectorNumElements() == NumElts &&
-        "Vector shuffle must be normalized in DAG");
+  assert(N0.getValueType() == VT && "Vector shuffle must be normalized in DAG");
 
   // Canonicalize shuffle undef, undef -> undef
   if (N0.getOpcode() == ISD::UNDEF && N1.getOpcode() == ISD::UNDEF)
@@ -7804,27 +7803,21 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     if (N0.getOperand(1).getOpcode() != ISD::UNDEF)
       return SDValue();
 
-    // The incoming shuffle must be of the same type as the result of the current
-    // shuffle.
-    if (OtherSV->getOperand(0).getValueType() != VT)
-      return SDValue();
-
-    EVT InVT = N0.getValueType();
-    int InNumElts = InVT.getVectorNumElements();
+    // The incoming shuffle must be of the same type as the result of the
+    // current shuffle.
+    assert(OtherSV->getOperand(0).getValueType() == VT &&
+           "Shuffle types don't match");
 
     for (unsigned i = 0; i != NumElts; ++i) {
       int Idx = SVN->getMaskElt(i);
-      // If we access the second (undef) operand then this index can be
-      // canonicalized to undef as well.
-      if (Idx >= InNumElts)
-        Idx = -1;
+      assert(Idx < (int)NumElts && "Index references undef operand");
       // Next, this index comes from the first value, which is the incoming
       // shuffle. Adopt the incoming index.
       if (Idx >= 0)
         Idx = OtherSV->getMaskElt(Idx);
 
       // The combined shuffle must map each index to itself.
-      if ((unsigned)Idx != i && Idx != -1)
+      if (Idx >= 0 && (unsigned)Idx != i)
         return SDValue();
     }
 
