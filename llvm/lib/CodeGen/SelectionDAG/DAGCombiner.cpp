@@ -7900,7 +7900,8 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
         SDValue Elt = RHS.getOperand(i);
         if (!isa<ConstantSDNode>(Elt))
           return SDValue();
-        else if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
+
+        if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
           Indices.push_back(i);
         else if (cast<ConstantSDNode>(Elt)->isNullValue())
           Indices.push_back(NumElts);
