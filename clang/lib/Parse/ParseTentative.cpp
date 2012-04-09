@@ -1268,8 +1268,8 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
     if (Tok.is(tok::equal)) {
       // '=' assignment-expression
       // Parse through assignment-expression.
-      tok::TokenKind StopToks[2] ={ tok::comma, tok::r_paren };
-      if (!SkipUntil(StopToks, 2, true/*StopAtSemi*/, true/*DontConsume*/))
+      if (!SkipUntil(tok::comma, tok::r_paren, true/*StopAtSemi*/,
+                     true/*DontConsume*/))
         return TPResult::Error();
     }
 

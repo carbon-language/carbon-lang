@@ -340,7 +340,7 @@ public:
   /// element, sets the element index.
   void setElementIndex(unsigned Index) {
     assert(getKind() == EK_ArrayElement || getKind() == EK_VectorElement ||
-           EK_ComplexElement);
+           getKind() == EK_ComplexElement);
     this->Index = Index;
   }
 

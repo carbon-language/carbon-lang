@@ -309,18 +309,19 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
   LAngleLoc = ConsumeToken();
 
   // Try to parse the template parameter list.
-  if (Tok.is(tok::greater))
+  bool Failed = false;
+  if (!Tok.is(tok::greater) && !Tok.is(tok::greatergreater))
+    Failed = ParseTemplateParameterList(Depth, TemplateParams);
+
+  if (Tok.is(tok::greatergreater)) {
+    Tok.setKind(tok::greater);
+    RAngleLoc = Tok.getLocation();
+    Tok.setLocation(Tok.getLocation().getLocWithOffset(1));
+  } else if (Tok.is(tok::greater))
     RAngleLoc = ConsumeToken();
-  else if (ParseTemplateParameterList(Depth, TemplateParams)) {
-    if (Tok.is(tok::greatergreater)) {
-      Tok.setKind(tok::greater);
-      Tok.setLocation(Tok.getLocation().getLocWithOffset(1));
-    } else if (Tok.is(tok::greater))
-      RAngleLoc = ConsumeToken();
-    else {
-      Diag(Tok.getLocation(), diag::err_expected_greater);
-      return true;
-    }
+  else if (Failed) {
+    Diag(Tok.getLocation(), diag::err_expected_greater);
+    return true;
   }
   return false;
 }
@@ -356,10 +357,8 @@ Parser::ParseTemplateParameterList(unsigned Depth,
       // Somebody probably forgot to close the template. Skip ahead and
       // try to get out of the expression. This error is currently
       // subsumed by whatever goes on in ParseTemplateParameter.
-      // TODO: This could match >>, and it would be nice to avoid those
-      // silly errors with template <vec<T>>.
       Diag(Tok.getLocation(), diag::err_expected_comma_greater);
-      SkipUntil(tok::greater, true, true);
+      SkipUntil(tok::comma, tok::greater, tok::greatergreater, true, true);
       return false;
     }
   }
@@ -607,10 +606,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     if (DefaultArg.isInvalid()) {
       Diag(Tok.getLocation(), 
            diag::err_default_template_template_parameter_not_template);
-      static const tok::TokenKind EndToks[] = { 
-        tok::comma, tok::greater, tok::greatergreater
-      };
-      SkipUntil(EndToks, 3, true, true);
+      SkipUntil(tok::comma, tok::greater, tok::greatergreater, true, true);
     }
   }
   

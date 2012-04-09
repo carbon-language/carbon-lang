@@ -725,16 +725,22 @@ private:
   /// returns false.
   bool SkipUntil(tok::TokenKind T, bool StopAtSemi = true,
                  bool DontConsume = false, bool StopAtCodeCompletion = false) {
-    return SkipUntil(&T, 1, StopAtSemi, DontConsume, StopAtCodeCompletion);
+    return SkipUntil(llvm::makeArrayRef(T), StopAtSemi, DontConsume,
+                     StopAtCodeCompletion);
   }
   bool SkipUntil(tok::TokenKind T1, tok::TokenKind T2, bool StopAtSemi = true,
                  bool DontConsume = false, bool StopAtCodeCompletion = false) {
     tok::TokenKind TokArray[] = {T1, T2};
-    return SkipUntil(TokArray, 2, StopAtSemi, DontConsume,StopAtCodeCompletion);
+    return SkipUntil(TokArray, StopAtSemi, DontConsume,StopAtCodeCompletion);
   }
-  bool SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
+  bool SkipUntil(tok::TokenKind T1, tok::TokenKind T2, tok::TokenKind T3,
                  bool StopAtSemi = true, bool DontConsume = false,
-                 bool StopAtCodeCompletion = false);
+                 bool StopAtCodeCompletion = false) {
+    tok::TokenKind TokArray[] = {T1, T2, T3};
+    return SkipUntil(TokArray, StopAtSemi, DontConsume,StopAtCodeCompletion);
+  }
+  bool SkipUntil(ArrayRef<tok::TokenKind> Toks, bool StopAtSemi = true,
+                 bool DontConsume = false, bool StopAtCodeCompletion = false);
 
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.

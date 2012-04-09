@@ -213,15 +213,14 @@ bool Parser::ExpectAndConsumeSemi(unsigned DiagID) {
 ///
 /// If SkipUntil finds the specified token, it returns true, otherwise it
 /// returns false.
-bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
-                       bool StopAtSemi, bool DontConsume,
-                       bool StopAtCodeCompletion) {
+bool Parser::SkipUntil(ArrayRef<tok::TokenKind> Toks, bool StopAtSemi,
+                       bool DontConsume, bool StopAtCodeCompletion) {
   // We always want this function to skip at least one token if the first token
   // isn't T and if not at EOF.
   bool isFirstTokenSkipped = true;
   while (1) {
     // If we found one of the tokens, stop and return true.
-    for (unsigned i = 0; i != NumToks; ++i) {
+    for (unsigned i = 0, NumToks = Toks.size(); i != NumToks; ++i) {
       if (Tok.is(Toks[i])) {
         if (DontConsume) {
           // Noop, don't consume the token.

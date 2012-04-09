@@ -7197,7 +7197,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
                                                               &Loc);
   if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
     IsLV = Expr::MLV_ReadonlyProperty;
-  else if (Expr::MLV_ConstQualified && IsConstProperty(E, S))
+  else if (IsLV == Expr::MLV_ConstQualified && IsConstProperty(E, S))
     IsLV = Expr::MLV_Valid;
   else if (IsLV == Expr::MLV_ClassTemporary && IsReadonlyMessage(E, S))
     IsLV = Expr::MLV_InvalidMessageExpression;
