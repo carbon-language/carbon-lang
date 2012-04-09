@@ -254,7 +254,7 @@ lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
  * Enables the internalize pass during LTO optimizations.
  */
 extern void
-lto_codegen_whole_program_optimization(lto_code_gen_t cg);
+lto_codegen_set_whole_program_optimization(lto_code_gen_t cg);
 
 /**
  * Adds to a list of all global symbols that must exist in the final
