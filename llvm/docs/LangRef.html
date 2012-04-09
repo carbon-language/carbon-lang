@@ -3006,8 +3006,10 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 <div>
 
 <p><tt>fpaccuracy</tt> metadata may be attached to any instruction of floating
-   point type.  It expresses the maximum relative error of the result of
-   that instruction, in ULPs. ULP is defined as follows:</p>
+   point type.  It expresses the maximum relative error allowed in the result
+   of that instruction, in ULPs, thus potentially allowing the compiler to use
+   a more efficient but less accurate method of computing it.
+   ULP is defined as follows:</p>
 
 <blockquote>
 
