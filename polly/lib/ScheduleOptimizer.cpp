@@ -291,7 +291,7 @@ isl_union_map *getScheduleForBand(isl_band *Band, int *Dimensions) {
 //
 // This transformation creates a loop at the innermost level. The loop has a
 // constant number of iterations, if the number of loop iterations at
-// DimToVectorize can be devided by VectorWidth. The default VectorWidth is
+// DimToVectorize can be divided by VectorWidth. The default VectorWidth is
 // currently constant and not yet target specific. This function does not reason
 // about parallelism.
 static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,

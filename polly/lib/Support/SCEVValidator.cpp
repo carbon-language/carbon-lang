@@ -213,7 +213,7 @@ public:
     ValidatorResult LHS = visit(Expr->getLHS());
     ValidatorResult RHS = visit(Expr->getRHS());
 
-    // We currently do not represent an unsigned devision as an affine
+    // We currently do not represent an unsigned division as an affine
     // expression. If the division is constant during Scop execution we treat it
     // as a parameter, otherwise we bail out.
     if (LHS.isConstant() && RHS.isConstant())

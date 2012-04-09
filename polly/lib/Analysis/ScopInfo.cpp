@@ -324,12 +324,12 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
 
   setBaseName();
 
-  // Devide the access function by the size of the elements in the array.
+  // Divide the access function by the size of the elements in the array.
   //
   // A stride one array access in C expressed as A[i] is expressed in LLVM-IR
   // as something like A[i * elementsize]. This hides the fact that two
   // subsequent values of 'i' index two values that are stored next to each
-  // other in memory. By this devision we make this characteristic obvious
+  // other in memory. By this division we make this characteristic obvious
   // again.
   isl_int v;
   isl_int_init(v);
