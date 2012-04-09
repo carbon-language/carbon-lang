@@ -5377,6 +5377,69 @@ X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
   return LowerAVXCONCAT_VECTORS(Op, DAG);
 }
 
+// Try to lower a shuffle node into a simple blend instruction.
+static SDValue LowerVECTOR_SHUFFLEtoBlend(SDValue Op,
+                                          const X86Subtarget *Subtarget,
+                                          SelectionDAG &DAG, EVT PtrTy) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  SDValue V1 = SVOp->getOperand(0);
+  SDValue V2 = SVOp->getOperand(1);
+  DebugLoc dl = SVOp->getDebugLoc();
+  LLVMContext *Context = DAG.getContext();
+  EVT VT = Op.getValueType();
+  EVT InVT = V1.getValueType();
+  EVT EltVT = VT.getVectorElementType();
+  unsigned EltSize = EltVT.getSizeInBits();
+  int MaskSize = VT.getVectorNumElements();
+  int InSize = InVT.getVectorNumElements();
+
+  // TODO: At the moment we only use AVX blends. We could also use SSE4 blends.
+  if (!Subtarget->hasAVX())
+    return SDValue();
+
+  if (MaskSize != InSize)
+    return SDValue();
+
+  SmallVector<Constant*,2> MaskVals;
+  ConstantInt *Zero = ConstantInt::get(*Context, APInt(EltSize, 0));
+  ConstantInt *NegOne = ConstantInt::get(*Context, APInt(EltSize, -1));
+
+  for (int i = 0; i < MaskSize; ++i) {
+    int EltIdx = SVOp->getMaskElt(i);
+    if (EltIdx == i || EltIdx == -1)
+      MaskVals.push_back(NegOne);
+    else if (EltIdx == (i + MaskSize))
+      MaskVals.push_back(Zero);
+    else return SDValue();
+  }
+
+  Constant *MaskC = ConstantVector::get(MaskVals);
+  EVT MaskTy = EVT::getEVT(MaskC->getType());
+  assert(MaskTy.getSizeInBits() == VT.getSizeInBits() && "Invalid mask size");
+  SDValue MaskIdx = DAG.getConstantPool(MaskC, PtrTy);
+  unsigned Alignment = cast<ConstantPoolSDNode>(MaskIdx)->getAlignment();
+  SDValue Mask = DAG.getLoad(MaskTy, dl, DAG.getEntryNode(), MaskIdx,
+                             MachinePointerInfo::getConstantPool(),
+                             false, false, false, Alignment);
+
+  if (Subtarget->hasAVX2() && MaskTy == MVT::v32i8)
+    return DAG.getNode(ISD::VSELECT, dl, VT, Mask, V1, V2);
+
+  if (Subtarget->hasAVX()) {
+    switch (MaskTy.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v16i8:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v8i32:
+    case MVT::v4i64:
+             return DAG.getNode(ISD::VSELECT, dl, VT, Mask, V1, V2);
+    }
+  }
+
+  return SDValue();
+}
+
 // v8i16 shuffles - Prefer shuffles in the following order:
 // 1. [all]   pshuflw, pshufhw, optional move
 // 2. [ssse3] 1 x pshufb
@@ -6538,6 +6601,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isVPERM2X128Mask(M, VT, HasAVX))
     return getTargetShuffleNode(X86ISD::VPERM2X128, dl, VT, V1,
                                 V2, getShuffleVPERM2X128Immediate(SVOp), DAG);
+
+  SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(Op, Subtarget, DAG, getPointerTy());
+  if (BlendOp.getNode())
+    return BlendOp;
 
   //===--------------------------------------------------------------------===//
   // Since no target specific shuffle was selected for this generic one,
