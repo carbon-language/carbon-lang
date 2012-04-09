@@ -4397,7 +4397,29 @@ struct SpecialMemberDeletionInfo {
   bool shouldDeleteForSubobjectCall(Subobject Subobj,
                                     Sema::SpecialMemberOverloadResult *SMOR,
                                     bool IsDtorCallInCtor);
+
+  bool isAccessible(Subobject Subobj, CXXMethodDecl *D);
 };
+}
+
+/// Is the given special member inaccessible when used on the given
+/// sub-object.
+bool SpecialMemberDeletionInfo::isAccessible(Subobject Subobj,
+                                             CXXMethodDecl *target) {
+  /// If we're operating on a base class, the object type is the
+  /// type of this special member.
+  QualType objectTy;
+  AccessSpecifier access = target->getAccess();;
+  if (CXXBaseSpecifier *base = Subobj.dyn_cast<CXXBaseSpecifier*>()) {
+    objectTy = S.Context.getTypeDeclType(MD->getParent());
+    access = CXXRecordDecl::MergeAccess(base->getAccessSpecifier(), access);
+
+  // If we're operating on a field, the object type is the type of the field.
+  } else {
+    objectTy = S.Context.getTypeDeclType(target->getParent());
+  }
+
+  return S.isSpecialMemberAccessibleForDeletion(target, access, objectTy);
 }
 
 /// Check whether we should delete a special member due to the implicit
@@ -4414,8 +4436,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForSubobjectCall(
     DiagKind = !Decl ? 0 : 1;
   else if (SMOR->getKind() == Sema::SpecialMemberOverloadResult::Ambiguous)
     DiagKind = 2;
-  else if (S.CheckDirectMemberAccess(Loc, Decl, S.PDiag())
-             != Sema::AR_accessible)
+  else if (!isAccessible(Subobj, Decl))
     DiagKind = 3;
   else if (!IsDtorCallInCtor && Field && Field->getParent()->isUnion() &&
            !Decl->isTrivial()) {
