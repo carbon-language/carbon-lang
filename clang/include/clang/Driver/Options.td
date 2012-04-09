@@ -432,8 +432,6 @@ def fno_modules : Flag <"-fno-modules">, Group<f_Group>, Flags<[NoForward]>;
 def fno_ms_extensions : Flag<"-fno-ms-extensions">, Group<f_Group>;
 def fno_ms_compatibility : Flag<"-fno-ms-compatibility">, Group<f_Group>;
 def fno_delayed_template_parsing : Flag<"-fno-delayed-template-parsing">, Group<f_Group>;
-def fno_objc_default_synthesize_properties 
-  : Flag<"-fno-objc-default-synthesize-properties">, Group<f_Group>;
 def fno_objc_exceptions: Flag<"-fno-objc-exceptions">, Group<f_Group>;
 def fno_objc_legacy_dispatch : Flag<"-fno-objc-legacy-dispatch">, Group<f_Group>;
 def fno_omit_frame_pointer : Flag<"-fno-omit-frame-pointer">, Group<f_Group>;
