@@ -2607,11 +2607,12 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
     
     LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
 
-    const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu, die);
+    const DWARFDebugInfoEntry *decl_ctx_die = NULL;
+    clang::DeclContext *die_clang_decl_ctx = GetClangDeclContextContainingDIE (cu, die, &decl_ctx_die);
     if (decl_ctx_die)
-    {
-
+    { 
         clang::NamespaceDecl *clang_namespace_decl = namespace_decl->GetNamespaceDecl();
+
         if (clang_namespace_decl)
         {
             if (decl_ctx_die->Tag() != DW_TAG_namespace)
@@ -2621,17 +2622,10 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
                 return false;
             }
                 
-            DeclContextToDIEMap::iterator pos = m_decl_ctx_to_die.find(clang_namespace_decl);
-            
-            if (pos == m_decl_ctx_to_die.end())
-            {
-                if (log)
-                    GetObjectFile()->GetModule()->LogMessage(log.get(), "Found a match in a namespace, but its parent is not the requested namespace");
-                
+            if (clang_namespace_decl == die_clang_decl_ctx)
+                return true;
+            else
                 return false;
-            }
-            
-            return pos->second.count (decl_ctx_die);
         }
         else
         {
@@ -2704,8 +2698,8 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
         m_global_index.Find (name, die_offsets);
     }
     
-    const size_t num_matches = die_offsets.size();
-    if (num_matches)
+    const size_t num_die_matches = die_offsets.size();
+    if (num_die_matches)
     {
         SymbolContext sc;
         sc.module_sp = m_obj_file->GetModule();
@@ -2714,23 +2708,38 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
         DWARFDebugInfo* debug_info = DebugInfo();
         DWARFCompileUnit* dwarf_cu = NULL;
         const DWARFDebugInfoEntry* die = NULL;
-        for (size_t i=0; i<num_matches; ++i)
+        bool done = false;
+        for (size_t i=0; i<num_die_matches && !done; ++i)
         {
             const dw_offset_t die_offset = die_offsets[i];
             die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
 
             if (die)
             {
-                sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
-                assert(sc.comp_unit != NULL);
-                
-                if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
-                    continue;
+                switch (die->Tag())
+                {
+                    default:
+                    case DW_TAG_subprogram:
+                    case DW_TAG_inlined_subroutine:
+                    case DW_TAG_try_block:
+                    case DW_TAG_catch_block:
+                        break;
+                        
+                    case DW_TAG_variable:
+                        {
+                            sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
+                            assert(sc.comp_unit != NULL);
+                    
+                            if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
+                                continue;
 
-                ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
+                            ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
-                if (variables.GetSize() - original_size >= max_matches)
-                    break;
+                            if (variables.GetSize() - original_size >= max_matches)
+                                done = true;
+                        }
+                        break;
+                }
             }
             else
             {
@@ -2744,7 +2753,18 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
     }
 
     // Return the number of variable that were appended to the list
-    return variables.GetSize() - original_size;
+    const uint32_t num_matches = variables.GetSize() - original_size;
+    if (log && num_matches > 0)
+    {
+        GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                  "SymbolFileDWARF::FindGlobalVariables (name=\"%s\", namespace_decl=%p, append=%u, max_matches=%u, variables) => %u",
+                                                  name.GetCString(), 
+                                                  namespace_decl,
+                                                  append, 
+                                                  max_matches,
+                                                  num_matches);
+    }
+    return num_matches;
 }
 
 uint32_t
@@ -3340,7 +3360,18 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     }
 
     // Return the number of variable that were appended to the list
-    return sc_list.GetSize() - original_size;
+    const uint32_t num_matches = sc_list.GetSize() - original_size;
+    
+    if (log && num_matches > 0)
+    {
+        GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                  "SymbolFileDWARF::FindFunctions (name=\"%s\", name_type_mask=0x%x, append=%u, sc_list) => %u",
+                                                  name.GetCString(), 
+                                                  name_type_mask, 
+                                                  append,
+                                                  num_matches);
+    }
+    return num_matches;
 }
 
 uint32_t
@@ -3405,11 +3436,24 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
     
     if (log)
     {
-        GetObjectFile()->GetModule()->LogMessage (log.get(), 
-                                                  "SymbolFileDWARF::FindTypes (sc, name=\"%s\", append=%u, max_matches=%u, type_list)", 
-                                                  name.GetCString(), 
-                                                  append, 
-                                                  max_matches);
+        if (namespace_decl)
+        {
+            GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                      "SymbolFileDWARF::FindTypes (sc, name=\"%s\", clang::NamespaceDecl(%p) \"%s\", append=%u, max_matches=%u, type_list)", 
+                                                      name.GetCString(),
+                                                      namespace_decl->GetNamespaceDecl(),
+                                                      namespace_decl->GetQualifiedName().c_str(),
+                                                      append, 
+                                                      max_matches);
+        }
+        else
+        {
+            GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                      "SymbolFileDWARF::FindTypes (sc, name=\"%s\", clang::NamespaceDecl(NULL), append=%u, max_matches=%u, type_list)",
+                                                      name.GetCString(), 
+                                                      append, 
+                                                      max_matches);
+        }
     }
 
     // If we aren't appending the results to this list, then clear the list
@@ -3437,15 +3481,15 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
         m_type_index.Find (name, die_offsets);
     }
     
-    const size_t num_matches = die_offsets.size();
+    const size_t num_die_matches = die_offsets.size();
 
-    if (num_matches)
+    if (num_die_matches)
     {
         const uint32_t initial_types_size = types.GetSize();
         DWARFCompileUnit* dwarf_cu = NULL;
         const DWARFDebugInfoEntry* die = NULL;
         DWARFDebugInfo* debug_info = DebugInfo();
-        for (size_t i=0; i<num_matches; ++i)
+        for (size_t i=0; i<num_die_matches; ++i)
         {
             const dw_offset_t die_offset = die_offsets[i];
             die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
@@ -3474,7 +3518,31 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
             }            
 
         }
-        return types.GetSize() - initial_types_size;
+        const uint32_t num_matches = types.GetSize() - initial_types_size;
+        if (log && num_matches)
+        {
+            if (namespace_decl)
+            {
+                GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                          "SymbolFileDWARF::FindTypes (sc, name=\"%s\", clang::NamespaceDecl(%p) \"%s\", append=%u, max_matches=%u, type_list) => %u", 
+                                                          name.GetCString(),
+                                                          namespace_decl->GetNamespaceDecl(),
+                                                          namespace_decl->GetQualifiedName().c_str(),
+                                                          append, 
+                                                          max_matches,
+                                                          num_matches);
+            }
+            else
+            {
+                GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                          "SymbolFileDWARF::FindTypes (sc, name=\"%s\", clang::NamespaceDecl(NULL), append=%u, max_matches=%u, type_list) => %u",
+                                                          name.GetCString(), 
+                                                          append, 
+                                                          max_matches,
+                                                          num_matches);
+            }
+        }
+        return num_matches;
     }
     return 0;
 }
@@ -3557,6 +3625,15 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
             }
         }
     }
+    if (log && namespace_decl.GetNamespaceDecl())
+    {
+        GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                  "SymbolFileDWARF::FindNamespace (sc, name=\"%s\") => clang::NamespaceDecl(%p) \"%s\"",
+                                                  name.GetCString(),
+                                                  namespace_decl.GetNamespaceDecl(),
+                                                  namespace_decl.GetQualifiedName().c_str());
+    }
+
     return namespace_decl;
 }
 
