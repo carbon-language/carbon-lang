@@ -568,41 +568,11 @@ static void addFPMathArgs(const Driver &D, const Arg *A, const ArgList &Args,
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
-void Clang::AddARMTargetArgs(const ArgList &Args,
-                             ArgStringList &CmdArgs,
-                             bool KernelOrKext) const {
-  const Driver &D = getToolChain().getDriver();
-  llvm::Triple Triple = getToolChain().getTriple();
-
-  // Select the ABI to use.
-  //
-  // FIXME: Support -meabi.
-  const char *ABIName = 0;
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
-    ABIName = A->getValue(Args);
-  } else {
-    // Select the default based on the platform.
-    switch(Triple.getEnvironment()) {
-    case llvm::Triple::ANDROIDEABI:
-    case llvm::Triple::GNUEABI:
-      ABIName = "aapcs-linux";
-      break;
-    case llvm::Triple::EABI:
-      ABIName = "aapcs";
-      break;
-    default:
-      ABIName = "apcs-gnu";
-    }
-  }
-  CmdArgs.push_back("-target-abi");
-  CmdArgs.push_back(ABIName);
-
-  // Set the CPU based on -march= and -mcpu=.
-  CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(getARMTargetCPU(Args, Triple));
-
-  // Select the float ABI as determined by -msoft-float, -mhard-float, and
-  // -mfloat-abi=.
+// Select the float ABI as determined by -msoft-float, -mhard-float, and
+// -mfloat-abi=.
+static StringRef getARMFloatABI(const Driver &D,
+                                const ArgList &Args,
+                                const llvm::Triple &Triple) {
   StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float,
@@ -674,6 +644,45 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     }
   }
 
+  return FloatABI;
+}
+
+
+void Clang::AddARMTargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs,
+                             bool KernelOrKext) const {
+  const Driver &D = getToolChain().getDriver();
+  llvm::Triple Triple = getToolChain().getTriple();
+
+  // Select the ABI to use.
+  //
+  // FIXME: Support -meabi.
+  const char *ABIName = 0;
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    ABIName = A->getValue(Args);
+  } else {
+    // Select the default based on the platform.
+    switch(Triple.getEnvironment()) {
+    case llvm::Triple::ANDROIDEABI:
+    case llvm::Triple::GNUEABI:
+      ABIName = "aapcs-linux";
+      break;
+    case llvm::Triple::EABI:
+      ABIName = "aapcs";
+      break;
+    default:
+      ABIName = "apcs-gnu";
+    }
+  }
+  CmdArgs.push_back("-target-abi");
+  CmdArgs.push_back(ABIName);
+
+  // Set the CPU based on -march= and -mcpu=.
+  CmdArgs.push_back("-target-cpu");
+  CmdArgs.push_back(getARMTargetCPU(Args, Triple));
+
+  // Determine floating point ABI from the options & target defaults.
+  StringRef FloatABI = getARMFloatABI(D, Args, Triple);
   if (FloatABI == "soft") {
     // Floating point operations and argument passing are soft.
     //
