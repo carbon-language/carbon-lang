@@ -66,7 +66,7 @@ static uint32_t global_seed = 0;
 
 const size_t kLargeMalloc = 1 << 24;
 
-template<class T>
+template<typename T>
 NOINLINE void asan_write(T *a) {
   *a = 0;
 }
@@ -112,7 +112,7 @@ NOINLINE void free_ccc(void *p) { free(p); break_optimization(0);}
 NOINLINE void free_bbb(void *p) { free_ccc(p); break_optimization(0);}
 NOINLINE void free_aaa(void *p) { free_bbb(p); break_optimization(0);}
 
-template<class T>
+template<typename T>
 NOINLINE void oob_test(int size, int off) {
   char *p = (char*)malloc_aaa(size);
   // fprintf(stderr, "writing %d byte(s) into [%p,%p) with offset %d\n",
@@ -122,7 +122,7 @@ NOINLINE void oob_test(int size, int off) {
 }
 
 
-template<class T>
+template<typename T>
 NOINLINE void uaf_test(int size, int off) {
   char *p = (char *)malloc_aaa(size);
   free_aaa(p);
@@ -282,7 +282,7 @@ TEST(AddressSanitizer, DISABLED_TSDTest) {
   pthread_key_delete(test_key);
 }
 
-template<class T>
+template<typename T>
 void OOBTest() {
   char expected_str[100];
   for (int size = sizeof(T); size < 20; size += 5) {
@@ -795,7 +795,7 @@ static string LeftOOBErrorMessage(int oob_distance) {
   return string(expected_str);
 }
 
-template<class T>
+template<typename T>
 void MemSetOOBTestTemplate(size_t length) {
   if (length == 0) return;
   size_t size = Ident(sizeof(T) * length);
@@ -852,7 +852,7 @@ TEST(AddressSanitizer, MemSetOOBTest) {
 }
 
 // Same test for memcpy and memmove functions
-template <class T, class M>
+template <typename T, class M>
 void MemTransferOOBTestTemplate(size_t length) {
   if (length == 0) return;
   size_t size = Ident(sizeof(T) * length);
