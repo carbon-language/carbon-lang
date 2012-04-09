@@ -7338,15 +7338,15 @@ static SDValue PerformVMOVDRRCombine(SDNode *N, SelectionDAG &DAG) {
 /// ISD::STORE.
 static SDValue PerformSTORECombine(SDNode *N,
                                    TargetLowering::DAGCombinerInfo &DCI) {
-  // Bitcast an i64 store extracted from a vector to f64.
-  // Otherwise, the i64 value will be legalized to a pair of i32 values.
   StoreSDNode *St = cast<StoreSDNode>(N);
   SDValue StVal = St->getValue();
   if (!ISD::isNormalStore(St) || St->isVolatile())
     return SDValue();
 
+  // Split a store of a VMOVDRR into two integer stores to avoid mixing NEON and
+  // ARM stores of arguments in the same cache line.
   if (StVal.getNode()->getOpcode() == ARMISD::VMOVDRR &&
-      StVal.getNode()->hasOneUse() && !St->isVolatile()) {
+      StVal.getNode()->hasOneUse()) {
     SelectionDAG  &DAG = DCI.DAG;
     DebugLoc DL = St->getDebugLoc();
     SDValue BasePtr = St->getBasePtr();
@@ -7367,6 +7367,8 @@ static SDValue PerformSTORECombine(SDNode *N,
       StVal.getNode()->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
     return SDValue();
 
+  // Bitcast an i64 store extracted from a vector to f64.
+  // Otherwise, the i64 value will be legalized to a pair of i32 values.
   SelectionDAG &DAG = DCI.DAG;
   DebugLoc dl = StVal.getDebugLoc();
   SDValue IntVec = StVal.getOperand(0);
