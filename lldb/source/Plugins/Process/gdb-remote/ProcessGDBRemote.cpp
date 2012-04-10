@@ -1129,7 +1129,7 @@ ProcessGDBRemote::DoResume ()
     return error;
 }
 
-uint32_t
+bool
 ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // locker will keep a mutex locked until it goes out of scope
@@ -1151,11 +1151,17 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
                 thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
             new_thread_list.AddThread(thread_sp);
         }
+        SetThreadStopInfo (m_last_stop_packet);
+    }
+    else if (sequence_mutex_unavailable)
+    {
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex");
+#endif
+        return false; // We just didn't get the list
     }
 
-    if (sequence_mutex_unavailable == false)
-        SetThreadStopInfo (m_last_stop_packet);
-    return new_thread_list.GetSize(false);
+    return true;
 }
 
 

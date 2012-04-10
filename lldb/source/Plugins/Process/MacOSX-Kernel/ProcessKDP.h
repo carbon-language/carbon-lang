@@ -231,7 +231,7 @@ protected:
     void
     Clear ( );
     
-    uint32_t
+    virtual bool
     UpdateThreadList (lldb_private::ThreadList &old_thread_list, 
                       lldb_private::ThreadList &new_thread_list);
     

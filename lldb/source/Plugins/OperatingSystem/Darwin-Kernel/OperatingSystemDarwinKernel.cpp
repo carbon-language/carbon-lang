@@ -223,7 +223,7 @@ OperatingSystemDarwinKernel::GetPluginVersion()
     return 1;
 }
 
-uint32_t
+bool
 OperatingSystemDarwinKernel::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // Make any constant strings once and cache the uniqued C string values
@@ -263,7 +263,7 @@ OperatingSystemDarwinKernel::UpdateThreadList (ThreadList &old_thread_list, Thre
         }
         next_valobj_sp.swap(valobj_sp);
     }
-    return new_thread_list.GetSize(false);
+    return new_thread_list.GetSize(false) > 0;
 }
 
 void

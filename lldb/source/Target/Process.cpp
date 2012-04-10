@@ -1236,13 +1236,15 @@ Process::UpdateThreadListIfNeeded ()
             // and the os->UpdateThreadList(...) so it doesn't change on us
             ThreadList new_thread_list(this);
             // Always update the thread list with the protocol specific
-            // thread list
-            UpdateThreadList (m_thread_list, new_thread_list);
-            OperatingSystem *os = GetOperatingSystem ();
-            if (os)
-                os->UpdateThreadList (m_thread_list, new_thread_list);
-            m_thread_list.Update (new_thread_list);
-            m_thread_list.SetStopID (stop_id);
+            // thread list, but only update if "true" is returned
+            if (UpdateThreadList (m_thread_list, new_thread_list))
+            {
+                OperatingSystem *os = GetOperatingSystem ();
+                if (os)
+                    os->UpdateThreadList (m_thread_list, new_thread_list);
+                m_thread_list.Update (new_thread_list);
+                m_thread_list.SetStopID (stop_id);
+            }
         }
     }
 }
@@ -4281,7 +4283,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     if (IS_VALID_LLDB_HOST_THREAD(backup_private_state_thread))
     {
         StopPrivateStateThread();
-        lldb::thread_result_t thread_result;
         Error error;
         // Host::ThreadJoin(m_private_state_thread, &thread_result, &error);
         m_private_state_thread = backup_private_state_thread;

@@ -301,7 +301,7 @@ ProcessKDP::DoResume ()
     return error;
 }
 
-uint32_t
+bool
 ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // locker will keep a mutex locked until it goes out of scope
@@ -323,7 +323,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
             thread_sp.reset(new ThreadKDP (shared_from_this(), tid));
         new_thread_list.AddThread(thread_sp);
     }
-    return new_thread_list.GetSize(false);
+    return new_thread_list.GetSize(false) > 0;
 }
 
 

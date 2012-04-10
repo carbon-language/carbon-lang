@@ -201,10 +201,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
             // logs all of the packet will set a boolean so that we don't dump this more
             // than once
             if (!m_history.DidDumpToLog ())
-            {
-                DumpHistory("/tmp/foo.txt");
                 m_history.Dump (log.get());
-            }
 
             log->Printf ("<%4zu> send packet: %.*s", bytes_written, (int)packet.GetSize(), packet.GetData());
         }
@@ -243,7 +240,7 @@ GDBRemoteCommunication::GetAck ()
 }
 
 bool
-GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker)
+GDBRemoteCommunication::TryLockSequenceMutex (Mutex::Locker& locker)
 {
     return locker.TryLock (m_sequence_mutex.GetMutex());
 }

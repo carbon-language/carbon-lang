@@ -337,7 +337,7 @@ ProcessMachCore::GetDynamicLoader ()
     return m_dyld_ap.get();
 }
 
-uint32_t
+bool
 ProcessMachCore::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     if (old_thread_list.GetSize(false) == 0)
@@ -362,7 +362,7 @@ ProcessMachCore::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_
         for (uint32_t i=0; i<num_threads; ++i)
             new_thread_list.AddThread (old_thread_list.GetThreadAtIndex (i));
     }
-    return new_thread_list.GetSize(false);
+    return new_thread_list.GetSize(false) > 0;
 }
 
 void

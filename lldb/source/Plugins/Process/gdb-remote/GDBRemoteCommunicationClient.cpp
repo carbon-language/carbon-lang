@@ -240,7 +240,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     Mutex::Locker locker;
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     size_t response_len = 0;
-    if (GetSequenceMutex (locker))
+    if (TryLockSequenceMutex (locker))
     {
         if (SendPacketNoLock (payload, payload_length))
            response_len = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
@@ -628,7 +628,7 @@ GDBRemoteCommunicationClient::SendAsyncSignal (int signo)
     return false;
 }
 
-// This function takes a mutex locker as a parameter in case the GetSequenceMutex
+// This function takes a mutex locker as a parameter in case the TryLockSequenceMutex
 // actually succeeds. If it doesn't succeed in acquiring the sequence mutex 
 // (the expected result), then it will send the halt packet. If it does succeed
 // then the caller that requested the interrupt will want to keep the sequence
@@ -653,7 +653,7 @@ GDBRemoteCommunicationClient::SendInterrupt
     if (IsRunning())
     {
         // Only send an interrupt if our debugserver is running...
-        if (GetSequenceMutex (locker) == false)
+        if (TryLockSequenceMutex (locker) == false)
         {
             // Someone has the mutex locked waiting for a response or for the
             // inferior to stop, so send the interrupt on the down low...
@@ -1842,7 +1842,7 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     Mutex::Locker locker;
     thread_ids.clear();
     
-    if (GetSequenceMutex (locker))
+    if (TryLockSequenceMutex (locker))
     {
         sequence_mutex_unavailable = false;
         StringExtractorGDBRemote response;

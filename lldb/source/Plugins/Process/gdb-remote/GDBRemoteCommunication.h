@@ -74,7 +74,7 @@ public:
                         size_t payload_length);
 
     bool
-    GetSequenceMutex(lldb_private::Mutex::Locker& locker);
+    TryLockSequenceMutex(lldb_private::Mutex::Locker& locker);
 
     bool
     CheckForPacket (const uint8_t *src, 

@@ -64,7 +64,7 @@ public:
     //------------------------------------------------------------------
     // Plug-in Methods
     //------------------------------------------------------------------
-    virtual uint32_t
+    virtual bool
     UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list) = 0;
     
     virtual void
