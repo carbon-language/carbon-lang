@@ -1,15 +1,29 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: private unnamed_addr constant [15 x i8] c"externFunction\00"
 // CHECK: private unnamed_addr constant [26 x i8] c"void NS::externFunction()\00"
+// CHECK: private unnamed_addr constant [49 x i8] c"void functionTemplateExplicitSpecialization(int)\00"
+
+// CHECK: private unnamed_addr constant [95 x i8] c"void SpecializedClassTemplate<char>::memberFunctionTemplate(T, U) const [T = char, U = double]\00"
+// CHECK: private unnamed_addr constant [85 x i8] c"void SpecializedClassTemplate<int>::memberFunctionTemplate(int, U) const [U = float]\00"
+// CHECK: private unnamed_addr constant [57 x i8] c"void NonTypeTemplateParam<42>::size() const [Count = 42]\00"
+// CHECK: private unnamed_addr constant [122 x i8] c"static void ClassWithTemplateTemplateParam<char, NS::ClassTemplate>::staticMember() [T = char, Param = NS::ClassTemplate]\00"
+// CHECK: private unnamed_addr constant [106 x i8] c"void OuterClass<int *>::MiddleClass::InnerClass<float>::memberFunction(T, U) const [T = int *, U = float]\00"
+// CHECK: private unnamed_addr constant [65 x i8] c"void functionTemplateWithUnnamedTemplateParameter(T) [T = float]\00"
+
+// CHECK: private unnamed_addr constant [60 x i8] c"void functionTemplateExplicitSpecialization(T) [T = double]\00"
+// CHECK: private unnamed_addr constant [52 x i8] c"T *functionTemplateWithCompoundTypes(T *) [T = int]\00" 
+// CHECK: private unnamed_addr constant [54 x i8] c"T functionTemplateWithTemplateReturnType() [T = char]\00"
+// CHECK: private unnamed_addr constant [57 x i8] c"void functionTemplateWithoutParameterList() [T = double]\00"
+// CHECK: private unnamed_addr constant [62 x i8] c"void functionTemplateWithTwoParams(T, U) [T = int, U = float]\00"
 
 // CHECK: private unnamed_addr constant [22 x i8] c"classTemplateFunction\00"
-// CHECK: private unnamed_addr constant [60 x i8] c"void NS::ClassTemplate<NS::Base *>::classTemplateFunction()\00"
-// CHECK: private unnamed_addr constant [53 x i8] c"void NS::ClassTemplate<int>::classTemplateFunction()\00"
+// CHECK: private unnamed_addr constant [77 x i8] c"void NS::ClassTemplate<NS::Base *>::classTemplateFunction() [T = NS::Base *]\00"
+// CHECK: private unnamed_addr constant [63 x i8] c"void NS::ClassTemplate<int>::classTemplateFunction() [T = int]\00"
 
 // CHECK: private unnamed_addr constant [18 x i8] c"functionTemplate1\00"
-// CHECK: private unnamed_addr constant [45 x i8] c"void NS::Base::functionTemplate1(NS::Base *)\00"
-// CHECK: private unnamed_addr constant [38 x i8] c"void NS::Base::functionTemplate1(int)\00"
+// CHECK: private unnamed_addr constant [53 x i8] c"void NS::Base::functionTemplate1(T) [T = NS::Base *]\00"
+// CHECK: private unnamed_addr constant [46 x i8] c"void NS::Base::functionTemplate1(T) [T = int]\00"
 
 // CHECK: private unnamed_addr constant [23 x i8] c"anonymousUnionFunction\00"
 // CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous union>::anonymousUnionFunction()\00"
@@ -30,6 +44,10 @@
 
 // CHECK: private unnamed_addr constant [16 x i8] c"virtualFunction\00"
 // CHECK: private unnamed_addr constant [44 x i8] c"virtual void NS::Derived::virtualFunction()\00"
+
+// CHECK: private unnamed_addr constant [21 x i8] c"refQualifiedFunction\00"
+// CHECK: private unnamed_addr constant [41 x i8] c"void NS::Base::refQualifiedFunction() &&\00"
+// CHECK: private unnamed_addr constant [40 x i8] c"void NS::Base::refQualifiedFunction() &\00"
 
 // CHECK: private unnamed_addr constant [22 x i8] c"constVolatileFunction\00"
 // CHECK: private unnamed_addr constant [54 x i8] c"void NS::Base::constVolatileFunction() const volatile\00"
@@ -77,6 +95,8 @@
 
 // CHECK: private unnamed_addr constant [19 x i8] c"localClassFunction\00"
 // CHECK: private unnamed_addr constant [59 x i8] c"void NS::localClass(int)::LocalClass::localClassFunction()\00"
+
+
 
 int printf(const char * _Format, ...);
 
@@ -203,11 +223,23 @@ public:
     printf("__FUNCTION__ %s\n", __FUNCTION__);
     printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
   }
+
+  void refQualifiedFunction() & {
+    printf("__func__ %s\n", __func__);
+    printf("__FUNCTION__ %s\n", __FUNCTION__);
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+
+  void refQualifiedFunction() && {
+    printf("__func__ %s\n", __func__);
+    printf("__FUNCTION__ %s\n", __FUNCTION__);
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
 };
 
 class Derived : public Base {
 public:
-  // Virtual function without being explicitally written.
+  // Virtual function without being explicitly written.
   void virtualFunction() {
     printf("__func__ %s\n", __func__);
     printf("__FUNCTION__ %s\n", __FUNCTION__);
@@ -294,6 +326,116 @@ extern void externFunction() {
 
 } // end NS namespace
 
+// additional tests for __PRETTY_FUNCTION__
+template <typename T, typename U>
+void functionTemplateWithTwoParams(T, U)
+{
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+}
+
+template <typename T>
+void functionTemplateWithoutParameterList()
+{
+  T t = T();
+
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+}
+
+template <typename T>
+T functionTemplateWithTemplateReturnType()
+{
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+
+  return T();
+}
+
+template <typename T>
+T * functionTemplateWithCompoundTypes(T a[])
+{
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+
+  return 0;
+}
+
+template <typename T>
+void functionTemplateExplicitSpecialization(T t)
+{
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+}
+
+template <>
+void functionTemplateExplicitSpecialization<int>(int i)
+{
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+}
+
+template <typename, typename T>
+void functionTemplateWithUnnamedTemplateParameter(T t)
+{
+  printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+}
+
+template <typename T>
+class OuterClass
+{
+public:
+  class MiddleClass
+  {
+  public:
+    template <typename U>
+    class InnerClass
+    {
+    public:
+      void memberFunction(T x, U y) const
+      {
+        printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+      }
+    };
+  };
+};
+
+template <typename T, template <typename> class Param = NS::ClassTemplate>
+class ClassWithTemplateTemplateParam
+{
+public:
+  static void staticMember()
+  {
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+};
+
+template <int Count>
+class NonTypeTemplateParam
+{
+public:
+  void size() const
+  {
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+};
+
+template <typename T>
+class SpecializedClassTemplate
+{
+public:
+  template <typename U>
+  void memberFunctionTemplate(T t, U u) const
+  {
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+};
+
+template <>
+class SpecializedClassTemplate<int>
+{
+public:
+  template <typename U>
+  void memberFunctionTemplate(int i, U u) const
+  {
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+};
+
 int main() {
   ClassInAnonymousNamespace anonymousNamespace;
   anonymousNamespace.anonymousNamespaceFunction();
@@ -319,6 +461,8 @@ int main() {
   b.constFunction();
   b.volatileFunction();
   b.constVolatileFunction();
+  b.refQualifiedFunction();
+  NS::Base().refQualifiedFunction();
 
   NS::Derived d;
   d.virtualFunction();
@@ -344,6 +488,30 @@ int main() {
   NS::localClass(0);
 
   NS::externFunction();
+
+  // additional tests for __PRETTY_FUNCTION__
+
+  functionTemplateWithTwoParams(0, 0.0f);
+  functionTemplateWithoutParameterList<double>();
+  functionTemplateWithTemplateReturnType<char>();
+  int array[] = { 1, 2, 3 };
+  functionTemplateWithCompoundTypes(array);
+  functionTemplateExplicitSpecialization(0);
+  functionTemplateExplicitSpecialization(0.0);
+  functionTemplateWithUnnamedTemplateParameter<int, float>(0.0f);
+
+  OuterClass<int *>::MiddleClass::InnerClass<float> omi;
+  omi.memberFunction(0, 0.0f);
+
+  ClassWithTemplateTemplateParam<char>::staticMember();
+
+  NonTypeTemplateParam<42> ntt;
+  ntt.size();
+
+  SpecializedClassTemplate<int> sct1;
+  sct1.memberFunctionTemplate(0, 0.0f);
+  SpecializedClassTemplate<char> sct2;
+  sct2.memberFunctionTemplate('0', 0.0);
 
   return 0;
 }

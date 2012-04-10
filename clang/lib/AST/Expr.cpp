@@ -399,21 +399,23 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     }
 
     PrintingPolicy Policy(Context.getLangOpts());
-
     std::string Proto = FD->getQualifiedNameAsString(Policy);
+    llvm::raw_string_ostream POut(Proto);
 
-    const FunctionType *AFT = FD->getType()->getAs<FunctionType>();
+    const FunctionDecl *Decl = FD;
+    if (const FunctionDecl* Pattern = FD->getTemplateInstantiationPattern())
+      Decl = Pattern;
+    const FunctionType *AFT = Decl->getType()->getAs<FunctionType>();
     const FunctionProtoType *FT = 0;
     if (FD->hasWrittenPrototype())
       FT = dyn_cast<FunctionProtoType>(AFT);
 
-    Proto += "(";
+    POut << "(";
     if (FT) {
-      llvm::raw_string_ostream POut(Proto);
-      for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
+      for (unsigned i = 0, e = Decl->getNumParams(); i != e; ++i) {
         if (i) POut << ", ";
         std::string Param;
-        FD->getParamDecl(i)->getType().getAsStringInternal(Param, Policy);
+        Decl->getParamDecl(i)->getType().getAsStringInternal(Param, Policy);
         POut << Param;
       }
 
@@ -422,15 +424,73 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
         POut << "...";
       }
     }
-    Proto += ")";
+    POut << ")";
 
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
       Qualifiers ThisQuals = Qualifiers::fromCVRMask(MD->getTypeQualifiers());
       if (ThisQuals.hasConst())
-        Proto += " const";
+        POut << " const";
       if (ThisQuals.hasVolatile())
-        Proto += " volatile";
+        POut << " volatile";
+      RefQualifierKind Ref = MD->getRefQualifier();
+      if (Ref == RQ_LValue)
+        POut << " &";
+      else if (Ref == RQ_RValue)
+        POut << " &&";
     }
+
+    typedef SmallVector<const ClassTemplateSpecializationDecl *, 8> SpecsTy;
+    SpecsTy Specs;
+    const DeclContext *Ctx = FD->getDeclContext();
+    while (Ctx && isa<NamedDecl>(Ctx)) {
+      const ClassTemplateSpecializationDecl *Spec
+                               = dyn_cast<ClassTemplateSpecializationDecl>(Ctx);
+      if (Spec && !Spec->isExplicitSpecialization())
+        Specs.push_back(Spec);
+      Ctx = Ctx->getParent();
+    }
+
+    std::string TemplateParams;
+    llvm::raw_string_ostream TOut(TemplateParams);
+    for (SpecsTy::reverse_iterator I = Specs.rbegin(), E = Specs.rend();
+         I != E; ++I) {
+      const TemplateParameterList *Params 
+                  = (*I)->getSpecializedTemplate()->getTemplateParameters();
+      const TemplateArgumentList &Args = (*I)->getTemplateArgs();
+      assert(Params->size() == Args.size());
+      for (unsigned i = 0, numParams = Params->size(); i != numParams; ++i) {
+        StringRef Param = Params->getParam(i)->getName();
+        if (Param.empty()) continue;
+        TOut << Param << " = ";
+        Args.get(i).print(Policy, TOut);
+        TOut << ", ";
+      }
+    }
+
+    FunctionTemplateSpecializationInfo *FSI 
+                                          = FD->getTemplateSpecializationInfo();
+    if (FSI && !FSI->isExplicitSpecialization()) {
+      const TemplateParameterList* Params 
+                                  = FSI->getTemplate()->getTemplateParameters();
+      const TemplateArgumentList* Args = FSI->TemplateArguments;
+      assert(Params->size() == Args->size());
+      for (unsigned i = 0, e = Params->size(); i != e; ++i) {
+        StringRef Param = Params->getParam(i)->getName();
+        if (Param.empty()) continue;
+        TOut << Param << " = ";
+        Args->get(i).print(Policy, TOut);
+        TOut << ", ";
+      }
+    }
+
+    TOut.flush();
+    if (!TemplateParams.empty()) {
+      // remove the trailing comma and space
+      TemplateParams.resize(TemplateParams.size() - 2);
+      POut << " [" << TemplateParams << "]";
+    }
+
+    POut.flush();
 
     if (!isa<CXXConstructorDecl>(FD) && !isa<CXXDestructorDecl>(FD))
       AFT->getResultType().getAsStringInternal(Proto, Policy);
