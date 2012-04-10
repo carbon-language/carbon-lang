@@ -303,7 +303,8 @@ ThreadPlanCallFunction::DoTakedown ()
         const ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
         if (abi && m_return_type.IsValid())
         {
-            m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type);
+            const bool persistent = false;
+            m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type, persistent);
         }
 
         if (log)
