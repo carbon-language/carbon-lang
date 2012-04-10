@@ -116,8 +116,8 @@ namespace llvm {
     // List of super-registers in topological order, small to large.
     typedef std::vector<const CodeGenRegister*> SuperRegList;
 
-    // Get the list of super-registers.
-    // This is only valid after computeDerivedInfo has visited all registers.
+    // Get the list of super-registers. This is valid after getSubReg
+    // visits all registers during RegBank construction.
     const SuperRegList &getSuperRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
       return SuperRegs;
