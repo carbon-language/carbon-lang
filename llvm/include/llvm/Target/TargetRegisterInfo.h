@@ -500,10 +500,28 @@ public:
   /// getRegPressureLimit - Return the register pressure "high water mark" for
   /// the specific register class. The scheduler is in high register pressure
   /// mode (for the specific register class) if it goes over the limit.
+  ///
+  /// Note: this is the old register pressure model that relies on a manually
+  /// specified representative register class per value type.
   virtual unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                        MachineFunction &MF) const {
     return 0;
   }
+
+  /// Get the weight in units of pressure for this register class.
+  virtual unsigned getRegClassWeight(const TargetRegisterClass *RC) const = 0;
+
+  /// Get the number of dimensions of register pressure.
+  virtual unsigned getNumRegPressureSets() const = 0;
+
+  /// Get the register unit pressure limit for this dimension.
+  /// This limit must be adjusted dynamically for reserved registers.
+  virtual unsigned getRegPressureSetLimit(unsigned Idx) const = 0;
+
+  /// Get the dimensions of register pressure impacted by this register class.
+  /// Returns a -1 terminated array of pressure set IDs.
+  virtual const int *getRegClassPressureSets(
+    const TargetRegisterClass *RC) const = 0;
 
   /// getRawAllocationOrder - Returns the register allocation order for a
   /// specified register class with a target-dependent hint. The returned list
