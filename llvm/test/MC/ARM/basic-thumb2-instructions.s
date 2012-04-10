@@ -2686,6 +2686,12 @@ _func:
         sub r4, r5, r6, asr #5
         sub r4, r5, r6, ror #5
         sub.w r5, r2, r12, rrx
+        sub r2, sp, ip
+        sub sp, sp, ip
+        sub sp, ip
+        sub.w r2, sp, ip
+        sub.w sp, sp, ip
+        sub.w sp, ip
 
 @ CHECK: sub.w	r4, r5, r6              @ encoding: [0xa5,0xeb,0x06,0x04]
 @ CHECK: sub.w	r4, r5, r6, lsl #5      @ encoding: [0xa5,0xeb,0x46,0x14]
@@ -2694,6 +2700,12 @@ _func:
 @ CHECK: sub.w	r4, r5, r6, asr #5      @ encoding: [0xa5,0xeb,0x66,0x14]
 @ CHECK: sub.w	r4, r5, r6, ror #5      @ encoding: [0xa5,0xeb,0x76,0x14]
 @ CHECK: sub.w r5, r2, r12, rrx         @ encoding: [0xa2,0xeb,0x3c,0x05]
+@ CHECK: sub.w	r2, sp, r12             @ encoding: [0xad,0xeb,0x0c,0x02]
+@ CHECK: sub.w	sp, sp, r12             @ encoding: [0xad,0xeb,0x0c,0x0d]
+@ CHECK: sub.w	sp, sp, r12             @ encoding: [0xad,0xeb,0x0c,0x0d]
+@ CHECK: sub.w	r2, sp, r12             @ encoding: [0xad,0xeb,0x0c,0x02]
+@ CHECK: sub.w	sp, sp, r12             @ encoding: [0xad,0xeb,0x0c,0x0d]
+@ CHECK: sub.w	sp, sp, r12             @ encoding: [0xad,0xeb,0x0c,0x0d]
 
 
 @------------------------------------------------------------------------------

@@ -4770,7 +4770,7 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       static_cast<ARMOperand*>(Operands[4])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->getReg() == ARM::SP &&
       static_cast<ARMOperand*>(Operands[1])->getReg() == 0 &&
-      (static_cast<ARMOperand*>(Operands[5])->isReg() ||
+      ((Mnemonic == "add" &&static_cast<ARMOperand*>(Operands[5])->isReg()) ||
        static_cast<ARMOperand*>(Operands[5])->isImm0_1020s4()))
     return true;
   // For Thumb2, add/sub immediate does not have a cc_out operand for the
@@ -4854,7 +4854,10 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       (Operands.size() == 5 || Operands.size() == 6) &&
       static_cast<ARMOperand*>(Operands[3])->isReg() &&
       static_cast<ARMOperand*>(Operands[3])->getReg() == ARM::SP &&
-      static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0 &&
+      (static_cast<ARMOperand*>(Operands[4])->isImm() ||
+       (Operands.size() == 6 &&
+        static_cast<ARMOperand*>(Operands[5])->isImm())))
     return true;
 
   return false;
