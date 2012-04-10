@@ -350,6 +350,8 @@ bool GenericTaintChecker::propagateFromPre(const CallExpr *CE,
 
     // The arguments are pointer arguments. The data they are pointing at is
     // tainted after the call.
+    if (CE->getNumArgs() < (ArgNum + 1))
+      return false;
     const Expr* Arg = CE->getArg(ArgNum);
     SymbolRef Sym = getPointedToSymbol(C, Arg);
     if (Sym)
@@ -458,7 +460,8 @@ GenericTaintChecker::TaintPropagationRule::process(const CallExpr *CE,
       break;
     }
 
-    assert(ArgNum < CE->getNumArgs());
+    if (CE->getNumArgs() < (ArgNum + 1))
+      return State;
     if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(ArgNum), State, C)))
       break;
   }
@@ -525,9 +528,10 @@ ProgramStateRef GenericTaintChecker::preFscanf(const CallExpr *CE,
 
 // If argument 0(protocol domain) is network, the return value should get taint.
 ProgramStateRef GenericTaintChecker::postSocket(const CallExpr *CE,
-                                                    CheckerContext &C) const {
-  assert(CE->getNumArgs() >= 3);
+                                                CheckerContext &C) const {
   ProgramStateRef State = C.getState();
+  if (CE->getNumArgs() < 3)
+    return State;
 
   SourceLocation DomLoc = CE->getArg(0)->getExprLoc();
   StringRef DomName = C.getMacroNameOrSpelling(DomLoc);
@@ -542,7 +546,9 @@ ProgramStateRef GenericTaintChecker::postSocket(const CallExpr *CE,
 ProgramStateRef GenericTaintChecker::postScanf(const CallExpr *CE,
                                                    CheckerContext &C) const {
   ProgramStateRef State = C.getState();
-  assert(CE->getNumArgs() >= 2);
+  if (CE->getNumArgs() < 2)
+    return State;
+
   SVal x = State->getSVal(CE->getArg(1), C.getLocationContext());
   // All arguments except for the very first one should get taint.
   for (unsigned int i = 1; i < CE->getNumArgs(); ++i) {
@@ -557,7 +563,7 @@ ProgramStateRef GenericTaintChecker::postScanf(const CallExpr *CE,
 }
 
 ProgramStateRef GenericTaintChecker::postRetTaint(const CallExpr *CE,
-                                                      CheckerContext &C) const {
+                                                  CheckerContext &C) const {
   return C.getState()->addTaint(CE, C.getLocationContext());
 }
 
@@ -677,7 +683,7 @@ bool GenericTaintChecker::checkSystemCall(const CallExpr *CE,
     .Case("dlopen", 0)
     .Default(UINT_MAX);
 
-  if (ArgNum == UINT_MAX)
+  if (ArgNum == UINT_MAX || CE->getNumArgs() < (ArgNum + 1))
     return false;
 
   if (generateReportIfTainted(CE->getArg(ArgNum),
@@ -722,7 +728,7 @@ bool GenericTaintChecker::checkTaintedBufferSize(const CallExpr *CE,
       ArgNum = 2;
   }
 
-  if (ArgNum != InvalidArgIndex &&
+  if (ArgNum != InvalidArgIndex && CE->getNumArgs() > ArgNum &&
       generateReportIfTainted(CE->getArg(ArgNum), MsgTaintedBufferSize, C))
     return true;
 

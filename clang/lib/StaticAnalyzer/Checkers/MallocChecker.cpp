@@ -368,6 +368,8 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
 
   ProgramStateRef State = C.getState();
   if (FunI == II_malloc || FunI == II_valloc) {
+    if (CE->getNumArgs() < 1)
+      return;
     State = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(), State);
   } else if (FunI == II_realloc) {
     State = ReallocMem(C, CE, false);
@@ -490,6 +492,9 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                                           ProgramStateRef state,
                                           unsigned Num,
                                           bool Hold) const {
+  if (CE->getNumArgs() < (Num + 1))
+    return 0;
+
   const Expr *ArgExpr = CE->getArg(Num);
   SVal ArgVal = state->getSVal(ArgExpr, C.getLocationContext());
   if (!isa<DefinedOrUnknownSVal>(ArgVal))
@@ -710,6 +715,9 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
 ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
                                           const CallExpr *CE,
                                           bool FreesOnFail) const {
+  if (CE->getNumArgs() < 2)
+    return 0;
+
   ProgramStateRef state = C.getState();
   const Expr *arg0Expr = CE->getArg(0);
   const LocationContext *LCtx = C.getLocationContext();
@@ -795,6 +803,9 @@ ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
 }
 
 ProgramStateRef MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE){
+  if (CE->getNumArgs() < 2)
+    return 0;
+
   ProgramStateRef state = C.getState();
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getLocationContext();
