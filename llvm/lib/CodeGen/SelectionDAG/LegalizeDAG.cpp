@@ -1790,7 +1790,11 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
 
   // isTailCall may be true since the callee does not reference caller stack
   // frame. Check if it's in the right position.
-  bool isTailCall = isInTailCallPosition(DAG, Node, InChain, TLI);
+  SDValue TCChain = InChain;
+  bool isTailCall = isInTailCallPosition(DAG, Node, TCChain, TLI);
+  if (isTailCall)
+    InChain = TCChain;
+
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, TLI.getLibcallCallingConv(LC), isTailCall,
