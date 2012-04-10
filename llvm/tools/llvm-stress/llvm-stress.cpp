@@ -202,11 +202,17 @@ protected:
 
   /// Pick a random vector type.
   Type *pickVectorType(unsigned len = (unsigned)-1) {
-    Type *Ty = pickScalarType();
     // Pick a random vector width in the range 2**0 to 2**4.
     // by adding two randoms we are generating a normal-like distribution
     // around 2**3.
     unsigned width = 1<<((Ran->Rand() % 3) + (Ran->Rand() % 3));
+    Type *Ty;
+
+    // Vectors of x86mmx are illegal; keep trying till we get something else.
+    do {
+      Ty = pickScalarType();
+    } while (Ty->isX86_MMXTy());
+
     if (len != (unsigned)-1)
       width = len;
     return VectorType::get(Ty, width);
