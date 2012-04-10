@@ -1118,6 +1118,17 @@ void CodeGenRegBank::computeRegUnitWeights() {
   }
 }
 
+// Populate a unique sorted list of units from a register set.
+static void buildRegUnitSet(const CodeGenRegister::Set &Regs,
+                            std::vector<unsigned> &RegUnits) {
+  std::vector<unsigned> TmpUnits;
+  for (RegUnitIterator UnitI(Regs); UnitI.isValid(); ++UnitI)
+    TmpUnits.push_back(*UnitI);
+  std::sort(TmpUnits.begin(), TmpUnits.end());
+  std::unique_copy(TmpUnits.begin(), TmpUnits.end(),
+                   std::back_inserter(RegUnits));
+}
+
 // Find a set in UniqueSets with the same elements as Set.
 // Return an iterator into UniqueSets.
 static std::vector<RegUnitSet>::const_iterator
@@ -1185,18 +1196,12 @@ void CodeGenRegBank::computeRegUnitSets() {
   unsigned NumRegClasses = RegClasses.size();
   for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
 
-    // Compute a sorted list of units in this class.
-    std::vector<unsigned> RegUnits;
-    const CodeGenRegister::Set &Regs = RegClasses[RCIdx]->getMembers();
-    for (RegUnitIterator UnitI(Regs); UnitI.isValid(); ++UnitI)
-      RegUnits.push_back(*UnitI);
-    std::sort(RegUnits.begin(), RegUnits.end());
-
     // Speculatively grow the RegUnitSets to hold the new set.
     RegUnitSets.resize(RegUnitSets.size() + 1);
     RegUnitSets.back().Name = RegClasses[RCIdx]->getName();
-    std::unique_copy(RegUnits.begin(), RegUnits.end(),
-                     std::back_inserter(RegUnitSets.back().Units));
+
+    // Compute a sorted list of units in this class.
+    buildRegUnitSet(RegClasses[RCIdx]->getMembers(), RegUnitSets.back().Units);
 
     // Find an existing RegUnitSet.
     std::vector<RegUnitSet>::const_iterator SetI =
@@ -1256,10 +1261,7 @@ void CodeGenRegBank::computeRegUnitSets() {
   for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
     // Recompute the sorted list of units in this class.
     std::vector<unsigned> RegUnits;
-    const CodeGenRegister::Set &Regs = RegClasses[RCIdx]->getMembers();
-    for (RegUnitIterator UnitI(Regs); UnitI.isValid(); ++UnitI)
-      RegUnits.push_back(*UnitI);
-    std::sort(RegUnits.begin(), RegUnits.end());
+    buildRegUnitSet(RegClasses[RCIdx]->getMembers(), RegUnits);
 
     // Don't increase pressure for unallocatable regclasses.
     if (RegUnits.empty())
