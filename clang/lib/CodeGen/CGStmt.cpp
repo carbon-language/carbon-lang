@@ -1178,8 +1178,8 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
       for (unsigned i = 0, e = CaseStmts.size(); i != e; ++i)
         EmitStmt(CaseStmts[i]);
 
-      // Now we want to restore the saved switch instance so that nested switches
-      // continue to function properly
+      // Now we want to restore the saved switch instance so that nested
+      // switches continue to function properly
       SwitchInsn = SavedSwitchInsn;
 
       return;
