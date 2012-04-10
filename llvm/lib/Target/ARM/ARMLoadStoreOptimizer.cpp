@@ -1160,6 +1160,11 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
       unsigned NewOpc = (isLd)
         ? (isT2 ? (OffImm < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
         : (isT2 ? (OffImm < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STRi12);
+      // Be extra careful for thumb2. t2LDRi8 can't reference a zero offset,
+      // so adjust and use t2LDRi12 here for that.
+      unsigned NewOpc2 = (isLd)
+        ? (isT2 ? (OffImm+4 < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
+        : (isT2 ? (OffImm+4 < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STRi12);
       DebugLoc dl = MBBI->getDebugLoc();
       // If this is a load and base register is killed, it may have been
       // re-defed by the load, make sure the first load does not clobber it.
@@ -1167,13 +1172,11 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
           (BaseKill || OffKill) &&
           (TRI->regsOverlap(EvenReg, BaseReg))) {
         assert(!TRI->regsOverlap(OddReg, BaseReg));
-        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc,
+        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
                       OddReg, OddDeadKill, false,
                       BaseReg, false, BaseUndef, false, OffUndef,
                       Pred, PredReg, TII, isT2);
         NewBBI = llvm::prior(MBBI);
-        // Be extra careful for thumb2. t2LDRi8 can't reference a zero offset,
-        // so adjust and use t2LDRi12 here for that.
         if (isT2 && NewOpc == ARM::t2LDRi8 && OffImm+4 >= 0)
           NewOpc = ARM::t2LDRi12;
         InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
@@ -1197,11 +1200,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       BaseReg, false, BaseUndef, false, OffUndef,
                       Pred, PredReg, TII, isT2);
         NewBBI = llvm::prior(MBBI);
-        // Be extra careful for thumb2. t2STRi8 can't reference a zero offset,
-        // so adjust and use t2STRi12 here for that.
-        if (isT2 && NewOpc == ARM::t2STRi8 && OffImm+4 >= 0)
-          NewOpc = ARM::t2STRi12;
-        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc,
+        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
                       OddReg, OddDeadKill, OddUndef,
                       BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
                       Pred, PredReg, TII, isT2);
