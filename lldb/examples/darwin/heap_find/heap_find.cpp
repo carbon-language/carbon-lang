@@ -27,8 +27,41 @@
 //
 // (lldb) expression find_cstring_in_heap ("hello")
 //
-// The results will be printed to the STDOUT of the inferior program.
+// The results will be printed to the STDOUT of the inferior program. The 
+// return value of the "find_pointer_in_heap" function is the number of 
+// pointer references that were found. A quick example shows
 //
+// (lldb) expr find_pointer_in_heap(0x0000000104000410)
+// (uint32_t) $5 = 0x00000002
+// 0x104000740: 0x0000000104000410 found in malloc block 0x104000730 + 16 (malloc_size = 48)
+// 0x100820060: 0x0000000104000410 found in malloc block 0x100820000 + 96 (malloc_size = 4096)
+//
+// From the above output we see that 0x104000410 was found in the malloc block
+// at 0x104000730 and 0x100820000. If we want to see what these blocks are, we
+// can display the memory for this block using the "address" ("A" for short) 
+// format. The address format shows pointers, and if those pointers point to
+// objects that have symbols or know data contents, it will display information
+// about the pointers:
+/
+// (lldb) memory read --format address --count 1 0x104000730 
+// 0x104000730: 0x0000000100002460 (void *)0x0000000100002488: MyString
+// 
+// We can see that the first block is a "MyString" object that contains our
+// pointer value at offset 16.
+//
+// Looking at the next pointers, are a bit more tricky:
+// (lldb) memory read -fA 0x100820000 -c1
+// 0x100820000: 0x4f545541a1a1a1a1
+// (lldb) memory read 0x100820000
+// 0x100820000: a1 a1 a1 a1 41 55 54 4f 52 45 4c 45 41 53 45 21  ....AUTORELEASE!
+// 0x100820010: 78 00 82 00 01 00 00 00 60 f9 e8 75 ff 7f 00 00  x.......`..u....
+// 
+// This is an objective C auto release pool object that contains our pointer.
+// C++ classes will show up if they are virtual as something like:
+// (lldb) memory read --format address --count 1 0x104008000
+// 0x104008000: 0x109008000 vtable for lldb_private::Process
+//
+// This is a clue that the 0x104008000 is a "lldb_private::Process *".
 //===----------------------------------------------------------------------===//
 
 #include <assert.h>
