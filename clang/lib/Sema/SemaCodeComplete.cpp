@@ -6033,10 +6033,14 @@ static void FindImplementableMethods(ASTContext &Context,
 /// \brief Add the parenthesized return or parameter type chunk to a code 
 /// completion string.
 static void AddObjCPassingTypeChunk(QualType Type,
+                                    unsigned ObjCDeclQuals,
                                     ASTContext &Context,
                                     const PrintingPolicy &Policy,
                                     CodeCompletionBuilder &Builder) {
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+  std::string Quals = formatObjCParamQualifiers(ObjCDeclQuals);
+  if (!Quals.empty())
+    Builder.AddTextChunk(Builder.getAllocator().CopyString(Quals));
   Builder.AddTextChunk(GetCompletionTypeString(Type, Context, Policy,
                                                Builder.getAllocator()));
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
@@ -6111,7 +6115,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
       KnownSelectors.insert(Selectors.getNullarySelector(PropName)) &&
       ReturnTypeMatchesProperty && !Property->getGetterMethodDecl()) {
     if (ReturnType.isNull())
-      AddObjCPassingTypeChunk(Property->getType(), Context, Policy, Builder);
+      AddObjCPassingTypeChunk(Property->getType(), /*Quals=*/0,
+                              Context, Policy, Builder);
     
     Builder.AddTypedTextChunk(Key);
     Results.AddResult(Result(Builder.TakeString(), CCP_CodePattern, 
@@ -6157,7 +6162,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
       Builder.AddTypedTextChunk(
                                 Allocator.CopyString(SelectorId->getName()));
       Builder.AddTypedTextChunk(":");
-      AddObjCPassingTypeChunk(Property->getType(), Context, Policy, Builder);
+      AddObjCPassingTypeChunk(Property->getType(), /*Quals=*/0,
+                              Context, Policy, Builder);
       Builder.AddTextChunk(Key);
       Results.AddResult(Result(Builder.TakeString(), CCP_CodePattern, 
                                CXCursor_ObjCInstanceMethodDecl));
@@ -6740,8 +6746,10 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     // If the result type was not already provided, add it to the
     // pattern as (type).
     if (ReturnType.isNull())
-      AddObjCPassingTypeChunk(Method->getResultType(), Context, Policy, 
-                              Builder);
+      AddObjCPassingTypeChunk(Method->getResultType(),
+                              Method->getObjCDeclQualifier(),
+                              Context, Policy,
+                              Builder); 
 
     Selector Sel = Method->getSelector();
 
@@ -6765,7 +6773,9 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
         break;
 
       // Add the parameter type.
-      AddObjCPassingTypeChunk((*P)->getOriginalType(), Context, Policy, 
+      AddObjCPassingTypeChunk((*P)->getOriginalType(),
+                              (*P)->getObjCDeclQualifier(),
+                              Context, Policy,
                               Builder);
       
       if (IdentifierInfo *Id = (*P)->getIdentifier())

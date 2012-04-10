@@ -4,7 +4,7 @@
 @protocol P1
 - (id)abc;
 - (id)initWithInt:(int)x;
-- (id)initWithTwoInts:(int)x second:(int)y;
+- (id)initWithTwoInts:(inout int)x second:(int)y;
 - (int)getInt;
 - (id)getSelf;
 @end
@@ -57,7 +57,7 @@
 @end
 
 @interface Passing
-- (oneway void)method:(in id x);
+- (oneway void)method:(in id)x;
 @end
 
 @interface Gaps
@@ -65,7 +65,11 @@
 @end
 
 @implementation Gaps
-- (void)method:(int)x :(int)y;
+- (void)method:(int)x :(int)y {}
+@end
+
+@implementation Passing
+- (oneway void)method:(in id x) {}
 @end
 
 // RUN: c-index-test -code-completion-at=%s:17:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -73,25 +77,25 @@
 // CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText getInt} (40) (parent: ObjCProtocolDecl 'P1')
 // CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText getSelf} (40) (parent: ObjCProtocolDecl 'P1')
 // CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x} (40) (parent: ObjCProtocolDecl 'P1')
-// CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y} (40) (parent: ObjCProtocolDecl 'P1')
+// CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text inout }{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y} (40) (parent: ObjCProtocolDecl 'P1')
 // RUN: c-index-test -code-completion-at=%s:17:7 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: ObjCInstanceMethodDecl:{TypedText abc}
 // CHECK-CC2-NEXT: ObjCInstanceMethodDecl:{TypedText getSelf}
 // CHECK-CC2: ObjCInstanceMethodDecl:{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}
-// CHECK-CC2: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}
+// CHECK-CC2: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text inout }{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}
 // RUN: c-index-test -code-completion-at=%s:24:7 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCInstanceMethodDecl:{TypedText abc}
 // CHECK-CC3-NEXT: ObjCInstanceMethodDecl:{TypedText getSelf}
 // CHECK-CC3: ObjCInstanceMethodDecl:{TypedText init}
 // CHECK-CC3: ObjCInstanceMethodDecl:{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}
-// CHECK-CC3: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}
+// CHECK-CC3: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text inout }{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:33:3 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (42)
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText getInt}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText getSecondValue}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (40)
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
-// CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
+// CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text inout }{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // CHECK-CC4: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText setValue}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:33:8 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: ObjCInstanceMethodDecl:{TypedText getInt}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (42) (parent: ObjCProtocolDecl 'P1')
@@ -102,7 +106,7 @@
 // CHECK-CC6: ObjCInstanceMethodDecl:{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
 // CHECK-CC6: ObjCInstanceMethodDecl:{TypedText getSelf}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (40)
 // CHECK-CC6: ObjCInstanceMethodDecl:{TypedText initWithInt}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
-// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
+// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText initWithTwoInts}{TypedText :}{LeftParen (}{Text inout }{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText second:}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
 // RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:42:3 %s | FileCheck -check-prefix=CHECK-CC7 %s
 // CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}{HorizontalSpace  }{LeftBrace {}{VerticalSpace  }{Text return}{HorizontalSpace  }{Placeholder expression}{SemiColon ;}{VerticalSpace  }{RightBrace }} (42)
 // CHECK-CC7: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText categoryFunction}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
@@ -174,3 +178,7 @@
 // <rdar://problem/8939352>
 // RUN: c-index-test -code-completion-at=%s:68:9 %s | FileCheck -check-prefix=CHECK-8939352 %s
 // CHECK-8939352: ObjCInstanceMethodDecl:{TypedText method}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text y} (40)
+
+
+// RUN: c-index-test -code-completion-at=%s:72:2 %s | FileCheck -check-prefix=CHECK-ONEWAY %s
+// CHECK-ONEWAY: ObjCInstanceMethodDecl:{LeftParen (}{Text oneway }{Text void}{RightParen )}{TypedText method}{TypedText :}{LeftParen (}{Text in }{Text id}{RightParen )}{Text x} (40) (parent: ObjCInterfaceDecl 'Passing')
