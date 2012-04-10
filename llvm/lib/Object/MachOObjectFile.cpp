@@ -34,7 +34,6 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
       MachOObj(MOO),
       RegisteredStringTable(std::numeric_limits<uint32_t>::max()) {
   DataRefImpl DRI;
-  DRI.d.a = DRI.d.b = 0;
   moveToNextSection(DRI);
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
@@ -355,7 +354,6 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
 symbol_iterator MachOObjectFile::begin_symbols() const {
   // DRI.d.a = segment number; DRI.d.b = symbol index.
   DataRefImpl DRI;
-  DRI.d.a = DRI.d.b = 0;
   moveToNextSymbol(DRI);
   return symbol_iterator(SymbolRef(DRI, this));
 }
@@ -363,7 +361,6 @@ symbol_iterator MachOObjectFile::begin_symbols() const {
 symbol_iterator MachOObjectFile::end_symbols() const {
   DataRefImpl DRI;
   DRI.d.a = MachOObj->getHeader().NumLoadCommands;
-  DRI.d.b = 0;
   return symbol_iterator(SymbolRef(DRI, this));
 }
 
@@ -601,7 +598,6 @@ error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
 
 relocation_iterator MachOObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
   DataRefImpl ret;
-  ret.d.a = 0;
   ret.d.b = getSectionIndex(Sec);
   return relocation_iterator(RelocationRef(ret, this));
 }
@@ -624,7 +620,6 @@ relocation_iterator MachOObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
 
 section_iterator MachOObjectFile::begin_sections() const {
   DataRefImpl DRI;
-  DRI.d.a = DRI.d.b = 0;
   moveToNextSection(DRI);
   return section_iterator(SectionRef(DRI, this));
 }
@@ -632,7 +627,6 @@ section_iterator MachOObjectFile::begin_sections() const {
 section_iterator MachOObjectFile::end_sections() const {
   DataRefImpl DRI;
   DRI.d.a = MachOObj->getHeader().NumLoadCommands;
-  DRI.d.b = 0;
   return section_iterator(SectionRef(DRI, this));
 }
 
@@ -708,7 +702,6 @@ error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
   bool isExtern = (RE->Word1 >> 27) & 1;
 
   DataRefImpl Sym;
-  Sym.d.a = Sym.d.b = 0;
   moveToNextSymbol(Sym);
   if (isExtern) {
     for (unsigned i = 0; i < SymbolIdx; i++) {

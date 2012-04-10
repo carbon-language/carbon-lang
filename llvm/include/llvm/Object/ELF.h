@@ -290,9 +290,7 @@ class DynRefImpl {
   const OwningType *OwningObject;
 
 public:
-  DynRefImpl() : OwningObject(NULL) {
-    std::memset(&DynPimpl, 0, sizeof(DynPimpl));
-  }
+  DynRefImpl() : OwningObject(NULL) { }
 
   DynRefImpl(DataRefImpl DynP, const OwningType *Owner);
 
@@ -1108,7 +1106,6 @@ template<support::endianness target_endianness, bool is64Bits>
 relocation_iterator ELFObjectFile<target_endianness, is64Bits>
                                  ::getSectionRelBegin(DataRefImpl Sec) const {
   DataRefImpl RelData;
-  memset(&RelData, 0, sizeof(RelData));
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   typename RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
   if (sec != 0 && ittr != SectionRelocMap.end()) {
@@ -1123,7 +1120,6 @@ template<support::endianness target_endianness, bool is64Bits>
 relocation_iterator ELFObjectFile<target_endianness, is64Bits>
                                  ::getSectionRelEnd(DataRefImpl Sec) const {
   DataRefImpl RelData;
-  memset(&RelData, 0, sizeof(RelData));
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   typename RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
   if (sec != 0 && ittr != SectionRelocMap.end()) {
@@ -1626,7 +1622,6 @@ template<support::endianness target_endianness, bool is64Bits>
 symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                              ::begin_symbols() const {
   DataRefImpl SymbolData;
-  memset(&SymbolData, 0, sizeof(SymbolData));
   if (SymbolTableSections.size() <= 1) {
     SymbolData.d.a = std::numeric_limits<uint32_t>::max();
     SymbolData.d.b = std::numeric_limits<uint32_t>::max();
@@ -1641,7 +1636,6 @@ template<support::endianness target_endianness, bool is64Bits>
 symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                              ::end_symbols() const {
   DataRefImpl SymbolData;
-  memset(&SymbolData, 0, sizeof(SymbolData));
   SymbolData.d.a = std::numeric_limits<uint32_t>::max();
   SymbolData.d.b = std::numeric_limits<uint32_t>::max();
   return symbol_iterator(SymbolRef(SymbolData, this));
@@ -1651,7 +1645,6 @@ template<support::endianness target_endianness, bool is64Bits>
 symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                              ::begin_dynamic_symbols() const {
   DataRefImpl SymbolData;
-  memset(&SymbolData, 0, sizeof(SymbolData));
   if (SymbolTableSections[0] == NULL) {
     SymbolData.d.a = std::numeric_limits<uint32_t>::max();
     SymbolData.d.b = std::numeric_limits<uint32_t>::max();
@@ -1666,7 +1659,6 @@ template<support::endianness target_endianness, bool is64Bits>
 symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                              ::end_dynamic_symbols() const {
   DataRefImpl SymbolData;
-  memset(&SymbolData, 0, sizeof(SymbolData));
   SymbolData.d.a = std::numeric_limits<uint32_t>::max();
   SymbolData.d.b = std::numeric_limits<uint32_t>::max();
   return symbol_iterator(SymbolRef(SymbolData, this));
@@ -1676,7 +1668,6 @@ template<support::endianness target_endianness, bool is64Bits>
 section_iterator ELFObjectFile<target_endianness, is64Bits>
                               ::begin_sections() const {
   DataRefImpl ret;
-  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base() + Header->e_shoff);
   return section_iterator(SectionRef(ret, this));
 }
@@ -1685,7 +1676,6 @@ template<support::endianness target_endianness, bool is64Bits>
 section_iterator ELFObjectFile<target_endianness, is64Bits>
                               ::end_sections() const {
   DataRefImpl ret;
-  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base()
                                      + Header->e_shoff
                                      + (Header->e_shentsize*getNumSections()));
@@ -1696,7 +1686,6 @@ template<support::endianness target_endianness, bool is64Bits>
 typename ELFObjectFile<target_endianness, is64Bits>::dyn_iterator
 ELFObjectFile<target_endianness, is64Bits>::begin_dynamic_table() const {
   DataRefImpl DynData;
-  memset(&DynData, 0, sizeof(DynData));
   if (dot_dynamic_sec == NULL || dot_dynamic_sec->sh_size == 0) {
     DynData.d.a = std::numeric_limits<uint32_t>::max();
   } else {
@@ -1710,7 +1699,6 @@ typename ELFObjectFile<target_endianness, is64Bits>::dyn_iterator
 ELFObjectFile<target_endianness, is64Bits>
                           ::end_dynamic_table() const {
   DataRefImpl DynData;
-  memset(&DynData, 0, sizeof(DynData));
   DynData.d.a = std::numeric_limits<uint32_t>::max();
   return dyn_iterator(DynRef(DynData, this));
 }

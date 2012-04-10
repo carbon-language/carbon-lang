@@ -282,7 +282,6 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Symb,
     const coff_section *sec = 0;
     if (error_code ec = getSection(symb->SectionNumber, sec)) return ec;
     DataRefImpl Sec;
-    std::memset(&Sec, 0, sizeof(Sec));
     Sec.p = reinterpret_cast<uintptr_t>(sec);
     Result = section_iterator(SectionRef(Sec, this));
   }
@@ -374,7 +373,6 @@ error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
 relocation_iterator COFFObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
   const coff_section *sec = toSec(Sec);
   DataRefImpl ret;
-  std::memset(&ret, 0, sizeof(ret));
   if (sec->NumberOfRelocations == 0)
     ret.p = 0;
   else
@@ -386,7 +384,6 @@ relocation_iterator COFFObjectFile::getSectionRelBegin(DataRefImpl Sec) const {
 relocation_iterator COFFObjectFile::getSectionRelEnd(DataRefImpl Sec) const {
   const coff_section *sec = toSec(Sec);
   DataRefImpl ret;
-  std::memset(&ret, 0, sizeof(ret));
   if (sec->NumberOfRelocations == 0)
     ret.p = 0;
   else
@@ -470,7 +467,6 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
 
 symbol_iterator COFFObjectFile::begin_symbols() const {
   DataRefImpl ret;
-  std::memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(SymbolTable);
   return symbol_iterator(SymbolRef(ret, this));
 }
@@ -478,7 +474,6 @@ symbol_iterator COFFObjectFile::begin_symbols() const {
 symbol_iterator COFFObjectFile::end_symbols() const {
   // The symbol table ends where the string table begins.
   DataRefImpl ret;
-  std::memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(StringTable);
   return symbol_iterator(SymbolRef(ret, this));
 }
@@ -511,14 +506,12 @@ StringRef COFFObjectFile::getLoadName() const {
 
 section_iterator COFFObjectFile::begin_sections() const {
   DataRefImpl ret;
-  std::memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(SectionTable);
   return section_iterator(SectionRef(ret, this));
 }
 
 section_iterator COFFObjectFile::end_sections() const {
   DataRefImpl ret;
-  std::memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(SectionTable + Header->NumberOfSections);
   return section_iterator(SectionRef(ret, this));
 }
@@ -669,7 +662,6 @@ error_code COFFObjectFile::getRelocationSymbol(DataRefImpl Rel,
                                                SymbolRef &Res) const {
   const coff_relocation* R = toRel(Rel);
   DataRefImpl Symb;
-  std::memset(&Symb, 0, sizeof(Symb));
   Symb.p = reinterpret_cast<uintptr_t>(SymbolTable + R->SymbolTableIndex);
   Res = SymbolRef(Symb, this);
   return object_error::success;
@@ -749,7 +741,6 @@ error_code COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
   const coff_symbol *symb = 0;
   if (error_code ec = getSymbol(reloc->SymbolTableIndex, symb)) return ec;
   DataRefImpl sym;
-  ::memset(&sym, 0, sizeof(sym));
   sym.p = reinterpret_cast<uintptr_t>(symb);
   StringRef symname;
   if (error_code ec = getSymbolName(sym, symname)) return ec;

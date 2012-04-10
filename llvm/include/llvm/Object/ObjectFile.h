@@ -38,6 +38,9 @@ union DataRefImpl {
     uint32_t a, b;
   } d;
   uintptr_t p;
+  DataRefImpl() {
+    std::memset(this, 0, sizeof(DataRefImpl));
+  }
 };
 
 template<class content_type>
@@ -94,9 +97,7 @@ class RelocationRef {
   const ObjectFile *OwningObject;
 
 public:
-  RelocationRef() : OwningObject(NULL) {
-    std::memset(&RelocationPimpl, 0, sizeof(RelocationPimpl));
-  }
+  RelocationRef() : OwningObject(NULL) { }
 
   RelocationRef(DataRefImpl RelocationP, const ObjectFile *Owner);
 
@@ -136,9 +137,7 @@ class SectionRef {
   const ObjectFile *OwningObject;
 
 public:
-  SectionRef() : OwningObject(NULL) {
-    std::memset(&SectionPimpl, 0, sizeof(SectionPimpl));
-  }
+  SectionRef() : OwningObject(NULL) { }
 
   SectionRef(DataRefImpl SectionP, const ObjectFile *Owner);
 
@@ -175,9 +174,7 @@ class SymbolRef {
   const ObjectFile *OwningObject;
 
 public:
-  SymbolRef() : OwningObject(NULL) {
-    std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl));
-  }
+  SymbolRef() : OwningObject(NULL) { }
 
   enum Type {
     ST_Unknown, // Type not specified
@@ -236,9 +233,7 @@ class LibraryRef {
   const ObjectFile *OwningObject;
 
 public:
-  LibraryRef() : OwningObject(NULL) {
-    std::memset(&LibraryPimpl, 0, sizeof(LibraryPimpl));
-  }
+  LibraryRef() : OwningObject(NULL) { }
 
   LibraryRef(DataRefImpl LibraryP, const ObjectFile *Owner);
 
