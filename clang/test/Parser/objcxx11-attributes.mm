@@ -33,6 +33,7 @@ void f(X *noreturn) {
   [[]];
   [[int(), noreturn]];
   [[class, test(foo 'x' bar),,,]];
+  [[bitand, noreturn]];
 }
 
 template<typename...Ts> void f(Ts ...x) {

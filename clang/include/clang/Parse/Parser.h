@@ -1907,7 +1907,7 @@ private:
     if (getLangOpts().CPlusPlus0x && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
-      ParseCXX0XAttributes(attrs, &endLoc);
+      ParseCXX11Attributes(attrs, &endLoc);
       D.takeAttributes(attrs, endLoc);
     }
   }
@@ -1915,7 +1915,7 @@ private:
                                  SourceLocation *endLoc = 0) {
     if (getLangOpts().CPlusPlus0x && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
-      ParseCXX0XAttributes(attrsWithRange, endLoc);
+      ParseCXX11Attributes(attrsWithRange, endLoc);
       attrs.takeAllFrom(attrsWithRange);
     }
   }
@@ -1924,13 +1924,14 @@ private:
                                  bool OuterMightBeMessageSend = false) {
     if (getLangOpts().CPlusPlus0x &&
         isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
-      ParseCXX0XAttributes(attrs, endLoc);
+      ParseCXX11Attributes(attrs, endLoc);
   }
 
-  void ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
+  void ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
                                     SourceLocation *EndLoc = 0);
-  void ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
+  void ParseCXX11Attributes(ParsedAttributesWithRange &attrs,
                             SourceLocation *EndLoc = 0);
+  IdentifierInfo *TryParseCXX11AttributeIdentifier(SourceLocation &Loc);
 
   void MaybeParseMicrosoftAttributes(ParsedAttributes &attrs,
                                      SourceLocation *endLoc = 0) {

@@ -3486,11 +3486,11 @@ bool Parser::isConstructorDeclarator() {
 ///
 void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
                                        bool VendorAttributesAllowed,
-                                       bool CXX0XAttributesAllowed) {
-  if (getLangOpts().CPlusPlus0x && CXX0XAttributesAllowed &&
+                                       bool CXX11AttributesAllowed) {
+  if (getLangOpts().CPlusPlus0x && CXX11AttributesAllowed &&
       isCXX11AttributeSpecifier()) {
     ParsedAttributesWithRange attrs(AttrFactory);
-    ParseCXX0XAttributes(attrs);
+    ParseCXX11Attributes(attrs);
     DS.takeAttributesFrom(attrs);
   }
 

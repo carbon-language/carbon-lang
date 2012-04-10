@@ -11,6 +11,9 @@ int array_attr [1] [[]];
 alignas(8) int aligned_attr;
 [[test::valid(for 42 [very] **** '+' symbols went on a trip; the end.)]]
   int garbage_attr;
+[[,,,static, class, namespace,, inline, constexpr, mutable,, bi\
+tand, bitor::compl(!.*_ Cx.!U^*R),,,]] int more_garbage_attr;
+[[u8"invalid!"]] int invalid_string_attr; // expected-error {{expected ']'}}
 void fn_attr () [[]];
 void noexcept_fn_attr () noexcept [[]];
 struct MemberFnOrder {
@@ -21,7 +24,7 @@ extern "C++" [[]] int extern_attr;
 template <typename T> [[]] void template_attr ();
 [[]] [[]] int [[]] [[]] multi_attr [[]] [[]];
 
-int comma_attr [[,]]; // expected-error {{expected identifier}}
+int comma_attr [[,]];
 int scope_attr [[foo::]]; // expected-error {{expected identifier}}
 int (paren_attr) [[]]; // expected-error {{an attribute list cannot appear here}}
 unsigned [[]] int attr_in_decl_spec; // expected-error {{expected unqualified-id}}
@@ -69,4 +72,8 @@ void foo () {
   int n = __builtin_offsetof(S, arr[ [] { return 0; }() ]); // expected-error {{C++11 only allows consecutive left square brackets when introducing an attribute}}
 
   [[]] return;
+}
+
+template<typename...Ts> void variadic() {
+  void bar [[noreturn...]] (); // expected-error {{attribute 'noreturn' cannot be used as an attribute pack}}
 }
