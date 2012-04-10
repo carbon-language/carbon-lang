@@ -513,7 +513,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     return false;
   }
 
-  // SCoP can not contains the entry block of the function, because we need
+  // SCoP cannot contain the entry block of the function, because we need
   // to insert alloca instruction there when translate scalar to array.
   if (R.getEntry() == &(R.getEntry()->getParent()->getEntryBlock()))
     INVALID(Other, "Region containing entry block of function is invalid!");
