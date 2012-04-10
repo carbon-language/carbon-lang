@@ -4431,9 +4431,9 @@ static bool isTruncateOf(SelectionDAG &DAG, SDValue N, SDValue &Op,
 
   ConstantSDNode *COp0 = dyn_cast<ConstantSDNode>(Op0);
   ConstantSDNode *COp1 = dyn_cast<ConstantSDNode>(Op1);
-  if (COp0 && COp0->getZExtValue() == 0)
+  if (COp0 && COp0->isNullValue())
     Op = Op1;
-  else if (COp1 && COp1->getZExtValue() == 0)
+  else if (COp1 && COp1->isNullValue())
     Op = Op0;
   else
     return false;
