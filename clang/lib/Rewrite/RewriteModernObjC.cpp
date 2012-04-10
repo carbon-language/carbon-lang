@@ -1325,7 +1325,8 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *Pseud
 
   // Because the rewriter doesn't allow us to rewrite rewritten code,
   // we need to suppress rewriting the sub-statements.
-  Expr *Base, *RHS;
+  Expr *Base;
+  SmallVector<Expr*, 2> Args;
   {
     DisableReplaceStmtScope S(*this);
 
@@ -1336,11 +1337,15 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *Pseud
       Base = cast<OpaqueValueExpr>(Base)->getSourceExpr();
       Base = cast<Expr>(RewriteFunctionBodyOrGlobalInitializer(Base));
     }
-
-    // Rebuild the RHS.
-    RHS = cast<BinaryOperator>(PseudoOp->getSyntacticForm())->getRHS();
-    RHS = cast<OpaqueValueExpr>(RHS)->getSourceExpr();
-    RHS = cast<Expr>(RewriteFunctionBodyOrGlobalInitializer(RHS));
+  
+    unsigned numArgs = OldMsg->getNumArgs();
+    for (unsigned i = 0; i < numArgs; i++) {
+      Expr *Arg = OldMsg->getArg(i);
+      if (isa<OpaqueValueExpr>(Arg))
+        Arg = cast<OpaqueValueExpr>(Arg)->getSourceExpr();
+      Arg = cast<Expr>(RewriteFunctionBodyOrGlobalInitializer(Arg));
+      Args.push_back(Arg);
+    }
   }
 
   // TODO: avoid this copy.
@@ -1357,7 +1362,7 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *Pseud
                                      OldMsg->getSelector(),
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
-                                     RHS,
+                                     Args,
                                      OldMsg->getRightLoc(),
                                      OldMsg->isImplicit());
     break;
@@ -1370,7 +1375,7 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *Pseud
                                      OldMsg->getSelector(),
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
-                                     RHS,
+                                     Args,
                                      OldMsg->getRightLoc(),
                                      OldMsg->isImplicit());
     break;
@@ -1386,7 +1391,7 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *Pseud
                                      OldMsg->getSelector(),
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
-                                     RHS,
+                                     Args,
                                      OldMsg->getRightLoc(),
                                      OldMsg->isImplicit());
     break;
@@ -1408,20 +1413,27 @@ Stmt *RewriteModernObjC::RewritePropertyOrImplicitGetter(PseudoObjectExpr *Pseud
   // Because the rewriter doesn't allow us to rewrite rewritten code,
   // we need to suppress rewriting the sub-statements.
   Expr *Base = 0;
+  SmallVector<Expr*, 1> Args;
   {
     DisableReplaceStmtScope S(*this);
-
     // Rebuild the base expression if we have one.
     if (OldMsg->getReceiverKind() == ObjCMessageExpr::Instance) {
       Base = OldMsg->getInstanceReceiver();
       Base = cast<OpaqueValueExpr>(Base)->getSourceExpr();
       Base = cast<Expr>(RewriteFunctionBodyOrGlobalInitializer(Base));
     }
+    unsigned numArgs = OldMsg->getNumArgs();
+    for (unsigned i = 0; i < numArgs; i++) {
+      Expr *Arg = OldMsg->getArg(i);
+      if (isa<OpaqueValueExpr>(Arg))
+        Arg = cast<OpaqueValueExpr>(Arg)->getSourceExpr();
+      Arg = cast<Expr>(RewriteFunctionBodyOrGlobalInitializer(Arg));
+      Args.push_back(Arg);
+    }
   }
 
   // Intentionally empty.
   SmallVector<SourceLocation, 1> SelLocs;
-  SmallVector<Expr*, 1> Args;
 
   ObjCMessageExpr *NewMsg = 0;
   switch (OldMsg->getReceiverKind()) {
