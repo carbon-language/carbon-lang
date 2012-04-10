@@ -1080,6 +1080,14 @@ def : Pat<(fadd_mlx SPR:$dstin, (fmul_su SPR:$a, SPR:$b)),
           (VFMAS SPR:$dstin, SPR:$a, SPR:$b)>,
           Requires<[HasVFP4,DontUseNEONForFP,FPContractions]>;
 
+// Match @llvm.fma.* intrinsics
+def : Pat<(fma (f64 DPR:$Ddin), (f64 DPR:$Dn), (f64 DPR:$Dm)),
+          (VFMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(fma (f32 SPR:$Sdin), (f32 SPR:$Sn), (f32 SPR:$Sm)),
+          (VFMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
+      Requires<[HasVFP4]>;
+
 def VFMSD : ADbI<0b11101, 0b10, 1, 0,
                  (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
                  IIC_fpFMAC64, "vfms", ".f64\t$Dd, $Dn, $Dm",
