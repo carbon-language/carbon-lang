@@ -906,6 +906,39 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
     *EndLoc = T.getCloseLocation();
 }
 
+/// DiagnoseProhibitedCXX11Attribute - We have found the opening square brackets
+/// of a C++11 attribute-specifier in a location where an attribute is not
+/// permitted. By C++11 [dcl.attr.grammar]p6, this is ill-formed. Diagnose this
+/// situation.
+///
+/// \return \c true if we skipped an attribute-like chunk of tokens, \c false if
+/// this doesn't appear to actually be an attribute-specifier, and the caller
+/// should try to parse it.
+bool Parser::DiagnoseProhibitedCXX11Attribute() {
+  assert(Tok.is(tok::l_square) && NextToken().is(tok::l_square));
+
+  switch (isCXX11AttributeSpecifier(/*Disambiguate*/true)) {
+  case CAK_NotAttributeSpecifier:
+    // No diagnostic: we're in Obj-C++11 and this is not actually an attribute.
+    return false;
+
+  case CAK_InvalidAttributeSpecifier:
+    Diag(Tok.getLocation(), diag::err_l_square_l_square_not_attribute);
+    return false;
+
+  case CAK_AttributeSpecifier:
+    // Parse and discard the attributes.
+    SourceLocation BeginLoc = ConsumeBracket();
+    ConsumeBracket();
+    SkipUntil(tok::r_square, /*StopAtSemi*/ false);
+    assert(Tok.is(tok::r_square) && "isCXX11AttributeSpecifier lied");
+    SourceLocation EndLoc = ConsumeBracket();
+    Diag(BeginLoc, diag::err_attributes_not_allowed)
+      << SourceRange(BeginLoc, EndLoc);
+    return true;
+  }
+}
+
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
   Diag(attrs.Range.getBegin(), diag::err_attributes_not_allowed)
     << attrs.Range;
@@ -3454,14 +3487,11 @@ bool Parser::isConstructorDeclarator() {
 void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
                                        bool VendorAttributesAllowed,
                                        bool CXX0XAttributesAllowed) {
-  if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
-    SourceLocation Loc = Tok.getLocation();
+  if (getLangOpts().CPlusPlus0x && CXX0XAttributesAllowed &&
+      isCXX11AttributeSpecifier()) {
     ParsedAttributesWithRange attrs(AttrFactory);
     ParseCXX0XAttributes(attrs);
-    if (CXX0XAttributesAllowed)
-      DS.takeAttributesFrom(attrs);
-    else
-      Diag(Loc, diag::err_attributes_not_allowed);
+    DS.takeAttributesFrom(attrs);
   }
 
   SourceLocation EndLoc;
@@ -3654,6 +3684,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     // Is a pointer.
     DeclSpec DS(AttrFactory);
 
+    // FIXME: GNU attributes are not allowed here in a new-type-id.
     ParseTypeQualifierListOpt(DS);
     D.ExtendWithDeclSpec(DS);
 
@@ -3684,16 +3715,13 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
            diag::warn_cxx98_compat_rvalue_reference :
            diag::ext_rvalue_reference);
 
+    // GNU-style and C++11 attributes are allowed here, as is restrict.
+    ParseTypeQualifierListOpt(DS);
+    D.ExtendWithDeclSpec(DS);
+
     // C++ 8.3.2p1: cv-qualified references are ill-formed except when the
     // cv-qualifiers are introduced through the use of a typedef or of a
     // template type argument, in which case the cv-qualifiers are ignored.
-    //
-    // [GNU] Retricted references are allowed.
-    // [GNU] Attributes on references are allowed.
-    // [C++0x] Attributes on references are not allowed.
-    ParseTypeQualifierListOpt(DS, true, false);
-    D.ExtendWithDeclSpec(DS);
-
     if (DS.getTypeQualifiers() != DeclSpec::TQ_unspecified) {
       if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
         Diag(DS.getConstSpecLoc(),
@@ -3754,13 +3782,19 @@ static void diagnoseMisplacedEllipsis(Parser &P, Declarator &D,
 /// [C99]   direct-declarator '[' 'static' type-qual-list[opt] assign-expr ']'
 /// [C99]   direct-declarator '[' type-qual-list 'static' assignment-expr ']'
 /// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
+/// [C++11] direct-declarator '[' constant-expression[opt] ']'
+///                    attribute-specifier-seq[opt]
 ///         direct-declarator '(' parameter-type-list ')'
 ///         direct-declarator '(' identifier-list[opt] ')'
 /// [GNU]   direct-declarator '(' parameter-forward-declarations
 ///                    parameter-type-list[opt] ')'
 /// [C++]   direct-declarator '(' parameter-declaration-clause ')'
 ///                    cv-qualifier-seq[opt] exception-specification[opt]
+/// [C++11] direct-declarator '(' parameter-declaration-clause ')'
+///                    attribute-specifier-seq[opt] cv-qualifier-seq[opt]
+///                    ref-qualifier[opt] exception-specification[opt]
 /// [C++]   declarator-id
+/// [C++11] declarator-id attribute-specifier-seq[opt]
 ///
 ///       declarator-id: [C++ 8]
 ///         '...'[opt] id-expression
@@ -3908,8 +3942,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   assert(D.isPastIdentifier() &&
          "Haven't past the location of the identifier yet?");
 
-  // Don't parse attributes unless we have an identifier.
-  if (D.getIdentifier())
+  // Don't parse attributes unless we have parsed an unparenthesized name.
+  if (D.hasName() && !D.getNumTypeObjects())
     MaybeParseCXX0XAttributes(D);
 
   while (1) {
@@ -4055,22 +4089,23 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 /// declarator D up to a paren, which indicates that we are parsing function
 /// arguments.
 ///
-/// If attrs is non-null, then the caller parsed those arguments immediately
-/// after the open paren - they should be considered to be the first argument of
-/// a parameter.  If RequiresArg is true, then the first argument of the
-/// function is required to be present and required to not be an identifier
-/// list.
+/// If FirstArgAttrs is non-null, then the caller parsed those arguments
+/// immediately after the open paren - they should be considered to be the
+/// first argument of a parameter.
 ///
-/// For C++, after the parameter-list, it also parses cv-qualifier-seq[opt],
-/// (C++0x) ref-qualifier[opt], exception-specification[opt], and
-/// (C++0x) trailing-return-type[opt].
+/// If RequiresArg is true, then the first argument of the function is required
+/// to be present and required to not be an identifier list.
 ///
-/// [C++0x] exception-specification:
+/// For C++, after the parameter-list, it also parses the cv-qualifier-seq[opt],
+/// (C++11) ref-qualifier[opt], exception-specification[opt],
+/// (C++11) attribute-specifier-seq[opt], and (C++11) trailing-return-type[opt].
+///
+/// [C++11] exception-specification:
 ///           dynamic-exception-specification
 ///           noexcept-specification
 ///
 void Parser::ParseFunctionDeclarator(Declarator &D,
-                                     ParsedAttributes &attrs,
+                                     ParsedAttributes &FirstArgAttrs,
                                      BalancedDelimiterTracker &Tracker,
                                      bool RequiresArg) {
   assert(getCurScope()->isFunctionPrototypeScope() && 
@@ -4096,8 +4131,9 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   SmallVector<ParsedType, 2> DynamicExceptions;
   SmallVector<SourceRange, 2> DynamicExceptionRanges;
   ExprResult NoexceptExpr;
+  ParsedAttributes FnAttrs(AttrFactory);
   ParsedType TrailingReturnType;
-  
+
   Actions.ActOnStartFunctionDeclarator();
 
   SourceLocation EndLoc;
@@ -4111,7 +4147,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
     EndLoc = Tracker.getCloseLocation();
   } else {
     if (Tok.isNot(tok::r_paren))
-      ParseParameterDeclarationClause(D, attrs, ParamInfo, EllipsisLoc);
+      ParseParameterDeclarationClause(D, FirstArgAttrs, ParamInfo, EllipsisLoc);
     else if (RequiresArg)
       Diag(Tok, diag::err_argument_required_after_attribute);
 
@@ -4122,22 +4158,24 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
     EndLoc = Tracker.getCloseLocation();
 
     if (getLangOpts().CPlusPlus) {
-      MaybeParseCXX0XAttributes(attrs);
+      // FIXME: Accept these components in any order, and produce fixits to
+      // correct the order if the user gets it wrong. Ideally we should deal
+      // with the virt-specifier-seq and pure-specifier in the same way.
 
       // Parse cv-qualifier-seq[opt].
-      ParseTypeQualifierListOpt(DS, false /*no attributes*/);
-        if (!DS.getSourceRange().getEnd().isInvalid()) {
-          EndLoc = DS.getSourceRange().getEnd();
-          ConstQualifierLoc = DS.getConstSpecLoc();
-          VolatileQualifierLoc = DS.getVolatileSpecLoc();
-        }
+      ParseTypeQualifierListOpt(DS, false /*no attributes*/, false);
+      if (!DS.getSourceRange().getEnd().isInvalid()) {
+        EndLoc = DS.getSourceRange().getEnd();
+        ConstQualifierLoc = DS.getConstSpecLoc();
+        VolatileQualifierLoc = DS.getVolatileSpecLoc();
+      }
 
       // Parse ref-qualifier[opt].
       if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
         Diag(Tok, getLangOpts().CPlusPlus0x ?
              diag::warn_cxx98_compat_ref_qualifier :
              diag::ext_ref_qualifier);
-        
+
         RefQualifierIsLValueRef = Tok.is(tok::amp);
         RefQualifierLoc = ConsumeToken();
         EndLoc = RefQualifierLoc;
@@ -4150,6 +4188,10 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                                    NoexceptExpr);
       if (ESpecType != EST_None)
         EndLoc = ESpecRange.getEnd();
+
+      // Parse attribute-specifier-seq[opt]. Per DR 979 and DR 1297, this goes
+      // after the exception-specification.
+      MaybeParseCXX0XAttributes(FnAttrs);
 
       // Parse trailing-return-type[opt].
       if (getLangOpts().CPlusPlus0x && Tok.is(tok::arrow)) {
@@ -4181,7 +4223,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              Tracker.getOpenLocation(), 
                                              EndLoc, D,
                                              TrailingReturnType),
-                attrs, EndLoc);
+                FnAttrs, EndLoc);
 
   Actions.ActOnEndFunctionDeclarator();
 }
@@ -4455,7 +4497,12 @@ void Parser::ParseParameterDeclarationClause(
 /// [C99]   direct-declarator '[' 'static' type-qual-list[opt] assign-expr ']'
 /// [C99]   direct-declarator '[' type-qual-list 'static' assignment-expr ']'
 /// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
+/// [C++11] direct-declarator '[' constant-expression[opt] ']'
+///                           attribute-specifier-seq[opt]
 void Parser::ParseBracketDeclarator(Declarator &D) {
+  if (CheckProhibitedCXX11Attribute())
+    return;
+
   BalancedDelimiterTracker T(*this, tok::l_square);
   T.consumeOpen();
 

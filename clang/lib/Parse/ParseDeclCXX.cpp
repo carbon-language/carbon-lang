@@ -2736,38 +2736,38 @@ void Parser::PopParsingClass(Sema::ParsingClassState state) {
   Victim->TemplateScope = getCurScope()->getParent()->isTemplateParamScope();
 }
 
-/// ParseCXX0XAttributeSpecifier - Parse a C++0x attribute-specifier. Currently
+/// ParseCXX0XAttributeSpecifier - Parse a C++11 attribute-specifier. Currently
 /// only parses standard attributes.
 ///
-/// [C++0x] attribute-specifier:
+/// [C++11] attribute-specifier:
 ///         '[' '[' attribute-list ']' ']'
 ///         alignment-specifier
 ///
-/// [C++0x] attribute-list:
+/// [C++11] attribute-list:
 ///         attribute[opt]
 ///         attribute-list ',' attribute[opt]
 ///
-/// [C++0x] attribute:
+/// [C++11] attribute:
 ///         attribute-token attribute-argument-clause[opt]
 ///
-/// [C++0x] attribute-token:
+/// [C++11] attribute-token:
 ///         identifier
 ///         attribute-scoped-token
 ///
-/// [C++0x] attribute-scoped-token:
+/// [C++11] attribute-scoped-token:
 ///         attribute-namespace '::' identifier
 ///
-/// [C++0x] attribute-namespace:
+/// [C++11] attribute-namespace:
 ///         identifier
 ///
-/// [C++0x] attribute-argument-clause:
+/// [C++11] attribute-argument-clause:
 ///         '(' balanced-token-seq ')'
 ///
-/// [C++0x] balanced-token-seq:
+/// [C++11] balanced-token-seq:
 ///         balanced-token
 ///         balanced-token-seq balanced-token
 ///
-/// [C++0x] balanced-token:
+/// [C++11] balanced-token:
 ///         '(' balanced-token-seq ')'
 ///         '[' balanced-token-seq ']'
 ///         '{' balanced-token-seq '}'
@@ -2781,7 +2781,7 @@ void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
   }
 
   assert(Tok.is(tok::l_square) && NextToken().is(tok::l_square)
-      && "Not a C++0x attribute list");
+      && "Not a C++11 attribute list");
 
   Diag(Tok.getLocation(), diag::warn_cxx98_compat_attribute);
 
@@ -2793,7 +2793,11 @@ void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
     ConsumeToken();
   }
 
-  while (Tok.is(tok::identifier) || Tok.is(tok::comma)) {
+  // C++11 [dcl.attr.grammar]p3: If a keyword or an alternative token that
+  // satisfies the syntactic requirements of an identifier is contained in an
+  // attribute-token, it is considered an identifier.
+  // FIXME: Support alternative tokens here.
+  while (Tok.getIdentifierInfo() || Tok.is(tok::comma)) {
     // attribute not present
     if (Tok.is(tok::comma)) {
       ConsumeToken();
@@ -2807,7 +2811,7 @@ void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
     if (Tok.is(tok::coloncolon)) {
       ConsumeToken();
 
-      if (!Tok.is(tok::identifier)) {
+      if (!Tok.getIdentifierInfo()) {
         Diag(Tok.getLocation(), diag::err_expected_ident);
         SkipUntil(tok::r_square, tok::comma, true, true);
         continue;
@@ -2824,8 +2828,7 @@ void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
     // No scoped names are supported; ideally we could put all non-standard
     // attributes into namespaces.
     if (!ScopeName) {
-      switch(AttributeList::getKind(AttrName))
-      {
+      switch (AttributeList::getKind(AttrName)) {
       // No arguments
       case AttributeList::AT_carries_dependency:
       case AttributeList::AT_noreturn: {
@@ -2852,6 +2855,9 @@ void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
       // SkipUntil maintains the balancedness of tokens.
       SkipUntil(tok::r_paren, false);
     }
+
+    if (Tok.is(tok::ellipsis))
+      ConsumeToken();
   }
 
   if (ExpectAndConsume(tok::r_square, diag::err_expected_rsquare))
@@ -2874,7 +2880,7 @@ void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
 
   do {
     ParseCXX0XAttributeSpecifier(attrs, endLoc);
-  } while (isCXX0XAttributeSpecifier());
+  } while (isCXX11AttributeSpecifier());
 
   attrs.Range = SourceRange(StartLoc, *endLoc);
 }
@@ -2892,6 +2898,7 @@ void Parser::ParseMicrosoftAttributes(ParsedAttributes &attrs,
   assert(Tok.is(tok::l_square) && "Not a Microsoft attribute list");
 
   while (Tok.is(tok::l_square)) {
+    // FIXME: If this is actually a C++11 attribute, parse it as one.
     ConsumeBracket();
     SkipUntil(tok::r_square, true, true);
     if (endLoc) *endLoc = Tok.getLocation();

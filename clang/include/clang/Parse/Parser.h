@@ -1864,6 +1864,16 @@ private:
                            Decl **OwnedType = 0);
   void ParseBlockId();
 
+  // Check for the start of a C++11 attribute-specifier-seq in a context where
+  // an attribute is not allowed.
+  bool CheckProhibitedCXX11Attribute() {
+    assert(Tok.is(tok::l_square));
+    if (!getLangOpts().CPlusPlus0x || NextToken().isNot(tok::l_square))
+      return false;
+    return DiagnoseProhibitedCXX11Attribute();
+  }
+  bool DiagnoseProhibitedCXX11Attribute();
+
   void ProhibitAttributes(ParsedAttributesWithRange &attrs) {
     if (!attrs.Range.isValid()) return;
     DiagnoseProhibitedAttributes(attrs);
@@ -1894,7 +1904,7 @@ private:
                              SourceLocation *EndLoc);
 
   void MaybeParseCXX0XAttributes(Declarator &D) {
-    if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+    if (getLangOpts().CPlusPlus0x && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
       ParseCXX0XAttributes(attrs, &endLoc);
@@ -1903,15 +1913,17 @@ private:
   }
   void MaybeParseCXX0XAttributes(ParsedAttributes &attrs,
                                  SourceLocation *endLoc = 0) {
-    if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+    if (getLangOpts().CPlusPlus0x && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
       ParseCXX0XAttributes(attrsWithRange, endLoc);
       attrs.takeAllFrom(attrsWithRange);
     }
   }
   void MaybeParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
-                                 SourceLocation *endLoc = 0) {
-    if (getLangOpts().CPlusPlus0x && isCXX0XAttributeSpecifier())
+                                 SourceLocation *endLoc = 0,
+                                 bool OuterMightBeMessageSend = false) {
+    if (getLangOpts().CPlusPlus0x &&
+        isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
       ParseCXX0XAttributes(attrs, endLoc);
   }
 
@@ -2029,8 +2041,19 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 7: Declarations [dcl.dcl]
 
-  bool isCXX0XAttributeSpecifier(bool FullLookahead = false,
-                                 tok::TokenKind *After = 0);
+  /// The kind of attribute specifier we have found.
+  enum CXX11AttributeKind {
+    /// This is not an attribute specifier.
+    CAK_NotAttributeSpecifier,
+    /// This should be treated as an attribute-specifier.
+    CAK_AttributeSpecifier,
+    /// The next tokens are '[[', but this is not an attribute-specifier. This
+    /// is ill-formed by C++11 [dcl.attr.grammar]p6.
+    CAK_InvalidAttributeSpecifier
+  };
+  CXX11AttributeKind
+  isCXX11AttributeSpecifier(bool Disambiguate = false,
+                            bool OuterMightBeMessageSend = false);
 
   Decl *ParseNamespace(unsigned Context, SourceLocation &DeclEnd,
                        SourceLocation InlineLoc = SourceLocation());

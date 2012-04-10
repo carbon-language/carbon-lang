@@ -211,6 +211,11 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     //   [foo ... bar]     -> array designator
     //   [4][foo bar]      -> obsolete GNU designation with objc message send.
     //
+    // We do not need to check for an expression starting with [[ here. If it
+    // contains an Objective-C message send, then it is not an ill-formed
+    // attribute. If it is a lambda-expression within an array-designator, then
+    // it will be rejected because a constant-expression cannot begin with a
+    // lambda-expression.
     InMessageExpressionRAIIObject InMessage(*this, true);
     
     BalancedDelimiterTracker T(*this, tok::l_square);

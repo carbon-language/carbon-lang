@@ -374,91 +374,167 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
   return TPR == TPResult::True();
 }
 
-/// isCXX0XAttributeSpecifier - returns true if this is a C++0x
-/// attribute-specifier. By default, unless in Obj-C++, only a cursory check is
-/// performed that will simply return true if a [[ is seen. Currently C++ has no
-/// syntactical ambiguities from this check, but it may inhibit error recovery.
-/// If CheckClosing is true, a check is made for closing ]] brackets.
+/// \brief Returns true if this is a C++11 attribute-specifier. Per
+/// C++11 [dcl.attr.grammar]p6, two consecutive left square bracket tokens
+/// always introduce an attribute. In Objective-C++11, this rule does not
+/// apply if either '[' begins a message-send.
 ///
-/// If given, After is set to the token after the attribute-specifier so that
-/// appropriate parsing decisions can be made; it is left untouched if false is
-/// returned.
+/// If Disambiguate is true, we try harder to determine whether a '[[' starts
+/// an attribute-specifier, and return CAK_InvalidAttributeSpecifier if not.
 ///
-/// FIXME: If an error is in the closing ]] brackets, the program assumes
-/// the absence of an attribute-specifier, which can cause very yucky errors
-/// to occur.
+/// If OuterMightBeMessageSend is true, we assume the outer '[' is either an
+/// Obj-C message send or the start of an attribute. Otherwise, we assume it
+/// is not an Obj-C message send.
 ///
-/// [C++0x] attribute-specifier:
+/// C++11 [dcl.attr.grammar]:
+///
+///     attribute-specifier:
 ///         '[' '[' attribute-list ']' ']'
 ///         alignment-specifier
 ///
-/// [C++0x] attribute-list:
+///     attribute-list:
 ///         attribute[opt]
 ///         attribute-list ',' attribute[opt]
+///         attribute '...'
+///         attribute-list ',' attribute '...'
 ///
-/// [C++0x] attribute:
+///     attribute:
 ///         attribute-token attribute-argument-clause[opt]
 ///
-/// [C++0x] attribute-token:
+///     attribute-token:
 ///         identifier
-///         attribute-scoped-token
+///         identifier '::' identifier
 ///
-/// [C++0x] attribute-scoped-token:
-///         attribute-namespace '::' identifier
-///
-/// [C++0x] attribute-namespace:
-///         identifier
-///
-/// [C++0x] attribute-argument-clause:
+///     attribute-argument-clause:
 ///         '(' balanced-token-seq ')'
-///
-/// [C++0x] balanced-token-seq:
-///         balanced-token
-///         balanced-token-seq balanced-token
-///
-/// [C++0x] balanced-token:
-///         '(' balanced-token-seq ')'
-///         '[' balanced-token-seq ']'
-///         '{' balanced-token-seq '}'
-///         any token but '(', ')', '[', ']', '{', or '}'
-bool Parser::isCXX0XAttributeSpecifier (bool CheckClosing,
-                                        tok::TokenKind *After) {
+Parser::CXX11AttributeKind
+Parser::isCXX11AttributeSpecifier(bool Disambiguate,
+                                  bool OuterMightBeMessageSend) {
   if (Tok.is(tok::kw_alignas))
-    return true;
+    return CAK_AttributeSpecifier;
 
   if (Tok.isNot(tok::l_square) || NextToken().isNot(tok::l_square))
-    return false;
-  
-  // No tentative parsing if we don't need to look for ]]
-  if (!CheckClosing && !getLangOpts().ObjC1)
-    return true;
-  
-  struct TentativeReverter {
-    TentativeParsingAction PA;
+    return CAK_NotAttributeSpecifier;
 
-    TentativeReverter (Parser& P)
-      : PA(P)
-    {}
-    ~TentativeReverter () {
-      PA.Revert();
-    }
-  } R(*this);
+  // No tentative parsing if we don't need to look for ']]' or a lambda.
+  if (!Disambiguate && !getLangOpts().ObjC1)
+    return CAK_AttributeSpecifier;
+
+  TentativeParsingAction PA(*this);
 
   // Opening brackets were checked for above.
   ConsumeBracket();
+
+  // Outside Obj-C++11, treat anything with a matching ']]' as an attribute.
+  if (!getLangOpts().ObjC1) {
+    ConsumeBracket();
+
+    bool IsAttribute = SkipUntil(tok::r_square, false);
+    IsAttribute &= Tok.is(tok::r_square);
+
+    PA.Revert();
+
+    return IsAttribute ? CAK_AttributeSpecifier : CAK_InvalidAttributeSpecifier;
+  }
+
+  // In Obj-C++11, we need to distinguish four situations:
+  //  1a) int x[[attr]];                     C++11 attribute.
+  //  1b) [[attr]];                          C++11 statement attribute.
+  //   2) int x[[obj](){ return 1; }()];     Lambda in array size/index.
+  //  3a) int x[[obj get]];                  Message send in array size/index.
+  //  3b) [[Class alloc] init];              Message send in message send.
+  //   4) [[obj]{ return self; }() doStuff]; Lambda in message send.
+  // (1) is an attribute, (2) is ill-formed, and (3) and (4) are accepted.
+
+  // If we have a lambda-introducer, then this is definitely not a message send.
+  // FIXME: If this disambiguation is too slow, fold the tentative lambda parse
+  // into the tentative attribute parse below.
+  LambdaIntroducer Intro;
+  if (!TryParseLambdaIntroducer(Intro)) {
+    // A lambda cannot end with ']]', and an attribute must.
+    bool IsAttribute = Tok.is(tok::r_square);
+
+    PA.Revert();
+
+    if (IsAttribute)
+      // Case 1: C++11 attribute.
+      return CAK_AttributeSpecifier;
+
+    if (OuterMightBeMessageSend)
+      // Case 4: Lambda in message send.
+      return CAK_NotAttributeSpecifier;
+
+    // Case 2: Lambda in array size / index.
+    return CAK_InvalidAttributeSpecifier;
+  }
+
   ConsumeBracket();
 
-  // SkipUntil will handle balanced tokens, which are guaranteed in attributes.
-  SkipUntil(tok::r_square, false);
+  // If we don't have a lambda-introducer, then we have an attribute or a
+  // message-send.
+  bool IsAttribute = true;
+  while (Tok.isNot(tok::r_square)) {
+    if (Tok.is(tok::comma)) {
+      // Case 1: Stray commas can only occur in attributes.
+      PA.Revert();
+      return CAK_AttributeSpecifier;
+    }
 
-  if (Tok.isNot(tok::r_square))
-    return false;
-  ConsumeBracket();
+    // Parse the attribute-token, if present.
+    // C++11 [dcl.attr.grammar]:
+    //   If a keyword or an alternative token that satisfies the syntactic
+    //   requirements of an identifier is contained in an attribute-token,
+    //   it is considered an identifier.
+    if (!Tok.getIdentifierInfo()) {
+      IsAttribute = false;
+      break;
+    }
+    ConsumeToken();
+    if (Tok.is(tok::coloncolon)) {
+      ConsumeToken();
+      if (!Tok.getIdentifierInfo()) {
+        IsAttribute = false;
+        break;
+      }
+      ConsumeToken();
+    }
 
-  if (After)
-    *After = Tok.getKind();
+    // Parse the attribute-argument-clause, if present.
+    if (Tok.is(tok::l_paren)) {
+      ConsumeParen();
+      if (!SkipUntil(tok::r_paren, false)) {
+        IsAttribute = false;
+        break;
+      }
+    }
 
-  return true;
+    if (Tok.is(tok::ellipsis))
+      ConsumeToken();
+
+    if (Tok.isNot(tok::comma))
+      break;
+
+    ConsumeToken();
+  }
+
+  // An attribute must end ']]'.
+  if (IsAttribute) {
+    if (Tok.is(tok::r_square)) {
+      ConsumeBracket();
+      IsAttribute = Tok.is(tok::r_square);
+    } else {
+      IsAttribute = false;
+    }
+  }
+
+  PA.Revert();
+
+  if (IsAttribute)
+    // Case 1: C++11 statement attribute.
+    return CAK_AttributeSpecifier;
+
+  // Case 3: Message send.
+  return CAK_NotAttributeSpecifier;
 }
 
 ///         declarator:
@@ -1217,11 +1293,13 @@ bool Parser::isCXXFunctionDeclarator(bool warnIfAmbiguous) {
 ///   parameter-declaration-list ',' parameter-declaration
 ///
 /// parameter-declaration:
-///   decl-specifier-seq declarator attributes[opt]
-///   decl-specifier-seq declarator attributes[opt] '=' assignment-expression
-///   decl-specifier-seq abstract-declarator[opt] attributes[opt]
-///   decl-specifier-seq abstract-declarator[opt] attributes[opt]
+///   attribute-specifier-seq[opt] decl-specifier-seq declarator attributes[opt]
+///   attribute-specifier-seq[opt] decl-specifier-seq declarator attributes[opt]
 ///     '=' assignment-expression
+///   attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt]
+///     attributes[opt]
+///   attribute-specifier-seq[opt] decl-specifier-seq abstract-declarator[opt]
+///     attributes[opt] '=' assignment-expression
 ///
 Parser::TPResult Parser::TryParseParameterDeclarationClause() {
 

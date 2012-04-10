@@ -469,6 +469,9 @@ def err_cxx0x_attribute_forbids_arguments : Error<
 def err_cxx0x_attribute_requires_arguments : Error<
   "C++11 attribute '%0' must have an argument list">;
 def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
+def err_l_square_l_square_not_attribute : Error<
+  "C++11 only allows consecutive left square brackets when "
+  "introducing an attribute">;
 def err_alignas_pack_exp_unsupported : Error<
   "pack expansions in alignment specifiers are not supported yet">;
 

@@ -1287,7 +1287,12 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (getLangOpts().ObjC1 && Tok.isAtStartOfLine() &&
           isSimpleObjCMessageExpression())
         return move(LHS);
-       
+
+      // Reject array indices starting with a lambda-expression. '[[' is
+      // reserved for attributes.
+      if (CheckProhibitedCXX11Attribute())
+        return ExprError();
+
       BalancedDelimiterTracker T(*this, tok::l_square);
       T.consumeOpen();
       Loc = T.getOpenLocation();
@@ -1756,6 +1761,9 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().LocEnd = ConsumeToken();
 
       } else if (Tok.is(tok::l_square)) {
+        if (CheckProhibitedCXX11Attribute())
+          return ExprError();
+
         // offsetof-member-designator: offsetof-member-design '[' expression ']'
         Comps.push_back(Sema::OffsetOfComponent());
         Comps.back().isBrackets = true;
