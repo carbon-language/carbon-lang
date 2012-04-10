@@ -311,14 +311,12 @@ protected:
                     switch (cursor[1])
                     {
                     default:
-                        return false;
-                    case 'l':
-                    case 'x':
-                    case ' ':
-                    case '\t':
                         return true;
+                    case 'f':
+                    case 'i':
+                    case 'k':
+                        return false;
                     }
-                    return false;
                 }
             case 'c':
                 {
