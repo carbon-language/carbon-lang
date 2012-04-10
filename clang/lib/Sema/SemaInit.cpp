@@ -2877,7 +2877,7 @@ static void TryConstructorInitialization(Sema &S,
 
   // The type we're constructing needs to be complete.
   if (S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {
-    Sequence.SetFailed(InitializationSequence::FK_Incomplete);
+    Sequence.setIncompleteTypeFailure(DestType);
     return;
   }
 
@@ -3109,7 +3109,7 @@ static void TryListInitialization(Sema &S,
   }
   if (DestType->isRecordType()) {
     if (S.RequireCompleteType(InitList->getLocStart(), DestType, S.PDiag())) {
-      Sequence.SetFailed(InitializationSequence::FK_Incomplete);
+      Sequence.setIncompleteTypeFailure(DestType);
       return;
     }
 
@@ -5687,7 +5687,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     break;
 
   case FK_Incomplete:
-    S.RequireCompleteType(Kind.getLocation(), DestType,
+    S.RequireCompleteType(Kind.getLocation(), FailedIncompleteType,
                           diag::err_init_incomplete_type);
     break;
 

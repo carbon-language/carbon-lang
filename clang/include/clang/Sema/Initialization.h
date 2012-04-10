@@ -734,6 +734,9 @@ private:
   /// \brief The candidate set created when initialization failed.
   OverloadCandidateSet FailedCandidateSet;
 
+  /// \brief The incomplete type that caused a failure.
+  QualType FailedIncompleteType;
+  
   /// \brief Prints a follow-up note that highlights the location of
   /// the initialized entity, if it's remote.
   void PrintInitLocationNote(Sema &S, const InitializedEntity &Entity);
@@ -949,6 +952,8 @@ public:
   void SetFailed(FailureKind Failure) {
     SequenceKind = FailedSequence;
     this->Failure = Failure;
+    assert((Failure != FK_Incomplete || !FailedIncompleteType.isNull()) &&
+           "Incomplete type failure requires a type!");
   }
   
   /// \brief Note that this initialization sequence failed due to failed
@@ -965,6 +970,13 @@ public:
   /// sequence failed due to a bad overload.
   OverloadingResult getFailedOverloadResult() const {
     return FailedOverloadResult;
+  }
+
+  /// \brief Note that this initialization sequence failed due to an
+  /// incomplete type.
+  void setIncompleteTypeFailure(QualType IncompleteType) {
+    FailedIncompleteType = IncompleteType;
+    SetFailed(FK_Incomplete);
   }
 
   /// \brief Determine why initialization failed.
