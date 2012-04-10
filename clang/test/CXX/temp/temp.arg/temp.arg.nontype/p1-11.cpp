@@ -4,13 +4,15 @@ namespace std {
   typedef decltype(nullptr) nullptr_t;
 }
 
-template<int *ip> struct IP {  // expected-note 2 {{template parameter is declared here}}
+template<int *ip> struct IP {  // expected-note 4 {{template parameter is declared here}}
   IP<ip> *ip2;
 };
 
 constexpr std::nullptr_t get_nullptr() { return nullptr; }
 
-std::nullptr_t np;
+constexpr std::nullptr_t np = nullptr;
+
+std::nullptr_t nonconst_np;
 
 IP<0> ip0; // expected-error{{null non-type template argument must be cast to template parameter type 'int *'}}
 IP<(0)> ip1; // expected-error{{null non-type template argument must be cast to template parameter type 'int *'}}
@@ -18,6 +20,8 @@ IP<nullptr> ip2;
 IP<get_nullptr()> ip3;
 IP<(int*)0> ip4;
 IP<np> ip5;
+IP<nonconst_np> ip5; // expected-error{{non-type template argument for template parameter of pointer type 'int *' must have its address taken}}
+IP<(float*)0> ip6; // expected-error{{null non-type template argument of type 'float *' does not match template parameter of type 'int *'}}
 
 struct X { };
 template<int X::*pm> struct PM { // expected-note 2 {{template parameter is declared here}}

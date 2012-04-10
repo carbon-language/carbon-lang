@@ -2346,6 +2346,9 @@ def err_template_arg_not_ice : Error<
   "expression">;
 def err_template_arg_untyped_null_constant : Error<
   "null non-type template argument must be cast to template parameter type %0">;
+def err_template_arg_wrongtype_null_constant : Error<
+ "null non-type template argument of type %0 does not match template parameter "
+ "of type %1">;
 def err_deduced_non_type_template_arg_type_mismatch : Error<
   "deduced non-type template argument does not have the same type as the "
   "its corresponding template parameter (%0 vs %1)">;
@@ -2364,6 +2367,8 @@ def err_template_arg_no_ref_bind : Error<
 def err_template_arg_ref_bind_ignores_quals : Error<
   "reference binding of non-type template parameter of type %0 to template "
   "argument of type %1 ignores qualifiers">;
+def err_template_arg_not_address_constant : Error<
+  "non-type template argument of type %0 is not a constant expression">;
 def err_template_arg_not_decl_ref : Error<
   "non-type template argument does not refer to any declaration">;
 def err_template_arg_not_object_or_func_form : Error<

@@ -4484,8 +4484,6 @@ public:
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param,
                              TypeSourceInfo *Arg);
-  bool CheckTemplateArgumentPointerToMember(Expr *Arg,
-                                            TemplateArgument &Converted);
   ExprResult CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                    QualType InstantiatedParamType, Expr *Arg,
                                    TemplateArgument &Converted,
