@@ -234,7 +234,7 @@ public:
                          DenseMapAPFloatKeyInfo> FPMapTy;
   FPMapTy FPConstants;
   
-  StringMap<MDString*> MDStringCache;
+  StringMap<Value*> MDStringCache;
   
   FoldingSet<MDNode> MDNodeSet;
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they

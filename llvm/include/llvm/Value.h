@@ -107,9 +107,10 @@ public:
   /// All values hold a context through their type.
   LLVMContext &getContext() const;
 
-  // All values can potentially be named...
-  bool hasName() const { return Name != 0; }
+  // All values can potentially be named.
+  bool hasName() const { return Name != 0 && SubclassID != MDStringVal; }
   ValueName *getValueName() const { return Name; }
+  void setValueName(ValueName *VN) { Name = VN; }
   
   /// getName() - Return a constant reference to the value's name. This is cheap
   /// and guaranteed to return the same reference as long as the value is not

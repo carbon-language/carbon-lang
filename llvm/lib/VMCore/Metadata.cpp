@@ -31,16 +31,17 @@ using namespace llvm;
 
 void MDString::anchor() { }
 
-MDString::MDString(LLVMContext &C, StringRef S)
-  : Value(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
+MDString::MDString(LLVMContext &C)
+  : Value(Type::getMetadataTy(C), Value::MDStringVal) {}
 
 MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  StringMapEntry<MDString *> &Entry =
+  StringMapEntry<Value*> &Entry =
     pImpl->MDStringCache.GetOrCreateValue(Str);
-  MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Context, Entry.getKey());
-  return S;
+  Value *&S = Entry.getValue();
+  if (!S) S = new MDString(Context);
+  S->setValueName(&Entry);
+  return cast<MDString>(S);
 }
 
 //===----------------------------------------------------------------------===//

@@ -76,7 +76,7 @@ Value::~Value() {
 
   // If this value is named, destroy the name.  This should not be in a symtab
   // at this point.
-  if (Name)
+  if (Name && SubclassID != MDStringVal)
     Name->Destroy();
 
   // There should be no uses of this object anymore, remove it.
@@ -170,6 +170,9 @@ StringRef Value::getName() const {
 }
 
 void Value::setName(const Twine &NewName) {
+  assert(SubclassID != MDStringVal &&
+         "Cannot set the name of MDString with this method!");
+
   // Fast path for common IRBuilder case of setName("") when there is no name.
   if (NewName.isTriviallyEmpty() && !hasName())
     return;
@@ -228,6 +231,8 @@ void Value::setName(const Twine &NewName) {
 /// takeName - transfer the name from V to this value, setting V's name to
 /// empty.  It is an error to call V->takeName(V).
 void Value::takeName(Value *V) {
+  assert(SubclassID != MDStringVal && "Cannot take the name of an MDString!");
+
   ValueSymbolTable *ST = 0;
   // If this value has a name, drop it.
   if (hasName()) {
