@@ -7146,6 +7146,11 @@ static bool IsReadonlyProperty(Expr *E, Sema &S) {
 static bool IsConstProperty(Expr *E, Sema &S) {
   const ObjCPropertyRefExpr *PropExpr = dyn_cast<ObjCPropertyRefExpr>(E);
   if (!PropExpr) return false;
+  
+  assert(!S.Context.hasSameType(PropExpr->getType(), 
+                                S.Context.PseudoObjectTy)
+         && "property expression cannot be a pseudo object");
+  
   if (PropExpr->isImplicitProperty()) return false;
     
   ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
