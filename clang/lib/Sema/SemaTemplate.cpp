@@ -3479,10 +3479,35 @@ isNullPointerValueTemplateArgument(Sema &S, NonTypeTemplateParmDecl *Param,
     return NPV_NotNullPointer;
   
   // Determine whether we have a constant expression.
+  ExprResult ArgRV = S.DefaultFunctionArrayConversion(Arg);
+  if (ArgRV.isInvalid())
+    return NPV_Error;
+  Arg = ArgRV.take();
+  
   Expr::EvalResult EvalResult;
+  llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+  EvalResult.Diag = &Notes;
   if (!Arg->EvaluateAsRValue(EvalResult, S.Context) ||
-      EvalResult.HasSideEffects)
-    return NPV_NotNullPointer;
+      EvalResult.HasSideEffects) {
+    SourceLocation DiagLoc = Arg->getExprLoc();
+    
+    // If our only note is the usual "invalid subexpression" note, just point
+    // the caret at its location rather than producing an essentially
+    // redundant note.
+    if (Notes.size() == 1 && Notes[0].second.getDiagID() ==
+        diag::note_invalid_subexpr_in_const_expr) {
+      DiagLoc = Notes[0].first;
+      Notes.clear();
+    }
+    
+    S.Diag(DiagLoc, diag::err_template_arg_not_address_constant)
+      << Arg->getType() << Arg->getSourceRange();
+    for (unsigned I = 0, N = Notes.size(); I != N; ++I)
+      S.Diag(Notes[I].first, Notes[I].second);
+    
+    S.Diag(Param->getLocation(), diag::note_template_param_here);
+    return NPV_Error;
+  }
   
   // C++11 [temp.arg.nontype]p1:
   //   - an address constant expression of type std::nullptr_t
