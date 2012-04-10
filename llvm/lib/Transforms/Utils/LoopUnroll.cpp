@@ -149,6 +149,12 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     return false;
   }
 
+  // Loops with indirectbr cannot be cloned.
+  if (!L->isSafeToClone()) {
+    DEBUG(dbgs() << "  Can't unroll; Loop body cannot be cloned.\n");
+    return false;
+  }
+
   BasicBlock *Header = L->getHeader();
   BranchInst *BI = dyn_cast<BranchInst>(LatchBlock->getTerminator());
 

@@ -1,18 +1,13 @@
-; RUN: opt -loop-unswitch -disable-output -stats -info-output-file - < %s | FileCheck --check-prefix=STATS %s
-; RUN: opt -S -loop-unswitch -verify-loop-info -verify-dom-info %s | FileCheck %s
-
-; STATS: 1 loop-unswitch - Total number of instructions analyzed
+; RUN: opt < %s -S -loop-unswitch -verify-loop-info -verify-dom-info | FileCheck %s
+; PR12343: -loop-unswitch crash on indirect branch
 
 ; CHECK:       %0 = icmp eq i64 undef, 0
 ; CHECK-NEXT:  br i1 %0, label %"5", label %"4"
 
 ; CHECK:       "5":                                              ; preds = %entry
-; CHECK-NEXT:  br label %"5.split"
-
-; CHECK:       "5.split":                                        ; preds = %"5"
 ; CHECK-NEXT:  br label %"16"
 
-; CHECK:       "16":                                             ; preds = %"22", %"5.split"
+; CHECK:       "16":                                             ; preds = %"22", %"5"
 ; CHECK-NEXT:  indirectbr i8* undef, [label %"22", label %"33"]
 
 ; CHECK:       "22":                                             ; preds = %"16"

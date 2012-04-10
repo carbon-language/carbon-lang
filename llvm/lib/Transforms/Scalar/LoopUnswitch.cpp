@@ -192,10 +192,6 @@ namespace {
       loopPreheader = currentLoop->getLoopPreheader();
     }
 
-    /// HasIndirectBrsInPreds - Returns true if there are predecessors, that are
-    /// terminated with indirect branch instruction.
-    bool HasIndirectBrsInPreds(const SmallVectorImpl<BasicBlock *> &ExitBlocks);
-
     /// Split all of the edges from inside the loop to their exit blocks.
     /// Update the appropriate Phi nodes as we do so.
     void SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks);
@@ -203,7 +199,7 @@ namespace {
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
                                   BasicBlock *ExitBlock);
-    bool UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L);
+    void UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L);
 
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
                                               Constant *Val, bool isEqual);
@@ -407,6 +403,14 @@ bool LoopUnswitch::processCurrentLoop() {
 
   // If LoopSimplify was unable to form a preheader, don't do any unswitching.
   if (!loopPreheader)
+    return false;
+
+  // Loops with indirectbr cannot be cloned.
+  if (!currentLoop->isSafeToClone())
+    return false;
+
+  // Without dedicated exits, splitting the exit edge may fail.
+  if (!currentLoop->hasDedicatedExits())
     return false;
 
   LLVMContext &Context = loopHeader->getContext();
@@ -638,7 +642,8 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   if (OptimizeForSize || F->hasFnAttr(Attribute::OptimizeForSize))
     return false;
 
-  return UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
+  UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
+  return true;
 }
 
 /// CloneLoop - Recursively clone the specified loop and all of its children,
@@ -733,24 +738,6 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   ++NumTrivial;
 }
 
-/// HasIndirectBrsInPreds - Returns true if there are predecessors, that are
-/// terminated with indirect branch instruction.
-bool LoopUnswitch::HasIndirectBrsInPreds(
-     const SmallVectorImpl<BasicBlock *> &ExitBlocks){
-
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-    const BasicBlock *ExitBlock = ExitBlocks[i];
-    for (const_pred_iterator p = pred_begin(ExitBlock), e = pred_end(ExitBlock);
-         p != e; ++p) {
-      // Cannot split an edge from an IndirectBrInst
-      if (isa<IndirectBrInst>((*p)->getTerminator()))
-        return true;
-
-    }
-  }
-  return false;
-}
-
 /// SplitExitEdges - Split all of the edges from inside the loop to their exit
 /// blocks.  Update the appropriate Phi nodes as we do so.
 void LoopUnswitch::SplitExitEdges(Loop *L,
@@ -776,7 +763,7 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
 /// UnswitchNontrivialCondition - We determined that the loop is profitable
 /// to unswitch when LIC equal Val.  Split it into loop versions and test the
 /// condition outside of either loop.  Return the loops created as Out1/Out2.
-bool LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
+void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
                                                Loop *L) {
   Function *F = loopHeader->getParent();
   DEBUG(dbgs() << "loop-unswitch: Unswitching loop %"
@@ -800,8 +787,6 @@ bool LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
-  if (HasIndirectBrsInPreds(ExitBlocks))
-    return false;
 
   // Split all of the edges from inside the loop to their exit blocks.  Update
   // the appropriate Phi nodes as we do so.
@@ -916,8 +901,6 @@ bool LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   if (!LoopProcessWorklist.empty() && LoopProcessWorklist.back() == NewLoop &&
       LICHandle && !isa<Constant>(LICHandle))
     RewriteLoopBodyWithConditionConstant(NewLoop, LICHandle, Val, true);
-
-  return true;
 }
 
 /// RemoveFromWorklist - Remove all instances of I from the worklist vector

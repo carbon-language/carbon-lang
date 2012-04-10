@@ -205,6 +205,17 @@ bool Loop::isLoopSimplifyForm() const {
   return getLoopPreheader() && getLoopLatch() && hasDedicatedExits();
 }
 
+/// isSafeToClone - Return true if the loop body is safe to clone in practice.
+/// Routines that reform the loop CFG and split edges often fail on indirectbr.
+bool Loop::isSafeToClone() const {
+  // Return false if any loop blocks contain indirectbrs.
+  for (Loop::block_iterator I = block_begin(), E = block_end(); I != E; ++I) {
+    if (isa<IndirectBrInst>((*I)->getTerminator()))
+      return false;
+  }
+  return true;
+}
+
 /// hasDedicatedExits - Return true if no exit block for the loop
 /// has a predecessor that is outside the loop.
 bool Loop::hasDedicatedExits() const {

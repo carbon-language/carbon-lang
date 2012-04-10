@@ -594,6 +594,9 @@ public:
   /// normal form.
   bool isLoopSimplifyForm() const;
 
+  /// isSafeToClone - Return true if the loop body is safe to clone in practice.
+  bool isSafeToClone() const;
+
   /// hasDedicatedExits - Return true if no exit block for the loop
   /// has a predecessor that is outside the loop.
   bool hasDedicatedExits() const;
