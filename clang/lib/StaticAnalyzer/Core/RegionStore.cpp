@@ -896,11 +896,7 @@ SVal RegionStoreManager::evalDynamicCast(SVal base, QualType derivedType,
     return UnknownVal();
   const MemRegion *BaseRegion = baseRegVal->stripCasts();
 
-  // Assume the derived class is a pointer to a CXX record.
-  // TODO: Note, we do not model reference types: a bad_cast exception is thrown
-  // when a cast of reference fails, but we just return an UnknownVal.
-  if (!derivedType->isPointerType())
-    return UnknownVal();
+  // Assume the derived class is a pointer or a reference to a CXX record.
   derivedType = derivedType->getPointeeType();
   assert(!derivedType.isNull());
   const CXXRecordDecl *DerivedDecl = derivedType->getAsCXXRecordDecl();

@@ -304,14 +304,21 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
           val = getStoreManager().evalDynamicCast(val, T, Failed);
 
         if (Failed) {
-          // If the cast fails, conjure symbol constrained to 0.
-          DefinedOrUnknownSVal NewSym = svalBuilder.getConjuredSymbolVal(NULL,
-                                 CastE, LCtx, resultType,
-                                 currentBuilderContext->getCurrentBlockCount());
-          DefinedOrUnknownSVal Constraint = svalBuilder.evalEQ(state,
-                                 NewSym, svalBuilder.makeZeroVal(resultType));
-          state = state->assume(Constraint, true);
-          state = state->BindExpr(CastE, LCtx, NewSym);
+          if (T->isReferenceType()) {
+            // A bad_cast exception is thrown if input value is a reference.
+            // Currently, we model this, by generating a sink.
+            Bldr.generateNode(CastE, Pred, state, true);
+            continue;
+          } else {
+            // If the cast fails on a pointer, conjure symbol constrained to 0.
+            DefinedOrUnknownSVal NewSym = svalBuilder.getConjuredSymbolVal(NULL,
+                CastE, LCtx, resultType,
+                currentBuilderContext->getCurrentBlockCount());
+            DefinedOrUnknownSVal Constraint = svalBuilder.evalEQ(state,
+                NewSym, svalBuilder.makeZeroVal(resultType));
+            state = state->assume(Constraint, true);
+            state = state->BindExpr(CastE, LCtx, NewSym);
+          }
         } else {
           // If we don't know if the cast succeeded, conjure a new symbol.
           if (val.isUnknown()) {

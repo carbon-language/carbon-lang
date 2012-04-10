@@ -167,10 +167,18 @@ int testCastToVoidStar() {
   return *res; // no warning
 }
 
-int testReference() {
+int testReferenceSuccesfulCast() {
+  B rb;
+  B &b = dynamic_cast<B&>(rb);
+  int *x = 0;
+  return *x; // expected-warning {{Dereference of null pointer}}
+}
+
+int testReferenceFailedCast() {
   A a;
   B &b = dynamic_cast<B&>(a);
-  return b.m; // no warning
+  int *x = 0;
+  return *x; // no warning (An exception is thrown by the cast.)
 }
 
 // False negatives.
