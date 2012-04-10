@@ -5,7 +5,8 @@
 // RUN: clang-check "%t" "%t/test.cpp" 2>&1|FileCheck %s
 // FIXME: Make the above easier.
 
-invalid; // CHECK: C++ requires
+// CHECK: C++ requires
+invalid;
 
 // FIXME: JSON doesn't like path separator '\', on Win32 hosts.
 // FIXME: clang-check doesn't like gcc driver on cygming.
