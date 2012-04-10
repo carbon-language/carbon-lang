@@ -1135,15 +1135,8 @@ findRegUnitSet(const std::vector<RegUnitSet> &UniqueSets,
 // Return true if the RUSubSet is a subset of RUSuperSet.
 static bool isRegUnitSubSet(const std::vector<unsigned> &RUSubSet,
                             const std::vector<unsigned> &RUSuperSet) {
-  for (RegUnitSet::iterator SubIdx = RUSubSet.begin(), EndIdx = RUSubSet.end(),
-         SearchIdx = RUSuperSet.begin(), SearchEnd = RUSuperSet.end();
-       SubIdx != EndIdx; ++SubIdx) {
-    SearchIdx = find(SearchIdx, SearchEnd, *SubIdx);
-    if (SearchIdx == SearchEnd)
-      return false;
-    ++SearchIdx;
-  }
-  return true;
+  return std::includes(RUSuperSet.begin(), RUSuperSet.end(),
+                       RUSubSet.begin(), RUSubSet.end());
 }
 
 // Iteratively prune unit sets.
