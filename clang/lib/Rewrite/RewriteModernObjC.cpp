@@ -330,6 +330,7 @@ namespace {
     Stmt *RewriteBreakStmt(BreakStmt *S);
     Stmt *RewriteContinueStmt(ContinueStmt *S);
     void RewriteCastExpr(CStyleCastExpr *CE);
+    void RewriteImplicitCastObjCExpr(CastExpr *IE);
     void RewriteLinkageSpec(LinkageSpecDecl *LSD);
     
     // Block rewriting.
@@ -4459,6 +4460,24 @@ void RewriteModernObjC::RewriteCastExpr(CStyleCastExpr *CE) {
   return;
 }
 
+void RewriteModernObjC::RewriteImplicitCastObjCExpr(CastExpr *IC) {
+  CastKind CastKind = IC->getCastKind();
+  
+  if (CastKind == CK_BlockPointerToObjCPointerCast) {
+    CStyleCastExpr * CastExpr = 
+      NoTypeInfoCStyleCastExpr(Context, IC->getType(), CK_BitCast, IC);
+    ReplaceStmt(IC, CastExpr);
+  }
+  else if (CastKind == CK_AnyPointerToBlockPointerCast) {
+    QualType BlockT = IC->getType();
+    (void)convertBlockPointerToFunctionPointer(BlockT);
+    CStyleCastExpr * CastExpr = 
+      NoTypeInfoCStyleCastExpr(Context, BlockT, CK_BitCast, IC);
+    ReplaceStmt(IC, CastExpr);
+  }
+  return;
+}
+
 void RewriteModernObjC::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
   SourceLocation DeclLoc = FD->getLocation();
   unsigned parenCount = 0;
@@ -5335,6 +5354,9 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   }
   if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(S)) {
     RewriteCastExpr(CE);
+  }
+  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
+    RewriteImplicitCastObjCExpr(ICE);
   }
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
