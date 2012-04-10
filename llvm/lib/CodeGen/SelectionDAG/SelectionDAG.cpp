@@ -2428,7 +2428,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
       case ISD::FABS:
         V.clearSign();
         return getConstantFP(V, VT);
-      case ISD::FP_ROUND:
       case ISD::FP_EXTEND: {
         bool ignored;
         // This can return overflow, underflow, or inexact; we don't care.
@@ -2993,6 +2992,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
         return getConstantFP(V1, VT);
       default: break;
       }
+    }
+
+    if (Opcode == ISD::FP_ROUND) {
+      APFloat V = N1CFP->getValueAPF();    // make copy
+      bool ignored;
+      // This can return overflow, underflow, or inexact; we don't care.
+      // FIXME need to be more flexible about rounding mode.
+      (void)V.convert(*EVTToAPFloatSemantics(VT),
+                      APFloat::rmNearestTiesToEven, &ignored);
+      return getConstantFP(V, VT);
     }
   }
 
