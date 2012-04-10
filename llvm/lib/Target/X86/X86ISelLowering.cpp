@@ -5396,7 +5396,6 @@ static SDValue LowerVECTOR_SHUFFLEtoBlend(SDValue Op,
   EVT InVT = V1.getValueType();
   EVT EltVT = VT.getVectorElementType();
   unsigned EltSize = EltVT.getSizeInBits();
-
   int MaskSize = VT.getVectorNumElements();
   int InSize = InVT.getVectorNumElements();
 
