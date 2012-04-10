@@ -1222,7 +1222,7 @@ void CodeGenRegBank::computeRegUnitSets() {
     assert(Idx < (2*NumRegUnitSubSets) && "runaway unit set inference");
 
     // Compare new sets with all original classes.
-    for (unsigned SearchIdx = (SearchIdx >= NumRegUnitSubSets) ? 0 : Idx+1;
+    for (unsigned SearchIdx = (Idx >= NumRegUnitSubSets) ? 0 : Idx+1;
          SearchIdx != EndIdx; ++SearchIdx) {
       std::set<unsigned> Intersection;
       std::set_intersection(RegUnitSets[Idx].Units.begin(),
