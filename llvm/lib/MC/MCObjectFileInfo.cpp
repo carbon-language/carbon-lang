@@ -260,9 +260,14 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 
   // Solaris requires different flags for .eh_frame to seemingly every other
   // platform.
+  EHSectionType = ELF::SHT_PROGBITS;
   EHSectionFlags = ELF::SHF_ALLOC;
-  if (T.getOS() == Triple::Solaris)
-    EHSectionFlags |= ELF::SHF_WRITE;
+  if (T.getOS() == Triple::Solaris) {
+    if (T.getArch() == Triple::x86_64)
+      EHSectionType = ELF::SHT_X86_64_UNWIND;
+    else
+      EHSectionFlags |= ELF::SHF_WRITE;
+  }
 
 
   // ELF
@@ -575,7 +580,7 @@ void MCObjectFileInfo::InitEHFrameSection() {
                            SectionKind::getReadOnly());
   else if (Env == IsELF)
     EHFrameSection =
-      Ctx->getELFSection(".eh_frame", ELF::SHT_PROGBITS,
+      Ctx->getELFSection(".eh_frame", EHSectionType,
                          EHSectionFlags,
                          SectionKind::getDataRel());
   else

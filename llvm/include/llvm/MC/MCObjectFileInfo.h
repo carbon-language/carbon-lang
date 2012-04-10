@@ -47,6 +47,7 @@ protected:
   unsigned FDECFIEncoding;
   unsigned TTypeEncoding;
   // Section flags for eh_frame
+  unsigned EHSectionType;
   unsigned EHSectionFlags;
 
   /// TextSection - Section directive for standard text.
