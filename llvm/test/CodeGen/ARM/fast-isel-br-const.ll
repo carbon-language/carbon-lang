@@ -5,7 +5,7 @@ define i32 @t1(i32 %a, i32 %b) nounwind uwtable ssp {
 entry:
 ; THUMB: t1:
 ; ARM: t1:
-
+  %x = add i32 %a, %b  
   br i1 1, label %if.then, label %if.else
 ; THUMB-NOT: b LBB0_1
 ; ARM-NOT:  b LBB0_1
@@ -24,6 +24,7 @@ if.then2:                                         ; preds = %if.else
   br label %if.end6
 
 if.else3:                                         ; preds = %if.else
+  %y = sub i32 %a, %b
   br i1 1, label %if.then5, label %if.end
 ; THUMB-NOT: b LBB0_5
 ; ARM-NOT:  b LBB0_5
