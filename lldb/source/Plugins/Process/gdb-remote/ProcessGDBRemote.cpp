@@ -162,6 +162,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_register_info (),
     m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
+    m_thread_ids (),
+    m_thread_ids_mutex (Mutex::eMutexTypeRecursive),
     m_continue_c_tids (),
     m_continue_C_tids (),
     m_continue_s_tids (),
@@ -1129,6 +1131,29 @@ ProcessGDBRemote::DoResume ()
     return error;
 }
 
+void
+ProcessGDBRemote::ClearThreadIDList ()
+{
+    Mutex::Locker locker(m_thread_ids_mutex);
+    m_thread_ids.clear();
+}
+
+bool
+ProcessGDBRemote::UpdateThreadIDList ()
+{
+    Mutex::Locker locker(m_thread_ids_mutex);
+    bool sequence_mutex_unavailable = false;
+    m_gdb_comm.GetCurrentThreadIDs (m_thread_ids, sequence_mutex_unavailable);
+    if (sequence_mutex_unavailable)
+    {
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex");
+#endif
+        return false; // We just didn't get the list
+    }
+    return true;
+}
+
 bool
 ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
@@ -1137,28 +1162,28 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
     if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %llu)", __FUNCTION__, GetID());
     // Update the thread list's stop id immediately so we don't recurse into this function.
+    Mutex::Locker locker(m_thread_ids_mutex);
+    
+    size_t num_thread_ids = m_thread_ids.size();
+    // The "m_thread_ids" thread ID list should always be updated after each stop
+    // reply packet, but in case it isn't, update it here.
+    if (num_thread_ids == 0)
+    {
+        if (!UpdateThreadIDList ())
+            return false;
+        num_thread_ids = m_thread_ids.size();
+    }
 
-    std::vector<lldb::tid_t> thread_ids;
-    bool sequence_mutex_unavailable = false;
-    const size_t num_thread_ids = m_gdb_comm.GetCurrentThreadIDs (thread_ids, sequence_mutex_unavailable);
     if (num_thread_ids > 0)
     {
         for (size_t i=0; i<num_thread_ids; ++i)
         {
-            tid_t tid = thread_ids[i];
+            tid_t tid = m_thread_ids[i];
             ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
             if (!thread_sp)
                 thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
             new_thread_list.AddThread(thread_sp);
         }
-        SetThreadStopInfo (m_last_stop_packet);
-    }
-    else if (sequence_mutex_unavailable)
-    {
-#if defined (LLDB_CONFIGURATION_DEBUG)
-        assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex");
-#endif
-        return false; // We just didn't get the list
     }
 
     return true;
@@ -1196,7 +1221,6 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             std::string description;
             uint32_t exc_type = 0;
             std::vector<addr_t> exc_data;
-            uint32_t tid = LLDB_INVALID_THREAD_ID;
             addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
             uint32_t exc_data_count = 0;
             ThreadSP thread_sp;
@@ -1221,7 +1245,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 else if (name.compare("thread") == 0)
                 {
                     // thread in big endian hex
-                    tid = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    lldb::tid_t tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
                     // m_thread_list does have its own mutex, but we need to
                     // hold onto the mutex between the call to m_thread_list.FindThreadByID(...)
                     // and the m_thread_list.AddThread(...) so it doesn't change on us
@@ -1233,6 +1257,28 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
                         m_thread_list.AddThread(thread_sp);
                     }
+                }
+                else if (name.compare("threads") == 0)
+                {
+                    Mutex::Locker locker(m_thread_ids_mutex);                    
+                    m_thread_ids.clear();
+                    // A comma separated list of all threads in the current process including
+                    // the thread for this stop reply packet
+                    size_t comma_pos;
+                    lldb::tid_t tid;
+                    while ((comma_pos = value.find(',')) != std::string::npos)
+                    {
+                        value[comma_pos] = '\0';
+                        // thread in big endian hex
+                        tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+                        if (tid != LLDB_INVALID_THREAD_ID)
+                            m_thread_ids.push_back (tid);
+                        value.erase(0, comma_pos + 1);
+                            
+                    }
+                    tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+                    if (tid != LLDB_INVALID_THREAD_ID)
+                        m_thread_ids.push_back (tid);
                 }
                 else if (name.compare("hexname") == 0)
                 {
@@ -1424,10 +1470,23 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 void
 ProcessGDBRemote::RefreshStateAfterStop ()
 {
+    Mutex::Locker locker(m_thread_ids_mutex);
+    m_thread_ids.clear();
+    // Set the thread stop info. It might have a "threads" key whose value is
+    // a list of all thread IDs in the current process, so m_thread_ids might
+    // get set.
+    SetThreadStopInfo (m_last_stop_packet);
+    // Check to see if SetThreadStopInfo() filled in m_thread_ids?
+    if (m_thread_ids.empty())
+    {
+        // No, we need to fetch the thread list manually
+        UpdateThreadIDList();
+    }
+
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
     m_thread_list.RefreshStateAfterStop();
-    SetThreadStopInfo (m_last_stop_packet);
+    
 }
 
 Error
@@ -1601,6 +1660,7 @@ ProcessGDBRemote::DoDestroy ()
                 if (packet_cmd == 'W' || packet_cmd == 'X')
                 {
                     SetLastStopPacket (response);
+                    ClearThreadIDList ();
                     SetExitStatus(response.GetHexU8(), NULL);
                 }
             }
@@ -2419,6 +2479,7 @@ ProcessGDBRemote::AsyncThread (void *arg)
 
                                     case eStateExited:
                                         process->SetLastStopPacket (response);
+                                        process->ClearThreadIDList();
                                         response.SetFilePos(1);
                                         process->SetExitStatus(response.GetHexU8(), NULL);
                                         done = true;
