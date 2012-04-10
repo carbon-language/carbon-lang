@@ -210,48 +210,6 @@ TEST(AddressSanitizer, PvallocTest) {
 }
 #endif  // __APPLE__
 
-void NoOpSignalHandler(int unused) {
-  fprintf(stderr, "NoOpSignalHandler (should not happen). Aborting\n");
-  abort();
-}
-
-void NoOpSigaction(int, siginfo_t *siginfo, void *context) {
-  fprintf(stderr, "NoOpSigaction (should not happen). Aborting\n");
-  abort();
-}
-
-TEST(AddressSanitizer, SignalTest) {
-  signal(SIGSEGV, NoOpSignalHandler);
-  signal(SIGILL, NoOpSignalHandler);
-  // If asan did not intercept sigaction NoOpSigaction will fire.
-  char *x = Ident((char*)malloc(5));
-  EXPECT_DEATH(x[6]++, "is located 1 bytes to the right");
-  free(Ident(x));
-}
-
-TEST(AddressSanitizer, SigactionTest) {
-  {
-    struct sigaction sigact;
-    memset(&sigact, 0, sizeof(sigact));
-    sigact.sa_sigaction = NoOpSigaction;;
-    sigact.sa_flags = SA_SIGINFO;
-    sigaction(SIGSEGV, &sigact, 0);
-  }
-
-  {
-    struct sigaction sigact;
-    memset(&sigact, 0, sizeof(sigact));
-    sigact.sa_sigaction = NoOpSigaction;;
-    sigact.sa_flags = SA_SIGINFO;
-    sigaction(SIGILL, &sigact, 0);
-  }
-
-  // If asan did not intercept sigaction NoOpSigaction will fire.
-  char *x = Ident((char*)malloc(5));
-  EXPECT_DEATH(x[6]++, "is located 1 bytes to the right");
-  free(Ident(x));
-}
-
 void *TSDWorker(void *test_key) {
   if (test_key) {
     pthread_setspecific(*(pthread_key_t*)test_key, (void*)0xfeedface);
