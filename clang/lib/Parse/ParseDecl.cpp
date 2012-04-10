@@ -937,6 +937,7 @@ bool Parser::DiagnoseProhibitedCXX11Attribute() {
       << SourceRange(BeginLoc, EndLoc);
     return true;
   }
+  llvm_unreachable("All cases handled above.");
 }
 
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
