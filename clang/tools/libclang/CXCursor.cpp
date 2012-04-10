@@ -786,14 +786,11 @@ CXTranslationUnit cxcursor::getCursorTU(CXCursor Cursor) {
   return static_cast<CXTranslationUnit>(Cursor.data[2]);
 }
 
-static void CollectOverriddenMethods(CXTranslationUnit TU,
-                                     DeclContext *Ctx, 
+static void CollectOverriddenMethodsRecurse(CXTranslationUnit TU,
+                                     ObjCContainerDecl *Container, 
                                      ObjCMethodDecl *Method,
-                                     SmallVectorImpl<CXCursor> &Methods) {
-  if (!Ctx)
-    return;
-
-  ObjCContainerDecl *Container = dyn_cast<ObjCContainerDecl>(Ctx);
+                                     SmallVectorImpl<CXCursor> &Methods,
+                                     bool MovedToSuper) {
   if (!Container)
     return;
 
@@ -801,10 +798,23 @@ static void CollectOverriddenMethods(CXTranslationUnit TU,
   // category is not "overriden" since it is considered as the "same" method
   // (same USR) as the one from the interface.
   if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Container)) {
+    // Check whether we have a matching method at this category but only if we
+    // are at the super class level.
+    if (MovedToSuper)
+      if (ObjCMethodDecl *
+            Overridden = Container->getMethod(Method->getSelector(),
+                                              Method->isInstanceMethod()))
+        if (Method != Overridden) {
+          // We found an override at this category; there is no need to look
+          // into its protocols.
+          Methods.push_back(MakeCXCursor(Overridden, TU));
+          return;
+        }
+
     for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
                                           PEnd = Category->protocol_end();
          P != PEnd; ++P)
-      CollectOverriddenMethods(TU, *P, Method, Methods);
+      CollectOverriddenMethodsRecurse(TU, *P, Method, Methods, MovedToSuper);
     return;
   }
 
@@ -822,29 +832,37 @@ static void CollectOverriddenMethods(CXTranslationUnit TU,
     for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
                                           PEnd = Protocol->protocol_end();
          P != PEnd; ++P)
-      CollectOverriddenMethods(TU, *P, Method, Methods);
+      CollectOverriddenMethodsRecurse(TU, *P, Method, Methods, MovedToSuper);
   }
 
   if (ObjCInterfaceDecl *Interface = dyn_cast<ObjCInterfaceDecl>(Container)) {
     for (ObjCInterfaceDecl::protocol_iterator P = Interface->protocol_begin(),
                                            PEnd = Interface->protocol_end();
          P != PEnd; ++P)
-      CollectOverriddenMethods(TU, *P, Method, Methods);
+      CollectOverriddenMethodsRecurse(TU, *P, Method, Methods, MovedToSuper);
 
     for (ObjCCategoryDecl *Category = Interface->getCategoryList();
          Category; Category = Category->getNextClassCategory())
-      CollectOverriddenMethods(TU, Category, Method, Methods);
+      CollectOverriddenMethodsRecurse(TU, Category, Method, Methods,
+                                      MovedToSuper);
 
     if (ObjCInterfaceDecl *Super = Interface->getSuperClass())
-      return CollectOverriddenMethods(TU, Super, Method, Methods);
+      return CollectOverriddenMethodsRecurse(TU, Super, Method, Methods,
+                                             /*MovedToSuper=*/true);
   }
+}
+
+static inline void CollectOverriddenMethods(CXTranslationUnit TU,
+                                           ObjCContainerDecl *Container, 
+                                           ObjCMethodDecl *Method,
+                                           SmallVectorImpl<CXCursor> &Methods) {
+  CollectOverriddenMethodsRecurse(TU, Container, Method, Methods,
+                                  /*MovedToSuper=*/false);
 }
 
 void cxcursor::getOverriddenCursors(CXCursor cursor,
                                     SmallVectorImpl<CXCursor> &overridden) { 
-  if (!clang_isDeclaration(cursor.kind))
-    return;
-
+  assert(clang_isDeclaration(cursor.kind));
   Decl *D = getCursorDecl(cursor);
   if (!D)
     return;
@@ -893,7 +911,9 @@ void cxcursor::getOverriddenCursors(CXCursor cursor,
     CollectOverriddenMethods(TU, ID, Method, overridden);
 
   } else {
-    CollectOverriddenMethods(TU, Method->getDeclContext(), Method, overridden);
+    CollectOverriddenMethods(TU,
+                  dyn_cast_or_null<ObjCContainerDecl>(Method->getDeclContext()),
+                  Method, overridden);
   }
 }
 

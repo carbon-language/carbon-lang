@@ -5535,6 +5535,8 @@ void clang_getOverriddenCursors(CXCursor cursor,
     *num_overridden = 0;
   if (!overridden || !num_overridden)
     return;
+  if (!clang_isDeclaration(cursor.kind))
+    return;
 
   SmallVector<CXCursor, 8> Overridden;
   cxcursor::getOverriddenCursors(cursor, Overridden);
