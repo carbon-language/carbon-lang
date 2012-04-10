@@ -36,6 +36,7 @@
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
+#include "lldb/Target/ThreadPlanBase.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -3102,8 +3103,17 @@ Process::StartPrivateStateThread (bool force)
         snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state-override(pid=%llu)>", GetID());
     else
         snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%llu)>", GetID());
+        
+    // Create the private state thread, and start it running.
     m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
-    return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
+    bool success = IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
+    if (success)
+    {
+        ResumePrivateStateThread();
+        return true;
+    }
+    else
+        return false;
 }
 
 void
@@ -3247,8 +3257,8 @@ Process::PrivateStateThread (void *arg)
 void *
 Process::RunPrivateStateThread ()
 {
-    bool control_only = false;
-    m_private_state_control_wait.SetValue (false, eBroadcastNever);
+    bool control_only = true;
+    m_private_state_control_wait.SetValue (true, eBroadcastNever);
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
@@ -3910,15 +3920,35 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     }
 
     lldb::thread_t backup_private_state_thread = LLDB_INVALID_HOST_THREAD;
+    lldb::StateType old_state;
+    lldb::ThreadPlanSP stopper_base_plan_sp;
     
+    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
     if (Host::GetCurrentThread() == m_private_state_thread)
     {
-        // Yikes, we are running on the private state thread!  So we can't call DoRunThreadPlan on this thread, since
-        // then nobody will be around to fetch internal events.
+        // Yikes, we are running on the private state thread!  So we can't wait for public events on this thread, since
+        // we are the thread that is generating public events.
         // The simplest thing to do is to spin up a temporary thread to handle private state thread events while
-        // we are doing the RunThreadPlan here.
+        // we are fielding public events here.
+        if (log)
+			log->Printf ("Running thread plan on private state thread, spinning up another state thread to handle the events.");
+            
+
         backup_private_state_thread = m_private_state_thread;
-        printf ("Running thread plan on private state thread, spinning up another state thread to handle the events.\n");
+
+        // One other bit of business: we want to run just this thread plan and anything it pushes, and then stop,
+        // returning control here.
+        // But in the normal course of things, the plan above us on the stack would be given a shot at the stop
+        // event before deciding to stop, and we don't want that.  So we insert a "stopper" base plan on the stack
+        // before the plan we want to run.  Since base plans always stop and return control to the user, that will
+        // do just what we want.
+        stopper_base_plan_sp.reset(new ThreadPlanBase (*thread));
+        thread->QueueThreadPlan (stopper_base_plan_sp, false);
+        // Have to make sure our public state is stopped, since otherwise the reporting logic below doesn't work correctly.
+        old_state = m_public_state.GetValue();
+        m_public_state.SetValueNoLock(eStateStopped);
+        
+        // Now spin up the private state thread:
         StartPrivateStateThread(true);
     }
     
@@ -3931,7 +3961,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     ProcessEventHijacker run_thread_plan_hijacker (*this, &listener);
         
-    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
     if (log)
     {
         StreamString s;
@@ -3975,7 +4004,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             timeout_ptr = &real_timeout;
             
             got_event = listener.WaitForEvent(timeout_ptr, event_sp);
-            if (!got_event) 
+            if (!got_event)
             {
                 if (log)
                     log->PutCString("Didn't get any event after initial resume, exiting.");
@@ -4284,8 +4313,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     {
         StopPrivateStateThread();
         Error error;
-        // Host::ThreadJoin(m_private_state_thread, &thread_result, &error);
         m_private_state_thread = backup_private_state_thread;
+        if (stopper_base_plan_sp != NULL)
+        {
+            thread->DiscardThreadPlansUpToPlan(stopper_base_plan_sp);
+        }
+        m_public_state.SetValueNoLock(old_state);
+
     }
     
     
