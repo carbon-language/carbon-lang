@@ -60,14 +60,28 @@ class Random {
 public:
   /// C'tor
   Random(unsigned _seed):Seed(_seed) {}
-  /// Return the next random value.
-  unsigned Rand() {
-    unsigned Val = Seed + 0x000b07a1;
+
+  /// Return a random integer, up to a
+  /// maximum of 2**19 - 1.
+  uint32_t Rand() {
+    uint32_t Val = Seed + 0x000b07a1;
     Seed = (Val * 0x3c7c0ac1);
     // Only lowest 19 bits are random-ish.
     return Seed & 0x7ffff;
   }
 
+  /// Return a random 32 bit integer.
+  uint32_t Rand32() {
+    uint32_t Val = Rand();
+    Val &= 0xffff;
+    return Val | (Rand() << 16);
+  }
+
+  /// Return a random 64 bit integer.
+  uint64_t Rand64() {
+    uint64_t Val = Rand32();
+    return Val | (uint64_t(Rand32()) << 32);
+  }
 private:
   unsigned Seed;
 };
@@ -348,10 +362,20 @@ struct ConstModifier: public Modifier {
     }
 
     if (Ty->isFloatingPointTy()) {
+      // Generate 128 random bits, the size of the (currently)
+      // largest floating-point types.
+      uint64_t RandomBits[2];
+      for (unsigned i = 0; i < 2; ++i)
+        RandomBits[i] = Ran->Rand64();
+
+      APInt RandomInt(Ty->getPrimitiveSizeInBits(), makeArrayRef(RandomBits));
+
+      bool isIEEE = !Ty->isX86_FP80Ty() && !Ty->isPPC_FP128Ty();
+      APFloat RandomFloat(RandomInt, isIEEE);
+
       if (Ran->Rand() & 1)
         return PT->push_back(ConstantFP::getNullValue(Ty));
-      return PT->push_back(ConstantFP::get(Ty,
-                                           static_cast<double>(1)/Ran->Rand()));
+      return PT->push_back(ConstantFP::get(Ty->getContext(), RandomFloat));
     }
 
     if (Ty->isIntegerTy()) {
