@@ -89,6 +89,7 @@ Thread::DestroyThread ()
     m_plan_stack.clear();
     m_discarded_plan_stack.clear();
     m_completed_plan_stack.clear();
+    m_actual_stop_info_sp.reset();
     m_destroy_called = true;
 }
 
