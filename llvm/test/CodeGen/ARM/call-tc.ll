@@ -147,7 +147,11 @@ declare i32 @c(i32)
 
 @x = external global i32, align 4
 
-define i32 @_Z5test1v() nounwind {
+define i32 @t9() nounwind {
+; CHECKT2D: t9:
+; CHECKT2D: blx __ZN9MutexLockC1Ev
+; CHECKT2D: blx __ZN9MutexLockD1Ev
+; CHECKT2D: b.w ___divsi3
   %lock = alloca %class.MutexLock, align 1
   %1 = call %class.MutexLock* @_ZN9MutexLockC1Ev(%class.MutexLock* %lock)
   %2 = load i32* @x, align 4
