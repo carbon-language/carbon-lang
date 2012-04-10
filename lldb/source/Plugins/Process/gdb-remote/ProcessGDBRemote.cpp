@@ -704,6 +704,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
     m_gdb_comm.ResetDiscoverableSettings();
     m_gdb_comm.QueryNoAckModeSupported ();
     m_gdb_comm.GetThreadSuffixSupported ();
+    m_gdb_comm.GetListThreadsInStopReplySupported ();
     m_gdb_comm.GetHostInfo ();
     m_gdb_comm.GetVContSupported ('c');
     return error;
@@ -1262,8 +1263,9 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     Mutex::Locker locker(m_thread_ids_mutex);                    
                     m_thread_ids.clear();
-                    // A comma separated list of all threads in the current process including
-                    // the thread for this stop reply packet
+                    // A comma separated list of all threads in the current
+                    // process that includes the thread for this stop reply
+                    // packet
                     size_t comma_pos;
                     lldb::tid_t tid;
                     while ((comma_pos = value.find(',')) != std::string::npos)

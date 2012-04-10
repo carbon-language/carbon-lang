@@ -106,6 +106,7 @@ public:
         set_stdout,                     // 'QSetSTDOUT:'
         set_stderr,                     // 'QSetSTDERR:'
         set_working_dir,                // 'QSetWorkingDir:'
+        set_list_threads_in_stop_reply, // 'QListThreadsInStopReply:'
         memory_region_info,             // 'qMemoryRegionInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
@@ -177,6 +178,7 @@ public:
     rnb_err_t HandlePacket_QEnvironment (const char *p);
     rnb_err_t HandlePacket_QEnvironmentHexEncoded (const char *p);
     rnb_err_t HandlePacket_QLaunchArch (const char *p);
+    rnb_err_t HandlePacket_QListThreadsInStopReply (const char *p);
     rnb_err_t HandlePacket_QPrefixRegisterPacketsWithThreadID (const char *p);
     rnb_err_t HandlePacket_last_signal (const char *p);
     rnb_err_t HandlePacket_m (const char *p);
@@ -328,15 +330,15 @@ protected:
     BreakpointMap   m_breakpoints;
     BreakpointMap   m_watchpoints;
     uint32_t        m_max_payload_size;  // the maximum sized payload we should send to gdb
-    bool            m_extended_mode:1,   // are we in extended mode?
-                    m_noack_mode:1,      // are we in no-ack mode?
-                    m_noack_mode_just_enabled:1, // Did we just enable this and need to compute one more checksum?
-                    m_use_native_regs:1, // Use native registers by querying DNB layer for register definitions?
-                    m_thread_suffix_supported:1; // Set to true if the 'p', 'P', 'g', and 'G' packets should be prefixed with the thread ID and colon:
+    bool            m_extended_mode;   // are we in extended mode?
+    bool            m_noack_mode;      // are we in no-ack mode?
+    bool            m_use_native_regs; // Use native registers by querying DNB layer for register definitions?
+    bool            m_thread_suffix_supported; // Set to true if the 'p', 'P', 'g', and 'G' packets should be prefixed with the thread ID and colon:
                                                                 // "$pRR;thread:TTTT;" instead of "$pRR"
                                                                 // "$PRR=VVVVVVVV;thread:TTTT;" instead of "$PRR=VVVVVVVV"
                                                                 // "$g;thread:TTTT" instead of "$g"
                                                                 // "$GVVVVVVVVVVVVVV;thread:TTTT;#00 instead of "$GVVVVVVVVVVVVVV"
+    bool            m_list_threads_in_stop_reply;
 };
 
 /* We translate the /usr/include/mach/exception_types.h exception types

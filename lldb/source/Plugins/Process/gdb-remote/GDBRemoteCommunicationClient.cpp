@@ -38,6 +38,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     GDBRemoteCommunication("gdb-remote.client", "gdb-remote.client.rx_packet", is_platform),
     m_supports_not_sending_acks (eLazyBoolCalculate),
     m_supports_thread_suffix (eLazyBoolCalculate),
+    m_supports_threads_in_stop_reply (eLazyBoolCalculate),
     m_supports_vCont_all (eLazyBoolCalculate),
     m_supports_vCont_any (eLazyBoolCalculate),
     m_supports_vCont_c (eLazyBoolCalculate),
@@ -114,10 +115,28 @@ GDBRemoteCommunicationClient::QueryNoAckModeSupported ()
 }
 
 void
+GDBRemoteCommunicationClient::GetListThreadsInStopReplySupported ()
+{
+    if (m_supports_threads_in_stop_reply == eLazyBoolCalculate)
+    {
+        m_supports_threads_in_stop_reply = eLazyBoolNo;
+        
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse("QListThreadsInStopReply", response, false))
+        {
+            if (response.IsOKResponse())
+                m_supports_threads_in_stop_reply = eLazyBoolYes;
+        }
+    }
+}
+
+
+void
 GDBRemoteCommunicationClient::ResetDiscoverableSettings()
 {
     m_supports_not_sending_acks = eLazyBoolCalculate;
     m_supports_thread_suffix = eLazyBoolCalculate;
+    m_supports_threads_in_stop_reply = eLazyBoolCalculate;
     m_supports_vCont_c = eLazyBoolCalculate;
     m_supports_vCont_C = eLazyBoolCalculate;
     m_supports_vCont_s = eLazyBoolCalculate;

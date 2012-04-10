@@ -71,6 +71,9 @@ public:
     void
     QueryNoAckModeSupported ();
 
+    void
+    GetListThreadsInStopReplySupported ();
+
     bool
     SendAsyncSignal (int signo);
 
@@ -335,6 +338,7 @@ protected:
     //------------------------------------------------------------------
     lldb_private::LazyBool m_supports_not_sending_acks;
     lldb_private::LazyBool m_supports_thread_suffix;
+    lldb_private::LazyBool m_supports_threads_in_stop_reply;
     lldb_private::LazyBool m_supports_vCont_all;
     lldb_private::LazyBool m_supports_vCont_any;
     lldb_private::LazyBool m_supports_vCont_c;
