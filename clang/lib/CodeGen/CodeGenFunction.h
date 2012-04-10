@@ -2518,8 +2518,7 @@ public:
 
   /// SetFPAccuracy - Set the minimum required accuracy of the given floating
   /// point operation, expressed as the maximum relative error in ulp.
-  void SetFPAccuracy(llvm::Value *Val, unsigned AccuracyN,
-                     unsigned AccuracyD = 1);
+  void SetFPAccuracy(llvm::Value *Val, float Accuracy);
 
 private:
   llvm::MDNode *getRangeForLoadFromType(QualType Ty);

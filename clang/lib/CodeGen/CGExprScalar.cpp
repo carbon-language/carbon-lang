@@ -1807,7 +1807,7 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
       if (ValTy->isFloatTy() ||
           (isa<llvm::VectorType>(ValTy) &&
            cast<llvm::VectorType>(ValTy)->getElementType()->isFloatTy()))
-        CGF.SetFPAccuracy(Val, 5, 2);
+        CGF.SetFPAccuracy(Val, 2.5);
     }
     return Val;
   }
