@@ -3,4 +3,4 @@
 // RUN: FileCheck %s < %t.log
 
 // CHECK: "-plugin" "{{.*}}/LLVMgold.so"
-// CHECK: "-plugin-arg=foo"
+// CHECK: "-plugin-opt=foo"
