@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-unk-unk -o - -emit-llvm -g %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -o - -emit-llvm -g %s | FileCheck %s
+// REQUIRES: asserts
 // PR9796
 
 // Check to make sure that we emit the block for the break so that we can count the line.
