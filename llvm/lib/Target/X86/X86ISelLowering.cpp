@@ -5391,75 +5391,59 @@ static SDValue LowerVECTOR_SHUFFLEtoBlend(SDValue Op,
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
+  LLVMContext *Context = DAG.getContext();
   EVT VT = Op.getValueType();
   EVT InVT = V1.getValueType();
+  EVT EltVT = VT.getVectorElementType();
+  unsigned EltSize = EltVT.getSizeInBits();
   int MaskSize = VT.getVectorNumElements();
   int InSize = InVT.getVectorNumElements();
 
-  if (!Subtarget->hasSSE41())
+  // TODO: At the moment we only use AVX blends. We could also use SSE4 blends.
+  if (!Subtarget->hasAVX())
     return SDValue();
 
   if (MaskSize != InSize)
     return SDValue();
 
-  int ISDNo = 0;
-  MVT OpTy;
-
-  switch (VT.getSimpleVT().SimpleTy) {
-  default: return SDValue();
-  case MVT::v8i16:
-           ISDNo = X86ISD::BLENDPW;
-           OpTy = MVT::v8i16;
-           break;
-  case MVT::v4i32:
-  case MVT::v4f32:
-           ISDNo = X86ISD::BLENDPS;
-           OpTy = MVT::v4f32;
-           break;
-  case MVT::v2i64:
-  case MVT::v2f64:
-           ISDNo = X86ISD::BLENDPD;
-           OpTy = MVT::v2f64;
-           break;
-  case MVT::v8i32:
-  case MVT::v8f32:
-           if (!Subtarget->hasAVX())
-             return SDValue();
-           ISDNo = X86ISD::BLENDPS;
-           OpTy = MVT::v8f32;
-           break;
-  case MVT::v4i64:
-  case MVT::v4f64:
-           if (!Subtarget->hasAVX())
-             return SDValue();
-           ISDNo = X86ISD::BLENDPD;
-           OpTy = MVT::v4f64;
-           break;
-  case MVT::v16i16:
-           if (!Subtarget->hasAVX2())
-             return SDValue();
-           ISDNo = X86ISD::BLENDPW;
-           OpTy = MVT::v16i16;
-           break;
-  }
-  assert(ISDNo && "Invalid Op Number");
-
-  unsigned MaskVals = 0;
+  SmallVector<Constant*,2> MaskVals;
+  ConstantInt *Zero = ConstantInt::get(*Context, APInt(EltSize, 0));
+  ConstantInt *NegOne = ConstantInt::get(*Context, APInt(EltSize, -1));
 
   for (int i = 0; i < MaskSize; ++i) {
     int EltIdx = SVOp->getMaskElt(i);
     if (EltIdx == i || EltIdx == -1)
-      MaskVals |= (1<<i);
+      MaskVals.push_back(NegOne);
     else if (EltIdx == (i + MaskSize))
-      continue; // Bit is set to zero;
+      MaskVals.push_back(Zero);
     else return SDValue();
   }
 
-  V1 = DAG.getNode(ISD::BITCAST, dl, OpTy, V1);
-  V2 = DAG.getNode(ISD::BITCAST, dl, OpTy, V2);
-  SDValue Ret =  DAG.getNode(ISDNo, dl, OpTy, V1, V2,
-                             DAG.getConstant(MaskVals, MVT::i32));
-  return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
+  Constant *MaskC = ConstantVector::get(MaskVals);
+  EVT MaskTy = EVT::getEVT(MaskC->getType());
+  assert(MaskTy.getSizeInBits() == VT.getSizeInBits() && "Invalid mask size");
+  SDValue MaskIdx = DAG.getConstantPool(MaskC, PtrTy);
+  unsigned Alignment = cast<ConstantPoolSDNode>(MaskIdx)->getAlignment();
+  SDValue Mask = DAG.getLoad(MaskTy, dl, DAG.getEntryNode(), MaskIdx,
+                             MachinePointerInfo::getConstantPool(),
+                             false, false, false, Alignment);
+
+  if (Subtarget->hasAVX2() && MaskTy == MVT::v32i8)
+    return DAG.getNode(ISD::VSELECT, dl, VT, Mask, V1, V2);
+
+  if (Subtarget->hasAVX()) {
+    switch (MaskTy.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v16i8:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v8i32:
+    case MVT::v4i64:
+             return DAG.getNode(ISD::VSELECT, dl, VT, Mask, V1, V2);
+    }
+  }
+
+  return SDValue();
 }
 
 // v8i16 shuffles - Prefer shuffles in the following order:
@@ -11066,9 +11050,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::ANDNP:              return "X86ISD::ANDNP";
   case X86ISD::PSIGN:              return "X86ISD::PSIGN";
   case X86ISD::BLENDV:             return "X86ISD::BLENDV";
-  case X86ISD::BLENDPW:            return "X86ISD::BLENDPW";
-  case X86ISD::BLENDPS:            return "X86ISD::BLENDPS";
-  case X86ISD::BLENDPD:            return "X86ISD::BLENDPD";
   case X86ISD::HADD:               return "X86ISD::HADD";
   case X86ISD::HSUB:               return "X86ISD::HSUB";
   case X86ISD::FHADD:              return "X86ISD::FHADD";

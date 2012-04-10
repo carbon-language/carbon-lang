@@ -175,13 +175,8 @@ namespace llvm {
       /// PSIGN - Copy integer sign.
       PSIGN,
 
-      /// BLENDV - Blend where the selector is an XMM.
+      /// BLEND family of opcodes
       BLENDV,
-
-      /// BLENDxx - Blend where the selector is an immediate.
-      BLENDPW,
-      BLENDPS,
-      BLENDPD,
 
       /// HADD - Integer horizontal add.
       HADD,
