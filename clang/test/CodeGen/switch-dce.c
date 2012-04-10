@@ -216,32 +216,19 @@ void test12() {
   }
 }
 
-
-// rdar://9289524 - Check that the empty cases don't produce an empty block.
+// Verify that case 42 only calls test14 once.
 // CHECK: @test13
-// CHECK: switch 
-// CHECK:     i32 42, label [[EPILOG:%[0-9.a-z]+]]
-// CHECK:     i32 11, label [[EPILOG]]
+// CHECK: call void @test13(i32 97)
+// CHECK-NEXT: br label %[[EPILOG2:[0-9.a-z]+]]
+// CHECK: [[EPILOG2]]
+// CHECK-NEXT: br label [[EPILOG:%[0-9.a-z]+]]
+// CHECK: call void @test13(i32 42)
+// CHECK-NEXT: br label [[EPILOG]]
 void test13(int x) {
   switch (x) {
-  case 42: break;  // No empty block please.
-  case 11: break;  // No empty block please.
-  default: test13(42); break;
-  }
-}
-
-
-// Verify that case 42 only calls test14 once.
-// CHECK: @test14
-// CHECK: call void @test14(i32 97)
-// CHECK-NEXT: br label [[EPILOG2:%[0-9.a-z]+]]
-// CHECK: call void @test14(i32 42)
-// CHECK-NEXT: br label [[EPILOG2]]
-void test14(int x) {
-  switch (x) {
-    case 42: test14(97);  // fallthrough
+    case 42: test13(97);  // fallthrough
     case 11: break;
-    default: test14(42); break;
+    default: test13(42); break;
   }
 }
 

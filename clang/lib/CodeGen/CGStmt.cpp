@@ -892,7 +892,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
 
   // If the body of the case is just a 'break', and if there was no fallthrough,
   // try to not emit an empty block.
-  if (isa<BreakStmt>(S.getSubStmt())) {
+  if ((CGM.getCodeGenOpts().OptimizationLevel > 0) && isa<BreakStmt>(S.getSubStmt())) {
     JumpDest Block = BreakContinueStack.back().BreakBlock;
     
     // Only do this optimization if there are no cleanups that need emitting.
