@@ -767,7 +767,11 @@ enabled.</p>
 
 <p>Use <tt>__has_feature(cxx_decltype)</tt> or
 <tt>__has_extension(cxx_decltype)</tt> to determine if support for the
-<tt>decltype()</tt> specifier is enabled.</p>
+<tt>decltype()</tt> specifier is enabled. C++11's <tt>decltype</tt>
+does not require type-completeness of a function call expression.
+Use <tt>__has_feature(cxx_decltype_incomplete_return_types)</tt>
+or <tt>__has_extension(cxx_decltype_incomplete_return_types)</tt>
+to determine if support for this feature is enabled.</p>
 
 <h4 id="cxx_default_function_template_args">C++11 default template arguments in function templates</h4>
 

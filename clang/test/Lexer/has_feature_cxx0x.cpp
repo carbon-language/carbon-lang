@@ -40,6 +40,16 @@ int no_decltype();
 // CHECK-NO-0X: no_decltype
 
 
+#if __has_feature(cxx_decltype_incomplete_return_types)
+int has_decltype_incomplete_return_types();
+#else
+int no_decltype_incomplete_return_types();
+#endif
+
+// CHECK-0X: has_decltype_incomplete_return_types
+// CHECK-NO-0X: no_decltype_incomplete_return_types
+
+
 #if __has_feature(cxx_auto_type)
 int has_auto_type();
 #else
