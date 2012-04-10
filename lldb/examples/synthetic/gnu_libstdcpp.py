@@ -12,6 +12,8 @@ class StdListSynthProvider:
 	def __init__(self, valobj, dict):
 		logger = Logger.Logger()
 		self.valobj = valobj
+		self.count = None
+		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
 
 	def next_node(self,node):
 		logger = Logger.Logger()
@@ -134,7 +136,9 @@ class StdVectorSynthProvider:
 
 	def __init__(self, valobj, dict):
 		logger = Logger.Logger()
-		self.valobj = valobj;
+		self.count = None
+		self.valobj = valobj
+		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
 
 	def num_children(self):
 		logger = Logger.Logger()
@@ -228,6 +232,7 @@ class StdMapSynthProvider:
 	def __init__(self, valobj, dict):
 		logger = Logger.Logger()
 		self.valobj = valobj;
+		self.count = None
 		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
 		
 	# we need this function as a temporary workaround for rdar://problem/10801549
