@@ -188,6 +188,7 @@ namespace llvm {
     //
     DenseMap<CodeGenSubRegIndex*,
              SmallPtrSet<CodeGenRegisterClass*, 8> > SuperRegClasses;
+
   public:
     unsigned EnumValue;
     std::string Namespace;
@@ -312,6 +313,14 @@ namespace llvm {
     static void computeSubClasses(CodeGenRegBank&);
   };
 
+  // Each RegUnitSet is a sorted vector with a name.
+  struct RegUnitSet {
+    typedef std::vector<unsigned>::const_iterator iterator;
+
+    std::string Name;
+    std::vector<unsigned> Units;
+  };
+
   // CodeGenRegBank - Represent a target's registers and the relations between
   // them.
   class CodeGenRegBank {
@@ -339,6 +348,15 @@ namespace llvm {
     typedef std::map<CodeGenRegisterClass::Key, CodeGenRegisterClass*> RCKeyMap;
     RCKeyMap Key2RC;
 
+    // Remember each unique set of register units. Initially, this contains a
+    // unique set for each register class. Simliar sets are coalesced with
+    // pruneUnitSets and new supersets are inferred during computeRegUnitSets.
+    std::vector<RegUnitSet> RegUnitSets;
+
+    // Map RegisterClass index to the index of the RegUnitSet that contains the
+    // class's units and any inferred RegUnit supersets.
+    std::vector<std::vector<unsigned> > RegClassUnitSets;
+
     // Add RC to *2RC maps.
     void addToMaps(CodeGenRegisterClass*);
 
@@ -354,8 +372,14 @@ namespace llvm {
     void inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
                                     unsigned FirstSubRegRC = 0);
 
+    // Iteratively prune unit sets.
+    void pruneUnitSets();
+
     // Compute a weight for each register unit created during getSubRegs.
     void computeRegUnitWeights();
+
+    // Create a RegUnitSet for each RegClass and infer superclasses.
+    void computeRegUnitSets();
 
     // Populate the Composite map from sub-register relationships.
     void computeComposites();
@@ -392,12 +416,16 @@ namespace llvm {
     // to increase its pressure. Note that NumNativeRegUnits is not increased.
     unsigned newRegUnit(unsigned Weight) {
       if (!RegUnitWeights.empty()) {
+        assert(Weight && "should only add allocatable units");
         RegUnitWeights.resize(NumRegUnits+1);
         RegUnitWeights[NumRegUnits] = Weight;
       }
       return NumRegUnits++;
     }
 
+    // Native units are the singular unit of a leaf register. Register aliasing
+    // is completely characterized by native units. Adopted units exist to give
+    // register additional weight but don't affect aliasing.
     bool isNativeUnit(unsigned RUID) {
       return RUID < NumNativeRegUnits;
     }
@@ -416,12 +444,30 @@ namespace llvm {
     /// return the superclass.  Otherwise return null.
     const CodeGenRegisterClass* getRegClassForRegister(Record *R);
 
+    // Get a register unit's weight. Zero for unallocatable registers.
     unsigned getRegUnitWeight(unsigned RUID) const {
       return RegUnitWeights[RUID];
     }
 
+    // Increase a RegUnitWeight.
     void increaseRegUnitWeight(unsigned RUID, unsigned Inc) {
       RegUnitWeights[RUID] += Inc;
+    }
+
+    // Get the number of register pressure dimensions.
+    unsigned getNumRegPressureSets() const { return RegUnitSets.size(); }
+
+    // Get a set of register unit IDs for a given dimension of pressure.
+    RegUnitSet getRegPressureSet(unsigned Idx) const {
+      return RegUnitSets[Idx];
+    }
+
+    // Get a list of pressure set IDs for a register class. Liveness of a
+    // register in this class impacts each pressure set in this list by the
+    // weight of the register. An exact solution requires all registers in a
+    // class to have the same class, but it is not strictly guaranteed.
+    ArrayRef<unsigned> getRCPressureSetIDs(unsigned RCIdx) const {
+      return RegClassUnitSets[RCIdx];
     }
 
     // Computed derived records such as missing sub-register indices.

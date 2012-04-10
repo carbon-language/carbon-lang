@@ -54,6 +54,9 @@ private:
                             const std::vector<CodeGenRegister*> &Regs,
                             bool isCtor);
   void EmitRegClasses(raw_ostream &OS, CodeGenTarget &Target);
+
+  void EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
+                           const std::string &ClassName);
 };
 
 } // End llvm namespace

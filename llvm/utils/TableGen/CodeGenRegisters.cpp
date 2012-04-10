@@ -1118,6 +1118,169 @@ void CodeGenRegBank::computeRegUnitWeights() {
   }
 }
 
+// Find a set in UniqueSets with the same elements as Set.
+// Return an iterator into UniqueSets.
+static std::vector<RegUnitSet>::const_iterator
+findRegUnitSet(const std::vector<RegUnitSet> &UniqueSets,
+               const RegUnitSet &Set) {
+  std::vector<RegUnitSet>::const_iterator
+    I = UniqueSets.begin(), E = UniqueSets.end();
+  for(;I != E; ++I) {
+    if (I->Units == Set.Units)
+      break;
+  }
+  return I;
+}
+
+// Return true if the RUSubSet is a subset of RUSuperSet.
+static bool isRegUnitSubSet(const std::vector<unsigned> &RUSubSet,
+                            const std::vector<unsigned> &RUSuperSet) {
+  for (RegUnitSet::iterator SubIdx = RUSubSet.begin(), EndIdx = RUSubSet.end(),
+         SearchIdx = RUSuperSet.begin(), SearchEnd = RUSuperSet.end();
+       SubIdx != EndIdx; ++SubIdx) {
+    SearchIdx = find(SearchIdx, SearchEnd, *SubIdx);
+    if (SearchIdx == SearchEnd)
+      return false;
+    ++SearchIdx;
+  }
+  return true;
+}
+
+// Iteratively prune unit sets.
+void CodeGenRegBank::pruneUnitSets() {
+  assert(RegClassUnitSets.empty() && "this invalidates RegClassUnitSets");
+
+  // Form an equivalence class of UnitSets with no significant difference.
+  IntEqClasses RepUnitSetIDs(RegUnitSets.size());
+  for (unsigned SubIdx = 0, EndIdx = RegUnitSets.size();
+       SubIdx != EndIdx; ++SubIdx) {
+    const RegUnitSet &SubSet = RegUnitSets[SubIdx];
+    for (unsigned SuperIdx = 0; SuperIdx != EndIdx; ++SuperIdx) {
+      if (SuperIdx == SubIdx)
+        continue;
+
+      const RegUnitSet &SuperSet = RegUnitSets[SuperIdx];
+      if (isRegUnitSubSet(SubSet.Units, SuperSet.Units)
+          && (SubSet.Units.size() + 3 > SuperSet.Units.size())) {
+        RepUnitSetIDs.join(SubIdx, SuperIdx);
+      }
+    }
+  }
+  RepUnitSetIDs.compress();
+
+  // Populate PrunedUnitSets with each equivalence class's superset.
+  std::vector<RegUnitSet> PrunedUnitSets(RepUnitSetIDs.getNumClasses());
+  for (unsigned i = 0, e = RegUnitSets.size(); i != e; ++i) {
+    RegUnitSet &SuperSet = PrunedUnitSets[RepUnitSetIDs[i]];
+    if (SuperSet.Units.size() < RegUnitSets[i].Units.size())
+      SuperSet = RegUnitSets[i];
+  }
+  RegUnitSets.swap(PrunedUnitSets);
+}
+
+// Create a RegUnitSet for each RegClass that contains all units in the class
+// including adopted units that are necessary to model register pressure. Then
+// iteratively compute RegUnitSets such that the union of any two overlapping
+// RegUnitSets is repreresented.
+//
+// RegisterInfoEmitter will map each RegClass to its RegUnitClass and any
+// RegUnitSet that is a superset of that RegUnitClass.
+void CodeGenRegBank::computeRegUnitSets() {
+
+  // Compute a unique RegUnitSet for each RegClass.
+  const ArrayRef<CodeGenRegisterClass*> &RegClasses = getRegClasses();
+  unsigned NumRegClasses = RegClasses.size();
+  for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
+
+    // Compute a sorted list of units in this class.
+    std::vector<unsigned> RegUnits;
+    const CodeGenRegister::Set &Regs = RegClasses[RCIdx]->getMembers();
+    for (RegUnitIterator UnitI(Regs); UnitI.isValid(); ++UnitI)
+      RegUnits.push_back(*UnitI);
+    std::sort(RegUnits.begin(), RegUnits.end());
+
+    // Speculatively grow the RegUnitSets to hold the new set.
+    RegUnitSets.resize(RegUnitSets.size() + 1);
+    RegUnitSets.back().Name = RegClasses[RCIdx]->getName();
+    std::unique_copy(RegUnits.begin(), RegUnits.end(),
+                     std::back_inserter(RegUnitSets.back().Units));
+
+    // Find an existing RegUnitSet.
+    std::vector<RegUnitSet>::const_iterator SetI =
+      findRegUnitSet(RegUnitSets, RegUnitSets.back());
+    if (SetI != llvm::prior(RegUnitSets.end()))
+      RegUnitSets.pop_back();
+  }
+
+  // Iteratively prune unit sets.
+  pruneUnitSets();
+
+  // Iterate over all unit sets, including new ones added by this loop.
+  unsigned NumRegUnitSubSets = RegUnitSets.size();
+  for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx) {
+    // In theory, this is combinatorial. In practice, it needs to be bounded
+    // by a small number of sets for regpressure to be efficient.
+    // If the assert is hit, we need to implement pruning.
+    assert(Idx < (2*NumRegUnitSubSets) && "runaway unit set inference");
+
+    // Compare new sets with all original classes.
+    for (unsigned SearchIdx = (SearchIdx >= NumRegUnitSubSets) ? 0 : Idx+1;
+         SearchIdx != EndIdx; ++SearchIdx) {
+      std::set<unsigned> Intersection;
+      std::set_intersection(RegUnitSets[Idx].Units.begin(),
+                            RegUnitSets[Idx].Units.end(),
+                            RegUnitSets[SearchIdx].Units.begin(),
+                            RegUnitSets[SearchIdx].Units.end(),
+                            std::inserter(Intersection, Intersection.begin()));
+      if (Intersection.empty())
+        continue;
+
+      // Speculatively grow the RegUnitSets to hold the new set.
+      RegUnitSets.resize(RegUnitSets.size() + 1);
+      RegUnitSets.back().Name =
+        RegUnitSets[Idx].Name + "+" + RegUnitSets[SearchIdx].Name;
+
+      std::set_union(RegUnitSets[Idx].Units.begin(),
+                     RegUnitSets[Idx].Units.end(),
+                     RegUnitSets[SearchIdx].Units.begin(),
+                     RegUnitSets[SearchIdx].Units.end(),
+                     std::inserter(RegUnitSets.back().Units,
+                                   RegUnitSets.back().Units.begin()));
+
+      // Find an existing RegUnitSet, or add the union to the unique sets.
+      std::vector<RegUnitSet>::const_iterator SetI =
+        findRegUnitSet(RegUnitSets, RegUnitSets.back());
+      if (SetI != llvm::prior(RegUnitSets.end()))
+        RegUnitSets.pop_back();
+    }
+  }
+
+  // Iteratively prune unit sets again after inferring supersets.
+  pruneUnitSets();
+
+  // For each register class, list the UnitSets that are supersets.
+  RegClassUnitSets.resize(NumRegClasses);
+  for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
+    // Recompute the sorted list of units in this class.
+    std::vector<unsigned> RegUnits;
+    const CodeGenRegister::Set &Regs = RegClasses[RCIdx]->getMembers();
+    for (RegUnitIterator UnitI(Regs); UnitI.isValid(); ++UnitI)
+      RegUnits.push_back(*UnitI);
+    std::sort(RegUnits.begin(), RegUnits.end());
+
+    // Don't increase pressure for unallocatable regclasses.
+    if (RegUnits.empty())
+      continue;
+
+    // Find all supersets.
+    for (unsigned USIdx = 0, USEnd = RegUnitSets.size();
+         USIdx != USEnd; ++USIdx) {
+      if (isRegUnitSubSet(RegUnits, RegUnitSets[USIdx].Units))
+        RegClassUnitSets[RCIdx].push_back(USIdx);
+    }
+  }
+}
+
 // Compute sets of overlapping registers.
 //
 // The standard set is all super-registers and all sub-registers, but the
@@ -1198,6 +1361,10 @@ void CodeGenRegBank::computeDerivedInfo() {
   // Compute a weight for each register unit created during getSubRegs.
   // This may create adopted register units (with unit # >= NumNativeRegUnits).
   computeRegUnitWeights();
+
+  // Compute a unique set of RegUnitSets. One for each RegClass and inferred
+  // supersets for the union of overlapping sets.
+  computeRegUnitSets();
 }
 
 //

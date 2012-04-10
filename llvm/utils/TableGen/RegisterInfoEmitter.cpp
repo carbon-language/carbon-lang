@@ -118,6 +118,75 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
   OS << "#endif // GET_REGINFO_ENUM\n\n";
 }
 
+void RegisterInfoEmitter::
+EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
+                    const std::string &ClassName) {
+  unsigned NumRCs = RegBank.getRegClasses().size();
+  unsigned NumSets = RegBank.getNumRegPressureSets();
+
+  OS << "/// Get the weight in units of pressure for this register class.\n"
+     << "unsigned " << ClassName << "::\n"
+     << "getRegClassWeight(const TargetRegisterClass *RC) const {\n"
+     << "  static const unsigned RCWeightTable[] = {\n";
+  for (unsigned i = 0, e = NumRCs; i != e; ++i) {
+    const CodeGenRegisterClass &RC = *RegBank.getRegClasses()[i];
+    const CodeGenRegister::Set &Regs = RC.getMembers();
+    if (Regs.empty())
+      OS << "    0";
+    else
+      OS << "    " << (*Regs.begin())->getWeight(RegBank);
+    OS << ",  \t// " << RC.getName() << "\n";
+  }
+  OS << "    0 };\n"
+     << "  return RCWeightTable[RC->getID()];\n"
+     << "}\n\n";
+
+  OS << "\n"
+     << "// Get the number of dimensions of register pressure.\n"
+     << "unsigned " << ClassName << "::getNumRegPressureSets() const {\n"
+     << "  return " << NumSets << ";\n}\n\n";
+
+  OS << "// Get the register unit pressure limit for this dimension.\n"
+     << "// This limit must be adjusted dynamically for reserved registers.\n"
+     << "unsigned " << ClassName << "::\n"
+     << "getRegPressureSetLimit(unsigned Idx) const {\n"
+     << "  static const unsigned PressureLimitTable[] = {\n";
+  for (unsigned i = 0; i < NumSets; ++i ) {
+    OS << "    " << RegBank.getRegPressureSet(i).Units.size()
+       << ",  \t// " << i << ": " << RegBank.getRegPressureSet(i).Name << "\n";
+  }
+  OS << "    0 };\n"
+     << "  return PressureLimitTable[Idx];\n"
+     << "}\n\n";
+
+  OS << "/// Get the dimensions of register pressure "
+     << "impacted by this register class.\n"
+     << "/// Returns a -1 terminated array of pressure set IDs\n"
+     << "const int* " << ClassName << "::\n"
+     << "getRegClassPressureSets(const TargetRegisterClass *RC) const {\n"
+     << "  static const int RCSetsTable[] = {\n    ";
+  std::vector<unsigned> RCSetStarts(NumRCs);
+  for (unsigned i = 0, StartIdx = 0, e = NumRCs; i != e; ++i) {
+    RCSetStarts[i] = StartIdx;
+    ArrayRef<unsigned> PSetIDs = RegBank.getRCPressureSetIDs(i);
+    for (ArrayRef<unsigned>::iterator PSetI = PSetIDs.begin(),
+           PSetE = PSetIDs.end(); PSetI != PSetE; ++PSetI) {
+      OS << *PSetI << ",  ";
+      ++StartIdx;
+    }
+    OS << "-1,  \t// " << RegBank.getRegClasses()[i]->getName() << "\n    ";
+    ++StartIdx;
+  }
+  OS << "-1 };\n";
+  OS << "  static const unsigned RCSetStartTable[] = {\n    ";
+  for (unsigned i = 0, e = NumRCs; i != e; ++i) {
+    OS << RCSetStarts[i] << ",";
+  }
+  OS << "0 };\n"
+     << "  unsigned SetListStart = RCSetStartTable[RC->getID()];\n"
+     << "  return &RCSetsTable[SetListStart];\n"
+     << "}\n\n";
+}
 
 void
 RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
@@ -593,6 +662,11 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  const TargetRegisterClass *getMatchingSuperRegClass("
         "const TargetRegisterClass*, const TargetRegisterClass*, "
         "unsigned) const;\n"
+     << "  unsigned getRegClassWeight(const TargetRegisterClass *RC) const;\n"
+     << "  unsigned getNumRegPressureSets() const;\n"
+     << "  unsigned getRegPressureSetLimit(unsigned Idx) const;\n"
+     << "  const int *getRegClassPressureSets("
+     << "const TargetRegisterClass *RC) const;\n"
      << "};\n\n";
 
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = RegBank.getRegClasses();
@@ -960,6 +1034,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  return 0;\n";
   }
   OS << "}\n\n";
+
+  EmitRegUnitPressure(OS, RegBank, ClassName);
 
   // Emit the constructor of the class...
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
