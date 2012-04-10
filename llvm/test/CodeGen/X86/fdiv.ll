@@ -23,3 +23,19 @@ define double @funky(double %x) {
   %div = fdiv double %x, 0.0
   ret double %div
 }
+
+define double @denormal1(double %x) {
+; Don't generate multiplication by a denormal.
+; CHECK: @denormal1
+; CHECK: divsd
+  %div = fdiv double %x, 0x7FD0000000000001
+  ret double %div
+}
+
+define double @denormal2(double %x) {
+; Don't generate multiplication by a denormal.
+; CHECK: @denormal
+; CHECK: divsd
+  %div = fdiv double %x, 0x7FEFFFFFFFFFFFFF
+  ret double %div
+}
