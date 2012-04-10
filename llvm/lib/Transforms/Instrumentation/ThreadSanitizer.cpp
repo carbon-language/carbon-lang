@@ -22,6 +22,7 @@
 #define DEBUG_TYPE "tsan"
 
 #include "FunctionBlackList.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -45,16 +46,33 @@ using namespace llvm;
 static cl::opt<std::string>  ClBlackListFile("tsan-blacklist",
        cl::desc("Blacklist file"), cl::Hidden);
 
+static cl::opt<bool> ClPrintStats("tsan-print-stats",
+       cl::desc("Print ThreadSanitizer instrumentation stats"), cl::Hidden);
+
 namespace {
+
+// Stats counters for ThreadSanitizer instrumentation.
+struct ThreadSanitizerStats {
+  size_t NumInstrumentedReads;
+  size_t NumInstrumentedWrites;
+  size_t NumOmittedReadsBeforeWrite;
+  size_t NumAccessesWithBadSize;
+  size_t NumInstrumentedVtableWrites;
+};
+
 /// ThreadSanitizer: instrument the code in module to find races.
 struct ThreadSanitizer : public FunctionPass {
   ThreadSanitizer();
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
+  bool doFinalization(Module &M);
   bool instrumentLoadOrStore(Instruction *I);
   static char ID;  // Pass identification, replacement for typeid.
 
  private:
+  void choseInstructionsToInstrument(SmallVectorImpl<Instruction*> &Local,
+                                     SmallVectorImpl<Instruction*> &All);
+
   TargetData *TD;
   OwningPtr<FunctionBlackList> BL;
   // Callbacks to run-time library are computed in doInitialization.
@@ -65,6 +83,9 @@ struct ThreadSanitizer : public FunctionPass {
   Value *TsanRead[kNumberOfAccessSizes];
   Value *TsanWrite[kNumberOfAccessSizes];
   Value *TsanVptrUpdate;
+
+  // Stats are modified w/o synchronization.
+  ThreadSanitizerStats stats;
 };
 }  // namespace
 
@@ -87,6 +108,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   if (!TD)
     return false;
   BL.reset(new FunctionBlackList(ClBlackListFile));
+  memset(&stats, 0, sizeof(stats));
 
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());
@@ -115,11 +137,59 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   return true;
 }
 
+bool ThreadSanitizer::doFinalization(Module &M) {
+  if (ClPrintStats) {
+    errs() << "ThreadSanitizerStats " << M.getModuleIdentifier()
+           << ": wr " << stats.NumInstrumentedWrites
+           << "; rd " << stats.NumInstrumentedReads
+           << "; vt " << stats.NumInstrumentedVtableWrites
+           << "; bs " << stats.NumAccessesWithBadSize
+           << "; rbw " << stats.NumOmittedReadsBeforeWrite
+           << "\n";
+  }
+  return true;
+}
+
+// Instrumenting some of the accesses may be proven redundant.
+// Currently handled:
+//  - read-before-write (within same BB, no calls between)
+//
+// We do not handle some of the patterns that should not survive
+// after the classic compiler optimizations.
+// E.g. two reads from the same temp should be eliminated by CSE,
+// two writes should be eliminated by DSE, etc.
+//
+// 'Local' is a vector of insns within the same BB (no calls between).
+// 'All' is a vector of insns that will be instrumented.
+void ThreadSanitizer::choseInstructionsToInstrument(
+    SmallVectorImpl<Instruction*> &Local,
+    SmallVectorImpl<Instruction*> &All) {
+  SmallSet<Value*, 8> WriteTargets;
+  // Iterate from the end.
+  for (SmallVectorImpl<Instruction*>::reverse_iterator It = Local.rbegin(),
+       E = Local.rend(); It != E; ++It) {
+    Instruction *I = *It;
+    if (StoreInst *Store = dyn_cast<StoreInst>(I)) {
+      WriteTargets.insert(Store->getPointerOperand());
+    } else {
+      LoadInst *Load = cast<LoadInst>(I);
+      if (WriteTargets.count(Load->getPointerOperand())) {
+        // We will write to this temp, so no reason to analyze the read.
+        stats.NumOmittedReadsBeforeWrite++;
+        continue;
+      }
+    }
+    All.push_back(I);
+  }
+  Local.clear();
+}
+
 bool ThreadSanitizer::runOnFunction(Function &F) {
   if (!TD) return false;
   if (BL->isIn(F)) return false;
   SmallVector<Instruction*, 8> RetVec;
-  SmallVector<Instruction*, 8> LoadsAndStores;
+  SmallVector<Instruction*, 8> AllLoadsAndStores;
+  SmallVector<Instruction*, 8> LocalLoadsAndStores;
   bool Res = false;
   bool HasCalls = false;
 
@@ -130,12 +200,15 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
     for (BasicBlock::iterator BI = BB.begin(), BE = BB.end();
          BI != BE; ++BI) {
       if (isa<LoadInst>(BI) || isa<StoreInst>(BI))
-        LoadsAndStores.push_back(BI);
+        LocalLoadsAndStores.push_back(BI);
       else if (isa<ReturnInst>(BI))
         RetVec.push_back(BI);
-      else if (isa<CallInst>(BI) || isa<InvokeInst>(BI))
+      else if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) {
         HasCalls = true;
+        choseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
+      }
     }
+    choseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
   }
 
   // We have collected all loads and stores.
@@ -143,8 +216,8 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
   // (e.g. variables that do not escape, etc).
 
   // Instrument memory accesses.
-  for (size_t i = 0, n = LoadsAndStores.size(); i < n; ++i) {
-    Res |= instrumentLoadOrStore(LoadsAndStores[i]);
+  for (size_t i = 0, n = AllLoadsAndStores.size(); i < n; ++i) {
+    Res |= instrumentLoadOrStore(AllLoadsAndStores[i]);
   }
 
   // Instrument function entry/exit points if there were instrumented accesses.
@@ -185,6 +258,7 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
   uint32_t TypeSize = TD->getTypeStoreSizeInBits(OrigTy);
   if (TypeSize != 8  && TypeSize != 16 &&
       TypeSize != 32 && TypeSize != 64 && TypeSize != 128) {
+    stats.NumAccessesWithBadSize++;
     // Ignore all unusual sizes.
     return false;
   }
@@ -193,11 +267,14 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
     IRB.CreateCall2(TsanVptrUpdate,
                     IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
                     IRB.CreatePointerCast(StoredValue, IRB.getInt8PtrTy()));
+    stats.NumInstrumentedVtableWrites++;
     return true;
   }
   size_t Idx = CountTrailingZeros_32(TypeSize / 8);
   assert(Idx < kNumberOfAccessSizes);
   Value *OnAccessFunc = IsWrite ? TsanWrite[Idx] : TsanRead[Idx];
   IRB.CreateCall(OnAccessFunc, IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()));
+  if (IsWrite) stats.NumInstrumentedWrites++;
+  else         stats.NumInstrumentedReads++;
   return true;
 }
