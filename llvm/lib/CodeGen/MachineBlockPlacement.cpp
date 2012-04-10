@@ -547,6 +547,18 @@ MachineBasicBlock *
 MachineBlockPlacement::findBestLoopTop(MachineFunction &F,
                                        MachineLoop &L,
                                        const BlockFilterSet &LoopBlockSet) {
+  // We don't want to layout the loop linearly in all cases. If the loop header
+  // is just a normal basic block in the loop, we want to look for what block
+  // within the loop is the best one to layout at the top. However, if the loop
+  // header has be pre-merged into a chain due to predecessors not having
+  // analyzable branches, *and* the predecessor it is merged with is *not* part
+  // of the loop, rotating the header into the middle of the loop will create
+  // a non-contiguous range of blocks which is Very Bad. So start with the
+  // header and only rotate if safe.
+  BlockChain &HeaderChain = *BlockToChain[L.getHeader()];
+  if (!LoopBlockSet.count(*HeaderChain.begin()))
+    return L.getHeader();
+
   BlockFrequency BestExitEdgeFreq;
   MachineBasicBlock *ExitingBB = 0;
   MachineBasicBlock *LoopingBB = 0;
