@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <mach/mach.h>
 #include <malloc/malloc.h>
+#include <stack_logging.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,19 +44,19 @@ struct range_callback_info_t;
 typedef void range_callback_t (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size);
 typedef void zone_callback_t (void *info, const malloc_zone_t *zone);
 
-typedef struct range_callback_info_tag
+struct range_callback_info_t
 {
     zone_callback_t *zone_callback;
     range_callback_t *range_callback;
     void *baton;
-} range_callback_info_t;
+};
 
-typedef enum data_type
+enum data_type_t
 {
     eDataTypeBytes,
     eDataTypeCStr,
     eDataTypeInteger
-} data_type_t;
+};
 
 typedef struct range_contains_data_callback_info_tag
 {
@@ -197,108 +198,6 @@ range_contains_ptr_callback (task_t task, void *baton, unsigned type, uint64_t p
     {
         printf ("0x%llx: error: couldn't read %llu bytes\n", ptr_addr, ptr_size);
     }   
-}
-
-
-typedef uint64_t MachMallocEventId;
-
-enum MachMallocEventType
-{
-    eMachMallocEventTypeAlloc = 2,
-    eMachMallocEventTypeDealloc = 4,
-    eMachMallocEventTypeOther = 1
-};
-
-struct MachMallocEvent
-{
-    mach_vm_address_t m_base_address;
-    uint64_t m_size;
-    MachMallocEventType m_event_type;
-    MachMallocEventId m_event_id;
-};
-
-static void foundStackLog(mach_stack_logging_record_t record, void *context) {
-    *((bool*)context) = true;
-}
-
-bool
-malloc_stack_logging_is_enabled ()
-{
-    bool found = false;
-    __mach_stack_logging_enumerate_records(m_task, 0x0, foundStackLog, &found);
-    return found;
-}
-
-struct history_enumerator_impl_data
-{
-    MachMallocEvent *buffer;
-    uint32_t        *position;
-    uint32_t         count;
-};
-
-static void 
-history_enumerator_impl(mach_stack_logging_record_t record, void* enum_obj)
-{
-    history_enumerator_impl_data *data = (history_enumerator_impl_data*)enum_obj;
-    
-    if (*data->position >= data->count)
-        return;
-    
-    data->buffer[*data->position].m_base_address = record.address;
-    data->buffer[*data->position].m_size = record.argument;
-    data->buffer[*data->position].m_event_id = record.stack_identifier;
-    data->buffer[*data->position].m_event_type = record.type_flags == stack_logging_type_alloc ?   eMachMallocEventTypeAlloc :
-                                                 record.type_flags == stack_logging_type_dealloc ? eMachMallocEventTypeDealloc :
-                                                                                                   eMachMallocEventTypeOther;
-    *data->position+=1;
-}
-
-bool
-MachTask::EnumerateMallocRecords (MachMallocEvent *event_buffer,
-                                  uint32_t buffer_size,
-                                  uint32_t *count)
-{
-    return EnumerateMallocRecords(0,
-                                  event_buffer,
-                                  buffer_size,
-                                  count);
-}
-
-bool
-MachTask::EnumerateMallocRecords (mach_vm_address_t address,
-                                  MachMallocEvent *event_buffer,
-                                  uint32_t buffer_size,
-                                  uint32_t *count)
-{
-    if (!event_buffer || !count)
-        return false;
-    
-    if (buffer_size == 0)
-        return false;
-    
-    *count = 0;
-    history_enumerator_impl_data data = { event_buffer, count, buffer_size };
-    __mach_stack_logging_enumerate_records(m_task, address, history_enumerator_impl, &data);
-    return (*count > 0);
-}
-
-bool
-MachTask::EnumerateMallocFrames (MachMallocEventId event_id,
-                                 mach_vm_address_t *function_addresses_buffer,
-                                 uint32_t buffer_size,
-                                 uint32_t *count)
-{
-    if (!function_addresses_buffer || !count)
-        return false;
-    
-    if (buffer_size == 0)
-        return false;
-    
-    __mach_stack_logging_frames_for_uniqued_stack(m_task, event_id, &function_addresses_buffer[0], buffer_size, count);
-    *count -= 1;
-    if (function_addresses_buffer[*count-1] < vm_page_size)
-        *count -= 1;
-    return (*count > 0);
 }
 
 uint32_t
