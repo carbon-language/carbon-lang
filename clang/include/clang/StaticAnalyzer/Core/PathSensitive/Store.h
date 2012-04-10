@@ -120,9 +120,18 @@ public:
   virtual SVal ArrayToPointer(Loc Array) = 0;
 
   /// Evaluates DerivedToBase casts.
-  virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType) {
-    return UnknownVal();
-  }
+  virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType) = 0;
+
+  /// \brief Evaluates C++ dynamic_cast cast.
+  /// The callback may result in the following 3 scenarios:
+  ///  - Successful cast (ex: derived is subclass of base).
+  ///  - Failed cast (ex: derived is definitely not a subclass of base).
+  ///  - We don't know (base is a symbolic region and we don't have 
+  ///    enough info to determine if the cast will succeed at run time).
+  /// The function returns an SVal representing the derived class; it's
+  /// valid only if Failed flag is set to false.
+  virtual SVal evalDynamicCast(SVal base, QualType derivedPtrType,
+                                 bool &Failed) = 0;
 
   class CastResult {
     ProgramStateRef state;

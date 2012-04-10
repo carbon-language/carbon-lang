@@ -1,0 +1,185 @@
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core -verify %s
+
+class A {
+public:
+    virtual void f(){};
+
+};
+class B : public A{
+public:
+  int m;
+};
+class C : public A{};
+
+class BB: public B{};
+
+// A lot of the tests below have the if statement in them, which forces the
+// analyzer to explore both path - when the result is 0 and not. This makes
+// sure that we definitely know that the result is non-0 (as the result of
+// the cast).
+int testDynCastFromRadar() {
+    B aa;
+    A *a = &aa;
+    const int* res = 0;
+    B *b = dynamic_cast<B*>(a);
+    static const int i = 5;
+    if(b) {
+        res = &i;
+    } else {
+        res = 0;
+    }
+    return *res; // no warning
+}
+
+int testBaseToBase1() {
+  B b;
+  B *pb = &b;
+  B *pbb = dynamic_cast<B*>(pb);
+  const int* res = 0;
+  static const int i = 5;
+  if (pbb) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // no warning
+}
+
+int testMultipleLevelsOfSubclassing1() {
+  BB bb;
+  B *pb = &bb;
+  A *pa = pb;
+  B *b = dynamic_cast<B*>(pa);
+  const int* res = 0;
+  static const int i = 5;
+  if (b) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // no warning
+}
+
+int testMultipleLevelsOfSubclassing2() {
+  BB bb;
+  A *pbb = &bb;
+  B *b = dynamic_cast<B*>(pbb);
+  BB *s = dynamic_cast<BB*>(b);
+  const int* res = 0;
+  static const int i = 5;
+  if (s) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // no warning
+}
+
+int testMultipleLevelsOfSubclassing3() {
+  BB bb;
+  A *pbb = &bb;
+  B *b = dynamic_cast<B*>(pbb);
+  return b->m; // no warning
+}
+
+int testLHS() {
+    B aa;
+    A *a = &aa;
+    return (dynamic_cast<B*>(a))->m;
+}
+
+int testLHS2() {
+    B aa;
+    A *a = &aa;
+    return (*dynamic_cast<B*>(a)).m;
+}
+
+int testDynCastUnknown2(class A *a) {
+  B *b = dynamic_cast<B*>(a);
+  return b->m; // no warning
+}
+
+int testDynCastUnknown(class A *a) {
+  B *b = dynamic_cast<B*>(a);
+  const int* res = 0;
+  static const int i = 5;
+  if (b) {
+    res = &i;
+  } else {
+    res = 0;
+  }
+  return *res; // expected-warning {{Dereference of null pointer}}
+}
+
+int testDynCastFail2() {
+  C c;
+  A *pa = &c;
+  B *b = dynamic_cast<B*>(pa);
+  return b->m; // expected-warning {{dereference of a null pointer}}
+}
+
+int testLHSFail() {
+    C c;
+    A *a = &c;
+    return (*dynamic_cast<B*>(a)).m; // expected-warning {{Dereference of null pointer}}
+}
+
+int testBaseToDerivedFail() {
+  A a;
+  B *b = dynamic_cast<B*>(&a);
+  return b->m; // expected-warning {{dereference of a null pointer}}
+}
+
+int testConstZeroFail() {
+  B *b = dynamic_cast<B*>((A *)0);
+  return b->m; // expected-warning {{dereference of a null pointer}}
+}
+
+int testConstZeroFail2() {
+  A *a = 0;
+  B *b = dynamic_cast<B*>(a);
+  return b->m; // expected-warning {{dereference of a null pointer}}
+}
+
+int testUpcast() {
+  B b;
+  A *a = dynamic_cast<A*>(&b);
+  const int* res = 0;
+  static const int i = 5;
+  if (a) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // no warning
+}
+
+int testCastToVoidStar() {
+  A a;
+  void *b = dynamic_cast<void*>(&a);
+  const int* res = 0;
+  static const int i = 5;
+  if (b) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // no warning
+}
+
+int testReference() {
+  A a;
+  B &b = dynamic_cast<B&>(a);
+  return b.m; // no warning
+}
+
+// False negatives.
+
+// Symbolic regions are not typed, so we cannot deduce that the cast will
+// always fail in this case.
+int testDynCastFail1(class C *c) {
+  B *b = 0;
+  b = dynamic_cast<B*>(c);
+  return b->m;
+}
+

@@ -283,8 +283,50 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         Bldr.generateNode(CastE, Pred, state);
         continue;
       }
-        // Various C++ casts that are not handled yet.
-      case CK_Dynamic:
+      // Handle C++ dyn_cast.
+      case CK_Dynamic: {
+        ProgramStateRef state = Pred->getState();
+        const LocationContext *LCtx = Pred->getLocationContext();
+        SVal val = state->getSVal(Ex, LCtx);
+
+        // Compute the type of the result.
+        QualType resultType = CastE->getType();
+        if (CastE->isLValue())
+          resultType = getContext().getPointerType(resultType);
+
+        bool Failed = false;
+
+        // Check if the value being cast evaluates to 0.
+        if (val.isZeroConstant())
+          Failed = true;
+        // Else, evaluate the cast.
+        else
+          val = getStoreManager().evalDynamicCast(val, T, Failed);
+
+        if (Failed) {
+          // If the cast fails, conjure symbol constrained to 0.
+          DefinedOrUnknownSVal NewSym = svalBuilder.getConjuredSymbolVal(NULL,
+                                 CastE, LCtx, resultType,
+                                 currentBuilderContext->getCurrentBlockCount());
+          DefinedOrUnknownSVal Constraint = svalBuilder.evalEQ(state,
+                                 NewSym, svalBuilder.makeZeroVal(resultType));
+          state = state->assume(Constraint, true);
+          state = state->BindExpr(CastE, LCtx, NewSym);
+        } else {
+          // If we don't know if the cast succeeded, conjure a new symbol.
+          if (val.isUnknown()) {
+            DefinedOrUnknownSVal NewSym = svalBuilder.getConjuredSymbolVal(NULL,
+                                 CastE, LCtx, resultType,
+                                 currentBuilderContext->getCurrentBlockCount());
+            state = state->BindExpr(CastE, LCtx, NewSym);
+          } else 
+            // Else, bind to the derived region value.
+            state = state->BindExpr(CastE, LCtx, val);
+        }
+        Bldr.generateNode(CastE, Pred, state);
+        continue;
+      }
+      // Various C++ casts that are not handled yet.
       case CK_ToUnion:
       case CK_BaseToDerived:
       case CK_NullToMemberPointer:
@@ -300,9 +342,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         if (CastE->isLValue())
           resultType = getContext().getPointerType(resultType);
         const LocationContext *LCtx = Pred->getLocationContext();
-        SVal result =
-	  svalBuilder.getConjuredSymbolVal(NULL, CastE, LCtx, resultType,
-                               currentBuilderContext->getCurrentBlockCount());
+        SVal result = svalBuilder.getConjuredSymbolVal(NULL, CastE, LCtx,
+                    resultType, currentBuilderContext->getCurrentBlockCount());
         ProgramStateRef state = Pred->getState()->BindExpr(CastE, LCtx,
                                                                result);
         Bldr.generateNode(CastE, Pred, state);
