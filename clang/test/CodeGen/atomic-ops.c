@@ -1,5 +1,12 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=i686-apple-darwin9 | FileCheck %s
 
+// Also test serialization of atomic operations here, to avoid duplicating the
+// test.
+// RUN: %clang_cc1 %s -emit-pch -o %t -triple=i686-apple-darwin9
+// RUN: %clang_cc1 %s -include-pch %t -triple=i686-apple-darwin9 -emit-llvm -o - | FileCheck %s
+#ifndef ALREADY_INCLUDED
+#define ALREADY_INCLUDED
+
 // Basic IRGen tests for __atomic_*
 
 // FIXME: Need to implement __atomic_is_lock_free
@@ -117,3 +124,5 @@ int structAtomicCmpExchange() {
   return __atomic_compare_exchange_strong(&bigAtomic, &f, g, 5, 5);
   // CHECK: call zeroext i1 @__atomic_compare_exchange(i32 512, i8* bitcast (%struct.foo* @bigAtomic to i8*), 
 }
+
+#endif

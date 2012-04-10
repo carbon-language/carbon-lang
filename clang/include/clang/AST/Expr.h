@@ -4470,7 +4470,7 @@ public:
 
 /// AtomicExpr - Variadic atomic builtins: __atomic_exchange, __atomic_fetch_*,
 /// __atomic_load, __atomic_store, and __atomic_compare_exchange_*, for the
-/// similarly-named C++0x instructions.  All of these instructions take one
+/// similarly-named C++11 instructions.  All of these instructions take one
 /// primary pointer and at least one memory order.
 class AtomicExpr : public Expr {
 public:
@@ -4483,9 +4483,15 @@ private:
   SourceLocation BuiltinLoc, RParenLoc;
   AtomicOp Op;
 
+  friend class ASTStmtReader;
+
 public:
   AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr, QualType t,
              AtomicOp op, SourceLocation RP);
+
+  /// \brief Determine the number of arguments the specified atomic builtin
+  /// should have.
+  static unsigned getNumSubExprs(AtomicOp Op);
 
   /// \brief Build an empty AtomicExpr.
   explicit AtomicExpr(EmptyShell Empty) : Expr(AtomicExprClass, Empty) { }
@@ -4493,14 +4499,8 @@ public:
   Expr *getPtr() const {
     return cast<Expr>(SubExprs[PTR]);
   }
-  void setPtr(Expr *E) {
-    SubExprs[PTR] = E;
-  }
   Expr *getOrder() const {
     return cast<Expr>(SubExprs[ORDER]);
-  }
-  void setOrder(Expr *E) {
-    SubExprs[ORDER] = E;
   }
   Expr *getVal1() const {
     if (Op == Init)
@@ -4508,35 +4508,17 @@ public:
     assert(NumSubExprs >= 3);
     return cast<Expr>(SubExprs[VAL1]);
   }
-  void setVal1(Expr *E) {
-    if (Op == Init) {
-      SubExprs[ORDER] = E;
-      return;
-    }
-    assert(NumSubExprs >= 3);
-    SubExprs[VAL1] = E;
-  }
   Expr *getOrderFail() const {
     assert(NumSubExprs == 5);
     return cast<Expr>(SubExprs[ORDER_FAIL]);
-  }
-  void setOrderFail(Expr *E) {
-    assert(NumSubExprs == 5);
-    SubExprs[ORDER_FAIL] = E;
   }
   Expr *getVal2() const {
     assert(NumSubExprs == 5);
     return cast<Expr>(SubExprs[VAL2]);
   }
-  void setVal2(Expr *E) {
-    assert(NumSubExprs == 5);
-    SubExprs[VAL2] = E;
-  }
 
   AtomicOp getOp() const { return Op; }
-  void setOp(AtomicOp op) { Op = op; }
   unsigned getNumSubExprs() { return NumSubExprs; }
-  void setNumSubExprs(unsigned num) { NumSubExprs = num; }
 
   Expr **getSubExprs() { return reinterpret_cast<Expr **>(SubExprs); }
 
@@ -4550,10 +4532,7 @@ public:
   }
 
   SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
-  void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
-
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(BuiltinLoc, RParenLoc);

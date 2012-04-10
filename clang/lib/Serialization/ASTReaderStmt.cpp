@@ -790,21 +790,12 @@ void ASTStmtReader::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
 
 void ASTStmtReader::VisitAtomicExpr(AtomicExpr *E) {
   VisitExpr(E);
-  E->setOp(AtomicExpr::AtomicOp(Record[Idx++]));
-  E->setPtr(Reader.ReadSubExpr());
-  E->setOrder(Reader.ReadSubExpr());
-  E->setNumSubExprs(2);
-  if (E->getOp() != AtomicExpr::Load) {
-    E->setVal1(Reader.ReadSubExpr());
-    E->setNumSubExprs(3);
-  }
-  if (E->isCmpXChg()) {
-    E->setOrderFail(Reader.ReadSubExpr());
-    E->setVal2(Reader.ReadSubExpr());
-    E->setNumSubExprs(5);
-  }
-  E->setBuiltinLoc(ReadSourceLocation(Record, Idx));
-  E->setRParenLoc(ReadSourceLocation(Record, Idx));
+  E->Op = AtomicExpr::AtomicOp(Record[Idx++]);
+  E->NumSubExprs = AtomicExpr::getNumSubExprs(E->Op);
+  for (unsigned I = 0; I != E->NumSubExprs; ++I)
+    E->SubExprs[I] = Reader.ReadSubExpr();
+  E->BuiltinLoc = ReadSourceLocation(Record, Idx);
+  E->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
 //===----------------------------------------------------------------------===//

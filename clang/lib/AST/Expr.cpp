@@ -3841,6 +3841,7 @@ AtomicExpr::AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr,
          false, false, false, false),
     NumSubExprs(nexpr), BuiltinLoc(BLoc), RParenLoc(RP), Op(op)
 {
+  assert(nexpr == getNumSubExprs(op) && "wrong number of subexpressions");
   for (unsigned i = 0; i < nexpr; i++) {
     if (args[i]->isTypeDependent())
       ExprBits.TypeDependent = true;
@@ -3853,4 +3854,24 @@ AtomicExpr::AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr,
 
     SubExprs[i] = args[i];
   }
+}
+
+unsigned AtomicExpr::getNumSubExprs(AtomicOp Op) {
+  switch (Op) {
+  case Init:
+  case Load:
+    return 2;
+  case Store:
+  case Xchg:
+  case Add:
+  case Sub:
+  case And:
+  case Or:
+  case Xor:
+    return 3;
+  case CmpXchgStrong:
+  case CmpXchgWeak:
+    return 5;
+  }
+  llvm_unreachable("unknown atomic op");
 }
