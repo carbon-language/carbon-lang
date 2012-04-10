@@ -31,3 +31,12 @@ void B::bar(float real) {
 // RUN: c-index-test -code-completion-at=%s:16:6 %s | FileCheck -check-prefix=CHECK-FOO-QUAL %s
 // CHECK-FOO-QUAL: CXXMethod:{TypedText foo}{LeftParen (}{Placeholder a}{Comma , }{Placeholder b}{RightParen )} (20)
 
+// RUN: c-index-test -code-completion-at=%s:5:1 %s | FileCheck -check-prefix=CHECK-ACCESS %s
+// CHECK-ACCESS: NotImplemented:{TypedText private} (40)
+// CHECK-ACCESS: NotImplemented:{TypedText protected} (40)
+// CHECK-ACCESS: NotImplemented:{TypedText public} (40)
+
+// RUN: env CINDEXTEST_CODE_COMPLETE_PATTERNS=1 c-index-test -code-completion-at=%s:5:1 %s | FileCheck -check-prefix=CHECK-ACCESS-PATTERN %s
+// CHECK-ACCESS-PATTERN: NotImplemented:{TypedText private}{Colon :} (40)
+// CHECK-ACCESS-PATTERN: NotImplemented:{TypedText protected}{Colon :} (40)
+// CHECK-ACCESS-PATTERN: NotImplemented:{TypedText public}{Colon :} (40)

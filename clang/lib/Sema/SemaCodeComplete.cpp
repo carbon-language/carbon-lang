@@ -1542,17 +1542,20 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 
         // public:
         Builder.AddTypedTextChunk("public");
-        Builder.AddChunk(CodeCompletionString::CK_Colon);
+        if (Results.includeCodePatterns())
+          Builder.AddChunk(CodeCompletionString::CK_Colon);
         Results.AddResult(Result(Builder.TakeString()));
 
         // protected:
         Builder.AddTypedTextChunk("protected");
-        Builder.AddChunk(CodeCompletionString::CK_Colon);
+        if (Results.includeCodePatterns())
+          Builder.AddChunk(CodeCompletionString::CK_Colon);
         Results.AddResult(Result(Builder.TakeString()));
 
         // private:
         Builder.AddTypedTextChunk("private");
-        Builder.AddChunk(CodeCompletionString::CK_Colon);
+        if (Results.includeCodePatterns())
+          Builder.AddChunk(CodeCompletionString::CK_Colon);
         Results.AddResult(Result(Builder.TakeString()));
       }
     }
