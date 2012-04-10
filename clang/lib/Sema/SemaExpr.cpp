@@ -7143,21 +7143,6 @@ static bool IsReadonlyProperty(Expr *E, Sema &S) {
   return false;
 }
 
-static bool IsConstProperty(Expr *E, Sema &S) {
-  const ObjCPropertyRefExpr *PropExpr = dyn_cast<ObjCPropertyRefExpr>(E);
-  if (!PropExpr) return false;
-  
-  assert(!S.Context.hasSameType(PropExpr->getType(), 
-                                S.Context.PseudoObjectTy)
-         && "property expression cannot be a pseudo object");
-  
-  if (PropExpr->isImplicitProperty()) return false;
-    
-  ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
-  QualType T = PDecl->getType().getNonReferenceType();
-  return T.isConstQualified();
-}
-
 static bool IsReadonlyMessage(Expr *E, Sema &S) {
   const MemberExpr *ME = dyn_cast<MemberExpr>(E);
   if (!ME) return false;
@@ -7197,13 +7182,12 @@ static NonConstCaptureKind isReferenceToNonConstCapture(Sema &S, Expr *E) {
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
 /// emit an error and return true.  If so, return false.
 static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
+  assert(!E->hasPlaceholderType(BuiltinType::PseudoObject));
   SourceLocation OrigLoc = Loc;
   Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context,
                                                               &Loc);
   if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
     IsLV = Expr::MLV_ReadonlyProperty;
-  else if (IsLV == Expr::MLV_ConstQualified && IsConstProperty(E, S))
-    IsLV = Expr::MLV_Valid;
   else if (IsLV == Expr::MLV_ClassTemporary && IsReadonlyMessage(E, S))
     IsLV = Expr::MLV_InvalidMessageExpression;
   if (IsLV == Expr::MLV_Valid)
