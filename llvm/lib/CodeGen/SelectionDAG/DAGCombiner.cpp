@@ -5769,8 +5769,15 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
     APFloat N1APF = N1CFP->getValueAPF();
     APFloat Recip(N1APF.getSemantics(), 1); // 1.0
     APFloat::opStatus st = Recip.divide(N1APF, APFloat::rmNearestTiesToEven);
-    // Only do the transform if the reciprocal is not too horrible (eg not NaN).
-    if (st == APFloat::opOK || st == APFloat::opInexact)
+    // Only do the transform if the reciprocal is not too horrible (eg not NaN)
+    // and the reciprocal is a legal fp imm.
+    if ((st == APFloat::opOK || st == APFloat::opInexact) &&
+        (!LegalOperations ||
+         // FIXME: custom lowering of ConstantFP might fail (see e.g. ARM
+         // backend)... we should handle this gracefully after Legalize.
+         // TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT) ||
+         TLI.isOperationLegal(llvm::ISD::ConstantFP, VT) ||
+         TLI.isFPImmLegal(Recip, VT)))
       return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N0,
                          DAG.getConstantFP(Recip, VT));
   }
