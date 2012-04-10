@@ -130,6 +130,17 @@ namespace llvm {
     // This is only valid after getSubRegs() completes.
     const RegUnitList &getRegUnits() const { return RegUnits; }
 
+    // Inherit register units from subregisters.
+    // Return true if the RegUnits changed.
+    bool inheritRegUnits(CodeGenRegBank &RegBank);
+
+    // Adopt a register unit for pressure tracking.
+    // A unit is adopted iff its unit number is >= NumNativeRegUnits.
+    void adoptRegUnit(unsigned RUID) { RegUnits.push_back(RUID); }
+
+    // Get the sum of this register's register unit weights.
+    unsigned getWeight(const CodeGenRegBank &RegBank) const;
+
     // Order CodeGenRegister pointers by EnumValue.
     struct Less {
       bool operator()(const CodeGenRegister *A,
@@ -315,7 +326,12 @@ namespace llvm {
     // Registers.
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
-    unsigned NumRegUnits;
+    unsigned NumNativeRegUnits;
+    unsigned NumRegUnits; // # native + adopted register units.
+
+    // Map each register unit to a weight (for register pressure).
+    // Includes native and adopted register units.
+    std::vector<unsigned> RegUnitWeights;
 
     // Register classes.
     std::vector<CodeGenRegisterClass*> RegClasses;
@@ -337,6 +353,9 @@ namespace llvm {
     void inferSubClassWithSubReg(CodeGenRegisterClass *RC);
     void inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
                                     unsigned FirstSubRegRC = 0);
+
+    // Compute a weight for each register unit created during getSubRegs.
+    void computeRegUnitWeights();
 
     // Populate the Composite map from sub-register relationships.
     void computeComposites();
@@ -364,7 +383,24 @@ namespace llvm {
     // Find a register from its Record def.
     CodeGenRegister *getReg(Record*);
 
-    unsigned newRegUnit() { return NumRegUnits++; }
+    // Get a Register's index into the Registers array.
+    unsigned getRegIndex(const CodeGenRegister *Reg) const {
+      return Reg->EnumValue - 1;
+    }
+
+    // Create a new non-native register unit that can be adopted by a register
+    // to increase its pressure. Note that NumNativeRegUnits is not increased.
+    unsigned newRegUnit(unsigned Weight) {
+      if (!RegUnitWeights.empty()) {
+        RegUnitWeights.resize(NumRegUnits+1);
+        RegUnitWeights[NumRegUnits] = Weight;
+      }
+      return NumRegUnits++;
+    }
+
+    bool isNativeUnit(unsigned RUID) {
+      return RUID < NumNativeRegUnits;
+    }
 
     ArrayRef<CodeGenRegisterClass*> getRegClasses() const {
       return RegClasses;
@@ -379,6 +415,14 @@ namespace llvm {
     /// classes have a superset-subset relationship and the same set of types,
     /// return the superclass.  Otherwise return null.
     const CodeGenRegisterClass* getRegClassForRegister(Record *R);
+
+    unsigned getRegUnitWeight(unsigned RUID) const {
+      return RegUnitWeights[RUID];
+    }
+
+    void increaseRegUnitWeight(unsigned RUID, unsigned Inc) {
+      RegUnitWeights[RUID] += Inc;
+    }
 
     // Computed derived records such as missing sub-register indices.
     void computeDerivedInfo();
