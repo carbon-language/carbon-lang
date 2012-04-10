@@ -1934,59 +1934,68 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   return result;
 }
 
-bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
+bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
   if (N->getNumValues() != 1)
     return false;
   if (!N->hasNUsesOfValue(1, 0))
     return false;
 
-  unsigned NumCopies = 0;
-  SDNode* Copies[2] = { 0, 0 };
-  SDNode *Use = *N->use_begin();
-  if (Use->getOpcode() == ISD::CopyToReg) {
-    Copies[NumCopies++] = Use;
-  } else if (Use->getOpcode() == ARMISD::VMOVRRD) {
+  SDValue TCChain = Chain;
+  SDNode *Copy = *N->use_begin();
+  if (Copy->getOpcode() == ISD::CopyToReg) {
+    // If the copy has a glue operand, we conservatively assume it isn't safe to
+    // perform a tail call.
+    if (Copy->getOperand(Copy->getNumOperands()-1).getValueType() == MVT::Glue)
+      return false;
+    TCChain = Copy->getOperand(0);
+  } else if (Copy->getOpcode() == ARMISD::VMOVRRD) {
+    SDNode *VMov = Copy;
     // f64 returned in a pair of GPRs.
-    for (SDNode::use_iterator UI = Use->use_begin(), UE = Use->use_end();
+    SmallPtrSet<SDNode*, 2> Copies;
+    for (SDNode::use_iterator UI = VMov->use_begin(), UE = VMov->use_end();
          UI != UE; ++UI) {
       if (UI->getOpcode() != ISD::CopyToReg)
         return false;
-      Copies[UI.getUse().getResNo()] = *UI;
-      ++NumCopies;
+      Copies.insert(*UI);
     }
-  } else if (Use->getOpcode() == ISD::BITCAST) {
+    if (Copies.size() > 2)
+      return false;
+
+    for (SDNode::use_iterator UI = VMov->use_begin(), UE = VMov->use_end();
+         UI != UE; ++UI) {
+      SDValue UseChain = UI->getOperand(0);
+      if (Copies.count(UseChain.getNode()))
+        // Second CopyToReg
+        Copy = *UI;
+      else
+        // First CopyToReg
+        TCChain = UseChain;
+    }
+  } else if (Copy->getOpcode() == ISD::BITCAST) {
     // f32 returned in a single GPR.
-    if (!Use->hasNUsesOfValue(1, 0))
+    if (!Copy->hasOneUse())
       return false;
-    Use = *Use->use_begin();
-    if (Use->getOpcode() != ISD::CopyToReg || !Use->hasNUsesOfValue(1, 0))
+    Copy = *Copy->use_begin();
+    if (Copy->getOpcode() != ISD::CopyToReg || !Copy->hasNUsesOfValue(1, 0))
       return false;
-    Copies[NumCopies++] = Use;
+    Chain = Copy->getOperand(0);
   } else {
     return false;
   }
 
-  if (NumCopies != 1 && NumCopies != 2)
-    return false;
-
   bool HasRet = false;
-  for (unsigned i = 0; i < NumCopies; ++i) {
-    SDNode *Copy = Copies[i];
-    for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
-         UI != UE; ++UI) {
-      if (UI->getOpcode() == ISD::CopyToReg) {
-        SDNode *Use = *UI;
-        if (Use == Copies[0] || ((NumCopies == 2) && (Use == Copies[1])))
-          continue;
-        return false;
-      }
-      if (UI->getOpcode() != ARMISD::RET_FLAG)
-        return false;
-      HasRet = true;
-    }
+  for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
+       UI != UE; ++UI) {
+    if (UI->getOpcode() != ARMISD::RET_FLAG)
+      return false;
+    HasRet = true;
   }
 
-  return HasRet;
+  if (!HasRet)
+    return false;
+
+  Chain = TCChain;
+  return true;
 }
 
 bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {

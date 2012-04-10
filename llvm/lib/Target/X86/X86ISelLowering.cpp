@@ -1578,18 +1578,20 @@ X86TargetLowering::LowerReturn(SDValue Chain,
                      MVT::Other, &RetOps[0], RetOps.size());
 }
 
-bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
+bool X86TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
   if (N->getNumValues() != 1)
     return false;
   if (!N->hasNUsesOfValue(1, 0))
     return false;
 
+  SDValue TCChain = Chain;
   SDNode *Copy = *N->use_begin();
   if (Copy->getOpcode() == ISD::CopyToReg) {
     // If the copy has a glue operand, we conservatively assume it isn't safe to
     // perform a tail call.
     if (Copy->getOperand(Copy->getNumOperands()-1).getValueType() == MVT::Glue)
       return false;
+    TCChain = Copy->getOperand(0);
   } else if (Copy->getOpcode() != ISD::FP_EXTEND)
     return false;
 
@@ -1601,7 +1603,11 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
     HasRet = true;
   }
 
-  return HasRet;
+  if (!HasRet)
+    return false;
+
+  Chain = TCChain;
+  return true;
 }
 
 EVT

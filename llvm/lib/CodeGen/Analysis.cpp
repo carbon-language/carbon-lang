@@ -290,7 +290,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
 }
 
 bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
-                                const TargetLowering &TLI) {
+                                SDValue &Chain, const TargetLowering &TLI) {
   const Function *F = DAG.getMachineFunction().getFunction();
 
   // Conservatively require the attributes of the call to match those of
@@ -304,5 +304,5 @@ bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
     return false;
 
   // Check if the only use is a function return node.
-  return TLI.isUsedByReturnOnly(Node);
+  return TLI.isUsedByReturnOnly(Node, Chain);
 }

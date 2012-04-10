@@ -27,6 +27,7 @@ namespace llvm {
 class GlobalVariable;
 class TargetLowering;
 class SDNode;
+class SDValue;
 class SelectionDAG;
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
@@ -89,7 +90,7 @@ bool isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
                           const TargetLowering &TLI);
 
 bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
-                          const TargetLowering &TLI);
+                          SDValue &Chain, const TargetLowering &TLI);
 
 } // End llvm namespace
 
