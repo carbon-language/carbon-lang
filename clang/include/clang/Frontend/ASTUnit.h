@@ -58,14 +58,6 @@ class ASTFrontendAction;
 
 using namespace idx;
   
-/// \brief Allocator for a cached set of global code completions.
-class GlobalCodeCompletionAllocator 
-  : public CodeCompletionAllocator,
-    public RefCountedBase<GlobalCodeCompletionAllocator>
-{
-
-};
-  
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
 class ASTUnit : public ModuleLoader {
@@ -324,25 +316,20 @@ public:
   getCachedCompletionAllocator() {
     return CachedCompletionAllocator;
   }
-  
-  /// \brief Retrieve the allocator used to cache global code completions.
-  /// Creates the allocator if it doesn't already exist.
-  IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
-  getCursorCompletionAllocator() {
-    if (!CursorCompletionAllocator.getPtr()) {
-      CursorCompletionAllocator = new GlobalCodeCompletionAllocator;
-    }
-    return CursorCompletionAllocator;
+
+  CodeCompletionTUInfo &getCodeCompletionTUInfo() {
+    if (!CCTUInfo)
+      CCTUInfo.reset(new CodeCompletionTUInfo(
+                                            new GlobalCodeCompletionAllocator));
+    return *CCTUInfo;
   }
-  
+
 private:
   /// \brief Allocator used to store cached code completions.
   IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
     CachedCompletionAllocator;
   
-  /// \brief Allocator used to store code completions for arbitrary cursors.
-  IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
-    CursorCompletionAllocator;
+  OwningPtr<CodeCompletionTUInfo> CCTUInfo;
 
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;

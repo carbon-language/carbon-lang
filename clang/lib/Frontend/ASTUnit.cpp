@@ -351,7 +351,8 @@ void ASTUnit::CacheCodeCompletionResults() {
   typedef CodeCompletionResult Result;
   SmallVector<Result, 8> Results;
   CachedCompletionAllocator = new GlobalCodeCompletionAllocator;
-  TheSema->GatherGlobalCodeCompletions(*CachedCompletionAllocator, Results);
+  TheSema->GatherGlobalCodeCompletions(*CachedCompletionAllocator,
+                                       getCodeCompletionTUInfo(), Results);
   
   // Translate global code completions into cached completions.
   llvm::DenseMap<CanQualType, unsigned> CompletionTypes;
@@ -362,7 +363,8 @@ void ASTUnit::CacheCodeCompletionResults() {
       bool IsNestedNameSpecifier = false;
       CachedCodeCompletionResult CachedResult;
       CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema,
-                                                    *CachedCompletionAllocator);
+                                                    *CachedCompletionAllocator,
+                                                    getCodeCompletionTUInfo());
       CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
                                                         Ctx->getLangOpts(),
                                                         IsNestedNameSpecifier);
@@ -426,7 +428,8 @@ void ASTUnit::CacheCodeCompletionResults() {
           Results[I].StartsNestedNameSpecifier = true;
           CachedResult.Completion 
             = Results[I].CreateCodeCompletionString(*TheSema,
-                                                    *CachedCompletionAllocator);
+                                                    *CachedCompletionAllocator,
+                                                    getCodeCompletionTUInfo());
           CachedResult.ShowInContexts = RemainingContexts;
           CachedResult.Priority = CCP_NestedNameSpecifier;
           CachedResult.TypeClass = STC_Void;
@@ -447,7 +450,8 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedCodeCompletionResult CachedResult;
       CachedResult.Completion 
         = Results[I].CreateCodeCompletionString(*TheSema,
-                                                *CachedCompletionAllocator);
+                                                *CachedCompletionAllocator,
+                                                getCodeCompletionTUInfo());
       CachedResult.ShowInContexts
         = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
@@ -1989,9 +1993,9 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
       CurrentTopLevelHashValue != CompletionCacheTopLevelHashValue)
     CacheCodeCompletionResults();
 
-  // We now need to clear out the completion allocator for
-  // clang_getCursorCompletionString; it'll be recreated if necessary.
-  CursorCompletionAllocator = 0;
+  // We now need to clear out the completion info related to this translation
+  // unit; it'll be recreated if necessary.
+  CCTUInfo.reset();
   
   return Result;
 }
@@ -2052,6 +2056,10 @@ namespace {
     
     virtual CodeCompletionAllocator &getAllocator() {
       return Next.getAllocator();
+    }
+
+    virtual CodeCompletionTUInfo &getCodeCompletionTUInfo() {
+      return Next.getCodeCompletionTUInfo();
     }
   };
 }
@@ -2210,8 +2218,8 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
         Context.getKind() == CodeCompletionContext::CCC_MacroNameUse) {
       // Create a new code-completion string that just contains the
       // macro name, without its arguments.
-      CodeCompletionBuilder Builder(getAllocator(), CCP_CodePattern,
-                                    C->Availability);
+      CodeCompletionBuilder Builder(getAllocator(), getCodeCompletionTUInfo(),
+                                    CCP_CodePattern, C->Availability);
       Builder.AddTypedTextChunk(C->Completion->getTypedText());
       CursorKind = CXCursor_NotImplemented;
       Priority = CCP_CodePattern;

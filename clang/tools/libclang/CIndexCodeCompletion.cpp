@@ -264,7 +264,8 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
     CachedCompletionAllocator;
   
   /// \brief Allocator used to store code completion results.
-  clang::CodeCompletionAllocator CodeCompletionAllocator;
+  IntrusiveRefCntPtr<clang::GlobalCodeCompletionAllocator>
+    CodeCompletionAllocator;
   
   /// \brief Context under which completion occurred.
   enum clang::CodeCompletionContext::Kind ContextKind;
@@ -300,6 +301,7 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
     FileSystemOpts(FileSystemOpts),
     FileMgr(new FileManager(FileSystemOpts)),
     SourceMgr(new SourceManager(*Diag, *FileMgr)),
+    CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
     Contexts(CXCompletionContext_Unknown),
     ContainerKind(CXCursor_InvalidCode),
     ContainerUSR(createCXString("")),
@@ -503,13 +505,15 @@ static unsigned long long getContextsForContextKind(
 namespace {
   class CaptureCompletionResults : public CodeCompleteConsumer {
     AllocatedCXCodeCompleteResults &AllocatedResults;
+    CodeCompletionTUInfo CCTUInfo;
     SmallVector<CXCompletionResult, 16> StoredResults;
     CXTranslationUnit *TU;
   public:
     CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results,
                              CXTranslationUnit *TranslationUnit)
       : CodeCompleteConsumer(true, false, true, false), 
-        AllocatedResults(Results), TU(TranslationUnit) { }
+        AllocatedResults(Results), CCTUInfo(Results.CodeCompletionAllocator),
+        TU(TranslationUnit) { }
     ~CaptureCompletionResults() { Finish(); }
     
     virtual void ProcessCodeCompleteResults(Sema &S, 
@@ -519,8 +523,8 @@ namespace {
       StoredResults.reserve(StoredResults.size() + NumResults);
       for (unsigned I = 0; I != NumResults; ++I) {
         CodeCompletionString *StoredCompletion        
-          = Results[I].CreateCodeCompletionString(S, 
-                                      AllocatedResults.CodeCompletionAllocator);
+          = Results[I].CreateCodeCompletionString(S, getAllocator(),
+                                                  getCodeCompletionTUInfo());
         
         CXCompletionResult R;
         R.CursorKind = Results[I].CursorKind;
@@ -607,8 +611,8 @@ namespace {
       StoredResults.reserve(StoredResults.size() + NumCandidates);
       for (unsigned I = 0; I != NumCandidates; ++I) {
         CodeCompletionString *StoredCompletion
-          = Candidates[I].CreateSignatureString(CurrentArg, S, 
-                                      AllocatedResults.CodeCompletionAllocator);
+          = Candidates[I].CreateSignatureString(CurrentArg, S, getAllocator(),
+                                                getCodeCompletionTUInfo());
         
         CXCompletionResult R;
         R.CursorKind = CXCursor_NotImplemented;
@@ -618,8 +622,10 @@ namespace {
     }
     
     virtual CodeCompletionAllocator &getAllocator() { 
-      return AllocatedResults.CodeCompletionAllocator;
+      return *AllocatedResults.CodeCompletionAllocator;
     }
+
+    virtual CodeCompletionTUInfo &getCodeCompletionTUInfo() { return CCTUInfo; }
     
   private:
     void Finish() {

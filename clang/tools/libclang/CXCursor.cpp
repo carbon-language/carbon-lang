@@ -1076,13 +1076,12 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
     Decl *decl = getCursorDecl(cursor);
     if (NamedDecl *namedDecl = dyn_cast_or_null<NamedDecl>(decl)) {
       ASTUnit *unit = getCursorASTUnit(cursor);
-      CodeCompletionAllocator *Allocator
-        = unit->getCursorCompletionAllocator().getPtr();
       CodeCompletionResult Result(namedDecl);
       CodeCompletionString *String
         = Result.CreateCodeCompletionString(unit->getASTContext(),
                                             unit->getPreprocessor(),
-                                            *Allocator);
+                                 unit->getCodeCompletionTUInfo().getAllocator(),
+                                 unit->getCodeCompletionTUInfo());
       return String;
     }
   }
@@ -1090,13 +1089,12 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
     MacroDefinition *definition = getCursorMacroDefinition(cursor);
     const IdentifierInfo *MacroInfo = definition->getName();
     ASTUnit *unit = getCursorASTUnit(cursor);
-    CodeCompletionAllocator *Allocator
-      = unit->getCursorCompletionAllocator().getPtr();
     CodeCompletionResult Result(const_cast<IdentifierInfo *>(MacroInfo));
     CodeCompletionString *String
       = Result.CreateCodeCompletionString(unit->getASTContext(),
                                           unit->getPreprocessor(),
-                                          *Allocator);
+                                 unit->getCodeCompletionTUInfo().getAllocator(),
+                                 unit->getCodeCompletionTUInfo());
     return String;
   }
   return NULL;

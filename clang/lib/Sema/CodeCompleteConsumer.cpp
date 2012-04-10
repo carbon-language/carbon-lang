@@ -267,8 +267,70 @@ const char *CodeCompletionAllocator::CopyString(Twine String) {
   return CopyString(String.toStringRef(Data));
 }
 
+StringRef CodeCompletionTUInfo::getParentName(DeclContext *DC) {
+  NamedDecl *ND = dyn_cast<NamedDecl>(DC);
+  if (!ND)
+    return StringRef();
+  
+  // Check whether we've already cached the parent name.
+  StringRef &CachedParentName = ParentNames[DC];
+  if (!CachedParentName.empty())
+    return CachedParentName;
+
+  // If we already processed this DeclContext and assigned empty to it, the
+  // data pointer will be non-null.
+  if (CachedParentName.data() != 0)
+    return StringRef();
+
+  // Find the interesting names.
+  llvm::SmallVector<DeclContext *, 2> Contexts;
+  while (DC && !DC->isFunctionOrMethod()) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(DC)) {
+      if (ND->getIdentifier())
+        Contexts.push_back(DC);
+    }
+    
+    DC = DC->getParent();
+  }
+
+  {
+    llvm::SmallString<128> S;
+    llvm::raw_svector_ostream OS(S);
+    bool First = true;
+    for (unsigned I = Contexts.size(); I != 0; --I) {
+      if (First)
+        First = false;
+      else {
+        OS << "::";
+      }
+      
+      DeclContext *CurDC = Contexts[I-1];
+      if (ObjCCategoryImplDecl *CatImpl = dyn_cast<ObjCCategoryImplDecl>(CurDC))
+        CurDC = CatImpl->getCategoryDecl();
+      
+      if (ObjCCategoryDecl *Cat = dyn_cast<ObjCCategoryDecl>(CurDC)) {
+        ObjCInterfaceDecl *Interface = Cat->getClassInterface();
+        if (!Interface) {
+          // Assign an empty StringRef but with non-null data to distinguish
+          // between empty because we didn't process the DeclContext yet.
+          CachedParentName = StringRef((const char *)~0U, 0);
+          return StringRef();
+        }
+        
+        OS << Interface->getName() << '(' << Cat->getName() << ')';
+      } else {
+        OS << cast<NamedDecl>(CurDC)->getName();
+      }
+    }
+    
+    CachedParentName = AllocatorRef->CopyString(OS.str());
+  }
+
+  return CachedParentName;
+}
+
 CodeCompletionString *CodeCompletionBuilder::TakeString() {
-  void *Mem = Allocator.Allocate(
+  void *Mem = getAllocator().Allocate(
                   sizeof(CodeCompletionString) + sizeof(Chunk) * Chunks.size()
                                     + sizeof(const char *) * Annotations.size(),
                                  llvm::alignOf<CodeCompletionString>());
@@ -329,54 +391,7 @@ void CodeCompletionBuilder::addParentContext(DeclContext *DC) {
     return;
   
   ParentKind = getCursorKindForDecl(ND);
-  
-  // Check whether we've already cached the parent name.
-  StringRef &CachedParentName = Allocator.getParentNames()[DC];
-  if (!CachedParentName.empty()) {
-    ParentName = CachedParentName;
-    return;
-  }
-
-  // Find the interesting names.
-  llvm::SmallVector<DeclContext *, 2> Contexts;
-  while (DC && !DC->isFunctionOrMethod()) {
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(DC)) {
-      if (ND->getIdentifier())
-        Contexts.push_back(DC);
-    }
-    
-    DC = DC->getParent();
-  }
-
-  {
-    llvm::SmallString<128> S;
-    llvm::raw_svector_ostream OS(S);
-    bool First = true;
-    for (unsigned I = Contexts.size(); I != 0; --I) {
-      if (First)
-        First = false;
-      else {
-        OS << "::";
-      }
-      
-      DeclContext *CurDC = Contexts[I-1];
-      if (ObjCCategoryImplDecl *CatImpl = dyn_cast<ObjCCategoryImplDecl>(CurDC))
-        CurDC = CatImpl->getCategoryDecl();
-      
-      if (ObjCCategoryDecl *Cat = dyn_cast<ObjCCategoryDecl>(CurDC)) {
-        ObjCInterfaceDecl *Interface = Cat->getClassInterface();
-        if (!Interface)
-          return;
-        
-        OS << Interface->getName() << '(' << Cat->getName() << ')';
-      } else {
-        OS << cast<NamedDecl>(CurDC)->getName();
-      }
-    }
-    
-    ParentName = Allocator.CopyString(OS.str());
-    CachedParentName = ParentName;
-  }
+  ParentName = getCodeCompletionTUInfo().getParentName(DC);
 }
 
 unsigned CodeCompletionResult::getPriorityFromDecl(NamedDecl *ND) {
@@ -458,7 +473,8 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
       if (Results[I].Hidden)
         OS << " (Hidden)";
       if (CodeCompletionString *CCS 
-            = Results[I].CreateCodeCompletionString(SemaRef, Allocator)) {
+            = Results[I].CreateCodeCompletionString(SemaRef, getAllocator(),
+                                                    CCTUInfo)) {
         OS << " : " << CCS->getAsString();
       }
         
@@ -472,7 +488,8 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     case CodeCompletionResult::RK_Macro: {
       OS << Results[I].Macro->getName();
       if (CodeCompletionString *CCS 
-            = Results[I].CreateCodeCompletionString(SemaRef, Allocator)) {
+            = Results[I].CreateCodeCompletionString(SemaRef, getAllocator(),
+                                                    CCTUInfo)) {
         OS << " : " << CCS->getAsString();
       }
       OS << '\n';
@@ -496,7 +513,7 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   for (unsigned I = 0; I != NumCandidates; ++I) {
     if (CodeCompletionString *CCS
           = Candidates[I].CreateSignatureString(CurrentArg, SemaRef,
-                                                Allocator)) {
+                                                getAllocator(), CCTUInfo)) {
       OS << "OVERLOAD: " << CCS->getAsString() << "\n";
     }
   }
