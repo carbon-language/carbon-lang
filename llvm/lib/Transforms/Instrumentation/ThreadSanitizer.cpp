@@ -58,6 +58,8 @@ struct ThreadSanitizerStats {
   size_t NumOmittedReadsBeforeWrite;
   size_t NumAccessesWithBadSize;
   size_t NumInstrumentedVtableWrites;
+  size_t NumOmittedReadsFromConstantGlobals;
+  size_t NumOmittedReadsFromVtable;
 };
 
 /// ThreadSanitizer: instrument the code in module to find races.
@@ -72,6 +74,7 @@ struct ThreadSanitizer : public FunctionPass {
  private:
   void choseInstructionsToInstrument(SmallVectorImpl<Instruction*> &Local,
                                      SmallVectorImpl<Instruction*> &All);
+  bool addrPointsToConstantData(Value *Addr);
 
   TargetData *TD;
   OwningPtr<FunctionBlackList> BL;
@@ -145,9 +148,42 @@ bool ThreadSanitizer::doFinalization(Module &M) {
            << "; vt " << stats.NumInstrumentedVtableWrites
            << "; bs " << stats.NumAccessesWithBadSize
            << "; rbw " << stats.NumOmittedReadsBeforeWrite
+           << "; rcg " << stats.NumOmittedReadsFromConstantGlobals
+           << "; rvt " << stats.NumOmittedReadsFromVtable
            << "\n";
   }
   return true;
+}
+
+static bool isVtableAccess(Instruction *I) {
+  if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa)) {
+    if (Tag->getNumOperands() < 1) return false;
+    if (MDString *Tag1 = dyn_cast<MDString>(Tag->getOperand(0))) {
+      if (Tag1->getString() == "vtable pointer") return true;
+    }
+  }
+  return false;
+}
+
+bool ThreadSanitizer::addrPointsToConstantData(Value *Addr) {
+  // If this is a GEP, just analyze its pointer operand.
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr))
+    Addr = GEP->getPointerOperand();
+
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Addr)) {
+    if (GV->isConstant()) {
+      // Reads from constant globals can not race with any writes.
+      stats.NumOmittedReadsFromConstantGlobals++;
+      return true;
+    }
+  } else if(LoadInst *L = dyn_cast<LoadInst>(Addr)) {
+    if (isVtableAccess(L)) {
+      // Reads from a vtable pointer can not race with any writes.
+      stats.NumOmittedReadsFromVtable++;
+      return true;
+    }
+  }
+  return false;
 }
 
 // Instrumenting some of the accesses may be proven redundant.
@@ -173,9 +209,14 @@ void ThreadSanitizer::choseInstructionsToInstrument(
       WriteTargets.insert(Store->getPointerOperand());
     } else {
       LoadInst *Load = cast<LoadInst>(I);
-      if (WriteTargets.count(Load->getPointerOperand())) {
+      Value *Addr = Load->getPointerOperand();
+      if (WriteTargets.count(Addr)) {
         // We will write to this temp, so no reason to analyze the read.
         stats.NumOmittedReadsBeforeWrite++;
+        continue;
+      }
+      if (addrPointsToConstantData(Addr)) {
+        // Addr points to some constant data -- it can not race with any writes.
         continue;
       }
     }
@@ -234,16 +275,6 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
     Res = true;
   }
   return Res;
-}
-
-static bool isVtableAccess(Instruction *I) {
-  if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa)) {
-    if (Tag->getNumOperands() < 1) return false;
-    if (MDString *Tag1 = dyn_cast<MDString>(Tag->getOperand(0))) {
-      if (Tag1->getString() == "vtable pointer") return true;
-    }
-  }
-  return false;
 }
 
 bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
