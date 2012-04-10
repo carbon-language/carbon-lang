@@ -4354,12 +4354,17 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // Only do this before legalize for now.
     if (VT.isVector() && !LegalOperations) {
       EVT N0VT = N0.getOperand(0).getValueType();
+      // On some architectures (such as SSE/NEON/etc)the SETCC result type is
+      // of the same size as the compared operands. Only optimize sext(setcc())
+      // if this is the case.
+      EVT SVT = TLI.getSetCCResultType(N0VT);
+
         // We know that the # elements of the results is the same as the
         // # elements of the compare (and the # elements of the compare result
         // for that matter).  Check to see that they are the same size.  If so,
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
-      if (VT.getSizeInBits() == N0VT.getSizeInBits())
+      if (VT.getSizeInBits() == SVT.getSizeInBits())
         return DAG.getSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
                              N0.getOperand(1),
                              cast<CondCodeSDNode>(N0.getOperand(2))->get());
@@ -4373,11 +4378,13 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
         EVT MatchingVectorType =
           EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
                            N0VT.getVectorNumElements());
-        SDValue VsetCC =
-          DAG.getSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
-                        N0.getOperand(1),
-                        cast<CondCodeSDNode>(N0.getOperand(2))->get());
-        return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
+
+        if (SVT == MatchingVectorType) {
+          SDValue VsetCC = DAG.getSetCC(N->getDebugLoc(), MatchingVectorType,
+                                 N0.getOperand(0), N0.getOperand(1),
+                                 cast<CondCodeSDNode>(N0.getOperand(2))->get());
+          return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
+        }
       }
     }
 
