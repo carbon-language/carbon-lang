@@ -250,11 +250,15 @@ public:
   
   SVal getSValAsScalarOrLoc(const Stmt *Ex, const LocationContext *LCtx) const;
 
+  /// \brief Return the value bound to the specified location.
+  /// Returns UnknownVal() if none found.
   SVal getSVal(Loc LV, QualType T = QualType()) const;
 
   /// Returns the "raw" SVal bound to LV before any value simplfication.
   SVal getRawSVal(Loc LV, QualType T= QualType()) const;
 
+  /// \brief Return the value bound to the specified location.
+  /// Returns UnknownVal() if none found.
   SVal getSVal(const MemRegion* R) const;
 
   SVal getSValAsScalarOrLoc(const MemRegion *R) const;
