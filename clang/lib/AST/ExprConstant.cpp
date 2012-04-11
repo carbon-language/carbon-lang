@@ -4365,7 +4365,8 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
       
     return Error(E);
 
-  case Builtin::BI__atomic_is_lock_free: {
+  case Builtin::BI__atomic_is_lock_free:
+  case Builtin::BI__c11_atomic_is_lock_free: {
     APSInt SizeVal;
     if (!EvaluateInteger(E->getArg(0), SizeVal, Info))
       return false;

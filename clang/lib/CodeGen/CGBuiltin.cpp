@@ -967,9 +967,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
 
   case Builtin::BI__atomic_thread_fence:
-  case Builtin::BI__atomic_signal_fence: {
+  case Builtin::BI__atomic_signal_fence:
+  case Builtin::BI__c11_atomic_thread_fence:
+  case Builtin::BI__c11_atomic_signal_fence: {
     llvm::SynchronizationScope Scope;
-    if (BuiltinID == Builtin::BI__atomic_signal_fence)
+    if (BuiltinID == Builtin::BI__atomic_signal_fence ||
+        BuiltinID == Builtin::BI__c11_atomic_signal_fence)
       Scope = llvm::SingleThread;
     else
       Scope = llvm::CrossThread;

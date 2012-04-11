@@ -34,15 +34,14 @@
 <li><a href="#availability">Availability attribute</a></li>
 <li><a href="#checking_language_features">Checks for Standard Language Features</a>
   <ul>
-  <li><a href="#cxx_exceptions">C++ exceptions</a></li>
-  <li><a href="#cxx_rtti">C++ RTTI</a></li>
-  </ul></li>
-<li><a href="#checking_upcoming_features">Checks for Upcoming Standard Language Features</a>
-  <ul>
-  <li><a href="#cxx0x">C++11</a>
+  <li><a href="#cxx98">C++98</a>
     <ul>
-   <li><a href="#cxx_access_control_sfinae">C++11 SFINAE includes
-   access control</a></li>
+    <li><a href="#cxx_exceptions">C++ exceptions</a></li>
+    <li><a href="#cxx_rtti">C++ RTTI</a></li>
+  </ul></li>
+  <li><a href="#cxx11">C++11</a>
+    <ul>
+    <li><a href="#cxx_access_control_sfinae">C++11 SFINAE includes access control</a></li>
     <li><a href="#cxx_alias_templates">C++11 alias templates</a></li>
     <li><a href="#cxx_alignas">C++11 alignment specifiers</a></li>
     <li><a href="#cxx_attributes">C++11 attributes</a></li>
@@ -69,20 +68,21 @@
     <li><a href="#cxx_reference_qualified_functions">C++11 reference-qualified functions</a></li>
     <li><a href="#cxx_static_assert">C++11 <tt>static_assert()</tt></a></li>
     <li><a href="#cxx_auto_type">C++11 type inference</a></li>
-   <li><a href="#cxx_strong_enums">C++11 strongly-typed enumerations</a></li>
+    <li><a href="#cxx_strong_enums">C++11 strongly-typed enumerations</a></li>
     <li><a href="#cxx_trailing_return">C++11 trailing return type</a></li>
     <li><a href="#cxx_unicode_literals">C++11 Unicode string literals</a></li>
     <li><a href="#cxx_unrestricted_unions">C++11 unrestricted unions</a></li>
     <li><a href="#cxx_user_literals">C++11 user-defined literals</a></li>
     <li><a href="#cxx_variadic_templates">C++11 variadic templates</a></li>
-   </ul></li>
+  </ul></li>
   <li><a href="#c11">C11</a>
     <ul>
     <li><a href="#c_alignas">C11 alignment specifiers</a></li>
+    <li><a href="#c_atomic">C11 atomic operations</a></li>
     <li><a href="#c_generic_selections">C11 generic selections</a></li>
     <li><a href="#c_static_assert">C11 <tt>_Static_assert()</tt></a></li>
-    </ul></li>
-  </ul> </li>
+  </ul></li>
+</ul></li>
 <li><a href="#checking_type_traits">Checks for Type Traits</a></li>
 <li><a href="#blocks">Blocks</a></li>
 <li><a href="#objc_features">Objective-C Features</a>
@@ -91,7 +91,7 @@
     <li><a href="#objc_arc">Automatic reference counting</a></li>
     <li><a href="#objc_fixed_enum">Enumerations with a fixed underlying type</a></li>
     <li><a href="#objc_lambdas">Interoperability with C++11 lambdas</a></li>
-    <li><a href="#object-literals-subscripting">Object Literals and Subscripting</a></li>    
+    <li><a href="#object-literals-subscripting">Object Literals and Subscripting</a></li>
   </ul>
 </li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
@@ -707,33 +707,32 @@ linked</a>, as if the <code>weak_import</code> attribute were added to the decla
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>
 <!-- ======================================================================= -->
 
-<p>The <tt>__has_feature</tt> macro can be used to query if certain standard language features are
-enabled.  Those features are listed here.</p>
+<p>The <tt>__has_feature</tt> macro can be used to query if certain standard
+language features are enabled.  The <tt>__has_extension</tt> macro can be used
+to query if language features are available as an extension when compiling for
+a standard which does not provide them. The features which can be tested are
+listed here.</p>
 
-<h3 id="cxx_exceptions">C++ exceptions</h3>
+<h3 id="cxx98">C++98</h3>
+
+<p>The features listed below are part of the C++98 standard. These features are
+enabled by default when compiling C++ code.</p>
+
+<h4 id="cxx_exceptions">C++ exceptions</h4>
 
 <p>Use <tt>__has_feature(cxx_exceptions)</tt> to determine if C++ exceptions have been enabled. For
-example, compiling code with <tt>-fexceptions</tt> enables C++ exceptions.</p>
+example, compiling code with <tt>-fno-exceptions</tt> disables C++ exceptions.</p>
 
-<h3 id="cxx_rtti">C++ RTTI</h3>
+<h4 id="cxx_rtti">C++ RTTI</h4>
 
 <p>Use <tt>__has_feature(cxx_rtti)</tt> to determine if C++ RTTI has been enabled. For example,
 compiling code with <tt>-fno-rtti</tt> disables the use of RTTI.</p>
 
-<!-- ======================================================================= -->
-<h2 id="checking_upcoming_features">Checks for Upcoming Standard Language Features</h2>
-<!-- ======================================================================= -->
+<h3 id="cxx11">C++11</h3>
 
-<p>The <tt>__has_feature</tt> or <tt>__has_extension</tt> macros can be used
-to query if certain upcoming standard language features are enabled.  Those
-features are listed here.  Features that are not yet implemented will be
-noted.</p>
-
-<h3 id="cxx0x">C++11</h3>
-
-<p>The features listed below are slated for inclusion in the upcoming
-C++11 standard. As a result, all these features are enabled
-with the <tt>-std=c++11</tt> option when compiling C++ code.</p>
+<p>The features listed below are part of the C++11 standard. As a result, all
+these features are enabled with the <tt>-std=c++11</tt> or <tt>-std=gnu++11</tt>
+option when compiling C++ code.</p>
 
 <h4 id="cxx_access_control_sfinae">C++11 SFINAE includes access control</h4>
 
@@ -922,15 +921,24 @@ for variadic templates is enabled.</p>
 
 <h3 id="c11">C11</h3>
 
-<p>The features listed below are slated for inclusion in the upcoming
-C11 standard. As a result, all these features are enabled
-with the <tt>-std=c11</tt> option when compiling C code.</p>
+<p>The features listed below are part of the C11 standard. As a result, all
+these features are enabled with the <tt>-std=c11</tt> or <tt>-std=gnu11</tt>
+option when compiling C code. Additionally, because these features are all
+backward-compatible, they are available as extensions in all language modes.</p>
 
 <h4 id="c_alignas">C11 alignment specifiers</h4>
 
 <p>Use <tt>__has_feature(c_alignas)</tt> or <tt>__has_extension(c_alignas)</tt>
 to determine if support for alignment specifiers using <tt>_Alignas</tt>
 is enabled.</p>
+
+<h4 id="c_atomic">C11 atomic operations</h4>
+
+<p>Use <tt>__has_feature(c_atomic)</tt> or <tt>__has_extension(c_atomic)</tt>
+to determine if support for atomic types using <tt>_Atomic</tt> is enabled.
+Clang also provides <a href="#__c11_atomic">a set of builtins</a> which can be
+used to implement the <tt>&lt;stdatomic.h&gt;</tt> operations on _Atomic
+types.</p>
 
 <h4 id="c_generic_selections">C11 generic selections</h4>
 
@@ -1454,6 +1462,32 @@ code by avoiding expensive loops around __sync_bool_compare_and_swap() or
 relying on the platform specific implementation details of
 __sync_lock_test_and_set(). The __sync_swap() builtin is a full barrier.
 </p>
+
+<!-- ======================================================================= -->
+<h3><a name="__c11_atomic">__c11_atomic builtins</a></h3>
+<!-- ======================================================================= -->
+
+<p>Clang provides a set of builtins which are intended to be used to implement
+C11's <tt>&lt;stdatomic.h&gt;</tt> header. These builtins provide the semantics
+of the <tt>_explicit</tt> form of the corresponding C11 operation, and are named
+with a <tt>__c11_</tt> prefix. The supported operations are:</p>
+
+<ul>
+  <li><tt>__c11_atomic_init</tt></li>
+  <li><tt>__c11_atomic_thread_fence</tt></li>
+  <li><tt>__c11_atomic_signal_fence</tt></li>
+  <li><tt>__c11_atomic_is_lock_free</tt></li>
+  <li><tt>__c11_atomic_store</tt></li>
+  <li><tt>__c11_atomic_load</tt></li>
+  <li><tt>__c11_atomic_exchange</tt></li>
+  <li><tt>__c11_atomic_compare_exchange_strong</tt></li>
+  <li><tt>__c11_atomic_compare_exchange_weak</tt></li>
+  <li><tt>__c11_atomic_fetch_add</tt></li>
+  <li><tt>__c11_atomic_fetch_sub</tt></li>
+  <li><tt>__c11_atomic_fetch_and</tt></li>
+  <li><tt>__c11_atomic_fetch_or</tt></li>
+  <li><tt>__c11_atomic_fetch_xor</tt></li>
+</ul>
 
 
 <!-- ======================================================================= -->

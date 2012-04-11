@@ -1109,37 +1109,37 @@ void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
   const char *Name = 0;
   switch (Node->getOp()) {
     case AtomicExpr::Init:
-      Name = "__atomic_init(";
+      Name = "__c11_atomic_init(";
       break;
     case AtomicExpr::Load:
-      Name = "__atomic_load(";
+      Name = "__c11_atomic_load(";
       break;
     case AtomicExpr::Store:
-      Name = "__atomic_store(";
+      Name = "__c11_atomic_store(";
       break;
     case AtomicExpr::CmpXchgStrong:
-      Name = "__atomic_compare_exchange_strong(";
+      Name = "__c11_atomic_compare_exchange_strong(";
       break;
     case AtomicExpr::CmpXchgWeak:
-      Name = "__atomic_compare_exchange_weak(";
+      Name = "__c11_atomic_compare_exchange_weak(";
       break;
     case AtomicExpr::Xchg:
-      Name = "__atomic_exchange(";
+      Name = "__c11_atomic_exchange(";
       break;
     case AtomicExpr::Add:
-      Name = "__atomic_fetch_add(";
+      Name = "__c11_atomic_fetch_add(";
       break;
     case AtomicExpr::Sub:
-      Name = "__atomic_fetch_sub(";
+      Name = "__c11_atomic_fetch_sub(";
       break;
     case AtomicExpr::And:
-      Name = "__atomic_fetch_and(";
+      Name = "__c11_atomic_fetch_and(";
       break;
     case AtomicExpr::Or:
-      Name = "__atomic_fetch_or(";
+      Name = "__c11_atomic_fetch_or(";
       break;
     case AtomicExpr::Xor:
-      Name = "__atomic_fetch_xor(";
+      Name = "__c11_atomic_fetch_xor(";
       break;
   }
   OS << Name;

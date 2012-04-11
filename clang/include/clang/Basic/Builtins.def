@@ -594,6 +594,23 @@ BUILTIN(__sync_swap_4, "iiD*i.", "tn")
 BUILTIN(__sync_swap_8, "LLiLLiD*LLi.", "tn")
 BUILTIN(__sync_swap_16, "LLLiLLLiD*LLLi.", "tn")
 
+// C11 _Atomic operations for <stdatomic.h>.
+BUILTIN(__c11_atomic_load, "v.", "t")
+BUILTIN(__c11_atomic_store, "v.", "t")
+BUILTIN(__c11_atomic_exchange, "v.", "t")
+BUILTIN(__c11_atomic_compare_exchange_strong, "v.", "t")
+BUILTIN(__c11_atomic_compare_exchange_weak, "v.", "t")
+BUILTIN(__c11_atomic_fetch_add, "v.", "t")
+BUILTIN(__c11_atomic_fetch_sub, "v.", "t")
+BUILTIN(__c11_atomic_fetch_and, "v.", "t")
+BUILTIN(__c11_atomic_fetch_or, "v.", "t")
+BUILTIN(__c11_atomic_fetch_xor, "v.", "t")
+BUILTIN(__c11_atomic_thread_fence, "vi", "n")
+BUILTIN(__c11_atomic_signal_fence, "vi", "n")
+BUILTIN(__c11_atomic_init, "v.", "t")
+BUILTIN(__c11_atomic_is_lock_free, "iz", "n")
+
+// FIXME: Convert these to implementing GNU atomic builtins.
 BUILTIN(__atomic_load, "v.", "t")
 BUILTIN(__atomic_store, "v.", "t")
 BUILTIN(__atomic_exchange, "v.", "t")

@@ -251,28 +251,39 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_swap_16:
     return SemaBuiltinAtomicOverloaded(move(TheCallResult));
   case Builtin::BI__atomic_load:
+  case Builtin::BI__c11_atomic_load:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Load);
   case Builtin::BI__atomic_store:
+  case Builtin::BI__c11_atomic_store:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Store);
   case Builtin::BI__atomic_init:
+  case Builtin::BI__c11_atomic_init:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Init);
   case Builtin::BI__atomic_exchange:
+  case Builtin::BI__c11_atomic_exchange:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xchg);
   case Builtin::BI__atomic_compare_exchange_strong:
+  case Builtin::BI__c11_atomic_compare_exchange_strong:
     return SemaAtomicOpsOverloaded(move(TheCallResult),
                                    AtomicExpr::CmpXchgStrong);
   case Builtin::BI__atomic_compare_exchange_weak:
+  case Builtin::BI__c11_atomic_compare_exchange_weak:
     return SemaAtomicOpsOverloaded(move(TheCallResult),
                                    AtomicExpr::CmpXchgWeak);
   case Builtin::BI__atomic_fetch_add:
+  case Builtin::BI__c11_atomic_fetch_add:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Add);
   case Builtin::BI__atomic_fetch_sub:
+  case Builtin::BI__c11_atomic_fetch_sub:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Sub);
   case Builtin::BI__atomic_fetch_and:
+  case Builtin::BI__c11_atomic_fetch_and:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::And);
   case Builtin::BI__atomic_fetch_or:
+  case Builtin::BI__c11_atomic_fetch_or:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Or);
   case Builtin::BI__atomic_fetch_xor:
+  case Builtin::BI__c11_atomic_fetch_xor:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xor);
   case Builtin::BI__builtin_annotation:
     if (CheckBuiltinAnnotationString(*this, TheCall->getArg(1)))
@@ -510,11 +521,11 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
   DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
 
   // All these operations take one of the following four forms:
-  // T   __atomic_load(_Atomic(T)*, int)                              (loads)
-  // T*  __atomic_add(_Atomic(T*)*, ptrdiff_t, int)         (pointer add/sub)
-  // int __atomic_compare_exchange_strong(_Atomic(T)*, T*, T, int, int)
-  //                                                                (cmpxchg)
-  // T   __atomic_exchange(_Atomic(T)*, T, int)             (everything else)
+  // T   __c11_atomic_load(_Atomic(T)*, int)                             (loads)
+  // T*  __c11_atomic_add(_Atomic(T*)*, ptrdiff_t, int)        (pointer add/sub)
+  // int __c11_atomic_compare_exchange_strong(_Atomic(T)*, T*, T, int, int)
+  //                                                                   (cmpxchg)
+  // T   __c11_atomic_exchange(_Atomic(T)*, T, int)            (everything else)
   // where T is an appropriate type, and the int paremeterss are for orderings.
   unsigned NumVals = 1;
   unsigned NumOrders = 1;

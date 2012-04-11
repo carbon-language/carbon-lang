@@ -9,6 +9,6 @@ void foo()
 {
   _Atomic(int) j = 12; // CHECK: store 
                        // CHECK-NOT: atomic
-  __atomic_init(&j, 42); // CHECK: store 
-                         // CHECK-NOT: atomic
+  __c11_atomic_init(&j, 42); // CHECK: store 
+                             // CHECK-NOT: atomic
 }
