@@ -216,6 +216,11 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FREM,              MVT::f32,   Expand);
   setOperationAction(ISD::FREM,              MVT::f64,   Expand);
 
+  if (!TM.Options.NoNaNsFPMath) {
+    setOperationAction(ISD::FNEG,             MVT::f32,   Expand);
+    setOperationAction(ISD::FNEG,             MVT::f64,   Expand);
+  }
+
   setOperationAction(ISD::EXCEPTIONADDR,     MVT::i32, Expand);
   setOperationAction(ISD::EXCEPTIONADDR,     MVT::i64, Expand);
   setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);
