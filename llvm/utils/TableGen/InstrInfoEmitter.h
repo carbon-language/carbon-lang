@@ -31,7 +31,7 @@ class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
   CodeGenDAGPatterns CDP;
   std::map<std::string, unsigned> ItinClassMap;
-  
+
 public:
   InstrInfoEmitter(RecordKeeper &R) : Records(R), CDP(R) { }
 
@@ -41,9 +41,9 @@ public:
 private:
   void emitEnums(raw_ostream &OS);
 
-  typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;  
+  typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
-                  Record *InstrInfo, 
+                  Record *InstrInfo,
                   std::map<std::vector<Record*>, unsigned> &EL,
                   const OperandInfoMapTy &OpInfo,
                   raw_ostream &OS);
@@ -51,7 +51,7 @@ private:
   // Itinerary information.
   void GatherItinClasses();
   unsigned getItinClassNumber(const Record *InstRec);
-  
+
   // Operand information.
   void EmitOperandInfo(raw_ostream &OS, OperandInfoMapTy &OperandInfoIDs);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
