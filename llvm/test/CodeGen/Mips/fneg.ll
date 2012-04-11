@@ -1,5 +1,4 @@
-; RUN: llc  < %s -march=mipsel -mcpu=mips32 | FileCheck %s -check-prefix=NAN
-; RUN: llc  < %s -march=mipsel -mcpu=mips32 -enable-no-nans-fp-math | FileCheck %s -check-prefix=NO-NAN
+; RUN: llc  < %s -march=mipsel -mcpu=mips32 | FileCheck %s 
 
 define float @foo0(i32 %a, float %d) nounwind readnone {
 entry:
