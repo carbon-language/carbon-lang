@@ -122,7 +122,7 @@ if __name__ == '__main__':
 def __lldb_init_module (debugger, dict):
     # This initializer is being run from LLDB in the embedded command interpreter
     # Add any commands contained in this module to LLDB
-    debugger.HandleCommand('process load /Volumes/work/gclayton/Documents/src/lldb/examples/darwin/heap_find/libheap.dylib')
+    debugger.HandleCommand('process load libheap.dylib')
     debugger.HandleCommand('command script add -f heap.heap_search heap_search')
     print '"heap_search" command installed, type "heap_search --help" for detailed help'
 
