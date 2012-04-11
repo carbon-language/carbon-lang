@@ -190,6 +190,7 @@ let Predicates = [IsFP64bit] in {
  def CVT_D64_L : FFR1<0x21, 21, "cvt", "d.l", FGR64, FGR64>;
 }
 
+let Predicates = [NoNaNsFPMath] in
 defm FABS    : FFR1P_M<0x5, "abs",  fabs>;
 defm FNEG    : FFR1P_M<0x7, "neg",  fneg>;
 defm FSQRT   : FFR1P_M<0x4, "sqrt", fsqrt>;
