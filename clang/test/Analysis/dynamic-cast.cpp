@@ -221,3 +221,10 @@ int testDynCastFalsePositive(BB *c) {
   return *res; // expected-warning{{Dereference of null pointer}}
 }
 
+// Does not work when we new an object.
+int testDynCastFail3() {
+  A *a = new A();
+  B *b = dynamic_cast<B*>(a);
+  return b->m;
+}
+
