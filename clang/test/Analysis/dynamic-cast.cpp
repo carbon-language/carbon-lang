@@ -181,13 +181,43 @@ int testReferenceFailedCast() {
   return *x; // no warning (An exception is thrown by the cast.)
 }
 
-// False negatives.
-
-// Symbolic regions are not typed, so we cannot deduce that the cast will
-// always fail in this case.
-int testDynCastFail1(class C *c) {
+// Here we allow any outcome of the cast and this is good because there is a
+// situation where this will fail. So if the user has written the code in this
+// way, we assume they expect the cast to succeed.
+// Note, this might need special handling if we track types of symbolic casts
+// and use them for dynamic_cast handling.
+int testDynCastMostLikelyWillFail(C *c) {
   B *b = 0;
   b = dynamic_cast<B*>(c);
-  return b->m;
+  const int* res = 0;
+  static const int i = 5;
+  if (b) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // expected-warning{{Dereference of null pointer}}
+}
+
+class M : public B, public C {};
+void callTestDynCastMostLikelyWillFail() {
+  M m;
+  testDynCastMostLikelyWillFail(&m);
+}
+
+// False positives/negatives.
+
+// Due to symbolic regions not being typed.
+int testDynCastFalsePositive(BB *c) {
+  B *b = 0;
+  b = dynamic_cast<B*>(c);
+  const int* res = 0;
+  static const int i = 5;
+  if (b) {
+      res = &i;
+  } else {
+      res = 0;
+  }
+  return *res; // expected-warning{{Dereference of null pointer}}
 }
 
