@@ -21,7 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
@@ -1361,12 +1361,10 @@ namespace llvm {
       return CIEKey::getTombstoneKey();
     }
     static unsigned getHashValue(const CIEKey &Key) {
-      FoldingSetNodeID ID;
-      ID.AddPointer(Key.Personality);
-      ID.AddInteger(Key.PersonalityEncoding);
-      ID.AddInteger(Key.LsdaEncoding);
-      ID.AddBoolean(Key.IsSignalFrame);
-      return ID.ComputeHash();
+      return static_cast<unsigned>(hash_combine(Key.Personality,
+                                                Key.PersonalityEncoding,
+                                                Key.LsdaEncoding,
+                                                Key.IsSignalFrame));
     }
     static bool isEqual(const CIEKey &LHS,
                         const CIEKey &RHS) {

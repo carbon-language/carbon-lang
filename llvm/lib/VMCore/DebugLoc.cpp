@@ -173,10 +173,7 @@ DebugLoc DenseMapInfo<DebugLoc>::getTombstoneKey() {
 }
 
 unsigned DenseMapInfo<DebugLoc>::getHashValue(const DebugLoc &Key) {
-  FoldingSetNodeID ID;
-  ID.AddInteger(Key.LineCol);
-  ID.AddInteger(Key.ScopeIdx);
-  return ID.ComputeHash();
+  return static_cast<unsigned>(hash_combine(Key.LineCol, Key.ScopeIdx));
 }
 
 bool DenseMapInfo<DebugLoc>::isEqual(const DebugLoc &LHS, const DebugLoc &RHS) {
