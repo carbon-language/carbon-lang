@@ -667,8 +667,9 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
     {
       int numArgs = clang_Cursor_getNumArguments(cursor);
       if (numArgs != -1 && numArgs != 0) {
+        int i;
         printf(" [args=");
-        for (int i = 0; i < numArgs; ++i) {
+        for (i = 0; i < numArgs; ++i) {
           CXType T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
           if (T.kind != CXType_Invalid) {
             CXString S = clang_getTypeKindSpelling(T.kind);
