@@ -5386,7 +5386,7 @@ X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
 // Try to lower a shuffle node into a simple blend instruction.
 static SDValue LowerVECTOR_SHUFFLEtoBlend(SDValue Op,
                                           const X86Subtarget *Subtarget,
-                                          SelectionDAG &DAG, EVT PtrTy) {
+                                          SelectionDAG &DAG) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
@@ -6624,7 +6624,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::VPERM2X128, dl, VT, V1,
                                 V2, getShuffleVPERM2X128Immediate(SVOp), DAG);
 
-  SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(Op, Subtarget, DAG, getPointerTy());
+  SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(Op, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
 
