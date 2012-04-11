@@ -6735,12 +6735,22 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f64 (vselect (v4i64 VR256:$mask), (v4f64 VR256:$src1),
                             (v4f64 VR256:$src2))),
             (VBLENDVPDYrr VR256:$src2, VR256:$src1, VR256:$mask)>;
+
+  def : Pat<(v8f32 (X86Blendps (v8f32 VR256:$src1), (v8f32 VR256:$src2),
+                               (imm:$mask))),
+            (VBLENDPSYrri VR256:$src2, VR256:$src1, imm:$mask)>;
+  def : Pat<(v4f64 (X86Blendpd (v4f64 VR256:$src1), (v4f64 VR256:$src2),
+                               (imm:$mask))),
+            (VBLENDPDYrri VR256:$src2, VR256:$src1, imm:$mask)>;
 }
 
 let Predicates = [HasAVX2] in {
   def : Pat<(v32i8 (vselect (v32i8 VR256:$mask), (v32i8 VR256:$src1),
                             (v32i8 VR256:$src2))),
             (VPBLENDVBYrr VR256:$src2, VR256:$src1, VR256:$mask)>;
+  def : Pat<(v16i16 (X86Blendpw (v16i16 VR256:$src1), (v16i16 VR256:$src2),
+                               (imm:$mask))),
+            (VPBLENDWYrri VR256:$src2, VR256:$src1, imm:$mask)>;
 }
 
 /// SS41I_ternary_int - SSE 4.1 ternary operator
@@ -6789,6 +6799,17 @@ let Predicates = [HasSSE41] in {
   def : Pat<(v2f64 (vselect (v2i64 XMM0), (v2f64 VR128:$src1),
                             (v2f64 VR128:$src2))),
             (BLENDVPDrr0 VR128:$src2, VR128:$src1)>;
+
+  def : Pat<(v8i16 (X86Blendpw (v8i16 VR128:$src1), (v8i16 VR128:$src2),
+                               (imm:$mask))),
+            (VPBLENDWrri VR128:$src2, VR128:$src1, imm:$mask)>;
+  def : Pat<(v4f32 (X86Blendps (v4f32 VR128:$src1), (v4f32 VR128:$src2),
+                               (imm:$mask))),
+            (VBLENDPSrri VR128:$src2, VR128:$src1, imm:$mask)>;
+  def : Pat<(v2f64 (X86Blendpd (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+                               (imm:$mask))),
+            (VBLENDPDrri VR128:$src2, VR128:$src1, imm:$mask)>;
+
 }
 
 let Predicates = [HasAVX] in

@@ -164,7 +164,7 @@ i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32
 }
 
 ; CHECK: blend1
-; CHECK: vblendvps
+; CHECK: vblendps
 ; CHECK: ret
 define <4 x i32> @blend1(<4 x i32> %a, <4 x i32> %b) nounwind alwaysinline {
   %t = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 2, i32 7>
@@ -172,7 +172,7 @@ define <4 x i32> @blend1(<4 x i32> %a, <4 x i32> %b) nounwind alwaysinline {
 }
 
 ; CHECK: blend2
-; CHECK: vblendvps
+; CHECK: vblendps
 ; CHECK: ret
 define <4 x i32> @blend2(<4 x i32> %a, <4 x i32> %b) nounwind alwaysinline {
   %t = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
@@ -180,7 +180,7 @@ define <4 x i32> @blend2(<4 x i32> %a, <4 x i32> %b) nounwind alwaysinline {
 }
 
 ; CHECK: blend2a
-; CHECK: vblendvps
+; CHECK: vblendps
 ; CHECK: ret
 define <4 x float> @blend2a(<4 x float> %a, <4 x float> %b) nounwind alwaysinline {
   %t = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
@@ -188,7 +188,7 @@ define <4 x float> @blend2a(<4 x float> %a, <4 x float> %b) nounwind alwaysinlin
 }
 
 ; CHECK: blend3
-; CHECK-NOT: vblendvps
+; CHECK-NOT: vblendps
 ; CHECK: ret
 define <4 x i32> @blend3(<4 x i32> %a, <4 x i32> %b) nounwind alwaysinline {
   %t = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 1, i32 5, i32 2, i32 7>
@@ -196,7 +196,7 @@ define <4 x i32> @blend3(<4 x i32> %a, <4 x i32> %b) nounwind alwaysinline {
 }
 
 ; CHECK: blend4
-; CHECK: vblendvpd
+; CHECK: vblendpd
 ; CHECK: ret
 define <4 x i64> @blend4(<4 x i64> %a, <4 x i64> %b) nounwind alwaysinline {
   %t = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 0, i32 1, i32 2, i32 7>
