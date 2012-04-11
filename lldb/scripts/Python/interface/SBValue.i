@@ -379,7 +379,10 @@ public:
     GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
     
     %pythoncode %{
-
+        def __get_dynamic__ (self):
+            '''Helper function for the "SBValue.dynamic" property.'''
+            return self.GetDynamicValue (eDynamicCanRunTarget)
+        
         __swig_getmethods__["name"] = GetName
         if _newclass: name = property(GetName, None, doc='Returns the name of this SBValue as a string')
 
@@ -429,7 +432,10 @@ public:
 
         __swig_getmethods__["description"] = GetObjectDescription
         if _newclass: description = property(GetObjectDescription, None, doc='Returns the language-specific description of this SBValue as a string')
-
+        
+        __swig_getmethods__["dynamic"] = __get_dynamic__
+        if _newclass: description = property(__get_dynamic__, None, doc='Gets the dynamic type for a value')
+        
         __swig_getmethods__["location"] = GetLocation
         if _newclass: location = property(GetLocation, None, doc='Returns the location of this SBValue as a string')
 
