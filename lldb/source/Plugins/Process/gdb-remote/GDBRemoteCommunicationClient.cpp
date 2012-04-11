@@ -259,7 +259,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     Mutex::Locker locker;
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     size_t response_len = 0;
-    if (TryLockSequenceMutex (locker))
+    if (GetSequenceMutex (locker, 0))
     {
         if (SendPacketNoLock (payload, payload_length))
            response_len = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
@@ -361,30 +361,6 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     return response_len;
 }
 
-//template<typename _Tp>
-//class ScopedValueChanger
-//{
-//public:
-//    // Take a value reference and the value to assign it to when this class
-//    // instance goes out of scope.
-//    ScopedValueChanger (_Tp &value_ref, _Tp value) :
-//        m_value_ref (value_ref),
-//        m_value (value)
-//    {
-//    }
-//
-//    // This object is going out of scope, change the value pointed to by
-//    // m_value_ref to the value we got during construction which was stored in
-//    // m_value;
-//    ~ScopedValueChanger ()
-//    {
-//        m_value_ref = m_value;
-//    }
-//protected:
-//    _Tp &m_value_ref;   // A reference to the value we will change when this object destructs
-//    _Tp m_value;        // The value to assign to m_value_ref when this goes out of scope.
-//};
-
 StateType
 GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
 (
@@ -415,7 +391,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
         {
             if (log)
                 log->Printf ("GDBRemoteCommunicationClient::%s () sending continue packet: %s", __FUNCTION__, continue_packet.c_str());
-            if (SendPacket(continue_packet.c_str(), continue_packet.size()) == 0)
+            if (SendPacketNoLock(continue_packet.c_str(), continue_packet.size()) == 0)
                 state = eStateInvalid;
         
             m_private_is_running.SetValue (true, eBroadcastAlways);
@@ -426,7 +402,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
         if (log)
             log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%s)", __FUNCTION__, continue_packet.c_str());
 
-        if (WaitForPacketWithTimeoutMicroSeconds (response, UINT32_MAX))
+        if (WaitForPacketWithTimeoutMicroSecondsNoLock(response, UINT32_MAX))
         {
             if (response.Empty())
                 state = eStateInvalid;
@@ -647,7 +623,7 @@ GDBRemoteCommunicationClient::SendAsyncSignal (int signo)
     return false;
 }
 
-// This function takes a mutex locker as a parameter in case the TryLockSequenceMutex
+// This function takes a mutex locker as a parameter in case the GetSequenceMutex
 // actually succeeds. If it doesn't succeed in acquiring the sequence mutex 
 // (the expected result), then it will send the halt packet. If it does succeed
 // then the caller that requested the interrupt will want to keep the sequence
@@ -672,7 +648,12 @@ GDBRemoteCommunicationClient::SendInterrupt
     if (IsRunning())
     {
         // Only send an interrupt if our debugserver is running...
-        if (TryLockSequenceMutex (locker) == false)
+        if (GetSequenceMutex (locker, 0))
+        {
+            if (log)
+                log->Printf ("SendInterrupt () - got sequence mutex without having to interrupt");
+        }
+        else
         {
             // Someone has the mutex locked waiting for a response or for the
             // inferior to stop, so send the interrupt on the down low...
@@ -717,11 +698,6 @@ GDBRemoteCommunicationClient::SendInterrupt
                     log->Printf ("SendInterrupt () - failed to write interrupt");
             }
             return false;
-        }
-        else
-        {
-            if (log)
-                log->Printf ("SendInterrupt () - got sequence mutex without having to interrupt");
         }
     }
     else
@@ -1172,6 +1148,12 @@ GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
         }
     }
     return false;
+}
+
+bool
+GDBRemoteCommunicationClient::Detach ()
+{
+    return SendPacket ("D", 1) > 0;
 }
 
 Error
@@ -1861,7 +1843,7 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     Mutex::Locker locker;
     thread_ids.clear();
     
-    if (TryLockSequenceMutex (locker))
+    if (GetSequenceMutex (locker, 0))
     {
         sequence_mutex_unavailable = false;
         StringExtractorGDBRemote response;
@@ -1894,3 +1876,19 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     }
     return thread_ids.size();
 }
+
+lldb::addr_t
+GDBRemoteCommunicationClient::GetShlibInfoAddr()
+{
+    if (!IsRunning())
+    {
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse("qShlibInfoAddr", ::strlen ("qShlibInfoAddr"), response, false))
+        {
+            if (response.IsNormalResponse())
+                return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
+        }
+    }
+    return LLDB_INVALID_ADDRESS;
+}
+

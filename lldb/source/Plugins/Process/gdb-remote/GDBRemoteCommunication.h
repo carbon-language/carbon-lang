@@ -45,21 +45,6 @@ public:
     virtual
     ~GDBRemoteCommunication();
 
-    size_t
-    SendPacket (const char *payload);
-
-    size_t
-    SendPacket (const char *payload,
-                size_t payload_length);
-
-    size_t
-    SendPacket (lldb_private::StreamString &response);
-
-    // Wait for a packet within 'nsec' seconds
-    size_t
-    WaitForPacketWithTimeoutMicroSeconds (StringExtractorGDBRemote &response,
-                                          uint32_t usec);
-
     char
     GetAck ();
 
@@ -74,7 +59,7 @@ public:
                         size_t payload_length);
 
     bool
-    TryLockSequenceMutex(lldb_private::Mutex::Locker& locker);
+    GetSequenceMutex (lldb_private::Mutex::Locker& locker, uint32_t usec_timeout);
 
     bool
     CheckForPacket (const uint8_t *src, 
@@ -258,6 +243,10 @@ protected:
         uint32_t m_total_packet_count;
         mutable bool m_dumped_to_log;
     };
+
+    size_t
+    SendPacket (const char *payload,
+                size_t payload_length);
 
     size_t
     SendPacketNoLock (const char *payload, 

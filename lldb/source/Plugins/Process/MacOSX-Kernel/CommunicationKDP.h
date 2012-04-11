@@ -102,7 +102,7 @@ public:
                                           uint32_t usec);
 
     bool
-    TryLockSequenceMutex(lldb_private::Mutex::Locker& locker);
+    GetSequenceMutex(lldb_private::Mutex::Locker& locker);
 
     bool
     CheckForPacket (const uint8_t *src, 

@@ -308,7 +308,7 @@ SBDebugger::HandleCommand (const char *command)
         TargetSP target_sp (m_opaque_sp->GetSelectedTarget());
         Mutex::Locker api_locker;
         if (target_sp)
-            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock(target_sp->GetAPIMutex().GetMutex());
 
         SBCommandInterpreter sb_interpreter(GetCommandInterpreter ());
         SBCommandReturnObject result;
@@ -830,7 +830,7 @@ SBDebugger::PushInputReader (SBInputReader &reader)
         TargetSP target_sp (m_opaque_sp->GetSelectedTarget());
         Mutex::Locker api_locker;
         if (target_sp)
-            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock(target_sp->GetAPIMutex().GetMutex());
         InputReaderSP reader_sp(*reader);
         m_opaque_sp->PushInputReader (reader_sp);
     }

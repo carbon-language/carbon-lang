@@ -2839,7 +2839,7 @@ public:
             
             if (use_global_module_list)
             {
-                locker.Reset (Module::GetAllocationModuleCollectionMutex()->GetMutex());
+                locker.Lock (Module::GetAllocationModuleCollectionMutex()->GetMutex());
                 num_modules = Module::GetNumberAllocatedModules();
             }
             else

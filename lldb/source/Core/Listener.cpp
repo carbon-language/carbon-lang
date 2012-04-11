@@ -303,7 +303,7 @@ Listener::FindNextEventInternal
         // Unlock the event queue here.  We've removed this event and are about to return
         // it so it should be okay to get the next event off the queue here - and it might
         // be useful to do that in the "DoOnRemoval".
-        lock.Reset();
+        lock.Unlock();
         event_sp->DoOnRemoval();
         return true;
     }

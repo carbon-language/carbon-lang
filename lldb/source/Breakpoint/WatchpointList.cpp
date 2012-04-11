@@ -273,5 +273,5 @@ WatchpointList::RemoveAll ()
 void
 WatchpointList::GetListMutex (Mutex::Locker &locker)
 {
-    return locker.Reset (m_mutex.GetMutex());
+    return locker.Lock (m_mutex.GetMutex());
 }

@@ -1621,10 +1621,10 @@ ProcessGDBRemote::DoDetach()
 
     m_thread_list.DiscardThreadPlans();
 
-    size_t response_size = m_gdb_comm.SendPacket ("D", 1);
+    bool success = m_gdb_comm.Detach ();
     if (log)
     {
-        if (response_size)
+        if (success)
             log->PutCString ("ProcessGDBRemote::DoDetach() detach packet sent successfully");
         else
             log->PutCString ("ProcessGDBRemote::DoDetach() detach packet send failed");
@@ -1691,16 +1691,7 @@ ProcessGDBRemote::IsAlive ()
 addr_t
 ProcessGDBRemote::GetImageInfoAddress()
 {
-    if (!m_gdb_comm.IsRunning())
-    {
-        StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("qShlibInfoAddr", ::strlen ("qShlibInfoAddr"), response, false))
-        {
-            if (response.IsNormalResponse())
-                return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
-        }
-    }
-    return LLDB_INVALID_ADDRESS;
+    return m_gdb_comm.GetShlibInfoAddr();
 }
 
 //------------------------------------------------------------------

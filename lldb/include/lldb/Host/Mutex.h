@@ -105,7 +105,7 @@ public:
         /// non-NULL.
         //--------------------------------------------------------------
         void
-        Reset(pthread_mutex_t *mutex = NULL);
+        Lock (pthread_mutex_t *mutex);
 
         //--------------------------------------------------------------
         /// Change the contained mutex only if the mutex can be locked.
@@ -124,6 +124,9 @@ public:
         //--------------------------------------------------------------
         bool
         TryLock (pthread_mutex_t *mutex);
+
+        void
+        Unlock ();
 
     protected:
         //--------------------------------------------------------------

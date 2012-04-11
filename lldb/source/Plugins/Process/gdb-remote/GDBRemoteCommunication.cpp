@@ -158,21 +158,6 @@ GDBRemoteCommunication::SendNack ()
 }
 
 size_t
-GDBRemoteCommunication::SendPacket (lldb_private::StreamString &payload)
-{
-    Mutex::Locker locker(m_sequence_mutex);
-    const std::string &p (payload.GetString());
-    return SendPacketNoLock (p.c_str(), p.size());
-}
-
-size_t
-GDBRemoteCommunication::SendPacket (const char *payload)
-{
-    Mutex::Locker locker(m_sequence_mutex);
-    return SendPacketNoLock (payload, ::strlen (payload));
-}
-
-size_t
 GDBRemoteCommunication::SendPacket (const char *payload, size_t payload_length)
 {
     Mutex::Locker locker(m_sequence_mutex);
@@ -234,15 +219,20 @@ char
 GDBRemoteCommunication::GetAck ()
 {
     StringExtractorGDBRemote packet;
-    if (WaitForPacketWithTimeoutMicroSeconds (packet, GetPacketTimeoutInMicroSeconds ()) == 1)
+    if (WaitForPacketWithTimeoutMicroSecondsNoLock (packet, GetPacketTimeoutInMicroSeconds ()) == 1)
         return packet.GetChar();
     return 0;
 }
 
 bool
-GDBRemoteCommunication::TryLockSequenceMutex (Mutex::Locker& locker)
+GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker, uint32_t usec_timeout)
 {
-    return locker.TryLock (m_sequence_mutex.GetMutex());
+    if (usec_timeout == 0)
+        return locker.TryLock (m_sequence_mutex.GetMutex());
+    
+    // Wait for the lock
+    locker.Lock (m_sequence_mutex.GetMutex());
+    return true;
 }
 
 
@@ -250,13 +240,6 @@ bool
 GDBRemoteCommunication::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
 {
     return m_private_is_running.WaitForValueEqualTo (false, timeout_ptr, NULL);
-}
-
-size_t
-GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSeconds (StringExtractorGDBRemote &packet, uint32_t timeout_usec)
-{
-    Mutex::Locker locker(m_sequence_mutex);
-    return WaitForPacketWithTimeoutMicroSecondsNoLock (packet, timeout_usec);
 }
 
 size_t

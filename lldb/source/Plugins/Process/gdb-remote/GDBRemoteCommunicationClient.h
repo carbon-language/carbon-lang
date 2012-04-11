@@ -199,6 +199,9 @@ public:
     bool
     DeallocateMemory (lldb::addr_t addr);
 
+    bool
+    Detach ();
+
     lldb_private::Error
     GetMemoryRegionInfo (lldb::addr_t addr, 
                         lldb_private::MemoryRegionInfo &range_info); 
@@ -231,6 +234,9 @@ public:
 
     bool
     GetHostname (std::string &s);
+
+    lldb::addr_t
+    GetShlibInfoAddr();
 
     bool
     GetSupportsThreadSuffix ();

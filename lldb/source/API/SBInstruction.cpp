@@ -78,7 +78,7 @@ SBInstruction::GetMnemonic(SBTarget target)
         TargetSP target_sp (target.GetSP());
         if (target_sp)
         {
-            api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock (target_sp->GetAPIMutex().GetMutex());
             target_sp->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
@@ -97,7 +97,7 @@ SBInstruction::GetOperands(SBTarget target)
         TargetSP target_sp (target.GetSP());
         if (target_sp)
         {
-            api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock (target_sp->GetAPIMutex().GetMutex());
             target_sp->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
@@ -116,7 +116,7 @@ SBInstruction::GetComment(SBTarget target)
         TargetSP target_sp (target.GetSP());
         if (target_sp)
         {
-            api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock (target_sp->GetAPIMutex().GetMutex());
             target_sp->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }

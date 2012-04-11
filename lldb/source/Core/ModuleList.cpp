@@ -118,7 +118,7 @@ ModuleList::RemoveOrphans (bool mandatory)
     
     if (mandatory)
     {
-        locker.Reset (m_modules_mutex.GetMutex());
+        locker.Lock (m_modules_mutex.GetMutex());
     }
     else
     {

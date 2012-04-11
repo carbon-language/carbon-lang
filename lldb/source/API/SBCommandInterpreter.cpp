@@ -93,7 +93,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         Mutex::Locker api_locker;
         if (target_sp)
-            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock(target_sp->GetAPIMutex().GetMutex());
         m_opaque_ptr->HandleCommand (command_line, add_to_history, result.ref());
     }
     else
@@ -238,7 +238,7 @@ SBCommandInterpreter::SourceInitFileInHomeDirectory (SBCommandReturnObject &resu
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         Mutex::Locker api_locker;
         if (target_sp)
-            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock(target_sp->GetAPIMutex().GetMutex());
         m_opaque_ptr->SourceInitFile (false, result.ref());
     }
     else
@@ -263,7 +263,7 @@ SBCommandInterpreter::SourceInitFileInCurrentWorkingDirectory (SBCommandReturnOb
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         Mutex::Locker api_locker;
         if (target_sp)
-            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
+            api_locker.Lock(target_sp->GetAPIMutex().GetMutex());
         m_opaque_ptr->SourceInitFile (true, result.ref());
     }
     else

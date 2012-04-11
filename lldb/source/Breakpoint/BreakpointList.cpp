@@ -223,5 +223,5 @@ BreakpointList::ClearAllBreakpointSites ()
 void
 BreakpointList::GetListMutex (Mutex::Locker &locker)
 {
-    return locker.Reset (m_mutex.GetMutex());
+    return locker.Lock (m_mutex.GetMutex());
 }

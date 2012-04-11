@@ -181,7 +181,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
     if (!m_reg_valid[reg])
     {
         Mutex::Locker locker;
-        if (gdb_comm.TryLockSequenceMutex (locker))
+        if (gdb_comm.GetSequenceMutex (locker, 0))
         {
             const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
             ProcessSP process_sp (m_thread.GetProcess());
@@ -331,7 +331,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                                   m_reg_data.GetByteOrder()))   // dst byte order
     {
         Mutex::Locker locker;
-        if (gdb_comm.TryLockSequenceMutex (locker))
+        if (gdb_comm.GetSequenceMutex (locker, 0))
         {
             const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
             ProcessSP process_sp (m_thread.GetProcess());
@@ -440,7 +440,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     StringExtractorGDBRemote response;
 
     Mutex::Locker locker;
-    if (gdb_comm.TryLockSequenceMutex (locker))
+    if (gdb_comm.GetSequenceMutex (locker, 0))
     {
         char packet[32];
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
@@ -496,7 +496,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
 
     StringExtractorGDBRemote response;
     Mutex::Locker locker;
-    if (gdb_comm.TryLockSequenceMutex (locker))
+    if (gdb_comm.GetSequenceMutex (locker, 0))
     {
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
         ProcessSP process_sp (m_thread.GetProcess());
