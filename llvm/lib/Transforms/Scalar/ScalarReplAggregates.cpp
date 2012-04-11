@@ -13,7 +13,7 @@
 // each member (if possible).  Then, if possible, it transforms the individual
 // alloca instructions into nice clean scalar SSA form.
 //
-// This combines a simple SRoA algorithm with the Mem2Reg algorithm because
+// This combines a simple SRoA algorithm with the Mem2Reg algorithm because they
 // often interact, especially for C++ programs.  As such, iterating between
 // SRoA, then Mem2Reg until we run out of things to promote works well.
 //
