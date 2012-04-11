@@ -63,7 +63,7 @@ ifeq ($(HOST_OS),Darwin)
     endif
 endif
 
-ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD OpenBSD))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD OpenBSD GNU))
     # Include everything from the .a's into the shared library.
     LLVMLibsOptions := -Wl,--whole-archive $(LLVMLibsOptions) \
                        -Wl,--no-whole-archive
@@ -71,7 +71,7 @@ ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD OpenBSD))
     LLVMLibsOptions += -Wl,--soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
-ifeq ($(HOST_OS),Linux)
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux GNU))
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
 endif

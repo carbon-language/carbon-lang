@@ -60,6 +60,11 @@
 #include <mach-o/dyld.h>
 #endif
 
+// For GNU Hurd
+#if defined(__GNU__) && !defined(MAXPATHLEN)
+# define MAXPATHLEN 4096
+#endif
+
 // Put in a hack for Cygwin which falsely reports that the mkdtemp function
 // is available when it is not.
 #ifdef __CYGWIN__

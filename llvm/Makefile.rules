@@ -1432,7 +1432,7 @@ LD.Flags += -Wl,-exported_symbol,_main
 endif
 endif
 
-ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD GNU))
 ifneq ($(ARCH), Mips)
   LD.Flags += -Wl,--version-script=$(LLVM_SRC_ROOT)/autoconf/ExportMap.map
 endif

@@ -46,6 +46,11 @@
 #include <limits.h>
 #endif
 
+// For GNU Hurd
+#if defined(__GNU__) && !defined(PATH_MAX)
+# define PATH_MAX 4096
+#endif
+
 using namespace llvm;
 
 namespace {
@@ -96,7 +101,12 @@ namespace sys  {
 namespace fs {
 
 error_code current_path(SmallVectorImpl<char> &result) {
+#ifdef MAXPATHLEN
   result.reserve(MAXPATHLEN);
+#else
+// For GNU Hurd
+  result.reserve(1024);
+#endif
 
   while (true) {
     if (::getcwd(result.data(), result.capacity()) == 0) {
