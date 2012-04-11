@@ -990,3 +990,11 @@ xchgl %ecx, %eax
 // CHECK: xchgl %ecx, %eax
 // CHECK: encoding: [0x91]
 xchgl %eax, %ecx
+
+// CHECK: retw
+// CHECK: encoding: [0x66,0xc3]
+retw
+
+// CHECK: lretw
+// CHECK: encoding: [0x66,0xcb]
+lretw

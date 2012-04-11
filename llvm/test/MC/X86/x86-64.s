@@ -50,6 +50,9 @@
 // CHECK: ret
         ret
         
+// CHECK: retw
+        retw
+        
 // FIXME: Check that this matches SUB32ri8
 // CHECK: subl $1, %eax
         subl $1, %eax
@@ -841,6 +844,7 @@ iretq
 lretq  // CHECK: lretq # encoding: [0x48,0xcb]
 lretl  // CHECK: lretl # encoding: [0xcb]
 lret   // CHECK: lretl # encoding: [0xcb]
+lretw  // CHECK: lretw # encoding: [0x66,0xcb]
 
 // rdar://8403907
 sysret

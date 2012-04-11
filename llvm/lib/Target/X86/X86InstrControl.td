@@ -21,20 +21,25 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
   def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
                     "ret",
                     [(X86retflag 0)], IIC_RET>;
+  def RETW   : I   <0xC3, RawFrm, (outs), (ins variable_ops),
+                    "ret{w}",
+                    [], IIC_RET>, OpSize;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret\t$amt",
                     [(X86retflag timm:$amt)], IIC_RET_IMM>;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
-                    "retw\t$amt",
+                    "ret{w}\t$amt",
                     [], IIC_RET_IMM>, OpSize;
   def LRETL  : I   <0xCB, RawFrm, (outs), (ins),
-                    "lretl", [], IIC_RET>;
+                    "{l}ret{l|f}", [], IIC_RET>;
+  def LRETW  : I   <0xCB, RawFrm, (outs), (ins),
+                    "{l}ret{w|f}", [], IIC_RET>, OpSize;
   def LRETQ  : RI  <0xCB, RawFrm, (outs), (ins),
-                    "lretq", [], IIC_RET>;
+                    "{l}ret{q|f}", [], IIC_RET>;
   def LRETI  : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
-                    "lret\t$amt", [], IIC_RET>;
+                    "{l}ret{l|f}\t$amt", [], IIC_RET>;
   def LRETIW : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
-                    "lretw\t$amt", [], IIC_RET>, OpSize;
+                    "{l}ret{w|f}\t$amt", [], IIC_RET>, OpSize;
 }
 
 // Unconditional branches.

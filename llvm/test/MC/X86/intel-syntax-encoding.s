@@ -42,3 +42,16 @@ LBB0_3:
 
 // CHECK: encoding: [0x0f,0xc2,0xd1,0x01]
 	cmpltps XMM2, XMM1
+
+// CHECK: encoding: [0xc3]
+    ret
+
+// CHECK: encoding: [0xcb]
+    retf
+
+// CHECK: encoding: [0xc2,0x08,0x00]
+    ret 8
+
+// CHECK: encoding: [0xca,0x08,0x00]
+    retf 8
+
