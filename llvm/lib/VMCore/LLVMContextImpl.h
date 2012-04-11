@@ -194,6 +194,26 @@ struct FunctionTypeKeyInfo {
   }
 };
 
+// Provide a FoldingSetTrait::Equals specialization for MDNode that can use a
+// shortcut to avoid comparing all operands.
+template<> struct FoldingSetTrait<MDNode> : DefaultFoldingSetTrait<MDNode> {
+  static bool Equals(const MDNode &X, const FoldingSetNodeID &ID,
+                     unsigned IDHash, FoldingSetNodeID &TempID) {
+    assert(!X.isNotUniqued() && "Non-uniqued MDNode in FoldingSet?");
+    // First, check if the cached hashes match.  If they don't we can skip the
+    // expensive operand walk.
+    if (X.Hash != IDHash)
+      return false;
+
+    // If they match we have to compare the operands.
+    X.Profile(TempID);
+    return TempID == ID;
+  }
+  static unsigned ComputeHash(const MDNode &X, FoldingSetNodeID &) {
+    return X.Hash; // Return cached hash.
+  }
+};
+
 /// DebugRecVH - This is a CallbackVH used to keep the Scope -> index maps
 /// up to date as MDNodes mutate.  This class is implemented in DebugLoc.cpp.
 class DebugRecVH : public CallbackVH {

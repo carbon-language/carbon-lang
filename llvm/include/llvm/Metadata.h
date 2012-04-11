@@ -75,6 +75,10 @@ class MDNode : public Value, public FoldingSetNode {
   void operator=(const MDNode &);        // DO NOT IMPLEMENT
   friend class MDNodeOperand;
   friend class LLVMContextImpl;
+  friend struct FoldingSetTrait<MDNode>;
+
+  /// NumOperands - If the MDNode is uniqued cache the hash to speed up lookup.
+  unsigned Hash;
 
   /// NumOperands - This many 'MDNodeOperand' items are co-allocated onto the
   /// end of this MDNode.

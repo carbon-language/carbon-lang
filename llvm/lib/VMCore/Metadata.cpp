@@ -250,6 +250,9 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   void *Ptr = malloc(sizeof(MDNode)+Vals.size()*sizeof(MDNodeOperand));
   N = new (Ptr) MDNode(Context, Vals, isFunctionLocal);
 
+  // Cache the operand hash.
+  N->Hash = ID.ComputeHash();
+
   // InsertPoint will have been set by the FindNodeOrInsertPos call.
   pImpl->MDNodeSet.InsertNode(N, InsertPoint);
 
@@ -373,6 +376,8 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
     return;
   }
 
+  // Cache the operand hash.
+  Hash = ID.ComputeHash();
   // InsertPoint will have been set by the FindNodeOrInsertPos call.
   pImpl->MDNodeSet.InsertNode(this, InsertPoint);
 
