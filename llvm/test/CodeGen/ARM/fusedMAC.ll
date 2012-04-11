@@ -99,28 +99,47 @@ define <4 x float> @fusedMACTest12(<4 x float> %a, <4 x float> %b) {
   ret <4 x float> %sub
 }
 
-define float @test_f32(float %a, float %b, float %c) nounwind readnone ssp {
+define float @test_fma_f32(float %a, float %b, float %c) nounwind readnone ssp {
 entry:
-; CHECK: test_f32
+; CHECK: test_fma_f32
 ; CHECK: vfma.f32
   %call = tail call float @llvm.fma.f32(float %a, float %b, float %c) nounwind readnone
   ret float %call
 }
 
-define double @test_f64(double %a, double %b, double %c) nounwind readnone ssp {
+define double @test_fma_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:
-; CHECK: test_f64
+; CHECK: test_fma_f64
 ; CHECK: vfma.f64
   %call = tail call double @llvm.fma.f64(double %a, double %b, double %c) nounwind readnone
   ret double %call
 }
 
-define <2 x float> @test_v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone ssp {
+define <2 x float> @test_fma_v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone ssp {
 entry:
-; CHECK: test_v2f32
+; CHECK: test_fma_v2f32
 ; CHECK: vfma.f32
   %0 = tail call <2 x float> @llvm.fma.v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind
   ret <2 x float> %0
+}
+
+define float @test_fnma_f32(float %a, float %b, float %c) nounwind readnone ssp {
+entry:
+; CHECK: test_fnma_f32
+; CHECK: vfnma.f32
+  %call = tail call float @llvm.fma.f32(float %a, float %b, float %c) nounwind readnone
+  %tmp1 = fsub float -0.0, %call
+  %tmp2 = fsub float %tmp1, %c
+  ret float %tmp2
+}
+
+define double @test_fnma_f64(double %a, double %b, double %c) nounwind readnone ssp {
+entry:
+; CHECK: test_fnma_f64
+; CHECK: vfnma.f64
+  %call = tail call double @llvm.fma.f64(double %a, double %b, double %c) nounwind readnone
+  %tmp = fsub double -0.0, %call
+  ret double %tmp
 }
 
 declare float @llvm.fma.f32(float, float, float) nounwind readnone
