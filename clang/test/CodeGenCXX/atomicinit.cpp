@@ -21,5 +21,5 @@ _Atomic(B) b;
 // CHECK: define void @_Z11atomic_initR1Ai
 void atomic_init(A& a, int i) {
   // CHECK-NOT: atomic
-  __atomic_init(&b, B(i));
+  __c11_atomic_init(&b, B(i));
 }
