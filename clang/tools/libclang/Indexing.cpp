@@ -388,7 +388,8 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     }
   }
 
-  Unit = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
+  DiagnosticErrorTrap DiagTrap(*Diags);
+  bool Success = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
                                                        IndexAction.get(),
                                                        Unit,
                                                        Persistent,
@@ -397,7 +398,10 @@ static void clang_indexSourceFile_Impl(void *UserData) {
                                                     /*CaptureDiagnostics=*/true,
                                                        PrecompilePreamble,
                                                     CacheCodeCompletionResults);
-  if (!Unit)
+  if (DiagTrap.hasErrorOccurred() && CXXIdx->getDisplayDiagnostics())
+    printDiagsToStderr(Unit);
+
+  if (!Success)
     return;
 
   if (out_TU)

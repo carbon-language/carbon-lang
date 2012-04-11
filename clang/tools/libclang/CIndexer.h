@@ -25,6 +25,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class ASTUnit;
 
 class CIndexer {
   bool OnlyLocalDecls;
@@ -94,6 +95,10 @@ public:
 
   /// \brief Print libclang's resource usage to standard error.
   void PrintLibclangResourceUsage(CXTranslationUnit TU);
+
+  namespace cxindex {
+    void printDiagsToStderr(ASTUnit *Unit);
+  }
 }
 
 #endif

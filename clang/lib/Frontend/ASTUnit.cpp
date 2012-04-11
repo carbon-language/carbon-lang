@@ -1138,18 +1138,12 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   }
 
   Act->Execute();
-  
-  // Steal the created target, context, and preprocessor.
-  TheSema.reset(Clang->takeSema());
-  Consumer.reset(Clang->takeASTConsumer());
-  Ctx = &Clang->getASTContext();
-  PP = &Clang->getPreprocessor();
-  Clang->setSourceManager(0);
-  Clang->setFileManager(0);
-  Target = &Clang->getTarget();
-  Reader = Clang->getModuleManager();
+
+  transferASTDataFromCompilerInstance(*Clang);
   
   Act->EndSourceFile();
+
+  FailedParseDiagnostics.clear();
 
   return false;
 
@@ -1159,7 +1153,11 @@ error:
     delete OverrideMainBuffer;
     SavedMainFileBuffer = 0;
   }
-  
+
+  // Keep the ownership of the data in the ASTUnit because the client may
+  // want to see the diagnostics.
+  transferASTDataFromCompilerInstance(*Clang);
+  FailedParseDiagnostics.swap(StoredDiagnostics);
   StoredDiagnostics.clear();
   NumStoredDiagnosticsFromDriver = 0;
   return true;
@@ -1647,6 +1645,18 @@ void ASTUnit::RealizeTopLevelDeclsFromPreamble() {
   TopLevelDecls.insert(TopLevelDecls.begin(), Resolved.begin(), Resolved.end());
 }
 
+void ASTUnit::transferASTDataFromCompilerInstance(CompilerInstance &CI) {
+  // Steal the created target, context, and preprocessor.
+  TheSema.reset(CI.takeSema());
+  Consumer.reset(CI.takeASTConsumer());
+  Ctx = &CI.getASTContext();
+  PP = &CI.getPreprocessor();
+  CI.setSourceManager(0);
+  CI.setFileManager(0);
+  Target = &CI.getTarget();
+  Reader = CI.getModuleManager();
+}
+
 StringRef ASTUnit::getMainFileName() const {
   return Invocation->getFrontendOpts().Inputs[0].File;
 }
@@ -1675,7 +1685,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                                              bool OnlyLocalDecls,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
-                                             bool CacheCodeCompletionResults) {
+                                             bool CacheCodeCompletionResults,
+                                             OwningPtr<ASTUnit> *ErrAST) {
   assert(CI && "A CompilerInvocation is required");
 
   OwningPtr<ASTUnit> OwnAST;
@@ -1770,8 +1781,13 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   llvm::CrashRecoveryContextCleanupRegistrar<TopLevelDeclTrackerAction>
     ActCleanup(TrackerAct.get());
 
-  if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0]))
+  if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
+    AST->transferASTDataFromCompilerInstance(*Clang);
+    if (OwnAST && ErrAST)
+      ErrAST->swap(OwnAST);
+
     return 0;
+  }
 
   if (Persistent && !TrackerAct) {
     Clang->getPreprocessor().addPPCallbacks(
@@ -1784,16 +1800,9 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
     Clang->setASTConsumer(new MultiplexConsumer(Consumers));
   }
   Act->Execute();
-  
+
   // Steal the created target, context, and preprocessor.
-  AST->TheSema.reset(Clang->takeSema());
-  AST->Consumer.reset(Clang->takeASTConsumer());
-  AST->Ctx = &Clang->getASTContext();
-  AST->PP = &Clang->getPreprocessor();
-  Clang->setSourceManager(0);
-  Clang->setFileManager(0);
-  AST->Target = &Clang->getTarget();
-  AST->Reader = Clang->getModuleManager();
+  AST->transferASTDataFromCompilerInstance(*Clang);
   
   Act->EndSourceFile();
 
@@ -1872,7 +1881,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool PrecompilePreamble,
                                       TranslationUnitKind TUKind,
                                       bool CacheCodeCompletionResults,
-                                      bool AllowPCHWithCompilerErrors) {
+                                      bool AllowPCHWithCompilerErrors,
+                                      OwningPtr<ASTUnit> *ErrAST) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1936,7 +1946,17 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
     ASTUnitCleanup(AST.get());
 
-  return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0 : AST.take();
+  if (AST->LoadFromCompilerInvocation(PrecompilePreamble)) {
+    // Some error occurred, if caller wants to examine diagnostics, pass it the
+    // ASTUnit.
+    if (ErrAST) {
+      AST->StoredDiagnostics.swap(AST->FailedParseDiagnostics);
+      ErrAST->swap(AST);
+    }
+    return 0;
+  }
+
+  return AST.take();
 }
 
 bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
