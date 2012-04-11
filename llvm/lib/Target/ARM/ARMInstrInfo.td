@@ -181,11 +181,11 @@ def HasVFP3          : Predicate<"Subtarget->hasVFP3()">,
                                  AssemblerPredicate<"FeatureVFP3">;
 def HasVFP4          : Predicate<"Subtarget->hasVFP4()">,
                                  AssemblerPredicate<"FeatureVFP4">;
-def NoVFP4            : Predicate<"!Subtarget->hasVFP4()">;
+def NoVFP4           : Predicate<"!Subtarget->hasVFP4()">;
 def HasNEON          : Predicate<"Subtarget->hasNEON()">,
                                  AssemblerPredicate<"FeatureNEON">;
 def HasNEON2         : Predicate<"Subtarget->hasNEON2()">,
-                                 AssemblerPredicate<"FeatureNEON2">;
+                                 AssemblerPredicate<"FeatureNEON,FeatureVFP4">;
 def NoNEON2          : Predicate<"!Subtarget->hasNEON2()">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16">;
@@ -220,6 +220,9 @@ def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;
 def UseMovt          : Predicate<"Subtarget->useMovt()">;
 def DontUseMovt      : Predicate<"!Subtarget->useMovt()">;
 def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
+
+// Allow more precision in FP computation
+def FPContractions : Predicate<"!TM.Options.NoExcessFPPrecision">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.

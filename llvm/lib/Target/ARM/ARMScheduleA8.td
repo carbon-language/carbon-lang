@@ -324,6 +324,15 @@ def CortexA8Itineraries : ProcessorItineraries<
                                InstrStage<19, [A8_NPipe], 0>,
                                InstrStage<19, [A8_NLSPipe]>], [19, 2, 1, 1]>,
   //
+  // Single-precision Fused FP MAC
+  InstrItinData<IIC_fpFMAC32, [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
+                               InstrStage<1, [A8_NPipe]>], [7, 2, 1, 1]>,
+  //
+  // Double-precision Fused FP MAC
+  InstrItinData<IIC_fpFMAC64, [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
+                               InstrStage<19, [A8_NPipe], 0>,
+                               InstrStage<19, [A8_NLSPipe]>], [19, 2, 1, 1]>,
+  //
   // Single-precision FP DIV
   InstrItinData<IIC_fpDIV32 , [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
                                InstrStage<20, [A8_NPipe], 0>,
@@ -858,6 +867,16 @@ def CortexA8Itineraries : ProcessorItineraries<
   // Result written in N9, but that is relative to the last cycle of multicycle,
   // so we use 10 for those cases
   InstrItinData<IIC_VMACQ,    [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
+                               InstrStage<2, [A8_NPipe]>], [10, 3, 2, 2]>,
+  //
+  // Double-register Fused FP Multiple-Accumulate
+  InstrItinData<IIC_VFMACD,   [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
+                               InstrStage<1, [A8_NPipe]>], [9, 3, 2, 2]>,
+  //
+  // Quad-register Fused FP Multiple-Accumulate
+  // Result written in N9, but that is relative to the last cycle of multicycle,
+  // so we use 10 for those cases
+  InstrItinData<IIC_VFMACQ,   [InstrStage<1, [A8_Pipe0, A8_Pipe1], 0>,
                                InstrStage<2, [A8_NPipe]>], [10, 3, 2, 2]>,
   //
   // Double-register Reciprical Step

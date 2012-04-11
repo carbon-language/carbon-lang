@@ -76,8 +76,6 @@ def FeatureVMLxForwarding : SubtargetFeature<"vmlx-forwarding",
 def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
                                         "true",
                                         "Use NEON for single precision FP">;
-// Allow more precision in FP computation
-def FPContractions : Predicate<"!TM.Options.NoExcessFPPrecision">;
 
 // Disable 32-bit to 16-bit narrowing for experimentation.
 def FeaturePref32BitThumb : SubtargetFeature<"32bit", "Pref32BitThumb", "true",

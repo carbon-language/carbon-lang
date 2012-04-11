@@ -604,6 +604,22 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<2,  [A9_NPipe]>],
                               [9, 1, 1, 1]>,
   //
+  // Single-precision Fused FP MAC
+  InstrItinData<IIC_fpFMAC32, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_DRegsVFP], 0, Required>,
+                               InstrStage<9, [A9_DRegsN],   0, Reserved>,
+                               InstrStage<1, [A9_NPipe]>],
+                              [8, 1, 1, 1]>,
+  //
+  // Double-precision Fused FP MAC
+  InstrItinData<IIC_fpFMAC64, [InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1,  [A9_MUX0], 0>,
+                               InstrStage<1,  [A9_DRegsVFP], 0, Required>,
+                               InstrStage<10, [A9_DRegsN],  0, Reserved>,
+                               InstrStage<2,  [A9_NPipe]>],
+                              [9, 1, 1, 1]>,
+  //
   // Single-precision FP DIV
   InstrItinData<IIC_fpDIV32 , [InstrStage<1,  [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1,  [A9_MUX0], 0>,
@@ -1690,6 +1706,26 @@ def CortexA9Itineraries : ProcessorItineraries<
   // Result written in N9, but that is relative to the last cycle of multicycle,
   // so we use 10 for those cases
   InstrItinData<IIC_VMACQ,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 9 cycles
+                               InstrStage<10, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<4, [A9_NPipe]>],
+                              [8, 4, 2, 1]>,
+  //
+  // Double-register Fused FP Multiple-Accumulate
+  InstrItinData<IIC_VFMACD,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_DRegsN],   0, Required>,
+                               // Extra latency cycles since wbck is 7 cycles
+                               InstrStage<8, [A9_DRegsVFP], 0, Reserved>,
+                               InstrStage<2, [A9_NPipe]>],
+                              [6, 3, 2, 1]>,
+  //
+  // Quad-register Fused FP Multiple-Accumulate
+  // Result written in N9, but that is relative to the last cycle of multicycle,
+  // so we use 10 for those cases
+  InstrItinData<IIC_VFMACQ,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 9 cycles

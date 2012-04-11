@@ -45,7 +45,7 @@ protected:
   bool HasV6T2Ops;
   bool HasV7Ops;
 
-  /// HasVFPv2, HasVFPv3, HasVFPv4, HasNEON, HasNEONVFPv4 - Specify what
+  /// HasVFPv2, HasVFPv3, HasVFPv4, HasNEON, HasNEON2 - Specify what
   /// floating point ISAs are supported.
   bool HasVFPv2;
   bool HasVFPv3;

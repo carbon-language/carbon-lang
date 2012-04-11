@@ -4115,7 +4115,6 @@ defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, IIC_VMACi16D, IIC_VMACi32D,
                             "vqdmlsl", "s", int_arm_neon_vqdmlsl>;
 defm VQDMLSLsl: N3VLInt3SL_HS<0, 0b111, "vqdmlsl", "s", int_arm_neon_vqdmlsl>;
 
-
 // Fused Vector Multiply-Accumulate and Fused Multiply-Subtract Operations.
 def  VFMAfd   : N3VDMulOp<0, 0, 0b00, 0b1100, 1, IIC_VFMACD, "vfma", "f32",
                           v2f32, fmul_su, fadd_mlx>,
@@ -4136,10 +4135,10 @@ def  VFMSfq   : N3VQMulOp<0, 0, 0b10, 0b1100, 1, IIC_VFMACQ, "vfms", "f32",
 // Match @llvm.fma.* intrinsics
 def : Pat<(fma (v2f32 DPR:$src1), (v2f32 DPR:$Vn), (v2f32 DPR:$Vm)),
           (VFMAfd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
-          Requires<[HasNEON, HasVFP4]>;
+          Requires<[HasNEON2]>;
 def : Pat<(fma (v4f32 QPR:$src1), (v4f32 QPR:$Vn), (v4f32 QPR:$Vm)),
           (VFMAfq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
-          Requires<[HasNEON, HasVFP4]>;
+          Requires<[HasNEON2]>;
 
 // Vector Subtract Operations.
 
@@ -5497,9 +5496,9 @@ def : N3VSMulOpPat<fmul, fadd, VMLAfd>,
 def : N3VSMulOpPat<fmul, fsub, VMLSfd>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx, NoNEON2]>;
 def : N3VSMulOpPat<fmul, fadd, VFMAfd>,
-      Requires<[HasNEON2, UseNEONForFP,FPContractions]>;
+      Requires<[HasNEON2, UseNEONForFP, FPContractions]>;
 def : N3VSMulOpPat<fmul, fsub, VFMSfd>,
-      Requires<[HasNEON2, UseNEONForFP,FPContractions]>;
+      Requires<[HasNEON2, UseNEONForFP, FPContractions]>;
 def : N2VSPat<fabs, VABSfd>;
 def : N2VSPat<fneg, VNEGfd>;
 def : N3VSPat<NEONfmax, VMAXfd>;
