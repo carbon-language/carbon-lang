@@ -5378,7 +5378,9 @@ def  VTRNq32  : N2VQShuffle<0b10, 0b00001, IIC_VPERMQ, "vtrn", "32">;
 
 def  VUZPd8   : N2VDShuffle<0b00, 0b00010, "vuzp", "8">;
 def  VUZPd16  : N2VDShuffle<0b01, 0b00010, "vuzp", "16">;
-def  VUZPd32  : N2VDShuffle<0b10, 0b00010, "vuzp", "32">;
+// vuzp.32 Dd, Dm is a pseudo-instruction expanded to vtrn.32 Dd, Dm.
+def : NEONInstAlias<"vuzp${p}.32 $Dd, $Dm",
+                    (VTRNd32 DPR:$Dd, DPR:$Dm, pred:$p)>;
 
 def  VUZPq8   : N2VQShuffle<0b00, 0b00010, IIC_VPERMQ3, "vuzp", "8">;
 def  VUZPq16  : N2VQShuffle<0b01, 0b00010, IIC_VPERMQ3, "vuzp", "16">;
