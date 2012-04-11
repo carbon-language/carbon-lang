@@ -35,7 +35,7 @@ class InstrInfoEmitter : public TableGenBackend {
 public:
   InstrInfoEmitter(RecordKeeper &R) : Records(R), CDP(R) { }
 
-  // run - Output the instruction set description, returning true on failure.
+  // run - Output the instruction set description.
   void run(raw_ostream &OS);
 
 private:
