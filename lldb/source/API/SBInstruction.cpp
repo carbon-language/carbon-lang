@@ -139,19 +139,9 @@ SBInstruction::GetData (SBTarget target)
     lldb::SBData sb_data;
     if (m_opaque_sp)
     {
-        const Opcode &opcode = m_opaque_sp->GetOpcode();
-        const void *opcode_data = opcode.GetOpcodeBytes();
-        const uint32_t opcode_data_size = opcode.GetByteSize();
-        if (opcode_data && opcode_data_size > 0)
+        DataExtractorSP data_extractor_sp (new DataExtractor());
+        if (m_opaque_sp->GetOpcode().GetData (*data_extractor_sp))
         {
-            ByteOrder data_byte_order = opcode.GetDataByteOrder();
-            TargetSP target_sp (target.GetSP());
-            if (data_byte_order == eByteOrderInvalid && target_sp)
-                data_byte_order = target_sp->GetArchitecture().GetByteOrder();
-            DataBufferSP data_buffer_sp (new DataBufferHeap (opcode_data, opcode_data_size));
-            DataExtractorSP data_extractor_sp (new DataExtractor (data_buffer_sp, 
-                                                                  data_byte_order,
-                                                                  target_sp ? target_sp->GetArchitecture().GetAddressByteSize() : sizeof(void*)));
             sb_data.SetOpaque (data_extractor_sp);
         }
     }

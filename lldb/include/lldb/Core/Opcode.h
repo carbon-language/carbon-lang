@@ -204,6 +204,9 @@ namespace lldb_private {
             }
             return 0;
         }
+        
+        uint32_t
+        GetData (DataExtractor &data) const;
 
 
     protected:

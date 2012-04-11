@@ -13,6 +13,8 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Endian.h"
 
@@ -78,4 +80,37 @@ Opcode::GetDataByteOrder () const
     }
     return eByteOrderInvalid;
 }
+
+uint32_t
+Opcode::GetData (DataExtractor &data) const
+{
+    uint32_t byte_size = GetByteSize ();
+    DataBufferSP buffer_sp;
+    if (byte_size > 0)
+    {
+        switch (m_type)
+        {
+            case Opcode::eTypeInvalid:
+                break;
+                
+            case Opcode::eType8:    buffer_sp.reset (new DataBufferHeap (&m_data.inst8,  byte_size)); break;
+            case Opcode::eType16:   buffer_sp.reset (new DataBufferHeap (&m_data.inst16, byte_size)); break;
+            case Opcode::eType32:   buffer_sp.reset (new DataBufferHeap (&m_data.inst32, byte_size)); break;
+            case Opcode::eType64:   buffer_sp.reset (new DataBufferHeap (&m_data.inst64, byte_size)); break;
+            case Opcode::eTypeBytes:buffer_sp.reset (new DataBufferHeap (GetOpcodeBytes(), byte_size)); break;
+                break;
+        }
+    }
+    
+    if (buffer_sp)
+    {
+        data.SetByteOrder(GetDataByteOrder());
+        data.SetData (buffer_sp);
+        return byte_size;
+    }
+    data.Clear();
+    return 0;
+}
+
+
 

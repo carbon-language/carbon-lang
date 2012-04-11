@@ -207,49 +207,64 @@ protected:
                          uint32_t offset,
                          size_t inst_size)
     {
-        llvm::Triple::ArchType arch = m_disasm.GetArchitecture().GetMachine();
+        const ArchSpec &arch = m_disasm.GetArchitecture();
+        llvm::Triple::ArchType machine = arch.GetMachine();
         
-        switch (arch)
+        switch (machine)
         {
-        default:
         case llvm::Triple::x86:
         case llvm::Triple::x86_64:
             m_opcode.SetOpcodeBytes(extractor.PeekData(offset, inst_size), inst_size);
-            break;
+            return;
+
         case llvm::Triple::arm:
         case llvm::Triple::thumb:
             switch (inst_size)
             {
                 case 2:
-                    {
-                        m_opcode.SetOpcode16 (extractor.GetU16 (&offset)); 
-                        break;
-                    }
+                    m_opcode.SetOpcode16 (extractor.GetU16 (&offset));
                     break;
                 case 4:
+                    if (machine == llvm::Triple::arm && m_address_class == eAddressClassCodeAlternateISA)
                     {
-                        if (arch == llvm::Triple::arm && 
-                            m_address_class == eAddressClassCodeAlternateISA)
-                        {
-                            // If it is a 32-bit THUMB instruction, we need to swap the upper & lower halves.
-                            uint32_t orig_bytes = extractor.GetU32 (&offset);
-                            uint16_t upper_bits = (orig_bytes >> 16) & ((1u << 16) - 1);
-                            uint16_t lower_bits = orig_bytes & ((1u << 16) - 1);
-                            uint32_t swapped = (lower_bits << 16) | upper_bits;
-                            m_opcode.SetOpcode32 (swapped);
-                        }
-                        else
-                        {
-                            m_opcode.SetOpcode32 (extractor.GetU32 (&offset));
-                        }
+                        // If it is a 32-bit THUMB instruction, we need to swap the upper & lower halves.
+                        uint32_t orig_bytes = extractor.GetU32 (&offset);
+                        uint16_t upper_bits = (orig_bytes >> 16) & ((1u << 16) - 1);
+                        uint16_t lower_bits = orig_bytes & ((1u << 16) - 1);
+                        uint32_t swapped = (lower_bits << 16) | upper_bits;
+                        m_opcode.SetOpcode32 (swapped);
+                    }
+                    else
+                    {
+                        m_opcode.SetOpcode32 (extractor.GetU32 (&offset));
                     }
                     break;
                 default:
                     assert (!"Invalid ARM opcode size");
                     break;
             }
+            return;
+
+        default:
             break;
         }
+        // Handle the default cases here.
+        const uint32_t min_op_byte_size = arch.GetMinimumOpcodeByteSize();
+        const uint32_t max_op_byte_size = arch.GetMaximumOpcodeByteSize();
+        if (min_op_byte_size == max_op_byte_size)
+        {
+            assert (inst_size == min_op_byte_size);
+            switch (inst_size)
+            {
+                case 1: m_opcode.SetOpcode8  (extractor.GetU8  (&offset)); return;
+                case 2: m_opcode.SetOpcode16 (extractor.GetU16 (&offset)); return;
+                case 4: m_opcode.SetOpcode32 (extractor.GetU32 (&offset)); return;
+                case 8: m_opcode.SetOpcode64 (extractor.GetU64 (&offset)); return;
+                default:
+                    break;
+            }
+        }
+        m_opcode.SetOpcodeBytes(extractor.PeekData(offset, inst_size), inst_size);
     }
     
     bool StringRepresentsBranch (const char *data, size_t size)
