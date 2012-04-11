@@ -2410,6 +2410,8 @@ static DecodeStatus DecodeVSTInstruction(MCInst &Inst, unsigned Insn,
     case ARM::VST2b8wb_register:
     case ARM::VST2b16wb_register:
     case ARM::VST2b32wb_register:
+      if (Rm == 0xF)
+        return MCDisassembler::Fail;
       Inst.addOperand(MCOperand::CreateImm(0));
       break;
     case ARM::VST3d8_UPD:
