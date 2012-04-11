@@ -226,6 +226,12 @@ public:
 
   /// getOrCreateRecordType - Emit record type's standalone debug info. 
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);
+
+  /// getOrCreateInterfaceType - Emit an objective c interface type standalone
+  /// debug info.
+  llvm::DIType getOrCreateInterfaceType(QualType Ty,
+					SourceLocation Loc);
+
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
