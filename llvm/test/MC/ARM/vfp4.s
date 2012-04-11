@@ -1,7 +1,7 @@
 @ RUN: llvm-mc < %s -triple armv7-unknown-unknown -show-encoding -mattr=+neon,+vfp4   | FileCheck %s --check-prefix=ARM
 @ RUN: llvm-mc < %s -triple thumbv7-unknown-unknown -show-encoding -mattr=+neon,+vfp4 | FileCheck %s --check-prefix=THUMB
 
-        @ ARM: vfma.f64 d16, d18, d17 @ encoding: [0xa1,0x0b,0xe2,0xee]
+@ ARM: vfma.f64 d16, d18, d17 @ encoding: [0xa1,0x0b,0xe2,0xee]
 @ THUMB: vfma.f64 d16, d18, d17 @ encoding: [0xe2,0xee,0xa1,0x0b]
 vfma.f64 d16, d18, d17
 

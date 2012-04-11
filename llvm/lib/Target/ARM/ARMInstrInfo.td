@@ -181,12 +181,8 @@ def HasVFP3          : Predicate<"Subtarget->hasVFP3()">,
                                  AssemblerPredicate<"FeatureVFP3">;
 def HasVFP4          : Predicate<"Subtarget->hasVFP4()">,
                                  AssemblerPredicate<"FeatureVFP4">;
-def NoVFP4           : Predicate<"!Subtarget->hasVFP4()">;
 def HasNEON          : Predicate<"Subtarget->hasNEON()">,
                                  AssemblerPredicate<"FeatureNEON">;
-def HasNEON2         : Predicate<"Subtarget->hasNEON2()">,
-                                 AssemblerPredicate<"FeatureNEON,FeatureVFP4">;
-def NoNEON2          : Predicate<"!Subtarget->hasNEON2()">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16">;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">,
@@ -221,8 +217,10 @@ def UseMovt          : Predicate<"Subtarget->useMovt()">;
 def DontUseMovt      : Predicate<"!Subtarget->useMovt()">;
 def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
 
-// Allow more precision in FP computation
-def FPContractions : Predicate<"!TM.Options.NoExcessFPPrecision">;
+// Prefer fused MAC for fp mul + add over fp VMLA / VMLS if they are available.
+// But only select them if more precision in FP computation is allowed.
+def UseFusedMAC      : Predicate<"!TM.Options.NoExcessFPPrecision">;
+def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4()">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.

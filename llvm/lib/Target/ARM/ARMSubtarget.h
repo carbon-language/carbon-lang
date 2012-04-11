@@ -45,13 +45,12 @@ protected:
   bool HasV6T2Ops;
   bool HasV7Ops;
 
-  /// HasVFPv2, HasVFPv3, HasVFPv4, HasNEON, HasNEON2 - Specify what
+  /// HasVFPv2, HasVFPv3, HasVFPv4, HasNEON - Specify what
   /// floating point ISAs are supported.
   bool HasVFPv2;
   bool HasVFPv3;
   bool HasVFPv4;
   bool HasNEON;
-  bool HasNEON2;
 
   /// UseNEONForSinglePrecisionFP - if the NEONFP attribute has been
   /// specified. Use the method useNEONForSinglePrecisionFP() to
@@ -205,7 +204,6 @@ protected:
   bool hasVFP3() const { return HasVFPv3; }
   bool hasVFP4() const { return HasVFPv4; }
   bool hasNEON() const { return HasNEON;  }
-  bool hasNEON2() const { return HasNEON2 || (HasNEON && HasVFPv4);  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
 
