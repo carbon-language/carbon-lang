@@ -4812,6 +4812,10 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
   // {0, &ND, some_flag, __size=sizeof(struct __Block_byref_ND), 
   //  initializer-if-any};
   bool hasInit = (ND->getInit() != 0);
+  // FIXME. rewriter does not support __block c++ objects which
+  // require construction.
+  if (hasInit && dyn_cast<CXXConstructExpr>(ND->getInit()))
+    hasInit = false;
   unsigned flags = 0;
   if (HasCopyAndDispose)
     flags |= BLOCK_HAS_COPY_DISPOSE;
