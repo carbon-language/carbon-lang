@@ -34,6 +34,18 @@ void f(X *noreturn) {
   [[int(), noreturn]];
   [[class, test(foo 'x' bar),,,]];
   [[bitand, noreturn]];
+
+  [[noreturn]]int(e)();
+
+  // A function taking a noreturn function.
+  int(f)([[noreturn]] int());
+  f(e);
+
+  // Variables initialized by a message send.
+  int(g)([[noreturn getSelf] getSize]);
+  int(h)([[noreturn]{return noreturn;}() getSize]);
+
+  int i = g + h;
 }
 
 template<typename...Ts> void f(Ts ...x) {

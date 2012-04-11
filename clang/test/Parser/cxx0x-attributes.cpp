@@ -71,6 +71,10 @@ void foo () {
   (void)s.arr[ [] { return 0; }() ]; // expected-error {{C++11 only allows consecutive left square brackets when introducing an attribute}}
   int n = __builtin_offsetof(S, arr[ [] { return 0; }() ]); // expected-error {{C++11 only allows consecutive left square brackets when introducing an attribute}}
 
+  void bar [[noreturn]] ([[]] int i, [[]] int j);
+  using FuncType = void ([[]] int);
+  void baz([[]]...); // expected-error {{expected parameter declarator}}
+
   [[]] return;
 }
 

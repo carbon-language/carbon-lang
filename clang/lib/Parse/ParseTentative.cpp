@@ -1322,6 +1322,11 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
         return TPResult::False();
     }
 
+    // An attribute-specifier-seq here is a sign of a function declarator.
+    if (isCXX11AttributeSpecifier(/*Disambiguate*/false,
+                                  /*OuterMightBeMessageSend*/true))
+      return TPResult::True();
+
     ParsedAttributes attrs(AttrFactory);
     MaybeParseMicrosoftAttributes(attrs);
 
