@@ -36,6 +36,11 @@ STATISTIC(NumCallsDeleted, "Number of call sites deleted, not inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 STATISTIC(NumMergedAllocas, "Number of allocas merged together");
 
+// This weirdly named statistic tracks the number of times that, when attemting
+// to inline a function A into B, we analyze the callers of B in order to see
+// if those would be more profitable and blocked inline steps.
+STATISTIC(NumCallerCallersAnalyzed, "Number of caller-callers analyzed");
+
 static cl::opt<int>
 InlineLimit("inline-threshold", cl::Hidden, cl::init(225), cl::ZeroOrMore,
         cl::desc("Control the amount of inlining to perform (default = 225)"));
@@ -277,6 +282,7 @@ bool Inliner::shouldInline(CallSite CS) {
       }
 
       InlineCost IC2 = getInlineCost(CS2);
+      ++NumCallerCallersAnalyzed;
       if (!IC2) {
         callerWillBeRemoved = false;
         continue;

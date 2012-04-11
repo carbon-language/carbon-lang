@@ -29,8 +29,11 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
+
+STATISTIC(NumCallsAnalyzed, "Number of call sites analyzed");
 
 namespace {
 
@@ -802,6 +805,8 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
 /// is below the computed threshold, then inlining was forcibly disabled by
 /// some artifact of the rountine.
 bool CallAnalyzer::analyzeCall(CallSite CS) {
+  ++NumCallsAnalyzed;
+
   // Track whether the post-inlining function would have more than one basic
   // block. A single basic block is often intended for inlining. Balloon the
   // threshold by 50% until we pass the single-BB phase.
