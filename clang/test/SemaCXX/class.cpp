@@ -131,10 +131,10 @@ namespace pr6629 {
     bogus<foo<T1,T2> > // expected-error {{unknown template name 'bogus'}} \
                        // BOGUS expected-error {{expected '{' after base class list}} \
                        // BOGUS expected-error {{expected ';' after struct}} \
-                       // BOGUS expected-error {{expected unqualified-id}} \
+                       // BOGUS expected-error {{expected unqualified-id}}
   { };
 
-  template<> struct foo<unknown,unknown> { // why isn't there an error here?
+  template<> struct foo<unknown,unknown> { // expected-error {{undeclared identifier 'unknown'}}
     template <typename U1, typename U2> struct bar {
       typedef bar type;
       static const int value = 0;

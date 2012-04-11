@@ -1117,6 +1117,67 @@ bool Parser::MightBeDeclarator(unsigned Context) {
   }
 }
 
+/// Skip until we reach something which seems like a sensible place to pick
+/// up parsing after a malformed declaration. This will sometimes stop sooner
+/// than SkipUntil(tok::r_brace) would, but will never stop later.
+void Parser::SkipMalformedDecl() {
+  while (true) {
+    switch (Tok.getKind()) {
+    case tok::l_brace:
+      // Skip until matching }, then stop. We've probably skipped over
+      // a malformed class or function definition or similar.
+      ConsumeBrace();
+      SkipUntil(tok::r_brace, /*StopAtSemi*/false);
+      if (Tok.is(tok::comma) || Tok.is(tok::l_brace) || Tok.is(tok::kw_try)) {
+        // This declaration isn't over yet. Keep skipping.
+        continue;
+      }
+      if (Tok.is(tok::semi))
+        ConsumeToken();
+      return;
+
+    case tok::l_square:
+      ConsumeBracket();
+      SkipUntil(tok::r_square, /*StopAtSemi*/false);
+      continue;
+
+    case tok::l_paren:
+      ConsumeParen();
+      SkipUntil(tok::r_paren, /*StopAtSemi*/false);
+      continue;
+
+    case tok::r_brace:
+      return;
+
+    case tok::semi:
+      ConsumeToken();
+      return;
+
+    case tok::kw_inline:
+      // 'inline namespace' at the start of a line is almost certainly
+      // a good place to pick back up parsing.
+      if (Tok.isAtStartOfLine() && NextToken().is(tok::kw_namespace))
+        return;
+      break;
+
+    case tok::kw_namespace:
+      // 'namespace' at the start of a line is almost certainly a good
+      // place to pick back up parsing.
+      if (Tok.isAtStartOfLine())
+        return;
+      break;
+
+    case tok::eof:
+      return;
+
+    default:
+      break;
+    }
+
+    ConsumeAnyToken();
+  }
+}
+
 /// ParseDeclGroup - Having concluded that this is either a function
 /// definition or a group of object declarations, actually parse the
 /// result.
@@ -1131,10 +1192,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
   // Bail out if the first declarator didn't seem well-formed.
   if (!D.hasName() && !D.mayOmitIdentifier()) {
-    // Skip until ; or }.
-    SkipUntil(tok::r_brace, true, true);
-    if (Tok.is(tok::semi))
-      ConsumeToken();
+    SkipMalformedDecl();
     return DeclGroupPtrTy();
   }
 

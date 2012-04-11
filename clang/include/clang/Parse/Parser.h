@@ -742,6 +742,10 @@ private:
   bool SkipUntil(ArrayRef<tok::TokenKind> Toks, bool StopAtSemi = true,
                  bool DontConsume = false, bool StopAtCodeCompletion = false);
 
+  /// SkipMalformedDecl - Read tokens until we get to some likely good stopping
+  /// point for skipping past a simple-declaration.
+  void SkipMalformedDecl();
+
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.
 
