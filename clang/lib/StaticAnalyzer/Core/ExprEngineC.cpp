@@ -310,14 +310,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
             Bldr.generateNode(CastE, Pred, state, true);
             continue;
           } else {
-            // If the cast fails on a pointer, conjure symbol constrained to 0.
-            DefinedOrUnknownSVal NewSym = svalBuilder.getConjuredSymbolVal(NULL,
-                CastE, LCtx, resultType,
-                currentBuilderContext->getCurrentBlockCount());
-            DefinedOrUnknownSVal Constraint = svalBuilder.evalEQ(state,
-                NewSym, svalBuilder.makeZeroVal(resultType));
-            state = state->assume(Constraint, true);
-            state = state->BindExpr(CastE, LCtx, NewSym);
+            // If the cast fails on a pointer, bind to 0.
+            state = state->BindExpr(CastE, LCtx, svalBuilder.makeNull());
           }
         } else {
           // If we don't know if the cast succeeded, conjure a new symbol.
