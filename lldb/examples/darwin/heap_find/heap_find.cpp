@@ -42,7 +42,7 @@
 // format. The address format shows pointers, and if those pointers point to
 // objects that have symbols or know data contents, it will display information
 // about the pointers:
-/
+//
 // (lldb) memory read --format address --count 1 0x104000730 
 // 0x104000730: 0x0000000100002460 (void *)0x0000000100002488: MyString
 // 
@@ -71,6 +71,7 @@
 #include <stack_logging.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 
 struct range_callback_info_t;
 
@@ -91,15 +92,23 @@ enum data_type_t
     eDataTypeInteger
 };
 
-typedef struct range_contains_data_callback_info_tag
+struct range_contains_data_callback_info_t
 {
     const uint8_t *data;
     const size_t data_len;
     const uint32_t align;
     const data_type_t data_type;
     uint32_t match_count;
-} range_contains_data_callback_info_t;
+};
 
+struct malloc_match
+{
+    void *addr;
+    intptr_t size;
+    intptr_t offset;
+};
+
+std::vector<malloc_match> g_matches;
 
 static kern_return_t
 task_peek (task_t task, vm_address_t remote_address, vm_size_t size, void **local_memory)
@@ -166,6 +175,7 @@ foreach_range_in_this_process (range_callback_t *callback, void *baton)
     foreach_zone_in_this_process (&info);
 }
 
+
 static void
 range_contains_ptr_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size)
 {
@@ -191,39 +201,41 @@ range_contains_ptr_callback (task_t task, void *baton, unsigned type, uint64_t p
             if (memcmp (data_info->data, data, data_info->data_len) == 0)
             {
                 ++data_info->match_count;
-                printf ("0x%llx: ", addr);
-                uint32_t i;
-                switch (data_info->data_type)
-                {
-                case eDataTypeInteger:
-                    {
-                        // NOTE: little endian specific, but all darwin platforms are little endian now..
-                        for (i=0; i<data_info->data_len; ++i)
-                            printf (i ? "%2.2x" : "0x%2.2x", data[data_info->data_len - (i + 1)]);
-                    }
-                    break;
-                case eDataTypeBytes:
-                    {
-                        for (i=0; i<data_info->data_len; ++i)
-                            printf (" %2.2x", data[i]);
-                    }
-                    break;
-                case eDataTypeCStr:
-                    {
-                        putchar ('"');
-                        for (i=0; i<data_info->data_len; ++i)
-                        {
-                            if (isprint (data[i]))
-                                putchar (data[i]);
-                            else
-                                printf ("\\x%2.2x", data[i]);
-                        }
-                        putchar ('"');
-                    }
-                    break;
-                    
-                }
-                printf (" found in malloc block 0x%llx + %llu (malloc_size = %llu)\n", ptr_addr, addr - ptr_addr, ptr_size);
+                malloc_match match = { (void *)ptr_addr, ptr_size, addr - ptr_addr };
+                g_matches.push_back(match);
+                // printf ("0x%llx: ", addr);
+                // uint32_t i;
+                // switch (data_info->data_type)
+                // {
+                // case eDataTypeInteger:
+                //     {
+                //         // NOTE: little endian specific, but all darwin platforms are little endian now..
+                //         for (i=0; i<data_info->data_len; ++i)
+                //             printf (i ? "%2.2x" : "0x%2.2x", data[data_info->data_len - (i + 1)]);
+                //     }
+                //     break;
+                // case eDataTypeBytes:
+                //     {
+                //         for (i=0; i<data_info->data_len; ++i)
+                //             printf (" %2.2x", data[i]);
+                //     }
+                //     break;
+                // case eDataTypeCStr:
+                //     {
+                //         putchar ('"');
+                //         for (i=0; i<data_info->data_len; ++i)
+                //         {
+                //             if (isprint (data[i]))
+                //                 putchar (data[i]);
+                //             else
+                //                 printf ("\\x%2.2x", data[i]);
+                //         }
+                //         putchar ('"');
+                //     }
+                //     break;
+                //     
+                // }
+                // printf (" found in malloc block 0x%llx + %llu (malloc_size = %llu)\n", ptr_addr, addr - ptr_addr, ptr_size);
             }
         }
     }
@@ -233,24 +245,35 @@ range_contains_ptr_callback (task_t task, void *baton, unsigned type, uint64_t p
     }   
 }
 
-uint32_t
+malloc_match *
 find_pointer_in_heap (intptr_t addr)
 {
+    g_matches.clear();
     range_contains_data_callback_info_t data_info = { (uint8_t *)&addr, sizeof(addr), sizeof(addr), eDataTypeInteger, 0};
     range_callback_info_t info = { enumerate_range_in_zone, range_contains_ptr_callback, &data_info };
     foreach_zone_in_this_process (&info);
-    return data_info.match_count;
+    if (g_matches.empty())
+        return NULL;
+    malloc_match match = { NULL, 0, 0 };
+    g_matches.push_back(match);
+    return g_matches.data();
 }
 
-uint32_t
+
+malloc_match *
 find_cstring_in_heap (const char *s)
 {
     if (s && s[0])
     {
+        g_matches.clear();
         range_contains_data_callback_info_t data_info = { (uint8_t *)s, strlen(s), 1, eDataTypeCStr, 0};
         range_callback_info_t info = { enumerate_range_in_zone, range_contains_ptr_callback, &data_info };
         foreach_zone_in_this_process (&info);
-        return data_info.match_count;
+        if (g_matches.empty())
+            return NULL;
+        malloc_match match = { NULL, 0, 0 };
+        g_matches.push_back(match);
+        return g_matches.data();
     }
     else
     {
