@@ -59,6 +59,7 @@
 	vzip.8	q9, q8
 	vzip.16	q9, q8
 	vzip.32	q9, q8
+        vzip.32 d2, d3
 
 @ CHECK: vuzp.8	d17, d16                @ encoding: [0x20,0x11,0xf2,0xf3]
 @ CHECK: vuzp.16 d17, d16               @ encoding: [0x20,0x11,0xf6,0xf3]
@@ -70,6 +71,7 @@
 @ CHECK: vzip.8	q9, q8                  @ encoding: [0xe0,0x21,0xf2,0xf3]
 @ CHECK: vzip.16 q9, q8                 @ encoding: [0xe0,0x21,0xf6,0xf3]
 @ CHECK: vzip.32 q9, q8                 @ encoding: [0xe0,0x21,0xfa,0xf3]
+@ CHECK: vtrn.32 d2, d3                 @ encoding: [0x83,0x20,0xba,0xf3]
 
 
 @ VTRN alternate size suffices

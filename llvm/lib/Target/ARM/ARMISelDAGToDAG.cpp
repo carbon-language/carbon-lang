@@ -2825,7 +2825,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     case MVT::v8i8:  Opc = ARM::VZIPd8; break;
     case MVT::v4i16: Opc = ARM::VZIPd16; break;
     case MVT::v2f32:
-    case MVT::v2i32: Opc = ARM::VZIPd32; break;
+    // vzip.32 Dd, Dm is a pseudo-instruction expanded to vtrn.32 Dd, Dm.
+    case MVT::v2i32: Opc = ARM::VTRNd32; break;
     case MVT::v16i8: Opc = ARM::VZIPq8; break;
     case MVT::v8i16: Opc = ARM::VZIPq16; break;
     case MVT::v4f32:
