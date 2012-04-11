@@ -1167,8 +1167,7 @@ void CodeGenRegBank::pruneUnitSets() {
   assert(RegClassUnitSets.empty() && "this invalidates RegClassUnitSets");
 
   // Form an equivalence class of UnitSets with no significant difference.
-  // Populate PrunedUnitSets with each equivalence class's superset.
-  std::vector<RegUnitSet> PrunedUnitSets;
+  std::vector<unsigned> SuperSetIDs;
   for (unsigned SubIdx = 0, EndIdx = RegUnitSets.size();
        SubIdx != EndIdx; ++SubIdx) {
     const RegUnitSet &SubSet = RegUnitSets[SubIdx];
@@ -1176,25 +1175,22 @@ void CodeGenRegBank::pruneUnitSets() {
     for (; SuperIdx != EndIdx; ++SuperIdx) {
       if (SuperIdx == SubIdx)
         continue;
-      const RegUnitSet *SuperSet = 0;
-      if (SuperIdx > SubIdx)
-        SuperSet = &RegUnitSets[SuperIdx];
-      else {
-        // Compare with already-pruned sets.
-        if (SuperIdx >= PrunedUnitSets.size())
-          continue;
-        SuperSet = &PrunedUnitSets[SuperIdx];
-      }
-      if (isRegUnitSubSet(SubSet.Units, SuperSet->Units)
-          && (SubSet.Units.size() + 3 > SuperSet->Units.size())) {
+
+      const RegUnitSet &SuperSet = RegUnitSets[SuperIdx];
+      if (isRegUnitSubSet(SubSet.Units, SuperSet.Units)
+          && (SubSet.Units.size() + 3 > SuperSet.Units.size())) {
         break;
       }
     }
-    if (SuperIdx != EndIdx)
-      continue;
-    PrunedUnitSets.resize(PrunedUnitSets.size()+1);
-    PrunedUnitSets.back().Name = RegUnitSets[SubIdx].Name;
-    PrunedUnitSets.back().Units.swap(RegUnitSets[SubIdx].Units);
+    if (SuperIdx == EndIdx)
+      SuperSetIDs.push_back(SubIdx);
+  }
+  // Populate PrunedUnitSets with each equivalence class's superset.
+  std::vector<RegUnitSet> PrunedUnitSets(SuperSetIDs.size());
+  for (unsigned i = 0, e = SuperSetIDs.size(); i != e; ++i) {
+    unsigned SuperIdx = SuperSetIDs[i];
+    PrunedUnitSets[i].Name = RegUnitSets[SuperIdx].Name;
+    PrunedUnitSets[i].Units.swap(RegUnitSets[SuperIdx].Units);
   }
   RegUnitSets.swap(PrunedUnitSets);
 }
