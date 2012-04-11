@@ -1316,13 +1316,6 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   SCS.setFromType(FromType);
   SCS.CopyConstructor = 0;
 
-  // Allow conversion to _Atomic types.  These are C11 and are provided as an
-  // extension in C++ mode.  
-  if (const AtomicType *ToAtomicType = ToType->getAs<AtomicType>()) {
-    if (ToAtomicType->getValueType() == FromType)
-      return true;
-  }
-
   // There are no standard conversions for class types in C++, so
   // abort early. When overloading in C, however, we do permit
   if (FromType->isRecordType() || ToType->isRecordType()) {
@@ -1526,6 +1519,13 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                              InOverloadResolution,
                                              SCS, CStyle)) {
     SCS.Second = ICK_TransparentUnionConversion;
+    FromType = ToType;
+  }  else if (const AtomicType *ToAtomicType = ToType->getAs<AtomicType>()) {
+    // Allow conversion to _Atomic types.  These are C11 and are provided as an
+    // extension in C++ mode.  
+    if (S.Context.hasSameUnqualifiedType(ToAtomicType->getValueType(),
+                                         FromType))
+    SCS.Second = ICK_Identity;
     FromType = ToType;
   } else {
     // No second conversion required.
