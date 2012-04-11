@@ -945,22 +945,34 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
 
   // For simplicitly make the SetID the same as EnumValue.
   IntEqClasses UberSetIDs(Registers.size()+1);
+  std::set<unsigned> AllocatableRegs;
   for (unsigned i = 0, e = RegBank.getRegClasses().size(); i != e; ++i) {
+
     CodeGenRegisterClass *RegClass = RegBank.getRegClasses()[i];
+    if (!RegClass->Allocatable)
+      continue;
+
     const CodeGenRegister::Set &Regs = RegClass->getMembers();
-    if (Regs.empty()) continue;
+    if (Regs.empty())
+      continue;
 
     unsigned USetID = UberSetIDs.findLeader((*Regs.begin())->EnumValue);
     assert(USetID && "register number 0 is invalid");
 
-    // combine non-allocatable classes
-    if (!RegClass->Allocatable) {
-      UberSetIDs.join(0, USetID);
-      USetID = 0;
-    }
+    AllocatableRegs.insert((*Regs.begin())->EnumValue);
     for (CodeGenRegister::Set::const_iterator I = llvm::next(Regs.begin()),
-           E = Regs.end(); I != E; ++I)
+           E = Regs.end(); I != E; ++I) {
+      AllocatableRegs.insert((*I)->EnumValue);
       UberSetIDs.join(USetID, (*I)->EnumValue);
+    }
+  }
+  // Combine non-allocatable regs.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    unsigned RegNum = Registers[i]->EnumValue;
+    if (AllocatableRegs.count(RegNum))
+      continue;
+
+    UberSetIDs.join(0, RegNum);
   }
   UberSetIDs.compress();
 
@@ -1155,29 +1167,34 @@ void CodeGenRegBank::pruneUnitSets() {
   assert(RegClassUnitSets.empty() && "this invalidates RegClassUnitSets");
 
   // Form an equivalence class of UnitSets with no significant difference.
-  IntEqClasses RepUnitSetIDs(RegUnitSets.size());
+  // Populate PrunedUnitSets with each equivalence class's superset.
+  std::vector<RegUnitSet> PrunedUnitSets;
   for (unsigned SubIdx = 0, EndIdx = RegUnitSets.size();
        SubIdx != EndIdx; ++SubIdx) {
     const RegUnitSet &SubSet = RegUnitSets[SubIdx];
-    for (unsigned SuperIdx = 0; SuperIdx != EndIdx; ++SuperIdx) {
+    unsigned SuperIdx = 0;
+    for (; SuperIdx != EndIdx; ++SuperIdx) {
       if (SuperIdx == SubIdx)
         continue;
-
-      const RegUnitSet &SuperSet = RegUnitSets[SuperIdx];
-      if (isRegUnitSubSet(SubSet.Units, SuperSet.Units)
-          && (SubSet.Units.size() + 3 > SuperSet.Units.size())) {
-        RepUnitSetIDs.join(SubIdx, SuperIdx);
+      const RegUnitSet *SuperSet = 0;
+      if (SuperIdx > SubIdx)
+        SuperSet = &RegUnitSets[SuperIdx];
+      else {
+        // Compare with already-pruned sets.
+        if (SuperIdx >= PrunedUnitSets.size())
+          continue;
+        SuperSet = &PrunedUnitSets[SuperIdx];
+      }
+      if (isRegUnitSubSet(SubSet.Units, SuperSet->Units)
+          && (SubSet.Units.size() + 3 > SuperSet->Units.size())) {
+        break;
       }
     }
-  }
-  RepUnitSetIDs.compress();
-
-  // Populate PrunedUnitSets with each equivalence class's superset.
-  std::vector<RegUnitSet> PrunedUnitSets(RepUnitSetIDs.getNumClasses());
-  for (unsigned i = 0, e = RegUnitSets.size(); i != e; ++i) {
-    RegUnitSet &SuperSet = PrunedUnitSets[RepUnitSetIDs[i]];
-    if (SuperSet.Units.size() < RegUnitSets[i].Units.size())
-      SuperSet = RegUnitSets[i];
+    if (SuperIdx != EndIdx)
+      continue;
+    PrunedUnitSets.resize(PrunedUnitSets.size()+1);
+    PrunedUnitSets.back().Name = RegUnitSets[SubIdx].Name;
+    PrunedUnitSets.back().Units.swap(RegUnitSets[SubIdx].Units);
   }
   RegUnitSets.swap(PrunedUnitSets);
 }
@@ -1195,6 +1212,8 @@ void CodeGenRegBank::computeRegUnitSets() {
   const ArrayRef<CodeGenRegisterClass*> &RegClasses = getRegClasses();
   unsigned NumRegClasses = RegClasses.size();
   for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
+    if (!RegClasses[RCIdx]->Allocatable)
+      continue;
 
     // Speculatively grow the RegUnitSets to hold the new set.
     RegUnitSets.resize(RegUnitSets.size() + 1);
@@ -1253,12 +1272,15 @@ void CodeGenRegBank::computeRegUnitSets() {
     }
   }
 
-  // Iteratively prune unit sets again after inferring supersets.
+  // Iteratively prune unit sets after inferring supersets.
   pruneUnitSets();
 
   // For each register class, list the UnitSets that are supersets.
   RegClassUnitSets.resize(NumRegClasses);
   for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
+    if (!RegClasses[RCIdx]->Allocatable)
+      continue;
+
     // Recompute the sorted list of units in this class.
     std::vector<unsigned> RegUnits;
     buildRegUnitSet(RegClasses[RCIdx]->getMembers(), RegUnits);
@@ -1273,6 +1295,7 @@ void CodeGenRegBank::computeRegUnitSets() {
       if (isRegUnitSubSet(RegUnits, RegUnitSets[USIdx].Units))
         RegClassUnitSets[RCIdx].push_back(USIdx);
     }
+    assert(!RegClassUnitSets[RCIdx].empty() && "missing unit set for regclass");
   }
 }
 
