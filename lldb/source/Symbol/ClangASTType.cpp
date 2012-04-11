@@ -92,9 +92,12 @@ ClangASTType::GetConstQualifiedTypeName ()
 }
 
 ConstString
-ClangASTType::GetConstQualifiedTypeName (clang::ASTContext *ast, clang_type_t opaque_qual_type)
+ClangASTType::GetConstQualifiedTypeName (clang::ASTContext *ast, clang_type_t clang_type)
 {
-    return ConstString (GetTypeNameForQualType (ast, clang::QualType::getFromOpaquePtr(opaque_qual_type)).c_str());
+    if (ast == NULL || clang_type == NULL)
+        return ConstString("<invalid>");
+
+    return ConstString (GetTypeNameForQualType (ast, clang::QualType::getFromOpaquePtr(clang_type)).c_str());
 }
 
 
