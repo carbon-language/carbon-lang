@@ -2804,11 +2804,11 @@ void SelectionDAGBuilder::visitExtractElement(const User &I) {
 }
 
 // Utility for visitShuffleVector - Return true if every element in Mask,
-// begining // from position Pos and ending in Pos+Size, falls within the
+// begining from position Pos and ending in Pos+Size, falls within the
 // specified sequential range [L, L+Pos). or is undef.
 static bool isSequentialInRange(const SmallVectorImpl<int> &Mask,
-                                int Pos, int Size, int Low) {
-  for (int i = Pos, e = Pos+Size; i != e; ++i, ++Low)
+                                unsigned Pos, unsigned Size, int Low) {
+  for (unsigned i = Pos, e = Pos+Size; i != e; ++i, ++Low)
     if (Mask[i] >= 0 && Mask[i] != Low)
       return false;
   return true;
@@ -2878,10 +2878,9 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
     SmallVector<int, 8> MappedOps;
     for (unsigned i = 0; i != MaskNumElts; ++i) {
       int Idx = Mask[i];
-      if (Idx < (int)SrcNumElts)
-        MappedOps.push_back(Idx);
-      else
-        MappedOps.push_back(Idx + MaskNumElts - SrcNumElts);
+      if (Idx >= (int)SrcNumElts)
+        Idx -= SrcNumElts - MaskNumElts;
+      MappedOps.push_back(Idx);
     }
 
     setValue(&I, DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
@@ -2952,12 +2951,13 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
       SmallVector<int, 8> MappedOps;
       for (unsigned i = 0; i != MaskNumElts; ++i) {
         int Idx = Mask[i];
-        if (Idx < 0)
-          MappedOps.push_back(Idx);
-        else if (Idx < (int)SrcNumElts)
-          MappedOps.push_back(Idx - StartIdx[0]);
-        else
-          MappedOps.push_back(Idx - SrcNumElts - StartIdx[1] + MaskNumElts);
+        if (Idx >= 0) {
+          if (Idx < (int)SrcNumElts)
+            Idx -= StartIdx[0];
+          else
+            Idx -= SrcNumElts + StartIdx[1] - MaskNumElts;
+        }
+        MappedOps.push_back(Idx);
       }
 
       setValue(&I, DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
@@ -2973,22 +2973,20 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
   EVT PtrVT = TLI.getPointerTy();
   SmallVector<SDValue,8> Ops;
   for (unsigned i = 0; i != MaskNumElts; ++i) {
-    if (Mask[i] < 0) {
-      Ops.push_back(DAG.getUNDEF(EltVT));
+    int Idx = Mask[i];
+    SDValue Res;
+
+    if (Idx < 0) {
+      Res = DAG.getUNDEF(EltVT);
     } else {
-      int Idx = Mask[i];
-      SDValue Res;
+      SDValue &Src = Idx < (int)SrcNumElts ? Src1 : Src2;
+      if (Idx >= (int)SrcNumElts) Idx -= SrcNumElts;
 
-      if (Idx < (int)SrcNumElts)
-        Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
-                          EltVT, Src1, DAG.getConstant(Idx, PtrVT));
-      else
-        Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
-                          EltVT, Src2,
-                          DAG.getConstant(Idx - SrcNumElts, PtrVT));
-
-      Ops.push_back(Res);
+      Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
+                        EltVT, Src, DAG.getConstant(Idx, PtrVT));
     }
+
+    Ops.push_back(Res);
   }
 
   setValue(&I, DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
