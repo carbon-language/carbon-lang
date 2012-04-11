@@ -80,6 +80,14 @@ namespace {
     MachineLoop *CurLoop;          // The current loop we are working on.
     MachineBasicBlock *CurPreheader; // The preheader for CurLoop.
 
+    // Exit blocks for CurLoop.
+    SmallVector<MachineBasicBlock*, 8> ExitBlocks;
+
+    bool isExitBlock(const MachineBasicBlock *MBB) const {
+      return std::find(ExitBlocks.begin(), ExitBlocks.end(), MBB) !=
+        ExitBlocks.end();
+    }
+
     // Track 'estimated' register pressure.
     SmallSet<unsigned, 32> RegSeen;
     SmallVector<unsigned, 8> RegPressure;
@@ -182,9 +190,9 @@ namespace {
     ///
     bool IsLoopInvariantInst(MachineInstr &I);
 
-    /// HasAnyPHIUse - Return true if the specified register is used by any
-    /// phi node.
-    bool HasAnyPHIUse(unsigned Reg) const;
+    /// HasLoopPHIUse - Return true if the specified instruction is used by any
+    /// phi node in the current loop.
+    bool HasLoopPHIUse(const MachineInstr *MI) const;
 
     /// HasHighOperandLatency - Compute operand latency between a def of 'Reg'
     /// and an use in the current loop, return true if the target considered
@@ -348,6 +356,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   while (!Worklist.empty()) {
     CurLoop = Worklist.pop_back_val();
     CurPreheader = 0;
+    ExitBlocks.clear();
 
     // If this is done before regalloc, only visit outer-most preheader-sporting
     // loops.
@@ -355,6 +364,8 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
       Worklist.append(CurLoop->begin(), CurLoop->end());
       continue;
     }
+
+    CurLoop->getExitBlocks(ExitBlocks);
 
     if (!PreRegAlloc)
       HoistRegionPostRA();
@@ -955,22 +966,40 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
 }
 
 
-/// HasAnyPHIUse - Return true if the specified register is used by any
-/// phi node.
-bool MachineLICM::HasAnyPHIUse(unsigned Reg) const {
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
-    MachineInstr *UseMI = &*UI;
-    if (UseMI->isPHI())
-      return true;
-    // Look pass copies as well.
-    if (UseMI->isCopy()) {
-      unsigned Def = UseMI->getOperand(0).getReg();
-      if (TargetRegisterInfo::isVirtualRegister(Def) &&
-          HasAnyPHIUse(Def))
-        return true;
+/// HasLoopPHIUse - Return true if the specified instruction is used by a
+/// phi node and hoisting it could cause a copy to be inserted.
+bool MachineLICM::HasLoopPHIUse(const MachineInstr *MI) const {
+  SmallVector<const MachineInstr*, 8> Work(1, MI);
+  do {
+    MI = Work.pop_back_val();
+    for (ConstMIOperands MO(MI); MO.isValid(); ++MO) {
+      if (!MO->isReg() || !MO->isDef())
+        continue;
+      unsigned Reg = MO->getReg();
+      if (!TargetRegisterInfo::isVirtualRegister(Reg))
+        continue;
+      for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+           UE = MRI->use_end(); UI != UE; ++UI) {
+        MachineInstr *UseMI = &*UI;
+        // A PHI may cause a copy to be inserted.
+        if (UseMI->isPHI()) {
+          // A PHI inside the loop causes a copy because the live range of Reg is
+          // extended across the PHI.
+          if (CurLoop->contains(UseMI))
+            return true;
+          // A PHI in an exit block can cause a copy to be inserted if the PHI
+          // has multiple predecessors in the loop with different values.
+          // For now, approximate by rejecting all exit blocks.
+          if (isExitBlock(UseMI->getParent()))
+            return true;
+          continue;
+        }
+        // Look past copies as well.
+        if (UseMI->isCopy() && CurLoop->contains(UseMI))
+          Work.push_back(UseMI);
+      }
     }
-  }
+  } while (!Work.empty());
   return false;
 }
 
@@ -1182,15 +1211,10 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       return false;
   }
 
-  // If result(s) of this instruction is used by PHIs outside of the loop, then
-  // don't hoist it if the instruction because it will introduce an extra copy.
-  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
-      continue;
-    if (HasAnyPHIUse(MO.getReg()))
-      return false;
-  }
+  // If result(s) of this instruction is used by PHIs inside the loop, then
+  // don't hoist it because it will introduce an extra copy.
+  if (HasLoopPHIUse(&MI))
+    return false;
 
   return true;
 }
