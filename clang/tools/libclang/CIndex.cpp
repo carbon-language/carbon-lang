@@ -112,10 +112,11 @@ CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
   // We want the last character in this location, so we will adjust the
   // location accordingly.
   SourceLocation EndLoc = R.getEnd();
-  if (EndLoc.isValid() && EndLoc.isMacroID())
+  if (EndLoc.isValid() && EndLoc.isMacroID() && !SM.isMacroArgExpansion(EndLoc))
     EndLoc = SM.getExpansionRange(EndLoc).second;
-  if (R.isTokenRange() && !EndLoc.isInvalid() && EndLoc.isFileID()) {
-    unsigned Length = Lexer::MeasureTokenLength(EndLoc, SM, LangOpts);
+  if (R.isTokenRange() && !EndLoc.isInvalid()) {
+    unsigned Length = Lexer::MeasureTokenLength(SM.getSpellingLoc(EndLoc),
+                                                SM, LangOpts);
     EndLoc = EndLoc.getLocWithOffset(Length);
   }
 
