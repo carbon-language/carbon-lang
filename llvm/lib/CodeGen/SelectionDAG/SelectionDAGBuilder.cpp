@@ -4388,9 +4388,8 @@ static unsigned getTruncatedArgReg(const SDValue &N) {
     const SDValue &CFR = Ext.getOperand(0);
     if (CFR.getOpcode() == ISD::CopyFromReg)
       return cast<RegisterSDNode>(CFR.getOperand(1))->getReg();
-    else
-      if (CFR.getOpcode() == ISD::TRUNCATE)
-        return getTruncatedArgReg(CFR);
+    if (CFR.getOpcode() == ISD::TRUNCATE)
+      return getTruncatedArgReg(CFR);
   }
   return 0;
 }
@@ -4419,7 +4418,7 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
   // Some arguments' frame index is recorded during argument lowering.
   Offset = FuncInfo.getArgumentFrameIndex(Arg);
   if (Offset)
-      Reg = TRI->getFrameRegister(MF);
+    Reg = TRI->getFrameRegister(MF);
 
   if (!Reg && N.getNode()) {
     if (N.getOpcode() == ISD::CopyFromReg)
