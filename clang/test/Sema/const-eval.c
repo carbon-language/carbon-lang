@@ -117,3 +117,7 @@ EVAL_EXPR(42, __builtin_constant_p(pr11391.f = 1))
 float varfloat;
 const float constfloat = 0;
 EVAL_EXPR(43, varfloat && constfloat) // expected-error {{must have a constant size}}
+
+// <rdar://problem/11205586>
+// (Make sure we continue to reject this.)
+EVAL_EXPR(44, "x"[0]); // expected-error {{variable length array}}
