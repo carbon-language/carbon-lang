@@ -152,7 +152,13 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "getRegPressureSetLimit(unsigned Idx) const {\n"
      << "  static const unsigned PressureLimitTable[] = {\n";
   for (unsigned i = 0; i < NumSets; ++i ) {
-    OS << "    " << RegBank.getRegPressureSet(i).Units.size()
+    const RegUnitSet &RegUnits = RegBank.getRegPressureSet(i);
+    unsigned Weight = 0;
+    for (RegUnitSet::iterator
+           I = RegUnits.Units.begin(), E = RegUnits.Units.end(); I != E; ++I) {
+      Weight += RegBank.getRegUnitWeight(*I);
+    }
+    OS << "    " << Weight
        << ",  \t// " << i << ": " << RegBank.getRegPressureSet(i).Name << "\n";
   }
   OS << "    0 };\n"
