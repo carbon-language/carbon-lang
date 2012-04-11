@@ -288,7 +288,7 @@ struct MatchableInfo {
     Record *SingletonReg;
 
     explicit AsmOperand(StringRef T) : Token(T), Class(0), SubOpIdx(-1),
-				       SingletonReg(0) {}
+                                       SingletonReg(0) {}
   };
 
   /// ResOperand - This represents a single operand in the result instruction
@@ -421,7 +421,7 @@ struct MatchableInfo {
 
   void Initialize(const AsmMatcherInfo &Info,
                   SmallPtrSet<Record*, 16> &SingletonRegisters,
-		  int AsmVariantNo, std::string &RegisterPrefix);
+                  int AsmVariantNo, std::string &RegisterPrefix);
 
   /// Validate - Return true if this matchable is a valid thing to match against
   /// and perform a bunch of validity checking.
@@ -818,7 +818,7 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
 void MatchableInfo::
 extractSingletonRegisterForAsmOperand(unsigned OperandNo,
                                       const AsmMatcherInfo &Info,
-				      std::string &RegisterPrefix) {
+                                      std::string &RegisterPrefix) {
   StringRef Tok = AsmOperands[OperandNo].Token;
   if (RegisterPrefix.empty()) {
     std::string LoweredTok = Tok.lower();
@@ -1186,37 +1186,37 @@ void AsmMatcherInfo::BuildInfo() {
     int AsmVariantNo = AsmVariant->getValueAsInt("Variant");
 
     for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
-	   E = Target.inst_end(); I != E; ++I) {
+           E = Target.inst_end(); I != E; ++I) {
       const CodeGenInstruction &CGI = **I;
 
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instructions we consider.
       if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
-	continue;
+        continue;
 
       // Ignore "codegen only" instructions.
       if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
-	continue;
+        continue;
 
       // Validate the operand list to ensure we can handle this instruction.
       for (unsigned i = 0, e = CGI.Operands.size(); i != e; ++i) {
-	const CGIOperandList::OperandInfo &OI = CGI.Operands[i];
-	
-	// Validate tied operands.
-	if (OI.getTiedRegister() != -1) {
-	  // If we have a tied operand that consists of multiple MCOperands,
-	  // reject it.  We reject aliases and ignore instructions for now.
-	  if (OI.MINumOperands != 1) {
-	    // FIXME: Should reject these.  The ARM backend hits this with $lane
-	    // in a bunch of instructions. It is unclear what the right answer is.
-	    DEBUG({
-		errs() << "warning: '" << CGI.TheDef->getName() << "': "
-		       << "ignoring instruction with multi-operand tied operand '"
-		       << OI.Name << "'\n";
-	      });
-	    continue;
-	  }
-	}
+        const CGIOperandList::OperandInfo &OI = CGI.Operands[i];
+
+        // Validate tied operands.
+        if (OI.getTiedRegister() != -1) {
+          // If we have a tied operand that consists of multiple MCOperands,
+          // reject it.  We reject aliases and ignore instructions for now.
+          if (OI.MINumOperands != 1) {
+            // FIXME: Should reject these.  The ARM backend hits this with $lane
+            // in a bunch of instructions. It is unclear what the right answer is.
+            DEBUG({
+                errs() << "warning: '" << CGI.TheDef->getName() << "': "
+                       << "ignoring instruction with multi-operand tied operand '"
+                       << OI.Name << "'\n";
+              });
+            continue;
+          }
+        }
       }
 
       OwningPtr<MatchableInfo> II(new MatchableInfo(CGI));
@@ -1226,14 +1226,14 @@ void AsmMatcherInfo::BuildInfo() {
       // Ignore instructions which shouldn't be matched and diagnose invalid
       // instruction definitions with an error.
       if (!II->Validate(CommentDelimiter, true))
-	continue;
+        continue;
 
       // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
       //
       // FIXME: This is a total hack.
       if (StringRef(II->TheDef->getName()).startswith("Int_") ||
-	  StringRef(II->TheDef->getName()).endswith("_Int"))
-	continue;
+          StringRef(II->TheDef->getName()).endswith("_Int"))
+        continue;
 
       Matchables.push_back(II.take());
     }
@@ -1249,8 +1249,8 @@ void AsmMatcherInfo::BuildInfo() {
       // filter the set of instruction aliases we consider, based on the target
       // instruction.
       if (!StringRef(Alias->ResultInst->TheDef->getName()).startswith(
-								      MatchPrefix))
-	continue;
+                                                                      MatchPrefix))
+        continue;
 
       OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
 
