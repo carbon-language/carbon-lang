@@ -621,7 +621,7 @@ struct __atomic_base  // false
     _LIBCPP_INLINE_VISIBILITY
     __atomic_base() {} // = default;
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ __atomic_base(_Tp __d) { __atomic_store(&__a_, __d, memory_order_seq_cst); }
+    /*constexpr*/ __atomic_base(_Tp __d) : __a_(__d) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     __atomic_base(const __atomic_base&) = delete;
     __atomic_base& operator=(const __atomic_base&) = delete;
@@ -820,7 +820,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 atomic_init(volatile atomic<_Tp>* __o, _Tp __d)
 {
-    __atomic_store(&__o->__a_, __d, memory_order_seq_cst);
+    __atomic_init(&__o->__a_, __d);
 }
 
 template <class _Tp>
@@ -828,7 +828,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 atomic_init(atomic<_Tp>* __o, _Tp __d)
 {
-    __atomic_store(&__o->__a_, __d, memory_order_seq_cst);
+    __atomic_init(&__o->__a_, __d);
 }
 
 // atomic_store
@@ -1366,7 +1366,7 @@ typedef struct atomic_flag
     _LIBCPP_INLINE_VISIBILITY
     atomic_flag() {} // = default;
     _LIBCPP_INLINE_VISIBILITY
-    atomic_flag(bool __b) { __atomic_store(&__a_, __b, memory_order_seq_cst); }
+    atomic_flag(bool __b) : __a_(__b) {}
 
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_flag(const atomic_flag&) = delete;
