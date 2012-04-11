@@ -2786,10 +2786,21 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
 
   if (E->getOp() == AtomicExpr::Init) {
     assert(!Dest && "Init does not return a value");
-    Val1 = EmitScalarExpr(E->getVal1());
-    llvm::StoreInst *Store = Builder.CreateStore(Val1, Ptr);
-    Store->setAlignment(Size);
-    Store->setVolatile(E->isVolatile());
+    if (!hasAggregateLLVMType(E->getVal1()->getType())) {
+      llvm::StoreInst *Store =
+        Builder.CreateStore(EmitScalarExpr(E->getVal1()), Ptr);
+      Store->setAlignment(Size);
+      Store->setVolatile(E->isVolatile());
+    } else if (E->getType()->isAnyComplexType()) {
+      EmitComplexExprIntoAddr(E->getVal1(), Ptr, E->isVolatile());
+    } else {
+      AggValueSlot Slot = AggValueSlot::forAddr(Ptr, alignChars,
+                                        AtomicTy.getQualifiers(),
+                                        AggValueSlot::IsNotDestructed,
+                                        AggValueSlot::DoesNotNeedGCBarriers,
+                                        AggValueSlot::IsNotAliased);
+      EmitAggExpr(E->getVal1(), Slot);
+    }
     return RValue::get(0);
   }
 
