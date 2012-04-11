@@ -24,7 +24,7 @@ namespace llvm {
   // Possible float ABI settings. Used with FloatABIType in TargetOptions.h.
   namespace FloatABI {
     enum ABIType {
-      Default, // Target-specific (either soft of hard depending on triple, etc).
+      Default, // Target-specific (either soft or hard depending on triple, etc).
       Soft, // Soft float.
       Hard  // Hard float.
     };
