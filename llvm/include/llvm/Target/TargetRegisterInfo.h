@@ -202,6 +202,13 @@ struct TargetRegisterInfoDesc {
   bool inAllocatableClass;      // Register belongs to an allocatable regclass.
 };
 
+/// Each TargetRegisterClass has a per register weight, and weight
+/// limit which must be less than the limits of its pressure sets.
+struct RegClassWeight {
+  unsigned RegWeigt;
+  unsigned WeightLimit;
+};
+
 /// TargetRegisterInfo base class - We assume that the target defines a static
 /// array of TargetRegisterDesc objects that represent all of the machine
 /// registers that the target has.  As such, we simply have to track a pointer
@@ -509,7 +516,8 @@ public:
   }
 
   /// Get the weight in units of pressure for this register class.
-  virtual unsigned getRegClassWeight(const TargetRegisterClass *RC) const = 0;
+  virtual const RegClassWeight &getRegClassWeight(
+    const TargetRegisterClass *RC) const = 0;
 
   /// Get the number of dimensions of register pressure.
   virtual unsigned getNumRegPressureSets() const = 0;

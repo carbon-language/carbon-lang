@@ -125,19 +125,23 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
   unsigned NumSets = RegBank.getNumRegPressureSets();
 
   OS << "/// Get the weight in units of pressure for this register class.\n"
-     << "unsigned " << ClassName << "::\n"
+     << "const RegClassWeight &" << ClassName << "::\n"
      << "getRegClassWeight(const TargetRegisterClass *RC) const {\n"
-     << "  static const unsigned RCWeightTable[] = {\n";
+     << "  static const RegClassWeight RCWeightTable[] = {\n";
   for (unsigned i = 0, e = NumRCs; i != e; ++i) {
     const CodeGenRegisterClass &RC = *RegBank.getRegClasses()[i];
     const CodeGenRegister::Set &Regs = RC.getMembers();
     if (Regs.empty())
-      OS << "    0";
-    else
-      OS << "    " << (*Regs.begin())->getWeight(RegBank);
-    OS << ",  \t// " << RC.getName() << "\n";
+      OS << "    {0, 0";
+    else {
+      std::vector<unsigned> RegUnits;
+      RC.buildRegUnitSet(RegUnits);
+      OS << "    {" << (*Regs.begin())->getWeight(RegBank)
+         << ", " << RegBank.getRegUnitSetWeight(RegUnits);
+    }
+    OS << "},  \t// " << RC.getName() << "\n";
   }
-  OS << "    0 };\n"
+  OS << "    {0, 0} };\n"
      << "  return RCWeightTable[RC->getID()];\n"
      << "}\n\n";
 
@@ -153,12 +157,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "  static const unsigned PressureLimitTable[] = {\n";
   for (unsigned i = 0; i < NumSets; ++i ) {
     const RegUnitSet &RegUnits = RegBank.getRegPressureSet(i);
-    unsigned Weight = 0;
-    for (RegUnitSet::iterator
-           I = RegUnits.Units.begin(), E = RegUnits.Units.end(); I != E; ++I) {
-      Weight += RegBank.getRegUnitWeight(*I);
-    }
-    OS << "    " << Weight
+    OS << "    " << RegBank.getRegUnitSetWeight(RegUnits.Units)
        << ",  \t// " << i << ": " << RegBank.getRegPressureSet(i).Name << "\n";
   }
   OS << "    0 };\n"
@@ -668,7 +667,8 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  const TargetRegisterClass *getMatchingSuperRegClass("
         "const TargetRegisterClass*, const TargetRegisterClass*, "
         "unsigned) const;\n"
-     << "  unsigned getRegClassWeight(const TargetRegisterClass *RC) const;\n"
+     << "  const RegClassWeight &getRegClassWeight("
+     << "const TargetRegisterClass *RC) const;\n"
      << "  unsigned getNumRegPressureSets() const;\n"
      << "  unsigned getRegPressureSetLimit(unsigned Idx) const;\n"
      << "  const int *getRegClassPressureSets("

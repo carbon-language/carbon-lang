@@ -722,6 +722,16 @@ CodeGenRegisterClass::getSuperRegClasses(CodeGenSubRegIndex *SubIdx,
     Out.set((*I)->EnumValue);
 }
 
+// Populate a unique sorted list of units from a register set.
+void CodeGenRegisterClass::buildRegUnitSet(
+  std::vector<unsigned> &RegUnits) const {
+  std::vector<unsigned> TmpUnits;
+  for (RegUnitIterator UnitI(Members); UnitI.isValid(); ++UnitI)
+    TmpUnits.push_back(*UnitI);
+  std::sort(TmpUnits.begin(), TmpUnits.end());
+  std::unique_copy(TmpUnits.begin(), TmpUnits.end(),
+                   std::back_inserter(RegUnits));
+}
 
 //===----------------------------------------------------------------------===//
 //                               CodeGenRegBank
@@ -1130,17 +1140,6 @@ void CodeGenRegBank::computeRegUnitWeights() {
   }
 }
 
-// Populate a unique sorted list of units from a register set.
-static void buildRegUnitSet(const CodeGenRegister::Set &Regs,
-                            std::vector<unsigned> &RegUnits) {
-  std::vector<unsigned> TmpUnits;
-  for (RegUnitIterator UnitI(Regs); UnitI.isValid(); ++UnitI)
-    TmpUnits.push_back(*UnitI);
-  std::sort(TmpUnits.begin(), TmpUnits.end());
-  std::unique_copy(TmpUnits.begin(), TmpUnits.end(),
-                   std::back_inserter(RegUnits));
-}
-
 // Find a set in UniqueSets with the same elements as Set.
 // Return an iterator into UniqueSets.
 static std::vector<RegUnitSet>::const_iterator
@@ -1216,7 +1215,7 @@ void CodeGenRegBank::computeRegUnitSets() {
     RegUnitSets.back().Name = RegClasses[RCIdx]->getName();
 
     // Compute a sorted list of units in this class.
-    buildRegUnitSet(RegClasses[RCIdx]->getMembers(), RegUnitSets.back().Units);
+    RegClasses[RCIdx]->buildRegUnitSet(RegUnitSets.back().Units);
 
     // Find an existing RegUnitSet.
     std::vector<RegUnitSet>::const_iterator SetI =
@@ -1279,7 +1278,7 @@ void CodeGenRegBank::computeRegUnitSets() {
 
     // Recompute the sorted list of units in this class.
     std::vector<unsigned> RegUnits;
-    buildRegUnitSet(RegClasses[RCIdx]->getMembers(), RegUnits);
+    RegClasses[RCIdx]->buildRegUnitSet(RegUnits);
 
     // Don't increase pressure for unallocatable regclasses.
     if (RegUnits.empty())

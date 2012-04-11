@@ -279,6 +279,9 @@ namespace llvm {
     // getOrder(0).
     const CodeGenRegister::Set &getMembers() const { return Members; }
 
+    // Populate a unique sorted list of units from a register set.
+    void buildRegUnitSet(std::vector<unsigned> &RegUnits) const;
+
     CodeGenRegisterClass(CodeGenRegBank&, Record *R);
 
     // A key representing the parts of a register class used for forming
@@ -447,6 +450,15 @@ namespace llvm {
     // Get a register unit's weight. Zero for unallocatable registers.
     unsigned getRegUnitWeight(unsigned RUID) const {
       return RegUnitWeights[RUID];
+    }
+
+    // Get the sum of unit weights.
+    unsigned getRegUnitSetWeight(const std::vector<unsigned> &Units) const {
+      unsigned Weight = 0;
+      for (std::vector<unsigned>::const_iterator
+             I = Units.begin(), E = Units.end(); I != E; ++I)
+        Weight += getRegUnitWeight(*I);
+      return Weight;
     }
 
     // Increase a RegUnitWeight.
