@@ -205,7 +205,7 @@ namespace {
     /// CanCauseHighRegPressure - Visit BBs from header to current BB,
     /// check if hoisting an instruction of the given cost matrix can cause high
     /// register pressure.
-    bool CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost);
+    bool CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost, bool Cheap);
 
     /// UpdateBackTraceRegPressure - Traverse the back trace from header to
     /// the current block and update their register pressures to reflect the
@@ -1067,7 +1067,8 @@ bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
 /// CanCauseHighRegPressure - Visit BBs from header to current BB, check
 /// if hoisting an instruction of the given cost matrix can cause high
 /// register pressure.
-bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost) {
+bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost,
+                                          bool CheapInstr) {
   for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
        CI != CE; ++CI) {
     if (CI->second <= 0)
@@ -1076,6 +1077,12 @@ bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost) {
     unsigned RCId = CI->first;
     unsigned Limit = RegLimit[RCId];
     int Cost = CI->second;
+
+    // Don't hoist cheap instructions if they would increase register pressure,
+    // even if we're under the limit.
+    if (CheapInstr)
+      return true;
+
     for (unsigned i = BackTrace.size(); i != 0; --i) {
       SmallVector<unsigned, 8> &RP = BackTrace[i-1];
       if (RP[RCId] + Cost >= Limit)
@@ -1138,83 +1145,96 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   if (MI.isImplicitDef())
     return true;
 
-  // If the instruction is cheap, only hoist if it is re-materilizable. LICM
-  // will increase register pressure. It's probably not worth it if the
-  // instruction is cheap.
-  // Also hoist loads from constant memory, e.g. load from stubs, GOT. Hoisting
-  // these tend to help performance in low register pressure situation. The
-  // trade off is it may cause spill in high pressure situation. It will end up
-  // adding a store in the loop preheader. But the reload is no more expensive.
-  // The side benefit is these loads are frequently CSE'ed.
-  if (IsCheapInstruction(MI)) {
-    if (!TII->isTriviallyReMaterializable(&MI, AA))
-      return false;
-  } else {
-    // Estimate register pressure to determine whether to LICM the instruction.
-    // In low register pressure situation, we can be more aggressive about
-    // hoisting. Also, favors hoisting long latency instructions even in
-    // moderately high pressure situation.
-    // FIXME: If there are long latency loop-invariant instructions inside the
-    // loop at this point, why didn't the optimizer's LICM hoist them?
-    DenseMap<unsigned, int> Cost;
-    for (unsigned i = 0, e = MI.getDesc().getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI.getOperand(i);
-      if (!MO.isReg() || MO.isImplicit())
-        continue;
-      unsigned Reg = MO.getReg();
-      if (!TargetRegisterInfo::isVirtualRegister(Reg))
-        continue;
+  // Besides removing computation from the loop, hoisting an instruction has
+  // these effects:
+  //
+  // - The value defined by the instruction becomes live across the entire
+  //   loop. This increases register pressure in the loop.
+  //
+  // - If the value is used by a PHI in the loop, a copy will be required for
+  //   lowering the PHI after extending the live range.
+  //
+  // - When hoisting the last use of a value in the loop, that value no longer
+  //   needs to be live in the loop. This lowers register pressure in the loop.
 
-      unsigned RCId, RCCost;
-      getRegisterClassIDAndCost(&MI, Reg, i, RCId, RCCost);
-      if (MO.isDef()) {
-        if (HasHighOperandLatency(MI, i, Reg)) {
-          ++NumHighLatency;
-          return true;
-        }
+  bool CheapInstr = IsCheapInstruction(MI);
+  bool CreatesCopy = HasLoopPHIUse(&MI);
 
-        DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
-        if (CI != Cost.end())
-          CI->second += RCCost;
-        else
-          Cost.insert(std::make_pair(RCId, RCCost));
-      } else if (isOperandKill(MO, MRI)) {
-        // Is a virtual register use is a kill, hoisting it out of the loop
-        // may actually reduce register pressure or be register pressure
-        // neutral.
-        DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
-        if (CI != Cost.end())
-          CI->second -= RCCost;
-        else
-          Cost.insert(std::make_pair(RCId, -RCCost));
-      }
-    }
-
-    // Visit BBs from header to current BB, if hoisting this doesn't cause
-    // high register pressure, then it's safe to proceed.
-    if (!CanCauseHighRegPressure(Cost)) {
-      ++NumLowRP;
-      return true;
-    }
-
-    // Do not "speculate" in high register pressure situation. If an
-    // instruction is not guaranteed to be executed in the loop, it's best to be
-    // conservative.
-    if (AvoidSpeculation &&
-        (!IsGuaranteedToExecute(MI.getParent()) && !MayCSE(&MI)))
-      return false;
-
-    // High register pressure situation, only hoist if the instruction is going
-    // to be remat'ed.
-    if (!TII->isTriviallyReMaterializable(&MI, AA) &&
-        !MI.isInvariantLoad(AA))
-      return false;
+  // Don't hoist a cheap instruction if it would create a copy in the loop.
+  if (CheapInstr && CreatesCopy) {
+    DEBUG(dbgs() << "Won't hoist cheap instr with loop PHI use: " << MI);
+    return false;
   }
 
-  // If result(s) of this instruction is used by PHIs inside the loop, then
-  // don't hoist it because it will introduce an extra copy.
-  if (HasLoopPHIUse(&MI))
+  // Rematerializable instructions should always be hoisted since the register
+  // allocator can just pull them down again when needed.
+  if (TII->isTriviallyReMaterializable(&MI, AA))
+    return true;
+
+  // Estimate register pressure to determine whether to LICM the instruction.
+  // In low register pressure situation, we can be more aggressive about
+  // hoisting. Also, favors hoisting long latency instructions even in
+  // moderately high pressure situation.
+  // Cheap instructions will only be hoisted if they don't increase register
+  // pressure at all.
+  // FIXME: If there are long latency loop-invariant instructions inside the
+  // loop at this point, why didn't the optimizer's LICM hoist them?
+  DenseMap<unsigned, int> Cost;
+  for (unsigned i = 0, e = MI.getDesc().getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || MO.isImplicit())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
+
+    unsigned RCId, RCCost;
+    getRegisterClassIDAndCost(&MI, Reg, i, RCId, RCCost);
+    if (MO.isDef()) {
+      if (HasHighOperandLatency(MI, i, Reg)) {
+        DEBUG(dbgs() << "Hoist High Latency: " << MI);
+        ++NumHighLatency;
+        return true;
+      }
+      Cost[RCId] += RCCost;
+    } else if (isOperandKill(MO, MRI)) {
+      // Is a virtual register use is a kill, hoisting it out of the loop
+      // may actually reduce register pressure or be register pressure
+      // neutral.
+      Cost[RCId] -= RCCost;
+    }
+  }
+
+  // Visit BBs from header to current BB, if hoisting this doesn't cause
+  // high register pressure, then it's safe to proceed.
+  if (!CanCauseHighRegPressure(Cost, CheapInstr)) {
+    DEBUG(dbgs() << "Hoist non-reg-pressure: " << MI);
+    ++NumLowRP;
+    return true;
+  }
+
+  // Don't risk increasing register pressure if it would create copies.
+  if (CreatesCopy) {
+    DEBUG(dbgs() << "Won't hoist instr with loop PHI use: " << MI);
     return false;
+  }
+
+  // Do not "speculate" in high register pressure situation. If an
+  // instruction is not guaranteed to be executed in the loop, it's best to be
+  // conservative.
+  if (AvoidSpeculation &&
+      (!IsGuaranteedToExecute(MI.getParent()) && !MayCSE(&MI))) {
+    DEBUG(dbgs() << "Won't speculate: " << MI);
+    return false;
+  }
+
+  // High register pressure situation, only hoist if the instruction is going
+  // to be remat'ed.
+  if (!TII->isTriviallyReMaterializable(&MI, AA) &&
+      !MI.isInvariantLoad(AA)) {
+    DEBUG(dbgs() << "Can't remat / high reg-pressure: " << MI);
+    return false;
+  }
 
   return true;
 }
