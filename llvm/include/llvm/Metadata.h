@@ -77,7 +77,7 @@ class MDNode : public Value, public FoldingSetNode {
   friend class LLVMContextImpl;
   friend struct FoldingSetTrait<MDNode>;
 
-  /// NumOperands - If the MDNode is uniqued cache the hash to speed up lookup.
+  /// Hash - If the MDNode is uniqued cache the hash to speed up lookup.
   unsigned Hash;
 
   /// NumOperands - This many 'MDNodeOperand' items are co-allocated onto the
