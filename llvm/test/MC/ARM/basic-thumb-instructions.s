@@ -97,10 +97,16 @@ _func:
         asrs r2, r3, #32
         asrs r2, r3, #5
         asrs r2, r3, #1
+        asrs r5, #21
+        asrs r5, r5, #21
+        asrs r3, r5, #21
 
 @ CHECK: asrs	r2, r3, #32             @ encoding: [0x1a,0x10]
 @ CHECK: asrs	r2, r3, #5              @ encoding: [0x5a,0x11]
 @ CHECK: asrs	r2, r3, #1              @ encoding: [0x5a,0x10]
+@ CHECK: asrs	r5, r5, #21             @ encoding: [0x6d,0x15]
+@ CHECK: asrs	r5, r5, #21             @ encoding: [0x6d,0x15]
+@ CHECK: asrs	r3, r5, #21             @ encoding: [0x6b,0x15]
 
 
 @------------------------------------------------------------------------------
@@ -319,9 +325,15 @@ _func:
 @------------------------------------------------------------------------------
         lsls r4, r5, #0
         lsls r4, r5, #4
+        lsls r3, #12
+        lsls r3, r3, #12
+        lsls r1, r3, #12
 
 @ CHECK: lsls	r4, r5, #0              @ encoding: [0x2c,0x00]
 @ CHECK: lsls	r4, r5, #4              @ encoding: [0x2c,0x01]
+@ CHECK: lsls	r3, r3, #12             @ encoding: [0x1b,0x03]
+@ CHECK: lsls	r3, r3, #12             @ encoding: [0x1b,0x03]
+@ CHECK: lsls	r1, r3, #12             @ encoding: [0x19,0x03]
 
 
 @------------------------------------------------------------------------------
@@ -337,9 +349,15 @@ _func:
 @------------------------------------------------------------------------------
         lsrs r1, r3, #1
         lsrs r1, r3, #32
+        lsrs r4, #20
+        lsrs r4, r4, #20
+        lsrs r2, r4, #20
 
 @ CHECK: lsrs	r1, r3, #1              @ encoding: [0x59,0x08]
 @ CHECK: lsrs	r1, r3, #32             @ encoding: [0x19,0x08]
+@ CHECK: lsrs	r4, r4, #20             @ encoding: [0x24,0x0d]
+@ CHECK: lsrs	r4, r4, #20             @ encoding: [0x24,0x0d]
+@ CHECK: lsrs	r2, r4, #20             @ encoding: [0x22,0x0d]
 
 
 @------------------------------------------------------------------------------

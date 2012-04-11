@@ -6650,6 +6650,37 @@ processInstruction(MCInst &Inst,
     return true;
   }
 
+  // Handle encoding choice for the shift-immediate instructions.
+  case ARM::t2LSLri:
+  case ARM::t2LSRri:
+  case ARM::t2ASRri: {
+    if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
+        Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() &&
+        Inst.getOperand(5).getReg() == (inITBlock() ? 0 : ARM::CPSR) &&
+        !(static_cast<ARMOperand*>(Operands[3])->isToken() &&
+         static_cast<ARMOperand*>(Operands[3])->getToken() == ".w")) {
+      unsigned NewOpc;
+      switch (Inst.getOpcode()) {
+      default: llvm_unreachable("unexpected opcode");
+      case ARM::t2LSLri: NewOpc = ARM::tLSLri; break;
+      case ARM::t2LSRri: NewOpc = ARM::tLSRri; break;
+      case ARM::t2ASRri: NewOpc = ARM::tASRri; break;
+      }
+      // The Thumb1 operands aren't in the same order. Awesome, eh?
+      MCInst TmpInst;
+      TmpInst.setOpcode(NewOpc);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(5));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(2));
+      TmpInst.addOperand(Inst.getOperand(3));
+      TmpInst.addOperand(Inst.getOperand(4));
+      Inst = TmpInst;
+      return true;
+    }
+    return false;
+  }
+
   // Handle the Thumb2 mode MOV complex aliases.
   case ARM::t2MOVsr:
   case ARM::t2MOVSsr: {

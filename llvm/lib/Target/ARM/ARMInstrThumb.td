@@ -1407,3 +1407,11 @@ def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
 def : tInstAlias<"neg${s}${p} $Rd, $Rm",
                  (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>;
 
+
+// Implied destination operand forms for shifts.
+def : tInstAlias<"lsl${s}${p} $Rdm, $imm",
+             (tLSLri tGPR:$Rdm, cc_out:$s, tGPR:$Rdm, imm0_31:$imm, pred:$p)>;
+def : tInstAlias<"lsr${s}${p} $Rdm, $imm",
+             (tLSRri tGPR:$Rdm, cc_out:$s, tGPR:$Rdm, imm_sr:$imm, pred:$p)>;
+def : tInstAlias<"asr${s}${p} $Rdm, $imm",
+             (tASRri tGPR:$Rdm, cc_out:$s, tGPR:$Rdm, imm_sr:$imm, pred:$p)>;
