@@ -103,43 +103,81 @@ define float @test_fma_f32(float %a, float %b, float %c) nounwind readnone ssp {
 entry:
 ; CHECK: test_fma_f32
 ; CHECK: vfma.f32
-  %call = tail call float @llvm.fma.f32(float %a, float %b, float %c) nounwind readnone
-  ret float %call
+  %tmp1 = tail call float @llvm.fma.f32(float %a, float %b, float %c) nounwind readnone
+  ret float %tmp1
 }
 
 define double @test_fma_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:
 ; CHECK: test_fma_f64
 ; CHECK: vfma.f64
-  %call = tail call double @llvm.fma.f64(double %a, double %b, double %c) nounwind readnone
-  ret double %call
+  %tmp1 = tail call double @llvm.fma.f64(double %a, double %b, double %c) nounwind readnone
+  ret double %tmp1
 }
 
 define <2 x float> @test_fma_v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone ssp {
 entry:
 ; CHECK: test_fma_v2f32
 ; CHECK: vfma.f32
-  %0 = tail call <2 x float> @llvm.fma.v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind
-  ret <2 x float> %0
+  %tmp1 = tail call <2 x float> @llvm.fma.v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind
+  ret <2 x float> %tmp1
 }
 
-define float @test_fnma_f32(float %a, float %b, float %c) nounwind readnone ssp {
+define double @test_fms_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:
-; CHECK: test_fnma_f32
-; CHECK: vfnma.f32
-  %call = tail call float @llvm.fma.f32(float %a, float %b, float %c) nounwind readnone
-  %tmp1 = fsub float -0.0, %call
-  %tmp2 = fsub float %tmp1, %c
-  ret float %tmp2
+; CHECK: test_fms_f64
+; CHECK: vfms.f64
+  %tmp1 = fsub double -0.0, %a
+  %tmp2 = tail call double @llvm.fma.f64(double %tmp1, double %b, double %c) nounwind readnone
+  ret double %tmp2
+}
+
+define double @test_fms_f64_2(double %a, double %b, double %c) nounwind readnone ssp {
+entry:
+; CHECK: test_fms_f64_2
+; CHECK: vfms.f64
+  %tmp1 = fsub double -0.0, %b
+  %tmp2 = tail call double @llvm.fma.f64(double %a, double %tmp1, double %c) nounwind readnone
+  %tmp3 = fsub double -0.0, %tmp2
+  ret double %tmp3
+}
+
+define double @test_fnms_f64(double %a, double %b, double %c) nounwind readnone ssp {
+entry:
+; CHECK: test_fnms_f64
+; CHECK: vfnms.f64
+  %tmp1 = fsub double -0.0, %a
+  %tmp2 = tail call double @llvm.fma.f64(double %tmp1, double %b, double %c) nounwind readnone
+  %tmp3 = fsub double -0.0, %tmp2
+  ret double %tmp3
+}
+
+define double @test_fnms_f64_2(double %a, double %b, double %c) nounwind readnone ssp {
+entry:
+; CHECK: test_fnms_f64_2
+; CHECK: vfnms.f64
+  %tmp1 = fsub double -0.0, %b
+  %tmp2 = tail call double @llvm.fma.f64(double %a, double %tmp1, double %c) nounwind readnone
+  ret double %tmp2
 }
 
 define double @test_fnma_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:
 ; CHECK: test_fnma_f64
 ; CHECK: vfnma.f64
-  %call = tail call double @llvm.fma.f64(double %a, double %b, double %c) nounwind readnone
-  %tmp = fsub double -0.0, %call
-  ret double %tmp
+  %tmp1 = tail call double @llvm.fma.f64(double %a, double %b, double %c) nounwind readnone
+  %tmp2 = fsub double -0.0, %tmp1
+  ret double %tmp2
+}
+
+define double @test_fnma_f64_2(double %a, double %b, double %c) nounwind readnone ssp {
+entry:
+; CHECK: test_fnma_f64_2
+; CHECK: vfnma.f64
+  %tmp1 = fsub double -0.0, %a
+  %tmp2 = fsub double -0.0, %c
+  %tmp3 = tail call double @llvm.fma.f64(double %tmp1, double %b, double %tmp2) nounwind readnone
+  ret double %tmp3
 }
 
 declare float @llvm.fma.f32(float, float, float) nounwind readnone

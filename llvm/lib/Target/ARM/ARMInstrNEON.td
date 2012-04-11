@@ -4133,12 +4133,18 @@ def  VFMSfq   : N3VQMulOp<0, 0, 0b10, 0b1100, 1, IIC_VFMACQ, "vfms", "f32",
                 Requires<[HasVFP4,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-def : Pat<(fma (v2f32 DPR:$src1), (v2f32 DPR:$Vn), (v2f32 DPR:$Vm)),
+def : Pat<(v2f32 (fma DPR:$src1, DPR:$Vn, DPR:$Vm)),
           (VFMAfd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
           Requires<[HasVFP4]>;
-def : Pat<(fma (v4f32 QPR:$src1), (v4f32 QPR:$Vn), (v4f32 QPR:$Vm)),
+def : Pat<(v4f32 (fma QPR:$src1, QPR:$Vn, QPR:$Vm)),
           (VFMAfq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
           Requires<[HasVFP4]>;
+def : Pat<(v2f32 (fma (fneg DPR:$src1), DPR:$Vn, DPR:$Vm)),
+          (VFMSfd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(v4f32 (fma (fneg QPR:$src1), QPR:$Vn, QPR:$Vm)),
+          (VFMSfq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
+      Requires<[HasVFP4]>;
 
 // Vector Subtract Operations.
 

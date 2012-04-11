@@ -1081,10 +1081,10 @@ def : Pat<(fadd_mlx SPR:$dstin, (fmul_su SPR:$a, SPR:$b)),
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-def : Pat<(fma (f64 DPR:$Ddin), (f64 DPR:$Dn), (f64 DPR:$Dm)),
+def : Pat<(f64 (fma DPR:$Ddin, DPR:$Dn, DPR:$Dm)),
           (VFMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(fma (f32 SPR:$Sdin), (f32 SPR:$Sn), (f32 SPR:$Sm)),
+def : Pat<(f32 (fma SPR:$Sdin, SPR:$Sn, SPR:$Sm)),
           (VFMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
 
@@ -1114,6 +1114,22 @@ def : Pat<(fsub_mlx SPR:$dstin, (fmul_su SPR:$a, SPR:$b)),
           (VFMSS SPR:$dstin, SPR:$a, SPR:$b)>,
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
+// Match @llvm.fma.* intrinsics
+// (fma (fneg x), y, z) -> (vfms x, y, z)
+def : Pat<(f64 (fma (fneg DPR:$Ddin), DPR:$Dn, DPR:$Dm)),
+          (VFMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(f32 (fma (fneg SPR:$Sdin), SPR:$Sn, SPR:$Sm)),
+          (VFMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
+      Requires<[HasVFP4]>;
+// (fneg (fma x, (fneg y), z) -> (vfms x, y, z)
+def : Pat<(fneg (f64 (fma DPR:$Ddin, (fneg DPR:$Dn), DPR:$Dm))),
+          (VFMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(fneg (f32 (fma SPR:$Sdin, (fneg SPR:$Sn), SPR:$Sm))),
+          (VFMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
+      Requires<[HasVFP4]>;
+
 def VFNMAD : ADbI<0b11101, 0b01, 1, 0,
                   (outs DPR:$Dd), (ins DPR:$Ddin, DPR:$Dn, DPR:$Dm),
                   IIC_fpFMAC64, "vfnma", ".f64\t$Dd, $Dn, $Dm",
@@ -1141,10 +1157,18 @@ def : Pat<(fsub_mlx (fneg (fmul_su SPR:$a, SPR:$b)), SPR:$dstin),
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
+// (fneg (fma x, y, z)) -> (vfnma x, y, z)
 def : Pat<(fneg (fma (f64 DPR:$Ddin), (f64 DPR:$Dn), (f64 DPR:$Dm))),
           (VFNMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
 def : Pat<(fneg (fma (f32 SPR:$Sdin), (f32 SPR:$Sn), (f32 SPR:$Sm))),
+          (VFNMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
+      Requires<[HasVFP4]>;
+// (fma (fneg x), y, (fneg z)) -> (vfnma x, y, z)
+def : Pat<(f64 (fma (fneg DPR:$Ddin), DPR:$Dn, (fneg DPR:$Dm))),
+          (VFNMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(f32 (fma (fneg SPR:$Sdin), SPR:$Sn, (fneg SPR:$Sm))),
           (VFNMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
 
@@ -1172,6 +1196,22 @@ def : Pat<(fsub_mlx (fmul_su DPR:$a, (f64 DPR:$b)), DPR:$dstin),
 def : Pat<(fsub_mlx (fmul_su SPR:$a, SPR:$b), SPR:$dstin),
           (VFNMSS SPR:$dstin, SPR:$a, SPR:$b)>,
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
+
+// Match @llvm.fma.* intrinsics
+// (fneg (fma (fneg x), y, z)) -> (vnfms x, y, z)
+def : Pat<(fneg (f64 (fma (fneg DPR:$Ddin), DPR:$Dn, DPR:$Dm))),
+          (VFNMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(fneg (f32 (fma (fneg SPR:$Sdin), SPR:$Sn, SPR:$Sm))),
+          (VFNMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
+      Requires<[HasVFP4]>;
+// (fma x, (fneg y), z) -> (vnfms x, y, z)
+def : Pat<(f64 (fma DPR:$Ddin, (fneg DPR:$Dn), DPR:$Dm)),
+          (VFNMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
+      Requires<[HasVFP4]>;
+def : Pat<(f32 (fma SPR:$Sdin, (fneg SPR:$Sn), SPR:$Sm)),
+          (VFNMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
+      Requires<[HasVFP4]>;
 
 //===----------------------------------------------------------------------===//
 // FP Conditional moves.
