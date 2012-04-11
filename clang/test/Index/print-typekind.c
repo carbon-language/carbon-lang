@@ -10,7 +10,7 @@ typedef int ArrayType[5];
 // RUN: c-index-test -test-print-typekind %s | FileCheck %s
 // CHECK: TypedefDecl=FooType:1:13 (Definition) typekind=Typedef [canonical=Int] [isPOD=1]
 // CHECK: VarDecl=p:2:6 typekind=Pointer [isPOD=1]
-// CHECK: FunctionDecl=f:3:6 (Definition) typekind=FunctionProto [canonical=FunctionProto] [result=Pointer] [isPOD=0]
+// CHECK: FunctionDecl=f:3:6 (Definition) typekind=FunctionProto [canonical=FunctionProto] [result=Pointer] [args= Pointer Pointer Typedef] [isPOD=0]
 // CHECK: ParmDecl=p:3:13 (Definition) typekind=Pointer [isPOD=1]
 // CHECK: ParmDecl=x:3:22 (Definition) typekind=Pointer [isPOD=1]
 // CHECK: ParmDecl=z:3:33 (Definition) typekind=Typedef [canonical=Int] [isPOD=1]

@@ -2525,6 +2525,22 @@ CINDEX_LINKAGE long long clang_getEnumConstantDeclValue(CXCursor C);
 CINDEX_LINKAGE unsigned long long clang_getEnumConstantDeclUnsignedValue(CXCursor C);
 
 /**
+ * \brief Retrieve the number of non-variadic arguments associated with a given
+ * cursor.
+ *
+ * If a cursor that is not a function or method is passed in, -1 is returned.
+ */
+CINDEX_LINKAGE int clang_Cursor_getNumArguments(CXCursor C);
+
+/**
+ * \brief Retrieve the argument cursor of a function or method.
+ *
+ * If a cursor that is not a function or method is passed in or the index
+ * exceeds the number of arguments, an invalid cursor is returned.
+ */
+CINDEX_LINKAGE CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i);
+
+/**
  * \determine Determine whether two CXTypes represent the same type.
  *
  * \returns non-zero if the CXTypes represent the same type and 
@@ -2598,9 +2614,9 @@ CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 /**
  * \brief Retrieve the number of non-variadic arguments associated with a function type.
  *
- * If a non-function type is passed in, UINT_MAX is returned.
+ * If a non-function type is passed in, -1 is returned.
  */
-CINDEX_LINKAGE unsigned clang_getNumArgTypes(CXType T);
+CINDEX_LINKAGE int clang_getNumArgTypes(CXType T);
 
 /**
  * \brief Retrieve the type of an argument of a function type.

@@ -663,6 +663,22 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
         clang_disposeString(RS);
       }
     }
+    /* Print the argument types if they exist. */
+    {
+      int numArgs = clang_Cursor_getNumArguments(cursor);
+      if (numArgs != -1 && numArgs != 0) {
+        printf(" [args=");
+        for (int i = 0; i < numArgs; ++i) {
+          CXType T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
+          if (T.kind != CXType_Invalid) {
+            CXString S = clang_getTypeKindSpelling(T.kind);
+            printf(" %s", clang_getCString(S));
+            clang_disposeString(S);
+          }
+        }
+        printf("]");
+      }
+    }
     /* Print if this is a non-POD type. */
     printf(" [isPOD=%d]", clang_isPODType(T));
 

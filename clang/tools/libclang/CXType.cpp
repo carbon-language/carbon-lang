@@ -455,10 +455,10 @@ CXCallingConv clang_getFunctionTypeCallingConv(CXType X) {
   return CXCallingConv_Invalid;
 }
 
-unsigned clang_getNumArgTypes(CXType X) {
+int clang_getNumArgTypes(CXType X) {
   QualType T = GetQualType(X);
   if (T.isNull())
-    return UINT_MAX;
+    return -1;
   
   if (const FunctionProtoType *FD = T->getAs<FunctionProtoType>()) {
     return FD->getNumArgs();
@@ -468,7 +468,7 @@ unsigned clang_getNumArgTypes(CXType X) {
     return 0;
   }
   
-  return UINT_MAX;
+  return -1;
 }
 
 CXType clang_getArgType(CXType X, unsigned i) {

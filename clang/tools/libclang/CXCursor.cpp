@@ -1024,6 +1024,35 @@ CXTranslationUnit clang_Cursor_getTranslationUnit(CXCursor cursor) {
   return getCursorTU(cursor);
 }
 
+int clang_Cursor_getNumArguments(CXCursor C) {
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+    if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
+      return MD->param_size();
+    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+      return FD->param_size();
+  }
+
+  return -1;
+}
+
+CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i) {
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+    if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D)) {
+      if (i < MD->param_size())
+        return cxcursor::MakeCXCursor(MD->param_begin()[i],
+                                      cxcursor::getCursorTU(C));
+    } else if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+      if (i < FD->param_size())
+        return cxcursor::MakeCXCursor(FD->param_begin()[i],
+                                      cxcursor::getCursorTU(C));
+    }
+  }
+
+  return clang_getNullCursor();
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
