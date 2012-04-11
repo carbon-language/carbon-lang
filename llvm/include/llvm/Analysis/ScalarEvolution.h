@@ -140,7 +140,7 @@ namespace llvm {
       ID = X.FastID;
     }
     static bool Equals(const SCEV &X, const FoldingSetNodeID &ID,
-                       FoldingSetNodeID &TempID) {
+                       unsigned IDHash, FoldingSetNodeID &TempID) {
       return ID == X.FastID;
     }
     static unsigned ComputeHash(const SCEV &X, FoldingSetNodeID &TempID) {

@@ -193,12 +193,11 @@ protected:
   virtual void GetNodeProfile(Node *N, FoldingSetNodeID &ID) const = 0;
   /// NodeEquals - Instantiations of the FoldingSet template implement
   /// this function to compare the given node with the given ID.
-  virtual bool NodeEquals(Node *N, const FoldingSetNodeID &ID,
+  virtual bool NodeEquals(Node *N, const FoldingSetNodeID &ID, unsigned IDHash,
                           FoldingSetNodeID &TempID) const=0;
-  /// NodeEquals - Instantiations of the FoldingSet template implement
+  /// ComputeNodeHash - Instantiations of the FoldingSet template implement
   /// this function to compute a hash value for the given node.
-  virtual unsigned ComputeNodeHash(Node *N,
-                                   FoldingSetNodeID &TempID) const = 0;
+  virtual unsigned ComputeNodeHash(Node *N, FoldingSetNodeID &TempID) const = 0;
 };
 
 //===----------------------------------------------------------------------===//
@@ -220,7 +219,7 @@ template<typename T> struct DefaultFoldingSetTrait {
   // to compute a temporary ID if necessary. The default implementation
   // just calls Profile and does a regular comparison. Implementations
   // can override this to provide more efficient implementations.
-  static inline bool Equals(T &X, const FoldingSetNodeID &ID,
+  static inline bool Equals(T &X, const FoldingSetNodeID &ID, unsigned IDHash,
                             FoldingSetNodeID &TempID);
 
   // ComputeHash - Compute a hash value for X, using TempID to
@@ -249,7 +248,7 @@ struct DefaultContextualFoldingSetTrait {
   static void Profile(T &X, FoldingSetNodeID &ID, Ctx Context) {
     X.Profile(ID, Context);
   }
-  static inline bool Equals(T &X, const FoldingSetNodeID &ID,
+  static inline bool Equals(T &X, const FoldingSetNodeID &ID, unsigned IDHash,
                             FoldingSetNodeID &TempID, Ctx Context);
   static inline unsigned ComputeHash(T &X, FoldingSetNodeID &TempID,
                                      Ctx Context);
@@ -344,7 +343,7 @@ template<class T> class FoldingSetBucketIterator;
 template<typename T>
 inline bool
 DefaultFoldingSetTrait<T>::Equals(T &X, const FoldingSetNodeID &ID,
-                                  FoldingSetNodeID &TempID) {
+                                  unsigned IDHash, FoldingSetNodeID &TempID) {
   FoldingSetTrait<T>::Profile(X, TempID);
   return TempID == ID;
 }
@@ -358,6 +357,7 @@ template<typename T, typename Ctx>
 inline bool
 DefaultContextualFoldingSetTrait<T, Ctx>::Equals(T &X,
                                                  const FoldingSetNodeID &ID,
+                                                 unsigned IDHash,
                                                  FoldingSetNodeID &TempID,
                                                  Ctx Context) {
   ContextualFoldingSetTrait<T, Ctx>::Profile(X, TempID, Context);
@@ -387,15 +387,14 @@ private:
   }
   /// NodeEquals - Instantiations may optionally provide a way to compare a
   /// node with a specified ID.
-  virtual bool NodeEquals(Node *N, const FoldingSetNodeID &ID,
+  virtual bool NodeEquals(Node *N, const FoldingSetNodeID &ID, unsigned IDHash,
                           FoldingSetNodeID &TempID) const {
     T *TN = static_cast<T *>(N);
-    return FoldingSetTrait<T>::Equals(*TN, ID, TempID);
+    return FoldingSetTrait<T>::Equals(*TN, ID, IDHash, TempID);
   }
-  /// NodeEquals - Instantiations may optionally provide a way to compute a
+  /// ComputeNodeHash - Instantiations may optionally provide a way to compute a
   /// hash value directly from a node.
-  virtual unsigned ComputeNodeHash(Node *N,
-                                   FoldingSetNodeID &TempID) const {
+  virtual unsigned ComputeNodeHash(Node *N, FoldingSetNodeID &TempID) const {
     T *TN = static_cast<T *>(N);
     return FoldingSetTrait<T>::ComputeHash(*TN, TempID);
   }
@@ -465,10 +464,11 @@ private:
     ContextualFoldingSetTrait<T, Ctx>::Profile(*TN, ID, Context);
   }
   virtual bool NodeEquals(FoldingSetImpl::Node *N,
-                          const FoldingSetNodeID &ID,
+                          const FoldingSetNodeID &ID, unsigned IDHash,
                           FoldingSetNodeID &TempID) const {
     T *TN = static_cast<T *>(N);
-    return ContextualFoldingSetTrait<T, Ctx>::Equals(*TN, ID, TempID, Context);
+    return ContextualFoldingSetTrait<T, Ctx>::Equals(*TN, ID, IDHash, TempID,
+                                                     Context);
   }
   virtual unsigned ComputeNodeHash(FoldingSetImpl::Node *N,
                                    FoldingSetNodeID &TempID) const {

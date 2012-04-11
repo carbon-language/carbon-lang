@@ -265,15 +265,15 @@ void FoldingSetImpl::GrowHashTable() {
 FoldingSetImpl::Node
 *FoldingSetImpl::FindNodeOrInsertPos(const FoldingSetNodeID &ID,
                                      void *&InsertPos) {
-  
-  void **Bucket = GetBucketFor(ID.ComputeHash(), Buckets, NumBuckets);
+  unsigned IDHash = ID.ComputeHash();
+  void **Bucket = GetBucketFor(IDHash, Buckets, NumBuckets);
   void *Probe = *Bucket;
   
   InsertPos = 0;
   
   FoldingSetNodeID TempID;
   while (Node *NodeInBucket = GetNextPtr(Probe)) {
-    if (NodeEquals(NodeInBucket, ID, TempID))
+    if (NodeEquals(NodeInBucket, ID, IDHash, TempID))
       return NodeInBucket;
     TempID.clear();
 
