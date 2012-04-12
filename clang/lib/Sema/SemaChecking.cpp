@@ -250,41 +250,11 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
     return SemaBuiltinAtomicOverloaded(move(TheCallResult));
-  case Builtin::BI__atomic_load:
-  case Builtin::BI__c11_atomic_load:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Load);
-  case Builtin::BI__atomic_store:
-  case Builtin::BI__c11_atomic_store:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Store);
-  case Builtin::BI__atomic_init:
-  case Builtin::BI__c11_atomic_init:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Init);
-  case Builtin::BI__atomic_exchange:
-  case Builtin::BI__c11_atomic_exchange:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xchg);
-  case Builtin::BI__atomic_compare_exchange_strong:
-  case Builtin::BI__c11_atomic_compare_exchange_strong:
-    return SemaAtomicOpsOverloaded(move(TheCallResult),
-                                   AtomicExpr::CmpXchgStrong);
-  case Builtin::BI__atomic_compare_exchange_weak:
-  case Builtin::BI__c11_atomic_compare_exchange_weak:
-    return SemaAtomicOpsOverloaded(move(TheCallResult),
-                                   AtomicExpr::CmpXchgWeak);
-  case Builtin::BI__atomic_fetch_add:
-  case Builtin::BI__c11_atomic_fetch_add:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Add);
-  case Builtin::BI__atomic_fetch_sub:
-  case Builtin::BI__c11_atomic_fetch_sub:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Sub);
-  case Builtin::BI__atomic_fetch_and:
-  case Builtin::BI__c11_atomic_fetch_and:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::And);
-  case Builtin::BI__atomic_fetch_or:
-  case Builtin::BI__c11_atomic_fetch_or:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Or);
-  case Builtin::BI__atomic_fetch_xor:
-  case Builtin::BI__c11_atomic_fetch_xor:
-    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xor);
+#define BUILTIN(ID, TYPE, ATTRS)
+#define ATOMIC_BUILTIN(ID, TYPE, ATTRS) \
+  case Builtin::BI##ID: \
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::AO##ID);
+#include "clang/Basic/Builtins.def"
   case Builtin::BI__builtin_annotation:
     if (CheckBuiltinAnnotationString(*this, TheCall->getArg(1)))
       return ExprError();
@@ -515,74 +485,174 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
   return false;
 }
 
-ExprResult
-Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op) {
+ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
+                                         AtomicExpr::AtomicOp Op) {
   CallExpr *TheCall = cast<CallExpr>(TheCallResult.get());
   DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
 
-  // All these operations take one of the following four forms:
-  // T   __c11_atomic_load(_Atomic(T)*, int)                             (loads)
-  // T*  __c11_atomic_add(_Atomic(T*)*, ptrdiff_t, int)        (pointer add/sub)
-  // int __c11_atomic_compare_exchange_strong(_Atomic(T)*, T*, T, int, int)
-  //                                                                   (cmpxchg)
-  // T   __c11_atomic_exchange(_Atomic(T)*, T, int)            (everything else)
-  // where T is an appropriate type, and the int paremeterss are for orderings.
-  unsigned NumVals = 1;
-  unsigned NumOrders = 1;
-  if (Op == AtomicExpr::Load) {
-    NumVals = 0;
-  } else if (Op == AtomicExpr::CmpXchgWeak || Op == AtomicExpr::CmpXchgStrong) {
-    NumVals = 2;
-    NumOrders = 2;
-  }
-  if (Op == AtomicExpr::Init)
-    NumOrders = 0;
+  // All these operations take one of the following forms:
+  enum {
+    // C    __c11_atomic_init(A *, C)
+    Init,
+    // C    __c11_atomic_load(A *, int)
+    Load,
+    // void __atomic_load(A *, CP, int)
+    Copy,
+    // C    __c11_atomic_add(A *, M, int)
+    Arithmetic,
+    // C    __atomic_exchange_n(A *, CP, int)
+    Xchg,
+    // void __atomic_exchange(A *, C *, CP, int)
+    GNUXchg,
+    // bool __c11_atomic_compare_exchange_strong(A *, C *, CP, int, int)
+    C11CmpXchg,
+    // bool __atomic_compare_exchange(A *, C *, CP, bool, int, int)
+    GNUCmpXchg
+  } Form = Init;
+  const unsigned NumArgs[] = { 2, 2, 3, 3, 3, 4, 5, 6 };
+  const unsigned NumVals[] = { 1, 0, 1, 1, 1, 2, 2, 3 };
+  // where:
+  //   C is an appropriate type,
+  //   A is volatile _Atomic(C) for __c11 builtins and is C for GNU builtins,
+  //   CP is C for __c11 builtins and GNU _n builtins and is C * otherwise,
+  //   M is C if C is an integer, and ptrdiff_t if C is a pointer, and
+  //   the int parameters are for orderings.
 
-  if (TheCall->getNumArgs() < NumVals+NumOrders+1) {
+  assert(AtomicExpr::AO__c11_atomic_init == 0 &&
+         AtomicExpr::AO__c11_atomic_fetch_xor + 1 == AtomicExpr::AO__atomic_load
+         && "need to update code for modified C11 atomics");
+  bool IsC11 = Op >= AtomicExpr::AO__c11_atomic_init &&
+               Op <= AtomicExpr::AO__c11_atomic_fetch_xor;
+  bool IsN = Op == AtomicExpr::AO__atomic_load_n ||
+             Op == AtomicExpr::AO__atomic_store_n ||
+             Op == AtomicExpr::AO__atomic_exchange_n ||
+             Op == AtomicExpr::AO__atomic_compare_exchange_n;
+  bool IsAddSub = false;
+
+  switch (Op) {
+  case AtomicExpr::AO__c11_atomic_init:
+    Form = Init;
+    break;
+
+  case AtomicExpr::AO__c11_atomic_load:
+  case AtomicExpr::AO__atomic_load_n:
+    Form = Load;
+    break;
+
+  case AtomicExpr::AO__c11_atomic_store:
+  case AtomicExpr::AO__atomic_load:
+  case AtomicExpr::AO__atomic_store:
+  case AtomicExpr::AO__atomic_store_n:
+    Form = Copy;
+    break;
+
+  case AtomicExpr::AO__c11_atomic_fetch_add:
+  case AtomicExpr::AO__c11_atomic_fetch_sub:
+  case AtomicExpr::AO__atomic_fetch_add:
+  case AtomicExpr::AO__atomic_fetch_sub:
+  case AtomicExpr::AO__atomic_add_fetch:
+  case AtomicExpr::AO__atomic_sub_fetch:
+    IsAddSub = true;
+    // Fall through.
+  case AtomicExpr::AO__c11_atomic_fetch_and:
+  case AtomicExpr::AO__c11_atomic_fetch_or:
+  case AtomicExpr::AO__c11_atomic_fetch_xor:
+  case AtomicExpr::AO__atomic_fetch_and:
+  case AtomicExpr::AO__atomic_fetch_or:
+  case AtomicExpr::AO__atomic_fetch_xor:
+  case AtomicExpr::AO__atomic_and_fetch:
+  case AtomicExpr::AO__atomic_or_fetch:
+  case AtomicExpr::AO__atomic_xor_fetch:
+    Form = Arithmetic;
+    break;
+
+  case AtomicExpr::AO__c11_atomic_exchange:
+  case AtomicExpr::AO__atomic_exchange_n:
+    Form = Xchg;
+    break;
+
+  case AtomicExpr::AO__atomic_exchange:
+    Form = GNUXchg;
+    break;
+
+  case AtomicExpr::AO__c11_atomic_compare_exchange_strong:
+  case AtomicExpr::AO__c11_atomic_compare_exchange_weak:
+    Form = C11CmpXchg;
+    break;
+
+  case AtomicExpr::AO__atomic_compare_exchange:
+  case AtomicExpr::AO__atomic_compare_exchange_n:
+    Form = GNUCmpXchg;
+    break;
+  }
+
+  // Check we have the right number of arguments.
+  if (TheCall->getNumArgs() < NumArgs[Form]) {
     Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 << NumVals+NumOrders+1 << TheCall->getNumArgs()
+      << 0 << NumArgs[Form] << TheCall->getNumArgs()
       << TheCall->getCallee()->getSourceRange();
     return ExprError();
-  } else if (TheCall->getNumArgs() > NumVals+NumOrders+1) {
-    Diag(TheCall->getArg(NumVals+NumOrders+1)->getLocStart(),
+  } else if (TheCall->getNumArgs() > NumArgs[Form]) {
+    Diag(TheCall->getArg(NumArgs[Form])->getLocStart(),
          diag::err_typecheck_call_too_many_args)
-      << 0 << NumVals+NumOrders+1 << TheCall->getNumArgs()
+      << 0 << NumArgs[Form] << TheCall->getNumArgs()
       << TheCall->getCallee()->getSourceRange();
     return ExprError();
   }
 
-  // Inspect the first argument of the atomic operation.  This should always be
-  // a pointer to an _Atomic type.
+  // Inspect the first argument of the atomic operation.
   Expr *Ptr = TheCall->getArg(0);
   Ptr = DefaultFunctionArrayLvalueConversion(Ptr).get();
   const PointerType *pointerType = Ptr->getType()->getAs<PointerType>();
   if (!pointerType) {
-    Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic)
+    Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
       << Ptr->getType() << Ptr->getSourceRange();
     return ExprError();
   }
 
-  QualType AtomTy = pointerType->getPointeeType();
-  if (!AtomTy->isAtomicType()) {
-    Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic)
-      << Ptr->getType() << Ptr->getSourceRange();
-    return ExprError();
+  // For a __c11 builtin, this should be a pointer to an _Atomic type.
+  QualType AtomTy = pointerType->getPointeeType(); // 'A'
+  QualType ValType = AtomTy; // 'C'
+  if (IsC11) {
+    if (!AtomTy->isAtomicType()) {
+      Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic)
+        << Ptr->getType() << Ptr->getSourceRange();
+      return ExprError();
+    }
+    ValType = AtomTy->getAs<AtomicType>()->getValueType();
   }
-  QualType ValType = AtomTy->getAs<AtomicType>()->getValueType();
 
-  if ((Op == AtomicExpr::Add || Op == AtomicExpr::Sub) &&
-      !ValType->isIntegerType() && !ValType->isPointerType()) {
+  // For an arithmetic operation, the implied arithmetic must be well-formed.
+  if (Form == Arithmetic) {
+    // gcc does not enforce these rules for GNU atomics, but we do so for sanity.
+    if (IsAddSub && !ValType->isIntegerType() && !ValType->isPointerType()) {
+      Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic_int_or_ptr)
+        << IsC11 << Ptr->getType() << Ptr->getSourceRange();
+      return ExprError();
+    }
+    if (!IsAddSub && !ValType->isIntegerType()) {
+      Diag(DRE->getLocStart(), diag::err_atomic_op_bitwise_needs_atomic_int)
+        << IsC11 << Ptr->getType() << Ptr->getSourceRange();
+      return ExprError();
+    }
+  } else if (IsN && !ValType->isIntegerType() && !ValType->isPointerType()) {
+    // For __atomic_*_n operations, the value type must be a scalar integral or
+    // pointer type which is 1, 2, 4, 8 or 16 bytes in length.
     Diag(DRE->getLocStart(), diag::err_atomic_op_needs_atomic_int_or_ptr)
+      << IsC11 << Ptr->getType() << Ptr->getSourceRange();
+    return ExprError();
+  }
+
+  if (!IsC11 && !AtomTy.isTriviallyCopyableType(Context)) {
+    // For GNU atomics, require a trivially-copyable type. This is not part of
+    // the GNU atomics specification, but we enforce it for sanity.
+    Diag(DRE->getLocStart(), diag::err_atomic_op_needs_trivial_copy)
       << Ptr->getType() << Ptr->getSourceRange();
     return ExprError();
   }
 
-  if (!ValType->isIntegerType() &&
-      (Op == AtomicExpr::And || Op == AtomicExpr::Or || Op == AtomicExpr::Xor)){
-    Diag(DRE->getLocStart(), diag::err_atomic_op_logical_needs_atomic_int)
-      << Ptr->getType() << Ptr->getSourceRange();
-    return ExprError();
-  }
+  // FIXME: For any builtin other than a load, the ValType must not be
+  // const-qualified.
 
   switch (ValType.getObjCLifetime()) {
   case Qualifiers::OCL_None:
@@ -593,63 +663,107 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
   case Qualifiers::OCL_Weak:
   case Qualifiers::OCL_Strong:
   case Qualifiers::OCL_Autoreleasing:
+    // FIXME: Can this happen? By this point, ValType should be known
+    // to be trivially copyable.
     Diag(DRE->getLocStart(), diag::err_arc_atomic_ownership)
       << ValType << Ptr->getSourceRange();
     return ExprError();
   }
 
   QualType ResultType = ValType;
-  if (Op == AtomicExpr::Store || Op == AtomicExpr::Init)
+  if (Form == Copy || Form == GNUXchg || Form == Init)
     ResultType = Context.VoidTy;
-  else if (Op == AtomicExpr::CmpXchgWeak || Op == AtomicExpr::CmpXchgStrong)
+  else if (Form == C11CmpXchg || Form == GNUCmpXchg)
     ResultType = Context.BoolTy;
+
+  // The type of a parameter passed 'by value'. In the GNU atomics, such
+  // arguments are actually passed as pointers.
+  QualType ByValType = ValType; // 'CP'
+  if (!IsC11 && !IsN)
+    ByValType = Ptr->getType();
 
   // The first argument --- the pointer --- has a fixed type; we
   // deduce the types of the rest of the arguments accordingly.  Walk
   // the remaining arguments, converting them to the deduced value type.
-  for (unsigned i = 1; i != NumVals+NumOrders+1; ++i) {
-    ExprResult Arg = TheCall->getArg(i);
+  for (unsigned i = 1; i != NumArgs[Form]; ++i) {
     QualType Ty;
-    if (i < NumVals+1) {
-      // The second argument to a cmpxchg is a pointer to the data which will
-      // be exchanged. The second argument to a pointer add/subtract is the
-      // amount to add/subtract, which must be a ptrdiff_t.  The third
-      // argument to a cmpxchg and the second argument in all other cases
-      // is the type of the value.
-      if (i == 1 && (Op == AtomicExpr::CmpXchgWeak ||
-                     Op == AtomicExpr::CmpXchgStrong))
-         Ty = Context.getPointerType(ValType.getUnqualifiedType());
-      else if (!ValType->isIntegerType() &&
-               (Op == AtomicExpr::Add || Op == AtomicExpr::Sub))
-        Ty = Context.getPointerDiffType();
-      else
-        Ty = ValType;
+    if (i < NumVals[Form] + 1) {
+      switch (i) {
+      case 1:
+        // The second argument is the non-atomic operand. For arithmetic, this
+        // is always passed by value, and for a compare_exchange it is always
+        // passed by address. For the rest, GNU uses by-address and C11 uses
+        // by-value.
+        assert(Form != Load);
+        if (Form == Init || (Form == Arithmetic && ValType->isIntegerType()))
+          Ty = ValType;
+        else if (Form == Copy || Form == Xchg)
+          Ty = ByValType;
+        else if (Form == Arithmetic)
+          Ty = Context.getPointerDiffType();
+        else
+          Ty = Context.getPointerType(ValType.getUnqualifiedType());
+        break;
+      case 2:
+        // The third argument to compare_exchange / GNU exchange is a
+        // (pointer to a) desired value.
+        Ty = ByValType;
+        break;
+      case 3:
+        // The fourth argument to GNU compare_exchange is a 'weak' flag.
+        Ty = Context.BoolTy;
+        break;
+      }
     } else {
       // The order(s) are always converted to int.
       Ty = Context.IntTy;
     }
+
     InitializedEntity Entity =
         InitializedEntity::InitializeParameter(Context, Ty, false);
+    ExprResult Arg = TheCall->getArg(i);
     Arg = PerformCopyInitialization(Entity, SourceLocation(), Arg);
     if (Arg.isInvalid())
       return true;
     TheCall->setArg(i, Arg.get());
   }
 
+  // Permute the arguments into a 'consistent' order.
   SmallVector<Expr*, 5> SubExprs;
   SubExprs.push_back(Ptr);
-  if (Op == AtomicExpr::Load) {
-    SubExprs.push_back(TheCall->getArg(1)); // Order
-  } else if (Op == AtomicExpr::Init) {
+  switch (Form) {
+  case Init:
+    // Note, AtomicExpr::getVal1() has a special case for this atomic.
     SubExprs.push_back(TheCall->getArg(1)); // Val1
-  } else if (Op != AtomicExpr::CmpXchgWeak && Op != AtomicExpr::CmpXchgStrong) {
+    break;
+  case Load:
+    SubExprs.push_back(TheCall->getArg(1)); // Order
+    break;
+  case Copy:
+  case Arithmetic:
+  case Xchg:
     SubExprs.push_back(TheCall->getArg(2)); // Order
     SubExprs.push_back(TheCall->getArg(1)); // Val1
-  } else {
+    break;
+  case GNUXchg:
+    // Note, AtomicExpr::getVal2() has a special case for this atomic.
+    SubExprs.push_back(TheCall->getArg(3)); // Order
+    SubExprs.push_back(TheCall->getArg(1)); // Val1
+    SubExprs.push_back(TheCall->getArg(2)); // Val2
+    break;
+  case C11CmpXchg:
     SubExprs.push_back(TheCall->getArg(3)); // Order
     SubExprs.push_back(TheCall->getArg(1)); // Val1
     SubExprs.push_back(TheCall->getArg(4)); // OrderFail
     SubExprs.push_back(TheCall->getArg(2)); // Val2
+    break;
+  case GNUCmpXchg:
+    SubExprs.push_back(TheCall->getArg(4)); // Order
+    SubExprs.push_back(TheCall->getArg(1)); // Val1
+    SubExprs.push_back(TheCall->getArg(5)); // OrderFail
+    SubExprs.push_back(TheCall->getArg(2)); // Val2
+    SubExprs.push_back(TheCall->getArg(3)); // Weak
+    break;
   }
 
   return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),

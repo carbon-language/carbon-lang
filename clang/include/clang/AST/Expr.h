@@ -4470,14 +4470,21 @@ public:
 
 /// AtomicExpr - Variadic atomic builtins: __atomic_exchange, __atomic_fetch_*,
 /// __atomic_load, __atomic_store, and __atomic_compare_exchange_*, for the
-/// similarly-named C++11 instructions.  All of these instructions take one
-/// primary pointer and at least one memory order.
+/// similarly-named C++11 instructions, and __c11 variants for <stdatomic.h>.
+/// All of these instructions take one primary pointer and at least one memory
+/// order.
 class AtomicExpr : public Expr {
 public:
-  enum AtomicOp { Load, Store, CmpXchgStrong, CmpXchgWeak, Xchg,
-                  Add, Sub, And, Or, Xor, Init };
+  enum AtomicOp {
+#define BUILTIN(ID, TYPE, ATTRS)
+#define ATOMIC_BUILTIN(ID, TYPE, ATTRS) AO ## ID,
+#include "clang/Basic/Builtins.def"
+    // Avoid trailing comma
+    BI_First = 0
+  };
+
 private:
-  enum { PTR, ORDER, VAL1, ORDER_FAIL, VAL2, END_EXPR };
+  enum { PTR, ORDER, VAL1, ORDER_FAIL, VAL2, WEAK, END_EXPR };
   Stmt* SubExprs[END_EXPR];
   unsigned NumSubExprs;
   SourceLocation BuiltinLoc, RParenLoc;
@@ -4503,18 +4510,24 @@ public:
     return cast<Expr>(SubExprs[ORDER]);
   }
   Expr *getVal1() const {
-    if (Op == Init)
+    if (Op == AO__c11_atomic_init)
       return cast<Expr>(SubExprs[ORDER]);
-    assert(NumSubExprs >= 3);
+    assert(NumSubExprs > VAL1);
     return cast<Expr>(SubExprs[VAL1]);
   }
   Expr *getOrderFail() const {
-    assert(NumSubExprs == 5);
+    assert(NumSubExprs > ORDER_FAIL);
     return cast<Expr>(SubExprs[ORDER_FAIL]);
   }
   Expr *getVal2() const {
-    assert(NumSubExprs == 5);
+    if (Op == AO__atomic_exchange)
+      return cast<Expr>(SubExprs[ORDER_FAIL]);
+    assert(NumSubExprs > VAL2);
     return cast<Expr>(SubExprs[VAL2]);
+  }
+  Expr *getWeak() const {
+    assert(NumSubExprs > WEAK);
+    return cast<Expr>(SubExprs[WEAK]);
   }
 
   AtomicOp getOp() const { return Op; }
@@ -4527,8 +4540,10 @@ public:
   }
 
   bool isCmpXChg() const {
-    return getOp() == AtomicExpr::CmpXchgStrong ||
-           getOp() == AtomicExpr::CmpXchgWeak;
+    return getOp() == AO__c11_atomic_compare_exchange_strong ||
+           getOp() == AO__c11_atomic_compare_exchange_weak ||
+           getOp() == AO__atomic_compare_exchange ||
+           getOp() == AO__atomic_compare_exchange_n;
   }
 
   SourceLocation getBuiltinLoc() const { return BuiltinLoc; }

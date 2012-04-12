@@ -1108,52 +1108,34 @@ void StmtPrinter::VisitPseudoObjectExpr(PseudoObjectExpr *Node) {
 void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
   const char *Name = 0;
   switch (Node->getOp()) {
-    case AtomicExpr::Init:
-      Name = "__c11_atomic_init(";
-      break;
-    case AtomicExpr::Load:
-      Name = "__c11_atomic_load(";
-      break;
-    case AtomicExpr::Store:
-      Name = "__c11_atomic_store(";
-      break;
-    case AtomicExpr::CmpXchgStrong:
-      Name = "__c11_atomic_compare_exchange_strong(";
-      break;
-    case AtomicExpr::CmpXchgWeak:
-      Name = "__c11_atomic_compare_exchange_weak(";
-      break;
-    case AtomicExpr::Xchg:
-      Name = "__c11_atomic_exchange(";
-      break;
-    case AtomicExpr::Add:
-      Name = "__c11_atomic_fetch_add(";
-      break;
-    case AtomicExpr::Sub:
-      Name = "__c11_atomic_fetch_sub(";
-      break;
-    case AtomicExpr::And:
-      Name = "__c11_atomic_fetch_and(";
-      break;
-    case AtomicExpr::Or:
-      Name = "__c11_atomic_fetch_or(";
-      break;
-    case AtomicExpr::Xor:
-      Name = "__c11_atomic_fetch_xor(";
-      break;
+#define BUILTIN(ID, TYPE, ATTRS)
+#define ATOMIC_BUILTIN(ID, TYPE, ATTRS) \
+  case AtomicExpr::AO ## ID: \
+    Name = #ID "("; \
+    break;
+#include "clang/Basic/Builtins.def"
   }
   OS << Name;
+
+  // AtomicExpr stores its subexpressions in a permuted order.
   PrintExpr(Node->getPtr());
   OS << ", ";
-  if (Node->getOp() != AtomicExpr::Load) {
+  if (Node->getOp() != AtomicExpr::AO__c11_atomic_load &&
+      Node->getOp() != AtomicExpr::AO__atomic_load_n) {
     PrintExpr(Node->getVal1());
     OS << ", ";
   }
-  if (Node->isCmpXChg()) {
+  if (Node->getOp() == AtomicExpr::AO__atomic_exchange ||
+      Node->isCmpXChg()) {
     PrintExpr(Node->getVal2());
     OS << ", ";
   }
-  if (Node->getOp() != AtomicExpr::Init)
+  if (Node->getOp() == AtomicExpr::AO__atomic_compare_exchange ||
+      Node->getOp() == AtomicExpr::AO__atomic_compare_exchange_n) {
+    PrintExpr(Node->getWeak());
+    OS << ", ";
+  }
+  if (Node->getOp() != AtomicExpr::AO__c11_atomic_init)
     PrintExpr(Node->getOrder());
   if (Node->isCmpXChg()) {
     OS << ", ";

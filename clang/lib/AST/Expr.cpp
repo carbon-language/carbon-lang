@@ -3858,20 +3858,44 @@ AtomicExpr::AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr,
 
 unsigned AtomicExpr::getNumSubExprs(AtomicOp Op) {
   switch (Op) {
-  case Init:
-  case Load:
+  case AO__c11_atomic_init:
+  case AO__c11_atomic_load:
+  case AO__atomic_load_n:
     return 2;
-  case Store:
-  case Xchg:
-  case Add:
-  case Sub:
-  case And:
-  case Or:
-  case Xor:
+
+  case AO__c11_atomic_store:
+  case AO__c11_atomic_exchange:
+  case AO__atomic_load:
+  case AO__atomic_store:
+  case AO__atomic_store_n:
+  case AO__atomic_exchange_n:
+  case AO__c11_atomic_fetch_add:
+  case AO__c11_atomic_fetch_sub:
+  case AO__c11_atomic_fetch_and:
+  case AO__c11_atomic_fetch_or:
+  case AO__c11_atomic_fetch_xor:
+  case AO__atomic_fetch_add:
+  case AO__atomic_fetch_sub:
+  case AO__atomic_fetch_and:
+  case AO__atomic_fetch_or:
+  case AO__atomic_fetch_xor:
+  case AO__atomic_add_fetch:
+  case AO__atomic_sub_fetch:
+  case AO__atomic_and_fetch:
+  case AO__atomic_or_fetch:
+  case AO__atomic_xor_fetch:
     return 3;
-  case CmpXchgStrong:
-  case CmpXchgWeak:
+
+  case AO__atomic_exchange:
+    return 4;
+
+  case AO__c11_atomic_compare_exchange_strong:
+  case AO__c11_atomic_compare_exchange_weak:
     return 5;
+
+  case AO__atomic_compare_exchange:
+  case AO__atomic_compare_exchange_n:
+    return 6;
   }
   llvm_unreachable("unknown atomic op");
 }
