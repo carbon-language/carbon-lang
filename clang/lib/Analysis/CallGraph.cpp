@@ -14,15 +14,58 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 
 #include "llvm/Support/GraphWriter.h"
 
 using namespace clang;
 
-/// Determine if a declaration should be included in the graph.
-static bool includeInGraph(const Decl *D) {
+namespace {
+/// A helper class, which walks the AST and locates all the call sites in the
+/// given function body.
+class CGBuilder : public StmtVisitor<CGBuilder> {
+  CallGraph *G;
+  const Decl *FD;
+  CallGraphNode *CallerNode;
+
+public:
+  CGBuilder(CallGraph *g, const Decl *D, CallGraphNode *N)
+    : G(g), FD(D), CallerNode(N) {}
+
+  void VisitStmt(Stmt *S) { VisitChildren(S); }
+
+  void VisitCallExpr(CallExpr *CE) {
+    // TODO: We need to handle ObjC method calls as well.
+    if (FunctionDecl *CalleeDecl = CE->getDirectCallee())
+      if (G->includeInGraph(CalleeDecl)) {
+        CallGraphNode *CalleeNode = G->getOrInsertNode(CalleeDecl);
+        CallerNode->addCallee(CalleeNode, G);
+      }
+  }
+
+  void VisitChildren(Stmt *S) {
+    for (Stmt::child_range I = S->children(); I; ++I)
+      if (*I)
+        static_cast<CGBuilder*>(this)->Visit(*I);
+  }
+};
+
+} // end anonymous namespace
+
+CallGraph::CallGraph() {
+  Root = getOrInsertNode(0);
+}
+
+CallGraph::~CallGraph() {
+  if (!FunctionMap.empty()) {
+    for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
+        I != E; ++I)
+      delete I->second;
+    FunctionMap.clear();
+  }
+}
+
+bool CallGraph::includeInGraph(const Decl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // We skip function template definitions, as their semantics is
     // only determined when they are instantiated.
@@ -43,83 +86,15 @@ static bool includeInGraph(const Decl *D) {
   return true;
 }
 
-namespace {
-/// A helper class, which walks the AST and locates all the call sites in the
-/// given function body.
-class CGBuilder : public StmtVisitor<CGBuilder> {
-  CallGraph *G;
-  const Decl *FD;
-  CallGraphNode *CallerNode;
-
-public:
-  CGBuilder(CallGraph *g, const Decl *D, CallGraphNode *N)
-    : G(g), FD(D), CallerNode(N) {}
-
-  void VisitStmt(Stmt *S) { VisitChildren(S); }
-
-  void VisitCallExpr(CallExpr *CE) {
-    // TODO: We need to handle ObjC method calls as well.
-    if (FunctionDecl *CalleeDecl = CE->getDirectCallee())
-      if (includeInGraph(CalleeDecl)) {
-        CallGraphNode *CalleeNode = G->getOrInsertFunction(CalleeDecl);
-        CallerNode->addCallee(CalleeNode, G);
-      }
-  }
-
-  void VisitChildren(Stmt *S) {
-    for (Stmt::child_range I = S->children(); I; ++I)
-      if (*I)
-        static_cast<CGBuilder*>(this)->Visit(*I);
-  }
-};
-
-/// A helper class which walks the AST declarations.
-// TODO: We might want to specialize the visitor to shrink the call graph.
-// For example, we might not want to include the inline methods from header
-// files.
-class CGDeclVisitor : public RecursiveASTVisitor<CGDeclVisitor> {
-  CallGraph *CG;
-
-public:
-  CGDeclVisitor(CallGraph * InCG) : CG(InCG) {}
-
-  bool VisitFunctionDecl(FunctionDecl *FD) {
-    // We skip function template definitions, as their semantics is
-    // only determined when they are instantiated.
-    if (includeInGraph(FD))
-      // If this function has external linkage, anything could call it.
-      // Note, we are not precise here. For example, the function could have
-      // its address taken.
-      CG->addToCallGraph(FD, FD->isGlobal());
-    return true;
-  }
-
-  bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
-    if (includeInGraph(MD))
-      CG->addToCallGraph(MD, true);
-    return true;
-  }
-};
-
-} // end anonymous namespace
-
-CallGraph::CallGraph() {
-  Root = getOrInsertFunction(0);
-}
-
-CallGraph::~CallGraph() {
-  if (!FunctionMap.empty()) {
-    for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-        I != E; ++I)
-      delete I->second;
-    FunctionMap.clear();
-  }
-}
-
-void CallGraph::addToCallGraph(Decl* D, bool IsGlobal) {
+void CallGraph::addNodeForDecl(Decl* D, bool IsGlobal) {
   assert(D);
-  CallGraphNode *Node = getOrInsertFunction(D);
 
+  // Do nothing if the node already exists.
+  if (FunctionMap.find(D) != FunctionMap.end())
+    return;
+
+  // Allocate a new node, mark it as root, and process it's calls.
+  CallGraphNode *Node = getOrInsertNode(D);
   if (IsGlobal)
     Root->addCallee(Node, this);
 
@@ -129,17 +104,13 @@ void CallGraph::addToCallGraph(Decl* D, bool IsGlobal) {
     builder.Visit(Body);
 }
 
-void CallGraph::addToCallGraph(TranslationUnitDecl *TU) {
-  CGDeclVisitor(this).TraverseDecl(TU);
-}
-
 CallGraphNode *CallGraph::getNode(const Decl *F) const {
   FunctionMapTy::const_iterator I = FunctionMap.find(F);
   if (I == FunctionMap.end()) return 0;
   return I->second;
 }
 
-CallGraphNode *CallGraph::getOrInsertFunction(Decl *F) {
+CallGraphNode *CallGraph::getOrInsertNode(Decl *F) {
   CallGraphNode *&Node = FunctionMap[F];
   if (Node)
     return Node;

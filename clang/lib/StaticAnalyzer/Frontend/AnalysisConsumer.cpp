@@ -41,6 +41,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 
 #include <queue>
@@ -94,6 +95,13 @@ public:
   const std::string OutDir;
   AnalyzerOptions Opts;
   ArrayRef<std::string> Plugins;
+
+  /// \brief Stores the declarations from the local translation unit.
+  /// Note, we pre-compute the local declarations at parse time as an
+  /// optimization to make sure we do not deserialize everything from disk.
+  /// The local declaration to all declarations ratio might be very small when
+  /// working with a PCH file.
+  SetOfDecls LocalTUDecls;
 
   // PD is owned by AnalysisManager.
   PathDiagnosticConsumer *PD;
@@ -214,11 +222,16 @@ public:
                                   Opts.NoRetryExhausted));
   }
 
+  /// \brief Store the top level decls in the set to be processed later on.
+  /// (Doing this pre-processing avoids deserialization of data from PCH.)
+  virtual bool HandleTopLevelDecl(DeclGroupRef D);
+  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D);
+
   virtual void HandleTranslationUnit(ASTContext &C);
 
-  /// \brief Build the call graph for the TU and use it to define the order
-  /// in which the functions should be visited.
-  void HandleDeclsGallGraph(TranslationUnitDecl *TU);
+  /// \brief Build the call graph for all the top level decls of this TU and
+  /// use it to define the order in which the functions should be visited.
+  void HandleDeclsGallGraph();
 
   /// \brief Run analyzes(syntax or path sensitive) on the given function.
   /// \param Mode - determines if we are requesting syntax only or path
@@ -226,13 +239,12 @@ public:
   /// \param VisitedCallees - The output parameter, which is populated with the
   /// set of functions which should be considered analyzed after analyzing the
   /// given root function.
-  void HandleCode(Decl *D, AnalysisMode Mode, SetOfDecls *VisitedCallees = 0);
+  void HandleCode(Decl *D, AnalysisMode Mode,
+                  SetOfConstDecls *VisitedCallees = 0);
 
-  /// \brief Check if we should skip (not analyze) the given function.
-  bool skipFunction(Decl *D);
-
-  void RunPathSensitiveChecks(Decl *D, SetOfDecls *VisitedCallees);
-  void ActionExprEngine(Decl *D, bool ObjCGCEnabled, SetOfDecls *VisitedCallees);
+  void RunPathSensitiveChecks(Decl *D, SetOfConstDecls *VisitedCallees);
+  void ActionExprEngine(Decl *D, bool ObjCGCEnabled,
+                        SetOfConstDecls *VisitedCallees);
 
   /// Visitors for the RecursiveASTVisitor.
 
@@ -262,6 +274,13 @@ public:
       HandleCode(MD, RecVisitorMode);
     return true;
   }
+
+private:
+  void storeTopLevelDecls(DeclGroupRef DG);
+
+  /// \brief Check if we should skip (not analyze) the given function.
+  bool skipFunction(Decl *D);
+
 };
 } // end anonymous namespace
 
@@ -271,11 +290,35 @@ public:
 //===----------------------------------------------------------------------===//
 llvm::Timer* AnalysisConsumer::TUTotalTimer = 0;
 
-void AnalysisConsumer::HandleDeclsGallGraph(TranslationUnitDecl *TU) {
+bool AnalysisConsumer::HandleTopLevelDecl(DeclGroupRef DG) {
+  storeTopLevelDecls(DG);
+  return true;
+}
+
+void AnalysisConsumer::HandleTopLevelDeclInObjCContainer(DeclGroupRef DG) {
+  storeTopLevelDecls(DG);
+}
+
+void AnalysisConsumer::storeTopLevelDecls(DeclGroupRef DG) {
+  for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I) {
+
+    // Skip ObjCMethodDecl, wait for the objc container to avoid
+    // analyzing twice.
+    if (isa<ObjCMethodDecl>(*I))
+      continue;
+
+    LocalTUDecls.insert(*I);
+  }
+}
+
+void AnalysisConsumer::HandleDeclsGallGraph() {
   // Otherwise, use the Callgraph to derive the order.
   // Build the Call Graph.
   CallGraph CG;
-  CG.addToCallGraph(TU);
+  // Add all the top level declarations to the graph.
+  for (SetOfDecls::iterator I = LocalTUDecls.begin(),
+                            E = LocalTUDecls.end(); I != E; ++I)
+    CG.addToCallGraph(*I);
 
   // Find the top level nodes - children of root + the unreachable (parentless)
   // nodes.
@@ -316,15 +359,15 @@ void AnalysisConsumer::HandleDeclsGallGraph(TranslationUnitDecl *TU) {
       continue;
 
     // Analyze the function.
-    SetOfDecls VisitedCallees;
+    SetOfConstDecls VisitedCallees;
     Decl *D = N->getDecl();
     assert(D);
     HandleCode(D, ANALYSIS_PATH,
                (Mgr->InliningMode == All ? 0 : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
-    for (SetOfDecls::const_iterator I = VisitedCallees.begin(),
-                                    E = VisitedCallees.end(); I != E; ++I) {
+    for (SetOfConstDecls::const_iterator I = VisitedCallees.begin(),
+                                         E = VisitedCallees.end(); I != E; ++I){
       CallGraphNode *VN = CG.getNode(*I);
       if (VN)
         Visited.insert(VN);
@@ -358,10 +401,14 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     // sensitive analyzes as well.
     RecVisitorMode = (Mgr->shouldInlineCall() ? ANALYSIS_SYNTAX : ANALYSIS_ALL);
     RecVisitorBR = &BR;
-    TraverseDecl(TU);
+
+    // Process all the top level declarations.
+    for (SetOfDecls::iterator I = LocalTUDecls.begin(),
+                              E = LocalTUDecls.end(); I != E; ++I)
+      TraverseDecl(*I);
 
     if (Mgr->shouldInlineCall())
-      HandleDeclsGallGraph(TU);
+      HandleDeclsGallGraph();
 
     // After all decls handled, run checkers on the entire TranslationUnit.
     checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);
@@ -424,7 +471,7 @@ bool AnalysisConsumer::skipFunction(Decl *D) {
 }
 
 void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
-                                  SetOfDecls *VisitedCallees) {
+                                  SetOfConstDecls *VisitedCallees) {
   if (skipFunction(D))
     return;
 
@@ -458,7 +505,7 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
 //===----------------------------------------------------------------------===//
 
 void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
-                                        SetOfDecls *VisitedCallees) {
+                                        SetOfConstDecls *VisitedCallees) {
   // Construct the analysis engine.  First check if the CFG is valid.
   // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
   if (!Mgr->getCFG(D))
@@ -489,7 +536,8 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   Eng.getBugReporter().FlushReports();
 }
 
-void AnalysisConsumer::RunPathSensitiveChecks(Decl *D, SetOfDecls *Visited) {
+void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
+                                              SetOfConstDecls *Visited) {
 
   switch (Mgr->getLangOpts().getGC()) {
   case LangOptions::NonGC:

@@ -67,7 +67,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext &Ctx) {
 //===----------------------------------------------------------------------===//
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
-                       SetOfDecls *VisitedCallees,
+                       SetOfConstDecls *VisitedCallees,
                        FunctionSummariesTy *FS)
   : AMgr(mgr),
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),

@@ -18,6 +18,7 @@
 #define LLVM_CLANG_ANALYSIS_CALLGRAPH
 
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SetVector.h"
@@ -25,8 +26,14 @@
 namespace clang {
 class CallGraphNode;
 
-class CallGraph {
+/// \class The AST-based call graph.
+///
+/// The call graph extends itself with the given declarations by implementing
+/// the recursive AST visitor, which constructs the graph by visiting the given
+/// declarations.
+class CallGraph : public RecursiveASTVisitor<CallGraph> {
   friend class CallGraphNode;
+
   typedef llvm::DenseMap<const Decl *, CallGraphNode *> FunctionMapTy;
 
   /// FunctionMap owns all CallGraphNodes.
@@ -45,19 +52,23 @@ public:
   CallGraph();
   ~CallGraph();
 
-  /// \brief Add the given declaration to the call graph.
-  void addToCallGraph(Decl *D, bool IsGlobal);
+  /// \brief Populate the call graph with the functions in the given
+  /// declaration.
+  ///
+  /// Recursively walks the declaration to find all the dependent Decls as well.
+  void addToCallGraph(Decl *D) {
+    TraverseDecl(D);
+  }
 
-  /// \brief Populate the call graph with the functions in the given translation
-  /// unit.
-  void addToCallGraph(TranslationUnitDecl *TU);
+  /// \brief Determine if a declaration should be included in the graph.
+  static bool includeInGraph(const Decl *D);
 
   /// \brief Lookup the node for the given declaration.
   CallGraphNode *getNode(const Decl *) const;
 
   /// \brief Lookup the node for the given declaration. If none found, insert
   /// one into the graph.
-  CallGraphNode *getOrInsertFunction(Decl *);
+  CallGraphNode *getOrInsertNode(Decl *);
 
   /// Iterators through all the elements in the graph. Note, this gives
   /// non-deterministic order.
@@ -90,6 +101,32 @@ public:
   void print(raw_ostream &os) const;
   void dump() const;
   void viewGraph() const;
+
+  /// Part of recursive declaration visitation.
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    // We skip function template definitions, as their semantics is
+    // only determined when they are instantiated.
+    if (includeInGraph(FD))
+      // If this function has external linkage, anything could call it.
+      // Note, we are not precise here. For example, the function could have
+      // its address taken.
+      addNodeForDecl(FD, FD->isGlobal());
+    return true;
+  }
+
+  /// Part of recursive declaration visitation.
+  bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
+    if (includeInGraph(MD))
+      addNodeForDecl(MD, true);
+    return true;
+  }
+
+private:
+  /// \brief Add the given declaration to the call graph.
+  void addNodeForDecl(Decl *D, bool IsGlobal);
+
+  /// \brief Allocate a new node in the graph.
+  CallGraphNode *allocateNewNode(Decl *);
 };
 
 class CallGraphNode {

@@ -82,7 +82,7 @@ private:
 
   /// The functions which have been analyzed through inlining. This is owned by
   /// AnalysisConsumer. It can be null.
-  SetOfDecls *AnalyzedCallees;
+  SetOfConstDecls *AnalyzedCallees;
 
   /// The information about functions shared by the whole translation unit.
   /// (This data is owned by AnalysisConsumer.)
@@ -109,7 +109,7 @@ private:
 public:
   /// Construct a CoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  CoreEngine(SubEngine& subengine, SetOfDecls *VisitedCallees,
+  CoreEngine(SubEngine& subengine, SetOfConstDecls *VisitedCallees,
              FunctionSummariesTy *FS)
     : SubEng(subengine), G(new ExplodedGraph()),
       WList(WorkList::makeBFS()),

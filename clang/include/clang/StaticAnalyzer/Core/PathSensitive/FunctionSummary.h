@@ -21,7 +21,8 @@
 
 namespace clang {
 namespace ento {
-typedef llvm::SmallPtrSet<const Decl*,24> SetOfDecls;
+typedef llvm::SmallPtrSet<Decl*, 24> SetOfDecls;
+typedef llvm::SmallPtrSet<const Decl*, 24> SetOfConstDecls;
 
 class FunctionSummariesTy {
   struct FunctionSummary {
