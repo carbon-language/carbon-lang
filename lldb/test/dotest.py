@@ -101,7 +101,7 @@ config = {}
 # with the command line overriding the configFile.  When specified, they should be
 # of the list type.  For example, "-A x86_64^i386" => archs=['x86_64', 'i386'] and
 # "-C gcc^clang" => compilers=['gcc', 'clang'].
-archs = ['x86_64']
+archs = ['x86_64', 'i386']
 compilers = ['clang']
 
 # The arch might dictate some specific CFLAGS to be passed to the toolchain to build
