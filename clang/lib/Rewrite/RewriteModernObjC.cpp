@@ -5726,7 +5726,12 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#ifndef KEEP_ATTRIBUTES\n";  // We use this for clang tests.
     Preamble += "#define __attribute__(X)\n";
     Preamble += "#endif\n";
+    Preamble += "#ifndef __weak\n";
     Preamble += "#define __weak\n";
+    Preamble += "#endif\n";
+    Preamble += "#ifndef __block\n";
+    Preamble += "#define __block\n";
+    Preamble += "#endif\n";
   }
   else {
     Preamble += "#define __block\n";
