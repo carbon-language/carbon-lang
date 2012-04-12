@@ -1420,7 +1420,7 @@ Optional Features:
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, arm, mips, spu, hexagon,
-                          xcore, msp430, ptx, cbe, and cpp (default=all)
+                          xcore, msp430, ptx, and cpp (default=all)
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
   --enable-libffi         Check for the presence of libffi (default is NO)
