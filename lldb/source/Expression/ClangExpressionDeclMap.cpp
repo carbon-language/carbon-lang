@@ -634,7 +634,8 @@ ClangExpressionDeclMap::GetStructElement
     
     if (!member_sp ||
         !member_sp->m_parser_vars.get() ||
-        !member_sp->m_jit_vars.get())
+        !member_sp->m_jit_vars.get() ||
+        !member_sp->GetValueObject())
         return false;
     
     decl = member_sp->m_parser_vars->m_named_decl;
