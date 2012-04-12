@@ -3255,6 +3255,17 @@ protected:
     //------------------------------------------------------------------
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection;
 
+    struct PreResumeCallbackAndBaton
+    {
+        bool (*callback) (void *);
+        void *baton;
+        PreResumeCallbackAndBaton (PreResumeActionCallback in_callback, void *in_baton) :
+            callback (in_callback),
+            baton (in_baton)
+        {
+        }
+    };
+    
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
@@ -3290,18 +3301,6 @@ protected:
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
     LanguageRuntimeCollection 	m_language_runtimes;
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
-    
-    struct PreResumeCallbackAndBaton
-    {
-        bool (*callback) (void *);
-        void *baton;
-        PreResumeCallbackAndBaton (PreResumeActionCallback in_callback, void *in_baton) :
-            callback (in_callback),
-            baton (in_baton)
-        {
-        }
-    };
-    
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_run_lock;
 
