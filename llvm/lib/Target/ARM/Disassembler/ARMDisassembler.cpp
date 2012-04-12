@@ -181,6 +181,8 @@ static DecodeStatus DecodeAddrMode5Operand(MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeAddrMode7Operand(MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2BInstruction(MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeBranchImmInstruction(MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeAddrMode6Operand(MCInst &Inst, unsigned Val,
@@ -2030,6 +2032,21 @@ static DecodeStatus DecodeAddrMode7Operand(MCInst &Inst, unsigned Val,
 }
 
 static DecodeStatus
+DecodeT2BInstruction(MCInst &Inst, unsigned Insn,
+                     uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+  unsigned imm = (fieldFromInstruction32(Insn, 0, 11) << 0) |
+                 (fieldFromInstruction32(Insn, 11, 1) << 18) |
+                 (fieldFromInstruction32(Insn, 13, 1) << 17) |
+                 (fieldFromInstruction32(Insn, 16, 6) << 11) |
+                 (fieldFromInstruction32(Insn, 26, 1) << 19);
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<20>(imm<<1) + 4,
+                                true, 4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<20>(imm << 1)));
+  return S;
+}
+
+static DecodeStatus
 DecodeBranchImmInstruction(MCInst &Inst, unsigned Insn,
                            uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
@@ -2955,19 +2972,25 @@ static DecodeStatus DecodeThumbAddSpecialReg(MCInst &Inst, uint16_t Insn,
 
 static DecodeStatus DecodeThumbBROperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<12>(Val << 1)));
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<12>(Val<<1) + 4,
+                                true, 2, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<12>(Val << 1)));
   return MCDisassembler::Success;
 }
 
 static DecodeStatus DecodeT2BROperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<21>(Val)));
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val<<1) + 4,
+                                true, 4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<21>(Val)));
   return MCDisassembler::Success;
 }
 
 static DecodeStatus DecodeThumbCmpBROperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<7>(Val << 1)));
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<7>(Val<<1) + 4,
+                                true, 2, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<7>(Val << 1)));
   return MCDisassembler::Success;
 }
 
@@ -3389,7 +3412,9 @@ static DecodeStatus DecodeT2SOImm(MCInst &Inst, unsigned Val,
 static DecodeStatus
 DecodeThumbBCCTargetOperand(MCInst &Inst, unsigned Val,
                             uint64_t Address, const void *Decoder){
-  Inst.addOperand(MCOperand::CreateImm(Val << 1));
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<8>(Val<<1) + 4,
+                                true, 2, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<8>(Val << 1)));
   return MCDisassembler::Success;
 }
 

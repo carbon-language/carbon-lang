@@ -3197,6 +3197,7 @@ def t2B   : T2I<(outs), (ins uncondbrtarget:$target), IIC_Br,
   let Inst{13} = target{17};
   let Inst{21-16} = target{16-11};
   let Inst{10-0} = target{10-0};
+  let DecoderMethod = "DecodeT2BInstruction";
 }
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in {
