@@ -1,6 +1,5 @@
 ; RUN: %lli %s > /dev/null
 ; XFAIL: arm
-; XFAIL: mcjit
 
 declare void @exit(i32)
 

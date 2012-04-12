@@ -1,6 +1,5 @@
 ; RUN: %lli  %s > /dev/null
 ; XFAIL: arm
-; XFAIL: mcjit
 
 @count = global i32 1, align 4
 

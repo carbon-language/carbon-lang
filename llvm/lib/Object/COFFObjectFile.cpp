@@ -356,6 +356,27 @@ error_code COFFObjectFile::isSectionBSS(DataRefImpl Sec,
   return object_error::success;
 }
 
+error_code COFFObjectFile::isSectionRequiredForExecution(DataRefImpl Sec,
+                                                         bool &Result) const {
+  // FIXME: Unimplemented
+  Result = true;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::isSectionVirtual(DataRefImpl Sec,
+                                           bool &Result) const {
+  const coff_section *sec = toSec(Sec);
+  Result = sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::isSectionZeroInit(DataRefImpl Sec,
+                                             bool &Result) const {
+  // FIXME: Unimplemented
+  Result = false;
+  return object_error::success;
+}
+
 error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                  DataRefImpl Symb,
                                                  bool &Result) const {

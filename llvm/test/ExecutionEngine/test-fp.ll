@@ -1,5 +1,4 @@
 ; RUN: %lli %s > /dev/null
-; XFAIL: mcjit
 
 define double @test(double* %DP, double %Arg) {
 	%D = load double* %DP		; <double> [#uses=1]

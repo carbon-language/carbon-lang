@@ -2,7 +2,6 @@
 ;
 ; RUN: not %lli %s
 ; XFAIL: arm
-; XFAIL: mcjit
 
 @test = global i64 0		; <i64*> [#uses=1]
 

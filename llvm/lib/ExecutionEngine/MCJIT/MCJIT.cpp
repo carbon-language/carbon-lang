@@ -74,9 +74,9 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
   OS.flush();
 
   // Load the object into the dynamic linker.
-  // FIXME: It would be nice to avoid making yet another copy.
-  MemoryBuffer *MB = MemoryBuffer::getMemBufferCopy(StringRef(Buffer.data(),
-                                                              Buffer.size()));
+  MemoryBuffer *MB = MemoryBuffer::getMemBuffer(StringRef(Buffer.data(),
+                                                          Buffer.size()),
+                                                "", false);
   if (Dyld.loadObject(MB))
     report_fatal_error(Dyld.getErrorString());
   // Resolve any relocations.

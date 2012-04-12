@@ -1,7 +1,6 @@
 ; PR672
 ; RUN: %lli %s
 ; XFAIL: arm
-; XFAIL: mcjit-ia32
 
 define i32 @main() {
 	%f = bitcast i32 (i32, i32*, i32)* @check_tail to i32*		; <i32*> [#uses=1]

@@ -72,6 +72,10 @@ protected:
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionRequiredForExecution(DataRefImpl Sec,
+                                                   bool &Res) const;
+  virtual error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl DRI, DataRefImpl S,
                                            bool &Result) const;
   virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;

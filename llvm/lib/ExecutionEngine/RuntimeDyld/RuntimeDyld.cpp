@@ -36,10 +36,9 @@ namespace {
   }
 } // end anonymous namespace
 
-
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
-  // First, resolve relocations assotiated with external symbols.
+  // First, resolve relocations associated with external symbols.
   resolveSymbols();
 
   // Just iterate over the sections we have and resolve all the relocations
@@ -63,14 +62,18 @@ void RuntimeDyldImpl::mapSectionAddress(void *LocalAddress,
 bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
   // FIXME: ObjectFile don't modify MemoryBuffer.
   //        It should use const MemoryBuffer as parameter.
-  ObjectFile *obj
-    = ObjectFile::createObjectFile(const_cast<MemoryBuffer*>(InputBuffer));
+  OwningPtr<ObjectFile> obj(ObjectFile::createObjectFile(
+                                       const_cast<MemoryBuffer*>(InputBuffer)));
+  if (!obj)
+    report_fatal_error("Unable to create object image from memory buffer!");
 
   Arch = (Triple::ArchType)obj->getArch();
 
   LocalSymbolMap LocalSymbols;     // Functions and data symbols from the
                                    // object file.
   ObjSectionToIDMap LocalSections; // Used sections from the object file
+  CommonSymbolMap   CommonSymbols; // Common symbols requiring allocation
+  uint64_t          CommonSize = 0;
 
   error_code err;
   // Parse symbols
@@ -83,35 +86,49 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
     Check(i->getType(SymType));
     Check(i->getName(Name));
 
-    if (SymType == object::SymbolRef::ST_Function ||
-        SymType == object::SymbolRef::ST_Data) {
-      uint64_t FileOffset;
-      uint32_t flags;
-      StringRef sData;
-      section_iterator si = obj->end_sections();
-      Check(i->getFileOffset(FileOffset));
-      Check(i->getFlags(flags));
-      Check(i->getSection(si));
-      if (si == obj->end_sections()) continue;
-      Check(si->getContents(sData));
-      const uint8_t* SymPtr = (const uint8_t*)InputBuffer->getBufferStart() +
-                              (uintptr_t)FileOffset;
-      uintptr_t SectOffset = (uintptr_t)(SymPtr - (const uint8_t*)sData.begin());
-      unsigned SectionID
-        = findOrEmitSection(*si,
-                          SymType == object::SymbolRef::ST_Function,
-                          LocalSections);
-      bool isGlobal = flags & SymbolRef::SF_Global;
-      LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
-      DEBUG(dbgs() << "\tFileOffset: " << format("%p", (uintptr_t)FileOffset)
-                   << " flags: " << flags
-                   << " SID: " << SectionID
-                   << " Offset: " << format("%p", SectOffset));
-      if (isGlobal)
-        SymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
+    uint32_t flags;
+    Check(i->getFlags(flags));
+
+    bool isCommon = flags & SymbolRef::SF_Common;
+    if (isCommon) {
+      // Add the common symbols to a list.  We'll allocate them all below.
+      uint64_t Size = 0;
+      Check(i->getSize(Size));
+      CommonSize += Size;
+      CommonSymbols[*i] = Size;
+    } else {
+      if (SymType == object::SymbolRef::ST_Function ||
+          SymType == object::SymbolRef::ST_Data) {
+        uint64_t FileOffset;
+        StringRef sData;
+        section_iterator si = obj->end_sections();
+        Check(i->getFileOffset(FileOffset));
+        Check(i->getSection(si));
+        if (si == obj->end_sections()) continue;
+        Check(si->getContents(sData));
+        const uint8_t* SymPtr = (const uint8_t*)InputBuffer->getBufferStart() +
+                                (uintptr_t)FileOffset;
+        uintptr_t SectOffset = (uintptr_t)(SymPtr - (const uint8_t*)sData.begin());
+        unsigned SectionID =
+          findOrEmitSection(*si,
+                            SymType == object::SymbolRef::ST_Function,
+                            LocalSections);
+        bool isGlobal = flags & SymbolRef::SF_Global;
+        LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
+        DEBUG(dbgs() << "\tFileOffset: " << format("%p", (uintptr_t)FileOffset)
+                     << " flags: " << flags
+                     << " SID: " << SectionID
+                     << " Offset: " << format("%p", SectOffset));
+        if (isGlobal)
+          SymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
+      }
     }
     DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name << "\n");
   }
+
+  // Allocate common symbols
+  if (CommonSize != 0)
+    emitCommonSymbols(CommonSymbols, CommonSize, LocalSymbols);
 
   // Parse and proccess relocations
   DEBUG(dbgs() << "Parse relocations:\n");
@@ -150,6 +167,38 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
   return false;
 }
 
+unsigned RuntimeDyldImpl::emitCommonSymbols(const CommonSymbolMap &Map,
+                                            uint64_t TotalSize,
+                                            LocalSymbolMap &LocalSymbols) {
+  // Allocate memory for the section
+  unsigned SectionID = Sections.size();
+  uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, sizeof(void*),
+                                              SectionID);
+  if (!Addr)
+    report_fatal_error("Unable to allocate memory for common symbols!");
+  uint64_t Offset = 0;
+  Sections.push_back(SectionEntry(Addr, TotalSize, TotalSize, 0));
+  memset(Addr, 0, TotalSize);
+
+  DEBUG(dbgs() << "emitCommonSection SectionID: " << SectionID
+               << " new addr: " << format("%p", Addr)
+               << " DataSize: " << TotalSize
+               << "\n");
+
+  // Assign the address of each symbol
+  for (CommonSymbolMap::const_iterator it = Map.begin(), itEnd = Map.end();
+       it != itEnd; it++) {
+    uint64_t Size = it->second;
+    StringRef Name;
+    it->first.getName(Name);
+    LocalSymbols[Name.data()] = SymbolLoc(SectionID, Offset);
+    Offset += Size;
+    Addr += Size;
+  }
+
+  return SectionID;
+}
+
 unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
                                       bool IsCode) {
 
@@ -158,7 +207,7 @@ unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
   error_code err;
   if (StubSize > 0) {
     for (relocation_iterator i = Section.begin_relocations(),
-         e = Section.end_relocations(); i != e; i.increment(err))
+         e = Section.end_relocations(); i != e; i.increment(err), Check(err))
       StubBufSize += StubSize;
   }
   StringRef data;
@@ -167,22 +216,63 @@ unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
   Check(Section.getAlignment(Alignment64));
 
   unsigned Alignment = (unsigned)Alignment64 & 0xffffffffL;
-  unsigned DataSize = data.size();
-  unsigned Allocate = DataSize + StubBufSize;
-  unsigned SectionID = Sections.size();
-  const char *pData = data.data();
-  uint8_t *Addr = IsCode
-    ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID)
-    : MemMgr->allocateDataSection(Allocate, Alignment, SectionID);
+  bool IsRequired;
+  bool IsVirtual;
+  bool IsZeroInit;
+  uint64_t DataSize;
+  Check(Section.isRequiredForExecution(IsRequired));
+  Check(Section.isVirtual(IsVirtual));
+  Check(Section.isZeroInit(IsZeroInit));
+  Check(Section.getSize(DataSize));
 
-  memcpy(Addr, pData, DataSize);
-  DEBUG(dbgs() << "emitSection SectionID: " << SectionID
-               << " obj addr: " << format("%p", pData)
-               << " new addr: " << format("%p", Addr)
-               << " DataSize: " << DataSize
-               << " StubBufSize: " << StubBufSize
-               << " Allocate: " << Allocate
-               << "\n");
+  unsigned Allocate;
+  unsigned SectionID = Sections.size();
+  uint8_t *Addr;
+  const char *pData = 0;
+
+  // Some sections, such as debug info, don't need to be loaded for execution.
+  // Leave those where they are.
+  if (IsRequired) {
+    Allocate = DataSize + StubBufSize;
+    Addr = IsCode
+      ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID)
+      : MemMgr->allocateDataSection(Allocate, Alignment, SectionID);
+    if (!Addr)
+      report_fatal_error("Unable to allocate section memory!");
+
+    // Virtual sections have no data in the object image, so leave pData = 0
+    if (!IsVirtual)
+      pData = data.data();
+
+    // Zero-initialize or copy the data from the image
+    if (IsZeroInit || IsVirtual)
+      memset(Addr, 0, DataSize);
+    else
+      memcpy(Addr, pData, DataSize);
+
+    DEBUG(dbgs() << "emitSection SectionID: " << SectionID
+                 << " obj addr: " << format("%p", pData)
+                 << " new addr: " << format("%p", Addr)
+                 << " DataSize: " << DataSize
+                 << " StubBufSize: " << StubBufSize
+                 << " Allocate: " << Allocate
+                 << "\n");
+  }
+  else {
+    // Even if we didn't load the section, we need to record an entry for it
+    //   to handle later processing (and by 'handle' I mean don't do anything
+    //   with these sections).
+    Allocate = 0;
+    Addr = 0;
+    DEBUG(dbgs() << "emitSection SectionID: " << SectionID
+                 << " obj addr: " << format("%p", data.data())
+                 << " new addr: 0"
+                 << " DataSize: " << DataSize
+                 << " StubBufSize: " << StubBufSize
+                 << " Allocate: " << Allocate
+                 << "\n");
+  }
+
   Sections.push_back(SectionEntry(Addr, Allocate, DataSize,(uintptr_t)pData));
   return SectionID;
 }
@@ -259,15 +349,18 @@ void RuntimeDyldImpl::reassignSectionAddress(unsigned SectionID,
 
 void RuntimeDyldImpl::resolveRelocationEntry(const RelocationEntry &RE,
                                              uint64_t Value) {
-    uint8_t *Target = Sections[RE.SectionID].Address + RE.Offset;
-    DEBUG(dbgs() << "\tSectionID: " << RE.SectionID
-          << " + " << RE.Offset << " (" << format("%p", Target) << ")"
-          << " Data: " << RE.Data
-          << " Addend: " << RE.Addend
-          << "\n");
+    // Ignore relocations for sections that were not loaded
+    if (Sections[RE.SectionID].Address != 0) {
+      uint8_t *Target = Sections[RE.SectionID].Address + RE.Offset;
+      DEBUG(dbgs() << "\tSectionID: " << RE.SectionID
+            << " + " << RE.Offset << " (" << format("%p", Target) << ")"
+            << " Data: " << RE.Data
+            << " Addend: " << RE.Addend
+            << "\n");
 
-    resolveRelocation(Target, Sections[RE.SectionID].LoadAddress + RE.Offset,
-                      Value, RE.Data, RE.Addend);
+      resolveRelocation(Target, Sections[RE.SectionID].LoadAddress + RE.Offset,
+                        Value, RE.Data, RE.Addend);
+  }
 }
 
 void RuntimeDyldImpl::resolveRelocationList(const RelocationList &Relocs,

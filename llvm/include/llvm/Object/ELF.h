@@ -33,6 +33,15 @@
 namespace llvm {
 namespace object {
 
+// Subclasses of ELFObjectFile may need this for template instantiation
+inline std::pair<unsigned char, unsigned char>
+getElfArchType(MemoryBuffer *Object) {
+  if (Object->getBufferSize() < ELF::EI_NIDENT)
+    return std::make_pair((uint8_t)ELF::ELFCLASSNONE,(uint8_t)ELF::ELFDATANONE);
+  return std::make_pair( (uint8_t)Object->getBufferStart()[ELF::EI_CLASS]
+                        , (uint8_t)Object->getBufferStart()[ELF::EI_DATA]);
+}
+
 // Templates to choose Elf_Addr and Elf_Off depending on is64Bits.
 template<support::endianness target_endianness>
 struct ELFDataTypeTypedefHelperCommon {
@@ -540,6 +549,10 @@ protected:
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const;
   virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionRequiredForExecution(DataRefImpl Sec,
+                                                   bool &Res) const;
+  virtual error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const;
   virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
@@ -1086,6 +1099,43 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   if (sec->sh_flags & (ELF::SHF_ALLOC | ELF::SHF_WRITE)
       && sec->sh_type == ELF::SHT_NOBITS)
+    Result = true;
+  else
+    Result = false;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSectionRequiredForExecution(DataRefImpl Sec,
+                                                        bool &Result) const {
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  if (sec->sh_flags & ELF::SHF_ALLOC)
+    Result = true;
+  else
+    Result = false;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSectionVirtual(DataRefImpl Sec,
+                                           bool &Result) const {
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  if (sec->sh_type == ELF::SHT_NOBITS)
+    Result = true;
+  else
+    Result = false;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>::isSectionZeroInit(DataRefImpl Sec,
+                                            bool &Result) const {
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  // For ELF, all zero-init sections are virtual (that is, they occupy no space
+  //   in the object image) and vice versa.
+  if (sec->sh_flags & ELF::SHT_NOBITS)
     Result = true;
   else
     Result = false;

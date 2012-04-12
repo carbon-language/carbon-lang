@@ -110,6 +110,9 @@ protected:
   StringMap<SymbolLoc> SymbolTable;
   typedef DenseMap<const char*, SymbolLoc> LocalSymbolMap;
 
+  // Keep a map of common symbols to their sizes
+  typedef std::map<SymbolRef, unsigned> CommonSymbolMap;
+
   // For each symbol, keep a list of relocations based on it. Anytime
   // its address is reassigned (the JIT re-compiled the function, e.g.),
   // the relocations get re-resolved.
@@ -148,6 +151,12 @@ protected:
   uint8_t *getSectionAddress(unsigned SectionID) {
     return (uint8_t*)Sections[SectionID].Address;
   }
+
+  /// \brief Emits a section containing common symbols.
+  /// \return SectionID.
+  unsigned emitCommonSymbols(const CommonSymbolMap &Map,
+                             uint64_t TotalSize,
+                             LocalSymbolMap &Symbols);
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be

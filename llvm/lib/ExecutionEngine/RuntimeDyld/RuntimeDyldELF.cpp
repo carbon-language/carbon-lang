@@ -71,7 +71,8 @@ void RuntimeDyldELF::resolveX86Relocation(uint8_t *LocalAddress,
   switch (Type) {
   case ELF::R_386_32: {
     uint32_t *Target = (uint32_t*)(LocalAddress);
-    *Target = Value + Addend;
+    uint32_t Placeholder = *Target;
+    *Target = Placeholder + Value + Addend;
     break;
   }
   case ELF::R_386_PC32: {

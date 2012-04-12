@@ -175,7 +175,12 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
     BeginOffset = Entry->Value;
     SectionIndex = Entry->SectionIndex;
     if (!SectionIndex) {
-      Result = UnknownAddressOrSize;
+      uint32_t flags = SymbolRef::SF_None;
+      getSymbolFlags(DRI, flags);
+      if (flags & SymbolRef::SF_Common)
+        Result = Entry->Value;
+      else
+        Result = UnknownAddressOrSize;
       return object_error::success;
     }
     // Unfortunately symbols are unsorted so we need to touch all
@@ -198,7 +203,12 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
     BeginOffset = Entry->Value;
     SectionIndex = Entry->SectionIndex;
     if (!SectionIndex) {
-      Result = UnknownAddressOrSize;
+      uint32_t flags = SymbolRef::SF_None;
+      getSymbolFlags(DRI, flags);
+      if (flags & SymbolRef::SF_Common)
+        Result = Entry->Value;
+      else
+        Result = UnknownAddressOrSize;
       return object_error::success;
     }
     // Unfortunately symbols are unsorted so we need to touch all
@@ -265,19 +275,22 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
                                            uint32_t &Result) const {
   uint16_t MachOFlags;
   uint8_t MachOType;
+  uint8_t MachOSectionIndex;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(DRI, Entry);
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
+    MachOSectionIndex = Entry->SectionIndex;
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(DRI, Entry);
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
+    MachOSectionIndex = Entry->SectionIndex;
   }
 
-  // TODO: Correctly set SF_ThreadLocal and SF_Common.
+  // TODO: Correctly set SF_ThreadLocal
   Result = SymbolRef::SF_None;
 
   if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeUndefined)
@@ -286,8 +299,11 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
   if (MachOFlags & macho::STF_StabsEntryMask)
     Result |= SymbolRef::SF_FormatSpecific;
 
-  if (MachOType & MachO::NlistMaskExternal)
+  if (MachOType & MachO::NlistMaskExternal) {
     Result |= SymbolRef::SF_Global;
+    if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeUndefined)
+      Result |= SymbolRef::SF_Common;
+  }
 
   if (MachOFlags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef))
     Result |= SymbolRef::SF_Weak;
@@ -563,6 +579,37 @@ error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
                                          bool &Result) const {
   // FIXME: Unimplemented.
   Result = false;
+  return object_error::success;
+}
+
+error_code MachOObjectFile::isSectionRequiredForExecution(DataRefImpl Sec,
+                                                          bool &Result) const {
+  // FIXME: Unimplemented
+  Result = true;
+  return object_error::success;
+}
+
+error_code MachOObjectFile::isSectionVirtual(DataRefImpl Sec,
+                                            bool &Result) const {
+  // FIXME: Unimplemented
+  Result = false;
+  return object_error::success;
+}
+
+error_code MachOObjectFile::isSectionZeroInit(DataRefImpl DRI,
+                                              bool &Result) const {
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Section64> Sect;
+    getSection64(DRI, Sect);
+    Result = (Sect->Flags & MachO::SectionTypeZeroFill ||
+              Sect->Flags & MachO::SectionTypeZeroFillLarge);
+  } else {
+    InMemoryStruct<macho::Section> Sect;
+    getSection(DRI, Sect);
+    Result = (Sect->Flags & MachO::SectionTypeZeroFill ||
+              Sect->Flags & MachO::SectionTypeZeroFillLarge);
+  }
+
   return object_error::success;
 }
 

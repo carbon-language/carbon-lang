@@ -1,6 +1,5 @@
 ; RUN: %lli %s test
 ; XFAIL: arm
-; XFAIL: mcjit
 
 declare i32 @puts(i8*)
 
