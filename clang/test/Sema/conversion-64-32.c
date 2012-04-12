@@ -13,3 +13,7 @@ int4 test1(long2 a) {
   int4  v127 = a;  // no warning.
   return v127; 
 }
+
+int test2(long v) {
+  return v / 2; // expected-warning {{implicit conversion loses integer precision: 'long' to 'int'}}
+}
