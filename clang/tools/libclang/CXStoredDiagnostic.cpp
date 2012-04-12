@@ -79,6 +79,11 @@ unsigned CXStoredDiagnostic::getCategory() const {
   return DiagnosticIDs::getCategoryNumberForDiag(Diag.getID());
 }
 
+CXString CXStoredDiagnostic::getCategoryText() const {
+  unsigned catID = DiagnosticIDs::getCategoryNumberForDiag(Diag.getID());
+  return createCXString(DiagnosticIDs::getCategoryNameFromID(catID));
+}
+
 unsigned CXStoredDiagnostic::getNumRanges() const {
   if (Diag.getLocation().isInvalid())
     return 0;

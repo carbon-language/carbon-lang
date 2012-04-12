@@ -119,6 +119,10 @@ unsigned CXLoadedDiagnostic::getCategory() const {
   return category;
 }
 
+CXString CXLoadedDiagnostic::getCategoryText() const {
+  return cxstring::createCXString(CategoryText);
+}
+
 unsigned CXLoadedDiagnostic::getNumRanges() const {
   return Ranges.size();
 }
@@ -650,6 +654,7 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         D->category = Record[offset++];
         unsigned diagFlag = Record[offset++];
         D->DiagOption = diagFlag ? TopDiags.WarningFlags[diagFlag] : "";
+        D->CategoryText = D->category ? TopDiags.Categories[D->category] : "";
         D->Spelling = TopDiags.makeString(BlobStart, BlobLen);
         continue;
       }

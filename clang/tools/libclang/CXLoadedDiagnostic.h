@@ -43,6 +43,9 @@ public:
   /// \brief Return the category of the diagnostic.
   virtual unsigned getCategory() const;
   
+  /// \brief Return the category string of the diagnostic.
+  virtual CXString getCategoryText() const;
+  
   /// \brief Return the number of source ranges for the diagnostic.
   virtual unsigned getNumRanges() const;
   
@@ -82,6 +85,7 @@ public:
   std::vector<std::pair<CXSourceRange, CXString> > FixIts;
   llvm::StringRef Spelling;
   llvm::StringRef DiagOption;
+  llvm::StringRef CategoryText;
   unsigned severity;
   unsigned category;
 };

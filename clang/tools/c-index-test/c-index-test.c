@@ -2586,9 +2586,9 @@ static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
     CXSourceLocation DiagLoc;
     CXDiagnostic D;
     CXFile File;
-    CXString FileName, DiagSpelling, DiagOption;
+    CXString FileName, DiagSpelling, DiagOption, DiagCat;
     unsigned line, column, offset;
-    const char *DiagOptionStr = 0;
+    const char *DiagOptionStr = 0, *DiagCatStr = 0;
     
     D = clang_getDiagnosticInSet(Diags, i);
     DiagLoc = clang_getDiagnosticLocation(D);
@@ -2609,6 +2609,12 @@ static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
     DiagOptionStr = clang_getCString(DiagOption);
     if (DiagOptionStr) {
       fprintf(stderr, " [%s]", DiagOptionStr);
+    }
+    
+    DiagCat = clang_getDiagnosticCategoryText(D);
+    DiagCatStr = clang_getCString(DiagCat);
+    if (DiagCatStr) {
+      fprintf(stderr, " [%s]", DiagCatStr);
     }
     
     fprintf(stderr, "\n");

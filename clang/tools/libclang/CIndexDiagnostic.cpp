@@ -72,6 +72,8 @@ public:
   }
   
   unsigned getCategory() const { return 0; }
+  CXString getCategoryText() const { return createCXString(""); }
+
   unsigned getNumRanges() const { return 0; }
   CXSourceRange getRange(unsigned Range) const { return clang_getNullRange(); }
   unsigned getNumFixIts() const { return 0; }
@@ -324,7 +326,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
         }
         
         if (Options & CXDiagnostic_DisplayCategoryName) {
-          CXString CategoryName = clang_getDiagnosticCategoryName(CategoryID);
+          CXString CategoryName = clang_getDiagnosticCategoryText(Diagnostic);
           if (NeedBracket)
             Out << " [";
           if (NeedComma)
@@ -385,7 +387,14 @@ unsigned clang_getDiagnosticCategory(CXDiagnostic Diag) {
 }
   
 CXString clang_getDiagnosticCategoryName(unsigned Category) {
+  // Kept for backwards compatibility.
   return createCXString(DiagnosticIDs::getCategoryNameFromID(Category));
+}
+  
+CXString clang_getDiagnosticCategoryText(CXDiagnostic Diag) {
+  if (CXDiagnosticImpl *D = static_cast<CXDiagnosticImpl *>(Diag))
+    return D->getCategoryText();
+  return createCXString("");
 }
   
 unsigned clang_getDiagnosticNumRanges(CXDiagnostic Diag) {

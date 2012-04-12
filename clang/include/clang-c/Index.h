@@ -35,6 +35,16 @@ extern "C" {
   #define CINDEX_LINKAGE
 #endif
 
+#ifdef __GNUC__
+  #define CINDEX_DEPRECATED __attribute__((deprecated))
+#else
+  #ifdef _MSC_VER
+    #define CINDEX_DEPRECATED __declspec(deprecated)
+  #else
+    #define CINDEX_DEPRECATED
+  #endif
+#endif
+
 /** \defgroup CINDEX libclang: C Interface to Clang
  *
  * The C Interface to Clang provides a relatively small API that exposes
@@ -830,14 +840,25 @@ CINDEX_LINKAGE CXString clang_getDiagnosticOption(CXDiagnostic Diag,
 CINDEX_LINKAGE unsigned clang_getDiagnosticCategory(CXDiagnostic);
 
 /**
- * \brief Retrieve the name of a particular diagnostic category.
+ * \brief Retrieve the name of a particular diagnostic category.  This
+ *  is now deprecated.  Use clang_getDiagnosticCategoryText()
+ *  instead.
  *
  * \param Category A diagnostic category number, as returned by 
  * \c clang_getDiagnosticCategory().
  *
  * \returns The name of the given diagnostic category.
  */
-CINDEX_LINKAGE CXString clang_getDiagnosticCategoryName(unsigned Category);
+CINDEX_DEPRECATED CINDEX_LINKAGE
+CXString clang_getDiagnosticCategoryName(unsigned Category);
+
+/**
+ * \brief Retrieve the diagnostic category text for a given diagnostic.
+ *
+ *
+ * \returns The text of the given diagnostic category.
+ */
+CINDEX_LINKAGE CXString clang_getDiagnosticCategoryText(CXDiagnostic);
   
 /**
  * \brief Determine the number of source ranges associated with the given

@@ -6,9 +6,9 @@ clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
 clang_Cursor_getArgument
 clang_Cursor_getNumArguments
+clang_Cursor_getObjCSelectorIndex
 clang_Cursor_getSpellingNameRange
 clang_Cursor_getTranslationUnit
-clang_Cursor_getObjCSelectorIndex
 clang_Cursor_isNull
 clang_IndexAction_create
 clang_IndexAction_dispose
@@ -97,6 +97,7 @@ clang_getDefinitionSpellingAndExtent
 clang_getDiagnostic
 clang_getDiagnosticCategory
 clang_getDiagnosticCategoryName
+clang_getDiagnosticCategoryText
 clang_getDiagnosticFixIt
 clang_getDiagnosticInSet
 clang_getDiagnosticLocation
