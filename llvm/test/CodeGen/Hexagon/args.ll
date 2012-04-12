@@ -1,4 +1,5 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched < %s | FileCheck %s
+; RUN: true
+; DISABLED: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched < %s | FileCheck %s
 ; CHECK: r[[T0:[0-9]+]] = #7
 ; CHECK: memw(r29 + #0) = r[[T0]]
 ; CHECK: r0 = #1

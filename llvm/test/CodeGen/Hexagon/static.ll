@@ -1,4 +1,5 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched < %s | FileCheck %s
+; RUN: true
+; DISABLED: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched < %s | FileCheck %s
 
 @num = external global i32
 @acc = external global i32
