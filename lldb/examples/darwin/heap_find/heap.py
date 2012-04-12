@@ -25,13 +25,13 @@ def heap_search(options, arg_str):
     expr = None
     arg_str_description = arg_str
     if options.type == 'pointer':
-        expr = 'find_pointer_in_heap(%s)' % arg_str
+        expr = 'find_pointer_in_heap((void *)%s)' % arg_str
         arg_str_description = 'malloc block containing pointer %s' % arg_str
     elif options.type == 'cstr':
         expr = 'find_cstring_in_heap("%s")' % arg_str
         arg_str_description = 'malloc block containing "%s"' % arg_str
     elif options.type == 'addr':
-        expr = 'find_block_for_address(%s)' % arg_str
+        expr = 'find_block_for_address((void *)%s)' % arg_str
         arg_str_description = 'malloc block for %s' % arg_str
     else:
         print 'error: invalid type "%s"\nvalid values are "pointer", "cstr"' % options.type
