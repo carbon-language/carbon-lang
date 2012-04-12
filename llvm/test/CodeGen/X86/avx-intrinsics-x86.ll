@@ -1078,33 +1078,33 @@ define <2 x i64> @test_x86_sse41_pmuldq(<4 x i32> %a0, <4 x i32> %a1) {
 declare <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32>, <4 x i32>) nounwind readnone
 
 
-define i32 @test_x86_sse41_ptestc(<4 x float> %a0, <4 x float> %a1) {
+define i32 @test_x86_sse41_ptestc(<2 x i64> %a0, <2 x i64> %a1) {
   ; CHECK: vptest 
   ; CHECK: sbbl
-  %res = call i32 @llvm.x86.sse41.ptestc(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
+  %res = call i32 @llvm.x86.sse41.ptestc(<2 x i64> %a0, <2 x i64> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
-declare i32 @llvm.x86.sse41.ptestc(<4 x float>, <4 x float>) nounwind readnone
+declare i32 @llvm.x86.sse41.ptestc(<2 x i64>, <2 x i64>) nounwind readnone
 
 
-define i32 @test_x86_sse41_ptestnzc(<4 x float> %a0, <4 x float> %a1) {
+define i32 @test_x86_sse41_ptestnzc(<2 x i64> %a0, <2 x i64> %a1) {
   ; CHECK: vptest 
   ; CHECK: seta
   ; CHECK: movzbl
-  %res = call i32 @llvm.x86.sse41.ptestnzc(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
+  %res = call i32 @llvm.x86.sse41.ptestnzc(<2 x i64> %a0, <2 x i64> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
-declare i32 @llvm.x86.sse41.ptestnzc(<4 x float>, <4 x float>) nounwind readnone
+declare i32 @llvm.x86.sse41.ptestnzc(<2 x i64>, <2 x i64>) nounwind readnone
 
 
-define i32 @test_x86_sse41_ptestz(<4 x float> %a0, <4 x float> %a1) {
+define i32 @test_x86_sse41_ptestz(<2 x i64> %a0, <2 x i64> %a1) {
   ; CHECK: vptest 
   ; CHECK: sete
   ; CHECK: movzbl
-  %res = call i32 @llvm.x86.sse41.ptestz(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
+  %res = call i32 @llvm.x86.sse41.ptestz(<2 x i64> %a0, <2 x i64> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
-declare i32 @llvm.x86.sse41.ptestz(<4 x float>, <4 x float>) nounwind readnone
+declare i32 @llvm.x86.sse41.ptestz(<2 x i64>, <2 x i64>) nounwind readnone
 
 
 define <2 x double> @test_x86_sse41_round_pd(<2 x double> %a0) {

@@ -183,8 +183,8 @@ define <4 x float> @insertps_3(<4 x float> %t1, <4 x float> %t2) nounwind {
 ; X64:    insertps  $0, %xmm1, %xmm0        
 }
 
-define i32 @ptestz_1(<4 x float> %t1, <4 x float> %t2) nounwind {
-        %tmp1 = call i32 @llvm.x86.sse41.ptestz(<4 x float> %t1, <4 x float> %t2) nounwind readnone
+define i32 @ptestz_1(<2 x i64> %t1, <2 x i64> %t2) nounwind {
+        %tmp1 = call i32 @llvm.x86.sse41.ptestz(<2 x i64> %t1, <2 x i64> %t2) nounwind readnone
         ret i32 %tmp1
 ; X32: _ptestz_1:
 ; X32:    ptest 	%xmm1, %xmm0
@@ -195,8 +195,8 @@ define i32 @ptestz_1(<4 x float> %t1, <4 x float> %t2) nounwind {
 ; X64:    sete	%al
 }
 
-define i32 @ptestz_2(<4 x float> %t1, <4 x float> %t2) nounwind {
-        %tmp1 = call i32 @llvm.x86.sse41.ptestc(<4 x float> %t1, <4 x float> %t2) nounwind readnone
+define i32 @ptestz_2(<2 x i64> %t1, <2 x i64> %t2) nounwind {
+        %tmp1 = call i32 @llvm.x86.sse41.ptestc(<2 x i64> %t1, <2 x i64> %t2) nounwind readnone
         ret i32 %tmp1
 ; X32: _ptestz_2:
 ; X32:    ptest 	%xmm1, %xmm0
@@ -207,8 +207,8 @@ define i32 @ptestz_2(<4 x float> %t1, <4 x float> %t2) nounwind {
 ; X64:    sbbl	%eax
 }
 
-define i32 @ptestz_3(<4 x float> %t1, <4 x float> %t2) nounwind {
-        %tmp1 = call i32 @llvm.x86.sse41.ptestnzc(<4 x float> %t1, <4 x float> %t2) nounwind readnone
+define i32 @ptestz_3(<2 x i64> %t1, <2 x i64> %t2) nounwind {
+        %tmp1 = call i32 @llvm.x86.sse41.ptestnzc(<2 x i64> %t1, <2 x i64> %t2) nounwind readnone
         ret i32 %tmp1
 ; X32: _ptestz_3:
 ; X32:    ptest 	%xmm1, %xmm0
@@ -220,9 +220,9 @@ define i32 @ptestz_3(<4 x float> %t1, <4 x float> %t2) nounwind {
 }
 
 
-declare i32 @llvm.x86.sse41.ptestz(<4 x float>, <4 x float>) nounwind readnone
-declare i32 @llvm.x86.sse41.ptestc(<4 x float>, <4 x float>) nounwind readnone
-declare i32 @llvm.x86.sse41.ptestnzc(<4 x float>, <4 x float>) nounwind readnone
+declare i32 @llvm.x86.sse41.ptestz(<2 x i64>, <2 x i64>) nounwind readnone
+declare i32 @llvm.x86.sse41.ptestc(<2 x i64>, <2 x i64>) nounwind readnone
+declare i32 @llvm.x86.sse41.ptestnzc(<2 x i64>, <2 x i64>) nounwind readnone
 
 ; This used to compile to insertps $0  + insertps $16.  insertps $0 is always
 ; pointless.
