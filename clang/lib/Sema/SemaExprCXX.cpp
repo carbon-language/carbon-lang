@@ -2765,6 +2765,13 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     llvm_unreachable("Improper third standard conversion");
   }
 
+  // If this conversion sequence involved a scalar -> atomic conversion, perform
+  // that conversion now.
+  if (const AtomicType *ToAtomic = ToType->getAs<AtomicType>())
+    if (Context.hasSameType(ToAtomic->getValueType(), From->getType()))
+      From = ImpCastExprToType(From, ToType, CK_NonAtomicToAtomic, VK_RValue, 0,
+                               CCK).take();
+      
   return Owned(From);
 }
 
