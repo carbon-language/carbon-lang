@@ -569,6 +569,12 @@ private:
   void copyStore(const StoreInst *Store, ValueMapT &VectorMap,
                  VectorValueMapT &ScalarMaps);
 
+  void copyInstScalarized(const Instruction *Inst, ValueMapT &VectorMap,
+                          VectorValueMapT &ScalarMaps);
+
+  bool extractScalarValues(const Instruction *Inst, ValueMapT &VectorMap,
+                           VectorValueMapT &ScalarMaps);
+
   bool hasVectorOperands(const Instruction *Inst, ValueMapT &VectorMap);
 
   void copyInstruction(const Instruction *Inst, ValueMapT &VectorMap,
@@ -680,18 +686,16 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
 void VectorBlockGenerator::generateLoad(const LoadInst *Load,
                                         ValueMapT &VectorMap,
                                         VectorValueMapT &ScalarMaps) {
-  Value *NewLoad;
-
-  if (GroupedUnrolling) {
+  if (GroupedUnrolling || !VectorType::isValidElementType(Load->getType())) {
     for (int i = 0; i < getVectorWidth(); i++)
       ScalarMaps[i][Load] = generateScalarLoad(Load, ScalarMaps[i],
                                                GlobalMaps[i]);
-
     return;
   }
 
   MemoryAccess &Access = Statement.getAccessFor(Load);
 
+  Value *NewLoad;
   if (Access.isStrideZero(isl_set_copy(Domain)))
     NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0]);
   else if (Access.isStrideOne(isl_set_copy(Domain)))
@@ -772,6 +776,63 @@ bool VectorBlockGenerator::hasVectorOperands(const Instruction *Inst,
   return false;
 }
 
+bool VectorBlockGenerator::extractScalarValues(const Instruction *Inst,
+                                               ValueMapT &VectorMap,
+                                               VectorValueMapT &ScalarMaps) {
+  bool HasVectorOperand = false;
+  int VectorWidth = getVectorWidth();
+
+  for (Instruction::const_op_iterator OI = Inst->op_begin(),
+       OE = Inst->op_end(); OI != OE; ++OI) {
+    ValueMapT::iterator VecOp = VectorMap.find(*OI);
+
+    if (VecOp == VectorMap.end())
+      continue;
+
+    HasVectorOperand = true;
+    Value *NewVector = VecOp->second;
+
+    for (int i = 0; i < VectorWidth; ++i) {
+      ValueMapT &SM = ScalarMaps[i];
+
+      // If there is one scalar extracted, all scalar elements should have
+      // already been extracted by the code here. So no need to check for the
+      // existance of all of them.
+      if (SM.count(*OI))
+        break;
+
+      SM[*OI] = Builder.CreateExtractElement(NewVector, Builder.getInt32(i));
+    }
+  }
+
+  return HasVectorOperand;
+}
+
+void VectorBlockGenerator::copyInstScalarized(const Instruction *Inst,
+                                              ValueMapT &VectorMap,
+                                              VectorValueMapT &ScalarMaps) {
+  bool HasVectorOperand;
+  int VectorWidth = getVectorWidth();
+
+  HasVectorOperand = extractScalarValues(Inst, VectorMap, ScalarMaps);
+
+  for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
+    copyInstScalar(Inst, ScalarMaps[VectorLane], GlobalMaps[VectorLane]);
+
+  if (!VectorType::isValidElementType(Inst->getType()) || !HasVectorOperand)
+    return;
+
+  // Make the result available as vector value.
+  VectorType *VectorType = VectorType::get(Inst->getType(), VectorWidth);
+  Value *Vector = UndefValue::get(VectorType);
+
+  for (int i = 0; i < VectorWidth; i++)
+    Vector = Builder.CreateInsertElement(Vector, ScalarMaps[i][Inst],
+                                         Builder.getInt32(i));
+
+  VectorMap[Inst] = Vector;
+}
+
 int VectorBlockGenerator::getVectorWidth() {
   return GlobalMaps.size();
 }
@@ -805,11 +866,11 @@ void VectorBlockGenerator::copyInstruction(const Instruction *Inst,
       return;
     }
 
-    llvm_unreachable("Cannot issue vector code for this instruction");
+    // Falltrough: We generate scalar instructions, if we don't know how to
+    // generate vector code.
   }
 
-  for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
-    copyInstScalar(Inst, ScalarMaps[VectorLane], GlobalMaps[VectorLane]);
+  copyInstScalarized(Inst, VectorMap, ScalarMaps);
 }
 
 void VectorBlockGenerator::copyBB() {
