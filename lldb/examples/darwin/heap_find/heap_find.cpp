@@ -73,8 +73,6 @@
 #include <stdlib.h>
 #include <vector>
 
-struct range_callback_info_t;
-
 typedef void range_callback_t (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size);
 typedef void zone_callback_t (void *info, const malloc_zone_t *zone);
 
@@ -87,18 +85,28 @@ struct range_callback_info_t
 
 enum data_type_t
 {
-    eDataTypeBytes,
-    eDataTypeCStr,
-    eDataTypeInteger
+    eDataTypeAddress,
+    eDataTypeContainsData
+};
+
+struct aligned_data_t
+{
+    const uint8_t *buffer;
+    uint32_t size;
+    uint32_t align;
 };
 
 struct range_contains_data_callback_info_t
 {
-    const uint8_t *data;
-    const size_t data_len;
-    const uint32_t align;
-    const data_type_t data_type;
+    data_type_t type;
+    const void *lookup_addr;
+    union
+    {
+        uintptr_t addr;
+        aligned_data_t data;
+    };
     uint32_t match_count;
+    bool done;
 };
 
 struct malloc_match
@@ -109,7 +117,15 @@ struct malloc_match
 };
 
 std::vector<malloc_match> g_matches;
+const void *g_lookup_addr = 0;
 
+//----------------------------------------------------------------------
+// task_peek
+//
+// Reads memory from this tasks address space. This callback is needed
+// by the code that iterates through all of the malloc blocks to read
+// the memory in this process.
+//----------------------------------------------------------------------
 static kern_return_t
 task_peek (task_t task, vm_address_t remote_address, vm_size_t size, void **local_memory)
 {
@@ -121,7 +137,6 @@ task_peek (task_t task, vm_address_t remote_address, vm_size_t size, void **loca
 static const void
 foreach_zone_in_this_process (range_callback_info_t *info)
 {
-    //printf ("foreach_zone_in_this_process ( info->zone_callback = %p, info->range_callback = %p, info->baton = %p)", info->zone_callback, info->range_callback, info->baton);
     if (info == NULL || info->zone_callback == NULL)
         return;
 
@@ -138,8 +153,14 @@ foreach_zone_in_this_process (range_callback_info_t *info)
     }
 }
 
+//----------------------------------------------------------------------
+// dump_malloc_block_callback
+//
+// A simple callback that will dump each malloc block and all available
+// info from the enumeration callback perpective.
+//----------------------------------------------------------------------
 static void
-range_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size)
+dump_malloc_block_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size)
 {
     printf ("task = 0x%4.4x: baton = %p, type = %u, ptr_addr = 0x%llx + 0x%llu\n", task, baton, type, ptr_addr, ptr_size);
 }
@@ -168,89 +189,77 @@ enumerate_range_in_zone (void *baton, const malloc_zone_t *zone)
                                       ranges_callback);    
 }
 
-const void
-foreach_range_in_this_process (range_callback_t *callback, void *baton)
-{
-    range_callback_info_t info = { enumerate_range_in_zone, callback ? callback : range_callback, baton };
-    foreach_zone_in_this_process (&info);
-}
-
-
 static void
-range_contains_ptr_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size)
+range_info_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size)
 {
-    uint8_t *data = NULL;
-    range_contains_data_callback_info_t *data_info = (range_contains_data_callback_info_t *)baton;
-    if (data_info->data_len <= 0)
+    const uint64_t end_addr = ptr_addr + ptr_size;
+    
+    range_contains_data_callback_info_t *info = (range_contains_data_callback_info_t *)baton;
+    switch (info->type)
     {
-        printf ("error: invalid data size: %zu\n", data_info->data_len);
-    }
-    else if (data_info->data_len > ptr_size)
-    {
-        // This block is too short to contain the data we are looking for...
-        return;
-    }
-    else if (task_peek (task, ptr_addr, ptr_size, (void **)&data) == KERN_SUCCESS)
-    {
-        assert (data);
-        const uint64_t end_addr = ptr_addr + ptr_size;
-        for (uint64_t addr = ptr_addr; 
-             addr < end_addr && ((end_addr - addr) >= data_info->data_len);
-             addr += data_info->align, data += data_info->align)
+    case eDataTypeAddress:
+        if (ptr_addr <= info->addr && info->addr < end_addr)
         {
-            if (memcmp (data_info->data, data, data_info->data_len) == 0)
+            ++info->match_count;
+            malloc_match match = { (void *)ptr_addr, ptr_size, info->addr - ptr_addr };
+            g_matches.push_back(match);            
+        }
+        break;
+    
+    case eDataTypeContainsData:
+        {
+            const uint32_t size = info->data.size;
+            if (size < ptr_size) // Make sure this block can contain this data
             {
-                ++data_info->match_count;
-                malloc_match match = { (void *)ptr_addr, ptr_size, addr - ptr_addr };
-                g_matches.push_back(match);
-                // printf ("0x%llx: ", addr);
-                // uint32_t i;
-                // switch (data_info->data_type)
-                // {
-                // case eDataTypeInteger:
-                //     {
-                //         // NOTE: little endian specific, but all darwin platforms are little endian now..
-                //         for (i=0; i<data_info->data_len; ++i)
-                //             printf (i ? "%2.2x" : "0x%2.2x", data[data_info->data_len - (i + 1)]);
-                //     }
-                //     break;
-                // case eDataTypeBytes:
-                //     {
-                //         for (i=0; i<data_info->data_len; ++i)
-                //             printf (" %2.2x", data[i]);
-                //     }
-                //     break;
-                // case eDataTypeCStr:
-                //     {
-                //         putchar ('"');
-                //         for (i=0; i<data_info->data_len; ++i)
-                //         {
-                //             if (isprint (data[i]))
-                //                 putchar (data[i]);
-                //             else
-                //                 printf ("\\x%2.2x", data[i]);
-                //         }
-                //         putchar ('"');
-                //     }
-                //     break;
-                //     
-                // }
-                // printf (" found in malloc block 0x%llx + %llu (malloc_size = %llu)\n", ptr_addr, addr - ptr_addr, ptr_size);
+                uint8_t *ptr_data = NULL;
+                if (task_peek (task, ptr_addr, ptr_size, (void **)&ptr_data) == KERN_SUCCESS)
+                {
+                    const void *buffer = info->data.buffer;
+                    assert (ptr_data);
+                    const uint32_t align = info->data.align;
+                    for (uint64_t addr = ptr_addr; 
+                         addr < end_addr && ((end_addr - addr) >= size);
+                         addr += align, ptr_data += align)
+                    {
+                        if (memcmp (buffer, ptr_data, size) == 0)
+                        {
+                            ++info->match_count;
+                            malloc_match match = { (void *)ptr_addr, ptr_size, addr - ptr_addr };
+                            g_matches.push_back(match);
+                        }
+                    }
+                }
+                else
+                {
+                    printf ("0x%llx: error: couldn't read %llu bytes\n", ptr_addr, ptr_size);
+                }   
             }
         }
+        break;
     }
-    else
-    {
-        printf ("0x%llx: error: couldn't read %llu bytes\n", ptr_addr, ptr_size);
-    }   
 }
 
+//----------------------------------------------------------------------
+// find_pointer_in_heap
+//
+// Finds a pointer value inside one or more currently valid malloc
+// blocks.
+//----------------------------------------------------------------------
 malloc_match *
-find_pointer_in_heap (intptr_t addr)
+find_pointer_in_heap (const void * addr)
 {
     g_matches.clear();
-    range_contains_data_callback_info_t data_info = { (uint8_t *)&addr, sizeof(addr), sizeof(addr), eDataTypeInteger, 0};
-    range_callback_info_t info = { enumerate_range_in_zone, range_contains_ptr_callback, &data_info };
+    // Setup "info" to look for a malloc block that contains data
+    // that is the a pointer 
+    range_contains_data_callback_info_t data_info;
+    data_info.type = eDataTypeContainsData;      // Check each block for data
+    g_lookup_addr = addr;
+    data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
+    data_info.data.size = sizeof(addr);          // How many bytes? The byte size of a pointer
+    data_info.data.align = sizeof(addr);         // Align to a pointer byte size
+    data_info.match_count = 0;                   // Initialize the match count to zero
+    data_info.done = false;                      // Set done to false so searching doesn't stop
+    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
     foreach_zone_in_this_process (&info);
     if (g_matches.empty())
         return NULL;
@@ -260,24 +269,61 @@ find_pointer_in_heap (intptr_t addr)
 }
 
 
+//----------------------------------------------------------------------
+// find_cstring_in_heap
+//
+// Finds a C string inside one or more currently valid malloc blocks.
+//----------------------------------------------------------------------
 malloc_match *
 find_cstring_in_heap (const char *s)
 {
-    if (s && s[0])
-    {
-        g_matches.clear();
-        range_contains_data_callback_info_t data_info = { (uint8_t *)s, strlen(s), 1, eDataTypeCStr, 0};
-        range_callback_info_t info = { enumerate_range_in_zone, range_contains_ptr_callback, &data_info };
-        foreach_zone_in_this_process (&info);
-        if (g_matches.empty())
-            return NULL;
-        malloc_match match = { NULL, 0, 0 };
-        g_matches.push_back(match);
-        return g_matches.data();
-    }
-    else
+    g_matches.clear();
+    if (s == NULL || s[0] == '\0')
     {
         printf ("error: invalid argument (empty cstring)\n");
+        return NULL;
     }
-    return 0;
+    // Setup "info" to look for a malloc block that contains data
+    // that is the C string passed in aligned on a 1 byte boundary
+    range_contains_data_callback_info_t data_info;
+    data_info.type = eDataTypeContainsData;  // Check each block for data
+    g_lookup_addr = s;               // If an expression was used, then fill in the resolved address we are looking up
+    data_info.data.buffer = (uint8_t *)s;    // What data? The C string passed in
+    data_info.data.size = strlen(s);         // How many bytes? The length of the C string
+    data_info.data.align = 1;                // Data doesn't need to be aligned, so set the alignment to 1
+    data_info.match_count = 0;               // Initialize the match count to zero
+    data_info.done = false;                  // Set done to false so searching doesn't stop
+    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+    foreach_zone_in_this_process (&info);
+    if (g_matches.empty())
+        return NULL;
+    malloc_match match = { NULL, 0, 0 };
+    g_matches.push_back(match);
+    return g_matches.data();
+}
+
+//----------------------------------------------------------------------
+// find_block_for_address
+//
+// Find the malloc block that whose address range contains "addr".
+//----------------------------------------------------------------------
+malloc_match *
+find_block_for_address (const void *addr)
+{
+    g_matches.clear();
+    // Setup "info" to look for a malloc block that contains data
+    // that is the C string passed in aligned on a 1 byte boundary
+    range_contains_data_callback_info_t data_info;
+    g_lookup_addr = addr;               // If an expression was used, then fill in the resolved address we are looking up
+    data_info.type = eDataTypeAddress;  // Check each block to see if the block contains the address passed in
+    data_info.addr = (uintptr_t)addr;   // What data? The C string passed in
+    data_info.match_count = 0;          // Initialize the match count to zero
+    data_info.done = false;             // Set done to false so searching doesn't stop
+    range_callback_info_t info = { enumerate_range_in_zone, range_info_callback, &data_info };
+    foreach_zone_in_this_process (&info);
+    if (g_matches.empty())
+        return NULL;
+    malloc_match match = { NULL, 0, 0 };
+    g_matches.push_back(match);
+    return g_matches.data();
 }
