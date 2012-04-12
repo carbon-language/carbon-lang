@@ -83,6 +83,10 @@ N: John T. Criswell
 E: criswell@uiuc.edu
 D: Original Autoconf support, documentation improvements, bug fixes
 
+N: Anshuman Dasgupta
+E: adasgupt@codeaurora.org
+D: Deterministic finite automaton based infrastructure for VLIW packetization
+
 N: Stefanus Du Toit
 E: stefanus.dutoit@rapidmind.com
 D: Bug fixes and minor improvements

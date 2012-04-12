@@ -367,6 +367,12 @@ Release Notes</a>.</h1>
       is clobbered.</li>
 </ul>
 
+<p> We added new TableGen infrastructure to support bundling for
+    Very Long Instruction Word (VLIW) architectures. TableGen can now
+    automatically generate a deterministic finite automaton from a VLIW
+    target's schedule description which can be queried to determine
+    legal groupings of instructions in a bundle.</p>
+
 </div>
 
 <!--=========================================================================-->
