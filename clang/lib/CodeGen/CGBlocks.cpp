@@ -1208,7 +1208,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SC_Static,
                                           SC_None,
                                           false,
-                                          true);
+                                          false);
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
@@ -1323,7 +1323,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
                                           SC_None,
-                                          false, true);
+                                          false, false);
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
