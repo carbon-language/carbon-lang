@@ -1069,7 +1069,16 @@ enum CXTranslationUnit_Flags {
    * Note: this is a *temporary* option that is available only while
    * we are testing C++ precompiled preamble support. It is deprecated.
    */
-  CXTranslationUnit_CXXChainedPCH = 0x20
+  CXTranslationUnit_CXXChainedPCH = 0x20,
+
+  /**
+   * \brief Used to indicate that function/method bodies should be skipped while
+   * parsing.
+   *
+   * This option can be used to search for declarations/definitions while
+   * ignoring the usages.
+   */
+  CXTranslationUnit_SkipFunctionBodies = 0x40
 };
 
 /**

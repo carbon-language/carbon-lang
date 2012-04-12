@@ -741,6 +741,7 @@ public:
                                       TranslationUnitKind TUKind = TU_Complete,
                                       bool CacheCodeCompletionResults = false,
                                       bool AllowPCHWithCompilerErrors = false,
+                                      bool SkipFunctionBodies = false,
                                       OwningPtr<ASTUnit> *ErrAST = 0);
   
   /// \brief Reparse the source files using the same command-line options that

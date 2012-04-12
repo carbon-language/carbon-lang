@@ -39,6 +39,8 @@ static unsigned getDefaultParsingOptions() {
     options |= CXTranslationUnit_CacheCompletionResults;
   if (getenv("CINDEXTEST_COMPLETION_NO_CACHING"))
     options &= ~CXTranslationUnit_CacheCompletionResults;
+  if (getenv("CINDEXTEST_SKIP_FUNCTION_BODIES"))
+    options |= CXTranslationUnit_SkipFunctionBodies;
   
   return options;
 }

@@ -36,11 +36,13 @@ namespace clang {
   void ParseAST(Preprocessor &pp, ASTConsumer *C,
                 ASTContext &Ctx, bool PrintStats = false,
                 TranslationUnitKind TUKind = TU_Complete,
-                CodeCompleteConsumer *CompletionConsumer = 0);
+                CodeCompleteConsumer *CompletionConsumer = 0,
+                bool SkipFunctionBodies = false);
 
   /// \brief Parse the main file known to the preprocessor, producing an 
   /// abstract syntax tree.
-  void ParseAST(Sema &S, bool PrintStats = false);
+  void ParseAST(Sema &S, bool PrintStats = false,
+                bool SkipFunctionBodies = false);
   
 }  // end namespace clang
 

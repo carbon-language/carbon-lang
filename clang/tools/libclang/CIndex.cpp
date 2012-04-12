@@ -2521,7 +2521,8 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     = (options & CXTranslationUnit_Incomplete)? TU_Prefix : TU_Complete;
   bool CacheCodeCompetionResults
     = options & CXTranslationUnit_CacheCompletionResults;
-  
+  bool SkipFunctionBodies = options & CXTranslationUnit_SkipFunctionBodies;
+
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
   IntrusiveRefCntPtr<DiagnosticsEngine>
@@ -2605,6 +2606,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  TUKind,
                                  CacheCodeCompetionResults,
                                  /*AllowPCHWithCompilerErrors=*/true,
+                                 SkipFunctionBodies,
                                  &ErrUnit));
 
   if (NumErrors != Diags->getClient()->getNumErrors()) {

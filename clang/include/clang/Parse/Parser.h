@@ -198,8 +198,10 @@ class Parser : public CodeCompletionHandler {
 
   IdentifierInfo *getSEHExceptKeyword();
 
+  bool SkipFunctionBodies;
+
 public:
-  Parser(Preprocessor &PP, Sema &Actions);
+  Parser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies);
   ~Parser();
 
   const LangOptions &getLangOpts() const { return PP.getLangOpts(); }
@@ -1671,7 +1673,7 @@ private:
   /// unless the body contains the code-completion point.
   ///
   /// \returns true if the function body was skipped.
-  bool trySkippingFunctionBodyForCodeCompletion();
+  bool trySkippingFunctionBody();
 
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         const ParsedTemplateInfo &TemplateInfo,

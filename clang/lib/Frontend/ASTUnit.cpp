@@ -1882,6 +1882,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       TranslationUnitKind TUKind,
                                       bool CacheCodeCompletionResults,
                                       bool AllowPCHWithCompilerErrors,
+                                      bool SkipFunctionBodies,
                                       OwningPtr<ASTUnit> *ErrAST) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
@@ -1924,6 +1925,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
+
+  CI->getFrontendOpts().SkipFunctionBodies = SkipFunctionBodies;
 
   // Create the AST unit.
   OwningPtr<ASTUnit> AST;
@@ -2364,6 +2367,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
                                 FrontendOpts.ShowCodePatternsInCodeCompletion,
                                 FrontendOpts.ShowGlobalSymbolsInCodeCompletion);
   Clang->setCodeCompletionConsumer(AugmentedConsumer);
+
+  Clang->getFrontendOpts().SkipFunctionBodies = true;
 
   // If we have a precompiled preamble, try to use it. We only allow
   // the use of the precompiled preamble if we're if the completion

@@ -31,10 +31,11 @@ IdentifierInfo *Parser::getSEHExceptKeyword() {
   return Ident__except;
 }
 
-Parser::Parser(Preprocessor &pp, Sema &actions)
+Parser::Parser(Preprocessor &pp, Sema &actions, bool SkipFunctionBodies)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()),
     GreaterThanIsOperator(true), ColonIsSacred(false), 
-    InMessageExpression(false), TemplateParameterDepth(0) {
+    InMessageExpression(false), TemplateParameterDepth(0),
+    SkipFunctionBodies(SkipFunctionBodies) {
   Tok.setKind(tok::eof);
   Actions.CurScope = 0;
   NumCachedScopes = 0;

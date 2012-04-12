@@ -88,6 +88,7 @@ void CompilerInstance::setASTConsumer(ASTConsumer *Value) {
 
 void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
   CompletionConsumer.reset(Value);
+  getFrontendOpts().SkipFunctionBodies = true;
 }
 
 // Diagnostics
