@@ -5615,8 +5615,13 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   if (IsHeader)
     Preamble = "#pragma once\n";
   Preamble += "struct objc_selector; struct objc_class;\n";
-  Preamble += "struct __rw_objc_super { struct objc_object *object; ";
-  Preamble += "struct objc_object *superClass; ";
+  Preamble += "struct __rw_objc_super { \n\tstruct objc_object *object; ";
+  Preamble += "\n\tstruct objc_object *superClass; ";
+  // Add a constructor for creating temporary objects.
+  Preamble += "\n\t__rw_objc_super(struct objc_object *o, struct objc_object *s) ";
+  Preamble += ": object(o), superClass(s) {} ";
+  Preamble += "\n};\n";
+  
   if (LangOpts.MicrosoftExt) {
     // Define all sections using syntax that makes sense.
     // These are currently generated.
@@ -5640,12 +5645,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#pragma section(\".objc_classrefs$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_superrefs$B\", long, read, write)\n";
     
-    // Add a constructor for creating temporary objects.
-    Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) "
-    ": ";
-    Preamble += "object(o), superClass(s) {} ";
   }
-  Preamble += "};\n";
   Preamble += "#ifndef _REWRITER_typedef_Protocol\n";
   Preamble += "typedef struct objc_object Protocol;\n";
   Preamble += "#define _REWRITER_typedef_Protocol\n";
