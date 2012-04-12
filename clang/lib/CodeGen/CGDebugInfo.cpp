@@ -2009,12 +2009,13 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     }
     Name = getFunctionName(FD);
     // Use mangled name as linkage name for c/c++ functions.
-    if (!Fn->hasInternalLinkage())
+    if (FD->hasPrototype()) {
       LinkageName = CGM.getMangledName(GD);
+      Flags |= llvm::DIDescriptor::FlagPrototyped;
+    }
     if (LinkageName == Name)
       LinkageName = StringRef();
-    if (FD->hasPrototype())
-      Flags |= llvm::DIDescriptor::FlagPrototyped;
+
     if (const NamespaceDecl *NSDecl =
         dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
       FDContext = getOrCreateNameSpace(NSDecl);
