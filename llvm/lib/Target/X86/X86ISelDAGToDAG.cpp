@@ -1852,25 +1852,11 @@ static bool HasNoSignedComparisonUses(SDNode *N) {
 /// is suitable for doing the {load; increment or decrement; store} to modify
 /// transformation.
 static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc, 
-                                SDValue &StoredVal) {
+                                SDValue StoredVal, SelectionDAG *CurDAG,
+                                LoadSDNode* &LoadNode, SDValue &InputChain) {
 
   // is the value stored the result of a DEC or INC?
   if (!(Opc == X86ISD::DEC || Opc == X86ISD::INC)) return false;
-
-  // is the chain predecessor to the store a load?
-  SDValue Chain = StoreNode->getChain();
-  if (Chain->getOpcode() != ISD::LOAD) return false;
-  
-  // is the size of the value one that we can handle? (i.e. 64, 32, 16, or 8)
-  LoadSDNode *LoadNode = cast<LoadSDNode>(Chain.getNode());
-  EVT LdVT = LoadNode->getMemoryVT();    
-  if (LdVT != MVT::i64 && LdVT != MVT::i32 && LdVT != MVT::i16 && 
-      LdVT != MVT::i8)
-    return false;
-
-  // quick check of whether the store is simple
-  SDValue Undef = StoreNode->getOffset();
-  if (Undef->getOpcode() != ISD::UNDEF) return false;
 
   // is the stored value result 0 of the load?
   if (StoredVal.getResNo() != 0) return false;
@@ -1878,32 +1864,57 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
   // are there other uses of the loaded value than the inc or dec?
   if (!StoredVal.getNode()->hasNUsesOfValue(1, 0)) return false;
 
-  // is there exactly one use of the load?
-  if (!LoadNode->hasNUsesOfValue(1, 0)) return false;
-  
-  // are the load and store connected by the chain?
-  if (StoredVal->getOperand(0).getNode() != LoadNode) return false;
-
-  //OPC_CheckPredicate, 1, // Predicate_nontemporalstore
-  if (StoreNode->isNonTemporal())
-    return false;
-
-  // is the address of the store the same as the load?
-  SDValue Address = StoreNode->getBasePtr();
-  if (LoadNode->getBasePtr() != Address ||
-      LoadNode->getOffset() != Undef)
-    return false;
-
-  // is the load non-extending and non-indexed?
-  if (!ISD::isNormalLoad(LoadNode))
-    return false;
-
   // is the store non-extending and non-indexed?
-  if (!ISD::isNormalStore(StoreNode))
+  if (!ISD::isNormalStore(StoreNode) || StoreNode->isNonTemporal())
     return false;
 
-  // check load chain has only one use (from the store)
-  if (!Chain.hasOneUse())
+  SDValue Load = StoredVal->getOperand(0);
+  // Is the stored value a non-extending and non-indexed load?
+  if (!ISD::isNormalLoad(Load.getNode())) return false;
+
+  // Return LoadNode by reference.
+  LoadNode = cast<LoadSDNode>(Load);
+  // is the size of the value one that we can handle? (i.e. 64, 32, 16, or 8)
+  EVT LdVT = LoadNode->getMemoryVT();    
+  if (LdVT != MVT::i64 && LdVT != MVT::i32 && LdVT != MVT::i16 && 
+      LdVT != MVT::i8)
+    return false;
+
+  // Is store the only read of the loaded value?
+  if (!Load.hasOneUse())
+    return false;
+  
+  // Is the address of the store the same as the load?
+  if (LoadNode->getBasePtr() != StoreNode->getBasePtr() ||
+      LoadNode->getOffset() != StoreNode->getOffset())
+    return false;
+
+  // Check if the chain is produced by the load or is a TokenFactor with
+  // the load output chain as an operand. Return InputChain by reference.
+  SDValue Chain = StoreNode->getChain();
+
+  bool ChainCheck = false;
+  if (Chain == Load.getValue(1)) {
+    ChainCheck = true;
+    InputChain = LoadNode->getChain();
+  } else if (Chain.getOpcode() == ISD::TokenFactor) {
+    SmallVector<SDValue, 4> ChainOps;
+    for (unsigned i = 0, e = Chain.getNumOperands(); i != e; ++i) {
+      SDValue Op = Chain.getOperand(i);
+      if (Op == Load.getValue(1)) {
+        ChainCheck = true;
+        continue;
+      }
+      ChainOps.push_back(Op);
+    }
+
+    if (ChainCheck)
+      // Make a new TokenFactor with all the other input chains except
+      // for the load.
+      InputChain = CurDAG->getNode(ISD::TokenFactor, Chain.getDebugLoc(),
+                                   MVT::Other, &ChainOps[0], ChainOps.size());
+  }
+  if (!ChainCheck)
     return false;
 
   return true;
@@ -2455,12 +2466,11 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue StoredVal = StoreNode->getOperand(1);
     unsigned Opc = StoredVal->getOpcode();
 
-    if (!isLoadIncOrDecStore(StoreNode, Opc, StoredVal)) break;
-
-    // Merge the input chains if they are not intra-pattern references.
-    SDValue Chain = StoreNode->getOperand(0);
-    LoadSDNode *LoadNode = cast<LoadSDNode>(Chain.getNode());
-    SDValue InputChain = LoadNode->getOperand(0);
+    LoadSDNode *LoadNode = 0;
+    SDValue InputChain;
+    if (!isLoadIncOrDecStore(StoreNode, Opc, StoredVal, CurDAG,
+                             LoadNode, InputChain))
+      break;
 
     SDValue Base, Scale, Index, Disp, Segment;
     if (!SelectAddr(LoadNode, LoadNode->getBasePtr(),
