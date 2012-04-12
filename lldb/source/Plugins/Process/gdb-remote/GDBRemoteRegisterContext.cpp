@@ -21,6 +21,7 @@
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
 #include "ProcessGDBRemote.h"
+#include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
 #include "Utility/ARM_GCC_Registers.h"
 #include "Utility/ARM_DWARF_Registers.h"
@@ -181,7 +182,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
     if (!m_reg_valid[reg])
     {
         Mutex::Locker locker;
-        if (gdb_comm.GetSequenceMutex (locker, 0))
+        if (gdb_comm.GetSequenceMutex (locker))
         {
             const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
             ProcessSP process_sp (m_thread.GetProcess());
@@ -240,6 +241,12 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
                     }
                 }
             }
+        }
+        else
+        {
+            LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+            if (log)
+                log->Printf("error: failed to get packet sequence mutex, not sending read register for \"%s\"", reg_info->name);
         }
 
         // Make sure we got a valid register value after reading it
@@ -331,7 +338,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                                   m_reg_data.GetByteOrder()))   // dst byte order
     {
         Mutex::Locker locker;
-        if (gdb_comm.GetSequenceMutex (locker, 0))
+        if (gdb_comm.GetSequenceMutex (locker))
         {
             const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
             ProcessSP process_sp (m_thread.GetProcess());
@@ -420,6 +427,12 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                 }
             }
         }
+        else
+        {
+            LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+            if (log)
+                log->Printf("error: failed to get packet sequence mutex, not sending write register for \"%s\"", reg_info->name);
+        }
     }
     return false;
 }
@@ -440,7 +453,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     StringExtractorGDBRemote response;
 
     Mutex::Locker locker;
-    if (gdb_comm.GetSequenceMutex (locker, 0))
+    if (gdb_comm.GetSequenceMutex (locker))
     {
         char packet[32];
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
@@ -475,6 +488,13 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
             }
         }
     }
+    else
+    {
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+        if (log)
+            log->Printf("error: failed to get packet sequence mutex, not sending read all registers");
+    }
+
     data_sp.reset();
     return false;
 }
@@ -496,7 +516,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
 
     StringExtractorGDBRemote response;
     Mutex::Locker locker;
-    if (gdb_comm.GetSequenceMutex (locker, 0))
+    if (gdb_comm.GetSequenceMutex (locker))
     {
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
         ProcessSP process_sp (m_thread.GetProcess());
@@ -591,6 +611,12 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                 }
             }
         }
+    }
+    else
+    {
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
+        if (log)
+            log->Printf("error: failed to get packet sequence mutex, not sending write all registers");
     }
     return false;
 }

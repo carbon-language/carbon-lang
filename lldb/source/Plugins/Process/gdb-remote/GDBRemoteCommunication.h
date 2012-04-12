@@ -59,7 +59,7 @@ public:
                         size_t payload_length);
 
     bool
-    GetSequenceMutex (lldb_private::Mutex::Locker& locker, uint32_t usec_timeout);
+    GetSequenceMutex (lldb_private::Mutex::Locker& locker);
 
     bool
     CheckForPacket (const uint8_t *src, 

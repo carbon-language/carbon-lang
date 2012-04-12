@@ -225,14 +225,9 @@ GDBRemoteCommunication::GetAck ()
 }
 
 bool
-GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker, uint32_t usec_timeout)
+GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker)
 {
-    if (usec_timeout == 0)
-        return locker.TryLock (m_sequence_mutex.GetMutex());
-    
-    // Wait for the lock
-    locker.Lock (m_sequence_mutex.GetMutex());
-    return true;
+    return locker.TryLock (m_sequence_mutex.GetMutex());
 }
 
 

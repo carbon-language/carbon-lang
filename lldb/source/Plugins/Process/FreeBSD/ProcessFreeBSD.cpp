@@ -131,11 +131,11 @@ ProcessFreeBSD::Terminate()
 {
 }
 
-uint32_t
+bool
 ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // XXX haxx
     new_thread_list = old_thread_list;
   
-    return 0;
+    return false;
 }

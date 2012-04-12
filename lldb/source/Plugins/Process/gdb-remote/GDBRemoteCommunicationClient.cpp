@@ -259,7 +259,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     Mutex::Locker locker;
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     size_t response_len = 0;
-    if (GetSequenceMutex (locker, 0))
+    if (GetSequenceMutex (locker))
     {
         if (SendPacketNoLock (payload, payload_length))
            response_len = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
@@ -350,7 +350,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
         else
         {
             if (log) 
-                log->Printf("error: packet mutex taken and send_async == false, not sending packet '%*s'", (int) payload_length, payload);
+                log->Printf("error: failed to get packet sequence mutex, not sending packet '%*s'", (int) payload_length, payload);
         }
     }
     if (response_len == 0)
@@ -648,7 +648,7 @@ GDBRemoteCommunicationClient::SendInterrupt
     if (IsRunning())
     {
         // Only send an interrupt if our debugserver is running...
-        if (GetSequenceMutex (locker, 0))
+        if (GetSequenceMutex (locker))
         {
             if (log)
                 log->Printf ("SendInterrupt () - got sequence mutex without having to interrupt");
@@ -1843,7 +1843,7 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     Mutex::Locker locker;
     thread_ids.clear();
     
-    if (GetSequenceMutex (locker, 0))
+    if (GetSequenceMutex (locker))
     {
         sequence_mutex_unavailable = false;
         StringExtractorGDBRemote response;
@@ -1872,6 +1872,9 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     }
     else
     {
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
+        if (log)
+            log->Printf("error: failed to get packet sequence mutex, not sending packet 'qfThreadInfo'");
         sequence_mutex_unavailable = true;
     }
     return thread_ids.size();

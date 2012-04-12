@@ -489,7 +489,7 @@ ProcessPOSIX::UpdateThreadListIfNeeded()
     return m_thread_list.GetSize(false);
 }
 
-uint32_t
+bool
 ProcessPOSIX::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
@@ -509,7 +509,7 @@ ProcessPOSIX::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thre
         log->Printf ("ProcessPOSIX::%s() updated pid = %i", __FUNCTION__, GetID());
     new_thread_list.AddThread(thread_sp);
 
-    return new_thread_list.GetSize(false);
+    return new_thread_list.GetSize(false) > 0;
 }
 
 ByteOrder
