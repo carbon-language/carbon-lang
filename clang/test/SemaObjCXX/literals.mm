@@ -1,6 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x -fblocks %s
 
-typedef unsigned char BOOL;
+// rdar://11231426
+typedef bool BOOL;
+
+void y(BOOL (^foo)());
+
+void x() {
+    y(^{
+        return __objc_yes;
+    });
+}
 
 @protocol NSCopying
 - copy;

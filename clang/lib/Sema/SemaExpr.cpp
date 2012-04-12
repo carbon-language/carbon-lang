@@ -11259,6 +11259,18 @@ ExprResult
 Sema::ActOnObjCBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind == tok::kw___objc_yes || Kind == tok::kw___objc_no) &&
          "Unknown Objective-C Boolean value!");
+  QualType ObjCBoolLiteralQT = Context.ObjCBuiltinBoolTy;
+  // signed char is the default type for boolean literals. Use 'BOOL'
+  // instead, if BOOL typedef is visible in its scope instead.
+  Decl *TD = 
+    LookupSingleName(TUScope, &Context.Idents.get("BOOL"), 
+                     SourceLocation(), LookupOrdinaryName);
+  if (TypeDecl *BoolTD = dyn_cast_or_null<TypeDecl>(TD)) {
+    QualType QT = QualType(BoolTD->getTypeForDecl(), 0);
+    if (!QT.isNull())
+      ObjCBoolLiteralQT = QT;
+  }
+  
   return Owned(new (Context) ObjCBoolLiteralExpr(Kind == tok::kw___objc_yes,
-                                        Context.ObjCBuiltinBoolTy, OpLoc));
+                                        ObjCBoolLiteralQT, OpLoc));
 }
