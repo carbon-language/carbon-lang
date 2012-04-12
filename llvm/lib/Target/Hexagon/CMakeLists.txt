@@ -27,7 +27,7 @@ add_llvm_target(HexagonCodeGen
   HexagonSplitTFRCondSets.cpp
   HexagonSubtarget.cpp
   HexagonTargetMachine.cpp
-  HexagonTargetObjectFile.cpp
+  HexagonVLIWPacketizer.cpp
 )
 
 add_subdirectory(TargetInfo)
