@@ -1547,6 +1547,9 @@ def warn_objc_redundant_literal_use : Warning<
   "using %0 with a literal is redundant">, InGroup<ObjCRedundantLiteralUse>;
 }
 
+def warn_bool_for_boolean_literal : Warning<
+  "BOOL of type %0 is non-intergal and unsuitable for a "
+  "boolean literal - ignored">, InGroup<DiagGroup<"numeric-literals">>;
 def err_only_annotate_after_access_spec : Error<
   "access specifier can only have annotation attributes">;
 def err_attribute_section_invalid_for_target : Error<

@@ -11270,9 +11270,13 @@ Sema::ActOnObjCBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   Decl *TD = 
     LookupSingleName(TUScope, &Context.Idents.get("BOOL"), 
                      SourceLocation(), LookupOrdinaryName);
-  if (TypeDecl *BoolTD = dyn_cast_or_null<TypeDecl>(TD)) {
-    QualType QT = QualType(BoolTD->getTypeForDecl(), 0);
-    if (!QT.isNull())
+  if (TypedefDecl *BoolTD = dyn_cast_or_null<TypedefDecl>(TD)) {
+    QualType QT = BoolTD->getUnderlyingType();
+    if (!QT->isIntegralOrUnscopedEnumerationType()) {
+      Diag(OpLoc, diag::warn_bool_for_boolean_literal) << QT;
+      Diag(BoolTD->getLocation(), diag::note_previous_declaration);
+    }
+    else
       ObjCBoolLiteralQT = QT;
   }
   
