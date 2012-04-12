@@ -15,4 +15,7 @@
 /* Directories clang will search for headers */
 #undef C_INCLUDE_DIRS
 
+/* Linker version detected at compile time. */
+#undef HOST_LINK_VERSION
+
 #endif
