@@ -88,7 +88,7 @@ void CompilerInstance::setASTConsumer(ASTConsumer *Value) {
 
 void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
   CompletionConsumer.reset(Value);
-  getFrontendOpts().SkipFunctionBodies = true;
+  getFrontendOpts().SkipFunctionBodies = Value != 0;
 }
 
 // Diagnostics
@@ -384,7 +384,7 @@ static bool EnableCodeCompletion(Preprocessor &PP,
 void CompilerInstance::createCodeCompletionConsumer() {
   const ParsedSourceLocation &Loc = getFrontendOpts().CodeCompletionAt;
   if (!CompletionConsumer) {
-    CompletionConsumer.reset(
+    setCodeCompletionConsumer(
       createCodeCompletionConsumer(getPreprocessor(),
                                    Loc.FileName, Loc.Line, Loc.Column,
                                    getFrontendOpts().ShowMacrosInCodeCompletion,
@@ -395,14 +395,14 @@ void CompilerInstance::createCodeCompletionConsumer() {
       return;
   } else if (EnableCodeCompletion(getPreprocessor(), Loc.FileName,
                                   Loc.Line, Loc.Column)) {
-    CompletionConsumer.reset();
+    setCodeCompletionConsumer(0);
     return;
   }
 
   if (CompletionConsumer->isOutputBinary() &&
       llvm::sys::Program::ChangeStdoutToBinary()) {
     getPreprocessor().getDiagnostics().Report(diag::err_fe_stdout_binary);
-    CompletionConsumer.reset();
+    setCodeCompletionConsumer(0);
   }
 }
 
