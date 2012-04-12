@@ -17,8 +17,13 @@ SubDirs += i386 ppc x86_64 arm
 SubDirs += asan
 SubDirs += profile
 
+# FIXME: We don't currently support building an atomic library, and as it must
+# be a separate library from the runtime library, we need to remove its source
+# code from the source files list.
+ExcludedSources := atomic.c
+
 # Define the variables for this specific directory.
-Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
+Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(filter-out $(ExcludedSources),$(notdir $(file))))
 ObjNames := $(Sources:%.c=%.o)
 Implementation := Generic
 
