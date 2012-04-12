@@ -5659,6 +5659,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                     type_sp = type_ptr->shared_from_this();
                                                     break;
                                                 }
+                                                
+                                                // FIXME This is fixing some even uglier behavior but we really need to
+                                                // uniq the methods of each class as well as the class itself.
+                                                // <rdar://problem/11240464>
+                                                type_handled = true;
                                             }
                                         }
                                     }
