@@ -775,6 +775,7 @@ public:
   // dominates - Return true if Def dominates a use in User. This performs
   // the special checks necessary if Def and User are in the same basic block.
   // Note that Def doesn't dominate a use in Def itself!
+  bool dominates(const Instruction *Def, const Use &U) const;
   bool dominates(const Instruction *Def, const Instruction *User) const;
   bool dominates(const Instruction *Def, const BasicBlock *BB) const;
 
@@ -842,6 +843,8 @@ public:
   bool isReachableFromEntry(const BasicBlock* A) const {
     return DT->isReachableFromEntry(A);
   }
+
+  bool isReachableFromEntry(const Use &U) const;
 
 
   virtual void releaseMemory() {

@@ -184,3 +184,84 @@ bool DominatorTree::dominates(const Instruction *Def,
   }
   return true;
 }
+
+bool DominatorTree::dominates(const Instruction *Def,
+                              const Use &U) const {
+  Instruction *UserInst = dyn_cast<Instruction>(U.getUser());
+
+  // All non-instructions conceptually dominate everything. Instructions do
+  // not dominate non-instructions.
+  if (!UserInst)
+    return !isa<Instruction>(Def);
+
+  const BasicBlock *DefBB = Def->getParent();
+
+  // Determine the block in which the use happens. PHI nodes use
+  // their operands on edges; simulate this by thinking of the use
+  // happening at the end of the predecessor block.
+  const BasicBlock *UseBB;
+  if (PHINode *PN = dyn_cast<PHINode>(UserInst))
+    UseBB = PN->getIncomingBlock(U);
+  else
+    UseBB = UserInst->getParent();
+
+  // Any unreachable use is dominated, even if Def == User.
+  if (!isReachableFromEntry(UseBB))
+    return true;
+
+  // Unreachable definitions don't dominate anything.
+  if (!isReachableFromEntry(DefBB))
+    return false;
+
+  // Invoke instructions define their return values on the edges
+  // to their normal successors, so we have to handle them specially.
+  // Among other things, this means they don't dominate anything in
+  // their own block, except possibly a phi, so we don't need to
+  // walk the block in any case.
+  if (const InvokeInst *II = dyn_cast<InvokeInst>(Def)) {
+    // A PHI in the normal successor using the invoke's return value is
+    // dominated by the invoke's return value.
+    if (isa<PHINode>(UserInst) &&
+        UserInst->getParent() == II->getNormalDest() &&
+        cast<PHINode>(UserInst)->getIncomingBlock(U) == DefBB)
+      return true;
+
+    // Otherwise use the instruction-dominates-block query, which
+    // handles the crazy case of an invoke with a critical edge
+    // properly.
+    return dominates(Def, UseBB);
+  }
+
+  // If the def and use are in different blocks, do a simple CFG dominator
+  // tree query.
+  if (DefBB != UseBB)
+    return dominates(DefBB, UseBB);
+
+  // Ok, def and use are in the same block. If the def is an invoke, it
+  // doesn't dominate anything in the block. If it's a PHI, it dominates
+  // everything in the block.
+  if (isa<PHINode>(UserInst))
+    return true;
+
+  // Otherwise, just loop through the basic block until we find Def or User.
+  BasicBlock::const_iterator I = DefBB->begin();
+  for (; &*I != Def && &*I != UserInst; ++I)
+    /*empty*/;
+
+  return &*I != UserInst;
+}
+
+bool DominatorTree::isReachableFromEntry(const Use &U) const {
+  Instruction *I = dyn_cast<Instruction>(U.getUser());
+
+  // ConstantExprs aren't really reachable from the entry block, but they
+  // don't need to be treated like unreachable code either.
+  if (!I) return true;
+
+  // PHI nodes use their operands on their incoming edges.
+  if (PHINode *PN = dyn_cast<PHINode>(I))
+    return isReachableFromEntry(PN->getIncomingBlock(U));
+
+  // Everything else uses their operands in their own block.
+  return isReachableFromEntry(I->getParent());
+}
