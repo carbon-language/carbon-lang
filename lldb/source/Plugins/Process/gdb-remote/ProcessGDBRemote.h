@@ -293,7 +293,8 @@ protected:
     enum
     {
         eBroadcastBitAsyncContinue                  = (1 << 0),
-        eBroadcastBitAsyncThreadShouldExit          = (1 << 1)
+        eBroadcastBitAsyncThreadShouldExit          = (1 << 1),
+        eBroadcastBitAsyncThreadDidExit             = (1 << 2)
     };
 
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)

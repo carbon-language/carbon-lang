@@ -2465,8 +2465,7 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
         case eStateCrashed:
             {
                 // During attach, prior to sending the eStateStopped event, 
-                // lldb_private::Process subclasses must set the process must set
-                // the new process ID.
+                // lldb_private::Process subclasses must set the new process ID.
                 assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
                 if (m_exec_count > 0)
                 {
@@ -2943,6 +2942,11 @@ Process::Destroy ()
             m_target.GetDebugger().PopInputReader (m_process_input_reader);
         if (m_process_input_reader)
             m_process_input_reader.reset();
+            
+        // If we have been interrupted (to kill us) in the middle of running, we may not end up propagating
+        // the last events through the event system, in which case we might strand the write lock.  Unlock
+        // it here so when we do to tear down the process we don't get an error destroying the lock.
+        m_run_lock.WriteUnlock();
     }
     return error;
 }
@@ -3133,12 +3137,18 @@ Process::StopPrivateStateThread ()
 {
     if (PrivateStateThreadIsValid ())
         ControlPrivateStateThread (eBroadcastInternalStateControlStop);
+    else
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+        if (log)
+            printf ("Went to stop the private state thread, but it was already invalid.");
+    }
 }
 
 void
 Process::ControlPrivateStateThread (uint32_t signal)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS));
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     assert (signal == eBroadcastInternalStateControlStop ||
             signal == eBroadcastInternalStateControlPause ||
@@ -3160,18 +3170,35 @@ Process::ControlPrivateStateThread (uint32_t signal)
 
         timeout_time = TimeValue::Now();
         timeout_time.OffsetWithSeconds(2);
+        if (log)
+            log->Printf ("Sending control event of type: %d.", signal);
         m_private_state_control_wait.WaitForValueEqualTo (true, &timeout_time, &timed_out);
         m_private_state_control_wait.SetValue (false, eBroadcastNever);
 
         if (signal == eBroadcastInternalStateControlStop)
         {
             if (timed_out)
-                Host::ThreadCancel (private_state_thread, NULL);
+            {
+                Error error;
+                Host::ThreadCancel (private_state_thread, &error);
+                if (log)
+                    log->Printf ("Timed out responding to the control event, cancel got error: \"%s\".", error.AsCString());
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("The control event killed the private state thread without having to cancel.");
+            }
 
             thread_result_t result = NULL;
             Host::ThreadJoin (private_state_thread, &result, NULL);
             m_private_state_thread = LLDB_INVALID_HOST_THREAD;
         }
+    }
+    else
+    {
+        if (log)
+            log->Printf ("Private state thread already dead, no need to signal it to stop.");
     }
 }
 
@@ -3258,7 +3285,7 @@ void *
 Process::RunPrivateStateThread ()
 {
     bool control_only = true;
-    m_private_state_control_wait.SetValue (true, eBroadcastNever);
+    m_private_state_control_wait.SetValue (false, eBroadcastNever);
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
@@ -3271,11 +3298,13 @@ Process::RunPrivateStateThread ()
         WaitForEventsPrivate (NULL, event_sp, control_only);
         if (event_sp->BroadcasterIs(&m_private_state_control_broadcaster))
         {
+            if (log)
+                log->Printf ("Process::%s (arg = %p, pid = %llu) got a control event: %d", __FUNCTION__, this, GetID(), event_sp->GetType());
+
             switch (event_sp->GetType())
             {
             case eBroadcastInternalStateControlStop:
                 exit_now = true;
-                continue;   // Go to next loop iteration so we exit without
                 break;      // doing any internal state managment below
 
             case eBroadcastInternalStateControlPause:
@@ -3287,9 +3316,6 @@ Process::RunPrivateStateThread ()
                 break;
             }
             
-            if (log)
-                log->Printf ("Process::%s (arg = %p, pid = %llu) got a control event: %d", __FUNCTION__, this, GetID(), event_sp->GetType());
-
             m_private_state_control_wait.SetValue (true, eBroadcastAlways);
             continue;
         }

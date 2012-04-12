@@ -175,6 +175,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
+    m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadDidExit,      "async thread did exit");
 }
 
 //----------------------------------------------------------------------
@@ -927,6 +928,8 @@ ProcessGDBRemote::DoResume ()
     Listener listener ("gdb-remote.resume-packet-sent");
     if (listener.StartListeningForEvents (&m_gdb_comm, GDBRemoteCommunication::eBroadcastBitRunPacketSent))
     {
+        listener.StartListeningForEvents (&m_async_broadcaster, ProcessGDBRemote::eBroadcastBitAsyncThreadDidExit);
+        
         StreamString continue_packet;
         bool continue_packet_error = false;
         if (m_gdb_comm.HasAnyVContSupport ())
@@ -1122,10 +1125,29 @@ ProcessGDBRemote::DoResume ()
             TimeValue timeout;
             timeout = TimeValue::Now();
             timeout.OffsetWithSeconds (5);
+            if (!IS_VALID_LLDB_HOST_THREAD(m_async_thread))
+            {
+                error.SetErrorString ("Trying to resume but the async thread is dead.");
+                if (log)
+                    log->Printf ("ProcessGDBRemote::DoResume: Trying to resume but the async thread is dead.");
+                return error;
+            }
+            
             m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (continue_packet.GetData(), continue_packet.GetSize()));
 
             if (listener.WaitForEvent (&timeout, event_sp) == false)
+            {
                 error.SetErrorString("Resume timed out.");
+                if (log)
+                    log->Printf ("ProcessGDBRemote::DoResume: Resume timed out.");
+            }
+            else if (event_sp->BroadcasterIs (&m_async_broadcaster))
+            {
+                error.SetErrorString ("Broadcast continue, but the async thread was killed before we got an ack back.");
+                if (log)
+                    log->Printf ("ProcessGDBRemote::DoResume: Broadcast continue, but the async thread was killed before we got an ack back.");
+                return error;
+            }
         }
     }
 
