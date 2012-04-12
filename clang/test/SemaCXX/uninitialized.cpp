@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wall -Wuninitialized -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wall -Wuninitialized -std=c++11 -verify %s
 
 int foo(int x);
 int bar(int* x);
@@ -162,3 +162,8 @@ int pr12325(int params) {
   return x;
 }
 
+// Test lambda expressions with -Wuninitialized
+int test_lambda() {
+  auto f1 = [] (int x, int y) { int z; return x + y + z; }; // expected-warning {{C++11 requires lambda with omitted result type to consist of a single return statement}} expected-warning{{variable 'z' is uninitialized when used here}} expected-note {{initialize the variable 'z' to silence this warning}}
+  return f1(1, 2);
+}
