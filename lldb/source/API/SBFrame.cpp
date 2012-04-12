@@ -86,7 +86,9 @@ SBFrame::~SBFrame()
 StackFrameSP
 SBFrame::GetFrameSP() const
 {
-    return m_opaque_sp->GetFrameSP();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetFrameSP();
+    return StackFrameSP();
 }
 
 void
@@ -497,7 +499,7 @@ SBFrame::GetPCAddress () const
 void
 SBFrame::Clear()
 {
-    m_opaque_sp.reset();
+    m_opaque_sp->Clear();
 }
 
 lldb::SBValue
