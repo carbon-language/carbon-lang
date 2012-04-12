@@ -116,6 +116,9 @@ public:
     // twiddled.
     if ((unsigned)Fixup.getKind() != ARM::fixup_arm_ldst_pcrel_12 &&
         (unsigned)Fixup.getKind() != ARM::fixup_t2_ldst_pcrel_12 &&
+        (unsigned)Fixup.getKind() != ARM::fixup_arm_adr_pcrel_12 &&
+        (unsigned)Fixup.getKind() != ARM::fixup_thumb_adr_pcrel_10 &&
+        (unsigned)Fixup.getKind() != ARM::fixup_t2_adr_pcrel_12 &&
         (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
       if (A) {
         const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
