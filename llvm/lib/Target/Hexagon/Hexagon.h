@@ -17,10 +17,14 @@
 
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
   class FunctionPass;
   class TargetMachine;
+  class MachineInstr;
+  class MCInst;
+  class HexagonAsmPrinter;
   class HexagonTargetMachine;
   class raw_ostream;
 
@@ -30,13 +34,23 @@ namespace llvm {
   FunctionPass *createHexagonRemoveExtendOps(HexagonTargetMachine &TM);
   FunctionPass *createHexagonCFGOptimizer(HexagonTargetMachine &TM);
 
-  FunctionPass* createHexagonSplitTFRCondSets(HexagonTargetMachine &TM);
-  FunctionPass* createHexagonExpandPredSpillCode(HexagonTargetMachine &TM);
+  FunctionPass *createHexagonSplitTFRCondSets(HexagonTargetMachine &TM);
+  FunctionPass *createHexagonExpandPredSpillCode(HexagonTargetMachine &TM);
 
   FunctionPass *createHexagonHardwareLoops();
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonFixupHwLoops();
 
+/* TODO: object output.
+  MCCodeEmitter *createHexagonMCCodeEmitter(const Target &,
+                                            TargetMachine &TM,
+                                            MCContext &Ctx);
+*/
+/* TODO: assembler input.
+  TargetAsmBackend *createHexagonAsmBackend(const Target &, const std::string &);
+*/
+  void HexagonLowerToMC(const MachineInstr *MI, MCInst &MCI,
+                        HexagonAsmPrinter &AP);
 } // end namespace llvm;
 
 #define Hexagon_POINTER_SIZE 4
@@ -49,5 +63,11 @@ namespace llvm {
 // allocframe saves LR and FP on stack before allocating
 // a new stack frame. This takes 8 bytes.
 #define HEXAGON_LRFP_SIZE 8
+
+// Normal instruction size (in bytes).
+#define HEXAGON_INSTR_SIZE 4
+
+// Maximum number of words in a packet (in instructions).
+#define HEXAGON_PACKET_SIZE 4
 
 #endif

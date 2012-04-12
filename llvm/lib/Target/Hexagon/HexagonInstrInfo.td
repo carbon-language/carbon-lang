@@ -40,24 +40,24 @@ def ADDRriU6_2 : ComplexPattern<i32, 2, "SelectADDRriU6_2", [frameindex], []>;
 
 // Address operands.
 def MEMrr : Operand<i32> {
-  let PrintMethod = "printHexagonMEMrrOperand";
+  let PrintMethod = "printMEMrrOperand";
   let MIOperandInfo = (ops IntRegs, IntRegs);
 }
 
 // Address operands
 def MEMri : Operand<i32> {
-  let PrintMethod = "printHexagonMEMriOperand";
+  let PrintMethod = "printMEMriOperand";
   let MIOperandInfo = (ops IntRegs, IntRegs);
 }
 
 def MEMri_s11_2 : Operand<i32>,
   ComplexPattern<i32, 2, "SelectMEMriS11_2", []> {
-  let PrintMethod = "printHexagonMEMriOperand";
+  let PrintMethod = "printMEMriOperand";
   let MIOperandInfo = (ops IntRegs, s11Imm);
 }
 
 def FrameIndex : Operand<i32> {
-  let PrintMethod = "printHexagonFrameIndexOperand";
+  let PrintMethod = "printFrameIndexOperand";
   let MIOperandInfo = (ops IntRegs, s11Imm);
 }
 

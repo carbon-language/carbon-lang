@@ -1,4 +1,4 @@
-;===- ./lib/Target/Hexagon/LLVMBuild.txt -----------------------*- Conf -*--===;
+;===- ./lib/Target/Hexagon/InstPrinter/LLVMBuild.txt -----------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,18 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = InstPrinter MCTargetDesc TargetInfo
-
 [component_0]
-type = TargetGroup
-name = Hexagon
-parent = Target
-has_asmprinter = 1
-
-[component_1]
 type = Library
-name = HexagonCodeGen
+name = HexagonAsmPrinter
 parent = Hexagon
-required_libraries = AsmPrinter CodeGen Core HexagonAsmPrinter HexagonDesc HexagonInfo MC SelectionDAG Support Target
+required_libraries = MC Support
 add_to_library_groups = Hexagon

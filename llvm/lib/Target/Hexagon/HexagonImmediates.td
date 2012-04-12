@@ -10,211 +10,211 @@
 // From IA64's InstrInfo file
 def s32Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s16Imm : Operand<i32> {
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s12Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s11Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s11_0Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s11_1Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s11_2Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s11_3Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s10Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s9Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s8Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s8Imm64 : Operand<i64> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s6Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s4Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s4_0Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s4_1Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s4_2Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def s4_3Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u64Imm : Operand<i64> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u32Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u16Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u16_0Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u16_1Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u16_2Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u11_3Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u10Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u9Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u8Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u7Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u6Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u6_0Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u6_1Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u6_2Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u6_3Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u5Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u4Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u3Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u2Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def u1Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def n8Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def m6Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
+  let PrintMethod = "printImmOperand";
 }
 
 def nOneImm : Operand<i32> {
   // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonNOneImmOperand";
+  let PrintMethod = "printNOneImmOperand";
 }
 
 //
@@ -494,7 +494,7 @@ def m6ImmPred  : PatLeaf<(i32 imm), [{
 
 //InN means negative integers in [-(2^N - 1), 0]
 def n8ImmPred  : PatLeaf<(i32 imm), [{
-  // n8ImmPred predicate - True if the immediate fits in a 8-bit unsigned
+  // n8ImmPred predicate - True if the immediate fits in a 8-bit signed
   // field.
   int64_t v = (int64_t)N->getSExtValue();
   return (-255 <= v && v <= 0);

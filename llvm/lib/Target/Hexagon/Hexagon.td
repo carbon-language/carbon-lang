@@ -39,10 +39,7 @@ include "HexagonInstrInfo.td"
 include "HexagonIntrinsics.td"
 include "HexagonIntrinsicsDerived.td"
 
-
-def HexagonInstrInfo : InstrInfo {
-  // Define how we want to layout our target-specific information field.
-}
+def HexagonInstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
 // Hexagon processors supported.
@@ -56,6 +53,13 @@ def : Proc<"hexagonv2", HexagonItineraries,   [ArchV2]>;
 def : Proc<"hexagonv3", HexagonItineraries,   [ArchV2, ArchV3]>;
 def : Proc<"hexagonv4", HexagonItinerariesV4, [ArchV2, ArchV3, ArchV4]>;
 
+// Hexagon Uses the MC printer for assembler output, so make sure the TableGen
+// AsmWriter bits get associated with the correct class.
+def HexagonAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
@@ -63,4 +67,6 @@ def : Proc<"hexagonv4", HexagonItinerariesV4, [ArchV2, ArchV3, ArchV4]>;
 def Hexagon : Target {
   // Pull in Instruction Info:
   let InstructionSet = HexagonInstrInfo;
+
+  let AssemblyWriters = [HexagonAsmWriter];
 }
