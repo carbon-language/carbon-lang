@@ -1294,10 +1294,10 @@ static bool IsVectorConversion(ASTContext &Context, QualType FromType,
   return false;
 }
 
-static bool isAtomicConversion(Sema &S, Expr *From, QualType ToType,
-                               bool InOverloadResolution,
-                               StandardConversionSequence &SCS,
-                               bool CStyle);
+static bool tryAtomicConversion(Sema &S, Expr *From, QualType ToType,
+                                bool InOverloadResolution,
+                                StandardConversionSequence &SCS,
+                                bool CStyle);
   
 /// IsStandardConversion - Determines whether there is a standard
 /// conversion sequence (C++ [conv], C++ [over.ics.scs]) from the
@@ -1531,9 +1531,9 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                              SCS, CStyle)) {
     SCS.Second = ICK_TransparentUnionConversion;
     FromType = ToType;
-  } else if (isAtomicConversion(S, From, ToType, InOverloadResolution, SCS,
-                                CStyle)) {
-    // isAtomicConversion has updated the standard conversion sequence 
+  } else if (tryAtomicConversion(S, From, ToType, InOverloadResolution, SCS,
+                                 CStyle)) {
+    // tryAtomicConversion has updated the standard conversion sequence
     // appropriately.
     return true;
   } else {
@@ -2779,10 +2779,10 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
 ///
 /// If successful, updates \c SCS's second and third steps in the conversion
 /// sequence to finish the conversion.
-static bool isAtomicConversion(Sema &S, Expr *From, QualType ToType,
-                               bool InOverloadResolution,
-                               StandardConversionSequence &SCS,
-                               bool CStyle) {
+static bool tryAtomicConversion(Sema &S, Expr *From, QualType ToType,
+                                bool InOverloadResolution,
+                                StandardConversionSequence &SCS,
+                                bool CStyle) {
   const AtomicType *ToAtomic = ToType->getAs<AtomicType>();
   if (!ToAtomic)
     return false;
