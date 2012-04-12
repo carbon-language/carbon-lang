@@ -1601,7 +1601,7 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
                                           SC_None,
-                                          false, true);
+                                          false, false);
 
   CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
@@ -1672,7 +1672,7 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
                                           SC_None,
-                                          false, true);
+                                          false, false);
   CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
   if (byrefInfo.needsDispose()) {
