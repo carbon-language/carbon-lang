@@ -1202,7 +1202,7 @@ _mm256_loadu2_m128i(__m128i const *addr_hi, __m128i const *addr_lo)
 
 /* SIMD store ops (unaligned) */
 static __inline void __attribute__((__always_inline__, __nodebug__))
-_mm256_storeu2_m128(float const *addr_hi, float const *addr_lo, __m256 a)
+_mm256_storeu2_m128(float *addr_hi, float *addr_lo, __m256 a)
 {
   __m128 v128;
 
@@ -1213,7 +1213,7 @@ _mm256_storeu2_m128(float const *addr_hi, float const *addr_lo, __m256 a)
 }
 
 static __inline void __attribute__((__always_inline__, __nodebug__))
-_mm256_storeu2_m128d(double const *addr_hi, double const *addr_lo, __m256d a)
+_mm256_storeu2_m128d(double *addr_hi, double *addr_lo, __m256d a)
 {
   __m128d v128;
 
@@ -1224,7 +1224,7 @@ _mm256_storeu2_m128d(double const *addr_hi, double const *addr_lo, __m256d a)
 }
 
 static __inline void __attribute__((__always_inline__, __nodebug__))
-_mm256_storeu2_m128i(__m128i const *addr_hi, __m128i const *addr_lo, __m256i a)
+_mm256_storeu2_m128i(__m128i *addr_hi, __m128i *addr_lo, __m256i a)
 {
   __m128i v128;
 
