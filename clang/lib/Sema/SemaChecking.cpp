@@ -560,9 +560,11 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
   case AtomicExpr::AO__atomic_fetch_and:
   case AtomicExpr::AO__atomic_fetch_or:
   case AtomicExpr::AO__atomic_fetch_xor:
+  case AtomicExpr::AO__atomic_fetch_nand:
   case AtomicExpr::AO__atomic_and_fetch:
   case AtomicExpr::AO__atomic_or_fetch:
   case AtomicExpr::AO__atomic_xor_fetch:
+  case AtomicExpr::AO__atomic_nand_fetch:
     Form = Arithmetic;
     break;
 

@@ -74,6 +74,21 @@ int fi3b(int *i) {
   return __atomic_add_fetch(i, 1, memory_order_seq_cst);
 }
 
+int fi3c(int *i) {
+  // CHECK: @fi3c
+  // CHECK: atomicrmw nand
+  // CHECK-NOT: and
+  return __atomic_fetch_nand(i, 1, memory_order_seq_cst);
+}
+
+int fi3d(int *i) {
+  // CHECK: @fi3d
+  // CHECK: atomicrmw nand
+  // CHECK: and
+  // CHECK: xor
+  return __atomic_nand_fetch(i, 1, memory_order_seq_cst);
+}
+
 _Bool fi4(_Atomic(int) *i) {
   // CHECK: @fi4
   // CHECK: cmpxchg i32*

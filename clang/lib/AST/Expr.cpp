@@ -3879,11 +3879,13 @@ unsigned AtomicExpr::getNumSubExprs(AtomicOp Op) {
   case AO__atomic_fetch_and:
   case AO__atomic_fetch_or:
   case AO__atomic_fetch_xor:
+  case AO__atomic_fetch_nand:
   case AO__atomic_add_fetch:
   case AO__atomic_sub_fetch:
   case AO__atomic_and_fetch:
   case AO__atomic_or_fetch:
   case AO__atomic_xor_fetch:
+  case AO__atomic_nand_fetch:
     return 3;
 
   case AO__atomic_exchange:

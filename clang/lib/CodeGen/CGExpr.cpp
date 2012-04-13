@@ -2788,6 +2788,13 @@ EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
   case AtomicExpr::AO__atomic_fetch_xor:
     Op = llvm::AtomicRMWInst::Xor;
     break;
+
+  case AtomicExpr::AO__atomic_nand_fetch:
+    PostOp = llvm::Instruction::And;
+    // Fall through.
+  case AtomicExpr::AO__atomic_fetch_nand:
+    Op = llvm::AtomicRMWInst::Nand;
+    break;
   }
 
   llvm::LoadInst *LoadVal1 = CGF.Builder.CreateLoad(Val1);
@@ -2801,7 +2808,8 @@ EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
   llvm::Value *Result = RMWI;
   if (PostOp)
     Result = CGF.Builder.CreateBinOp(PostOp, RMWI, LoadVal1);
-
+  if (E->getOp() == AtomicExpr::AO__atomic_nand_fetch)
+    Result = CGF.Builder.CreateNot(Result);
   llvm::StoreInst *StoreDest = CGF.Builder.CreateStore(Result, Dest);
   StoreDest->setAlignment(Align);
 }
@@ -2933,9 +2941,11 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   case AtomicExpr::AO__atomic_fetch_and:
   case AtomicExpr::AO__atomic_fetch_or:
   case AtomicExpr::AO__atomic_fetch_xor:
+  case AtomicExpr::AO__atomic_fetch_nand:
   case AtomicExpr::AO__atomic_and_fetch:
   case AtomicExpr::AO__atomic_or_fetch:
   case AtomicExpr::AO__atomic_xor_fetch:
+  case AtomicExpr::AO__atomic_nand_fetch:
     Val1 = EmitValToTemp(*this, E->getVal1());
     break;
   }
