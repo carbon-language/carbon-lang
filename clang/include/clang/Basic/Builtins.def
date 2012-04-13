@@ -635,12 +635,12 @@ ATOMIC_BUILTIN(__atomic_sub_fetch, "v.", "t")
 ATOMIC_BUILTIN(__atomic_and_fetch, "v.", "t")
 ATOMIC_BUILTIN(__atomic_or_fetch, "v.", "t")
 ATOMIC_BUILTIN(__atomic_xor_fetch, "v.", "t")
-BUILTIN(__atomic_test_and_set, "vv*i", "n")
-BUILTIN(__atomic_clear, "vb*i", "n")
+BUILTIN(__atomic_test_and_set, "bvD*i", "n")
+BUILTIN(__atomic_clear, "vvD*i", "n")
 BUILTIN(__atomic_thread_fence, "vi", "n")
 BUILTIN(__atomic_signal_fence, "vi", "n")
-BUILTIN(__atomic_always_lock_free, "izv*", "n")
-BUILTIN(__atomic_is_lock_free, "izv*", "n")
+BUILTIN(__atomic_always_lock_free, "izvCD*", "n")
+BUILTIN(__atomic_is_lock_free, "izvCD*", "n")
 
 #undef ATOMIC_BUILTIN
 

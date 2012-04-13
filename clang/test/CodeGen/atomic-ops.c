@@ -7,9 +7,7 @@
 #ifndef ALREADY_INCLUDED
 #define ALREADY_INCLUDED
 
-// Basic IRGen tests for __c11_atomic_*
-
-// FIXME: Need to implement __c11_atomic_is_lock_free
+// Basic IRGen tests for __c11_atomic_* and GNU __atomic_*
 
 typedef enum memory_order {
   memory_order_relaxed, memory_order_consume, memory_order_acquire,
@@ -131,7 +129,8 @@ int *fp2a(int **p) {
   // CHECK: @fp2a
   // CHECK: store i32 4
   // CHECK: atomicrmw sub {{.*}} monotonic
-  return __atomic_fetch_sub(p, 1, memory_order_relaxed);
+  // Note, the GNU builtins do not multiply by sizeof(T)!
+  return __atomic_fetch_sub(p, 4, memory_order_relaxed);
 }
 
 _Complex float fc(_Atomic(_Complex float) *c) {
@@ -161,8 +160,55 @@ _Bool fsb(_Bool *c) {
   return __atomic_exchange_n(c, 1, memory_order_seq_cst);
 }
 
-int lock_free() {
+char flag1;
+volatile char flag2;
+void test_and_set() {
+  // CHECK: atomicrmw xchg i8* @flag1, i8 1 seq_cst
+  __atomic_test_and_set(&flag1, memory_order_seq_cst);
+  // CHECK: atomicrmw volatile xchg i8* @flag2, i8 1 acquire
+  __atomic_test_and_set(&flag2, memory_order_acquire);
+  // CHECK: store atomic volatile i8 0, i8* @flag2 release
+  __atomic_clear(&flag2, memory_order_release);
+  // CHECK: store atomic i8 0, i8* @flag1 seq_cst
+  __atomic_clear(&flag1, memory_order_seq_cst);
+}
+
+struct Sixteen {
+  char c[16];
+} sixteen;
+struct Seventeen {
+  char c[17];
+} seventeen;
+
+int lock_free(struct Incomplete *incomplete) {
   // CHECK: @lock_free
+
+  // CHECK: call i32 @__atomic_is_lock_free(i32 3, i8* null)
+  __c11_atomic_is_lock_free(3);
+
+  // CHECK: call i32 @__atomic_is_lock_free(i32 16, i8* {{.*}}@sixteen{{.*}})
+  __atomic_is_lock_free(16, &sixteen);
+
+  // CHECK: call i32 @__atomic_is_lock_free(i32 17, i8* {{.*}}@seventeen{{.*}})
+  __atomic_is_lock_free(17, &seventeen);
+
+  // CHECK: call i32 @__atomic_is_lock_free(i32 4, {{.*}})
+  __atomic_is_lock_free(4, incomplete);
+
+  char cs[20];
+  // CHECK: call i32 @__atomic_is_lock_free(i32 4, {{.*}})
+  __atomic_is_lock_free(4, cs+1);
+
+  // CHECK-NOT: call
+  __atomic_always_lock_free(3, 0);
+  __atomic_always_lock_free(16, 0);
+  __atomic_always_lock_free(17, 0);
+  __atomic_always_lock_free(16, &sixteen);
+  __atomic_always_lock_free(17, &seventeen);
+
+  int n;
+  __atomic_is_lock_free(4, &n);
+
   // CHECK: ret i32 1
   return __c11_atomic_is_lock_free(sizeof(_Atomic(int)));
 }

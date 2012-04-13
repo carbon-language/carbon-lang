@@ -1,13 +1,6 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only -triple=i686-linux-gnu
 
 // Basic parsing/Sema tests for __c11_atomic_*
-
-// FIXME: Need to implement:
-//   __c11_atomic_is_lock_free
-//   __atomic_is_lock_free
-//   __atomic_always_lock_free
-//   __atomic_test_and_set
-//   __atomic_clear
 
 typedef enum memory_order {
   memory_order_relaxed, memory_order_consume, memory_order_acquire,
@@ -15,6 +8,73 @@ typedef enum memory_order {
 } memory_order;
 
 struct S { char c[3]; };
+
+_Static_assert(__GCC_ATOMIC_BOOL_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_CHAR_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_CHAR16_T_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_CHAR32_T_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_WCHAR_T_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_SHORT_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_INT_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_LONG_LOCK_FREE == 2, "");
+_Static_assert(__GCC_ATOMIC_LLONG_LOCK_FREE == 1, "");
+_Static_assert(__GCC_ATOMIC_POINTER_LOCK_FREE == 2, "");
+
+_Static_assert(__c11_atomic_is_lock_free(1), "");
+_Static_assert(__c11_atomic_is_lock_free(2), "");
+_Static_assert(__c11_atomic_is_lock_free(3), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__c11_atomic_is_lock_free(4), "");
+_Static_assert(__c11_atomic_is_lock_free(8), "");
+_Static_assert(__c11_atomic_is_lock_free(16), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__c11_atomic_is_lock_free(17), ""); // expected-error {{not an integral constant expression}}
+
+_Static_assert(__atomic_is_lock_free(1, 0), "");
+_Static_assert(__atomic_is_lock_free(2, 0), "");
+_Static_assert(__atomic_is_lock_free(3, 0), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__atomic_is_lock_free(4, 0), "");
+_Static_assert(__atomic_is_lock_free(8, 0), "");
+_Static_assert(__atomic_is_lock_free(16, 0), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__atomic_is_lock_free(17, 0), ""); // expected-error {{not an integral constant expression}}
+
+char i8;
+short i16;
+int i32;
+int __attribute__((vector_size(8))) i64;
+struct Incomplete *incomplete;
+
+_Static_assert(__atomic_is_lock_free(1, &i8), "");
+_Static_assert(__atomic_is_lock_free(1, &i64), "");
+_Static_assert(__atomic_is_lock_free(2, &i8), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__atomic_is_lock_free(2, &i16), "");
+_Static_assert(__atomic_is_lock_free(2, &i64), "");
+_Static_assert(__atomic_is_lock_free(4, &i16), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__atomic_is_lock_free(4, &i32), "");
+_Static_assert(__atomic_is_lock_free(4, &i64), "");
+_Static_assert(__atomic_is_lock_free(8, &i32), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(__atomic_is_lock_free(8, &i64), "");
+
+_Static_assert(__atomic_always_lock_free(1, 0), "");
+_Static_assert(__atomic_always_lock_free(2, 0), "");
+_Static_assert(!__atomic_always_lock_free(3, 0), "");
+_Static_assert(__atomic_always_lock_free(4, 0), "");
+_Static_assert(__atomic_always_lock_free(8, 0), "");
+_Static_assert(!__atomic_always_lock_free(16, 0), "");
+_Static_assert(!__atomic_always_lock_free(17, 0), "");
+
+_Static_assert(__atomic_always_lock_free(1, incomplete), "");
+_Static_assert(!__atomic_always_lock_free(2, incomplete), "");
+_Static_assert(!__atomic_always_lock_free(4, incomplete), "");
+
+_Static_assert(__atomic_always_lock_free(1, &i8), "");
+_Static_assert(__atomic_always_lock_free(1, &i64), "");
+_Static_assert(!__atomic_always_lock_free(2, &i8), "");
+_Static_assert(__atomic_always_lock_free(2, &i16), "");
+_Static_assert(__atomic_always_lock_free(2, &i64), "");
+_Static_assert(!__atomic_always_lock_free(4, &i16), "");
+_Static_assert(__atomic_always_lock_free(4, &i32), "");
+_Static_assert(__atomic_always_lock_free(4, &i64), "");
+_Static_assert(!__atomic_always_lock_free(8, &i32), "");
+_Static_assert(__atomic_always_lock_free(8, &i64), "");
 
 void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
        int *I, int **P, float *D, struct S *s1, struct S *s2) {
@@ -94,4 +154,12 @@ void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
   _Bool cmpexch_7 = __atomic_compare_exchange(I, I, 5, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{passing 'int' to parameter of type 'int *'}}
   _Bool cmpexch_8 = __atomic_compare_exchange(I, P, I, 0, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{; dereference with *}}
   _Bool cmpexch_9 = __atomic_compare_exchange(I, I, I, 0, memory_order_seq_cst, memory_order_seq_cst);
+
+  const volatile int flag_k = 0;
+  volatile int flag = 0;
+  (void)(int)__atomic_test_and_set(&flag_k, memory_order_seq_cst); // expected-warning {{passing 'const volatile int *' to parameter of type 'volatile void *'}}
+  (void)(int)__atomic_test_and_set(&flag, memory_order_seq_cst);
+  __atomic_clear(&flag_k, memory_order_seq_cst); // expected-warning {{passing 'const volatile int *' to parameter of type 'volatile void *'}}
+  __atomic_clear(&flag, memory_order_seq_cst);
+  (int)__atomic_clear(&flag, memory_order_seq_cst); // expected-error {{operand of type 'void'}}
 }
