@@ -35,6 +35,11 @@ using namespace llvm;
 static cl::opt<bool>
 RunVectorization("vectorize", cl::desc("Run vectorization passes"));
 
+static cl::opt<bool>
+UseGVNAfterVectorization("use-gvn-after-vectorization",
+  cl::init(false), cl::Hidden,
+  cl::desc("Run GVN instead of Early CSE after vectorization passes"));
+
 PassManagerBuilder::PassManagerBuilder() {
     OptLevel = 2;
     SizeLevel = 0;
@@ -182,8 +187,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   if (Vectorize) {
     MPM.add(createBBVectorizePass());
     MPM.add(createInstructionCombiningPass());
-    if (OptLevel > 1)
-      MPM.add(createGVNPass());                 // Remove redundancies
+    if (OptLevel > 1 && UseGVNAfterVectorization)
+      MPM.add(createGVNPass());                   // Remove redundancies
+    else
+      MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
   }
 
   MPM.add(createAggressiveDCEPass());         // Delete dead instructions
