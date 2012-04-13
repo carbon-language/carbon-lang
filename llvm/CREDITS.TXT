@@ -245,6 +245,10 @@ N: Nick Lewycky
 E: nicholas@mxc.ca
 D: PredicateSimplifier pass
 
+N: Tony Linthicum, et. al.
+E: tlinth@codeaurora.org
+D: Backend for Qualcomm's Hexagon VLIW processor.
+
 N: Bruno Cardoso Lopes
 E: bruno.cardoso@gmail.com
 W: http://www.brunocardoso.org
