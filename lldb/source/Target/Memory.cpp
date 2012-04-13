@@ -51,20 +51,31 @@ MemoryCache::Flush (addr_t addr, size_t size)
 {
     if (size == 0)
         return;
-    
-    const uint32_t cache_line_byte_size = m_cache_line_byte_size;
-    const addr_t end_addr = (addr + size - 1);
-    const addr_t flush_start_addr = addr - (addr % cache_line_byte_size);
-    const addr_t flush_end_addr = end_addr - (end_addr % cache_line_byte_size);
-    
+
     Mutex::Locker locker (m_mutex);
     if (m_cache.empty())
         return;
-    
-    assert ((flush_start_addr % cache_line_byte_size) == 0);
-    
-    for (addr_t curr_addr = flush_start_addr; curr_addr <= flush_end_addr; curr_addr += cache_line_byte_size)
+
+    const uint32_t cache_line_byte_size = m_cache_line_byte_size;
+    const addr_t end_addr = (addr + size - 1);
+    const addr_t first_cache_line_addr = addr - (addr % cache_line_byte_size);
+    const addr_t last_cache_line_addr = end_addr - (end_addr % cache_line_byte_size);
+    // Watch for overflow where size will cause us to go off the end of the
+    // 64 bit address space
+    uint32_t num_cache_lines;
+    if (last_cache_line_addr >= first_cache_line_addr)
+        num_cache_lines = ((last_cache_line_addr - first_cache_line_addr)/cache_line_byte_size) + 1;
+    else
+        num_cache_lines = (UINT64_MAX - first_cache_line_addr + 1)/cache_line_byte_size;
+
+    //printf ("MemoryCache::Flush (0x%16.16llx, %zu (0x%zx))\n", addr, size, size);
+
+    uint32_t cache_idx = 0;
+    for (addr_t curr_addr = first_cache_line_addr;
+         cache_idx < num_cache_lines;
+         curr_addr += cache_line_byte_size, ++cache_idx)
     {
+        //printf ("flushing: 0x%16.16llx\n", curr_addr); /// REMOVE THIS PRIOR TO CHECKIN!!!!
         BlockMap::iterator pos = m_cache.find (curr_addr);
         if (pos != m_cache.end())
             m_cache.erase(pos);
