@@ -219,8 +219,11 @@ def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
 
 // Prefer fused MAC for fp mul + add over fp VMLA / VMLS if they are available.
 // But only select them if more precision in FP computation is allowed.
-def UseFusedMAC      : Predicate<"!TM.Options.NoExcessFPPrecision">;
-def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4()">;
+// Do not use them for Darwin platforms.
+def UseFusedMAC      : Predicate<"!TM.Options.NoExcessFPPrecision && "
+                                 "!Subtarget->isTargetDarwin()">;
+def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4() || "
+                                 "Subtarget->isTargetDarwin()">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
