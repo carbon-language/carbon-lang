@@ -2378,6 +2378,19 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
   return MakeAddrLValue(RV.getScalarVal(), E->getType());
 }
 
+RValue CodeGenFunction::EmitRValueForField(llvm::Value *Addr,
+                                           const FieldDecl *FD) {
+  QualType FT = FD->getType();
+  // FIXME: What are the right qualifiers here?
+  LValue LV = EmitLValueForField(Addr, FD, 0);
+  if (FT->isAnyComplexType())
+    // FIXME: Volatile?
+    return RValue::getComplex(LoadComplexFromAddr(LV.getAddress(), false));
+  else if (CodeGenFunction::hasAggregateLLVMType(FT))
+    return LV.asAggregateRValue();
+
+  return EmitLoadOfLValue(LV);
+}
 
 //===--------------------------------------------------------------------===//
 //                             Expression Emission

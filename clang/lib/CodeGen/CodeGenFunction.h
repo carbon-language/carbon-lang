@@ -2104,6 +2104,8 @@ public:
   LValue EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *E);
   LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
 
+  RValue EmitRValueForField(llvm::Value *Addr, const FieldDecl *FD);
+
   class ConstantEmission {
     llvm::PointerIntPair<llvm::Constant*, 1, bool> ValueAndIsReference;
     ConstantEmission(llvm::Constant *C, bool isReference)
