@@ -122,6 +122,7 @@ bool HexagonPassConfig::addPostRegAlloc() {
 
 
 bool HexagonPassConfig::addPreSched2() {
+  PM.add(createHexagonCopyToCombine());
   addPass(IfConverterID);
   return true;
 }

@@ -246,6 +246,12 @@ def COMBINE_rr : ALU32_rr<(outs DoubleRegs:$dst),
             "$dst = combine($src1, $src2)",
             []>;
 
+let neverHasSideEffects = 1 in
+def COMBINE_ii : ALU32_ii<(outs DoubleRegs:$dst),
+            (ins s8Imm:$src1, s8Imm:$src2),
+            "$dst = combine(#$src1, #$src2)",
+            []>;
+
 // Mux.
 def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
                                                    DoubleRegs:$src2,
