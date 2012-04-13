@@ -45,7 +45,6 @@
 #include "HexagonMachineFunctionInfo.h"
 
 #include <map>
-#include <iostream>
 
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
