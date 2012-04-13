@@ -21,12 +21,22 @@ import optparse
 import os
 import shlex
 
+def add_common_options(parser):
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    parser.add_option('-o', '--po', action='store_true', dest='print_object_description', help='print the object descriptions for any matches', default=False)
+    parser.add_option('-m', '--memory', action='store_true', dest='memory', help='dump the memory for each matching block', default=False)
+    parser.add_option('-f', '--format', type='string', dest='format', help='the format to use when dumping memory if --memory is specified', default=None)
+    
 def heap_search(options, arg_str):
     expr = None
     arg_str_description = arg_str
+    default_memory_format = "Y" # 'Y' is "bytes with ASCII" format
+    #memory_chunk_size = 1
     if options.type == 'pointer':
         expr = 'find_pointer_in_heap((void *)%s)' % arg_str
         arg_str_description = 'malloc block containing pointer %s' % arg_str
+        default_memory_format = "A" # 'A' is "address" format
+        #memory_chunk_size = lldb.process.GetAddressByteSize()
     elif options.type == 'cstr':
         expr = 'find_cstring_in_heap("%s")' % arg_str
         arg_str_description = 'malloc block containing "%s"' % arg_str
@@ -63,8 +73,7 @@ def heap_search(options, arg_str):
                         data = bytearray(lldb.process.ReadMemory(malloc_addr, 16, error))
                         if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
                             description += ', type = (AUTORELEASE!)'
-                            print description
-                            continue
+                    print description
                 else:
                     description += ', type = %s' % (type_name)
                     derefed_dynamic_value = dynamic_value.deref
@@ -110,6 +119,15 @@ def heap_search(options, arg_str):
                         desc = dynamic_value.GetObjectDescription()
                         if desc:
                             print '  (%s) 0x%x %s\n' % (type_name, malloc_addr, desc)
+                if options.memory:
+                    memory_format = options.format
+                    if not memory_format:
+                        memory_format = default_memory_format
+                    cmd_result = lldb.SBCommandReturnObject()
+                    #count = malloc_size / memory_chunk_size
+                    memory_command = "memory read -f %s 0x%x 0x%x" % (memory_format, malloc_addr, malloc_addr + malloc_size)
+                    lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
+                    print cmd_result.GetOutput()
         else:
             print '%s %s was not found in any malloc blocks' % (options.type, arg_str)
     else:
@@ -125,9 +143,7 @@ def ptr_refs(debugger, command, result, dict):
     and might be able to print what kind of objects the pointers are contained in using 
     dynamic type information in the program.'''
     parser = optparse.OptionParser(description=description, prog='ptr_refs',usage=usage)
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    parser.add_option('-o', '--po', action='store_true', dest='print_object_description', help='print the object descriptions for any matches', default=False)
-    parser.add_option('-m', '--memory', action='store_true', dest='show_memory', help='dump the memory for each matching block', default=False)
+    add_common_options(parser)
     try:
         (options, args) = parser.parse_args(command_args)
     except:
@@ -151,9 +167,7 @@ def cstr_refs(debugger, command, result, dict):
     and might be able to print what kind of objects the pointers are contained in using 
     dynamic type information in the program.'''
     parser = optparse.OptionParser(description=description, prog='cstr_refs',usage=usage)
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    parser.add_option('-o', '--po', action='store_true', dest='print_object_description', help='print the object descriptions for any matches', default=False)
-    parser.add_option('-m', '--memory', action='store_true', dest='show_memory', help='dump the memory for each matching block', default=False)
+    add_common_options(parser)
     try:
         (options, args) = parser.parse_args(command_args)
     except:
@@ -177,9 +191,7 @@ def malloc_info(debugger, command, result, dict):
     the specified address. The matching blocks might be able to show what kind 
     of objects they are using dynamic type information in the program.'''
     parser = optparse.OptionParser(description=description, prog='cstr_refs',usage=usage)
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    parser.add_option('-o', '--po', action='store_true', dest='print_object_description', help='print the object descriptions for any matches', default=False)
-    parser.add_option('-m', '--memory', action='store_true', dest='show_memory', help='dump the memory for each matching block', default=False)
+    add_common_options(parser)
     try:
         (options, args) = parser.parse_args(command_args)
     except:
