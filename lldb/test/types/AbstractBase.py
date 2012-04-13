@@ -29,6 +29,12 @@ class GenericTester(TestBase):
         # used for all the test cases.
         self.exe_name = self.testMethodName
 
+    def tearDown(self):
+        """Cleanup the test byproducts."""
+        TestBase.tearDown(self)
+        #print "Removing golden-output.txt..."
+        os.remove("golden-output.txt")
+
     #==========================================================================#
     # Functions build_and_run() and build_and_run_expr() are generic functions #
     # which are called from the Test*Types*.py test cases.  The API client is  #
@@ -75,9 +81,14 @@ class GenericTester(TestBase):
     def generic_type_tester(self, exe_name, atoms, quotedDisplay=False, blockCaptured=False):
         """Test that variables with basic types are displayed correctly."""
 
+        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
+
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./%s" % exe_name, sender=self)[0]
+        self.runCmd("process launch -o golden-output.txt")
+        with open("golden-output.txt") as f:
+            go = f.read()
+
         # This golden list contains a list of (variable, value) pairs extracted
         # from the golden output.
         gl = []
@@ -98,7 +109,6 @@ class GenericTester(TestBase):
 
         # Bring the program to the point where we can issue a series of
         # 'frame variable -T' command.
-        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
         if blockCaptured:
             break_line = line_number ("basic_type.cpp", "// Break here to test block captured variables.")
         else:
@@ -148,9 +158,14 @@ class GenericTester(TestBase):
     def generic_type_expr_tester(self, exe_name, atoms, quotedDisplay=False, blockCaptured=False):
         """Test that variable expressions with basic types are evaluated correctly."""
 
+        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
+
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./%s" % exe_name, sender=self)[0]
+        self.runCmd("process launch -o golden-output.txt")
+        with open("golden-output.txt") as f:
+            go = f.read()
+
         # This golden list contains a list of (variable, value) pairs extracted
         # from the golden output.
         gl = []
@@ -171,7 +186,6 @@ class GenericTester(TestBase):
 
         # Bring the program to the point where we can issue a series of
         # 'expr' command.
-        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
         if blockCaptured:
             break_line = line_number ("basic_type.cpp", "// Break here to test block captured variables.")
         else:
