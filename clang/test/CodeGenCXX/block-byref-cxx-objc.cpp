@@ -23,3 +23,13 @@ int main()
 // CHECK: call void @_Block_object_assign
 // CHECK: define internal void @__destroy_helper_block_
 // CHECK: call void @_Block_object_dispose
+
+// rdar://problem/11135650
+namespace test1 {
+  struct A { int x; A(); ~A(); };
+
+  void test() {
+    return;
+    __block A a;
+  }
+}

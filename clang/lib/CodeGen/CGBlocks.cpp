@@ -491,6 +491,8 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
 /// a full-expression so that the block's cleanups are pushed at the
 /// right place in the stack.
 static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
+  assert(CGF.HaveInsertPoint());
+
   // Allocate the block info and place it at the head of the list.
   CGBlockInfo &blockInfo =
     *new CGBlockInfo(block, CGF.CurFn->getName());

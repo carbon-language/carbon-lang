@@ -1171,6 +1171,10 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
   // If this was emitted as a global constant, we're done.
   if (emission.wasEmittedAsGlobal()) return;
 
+  // If we don't have an insertion point, we're done.  Sema prevents
+  // us from jumping into any of these scopes anyway.
+  if (!HaveInsertPoint()) return;
+
   const VarDecl &D = *emission.Variable;
 
   // Check the type for a cleanup.
