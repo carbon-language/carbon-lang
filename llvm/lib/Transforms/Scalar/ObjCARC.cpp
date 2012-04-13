@@ -4109,16 +4109,12 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         Use &U = UI.getUse();
         unsigned OperandNo = UI.getOperandNo();
         ++UI; // Increment UI now, because we may unlink its element.
-        Instruction *UserInst = dyn_cast<Instruction>(U.getUser());
-        if (!UserInst)
-          continue;
-        // FIXME: dominates should return true for unreachable UserInst.
-        if (DT->isReachableFromEntry(UserInst->getParent()) &&
-            DT->dominates(Inst, UserInst)) {
+        if (DT->isReachableFromEntry(U) &&
+            DT->dominates(Inst, U)) {
           Changed = true;
           Instruction *Replacement = Inst;
           Type *UseTy = U.get()->getType();
-          if (PHINode *PHI = dyn_cast<PHINode>(UserInst)) {
+          if (PHINode *PHI = dyn_cast<PHINode>(U.getUser())) {
             // For PHI nodes, insert the bitcast in the predecessor block.
             unsigned ValNo =
               PHINode::getIncomingValueNumForOperand(OperandNo);
@@ -4139,7 +4135,8 @@ bool ObjCARCContract::runOnFunction(Function &F) {
               }
           } else {
             if (Replacement->getType() != UseTy)
-              Replacement = new BitCastInst(Replacement, UseTy, "", UserInst);
+              Replacement = new BitCastInst(Replacement, UseTy, "",
+                                            cast<Instruction>(U.getUser()));
             U.set(Replacement);
           }
         }

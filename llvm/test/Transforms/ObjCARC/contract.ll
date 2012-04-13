@@ -143,3 +143,21 @@ define i8* @test7(i8* %p) {
   %2 = tail call i8* @objc_autoreleaseReturnValue(i8* %p)
   ret i8* %p
 }
+
+; Do the return value substitution for PHI nodes too.
+
+; CHECK: define i8* @test8(
+; CHECK: %retval = phi i8* [ %p, %if.then ], [ null, %entry ]
+; CHECK: }
+define i8* @test8(i1 %x, i8* %c) {
+entry:
+  br i1 %x, label %return, label %if.then
+
+if.then:                                          ; preds = %entry
+  %p = call i8* @objc_retain(i8* %c) nounwind
+  br label %return
+
+return:                                           ; preds = %if.then, %entry
+  %retval = phi i8* [ %c, %if.then ], [ null, %entry ]
+  ret i8* %retval
+}
