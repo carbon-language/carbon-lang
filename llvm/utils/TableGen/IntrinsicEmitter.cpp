@@ -537,7 +537,6 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   // at least one entry, for the function itself (index ~1), which is
   // usually nounwind.
   OS << "  static const uint8_t IntrinsicsToAttributesMap[] = {\n";
-  OS << "    255, // Invalid intrinsic\n";
 
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     const CodeGenIntrinsic &intrinsic = Ints[i];
@@ -549,11 +548,17 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
 
   OS << "  AttributeWithIndex AWI[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
-  OS << "  switch(IntrinsicsToAttributesMap[id]) {\n";
-  OS << "  default: llvm_unreachable(\"Invalid attribute number\");\n";
+  OS << "  if (id != 0) {\n";
+  OS << "    switch(IntrinsicsToAttributesMap[id - ";
+  if (TargetOnly)
+    OS << "Intrinsic::num_intrinsics";
+  else
+    OS << "1";
+  OS << "]) {\n";
+  OS << "    default: llvm_unreachable(\"Invalid attribute number\");\n";
   for (UniqAttrMapTy::const_iterator I = UniqAttributes.begin(),
        E = UniqAttributes.end(); I != E; ++I) {
-    OS << "  case " << I->second << ":\n";
+    OS << "    case " << I->second << ":\n";
 
     const CodeGenIntrinsic &intrinsic = *(I->first);
 
@@ -564,7 +569,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
     for (unsigned ai = 0, ae = intrinsic.ArgumentAttributes.size(); ai != ae;) {
       unsigned argNo = intrinsic.ArgumentAttributes[ai].first;
 
-      OS << "    AWI[" << numAttrs++ << "] = AttributeWithIndex::get("
+      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get("
          << argNo+1 << ", ";
 
       bool moreThanOne = false;
@@ -588,7 +593,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
     ModRefKind modRef = getModRefKind(intrinsic);
 
     if (!intrinsic.canThrow || modRef) {
-      OS << "    AWI[" << numAttrs++ << "] = AttributeWithIndex::get(~0, ";
+      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(~0, ";
       if (!intrinsic.canThrow) {
         OS << "Attribute::NoUnwind";
         if (modRef) OS << '|';
@@ -602,13 +607,14 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
     }
 
     if (numAttrs) {
-      OS << "    NumAttrs = " << numAttrs << ";\n";
-      OS << "    break;\n";
+      OS << "      NumAttrs = " << numAttrs << ";\n";
+      OS << "      break;\n";
     } else {
-      OS << "    return AttrListPtr();\n";
+      OS << "      return AttrListPtr();\n";
     }
   }
   
+  OS << "    }\n";
   OS << "  }\n";
   OS << "  return AttrListPtr::get(AWI, NumAttrs);\n";
   OS << "}\n";
