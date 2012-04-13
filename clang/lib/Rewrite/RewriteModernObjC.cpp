@@ -5357,10 +5357,13 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(S)) {
     RewriteCastExpr(CE);
   }
+#if 0
+  // FIXME. Cannot safely rewrite ImplicitCasts. This is the 2nd failed
+  // attempt: (id)((__typeof(z))_Block_copy((const void *)(z)));
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     RewriteImplicitCastObjCExpr(ICE);
   }
-#if 0
+
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     CastExpr *Replacement = new (Context) CastExpr(ICE->getType(),
                                                    ICE->getSubExpr(),
