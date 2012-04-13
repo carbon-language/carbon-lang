@@ -9,27 +9,39 @@ class TestRealDefinition(TestBase):
 
     mydir = os.path.join("lang", "objc", "real-definition")
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_frame_var_after_stop_at_interface_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDsym()
         self.stop_at_interface()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_frame_var_after_stop_at_interface_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDwarf()
         self.stop_at_interface()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_frame_var_after_stop_at_implementation_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDsym()
         self.stop_at_implementation()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_frame_var_after_stop_at_implementation_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDwarf()
         self.stop_at_implementation()
 
