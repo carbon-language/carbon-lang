@@ -34,6 +34,92 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // ThreadPlanCallFunction: Plan to call a single function
 //----------------------------------------------------------------------
+bool
+ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
+                                          bool discard_on_error,
+                                          ABI *& abi,
+                                          lldb::addr_t &start_load_addr,
+                                          lldb::addr_t &function_load_addr)
+{
+    // Call function thread plans need to be master plans so that they can potentially stay on the stack when
+    // a breakpoint is hit during the function call.
+    SetIsMasterPlan (true);
+    SetOkayToDiscard (discard_on_error);
+
+    ProcessSP process_sp (thread.GetProcess());
+    if (!process_sp)
+        return false;
+    
+    abi = process_sp->GetABI().get();
+    
+    if (!abi)
+        return false;
+    
+    TargetSP target_sp (thread.CalculateTarget());
+
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
+    SetBreakpoints();
+    
+    m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
+    // If we can't read memory at the point of the process where we are planning to put our function, we're
+    // not going to get any further...
+    Error error;
+    process_sp->ReadUnsignedIntegerFromMemory(m_function_sp, 4, 0, error);
+    if (!error.Success())
+    {
+        if (log)
+            log->Printf ("Trying to put the stack in unreadable memory at: 0x%llx.", m_function_sp);
+        return false;
+    }
+    
+    Module *exe_module = target_sp->GetExecutableModulePointer();
+
+    if (exe_module == NULL)
+    {
+        if (log)
+            log->Printf ("Can't execute code without an executable module.");
+        return false;
+    }
+    else
+    {
+        ObjectFile *objectFile = exe_module->GetObjectFile();
+        if (!objectFile)
+        {
+            if (log)
+                log->Printf ("Could not find object file for module \"%s\".", 
+                             exe_module->GetFileSpec().GetFilename().AsCString());
+            return false;
+        }
+        m_start_addr = objectFile->GetEntryPointAddress();
+        if (!m_start_addr.IsValid())
+        {
+            if (log)
+                log->Printf ("Could not find entry point address for executable module \"%s\".", 
+                             exe_module->GetFileSpec().GetFilename().AsCString());
+            return false;
+        }
+    }
+    
+    start_load_addr = m_start_addr.GetLoadAddress (target_sp.get());
+    
+    // Checkpoint the thread state so we can restore it later.
+    if (log && log->GetVerbose())
+        ReportRegisterState ("About to checkpoint thread before function call.  Original register state was:");
+
+    if (!thread.CheckpointThreadState (m_stored_thread_state))
+    {
+        if (log)
+            log->Printf ("Setting up ThreadPlanCallFunction, failed to checkpoint thread state.");
+        return false;
+    }
+    // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
+    thread.SetStopInfoToNothing();
+    
+    function_load_addr = m_function_addr.GetLoadAddress (target_sp.get());
+    
+    return true;
+}
 
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 Address &function,
@@ -52,78 +138,17 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_takedown_done (false),
     m_stop_address (LLDB_INVALID_ADDRESS)
 {
-    // Call function thread plans need to be master plans so that they can potentially stay on the stack when
-    // a breakpoint is hit during the function call.
-    SetIsMasterPlan (true);
-    SetOkayToDiscard (discard_on_error);
-
-    ProcessSP process_sp (thread.GetProcess());
-    if (!process_sp)
+    lldb::addr_t start_load_addr;
+    ABI *abi;
+    lldb::addr_t function_load_addr;
+    if (!ConstructorSetup (thread, discard_on_error, abi, start_load_addr, function_load_addr))
         return;
-    
-    const ABI *abi = process_sp->GetABI().get();
-    
-    if (!abi)
-        return;
-    
-    TargetSP target_sp (thread.CalculateTarget());
-
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    
-    SetBreakpoints();
-    
-    m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
-    
-    Module *exe_module = target_sp->GetExecutableModulePointer();
-
-    if (exe_module == NULL)
-    {
-        if (log)
-            log->Printf ("Can't execute code without an executable module.");
-        return;
-    }
-    else
-    {
-        ObjectFile *objectFile = exe_module->GetObjectFile();
-        if (!objectFile)
-        {
-            if (log)
-                log->Printf ("Could not find object file for module \"%s\".", 
-                             exe_module->GetFileSpec().GetFilename().AsCString());
-            return;
-        }
-        m_start_addr = objectFile->GetEntryPointAddress();
-        if (!m_start_addr.IsValid())
-        {
-            if (log)
-                log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                             exe_module->GetFileSpec().GetFilename().AsCString());
-            return;
-        }
-    }
-    
-    addr_t start_load_addr = m_start_addr.GetLoadAddress (target_sp.get());
-    
-    // Checkpoint the thread state so we can restore it later.
-    if (log && log->GetVerbose())
-        ReportRegisterState ("About to checkpoint thread before function call.  Original register state was:");
-
-    if (!thread.CheckpointThreadState (m_stored_thread_state))
-    {
-        if (log)
-            log->Printf ("Setting up ThreadPlanCallFunction, failed to checkpoint thread state.");
-        return;
-    }
-    // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
-    thread.SetStopInfoToNothing();
-    
-    addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress (target_sp.get());
         
     if (this_arg && cmd_arg)
     {
         if (!abi->PrepareTrivialCall (thread, 
                                       m_function_sp, 
-                                      FunctionLoadAddr, 
+                                      function_load_addr, 
                                       start_load_addr, 
                                       this_arg,
                                       cmd_arg,
@@ -134,7 +159,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     {
         if (!abi->PrepareTrivialCall (thread, 
                                       m_function_sp, 
-                                      FunctionLoadAddr, 
+                                      function_load_addr, 
                                       start_load_addr, 
                                       this_arg,
                                       &arg))
@@ -144,7 +169,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     {
         if (!abi->PrepareTrivialCall (thread, 
                                       m_function_sp, 
-                                      FunctionLoadAddr, 
+                                      function_load_addr, 
                                       start_load_addr, 
                                       &arg))
             return;
@@ -173,78 +198,18 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_function_addr (function),
     m_function_sp(NULL),
     m_return_type (return_type),
-    m_takedown_done (false)
+    m_takedown_done (false),
+    m_stop_address (LLDB_INVALID_ADDRESS)
 {
-    // Call function thread plans need to be master plans so that they can potentially stay on the stack when
-    // a breakpoint is hit during the function call.
-    SetIsMasterPlan (true);
-    SetOkayToDiscard (discard_on_error);
-    
-    ProcessSP process_sp (thread.GetProcess());
-    if (!process_sp)
+    lldb::addr_t start_load_addr;
+    ABI *abi;
+    lldb::addr_t function_load_addr;
+    if (!ConstructorSetup (thread, discard_on_error, abi, start_load_addr, function_load_addr))
         return;
-    
-    const ABI *abi = process_sp->GetABI().get();
-    
-    if (!abi)
-        return;
-
-    TargetSP target_sp (thread.CalculateTarget());
-
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    
-    SetBreakpoints();
-    
-    m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
-    
-    Module *exe_module = target_sp->GetExecutableModulePointer();
-    
-    if (exe_module == NULL)
-    {
-        if (log)
-            log->Printf ("Can't execute code without an executable module.");
-        return;
-    }
-    else
-    {
-        ObjectFile *objectFile = exe_module->GetObjectFile();
-        if (!objectFile)
-        {
-            if (log)
-                log->Printf ("Could not find object file for module \"%s\".", 
-                             exe_module->GetFileSpec().GetFilename().AsCString());
-            return;
-        }
-        m_start_addr = objectFile->GetEntryPointAddress();
-        if (!m_start_addr.IsValid())
-        {
-            if (log)
-                log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                             exe_module->GetFileSpec().GetFilename().AsCString());
-            return;
-        }
-    }
-    
-    addr_t start_load_addr = m_start_addr.GetLoadAddress(target_sp.get());
-    
-    // Checkpoint the thread state so we can restore it later.
-    if (log && log->GetVerbose())
-        ReportRegisterState ("About to checkpoint thread before function call.  Original register state was:");
-    
-    if (!thread.CheckpointThreadState (m_stored_thread_state))
-    {
-        if (log)
-            log->Printf ("Setting up ThreadPlanCallFunction, failed to checkpoint thread state.");
-        return;
-    }
-    // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
-    thread.SetStopInfoToNothing();
-    
-    addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(target_sp.get());
     
     if (!abi->PrepareTrivialCall (thread, 
-                                  m_function_sp, 
-                                  FunctionLoadAddr, 
+                                  m_function_sp,
+                                  function_load_addr, 
                                   start_load_addr, 
                                   arg1_ptr,
                                   arg2_ptr,

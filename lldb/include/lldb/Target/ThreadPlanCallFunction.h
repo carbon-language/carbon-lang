@@ -130,6 +130,14 @@ public:
 protected:
     void ReportRegisterState (const char *message);
 private:
+
+    bool
+    ConstructorSetup (Thread &thread,
+                      bool discard_on_error,
+                      ABI *& abi,
+                      lldb::addr_t &start_load_addr,
+                      lldb::addr_t &function_load_addr);
+
     void
     DoTakedown ();
     
