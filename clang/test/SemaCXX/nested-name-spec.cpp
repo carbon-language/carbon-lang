@@ -45,7 +45,7 @@ void C2::m() {
 }
 
 namespace B {
-  void ::A::Af() {} // expected-error {{definition or redeclaration of 'Af' not in a namespace enclosing 'A'}}
+  void ::A::Af() {} // expected-error {{cannot define or redeclare 'Af' here because namespace 'B' does not enclose namespace 'A'}}
 }
 
 void f1() {

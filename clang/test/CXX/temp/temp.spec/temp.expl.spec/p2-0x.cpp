@@ -33,7 +33,7 @@ namespace N0 {
 template<> void N0::f0(int) { } // okay
 
 namespace N1 {
-  template<> void N0::f0(long) { } // expected-error{{not in a namespace enclosing}}
+  template<> void N0::f0(long) { } // expected-error{{does not enclose namespace}}
 }
 
 template<> void N0::f0(double) { }
@@ -129,7 +129,7 @@ template<> int N0::X0<int>::member;
 template<> float N0::X0<float>::member = 3.14f;
 
 namespace N1 {
-  template<> double N0::X0<double>::member = 3.14; // expected-error{{not in a namespace enclosing}}
+  template<> double N0::X0<double>::member = 3.14; // expected-error{{does not enclose namespace}}
 }
 
 //    -- member class of a class template
@@ -227,7 +227,7 @@ void N0::X0<void*>::ft1(void *, float) { }
 
 namespace N1 {
   template<> template<>
-  void N0::X0<void*>::ft1(void *, long) { } // expected-error{{enclosing}}
+  void N0::X0<void*>::ft1(void *, long) { } // expected-error{{does not enclose namespace}}
 }
 
 

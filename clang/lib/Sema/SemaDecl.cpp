@@ -3307,7 +3307,7 @@ bool Sema::diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
         << Name << SS.getRange();
     else
       Diag(Loc, diag::err_invalid_declarator_scope)
-      << Name << cast<NamedDecl>(DC) << SS.getRange();
+      << Name << cast<NamedDecl>(Cur) << cast<NamedDecl>(DC) << SS.getRange();
     
     return true;
   }
