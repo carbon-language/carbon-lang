@@ -4033,7 +4033,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (!got_event)
             {
                 if (log)
-                    log->PutCString("Didn't get any event after initial resume, exiting.");
+                    log->PutCString("Process::RunThreadPlan(): didn't get any event after initial resume, exiting.");
 
                 errors.Printf("Didn't get any event after initial resume, exiting.");
                 return_value = eExecutionSetupError;
@@ -4044,7 +4044,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (stop_state != eStateRunning)
             {
                 if (log)
-                    log->Printf("Didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
+                    log->Printf("Process::RunThreadPlan(): didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
 
                 errors.Printf("Didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
                 return_value = eExecutionSetupError;
@@ -4052,7 +4052,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             }
         
             if (log)
-                log->PutCString ("Resuming succeeded.");
+                log->PutCString ("Process::RunThreadPlan(): resuming succeeded.");
             // We need to call the function synchronously, so spin waiting for it to return.
             // If we get interrupted while executing, we're going to lose our context, and
             // won't be able to gather the result at this point.
@@ -4062,10 +4062,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (single_thread_timeout_usec != 0)
             {
                 real_timeout = TimeValue::Now();
-                if (first_timeout)
-                    real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
-                else
-                    real_timeout.OffsetWithSeconds(10);
+                real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
                     
                 timeout_ptr = &real_timeout;
             }
@@ -4073,13 +4070,31 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         else
         {
             if (log)
-                log->PutCString ("Handled an extra running event.");
+                log->PutCString ("Process::RunThreadPlan(): handled an extra running event.");
             do_resume = true;
         }
         
         // Now wait for the process to stop again:
         stop_state = lldb::eStateInvalid;
         event_sp.reset();
+
+        if (log)
+        {
+            if (timeout_ptr)
+            {
+                StreamString s;
+                s.Printf ("about to wait - timeout is:\n   ");
+                timeout_ptr->Dump (&s, 120);
+                s.Printf ("\nNow is:\n    ");
+                TimeValue::Now().Dump (&s, 120);
+                log->Printf ("Process::RunThreadPlan(): %s", s.GetData());
+            }
+            else
+            {
+                log->Printf ("Process::RunThreadPlan(): about to wait forever.");
+            }
+        }
+        
         got_event = listener.WaitForEvent (timeout_ptr, event_sp);
         
         if (got_event)
@@ -4089,7 +4104,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 bool keep_going = false;
                 stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
                 if (log)
-                    log->Printf("In while loop, got event: %s.", StateAsCString(stop_state));
+                    log->Printf("Process::RunThreadPlan(): in while loop, got event: %s.", StateAsCString(stop_state));
                     
                 switch (stop_state)
                 {
@@ -4101,7 +4116,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         {
                             // Ooh, our thread has vanished.  Unlikely that this was successful execution...
                             if (log)
-                                log->Printf ("Execution completed but our thread (index-id=%u) has vanished.", thread_idx_id);
+                                log->Printf ("Process::RunThreadPlan(): execution completed but our thread (index-id=%u) has vanished.", thread_idx_id);
                             return_value = eExecutionInterrupted;
                         }
                         else
@@ -4113,7 +4128,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             if (stop_reason == eStopReasonPlanComplete)
                             {
                                 if (log)
-                                    log->PutCString ("Execution completed successfully.");
+                                    log->PutCString ("Process::RunThreadPlan(): execution completed successfully.");
                                 // Now mark this plan as private so it doesn't get reported as the stop reason
                                 // after this point.  
                                 if (thread_plan_sp)
@@ -4123,7 +4138,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             else
                             {
                                 if (log)
-                                    log->PutCString ("Thread plan didn't successfully complete.");
+                                    log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
 
                                 return_value = eExecutionInterrupted;
                             }
@@ -4133,7 +4148,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
                 case lldb::eStateCrashed:
                     if (log)
-                        log->PutCString ("Execution crashed.");
+                        log->PutCString ("Process::RunThreadPlan(): execution crashed.");
                     return_value = eExecutionInterrupted;
                     break;
 
@@ -4144,7 +4159,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
                 default:
                     if (log)
-                        log->Printf("Execution stopped with unexpected state: %s.", StateAsCString(stop_state));
+                        log->Printf("Process::RunThreadPlan(): execution stopped with unexpected state: %s.", StateAsCString(stop_state));
                         
                     errors.Printf ("Execution stopped with unexpected state.");
                     return_value = eExecutionInterrupted;
@@ -4158,7 +4173,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             else
             {
                 if (log)
-                    log->PutCString ("got_event was true, but the event pointer was null.  How odd...");
+                    log->PutCString ("Process::RunThreadPlan(): got_event was true, but the event pointer was null.  How odd...");
                 return_value = eExecutionInterrupted;
                 break;
             }
@@ -4229,7 +4244,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         if (!try_all_threads)
                         {
                             if (log)
-                                log->PutCString ("try_all_threads was false, we stopped so now we're quitting.");
+                                log->PutCString ("Process::RunThreadPlan(): try_all_threads was false, we stopped so now we're quitting.");
                             return_value = eExecutionInterrupted;
                             break;
                         }
@@ -4240,7 +4255,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             first_timeout = false;
                             thread_plan_sp->SetStopOthers (false);
                             if (log)
-                                log->PutCString ("Process::RunThreadPlan(): About to resume.");
+                                log->PutCString ("Process::RunThreadPlan(): about to resume.");
 
                             continue;
                         }
@@ -4434,8 +4449,16 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 
             if (discard_on_error && thread_plan_sp)
             {
+                if (log)
+                    log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - discarding thread plans up to %p.", thread_plan_sp.get());
                 thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - for plan: %p not discarding.", thread_plan_sp.get());
+
             }
         }
     }
