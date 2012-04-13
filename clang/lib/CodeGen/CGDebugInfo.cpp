@@ -184,7 +184,6 @@ CGDebugInfo::getClassName(const RecordDecl *RD) {
 
   const TemplateArgument *Args;
   unsigned NumArgs;
-  std::string Buffer;
   if (TypeSourceInfo *TAW = Spec->getTypeAsWritten()) {
     const TemplateSpecializationType *TST =
       cast<TemplateSpecializationType>(TAW->getType());
@@ -195,16 +194,17 @@ CGDebugInfo::getClassName(const RecordDecl *RD) {
     Args = TemplateArgs.data();
     NumArgs = TemplateArgs.size();
   }
-  Buffer = RD->getIdentifier()->getNameStart();
+  StringRef Name = RD->getIdentifier()->getName();
   PrintingPolicy Policy(CGM.getLangOpts());
-  Buffer += TemplateSpecializationType::PrintTemplateArgumentList(Args,
-                                                                  NumArgs,
-                                                                  Policy);
+  std::string TemplateArgList =
+    TemplateSpecializationType::PrintTemplateArgumentList(Args, NumArgs, Policy);
 
   // Copy this name on the side and use its reference.
-  char *StrPtr = DebugInfoNames.Allocate<char>(Buffer.length());
-  memcpy(StrPtr, Buffer.data(), Buffer.length());
-  return StringRef(StrPtr, Buffer.length());
+  size_t Length = Name.size() + TemplateArgList.size();
+  char *StrPtr = DebugInfoNames.Allocate<char>(Length);
+  memcpy(StrPtr, Name.data(), Name.size());
+  memcpy(StrPtr + Name.size(), TemplateArgList.data(), TemplateArgList.size());
+  return StringRef(StrPtr, Length);
 }
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
