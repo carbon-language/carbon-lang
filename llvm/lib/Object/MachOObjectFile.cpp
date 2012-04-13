@@ -275,19 +275,16 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
                                            uint32_t &Result) const {
   uint16_t MachOFlags;
   uint8_t MachOType;
-  uint8_t MachOSectionIndex;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(DRI, Entry);
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
-    MachOSectionIndex = Entry->SectionIndex;
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(DRI, Entry);
     MachOFlags = Entry->Flags;
     MachOType = Entry->Type;
-    MachOSectionIndex = Entry->SectionIndex;
   }
 
   // TODO: Correctly set SF_ThreadLocal
