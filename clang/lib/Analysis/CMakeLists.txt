@@ -1,4 +1,4 @@
-set(LLVM_USED_LIBS clangBasic clangAST clangIndex)
+set(LLVM_USED_LIBS clangBasic clangAST)
 
 add_clang_library(clangAnalysis
   AnalysisDeclContext.cpp

@@ -17,7 +17,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/Index/TranslationUnit.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtCXX.h"
 #include "llvm/Support/Casting.h"

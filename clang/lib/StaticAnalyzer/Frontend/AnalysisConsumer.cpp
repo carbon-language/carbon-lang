@@ -207,7 +207,6 @@ public:
                                   PP.getLangOpts(), PD,
                                   CreateStoreMgr, CreateConstraintMgr,
                                   checkerMgr.get(),
-                                  /* Indexer */ 0, 
                                   Opts.MaxNodes, Opts.MaxLoop,
                                   Opts.VisualizeEGDot, Opts.VisualizeEGUbi,
                                   Opts.AnalysisPurgeOpt, Opts.EagerlyAssume,

@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_FRONTEND_ASTUNIT_H
 #define LLVM_CLANG_FRONTEND_ASTUNIT_H
 
-#include "clang/Index/ASTLocation.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
@@ -57,8 +56,6 @@ class SourceManager;
 class TargetInfo;
 class ASTFrontendAction;
 
-using namespace idx;
-  
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
 class ASTUnit : public ModuleLoader {
@@ -133,9 +130,6 @@ private:
   
   /// The name of the original source file used to generate this ASTUnit.
   std::string OriginalSourceFile;
-
-  // Critical optimization when using clang_getCursor().
-  ASTLocation LastLoc;
 
   /// \brief The set of diagnostics produced when creating the preamble.
   SmallVector<StoredDiagnostic, 4> PreambleDiagnostics;
@@ -473,10 +467,6 @@ public:
 
   bool getOwnsRemappedFileBuffers() const { return OwnsRemappedFileBuffers; }
   void setOwnsRemappedFileBuffers(bool val) { OwnsRemappedFileBuffers = val; }
-
-  void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }
-  ASTLocation getLastASTLocation() const { return LastLoc; }
-
 
   StringRef getMainFileName() const;
 

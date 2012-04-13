@@ -8,8 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
-#include "clang/Index/Entity.h"
-#include "clang/Index/Indexer.h"
 
 using namespace clang;
 using namespace ento;
@@ -22,7 +20,6 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  StoreManagerCreator storemgr,
                                  ConstraintManagerCreator constraintmgr, 
                                  CheckerManager *checkerMgr,
-                                 idx::Indexer *idxer,
                                  unsigned maxnodes, unsigned maxvisit,
                                  bool vizdot, bool vizubi,
                                  AnalysisPurgeMode purge,
@@ -38,7 +35,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
   : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
     Ctx(ctx), Diags(diags), LangOpts(lang), PD(pd),
     CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
-    CheckerMgr(checkerMgr), Idxer(idxer),
+    CheckerMgr(checkerMgr), 
     AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
     VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
     EagerlyAssume(eager), TrimGraph(trim),
@@ -62,7 +59,6 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     CreateStoreMgr(ParentAM.CreateStoreMgr),
     CreateConstraintMgr(ParentAM.CreateConstraintMgr),
     CheckerMgr(ParentAM.CheckerMgr),
-    Idxer(ParentAM.Idxer),
     AScope(ScopeDecl),
     MaxNodes(ParentAM.MaxNodes),
     MaxVisit(ParentAM.MaxVisit),
@@ -79,22 +75,4 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     NoRetryExhausted(ParentAM.NoRetryExhausted)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
-}
-
-
-AnalysisDeclContext *
-AnalysisManager::getAnalysisDeclContextInAnotherTU(const Decl *D) {
-  idx::Entity Ent = idx::Entity::get(const_cast<Decl *>(D), 
-                                     Idxer->getProgram());
-  FunctionDecl *FuncDef;
-  idx::TranslationUnit *TU;
-  llvm::tie(FuncDef, TU) = Idxer->getDefinitionFor(Ent);
-
-  if (FuncDef == 0)
-    return 0;
-
-  // This AnalysisDeclContext wraps function definition in another translation unit.
-  // But it is still owned by the AnalysisManager associated with the current
-  // translation unit.
-  return AnaCtxMgr.getContext(FuncDef, TU);
 }

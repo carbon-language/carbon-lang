@@ -22,11 +22,6 @@
 
 namespace clang {
 
-namespace idx { 
-  class Indexer;
-  class TranslationUnit; 
-}
-
 namespace ento {
   class CheckerManager;
 
@@ -45,11 +40,6 @@ class AnalysisManager : public BugReporterData {
   ConstraintManagerCreator CreateConstraintMgr;
 
   CheckerManager *CheckerMgr;
-
-  /// \brief Provide function definitions in other translation units. This is
-  /// NULL if we don't have multiple translation units. AnalysisManager does
-  /// not own the Indexer.
-  idx::Indexer *Idxer;
 
   enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
 
@@ -99,7 +89,6 @@ public:
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
-                  idx::Indexer *idxer,
                   unsigned maxnodes, unsigned maxvisit,
                   bool vizdot, bool vizubi, AnalysisPurgeMode purge,
                   bool eager, bool trim,
@@ -136,8 +125,6 @@ public:
   }
 
   CheckerManager *getCheckerManager() const { return CheckerMgr; }
-
-  idx::Indexer *getIndexer() const { return Idxer; }
 
   virtual ASTContext &getASTContext() {
     return Ctx;
@@ -185,10 +172,6 @@ public:
   bool shouldEagerlyAssume() const { return EagerlyAssume; }
 
   bool shouldInlineCall() const { return (IPAMode == Inlining); }
-
-  bool hasIndexer() const { return Idxer != 0; }
-
-  AnalysisDeclContext *getAnalysisDeclContextInAnotherTU(const Decl *D);
 
   CFG *getCFG(Decl const *D) {
     return AnaCtxMgr.getContext(D)->getCFG();
