@@ -162,6 +162,7 @@ namespace {
     IC_MoveWeak,            ///< objc_moveWeak (derived)
     IC_CopyWeak,            ///< objc_copyWeak (derived)
     IC_DestroyWeak,         ///< objc_destroyWeak (derived)
+    IC_StoreStrong,         ///< objc_storeStrong (derived)
     IC_CallOrUser,          ///< could call objc_release and/or "use" pointers
     IC_Call,                ///< could call objc_release
     IC_User,                ///< could "use" a pointer
@@ -262,6 +263,7 @@ static InstructionClass GetFunctionClass(const Function *F) {
               return StringSwitch<InstructionClass>(F->getName())
                      .Case("objc_storeWeak",             IC_StoreWeak)
                      .Case("objc_initWeak",              IC_InitWeak)
+                     .Case("objc_storeStrong",           IC_StoreStrong)
                      .Default(IC_CallOrUser);
             // Second argument is i8**.
             if (PointerType *Pte1 = dyn_cast<PointerType>(ETy1))
@@ -618,22 +620,35 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
       const User *UUser = *UI;
       // Special - Use by a call (callee or argument) is not considered
       // to be an escape.
-      if (isa<CallInst>(UUser) || isa<InvokeInst>(UUser))
-        continue;
-      // Use by an instruction which copies the value is an escape if the
-      // result is an escape.
-      if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
-          isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
-        Worklist.push_back(UUser);
+      switch (GetBasicInstructionClass(UUser)) {
+      case IC_StoreWeak:
+      case IC_InitWeak:
+      case IC_StoreStrong:
+      case IC_Autorelease:
+      case IC_AutoreleaseRV:
+        // These special functions make copies of their pointer arguments.
+        return true;
+      case IC_User:
+      case IC_None:
+        // Use by an instruction which copies the value is an escape if the
+        // result is an escape.
+        if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
+            isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
+          Worklist.push_back(UUser);
+          continue;
+        }
+        // Use by a load is not an escape.
+        if (isa<LoadInst>(UUser))
+          continue;
+        // Use by a store is not an escape if the use is the address.
+        if (const StoreInst *SI = dyn_cast<StoreInst>(UUser))
+          if (V != SI->getValueOperand())
+            continue;
+        break;
+      default:
+        // Regular calls and other stuff are not considered escapes.
         continue;
       }
-      // Use by a load is not an escape.
-      if (isa<LoadInst>(UUser))
-        continue;
-      // Use by a store is not an escape if the use is the address.
-      if (const StoreInst *SI = dyn_cast<StoreInst>(UUser))
-        if (V != SI->getValueOperand())
-          continue;
       // Otherwise, conservatively assume an escape.
       return true;
     }
