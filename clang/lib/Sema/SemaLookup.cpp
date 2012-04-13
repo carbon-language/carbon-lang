@@ -3207,7 +3207,10 @@ public:
   typedef TypoEditDistanceMap::iterator distance_iterator;
   distance_iterator begin() { return BestResults.begin(); }
   distance_iterator end()  { return BestResults.end(); }
-  void erase(distance_iterator I) { BestResults.erase(I); }
+  void erase(distance_iterator I) {
+    delete I->second;
+    BestResults.erase(I);
+  }
   unsigned size() const { return BestResults.size(); }
   bool empty() const { return BestResults.empty(); }
 
@@ -3289,12 +3292,8 @@ void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
       CurrentCorrection.getAsString(SemaRef.getLangOpts()))
     CurrentCorrection = Correction;
 
-  while (BestResults.size() > MaxTypoDistanceResultSets) {
-    TypoEditDistanceMap::iterator Last = BestResults.end();
-    --Last;
-    delete Last->second;
-    BestResults.erase(Last);
-  }
+  while (BestResults.size() > MaxTypoDistanceResultSets)
+    erase(llvm::prior(BestResults.end()));
 }
 
 // Fill the supplied vector with the IdentifierInfo pointers for each piece of
