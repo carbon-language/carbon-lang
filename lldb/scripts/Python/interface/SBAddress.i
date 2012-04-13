@@ -93,6 +93,9 @@ public:
                 lldb::addr_t offset);
              
 
+    lldb::AddressClass
+    GetAddressClass ();
+
     %feature("docstring", "
     //------------------------------------------------------------------
     /// GetSymbolContext() and the following can lookup symbol information for a given address.

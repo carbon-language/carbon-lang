@@ -250,7 +250,7 @@ public:
           DumpStyle fallback_style = DumpStyleInvalid,
           uint32_t addr_byte_size = UINT32_MAX) const;
 
-    AddressClass
+    lldb::AddressClass
     GetAddressClass () const;
     
     //------------------------------------------------------------------

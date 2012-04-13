@@ -597,7 +597,7 @@ public:
     /// returned.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetCallableLoadAddress (lldb::addr_t load_addr, AddressClass addr_class = lldb_private::eAddressClassInvalid) const;
+    GetCallableLoadAddress (lldb::addr_t load_addr, lldb::AddressClass addr_class = lldb::eAddressClassInvalid) const;
 
     //------------------------------------------------------------------
     /// Get \a load_addr as an opcode for this target.
@@ -612,7 +612,7 @@ public:
     /// returned.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetOpcodeLoadAddress (lldb::addr_t load_addr, AddressClass addr_class = lldb_private::eAddressClassInvalid) const;
+    GetOpcodeLoadAddress (lldb::addr_t load_addr, lldb::AddressClass addr_class = lldb::eAddressClassInvalid) const;
 
 protected:
     void

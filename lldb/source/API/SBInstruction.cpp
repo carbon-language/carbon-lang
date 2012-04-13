@@ -237,3 +237,11 @@ SBInstruction::TestEmulation (lldb::SBStream &output_stream,  const char *test_f
         
     return m_opaque_sp->TestEmulation (output_stream.get(), test_file);
 }
+
+lldb::AddressClass
+SBInstruction::GetAddressClass ()
+{
+    if (m_opaque_sp.get())
+        return m_opaque_sp->GetAddressClass();
+    return eAddressClassInvalid;
+}

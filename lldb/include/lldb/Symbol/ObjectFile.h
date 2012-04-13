@@ -200,7 +200,7 @@ public:
     ///     architecture (and object for archives). Returns zero if no
     ///     architecture or object has been selected.
     //------------------------------------------------------------------
-    virtual AddressClass
+    virtual lldb::AddressClass
     GetAddressClass (lldb::addr_t file_addr);
 
     //------------------------------------------------------------------

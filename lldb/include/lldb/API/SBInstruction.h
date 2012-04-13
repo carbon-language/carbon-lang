@@ -39,6 +39,9 @@ public:
     SBAddress
     GetAddress();
     
+    lldb::AddressClass
+    GetAddressClass ();
+    
     const char *
     GetMnemonic (lldb::SBTarget target);
 

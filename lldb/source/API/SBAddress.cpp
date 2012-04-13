@@ -313,4 +313,11 @@ SBAddress::GetLineEntry ()
     return sb_line_entry;
 }
 
+AddressClass
+SBAddress::GetAddressClass ()
+{
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetAddressClass();
+    return eAddressClassInvalid;
+}
 

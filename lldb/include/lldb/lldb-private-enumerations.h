@@ -37,27 +37,6 @@ typedef enum AddressType
 } AddressType;
 
 //----------------------------------------------------------------------
-// Address Class
-//
-// A way of classifying an address used for disassembling and setting 
-// breakpoints. Many object files can track exactly what parts of their
-// object files are code, data and other information. This is of course
-// above and beyond just looking at the section types. For example, code
-// might contain PC relative data and the object file might be able to
-// tell us that an address in code is data.
-//----------------------------------------------------------------------
-typedef enum AddressClass
-{
-    eAddressClassInvalid,
-    eAddressClassUnknown,
-    eAddressClassCode,
-    eAddressClassCodeAlternateISA,
-    eAddressClassData,
-    eAddressClassDebug,
-    eAddressClassRuntime
-} AddressClass;
-
-//----------------------------------------------------------------------
 // Votes - Need a tri-state, yes, no, no opinion...
 //----------------------------------------------------------------------
 typedef enum Vote

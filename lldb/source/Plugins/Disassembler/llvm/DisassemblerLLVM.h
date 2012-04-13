@@ -20,7 +20,7 @@ class InstructionLLVM : public lldb_private::Instruction
 {
 public:
     InstructionLLVM (const lldb_private::Address &addr,
-                     lldb_private::AddressClass addr_class,
+                     lldb::AddressClass addr_class,
                      EDDisassemblerRef disassembler,
                      llvm::Triple::ArchType arch_type);
     

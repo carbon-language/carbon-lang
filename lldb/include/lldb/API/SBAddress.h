@@ -100,6 +100,8 @@ public:
     lldb::SBLineEntry
     GetLineEntry ();
     
+    lldb::AddressClass
+    GetAddressClass ();
 
 protected:
 

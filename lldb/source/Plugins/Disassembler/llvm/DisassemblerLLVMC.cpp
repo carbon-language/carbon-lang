@@ -32,7 +32,7 @@ class InstructionLLVMC : public lldb_private::Instruction
 public:
     InstructionLLVMC (DisassemblerLLVMC &disasm,
                       const lldb_private::Address &address, 
-                      lldb_private::AddressClass addr_class) :
+                      AddressClass addr_class) :
         Instruction(address, addr_class),
         m_is_valid(false),
         m_disasm(disasm),
@@ -350,7 +350,7 @@ protected:
     }
     
     template <bool Reparse> bool Parse (const lldb_private::Address &address, 
-                                        lldb_private::AddressClass addr_class,
+                                        AddressClass addr_class,
                                         const DataExtractor &extractor,
                                         uint32_t data_offset,
                                         lldb_private::ExecutionContextScope *exe_scope)

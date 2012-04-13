@@ -27,9 +27,12 @@ public:
     bool
     IsValid();
 
-    SBAddress
+    lldb::SBAddress
     GetAddress();
 
+    lldb::AddressClass
+    GetAddressClass ();
+    
     const char *
     GetMnemonic (lldb::SBTarget target);
     

@@ -30,7 +30,7 @@ class Instruction
 {
 public:
     Instruction (const Address &address, 
-                 AddressClass addr_class = eAddressClassInvalid);
+                 lldb::AddressClass addr_class = lldb::eAddressClassInvalid);
 
     virtual
    ~Instruction();
@@ -64,7 +64,7 @@ public:
     virtual void
     CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe_scope) = 0;
     
-    AddressClass
+    lldb::AddressClass
     GetAddressClass ();
 
     void
@@ -72,7 +72,7 @@ public:
     {
         // Invalidate the address class to lazily discover
         // it if we need to.
-        m_address_class = eAddressClassInvalid; 
+        m_address_class = lldb::eAddressClassInvalid; 
         m_address = addr;
     }
 
@@ -130,7 +130,7 @@ protected:
     // The usual value will be eAddressClassCode, but often when
     // disassembling memory, you might run into data. This can
     // help us to disassemble appropriately.
-    AddressClass m_address_class; 
+    lldb::AddressClass m_address_class;
     Opcode m_opcode; // The opcode for this instruction
     std::string m_opcode_name;
     std::string m_mnemocics;
