@@ -244,6 +244,7 @@ void CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *dtor,
   if (CGM.getContext().getLangOpts().AppleKext) {
     // Generate a global destructor entry.
     CGM.AddCXXDtorEntry(dtor, addr);
+    return;
   }
 
   // Otherwise, we just use atexit.
