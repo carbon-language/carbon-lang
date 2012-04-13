@@ -7,7 +7,6 @@ set(LLVM_USED_LIBS
     clangStaticAnalyzerFrontend
     clangStaticAnalyzerCheckers
     clangStaticAnalyzerCore
-    clangIndex
     clangAnalysis
     clangRewrite
     clangAST
