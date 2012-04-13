@@ -173,15 +173,6 @@ protected:
   virtual bool usesPreprocessorOnly() const { return true; }
 };
   
-class PubnamesDumpAction : public ASTFrontendAction {
-protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile);
-  
-public:
-  virtual bool hasCodeCompletionSupport() const { return false; }
-};
-
 //===----------------------------------------------------------------------===//
 // Preprocessor Actions
 //===----------------------------------------------------------------------===//

@@ -42,7 +42,6 @@ namespace frontend {
     PrintDeclContext,       ///< Print DeclContext and their Decls.
     PrintPreamble,          ///< Print the "preamble" of the input file
     PrintPreprocessedInput, ///< -E mode.
-    PubnamesDump,           ///< Print all of the "public" names in the source.
     RewriteMacros,          ///< Expand macros but not #includes.
     RewriteObjC,            ///< ObjC->C Rewriter.
     RewriteTest,            ///< Rewriter playground
