@@ -48,6 +48,11 @@ def ext_bcpl_comment : Extension<
   InGroup<Comment>;
 def ext_no_newline_eof : Extension<"no newline at end of file">, 
   InGroup<DiagGroup<"newline-eof">>;
+
+def warn_cxx98_compat_no_newline_eof : Warning<
+  "C++98 requires newline at end of file">,
+  InGroup<CXX98CompatPedantic>, DefaultIgnore;
+
 def ext_dollar_in_identifier : Extension<"'$' in identifier">,
   InGroup<DiagGroup<"dollar-in-identifier-extension">>;
 def ext_charize_microsoft : Extension<"@# is a microsoft extension">,
