@@ -209,12 +209,12 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     // If a symbolic branch target was added as a constant expression then print
-    // that address in hex.
+    // that address in hex. And only print 32 unsigned bits for the address.
     const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
     int64_t Address;
     if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
       O << "0x";
-      O.write_hex(Address);
+      O.write_hex((uint32_t)Address);
     }
     else {
       // Otherwise, just print the expression.
