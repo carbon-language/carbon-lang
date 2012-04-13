@@ -9111,15 +9111,6 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
 
-  for (BlockDecl::capture_const_iterator ci = BSI->TheDecl->capture_begin(),
-       ce = BSI->TheDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
-    QualType T = variable->getType();
-    QualType::DestructionKind destructKind = T.isDestructedType();
-    if (destructKind != QualType::DK_none)
-      getCurFunction()->setHasBranchProtectedScope();
-  }
-
   computeNRVO(Body, getCurBlock());
   
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
@@ -9127,10 +9118,23 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   PopFunctionScopeInfo(&WP, Result->getBlockDecl(), Result);
 
   // If the block isn't obviously global, i.e. it captures anything at
-  // all, mark this full-expression as needing a cleanup.
+  // all, then we need to do a few things in the surrounding context:
   if (Result->getBlockDecl()->hasCaptures()) {
+    // First, this expression has a new cleanup object.
     ExprCleanupObjects.push_back(Result->getBlockDecl());
     ExprNeedsCleanups = true;
+
+    // It also gets a branch-protected scope if any of the captured
+    // variables needs destruction.
+    for (BlockDecl::capture_const_iterator
+           ci = Result->getBlockDecl()->capture_begin(),
+           ce = Result->getBlockDecl()->capture_end(); ci != ce; ++ci) {
+      const VarDecl *var = ci->getVariable();
+      if (var->getType().isDestructedType() != QualType::DK_none) {
+        getCurFunction()->setHasBranchProtectedScope();
+        break;
+      }
+    }
   }
 
   return Owned(Result);

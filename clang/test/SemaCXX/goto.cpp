@@ -115,3 +115,13 @@ namespace PR10620 {
     ;
   }
 }
+
+namespace test12 {
+  struct A { A(); A(const A&); ~A(); };
+  void test(A a) { // expected-note {{jump enters lifetime of block}} FIXME: wierd location
+    goto lbl; // expected-error {{goto into protected scope}}
+    (void) ^{ (void) a; };
+  lbl:
+    return;
+  }
+}
