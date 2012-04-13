@@ -70,7 +70,7 @@ endif
 CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
-LDFLAGS += $(LD_EXTRAS)
+LDFLAGS += $(LD_EXTRAS) -arch $(ARCH)
 OBJECTS =
 EXE ?= a.out
 

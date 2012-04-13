@@ -9,23 +9,35 @@ class HiddenIvarsTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "hidden-ivars")
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_expr_with_dsym(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDsym()
         self.expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_expr_with_dwarf(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDwarf()
         self.expr()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_frame_variable_with_dsym(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDsym()
         self.frame_var()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_frame_variable_with_dwarf(self):
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires modern objc runtime")
         self.buildDwarf()
         self.frame_var()
 
