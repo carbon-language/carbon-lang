@@ -309,7 +309,6 @@ protected:
     typedef std::vector< std::pair<lldb::tid_t,int> > tid_sig_collection;
     typedef std::map<lldb::addr_t, lldb::addr_t> MMapMap;
     tid_collection m_thread_ids; // Thread IDs for all threads. This list gets updated after stopping
-    lldb_private::Mutex m_thread_ids_mutex;
     tid_collection m_continue_c_tids;                  // 'c' for continue
     tid_sig_collection m_continue_C_tids; // 'C' for continue with signal
     tid_collection m_continue_s_tids;                  // 's' for step

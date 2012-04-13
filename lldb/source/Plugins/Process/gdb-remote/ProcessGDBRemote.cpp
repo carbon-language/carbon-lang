@@ -163,7 +163,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
     m_thread_ids (),
-    m_thread_ids_mutex (Mutex::eMutexTypeRecursive),
     m_continue_c_tids (),
     m_continue_C_tids (),
     m_continue_s_tids (),
@@ -1157,14 +1156,14 @@ ProcessGDBRemote::DoResume ()
 void
 ProcessGDBRemote::ClearThreadIDList ()
 {
-    Mutex::Locker locker(m_thread_ids_mutex);
+    Mutex::Locker locker(m_thread_list.GetMutex());
     m_thread_ids.clear();
 }
 
 bool
 ProcessGDBRemote::UpdateThreadIDList ()
 {
-    Mutex::Locker locker(m_thread_ids_mutex);
+    Mutex::Locker locker(m_thread_list.GetMutex());
     bool sequence_mutex_unavailable = false;
     m_gdb_comm.GetCurrentThreadIDs (m_thread_ids, sequence_mutex_unavailable);
     if (sequence_mutex_unavailable)
@@ -1184,8 +1183,6 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
     if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %llu)", __FUNCTION__, GetID());
-    // Update the thread list's stop id immediately so we don't recurse into this function.
-    Mutex::Locker locker(m_thread_ids_mutex);
     
     size_t num_thread_ids = m_thread_ids.size();
     // The "m_thread_ids" thread ID list should always be updated after each stop
@@ -1283,7 +1280,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 }
                 else if (name.compare("threads") == 0)
                 {
-                    Mutex::Locker locker(m_thread_ids_mutex);                    
+                    Mutex::Locker locker(m_thread_list.GetMutex());
                     m_thread_ids.clear();
                     // A comma separated list of all threads in the current
                     // process that includes the thread for this stop reply
@@ -1494,7 +1491,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 void
 ProcessGDBRemote::RefreshStateAfterStop ()
 {
-    Mutex::Locker locker(m_thread_ids_mutex);
+    Mutex::Locker locker(m_thread_list.GetMutex());
     m_thread_ids.clear();
     // Set the thread stop info. It might have a "threads" key whose value is
     // a list of all thread IDs in the current process, so m_thread_ids might
