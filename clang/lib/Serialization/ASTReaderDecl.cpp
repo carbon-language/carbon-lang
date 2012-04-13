@@ -955,6 +955,10 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
   BD->setParams(Params);
 
+  BD->setIsVariadic(Record[Idx++]);
+  BD->setBlockMissingReturnType(Record[Idx++]);
+  BD->setIsConversionFromLambda(Record[Idx++]);
+
   bool capturesCXXThis = Record[Idx++];
   unsigned numCaptures = Record[Idx++];
   SmallVector<BlockDecl::Capture, 16> captures;
