@@ -11298,14 +11298,15 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
                                                        unsigned notOpc,
                                                        unsigned EAXreg,
                                                  const TargetRegisterClass *RC,
-                                                       bool invSrc) const {
+                                                       bool Invert) const {
   // For the atomic bitwise operator, we generate
   //   thisMBB:
   //   newMBB:
   //     ld  t1 = [bitinstr.addr]
   //     op  t2 = t1, [bitinstr.val]
+  //     not t3 = t2  (if Invert)
   //     mov EAX = t1
-  //     lcs dest = [bitinstr.addr], t2  [EAX is implicit]
+  //     lcs dest = [bitinstr.addr], t3  [EAX is implicit]
   //     bz  newMBB
   //     fallthrough -->nextMBB
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -11353,13 +11354,6 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
 
-  unsigned tt = F->getRegInfo().createVirtualRegister(RC);
-  if (invSrc) {
-    MIB = BuildMI(newMBB, dl, TII->get(notOpc), tt).addReg(t1);
-  }
-  else
-    tt = t1;
-
   unsigned t2 = F->getRegInfo().createVirtualRegister(RC);
   assert((argOpers[valArgIndx]->isReg() ||
           argOpers[valArgIndx]->isImm()) &&
@@ -11368,16 +11362,23 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
     MIB = BuildMI(newMBB, dl, TII->get(regOpc), t2);
   else
     MIB = BuildMI(newMBB, dl, TII->get(immOpc), t2);
-  MIB.addReg(tt);
+  MIB.addReg(t1);
   (*MIB).addOperand(*argOpers[valArgIndx]);
 
+  unsigned t3 = F->getRegInfo().createVirtualRegister(RC);
+  if (Invert) {
+    MIB = BuildMI(newMBB, dl, TII->get(notOpc), t3).addReg(t2);
+  }
+  else
+    t3 = t2;
+
   MIB = BuildMI(newMBB, dl, TII->get(TargetOpcode::COPY), EAXreg);
-  MIB.addReg(t1);
+  MIB.addReg(t3);
 
   MIB = BuildMI(newMBB, dl, TII->get(CXchgOpc));
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
-  MIB.addReg(t2);
+  MIB.addReg(t3);
   assert(bInstr->hasOneMemOperand() && "Unexpected number of memoperand");
   (*MIB).setMemRefs(bInstr->memoperands_begin(),
                     bInstr->memoperands_end());
@@ -11400,7 +11401,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
                                                        unsigned regOpcH,
                                                        unsigned immOpcL,
                                                        unsigned immOpcH,
-                                                       bool invSrc) const {
+                                                       bool Invert) const {
   // For the atomic bitwise operator, we generate
   //   thisMBB (instructions are in pairs, except cmpxchg8b)
   //     ld t1,t2 = [bitinstr.addr]
@@ -11408,6 +11409,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   //     out1, out2 = phi (thisMBB, t1/t2) (newMBB, t3/t4)
   //     op  t5, t6 <- out1, out2, [bitinstr.val]
   //      (for SWAP, substitute:  mov t5, t6 <- [bitinstr.val])
+  //     neg t7, t8 < t5, t6  (if Invert)
   //     mov ECX, EBX <- t5, t6
   //     mov EAX, EDX <- t1, t2
   //     cmpxchg8b [bitinstr.addr]  [EAX, EDX, EBX, ECX implicit]
@@ -11491,16 +11493,9 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     .addReg(t2).addMBB(thisMBB).addReg(t4).addMBB(newMBB);
 
   // The subsequent operations should be using the destination registers of
-  //the PHI instructions.
-  if (invSrc) {
-    t1 = F->getRegInfo().createVirtualRegister(RC);
-    t2 = F->getRegInfo().createVirtualRegister(RC);
-    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), t1).addReg(dest1Oper.getReg());
-    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), t2).addReg(dest2Oper.getReg());
-  } else {
-    t1 = dest1Oper.getReg();
-    t2 = dest2Oper.getReg();
-  }
+  // the PHI instructions.
+  t1 = dest1Oper.getReg();
+  t2 = dest2Oper.getReg();
 
   int valArgIndx = lastAddrIndx + 1;
   assert((argOpers[valArgIndx]->isReg() ||
@@ -11527,15 +11522,26 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     MIB.addReg(t2);
   (*MIB).addOperand(*argOpers[valArgIndx + 1]);
 
+  unsigned t7, t8;
+  if (Invert) {
+    t7 = F->getRegInfo().createVirtualRegister(RC);
+    t8 = F->getRegInfo().createVirtualRegister(RC);
+    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), t7).addReg(t5);
+    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), t8).addReg(t6);
+  } else {
+    t7 = t5;
+    t8 = t6;
+  }
+
   MIB = BuildMI(newMBB, dl, TII->get(TargetOpcode::COPY), X86::EAX);
   MIB.addReg(t1);
   MIB = BuildMI(newMBB, dl, TII->get(TargetOpcode::COPY), X86::EDX);
   MIB.addReg(t2);
 
   MIB = BuildMI(newMBB, dl, TII->get(TargetOpcode::COPY), X86::EBX);
-  MIB.addReg(t5);
+  MIB.addReg(t7);
   MIB = BuildMI(newMBB, dl, TII->get(TargetOpcode::COPY), X86::ECX);
-  MIB.addReg(t6);
+  MIB.addReg(t8);
 
   MIB = BuildMI(newMBB, dl, TII->get(X86::LCMPXCHG8B));
   for (int i=0; i <= lastAddrIndx; ++i)
