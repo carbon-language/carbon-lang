@@ -883,11 +883,8 @@ SBFrame::GetVariables (bool arguments,
 
             size_t i;
             VariableList *variable_list = NULL;
-            // Scope for locker
-            {
-                Mutex::Locker api_locker (target->GetAPIMutex());
-                variable_list = frame->GetVariableList(true);
-            }
+            Mutex::Locker api_locker (target->GetAPIMutex());
+            variable_list = frame->GetVariableList(true);
             if (variable_list)
             {
                 const size_t num_variables = variable_list->GetSize();
