@@ -74,6 +74,7 @@ error_check_mutex (pthread_mutex_t *m, MutexAction action)
         case eMutexActionAssertInitialized:
             // This function will return true if "m" is in the initialized mutex set
             success = g_initialized_mutex_set.find(m) != g_initialized_mutex_set.end();
+            assert (success);
             break;
     }
     // Manually call unlock so we don't to any of this error checking
