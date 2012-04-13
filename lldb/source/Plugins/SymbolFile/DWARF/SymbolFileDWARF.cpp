@@ -1667,6 +1667,8 @@ SymbolFileDWARF::ParseChildMembers
                                                                                         member_type->GetClangLayoutType(), 
                                                                                         accessibility, 
                                                                                         bit_size);
+                                
+                                GetClangASTContext().SetMetadata((uintptr_t)field_decl, MakeUserID(die->GetOffset()));
                             }
                             else
                             {
@@ -1736,6 +1738,8 @@ SymbolFileDWARF::ParseChildMembers
                                                                        prop_setter_name,
                                                                        prop_getter_name,
                                                                        prop_attributes);
+                            
+                            GetClangASTContext().SetMetadata((uintptr_t)ivar_decl, MakeUserID(die->GetOffset()));
                         }
                     }
                 }
@@ -3815,6 +3819,8 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                                                                                                                   storage);
                             assert(param_var_decl);
                             function_param_decls.push_back(param_var_decl);
+                            
+                            GetClangASTContext().SetMetadata((uintptr_t)param_var_decl, MakeUserID(die->GetOffset()));
                         }
                     }
                 }
@@ -5161,17 +5167,23 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                                                                template_param_infos);
                                 clang_type = ast.CreateClassTemplateSpecializationType (class_specialization_decl);
                                 clang_type_was_created = true;
+                                
+                                GetClangASTContext().SetMetadata((uintptr_t)class_template_decl, MakeUserID(die->GetOffset()));
+                                GetClangASTContext().SetMetadata((uintptr_t)class_specialization_decl, MakeUserID(die->GetOffset()));
                             }
                         }
 
                         if (!clang_type_was_created)
                         {
                             clang_type_was_created = true;
+                            clang::CXXRecordDecl *record_decl;
                             clang_type = ast.CreateRecordType (decl_ctx, 
                                                                accessibility, 
                                                                type_name_cstr, 
                                                                tag_decl_kind, 
-                                                               class_language);
+                                                               class_language,
+                                                               &record_decl);
+                            GetClangASTContext().SetMetadata((uintptr_t)record_decl, MakeUserID(die->GetOffset()));
                         }
                     }
 
@@ -5530,6 +5542,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                       accessibility);
                                     LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(objc_method_decl), die);
                                     type_handled = objc_method_decl != NULL;
+                                    GetClangASTContext().SetMetadata((uintptr_t)objc_method_decl, MakeUserID(die->GetOffset()));
                                 }
                             }
                             else if (is_cxx_method)
@@ -5634,6 +5647,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                     Host::SetCrashDescription (NULL);
 
                                                     type_handled = cxx_method_decl != NULL;
+                                                    
+                                                    GetClangASTContext().SetMetadata((uintptr_t)cxx_method_decl, MakeUserID(die->GetOffset()));
                                                 }
                                             }
                                             else
@@ -5698,6 +5713,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 ast.SetFunctionParameters (function_decl, 
                                                            &function_param_decls.front(), 
                                                            function_param_decls.size());
+                            
+                            GetClangASTContext().SetMetadata((uintptr_t)function_decl, MakeUserID(die->GetOffset()));
                         }
                     }
                     type_sp.reset( new Type (MakeUserID(die->GetOffset()), 

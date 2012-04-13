@@ -25,6 +25,7 @@
 #define DWARF_LOG_DEBUG_ARANGES     (1u << 5)
 #define DWARF_LOG_LOOKUPS           (1u << 6)
 #define DWARF_LOG_TYPE_COMPLETION   (1u << 7)
+#define DWARF_LOG_DEBUG_MAP         (1u << 8)
 #define DWARF_LOG_ALL               (UINT32_MAX)
 #define DWARF_LOG_DEFAULT           (DWARF_LOG_DEBUG_INFO)
 

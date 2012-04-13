@@ -109,6 +109,7 @@ LogChannelDWARF::Disable (const char **categories, Stream *feedback_strm)
         else if (::strcasecmp (arg, "pubtypes")   == 0) flag_bits &= ~DWARF_LOG_DEBUG_PUBTYPES;
         else if (::strcasecmp (arg, "aranges")    == 0) flag_bits &= ~DWARF_LOG_DEBUG_ARANGES;
         else if (::strcasecmp (arg, "lookups")    == 0) flag_bits &= ~DWARF_LOG_LOOKUPS;
+        else if (::strcasecmp (arg, "map")        == 0) flag_bits &= ~DWARF_LOG_DEBUG_MAP;
         else if (::strcasecmp (arg, "default")    == 0) flag_bits &= ~DWARF_LOG_DEFAULT;
         else if (::strncasecmp(arg, "comp", 4)    == 0) flag_bits &= ~DWARF_LOG_TYPE_COMPLETION;
         else
@@ -152,6 +153,7 @@ LogChannelDWARF::Enable
         else if (::strcasecmp (arg, "pubtypes")   == 0) flag_bits |= DWARF_LOG_DEBUG_PUBTYPES;
         else if (::strcasecmp (arg, "aranges")    == 0) flag_bits |= DWARF_LOG_DEBUG_ARANGES;
         else if (::strcasecmp (arg, "lookups")    == 0) flag_bits |= DWARF_LOG_LOOKUPS;
+        else if (::strcasecmp (arg, "map")        == 0) flag_bits |= DWARF_LOG_DEBUG_MAP;
         else if (::strcasecmp (arg, "default")    == 0) flag_bits |= DWARF_LOG_DEFAULT;
         else if (::strncasecmp(arg, "comp", 4)    == 0) flag_bits |= DWARF_LOG_TYPE_COMPLETION;
         else
@@ -181,7 +183,8 @@ LogChannelDWARF::ListCategories (Stream *strm)
                   "  pubnames - log the parsing if .debug_pubnames\n"
                   "  pubtypes - log the parsing if .debug_pubtypes\n"
                   "  lookups - log any lookups that happen by name, regex, or address\n\n"
-                  "  completion - log struct/unions/class type completions\n\n",
+                  "  completion - log struct/unions/class type completions\n\n"
+                  "  map - log insertions of object files into DWARF debug maps\n\n",
                   SymbolFileDWARF::GetPluginNameStatic());
 }
 

@@ -80,6 +80,9 @@ public:
         return origin.Valid();
     }
     
+    uint64_t
+    GetDeclMetadata (const clang::Decl *decl);
+    
     //
     // Namespace maps
     //

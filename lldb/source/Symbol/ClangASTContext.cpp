@@ -1125,10 +1125,13 @@ ClangASTContext::GetTypeForDecl (ObjCInterfaceDecl *decl)
 #pragma mark Structure, Unions, Classes
 
 clang_type_t
-ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type, const char *name, int kind, LanguageType language)
+ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type, const char *name, int kind, LanguageType language, CXXRecordDecl **out_decl)
 {
     ASTContext *ast = getASTContext();
     assert (ast != NULL);
+ 
+    if (out_decl)
+        *out_decl = NULL;
     
     if (decl_ctx == NULL)
         decl_ctx = ast->getTranslationUnitDecl();
@@ -1152,6 +1155,9 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type
                                                  SourceLocation(),
                                                  SourceLocation(),
                                                  name && name[0] ? &ast->Idents.get(name) : NULL);
+    
+    if (out_decl)
+        *out_decl = decl;
     
     if (!name)
         decl->setAnonymousStructOrUnion(true);
@@ -6195,36 +6201,6 @@ ClangASTContext::GetTypeQualifiers(clang_type_t clang_type)
     return qual_type.getQualifiers().getCVRQualifiers();
 }
 
-uint64_t
-GetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type)
-{
-    assert (clang_type);
-    
-    clang::ExternalASTSource *external_ast_source = ast->getExternalSource();
-    
-    if (!external_ast_source)
-        return 0;
-    
-    ClangExternalASTSourceCommon *common_ast_source = static_cast<ClangExternalASTSourceCommon*>(external_ast_source);
-    
-    return common_ast_source->GetMetadata((uintptr_t)clang_type);
-}
-
-void
-SetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type, uint64_t flags)
-{
-    assert (clang_type);
-    
-    clang::ExternalASTSource *external_ast_source = ast->getExternalSource();
-    
-    if (!external_ast_source)
-        return;
-    
-    ClangExternalASTSourceCommon *common_ast_source = static_cast<ClangExternalASTSourceCommon*>(external_ast_source);
-    
-    return common_ast_source->SetMetadata((uintptr_t)clang_type, flags);
-}
-
 bool
 ClangASTContext::GetCompleteType (clang::ASTContext *ast, lldb::clang_type_t clang_type)
 {
@@ -6297,6 +6273,31 @@ ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
     {
         return false;
     }
+}
+
+void
+ClangASTContext::SetMetadata (clang::ASTContext *ast,
+                              uintptr_t object,
+                              uint64_t metadata)
+{
+    ClangExternalASTSourceCommon *external_source =
+        static_cast<ClangExternalASTSourceCommon*>(ast->getExternalSource());
+    
+    if (external_source)
+        external_source->SetMetadata(object, metadata);
+}
+
+uint64_t
+ClangASTContext::GetMetadata (clang::ASTContext *ast,
+                              uintptr_t object)
+{
+    ClangExternalASTSourceCommon *external_source =
+        static_cast<ClangExternalASTSourceCommon*>(ast->getExternalSource());
+    
+    if (external_source && external_source->HasMetadata(object))
+        return external_source->GetMetadata(object);
+    else
+        return 0;
 }
 
 clang::DeclContext *

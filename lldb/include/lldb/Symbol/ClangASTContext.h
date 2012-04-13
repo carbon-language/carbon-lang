@@ -143,6 +143,26 @@ public:
     static bool
     GetCompleteDecl (clang::ASTContext *ast,
                      clang::Decl *decl);
+
+    void SetMetadata (uintptr_t object,
+                      uint64_t metadata)
+    {
+        SetMetadata(getASTContext(), object, metadata);
+    }
+    
+    static void
+    SetMetadata (clang::ASTContext *ast,
+                 uintptr_t object,
+                 uint64_t metadata);
+    
+    uint64_t GetMetadata (uintptr_t object)
+    {
+        return GetMetadata(getASTContext(), object);
+    }
+    
+    static uint64_t
+    GetMetadata (clang::ASTContext *ast,
+                 uintptr_t object);
     
     //------------------------------------------------------------------
     // Basic Types
@@ -270,7 +290,8 @@ public:
                       lldb::AccessType access_type,
                       const char *name,
                       int kind,
-                      lldb::LanguageType language);
+                      lldb::LanguageType language,
+                      clang::CXXRecordDecl **decl = NULL);
 
     static clang::FieldDecl *
     AddFieldToRecordType (clang::ASTContext *ast,
@@ -929,15 +950,6 @@ public:
     //------------------------------------------------------------------
     static unsigned
     GetTypeQualifiers(lldb::clang_type_t clang_type);
-    
-    //------------------------------------------------------------------
-    // Flags
-    //------------------------------------------------------------------
-    static uint64_t
-    GetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type);
-    
-    static void
-    SetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type, uint64_t flags);
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these

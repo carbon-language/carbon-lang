@@ -21,6 +21,7 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 
+#include "LogChannelDWARF.h"
 #include "SymbolFileDWARF.h"
 
 using namespace lldb;
@@ -106,6 +107,8 @@ SymbolFileDWARFDebugMap::InitOSO ()
     Symtab* symtab = m_obj_file->GetSymtab();
     if (symtab)
     {
+        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
+
         std::vector<uint32_t> oso_indexes;
 //      StreamFile s(stdout);
 //      symtab->Dump(&s, NULL, eSortOrderNone);
@@ -145,6 +148,9 @@ SymbolFileDWARFDebugMap::InitOSO ()
                 m_compile_unit_infos[i].last_symbol = symtab->SymbolAtIndex (sibling_idx - 1);
                 m_compile_unit_infos[i].first_symbol_index = symtab->GetIndexForSymbol(m_compile_unit_infos[i].so_symbol);
                 m_compile_unit_infos[i].last_symbol_index = symtab->GetIndexForSymbol(m_compile_unit_infos[i].last_symbol);
+                
+                if (log)
+                    log->Printf("Initialized OSO 0x%8.8x: file=%s", i, m_compile_unit_infos[i].oso_symbol->GetName().GetCString());
             }
         }
     }
