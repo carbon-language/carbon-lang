@@ -57,7 +57,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
     
     TargetSP target_sp (thread.CalculateTarget());
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
     
     SetBreakpoints();
     
@@ -69,7 +69,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
     if (!error.Success())
     {
         if (log)
-            log->Printf ("Trying to put the stack in unreadable memory at: 0x%llx.", m_function_sp);
+            log->Printf ("ThreadPlanCallFunction(%p): Trying to put the stack in unreadable memory at: 0x%llx.", this, m_function_sp);
         return false;
     }
     
@@ -78,7 +78,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
     if (exe_module == NULL)
     {
         if (log)
-            log->Printf ("Can't execute code without an executable module.");
+            log->Printf ("ThreadPlanCallFunction(%p): Can't execute code without an executable module.", this);
         return false;
     }
     else
@@ -87,16 +87,16 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
         if (!objectFile)
         {
             if (log)
-                log->Printf ("Could not find object file for module \"%s\".", 
-                             exe_module->GetFileSpec().GetFilename().AsCString());
+                log->Printf ("ThreadPlanCallFunction(%p): Could not find object file for module \"%s\".", 
+                             this, exe_module->GetFileSpec().GetFilename().AsCString());
             return false;
         }
         m_start_addr = objectFile->GetEntryPointAddress();
         if (!m_start_addr.IsValid())
         {
             if (log)
-                log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                             exe_module->GetFileSpec().GetFilename().AsCString());
+                log->Printf ("ThreadPlanCallFunction(%p): Could not find entry point address for executable module \"%s\".", 
+                             this, exe_module->GetFileSpec().GetFilename().AsCString());
             return false;
         }
     }
@@ -110,7 +110,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
     if (!thread.CheckpointThreadState (m_stored_thread_state))
     {
         if (log)
-            log->Printf ("Setting up ThreadPlanCallFunction, failed to checkpoint thread state.");
+            log->Printf ("ThreadPlanCallFunction(%p): Setting up ThreadPlanCallFunction, failed to checkpoint thread state.", this);
         return false;
     }
     // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
@@ -262,7 +262,16 @@ ThreadPlanCallFunction::ReportRegisterState (const char *message)
 void
 ThreadPlanCallFunction::DoTakedown ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+    
+    if (!m_valid)
+    {
+        //Don't call DoTakedown if we were never valid to begin with.
+        if (log)
+            log->Printf ("ThreadPlanCallFunction(%p): Log called on ThreadPlanCallFunction that was never valid.", this);
+        return;
+    }
+    
     if (!m_takedown_done)
     {
         ProcessSP process_sp (m_thread.GetProcess());
@@ -274,7 +283,7 @@ ThreadPlanCallFunction::DoTakedown ()
         }
 
         if (log)
-            log->Printf ("DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
+            log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
         m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
         m_real_stop_info_sp = GetPrivateStopReason();
@@ -288,7 +297,7 @@ ThreadPlanCallFunction::DoTakedown ()
     else
     {
         if (log)
-            log->Printf ("DoTakedown called as no-op for thread 0x%4.4llx, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
+            log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called as no-op for thread 0x%4.4llx, m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
     }
 }
 
@@ -447,7 +456,7 @@ ThreadPlanCallFunction::MischiefManaged ()
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
         if (log)
-            log->Printf("Completed call function plan.");
+            log->Printf("ThreadPlanCallFunction(%p): Completed call function plan.", this);
 
         ThreadPlan::MischiefManaged ();
         return true;
