@@ -78,8 +78,7 @@ void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   const MachineOperand &MO = MI->getOperand(OpNo);
 
   switch (MO.getType()) {
-  default:
-    assert(0 && "<unknown operand type>");
+  default: llvm_unreachable("<unknown operand type>");
   case MachineOperand::MO_Register:
     O << HexagonInstPrinter::getRegisterName(MO.getReg());
     return;

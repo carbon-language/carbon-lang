@@ -102,7 +102,7 @@ namespace {
                           MachineDominatorTree &MDT);
 
     // initPacketizerState - initialize some internal flags.
-    void initPacketizerState(void);
+    void initPacketizerState();
 
     // ignorePseudoInstruction - Ignore bundling of pseudo instructions.
     bool ignorePseudoInstruction(MachineInstr *MI, MachineBasicBlock *MBB);
@@ -250,7 +250,7 @@ void HexagonPacketizerList::reserveResourcesForConstExt(MachineInstr* MI) {
     MI->getParent()->getParent()->DeleteMachineInstr(PseudoMI);
   } else {
     MI->getParent()->getParent()->DeleteMachineInstr(PseudoMI);
-    assert(0 && "can not reserve resources for constant extender.");
+    llvm_unreachable("can not reserve resources for constant extender.");
   }
   return;
 }
@@ -491,6 +491,7 @@ static bool DoesModifyCalleeSavedReg(MachineInstr *MI,
 // Return the new value instruction for a given store.
 static int GetDotNewOp(const int opc) {
   switch (opc) {
+  default: llvm_unreachable("Unknown .new type");
 
   // store new value byte
   case Hexagon::STrib:
@@ -773,16 +774,14 @@ static int GetDotNewOp(const int opc) {
 
   case Hexagon::STriw_GP_cdnNotPt_V4:
     return Hexagon::STriw_GP_cdnNotPt_nv_V4;
-
-  default:
-    assert(0 && "Unknown .new type");
   }
-  return 0;
 }
 
 // Return .new predicate version for an instruction
 static int GetDotNewPredOp(const int opc) {
   switch (opc) {
+  default: llvm_unreachable("Unknown .new type");
+
   // Conditional stores
   // Store byte conditionally
   case Hexagon::STrib_cPt :
@@ -1405,12 +1404,7 @@ static int GetDotNewPredOp(const int opc) {
     return Hexagon::ZXTH_cdnPt_V4;
   case Hexagon::ZXTH_cNotPt_V4 :
     return Hexagon::ZXTH_cdnNotPt_V4;
-
-
-  default:
-    assert(0 && "Unknown .new type");
   }
-  return 0;
 }
 
 // Returns true if an instruction can be promoted to .new predicate
@@ -1482,6 +1476,8 @@ bool HexagonPacketizerList::PromoteToDotNew(MachineInstr* MI,
 
 static int GetDotOldOp(const int opc) {
   switch (opc) {
+  default: llvm_unreachable("Unknown .old type");
+
   case Hexagon::TFR_cdnPt:
     return Hexagon::TFR_cPt;
 
@@ -2156,11 +2152,7 @@ static int GetDotOldOp(const int opc) {
 
   case Hexagon::STrid_GP_cdnNotPt_V4 :
     return Hexagon::STrid_GP_cNotPt_V4;
-
-  default:
-    assert(0 && "Unknown .old type");
   }
-  return 0;
 }
 
 bool HexagonPacketizerList::DemoteToDotOld(MachineInstr* MI) {
@@ -2761,10 +2753,7 @@ static MachineOperand& GetPostIncrementOperand(MachineInstr *MI,
   }
 #endif
   // we should never come here.
-  assert(0 && "mayLoad or mayStore not set for Post Increment operation");
-
-  // return *some value* to avoid compiler warning
-  return MI->getOperand(0);
+  llvm_unreachable("mayLoad or mayStore not set for Post Increment operation");
 }
 
 // get the value being stored
@@ -3167,7 +3156,7 @@ bool HexagonPacketizerList::ArePredicatesComplements (MachineInstr* MI1,
 }
 
 // initPacketizerState - Initialize packetizer flags
-void HexagonPacketizerList::initPacketizerState(void) {
+void HexagonPacketizerList::initPacketizerState() {
 
   Dependence = false;
   PromotedToDotNew = false;
@@ -3236,10 +3225,10 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
 
   // Inline asm cannot go in the packet.
   if (I->getOpcode() == Hexagon::INLINEASM)
-    assert(0 && "Should not meet inline asm here!");
+    llvm_unreachable("Should not meet inline asm here!");
 
   if (isSoloInstruction(I))
-    assert(0 && "Should not meet solo instr here!");
+    llvm_unreachable("Should not meet solo instr here!");
 
   // A save callee-save register function call can only be in a packet
   // with instructions that don't write to the callee-save registers.
@@ -3550,8 +3539,7 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
 // isLegalToPruneDependencies
 bool HexagonPacketizerList::isLegalToPruneDependencies(SUnit *SUI, SUnit *SUJ) {
   MachineInstr *I = SUI->getInstr();
-  MachineInstr *J = SUJ->getInstr();
-  assert(I && J && "Unable to packetize null instruction!");
+  assert(I && SUJ->getInstr() && "Unable to packetize null instruction!");
 
   const unsigned FrameSize = MF.getFrameInfo()->getStackSize();
 

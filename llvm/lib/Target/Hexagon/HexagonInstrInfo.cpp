@@ -846,105 +846,107 @@ bool HexagonInstrInfo::isNewValueJump(const MachineInstr *MI) const {
 
 unsigned HexagonInstrInfo::getImmExtForm(const MachineInstr* MI) const {
   switch(MI->getOpcode()) {
-    // JMP_EQri
-    case Hexagon::JMP_EQriPt_nv_V4:
-      return Hexagon::JMP_EQriPt_ie_nv_V4;
-    case Hexagon::JMP_EQriNotPt_nv_V4:
-      return Hexagon::JMP_EQriNotPt_ie_nv_V4;
-    case Hexagon::JMP_EQriPnt_nv_V4:
-      return Hexagon::JMP_EQriPnt_ie_nv_V4;
-    case Hexagon::JMP_EQriNotPnt_nv_V4:
-      return Hexagon::JMP_EQriNotPnt_ie_nv_V4;
+  default: llvm_unreachable("Unknown type of instruction");
 
-    // JMP_EQri -- with -1
-    case Hexagon::JMP_EQriPtneg_nv_V4:
-      return Hexagon::JMP_EQriPtneg_ie_nv_V4;
-    case Hexagon::JMP_EQriNotPtneg_nv_V4:
-      return Hexagon::JMP_EQriNotPtneg_ie_nv_V4;
-    case Hexagon::JMP_EQriPntneg_nv_V4:
-      return Hexagon::JMP_EQriPntneg_ie_nv_V4;
-    case Hexagon::JMP_EQriNotPntneg_nv_V4:
-      return Hexagon::JMP_EQriNotPntneg_ie_nv_V4;
+  // JMP_EQri
+  case Hexagon::JMP_EQriPt_nv_V4:
+    return Hexagon::JMP_EQriPt_ie_nv_V4;
+  case Hexagon::JMP_EQriNotPt_nv_V4:
+    return Hexagon::JMP_EQriNotPt_ie_nv_V4;
+  case Hexagon::JMP_EQriPnt_nv_V4:
+    return Hexagon::JMP_EQriPnt_ie_nv_V4;
+  case Hexagon::JMP_EQriNotPnt_nv_V4:
+    return Hexagon::JMP_EQriNotPnt_ie_nv_V4;
 
-    // JMP_EQrr
-    case Hexagon::JMP_EQrrPt_nv_V4:
-      return Hexagon::JMP_EQrrPt_ie_nv_V4;
-    case Hexagon::JMP_EQrrNotPt_nv_V4:
-      return Hexagon::JMP_EQrrNotPt_ie_nv_V4;
-    case Hexagon::JMP_EQrrPnt_nv_V4:
-      return Hexagon::JMP_EQrrPnt_ie_nv_V4;
-    case Hexagon::JMP_EQrrNotPnt_nv_V4:
-      return Hexagon::JMP_EQrrNotPnt_ie_nv_V4;
+  // JMP_EQri -- with -1
+  case Hexagon::JMP_EQriPtneg_nv_V4:
+    return Hexagon::JMP_EQriPtneg_ie_nv_V4;
+  case Hexagon::JMP_EQriNotPtneg_nv_V4:
+    return Hexagon::JMP_EQriNotPtneg_ie_nv_V4;
+  case Hexagon::JMP_EQriPntneg_nv_V4:
+    return Hexagon::JMP_EQriPntneg_ie_nv_V4;
+  case Hexagon::JMP_EQriNotPntneg_nv_V4:
+    return Hexagon::JMP_EQriNotPntneg_ie_nv_V4;
 
-    // JMP_GTri
-    case Hexagon::JMP_GTriPt_nv_V4:
-      return Hexagon::JMP_GTriPt_ie_nv_V4;
-    case Hexagon::JMP_GTriNotPt_nv_V4:
-      return Hexagon::JMP_GTriNotPt_ie_nv_V4;
-    case Hexagon::JMP_GTriPnt_nv_V4:
-      return Hexagon::JMP_GTriPnt_ie_nv_V4;
-    case Hexagon::JMP_GTriNotPnt_nv_V4:
-      return Hexagon::JMP_GTriNotPnt_ie_nv_V4;
+  // JMP_EQrr
+  case Hexagon::JMP_EQrrPt_nv_V4:
+    return Hexagon::JMP_EQrrPt_ie_nv_V4;
+  case Hexagon::JMP_EQrrNotPt_nv_V4:
+    return Hexagon::JMP_EQrrNotPt_ie_nv_V4;
+  case Hexagon::JMP_EQrrPnt_nv_V4:
+    return Hexagon::JMP_EQrrPnt_ie_nv_V4;
+  case Hexagon::JMP_EQrrNotPnt_nv_V4:
+    return Hexagon::JMP_EQrrNotPnt_ie_nv_V4;
 
-    // JMP_GTri -- with -1
-    case Hexagon::JMP_GTriPtneg_nv_V4:
-      return Hexagon::JMP_GTriPtneg_ie_nv_V4;
-    case Hexagon::JMP_GTriNotPtneg_nv_V4:
-      return Hexagon::JMP_GTriNotPtneg_ie_nv_V4;
-    case Hexagon::JMP_GTriPntneg_nv_V4:
-      return Hexagon::JMP_GTriPntneg_ie_nv_V4;
-    case Hexagon::JMP_GTriNotPntneg_nv_V4:
-      return Hexagon::JMP_GTriNotPntneg_ie_nv_V4;
+  // JMP_GTri
+  case Hexagon::JMP_GTriPt_nv_V4:
+    return Hexagon::JMP_GTriPt_ie_nv_V4;
+  case Hexagon::JMP_GTriNotPt_nv_V4:
+    return Hexagon::JMP_GTriNotPt_ie_nv_V4;
+  case Hexagon::JMP_GTriPnt_nv_V4:
+    return Hexagon::JMP_GTriPnt_ie_nv_V4;
+  case Hexagon::JMP_GTriNotPnt_nv_V4:
+    return Hexagon::JMP_GTriNotPnt_ie_nv_V4;
 
-    // JMP_GTrr
-    case Hexagon::JMP_GTrrPt_nv_V4:
-      return Hexagon::JMP_GTrrPt_ie_nv_V4;
-    case Hexagon::JMP_GTrrNotPt_nv_V4:
-      return Hexagon::JMP_GTrrNotPt_ie_nv_V4;
-    case Hexagon::JMP_GTrrPnt_nv_V4:
-      return Hexagon::JMP_GTrrPnt_ie_nv_V4;
-    case Hexagon::JMP_GTrrNotPnt_nv_V4:
-      return Hexagon::JMP_GTrrNotPnt_ie_nv_V4;
+  // JMP_GTri -- with -1
+  case Hexagon::JMP_GTriPtneg_nv_V4:
+    return Hexagon::JMP_GTriPtneg_ie_nv_V4;
+  case Hexagon::JMP_GTriNotPtneg_nv_V4:
+    return Hexagon::JMP_GTriNotPtneg_ie_nv_V4;
+  case Hexagon::JMP_GTriPntneg_nv_V4:
+    return Hexagon::JMP_GTriPntneg_ie_nv_V4;
+  case Hexagon::JMP_GTriNotPntneg_nv_V4:
+    return Hexagon::JMP_GTriNotPntneg_ie_nv_V4;
 
-    // JMP_GTrrdn
-    case Hexagon::JMP_GTrrdnPt_nv_V4:
-      return Hexagon::JMP_GTrrdnPt_ie_nv_V4;
-    case Hexagon::JMP_GTrrdnNotPt_nv_V4:
-      return Hexagon::JMP_GTrrdnNotPt_ie_nv_V4;
-    case Hexagon::JMP_GTrrdnPnt_nv_V4:
-      return Hexagon::JMP_GTrrdnPnt_ie_nv_V4;
-    case Hexagon::JMP_GTrrdnNotPnt_nv_V4:
-      return Hexagon::JMP_GTrrdnNotPnt_ie_nv_V4;
+  // JMP_GTrr
+  case Hexagon::JMP_GTrrPt_nv_V4:
+    return Hexagon::JMP_GTrrPt_ie_nv_V4;
+  case Hexagon::JMP_GTrrNotPt_nv_V4:
+    return Hexagon::JMP_GTrrNotPt_ie_nv_V4;
+  case Hexagon::JMP_GTrrPnt_nv_V4:
+    return Hexagon::JMP_GTrrPnt_ie_nv_V4;
+  case Hexagon::JMP_GTrrNotPnt_nv_V4:
+    return Hexagon::JMP_GTrrNotPnt_ie_nv_V4;
 
-    // JMP_GTUri
-    case Hexagon::JMP_GTUriPt_nv_V4:
-      return Hexagon::JMP_GTUriPt_ie_nv_V4;
-    case Hexagon::JMP_GTUriNotPt_nv_V4:
-      return Hexagon::JMP_GTUriNotPt_ie_nv_V4;
-    case Hexagon::JMP_GTUriPnt_nv_V4:
-      return Hexagon::JMP_GTUriPnt_ie_nv_V4;
-    case Hexagon::JMP_GTUriNotPnt_nv_V4:
-      return Hexagon::JMP_GTUriNotPnt_ie_nv_V4;
+  // JMP_GTrrdn
+  case Hexagon::JMP_GTrrdnPt_nv_V4:
+    return Hexagon::JMP_GTrrdnPt_ie_nv_V4;
+  case Hexagon::JMP_GTrrdnNotPt_nv_V4:
+    return Hexagon::JMP_GTrrdnNotPt_ie_nv_V4;
+  case Hexagon::JMP_GTrrdnPnt_nv_V4:
+    return Hexagon::JMP_GTrrdnPnt_ie_nv_V4;
+  case Hexagon::JMP_GTrrdnNotPnt_nv_V4:
+    return Hexagon::JMP_GTrrdnNotPnt_ie_nv_V4;
 
-    // JMP_GTUrr
-    case Hexagon::JMP_GTUrrPt_nv_V4:
-      return Hexagon::JMP_GTUrrPt_ie_nv_V4;
-    case Hexagon::JMP_GTUrrNotPt_nv_V4:
-      return Hexagon::JMP_GTUrrNotPt_ie_nv_V4;
-    case Hexagon::JMP_GTUrrPnt_nv_V4:
-      return Hexagon::JMP_GTUrrPnt_ie_nv_V4;
-    case Hexagon::JMP_GTUrrNotPnt_nv_V4:
-      return Hexagon::JMP_GTUrrNotPnt_ie_nv_V4;
+  // JMP_GTUri
+  case Hexagon::JMP_GTUriPt_nv_V4:
+    return Hexagon::JMP_GTUriPt_ie_nv_V4;
+  case Hexagon::JMP_GTUriNotPt_nv_V4:
+    return Hexagon::JMP_GTUriNotPt_ie_nv_V4;
+  case Hexagon::JMP_GTUriPnt_nv_V4:
+    return Hexagon::JMP_GTUriPnt_ie_nv_V4;
+  case Hexagon::JMP_GTUriNotPnt_nv_V4:
+    return Hexagon::JMP_GTUriNotPnt_ie_nv_V4;
 
-    // JMP_GTUrrdn
-    case Hexagon::JMP_GTUrrdnPt_nv_V4:
-      return Hexagon::JMP_GTUrrdnPt_ie_nv_V4;
-    case Hexagon::JMP_GTUrrdnNotPt_nv_V4:
-      return Hexagon::JMP_GTUrrdnNotPt_ie_nv_V4;
-    case Hexagon::JMP_GTUrrdnPnt_nv_V4:
-      return Hexagon::JMP_GTUrrdnPnt_ie_nv_V4;
-    case Hexagon::JMP_GTUrrdnNotPnt_nv_V4:
-      return Hexagon::JMP_GTUrrdnNotPnt_ie_nv_V4;
+  // JMP_GTUrr
+  case Hexagon::JMP_GTUrrPt_nv_V4:
+    return Hexagon::JMP_GTUrrPt_ie_nv_V4;
+  case Hexagon::JMP_GTUrrNotPt_nv_V4:
+    return Hexagon::JMP_GTUrrNotPt_ie_nv_V4;
+  case Hexagon::JMP_GTUrrPnt_nv_V4:
+    return Hexagon::JMP_GTUrrPnt_ie_nv_V4;
+  case Hexagon::JMP_GTUrrNotPnt_nv_V4:
+    return Hexagon::JMP_GTUrrNotPnt_ie_nv_V4;
+
+  // JMP_GTUrrdn
+  case Hexagon::JMP_GTUrrdnPt_nv_V4:
+    return Hexagon::JMP_GTUrrdnPt_ie_nv_V4;
+  case Hexagon::JMP_GTUrrdnNotPt_nv_V4:
+    return Hexagon::JMP_GTUrrdnNotPt_ie_nv_V4;
+  case Hexagon::JMP_GTUrrdnPnt_nv_V4:
+    return Hexagon::JMP_GTUrrdnPnt_ie_nv_V4;
+  case Hexagon::JMP_GTUrrdnNotPnt_nv_V4:
+    return Hexagon::JMP_GTUrrdnNotPnt_ie_nv_V4;
 
   case Hexagon::TFR_FI:
       return Hexagon::TFR_FI_immext_V4;
@@ -991,120 +993,114 @@ unsigned HexagonInstrInfo::getImmExtForm(const MachineInstr* MI) const {
   case Hexagon::MEMb_SUBr_MEM_V4 :
   case Hexagon::MEMb_ANDr_MEM_V4 :
   case Hexagon::MEMb_ORr_MEM_V4 :
-    assert(0 && "Needs implementing");
-
-  default:
-    assert(0 && "Unknown type of instruction");
+    llvm_unreachable("Needs implementing");
   }
-  assert(0 && "Unknown type of instruction");
 }
 
 unsigned HexagonInstrInfo::getNormalBranchForm(const MachineInstr* MI) const {
   switch(MI->getOpcode()) {
-    // JMP_EQri
-    case Hexagon::JMP_EQriPt_ie_nv_V4:
-      return Hexagon::JMP_EQriPt_nv_V4;
-    case Hexagon::JMP_EQriNotPt_ie_nv_V4:
-      return Hexagon::JMP_EQriNotPt_nv_V4;
-    case Hexagon::JMP_EQriPnt_ie_nv_V4:
-      return Hexagon::JMP_EQriPnt_nv_V4;
-    case Hexagon::JMP_EQriNotPnt_ie_nv_V4:
-      return Hexagon::JMP_EQriNotPnt_nv_V4;
+  default: llvm_unreachable("Unknown type of jump instruction");
 
-    // JMP_EQri -- with -1
-    case Hexagon::JMP_EQriPtneg_ie_nv_V4:
-      return Hexagon::JMP_EQriPtneg_nv_V4;
-    case Hexagon::JMP_EQriNotPtneg_ie_nv_V4:
-      return Hexagon::JMP_EQriNotPtneg_nv_V4;
-    case Hexagon::JMP_EQriPntneg_ie_nv_V4:
-      return Hexagon::JMP_EQriPntneg_nv_V4;
-    case Hexagon::JMP_EQriNotPntneg_ie_nv_V4:
-      return Hexagon::JMP_EQriNotPntneg_nv_V4;
+  // JMP_EQri
+  case Hexagon::JMP_EQriPt_ie_nv_V4:
+    return Hexagon::JMP_EQriPt_nv_V4;
+  case Hexagon::JMP_EQriNotPt_ie_nv_V4:
+    return Hexagon::JMP_EQriNotPt_nv_V4;
+  case Hexagon::JMP_EQriPnt_ie_nv_V4:
+    return Hexagon::JMP_EQriPnt_nv_V4;
+  case Hexagon::JMP_EQriNotPnt_ie_nv_V4:
+    return Hexagon::JMP_EQriNotPnt_nv_V4;
 
-    // JMP_EQrr
-    case Hexagon::JMP_EQrrPt_ie_nv_V4:
-      return Hexagon::JMP_EQrrPt_nv_V4;
-    case Hexagon::JMP_EQrrNotPt_ie_nv_V4:
-      return Hexagon::JMP_EQrrNotPt_nv_V4;
-    case Hexagon::JMP_EQrrPnt_ie_nv_V4:
-      return Hexagon::JMP_EQrrPnt_nv_V4;
-    case Hexagon::JMP_EQrrNotPnt_ie_nv_V4:
-      return Hexagon::JMP_EQrrNotPnt_nv_V4;
+  // JMP_EQri -- with -1
+  case Hexagon::JMP_EQriPtneg_ie_nv_V4:
+    return Hexagon::JMP_EQriPtneg_nv_V4;
+  case Hexagon::JMP_EQriNotPtneg_ie_nv_V4:
+    return Hexagon::JMP_EQriNotPtneg_nv_V4;
+  case Hexagon::JMP_EQriPntneg_ie_nv_V4:
+    return Hexagon::JMP_EQriPntneg_nv_V4;
+  case Hexagon::JMP_EQriNotPntneg_ie_nv_V4:
+    return Hexagon::JMP_EQriNotPntneg_nv_V4;
 
-    // JMP_GTri
-    case Hexagon::JMP_GTriPt_ie_nv_V4:
-      return Hexagon::JMP_GTriPt_nv_V4;
-    case Hexagon::JMP_GTriNotPt_ie_nv_V4:
-      return Hexagon::JMP_GTriNotPt_nv_V4;
-    case Hexagon::JMP_GTriPnt_ie_nv_V4:
-      return Hexagon::JMP_GTriPnt_nv_V4;
-    case Hexagon::JMP_GTriNotPnt_ie_nv_V4:
-      return Hexagon::JMP_GTriNotPnt_nv_V4;
+  // JMP_EQrr
+  case Hexagon::JMP_EQrrPt_ie_nv_V4:
+    return Hexagon::JMP_EQrrPt_nv_V4;
+  case Hexagon::JMP_EQrrNotPt_ie_nv_V4:
+    return Hexagon::JMP_EQrrNotPt_nv_V4;
+  case Hexagon::JMP_EQrrPnt_ie_nv_V4:
+    return Hexagon::JMP_EQrrPnt_nv_V4;
+  case Hexagon::JMP_EQrrNotPnt_ie_nv_V4:
+    return Hexagon::JMP_EQrrNotPnt_nv_V4;
 
-    // JMP_GTri -- with -1
-    case Hexagon::JMP_GTriPtneg_ie_nv_V4:
-      return Hexagon::JMP_GTriPtneg_nv_V4;
-    case Hexagon::JMP_GTriNotPtneg_ie_nv_V4:
-      return Hexagon::JMP_GTriNotPtneg_nv_V4;
-    case Hexagon::JMP_GTriPntneg_ie_nv_V4:
-      return Hexagon::JMP_GTriPntneg_nv_V4;
-    case Hexagon::JMP_GTriNotPntneg_ie_nv_V4:
-      return Hexagon::JMP_GTriNotPntneg_nv_V4;
+  // JMP_GTri
+  case Hexagon::JMP_GTriPt_ie_nv_V4:
+    return Hexagon::JMP_GTriPt_nv_V4;
+  case Hexagon::JMP_GTriNotPt_ie_nv_V4:
+    return Hexagon::JMP_GTriNotPt_nv_V4;
+  case Hexagon::JMP_GTriPnt_ie_nv_V4:
+    return Hexagon::JMP_GTriPnt_nv_V4;
+  case Hexagon::JMP_GTriNotPnt_ie_nv_V4:
+    return Hexagon::JMP_GTriNotPnt_nv_V4;
 
-    // JMP_GTrr
-    case Hexagon::JMP_GTrrPt_ie_nv_V4:
-      return Hexagon::JMP_GTrrPt_nv_V4;
-    case Hexagon::JMP_GTrrNotPt_ie_nv_V4:
-      return Hexagon::JMP_GTrrNotPt_nv_V4;
-    case Hexagon::JMP_GTrrPnt_ie_nv_V4:
-      return Hexagon::JMP_GTrrPnt_nv_V4;
-    case Hexagon::JMP_GTrrNotPnt_ie_nv_V4:
-      return Hexagon::JMP_GTrrNotPnt_nv_V4;
+  // JMP_GTri -- with -1
+  case Hexagon::JMP_GTriPtneg_ie_nv_V4:
+    return Hexagon::JMP_GTriPtneg_nv_V4;
+  case Hexagon::JMP_GTriNotPtneg_ie_nv_V4:
+    return Hexagon::JMP_GTriNotPtneg_nv_V4;
+  case Hexagon::JMP_GTriPntneg_ie_nv_V4:
+    return Hexagon::JMP_GTriPntneg_nv_V4;
+  case Hexagon::JMP_GTriNotPntneg_ie_nv_V4:
+    return Hexagon::JMP_GTriNotPntneg_nv_V4;
 
-    // JMP_GTrrdn
-    case Hexagon::JMP_GTrrdnPt_ie_nv_V4:
-      return Hexagon::JMP_GTrrdnPt_nv_V4;
-    case Hexagon::JMP_GTrrdnNotPt_ie_nv_V4:
-      return Hexagon::JMP_GTrrdnNotPt_nv_V4;
-    case Hexagon::JMP_GTrrdnPnt_ie_nv_V4:
-      return Hexagon::JMP_GTrrdnPnt_nv_V4;
-    case Hexagon::JMP_GTrrdnNotPnt_ie_nv_V4:
-      return Hexagon::JMP_GTrrdnNotPnt_nv_V4;
+  // JMP_GTrr
+  case Hexagon::JMP_GTrrPt_ie_nv_V4:
+    return Hexagon::JMP_GTrrPt_nv_V4;
+  case Hexagon::JMP_GTrrNotPt_ie_nv_V4:
+    return Hexagon::JMP_GTrrNotPt_nv_V4;
+  case Hexagon::JMP_GTrrPnt_ie_nv_V4:
+    return Hexagon::JMP_GTrrPnt_nv_V4;
+  case Hexagon::JMP_GTrrNotPnt_ie_nv_V4:
+    return Hexagon::JMP_GTrrNotPnt_nv_V4;
 
-    // JMP_GTUri
-    case Hexagon::JMP_GTUriPt_ie_nv_V4:
-      return Hexagon::JMP_GTUriPt_nv_V4;
-    case Hexagon::JMP_GTUriNotPt_ie_nv_V4:
-      return Hexagon::JMP_GTUriNotPt_nv_V4;
-    case Hexagon::JMP_GTUriPnt_ie_nv_V4:
-      return Hexagon::JMP_GTUriPnt_nv_V4;
-    case Hexagon::JMP_GTUriNotPnt_ie_nv_V4:
-      return Hexagon::JMP_GTUriNotPnt_nv_V4;
+  // JMP_GTrrdn
+  case Hexagon::JMP_GTrrdnPt_ie_nv_V4:
+    return Hexagon::JMP_GTrrdnPt_nv_V4;
+  case Hexagon::JMP_GTrrdnNotPt_ie_nv_V4:
+    return Hexagon::JMP_GTrrdnNotPt_nv_V4;
+  case Hexagon::JMP_GTrrdnPnt_ie_nv_V4:
+    return Hexagon::JMP_GTrrdnPnt_nv_V4;
+  case Hexagon::JMP_GTrrdnNotPnt_ie_nv_V4:
+    return Hexagon::JMP_GTrrdnNotPnt_nv_V4;
 
-    // JMP_GTUrr
-    case Hexagon::JMP_GTUrrPt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrPt_nv_V4;
-    case Hexagon::JMP_GTUrrNotPt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrNotPt_nv_V4;
-    case Hexagon::JMP_GTUrrPnt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrPnt_nv_V4;
-    case Hexagon::JMP_GTUrrNotPnt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrNotPnt_nv_V4;
+  // JMP_GTUri
+  case Hexagon::JMP_GTUriPt_ie_nv_V4:
+    return Hexagon::JMP_GTUriPt_nv_V4;
+  case Hexagon::JMP_GTUriNotPt_ie_nv_V4:
+    return Hexagon::JMP_GTUriNotPt_nv_V4;
+  case Hexagon::JMP_GTUriPnt_ie_nv_V4:
+    return Hexagon::JMP_GTUriPnt_nv_V4;
+  case Hexagon::JMP_GTUriNotPnt_ie_nv_V4:
+    return Hexagon::JMP_GTUriNotPnt_nv_V4;
 
-    // JMP_GTUrrdn
-    case Hexagon::JMP_GTUrrdnPt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrdnPt_nv_V4;
-    case Hexagon::JMP_GTUrrdnNotPt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrdnNotPt_nv_V4;
-    case Hexagon::JMP_GTUrrdnPnt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrdnPnt_nv_V4;
-    case Hexagon::JMP_GTUrrdnNotPnt_ie_nv_V4:
-      return Hexagon::JMP_GTUrrdnNotPnt_nv_V4;
+  // JMP_GTUrr
+  case Hexagon::JMP_GTUrrPt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrPt_nv_V4;
+  case Hexagon::JMP_GTUrrNotPt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrNotPt_nv_V4;
+  case Hexagon::JMP_GTUrrPnt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrPnt_nv_V4;
+  case Hexagon::JMP_GTUrrNotPnt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrNotPnt_nv_V4;
 
-    default:
-      assert(0 && "Unknown type of jump instruction");
+  // JMP_GTUrrdn
+  case Hexagon::JMP_GTUrrdnPt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrdnPt_nv_V4;
+  case Hexagon::JMP_GTUrrdnNotPt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrdnNotPt_nv_V4;
+  case Hexagon::JMP_GTUrrdnPnt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrdnPnt_nv_V4;
+  case Hexagon::JMP_GTUrrdnNotPnt_ie_nv_V4:
+    return Hexagon::JMP_GTUrrdnNotPnt_nv_V4;
   }
-  assert(0 && "Unknown type of jump instruction");
 }
 
 
