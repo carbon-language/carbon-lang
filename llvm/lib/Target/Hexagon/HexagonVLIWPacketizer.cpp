@@ -3389,8 +3389,8 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       // we need to rework the last part, where it handles indirect call
       // of that (IsCallDependent) function. Bug 6216 is opened for this.
       //
-      unsigned DepReg;
-      const TargetRegisterClass* RC;
+      unsigned DepReg = 0;
+      const TargetRegisterClass* RC = NULL;
       if (DepType == SDep::Data) {
         DepReg = SUJ->Succs[i].getReg();
         RC = QRI->getMinimalPhysRegClass(DepReg);

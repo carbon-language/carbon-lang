@@ -2445,6 +2445,26 @@ isSpillPredRegOp(const MachineInstr *MI) const {
   return false;
 }
 
+bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+    case Hexagon::CMPEQrr:
+    case Hexagon::CMPEQri:
+    case Hexagon::CMPLTrr:
+    case Hexagon::CMPGTrr:
+    case Hexagon::CMPGTri:
+    case Hexagon::CMPLTUrr:
+    case Hexagon::CMPGTUrr:
+    case Hexagon::CMPGTUri:
+    case Hexagon::CMPGEri:
+    case Hexagon::CMPGEUri:
+      return true;
+
+    default:
+      return false;
+  }
+  return false;
+}
+
 bool HexagonInstrInfo::
 isConditionalTransfer (const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
@@ -2495,7 +2515,7 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::ZXTB_cNotPt_V4:
     case Hexagon::ZXTH_cPt_V4:
     case Hexagon::ZXTH_cNotPt_V4:
-      return QRI.Subtarget.getHexagonArchVersion() == HexagonSubtarget::V4;
+      return QRI.Subtarget.hasV4TOps();
 
     default:
       return false;
@@ -2544,7 +2564,7 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::POST_LDriuh_cNotPt :
     case Hexagon::POST_LDriub_cPt :
     case Hexagon::POST_LDriub_cNotPt :
-      return QRI.Subtarget.getHexagonArchVersion() == HexagonSubtarget::V4;
+      return QRI.Subtarget.hasV4TOps();
     case Hexagon::LDrid_indexed_cPt_V4 :
     case Hexagon::LDrid_indexed_cNotPt_V4 :
     case Hexagon::LDrid_indexed_shl_cPt_V4 :
@@ -2569,7 +2589,7 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::LDriw_indexed_cNotPt_V4 :
     case Hexagon::LDriw_indexed_shl_cPt_V4 :
     case Hexagon::LDriw_indexed_shl_cNotPt_V4 :
-      return QRI.Subtarget.getHexagonArchVersion() == HexagonSubtarget::V4;
+      return QRI.Subtarget.hasV4TOps();
     default:
       return false;
   }
