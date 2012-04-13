@@ -1300,8 +1300,13 @@ static Expr *stripOpaqueValuesFromPseudoObjectRef(Sema &S, Expr *E) {
   Expr *opaqueRef = E->IgnoreParens();
   if (ObjCPropertyRefExpr *refExpr
         = dyn_cast<ObjCPropertyRefExpr>(opaqueRef)) {
-    OpaqueValueExpr *baseOVE = cast<OpaqueValueExpr>(refExpr->getBase());
-    return ObjCPropertyRefRebuilder(S, baseOVE->getSourceExpr()).rebuild(E);
+    if (refExpr->isObjectReceiver()) {
+      OpaqueValueExpr *baseOVE = cast<OpaqueValueExpr>(refExpr->getBase());
+      return ObjCPropertyRefRebuilder(S, baseOVE->getSourceExpr()).rebuild(E);
+    }
+
+    // Neither class or super property references need a rebuild.
+    return E;
   } else if (ObjCSubscriptRefExpr *refExpr
                = dyn_cast<ObjCSubscriptRefExpr>(opaqueRef)) {
     OpaqueValueExpr *baseOVE = cast<OpaqueValueExpr>(refExpr->getBaseExpr());

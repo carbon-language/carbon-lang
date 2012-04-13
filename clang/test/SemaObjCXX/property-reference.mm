@@ -42,3 +42,18 @@ typedef const TCPPObject& CREF_TCPPObject;
 	cppObjectNonAtomic = cppObject;
 }
 @end
+
+
+// <rdar://problem/11052352>
+@interface NSObject
++ alloc;
+- init;
+- class;
+@end
+
+template<typename T> void f() {
+  NSObject *o = [NSObject.alloc init];
+  [o class];
+}
+
+template void f<int>();
