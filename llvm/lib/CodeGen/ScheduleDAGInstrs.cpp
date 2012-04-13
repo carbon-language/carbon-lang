@@ -39,8 +39,8 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      LiveIntervals *lis)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
     InstrItins(mf.getTarget().getInstrItineraryData()), LIS(lis),
-    IsPostRA(IsPostRAFlag), UnitLatencies(false), LoopRegs(MLI, MDT),
-    FirstDbgValue(0) {
+    IsPostRA(IsPostRAFlag), UnitLatencies(false), CanHandleTerminators(false),
+    LoopRegs(MLI, MDT), FirstDbgValue(0) {
   assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
   DbgValues.clear();
   assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
@@ -554,7 +554,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA) {
       continue;
     }
 
-    assert(!MI->isTerminator() && !MI->isLabel() &&
+    assert((!MI->isTerminator() || CanHandleTerminators) && !MI->isLabel() &&
            "Cannot schedule terminators or labels!");
 
     SUnit *SU = MISUnitMap[MI];

@@ -181,6 +181,13 @@ namespace llvm {
     /// the def-side latency only.
     bool UnitLatencies;
 
+    /// The standard DAG builder does not normally include terminators as DAG
+    /// nodes because it does not create the necessary dependencies to prevent
+    /// reordering. A specialized scheduler can overide
+    /// TargetInstrInfo::isSchedulingBoundary then enable this flag to indicate
+    /// it has taken responsibility for scheduling the terminator correctly.
+    bool CanHandleTerminators;
+
     /// State specific to the current scheduling region.
     /// ------------------------------------------------
 
