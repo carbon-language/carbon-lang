@@ -189,10 +189,9 @@ bool DominatorTree::dominates(const Instruction *Def,
                               const Use &U) const {
   Instruction *UserInst = dyn_cast<Instruction>(U.getUser());
 
-  // All non-instructions conceptually dominate everything. Instructions do
-  // not dominate non-instructions.
+  // Instructions do not dominate non-instructions.
   if (!UserInst)
-    return !isa<Instruction>(Def);
+    return false;
 
   const BasicBlock *DefBB = Def->getParent();
 
