@@ -17,7 +17,7 @@ TOOL_NO_EXPORTS = 1
 NO_INSTALL = 1
 
 LINK_COMPONENTS := support mc
-USEDLIBS = clangIndex.a clangARCMigrate.a clangRewrite.a \
+USEDLIBS = clangARCMigrate.a clangRewrite.a \
 		 clangFrontend.a clangDriver.a clangSerialization.a clangParse.a \
 		 clangSema.a clangEdit.a clangAnalysis.a clangAST.a clangLex.a clangBasic.a
 

@@ -7,7 +7,6 @@ set( LLVM_USED_LIBS
   clangDriver
   clangEdit
   clangFrontend
-  clangIndex
   clangLex
   clangParse
   clangEdit

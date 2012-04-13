@@ -18,7 +18,7 @@ INTERNAL_TOOL = 1
 TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := support mc
-USEDLIBS = clang.a clangIndex.a clangFrontend.a clangDriver.a \
+USEDLIBS = clang.a clangFrontend.a clangDriver.a \
 	   clangSerialization.a clangParse.a clangSema.a \
 	   clangAnalysis.a clangEdit.a clangAST.a clangLex.a clangBasic.a
 
