@@ -96,6 +96,10 @@ NoFMA("bb-vectorize-no-fma", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize the fused-multiply-add intrinsic"));
 
 static cl::opt<bool>
+NoSelect("bb-vectorize-no-select", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize select instructions"));
+
+static cl::opt<bool>
 NoMemOps("bb-vectorize-no-mem-ops", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize loads and stores"));
 
@@ -551,6 +555,9 @@ namespace {
 
       Type *DestTy = C->getDestTy();
       if (!DestTy->isSingleValueType() || DestTy->isPointerTy())
+        return false;
+    } else if (isa<SelectInst>(I)) {
+      if (!Config.VectorizeSelect)
         return false;
     } else if (!(I->isBinaryOp() || isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {
@@ -1894,6 +1901,7 @@ VectorizeConfig::VectorizeConfig() {
   VectorizeCasts = !::NoCasts;
   VectorizeMath = !::NoMath;
   VectorizeFMA = !::NoFMA;
+  VectorizeSelect = !::NoSelect;
   VectorizeMemOps = !::NoMemOps;
   AlignedOnly = ::AlignedOnly;
   ReqChainDepth= ::ReqChainDepth;

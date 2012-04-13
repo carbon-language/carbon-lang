@@ -43,6 +43,9 @@ struct VectorizeConfig {
   /// @brief Vectorize the fused-multiply-add intrinsic.
   bool VectorizeFMA;
 
+  /// @brief Vectorize select instructions.
+  bool VectorizeSelect;
+
   /// @brief Vectorize loads and stores.
   bool VectorizeMemOps;
 
