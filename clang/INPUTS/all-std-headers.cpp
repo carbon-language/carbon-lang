@@ -52,7 +52,7 @@
 #include <valarray>
 #include <vector>
 
-#if __cplusplus >= 201103
+#if __cplusplus >= 201103 || defined(__GXX_EXPERIMENTAL_CXX0X__)
 #include <array>
 #if __has_include(<atomic>)
 #include <atomic>
