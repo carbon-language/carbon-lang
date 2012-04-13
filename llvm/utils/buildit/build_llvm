@@ -228,19 +228,6 @@ fi
 cd $DEST_DIR$DEST_ROOT
 rm -f bin/.dir etc/llvm/.dir lib/.dir
 
-# Remove PPC64 fat slices.
-cd $DEST_DIR$DEST_ROOT/bin
-if [ $MACOSX_DEPLOYMENT_TARGET = "10.4" ]; then
-    find . -perm 755 -type f \! \( -name '*gccas' -o -name '*gccld' -o -name llvm-config \) \
-        -exec lipo -extract ppc -extract i386 {} -output {} \;
-elif [ $MACOSX_DEPLOYMENT_TARGET = "10.5" ]; then
-    find . -perm 755 -type f \! \( -name '*gccas' -o -name '*gccld' -o -name llvm-config \) \
-        -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
-else
-    find . -perm 755 -type f \! \( -name '*gccas' -o -name '*gccld' -o -name llvm-config \) \
-        -exec lipo -extract i386 -extract x86_64 {} -output {} \;
-fi
-
 # The Hello dylib is an example of how to build a pass.
 # The BugpointPasses module is only used to test bugpoint.
 # These unversioned dylibs cause verification failures, so do not install them.
