@@ -114,7 +114,7 @@ public:
                              lldb_private::ProcessLaunchInfo &launch_info); 
 
     void
-    DumpHistory(const char *path);
+    DumpHistory(lldb_private::Stream &strm);
     
 protected:
 
@@ -134,7 +134,8 @@ protected:
                 packet(),
                 type (ePacketTypeInvalid),
                 bytes_transmitted (0),
-                packet_idx (0)
+                packet_idx (0),
+                tid (LLDB_INVALID_THREAD_ID)
             {
             }
             
@@ -145,12 +146,13 @@ protected:
                 type = ePacketTypeInvalid;
                 bytes_transmitted = 0;
                 packet_idx = 0;
-                
+                tid = LLDB_INVALID_THREAD_ID;
             }
             std::string packet;
             PacketType type;
             uint32_t bytes_transmitted;
             uint32_t packet_idx;
+            lldb::tid_t tid;
         };
 
         History (uint32_t size);
@@ -161,35 +163,12 @@ protected:
         void
         AddPacket (char packet_char,
                    PacketType type,
-                   uint32_t bytes_transmitted)
-        {
-            const size_t size = m_packets.size();
-            if (size > 0)
-            {
-                const uint32_t idx = GetNextIndex();
-                m_packets[idx].packet.assign (1, packet_char);
-                m_packets[idx].type = type;
-                m_packets[idx].bytes_transmitted = bytes_transmitted;
-                m_packets[idx].packet_idx = m_total_packet_count;
-            }
-        }
-
+                   uint32_t bytes_transmitted);
         void
         AddPacket (const std::string &src,
                    uint32_t src_len,
                    PacketType type,
-                   uint32_t bytes_transmitted)
-        {
-            const size_t size = m_packets.size();
-            if (size > 0)
-            {
-                const uint32_t idx = GetNextIndex();
-                m_packets[idx].packet.assign (src, 0, src_len);
-                m_packets[idx].type = type;
-                m_packets[idx].bytes_transmitted = bytes_transmitted;
-                m_packets[idx].packet_idx = m_total_packet_count;
-            }
-        }
+                   uint32_t bytes_transmitted);
         
         void
         Dump (lldb_private::Stream &strm) const;

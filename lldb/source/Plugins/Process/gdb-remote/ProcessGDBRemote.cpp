@@ -32,6 +32,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
@@ -64,7 +65,10 @@ namespace lldb
     void
     DumpProcessGDBRemotePacketHistory (void *p, const char *path)
     {
-        ((ProcessGDBRemote *)p)->GetGDBRemote().DumpHistory (path);
+        lldb_private::StreamFile strm;
+        lldb_private::Error error (strm.GetFile().Open(path, lldb_private::File::eOpenOptionWrite | lldb_private::File::eOpenOptionCanCreate));
+        if (error.Success())
+            ((ProcessGDBRemote *)p)->GetGDBRemote().DumpHistory (strm);
     }
 };
 

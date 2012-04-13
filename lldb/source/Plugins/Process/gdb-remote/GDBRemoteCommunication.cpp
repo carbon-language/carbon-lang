@@ -46,6 +46,41 @@ GDBRemoteCommunication::History::~History ()
 }
 
 void
+GDBRemoteCommunication::History::AddPacket (char packet_char,
+                                            PacketType type,
+                                            uint32_t bytes_transmitted)
+{
+    const size_t size = m_packets.size();
+    if (size > 0)
+    {
+        const uint32_t idx = GetNextIndex();
+        m_packets[idx].packet.assign (1, packet_char);
+        m_packets[idx].type = type;
+        m_packets[idx].bytes_transmitted = bytes_transmitted;
+        m_packets[idx].packet_idx = m_total_packet_count;
+        m_packets[idx].tid = Host::GetCurrentThreadID();
+    }
+}
+
+void
+GDBRemoteCommunication::History::AddPacket (const std::string &src,
+                                            uint32_t src_len,
+                                            PacketType type,
+                                            uint32_t bytes_transmitted)
+{
+    const size_t size = m_packets.size();
+    if (size > 0)
+    {
+        const uint32_t idx = GetNextIndex();
+        m_packets[idx].packet.assign (src, 0, src_len);
+        m_packets[idx].type = type;
+        m_packets[idx].bytes_transmitted = bytes_transmitted;
+        m_packets[idx].packet_idx = m_total_packet_count;
+        m_packets[idx].tid = Host::GetCurrentThreadID();
+    }
+}
+
+void
 GDBRemoteCommunication::History::Dump (lldb_private::Stream &strm) const
 {
     const uint32_t size = GetNumPacketsInHistory ();
@@ -57,8 +92,9 @@ GDBRemoteCommunication::History::Dump (lldb_private::Stream &strm) const
         const Entry &entry = m_packets[idx];
         if (entry.type == ePacketTypeInvalid || entry.packet.empty())
             break;
-        strm.Printf ("history[%u] <%4u> %s packet: %s\n",
+        strm.Printf ("history[%u] tid=0x%4.4llx <%4u> %s packet: %s\n",
                      entry.packet_idx,
+                     entry.tid,
                      entry.bytes_transmitted,
                      (entry.type == ePacketTypeSend) ? "send" : "read",
                      entry.packet.c_str());
@@ -80,8 +116,9 @@ GDBRemoteCommunication::History::Dump (lldb_private::Log *log) const
             const Entry &entry = m_packets[idx];
             if (entry.type == ePacketTypeInvalid || entry.packet.empty())
                 break;
-            log->Printf ("history[%u] <%4u> %s packet: %s",
+            log->Printf ("history[%u] tid=0x%4.4llx <%4u> %s packet: %s",
                          entry.packet_idx,
+                         entry.tid,
                          entry.bytes_transmitted,
                          (entry.type == ePacketTypeSend) ? "send" : "read",
                          entry.packet.c_str());
@@ -598,12 +635,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *debugserver_url,
 }
 
 void
-GDBRemoteCommunication::DumpHistory(const char *path)
+GDBRemoteCommunication::DumpHistory(Stream &strm)
 {
-    StreamFile strm;
-    Error error (strm.GetFile().Open(path, File::eOpenOptionWrite | File::eOpenOptionCanCreate));
-    if (error.Success())
-        m_history.Dump (strm);
-    else
-        fprintf (stderr, "error: unable to open '%s' -- %s\n", path, error.AsCString());
+    m_history.Dump (strm);
 }

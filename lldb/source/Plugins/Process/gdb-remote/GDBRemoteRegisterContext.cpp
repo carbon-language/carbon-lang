@@ -246,7 +246,18 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
         {
             LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
             if (log)
-                log->Printf("error: failed to get packet sequence mutex, not sending read register for \"%s\"", reg_info->name);
+            {
+                if (log->GetVerbose())
+                {
+                    StreamString strm;
+                    gdb_comm.DumpHistory(strm);
+                    log->Printf("error: failed to get packet sequence mutex, not sending read register for \"%s\":\n%s", reg_info->name, strm.GetData());
+                }
+                else
+                {
+                    log->Printf("error: failed to get packet sequence mutex, not sending read register for \"%s\"", reg_info->name);
+                }
+            }
         }
 
         // Make sure we got a valid register value after reading it
@@ -431,7 +442,16 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
         {
             LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
             if (log)
-                log->Printf("error: failed to get packet sequence mutex, not sending write register for \"%s\"", reg_info->name);
+            {
+                if (log->GetVerbose())
+                {
+                    StreamString strm;
+                    gdb_comm.DumpHistory(strm);
+                    log->Printf("error: failed to get packet sequence mutex, not sending write register for \"%s\":\n%s", reg_info->name, strm.GetData());
+                }
+                else
+                    log->Printf("error: failed to get packet sequence mutex, not sending write register for \"%s\"", reg_info->name);
+            }
         }
     }
     return false;
@@ -492,7 +512,16 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     {
         LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
         if (log)
-            log->Printf("error: failed to get packet sequence mutex, not sending read all registers");
+        {
+            if (log->GetVerbose())
+            {
+                StreamString strm;
+                gdb_comm.DumpHistory(strm);
+                log->Printf("error: failed to get packet sequence mutex, not sending read all registers:\n%s", strm.GetData());
+            }
+            else
+                log->Printf("error: failed to get packet sequence mutex, not sending read all registers");
+        }
     }
 
     data_sp.reset();
@@ -616,7 +645,16 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
     {
         LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
         if (log)
-            log->Printf("error: failed to get packet sequence mutex, not sending write all registers");
+        {
+            if (log->GetVerbose())
+            {
+                StreamString strm;
+                gdb_comm.DumpHistory(strm);
+                log->Printf("error: failed to get packet sequence mutex, not sending write all registers:\n%s", strm.GetData());
+            }
+            else
+                log->Printf("error: failed to get packet sequence mutex, not sending write all registers");
+        }
     }
     return false;
 }
