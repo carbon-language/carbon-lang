@@ -3,10 +3,12 @@
 target datalayout = "e-p:64:64:64"
 
 declare i8* @objc_retain(i8*)
+declare i8* @objc_retainAutoreleasedReturnValue(i8*)
 declare void @objc_release(i8*)
 declare i8* @objc_autorelease(i8*)
+declare i8* @objc_autoreleaseReturnValue(i8*)
 declare void @objc_autoreleasePoolPop(i8*)
-declare void @objc_autoreleasePoolPush()
+declare i8* @objc_autoreleasePoolPush()
 declare i8* @objc_retainBlock(i8*)
 
 declare i8* @objc_retainedObject(i8*)
@@ -526,7 +528,7 @@ entry:
 define void @test13d(i8* %x, i64 %n) {
 entry:
   call i8* @objc_retain(i8* %x) nounwind
-  call void @objc_autoreleasePoolPush()
+  call i8* @objc_autoreleasePoolPush()
   call i8* @objc_retain(i8* %x) nounwind
   call void @use_pointer(i8* %x)
   call void @use_pointer(i8* %x)
@@ -1400,7 +1402,7 @@ entry:
 ; CHECK-NEXT: call i8* @objc_autorelease(i8* %p)
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
-; CHECK-NEXT: call void @objc_autoreleasePoolPush()
+; CHECK-NEXT: call i8* @objc_autoreleasePoolPush()
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
 define void @test43b(i8* %p) {
@@ -1410,7 +1412,7 @@ entry:
   call i8* @objc_retain(i8* %p)
   call void @use_pointer(i8* %p)
   call void @use_pointer(i8* %p)
-  call void @objc_autoreleasePoolPush()
+  call i8* @objc_autoreleasePoolPush()
   call void @objc_release(i8* %p)
   ret void
 }
@@ -1795,6 +1797,78 @@ loop.more:
 exit:
   call void @objc_release(i8* %x)
   ret void
+}
+
+; Move an autorelease past a phi with a null.
+
+; CHECK: define i8* @test65(
+; CHECK: if.then:
+; CHECK:   call i8* @objc_autorelease(
+; CHECK: return:
+; CHECK-NOT: @objc_autorelease
+; CHECK: }
+define i8* @test65(i1 %x) {
+entry:
+  br i1 %x, label %return, label %if.then
+
+if.then:                                          ; preds = %entry
+  %c = call i8* @returner()
+  %s = call i8* @objc_retainAutoreleasedReturnValue(i8* %c) nounwind
+  br label %return
+
+return:                                           ; preds = %if.then, %entry
+  %retval = phi i8* [ %s, %if.then ], [ null, %entry ]
+  %q = call i8* @objc_autorelease(i8* %retval) nounwind
+  ret i8* %retval
+}
+
+; Don't move an autorelease past an autorelease pool boundary.
+
+; CHECK: define i8* @test65b(
+; CHECK: if.then:
+; CHECK-NOT: @objc_autorelease
+; CHECK: return:
+; CHECK:   call i8* @objc_autorelease(
+; CHECK: }
+define i8* @test65b(i1 %x) {
+entry:
+  %t = call i8* @objc_autoreleasePoolPush()
+  br i1 %x, label %return, label %if.then
+
+if.then:                                          ; preds = %entry
+  %c = call i8* @returner()
+  %s = call i8* @objc_retainAutoreleasedReturnValue(i8* %c) nounwind
+  br label %return
+
+return:                                           ; preds = %if.then, %entry
+  %retval = phi i8* [ %s, %if.then ], [ null, %entry ]
+  call void @objc_autoreleasePoolPop(i8* %t)
+  %q = call i8* @objc_autorelease(i8* %retval) nounwind
+  ret i8* %retval
+}
+
+; Don't move an autoreleaseReuturnValue, which would break
+; the RV optimization.
+
+; CHECK: define i8* @test65c(
+; CHECK: if.then:
+; CHECK-NOT: @objc_autorelease
+; CHECK: return:
+; CHECK:   call i8* @objc_autoreleaseReturnValue(
+; CHECK: }
+define i8* @test65c(i1 %x) {
+entry:
+  br i1 %x, label %return, label %if.then
+
+if.then:                                          ; preds = %entry
+  %c = call i8* @returner()
+  %s = call i8* @objc_retainAutoreleasedReturnValue(i8* %c) nounwind
+  br label %return
+
+return:                                           ; preds = %if.then, %entry
+  %retval = phi i8* [ %s, %if.then ], [ null, %entry ]
+  %q = call i8* @objc_autoreleaseReturnValue(i8* %retval) nounwind
+  ret i8* %retval
 }
 
 declare void @bar(i32 ()*)

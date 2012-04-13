@@ -1963,6 +1963,7 @@ namespace {
   /// use here.
   enum DependenceKind {
     NeedsPositiveRetainCount,
+    AutoreleasePoolBoundary,
     CanChangeRetainCount,
     RetainAutoreleaseDep,       ///< Blocks objc_retainAutorelease.
     RetainAutoreleaseRVDep,     ///< Blocks objc_retainAutoreleaseReturnValue.
@@ -1992,6 +1993,19 @@ Depends(DependenceKind Flavor, Instruction *Inst, const Value *Arg,
     }
   }
 
+  case AutoreleasePoolBoundary: {
+    InstructionClass Class = GetInstructionClass(Inst);
+    switch (Class) {
+    case IC_AutoreleasepoolPop:
+    case IC_AutoreleasepoolPush:
+      // These mark the end and begin of an autorelease pool scope.
+      return true;
+    default:
+      // Nothing else does this.
+      return false;
+    }
+  }
+
   case CanChangeRetainCount: {
     InstructionClass Class = GetInstructionClass(Inst);
     switch (Class) {
@@ -2009,6 +2023,7 @@ Depends(DependenceKind Flavor, Instruction *Inst, const Value *Arg,
   case RetainAutoreleaseDep:
     switch (GetBasicInstructionClass(Inst)) {
     case IC_AutoreleasepoolPop:
+    case IC_AutoreleasepoolPush:
       // Don't merge an objc_autorelease with an objc_retain inside a different
       // autoreleasepool scope.
       return true;
@@ -2376,9 +2391,34 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 
         // Check that there is nothing that cares about the reference
         // count between the call and the phi.
-        FindDependencies(NeedsPositiveRetainCount, Arg,
-                         Inst->getParent(), Inst,
-                         DependingInstructions, Visited, PA);
+        switch (Class) {
+        case IC_Retain:
+        case IC_RetainBlock:
+          // These can always be moved up.
+          break;
+        case IC_Release:
+          // These can't be moved across things that care about the retain count.
+          FindDependencies(NeedsPositiveRetainCount, Arg,
+                           Inst->getParent(), Inst,
+                           DependingInstructions, Visited, PA);
+          break;
+        case IC_Autorelease:
+          // These can't be moved across autorelease pool scope boundaries.
+          FindDependencies(AutoreleasePoolBoundary, Arg,
+                           Inst->getParent(), Inst,
+                           DependingInstructions, Visited, PA);
+          break;
+        case IC_RetainRV:
+        case IC_AutoreleaseRV:
+          // Don't move these; the RV optimization depends on the autoreleaseRV
+          // being tail called, and the retainRV being immediately after a call
+          // (which might still happen if we get lucky with codegen layout, but
+          // it's not worth taking the chance).
+          continue;
+        default:
+          llvm_unreachable("Invalid dependence flavor");
+        }
+
         if (DependingInstructions.size() == 1 &&
             *DependingInstructions.begin() == PN) {
           Changed = true;
