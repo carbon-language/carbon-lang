@@ -643,8 +643,10 @@ void ASTUnit::ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
     DiagnosticConsumer *Client = 0;
     if (CaptureDiagnostics)
       Client = new StoredDiagnosticConsumer(AST.StoredDiagnostics);
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd- ArgBegin, 
-                                                ArgBegin, Client);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd-ArgBegin,
+                                                ArgBegin, Client,
+                                                /*ShouldOwnClient=*/true,
+                                                /*ShouldCloneClient=*/false);
   } else if (CaptureDiagnostics) {
     Diags->setClient(new StoredDiagnosticConsumer(AST.StoredDiagnostics));
   }
