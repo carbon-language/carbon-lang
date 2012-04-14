@@ -42,7 +42,7 @@ public:
     MD_dbg = 0,  // "dbg"
     MD_tbaa = 1, // "tbaa"
     MD_prof = 2,  // "prof"
-    MD_fpaccuracy = 3,  // "fpaccuracy"
+    MD_fpmath = 3,  // "fpmath"
     MD_range = 4 // "range"
   };
   

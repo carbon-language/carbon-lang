@@ -1653,16 +1653,16 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
 
-  if (MDNode *MD = I.getMetadata(LLVMContext::MD_fpaccuracy)) {
+  if (MDNode *MD = I.getMetadata(LLVMContext::MD_fpmath)) {
     Assert1(I.getType()->isFPOrFPVectorTy(),
-            "fpaccuracy requires a floating point result!", &I);
-    Assert1(MD->getNumOperands() == 1, "fpaccuracy takes one operand!", &I);
+            "fpmath requires a floating point result!", &I);
+    Assert1(MD->getNumOperands() == 1, "fpmath takes one operand!", &I);
     ConstantFP *Op = dyn_cast_or_null<ConstantFP>(MD->getOperand(0));
-    Assert1(Op, "fpaccuracy ULPs not a floating point number!", &I);
+    Assert1(Op, "fpmath ULPs not a floating point number!", &I);
     APFloat ULPs = Op->getValueAPF();
     Assert1(ULPs.isNormal() || ULPs.isZero(),
-            "fpaccuracy ULPs not a normal number!", &I);
-    Assert1(!ULPs.isNegative(), "fpaccuracy ULPs is negative!", &I);
+            "fpmath ULPs not a normal number!", &I);
+    Assert1(!ULPs.isNegative(), "fpmath ULPs is negative!", &I);
   }
 
   MDNode *MD = I.getMetadata(LLVMContext::MD_range);

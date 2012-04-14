@@ -44,9 +44,9 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned ProfID = getMDKindID("prof");
   assert(ProfID == MD_prof && "prof kind id drifted"); (void)ProfID;
 
-  // Create the 'fpaccuracy' metadata kind.
-  unsigned FPAccuracyID = getMDKindID("fpaccuracy");
-  assert(FPAccuracyID == MD_fpaccuracy && "fpaccuracy kind id drifted");
+  // Create the 'fpmath' metadata kind.
+  unsigned FPAccuracyID = getMDKindID("fpmath");
+  assert(FPAccuracyID == MD_fpmath && "fpmath kind id drifted");
   (void)FPAccuracyID;
 
   // Create the 'range' metadata kind.

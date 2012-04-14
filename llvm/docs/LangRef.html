@@ -103,7 +103,7 @@
       <li><a href="#metadata">Metadata Nodes and Metadata Strings</a>
         <ol>
           <li><a href="#tbaa">'<tt>tbaa</tt>' Metadata</a></li>
-          <li><a href="#fpaccuracy">'<tt>fpaccuracy</tt>' Metadata</a></li>
+          <li><a href="#fpmath">'<tt>fpmath</tt>' Metadata</a></li>
           <li><a href="#range">'<tt>range</tt>' Metadata</a></li>
         </ol>
       </li>
@@ -3000,15 +3000,15 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 
 <!-- _______________________________________________________________________ -->
 <h4>
-  <a name="fpaccuracy">'<tt>fpaccuracy</tt>' Metadata</a>
+  <a name="fpmath">'<tt>fpmath</tt>' Metadata</a>
 </h4>
  
 <div>
 
-<p><tt>fpaccuracy</tt> metadata may be attached to any instruction of floating
-   point type.  It expresses the maximum relative error allowed in the result
-   of that instruction, in ULPs, thus potentially allowing the compiler to use
-   a more efficient but less accurate method of computing it.
+<p><tt>fpmath</tt> metadata may be attached to any instruction of floating point
+   type.  It can be used to express the maximum acceptable relative error in the
+   result of that instruction, in ULPs, thus potentially allowing the compiler
+   to use a more efficient but less accurate method of computing it.
    ULP is defined as follows:</p>
 
 <blockquote>
