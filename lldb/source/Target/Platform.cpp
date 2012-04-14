@@ -574,7 +574,12 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
         if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
         {
             const bool is_localhost = true;
-            if (!launch_info.ConvertArgumentsForLaunchingInShell (error, is_localhost))
+            const bool will_debug = launch_info.GetFlags().Test(eLaunchFlagDebug);
+            const bool first_arg_is_full_shell_command = false;
+            if (!launch_info.ConvertArgumentsForLaunchingInShell (error,
+                                                                  is_localhost,
+                                                                  will_debug,
+                                                                  first_arg_is_full_shell_command))
                 return error;
         }
 

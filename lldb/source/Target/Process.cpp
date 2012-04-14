@@ -303,7 +303,10 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
 
 
 bool
-ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error, bool localhost)
+ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
+                                                        bool localhost,
+                                                        bool will_debug,
+                                                        bool first_arg_is_full_shell_command)
 {
     error.Clear();
 
@@ -334,37 +337,56 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error, bool local
             Args shell_arguments;
             std::string safe_arg;
             shell_arguments.AppendArgument (shell_executable);
-            StreamString shell_command;
             shell_arguments.AppendArgument ("-c");
-            shell_command.PutCString ("exec");
-            if (GetArchitecture().IsValid())
+
+            StreamString shell_command;
+            if (will_debug)
             {
-                shell_command.Printf(" /usr/bin/arch -arch %s", GetArchitecture().GetArchitectureName());
-                // Set the resume count to 2: 
-                // 1 - stop in shell
-                // 2 - stop in /usr/bin/arch
-                // 3 - then we will stop in our program
-                SetResumeCount(2);
-            }
-            else
-            {
-                // Set the resume count to 1: 
-                // 1 - stop in shell
-                // 2 - then we will stop in our program
-                SetResumeCount(1);
+                shell_command.PutCString ("exec");
+                if (GetArchitecture().IsValid())
+                {
+                    shell_command.Printf(" /usr/bin/arch -arch %s", GetArchitecture().GetArchitectureName());
+                    // Set the resume count to 2: 
+                    // 1 - stop in shell
+                    // 2 - stop in /usr/bin/arch
+                    // 3 - then we will stop in our program
+                    SetResumeCount(2);
+                }
+                else
+                {
+                    // Set the resume count to 1: 
+                    // 1 - stop in shell
+                    // 2 - then we will stop in our program
+                    SetResumeCount(1);
+                }
             }
             
             const char **argv = GetArguments().GetConstArgumentVector ();
             if (argv)
             {
-                for (size_t i=0; argv[i] != NULL; ++i)
+                if (first_arg_is_full_shell_command)
                 {
-                    const char *arg = Args::GetShellSafeArgument (argv[i], safe_arg);
-                    shell_command.Printf(" %s", arg);
+                    // There should only be one argument that is the shell command itself to be used as is
+                    if (argv[0] && !argv[1])
+                        shell_command.Printf("%s", argv[0]);
+                    else
+                        return false;
                 }
+                else
+                {
+                    for (size_t i=0; argv[i] != NULL; ++i)
+                    {
+                        const char *arg = Args::GetShellSafeArgument (argv[i], safe_arg);
+                        shell_command.Printf(" %s", arg);
+                    }
+                }
+                shell_arguments.AppendArgument (shell_command.GetString().c_str());
             }
-            shell_arguments.AppendArgument (shell_command.GetString().c_str());
-            
+            else
+            {
+                return false;
+            }
+
             m_executable.SetFile(shell_executable, false);
             m_arguments = shell_arguments;
             return true;

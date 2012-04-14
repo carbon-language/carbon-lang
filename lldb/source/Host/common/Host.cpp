@@ -1239,6 +1239,164 @@ Host::GetDummyTarget (lldb_private::Debugger &debugger)
     return dummy_target;
 }
 
+struct ShellInfo
+{
+    ShellInfo () :
+        process_reaped (false),
+        can_delete (false),
+        pid (LLDB_INVALID_PROCESS_ID),
+        signo(-1),
+        status(-1)
+    {
+    }
+
+    lldb_private::Predicate<bool> process_reaped;
+    lldb_private::Predicate<bool> can_delete;
+    lldb::pid_t pid;
+    int signo;
+    int status;
+};
+
+static bool
+MonitorShellCommand (void *callback_baton,
+                     lldb::pid_t pid,
+                     bool exited,       // True if the process did exit
+                     int signo,         // Zero for no signal
+                     int status)   // Exit value of process if signal is zero
+{
+    ShellInfo *shell_info = (ShellInfo *)callback_baton;
+    shell_info->pid = pid;
+    shell_info->signo = signo;
+    shell_info->status = status;
+    // Let the thread running Host::RunShellCommand() know that the process
+    // exited and that ShellInfo has been filled in by broadcasting to it
+    shell_info->process_reaped.SetValue(1, eBroadcastAlways);
+    // Now wait for a handshake back from that thread running Host::RunShellCommand
+    // so we know that we can delete shell_info_ptr
+    shell_info->can_delete.WaitForValueEqualTo(true);
+    // Sleep a bit to allow the shell_info->can_delete.SetValue() to complete...
+    usleep(1000);
+    // Now delete the shell info that was passed into this function
+    delete shell_info;
+    return true;
+}
+
+Error
+Host::RunShellCommand (const char *command,
+                       const char *working_dir,
+                       int *status_ptr,
+                       int *signo_ptr,
+                       std::string *command_output_ptr,
+                       uint32_t timeout_sec)
+{
+    Error error;
+    ProcessLaunchInfo launch_info;
+    launch_info.SetShell("/bin/bash");
+    launch_info.GetArguments().AppendArgument(command);
+    const bool localhost = true;
+    const bool will_debug = false;
+    const bool first_arg_is_full_shell_command = true;
+    launch_info.ConvertArgumentsForLaunchingInShell (error,
+                                                     localhost,
+                                                     will_debug,
+                                                     first_arg_is_full_shell_command);
+    
+    if (working_dir)
+        launch_info.SetWorkingDirectory(working_dir);
+    char output_file_path_buffer[L_tmpnam];
+    const char *output_file_path = NULL;
+    if (command_output_ptr)
+    {
+        // Create a temporary file to get the stdout/stderr and redirect the
+        // output of the command into this file. We will later read this file
+        // if all goes well and fill the data into "command_output_ptr"
+        output_file_path = ::tmpnam(output_file_path_buffer);
+        launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
+        launch_info.AppendOpenFileAction(STDOUT_FILENO, output_file_path, false, true);
+        launch_info.AppendDuplicateFileAction(STDERR_FILENO, STDOUT_FILENO);
+    }
+    else
+    {
+        launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
+        launch_info.AppendSuppressFileAction (STDOUT_FILENO, false, true);
+        launch_info.AppendSuppressFileAction (STDERR_FILENO, false, true);
+    }
+    
+    // The process monitor callback will delete the 'shell_info_ptr' below...
+    std::auto_ptr<ShellInfo> shell_info_ap (new ShellInfo());
+    
+    const bool monitor_signals = false;
+    launch_info.SetMonitorProcessCallback(MonitorShellCommand, shell_info_ap.get(), monitor_signals);
+    
+    error = LaunchProcess (launch_info);
+    const lldb::pid_t pid = launch_info.GetProcessID();
+    if (pid != LLDB_INVALID_PROCESS_ID)
+    {
+        // The process successfully launched, so we can defer ownership of
+        // "shell_info" to the MonitorShellCommand callback function that will
+        // get called when the process dies. We release the std::auto_ptr as it
+        // doesn't need to delete the ShellInfo anymore.
+        ShellInfo *shell_info = shell_info_ap.release();
+        TimeValue timeout_time(TimeValue::Now());
+        timeout_time.OffsetWithSeconds(timeout_sec);
+        bool timed_out = false;
+        shell_info->process_reaped.WaitForValueEqualTo(true, &timeout_time, &timed_out);
+        if (timed_out)
+        {
+            error.SetErrorString("timed out waiting for shell command to complete");
+            
+            // Kill the process since it didn't complete withint the timeout specified
+            ::kill (pid, SIGKILL);
+            // Wait for the monitor callback to get the message
+            timeout_time = TimeValue::Now();
+            timeout_time.OffsetWithSeconds(1);
+            timed_out = false;
+            shell_info->process_reaped.WaitForValueEqualTo(true, &timeout_time, &timed_out);
+        }
+        else
+        {
+            if (status_ptr)
+                *status_ptr = shell_info->status;
+
+            if (signo_ptr)
+                *signo_ptr = shell_info->signo;
+
+            if (command_output_ptr)
+            {
+                command_output_ptr->clear();
+                FileSpec file_spec(output_file_path, File::eOpenOptionRead);
+                uint64_t file_size = file_spec.GetByteSize();
+                if (file_size > 0)
+                {
+                    if (file_size > command_output_ptr->max_size())
+                    {
+                        error.SetErrorStringWithFormat("shell command output is too large to fit into a std::string");
+                    }
+                    else
+                    {
+                        command_output_ptr->resize(file_size);
+                        file_spec.ReadFileContents(0, &((*command_output_ptr)[0]), command_output_ptr->size(), &error);
+                    }
+                }
+            }
+        }
+        shell_info->can_delete.SetValue(true, eBroadcastAlways);
+    }
+    else
+    {
+        error.SetErrorString("failed to get process ID");
+    }
+
+    if (output_file_path)
+        ::unlink (output_file_path);
+    // Handshake with the monitor thread, or just let it know in advance that
+    // it can delete "shell_info" in case we timed out and were not able to kill
+    // the process...
+    return error;
+}
+
+
+
 #if !defined (__APPLE__)
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
