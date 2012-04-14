@@ -2163,6 +2163,7 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
 
 VTableLayout::~VTableLayout() {
   delete[] VTableComponents;
+  delete[] VTableThunks;
 }
 
 VTableContext::~VTableContext() {
