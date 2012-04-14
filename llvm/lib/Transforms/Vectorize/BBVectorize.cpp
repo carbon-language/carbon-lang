@@ -84,6 +84,10 @@ NoFloats("bb-vectorize-no-floats", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point values"));
 
 static cl::opt<bool>
+NoPointers("bb-vectorize-no-pointers", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize pointer values"));
+
+static cl::opt<bool>
 NoCasts("bb-vectorize-no-casts", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize casting (conversion) operations"));
 
@@ -98,6 +102,10 @@ NoFMA("bb-vectorize-no-fma", cl::init(false), cl::Hidden,
 static cl::opt<bool>
 NoSelect("bb-vectorize-no-select", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize select instructions"));
+
+static cl::opt<bool>
+NoGEP("bb-vectorize-no-gep", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize getelementptr instructions"));
 
 static cl::opt<bool>
 NoMemOps("bb-vectorize-no-mem-ops", cl::init(false), cl::Hidden,
@@ -550,14 +558,21 @@ namespace {
         return false;
 
       Type *SrcTy = C->getSrcTy();
-      if (!SrcTy->isSingleValueType() || SrcTy->isPointerTy())
+      if (!SrcTy->isSingleValueType())
         return false;
 
       Type *DestTy = C->getDestTy();
-      if (!DestTy->isSingleValueType() || DestTy->isPointerTy())
+      if (!DestTy->isSingleValueType())
         return false;
     } else if (isa<SelectInst>(I)) {
       if (!Config.VectorizeSelect)
+        return false;
+    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
+      if (!Config.VectorizeGEP)
+        return false;
+
+      // Currently, vector GEPs exist only with one index.
+      if (G->getNumIndices() != 1)
         return false;
     } else if (!(I->isBinaryOp() || isa<ShuffleVectorInst>(I) ||
         isa<ExtractElementInst>(I) || isa<InsertElementInst>(I))) {
@@ -595,6 +610,14 @@ namespace {
 
     if (!Config.VectorizeFloats
         && (T1->isFPOrFPVectorTy() || T2->isFPOrFPVectorTy()))
+      return false;
+
+    if ((!Config.VectorizePointers || TD == 0)
+        && ((T1->isPointerTy() ||
+              (T1->isVectorTy() && T1->getScalarType()->isPointerTy())) ||
+            (T2->isPointerTy() ||
+              (T2->isVectorTy() && T2->getScalarType()->isPointerTy()))
+           ))
       return false;
 
     if (T1->getPrimitiveSizeInBits() > Config.VectorBits/2 ||
@@ -1898,10 +1921,12 @@ VectorizeConfig::VectorizeConfig() {
   VectorBits = ::VectorBits;
   VectorizeInts = !::NoInts;
   VectorizeFloats = !::NoFloats;
+  VectorizePointers = !::NoPointers;
   VectorizeCasts = !::NoCasts;
   VectorizeMath = !::NoMath;
   VectorizeFMA = !::NoFMA;
   VectorizeSelect = !::NoSelect;
+  VectorizeGEP = !::NoGEP;
   VectorizeMemOps = !::NoMemOps;
   AlignedOnly = ::AlignedOnly;
   ReqChainDepth= ::ReqChainDepth;

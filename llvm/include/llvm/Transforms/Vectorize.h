@@ -34,6 +34,9 @@ struct VectorizeConfig {
   /// @brief Vectorize floating-point values.
   bool VectorizeFloats;
 
+  /// @brief Vectorize pointer values.
+  bool VectorizePointers;
+
   /// @brief Vectorize casting (conversion) operations.
   bool VectorizeCasts;
 
@@ -45,6 +48,9 @@ struct VectorizeConfig {
 
   /// @brief Vectorize select instructions.
   bool VectorizeSelect;
+
+  /// @brief Vectorize getelementptr instructions.
+  bool VectorizeGEP;
 
   /// @brief Vectorize loads and stores.
   bool VectorizeMemOps;
