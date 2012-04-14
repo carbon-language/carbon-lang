@@ -3165,7 +3165,7 @@ LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
 namespace {
 
 typedef llvm::StringMap<TypoCorrection, llvm::BumpPtrAllocator> TypoResultsMap;
-typedef std::map<unsigned, TypoResultsMap *> TypoEditDistanceMap;
+typedef std::map<unsigned, TypoResultsMap> TypoEditDistanceMap;
 
 static const unsigned MaxTypoDistanceResultSets = 5;
 
@@ -3187,14 +3187,6 @@ public:
     : Typo(Typo->getName()),
       SemaRef(SemaRef) { }
 
-  ~TypoCorrectionConsumer() {
-    for (TypoEditDistanceMap::iterator I = BestResults.begin(),
-                                    IEnd = BestResults.end();
-         I != IEnd;
-         ++I)
-      delete I->second;
-  }
-  
   virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
                          bool InBaseClass);
   void FoundName(StringRef Name);
@@ -3207,15 +3199,12 @@ public:
   typedef TypoEditDistanceMap::iterator distance_iterator;
   distance_iterator begin() { return BestResults.begin(); }
   distance_iterator end()  { return BestResults.end(); }
-  void erase(distance_iterator I) {
-    delete I->second;
-    BestResults.erase(I);
-  }
+  void erase(distance_iterator I) { BestResults.erase(I); }
   unsigned size() const { return BestResults.size(); }
   bool empty() const { return BestResults.empty(); }
 
   TypoCorrection &operator[](StringRef Name) {
-    return (*BestResults.begin()->second)[Name];
+    return BestResults.begin()->second[Name];
   }
 
   unsigned getBestEditDistance(bool Normalized) {
@@ -3279,11 +3268,9 @@ void TypoCorrectionConsumer::addName(StringRef Name,
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
-  TypoResultsMap *& Map = BestResults[Correction.getEditDistance(false)];
-  if (!Map)
-    Map = new TypoResultsMap;
+  TypoResultsMap &Map = BestResults[Correction.getEditDistance(false)];
 
-  TypoCorrection &CurrentCorrection = (*Map)[Name];
+  TypoCorrection &CurrentCorrection = Map[Name];
   if (!CurrentCorrection ||
       // FIXME: The following should be rolled up into an operator< on
       // TypoCorrection with a more principled definition.
@@ -3881,8 +3868,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   while (!Consumer.empty()) {
     TypoCorrectionConsumer::distance_iterator DI = Consumer.begin();
     unsigned ED = DI->first;
-    for (TypoCorrectionConsumer::result_iterator I = DI->second->begin(),
-                                              IEnd = DI->second->end();
+    for (TypoCorrectionConsumer::result_iterator I = DI->second.begin(),
+                                              IEnd = DI->second.end();
          I != IEnd; /* Increment in loop. */) {
       // If the item already has been looked up or is a keyword, keep it.
       // If a validator callback object was given, drop the correction
@@ -3891,7 +3878,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         TypoCorrectionConsumer::result_iterator Prev = I;
         ++I;
         if (!isCandidateViable(CCC, Prev->second))
-          DI->second->erase(Prev);
+          DI->second.erase(Prev);
         continue;
       }
 
@@ -3910,7 +3897,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         {
           TypoCorrectionConsumer::result_iterator Next = I;
           ++Next;
-          DI->second->erase(I);
+          DI->second.erase(I);
           I = Next;
         }
         break;
@@ -3928,7 +3915,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
           I->second.addCorrectionDecl(*TRD);
         ++I;
         if (!isCandidateViable(CCC, Prev->second))
-          DI->second->erase(Prev);
+          DI->second.erase(Prev);
         break;
       }
 
@@ -3937,14 +3924,14 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
         ++I;
         if (!isCandidateViable(CCC, Prev->second))
-          DI->second->erase(Prev);
+          DI->second.erase(Prev);
         break;
       }
 
       }
     }
 
-    if (DI->second->empty())
+    if (DI->second.empty())
       Consumer.erase(DI);
     else if (!getLangOpts().CPlusPlus || QualifiedResults.empty() || !ED)
       // If there are results in the closest possible bucket, stop
@@ -4008,7 +3995,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // No corrections remain...
   if (Consumer.empty()) return TypoCorrection();
 
-  TypoResultsMap &BestResults = *Consumer.begin()->second;
+  TypoResultsMap &BestResults = Consumer.begin()->second;
   ED = TypoCorrection::NormalizeEditDistance(Consumer.begin()->first);
 
   if (ED > 0 && Typo->getName().size() / ED < 3) {
@@ -4082,7 +4069,8 @@ std::string TypoCorrection::getAsString(const LangOptions &LO) const {
     std::string tmpBuffer;
     llvm::raw_string_ostream PrefixOStream(tmpBuffer);
     CorrectionNameSpec->print(PrefixOStream, PrintingPolicy(LO));
-    return PrefixOStream.str() + CorrectionName.getAsString();
+    CorrectionName.printName(PrefixOStream);
+    return PrefixOStream.str();
   }
 
   return CorrectionName.getAsString();
