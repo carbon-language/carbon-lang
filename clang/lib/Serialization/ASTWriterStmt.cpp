@@ -106,6 +106,14 @@ void ASTStmtWriter::VisitLabelStmt(LabelStmt *S) {
   Code = serialization::STMT_LABEL;
 }
 
+void ASTStmtWriter::VisitAttributedStmt(AttributedStmt *S) {
+  VisitStmt(S);
+  Writer.WriteAttributes(S->getAttrs(), Record);
+  Writer.AddStmt(S->getSubStmt());
+  Writer.AddSourceLocation(S->getAttrLoc(), Record);
+  Code = serialization::STMT_ATTRIBUTED;
+}
+
 void ASTStmtWriter::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
   Writer.AddDeclRef(S->getConditionVariable(), Record);

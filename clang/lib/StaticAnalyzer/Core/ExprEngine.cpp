@@ -536,6 +536,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::IfStmtClass:
     case Stmt::IndirectGotoStmtClass:
     case Stmt::LabelStmtClass:
+    case Stmt::AttributedStmtClass:
     case Stmt::NoStmtClass:
     case Stmt::NullStmtClass:
     case Stmt::SwitchStmtClass:

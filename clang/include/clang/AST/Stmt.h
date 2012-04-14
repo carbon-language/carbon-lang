@@ -20,6 +20,7 @@
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -791,6 +792,47 @@ public:
     return T->getStmtClass() == LabelStmtClass;
   }
   static bool classof(const LabelStmt *) { return true; }
+};
+
+
+/// \brief Represents an attribute applied to a statement.
+///
+/// Represents an attribute applied to a statement. For example:
+///   [[omp::for(...)]] for (...) { ... }
+///
+class AttributedStmt : public Stmt {
+  Stmt *SubStmt;
+  SourceLocation AttrLoc;
+  AttrVec Attrs;
+  // TODO: It can be done as Attr *Attrs[1]; and variable size array as in
+  // StringLiteral
+
+  friend class ASTStmtReader;
+
+public:
+  AttributedStmt(SourceLocation loc, const AttrVec &attrs, Stmt *substmt)
+    : Stmt(AttributedStmtClass), SubStmt(substmt), AttrLoc(loc), Attrs(attrs) {
+  }
+
+  // \brief Build an empty attributed statement.
+  explicit AttributedStmt(EmptyShell Empty)
+    : Stmt(AttributedStmtClass, Empty) {
+  }
+
+  SourceLocation getAttrLoc() const { return AttrLoc; }
+  const AttrVec &getAttrs() const { return Attrs; }
+  Stmt *getSubStmt() { return SubStmt; }
+  const Stmt *getSubStmt() const { return SubStmt; }
+
+  SourceRange getSourceRange() const LLVM_READONLY {
+    return SourceRange(AttrLoc, SubStmt->getLocEnd());
+  }
+  child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == AttributedStmtClass;
+  }
+  static bool classof(const AttributedStmt *) { return true; }
 };
 
 

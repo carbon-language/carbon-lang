@@ -109,6 +109,11 @@ void StmtProfiler::VisitLabelStmt(const LabelStmt *S) {
   VisitDecl(S->getDecl());
 }
 
+void StmtProfiler::VisitAttributedStmt(const AttributedStmt *S) {
+  VisitStmt(S);
+  // TODO: maybe visit attributes?
+}
+
 void StmtProfiler::VisitIfStmt(const IfStmt *S) {
   VisitStmt(S);
   VisitDecl(S->getConditionVariable());

@@ -247,19 +247,23 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::CompoundStmtClass:
     K = CXCursor_CompoundStmt;
     break;
-      
+
   case Stmt::NullStmtClass:
     K = CXCursor_NullStmt;
     break;
-      
+
   case Stmt::LabelStmtClass:
     K = CXCursor_LabelStmt;
     break;
-  
+
+  case Stmt::AttributedStmtClass:
+    K = CXCursor_UnexposedStmt;
+    break;
+
   case Stmt::DeclStmtClass:
     K = CXCursor_DeclStmt;
     break;
- 
+
   case Stmt::IntegerLiteralClass:
     K = CXCursor_IntegerLiteral;
     break;
@@ -287,7 +291,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::UnaryOperatorClass:
     K = CXCursor_UnaryOperator;
     break;
-  
+
   case Stmt::CXXNoexceptExprClass:
     K = CXCursor_UnaryExpr;
     break;

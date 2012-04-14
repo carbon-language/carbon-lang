@@ -97,8 +97,8 @@ Stmt *Stmt::IgnoreImplicit() {
 
 /// \brief Strip off all label-like statements.
 ///
-/// This will strip off label statements, case statements, and default
-/// statements recursively.
+/// This will strip off label statements, case statements, attributed
+/// statements and default statements recursively.
 const Stmt *Stmt::stripLabelLikeStatements() const {
   const Stmt *S = this;
   while (true) {
@@ -106,6 +106,8 @@ const Stmt *Stmt::stripLabelLikeStatements() const {
       S = LS->getSubStmt();
     else if (const SwitchCase *SC = dyn_cast<SwitchCase>(S))
       S = SC->getSubStmt();
+    else if (const AttributedStmt *AS = dyn_cast<AttributedStmt>(S))
+      S = AS->getSubStmt();
     else
       return S;
   }

@@ -169,6 +169,23 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
   PrintStmt(Node->getSubStmt(), 0);
 }
 
+void StmtPrinter::VisitAttributedStmt(AttributedStmt *Node) {
+  OS << "[[";
+  bool first = true;
+  for (AttrVec::const_iterator it = Node->getAttrs().begin(),
+                               end = Node->getAttrs().end();
+                               it != end; ++it) {
+    if (!first) {
+      OS << ", ";
+      first = false;
+    }
+    // TODO: check this
+    (*it)->printPretty(OS, Context);
+  }
+  OS << "]] ";
+  PrintStmt(Node->getSubStmt(), 0);
+}
+
 void StmtPrinter::PrintRawIfStmt(IfStmt *If) {
   OS << "if (";
   PrintExpr(If->getCond());

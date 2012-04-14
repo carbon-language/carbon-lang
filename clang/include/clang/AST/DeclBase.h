@@ -861,7 +861,6 @@ public:
   void dumpXML(raw_ostream &OS) const;
 
 private:
-  const Attr *getAttrsImpl() const;
   void setAttrsImpl(const AttrVec& Attrs, ASTContext &Ctx);
   void setDeclContextsImpl(DeclContext *SemaDC, DeclContext *LexicalDC,
                            ASTContext &Ctx);

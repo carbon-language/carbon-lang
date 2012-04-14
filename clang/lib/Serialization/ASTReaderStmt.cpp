@@ -159,9 +159,18 @@ void ASTStmtReader::VisitLabelStmt(LabelStmt *S) {
   S->setIdentLoc(ReadSourceLocation(Record, Idx));
 }
 
+void ASTStmtReader::VisitAttributedStmt(AttributedStmt *S) {
+  VisitStmt(S);
+  AttrVec Attrs;
+  Reader.ReadAttributes(F, Attrs, Record, Idx);
+  S->Attrs = Attrs;
+  S->SubStmt = Reader.ReadSubStmt();
+  S->AttrLoc = ReadSourceLocation(Record, Idx);
+}
+
 void ASTStmtReader::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
-  S->setConditionVariable(Reader.getContext(), 
+  S->setConditionVariable(Reader.getContext(),
                           ReadDeclAs<VarDecl>(Record, Idx));
   S->setCond(Reader.ReadSubExpr());
   S->setThen(Reader.ReadSubStmt());
@@ -1628,6 +1637,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case STMT_LABEL:
       S = new (Context) LabelStmt(Empty);
+      break;
+
+    case STMT_ATTRIBUTED:
+      S = new (Context) AttributedStmt(Empty);
       break;
 
     case STMT_IF:

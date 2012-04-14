@@ -1044,6 +1044,15 @@ public:
     return SemaRef.ActOnLabelStmt(IdentLoc, L, ColonLoc, SubStmt);
   }
 
+  /// \brief Build a new label statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  StmtResult RebuildAttributedStmt(SourceLocation AttrLoc, const AttrVec &Attrs,
+                                   Stmt *SubStmt) {
+    return SemaRef.ActOnAttributedStmt(AttrLoc, Attrs, SubStmt);
+  }
+
   /// \brief Build a new "if" statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -5154,12 +5163,28 @@ TreeTransform<Derived>::TransformLabelStmt(LabelStmt *S) {
                                         S->getDecl());
   if (!LD)
     return StmtError();
-  
-  
+
+
   // FIXME: Pass the real colon location in.
   return getDerived().RebuildLabelStmt(S->getIdentLoc(),
                                        cast<LabelDecl>(LD), SourceLocation(),
                                        SubStmt.get());
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformAttributedStmt(AttributedStmt *S) {
+  StmtResult SubStmt = getDerived().TransformStmt(S->getSubStmt());
+  if (SubStmt.isInvalid())
+    return StmtError();
+
+  // TODO: transform attributes
+  if (SubStmt.get() == S->getSubStmt() /* && attrs are the same */)
+    return S;
+
+  return getDerived().RebuildAttributedStmt(S->getAttrLoc(),
+                                            S->getAttrs(),
+                                            SubStmt.get());
 }
 
 template<typename Derived>

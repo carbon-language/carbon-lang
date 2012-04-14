@@ -78,13 +78,30 @@ using namespace clang;
 StmtResult
 Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement,
                                     SourceLocation *TrailingElseLoc) {
-  const char *SemiError = 0;
-  StmtResult Res;
 
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
-  ParsedAttributesWithRange attrs(AttrFactory);
-  MaybeParseCXX0XAttributes(attrs, 0, /*MightBeObjCMessageSend*/ true);
+  ParsedAttributesWithRange Attrs(AttrFactory);
+  MaybeParseCXX0XAttributes(Attrs, 0, /*MightBeObjCMessageSend*/ true);
+
+  StmtResult Res = ParseStatementOrDeclarationAfterAttributes(Stmts,
+                                 OnlyStatement, TrailingElseLoc, Attrs);
+
+  assert((Attrs.empty() || Res.isInvalid() || Res.isUsable()) &&
+         "attributes on empty statement");
+
+  if (Attrs.empty() || Res.isInvalid())
+    return Res;
+
+  return Actions.ProcessStmtAttributes(Res.get(), Attrs.getList(), Attrs.Range);
+}
+
+StmtResult
+Parser::ParseStatementOrDeclarationAfterAttributes(StmtVector &Stmts,
+          bool OnlyStatement, SourceLocation *TrailingElseLoc,
+          ParsedAttributesWithRange &Attrs) {
+  const char *SemiError = 0;
+  StmtResult Res;
 
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
@@ -95,6 +112,7 @@ Retry:
   switch (Kind) {
   case tok::at: // May be a @try or @throw statement
     {
+      ProhibitAttributes(Attrs); // TODO: is it correct?
       AtLoc = ConsumeToken();  // consume @
       return ParseObjCAtStatement(AtLoc);
     }
@@ -108,7 +126,7 @@ Retry:
     Token Next = NextToken();
     if (Next.is(tok::colon)) { // C99 6.8.1: labeled-statement
       // identifier ':' statement
-      return ParseLabeledStatement(attrs);
+      return ParseLabeledStatement(Attrs);
     }
 
     if (Next.isNot(tok::coloncolon)) {
@@ -210,7 +228,7 @@ Retry:
     if ((getLangOpts().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
       DeclGroupPtrTy Decl = ParseDeclaration(Stmts, Declarator::BlockContext,
-                                             DeclEnd, attrs);
+                                             DeclEnd, Attrs);
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
     }
 
@@ -219,54 +237,54 @@ Retry:
       return StmtError();
     }
 
-    return ParseExprStatement(attrs);
+    return ParseExprStatement();
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
-    return ParseCaseStatement(attrs);
+    return ParseCaseStatement();
   case tok::kw_default:             // C99 6.8.1: labeled-statement
-    return ParseDefaultStatement(attrs);
+    return ParseDefaultStatement();
 
   case tok::l_brace:                // C99 6.8.2: compound-statement
-    return ParseCompoundStatement(attrs);
+    return ParseCompoundStatement();
   case tok::semi: {                 // C99 6.8.3p3: expression[opt] ';'
     bool HasLeadingEmptyMacro = Tok.hasLeadingEmptyMacro();
     return Actions.ActOnNullStmt(ConsumeToken(), HasLeadingEmptyMacro);
   }
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
-    return ParseIfStatement(attrs, TrailingElseLoc);
+    return ParseIfStatement(TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    return ParseSwitchStatement(attrs, TrailingElseLoc);
+    return ParseSwitchStatement(TrailingElseLoc);
 
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    return ParseWhileStatement(attrs, TrailingElseLoc);
+    return ParseWhileStatement(TrailingElseLoc);
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
-    Res = ParseDoStatement(attrs);
+    Res = ParseDoStatement();
     SemiError = "do/while";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    return ParseForStatement(attrs, TrailingElseLoc);
+    return ParseForStatement(TrailingElseLoc);
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
-    Res = ParseGotoStatement(attrs);
+    Res = ParseGotoStatement();
     SemiError = "goto";
     break;
   case tok::kw_continue:            // C99 6.8.6.2: continue-statement
-    Res = ParseContinueStatement(attrs);
+    Res = ParseContinueStatement();
     SemiError = "continue";
     break;
   case tok::kw_break:               // C99 6.8.6.3: break-statement
-    Res = ParseBreakStatement(attrs);
+    Res = ParseBreakStatement();
     SemiError = "break";
     break;
   case tok::kw_return:              // C99 6.8.6.4: return-statement
-    Res = ParseReturnStatement(attrs);
+    Res = ParseReturnStatement();
     SemiError = "return";
     break;
 
   case tok::kw_asm: {
-    ProhibitAttributes(attrs);
+    ProhibitAttributes(Attrs);
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
     Res = Actions.ActOnFinishFullStmt(Res.get());
@@ -276,16 +294,19 @@ Retry:
   }
 
   case tok::kw_try:                 // C++ 15: try-block
-    return ParseCXXTryBlock(attrs);
+    return ParseCXXTryBlock();
 
   case tok::kw___try:
-    return ParseSEHTryBlock(attrs);
+    ProhibitAttributes(Attrs); // TODO: is it correct?
+    return ParseSEHTryBlock();
 
   case tok::annot_pragma_vis:
+    ProhibitAttributes(Attrs);
     HandlePragmaVisibility();
     return StmtEmpty();
 
   case tok::annot_pragma_pack:
+    ProhibitAttributes(Attrs);
     HandlePragmaPack();
     return StmtEmpty();
   }
@@ -306,11 +327,10 @@ Retry:
 }
 
 /// \brief Parse an expression statement.
-StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs) {
+StmtResult Parser::ParseExprStatement() {
   // If a case keyword is missing, this is where it should be inserted.
   Token OldToken = Tok;
 
-  // FIXME: Use the attributes
   // expression[opt] ';'
   ExprResult Expr(ParseExpression());
   if (Expr.isInvalid()) {
@@ -331,7 +351,7 @@ StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs) {
       << FixItHint::CreateInsertion(OldToken.getLocation(), "case ");
 
     // Recover parsing as a case statement.
-    return ParseCaseStatement(Attrs, /*MissingCase=*/true, Expr);
+    return ParseCaseStatement(/*MissingCase=*/true, Expr);
   }
 
   // Otherwise, eat the semicolon.
@@ -339,7 +359,7 @@ StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs) {
   return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
 }
 
-StmtResult Parser::ParseSEHTryBlock(ParsedAttributes & Attrs) {
+StmtResult Parser::ParseSEHTryBlock() {
   assert(Tok.is(tok::kw___try) && "Expected '__try'");
   SourceLocation Loc = ConsumeToken();
   return ParseSEHTryBlockCommon(Loc);
@@ -358,13 +378,12 @@ StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
   if(Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok,diag::err_expected_lbrace));
 
-  ParsedAttributesWithRange attrs(AttrFactory);
-  StmtResult TryBlock(ParseCompoundStatement(attrs));
+  StmtResult TryBlock(ParseCompoundStatement());
   if(TryBlock.isInvalid())
     return move(TryBlock);
 
   StmtResult Handler;
-  if (Tok.is(tok::identifier) && 
+  if (Tok.is(tok::identifier) &&
       Tok.getIdentifierInfo() == getSEHExceptKeyword()) {
     SourceLocation Loc = ConsumeToken();
     Handler = ParseSEHExceptBlock(Loc);
@@ -418,8 +437,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
   if(ExpectAndConsume(tok::r_paren,diag::err_expected_rparen))
     return StmtError();
 
-  ParsedAttributesWithRange attrs(AttrFactory);
-  StmtResult Block(ParseCompoundStatement(attrs));
+  StmtResult Block(ParseCompoundStatement());
 
   if(Block.isInvalid())
     return move(Block);
@@ -437,8 +455,7 @@ StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyBlock) {
     raii2(Ident___abnormal_termination, false),
     raii3(Ident_AbnormalTermination, false);
 
-  ParsedAttributesWithRange attrs(AttrFactory);
-  StmtResult Block(ParseCompoundStatement(attrs));
+  StmtResult Block(ParseCompoundStatement());
   if(Block.isInvalid())
     return move(Block);
 
@@ -451,7 +468,7 @@ StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyBlock) {
 ///         identifier ':' statement
 /// [GNU]   identifier ':' attributes[opt] statement
 ///
-StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
+StmtResult Parser::ParseLabeledStatement(ParsedAttributesWithRange &attrs) {
   assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
@@ -463,7 +480,8 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
   // identifier ':' statement
   SourceLocation ColonLoc = ConsumeToken();
 
-  // Read label attributes, if present.
+  // Read label attributes, if present. attrs will contain both C++11 and GNU
+  // attributes (if present) after this point.
   MaybeParseGNUAttributes(attrs);
 
   StmtResult SubStmt(ParseStatement());
@@ -474,8 +492,10 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
 
   LabelDecl *LD = Actions.LookupOrCreateLabel(IdentTok.getIdentifierInfo(),
                                               IdentTok.getLocation());
-  if (AttributeList *Attrs = attrs.getList())
+  if (AttributeList *Attrs = attrs.getList()) {
     Actions.ProcessDeclAttributeList(Actions.CurScope, LD, Attrs);
+    attrs.clear();
+  }
 
   return Actions.ActOnLabelStmt(IdentTok.getLocation(), LD, ColonLoc,
                                 SubStmt.get());
@@ -486,10 +506,8 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
 ///         'case' constant-expression ':' statement
 /// [GNU]   'case' constant-expression '...' constant-expression ':' statement
 ///
-StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
-                                      ExprResult Expr) {
+StmtResult Parser::ParseCaseStatement(bool MissingCase, ExprResult Expr) {
   assert((MissingCase || Tok.is(tok::kw_case)) && "Not a case stmt!");
-  // FIXME: Use attributes?
 
   // It is very very common for code to contain many case statements recursively
   // nested, as in (but usually without indentation):
@@ -625,9 +643,7 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
 ///         'default' ':' statement
 /// Note that this does not parse the 'statement' at the end.
 ///
-StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
-  //FIXME: Use attributes?
-
+StmtResult Parser::ParseDefaultStatement() {
   assert(Tok.is(tok::kw_default) && "Not a default stmt!");
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
@@ -668,9 +684,8 @@ StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
                                   SubStmt.get(), getCurScope());
 }
 
-StmtResult Parser::ParseCompoundStatement(ParsedAttributes &Attr,
-                                          bool isStmtExpr) {
-  return ParseCompoundStatement(Attr, isStmtExpr, Scope::DeclScope);
+StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
+  return ParseCompoundStatement(isStmtExpr, Scope::DeclScope);
 }
 
 /// ParseCompoundStatement - Parse a "{}" block.
@@ -700,11 +715,8 @@ StmtResult Parser::ParseCompoundStatement(ParsedAttributes &Attr,
 /// [OMP]   barrier-directive
 /// [OMP]   flush-directive
 ///
-StmtResult Parser::ParseCompoundStatement(ParsedAttributes &attrs,
-                                          bool isStmtExpr,
+StmtResult Parser::ParseCompoundStatement(bool isStmtExpr,
                                           unsigned ScopeFlags) {
-  //FIXME: Use attributes?
-
   assert(Tok.is(tok::l_brace) && "Not a compount stmt!");
 
   // Enter a scope to hold everything within the compound stmt.  Compound
@@ -894,10 +906,7 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
 /// [C++]   'if' '(' condition ')' statement
 /// [C++]   'if' '(' condition ')' statement 'else' statement
 ///
-StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs,
-                                    SourceLocation *TrailingElseLoc) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
   SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
 
@@ -1028,10 +1037,7 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs,
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
 /// [C++]   'switch' '(' condition ')' statement
-StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs,
-                                        SourceLocation *TrailingElseLoc) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
   SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
 
@@ -1119,10 +1125,7 @@ StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs,
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
 /// [C++]   'while' '(' condition ')' statement
-StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs,
-                                       SourceLocation *TrailingElseLoc) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseWhileStatement(SourceLocation *TrailingElseLoc) {
   assert(Tok.is(tok::kw_while) && "Not a while stmt!");
   SourceLocation WhileLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'while'.
@@ -1194,9 +1197,7 @@ StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs,
 ///       do-statement: [C99 6.8.5.2]
 ///         'do' statement 'while' '(' expression ')' ';'
 /// Note: this lets the caller parse the end ';'.
-StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseDoStatement() {
   assert(Tok.is(tok::kw_do) && "Not a do stmt!");
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
 
@@ -1277,10 +1278,7 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
 /// [C++0x] for-range-initializer:
 /// [C++0x]   expression
 /// [C++0x]   braced-init-list            [TODO]
-StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
-                                     SourceLocation *TrailingElseLoc) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
 
@@ -1535,9 +1533,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-StmtResult Parser::ParseGotoStatement(ParsedAttributes &attrs) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseGotoStatement() {
   assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
   SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
 
@@ -1571,9 +1567,7 @@ StmtResult Parser::ParseGotoStatement(ParsedAttributes &attrs) {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-StmtResult Parser::ParseContinueStatement(ParsedAttributes &attrs) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseContinueStatement() {
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
   return Actions.ActOnContinueStmt(ContinueLoc, getCurScope());
 }
@@ -1584,9 +1578,7 @@ StmtResult Parser::ParseContinueStatement(ParsedAttributes &attrs) {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-StmtResult Parser::ParseBreakStatement(ParsedAttributes &attrs) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseBreakStatement() {
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
   return Actions.ActOnBreakStmt(BreakLoc, getCurScope());
 }
@@ -1594,9 +1586,7 @@ StmtResult Parser::ParseBreakStatement(ParsedAttributes &attrs) {
 /// ParseReturnStatement
 ///       jump-statement:
 ///         'return' expression[opt] ';'
-StmtResult Parser::ParseReturnStatement(ParsedAttributes &attrs) {
-  // FIXME: Use attributes?
-
+StmtResult Parser::ParseReturnStatement() {
   assert(Tok.is(tok::kw_return) && "Not a return stmt!");
   SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
 
@@ -2043,9 +2033,7 @@ bool Parser::trySkippingFunctionBody() {
 ///       try-block:
 ///         'try' compound-statement handler-seq
 ///
-StmtResult Parser::ParseCXXTryBlock(ParsedAttributes &attrs) {
-  // FIXME: Add attributes?
-
+StmtResult Parser::ParseCXXTryBlock() {
   assert(Tok.is(tok::kw_try) && "Expected 'try'");
 
   SourceLocation TryLoc = ConsumeToken();
@@ -2072,17 +2060,17 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   if (Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
-  ParsedAttributesWithRange attrs(AttrFactory);
-  StmtResult TryBlock(ParseCompoundStatement(attrs, /*isStmtExpr=*/false,
+
+  StmtResult TryBlock(ParseCompoundStatement(/*isStmtExpr=*/false,
                                              Scope::DeclScope|Scope::TryScope));
   if (TryBlock.isInvalid())
     return move(TryBlock);
 
   // Borland allows SEH-handlers with 'try'
   
-  if((Tok.is(tok::identifier) && 
-      Tok.getIdentifierInfo() == getSEHExceptKeyword()) || 
-     Tok.is(tok::kw___finally)) {
+  if ((Tok.is(tok::identifier) &&
+       Tok.getIdentifierInfo() == getSEHExceptKeyword()) ||
+      Tok.is(tok::kw___finally)) {
     // TODO: Factor into common return ParseSEHHandlerCommon(...)
     StmtResult Handler;
     if(Tok.getIdentifierInfo() == getSEHExceptKeyword()) {
@@ -2103,6 +2091,7 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   }
   else {
     StmtVector Handlers(Actions);
+    ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
     ProhibitAttributes(attrs);
 
@@ -2168,8 +2157,7 @@ StmtResult Parser::ParseCXXCatchBlock() {
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
 
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
-  ParsedAttributes attrs(AttrFactory);
-  StmtResult Block(ParseCompoundStatement(attrs));
+  StmtResult Block(ParseCompoundStatement());
   if (Block.isInvalid())
     return move(Block);
 
@@ -2188,24 +2176,23 @@ void Parser::ParseMicrosoftIfExistsStatement(StmtVector &Stmts) {
   if (Result.Behavior == IEB_Dependent) {
     if (!Tok.is(tok::l_brace)) {
       Diag(Tok, diag::err_expected_lbrace);
-      return;      
+      return;
     }
-    
-    ParsedAttributes Attrs(AttrFactory);
-    StmtResult Compound = ParseCompoundStatement(Attrs);
+
+    StmtResult Compound = ParseCompoundStatement();
     if (Compound.isInvalid())
       return;
-    
+
     StmtResult DepResult = Actions.ActOnMSDependentExistsStmt(Result.KeywordLoc,
                                                               Result.IsIfExists,
-                                                              Result.SS, 
+                                                              Result.SS,
                                                               Result.Name,
                                                               Compound.get());
     if (DepResult.isUsable())
       Stmts.push_back(DepResult.get());
     return;
   }
-  
+
   BalancedDelimiterTracker Braces(*this, tok::l_brace);
   if (Braces.consumeOpen()) {
     Diag(Tok, diag::err_expected_lbrace);

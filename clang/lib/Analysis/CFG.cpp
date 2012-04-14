@@ -18,6 +18,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/Basic/AttrKinds.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Format.h"
@@ -1069,6 +1070,9 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
     case Stmt::LambdaExprClass:
       return VisitLambdaExpr(cast<LambdaExpr>(S), asc);
 
+    case Stmt::AttributedStmtClass:
+      return Visit(cast<AttributedStmt>(S)->getSubStmt(), asc);
+
     case Stmt::MemberExprClass:
       return VisitMemberExpr(cast<MemberExpr>(S), asc);
 
@@ -1131,7 +1135,7 @@ CFGBlock *CFGBuilder::VisitStmt(Stmt *S, AddStmtChoice asc) {
 
 /// VisitChildren - Visit the children of a Stmt.
 CFGBlock *CFGBuilder::VisitChildren(Stmt *Terminator) {
-  CFGBlock *lastBlock = Block;  
+  CFGBlock *lastBlock = Block;
   for (Stmt::child_range I = Terminator->children(); I; ++I)
     if (Stmt *child = *I)
       if (CFGBlock *b = Visit(child))

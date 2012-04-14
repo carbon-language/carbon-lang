@@ -964,6 +964,8 @@ namespace clang {
       STMT_DEFAULT,
       /// \brief A LabelStmt record.
       STMT_LABEL,
+      /// \brief An AttributedStmt record.
+      STMT_ATTRIBUTED,
       /// \brief An IfStmt record.
       STMT_IF,
       /// \brief A SwitchStmt record.

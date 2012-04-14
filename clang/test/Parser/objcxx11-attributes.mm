@@ -31,15 +31,17 @@ void f(X *noreturn) {
 
   // An attribute is OK.
   [[]];
-  [[int(), noreturn]];
+  [[int(), noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}}
   [[class, test(foo 'x' bar),,,]];
-  [[bitand, noreturn]];
+  [[bitand, noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}}
 
   [[noreturn]]int(e)();
+  int e2(); // expected-warning {{interpreted as a function declaration}} expected-note{{}}
 
   // A function taking a noreturn function.
-  int(f)([[noreturn]] int());
+  int(f)([[noreturn]] int()); // expected-note {{here}}
   f(e);
+  f(e2); // expected-error {{cannot initialize a parameter of type 'int (*)() __attribute__((noreturn))' with an lvalue of type 'int ()'}}
 
   // Variables initialized by a message send.
   int(g)([[noreturn getSelf] getSize]);

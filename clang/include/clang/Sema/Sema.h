@@ -1974,6 +1974,10 @@ public:
   bool CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC);
   bool CheckNoReturnAttr(const AttributeList &attr);
 
+  /// \brief Stmt attributes - this routine is the top level dispatcher.
+  StmtResult ProcessStmtAttributes(Stmt *Stmt, AttributeList *Attrs,
+                                   SourceRange Range);
+
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *Method,
@@ -2250,6 +2254,9 @@ public:
                                       Stmt *SubStmt, Scope *CurScope);
   StmtResult ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
                             SourceLocation ColonLoc, Stmt *SubStmt);
+
+  StmtResult ActOnAttributedStmt(SourceLocation AttrLoc, const AttrVec &Attrs,
+                                 Stmt *SubStmt);
 
   StmtResult ActOnIfStmt(SourceLocation IfLoc,
                          FullExprArg CondVal, Decl *CondVar,

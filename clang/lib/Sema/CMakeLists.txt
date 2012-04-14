@@ -40,6 +40,7 @@ add_clang_library(clangSema
   SemaOverload.cpp
   SemaPseudoObject.cpp
   SemaStmt.cpp
+  SemaStmtAttr.cpp
   SemaTemplate.cpp
   SemaTemplateDeduction.cpp
   SemaTemplateInstantiate.cpp

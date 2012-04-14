@@ -12,6 +12,7 @@ class DStmt<Stmt base, bit abstract = 0> : Stmt<abstract> {
 def NullStmt : Stmt;
 def CompoundStmt : Stmt;
 def LabelStmt : Stmt;
+def AttributedStmt : Stmt;
 def IfStmt : Stmt;
 def SwitchStmt : Stmt;
 def WhileStmt : Stmt;

@@ -79,6 +79,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::CompoundStmtClass:
   case Stmt::DeclStmtClass:
   case Stmt::LabelStmtClass:
+  case Stmt::AttributedStmtClass:
   case Stmt::GotoStmtClass:
   case Stmt::BreakStmtClass:
   case Stmt::ContinueStmtClass:
@@ -173,6 +174,8 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
   case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
   case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
   case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
+  case Stmt::AttributedStmtClass:
+                            EmitAttributedStmt(cast<AttributedStmt>(*S)); break;
   case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
   case Stmt::BreakStmtClass:    EmitBreakStmt(cast<BreakStmt>(*S));       break;
   case Stmt::ContinueStmtClass: EmitContinueStmt(cast<ContinueStmt>(*S)); break;
@@ -329,6 +332,10 @@ void CodeGenFunction::EmitLabel(const LabelDecl *D) {
 
 void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
   EmitLabel(S.getDecl());
+  EmitStmt(S.getSubStmt());
+}
+
+void CodeGenFunction::EmitAttributedStmt(const AttributedStmt &S) {
   EmitStmt(S.getSubStmt());
 }
 

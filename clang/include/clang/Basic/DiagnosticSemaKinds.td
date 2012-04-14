@@ -1563,6 +1563,9 @@ def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
 def warn_attribute_ignored : Warning<"%0 attribute ignored">;
 def warn_unknown_attribute_ignored : Warning<
   "unknown attribute %0 ignored">, InGroup<UnknownAttributes>;
+def warn_attribute_invalid_on_stmt : Warning<
+  "attribute %0 cannot be specified on a statement">,
+  InGroup<IgnoredAttributes>;
 def warn_declspec_attribute_ignored : Warning<
   "attribute %0 is ignored, place it after \"%select{class|struct|union|enum}1\" to apply attribute to type declaration">, InGroup<IgnoredAttributes>;
 def warn_attribute_precede_definition : Warning<

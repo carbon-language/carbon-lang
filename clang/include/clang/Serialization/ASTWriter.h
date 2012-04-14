@@ -76,6 +76,7 @@ public:
   typedef SmallVectorImpl<uint64_t> RecordDataImpl;
 
   friend class ASTDeclWriter;
+  friend class ASTStmtWriter;
 private:
   /// \brief Map that provides the ID numbers of each type within the
   /// output stream, plus those deserialized from a chained PCH.

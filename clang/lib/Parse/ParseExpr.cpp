@@ -1926,11 +1926,9 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   // unless they've already reported an error.
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-
     Actions.ActOnStartStmtExpr();
 
-    ParsedAttributes attrs(AttrFactory);
-    StmtResult Stmt(ParseCompoundStatement(attrs, true));
+    StmtResult Stmt(ParseCompoundStatement(true));
     ExprType = CompoundStmt;
 
     // If the substmt parsed correctly, build the AST node.
