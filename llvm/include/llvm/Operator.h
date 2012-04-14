@@ -129,14 +129,15 @@ public:
     IsExact = (1 << 0)
   };
   
+private:
+  ~PossiblyExactOperator(); // do not implement
+
   friend class BinaryOperator;
   friend class ConstantExpr;
   void setIsExact(bool B) {
     SubclassOptionalData = (SubclassOptionalData & ~IsExact) | (B * IsExact);
   }
   
-private:
-  ~PossiblyExactOperator(); // do not implement
 public:
   /// isExact - Test whether this division is known to be exact, with
   /// zero remainder.
