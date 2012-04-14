@@ -205,11 +205,11 @@ public:
   typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
 private:
   uint64_t NumVTableComponents;
-  VTableComponent *VTableComponents;
+  llvm::OwningArrayPtr<VTableComponent> VTableComponents;
 
   /// VTableThunks - Contains thunks needed by vtables.
   uint64_t NumVTableThunks;
-  VTableThunkTy *VTableThunks;
+  llvm::OwningArrayPtr<VTableThunkTy> VTableThunks;
 
   /// Address points - Address points for all vtables.
   AddressPointsMapTy AddressPoints;
@@ -227,11 +227,11 @@ public:
   }
 
   vtable_component_iterator vtable_component_begin() const {
-   return VTableComponents;
+   return VTableComponents.get();
   }
 
   vtable_component_iterator vtable_component_end() const {
-   return VTableComponents+NumVTableComponents;
+   return VTableComponents.get()+NumVTableComponents;
   }
 
   uint64_t getNumVTableThunks() const {
@@ -239,11 +239,11 @@ public:
   }
 
   vtable_thunk_iterator vtable_thunk_begin() const {
-   return VTableThunks;
+   return VTableThunks.get();
   }
 
   vtable_thunk_iterator vtable_thunk_end() const {
-   return VTableThunks+NumVTableThunks;
+   return VTableThunks.get()+NumVTableThunks;
   }
 
   uint64_t getAddressPoint(BaseSubobject Base) const {

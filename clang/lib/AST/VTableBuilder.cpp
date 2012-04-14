@@ -2157,14 +2157,12 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
     VTableThunks(new VTableThunkTy[NumVTableThunks]),
     AddressPoints(AddressPoints) {
   std::copy(VTableComponents, VTableComponents+NumVTableComponents,
-            this->VTableComponents);
-  std::copy(VTableThunks, VTableThunks+NumVTableThunks, this->VTableThunks);
+            this->VTableComponents.get());
+  std::copy(VTableThunks, VTableThunks+NumVTableThunks,
+            this->VTableThunks.get());
 }
 
-VTableLayout::~VTableLayout() {
-  delete[] VTableComponents;
-  delete[] VTableThunks;
-}
+VTableLayout::~VTableLayout() { }
 
 VTableContext::~VTableContext() {
   llvm::DeleteContainerSeconds(VTableLayouts);
