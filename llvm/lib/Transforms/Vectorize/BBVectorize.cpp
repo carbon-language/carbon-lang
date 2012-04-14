@@ -858,16 +858,33 @@ namespace {
                       std::vector<Value *> &PairableInsts,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
                       ValuePair P) {
+    StoreInst *SI, *SJ;
+
     // For each possible pairing for this variable, look at the uses of
     // the first value...
     for (Value::use_iterator I = P.first->use_begin(),
          E = P.first->use_end(); I != E; ++I) {
+      if (isa<LoadInst>(*I)) {
+        // A pair cannot be connected to a load because the load only takes one
+        // operand (the address) and it is a scalar even after vectorization.
+        continue;
+      } else if ((SI = dyn_cast<StoreInst>(*I)) &&
+                 P.first == SI->getPointerOperand()) {
+        // Similarly, a pair cannot be connected to a store through its
+        // pointer operand.
+        continue;
+      }
+
       VPIteratorPair IPairRange = CandidatePairs.equal_range(*I);
 
       // For each use of the first variable, look for uses of the second
       // variable...
       for (Value::use_iterator J = P.second->use_begin(),
            E2 = P.second->use_end(); J != E2; ++J) {
+        if ((SJ = dyn_cast<StoreInst>(*J)) &&
+            P.second == SJ->getPointerOperand())
+          continue;
+
         VPIteratorPair JPairRange = CandidatePairs.equal_range(*J);
 
         // Look for <I, J>:
@@ -883,6 +900,10 @@ namespace {
       // Look for cases where just the first value in the pair is used by
       // both members of another pair (splatting).
       for (Value::use_iterator J = P.first->use_begin(); J != E; ++J) {
+        if ((SJ = dyn_cast<StoreInst>(*J)) &&
+            P.first == SJ->getPointerOperand())
+          continue;
+
         if (isSecondInIteratorPair<Value*>(*J, IPairRange))
           ConnectedPairs.insert(VPPair(P, ValuePair(*I, *J)));
       }
@@ -893,9 +914,19 @@ namespace {
     // both members of another pair (splatting).
     for (Value::use_iterator I = P.second->use_begin(),
          E = P.second->use_end(); I != E; ++I) {
+      if (isa<LoadInst>(*I))
+        continue;
+      else if ((SI = dyn_cast<StoreInst>(*I)) &&
+               P.second == SI->getPointerOperand())
+        continue;
+
       VPIteratorPair IPairRange = CandidatePairs.equal_range(*I);
 
       for (Value::use_iterator J = P.second->use_begin(); J != E; ++J) {
+        if ((SJ = dyn_cast<StoreInst>(*J)) &&
+            P.second == SJ->getPointerOperand())
+          continue;
+
         if (isSecondInIteratorPair<Value*>(*J, IPairRange))
           ConnectedPairs.insert(VPPair(P, ValuePair(*I, *J)));
       }
