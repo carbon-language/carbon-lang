@@ -50,6 +50,10 @@ N: Cameron Buschardt
 E: buschard@uiuc.edu
 D: The `mem2reg' pass - promotes values stored in memory to registers
 
+N: Brendon Cahoon
+E: bcahoon@codeaurora.org
+D: Loop unrolling with run-time trip counts.
+
 N: Chandler Carruth
 E: chandlerc@gmail.com
 D: LinkTimeOptimizer for Linux, via binutils integration, and C API
