@@ -3174,8 +3174,7 @@ void CodeGenFunction::SetFPAccuracy(llvm::Value *Val, float Accuracy) {
   llvm::Value *ULPs = llvm::ConstantFP::get(Builder.getFloatTy(), Accuracy);
   llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(), ULPs);
 
-  cast<llvm::Instruction>(Val)->setMetadata(llvm::LLVMContext::MD_fpaccuracy,
-                                            Node);
+  cast<llvm::Instruction>(Val)->setMetadata(llvm::LLVMContext::MD_fpmath, Node);
 }
 
 namespace {

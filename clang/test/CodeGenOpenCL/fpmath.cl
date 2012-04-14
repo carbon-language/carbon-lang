@@ -4,13 +4,13 @@ typedef __attribute__(( ext_vector_type(4) )) float float4;
 
 float spscalardiv(float a, float b) {
   // CHECK: @spscalardiv
-  // CHECK: fdiv{{.*}}, !fpaccuracy ![[MD:[0-9]+]]
+  // CHECK: fdiv{{.*}}, !fpmath ![[MD:[0-9]+]]
   return a / b;
 }
 
 float4 spvectordiv(float4 a, float4 b) {
   // CHECK: @spvectordiv
-  // CHECK: fdiv{{.*}}, !fpaccuracy ![[MD]]
+  // CHECK: fdiv{{.*}}, !fpmath ![[MD]]
   return a / b;
 }
 
@@ -18,7 +18,7 @@ float4 spvectordiv(float4 a, float4 b) {
 
 double dpscalardiv(double a, double b) {
   // CHECK: @dpscalardiv
-  // CHECK-NOT: !fpaccuracy
+  // CHECK-NOT: !fpmath
   return a / b;
 }
 
