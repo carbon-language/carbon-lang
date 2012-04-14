@@ -2,6 +2,21 @@
 
 import argparse, datetime, re, subprocess, sys, time
 
+parser = argparse.ArgumentParser(description="Run an exhaustive test of the LLDB disassembler for a specific architecture.")
+
+parser.add_argument('--arch', required=True, action='store', help='The architecture whose disassembler is to be tested')
+parser.add_argument('--bytes', required=True, action='store', type=int, help='The byte width of instructions for that architecture')
+parser.add_argument('--random', required=False, action='store_true', help='Enables non-sequential testing')
+parser.add_argument('--start', required=False, action='store', type=int, help='The first instruction value to test')
+parser.add_argument('--skip', required=False, action='store', type=int, help='The interval between instructions to test')
+parser.add_argument('--log', required=False, action='store', help='A log file to write the most recent instruction being tested')
+parser.add_argument('--time', required=False, action='store_true', help='Every 100,000 instructions, print an ETA to standard out')
+parser.add_argument('--lldb', required=False, action='store', help='The path to LLDB.framework, if LLDB should be overridden')
+
+arguments = sys.argv[1:]
+
+arg_ns = parser.parse_args(arguments)
+
 def AddLLDBToSysPathOnMacOSX():
     def GetLLDBFrameworkPath():
         lldb_path = subprocess.check_output(["xcrun", "-find", "lldb"])
@@ -19,23 +34,12 @@ def AddLLDBToSysPathOnMacOSX():
     
     sys.path.append(lldb_framework_path + "/Resources/Python")
 
-AddLLDBToSysPathOnMacOSX()
+if arg_ns.lldb == None:
+    AddLLDBToSysPathOnMacOSX()
+else:
+    sys.path.append(arg_ns.lldb + "/Resources/Python")
 
 import lldb
-
-parser = argparse.ArgumentParser(description="Run an exhaustive test of the LLDB disassembler for a specific architecture.")
-
-parser.add_argument('--arch', required=True, action='store', help='The architecture whose disassembler is to be tested')
-parser.add_argument('--bytes', required=True, action='store', type=int, help='The byte width of instructions for that architecture')
-parser.add_argument('--random', required=False, action='store_true', help='Enables non-sequential testing')
-parser.add_argument('--start', required=False, action='store', type=int, help='The first instruction value to test')
-parser.add_argument('--skip', required=False, action='store', type=int, help='The interval between instructions to test')
-parser.add_argument('--log', required=False, action='store', help='A log file to write the most recent instruction being tested')
-parser.add_argument('--time', required=False, action='store_true', help='Every 100,000 instructions, print an ETA to standard out')
-
-arguments = sys.argv[1:]
-
-arg_ns = parser.parse_args(arguments)
 
 debugger = lldb.SBDebugger.Create()
 
