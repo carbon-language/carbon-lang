@@ -2243,6 +2243,7 @@ int perform_token_annotation(int argc, const char **argv) {
     clang_getSpellingLocation(clang_getRangeEnd(extent),
                               0, &end_line, &end_column, 0);
     printf("%s: \"%s\" ", kind, clang_getCString(spelling));
+    clang_disposeString(spelling);
     PrintExtent(stdout, start_line, start_column, end_line, end_column);
     if (!clang_isInvalid(cursors[i].kind)) {
       printf(" ");
