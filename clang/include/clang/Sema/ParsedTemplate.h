@@ -178,8 +178,11 @@ namespace clang {
     ParsedTemplateArgument *getTemplateArgs() { 
       return reinterpret_cast<ParsedTemplateArgument *>(this + 1); 
     }
-    
-    static TemplateIdAnnotation* Allocate(unsigned NumArgs) {
+
+    /// \brief Creates a new TemplateIdAnnotation with NumArgs arguments and
+    /// appends it to List.
+    static TemplateIdAnnotation *
+    Allocate(unsigned NumArgs, SmallVectorImpl<TemplateIdAnnotation*> &List) {
       TemplateIdAnnotation *TemplateId
         = (TemplateIdAnnotation *)std::malloc(sizeof(TemplateIdAnnotation) +
                                       sizeof(ParsedTemplateArgument) * NumArgs);
@@ -193,6 +196,7 @@ namespace clang {
       for (unsigned I = 0; I != NumArgs; ++I)
         new (TemplateArgs + I) ParsedTemplateArgument();
       
+      List.push_back(TemplateId);
       return TemplateId;
     }
     
