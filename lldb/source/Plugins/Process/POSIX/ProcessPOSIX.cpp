@@ -66,6 +66,7 @@ ProcessPOSIX::Initialize()
 
 ProcessPOSIX::ProcessPOSIX(Target& target, Listener &listener)
     : Process(target, listener),
+      m_byte_order(lldb::endian::InlHostByteOrder()),
       m_monitor(NULL),
       m_module(NULL),
       m_in_limbo(false),
@@ -73,8 +74,9 @@ ProcessPOSIX::ProcessPOSIX(Target& target, Listener &listener)
 {
     // FIXME: Putting this code in the ctor and saving the byte order in a
     // member variable is a hack to avoid const qual issues in GetByteOrder.
-    ObjectFile *obj_file = GetTarget().GetExecutableModule()->GetObjectFile();
-    m_byte_order = obj_file->GetByteOrder();
+	lldb::ModuleSP module = GetTarget().GetExecutableModule();
+	if (module != NULL && module->GetObjectFile() != NULL)
+		m_byte_order = module->GetObjectFile()->GetByteOrder();
 }
 
 ProcessPOSIX::~ProcessPOSIX()

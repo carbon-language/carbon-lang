@@ -63,6 +63,7 @@
 #endif
 
 #if defined (__FreeBSD__)
+#include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/Process/POSIX/ProcessPOSIX.h"
 #include "Plugins/Process/FreeBSD/ProcessFreeBSD.h"
 #endif
@@ -133,6 +134,7 @@ lldb_private::Initialize ()
 #endif
 #if defined (__FreeBSD__)
         ProcessFreeBSD::Initialize();
+        ProcessGDBRemote::Initialize();
 #endif
         //----------------------------------------------------------------------
         // Platform agnostic plugins
@@ -207,6 +209,7 @@ lldb_private::Terminate ()
 
 #if defined (__FreeBSD__)
     ProcessFreeBSD::Terminate();
+    ProcessGDBRemote::Terminate();
 #endif
     
     DynamicLoaderStatic::Terminate();

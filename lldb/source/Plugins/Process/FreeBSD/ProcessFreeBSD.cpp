@@ -120,10 +120,6 @@ ProcessFreeBSD::EnablePluginLogging(Stream *strm, Args &command)
 ProcessFreeBSD::ProcessFreeBSD(Target& target, Listener &listener)
     : ProcessPOSIX(target, listener)
 {
-    // FIXME: Putting this code in the ctor and saving the byte order in a
-    // member variable is a hack to avoid const qual issues in GetByteOrder.
-    ObjectFile *obj_file = GetTarget().GetExecutableModule()->GetObjectFile();
-    m_byte_order = obj_file->GetByteOrder();
 }
 
 void

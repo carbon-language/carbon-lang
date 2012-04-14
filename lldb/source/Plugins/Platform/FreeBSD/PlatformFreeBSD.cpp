@@ -27,6 +27,10 @@ using namespace lldb_private;
 Platform *
 PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
+    // The only time we create an instance is when we are creating a remote
+    // freebsd platform
+    const bool is_host = false;
+
     bool create = force;
     if (create == false && arch && arch->IsValid())
     {
@@ -36,7 +40,7 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
             create = true;
     }
     if (create)
-        return new PlatformFreeBSD (true);
+        return new PlatformFreeBSD (is_host);
     return NULL;
 
 }
@@ -65,29 +69,30 @@ PlatformFreeBSD::GetDescriptionStatic (bool is_host)
         return "Remote FreeBSD user platform plug-in.";
 }
 
+static uint32_t g_initialize_count = 0;
+
 void
 PlatformFreeBSD::Initialize ()
 {
-    static bool g_initialized = false;
-
-    if (!g_initialized)
+    if (g_initialize_count++ == 0)
     {
 #if defined (__FreeBSD__)
-        PlatformSP default_platform_sp (CreateInstance());
+    	// Force a host flag to true for the default platform object.
+        PlatformSP default_platform_sp (new PlatformFreeBSD(true));
         default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif
         PluginManager::RegisterPlugin(PlatformFreeBSD::GetShortPluginNameStatic(false),
                                       PlatformFreeBSD::GetDescriptionStatic(false),
                                       PlatformFreeBSD::CreateInstance);
-        g_initialized = true;
     }
 }
 
 void
 PlatformFreeBSD::Terminate ()
 {
-    PluginManager::UnregisterPlugin (PlatformFreeBSD::CreateInstance);
+    if (g_initialize_count > 0 && --g_initialize_count == 0)
+    	PluginManager::UnregisterPlugin (PlatformFreeBSD::CreateInstance);
 }
 
 //------------------------------------------------------------------
