@@ -5616,13 +5616,11 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     // These are currently generated.
     Preamble += "\n#pragma section(\".objc_classlist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_catlist$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".objc_protolist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_imageinfo$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_nlclslist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_nlcatlist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_protorefs$B\", long, read, write)\n";
     // These are generated but not necessary for functionality.
-    Preamble += "#pragma section(\".datacoal_nt$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cat_cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".cls_meth$B\", long, read, write)\n";
@@ -6593,7 +6591,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   // Writer out root metadata for current protocol: struct _protocol_t
   Result += "\n";
   if (LangOpts.MicrosoftExt)
-    Result += "__declspec(allocate(\".datacoal_nt$B\")) ";
+    Result += "static ";
   Result += "struct _protocol_t _OBJC_PROTOCOL_";
   Result += PDecl->getNameAsString();
   Result += " __attribute__ ((used, section (\"__DATA,__datacoal_nt,coalesced\"))) = {\n";
@@ -6651,11 +6649,8 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   else
     Result += "\t0\n};\n";
   
-  // Use this protocol meta-data to build protocol list table in section
-  // .objc_protolist$B
-  // Unspecified visibility means 'private extern'.
   if (LangOpts.MicrosoftExt)
-    Result += "__declspec(allocate(\".objc_protolist$B\")) ";
+    Result += "static ";
   Result += "struct _protocol_t *";
   Result += "_OBJC_LABEL_PROTOCOL_$_"; Result += PDecl->getNameAsString();
   Result += " = &_OBJC_PROTOCOL_"; Result += PDecl->getNameAsString();
