@@ -44,8 +44,8 @@ error_check_mutex (pthread_mutex_t *m, MutexAction action)
 {
     typedef std::set<pthread_mutex_t *> mutex_set;
     static pthread_mutex_t g_mutex_set_mutex = PTHREAD_MUTEX_INITIALIZER;
-    mutex_set g_initialized_mutex_set;
-    mutex_set g_destroyed_mutex_set;
+    static mutex_set g_initialized_mutex_set;
+    static mutex_set g_destroyed_mutex_set;
 
     bool success = true;
     int err;
