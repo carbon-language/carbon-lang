@@ -281,27 +281,6 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   LinkageInfo LV;
   LV.mergeVisibility(Context.getLangOpts().getVisibilityMode());
 
-  if (F.ConsiderVisibilityAttributes) {
-    if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
-      LV.setVisibility(*Vis, true);
-      F.ConsiderGlobalVisibility = false;
-    } else {
-      // If we're declared in a namespace with a visibility attribute,
-      // use that namespace's visibility, but don't call it explicit.
-      for (const DeclContext *DC = D->getDeclContext();
-           !isa<TranslationUnitDecl>(DC);
-           DC = DC->getParent()) {
-        const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
-        if (!ND) continue;
-        if (llvm::Optional<Visibility> Vis = ND->getExplicitVisibility()) {
-          LV.setVisibility(*Vis, true);
-          F.ConsiderGlobalVisibility = false;
-          break;
-        }
-      }
-    }
-  }
-
   // C++ [basic.link]p4:
 
   //   A name having namespace scope has external linkage if it is the
@@ -476,6 +455,27 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   // Everything not covered here has no linkage.
   } else {
     return LinkageInfo::none();
+  }
+
+  if (F.ConsiderVisibilityAttributes) {
+    if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
+      LV.setVisibility(*Vis, true);
+      F.ConsiderGlobalVisibility = false;
+    } else {
+      // If we're declared in a namespace with a visibility attribute,
+      // use that namespace's visibility, but don't call it explicit.
+      for (const DeclContext *DC = D->getDeclContext();
+           !isa<TranslationUnitDecl>(DC);
+           DC = DC->getParent()) {
+        const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
+        if (!ND) continue;
+        if (llvm::Optional<Visibility> Vis = ND->getExplicitVisibility()) {
+          LV.setVisibility(*Vis, true);
+          F.ConsiderGlobalVisibility = false;
+          break;
+        }
+      }
+    }
   }
 
   // If we ended up with non-external linkage, visibility should
