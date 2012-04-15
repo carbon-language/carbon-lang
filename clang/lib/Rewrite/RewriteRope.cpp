@@ -408,8 +408,8 @@ namespace {
     }
 
     ~RopePieceBTreeInterior() {
-      Children[0]->Destroy();
-      Children[1]->Destroy();
+      for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+        Children[i]->Destroy();
     }
 
     bool isFull() const { return NumChildren == 2*WidthFactor; }
