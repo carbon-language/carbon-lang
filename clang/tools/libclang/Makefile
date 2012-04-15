@@ -23,6 +23,11 @@ USEDLIBS = clangARCMigrate.a clangRewrite.a clangFrontend.a clangDriver.a \
 
 include $(CLANG_LEVEL)/Makefile
 
+# Add soname to the library.
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD OpenBSD GNU))
+        LDFLAGS += -Wl,-soname,lib$(LIBRARYNAME)$(SHLIBEXT)
+endif
+
 ##===----------------------------------------------------------------------===##
 # FIXME: This is copied from the 'lto' makefile.  Should we share this?
 ##===----------------------------------------------------------------------===##
