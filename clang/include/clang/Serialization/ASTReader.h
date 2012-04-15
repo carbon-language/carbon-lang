@@ -170,6 +170,9 @@ class ReadMethodPoolVisitor;
 
 namespace reader {
   class ASTIdentifierLookupTrait;
+  /// \brief The on-disk hash table used for the DeclContext's Name lookup table.
+  typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
+    ASTDeclContextNameLookupTable;
 }
 
 } // end namespace serialization
@@ -323,7 +326,9 @@ private:
   // TU, and when we read those update records, the actual context will not
   // be available yet (unless it's the TU), so have this pending map using the
   // ID as a key. It will be realized when the context is actually loaded.
-  typedef SmallVector<std::pair<void *, ModuleFile*>, 1> DeclContextVisibleUpdates;
+  typedef
+    SmallVector<std::pair<serialization::reader::ASTDeclContextNameLookupTable *,
+                          ModuleFile*>, 1> DeclContextVisibleUpdates;
   typedef llvm::DenseMap<serialization::DeclID, DeclContextVisibleUpdates>
       DeclContextVisibleUpdatesPending;
 

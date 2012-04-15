@@ -1911,7 +1911,8 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
     case UPDATE_VISIBLE: {
       unsigned Idx = 0;
       serialization::DeclID ID = ReadDeclID(F, Record, Idx);
-      void *Table = ASTDeclContextNameLookupTable::Create(
+      ASTDeclContextNameLookupTable *Table =
+        ASTDeclContextNameLookupTable::Create(
                         (const unsigned char *)BlobStart + Record[Idx++],
                         (const unsigned char *)BlobStart,
                         ASTDeclContextNameLookupTrait(*this, F));
@@ -4908,7 +4909,7 @@ namespace {
       
       // Look for this name within this module.
       ASTDeclContextNameLookupTable *LookupTable =
-        (ASTDeclContextNameLookupTable*)Info->second.NameLookupTableData;
+        Info->second.NameLookupTableData;
       ASTDeclContextNameLookupTable::iterator Pos
         = LookupTable->find(This->Name);
       if (Pos == LookupTable->end())
@@ -4997,7 +4998,7 @@ namespace {
       
       // Look for this name within this module.
       ASTDeclContextNameLookupTable *LookupTable =
-        (ASTDeclContextNameLookupTable*)Info->second.NameLookupTableData;
+        Info->second.NameLookupTableData;
       for (ASTDeclContextNameLookupTable::key_iterator
              I = LookupTable->key_begin(),
              E = LookupTable->key_end(); I != E; ++I) {
@@ -6364,6 +6365,6 @@ ASTReader::~ASTReader() {
     for (DeclContextVisibleUpdates::iterator J = I->second.begin(),
                                              F = I->second.end();
          J != F; ++J)
-      delete static_cast<ASTDeclContextNameLookupTable*>(J->first);
+      delete J->first;
   }
 }

@@ -79,10 +79,6 @@ public:
                      unsigned DataLen);
 };
 
-/// \brief The on-disk hash table used for the DeclContext's Name lookup table.
-typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
-  ASTDeclContextNameLookupTable;
-
 /// \brief Class that performs lookup for an identifier stored in an AST file.
 class ASTIdentifierLookupTrait {
   ASTReader &Reader;

@@ -27,8 +27,13 @@ namespace clang {
 
 class DeclContext;
 class Module;
-  
+template<typename Info> class OnDiskChainedHashTable;
+
 namespace serialization {
+
+namespace reader {
+  class ASTDeclContextNameLookupTrait;
+}
 
 /// \brief Specifies the kind of module that has been loaded.
 enum ModuleKind {
@@ -43,7 +48,8 @@ struct DeclContextInfo {
   DeclContextInfo()
     : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
 
-  void *NameLookupTableData; // an ASTDeclContextNameLookupTable.
+  OnDiskChainedHashTable<reader::ASTDeclContextNameLookupTrait>
+    *NameLookupTableData; // an ASTDeclContextNameLookupTable.
   const KindDeclIDPair *LexicalDecls;
   unsigned NumLexicalDecls;
 };

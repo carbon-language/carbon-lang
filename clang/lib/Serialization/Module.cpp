@@ -45,8 +45,7 @@ ModuleFile::~ModuleFile() {
        E = DeclContextInfos.end();
        I != E; ++I) {
     if (I->second.NameLookupTableData)
-      delete static_cast<ASTDeclContextNameLookupTable*>(
-                                                 I->second.NameLookupTableData);
+      delete I->second.NameLookupTableData;
   }
   
   delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
