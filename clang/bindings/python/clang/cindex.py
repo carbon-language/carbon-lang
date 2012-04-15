@@ -1079,6 +1079,11 @@ class TypeKind(object):
                     self._name_map[value] = key
         return self._name_map[self]
 
+    @property
+    def spelling(self):
+        """Retrieve the spelling of this TypeKind."""
+        return TypeKind_spelling(self.value)
+
     @staticmethod
     def from_id(id):
         if id >= len(TypeKind._kinds) or TypeKind._kinds[id] is None:
@@ -1088,6 +1093,10 @@ class TypeKind(object):
     def __repr__(self):
         return 'TypeKind.%s' % (self.name,)
 
+TypeKind_spelling = lib.clang_getTypeKindSpelling
+TypeKind_spelling.argtypes = [c_uint]
+TypeKind_spelling.restype = _CXString
+TypeKind_spelling.errcheck = _CXString.from_result
 
 
 TypeKind.INVALID = TypeKind(0)

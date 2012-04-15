@@ -1,5 +1,4 @@
 from clang.cindex import CursorKind
-from clang.cindex import Index
 from clang.cindex import TypeKind
 from nose.tools import raises
 from .util import get_cursor
@@ -108,6 +107,14 @@ def test_equal():
 
     assert a.type != None
     assert a.type != 'foo'
+
+def test_typekind_spelling():
+    """Ensure TypeKind.spelling works."""
+    tu = get_tu('int a;')
+    a = get_cursor(tu, 'a')
+
+    assert a is not None
+    assert a.type.kind.spelling == 'Int'
 
 def test_function_argument_types():
     """Ensure that Type.argument_types() works as expected."""
