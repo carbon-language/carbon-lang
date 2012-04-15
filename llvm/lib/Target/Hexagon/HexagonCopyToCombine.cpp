@@ -224,7 +224,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
   {
     // Look at instructions I in between I1 and (including) I2.
     MachineBasicBlock::iterator I(I1),
-      End(next(MachineBasicBlock::iterator(I2)));
+      End(llvm::next(MachineBasicBlock::iterator(I2)));
     bool IsImmUseReg = I1->getOperand(1).isImm();
     unsigned I1UseReg = IsImmUseReg ? 0 : I1->getOperand(1).getReg();
     // Track killed operands. If we move accross an instruction that kills our
@@ -317,7 +317,7 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
 /// false if the combine must be inserted at the returned instruction.
 MachineInstr *HexagonCopyToCombine::findPairable(MachineInstr *I1,
                                                  bool &DoInsertAtI1) {
-  MachineBasicBlock::iterator I2 = next(MachineBasicBlock::iterator(I1));
+  MachineBasicBlock::iterator I2 = llvm::next(MachineBasicBlock::iterator(I1));
   unsigned I1DestReg = I1->getOperand(0).getReg();
 
   for (MachineBasicBlock::iterator End = I1->getParent()->end(); I2 != End;
