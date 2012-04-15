@@ -6742,6 +6742,16 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f64 (X86Blendpd (v4f64 VR256:$src1), (v4f64 VR256:$src2),
                                (imm:$mask))),
             (VBLENDPDYrri VR256:$src2, VR256:$src1, imm:$mask)>;
+
+  def : Pat<(v8i16 (X86Blendpw (v8i16 VR128:$src1), (v8i16 VR128:$src2),
+                               (imm:$mask))),
+            (VPBLENDWrri VR128:$src2, VR128:$src1, imm:$mask)>;
+  def : Pat<(v4f32 (X86Blendps (v4f32 VR128:$src1), (v4f32 VR128:$src2),
+                               (imm:$mask))),
+            (VBLENDPSrri VR128:$src2, VR128:$src1, imm:$mask)>;
+  def : Pat<(v2f64 (X86Blendpd (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+                               (imm:$mask))),
+            (VBLENDPDrri VR128:$src2, VR128:$src1, imm:$mask)>;
 }
 
 let Predicates = [HasAVX2] in {
@@ -6802,13 +6812,13 @@ let Predicates = [HasSSE41] in {
 
   def : Pat<(v8i16 (X86Blendpw (v8i16 VR128:$src1), (v8i16 VR128:$src2),
                                (imm:$mask))),
-            (VPBLENDWrri VR128:$src2, VR128:$src1, imm:$mask)>;
+            (PBLENDWrri VR128:$src2, VR128:$src1, imm:$mask)>;
   def : Pat<(v4f32 (X86Blendps (v4f32 VR128:$src1), (v4f32 VR128:$src2),
                                (imm:$mask))),
-            (VBLENDPSrri VR128:$src2, VR128:$src1, imm:$mask)>;
+            (BLENDPSrri VR128:$src2, VR128:$src1, imm:$mask)>;
   def : Pat<(v2f64 (X86Blendpd (v2f64 VR128:$src1), (v2f64 VR128:$src2),
                                (imm:$mask))),
-            (VBLENDPDrri VR128:$src2, VR128:$src1, imm:$mask)>;
+            (BLENDPDrri VR128:$src2, VR128:$src1, imm:$mask)>;
 
 }
 
