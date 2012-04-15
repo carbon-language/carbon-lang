@@ -916,14 +916,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
-    if (E->getNumInits() > 0) {
-      QualType T1 = E->getType();
-      QualType T2 = E->getInit(0)->getType();
-      if (CGF.getContext().hasSameUnqualifiedType(T1, T2)) {
-        EmitAggLoadOfLValue(E->getInit(0));
-        return;
-      }
-    }
+    if (E->isStringLiteralInit())
+      return Visit(E->getInit(0));
 
     QualType elementType =
         CGF.getContext().getAsArrayType(E->getType())->getElementType();

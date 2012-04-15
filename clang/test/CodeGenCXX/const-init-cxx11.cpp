@@ -92,6 +92,9 @@ namespace Array {
   // CHECK: @_ZN5Array1cE = constant [6 x [4 x i8]] [{{.*}} c"foo\00", [4 x i8] c"a\00\00\00", [4 x i8] c"bar\00", [4 x i8] c"xyz\00", [4 x i8] c"b\00\00\00", [4 x i8] c"123\00"]
   extern constexpr char c[6][4] = { "foo", "a", { "bar" }, { 'x', 'y', 'z' }, { "b" }, '1', '2', '3' };
 
+  // CHECK: @_ZN5Array2ucE = constant [4 x i8] c"foo\00"
+  extern constexpr unsigned char uc[] = { "foo" };
+
   struct C { constexpr C() : n(5) {} int n, m = 3 * n + 1; };
   // CHECK: @_ZN5Array5ctorsE = constant [3 x {{.*}}] [{{.*}} { i32 5, i32 16 }, {{.*}} { i32 5, i32 16 }, {{.*}} { i32 5, i32 16 }]
   extern const C ctors[3];

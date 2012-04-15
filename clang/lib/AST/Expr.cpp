@@ -1590,6 +1590,16 @@ void InitListExpr::setArrayFiller(Expr *filler) {
       inits[i] = filler;
 }
 
+bool InitListExpr::isStringLiteralInit() const {
+  if (getNumInits() != 1)
+    return false;
+  const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(getType());
+  if (!CAT || !CAT->getElementType()->isIntegerType())
+    return false;
+  const Expr *Init = getInit(0)->IgnoreParenImpCasts();
+  return isa<StringLiteral>(Init) || isa<ObjCEncodeExpr>(Init);
+}
+
 SourceRange InitListExpr::getSourceRange() const {
   if (SyntacticForm)
     return SyntacticForm->getSourceRange();

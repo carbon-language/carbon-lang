@@ -3608,6 +3608,10 @@ public:
     return LBraceLoc.isValid() && RBraceLoc.isValid();
   }
 
+  // Is this an initializer for an array of characters, initialized by a string
+  // literal or an @encode?
+  bool isStringLiteralInit() const;
+
   SourceLocation getLBraceLoc() const { return LBraceLoc; }
   void setLBraceLoc(SourceLocation Loc) { LBraceLoc = Loc; }
   SourceLocation getRBraceLoc() const { return RBraceLoc; }

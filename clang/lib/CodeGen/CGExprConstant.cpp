@@ -758,17 +758,13 @@ public:
   }
 
   llvm::Constant *EmitArrayInitialization(InitListExpr *ILE) {
-    unsigned NumInitElements = ILE->getNumInits();
-    if (NumInitElements == 1 &&
-        CGM.getContext().hasSameUnqualifiedType(ILE->getType(),
-                                                ILE->getInit(0)->getType()) &&
-        (isa<StringLiteral>(ILE->getInit(0)) ||
-         isa<ObjCEncodeExpr>(ILE->getInit(0))))
+    if (ILE->isStringLiteralInit())
       return Visit(ILE->getInit(0));
 
     llvm::ArrayType *AType =
         cast<llvm::ArrayType>(ConvertType(ILE->getType()));
     llvm::Type *ElemTy = AType->getElementType();
+    unsigned NumInitElements = ILE->getNumInits();
     unsigned NumElements = AType->getNumElements();
 
     // Initialising an array requires us to automatically

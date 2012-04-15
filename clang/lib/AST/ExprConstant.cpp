@@ -1491,15 +1491,19 @@ static unsigned getBaseIndex(const CXXRecordDecl *Derived,
   llvm_unreachable("base class missing from derived class's bases list");
 }
 
-/// Extract the value of a character from a string literal.
+/// Extract the value of a character from a string literal. CharType is used to
+/// determine the expected signedness of the result -- a string literal used to
+/// initialize an array of 'signed char' or 'unsigned char' might contain chars
+/// of the wrong signedness.
 static APSInt ExtractStringLiteralCharacter(EvalInfo &Info, const Expr *Lit,
-                                            uint64_t Index) {
+                                            uint64_t Index, QualType CharType) {
   // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
   const StringLiteral *S = dyn_cast<StringLiteral>(Lit);
   assert(S && "unexpected string literal expression kind");
+  assert(CharType->isIntegerType() && "unexpected character type");
 
   APSInt Value(S->getCharByteWidth() * Info.Ctx.getCharWidth(),
-    Lit->getType()->getArrayElementTypeNoTypeQual()->isUnsignedIntegerType());
+               CharType->isUnsignedIntegerType());
   if (Index < S->getLength())
     Value = S->getCodeUnit(Index);
   return Value;
@@ -1546,7 +1550,7 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
         assert(I == N - 1 && "extracting subobject of character?");
         assert(!O->hasLValuePath() || O->getLValuePath().empty());
         Obj = APValue(ExtractStringLiteralCharacter(
-          Info, O->getLValueBase().get<const Expr*>(), Index));
+          Info, O->getLValueBase().get<const Expr*>(), Index, SubType));
         return true;
       } else if (O->getArrayInitializedElts() > Index)
         O = &O->getArrayInitializedElt(Index);
@@ -3849,8 +3853,7 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   // C++11 [dcl.init.string]p1: A char array [...] can be initialized by [...]
   // an appropriately-typed string literal enclosed in braces.
-  if (E->getNumInits() == 1 && E->getInit(0)->isGLValue() &&
-      Info.Ctx.hasSameUnqualifiedType(E->getType(), E->getInit(0)->getType())) {
+  if (E->isStringLiteralInit()) {
     LValue LV;
     if (!EvaluateLValue(E->getInit(0), LV, Info))
       return false;

@@ -615,6 +615,10 @@ static_assert(agg1.arr[4] == 0, "");
 static_assert(agg1.arr[5] == 0, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end}}
 static_assert(agg1.p == nullptr, "");
 
+static constexpr const unsigned char uc[] = { "foo" };
+static_assert(uc[0] == 'f', "");
+static_assert(uc[3] == 0, "");
+
 namespace SimpleDerivedClass {
 
 struct B {
