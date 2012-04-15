@@ -1,4 +1,4 @@
-// RUN: %clang -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // NULL is rdefined in stddef.h
 #define NULL ((void*) 0)

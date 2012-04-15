@@ -1,4 +1,4 @@
-// RUN: %clang -verify -pedantic %s -fsyntax-only
+// RUN: %clang_cc1 -verify -pedantic %s -fsyntax-only
 // RUN: %clang_cc1 -E %s | FileCheck %s
 // rdar://6899937
 #include "pragma_sysheader.h"
