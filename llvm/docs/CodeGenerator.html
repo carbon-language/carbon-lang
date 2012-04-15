@@ -1617,9 +1617,9 @@ def : Pat&lt;(i32 imm:$imm),
    range from 1 to 1023. To see how this numbering is defined for a particular
    architecture, you can read the <tt>GenRegisterNames.inc</tt> file for that
    architecture. For instance, by
-   inspecting <tt>lib/Target/X86/X86GenRegisterNames.inc</tt> we see that the
-   32-bit register <tt>EAX</tt> is denoted by 15, and the MMX register
-   <tt>MM0</tt> is mapped to 48.</p>
+   inspecting <tt>lib/Target/X86/X86GenRegisterInfo.inc</tt> we see that the
+   32-bit register <tt>EAX</tt> is denoted by 43, and the MMX register
+   <tt>MM0</tt> is mapped to 65.</p>
 
 <p>Some architectures contain registers that share the same physical location. A
    notable example is the X86 platform. For instance, in the X86 architecture,
