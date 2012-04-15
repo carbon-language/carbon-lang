@@ -82,8 +82,14 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
-  void Warning(SMLoc L, const Twine &Msg) { Parser.Warning(L, Msg); }
-  bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
+  bool Warning(SMLoc L, const Twine &Msg,
+               ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) {
+    return Parser.Warning(L, Msg, Ranges);
+  }
+  bool Error(SMLoc L, const Twine &Msg,
+             ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) {
+    return Parser.Error(L, Msg, Ranges);
+  }
 
   int tryParseRegister();
   bool tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
@@ -477,6 +483,8 @@ public:
   SMLoc getStartLoc() const { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
+
+  SMRange getLocRange() const { return SMRange(StartLoc, EndLoc); }
 
   ARMCC::CondCodes getCondCode() const {
     assert(Kind == k_CondCode && "Invalid access!");
@@ -7321,7 +7329,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(ErrorLoc, "invalid operand for instruction");
   }
   case Match_MnemonicFail:
-    return Error(IDLoc, "invalid instruction");
+    return Error(IDLoc, "invalid instruction",
+                 ((ARMOperand*)Operands[0])->getLocRange());
   case Match_ConversionFail:
     // The converter function will have already emited a diagnostic.
     return true;
