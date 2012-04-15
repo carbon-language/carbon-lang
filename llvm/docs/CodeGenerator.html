@@ -1627,7 +1627,7 @@ def : Pat&lt;(i32 imm:$imm),
    bits. These physical registers are marked as <i>aliased</i> in LLVM. Given a
    particular architecture, you can check which registers are aliased by
    inspecting its <tt>RegisterInfo.td</tt> file. Moreover, the method
-   <tt>TargetRegisterInfo::getAliasSet(p_reg)</tt> returns an array containing
+   <tt>MCRegisterInfo::getAliasSet(p_reg)</tt> returns an array containing
    all the physical registers aliased to the register <tt>p_reg</tt>.</p>
 
 <p>Physical registers, in LLVM, are grouped in <i>Register Classes</i>.
