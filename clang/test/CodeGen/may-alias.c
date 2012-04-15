@@ -26,5 +26,5 @@ void test1(struct Test1MA *p1, struct Test1 *p2) {
 
 // CHECK: !0 = metadata !{metadata !"any pointer", metadata !1}
 // CHECK: !1 = metadata !{metadata !"omnipotent char", metadata !2}
-// CHECK: !2 = metadata !{metadata !"Simple C/C++ TBAA", null}
+// CHECK: !2 = metadata !{metadata !"Simple C/C++ TBAA"}
 // CHECK: !3 = metadata !{metadata !"int", metadata !1}

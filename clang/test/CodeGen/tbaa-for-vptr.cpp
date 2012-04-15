@@ -16,4 +16,4 @@ void CallFoo(A *a) {
 // CHECK: %{{.*}} = load {{.*}} !tbaa !0
 // CHECK: store {{.*}} !tbaa !0
 // CHECK: !0 = metadata !{metadata !"vtable pointer", metadata !1}
-// CHECK: !1 = metadata !{metadata !"Simple C/C++ TBAA", null}
+// CHECK: !1 = metadata !{metadata !"Simple C/C++ TBAA"}

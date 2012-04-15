@@ -24,6 +24,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Support/MDBuilder.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
@@ -908,16 +909,8 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
     }
   }
 
-  if (End == Min)
-    return NULL;
-
-  llvm::Value *LowAndHigh[2];
-  LowAndHigh[0] = llvm::ConstantInt::get(LTy, Min);
-  LowAndHigh[1] = llvm::ConstantInt::get(LTy, End);
-
-  llvm::LLVMContext &C = getLLVMContext();
-  llvm::MDNode *Range = llvm::MDNode::get(C, LowAndHigh);
-  return Range;
+  llvm::MDBuilder MDHelper(getLLVMContext());
+  return MDHelper.CreateRange(Min, End);
 }
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
