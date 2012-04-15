@@ -412,7 +412,7 @@ struct ExtractElementModifier: public Modifier {
     Value *Val0 = getRandomVectorValue();
     Value *V = ExtractElementInst::Create(Val0,
              ConstantInt::get(Type::getInt32Ty(BB->getContext()),
-             Ran->Rand() % cast<VectorType>(Val0->getType())->getNumElements()), 
+             Ran->Rand() % cast<VectorType>(Val0->getType())->getNumElements()),
              "E", BB->getTerminator());
     return PT->push_back(V);
   }
@@ -476,7 +476,7 @@ struct CastModifier: public Modifier {
       DestTy = pickVectorType(VecTy->getNumElements());
     }
 
-    // no need to casr.
+    // no need to cast.
     if (VTy == DestTy) return;
 
     // Pointers:
@@ -487,9 +487,11 @@ struct CastModifier: public Modifier {
         new BitCastInst(V, DestTy, "PC", BB->getTerminator()));
     }
 
+    unsigned VSize = VTy->getScalarType()->getPrimitiveSizeInBits();
+    unsigned DestSize = DestTy->getScalarType()->getPrimitiveSizeInBits();
+
     // Generate lots of bitcasts.
-    if ((Ran->Rand() & 1) &&
-        VTy->getPrimitiveSizeInBits() == DestTy->getPrimitiveSizeInBits()) {
+    if ((Ran->Rand() & 1) && VSize == DestSize) {
       return PT->push_back(
         new BitCastInst(V, DestTy, "BC", BB->getTerminator()));
     }
@@ -497,11 +499,11 @@ struct CastModifier: public Modifier {
     // Both types are integers:
     if (VTy->getScalarType()->isIntegerTy() &&
         DestTy->getScalarType()->isIntegerTy()) {
-      if (VTy->getScalarType()->getPrimitiveSizeInBits() >
-          DestTy->getScalarType()->getPrimitiveSizeInBits()) {
+      if (VSize > DestSize) {
         return PT->push_back(
           new TruncInst(V, DestTy, "Tr", BB->getTerminator()));
       } else {
+        assert(VSize < DestSize && "Different int types with the same size?");
         if (Ran->Rand() & 1)
           return PT->push_back(
             new ZExtInst(V, DestTy, "ZE", BB->getTerminator()));
@@ -531,14 +533,15 @@ struct CastModifier: public Modifier {
     // Both floats.
     if (VTy->getScalarType()->isFloatingPointTy() &&
         DestTy->getScalarType()->isFloatingPointTy()) {
-      if (VTy->getScalarType()->getPrimitiveSizeInBits() >
-          DestTy->getScalarType()->getPrimitiveSizeInBits()) {
+      if (VSize > DestSize) {
         return PT->push_back(
           new FPTruncInst(V, DestTy, "Tr", BB->getTerminator()));
-      } else {
+      } else if (VSize < DestSize) {
         return PT->push_back(
           new FPExtInst(V, DestTy, "ZE", BB->getTerminator()));
       }
+      // If VSize == DestSize, then the two types must be fp128 and ppc_fp128,
+      // for which there is no defined conversion. So do nothing.
     }
   }
 
