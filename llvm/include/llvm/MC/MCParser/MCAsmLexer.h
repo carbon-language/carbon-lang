@@ -15,8 +15,6 @@
 #include "llvm/Support/SMLoc.h"
 
 namespace llvm {
-class MCAsmLexer;
-class MCInst;
 
 /// AsmToken - Target independent representation for an assembler token.
 class AsmToken {
@@ -53,6 +51,7 @@ public:
     Greater, GreaterEqual, GreaterGreater, At
   };
 
+private:
   TokenKind Kind;
 
   /// A reference to the entire token contents; this is always a pointer into
