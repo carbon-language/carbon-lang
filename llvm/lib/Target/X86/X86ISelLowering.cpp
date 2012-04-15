@@ -3984,15 +3984,15 @@ unsigned X86::getInsertVINSERTF128Immediate(SDNode *N) {
 static unsigned getShuffleCLImmediate(ShuffleVectorSDNode *N) {
   EVT VT = N->getValueType(0);
 
-  assert((VT.is256BitVector() && VT.getVectorNumElements() == 4) &&
-         "Unsupported vector type for VPERMQ/VPERMPD");
-
   unsigned NumElts = VT.getVectorNumElements();
+
+  assert((VT.is256BitVector() && NumElts == 4) &&
+         "Unsupported vector type for VPERMQ/VPERMPD");
 
   unsigned Mask = 0;
   for (unsigned i = 0; i != NumElts; ++i) {
     int Elt = N->getMaskElt(i);
-    if (Elt < 0) 
+    if (Elt < 0)
       continue;
     Mask |= Elt << (i*2);
   }
@@ -6650,19 +6650,22 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(Op, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
+
   if (V2IsUndef && HasAVX2 && (VT == MVT::v8i32 || VT == MVT::v8f32)) {
-    SmallVector<SDValue,8> permclMask;
+    SmallVector<SDValue, 8> permclMask;
     for (unsigned i = 0; i != 8; ++i) {
-        permclMask.push_back(DAG.getConstant((M[i] >= 0)?M[i]:0x80, MVT::i32));
+      permclMask.push_back(DAG.getConstant((M[i]>=0) ? M[i] : 0, MVT::i32));
     }
     return DAG.getNode(VT.isInteger()? X86ISD::VPERMD:X86ISD::VPERMPS, dl, VT,
                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32,
                                    &permclMask[0], 8), V1);
-
   }
-  if (V2IsUndef && HasAVX2 && (VT == MVT::v4i64 || VT == MVT::v4f64))
-    return getTargetShuffleNode(VT.isInteger()? X86ISD::VPERMQ : X86ISD::VPERMPD, dl, VT, V1,
+
+  if (V2IsUndef && HasAVX2 && (VT == MVT::v4i64 || VT == MVT::v4f64)) {
+    unsigned Opcode = VT.isInteger() ? X86ISD::VPERMQ : X86ISD::VPERMPD;
+    return getTargetShuffleNode(Opcode, dl, VT, V1,
                                 getShuffleCLImmediate(SVOp), DAG);
+  }
 
 
   //===--------------------------------------------------------------------===//
