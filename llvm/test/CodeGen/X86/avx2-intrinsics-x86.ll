@@ -800,22 +800,6 @@ define <8 x float> @test_x86_avx2_permps(<8 x float> %a0, <8 x float> %a1) {
 declare <8 x float> @llvm.x86.avx2.permps(<8 x float>, <8 x float>) nounwind readonly
 
 
-define <4 x i64> @test_x86_avx2_permq(<4 x i64> %a0) {
-  ; CHECK: vpermq
-  %res = call <4 x i64> @llvm.x86.avx2.permq(<4 x i64> %a0, i8 7) ; <<4 x i64>> [#uses=1]
-  ret <4 x i64> %res
-}
-declare <4 x i64> @llvm.x86.avx2.permq(<4 x i64>, i8) nounwind readonly
-
-
-define <4 x double> @test_x86_avx2_permpd(<4 x double> %a0) {
-  ; CHECK: vpermpd
-  %res = call <4 x double> @llvm.x86.avx2.permpd(<4 x double> %a0, i8 7) ; <<4 x double>> [#uses=1]
-  ret <4 x double> %res
-}
-declare <4 x double> @llvm.x86.avx2.permpd(<4 x double>, i8) nounwind readonly
-
-
 define <4 x i64> @test_x86_avx2_vperm2i128(<4 x i64> %a0, <4 x i64> %a1) {
   ; CHECK: vperm2i128
   %res = call <4 x i64> @llvm.x86.avx2.vperm2i128(<4 x i64> %a0, <4 x i64> %a1, i8 1) ; <<4 x i64>> [#uses=1]
