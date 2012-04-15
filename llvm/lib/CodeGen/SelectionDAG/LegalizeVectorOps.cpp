@@ -417,7 +417,8 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
 
   Op1 = DAG.getNode(ISD::AND, DL, VT, Op1, Mask);
   Op2 = DAG.getNode(ISD::AND, DL, VT, Op2, NotMask);
-  return DAG.getNode(ISD::OR, DL, VT, Op1, Op2);
+  SDValue Val = DAG.getNode(ISD::OR, DL, VT, Op1, Op2);
+  return DAG.getNode(ISD::BITCAST, DL, Op.getValueType(), Val);
 }
 
 SDValue VectorLegalizer::ExpandUINT_TO_FLOAT(SDValue Op) {
