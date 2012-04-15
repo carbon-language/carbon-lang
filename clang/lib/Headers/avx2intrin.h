@@ -822,7 +822,9 @@ _mm256_permutevar8x32_epi32(__m256i a, __m256i b)
 
 #define _mm256_permute4x64_pd(V, M) __extension__ ({ \
   __m256d __V = (V); \
-  (__m256d)__builtin_ia32_permdf256((__v4df)__V, (M)); })
+  (__m256d)__builtin_shufflevector((__v4df)__V, (__v4df) _mm256_setzero_pd(), \
+                                   (M) & 0x3, ((M) & 0xc) >> 2, \
+                                   ((M) & 0x30) >> 4, ((M) & 0xc0) >> 6); })
 
 static __inline__ __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_permutevar8x32_ps(__m256 a, __m256 b)
@@ -832,7 +834,9 @@ _mm256_permutevar8x32_ps(__m256 a, __m256 b)
 
 #define _mm256_permute4x64_epi64(V, M) __extension__ ({ \
   __m256i __V = (V); \
-  (__m256i)__builtin_ia32_permdi256(__V, (M)); })
+  (__m256i)__builtin_shufflevector((__v4di)__V, (__v4di) _mm256_setzero_si256(), \
+                                   (M) & 0x3, ((M) & 0xc) >> 2, \
+                                   ((M) & 0x30) >> 4, ((M) & 0xc0) >> 6); })
 
 #define _mm256_permute2x128_si256(V1, V2, M) __extension__ ({ \
   __m256i __V1 = (V1); \

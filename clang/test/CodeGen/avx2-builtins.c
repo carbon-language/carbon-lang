@@ -662,7 +662,7 @@ __m256i test_mm256_permutevar8x32_epi32(__m256i a, __m256i b) {
 }
 
 __m256d test_mm256_permute4x64_pd(__m256d a) {
-  // CHECK: @llvm.x86.avx2.permpd
+  // CHECK: shufflevector{{.*}}<i32 1, i32 2, i32 1, i32 0>
   return _mm256_permute4x64_pd(a, 25);
 }
 
@@ -672,7 +672,7 @@ __m256 test_mm256_permutevar8x32_ps(__m256 a, __m256 b) {
 }
 
 __m256i test_mm256_permute4x64_epi64(__m256i a) {
-  // CHECK:  @llvm.x86.avx2.permq
+  // CHECK: shufflevector{{.*}}<i32 3, i32 0, i32 2, i32 0>
   return _mm256_permute4x64_epi64(a, 35);
 }
 
