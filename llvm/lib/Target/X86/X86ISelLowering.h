@@ -285,6 +285,10 @@ namespace llvm {
       UNPCKL,
       UNPCKH,
       VPERMILP,
+      VPERMD,
+      VPERMQ,
+      VPERMPS,
+      VPERMPD,
       VPERM2X128,
       VBROADCAST,
 

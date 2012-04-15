@@ -7746,12 +7746,12 @@ defm VPERMPS : avx2_perm<0x16, "vpermps", memopv8f32, int_x86_avx2_permps>;
 
 multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                          Intrinsic Int> {
-  def Yrr : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
+  def Yri : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
                      (ins VR256:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR256:$dst, (Int VR256:$src1, imm:$src2))]>, VEX;
-  def Yrm : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
+  def Ymi : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
                      (ins i256mem:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -7764,6 +7764,29 @@ defm VPERMQ : avx2_perm_imm<0x00, "vpermq", memopv4i64, int_x86_avx2_permq>,
 let ExeDomain = SSEPackedDouble in
 defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, int_x86_avx2_permpd>,
                              VEX_W;
+
+let Predicates = [HasAVX2] in {
+def : Pat<(v8i32 (X86VPermd VR256:$src1, VR256:$src2)),
+          (VPERMDYrr VR256:$src1, VR256:$src2)>;
+def : Pat<(v8f32 (X86VPermps VR256:$src1, VR256:$src2)),
+          (VPERMPSYrr VR256:$src1, VR256:$src2)>;
+          
+def : Pat<(v4i64 (X86VPermq VR256:$src1, (i8 imm:$imm))),
+          (VPERMQYri VR256:$src1, imm:$imm)>;
+def : Pat<(v4f64 (X86VPermpd VR256:$src1, (i8 imm:$imm))),
+          (VPERMPDYri VR256:$src1, imm:$imm)>;
+
+def : Pat<(v8i32 (X86VPermps VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)))),
+          (VPERMDYrm VR256:$src1, addr:$src2)>;
+def : Pat<(v8f32 (X86VPermps VR256:$src1, (memopv8f32 addr:$src2))),
+          (VPERMPSYrm VR256:$src1, addr:$src2)>;
+          
+def : Pat<(v4i64 (X86VPermq (memopv4i64 addr:$src1), (i8 imm:$imm))),
+          (VPERMQYmi addr:$src1, imm:$imm)>;
+def : Pat<(v4f64 (X86VPermpd (memopv4f64 addr:$src1), (i8 imm:$imm))),
+          (VPERMPDYmi addr:$src1, imm:$imm)>;
+
+}
 
 //===----------------------------------------------------------------------===//
 // VPERM2I128 - Permute Floating-Point Values in 128-bit chunks
