@@ -183,12 +183,6 @@ void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
   cg->addMustPreserveSymbol(symbol);
 }
 
-/// lto_codegen_set_whole_program_optimization - Enable the internalize pass
-/// during LTO optimizations.
-void lto_codegen_set_whole_program_optimization(lto_code_gen_t cg) {
-  cg->enableInternalizePass();
-}
-
 /// lto_codegen_write_merged_modules - Writes a new file at the specified path
 /// that contains the merged contents of all modules added so far. Returns true
 /// on error (check lto_get_error_message() for details).

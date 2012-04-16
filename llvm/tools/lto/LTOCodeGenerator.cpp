@@ -64,7 +64,7 @@ LTOCodeGenerator::LTOCodeGenerator()
   : _context(getGlobalContext()),
     _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
     _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
-    _runInternalizePass(false), _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
+    _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
     _nativeObjectFile(NULL) {
   InitializeAllTargets();
   InitializeAllTargetMCs();
@@ -355,8 +355,10 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Add an appropriate TargetData instance for this module...
   passes.add(new TargetData(*_target->getTargetData()));
 
-  PassManagerBuilder().populateLTOPassManager(passes,
-                                              _runInternalizePass,
+  // Enabling internalize here would use its AllButMain variant. It
+  // keeps only main if it exists and does nothing for libraries. Instead
+  // we create the pass ourselves with the symbol list provided by the linker.
+  PassManagerBuilder().populateLTOPassManager(passes, /*Internalize=*/false,
                                               !DisableInline,
                                               DisableGVNLoadPRE);
 

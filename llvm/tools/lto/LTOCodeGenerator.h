@@ -54,8 +54,6 @@ struct LTOCodeGenerator {
   const void *compile(size_t *length, std::string &errMsg);
   void setCodeGenDebugOptions(const char *opts);
 
-  void enableInternalizePass() { _runInternalizePass = true; }
-
 private:
   bool generateObjectFile(llvm::raw_ostream &out, std::string &errMsg);
   void applyScopeRestrictions();
