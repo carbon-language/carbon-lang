@@ -78,8 +78,8 @@ NSDictionary * warn() {
 }
 
 // rdar:// 11231426
-typedef float BOOL; // expected-note {{previous declaration is here}}
+typedef float BOOL;
 
 BOOL radar11231426() {
-        return __objc_yes; // expected-warning {{BOOL of type 'float' is non-intergal and unsuitable for a boolean literal - ignored}}
+        return __objc_yes;
 }

@@ -4,7 +4,7 @@
 
 extern "C" void *sel_registerName(const char *);
 
-typedef signed char BOOL;
+typedef bool BOOL;
 typedef long NSInteger;
 typedef unsigned long NSUInteger;
 
@@ -63,7 +63,7 @@ int main(int argc, const char *argv[]) {
 // CHECK:  NSNumber *fortyTwoLongLong = ((NSNumber *(*)(id, SEL, long long))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithLongLong:"), 42LL);
 // CHECK:  NSNumber *piFloat = ((NSNumber *(*)(id, SEL, float))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithFloat:"), 3.1415927);
 // CHECK:  NSNumber *piDouble = ((NSNumber *(*)(id, SEL, double))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithDouble:"), 3.1415926535);
-// CHECK:  NSNumber *yesNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), (BOOL)true);
-// CHECK:  NSNumber *noNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), (BOOL)false);
-// CHECK:  NSNumber *trueNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), (BOOL)true);
-// CHECK:  NSNumber *falseNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), (BOOL)false);
+// CHECK:  NSNumber *yesNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), true);
+// CHECK:  NSNumber *noNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), false);
+// CHECK:  NSNumber *trueNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), true);
+// CHECK:  NSNumber *falseNumber = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), false);

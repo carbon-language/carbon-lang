@@ -132,6 +132,11 @@ protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
           WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType;
 
+  /// Flag whether the Objective-C built-in boolean type should be signed char.
+  /// Otherwise, when this flag is not set, the normal built-in boolean type is
+  /// used.
+  unsigned UseSignedCharForObjCBool : 1;
+
   /// Control whether the alignment of bit-field types is respected when laying
   /// out structures. If true, then the alignment of the bit-field type will be
   /// used to (a) impact the alignment of the containing structure, and (b)
@@ -297,6 +302,16 @@ public:
   /// MCountName - This returns name of the mcount instrumentation function.
   const char *getMCountName() const {
     return MCountName;
+  }
+
+  /// useSignedCharForObjCBool - Check if the Objective-C built-in boolean
+  /// type should be signed char.  Otherwise, if this returns false, the
+  /// normal built-in boolean type should also be used for Objective-C.
+  bool useSignedCharForObjCBool() const {
+    return UseSignedCharForObjCBool;
+  }
+  void noSignedCharForObjCBool() {
+    UseSignedCharForObjCBool = false;
   }
 
   /// useBitFieldTypeAlignment() - Check whether the alignment of bit-field 

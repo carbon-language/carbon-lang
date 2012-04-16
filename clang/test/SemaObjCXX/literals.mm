@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x -fblocks %s
 
 // rdar://11231426
-typedef bool BOOL;
+typedef signed char BOOL;
 
 void y(BOOL (^foo)());
 

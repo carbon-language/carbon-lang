@@ -481,7 +481,8 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   InitBuiltinType(ObjCBuiltinSelTy, BuiltinType::ObjCSel);
   
   // Builtin type for __objc_yes and __objc_no
-  ObjCBuiltinBoolTy = SignedCharTy;
+  ObjCBuiltinBoolTy = (Target.useSignedCharForObjCBool() ?
+                       SignedCharTy : BoolTy);
   
   ObjCConstantStringType = QualType();
 

@@ -5,7 +5,7 @@
 void *sel_registerName(const char *);
 typedef unsigned long NSUInteger;
 typedef long NSInteger;
-typedef signed char BOOL;
+typedef bool BOOL;
 
 @interface NSNumber
 + (NSNumber *)numberWithChar:(char)value;

@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %t.mm -o - | FileCheck %s 
 // rdar://11124775
 
-typedef signed char BOOL;
+typedef bool BOOL;
 
 BOOL yes() {
   return __objc_yes;
@@ -22,8 +22,8 @@ int main() {
   return __objc_yes;
 }
 
-// CHECK: return ((signed char)1);
-// CHECK: return ((signed char)0);
-// CHECK: which (((signed char)1));
-// CHECK: which (((signed char)0));
-// CHECK: return ((signed char)1);
+// CHECK: return ((bool)1);
+// CHECK: return ((bool)0);
+// CHECK: which (((bool)1));
+// CHECK: which (((bool)0));
+// CHECK: return ((bool)1);

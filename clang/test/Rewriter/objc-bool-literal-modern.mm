@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -fsyntax-only -D"__declspec(X)=" %t-rw.cpp
 // rdar://11124775
 
-typedef signed char BOOL;
+typedef bool BOOL;
 
 BOOL yes() {
   return __objc_yes;
