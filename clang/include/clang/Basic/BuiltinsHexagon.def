@@ -857,3 +857,5 @@ BUILTIN(__builtin_HEXAGON_S2_ct0p,"iLLi","")
 BUILTIN(__builtin_HEXAGON_S2_ct1p,"iLLi","")
 BUILTIN(__builtin_HEXAGON_S2_interleave,"LLiLLi","")
 BUILTIN(__builtin_HEXAGON_S2_deinterleave,"LLiLLi","")
+
+#undef BUILTIN
