@@ -612,9 +612,9 @@ namespace {
         && (T1->isFPOrFPVectorTy() || T2->isFPOrFPVectorTy()))
       return false;
 
-    if ((!Config.VectorizePointers || TD == 0)
-        && (T1->getScalarType()->isPointerTy() ||
-            T2->getScalarType()->isPointerTy()))
+    if ((!Config.VectorizePointers || TD == 0) &&
+        (T1->getScalarType()->isPointerTy() ||
+         T2->getScalarType()->isPointerTy()))
       return false;
 
     if (T1->getPrimitiveSizeInBits() > Config.VectorBits/2 ||
