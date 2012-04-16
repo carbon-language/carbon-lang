@@ -206,6 +206,36 @@ Release Notes</a>.</h1>
 
 </div>
 
+
+<!--=========================================================================-->
+<h3>
+<a name="Polly">Polly</a>
+</h3>
+
+<div>
+
+  <p><a href="http://polly.llvm.org/">Polly</a> is an <em>experimental</em>
+  optimizer for data locality and parallelism. It currently provides high-level
+  loop optimizations and automatic parallelisation (using the OpenMP run time).
+  Work in the area of automatic SIMD and accelerator code generation was
+  started.
+
+  <p>Within the LLVM 3.1 time-frame there were the following highlights:</p>
+
+  <ul>
+  <li>Polly became an official LLVM project</li>
+  <li>Polly can be loaded directly into clang (Enabled by '-O3 -mllvm -polly'
+  )</li>
+  <li>An automatic scheduling optimizer (derived from <a
+  href="http://pluto-compiler.sourceforge.net/">Pluto</a>) was integrated. It
+  performs loop transformations to optimize for data-locality and parallelism.
+  The transformations include, but are not limited to interchange, fusion,
+  fission, skewing and tiling.
+  </li>
+  </ul>
+
+</div>
+
 </div>
 
 <!-- *********************************************************************** -->
