@@ -4460,19 +4460,18 @@ void RewriteModernObjC::RewriteCastExpr(CStyleCastExpr *CE) {
 
 void RewriteModernObjC::RewriteImplicitCastObjCExpr(CastExpr *IC) {
   CastKind CastKind = IC->getCastKind();
+  if (CastKind != CK_BlockPointerToObjCPointerCast &&
+      CastKind != CK_AnyPointerToBlockPointerCast)
+    return;
   
-  if (CastKind == CK_BlockPointerToObjCPointerCast) {
-    CStyleCastExpr * CastExpr = 
-      NoTypeInfoCStyleCastExpr(Context, IC->getType(), CK_BitCast, IC);
-    ReplaceStmt(IC, CastExpr);
-  }
-  else if (CastKind == CK_AnyPointerToBlockPointerCast) {
-    QualType BlockT = IC->getType();
-    (void)convertBlockPointerToFunctionPointer(BlockT);
-    CStyleCastExpr * CastExpr = 
-      NoTypeInfoCStyleCastExpr(Context, BlockT, CK_BitCast, IC);
-    ReplaceStmt(IC, CastExpr);
-  }
+  QualType QT = IC->getType();
+  (void)convertBlockPointerToFunctionPointer(QT);
+  std::string TypeString(QT.getAsString(Context->getPrintingPolicy()));
+  std::string Str = "(";
+  Str += TypeString;
+  Str += ")";
+  InsertText(IC->getSubExpr()->getLocStart(), &Str[0], Str.size());
+
   return;
 }
 
@@ -5357,12 +5356,10 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(S)) {
     RewriteCastExpr(CE);
   }
-#if 0
-  // FIXME. Cannot safely rewrite ImplicitCasts. This is the 2nd failed
-  // attempt: (id)((__typeof(z))_Block_copy((const void *)(z)));
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     RewriteImplicitCastObjCExpr(ICE);
   }
+#if 0
 
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     CastExpr *Replacement = new (Context) CastExpr(ICE->getType(),

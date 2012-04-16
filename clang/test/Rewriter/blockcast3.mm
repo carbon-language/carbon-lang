@@ -1,5 +1,8 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc -fobjc-fragile-abi %s -o %t-rw.cpp
+// RUN: %clang_cc1 -E %s -o %t.mm
+// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc -fobjc-fragile-abi %t.mm -o %t-rw.cpp
 // RUN: FileCheck -check-prefix LP --input-file=%t-rw.cpp %s
+// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %t.mm -o %t-modern-rw.cpp
+// RUN: FileCheck -check-prefix LP --input-file=%t-modern-rw.cpp %s
 // radar 7607781
 
 typedef struct {
@@ -20,4 +23,4 @@ void f(const void **arg) {
 		});
 }
 
-// CHECK-LP: (struct __Block_byref_q_0 *)&q
+// CHECK-LP: (__Block_byref_q_0 *)&q
