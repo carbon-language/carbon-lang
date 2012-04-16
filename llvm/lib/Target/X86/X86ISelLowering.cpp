@@ -6655,9 +6655,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     for (unsigned i = 0; i != 8; ++i) {
       permclMask.push_back(DAG.getConstant((M[i]>=0) ? M[i] : 0, MVT::i32));
     }
+    SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32,
+                               &permclMask[0], 8);
+    // Bitcast is for VPERMPS since mask is v8i32 but node takes v8f32
     return DAG.getNode(X86ISD::VPERMV, dl, VT,
-                       DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32,
-                                   &permclMask[0], 8), V1);
+                       DAG.getNode(ISD::BITCAST, dl, VT, Mask), V1);
   }
 
   if (V2IsUndef && HasAVX2 && (VT == MVT::v4i64 || VT == MVT::v4f64))
