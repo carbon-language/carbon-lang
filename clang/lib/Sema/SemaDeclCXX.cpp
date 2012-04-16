@@ -11096,6 +11096,25 @@ bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
     return true;
 
   // Check the exception specification.
+  if (checkThisInStaticMemberFunctionExceptionSpec(Method))
+    return true;
+  
+  return checkThisInStaticMemberFunctionAttributes(Method);
+}
+
+bool Sema::checkThisInStaticMemberFunctionExceptionSpec(CXXMethodDecl *Method) {
+  TypeSourceInfo *TSInfo = Method->getTypeSourceInfo();
+  if (!TSInfo)
+    return false;
+  
+  TypeLoc TL = TSInfo->getTypeLoc();
+  FunctionProtoTypeLoc *ProtoTL = dyn_cast<FunctionProtoTypeLoc>(&TL);
+  if (!ProtoTL)
+    return false;
+  
+  const FunctionProtoType *Proto = ProtoTL->getTypePtr();
+  FindCXXThisExpr Finder(*this);
+
   switch (Proto->getExceptionSpecType()) {
   case EST_BasicNoexcept:
   case EST_Delayed:
@@ -11103,22 +11122,22 @@ bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
   case EST_MSAny:
   case EST_None:
     break;
-
+    
   case EST_ComputedNoexcept:
     if (!Finder.TraverseStmt(Proto->getNoexceptExpr()))
       return true;
-      
+    
   case EST_Dynamic:
     for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
-                                            EEnd = Proto->exception_end();
+         EEnd = Proto->exception_end();
          E != EEnd; ++E) {
       if (!Finder.TraverseType(*E))
         return true;
     }
     break;
   }
-  
-  return checkThisInStaticMemberFunctionAttributes(Method);
+
+  return false;
 }
 
 bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
@@ -11175,6 +11194,122 @@ bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
   }
   
   return false;
+}
+
+void
+Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
+                                  ArrayRef<ParsedType> DynamicExceptions,
+                                  ArrayRef<SourceRange> DynamicExceptionRanges,
+                                  Expr *NoexceptExpr,
+                                  llvm::SmallVectorImpl<QualType> &Exceptions,
+                                  FunctionProtoType::ExtProtoInfo &EPI) {
+  Exceptions.clear();
+  EPI.ExceptionSpecType = EST;
+  if (EST == EST_Dynamic) {
+    Exceptions.reserve(DynamicExceptions.size());
+    for (unsigned ei = 0, ee = DynamicExceptions.size(); ei != ee; ++ei) {
+      // FIXME: Preserve type source info.
+      QualType ET = GetTypeFromParser(DynamicExceptions[ei]);
+
+      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      collectUnexpandedParameterPacks(ET, Unexpanded);
+      if (!Unexpanded.empty()) {
+        DiagnoseUnexpandedParameterPacks(DynamicExceptionRanges[ei].getBegin(),
+                                         UPPC_ExceptionType,
+                                         Unexpanded);
+        continue;
+      }
+
+      // Check that the type is valid for an exception spec, and
+      // drop it if not.
+      if (!CheckSpecifiedExceptionType(ET, DynamicExceptionRanges[ei]))
+        Exceptions.push_back(ET);
+    }
+    EPI.NumExceptions = Exceptions.size();
+    EPI.Exceptions = Exceptions.data();
+    return;
+  }
+  
+  if (EST == EST_ComputedNoexcept) {
+    // If an error occurred, there's no expression here.
+    if (NoexceptExpr) {
+      assert((NoexceptExpr->isTypeDependent() ||
+              NoexceptExpr->getType()->getCanonicalTypeUnqualified() ==
+              Context.BoolTy) &&
+             "Parser should have made sure that the expression is boolean");
+      if (NoexceptExpr && DiagnoseUnexpandedParameterPack(NoexceptExpr)) {
+        EPI.ExceptionSpecType = EST_BasicNoexcept;
+        return;
+      }
+      
+      if (!NoexceptExpr->isValueDependent())
+        NoexceptExpr = VerifyIntegerConstantExpression(NoexceptExpr, 0,
+                         PDiag(diag::err_noexcept_needs_constant_expression),
+                         /*AllowFold*/ false).take();
+      EPI.NoexceptExpr = NoexceptExpr;
+    }
+    return;
+  }
+}
+
+void Sema::actOnDelayedExceptionSpecification(Decl *MethodD,
+             ExceptionSpecificationType EST,
+             SourceRange SpecificationRange,
+             ArrayRef<ParsedType> DynamicExceptions,
+             ArrayRef<SourceRange> DynamicExceptionRanges,
+             Expr *NoexceptExpr) {
+  if (!MethodD)
+    return;
+  
+  // Dig out the method we're referring to.
+  CXXMethodDecl *Method = 0;
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(MethodD))
+    Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+  else
+    Method = dyn_cast<CXXMethodDecl>(MethodD);
+  
+  if (!Method)
+    return;
+  
+  // Dig out the prototype. This should never fail.
+  const FunctionProtoType *Proto
+    = dyn_cast<FunctionProtoType>(Method->getType());
+  if (!Proto)
+    return;
+  
+  // Check the exception specification.
+  llvm::SmallVector<QualType, 4> Exceptions;
+  FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
+  checkExceptionSpecification(EST, DynamicExceptions, DynamicExceptionRanges,
+                              NoexceptExpr, Exceptions, EPI);
+  
+  // Rebuild the function type.
+  QualType T = Context.getFunctionType(Proto->getResultType(),
+                                       Proto->arg_type_begin(),
+                                       Proto->getNumArgs(),
+                                       EPI);
+  if (TypeSourceInfo *TSInfo = Method->getTypeSourceInfo()) {
+    // FIXME: When we get proper type location information for exceptions,
+    // we'll also have to rebuild the TypeSourceInfo. For now, we just patch
+    // up the TypeSourceInfo;
+    assert(TypeLoc::getFullDataSizeForType(T)
+             == TypeLoc::getFullDataSizeForType(Method->getType()) &&
+           "TypeLoc size mismatch with delayed exception specification");
+    TSInfo->overrideType(T);
+  }
+
+  Method->setType(T);
+  
+  if (Method->isStatic())
+    checkThisInStaticMemberFunctionExceptionSpec(Method);
+  
+  if (Method->isVirtual()) {
+    // Check overrides, which we previously had to delay.
+    for (CXXMethodDecl::method_iterator O = Method->begin_overridden_methods(),
+                                     OEnd = Method->end_overridden_methods();
+         O != OEnd; ++O)
+      CheckOverridingFunctionExceptionSpec(Method, *O);
+  }
 }
 
 /// IdentifyCUDATarget - Determine the CUDA compilation target for this function

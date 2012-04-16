@@ -855,7 +855,7 @@ private:
   /// argument (C++ [class.mem]p2).
   struct LateParsedMethodDeclaration : public LateParsedDeclaration {
     explicit LateParsedMethodDeclaration(Parser *P, Decl *M)
-      : Self(P), Method(M), TemplateScope(false) { }
+      : Self(P), Method(M), TemplateScope(false), ExceptionSpecTokens(0) { }
 
     virtual void ParseLexedMethodDeclarations();
 
@@ -875,6 +875,10 @@ private:
     /// method will be stored so that they can be reintroduced into
     /// scope at the appropriate times.
     SmallVector<LateParsedDefaultArgument, 8> DefaultArgs;
+  
+    /// \brief The set of tokens that make up an exception-specification that
+    /// has not yet been parsed.
+    CachedTokens *ExceptionSpecTokens;
   };
 
   /// LateParsedMemberInitializer - An initializer for a non-static class data
@@ -1417,11 +1421,13 @@ private:
   // C++ 15: C++ Throw Expression
   ExprResult ParseThrowExpression();
 
-  ExceptionSpecificationType MaybeParseExceptionSpecification(
+  ExceptionSpecificationType tryParseExceptionSpecification(
+                    bool Delayed,
                     SourceRange &SpecificationRange,
                     SmallVectorImpl<ParsedType> &DynamicExceptions,
                     SmallVectorImpl<SourceRange> &DynamicExceptionRanges,
-                    ExprResult &NoexceptExpr);
+                    ExprResult &NoexceptExpr,
+                    CachedTokens *&ExceptionSpecTokens);
 
   // EndLoc is filled with the location of the last token of the specification.
   ExceptionSpecificationType ParseDynamicExceptionSpecification(
@@ -2102,8 +2108,8 @@ private:
                                  ParsingDeclRAIIObject *DiagsFromTParams = 0);
   void ParseConstructorInitializer(Decl *ConstructorDecl);
   MemInitResult ParseMemInitializer(Decl *ConstructorDecl);
-  void HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
-                                       Decl *ThisDecl);
+  void HandleMemberFunctionDeclDelays(Declarator& DeclaratorInfo,
+                                      Decl *ThisDecl);
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]

@@ -780,10 +780,13 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     llvm::SmallVector<ParsedType, 2> DynamicExceptions;
     llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
     ExprResult NoexceptExpr;
-    ESpecType = MaybeParseExceptionSpecification(ESpecRange,
-                                                 DynamicExceptions,
-                                                 DynamicExceptionRanges,
-                                                 NoexceptExpr);
+    CachedTokens *ExceptionSpecTokens;
+    ESpecType = tryParseExceptionSpecification(/*Delayed=*/false,
+                                               ESpecRange,
+                                               DynamicExceptions,
+                                               DynamicExceptionRanges,
+                                               NoexceptExpr,
+                                               ExceptionSpecTokens);
 
     if (ESpecType != EST_None)
       DeclEndLoc = ESpecRange.getEnd();
@@ -818,6 +821,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            DynamicExceptions.size(),
                                            NoexceptExpr.isUsable() ?
                                              NoexceptExpr.get() : 0,
+                                           0,
                                            DeclLoc, DeclEndLoc, D,
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
@@ -863,6 +867,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                      /*ExceptionRanges=*/0,
                      /*NumExceptions=*/0,
                      /*NoexceptExpr=*/0,
+                     /*ExceptionSpecTokens=*/0,
                      DeclLoc, DeclEndLoc, D,
                      TrailingReturnType),
                   Attr, DeclEndLoc);

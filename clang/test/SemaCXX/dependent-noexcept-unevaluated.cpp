@@ -23,7 +23,7 @@ struct array
 {
     T data[N];
 
-    void swap(array& a) noexcept(noexcept(swap(declval<T&>(), declval<T&>())));
+  void swap(array& a) noexcept(noexcept(::swap(declval<T&>(), declval<T&>())));
 };
 
 struct DefaultOnly

@@ -29,3 +29,30 @@ namespace test2 {
     A<int> x;
   };
 }
+
+namespace test3 {
+  struct A {
+    struct B {
+      void f() throw(A);
+      void g() throw(B);
+    };
+
+    void f() throw(A);
+    void g() throw(B);
+  };
+
+  template<typename T>
+  struct A2 {
+    struct B {
+      void f1() throw(A2);
+      void f2() throw(A2<T>);
+      void g() throw(B);
+    };
+
+    void f1() throw(A2);
+    void f2() throw(A2<T>);
+    void g() throw(B);
+  };
+
+  template struct A2<int>;
+}

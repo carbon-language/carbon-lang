@@ -88,3 +88,13 @@ namespace Static {
     X2<int>().g(0);
   }
 }
+
+namespace PR12564 {
+  struct Base {
+    void bar(Base&) {}
+  };
+
+  struct Derived : Base {
+    void foo(Derived& d) noexcept(noexcept(d.bar(d))) {}
+  };
+}
