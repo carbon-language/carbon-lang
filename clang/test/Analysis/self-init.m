@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit -fobjc-default-synthesize-properties %s -verify
 
 @class NSZone, NSCoder;
 @protocol NSObject- (id)self;
@@ -48,9 +48,7 @@ void log(void *obj);
 extern void *somePtr;
 
 @class MyObj;
-static id _commonInit(MyObj *self) {
-  return self;
-}
+extern id _commonInit(MyObj *self);
 
 @interface MyObj : NSObject {
 	id myivar;
@@ -59,6 +57,7 @@ static id _commonInit(MyObj *self) {
 -(id)_init;
 -(id)initWithSomething:(int)x;
 -(void)doSomething;
++(id)commonInitMember:(id)s;
 @end
 
 @interface MyProxyObj : NSProxy {}
@@ -88,6 +87,14 @@ static id _commonInit(MyObj *self) {
 		log(&self);
 	}
 	return self;
+}
+
+-(id)init4_w {
+  [super init];
+  if (self) {
+    log(&self);
+  }
+  return self; // expected-warning {{Returning 'self' while it is not set to the result of '[(super or self) init...]'}}
 }
 
 - (id)initWithSomething:(int)x {    
@@ -157,6 +164,12 @@ static id _commonInit(MyObj *self) {
   return self;
 }
 
+-(id)init14_w {
+  [super init];
+  self = _commonInit(self);
+  return self; // expected-warning {{Returning 'self' while it is not set to the result of '[(super or self) init...]'}}
+}
+
 -(id)init15 {
   if (!(self = [super init]))
     return 0;
@@ -174,6 +187,28 @@ static id _commonInit(MyObj *self) {
   somePtr = [super init];
   myivar = 0; // expected-warning {{Instance variable used}}
   return 0;
+}
+
+-(id)init18 {
+  self = [super init];
+  self = _commonInit(self);
+  return self;
+}
+
++(id)commonInitMember:(id)s {
+  return s;
+}
+
+-(id)init19 {
+  self = [super init];
+  self = [MyObj commonInitMember:self];
+  return self;
+}
+
+-(id)init19_w {
+  [super init];
+  self = [MyObj commonInitMember:self];
+  return self; // expected-warning {{Returning 'self'}}
 }
 
 -(void)doSomething {}
@@ -201,3 +236,21 @@ static id _commonInit(MyObj *self) {
 }
 @end
 
+// Test radar:11235991 - passing self to a call to super.
+@protocol MyDelegate
+@end
+@interface Object : NSObject
+- (id) initWithObject: (id)i;
+@end
+@interface Derived: Object <MyDelegate>
+- (id) initWithInt: (int)t;
+@property (nonatomic, retain, readwrite) Object *size;
+@end
+@implementation Derived 
+- (id) initWithInt: (int)t {
+   if ((self = [super initWithObject:self])) {
+      _size = [[Object alloc] init];
+   }
+   return self;
+}
+@end
