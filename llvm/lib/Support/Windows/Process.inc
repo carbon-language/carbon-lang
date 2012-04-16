@@ -215,6 +215,38 @@ const char *Process::OutputColor(char code, bool bold, bool bg) {
   return 0;
 }
 
+static WORD GetConsoleTextAttribute(HANDLE hConsoleOutput) {
+  CONSOLE_SCREEN_BUFFER_INFO info;
+  GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+  return info.wAttributes;
+}
+
+const char *Process::OutputReverse() {
+  const WORD attributes
+   = GetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE));
+
+  const WORD foreground_mask = FOREGROUND_BLUE | FOREGROUND_GREEN |
+    FOREGROUND_RED | FOREGROUND_INTENSITY;
+  const WORD background_mask = BACKGROUND_BLUE | BACKGROUND_GREEN |
+    BACKGROUND_RED | BACKGROUND_INTENSITY;
+  const WORD color_mask = foreground_mask | background_mask;
+
+  WORD new_attributes =
+    ((attributes & FOREGROUND_BLUE     )?BACKGROUND_BLUE     :0) |
+    ((attributes & FOREGROUND_GREEN    )?BACKGROUND_GREEN    :0) |
+    ((attributes & FOREGROUND_RED      )?BACKGROUND_RED      :0) |
+    ((attributes & FOREGROUND_INTENSITY)?BACKGROUND_INTENSITY:0) |
+    ((attributes & BACKGROUND_BLUE     )?FOREGROUND_BLUE     :0) |
+    ((attributes & BACKGROUND_GREEN    )?FOREGROUND_GREEN    :0) |
+    ((attributes & BACKGROUND_RED      )?FOREGROUND_RED      :0) |
+    ((attributes & BACKGROUND_INTENSITY)?FOREGROUND_INTENSITY:0) |
+    0;
+  new_attributes = (attributes & ~color_mask) | (new_attributes & color_mask);
+
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), new_attributes);
+  return 0;
+}
+
 const char *Process::ResetColor() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultColors());
   return 0;
