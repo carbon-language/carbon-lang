@@ -1080,6 +1080,7 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
 
   // If the root changed (e.g. it was a dead load, update the root).
   DAG.setRoot(Dummy.getValue());
+  DAG.RemoveDeadNodes();
 }
 
 SDValue DAGCombiner::visit(SDNode *N) {
