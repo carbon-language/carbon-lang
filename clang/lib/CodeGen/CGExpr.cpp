@@ -399,8 +399,8 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
           break;
             
         case SubobjectAdjustment::FieldAdjustment: {
-          LValue LV = 
-            CGF.EmitLValueForField(Object, Adjustment.Field, 0);
+          LValue LV = CGF.MakeAddrLValue(Object, E->getType());
+          LV = CGF.EmitLValueForField(LV, Adjustment.Field);
           if (LV.isSimple()) {
             Object = LV.getAddress();
             break;
@@ -1570,8 +1570,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
     // Use special handling for lambdas.
     if (!V) {
-      if (FieldDecl *FD = LambdaCaptureFields.lookup(VD))
-        return EmitLValueForField(CXXABIThisValue, FD, 0);
+      if (FieldDecl *FD = LambdaCaptureFields.lookup(VD)) {
+        QualType LambdaTagType = getContext().getTagDeclType(FD->getParent());
+        LValue LambdaLV = MakeNaturalAlignAddrLValue(CXXABIThisValue,
+                                                     LambdaTagType);
+        return EmitLValueForField(LambdaLV, FD);
+      }
 
       assert(isa<BlockDecl>(CurCodeDecl) && E->refersToEnclosingLocal());
       CharUnits alignment = getContext().getDeclAlign(VD);
@@ -1966,32 +1970,19 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
-  bool isNonGC = false;
   Expr *BaseExpr = E->getBase();
-  llvm::Value *BaseValue = NULL;
-  Qualifiers BaseQuals;
 
   // If this is s.x, emit s as an lvalue.  If it is s->x, emit s as a scalar.
-  if (E->isArrow()) {
-    BaseValue = EmitScalarExpr(BaseExpr);
-    const PointerType *PTy =
-      BaseExpr->getType()->getAs<PointerType>();
-    BaseQuals = PTy->getPointeeType().getQualifiers();
-  } else {
-    LValue BaseLV = EmitLValue(BaseExpr);
-    if (BaseLV.isNonGC())
-      isNonGC = true;
-    // FIXME: this isn't right for bitfields.
-    BaseValue = BaseLV.getAddress();
-    QualType BaseTy = BaseExpr->getType();
-    BaseQuals = BaseTy.getQualifiers();
-  }
+  LValue BaseLV;
+  if (E->isArrow())
+    BaseLV = MakeNaturalAlignAddrLValue(EmitScalarExpr(BaseExpr),
+                                        BaseExpr->getType()->getPointeeType());
+  else
+    BaseLV = EmitLValue(BaseExpr);
 
   NamedDecl *ND = E->getMemberDecl();
   if (FieldDecl *Field = dyn_cast<FieldDecl>(ND)) {
-    LValue LV = EmitLValueForField(BaseValue, Field, 
-                                   BaseQuals.getCVRQualifiers());
-    LV.setNonGC(isNonGC);
+    LValue LV = EmitLValueForField(BaseLV, Field);
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }
@@ -2025,8 +2016,10 @@ LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
   IndirectFieldDecl::chain_iterator I = Field->chain_begin(),
     IEnd = Field->chain_end();
   while (true) {
-    LValue LV = EmitLValueForField(BaseValue, cast<FieldDecl>(*I),
-                                   CVRQualifiers);
+    QualType RecordTy =
+        getContext().getTypeDeclType(cast<FieldDecl>(*I)->getParent());
+    LValue LV = EmitLValueForField(MakeAddrLValue(BaseValue, RecordTy),
+                                   cast<FieldDecl>(*I));
     if (++I == IEnd) return LV;
 
     assert(LV.isSimple());
@@ -2035,19 +2028,25 @@ LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
   }
 }
 
-LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
-                                           const FieldDecl *field,
-                                           unsigned cvr) {
+LValue CodeGenFunction::EmitLValueForField(LValue base,
+                                           const FieldDecl *field) {
   if (field->isBitField())
-    return EmitLValueForBitfield(baseAddr, field, cvr);
+    return EmitLValueForBitfield(base.getAddress(), field,
+                                 base.getVRQualifiers());
 
   const RecordDecl *rec = field->getParent();
   QualType type = field->getType();
   CharUnits alignment = getContext().getDeclAlign(field);
 
+  // FIXME: It should be impossible to have an LValue without alignment for a
+  // complete type.
+  if (!base.getAlignment().isZero())
+    alignment = std::min(alignment, base.getAlignment());
+
   bool mayAlias = rec->hasAttr<MayAliasAttr>();
 
-  llvm::Value *addr = baseAddr;
+  llvm::Value *addr = base.getAddress();
+  unsigned cvr = base.getVRQualifiers();
   if (rec->isUnion()) {
     // For unions, there is no pointer adjustment.
     assert(!type->isReferenceType() && "union has reference member");
@@ -2110,30 +2109,33 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
 }
 
 LValue 
-CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue, 
-                                                  const FieldDecl *Field,
-                                                  unsigned CVRQualifiers) {
+CodeGenFunction::EmitLValueForFieldInitialization(LValue Base, 
+                                                  const FieldDecl *Field) {
   QualType FieldType = Field->getType();
   
   if (!FieldType->isReferenceType())
-    return EmitLValueForField(BaseValue, Field, CVRQualifiers);
+    return EmitLValueForField(Base, Field);
 
   const CGRecordLayout &RL =
     CGM.getTypes().getCGRecordLayout(Field->getParent());
   unsigned idx = RL.getLLVMFieldNo(Field);
-  llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx);
+  llvm::Value *V = Builder.CreateStructGEP(Base.getAddress(), idx);
   assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
 
-  
   // Make sure that the address is pointing to the right type.  This is critical
   // for both unions and structs.  A union needs a bitcast, a struct element
   // will need a bitcast if the LLVM type laid out doesn't match the desired
   // type.
   llvm::Type *llvmType = ConvertTypeForMem(FieldType);
-  unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
-  V = Builder.CreateBitCast(V, llvmType->getPointerTo(AS));
-  
+  V = EmitBitCastOfLValueToProperType(*this, V, llvmType, Field->getName());
+
   CharUnits Alignment = getContext().getDeclAlign(Field);
+
+  // FIXME: It should be impossible to have an LValue without alignment for a
+  // complete type.
+  if (!Base.getAlignment().isZero())
+    Alignment = std::min(Alignment, Base.getAlignment());
+
   return MakeAddrLValue(V, FieldType, Alignment);
 }
 
@@ -2371,18 +2373,18 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
   return MakeAddrLValue(RV.getScalarVal(), E->getType());
 }
 
-RValue CodeGenFunction::EmitRValueForField(llvm::Value *Addr,
+RValue CodeGenFunction::EmitRValueForField(LValue LV,
                                            const FieldDecl *FD) {
   QualType FT = FD->getType();
-  // FIXME: What are the right qualifiers here?
-  LValue LV = EmitLValueForField(Addr, FD, 0);
+  LValue FieldLV = EmitLValueForField(LV, FD);
   if (FT->isAnyComplexType())
-    // FIXME: Volatile?
-    return RValue::getComplex(LoadComplexFromAddr(LV.getAddress(), false));
+    return RValue::getComplex(
+        LoadComplexFromAddr(FieldLV.getAddress(),
+                            FieldLV.isVolatileQualified()));
   else if (CodeGenFunction::hasAggregateLLVMType(FT))
-    return LV.asAggregateRValue();
+    return FieldLV.asAggregateRValue();
 
-  return EmitLoadOfLValue(LV);
+  return EmitLoadOfLValue(FieldLV);
 }
 
 //===--------------------------------------------------------------------===//

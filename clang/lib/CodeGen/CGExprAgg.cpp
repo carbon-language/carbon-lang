@@ -348,7 +348,8 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
     return;
   }
-  LValue start = CGF.EmitLValueForFieldInitialization(destPtr, *field, 0);
+  LValue DestLV = CGF.MakeNaturalAlignAddrLValue(destPtr, initList->getType());
+  LValue start = CGF.EmitLValueForFieldInitialization(DestLV, *field);
   llvm::Value *arrayStart = Builder.CreateStructGEP(alloc, 0, "arraystart");
   CGF.EmitStoreThroughLValue(RValue::get(arrayStart), start);
   ++field;
@@ -357,7 +358,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
     return;
   }
-  LValue endOrLength = CGF.EmitLValueForFieldInitialization(destPtr, *field, 0);
+  LValue endOrLength = CGF.EmitLValueForFieldInitialization(DestLV, *field);
   if (ctx.hasSameType(field->getType(), elementPtr)) {
     // End pointer.
     llvm::Value *arrayEnd = Builder.CreateStructGEP(alloc,numInits, "arrayend");
@@ -912,7 +913,9 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return;
   }
 
-  llvm::Value *DestPtr = EnsureSlot(E->getType()).getAddr();
+  AggValueSlot Dest = EnsureSlot(E->getType());
+  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
+                                     Dest.getAlignment());
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
@@ -923,11 +926,11 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
         CGF.getContext().getAsArrayType(E->getType())->getElementType();
 
     llvm::PointerType *APType =
-      cast<llvm::PointerType>(DestPtr->getType());
+      cast<llvm::PointerType>(Dest.getAddr()->getType());
     llvm::ArrayType *AType =
       cast<llvm::ArrayType>(APType->getElementType());
 
-    EmitArrayInit(DestPtr, AType, elementType, E);
+    EmitArrayInit(Dest.getAddr(), AType, elementType, E);
     return;
   }
 
@@ -960,7 +963,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // FIXME: volatility
     FieldDecl *Field = E->getInitializedFieldInUnion();
 
-    LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestPtr, Field, 0);
+    LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestLV, Field);
     if (NumInitElements) {
       // Store the initializer into the field
       EmitInitializationToLValue(E->getInit(0), FieldLoc);
@@ -998,8 +1001,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
         CGF.getTypes().isZeroInitializable(E->getType()))
       break;
     
-    // FIXME: volatility
-    LValue LV = CGF.EmitLValueForFieldInitialization(DestPtr, *field, 0);
+
+    LValue LV = CGF.EmitLValueForFieldInitialization(DestLV, *field);
     // We never generate write-barries for initialized fields.
     LV.setNonGC(true);
     

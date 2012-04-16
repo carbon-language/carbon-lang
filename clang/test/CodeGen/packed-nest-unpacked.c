@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 %s -triple x86_64-apple-macosx10.7.2 -emit-llvm -o - | FileCheck %s
-// <rdar://problem/10463337>
 
 struct X { int x[6]; };
 struct Y { char x[13]; struct X y; } __attribute((packed));
 struct Y g;
 void f(struct X);
 
+// <rdar://problem/10463337>
 struct X test1() {
   // CHECK: @test1
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
@@ -24,8 +24,16 @@ void test3(struct X a) {
   g.y = a;
 }
 
+// <rdar://problem/10530444>
 void test4() {
   // CHECK: @test4
   // FIXME: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
   f(g.y);
+}
+
+// PR12395
+int test5() {
+  // CHECK: @test5
+  // CHECK: load i32* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1, i32 0, i64 0), align 1
+  return g.y.x[0];
 }

@@ -362,8 +362,12 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
                                         LambdaThisCaptureField);
       if (LambdaThisCaptureField) {
         // If this lambda captures this, load it.
-        LValue ThisLValue = EmitLValueForField(CXXABIThisValue,
-                                               LambdaThisCaptureField, 0);
+        QualType LambdaTagType =
+            getContext().getTagDeclType(LambdaThisCaptureField->getParent());
+        LValue LambdaLV = MakeNaturalAlignAddrLValue(CXXABIThisValue,
+                                                     LambdaTagType);
+        LValue ThisLValue = EmitLValueForField(LambdaLV,
+                                               LambdaThisCaptureField);
         CXXThisValue = EmitLoadOfLValue(ThisLValue).getScalarVal();
       }
     } else {
