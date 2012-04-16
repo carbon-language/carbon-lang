@@ -1,4 +1,4 @@
-; RUN: llc < %s -widen-vmovs -mcpu=cortex-a8 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -widen-vmovs -mcpu=cortex-a8 -verify-machineinstrs -disable-code-place | FileCheck %s
 target triple = "thumbv7-apple-ios"
 
 ; The 1.0e+10 constant is loaded from the constant pool and kept in a register.
@@ -10,6 +10,7 @@ target triple = "thumbv7-apple-ios"
 ; CHECK: , [[DN]]
 ; CHECK: %for.body.i
 ; CHECK: vadd.f32 [[DL]], [[DL]], [[DN]]
+; CHECK: %rInnerproduct.exit
 ;
 ; This test is verifying:
 ; - The VMOVS widening is happening.
