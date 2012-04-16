@@ -290,10 +290,6 @@ const char *Process::OutputBold(bool bg) {
   return "\033[1m";
 }
 
-const char *Process::OutputReverse() {
-  return "\033[7m";
-}
-
 const char *Process::ResetColor() {
   return "\033[0m";
 }

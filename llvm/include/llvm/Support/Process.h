@@ -136,10 +136,6 @@ namespace sys {
       /// Same as OutputColor, but only enables the bold attribute.
       static const char *OutputBold(bool bg);
 
-      /// This function returns the escape sequence to reverse forground and
-      /// background colors.
-      static const char *OutputReverse();
-
       /// Resets the terminals colors, or returns an escape sequence to do so.
       static const char *ResetColor();
     /// @}
