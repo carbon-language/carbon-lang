@@ -392,22 +392,44 @@ void MachineBasicBlock::updateTerminator() {
         TII->InsertBranch(*this, TBB, 0, Cond, dl);
       }
     } else {
+      // Walk through the successors and find the successor which is not
+      // a landing pad and is not the conditional branch destination (in TBB)
+      // as the fallthrough successor.
+      MachineBasicBlock *FallthroughBB = 0;
+      for (succ_iterator SI = succ_begin(), SE = succ_end(); SI != SE; ++SI) {
+        if ((*SI)->isLandingPad() || *SI == TBB)
+          continue;
+        assert(!FallthroughBB && "Found more than one fallthrough successor.");
+        FallthroughBB = *SI;
+      }
+      if (!FallthroughBB && canFallThrough()) {
+        // We fallthrough to the same basic block as the conditional jump
+        // targets. Remove the conditional jump, leaving unconditional
+        // fallthrough.
+        // FIXME: This does not seem like a reasonable pattern to support, but it
+        // has been seen in the wild coming out of degenerate ARM test cases.
+        TII->RemoveBranch(*this);
+
+        // Finally update the unconditional successor to be reached via a branch
+        // if it would not be reached by fallthrough.
+        if (!isLayoutSuccessor(TBB))
+          TII->InsertBranch(*this, TBB, 0, Cond, dl);
+        return;
+      }
+
       // The block has a fallthrough conditional branch.
-      MachineBasicBlock *MBBA = *succ_begin();
-      MachineBasicBlock *MBBB = *llvm::next(succ_begin());
-      if (MBBA == TBB) std::swap(MBBB, MBBA);
       if (isLayoutSuccessor(TBB)) {
         if (TII->ReverseBranchCondition(Cond)) {
           // We can't reverse the condition, add an unconditional branch.
           Cond.clear();
-          TII->InsertBranch(*this, MBBA, 0, Cond, dl);
+          TII->InsertBranch(*this, FallthroughBB, 0, Cond, dl);
           return;
         }
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, MBBA, 0, Cond, dl);
-      } else if (!isLayoutSuccessor(MBBA)) {
+        TII->InsertBranch(*this, FallthroughBB, 0, Cond, dl);
+      } else if (!isLayoutSuccessor(FallthroughBB)) {
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, TBB, MBBA, Cond, dl);
+        TII->InsertBranch(*this, TBB, FallthroughBB, Cond, dl);
       }
     }
   }
