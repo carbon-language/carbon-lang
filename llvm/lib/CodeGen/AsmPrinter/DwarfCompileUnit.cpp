@@ -1032,9 +1032,10 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
 
-  // Unfortunately this code needs to stay here to work around
-  // a bug in older gdbs that requires the linkage name to resolve
-  // multiple template functions.
+  // Unfortunately this code needs to stay here instead of below the
+  // AT_specification code in order to work around a bug in older
+  // gdbs that requires the linkage name to resolve multiple template
+  // functions.
   StringRef LinkageName = SP.getLinkageName();
   if (!LinkageName.empty())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
