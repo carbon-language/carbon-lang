@@ -121,3 +121,7 @@ EVAL_EXPR(43, varfloat && constfloat) // expected-error {{must have a constant s
 // <rdar://problem/11205586>
 // (Make sure we continue to reject this.)
 EVAL_EXPR(44, "x"[0]); // expected-error {{variable length array}}
+
+// <rdar://problem/10962435>
+EVAL_EXPR(45, ((char*)-1) + 1 == 0 ? 1 : -1)
+EVAL_EXPR(46, ((char*)-1) + 1 < (char*) -1 ? 1 : -1)
