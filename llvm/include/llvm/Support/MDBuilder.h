@@ -17,6 +17,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/APInt.h"
@@ -30,7 +31,7 @@ namespace llvm {
     MDBuilder(LLVMContext &context) : Context(context) {}
 
     /// CreateString - Return the given string as metadata.
-    MDString *CreateString(StringRef Str) const {
+    MDString *CreateString(StringRef Str) {
       return MDString::get(Context, Str);
     }
 
@@ -39,7 +40,7 @@ namespace llvm {
     //===------------------------------------------------------------------===//
 
     /// CreateRange - Return metadata describing the range [Lo, Hi).
-    MDNode *CreateRange(const APInt &Lo, const APInt &Hi) const {
+    MDNode *CreateRange(const APInt &Lo, const APInt &Hi) {
       assert(Lo.getBitWidth() == Hi.getBitWidth() && "Mismatched bitwidths!");
       // If the range is everything then it is useless.
       if (Hi == Lo)
@@ -51,6 +52,16 @@ namespace llvm {
       return MDNode::get(Context, Range);
     }
 
+    /// GetRangeMetadata - Get range metadata attached to an instruction.
+    MDNode *GetRangeMetadata(Instruction *I) const {
+      return I->getMetadata(LLVMContext::MD_range);
+    }
+
+    /// SetRangeMetadata - Attach range metadata to an instruction.
+    void SetRangeMetadata(Instruction *I, MDNode *RangeTag) {
+      I->setMetadata(LLVMContext::MD_range, RangeTag);
+    }
+
 
     //===------------------------------------------------------------------===//
     // TBAA metadata.
@@ -59,7 +70,7 @@ namespace llvm {
     /// CreateAnonymousTBAARoot - Return metadata appropriate for a TBAA root
     /// node.  Each returned node is distinct from all other metadata and will
     /// never be identified (uniqued) with anything else.
-    MDNode *CreateAnonymousTBAARoot() const {
+    MDNode *CreateAnonymousTBAARoot() {
       // To ensure uniqueness the root node is self-referential.
       MDNode *Dummy = MDNode::getTemporary(Context, ArrayRef<Value*>());
       MDNode *Root = MDNode::get(Context, Dummy);
@@ -77,14 +88,14 @@ namespace llvm {
     /// CreateTBAARoot - Return metadata appropriate for a TBAA root node with
     /// the given name.  This may be identified (uniqued) with other roots with
     /// the same name.
-    MDNode *CreateTBAARoot(StringRef Name) const {
+    MDNode *CreateTBAARoot(StringRef Name) {
       return MDNode::get(Context, CreateString(Name));
     }
 
     /// CreateTBAANode - Return metadata for a non-root TBAA node with the given
     /// name, parent in the TBAA tree, and value for 'pointsToConstantMemory'.
     MDNode *CreateTBAANode(StringRef Name, MDNode *Parent,
-                           bool isConstant = false) const {
+                           bool isConstant = false) {
       if (isConstant) {
         Constant *Flags = ConstantInt::get(Type::getInt64Ty(Context), 1);
         Value *Ops[3] = { CreateString(Name), Parent, Flags };
@@ -94,6 +105,17 @@ namespace llvm {
         return MDNode::get(Context, Ops);
       }
     }
+
+    /// GetTBAAMetadata - Get tbaa metadata attached to an instruction.
+    MDNode *GetTBAAMetadata(Instruction *I) const {
+      return I->getMetadata(LLVMContext::MD_tbaa);
+    }
+
+    /// SetTBAAMetadata - Attach tbaa metadata to an instruction.
+    void SetTBAAMetadata(Instruction *I, MDNode *TBAATag) {
+      I->setMetadata(LLVMContext::MD_tbaa, TBAATag);
+    }
+
   };
 
 } // end namespace llvm
