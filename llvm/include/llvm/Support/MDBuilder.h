@@ -26,9 +26,6 @@ namespace llvm {
   class MDBuilder {
     LLVMContext &Context;
 
-    MDString *getFastString() {
-      return createString("fast");
-    }
   public:
     MDBuilder(LLVMContext &context) : Context(context) {}
 
@@ -41,19 +38,12 @@ namespace llvm {
     // FPMath metadata.
     //===------------------------------------------------------------------===//
 
-    /// \brief Return metadata with appropriate settings for 'fast math'.
-    MDNode *createFastFPMath() {
-      return MDNode::get(Context, getFastString());
-    }
-
-    /// \brief Return metadata with the given settings.  Special values for the
-    /// Accuracy parameter are 0.0, which means the default (maximal precision)
-    /// setting; and negative values which all mean 'fast'.
+    /// \brief Return metadata with the given settings.  The special value 0.0
+    /// for the Accuracy parameter indicates the default (maximal precision)
+    /// setting.
     MDNode *createFPMath(float Accuracy) {
       if (Accuracy == 0.0)
         return 0;
-      if (Accuracy < 0.0)
-        return MDNode::get(Context, getFastString());
       assert(Accuracy > 0.0 && "Invalid fpmath accuracy!");
       Value *Op = ConstantFP::get(Type::getFloatTy(Context), Accuracy);
       return MDNode::get(Context, Op);

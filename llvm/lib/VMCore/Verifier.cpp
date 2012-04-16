@@ -1662,8 +1662,6 @@ void Verifier::visitInstruction(Instruction &I) {
       APFloat Accuracy = CFP0->getValueAPF();
       Assert1(Accuracy.isNormal() && !Accuracy.isNegative(),
               "fpmath accuracy not a positive number!", &I);
-    } else if (MDString *S0 = dyn_cast_or_null<MDString>(Op0)) {
-      Assert1(S0->getString() == "fast", "wrong fpmath accuracy keyword!", &I);
     } else {
       Assert1(false, "invalid fpmath accuracy!", &I);
     }

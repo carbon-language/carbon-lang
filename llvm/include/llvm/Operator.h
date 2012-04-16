@@ -174,12 +174,8 @@ public:
 
   /// \brief Get the maximum error permitted by this operation in ULPs.  An
   /// accuracy of 0.0 means that the operation should be performed with the
-  /// default precision.  A huge value is returned if the accuracy is 'fast'.
+  /// default precision.
   float getFPAccuracy() const;
-
-  /// \brief Return true if the accuracy is 'fast'.  This indicates that speed
-  /// is more important than accuracy.
-  bool isFastFPAccuracy() const;
 
   static inline bool classof(const FPMathOperator *) { return true; }
   static inline bool classof(const Instruction *I) {

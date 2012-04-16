@@ -2008,35 +2008,14 @@ bool BinaryOperator::isExact() const {
 
 /// getFPAccuracy - Get the maximum error permitted by this operation in ULPs.
 /// An accuracy of 0.0 means that the operation should be performed with the
-/// default precision.  A huge value is returned if the accuracy is 'fast'.
+/// default precision.
 float FPMathOperator::getFPAccuracy() const {
   const MDNode *MD =
     cast<Instruction>(this)->getMetadata(LLVMContext::MD_fpmath);
   if (!MD)
     return 0.0;
-  Value *Op = MD->getOperand(0);
-  if (const ConstantFP *Accuracy = dyn_cast<ConstantFP>(Op))
-    return Accuracy->getValueAPF().convertToFloat();
-  // If it's not a floating point number then it must be 'fast'.
-  assert(isa<MDString>(Op) && cast<MDString>(Op)->getString() == "fast" &&
-         "Expected the 'fast' keyword!");
-  return HUGE_VALF;
-}
-
-/// isFastFPAccuracy - Return true if the accuracy is 'fast'.  This says that
-/// speed is more important than accuracy.
-bool FPMathOperator::isFastFPAccuracy() const {
-  const MDNode *MD =
-    cast<Instruction>(this)->getMetadata(LLVMContext::MD_fpmath);
-  if (!MD)
-    return false;
-  Value *Op = MD->getOperand(0);
-  if (isa<ConstantFP>(Op))
-    return false;
-  // If it's not a floating point number then it must be 'fast'.
-  assert(isa<MDString>(Op) && cast<MDString>(Op)->getString() == "fast" &&
-         "Expected the 'fast' keyword!");
-  return true;
+  ConstantFP *Accuracy = cast<ConstantFP>(MD->getOperand(0));
+  return Accuracy->getValueAPF().convertToFloat();
 }
 
 

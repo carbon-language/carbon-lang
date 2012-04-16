@@ -27,24 +27,12 @@ TEST_F(MDBuilderTest, createString) {
   EXPECT_EQ(Str0->getString(), StringRef(""));
   EXPECT_EQ(Str1->getString(), StringRef("string"));
 }
-TEST_F(MDBuilderTest, createFastFPMath) {
-  MDBuilder MDHelper(Context);
-  MDNode *MD = MDHelper.createFastFPMath();
-  EXPECT_NE(MD, (MDNode *)0);
-  EXPECT_EQ(MD->getNumOperands(), 1U);
-  Value *Op = MD->getOperand(0);
-  EXPECT_TRUE(isa<MDString>(Op));
-  EXPECT_EQ(cast<MDString>(Op)->getString(), "fast");
-}
 TEST_F(MDBuilderTest, createFPMath) {
   MDBuilder MDHelper(Context);
   MDNode *MD0 = MDHelper.createFPMath(0.0);
   MDNode *MD1 = MDHelper.createFPMath(1.0);
-  MDNode *MDF = MDHelper.createFPMath(-1.0);
-  MDNode *MDF2 = MDHelper.createFastFPMath();
   EXPECT_EQ(MD0, (MDNode *)0);
   EXPECT_NE(MD1, (MDNode *)0);
-  EXPECT_EQ(MDF, MDF2);
   EXPECT_EQ(MD1->getNumOperands(), 1U);
   Value *Op = MD1->getOperand(0);
   EXPECT_TRUE(isa<ConstantFP>(Op));

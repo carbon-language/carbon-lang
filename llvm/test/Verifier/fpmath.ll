@@ -22,16 +22,6 @@ define void @fpmath1(i32 %i, float %f, <2 x float> %g) {
   ret void
 }
 
-define void @fpmath2(float %f, <2 x float> %g) {
-  %w = fadd float %f, %f, !fpmath !7
-; Above line is correct.
-  %w2 = fadd <2 x float> %g, %g, !fpmath !7
-; Above line is correct.
-  %x = fadd float %f, %f, !fpmath !8
-; CHECK: wrong fpmath accuracy keyword!
-  ret void
-}
-
 !0 = metadata !{ float 1.0 }
 !1 = metadata !{ }
 !2 = metadata !{ float 1.0, float 1.0 }
@@ -39,5 +29,3 @@ define void @fpmath2(float %f, <2 x float> %g) {
 !4 = metadata !{ float -1.0 }
 !5 = metadata !{ float 0.0 }
 !6 = metadata !{ float 0x7FFFFFFF00000000 }
-!7 = metadata !{ metadata !"fast" }
-!8 = metadata !{ metadata !"slow" }
