@@ -633,6 +633,19 @@ raw_ostream &raw_fd_ostream::resetColor() {
   return *this;
 }
 
+raw_ostream &raw_fd_ostream::reverseColor() {
+  if (sys::Process::ColorNeedsFlush())
+    flush();
+  const char *colorcode = sys::Process::OutputReverse();
+  if (colorcode) {
+    size_t len = strlen(colorcode);
+    write(colorcode, len);
+    // don't account colors towards output characters
+    pos -= len;
+  }
+  return *this;
+}
+
 bool raw_fd_ostream::is_displayed() const {
   return sys::Process::FileDescriptorIsDisplayed(FD);
 }
