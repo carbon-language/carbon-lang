@@ -3801,6 +3801,9 @@ def warn_null_in_comparison_operation : Warning<
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a non-static member function">;
+def err_this_static_member_func : Error<
+  "'this' cannot be%select{| implicitly}0 used in a static member function "
+  "declaration">;
 def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
 def err_invalid_qualified_function_type : Error<

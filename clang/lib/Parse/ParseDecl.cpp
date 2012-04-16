@@ -729,9 +729,9 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
   if (HasTemplateScope)
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
 
-  // Set or update the scope flags to include Scope::ThisScope.
+  // Set or update the scope flags.
   bool AlreadyHasClassScope = Class.TopLevelClass;
-  unsigned ScopeFlags = Scope::ClassScope|Scope::DeclScope|Scope::ThisScope;
+  unsigned ScopeFlags = Scope::ClassScope|Scope::DeclScope;
   ParseScope ClassScope(this, ScopeFlags, !AlreadyHasClassScope);
   ParseScopeFlags ClassScopeFlags(this, ScopeFlags, AlreadyHasClassScope);
 
@@ -739,11 +739,16 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
   if (!AlreadyHasClassScope)
     Actions.ActOnStartDelayedMemberDeclarations(getCurScope(),
                                                 Class.TagOrTemplate);
-
-  for (unsigned i = 0, ni = Class.LateParsedDeclarations.size(); i < ni; ++i) {
-    Class.LateParsedDeclarations[i]->ParseLexedAttributes();
+  {
+    // Allow 'this' within late-parsed attributes.
+    Sema::CXXThisScopeRAII ThisScope(Actions, Class.TagOrTemplate, 
+                                     /*TypeQuals=*/0);
+    
+    for (unsigned i = 0, ni = Class.LateParsedDeclarations.size(); i < ni; ++i){
+      Class.LateParsedDeclarations[i]->ParseLexedAttributes();
+    }
   }
-
+  
   if (!AlreadyHasClassScope)
     Actions.ActOnFinishDelayedMemberDeclarations(getCurScope(),
                                                  Class.TagOrTemplate);
@@ -4242,6 +4247,23 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
         EndLoc = RefQualifierLoc;
       }
 
+      // C++11 [expr.prim.general]p3:
+      //   If a declaration declares a member function or member function 
+      //   template of a class X, the expression this is a prvalue of type 
+      //   "pointer to cv-qualifier-seq X" between the optional cv-qualifer-seq
+      //   and the end of the function-definition, member-declarator, or 
+      //   declarator.
+      bool IsCXX11MemberFunction = 
+        getLangOpts().CPlusPlus0x &&
+        (D.getContext() == Declarator::MemberContext ||
+         (D.getContext() == Declarator::FileContext &&
+          D.getCXXScopeSpec().isValid() && 
+          Actions.CurContext->isRecord()));
+      Sema::CXXThisScopeRAII ThisScope(Actions,
+                               dyn_cast<CXXRecordDecl>(Actions.CurContext),
+                               DS.getTypeQualifiers(),
+                               IsCXX11MemberFunction);
+      
       // Parse exception-specification[opt].
       ESpecType = MaybeParseExceptionSpecification(ESpecRange,
                                                    DynamicExceptions,

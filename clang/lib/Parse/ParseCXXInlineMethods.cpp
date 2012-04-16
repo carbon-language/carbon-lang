@@ -447,9 +447,9 @@ void Parser::ParseLexedMemberInitializers(ParsingClass &Class) {
   if (HasTemplateScope)
     Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
 
-  // Set or update the scope flags to include Scope::ThisScope.
+  // Set or update the scope flags.
   bool AlreadyHasClassScope = Class.TopLevelClass;
-  unsigned ScopeFlags = Scope::ClassScope|Scope::DeclScope|Scope::ThisScope;
+  unsigned ScopeFlags = Scope::ClassScope|Scope::DeclScope;
   ParseScope ClassScope(this, ScopeFlags, !AlreadyHasClassScope);
   ParseScopeFlags ClassScopeFlags(this, ScopeFlags, AlreadyHasClassScope);
 
@@ -457,10 +457,20 @@ void Parser::ParseLexedMemberInitializers(ParsingClass &Class) {
     Actions.ActOnStartDelayedMemberDeclarations(getCurScope(),
                                                 Class.TagOrTemplate);
 
-  for (size_t i = 0; i < Class.LateParsedDeclarations.size(); ++i) {
-    Class.LateParsedDeclarations[i]->ParseLexedMemberInitializers();
-  }
+  {
+    // C++11 [expr.prim.general]p4:
+    //   Otherwise, if a member-declarator declares a non-static data member 
+    //  (9.2) of a class X, the expression this is a prvalue of type "pointer
+    //  to X" within the optional brace-or-equal-initializer. It shall not 
+    //  appear elsewhere in the member-declarator.
+    Sema::CXXThisScopeRAII ThisScope(Actions, Class.TagOrTemplate,
+                                     /*TypeQuals=*/(unsigned)0);
 
+    for (size_t i = 0; i < Class.LateParsedDeclarations.size(); ++i) {
+      Class.LateParsedDeclarations[i]->ParseLexedMemberInitializers();
+    }
+  }
+  
   if (!AlreadyHasClassScope)
     Actions.ActOnFinishDelayedMemberDeclarations(getCurScope(),
                                                  Class.TagOrTemplate);
@@ -481,6 +491,7 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
   ConsumeAnyToken();
 
   SourceLocation EqualLoc;
+    
   ExprResult Init = ParseCXXMemberInitializer(MI.Field, /*IsFunction=*/false, 
                                               EqualLoc);
 

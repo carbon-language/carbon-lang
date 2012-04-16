@@ -101,16 +101,8 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
 
   DeclContext *DC = SemaRef.getFunctionLevelDeclContext();
 
-  bool isStaticContext =
-    (!isa<CXXMethodDecl>(DC) ||
-     cast<CXXMethodDecl>(DC)->isStatic());
-
-  // C++0x [expr.prim]p4:
-  //   Otherwise, if a member-declarator declares a non-static data member
-  // of a class X, the expression this is a prvalue of type "pointer to X"
-  // within the optional brace-or-equal-initializer.
-  if (CurScope->getFlags() & Scope::ThisScope)
-    isStaticContext = false;
+  bool isStaticContext = SemaRef.CXXThisTypeOverride.isNull() &&
+    (!isa<CXXMethodDecl>(DC) || cast<CXXMethodDecl>(DC)->isStatic());
 
   if (R.isUnresolvableResult())
     return isStaticContext ? IMA_Unresolved_StaticContext : IMA_Unresolved;
@@ -549,12 +541,13 @@ class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
 }
 
 static bool
-LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
+LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R, 
                          SourceRange BaseRange, const RecordType *RTy,
                          SourceLocation OpLoc, CXXScopeSpec &SS,
                          bool HasTemplateArgs) {
   RecordDecl *RDecl = RTy->getDecl();
-  if (SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
+  if (!SemaRef.isThisOutsideMemberFunctionBody(QualType(RTy, 0)) &&
+      SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
                               SemaRef.PDiag(diag::err_typecheck_incomplete_tag)
                                     << BaseRange))
     return true;

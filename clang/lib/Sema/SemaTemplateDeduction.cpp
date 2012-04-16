@@ -2310,23 +2310,42 @@ Sema::SubstituteExplicitTemplateArguments(
   // explicitly-specified template arguments. If the function has a trailing
   // return type, substitute it after the arguments to ensure we substitute
   // in lexical order.
-  if (Proto->hasTrailingReturn() &&
-      SubstParmTypes(Function->getLocation(),
-                     Function->param_begin(), Function->getNumParams(),
-                     MultiLevelTemplateArgumentList(*ExplicitArgumentList),
-                     ParamTypes))
-    return TDK_SubstitutionFailure;
-
+  if (Proto->hasTrailingReturn()) {
+    if (SubstParmTypes(Function->getLocation(),
+                       Function->param_begin(), Function->getNumParams(),
+                       MultiLevelTemplateArgumentList(*ExplicitArgumentList),
+                       ParamTypes))
+      return TDK_SubstitutionFailure;
+  }
+  
   // Instantiate the return type.
   // FIXME: exception-specifications?
-  QualType ResultType
-    = SubstType(Proto->getResultType(),
-                MultiLevelTemplateArgumentList(*ExplicitArgumentList),
-                Function->getTypeSpecStartLoc(),
-                Function->getDeclName());
-  if (ResultType.isNull() || Trap.hasErrorOccurred())
-    return TDK_SubstitutionFailure;
-
+  QualType ResultType;
+  {
+    // C++11 [expr.prim.general]p3:
+    //   If a declaration declares a member function or member function 
+    //   template of a class X, the expression this is a prvalue of type 
+    //   "pointer to cv-qualifier-seq X" between the optional cv-qualifer-seq
+    //   and the end of the function-definition, member-declarator, or 
+    //   declarator.
+    unsigned ThisTypeQuals = 0;
+    CXXRecordDecl *ThisContext = 0;
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Function)) {
+      ThisContext = Method->getParent();
+      ThisTypeQuals = Method->getTypeQualifiers();
+    }
+      
+    CXXThisScopeRAII ThisScope(*this, ThisContext, ThisTypeQuals,
+                               getLangOpts().CPlusPlus0x);
+    
+    ResultType = SubstType(Proto->getResultType(),
+                   MultiLevelTemplateArgumentList(*ExplicitArgumentList),
+                   Function->getTypeSpecStartLoc(),
+                   Function->getDeclName());
+    if (ResultType.isNull() || Trap.hasErrorOccurred())
+      return TDK_SubstitutionFailure;
+  }
+  
   // Instantiate the types of each of the function parameters given the
   // explicitly-specified template arguments if we didn't do so earlier.
   if (!Proto->hasTrailingReturn() &&

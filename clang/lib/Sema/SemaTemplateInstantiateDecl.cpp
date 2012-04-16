@@ -2141,10 +2141,19 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   TypeSourceInfo *OldTInfo = D->getTypeSourceInfo();
   assert(OldTInfo && "substituting function without type source info");
   assert(Params.empty() && "parameter vector is non-empty at start");
+  
+  CXXRecordDecl *ThisContext = 0;
+  unsigned ThisTypeQuals = 0;
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    ThisContext = Method->getParent();
+    ThisTypeQuals = Method->getTypeQualifiers();
+  }
+  
   TypeSourceInfo *NewTInfo
     = SemaRef.SubstFunctionDeclType(OldTInfo, TemplateArgs,
                                     D->getTypeSpecStartLoc(),
-                                    D->getDeclName());
+                                    D->getDeclName(),
+                                    ThisContext, ThisTypeQuals);
   if (!NewTInfo)
     return 0;
 
@@ -2243,6 +2252,22 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
   assert(Proto && "Function template without prototype?");
 
   if (Proto->hasExceptionSpec() || Proto->getNoReturnAttr()) {
+    // C++11 [expr.prim.general]p3:
+    //   If a declaration declares a member function or member function 
+    //   template of a class X, the expression this is a prvalue of type 
+    //   "pointer to cv-qualifier-seq X" between the optional cv-qualifer-seq
+    //   and the end of the function-definition, member-declarator, or 
+    //   declarator.    
+    CXXRecordDecl *ThisContext = 0;
+    unsigned ThisTypeQuals = 0;
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(New)) {
+      ThisContext = Method->getParent();
+      ThisTypeQuals = Method->getTypeQualifiers();
+    }
+    Sema::CXXThisScopeRAII ThisScope(SemaRef, ThisContext, ThisTypeQuals,
+                                     SemaRef.getLangOpts().CPlusPlus0x);
+    
+    
     // The function has an exception specification or a "noreturn"
     // attribute. Substitute into each of the exception types.
     SmallVector<QualType, 4> Exceptions;

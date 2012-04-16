@@ -2280,9 +2280,7 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
 
 }
 
-/// Mangles a member expression.  Implicit accesses are not handled,
-/// but that should be okay, because you shouldn't be able to
-/// make an implicit access in a function template declaration.
+/// Mangles a member expression.
 void CXXNameMangler::mangleMemberExpr(const Expr *base,
                                       bool isArrow,
                                       NestedNameSpecifier *qualifier,
@@ -2291,8 +2289,17 @@ void CXXNameMangler::mangleMemberExpr(const Expr *base,
                                       unsigned arity) {
   // <expression> ::= dt <expression> <unresolved-name>
   //              ::= pt <expression> <unresolved-name>
-  Out << (isArrow ? "pt" : "dt");
-  mangleExpression(base);
+  if (base) {
+    if (base->isImplicitCXXThis()) {
+      // Note: GCC mangles member expressions to the implicit 'this' as
+      // *this., whereas we represent them as this->. The Itanium C++ ABI
+      // does not specify anything here, so we follow GCC.
+      Out << "dtdefpT";
+    } else {
+      Out << (isArrow ? "pt" : "dt");
+      mangleExpression(base);
+    }
+  }
   mangleUnresolvedName(qualifier, firstQualifierLookup, member, arity);
 }
 
@@ -2346,6 +2353,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   // <expr-primary> ::= L <type> <value number> E    # integer literal
   //                ::= L <type <value float> E      # floating literal
   //                ::= L <mangled-name> E           # external name
+  //                ::= fpT                          # 'this' expression
   QualType ImplicitlyConvertedToType;
   
 recurse:
@@ -2361,7 +2369,6 @@ recurse:
   // These all can only appear in local or variable-initialization
   // contexts and so should never appear in a mangling.
   case Expr::AddrLabelExprClass:
-  case Expr::CXXThisExprClass:
   case Expr::DesignatedInitExprClass:
   case Expr::ImplicitValueInitExprClass:
   case Expr::ParenListExprClass:
@@ -2919,6 +2926,10 @@ recurse:
     mangleExpression(cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr());
     break;
   }
+      
+  case Expr::CXXThisExprClass:
+    Out << "fpT";
+    break;
   }
 }
 

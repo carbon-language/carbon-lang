@@ -763,6 +763,7 @@ void StmtProfiler::VisitCXXUuidofExpr(const CXXUuidofExpr *S) {
 
 void StmtProfiler::VisitCXXThisExpr(const CXXThisExpr *S) {
   VisitExpr(S);
+  ID.AddBoolean(S->isImplicit());
 }
 
 void StmtProfiler::VisitCXXThrowExpr(const CXXThrowExpr *S) {

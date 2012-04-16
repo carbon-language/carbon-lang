@@ -1255,7 +1255,7 @@ public:
   void foo4(FooLate *f) __attribute__((exclusive_locks_required(f->mu)));
 
   static void foo5()    __attribute__((exclusive_locks_required(mu))); // \
-    // expected-error {{invalid use of member 'mu' in static member function}}
+    // expected-error {{'this' cannot be implicitly used in a static member function declaration}}
 
   template <class T>
   void foo6() __attribute__((exclusive_locks_required(T::statmu))) { }
