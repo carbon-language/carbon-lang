@@ -78,24 +78,16 @@ struct LVFlags {
               ConsiderTemplateParameterTypes(true) {
   }
 
+  LVFlags(bool Global, bool Attributes, bool Parameters) :
+    ConsiderGlobalVisibility(Global),
+    ConsiderVisibilityAttributes(Attributes),
+    ConsiderTemplateParameterTypes(Parameters) {
+  }
+
   /// \brief Returns a set of flags that is only useful for computing the 
   /// linkage, not the visibility, of a declaration.
   static LVFlags CreateOnlyDeclLinkage() {
-    LVFlags F;
-    F.ConsiderGlobalVisibility = false;
-    F.ConsiderVisibilityAttributes = false;
-    F.ConsiderTemplateParameterTypes = false;
-    return F;
-  }
-  
-  /// Returns a set of flags, otherwise based on these, which ignores
-  /// off all sources of visibility except template arguments.
-  LVFlags onlyTemplateVisibility() const {
-    LVFlags F = *this;
-    F.ConsiderGlobalVisibility = false;
-    F.ConsiderVisibilityAttributes = false;
-    F.ConsiderTemplateParameterTypes = false;
-    return F;
+    return LVFlags(false, false, false);
   }
 }; 
 } // end anonymous namespace
@@ -391,7 +383,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
                                = Function->getTemplateSpecializationInfo()) {
       if (shouldConsiderTemplateLV(Function, specInfo)) {
         LV.merge(getLVForDecl(specInfo->getTemplate(),
-                              F.onlyTemplateVisibility()));
+                              LVFlags::CreateOnlyDeclLinkage()));
         const TemplateArgumentList &templateArgs = *specInfo->TemplateArguments;
         LV.mergeWithMin(getLVForTemplateArgumentList(templateArgs, F));
       }
@@ -415,7 +407,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       if (shouldConsiderTemplateLV(spec)) {
         // From the template.
         LV.merge(getLVForDecl(spec->getSpecializedTemplate(),
-                              F.onlyTemplateVisibility()));
+                              LVFlags::CreateOnlyDeclLinkage()));
 
         // The arguments at which the template was instantiated.
         const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
@@ -514,7 +506,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
 
       // Ignore both global visibility and attributes when computing our
       // parent's visibility.
-      ClassF = F.onlyTemplateVisibility();
+      ClassF = LVFlags::CreateOnlyDeclLinkage();
     }
   }
 
