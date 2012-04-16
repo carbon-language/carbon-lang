@@ -2935,8 +2935,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
   case X86ISD::VPERMILP:
-  case X86ISD::VPERMQ:
-  case X86ISD::VPERMPD:
+  case X86ISD::VPERMI:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
 }
@@ -6656,16 +6655,14 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     for (unsigned i = 0; i != 8; ++i) {
       permclMask.push_back(DAG.getConstant((M[i]>=0) ? M[i] : 0, MVT::i32));
     }
-    return DAG.getNode(VT.isInteger()? X86ISD::VPERMD:X86ISD::VPERMPS, dl, VT,
+    return DAG.getNode(X86ISD::VPERMV, dl, VT,
                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32,
                                    &permclMask[0], 8), V1);
   }
 
-  if (V2IsUndef && HasAVX2 && (VT == MVT::v4i64 || VT == MVT::v4f64)) {
-    unsigned Opcode = VT.isInteger() ? X86ISD::VPERMQ : X86ISD::VPERMPD;
-    return getTargetShuffleNode(Opcode, dl, VT, V1,
+  if (V2IsUndef && HasAVX2 && (VT == MVT::v4i64 || VT == MVT::v4f64))
+    return getTargetShuffleNode(X86ISD::VPERMI, dl, VT, V1,
                                 getShuffleCLImmediate(SVOp), DAG);
-  }
 
 
   //===--------------------------------------------------------------------===//
@@ -11181,10 +11178,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILP:           return "X86ISD::VPERMILP";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
-  case X86ISD::VPERMD:             return "X86ISD::VPERMD";
-  case X86ISD::VPERMQ:             return "X86ISD::VPERMQ";
-  case X86ISD::VPERMPS:            return "X86ISD::VPERMPS";
-  case X86ISD::VPERMPD:            return "X86ISD::VPERMPD";
+  case X86ISD::VPERMV:             return "X86ISD::VPERMV";
+  case X86ISD::VPERMI:             return "X86ISD::VPERMI";
   case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";

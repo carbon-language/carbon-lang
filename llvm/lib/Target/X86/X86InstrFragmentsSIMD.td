@@ -157,10 +157,8 @@ def X86Unpckl : SDNode<"X86ISD::UNPCKL", SDTShuff2Op>;
 def X86Unpckh : SDNode<"X86ISD::UNPCKH", SDTShuff2Op>;
 
 def X86VPermilp  : SDNode<"X86ISD::VPERMILP", SDTShuff2OpI>;
-def X86VPermd    : SDNode<"X86ISD::VPERMD",   SDTVPermv>;
-def X86VPermps   : SDNode<"X86ISD::VPERMPS",  SDTVPermv>;
-def X86VPermq    : SDNode<"X86ISD::VPERMQ",   SDTShuff2OpI>;
-def X86VPermpd   : SDNode<"X86ISD::VPERMPD",  SDTShuff2OpI>;
+def X86VPermv    : SDNode<"X86ISD::VPERMV",   SDTVPermv>;
+def X86VPermi    : SDNode<"X86ISD::VPERMI",   SDTShuff2OpI>;
 
 def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 

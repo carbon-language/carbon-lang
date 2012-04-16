@@ -7755,37 +7755,35 @@ let ExeDomain = SSEPackedSingle in
 defm VPERMPS : avx2_perm<0x16, "vpermps", memopv8f32, int_x86_avx2_permps>;
 
 multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
-                         SDNode OpNode, ValueType OpVT> {
+                         ValueType OpVT> {
   def Yri : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
                      (ins VR256:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR256:$dst,
-                       (OpVT (OpNode VR256:$src1, (i8 imm:$src2))))]>, VEX;
+                       (OpVT (X86VPermi VR256:$src1, (i8 imm:$src2))))]>, VEX;
   def Ymi : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
                      (ins i256mem:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR256:$dst,
-                       (OpVT (OpNode (mem_frag addr:$src1), (i8 imm:$src2))))]>,
-                     VEX;
+                       (OpVT (X86VPermi (mem_frag addr:$src1),
+                              (i8 imm:$src2))))]>, VEX;
 }
 
-defm VPERMQ : avx2_perm_imm<0x00, "vpermq", memopv4i64, X86VPermq, v4i64>,
-                            VEX_W;
+defm VPERMQ : avx2_perm_imm<0x00, "vpermq", memopv4i64, v4i64>, VEX_W;
 let ExeDomain = SSEPackedDouble in
-defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, X86VPermpd, v4f64>,
-                             VEX_W;
+defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, v4f64>, VEX_W;
 
 let Predicates = [HasAVX2] in {
-def : Pat<(v8i32 (X86VPermd VR256:$src1, VR256:$src2)),
+def : Pat<(v8i32 (X86VPermv VR256:$src1, VR256:$src2)),
           (VPERMDYrr VR256:$src1, VR256:$src2)>;
-def : Pat<(v8f32 (X86VPermps VR256:$src1, VR256:$src2)),
+def : Pat<(v8f32 (X86VPermv VR256:$src1, VR256:$src2)),
           (VPERMPSYrr VR256:$src1, VR256:$src2)>;
 
-def : Pat<(v8i32 (X86VPermd VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)))),
+def : Pat<(v8i32 (X86VPermv VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)))),
           (VPERMDYrm VR256:$src1, addr:$src2)>;
-def : Pat<(v8f32 (X86VPermps VR256:$src1, (memopv8f32 addr:$src2))),
+def : Pat<(v8f32 (X86VPermv VR256:$src1, (memopv8f32 addr:$src2))),
           (VPERMPSYrm VR256:$src1, addr:$src2)>;
 }
 
