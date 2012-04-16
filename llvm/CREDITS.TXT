@@ -283,6 +283,10 @@ N: Scott Michel
 E: scottm@aero.org
 D: Added STI Cell SPU backend.
 
+N: Kai Nacke
+E: kai@redstar.de
+D: Support for implicit TLS model used with MS VC runtime
+
 N: Takumi Nakamura
 E: geek4civic@gmail.com
 E: chapuni@hf.rim.or.jp
