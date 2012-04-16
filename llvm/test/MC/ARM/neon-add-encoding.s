@@ -65,6 +65,33 @@
 @ CHECK: vhadd.u32	q8, q8, q9      @ encoding: [0xe2,0x00,0x60,0xf3]
 	vhadd.u32	q8, q8, q9
 
+
+	vhadd.s8	d11, d24
+	vhadd.s16	d12, d23
+	vhadd.s32	d13, d22
+	vhadd.u8	d14, d21
+	vhadd.u16	d15, d20
+	vhadd.u32	d16, d19
+	vhadd.s8	q1, q12
+	vhadd.s16	q2, q11
+	vhadd.s32	q3, q10
+	vhadd.u8	q4, q9
+	vhadd.u16	q5, q8
+	vhadd.u32	q6, q7
+
+@ CHECK: vhadd.s8	d11, d11, d24   @ encoding: [0x28,0xb0,0x0b,0xf2]
+@ CHECK: vhadd.s16	d12, d12, d23   @ encoding: [0x27,0xc0,0x1c,0xf2]
+@ CHECK: vhadd.s32	d13, d13, d22   @ encoding: [0x26,0xd0,0x2d,0xf2]
+@ CHECK: vhadd.u8	d14, d14, d21   @ encoding: [0x25,0xe0,0x0e,0xf3]
+@ CHECK: vhadd.u16	d15, d15, d20   @ encoding: [0x24,0xf0,0x1f,0xf3]
+@ CHECK: vhadd.u32	d16, d16, d19   @ encoding: [0xa3,0x00,0x60,0xf3]
+@ CHECK: vhadd.s8	q1, q1, q12     @ encoding: [0x68,0x20,0x02,0xf2]
+@ CHECK: vhadd.s16	q2, q2, q11     @ encoding: [0x66,0x40,0x14,0xf2]
+@ CHECK: vhadd.s32	q3, q3, q10     @ encoding: [0x64,0x60,0x26,0xf2]
+@ CHECK: vhadd.u8	q4, q4, q9      @ encoding: [0x62,0x80,0x08,0xf3]
+@ CHECK: vhadd.u16	q5, q5, q8      @ encoding: [0x60,0xa0,0x1a,0xf3]
+@ CHECK: vhadd.u32	q6, q6, q7      @ encoding: [0x4e,0xc0,0x2c,0xf3]
+
 	vrhadd.s8	d16, d16, d17
 	vrhadd.s16	d16, d16, d17
 	vrhadd.s32	d16, d16, d17
