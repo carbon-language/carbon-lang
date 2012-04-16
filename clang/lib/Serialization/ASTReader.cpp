@@ -27,7 +27,6 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
@@ -46,6 +45,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <iterator>
@@ -664,46 +664,6 @@ ASTDeclContextNameLookupTrait::GetInternalKey(
   return Key;
 }
 
-ASTDeclContextNameLookupTrait::external_key_type 
-ASTDeclContextNameLookupTrait::GetExternalKey(
-                                          const internal_key_type& Key) const {
-  ASTContext &Context = Reader.getContext();
-  switch (Key.Kind) {
-  case DeclarationName::Identifier:
-    return DeclarationName((IdentifierInfo*)Key.Data);
-
-  case DeclarationName::ObjCZeroArgSelector:
-  case DeclarationName::ObjCOneArgSelector:
-  case DeclarationName::ObjCMultiArgSelector:
-    return DeclarationName(Selector(Key.Data));
-
-  case DeclarationName::CXXConstructorName:
-    return Context.DeclarationNames.getCXXConstructorName(
-             Context.getCanonicalType(Reader.getLocalType(F, Key.Data)));
-
-  case DeclarationName::CXXDestructorName:
-    return Context.DeclarationNames.getCXXDestructorName(
-             Context.getCanonicalType(Reader.getLocalType(F, Key.Data)));
-
-  case DeclarationName::CXXConversionFunctionName:
-    return Context.DeclarationNames.getCXXConversionFunctionName(
-             Context.getCanonicalType(Reader.getLocalType(F, Key.Data)));
-
-  case DeclarationName::CXXOperatorName:
-    return Context.DeclarationNames.getCXXOperatorName(
-                                       (OverloadedOperatorKind)Key.Data);
-
-  case DeclarationName::CXXLiteralOperatorName:
-    return Context.DeclarationNames.getCXXLiteralOperatorName(
-                                                   (IdentifierInfo*)Key.Data);
-
-  case DeclarationName::CXXUsingDirective:
-    return DeclarationName::getUsingDirectiveName();
-  }
-
-  llvm_unreachable("Invalid Name Kind ?");
-}
-
 std::pair<unsigned, unsigned>
 ASTDeclContextNameLookupTrait::ReadKeyDataLength(const unsigned char*& d) {
   using namespace clang::io;
@@ -749,7 +709,7 @@ ASTDeclContextNameLookupTrait::ReadKey(const unsigned char* d, unsigned) {
 ASTDeclContextNameLookupTrait::data_type 
 ASTDeclContextNameLookupTrait::ReadData(internal_key_type, 
                                         const unsigned char* d,
-                                      unsigned DataLen) {
+                                        unsigned DataLen) {
   using namespace clang::io;
   unsigned NumDecls = ReadUnalignedLE16(d);
   LE32DeclID *Start = (LE32DeclID *)d;
@@ -4973,48 +4933,95 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
 }
 
 namespace {
-  /// \brief ModuleFile visitor used to complete the visible decls map of a
+  /// \brief ModuleFile visitor used to retrieve all visible names in a
   /// declaration context.
-  class DeclContextVisibleDeclMapVisitor {
+  class DeclContextAllNamesVisitor {
     ASTReader &Reader;
-    DeclContext *DC;
+    llvm::SmallVectorImpl<const DeclContext *> &Contexts;
+    const DeclContext *DC;
+    llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> > &Decls;
 
   public:
-    DeclContextVisibleDeclMapVisitor(ASTReader &Reader, DeclContext *DC)
-      : Reader(Reader), DC(DC) { }
+    DeclContextAllNamesVisitor(ASTReader &Reader,
+                               SmallVectorImpl<const DeclContext *> &Contexts,
+                               llvm::DenseMap<DeclarationName,
+                                           SmallVector<NamedDecl *, 8> > &Decls)
+      : Reader(Reader), Contexts(Contexts), Decls(Decls) { }
 
     static bool visit(ModuleFile &M, void *UserData) {
-      return static_cast<DeclContextVisibleDeclMapVisitor*>(UserData)->visit(M);
-    }
+      DeclContextAllNamesVisitor *This
+        = static_cast<DeclContextAllNamesVisitor *>(UserData);
 
-    bool visit(ModuleFile &M) {
       // Check whether we have any visible declaration information for
       // this context in this module.
-      ModuleFile::DeclContextInfosMap::iterator
-        Info = M.DeclContextInfos.find(DC);
-      if (Info == M.DeclContextInfos.end() || 
-          !Info->second.NameLookupTableData)
-        return false;
-      
-      // Look for this name within this module.
-      ASTDeclContextNameLookupTable *LookupTable =
-        Info->second.NameLookupTableData;
-      for (ASTDeclContextNameLookupTable::key_iterator
-             I = LookupTable->key_begin(),
-             E = LookupTable->key_end(); I != E; ++I) {
-        DC->lookup(*I); // Force loading of the visible decls for the decl name.
+      ModuleFile::DeclContextInfosMap::iterator Info;
+      bool FoundInfo = false;
+      for (unsigned I = 0, N = This->Contexts.size(); I != N; ++I) {
+        Info = M.DeclContextInfos.find(This->Contexts[I]);
+        if (Info != M.DeclContextInfos.end() &&
+            Info->second.NameLookupTableData) {
+          FoundInfo = true;
+          break;
+        }
       }
 
-      return false;
+      if (!FoundInfo)
+        return false;
+
+      ASTDeclContextNameLookupTable *LookupTable =
+        Info->second.NameLookupTableData;
+      bool FoundAnything = false;
+      for (ASTDeclContextNameLookupTable::data_iterator
+	     I = LookupTable->data_begin(), E = LookupTable->data_end();
+	   I != E; ++I) {
+        ASTDeclContextNameLookupTrait::data_type Data = *I;
+        for (; Data.first != Data.second; ++Data.first) {
+          NamedDecl *ND = This->Reader.GetLocalDeclAs<NamedDecl>(M,
+                                                                 *Data.first);
+          if (!ND)
+            continue;
+
+          // Record this declaration.
+          FoundAnything = true;
+          This->Decls[ND->getDeclName()].push_back(ND);
+        }
+      }
+
+      return FoundAnything;
     }
   };
 }
 
-void ASTReader::completeVisibleDeclsMap(DeclContext *DC) {
+void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   if (!DC->hasExternalVisibleStorage())
     return;
-  DeclContextVisibleDeclMapVisitor Visitor(*this, DC);
-  ModuleMgr.visit(&DeclContextVisibleDeclMapVisitor::visit, &Visitor);
+  llvm::DenseMap<DeclarationName, llvm::SmallVector<NamedDecl*, 8> > Decls;
+
+  // Compute the declaration contexts we need to look into. Multiple such
+  // declaration contexts occur when two declaration contexts from disjoint
+  // modules get merged, e.g., when two namespaces with the same name are
+  // independently defined in separate modules.
+  SmallVector<const DeclContext *, 2> Contexts;
+  Contexts.push_back(DC);
+
+  if (DC->isNamespace()) {
+    MergedDeclsMap::iterator Merged
+      = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
+    if (Merged != MergedDecls.end()) {
+      for (unsigned I = 0, N = Merged->second.size(); I != N; ++I)
+        Contexts.push_back(cast<DeclContext>(GetDecl(Merged->second[I])));
+    }
+  }
+
+  DeclContextAllNamesVisitor Visitor(*this, Contexts, Decls);
+  ModuleMgr.visit(&DeclContextAllNamesVisitor::visit, &Visitor);
+  ++NumVisibleDeclContextsRead;
+
+  for (llvm::DenseMap<DeclarationName,
+                      llvm::SmallVector<NamedDecl*, 8> >::iterator
+         I = Decls.begin(), E = Decls.end(); I != E; ++I) {
+    SetExternalVisibleDeclsForName(DC, I->first, I->second);
+  }
 }
 
 /// \brief Under non-PCH compilation the consumer receives the objc methods

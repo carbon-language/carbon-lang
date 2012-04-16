@@ -132,7 +132,7 @@ class OnDiskChainedHashTableGenerator {
   class Bucket {
   public:
     io::Offset off;
-    Item*  head;
+    Item* head;
     unsigned length;
 
     Bucket() {}
@@ -201,6 +201,7 @@ public:
 
       // Write out the number of items in the bucket.
       Emit16(out, B.length);
+      assert(B.length != 0  && "Bucket has a head but zero length?");
 
       // Write out the entries in the bucket.
       for (Item *I = B.head; I ; I = I->next) {
@@ -398,31 +399,30 @@ public:
   }
   key_iterator key_end() { return key_iterator(); }
 
-  /// \brief Iterates over all the entries in the table, returning
-  /// a key/data pair.
-  class item_iterator {
+  /// \brief Iterates over all the entries in the table, returning the data.
+  class data_iterator {
     const unsigned char* Ptr;
     unsigned NumItemsInBucketLeft;
     unsigned NumEntriesLeft;
     Info *InfoObj;
   public:
-    typedef std::pair<external_key_type, data_type> value_type;
+    typedef data_type value_type;
 
-    item_iterator(const unsigned char* const Ptr, unsigned NumEntries,
+    data_iterator(const unsigned char* const Ptr, unsigned NumEntries,
                   Info *InfoObj)
       : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
         InfoObj(InfoObj) { }
-    item_iterator()
+    data_iterator()
       : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) { }
 
-    bool operator==(const item_iterator& X) const {
+    bool operator==(const data_iterator& X) const {
       return X.NumEntriesLeft == NumEntriesLeft;
     }
-    bool operator!=(const item_iterator& X) const {
+    bool operator!=(const data_iterator& X) const {
       return X.NumEntriesLeft != NumEntriesLeft;
     }
 
-    item_iterator& operator++() {  // Preincrement
+    data_iterator& operator++() {  // Preincrement
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
         // number of items in this bucket.
@@ -438,8 +438,8 @@ public:
       --NumEntriesLeft;
       return *this;
     }
-    item_iterator operator++(int) {  // Postincrement
-      item_iterator tmp = *this; ++*this; return tmp;
+    data_iterator operator++(int) {  // Postincrement
+      data_iterator tmp = *this; ++*this; return tmp;
     }
 
     value_type operator*() const {
@@ -454,15 +454,14 @@ public:
       // Read the key.
       const internal_key_type& Key =
         InfoObj->ReadKey(LocalPtr, L.first);
-      return std::make_pair(InfoObj->GetExternalKey(Key),
-                          InfoObj->ReadData(Key, LocalPtr + L.first, L.second));
+      return InfoObj->ReadData(Key, LocalPtr + L.first, L.second);
     }
   };
 
-  item_iterator item_begin() {
-    return item_iterator(Base + 4, getNumEntries(), &InfoObj);
+  data_iterator data_begin() {
+    return data_iterator(Base + 4, getNumEntries(), &InfoObj);
   }
-  item_iterator item_end() { return item_iterator(); }
+  data_iterator data_end() { return data_iterator(); }
 
   Info &getInfoObj() { return InfoObj; }
 

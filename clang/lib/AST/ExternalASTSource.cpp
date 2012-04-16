@@ -49,7 +49,10 @@ ExternalASTSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
   return DeclContext::lookup_result();
 }
 
-ExternalLoadResult 
+void ExternalASTSource::completeVisibleDeclsMap(const DeclContext *DC) {
+}
+
+ExternalLoadResult
 ExternalASTSource::FindExternalLexicalDecls(const DeclContext *DC,
                                             bool (*isKindWeWant)(Decl::Kind),
                                          SmallVectorImpl<Decl*> &Result) {

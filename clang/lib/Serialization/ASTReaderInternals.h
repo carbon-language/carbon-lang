@@ -57,8 +57,7 @@ public:
   typedef DeclarationName external_key_type;
   typedef DeclNameKey internal_key_type;
 
-  explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, 
-                                         ModuleFile &F) 
+  explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, ModuleFile &F)
     : Reader(Reader), F(F) { }
 
   static bool EqualKey(const internal_key_type& a,
@@ -68,9 +67,8 @@ public:
 
   unsigned ComputeHash(const DeclNameKey &Key) const;
   internal_key_type GetInternalKey(const external_key_type& Name) const;
-  external_key_type GetExternalKey(const internal_key_type& Key) const;
 
-  static std::pair<unsigned, unsigned> 
+  static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d);
 
   internal_key_type ReadKey(const unsigned char* d, unsigned);

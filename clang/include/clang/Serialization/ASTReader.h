@@ -1472,7 +1472,7 @@ public:
                      llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos);
 
   /// \brief Load all external visible decls in the given DeclContext.
-  void completeVisibleDeclsMap(DeclContext *DC);
+  void completeVisibleDeclsMap(const DeclContext *DC);
 
   /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext &getContext() { return Context; }
