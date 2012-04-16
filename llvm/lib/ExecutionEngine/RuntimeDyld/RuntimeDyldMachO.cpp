@@ -205,7 +205,7 @@ resolveARMRelocation(uint8_t *LocalAddress,
 }
 
 void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
-                                            const ObjectFile &Obj,
+                                            ObjectImage &Obj,
                                             ObjSectionToIDMap &ObjSectionToID,
                                             LocalSymbolMap &Symbols,
                                             StubMap &Stubs) {
@@ -246,7 +246,7 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
         break;
     }
     assert(si != se && "No section containing relocation!");
-    Value.SectionID = findOrEmitSection(*si, true, ObjSectionToID);
+    Value.SectionID = findOrEmitSection(Obj, *si, true, ObjSectionToID);
     Value.Addend = *(const intptr_t *)Target;
     if (Value.Addend) {
       // The MachO addend is offset from the current section, we need set it

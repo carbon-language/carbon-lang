@@ -49,7 +49,7 @@ protected:
                             int64_t Addend);
 
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
-                                    const ObjectFile &Obj,
+                                    ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     LocalSymbolMap &Symbols, StubMap &Stubs);
 
@@ -59,7 +59,7 @@ public:
                                  uint64_t Value,
                                  uint32_t Type,
                                  int64_t Addend);
-                                 
+
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
   bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const;

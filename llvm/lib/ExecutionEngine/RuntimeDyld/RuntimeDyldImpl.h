@@ -29,6 +29,7 @@
 #include "llvm/ADT/Triple.h"
 #include <map>
 #include "llvm/Support/Format.h"
+#include "ObjectImage.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -154,7 +155,8 @@ protected:
 
   /// \brief Emits a section containing common symbols.
   /// \return SectionID.
-  unsigned emitCommonSymbols(const CommonSymbolMap &Map,
+  unsigned emitCommonSymbols(ObjectImage &Obj,
+                             const CommonSymbolMap &Map,
                              uint64_t TotalSize,
                              LocalSymbolMap &Symbols);
 
@@ -162,14 +164,18 @@ protected:
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emmits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned emitSection(const SectionRef &Section, bool IsCode);
+  unsigned emitSection(ObjectImage &Obj,
+                       const SectionRef &Section,
+                       bool IsCode);
 
   /// \brief Find Section in LocalSections. If the secton is not found - emit
   ///        it and store in LocalSections.
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emmits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned findOrEmitSection(const SectionRef &Section, bool IsCode,
+  unsigned findOrEmitSection(ObjectImage &Obj,
+                             const SectionRef &Section,
+                             bool IsCode,
                              ObjSectionToIDMap &LocalSections);
 
   /// \brief If Value.SymbolName is NULL then store relocation to the
@@ -200,11 +206,18 @@ protected:
   /// \brief Parses the object file relocation and store it to Relocations
   ///        or SymbolRelocations. Its depend from object file type.
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
-                                    const ObjectFile &Obj,
+                                    ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     LocalSymbolMap &Symbols, StubMap &Stubs) = 0;
 
   void resolveSymbols();
+  virtual ObjectImage *createObjectImage(const MemoryBuffer *InputBuffer);
+  virtual void handleObjectLoaded(ObjectImage *Obj)
+  {
+    // Subclasses may choose to retain this image if they have a use for it
+    delete Obj;
+  }
+
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
 

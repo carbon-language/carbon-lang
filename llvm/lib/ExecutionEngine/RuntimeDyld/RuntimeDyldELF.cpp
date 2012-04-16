@@ -20,11 +20,176 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Object/ELF.h"
+#include "JITRegistrar.h"
 using namespace llvm;
 using namespace llvm::object;
 
+namespace {
+
+template<support::endianness target_endianness, bool is64Bits>
+class DyldELFObject : public ELFObjectFile<target_endianness, is64Bits> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+
+  typedef Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
+  typedef Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
+  typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
+  typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
+
+  typedef typename ELFObjectFile<target_endianness, is64Bits>::
+    Elf_Ehdr Elf_Ehdr;
+
+  typedef typename ELFDataTypeTypedefHelper<
+          target_endianness, is64Bits>::value_type addr_type;
+
+protected:
+  // This duplicates the 'Data' member in the 'Binary' base class
+  // but it is necessary to workaround a bug in gcc 4.2
+  MemoryBuffer *InputData;
+
+public:
+  DyldELFObject(MemoryBuffer *Object, error_code &ec);
+
+  void updateSectionAddress(const SectionRef &Sec, uint64_t Addr);
+  void updateSymbolAddress(const SymbolRef &Sym, uint64_t Addr);
+
+  const MemoryBuffer& getBuffer() const { return *InputData; }
+
+  // Methods for type inquiry through isa, cast, and dyn_cast
+  static inline bool classof(const Binary *v) {
+    return (isa<ELFObjectFile<target_endianness, is64Bits> >(v)
+            && classof(cast<ELFObjectFile<target_endianness, is64Bits> >(v)));
+  }
+  static inline bool classof(
+      const ELFObjectFile<target_endianness, is64Bits> *v) {
+    return v->isDyldType();
+  }
+  static inline bool classof(const DyldELFObject *v) {
+    return true;
+  }
+};
+
+template<support::endianness target_endianness, bool is64Bits>
+class ELFObjectImage : public ObjectImage {
+  protected:
+    DyldELFObject<target_endianness, is64Bits> *DyldObj;
+    bool Registered;
+
+  public:
+    ELFObjectImage(DyldELFObject<target_endianness, is64Bits> *Obj)
+    : ObjectImage(Obj),
+      DyldObj(Obj),
+      Registered(false) {}
+
+    virtual ~ELFObjectImage() {
+      if (Registered)
+        deregisterWithDebugger();
+    }
+
+    // Subclasses can override these methods to update the image with loaded
+    // addresses for sections and common symbols
+    virtual void updateSectionAddress(const SectionRef &Sec, uint64_t Addr)
+    {
+      DyldObj->updateSectionAddress(Sec, Addr);
+    }
+
+    virtual void updateSymbolAddress(const SymbolRef &Sym, uint64_t Addr)
+    {
+      DyldObj->updateSymbolAddress(Sym, Addr);
+    }
+
+    virtual void registerWithDebugger()
+    {
+      JITRegistrar::getGDBRegistrar().registerObject(DyldObj->getBuffer());
+      Registered = true;
+    }
+    virtual void deregisterWithDebugger()
+    {
+      JITRegistrar::getGDBRegistrar().deregisterObject(DyldObj->getBuffer());
+    }
+};
+
+template<support::endianness target_endianness, bool is64Bits>
+DyldELFObject<target_endianness, is64Bits>::DyldELFObject(MemoryBuffer *Object,
+                                                          error_code &ec)
+  : ELFObjectFile<target_endianness, is64Bits>(Object, ec),
+    InputData(Object) {
+  this->isDyldELFObject = true;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+void DyldELFObject<target_endianness, is64Bits>::updateSectionAddress(
+                                                       const SectionRef &Sec,
+                                                       uint64_t Addr) {
+  DataRefImpl ShdrRef = Sec.getRawDataRefImpl();
+  Elf_Shdr *shdr = const_cast<Elf_Shdr*>(
+                          reinterpret_cast<const Elf_Shdr *>(ShdrRef.p));
+
+  // This assumes the address passed in matches the target address bitness
+  // The template-based type cast handles everything else.
+  shdr->sh_addr = static_cast<addr_type>(Addr);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+void DyldELFObject<target_endianness, is64Bits>::updateSymbolAddress(
+                                                       const SymbolRef &SymRef,
+                                                       uint64_t Addr) {
+
+  Elf_Sym *sym = const_cast<Elf_Sym*>(
+                                 ELFObjectFile<target_endianness, is64Bits>::
+                                   getSymbol(SymRef.getRawDataRefImpl()));
+
+  // This assumes the address passed in matches the target address bitness
+  // The template-based type cast handles everything else.
+  sym->st_value = static_cast<addr_type>(Addr);
+}
+
+} // namespace
+
+
 namespace llvm {
 
+ObjectImage *RuntimeDyldELF::createObjectImage(
+                                         const MemoryBuffer *ConstInputBuffer) {
+  MemoryBuffer *InputBuffer = const_cast<MemoryBuffer*>(ConstInputBuffer);
+  std::pair<unsigned char, unsigned char> Ident = getElfArchType(InputBuffer);
+  error_code ec;
+
+  if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB) {
+    DyldELFObject<support::little, false> *Obj =
+           new DyldELFObject<support::little, false>(InputBuffer, ec);
+    return new ELFObjectImage<support::little, false>(Obj);
+  }
+  else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB) {
+    DyldELFObject<support::big, false> *Obj =
+           new DyldELFObject<support::big, false>(InputBuffer, ec);
+    return new ELFObjectImage<support::big, false>(Obj);
+  }
+  else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB) {
+    DyldELFObject<support::big, true> *Obj =
+           new DyldELFObject<support::big, true>(InputBuffer, ec);
+    return new ELFObjectImage<support::big, true>(Obj);
+  }
+  else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB) {
+    DyldELFObject<support::little, true> *Obj =
+           new DyldELFObject<support::little, true>(InputBuffer, ec);
+    return new ELFObjectImage<support::little, true>(Obj);
+  }
+  else
+    llvm_unreachable("Unexpected ELF format");
+}
+
+void RuntimeDyldELF::handleObjectLoaded(ObjectImage *Obj)
+{
+  Obj->registerWithDebugger();
+  // Save the loaded object.  It will deregister itself when deleted
+  LoadedObject = Obj;
+}
+
+RuntimeDyldELF::~RuntimeDyldELF() {
+  if (LoadedObject)
+    delete LoadedObject;
+}
 
 void RuntimeDyldELF::resolveX86_64Relocation(uint8_t *LocalAddress,
                                              uint64_t FinalAddress,
@@ -167,7 +332,7 @@ void RuntimeDyldELF::resolveRelocation(uint8_t *LocalAddress,
 }
 
 void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
-                                          const ObjectFile &Obj,
+                                          ObjectImage &Obj,
                                           ObjSectionToIDMap &ObjSectionToID,
                                           LocalSymbolMap &Symbols,
                                           StubMap &Stubs) {
@@ -206,7 +371,7 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
           if (si == Obj.end_sections())
             llvm_unreachable("Symbol section not found, bad object file format!");
           DEBUG(dbgs() << "\t\tThis is section symbol\n");
-          Value.SectionID = findOrEmitSection((*si), true, ObjSectionToID);
+          Value.SectionID = findOrEmitSection(Obj, (*si), true, ObjSectionToID);
           Value.Addend = Addend;
           break;
         }

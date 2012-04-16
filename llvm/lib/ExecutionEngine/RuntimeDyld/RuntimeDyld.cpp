@@ -59,11 +59,17 @@ void RuntimeDyldImpl::mapSectionAddress(void *LocalAddress,
   llvm_unreachable("Attempting to remap address of unknown section!");
 }
 
+// Subclasses can implement this method to create specialized image instances
+// The caller owns the the pointer that is returned.
+ObjectImage *RuntimeDyldImpl::createObjectImage(const MemoryBuffer *InputBuffer) {
+  ObjectFile *ObjFile = ObjectFile::createObjectFile(const_cast<MemoryBuffer*>
+                                                                 (InputBuffer));
+  ObjectImage *Obj = new ObjectImage(ObjFile);
+  return Obj;
+}
+
 bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
-  // FIXME: ObjectFile don't modify MemoryBuffer.
-  //        It should use const MemoryBuffer as parameter.
-  OwningPtr<ObjectFile> obj(ObjectFile::createObjectFile(
-                                       const_cast<MemoryBuffer*>(InputBuffer)));
+  OwningPtr<ObjectImage> obj(createObjectImage(InputBuffer));
   if (!obj)
     report_fatal_error("Unable to create object image from memory buffer!");
 
@@ -110,7 +116,8 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
                                 (uintptr_t)FileOffset;
         uintptr_t SectOffset = (uintptr_t)(SymPtr - (const uint8_t*)sData.begin());
         unsigned SectionID =
-          findOrEmitSection(*si,
+          findOrEmitSection(*obj,
+                            *si,
                             SymType == object::SymbolRef::ST_Function,
                             LocalSections);
         bool isGlobal = flags & SymbolRef::SF_Global;
@@ -128,7 +135,7 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
 
   // Allocate common symbols
   if (CommonSize != 0)
-    emitCommonSymbols(CommonSymbols, CommonSize, LocalSymbols);
+    emitCommonSymbols(*obj, CommonSymbols, CommonSize, LocalSymbols);
 
   // Parse and proccess relocations
   DEBUG(dbgs() << "Parse relocations:\n");
@@ -145,7 +152,7 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
 
       // If it's first relocation in this section, find its SectionID
       if (isFirstRelocation) {
-        SectionID = findOrEmitSection(*si, true, LocalSections);
+        SectionID = findOrEmitSection(*obj, *si, true, LocalSections);
         DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
         isFirstRelocation = false;
       }
@@ -164,10 +171,14 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
       processRelocationRef(RI, *obj, LocalSections, LocalSymbols, Stubs);
     }
   }
+
+  handleObjectLoaded(obj.take());
+
   return false;
 }
 
-unsigned RuntimeDyldImpl::emitCommonSymbols(const CommonSymbolMap &Map,
+unsigned RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
+                                            const CommonSymbolMap &Map,
                                             uint64_t TotalSize,
                                             LocalSymbolMap &LocalSymbols) {
   // Allocate memory for the section
@@ -191,6 +202,7 @@ unsigned RuntimeDyldImpl::emitCommonSymbols(const CommonSymbolMap &Map,
     uint64_t Size = it->second;
     StringRef Name;
     it->first.getName(Name);
+    Obj.updateSymbolAddress(it->first, (uint64_t)Addr);
     LocalSymbols[Name.data()] = SymbolLoc(SectionID, Offset);
     Offset += Size;
     Addr += Size;
@@ -199,7 +211,8 @@ unsigned RuntimeDyldImpl::emitCommonSymbols(const CommonSymbolMap &Map,
   return SectionID;
 }
 
-unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
+unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
+                                      const SectionRef &Section,
                                       bool IsCode) {
 
   unsigned StubBufSize = 0,
@@ -257,6 +270,7 @@ unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
                  << " StubBufSize: " << StubBufSize
                  << " Allocate: " << Allocate
                  << "\n");
+    Obj.updateSectionAddress(Section, (uint64_t)Addr);
   }
   else {
     // Even if we didn't load the section, we need to record an entry for it
@@ -277,7 +291,8 @@ unsigned RuntimeDyldImpl::emitSection(const SectionRef &Section,
   return SectionID;
 }
 
-unsigned RuntimeDyldImpl::findOrEmitSection(const SectionRef &Section,
+unsigned RuntimeDyldImpl::findOrEmitSection(ObjectImage &Obj,
+                                            const SectionRef &Section,
                                             bool IsCode,
                                             ObjSectionToIDMap &LocalSections) {
 
@@ -286,7 +301,7 @@ unsigned RuntimeDyldImpl::findOrEmitSection(const SectionRef &Section,
   if (i != LocalSections.end())
     SectionID = i->second;
   else {
-    SectionID = emitSection(Section, IsCode);
+    SectionID = emitSection(Obj, Section, IsCode);
     LocalSections[Section] = SectionID;
   }
   return SectionID;

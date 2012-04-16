@@ -17,16 +17,6 @@ namespace llvm {
 
 using namespace object;
 
-namespace {
-  std::pair<unsigned char, unsigned char>
-  getElfArchType(MemoryBuffer *Object) {
-    if (Object->getBufferSize() < ELF::EI_NIDENT)
-      return std::make_pair((uint8_t)ELF::ELFCLASSNONE,(uint8_t)ELF::ELFDATANONE);
-    return std::make_pair( (uint8_t)Object->getBufferStart()[ELF::EI_CLASS]
-                         , (uint8_t)Object->getBufferStart()[ELF::EI_DATA]);
-  }
-}
-
 // Creates an in-memory object-file by default: createELFObjectFile(Buffer)
 ObjectFile *ObjectFile::createELFObjectFile(MemoryBuffer *Object) {
   std::pair<unsigned char, unsigned char> Ident = getElfArchType(Object);

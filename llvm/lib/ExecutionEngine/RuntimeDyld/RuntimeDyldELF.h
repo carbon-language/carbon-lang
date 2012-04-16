@@ -22,6 +22,8 @@ using namespace llvm;
 namespace llvm {
 class RuntimeDyldELF : public RuntimeDyldImpl {
 protected:
+  ObjectImage *LoadedObject;
+
   void resolveX86_64Relocation(uint8_t *LocalAddress,
                                uint64_t FinalAddress,
                                uint64_t Value,
@@ -47,12 +49,18 @@ protected:
                                  int64_t Addend);
 
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
-                                    const ObjectFile &Obj,
+                                    ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
                                     LocalSymbolMap &Symbols, StubMap &Stubs);
 
+  virtual ObjectImage *createObjectImage(const MemoryBuffer *InputBuffer);
+  virtual void handleObjectLoaded(ObjectImage *Obj);
+
 public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
+  RuntimeDyldELF(RTDyldMemoryManager *mm)
+      : RuntimeDyldImpl(mm), LoadedObject(0) {}
+
+  virtual ~RuntimeDyldELF();
 
   bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const;
 };
