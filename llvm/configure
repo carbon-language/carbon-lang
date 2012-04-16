@@ -1442,6 +1442,7 @@ Optional Packages:
   --with-c-include-dirs   Colon separated list of directories clang will
                           search for headers
   --with-gcc-toolchain    Directory where gcc is installed.
+  --with-default-sysroot  Add --sysroot=<path> to all compiler invocations.
   --with-binutils-include Specify path to binutils/include/ containing
                           plugin-api.h file for gold plugin.
   --with-bug-report-url   Specify the URL where bug reports should be
@@ -3802,7 +3803,7 @@ else
     llvm_cv_target_os_type="Darwin" ;;
   *-*-minix*)
     llvm_cv_target_os_type="Minix" ;;
-  *-*-freebsd*| *-*-kfreebsd-gnu)
+  *-*-freebsd* | *-*-kfreebsd-gnu)
     llvm_cv_target_os_type="FreeBSD" ;;
   *-*-openbsd*)
     llvm_cv_target_os_type="OpenBSD" ;;
@@ -5579,6 +5580,20 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define GCC_INSTALL_PREFIX "$withval"
+_ACEOF
+
+
+
+# Check whether --with-sysroot was given.
+if test "${with_sysroot+set}" = set; then
+  withval=$with_sysroot;
+else
+  withval=""
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_SYSROOT "$withval"
 _ACEOF
 
 
@@ -10386,7 +10401,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10387 "configure"
+#line 10404 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
