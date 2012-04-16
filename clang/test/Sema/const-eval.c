@@ -125,3 +125,9 @@ EVAL_EXPR(44, "x"[0]); // expected-error {{variable length array}}
 // <rdar://problem/10962435>
 EVAL_EXPR(45, ((char*)-1) + 1 == 0 ? 1 : -1)
 EVAL_EXPR(46, ((char*)-1) + 1 < (char*) -1 ? 1 : -1)
+EVAL_EXPR(47, &x < &x + 1 ? 1 : -1)
+EVAL_EXPR(48, &x != &x - 1 ? 1 : -1)
+EVAL_EXPR(49, &x < &x - 100 ? 1 : -1) // expected-error {{must have a constant size}}
+
+extern struct Test50S Test50;
+EVAL_EXPR(50, &Test50 < (struct Test50S*)((unsigned)&Test50 + 10)) // expected-error {{must have a constant size}}

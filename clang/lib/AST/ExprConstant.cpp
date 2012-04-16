@@ -5090,8 +5090,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
       // The comparison here must be unsigned, and performed with the same
       // width as the pointer.
-      // FIXME: Knowing the base is the same for the LHS and RHS isn't enough
-      // for relational operators.
       unsigned PtrSize = Info.Ctx.getTypeSize(LHSTy);
       uint64_t CompareLHS = LHSOffset.getQuantity();
       uint64_t CompareRHS = RHSOffset.getQuantity();
@@ -5099,6 +5097,19 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       uint64_t Mask = ~0ULL >> (64 - PtrSize);
       CompareLHS &= Mask;
       CompareRHS &= Mask;
+
+      // If there is a base and this is a relational operator, we can only
+      // compare pointers within the object in question; otherwise, the result
+      // depends on where the object is located in memory.
+      if (!LHSValue.Base.isNull() && E->isRelationalOp()) {
+        QualType BaseTy = getType(LHSValue.Base);
+        if (BaseTy->isIncompleteType())
+          return Error(E);
+        CharUnits Size = Info.Ctx.getTypeSizeInChars(BaseTy);
+        uint64_t OffsetLimit = Size.getQuantity();
+        if (CompareLHS > OffsetLimit || CompareRHS > OffsetLimit)
+          return Error(E);
+      }
 
       switch (E->getOpcode()) {
       default: llvm_unreachable("missing comparison operator");
