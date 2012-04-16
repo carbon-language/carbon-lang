@@ -4156,11 +4156,15 @@ void RewriteModernObjC::GetBlockDeclRefExprs(Stmt *S) {
         GetBlockDeclRefExprs(*CI);
     }
   // Handle specific things.
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S))
-    if (DRE->refersToEnclosingLocal() &&
-        HasLocalVariableExternalStorage(DRE->getDecl())) {
-      BlockDeclRefs.push_back(DRE);
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
+    if (DRE->refersToEnclosingLocal()) {
+      // FIXME: Handle enums.
+      if (!isa<FunctionDecl>(DRE->getDecl()))
+        BlockDeclRefs.push_back(DRE);
+      if (HasLocalVariableExternalStorage(DRE->getDecl()))
+        BlockDeclRefs.push_back(DRE);
     }
+  }
   
   return;
 }
