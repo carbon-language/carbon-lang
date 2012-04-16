@@ -425,10 +425,12 @@ class MemRegionVal : public Loc {
 public:
   explicit MemRegionVal(const MemRegion* r) : Loc(MemRegionKind, r) {}
 
+  /// \brief Get the underlining region.
   const MemRegion* getRegion() const {
     return static_cast<const MemRegion*>(Data);
   }
 
+  /// \brief Get the underlining region and strip casts.
   const MemRegion* stripCasts() const;
 
   template <typename REGION>
