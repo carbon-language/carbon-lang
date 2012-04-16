@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-extensions -fdelayed-template-parsing
+// RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-extensions -fdelayed-template-parsing
 
 /* Microsoft attribute tests */
 [repeatable][source_annotation_attribute( Parameter|ReturnValue )]
@@ -103,7 +103,7 @@ typedef COM_CLASS_TEMPLATE<struct_with_uuid> COM_TYPE_2;
 
 template <class T, const GUID& g>
 class COM_CLASS_TEMPLATE_REF  { };
-typedef COM_CLASS_TEMPLATE<struct_with_uuid, __uuidof(struct_with_uuid)> COM_TYPE_REF;
+typedef COM_CLASS_TEMPLATE_REF<struct_with_uuid, __uuidof(struct_with_uuid)> COM_TYPE_REF;
 
   struct late_defined_uuid;
   template<typename T>
