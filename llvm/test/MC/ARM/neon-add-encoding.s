@@ -77,6 +77,19 @@
 	vrhadd.u8	q8, q8, q9
 	vrhadd.u16	q8, q8, q9
 	vrhadd.u32	q8, q8, q9
+        @ Two-operand forms.
+	vrhadd.s8	d16, d17
+	vrhadd.s16	d16, d17
+	vrhadd.s32	d16, d17
+	vrhadd.u8	d16, d17
+	vrhadd.u16	d16, d17
+	vrhadd.u32	d16, d17
+	vrhadd.s8	q8, q9
+	vrhadd.s16	q8, q9
+	vrhadd.s32	q8, q9
+	vrhadd.u8	q8, q9
+	vrhadd.u16	q8, q9
+	vrhadd.u32	q8, q9
 
 @ CHECK: vrhadd.s8	d16, d16, d17   @ encoding: [0xa1,0x01,0x40,0xf2]
 @ CHECK: vrhadd.s16	d16, d16, d17   @ encoding: [0xa1,0x01,0x50,0xf2]
@@ -90,6 +103,20 @@
 @ CHECK: vrhadd.u8	q8, q8, q9      @ encoding: [0xe2,0x01,0x40,0xf3]
 @ CHECK: vrhadd.u16	q8, q8, q9      @ encoding: [0xe2,0x01,0x50,0xf3]
 @ CHECK: vrhadd.u32	q8, q8, q9      @ encoding: [0xe2,0x01,0x60,0xf3]
+
+@ CHECK: vrhadd.s8	d16, d16, d17   @ encoding: [0xa1,0x01,0x40,0xf2]
+@ CHECK: vrhadd.s16	d16, d16, d17   @ encoding: [0xa1,0x01,0x50,0xf2]
+@ CHECK: vrhadd.s32	d16, d16, d17   @ encoding: [0xa1,0x01,0x60,0xf2]
+@ CHECK: vrhadd.u8	d16, d16, d17   @ encoding: [0xa1,0x01,0x40,0xf3]
+@ CHECK: vrhadd.u16	d16, d16, d17   @ encoding: [0xa1,0x01,0x50,0xf3]
+@ CHECK: vrhadd.u32	d16, d16, d17   @ encoding: [0xa1,0x01,0x60,0xf3]
+@ CHECK: vrhadd.s8	q8, q8, q9      @ encoding: [0xe2,0x01,0x40,0xf2]
+@ CHECK: vrhadd.s16	q8, q8, q9      @ encoding: [0xe2,0x01,0x50,0xf2]
+@ CHECK: vrhadd.s32	q8, q8, q9      @ encoding: [0xe2,0x01,0x60,0xf2]
+@ CHECK: vrhadd.u8	q8, q8, q9      @ encoding: [0xe2,0x01,0x40,0xf3]
+@ CHECK: vrhadd.u16	q8, q8, q9      @ encoding: [0xe2,0x01,0x50,0xf3]
+@ CHECK: vrhadd.u32	q8, q8, q9      @ encoding: [0xe2,0x01,0x60,0xf3]
+
 
 	vqadd.s8	d16, d16, d17
 	vqadd.s16	d16, d16, d17

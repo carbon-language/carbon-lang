@@ -6951,6 +6951,38 @@ def : NEONInstAlias<"vsli${p}.32 $Vdm, $imm",
 def : NEONInstAlias<"vsli${p}.64 $Vdm, $imm",
                     (VSLIv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
 
+
+// Two-operand variants for VRHADD.
+    // Signed.
+def : NEONInstAlias<"vrhadd${p}.s8 $Vdn, $Rm",
+                    (VRHADDsv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.s16 $Vdn, $Rm",
+                    (VRHADDsv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.s32 $Vdn, $Rm",
+                    (VRHADDsv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Rm, pred:$p)>;
+
+def : NEONInstAlias<"vrhadd${p}.s8 $Vdn, $Rm",
+                    (VRHADDsv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.s16 $Vdn, $Rm",
+                    (VRHADDsv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.s32 $Vdn, $Rm",
+                    (VRHADDsv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Rm, pred:$p)>;
+
+    // Unsigned.
+def : NEONInstAlias<"vrhadd${p}.u8 $Vdn, $Rm",
+                    (VRHADDuv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.u16 $Vdn, $Rm",
+                    (VRHADDuv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.u32 $Vdn, $Rm",
+                    (VRHADDuv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Rm, pred:$p)>;
+
+def : NEONInstAlias<"vrhadd${p}.u8 $Vdn, $Rm",
+                    (VRHADDuv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.u16 $Vdn, $Rm",
+                    (VRHADDuv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Rm, pred:$p)>;
+def : NEONInstAlias<"vrhadd${p}.u32 $Vdn, $Rm",
+                    (VRHADDuv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Rm, pred:$p)>;
+
 // VSWP allows, but does not require, a type suffix.
 defm : NEONDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
                          (VSWPd DPR:$Vd, DPR:$Vm, pred:$p)>;
