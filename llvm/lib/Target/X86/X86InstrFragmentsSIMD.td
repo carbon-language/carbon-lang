@@ -124,6 +124,8 @@ def SDTShuff2OpI : SDTypeProfile<1, 2, [SDTCisVec<0>,
                                  SDTCisSameAs<0,1>, SDTCisInt<2>]>;
 def SDTShuff3OpI : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                  SDTCisSameAs<0,2>, SDTCisInt<3>]>;
+def SDTVPermv : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVT<1, v8i32>,
+                              SDTCisSameAs<0,2>]>;
 
 def SDTVBroadcast : SDTypeProfile<1, 1, [SDTCisVec<0>]>;
 def SDTBlend : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
@@ -155,8 +157,8 @@ def X86Unpckl : SDNode<"X86ISD::UNPCKL", SDTShuff2Op>;
 def X86Unpckh : SDNode<"X86ISD::UNPCKH", SDTShuff2Op>;
 
 def X86VPermilp  : SDNode<"X86ISD::VPERMILP", SDTShuff2OpI>;
-def X86VPermd    : SDNode<"X86ISD::VPERMD",   SDTShuff2Op>;
-def X86VPermps   : SDNode<"X86ISD::VPERMPS",  SDTShuff2Op>;
+def X86VPermd    : SDNode<"X86ISD::VPERMD",   SDTVPermv>;
+def X86VPermps   : SDNode<"X86ISD::VPERMPS",  SDTVPermv>;
 def X86VPermq    : SDNode<"X86ISD::VPERMQ",   SDTShuff2OpI>;
 def X86VPermpd   : SDNode<"X86ISD::VPERMPD",  SDTShuff2OpI>;
 
