@@ -17,21 +17,18 @@
 #include "../../lib/MC/MCDisassembler/EDInst.h"
 #include "../../lib/MC/MCDisassembler/EDOperand.h"
 #include "../../lib/MC/MCDisassembler/EDToken.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
 typedef std::vector<std::pair<unsigned char, const char*> > ByteArrayTy;
@@ -56,8 +53,9 @@ public:
 }
 
 static bool PrintInsts(const MCDisassembler &DisAsm,
-                       MCInstPrinter &Printer, const ByteArrayTy &Bytes,
-                       SourceMgr &SM, raw_ostream &Out) {
+                       const ByteArrayTy &Bytes,
+                       SourceMgr &SM, raw_ostream &Out,
+                       MCStreamer &Streamer) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
 
@@ -87,8 +85,7 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
       // Fall through
 
     case MCDisassembler::Success:
-      Printer.printInst(&Inst, Out, "");
-      Out << "\n";
+      Streamer.EmitInstruction(Inst);
       break;
     }
   }
@@ -145,55 +142,21 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
 
 int Disassembler::disassemble(const Target &T,
                               const std::string &Triple,
-                              const std::string &Cpu,
-                              const std::string &FeaturesStr,
+                              MCSubtargetInfo &STI,
+                              MCStreamer &Streamer,
                               MemoryBuffer &Buffer,
+                              SourceMgr &SM,
                               raw_ostream &Out) {
-  // Set up disassembler.
-  OwningPtr<const MCAsmInfo> AsmInfo(T.createMCAsmInfo(Triple));
-
-  if (!AsmInfo) {
-    errs() << "error: no assembly info for target " << Triple << "\n";
-    return -1;
-  }
-
-  OwningPtr<const MCSubtargetInfo> STI(T.createMCSubtargetInfo(Triple, Cpu,
-                                                               FeaturesStr));
-  if (!STI) {
-    errs() << "error: no subtarget info for target " << Triple << "\n";
-    return -1;
-  }
-
-  OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler(*STI));
+  OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler(STI));
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;
   }
 
-  OwningPtr<const MCRegisterInfo> MRI(T.createMCRegInfo(Triple));
-  if (!MRI) {
-    errs() << "error: no register info for target " << Triple << "\n";
-    return -1;
-  }
-
-  OwningPtr<const MCInstrInfo> MII(T.createMCInstrInfo());
-  if (!MII) {
-    errs() << "error: no instruction info for target " << Triple << "\n";
-    return -1;
-  }
-
-  int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(AsmPrinterVariant, *AsmInfo,
-                                                    *MII, *MRI, *STI));
-  if (!IP) {
-    errs() << "error: no instruction printer for target " << Triple << '\n';
-    return -1;
-  }
+  // Set up initial section manually here
+  Streamer.InitSections();
 
   bool ErrorOccurred = false;
-
-  SourceMgr SM;
-  SM.AddNewSourceBuffer(&Buffer, SMLoc());
 
   // Convert the input to a vector for disassembly.
   ByteArrayTy ByteArray;
@@ -202,7 +165,7 @@ int Disassembler::disassemble(const Target &T,
   ErrorOccurred |= ByteArrayFromString(ByteArray, Str, SM);
 
   if (!ByteArray.empty())
-    ErrorOccurred |= PrintInsts(*DisAsm, *IP, ByteArray, SM, Out);
+    ErrorOccurred |= PrintInsts(*DisAsm, ByteArray, SM, Out, Streamer);
 
   return ErrorOccurred;
 }
@@ -236,12 +199,10 @@ static int verboseEvaluator(uint64_t *V, unsigned R, void *Arg) {
 
 int Disassembler::disassembleEnhanced(const std::string &TS,
                                       MemoryBuffer &Buffer,
+                                      SourceMgr &SM,
                                       raw_ostream &Out) {
   ByteArrayTy ByteArray;
   StringRef Str = Buffer.getBuffer();
-  SourceMgr SM;
-
-  SM.AddNewSourceBuffer(&Buffer, SMLoc());
 
   if (ByteArrayFromString(ByteArray, Str, SM)) {
     return -1;
