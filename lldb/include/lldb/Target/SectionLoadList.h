@@ -53,7 +53,7 @@ public:
     ResolveLoadAddress (lldb::addr_t load_addr, Address &so_addr) const;
 
     bool
-    SetSectionLoadAddress (const Section *section, lldb::addr_t load_addr);
+    SetSectionLoadAddress (const Section *section, lldb::addr_t load_addr, bool warn_multiple = false);
 
     // The old load address should be specified when unloading to ensure we get
     // the correct instance of the section as a shared library could be loaded

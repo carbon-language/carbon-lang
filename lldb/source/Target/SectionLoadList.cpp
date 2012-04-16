@@ -57,7 +57,7 @@ SectionLoadList::GetSectionLoadAddress (const Section *section) const
 }
 
 bool
-SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr)
+SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr, bool warn_multiple)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
@@ -77,6 +77,7 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
     if (section->GetByteSize() == 0)
         return false; // No change
 
+    // Fill in the section -> load_addr map
     Mutex::Locker locker(m_mutex);
     sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
     if (sta_pos != m_sect_to_addr.end())
@@ -89,10 +90,21 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
     else
         m_sect_to_addr[section] = load_addr;
 
+    // Fill in the load_addr -> section map
     addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
     if (ats_pos != m_addr_to_sect.end())
     {
-        if (section != ats_pos->second)
+        // Some sections are ok to overlap, and for others we should warn. When
+        // we have multiple load addresses that correspond to a section, we will
+        // allways attribute the section to the be last section that claims it
+        // exists at that address. Sometimes it is ok for more that one section
+        // to be loaded at a specific load address, and other times it isn't.
+        // The "warn_multiple" parameter tells us if we should warn in this case
+        // or not. The DynamicLoader plug-in subclasses should know which
+        // sections should warn and which shouldn't (darwin shared cache modules
+        // all shared the same "__LINKEDIT" sections, so the dynamic loader can
+        // pass false for "warn_multiple").
+        if (warn_multiple && section != ats_pos->second)
         {
             ModuleSP module_sp (section->GetModule());
             if (module_sp)

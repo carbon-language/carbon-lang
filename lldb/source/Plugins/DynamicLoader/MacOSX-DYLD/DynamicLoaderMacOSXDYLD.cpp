@@ -440,18 +440,18 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
 
                         if (section_sp)
                         {
-                            // Don't ever load any __LINKEDIT sections since the ones in the shared
-                            // cached will be coalesced into a single section and we will get warnings
-                            // about multiple sections mapping to the same address.
-                            if (section_sp->GetName() != g_section_name_LINKEDIT)
+                            // __LINKEDIT sections from files in the shared cache
+                            // can overlap so check to see what the segment name is
+                            // and pass "false" so we don't warn of overlapping
+                            // "Section" objects, and "true" for all other sections.
+                            const bool warn_multiple = section_sp->GetName() != g_section_name_LINKEDIT;
+
+                            const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
+                            if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
+                                old_section_load_addr != new_section_load_addr)
                             {
-                                const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
-                                if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
-                                    old_section_load_addr != new_section_load_addr)
-                                {
-                                    if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
-                                        changed = true;
-                                }
+                                if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr, warn_multiple))
+                                    changed = true;
                             }
                         }
                         else
