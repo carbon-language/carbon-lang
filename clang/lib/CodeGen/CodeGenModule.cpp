@@ -1241,7 +1241,7 @@ CodeGenModule::CreateOrReplaceCXXRuntimeVariable(StringRef Name,
 
 /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
 /// given global variable.  If Ty is non-null and if the global doesn't exist,
-/// then it will be greated with the specified type instead of whatever the
+/// then it will be created with the specified type instead of whatever the
 /// normal requested type would be.
 llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
                                                   llvm::Type *Ty) {
