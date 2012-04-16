@@ -17,7 +17,6 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/APInt.h"
@@ -50,16 +49,6 @@ namespace llvm {
       Type *Ty = IntegerType::get(Context, Lo.getBitWidth());
       Value *Range[2] = { ConstantInt::get(Ty, Lo), ConstantInt::get(Ty, Hi) };
       return MDNode::get(Context, Range);
-    }
-
-    /// GetRangeMetadata - Get range metadata attached to an instruction.
-    MDNode *GetRangeMetadata(Instruction *I) const {
-      return I->getMetadata(LLVMContext::MD_range);
-    }
-
-    /// SetRangeMetadata - Attach range metadata to an instruction.
-    void SetRangeMetadata(Instruction *I, MDNode *RangeTag) {
-      I->setMetadata(LLVMContext::MD_range, RangeTag);
     }
 
 
@@ -104,16 +93,6 @@ namespace llvm {
         Value *Ops[2] = { CreateString(Name), Parent };
         return MDNode::get(Context, Ops);
       }
-    }
-
-    /// GetTBAAMetadata - Get tbaa metadata attached to an instruction.
-    MDNode *GetTBAAMetadata(Instruction *I) const {
-      return I->getMetadata(LLVMContext::MD_tbaa);
-    }
-
-    /// SetTBAAMetadata - Attach tbaa metadata to an instruction.
-    void SetTBAAMetadata(Instruction *I, MDNode *TBAATag) {
-      I->setMetadata(LLVMContext::MD_tbaa, TBAATag);
     }
 
   };
