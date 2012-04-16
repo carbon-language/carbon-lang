@@ -101,7 +101,7 @@ $ROOT of project trees for things which can be checked out separately. -->
 
 <div>
   <p>As mentioned earlier, LLVM projects are organized into
-  logical <em>components</em>. Every component is typically grouped into it's
+  logical <em>components</em>. Every component is typically grouped into its
   own subdirectory. Generally, a component is organized around a coherent group
   of sources which have some kind of clear API separation from other parts of
   the code.</p>
@@ -190,7 +190,7 @@ required_libraries = Archive BitReader Core Support TransformUtils
   number in order for files with multiple components ("component_0",
   "component_1", and so on).<p>
 
-  <p><b>Section names not matches this format (or the "common" section) are
+  <p><b>Section names not matching this format (or the "common" section) are
   currently unused and are disallowed.</b></p>
 
   <p>Every component is defined by the properties in the section. The exact list
@@ -212,7 +212,7 @@ required_libraries = Archive BitReader Core Support TransformUtils
     <li><i>parent</i> <b>[required]</b>
       <p>The name of the logical parent of the component. Components are
       organized into a logical tree to make it easier to navigate and organize
-      groups of components. The parent's have no semantics as far as the project
+      groups of components. The parents have no semantics as far as the project
       build is concerned, however. Typically, the parent will be the main
       component of the parent directory.</p>
 
@@ -263,7 +263,7 @@ required_libraries = Archive BitReader Core Support TransformUtils
           <p>If given, a list of the names of Library or LibraryGroup components
           which must also be linked in whenever this library is used. That is,
           the link time dependencies for this component. When tools are built,
-          the build system will include the transitive closer of
+          the build system will include the transitive closure of
           all <i>required_libraries</i> for the components the tool needs.</p></li>
 
         <li><i>add_to_library_groups</i> <b>[optional]</b>
