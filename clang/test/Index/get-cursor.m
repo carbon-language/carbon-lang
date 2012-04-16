@@ -60,6 +60,13 @@ void foo3(Test3 *test3) {
   [test3 setFoo:2 withBar:4];
 }
 
+@interface Test4
+@end
+@interface Test4(Dido)
+@end
+@implementation Test4(Dido)
+@end
+
 // RUN: c-index-test -cursor-at=%s:4:28 -cursor-at=%s:5:28 %s | FileCheck -check-prefix=CHECK-PROP %s
 // CHECK-PROP: ObjCPropertyDecl=foo1:4:26
 // CHECK-PROP: ObjCPropertyDecl=foo2:5:27
@@ -82,6 +89,9 @@ void foo3(Test3 *test3) {
 // CHECK-MEMBERREF: 52:11 MemberRefExpr=setImplicitProp::46:8 Extent=[52:5 - 52:23] Spelling=setImplicitProp: ([52:11 - 52:23])
 
 // RUN: c-index-test -cursor-at=%s:56:24 -cursor-at=%s:60:14 \
+// RUN:   -cursor-at=%s:65:20 -cursor-at=%s:67:25 \
 // RUN:   %s | FileCheck -check-prefix=CHECK-SPELLRANGE %s
 // CHECK-SPELLRANGE: 56:8 ObjCInstanceMethodDecl=setFoo:withBar::56:8 Extent=[56:1 - 56:37] Spelling=setFoo:withBar: ([56:8 - 56:14][56:22 - 56:29]) Selector index=1
 // CHECK-SPELLRANGE: 60:3 ObjCMessageExpr=setFoo:withBar::56:8 Extent=[60:3 - 60:29] Spelling=setFoo:withBar: ([60:10 - 60:16][60:19 - 60:26]) Selector index=0
+// CHECK-SPELLRANGE: 65:12 ObjCCategoryDecl=Dido:65:12 Extent=[65:1 - 66:5] Spelling=Dido ([65:18 - 65:22])
+// CHECK-SPELLRANGE: 67:17 ObjCCategoryImplDecl=Dido:67:17 (Definition) Extent=[67:1 - 68:2] Spelling=Dido ([67:23 - 67:27])

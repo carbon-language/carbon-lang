@@ -3196,6 +3196,18 @@ CXSourceRange clang_Cursor_getSpellingNameRange(CXCursor C,
     }
   }
 
+  if (C.kind == CXCursor_ObjCCategoryDecl ||
+      C.kind == CXCursor_ObjCCategoryImplDecl) {
+    if (pieceIndex > 0)
+      return clang_getNullRange();
+    if (ObjCCategoryDecl *
+          CD = dyn_cast_or_null<ObjCCategoryDecl>(getCursorDecl(C)))
+      return cxloc::translateSourceRange(Ctx, CD->getCategoryNameLoc());
+    if (ObjCCategoryImplDecl *
+          CID = dyn_cast_or_null<ObjCCategoryImplDecl>(getCursorDecl(C)))
+      return cxloc::translateSourceRange(Ctx, CID->getCategoryNameLoc());
+  }
+
   // FIXME: A CXCursor_InclusionDirective should give the location of the
   // filename, but we don't keep track of this.
 
