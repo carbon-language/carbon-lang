@@ -339,21 +339,19 @@ INTERCEPTOR(int, pthread_create, void *thread,
 #endif  // !_WIN32
 
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
-const char kOverrideSighandlerWarning[] =
-    "Warning: client program overrides the handler for signal %d.\n";
 INTERCEPTOR(void*, signal, int signum, void *handler) {
-  if (AsanInterceptsSignal(signum)) {
-    Report(kOverrideSighandlerWarning, signum);
+  if (!AsanInterceptsSignal(signum)) {
+    return REAL(signal)(signum, handler);
   }
-  return REAL(signal)(signum, handler);
+  return NULL;
 }
 
 INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
                             struct sigaction *oldact) {
-  if (AsanInterceptsSignal(signum)) {
-    Report(kOverrideSighandlerWarning, signum);
+  if (!AsanInterceptsSignal(signum)) {
+    return REAL(sigaction)(signum, act, oldact);
   }
-  return REAL(sigaction)(signum, act, oldact);
+  return 0;
 }
 #elif ASAN_POSIX
 // We need to have defined REAL(sigaction) on posix systems.
