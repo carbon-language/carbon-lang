@@ -92,6 +92,9 @@ public:
     return FailureResultFiles;
   }
 
+  /// Returns the sysroot path.
+  StringRef getSysRoot() const;
+
   /// getArgsForToolChain - Return the derived argument list for the
   /// tool chain \arg TC (or the default tool chain, if TC is not
   /// specified).

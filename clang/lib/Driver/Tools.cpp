@@ -377,10 +377,11 @@ void Clang::AddPreprocessingOptions(Compilation &C,
 
   // If we have a --sysroot, and don't have an explicit -isysroot flag, add an
   // -isysroot to the CC1 invocation.
-  if (Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
+  StringRef sysroot = C.getSysRoot();
+  if (sysroot != "") {
     if (!Args.hasArg(options::OPT_isysroot)) {
       CmdArgs.push_back("-isysroot");
-      CmdArgs.push_back(A->getValue(Args));
+      CmdArgs.push_back(C.getArgs().MakeArgString(sysroot));
     }
   }
   
@@ -4016,9 +4017,10 @@ void darwin::Link::AddLinkArgs(Compilation &C,
 
   // Give --sysroot= preference, over the Apple specific behavior to also use
   // --isysroot as the syslibroot.
-  if (const Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
+  StringRef sysroot = C.getSysRoot();
+  if (sysroot != "") {
     CmdArgs.push_back("-syslibroot");
-    CmdArgs.push_back(A->getValue(Args));
+    CmdArgs.push_back(C.getArgs().MakeArgString(sysroot));
   } else if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
     CmdArgs.push_back("-syslibroot");
     CmdArgs.push_back(A->getValue(Args));

@@ -230,3 +230,7 @@ void Compilation::initCompilationForDiagnostics(void) {
   Redirects[1] = new const llvm::sys::Path();
   Redirects[2] = new const llvm::sys::Path();
 }
+
+StringRef Compilation::getSysRoot(void) const {
+  return getDriver().SysRoot;
+}
