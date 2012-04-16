@@ -910,7 +910,7 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
   }
 
   llvm::MDBuilder MDHelper(getLLVMContext());
-  return MDHelper.CreateRange(Min, End);
+  return MDHelper.createRange(Min, End);
 }
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
@@ -3166,8 +3166,8 @@ void CodeGenFunction::SetFPAccuracy(llvm::Value *Val, float Accuracy) {
   if (Accuracy == 0.0 || !isa<llvm::Instruction>(Val))
     return;
 
-  llvm::Value *ULPs = llvm::ConstantFP::get(Builder.getFloatTy(), Accuracy);
-  llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(), ULPs);
+  llvm::MDBuilder MDHelper(getLLVMContext());
+  llvm::MDNode *Node = MDHelper.createFPMath(Accuracy);
 
   cast<llvm::Instruction>(Val)->setMetadata(llvm::LLVMContext::MD_fpmath, Node);
 }

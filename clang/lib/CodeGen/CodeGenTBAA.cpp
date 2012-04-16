@@ -40,7 +40,7 @@ llvm::MDNode *CodeGenTBAA::getRoot() {
   // (or a different version of this front-end), their TBAA trees will
   // remain distinct, and the optimizer will treat them conservatively.
   if (!Root)
-    Root = MDHelper.CreateTBAARoot("Simple C/C++ TBAA");
+    Root = MDHelper.createTBAARoot("Simple C/C++ TBAA");
 
   return Root;
 }
@@ -51,7 +51,7 @@ llvm::MDNode *CodeGenTBAA::getChar() {
   // these special powers only cover user-accessible memory, and doesn't
   // include things like vtables.
   if (!Char)
-    Char = MDHelper.CreateTBAANode("omnipotent char", getRoot());
+    Char = MDHelper.createTBAANode("omnipotent char", getRoot());
 
   return Char;
 }
@@ -115,7 +115,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // "underlying types".
     default:
       return MetadataCache[Ty] =
-        MDHelper.CreateTBAANode(BTy->getName(Features), getChar());
+        MDHelper.createTBAANode(BTy->getName(Features), getChar());
     }
   }
 
@@ -123,7 +123,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // TODO: Implement C++'s type "similarity" and consider dis-"similar"
   // pointers distinct.
   if (Ty->isPointerType())
-    return MetadataCache[Ty] = MDHelper.CreateTBAANode("any pointer",
+    return MetadataCache[Ty] = MDHelper.createTBAANode("any pointer",
                                                        getChar());
 
   // Enum types are distinct types. In C++ they have "underlying types",
@@ -151,7 +151,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     llvm::raw_svector_ostream Out(OutName);
     MContext.mangleCXXRTTIName(QualType(ETy, 0), Out);
     Out.flush();
-    return MetadataCache[Ty] = MDHelper.CreateTBAANode(OutName, getChar());
+    return MetadataCache[Ty] = MDHelper.createTBAANode(OutName, getChar());
   }
 
   // For now, handle any other kind of type conservatively.
@@ -159,5 +159,5 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
 }
 
 llvm::MDNode *CodeGenTBAA::getTBAAInfoForVTablePtr() {
-  return MDHelper.CreateTBAANode("vtable pointer", getRoot());
+  return MDHelper.createTBAANode("vtable pointer", getRoot());
 }
