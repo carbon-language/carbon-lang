@@ -613,11 +613,8 @@ namespace {
       return false;
 
     if ((!Config.VectorizePointers || TD == 0)
-        && ((T1->isPointerTy() ||
-              (T1->isVectorTy() && T1->getScalarType()->isPointerTy())) ||
-            (T2->isPointerTy() ||
-              (T2->isVectorTy() && T2->getScalarType()->isPointerTy()))
-           ))
+        && (T1->getScalarType()->isPointerTy() ||
+            T2->getScalarType()->isPointerTy()))
       return false;
 
     if (T1->getPrimitiveSizeInBits() > Config.VectorBits/2 ||
