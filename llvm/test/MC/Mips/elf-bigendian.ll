@@ -5,18 +5,18 @@
 
 ; Make sure that a section table (text) entry is correct.
 ; CHECK:   (('sh_name', 0x{{[0]*}}5) # '.text'
-; CHECKNEXT:   ('sh_type', 0x{{[0]*}}1)
-; CHECKNEXT:   ('sh_flags', 0x{{[0]*}}6)
-; CHECKNEXT:   ('sh_addr', 0x{{{[0-9,a-f]+}})
-; CHECKNEXT:   ('sh_offset', 0x{{{[0-9,a-f]+}})
-; CHECKNEXT:   ('sh_size', 0x{{{[0-9,a-f]+}})
-; CHECKNEXT:   ('sh_link', 0x{{[0]+}})
-; CHECKNEXT:   ('sh_info', 0x{{[0]+}})
-; CHECKNEXT:   ('sh_addralign', 0x{{[0]*}}4)
-; CHECKNEXT:   ('sh_entsize', 0x{{[0]+}})
+; CHECK-NEXT:   ('sh_type', 0x{{[0]*}}1)
+; CHECK-NEXT:   ('sh_flags', 0x{{[0]*}}6)
+; CHECK-NEXT:   ('sh_addr', 0x{{[0-9,a-f]+}})
+; CHECK-NEXT:   ('sh_offset', 0x{{[0-9,a-f]+}})
+; CHECK-NEXT:   ('sh_size', 0x{{[0-9,a-f]+}})
+; CHECK-NEXT:   ('sh_link', 0x{{[0]+}})
+; CHECK-NEXT:   ('sh_info', 0x{{[0]+}})
+; CHECK-NEXT:   ('sh_addralign', 0x{{[0]*}}4)
+; CHECK-NEXT:   ('sh_entsize', 0x{{[0]+}})
 
 ; See that at least first 3 instructions are correct: GP prologue
-; CHECKNEXT:   ('_section_data', '3c1c0000 279c0000 0399e021 {{[0-9,a-f]*}}')
+; CHECK-NEXT:   ('_section_data', '3c1c0000 279c0000 0399e021 {{[0-9,a-f, ]*}}')
 
 ; ModuleID = '../br1.c'
 target datalayout = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32"
