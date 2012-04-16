@@ -391,12 +391,13 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
 							 SuffixSchedule);
       isl_band_list_free(Children);
     } else if (EnablePollyVector) {
-      for (int i = ScheduleDimensions - 1 ;  i >= 0 ; i--) {
-	if (isl_band_member_is_zero_distance(Band, i)) {
+      for (int j = 0;  j < isl_band_n_member(Band); j++) {
+	if (isl_band_member_is_zero_distance(Band, j)) {
           isl_map *TileMap;
           isl_union_map *TileUMap;
 
-	  TileMap = getPrevectorMap(ctx, i, ScheduleDimensions);
+	  TileMap = getPrevectorMap(ctx, ScheduleDimensions - j - 1,
+                                    ScheduleDimensions);
 	  TileUMap = isl_union_map_from_map(TileMap);
           TileUMap = isl_union_map_align_params(TileUMap,
                                                 isl_space_copy(Space));
