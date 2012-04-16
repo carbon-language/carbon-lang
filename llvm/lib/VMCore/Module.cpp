@@ -434,7 +434,7 @@ bool Module::MaterializeAllPermanently(std::string *ErrInfo) {
 //
 
 
-// dropAllReferences() - This function causes all the subelementss to "let go"
+// dropAllReferences() - This function causes all the subelements to "let go"
 // of all references that they are maintaining.  This allows one to 'delete' a
 // whole module at a time, even though there may be circular references... first
 // all references are dropped, and all use counts go to zero.  Then everything
