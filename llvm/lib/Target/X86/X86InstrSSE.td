@@ -7735,24 +7735,26 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
 //
 
 multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
-                     Intrinsic Int> {
+                     ValueType OpVT> {
   def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2),
                    !strconcat(OpcodeStr,
                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR256:$dst, (Int VR256:$src2, VR256:$src1))]>, VEX_4V;
+                   [(set VR256:$dst,
+                     (OpVT (X86VPermv VR256:$src1, VR256:$src2)))]>, VEX_4V;
   def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
                    (ins VR256:$src1, i256mem:$src2),
                    !strconcat(OpcodeStr,
                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR256:$dst, (Int (bitconvert (mem_frag addr:$src2)),
-                                      VR256:$src1))]>,
+                   [(set VR256:$dst,
+                     (OpVT (X86VPermv VR256:$src1,
+                            (bitconvert (mem_frag addr:$src2)))))]>,
                    VEX_4V;
 }
 
-defm VPERMD : avx2_perm<0x36, "vpermd", memopv4i64, int_x86_avx2_permd>;
+defm VPERMD : avx2_perm<0x36, "vpermd", memopv4i64, v8i32>;
 let ExeDomain = SSEPackedSingle in
-defm VPERMPS : avx2_perm<0x16, "vpermps", memopv8f32, int_x86_avx2_permps>;
+defm VPERMPS : avx2_perm<0x16, "vpermps", memopv8f32, v8f32>;
 
 multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                          ValueType OpVT> {
@@ -7774,18 +7776,6 @@ multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
 defm VPERMQ : avx2_perm_imm<0x00, "vpermq", memopv4i64, v4i64>, VEX_W;
 let ExeDomain = SSEPackedDouble in
 defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, v4f64>, VEX_W;
-
-let Predicates = [HasAVX2] in {
-def : Pat<(v8i32 (X86VPermv VR256:$src1, VR256:$src2)),
-          (VPERMDYrr VR256:$src1, VR256:$src2)>;
-def : Pat<(v8f32 (X86VPermv VR256:$src1, VR256:$src2)),
-          (VPERMPSYrr VR256:$src1, VR256:$src2)>;
-
-def : Pat<(v8i32 (X86VPermv VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)))),
-          (VPERMDYrm VR256:$src1, addr:$src2)>;
-def : Pat<(v8f32 (X86VPermv VR256:$src1, (memopv8f32 addr:$src2))),
-          (VPERMPSYrm VR256:$src1, addr:$src2)>;
-}
 
 //===----------------------------------------------------------------------===//
 // VPERM2I128 - Permute Floating-Point Values in 128-bit chunks

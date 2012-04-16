@@ -9597,6 +9597,12 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx_vpermil_pd_256:
     return DAG.getNode(X86ISD::VPERMILP, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_avx2_permd:
+  case Intrinsic::x86_avx2_permps:
+    // Operands intentionally swapped. Mask is last operand to intrinsic,
+    // but second operand for node/intruction.
+    return DAG.getNode(X86ISD::VPERMV, dl, Op.getValueType(),
+                       Op.getOperand(2), Op.getOperand(1));
 
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
