@@ -122,14 +122,14 @@ define i32 @test_loop_early_exits(i32 %i, i32* %a) {
 ; Check that we sink early exit blocks out of loop bodies.
 ; CHECK: test_loop_early_exits:
 ; CHECK: %entry
+; CHECK: %body1
 ; CHECK: %body2
 ; CHECK: %body3
 ; CHECK: %body4
-; CHECK: %body1
+; CHECK: %exit
 ; CHECK: %bail1
 ; CHECK: %bail2
 ; CHECK: %bail3
-; CHECK: %exit
 
 entry:
   br label %body1
@@ -194,6 +194,36 @@ body1:
   %sum = add nsw i32 %0, %base
   %bailcond1 = icmp eq i32 %sum, 42
   br label %body0
+
+exit:
+  ret i32 %base
+}
+
+define i32 @test_no_loop_rotate(i32 %i, i32* %a) {
+; Check that we don't try to rotate a loop which is already laid out with
+; fallthrough opportunities into the top and out of the bottom.
+; CHECK: test_no_loop_rotate:
+; CHECK: %entry
+; CHECK: %body0
+; CHECK: %body1
+; CHECK: %exit
+
+entry:
+  br label %body0
+
+body0:
+  %iv = phi i32 [ 0, %entry ], [ %next, %body1 ]
+  %base = phi i32 [ 0, %entry ], [ %sum, %body1 ]
+  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %0 = load i32* %arrayidx
+  %sum = add nsw i32 %0, %base
+  %bailcond1 = icmp eq i32 %sum, 42
+  br i1 %bailcond1, label %exit, label %body1
+
+body1:
+  %next = add i32 %iv, 1
+  %exitcond = icmp eq i32 %next, %i
+  br i1 %exitcond, label %exit, label %body0
 
 exit:
   ret i32 %base

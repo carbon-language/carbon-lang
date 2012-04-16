@@ -215,6 +215,8 @@ class MachineBlockPlacement : public MachineFunctionPass {
                                       MachineLoop &L,
                                       const BlockFilterSet &LoopBlockSet);
   void buildLoopChains(MachineFunction &F, MachineLoop &L);
+  void rotateLoop(BlockChain &LoopChain, MachineBasicBlock *ExitingBB,
+                  const BlockFilterSet &LoopBlockSet);
   void buildCFGChains(MachineFunction &F);
 
 public:
@@ -659,6 +661,54 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F,
   return ExitingBB;
 }
 
+/// \brief Attempt to rotate an exiting block to the bottom of the loop.
+///
+/// Once we have built a chain, try to rotate it to line up the hot exit block
+/// with fallthrough out of the loop if doing so doesn't introduce unnecessary
+/// branches. For example, if the loop has fallthrough into its header and out
+/// of its bottom already, don't rotate it.
+void MachineBlockPlacement::rotateLoop(BlockChain &LoopChain,
+                                       MachineBasicBlock *ExitingBB,
+                                       const BlockFilterSet &LoopBlockSet) {
+  if (!ExitingBB)
+    return;
+
+  MachineBasicBlock *Top = *LoopChain.begin();
+  bool ViableTopFallthrough = false;
+  for (MachineBasicBlock::pred_iterator PI = Top->pred_begin(),
+                                        PE = Top->pred_end();
+       PI != PE; ++PI) {
+    BlockChain *PredChain = BlockToChain[*PI];
+    if (!LoopBlockSet.count(*PI) &&
+        (!PredChain || *PI == *llvm::prior(PredChain->end()))) {
+      ViableTopFallthrough = true;
+      break;
+    }
+  }
+
+  // If the header has viable fallthrough, check whether the current loop
+  // bottom is a viable exiting block. If so, bail out as rotating will
+  // introduce an unnecessary branch.
+  if (ViableTopFallthrough) {
+    MachineBasicBlock *Bottom = *llvm::prior(LoopChain.end());
+    for (MachineBasicBlock::succ_iterator SI = Bottom->succ_begin(),
+                                          SE = Bottom->succ_end();
+         SI != SE; ++SI) {
+      BlockChain *SuccChain = BlockToChain[*SI];
+      if (!LoopBlockSet.count(*SI) &&
+          (!SuccChain || *SI == *SuccChain->begin()))
+        return;
+    }
+  }
+
+  BlockChain::iterator ExitIt = std::find(LoopChain.begin(), LoopChain.end(),
+                                          ExitingBB);
+  if (ExitIt == LoopChain.end())
+    return;
+
+  std::rotate(LoopChain.begin(), llvm::next(ExitIt), LoopChain.end());
+}
+
 /// \brief Forms basic block chains from the natural loop structures.
 ///
 /// These chains are designed to preserve the existing *structure* of the code
@@ -709,17 +759,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   }
 
   buildChain(L.getHeader(), LoopChain, BlockWorkList, &LoopBlockSet);
-
-  // Once we have built a chain, try to rotate it to line up the hot exit block
-  // with fallthrough out of the loop (if we have a valid exit block for that).
-  if (ExitingBB) {
-    BlockChain::iterator ExitIt = std::find(LoopChain.begin(), LoopChain.end(),
-                                            ExitingBB);
-
-    if (ExitIt != LoopChain.end()) {
-      std::rotate(LoopChain.begin(), llvm::next(ExitIt), LoopChain.end());
-    }
-  }
+  rotateLoop(LoopChain, ExitingBB, LoopBlockSet);
 
   DEBUG({
     // Crash at the end so we get all of the debugging output first.
