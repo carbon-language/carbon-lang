@@ -244,9 +244,6 @@ public:
     void setLinkage(Linkage L) { linkage_ = L; }
     void setVisibility(Visibility V) { visibility_ = V; }
     void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
-    void setVisibility(LinkageInfo Other) {
-      setVisibility(Other.visibility(), Other.visibilityExplicit());
-    }
 
     void mergeLinkage(Linkage L) {
       setLinkage(minLinkage(linkage(), L));
