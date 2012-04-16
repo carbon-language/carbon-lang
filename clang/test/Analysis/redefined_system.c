@@ -12,6 +12,6 @@ char strdup();
 char atoi();
 
 int foo () {
-  return memmove() + malloc() + system + stdin() + memccpy() + free() + strdup() + atoi();
+  return memmove() + malloc() + system() + stdin() + memccpy() + free() + strdup() + atoi();
 
 }
