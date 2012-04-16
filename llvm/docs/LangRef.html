@@ -3006,10 +3006,12 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 <div>
 
 <p><tt>fpmath</tt> metadata may be attached to any instruction of floating point
-   type.  It can be used to express the maximum acceptable relative error in the
-   result of that instruction, in ULPs, thus potentially allowing the compiler
-   to use a more efficient but less accurate method of computing it.
-   ULP is defined as follows:</p>
+  type.  It can be used to express the maximum acceptable error in the result of
+  that instruction, in ULPs, thus potentially allowing the compiler to use a
+  more efficient but less accurate method of computing it.  The number of ULPs
+  may also be the string <tt>"fast"</tt>, which tells the compiler that speed
+  matters more than accuracy, so any fairly accurate method of computation is
+  fine as long as it is quick.  ULP is defined as follows:</p>
 
 <blockquote>
 
@@ -3021,13 +3023,14 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 
 </blockquote>
 
-<p>The metadata node shall consist of a single non-negative floating
-   point number representing the maximum relative error.  For example,
-   2.5 ULP:</p>
+<p>The metadata node shall consist of a single positive floating point number
+   representing the maximum relative error, or the string <tt>"fast"</tt>.
+   For example:</p>
 
 <div class="doc_code">
 <pre>
-!0 = metadata !{ float 2.5 }
+!0 = metadata !{ float 2.5 } ; maximum acceptable inaccuracy is 2.5 ULPs
+!1 = metadata !{ !metadata !"fast" } ; potentially unbounded inaccuracy
 </pre>
 </div>
 

@@ -12,8 +12,11 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Operator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Support/MDBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
 #include "gtest/gtest.h"
 
@@ -224,6 +227,28 @@ TEST(InstructionsTest, VectorGep) {
   delete ICmp1;
   delete PtrVecA;
   delete PtrVecB;
+}
+
+TEST(InstructionsTest, FPMathOperator) {
+  LLVMContext &Context = getGlobalContext();
+  IRBuilder<> Builder(Context);
+  MDBuilder MDHelper(Context);
+  Instruction *I = Builder.CreatePHI(Builder.getDoubleTy(), 0);
+  MDNode *MD1 = MDHelper.createFPMath(1.0);
+  MDNode *MDF = MDHelper.createFastFPMath();
+  Value *V1 = Builder.CreateFAdd(I, I, "", MD1);
+  Value *VF = Builder.CreateFAdd(I, I, "", MDF);
+  EXPECT_TRUE(isa<FPMathOperator>(V1));
+  EXPECT_TRUE(isa<FPMathOperator>(VF));
+  FPMathOperator *O1 = cast<FPMathOperator>(V1);
+  FPMathOperator *OF = cast<FPMathOperator>(VF);
+  EXPECT_FALSE(O1->isFastFPAccuracy());
+  EXPECT_TRUE(OF->isFastFPAccuracy());
+  EXPECT_EQ(O1->getFPAccuracy(), 1.0);
+  EXPECT_GT(OF->getFPAccuracy(), 999.0);
+  delete V1;
+  delete VF;
+  delete I;
 }
 
 }  // end anonymous namespace

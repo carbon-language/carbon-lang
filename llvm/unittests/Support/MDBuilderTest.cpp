@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
+#include "llvm/Operator.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MDBuilder.h"
 using namespace llvm;
 
@@ -18,19 +20,43 @@ protected:
   LLVMContext Context;
 };
 
-TEST_F(MDBuilderTest, CreateString) {
+TEST_F(MDBuilderTest, createString) {
   MDBuilder MDHelper(Context);
-  MDString *Str0 = MDHelper.CreateString("");
-  MDString *Str1 = MDHelper.CreateString("string");
+  MDString *Str0 = MDHelper.createString("");
+  MDString *Str1 = MDHelper.createString("string");
   EXPECT_EQ(Str0->getString(), StringRef(""));
   EXPECT_EQ(Str1->getString(), StringRef("string"));
 }
-
-TEST_F(MDBuilderTest, CreateRangeMetadata) {
+TEST_F(MDBuilderTest, createFastFPMath) {
+  MDBuilder MDHelper(Context);
+  MDNode *MD = MDHelper.createFastFPMath();
+  EXPECT_NE(MD, (MDNode *)0);
+  EXPECT_EQ(MD->getNumOperands(), 1U);
+  Value *Op = MD->getOperand(0);
+  EXPECT_TRUE(isa<MDString>(Op));
+  EXPECT_EQ(cast<MDString>(Op)->getString(), "fast");
+}
+TEST_F(MDBuilderTest, createFPMath) {
+  MDBuilder MDHelper(Context);
+  MDNode *MD0 = MDHelper.createFPMath(0.0);
+  MDNode *MD1 = MDHelper.createFPMath(1.0);
+  MDNode *MDF = MDHelper.createFPMath(-1.0);
+  MDNode *MDF2 = MDHelper.createFastFPMath();
+  EXPECT_EQ(MD0, (MDNode *)0);
+  EXPECT_NE(MD1, (MDNode *)0);
+  EXPECT_EQ(MDF, MDF2);
+  EXPECT_EQ(MD1->getNumOperands(), 1U);
+  Value *Op = MD1->getOperand(0);
+  EXPECT_TRUE(isa<ConstantFP>(Op));
+  EXPECT_TRUE(Op->getType()->isFloatingPointTy());
+  ConstantFP *Val = cast<ConstantFP>(Op);
+  EXPECT_TRUE(Val->isExactlyValue(1.0));
+}
+TEST_F(MDBuilderTest, createRangeMetadata) {
   MDBuilder MDHelper(Context);
   APInt A(8, 1), B(8, 2);
-  MDNode *R0 = MDHelper.CreateRange(A, A);
-  MDNode *R1 = MDHelper.CreateRange(A, B);
+  MDNode *R0 = MDHelper.createRange(A, A);
+  MDNode *R1 = MDHelper.createRange(A, B);
   EXPECT_EQ(R0, (MDNode *)0);
   EXPECT_NE(R1, (MDNode *)0);
   EXPECT_EQ(R1->getNumOperands(), 2U);
@@ -41,10 +67,10 @@ TEST_F(MDBuilderTest, CreateRangeMetadata) {
   EXPECT_EQ(C0->getValue(), A);
   EXPECT_EQ(C1->getValue(), B);
 }
-TEST_F(MDBuilderTest, CreateAnonymousTBAARoot) {
+TEST_F(MDBuilderTest, createAnonymousTBAARoot) {
   MDBuilder MDHelper(Context);
-  MDNode *R0 = MDHelper.CreateAnonymousTBAARoot();
-  MDNode *R1 = MDHelper.CreateAnonymousTBAARoot();
+  MDNode *R0 = MDHelper.createAnonymousTBAARoot();
+  MDNode *R1 = MDHelper.createAnonymousTBAARoot();
   EXPECT_NE(R0, R1);
   EXPECT_GE(R0->getNumOperands(), 1U);
   EXPECT_GE(R1->getNumOperands(), 1U);
@@ -53,23 +79,23 @@ TEST_F(MDBuilderTest, CreateAnonymousTBAARoot) {
   EXPECT_TRUE(R0->getNumOperands() == 1 || R0->getOperand(1) == 0);
   EXPECT_TRUE(R1->getNumOperands() == 1 || R1->getOperand(1) == 0);
 }
-TEST_F(MDBuilderTest, CreateTBAARoot) {
+TEST_F(MDBuilderTest, createTBAARoot) {
   MDBuilder MDHelper(Context);
-  MDNode *R0 = MDHelper.CreateTBAARoot("Root");
-  MDNode *R1 = MDHelper.CreateTBAARoot("Root");
+  MDNode *R0 = MDHelper.createTBAARoot("Root");
+  MDNode *R1 = MDHelper.createTBAARoot("Root");
   EXPECT_EQ(R0, R1);
   EXPECT_GE(R0->getNumOperands(), 1U);
   EXPECT_TRUE(isa<MDString>(R0->getOperand(0)));
   EXPECT_EQ(cast<MDString>(R0->getOperand(0))->getString(), "Root");
   EXPECT_TRUE(R0->getNumOperands() == 1 || R0->getOperand(1) == 0);
 }
-TEST_F(MDBuilderTest, CreateTBAANode) {
+TEST_F(MDBuilderTest, createTBAANode) {
   MDBuilder MDHelper(Context);
-  MDNode *R = MDHelper.CreateTBAARoot("Root");
-  MDNode *N0 = MDHelper.CreateTBAANode("Node", R);
-  MDNode *N1 = MDHelper.CreateTBAANode("edoN", R);
-  MDNode *N2 = MDHelper.CreateTBAANode("Node", R, true);
-  MDNode *N3 = MDHelper.CreateTBAANode("Node", R);
+  MDNode *R = MDHelper.createTBAARoot("Root");
+  MDNode *N0 = MDHelper.createTBAANode("Node", R);
+  MDNode *N1 = MDHelper.createTBAANode("edoN", R);
+  MDNode *N2 = MDHelper.createTBAANode("Node", R, true);
+  MDNode *N3 = MDHelper.createTBAANode("Node", R);
   EXPECT_EQ(N0, N3);
   EXPECT_NE(N0, N1);
   EXPECT_NE(N0, N2);

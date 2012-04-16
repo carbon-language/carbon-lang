@@ -15,8 +15,9 @@
 #ifndef LLVM_OPERATOR_H
 #define LLVM_OPERATOR_H
 
-#include "llvm/Instruction.h"
 #include "llvm/Constants.h"
+#include "llvm/Instruction.h"
+#include "llvm/Type.h"
 
 namespace llvm {
 
@@ -162,7 +163,32 @@ public:
            (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
   }
 };
-  
+
+/// FPMathOperator - Utility class for floating point operations which can have
+/// information about relaxed accuracy requirements attached to them.
+class FPMathOperator : public Operator {
+private:
+  ~FPMathOperator(); // do not implement
+
+public:
+
+  /// \brief Get the maximum error permitted by this operation in ULPs.  An
+  /// accuracy of 0.0 means that the operation should be performed with the
+  /// default precision.  A huge value is returned if the accuracy is 'fast'.
+  float getFPAccuracy() const;
+
+  /// \brief Return true if the accuracy is 'fast'.  This indicates that speed
+  /// is more important than accuracy.
+  bool isFastFPAccuracy() const;
+
+  static inline bool classof(const FPMathOperator *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getType()->isFPOrFPVectorTy();
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
 
   
 /// ConcreteOperator - A helper template for defining operators for individual

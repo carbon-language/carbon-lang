@@ -26,20 +26,46 @@ namespace llvm {
   class MDBuilder {
     LLVMContext &Context;
 
+    MDString *getFastString() {
+      return createString("fast");
+    }
   public:
     MDBuilder(LLVMContext &context) : Context(context) {}
 
-    /// CreateString - Return the given string as metadata.
-    MDString *CreateString(StringRef Str) {
+    /// \brief Return the given string as metadata.
+    MDString *createString(StringRef Str) {
       return MDString::get(Context, Str);
     }
+
+    //===------------------------------------------------------------------===//
+    // FPMath metadata.
+    //===------------------------------------------------------------------===//
+
+    /// \brief Return metadata with appropriate settings for 'fast math'.
+    MDNode *createFastFPMath() {
+      return MDNode::get(Context, getFastString());
+    }
+
+    /// \brief Return metadata with the given settings.  Special values for the
+    /// Accuracy parameter are 0.0, which means the default (maximal precision)
+    /// setting; and negative values which all mean 'fast'.
+    MDNode *createFPMath(float Accuracy) {
+      if (Accuracy == 0.0)
+        return 0;
+      if (Accuracy < 0.0)
+        return MDNode::get(Context, getFastString());
+      assert(Accuracy > 0.0 && "Invalid fpmath accuracy!");
+      Value *Op = ConstantFP::get(Type::getFloatTy(Context), Accuracy);
+      return MDNode::get(Context, Op);
+    }
+
 
     //===------------------------------------------------------------------===//
     // Range metadata.
     //===------------------------------------------------------------------===//
 
-    /// CreateRange - Return metadata describing the range [Lo, Hi).
-    MDNode *CreateRange(const APInt &Lo, const APInt &Hi) {
+    /// \brief Return metadata describing the range [Lo, Hi).
+    MDNode *createRange(const APInt &Lo, const APInt &Hi) {
       assert(Lo.getBitWidth() == Hi.getBitWidth() && "Mismatched bitwidths!");
       // If the range is everything then it is useless.
       if (Hi == Lo)
@@ -56,10 +82,10 @@ namespace llvm {
     // TBAA metadata.
     //===------------------------------------------------------------------===//
 
-    /// CreateAnonymousTBAARoot - Return metadata appropriate for a TBAA root
-    /// node.  Each returned node is distinct from all other metadata and will
-    /// never be identified (uniqued) with anything else.
-    MDNode *CreateAnonymousTBAARoot() {
+    /// \brief Return metadata appropriate for a TBAA root node.  Each returned
+    /// node is distinct from all other metadata and will never be identified
+    /// (uniqued) with anything else.
+    MDNode *createAnonymousTBAARoot() {
       // To ensure uniqueness the root node is self-referential.
       MDNode *Dummy = MDNode::getTemporary(Context, ArrayRef<Value*>());
       MDNode *Root = MDNode::get(Context, Dummy);
@@ -74,23 +100,23 @@ namespace llvm {
       return Root;
     }
 
-    /// CreateTBAARoot - Return metadata appropriate for a TBAA root node with
-    /// the given name.  This may be identified (uniqued) with other roots with
-    /// the same name.
-    MDNode *CreateTBAARoot(StringRef Name) {
-      return MDNode::get(Context, CreateString(Name));
+    /// \brief Return metadata appropriate for a TBAA root node with the given
+    /// name.  This may be identified (uniqued) with other roots with the same
+    /// name.
+    MDNode *createTBAARoot(StringRef Name) {
+      return MDNode::get(Context, createString(Name));
     }
 
-    /// CreateTBAANode - Return metadata for a non-root TBAA node with the given
-    /// name, parent in the TBAA tree, and value for 'pointsToConstantMemory'.
-    MDNode *CreateTBAANode(StringRef Name, MDNode *Parent,
+    /// \brief Return metadata for a non-root TBAA node with the given name,
+    /// parent in the TBAA tree, and value for 'pointsToConstantMemory'.
+    MDNode *createTBAANode(StringRef Name, MDNode *Parent,
                            bool isConstant = false) {
       if (isConstant) {
         Constant *Flags = ConstantInt::get(Type::getInt64Ty(Context), 1);
-        Value *Ops[3] = { CreateString(Name), Parent, Flags };
+        Value *Ops[3] = { createString(Name), Parent, Flags };
         return MDNode::get(Context, Ops);
       } else {
-        Value *Ops[2] = { CreateString(Name), Parent };
+        Value *Ops[2] = { createString(Name), Parent };
         return MDNode::get(Context, Ops);
       }
     }

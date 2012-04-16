@@ -17,6 +17,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -331,48 +332,62 @@ template<bool preserveNames = true, typename T = ConstantFolder,
          typename Inserter = IRBuilderDefaultInserter<preserveNames> >
 class IRBuilder : public IRBuilderBase, public Inserter {
   T Folder;
+  MDNode *DefaultFPMathTag;
 public:
-  IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter())
-    : IRBuilderBase(C), Inserter(I), Folder(F) {
+  IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter(),
+            MDNode *FPMathTag = 0)
+    : IRBuilderBase(C), Inserter(I), Folder(F), DefaultFPMathTag(FPMathTag) {
   }
 
-  explicit IRBuilder(LLVMContext &C) : IRBuilderBase(C), Folder() {
+  explicit IRBuilder(LLVMContext &C, MDNode *FPMathTag = 0) : IRBuilderBase(C),
+    Folder(), DefaultFPMathTag(FPMathTag) {
   }
 
-  explicit IRBuilder(BasicBlock *TheBB, const T &F)
-    : IRBuilderBase(TheBB->getContext()), Folder(F) {
+  explicit IRBuilder(BasicBlock *TheBB, const T &F, MDNode *FPMathTag = 0)
+    : IRBuilderBase(TheBB->getContext()), Folder(F),
+      DefaultFPMathTag(FPMathTag) {
     SetInsertPoint(TheBB);
   }
 
-  explicit IRBuilder(BasicBlock *TheBB)
-    : IRBuilderBase(TheBB->getContext()), Folder() {
+  explicit IRBuilder(BasicBlock *TheBB, MDNode *FPMathTag = 0)
+    : IRBuilderBase(TheBB->getContext()), Folder(),
+      DefaultFPMathTag(FPMathTag) {
     SetInsertPoint(TheBB);
   }
 
-  explicit IRBuilder(Instruction *IP)
-    : IRBuilderBase(IP->getContext()), Folder() {
+  explicit IRBuilder(Instruction *IP, MDNode *FPMathTag = 0)
+    : IRBuilderBase(IP->getContext()), Folder(), DefaultFPMathTag(FPMathTag) {
     SetInsertPoint(IP);
     SetCurrentDebugLocation(IP->getDebugLoc());
   }
 
-  explicit IRBuilder(Use &U)
-    : IRBuilderBase(U->getContext()), Folder() {
+  explicit IRBuilder(Use &U, MDNode *FPMathTag = 0)
+    : IRBuilderBase(U->getContext()), Folder(), DefaultFPMathTag(FPMathTag) {
     SetInsertPoint(U);
     SetCurrentDebugLocation(cast<Instruction>(U.getUser())->getDebugLoc());
   }
 
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
-    : IRBuilderBase(TheBB->getContext()), Folder(F) {
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F,
+            MDNode *FPMathTag = 0)
+    : IRBuilderBase(TheBB->getContext()), Folder(F),
+      DefaultFPMathTag(FPMathTag) {
     SetInsertPoint(TheBB, IP);
   }
 
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
-    : IRBuilderBase(TheBB->getContext()), Folder() {
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, MDNode *FPMathTag = 0)
+    : IRBuilderBase(TheBB->getContext()), Folder(),
+      DefaultFPMathTag(FPMathTag) {
     SetInsertPoint(TheBB, IP);
   }
 
   /// getFolder - Get the constant folder being used.
   const T &getFolder() { return Folder; }
+
+  /// getDefaultFPMathTag - Get the floating point math metadata being used.
+  MDNode *getDefaultFPMathTag() const { return DefaultFPMathTag; }
+
+  /// SetDefaultFPMathTag - Set the floating point math metadata to be used.
+  void SetDefaultFPMathTag(MDNode *FPMathTag) { DefaultFPMathTag = FPMathTag; }
 
   /// isNamePreserving - Return true if this builder is configured to actually
   /// add the requested names to IR created through it.
@@ -496,6 +511,14 @@ private:
     if (HasNSW) BO->setHasNoSignedWrap();
     return BO;
   }
+
+  Instruction *AddFPMathTag(Instruction *I, MDNode *FPMathTag) const {
+    if (!FPMathTag)
+      FPMathTag = DefaultFPMathTag;
+    if (FPMathTag)
+      I->setMetadata(LLVMContext::MD_fpmath, FPMathTag);
+    return I;
+  }
 public:
   Value *CreateAdd(Value *LHS, Value *RHS, const Twine &Name = "",
                    bool HasNUW = false, bool HasNSW = false) {
@@ -511,11 +534,13 @@ public:
   Value *CreateNUWAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
     return CreateAdd(LHS, RHS, Name, true, false);
   }
-  Value *CreateFAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateFAdd(Value *LHS, Value *RHS, const Twine &Name = "",
+                    MDNode *FPMathTag = 0) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFAdd(LC, RC), Name);
-    return Insert(BinaryOperator::CreateFAdd(LHS, RHS), Name);
+    return Insert(AddFPMathTag(BinaryOperator::CreateFAdd(LHS, RHS),
+                               FPMathTag), Name);
   }
   Value *CreateSub(Value *LHS, Value *RHS, const Twine &Name = "",
                    bool HasNUW = false, bool HasNSW = false) {
@@ -531,11 +556,13 @@ public:
   Value *CreateNUWSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     return CreateSub(LHS, RHS, Name, true, false);
   }
-  Value *CreateFSub(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateFSub(Value *LHS, Value *RHS, const Twine &Name = "",
+                    MDNode *FPMathTag = 0) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFSub(LC, RC), Name);
-    return Insert(BinaryOperator::CreateFSub(LHS, RHS), Name);
+    return Insert(AddFPMathTag(BinaryOperator::CreateFSub(LHS, RHS),
+                               FPMathTag), Name);
   }
   Value *CreateMul(Value *LHS, Value *RHS, const Twine &Name = "",
                    bool HasNUW = false, bool HasNSW = false) {
@@ -551,11 +578,13 @@ public:
   Value *CreateNUWMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     return CreateMul(LHS, RHS, Name, true, false);
   }
-  Value *CreateFMul(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateFMul(Value *LHS, Value *RHS, const Twine &Name = "",
+                    MDNode *FPMathTag = 0) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFMul(LC, RC), Name);
-    return Insert(BinaryOperator::CreateFMul(LHS, RHS), Name);
+    return Insert(AddFPMathTag(BinaryOperator::CreateFMul(LHS, RHS),
+                               FPMathTag), Name);
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const Twine &Name = "",
                     bool isExact = false) {
@@ -581,11 +610,13 @@ public:
   Value *CreateExactSDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     return CreateSDiv(LHS, RHS, Name, true);
   }
-  Value *CreateFDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateFDiv(Value *LHS, Value *RHS, const Twine &Name = "",
+                    MDNode *FPMathTag = 0) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFDiv(LC, RC), Name);
-    return Insert(BinaryOperator::CreateFDiv(LHS, RHS), Name);
+    return Insert(AddFPMathTag(BinaryOperator::CreateFDiv(LHS, RHS),
+                               FPMathTag), Name);
   }
   Value *CreateURem(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
@@ -599,11 +630,13 @@ public:
         return Insert(Folder.CreateSRem(LC, RC), Name);
     return Insert(BinaryOperator::CreateSRem(LHS, RHS), Name);
   }
-  Value *CreateFRem(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateFRem(Value *LHS, Value *RHS, const Twine &Name = "",
+                    MDNode *FPMathTag = 0) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFRem(LC, RC), Name);
-    return Insert(BinaryOperator::CreateFRem(LHS, RHS), Name);
+    return Insert(AddFPMathTag(BinaryOperator::CreateFRem(LHS, RHS),
+                               FPMathTag), Name);
   }
 
   Value *CreateShl(Value *LHS, Value *RHS, const Twine &Name = "",
@@ -729,10 +762,10 @@ public:
   Value *CreateNUWNeg(Value *V, const Twine &Name = "") {
     return CreateNeg(V, Name, true, false);
   }
-  Value *CreateFNeg(Value *V, const Twine &Name = "") {
+  Value *CreateFNeg(Value *V, const Twine &Name = "", MDNode *FPMathTag = 0) {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Insert(Folder.CreateFNeg(VC), Name);
-    return Insert(BinaryOperator::CreateFNeg(V), Name);
+    return Insert(AddFPMathTag(BinaryOperator::CreateFNeg(V), FPMathTag), Name);
   }
   Value *CreateNot(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))

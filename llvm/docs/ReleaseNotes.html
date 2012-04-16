@@ -489,6 +489,9 @@ syntax, there are still significant gaps in that support.</p>
   <li>The <tt>unwind</tt> instruction is now gone. With the introduction of the
       new exception handling system in LLVM 3.0, the <tt>unwind</tt> instruction
       became obsolete.</li>
+  <li>Floating point instructions can be annotated with <tt>fpmath</tt> metadata
+      to indicate relaxed precision requirements, such as those corresponding to
+      "fast math".</li>
   <li>....</li>
 </ul>
 
