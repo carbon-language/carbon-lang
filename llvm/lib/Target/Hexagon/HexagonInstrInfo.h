@@ -107,6 +107,8 @@ public:
 
   unsigned createVR(MachineFunction* MF, MVT VT) const;
 
+  virtual bool isExtendable(const MachineInstr* MI) const;
+  virtual bool isExtended(const MachineInstr* MI) const;
   virtual bool isPredicable(MachineInstr *MI) const;
   virtual bool
   PredicateInstruction(MachineInstr *MI,
@@ -136,6 +138,10 @@ public:
   isProfitableToDupForIfCvt(MachineBasicBlock &MBB,unsigned NumCycles,
                             const BranchProbability &Probability) const;
 
+  unsigned getInvertedPredicatedOpcode(const int Opcode) const;
+  unsigned getImmExtForm(const MachineInstr* MI) const;
+  unsigned getNormalBranchForm(const MachineInstr* MI) const;
+
   virtual DFAPacketizer*
   CreateTargetScheduleState(const TargetMachine *TM,
                             const ScheduleDAG *DAG) const;
@@ -160,21 +166,16 @@ public:
   bool isS8_Immediate(const int value) const;
   bool isS6_Immediate(const int value) const;
 
-  bool isSaveCalleeSavedRegsCall(const MachineInstr* MI) const;
   bool isConditionalTransfer(const MachineInstr* MI) const;
-  bool isConditionalALU32 (const MachineInstr* MI) const;
-  bool isConditionalLoad (const MachineInstr* MI) const;
+  bool isConditionalALU32(const MachineInstr* MI) const;
+  bool isConditionalLoad(const MachineInstr* MI) const;
   bool isConditionalStore(const MachineInstr* MI) const;
   bool isDeallocRet(const MachineInstr *MI) const;
-  unsigned getInvertedPredicatedOpcode(const int Opc) const;
-  bool isExtendable(const MachineInstr* MI) const;
-  bool isExtended(const MachineInstr* MI) const;
-  bool isPostIncrement(const MachineInstr* MI) const;
-  bool isNewValueStore(const MachineInstr* MI) const;
-  bool isNewValueJump(const MachineInstr* MI) const;
   bool isNewValueJumpCandidate(const MachineInstr *MI) const;
-  unsigned getImmExtForm(const MachineInstr* MI) const;
-  unsigned getNormalBranchForm(const MachineInstr* MI) const;
+  bool isNewValueJump(const MachineInstr* MI) const;
+  bool isNewValueStore(const MachineInstr* MI) const;
+  bool isPostIncrement(const MachineInstr* MI) const;
+  bool isSaveCalleeSavedRegsCall(const MachineInstr* MI) const;
 
 private:
   int getMatchingCondBranchOpcode(int Opc, bool sense) const;

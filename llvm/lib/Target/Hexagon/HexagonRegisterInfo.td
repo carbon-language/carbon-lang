@@ -131,6 +131,9 @@ let Namespace = "Hexagon" in {
   def SA1 : Rc<2, "sa1">, DwarfRegNum<[69]>;
   def LC1 : Rc<3, "lc1">, DwarfRegNum<[70]>;
 
+  def M0 : Rc<6, "m0">, DwarfRegNum<[71]>;
+  def M1 : Rc<7, "m1">, DwarfRegNum<[72]>;
+
   def PC : Rc<9,  "pc">, DwarfRegNum<[32]>; // is the Dwarf number correct?
   def GP : Rc<11, "gp">, DwarfRegNum<[33]>; // is the Dwarf number correct?
 }
@@ -140,15 +143,13 @@ let Namespace = "Hexagon" in {
 // FIXME: the register order should be defined in terms of the preferred
 // allocation order...
 //
-def IntRegs : RegisterClass<"Hexagon", [i32], 32,
+def IntRegs : RegisterClass<"Hexagon", [i32,f32], 32,
                             (add (sequence "R%u", 0, 9),
                                  (sequence "R%u", 12, 28),
                                  R10, R11, R29, R30, R31)> {
 }
 
-
-
-def DoubleRegs : RegisterClass<"Hexagon", [i64], 64,
+def DoubleRegs : RegisterClass<"Hexagon", [i64,f64], 64,
                                (add (sequence "D%u", 0, 4),
                                     (sequence "D%u", 6, 13), D5, D14, D15)> {
   let SubRegClasses = [(IntRegs subreg_loreg, subreg_hireg)];
@@ -162,6 +163,7 @@ def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
 
 def CRRegs : RegisterClass<"Hexagon", [i32], 32,
                            (add (sequence "LC%u", 0, 1),
-                                (sequence "SA%u", 0, 1), PC, GP)> {
+                                (sequence "SA%u", 0, 1),
+                                (sequence "M%u", 0, 1), PC, GP)> {
   let Size = 32;
 }

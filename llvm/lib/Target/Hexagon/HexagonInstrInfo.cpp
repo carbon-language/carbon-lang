@@ -34,23 +34,23 @@ using namespace llvm;
 /// Constants for Hexagon instructions.
 ///
 const int Hexagon_MEMW_OFFSET_MAX = 4095;
-const int Hexagon_MEMW_OFFSET_MIN = 4096;
+const int Hexagon_MEMW_OFFSET_MIN = -4096;
 const int Hexagon_MEMD_OFFSET_MAX = 8191;
-const int Hexagon_MEMD_OFFSET_MIN = 8192;
+const int Hexagon_MEMD_OFFSET_MIN = -8192;
 const int Hexagon_MEMH_OFFSET_MAX = 2047;
-const int Hexagon_MEMH_OFFSET_MIN = 2048;
+const int Hexagon_MEMH_OFFSET_MIN = -2048;
 const int Hexagon_MEMB_OFFSET_MAX = 1023;
-const int Hexagon_MEMB_OFFSET_MIN = 1024;
+const int Hexagon_MEMB_OFFSET_MIN = -1024;
 const int Hexagon_ADDI_OFFSET_MAX = 32767;
-const int Hexagon_ADDI_OFFSET_MIN = 32768;
+const int Hexagon_ADDI_OFFSET_MIN = -32768;
 const int Hexagon_MEMD_AUTOINC_MAX = 56;
-const int Hexagon_MEMD_AUTOINC_MIN = 64;
+const int Hexagon_MEMD_AUTOINC_MIN = -64;
 const int Hexagon_MEMW_AUTOINC_MAX = 28;
-const int Hexagon_MEMW_AUTOINC_MIN = 32;
+const int Hexagon_MEMW_AUTOINC_MIN = -32;
 const int Hexagon_MEMH_AUTOINC_MAX = 14;
-const int Hexagon_MEMH_AUTOINC_MIN = 16;
+const int Hexagon_MEMH_AUTOINC_MIN = -16;
 const int Hexagon_MEMB_AUTOINC_MAX = 7;
-const int Hexagon_MEMB_AUTOINC_MIN = 8;
+const int Hexagon_MEMB_AUTOINC_MIN = -8;
 
 
 
@@ -415,7 +415,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       MachineMemOperand::MOLoad,
                       MFI.getObjectSize(FI),
                       Align);
-
   if (RC == Hexagon::IntRegsRegisterClass) {
     BuildMI(MBB, I, DL, get(Hexagon::LDriw), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
@@ -454,9 +453,9 @@ unsigned HexagonInstrInfo::createVR(MachineFunction* MF, MVT VT) const {
   const TargetRegisterClass *TRC;
   if (VT == MVT::i1) {
     TRC =  Hexagon::PredRegsRegisterClass;
-  } else if (VT == MVT::i32) {
+  } else if (VT == MVT::i32 || VT == MVT::f32) {
     TRC =  Hexagon::IntRegsRegisterClass;
-  } else if (VT == MVT::i64) {
+  } else if (VT == MVT::i64 || VT == MVT::f64) {
     TRC =  Hexagon::DoubleRegsRegisterClass;
   } else {
     llvm_unreachable("Cannot handle this register class");
@@ -727,6 +726,12 @@ bool HexagonInstrInfo::isExtended(const MachineInstr *MI) const {
 
     // TFR_FI
     case Hexagon::TFR_FI_immext_V4:
+
+    // TFRI_F
+    case Hexagon::TFRI_f:
+    case Hexagon::TFRI_cPt_f:
+    case Hexagon::TFRI_cNotPt_f:
+    case Hexagon::CONST64_Float_Real:
       return true;
 
     default:
@@ -2059,9 +2064,6 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::LDriub:
     return !invertPredicate ? Hexagon::LDriub_cPt :
                               Hexagon::LDriub_cNotPt;
-  case Hexagon::LDriubit:
-    return !invertPredicate ? Hexagon::LDriub_cPt :
-                              Hexagon::LDriub_cNotPt;
  // Load Indexed.
   case Hexagon::LDrid_indexed:
     return !invertPredicate ? Hexagon::LDrid_indexed_cPt :
@@ -2254,13 +2256,17 @@ isValidOffset(const int Opcode, const int Offset) const {
   switch(Opcode) {
 
   case Hexagon::LDriw:
+  case Hexagon::LDriw_f:
   case Hexagon::STriw:
+  case Hexagon::STriw_f:
     assert((Offset % 4 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
   case Hexagon::LDrid:
+  case Hexagon::LDrid_f:
   case Hexagon::STrid:
+  case Hexagon::STrid_f:
     assert((Offset % 8 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMD_OFFSET_MAX);
@@ -2268,7 +2274,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::LDrih:
   case Hexagon::LDriuh:
   case Hexagon::STrih:
-  case Hexagon::LDrih_ae:
     assert((Offset % 2 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMH_OFFSET_MAX);
@@ -2276,9 +2281,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::LDrib:
   case Hexagon::STrib:
   case Hexagon::LDriub:
-  case Hexagon::LDriubit:
-  case Hexagon::LDrib_ae:
-  case Hexagon::LDriub_ae:
     return (Offset >= Hexagon_MEMB_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMB_OFFSET_MAX);
 
