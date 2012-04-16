@@ -3632,9 +3632,29 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   
   if (clang_isDeclaration(cursor.kind)) {
     // Avoid having the implicit methods override the property decls.
-    if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(cursor)))
+    if (ObjCMethodDecl *MD
+          = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(cursor))) {
       if (MD->isImplicit())
         return CXChildVisit_Break;
+
+    } else if (ObjCInterfaceDecl *ID
+                 = dyn_cast_or_null<ObjCInterfaceDecl>(getCursorDecl(cursor))) {
+      // Check that when we have multiple @class references in the same line,
+      // that later ones do not override the previous ones.
+      // If we have:
+      // @class Foo, Bar;
+      // source ranges for both start at '@', so 'Bar' will end up overriding
+      // 'Foo' even though the cursor location was at 'Foo'.
+      if (BestCursor->kind == CXCursor_ObjCInterfaceDecl ||
+          BestCursor->kind == CXCursor_ObjCClassRef)
+        if (ObjCInterfaceDecl *PrevID
+             = dyn_cast_or_null<ObjCInterfaceDecl>(getCursorDecl(*BestCursor))){
+         if (PrevID != ID &&
+             !PrevID->isThisDeclarationADefinition() &&
+             !ID->isThisDeclarationADefinition())
+           return CXChildVisit_Break;
+        }
+    }
   }
 
   if (clang_isExpression(cursor.kind) &&

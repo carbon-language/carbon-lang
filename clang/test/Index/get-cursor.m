@@ -67,6 +67,8 @@ void foo3(Test3 *test3) {
 @implementation Test4(Dido)
 @end
 
+@class Forw1, Forw2, Forw3;
+
 // RUN: c-index-test -cursor-at=%s:4:28 -cursor-at=%s:5:28 %s | FileCheck -check-prefix=CHECK-PROP %s
 // CHECK-PROP: ObjCPropertyDecl=foo1:4:26
 // CHECK-PROP: ObjCPropertyDecl=foo2:5:27
@@ -90,8 +92,13 @@ void foo3(Test3 *test3) {
 
 // RUN: c-index-test -cursor-at=%s:56:24 -cursor-at=%s:60:14 \
 // RUN:   -cursor-at=%s:65:20 -cursor-at=%s:67:25 \
+// RUN:   -cursor-at=%s:70:10 -cursor-at=%s:70:16 -cursor-at=%s:70:25 \
 // RUN:   %s | FileCheck -check-prefix=CHECK-SPELLRANGE %s
 // CHECK-SPELLRANGE: 56:8 ObjCInstanceMethodDecl=setFoo:withBar::56:8 Extent=[56:1 - 56:37] Spelling=setFoo:withBar: ([56:8 - 56:14][56:22 - 56:29]) Selector index=1
 // CHECK-SPELLRANGE: 60:3 ObjCMessageExpr=setFoo:withBar::56:8 Extent=[60:3 - 60:29] Spelling=setFoo:withBar: ([60:10 - 60:16][60:19 - 60:26]) Selector index=0
 // CHECK-SPELLRANGE: 65:12 ObjCCategoryDecl=Dido:65:12 Extent=[65:1 - 66:5] Spelling=Dido ([65:18 - 65:22])
 // CHECK-SPELLRANGE: 67:17 ObjCCategoryImplDecl=Dido:67:17 (Definition) Extent=[67:1 - 68:2] Spelling=Dido ([67:23 - 67:27])
+
+// CHECK-SPELLRANGE: 70:8 ObjCClassRef=Forw1:70:8 Extent=[70:8 - 70:13] Spelling=Forw1 ([70:8 - 70:13])
+// CHECK-SPELLRANGE: 70:15 ObjCClassRef=Forw2:70:15 Extent=[70:15 - 70:20] Spelling=Forw2 ([70:15 - 70:20])
+// CHECK-SPELLRANGE: 70:22 ObjCClassRef=Forw3:70:22 Extent=[70:22 - 70:27] Spelling=Forw3 ([70:22 - 70:27])
