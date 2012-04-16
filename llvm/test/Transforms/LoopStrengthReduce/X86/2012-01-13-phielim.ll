@@ -61,7 +61,7 @@ exit:                                 ; preds = %cond.true29.i, %cond.true.i
 ; CHECK: @test2
 ; CHECK: %entry
 ; CHECK-NOT: mov
-; CHECK: jne
+; CHECK: je
 define void @test2(i32 %n) nounwind uwtable {
 entry:
   br i1 undef, label %while.end, label %for.cond468

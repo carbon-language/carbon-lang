@@ -75,9 +75,9 @@ define void @test6(i32 %C, <4 x float>* %A, <4 x float>* %B) nounwind {
 ; Verify that the fmul gets sunk into the one part of the diamond where it is
 ; needed.
 ; CHECK: test6:
-; CHECK: jne
-; CHECK: mulps
+; CHECK: je
 ; CHECK: ret
+; CHECK: mulps
 ; CHECK: ret
 }
 

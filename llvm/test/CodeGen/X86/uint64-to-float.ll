@@ -7,12 +7,13 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0.0"
 
 ; CHECK: testq %rdi, %rdi
-; CHECK-NEXT: jns LBB0_2
+; CHECK-NEXT: js LBB0_1
+; CHECK: cvtsi2ss
+; CHECK-NEXT: ret
+; CHECK: LBB0_1
 ; CHECK: shrq
 ; CHECK-NEXT: andq
 ; CHECK-NEXT: orq
-; CHECK-NEXT: cvtsi2ss
-; CHECK: LBB0_2
 ; CHECK-NEXT: cvtsi2ss
 define float @test(i64 %a) {
 entry:

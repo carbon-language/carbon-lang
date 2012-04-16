@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i686-linux -enable-block-placement < %s | FileCheck %s
+; RUN: llc -mtriple=i686-linux < %s | FileCheck %s
 
 declare void @error(i32 %i, i32 %a, i32 %b)
 

@@ -26,7 +26,7 @@ entry:
 lpad:                                             ; preds = %entry
 ; CHECK-EL:  # %lpad
 ; CHECK-EL:  lw  $gp
-; CHECK-EL:  beq $5
+; CHECK-EL:  bne $5
 
   %exn.val = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
            catch i8* bitcast (i8** @_ZTId to i8*)

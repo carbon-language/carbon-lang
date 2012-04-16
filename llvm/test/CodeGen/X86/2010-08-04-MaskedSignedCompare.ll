@@ -17,7 +17,7 @@ entry:
 
 ; CHECK: andl	$150
 ; CHECK-NEXT: testb
-; CHECK-NEXT: jg
+; CHECK-NEXT: jle
 
 entry.if.end_crit_edge:                           ; preds = %entry
   %tmp4.pre = load i32* @g_38                     ; <i32> [#uses=1]

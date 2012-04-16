@@ -5,11 +5,11 @@
 
 ;      CHECK: movabsq $2305843009482129440, %r
 ; CHECK-NEXT: btq %rax, %r
-; CHECK-NEXT: jb
-; CHECK-NEXT: movl  $671088640, %e
+; CHECK-NEXT: jae
+;     CHECK: movl  $671088640, %e
 ; CHECK-NEXT: btq %rax, %r
-; CHECK-NEXT: jb
-; CHECK-NEXT: testq %rax, %r
+; CHECK-NEXT: jae
+;      CHECK: testq %rax, %r
 ; CHECK-NEXT: j
 
 define void @test(i8* %l) nounwind {
@@ -60,7 +60,7 @@ define void @test2(i32 %x) nounwind ssp {
 ; CHECK-NEXT: movl $91
 ; CHECK-NOT: movl
 ; CHECK-NEXT: btl
-; CHECK-NEXT: jb
+; CHECK-NEXT: jae
 entry:
   switch i32 %x, label %if.end [
     i32 6, label %if.then
@@ -85,7 +85,7 @@ define void @test3(i32 %x) nounwind {
 ; CHECK: cmpl $5
 ; CHECK: ja
 ; CHECK: cmpl $4
-; CHECK: jne
+; CHECK: je
   switch i32 %x, label %if.end [
     i32 0, label %if.then
     i32 1, label %if.then

@@ -113,14 +113,15 @@ altret:
 ; CHECK-NEXT:   jbe .LBB2_3
 ; CHECK-NEXT:   ucomiss %xmm{{[0-2]}}, %xmm{{[0-2]}}
 ; CHECK-NEXT:   ja .LBB2_4
-; CHECK-NEXT: .LBB2_2:
-; CHECK-NEXT:   movb $1, %al
-; CHECK-NEXT:   ret
+; CHECK-NEXT:   jmp .LBB2_2
 ; CHECK-NEXT: .LBB2_3:
 ; CHECK-NEXT:   ucomiss %xmm{{[0-2]}}, %xmm{{[0-2]}}
 ; CHECK-NEXT:   jbe .LBB2_2
 ; CHECK-NEXT: .LBB2_4:
 ; CHECK-NEXT:   xorb %al, %al
+; CHECK-NEXT:   ret
+; CHECK-NEXT: .LBB2_2:
+; CHECK-NEXT:   movb $1, %al
 ; CHECK-NEXT:   ret
 
 define i1 @dont_merge_oddly(float* %result) nounwind {
@@ -336,10 +337,10 @@ return:
 
 ; CHECK: two:
 ; CHECK-NOT: XYZ
+; CHECK: ret
 ; CHECK: movl $0, XYZ(%rip)
 ; CHECK: movl $1, XYZ(%rip)
 ; CHECK-NOT: XYZ
-; CHECK: ret
 
 define void @two() nounwind optsize {
 entry:

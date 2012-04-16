@@ -3,11 +3,19 @@
 ; Do not use tbb / tbh if any destination is before the jumptable.
 ; rdar://7102917
 
-define i16 @main__getopt_internal_2E_exit_2E_ce(i32) nounwind {
+define i16 @main__getopt_internal_2E_exit_2E_ce(i32, i1 %b) nounwind {
+entry:
+  br i1 %b, label %codeRepl127.exitStub, label %newFuncRoot
+
 newFuncRoot:
 	br label %_getopt_internal.exit.ce
 
 codeRepl127.exitStub:		; preds = %_getopt_internal.exit.ce
+  ; Add an explicit edge back to before the jump table to ensure this block
+  ; is placed first.
+  br i1 %b, label %newFuncRoot, label %codeRepl127.exitStub.exit
+
+codeRepl127.exitStub.exit:
 	ret i16 0
 
 parse_options.exit.loopexit.exitStub:		; preds = %_getopt_internal.exit.ce

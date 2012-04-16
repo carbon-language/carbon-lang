@@ -18,11 +18,12 @@ forcond.preheader:              ; preds = %entry
 ; CHECK-NOT: xorl
 ; CHECK-NOT: movl
 ; CHECK-NOT: LBB
-; CHECK: jne
+; CHECK: je
 
 ; There should be no moves required in the for loop body.
 ; CHECK: %forbody
 ; CHECK-NOT: mov
+; CHECK: jbe
 
 ifthen:         ; preds = %entry
   ret i32 0

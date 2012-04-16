@@ -19,7 +19,7 @@ overflow:
   ret i1 false
 ; CHECK: test1:
 ; CHECK: imull
-; CHECK-NEXT: jo
+; CHECK-NEXT: jno
 }
 
 define i1 @test2(i32 %v1, i32 %v2) nounwind {

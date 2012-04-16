@@ -30,7 +30,7 @@ not_less:
 }
 ; CHECK: f1:
 ; CHECK-NEXT: ashr r0, r0, 32
-; CHECK-NEXT: bf r0
+; CHECK-NEXT: bt r0
 
 define i32 @f2(i32 %a) {
         %1 = icmp sge i32 %a, 0
@@ -51,9 +51,9 @@ define i32 @f3(i32 %a) {
 }
 ; CHECK: f3:
 ; CHECK-NEXT: ashr r0, r0, 32
-; CHECK-NEXT: bf r0
-; CHECK-NEXT: ldc r0, 10
-; CHECK: ldc r0, 17
+; CHECK-NEXT: bt r0
+; CHECK-NEXT: ldc r0, 17
+; CHECK: ldc r0, 10
 
 define i32 @f4(i32 %a) {
         %1 = icmp sge i32 %a, 0
@@ -62,9 +62,9 @@ define i32 @f4(i32 %a) {
 }
 ; CHECK: f4:
 ; CHECK-NEXT: ashr r0, r0, 32
-; CHECK-NEXT: bf r0
-; CHECK-NEXT: ldc r0, 17
-; CHECK: ldc r0, 10
+; CHECK-NEXT: bt r0
+; CHECK-NEXT: ldc r0, 10
+; CHECK: ldc r0, 17
 
 define i32 @f5(i32 %a) {
         %1 = icmp sge i32 %a, 0

@@ -20,7 +20,7 @@ overflow:
 
 ; CHECK: func1:
 ; CHECK: subl 20(%esp)
-; CHECK-NEXT: jo
+; CHECK-NEXT: jno
 }
 
 define i1 @func2(i32 %v1, i32 %v2) nounwind {
@@ -40,7 +40,7 @@ carry:
 
 ; CHECK: func2:
 ; CHECK: subl 20(%esp)
-; CHECK-NEXT: jb
+; CHECK-NEXT: jae
 }
 
 declare i32 @printf(i8*, ...) nounwind

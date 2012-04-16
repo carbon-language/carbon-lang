@@ -26,9 +26,9 @@ return:                                           ; preds = %if.else, %if.end6
 
 define void @f1(float %f) nounwind {
 entry:
-; CHECK: bc1t $BB1_2
+; CHECK: bc1f $BB1_1
 ; CHECK: nop
-; CHECK: # BB#1:      
+; CHECK: # BB#2:
   %cmp = fcmp une float %f, 0.000000e+00
   br i1 %cmp, label %if.then, label %if.end
 

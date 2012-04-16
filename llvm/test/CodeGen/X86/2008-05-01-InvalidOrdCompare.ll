@@ -1,4 +1,4 @@
-; RUN: llc < %s -enable-unsafe-fp-math -march=x86 | grep jnp
+; RUN: llc < %s -enable-unsafe-fp-math -march=x86 | grep jp
 ; rdar://5902801
 
 declare void @test2()

@@ -37,8 +37,9 @@ static cl::opt<bool> DisableTailDuplicate("disable-tail-duplicate", cl::Hidden,
     cl::desc("Disable tail duplication"));
 static cl::opt<bool> DisableEarlyTailDup("disable-early-taildup", cl::Hidden,
     cl::desc("Disable pre-register allocation tail duplication"));
-static cl::opt<bool> EnableBlockPlacement("enable-block-placement",
-    cl::Hidden, cl::desc("Enable probability-driven block placement"));
+static cl::opt<bool> DisableBlockPlacement("disable-block-placement",
+    cl::Hidden, cl::desc("Disable the probability-driven block placement, and "
+                         "re-enable the old code placement pass"));
 static cl::opt<bool> EnableBlockPlacementStats("enable-block-placement-stats",
     cl::Hidden, cl::desc("Collect probability-driven block placement stats"));
 static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
@@ -610,10 +611,10 @@ void TargetPassConfig::addMachineLateOptimization() {
 /// Add standard basic block placement passes.
 void TargetPassConfig::addBlockPlacement() {
   AnalysisID ID = &NoPassID;
-  if (EnableBlockPlacement) {
-    // MachineBlockPlacement is an experimental pass which is disabled by
-    // default currently. Eventually it should subsume CodePlacementOpt, so
-    // when enabled, the other is disabled.
+  if (!DisableBlockPlacement) {
+    // MachineBlockPlacement is a new pass which subsumes the functionality of
+    // CodPlacementOpt. The old code placement pass can be restored by
+    // disabling block placement, but eventually it will be removed.
     ID = addPass(MachineBlockPlacementID);
   } else {
     ID = addPass(CodePlacementOptID);

@@ -5,11 +5,11 @@
 define i32 @t1(i32 %a, i32 %b) nounwind  {
 entry:
 ; CHECK: t1:
-; CHECK: jne
+; CHECK: je [[LABEL:.*BB.*]]
   %cmp1 = icmp eq i32 %b, 0
   br i1 %cmp1, label %while.end, label %while.body
 
-; CHECK: BB
+; CHECK: [[LABEL]]:
 ; CHECK-NOT: mov
 ; CHECK: ret
 

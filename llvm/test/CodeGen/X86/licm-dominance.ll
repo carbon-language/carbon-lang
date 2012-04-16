@@ -1,7 +1,7 @@
-; RUN: llc -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -asm-verbose=true < %s | FileCheck %s
 
 ; MachineLICM should check dominance before hoisting instructions.
-; CHECK:	jne	LBB0_3
+; CHECK: ## in Loop:
 ; CHECK-NEXT:	xorb	%al, %al
 ; CHECK-NEXT:	testb	%al, %al
 

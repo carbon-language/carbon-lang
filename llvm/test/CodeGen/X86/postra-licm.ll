@@ -70,8 +70,8 @@ bb26.preheader:                                   ; preds = %imix_test.exit
 bb23:                                             ; preds = %imix_test.exit
   unreachable
 ; Verify that there are no loads inside the loop.
-; X86-32: %bb26.preheader
 ; X86-32: .align 4
+; X86-32: %bb28
 ; X86-32-NOT: (%esp),
 ; X86-32-NOT: (%ebp),
 ; X86-32: jmp

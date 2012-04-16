@@ -16,11 +16,11 @@ declare i8* @choose(i8*, i8*)
 
 ; CHECK: tail_duplicate_me:
 ; CHECK:      qux
-; CHECK:      qux
 ; CHECK:      movw r{{[0-9]+}}, :lower16:_GHJK
 ; CHECK:      movt r{{[0-9]+}}, :upper16:_GHJK
 ; CHECK:      str r
 ; CHECK-NEXT: bx r
+; CHECK:      qux
 ; CHECK:      movw r{{[0-9]+}}, :lower16:_GHJK
 ; CHECK:      movt r{{[0-9]+}}, :upper16:_GHJK
 ; CHECK:      str r

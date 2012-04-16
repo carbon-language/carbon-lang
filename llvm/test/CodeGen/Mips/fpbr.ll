@@ -45,7 +45,7 @@ if.end:                                           ; preds = %if.else, %if.then
 define void @func2(float %f2, float %f3) nounwind {
 entry:
 ; CHECK: c.ole.s
-; CHECK: bc1f
+; CHECK: bc1t
   %cmp = fcmp ugt float %f2, %f3
   br i1 %cmp, label %if.else, label %if.then
 
@@ -102,7 +102,7 @@ if.end:                                           ; preds = %if.else, %if.then
 define void @func5(double %f2, double %f3) nounwind {
 entry:
 ; CHECK: c.ole.d
-; CHECK: bc1f
+; CHECK: bc1t
   %cmp = fcmp ugt double %f2, %f3
   br i1 %cmp, label %if.else, label %if.then
 

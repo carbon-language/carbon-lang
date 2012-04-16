@@ -9,13 +9,13 @@ entry:
 ; X32-NOT: andb
 ; X32-NOT: shrb
 ; X32:     testb $64
-; X32:     jne
+; X32:     je
 
 ; X64:     t:
 ; X64-NOT: setne
 ; X64:     xorl
 ; X64:     testb $64
-; X64:     jne
+; X64:     je
   %0 = and i32 %a, 16384
   %1 = icmp ne i32 %0, 0
   %2 = and i32 %b, 16384
@@ -43,7 +43,7 @@ define i32 @t2(i32 %x, i32 %y) nounwind ssp {
 ; X32: cmpl
 ; X32: sete
 ; X32-NOT: xor
-; X32: jne
+; X32: je
 
 ; X64: t2:
 ; X64: testl
@@ -51,7 +51,7 @@ define i32 @t2(i32 %x, i32 %y) nounwind ssp {
 ; X64: testl
 ; X64: sete
 ; X64-NOT: xor
-; X64: jne
+; X64: je
 entry:
   %0 = icmp eq i32 %x, 0                          ; <i1> [#uses=1]
   %1 = icmp eq i32 %y, 0                          ; <i1> [#uses=1]

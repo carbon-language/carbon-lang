@@ -7,8 +7,8 @@ define i32 @decode_byte(%struct.decode_t* %decode) nounwind {
 ; CHECK: decode_byte:
 ; CHECK: pushl
 ; CHECK: popl
-; CHECK: popl
 ; CHECK: jmp
+; CHECK: popl
 entry:
         %tmp2 = getelementptr %struct.decode_t* %decode, i32 0, i32 4           ; <i16*> [#uses=1]
         %tmp23 = bitcast i16* %tmp2 to i32*             ; <i32*> [#uses=1]
