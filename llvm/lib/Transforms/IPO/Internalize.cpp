@@ -123,6 +123,8 @@ bool InternalizePass::runOnModule(Module &M) {
   bool Changed = false;
 
   // Never internalize functions which code-gen might insert.
+  // FIXME: We should probably add this (and the __stack_chk_guard) via some
+  // type of call-back in CodeGen.
   ExternalNames.insert("__stack_chk_fail");
 
   // Mark all functions not in the api as internal.
