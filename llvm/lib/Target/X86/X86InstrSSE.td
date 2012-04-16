@@ -7740,13 +7740,13 @@ multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                    (ins VR256:$src1, VR256:$src2),
                    !strconcat(OpcodeStr,
                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR256:$dst, (Int VR256:$src1, VR256:$src2))]>, VEX_4V;
+                   [(set VR256:$dst, (Int VR256:$src2, VR256:$src1))]>, VEX_4V;
   def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
                    (ins VR256:$src1, i256mem:$src2),
                    !strconcat(OpcodeStr,
                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set VR256:$dst, (Int VR256:$src1,
-                                      (bitconvert (mem_frag addr:$src2))))]>,
+                   [(set VR256:$dst, (Int (bitconvert (mem_frag addr:$src2)),
+                                      VR256:$src1))]>,
                    VEX_4V;
 }
 
