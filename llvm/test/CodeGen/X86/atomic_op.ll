@@ -107,10 +107,15 @@ entry:
         ; CHECK: cmpxchgl
   %17 = cmpxchg i32* %val2, i32 1976, i32 1 monotonic
 	store i32 %17, i32* %old
-        ; CHECK: andl
-        ; CHECK: notl
+        ; CHECK: movl	$1401, %[[R17mask:[a-z]*]]
+        ; CHECK: movl	[[R17atomic:.*]], %eax
+        ; CHECK: movl	%eax, %[[R17newval:[a-z]*]]
+        ; CHECK: andl	%[[R17mask]], %[[R17newval]]
+        ; CHECK: notl	%[[R17newval]]
         ; CHECK: lock
-        ; CHECK: cmpxchgl
+        ; CHECK: cmpxchgl	%[[R17newval]], [[R17atomic]]
+        ; CHECK: jne
+        ; CHECK: movl	%eax,
   %18 = atomicrmw nand i32* %val2, i32 1401 monotonic
   store i32 %18, i32* %old
         ; CHECK: andl
