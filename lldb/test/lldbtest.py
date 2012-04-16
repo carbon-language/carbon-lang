@@ -1058,6 +1058,10 @@ class TestBase(Base):
         # And the result object.
         self.res = lldb.SBCommandReturnObject()
 
+        # Run global pre-flight code, if defined via the config file.
+        if lldb.pre_flight:
+            lldb.pre_flight(self)
+
     def tearDown(self):
         #import traceback
         #traceback.print_stack()
@@ -1078,6 +1082,10 @@ class TestBase(Base):
                     self.assertTrue(rc.Success(), PROCESS_KILLED)
         for target in targets:
             self.dbg.DeleteTarget(target)
+
+        # Run global post-flight code, if defined via the config file.
+        if lldb.post_flight:
+            lldb.post_flight(self)
 
         del self.dbg
 

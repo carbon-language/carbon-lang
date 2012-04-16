@@ -96,6 +96,9 @@ count = 1
 
 # The dictionary as a result of sourcing configFile.
 config = {}
+# The pre_flight and post_flight functions come from reading a config file.
+pre_flight = None
+post_flight = None
 
 # The 'archs' and 'compilers' can be specified via either command line or configFile,
 # with the command line overriding the configFile.  When specified, they should be
@@ -660,11 +663,21 @@ def parseOptionsAndInitTestdirs():
     # respectively.
     #
     # See also lldb-trunk/example/test/usage-config.
-    global config
+    global config, pre_flight, post_flight
     if configFile:
         # Pass config (a dictionary) as the locals namespace for side-effect.
         execfile(configFile, globals(), config)
-        #print "config:", config
+        print "config:", config
+        if "pre_flight" in config:
+            pre_flight = config["pre_flight"]
+            if not callable(pre_flight):
+                print "fatal error: pre_flight is not callable, exiting."
+                sys.exit(1)
+        if "post_flight" in config:
+            post_flight = config["post_flight"]
+            if not callable(post_flight):
+                print "fatal error: post_flight is not callable, exiting."
+                sys.exit(1)
         #print "sys.stderr:", sys.stderr
         #print "sys.stdout:", sys.stdout
 
@@ -1020,6 +1033,23 @@ lldb.DBG = lldb.SBDebugger.Create()
 
 # Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
 lldb.blacklist = blacklist
+
+# The pre_flight and post_flight come from reading a config file.
+lldb.pre_flight = pre_flight
+lldb.post_flight = post_flight
+def getsource_if_available(obj):
+    """
+    Return the text of the source code for an object if available.  Otherwise,
+    a print representation is returned.
+    """
+    import inspect
+    try:
+        return inspect.getsource(obj)
+    except:
+        return repr(obj)
+
+print "lldb.pre_flight:", getsource_if_available(lldb.pre_flight)
+print "lldb.post_flight:", getsource_if_available(lldb.post_flight)
 
 # Put all these test decorators in the lldb namespace.
 lldb.dont_do_python_api_test = dont_do_python_api_test
