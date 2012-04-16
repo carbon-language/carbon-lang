@@ -1100,6 +1100,12 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
     A->claim();
   }
 
+  if (!Args.hasArg(options::OPT_fno_short_enums))
+    CmdArgs.push_back("-fshort-enums");
+  if (Args.getLastArg(options::OPT_mieee_rnd_near)) {
+    CmdArgs.push_back ("-mllvm");
+    CmdArgs.push_back ("-enable-hexagon-ieee-rnd-near");
+  }
   CmdArgs.push_back ("-mllvm");
   CmdArgs.push_back ("-machine-sink-split=0");
 }

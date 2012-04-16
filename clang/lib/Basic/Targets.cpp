@@ -3015,8 +3015,8 @@ public:
   HexagonTargetInfo(const std::string& triple) : TargetInfo(triple)  {
     BigEndian = false;
     DescriptionString = ("e-p:32:32:32-"
-                         "i64:64:64-i32:32:32-"
-                         "i16:16:16-i1:32:32-a:0:0");
+                         "i64:64:64-i32:32:32-i16:16:16-i1:32:32"
+                         "f64:64:64-f32:32:32-a0:0-n32");
 
     // {} in inline assembly are packet specifiers, not assembly variant
     // specifiers.
@@ -3057,6 +3057,7 @@ public:
       .Case("hexagonv2", "2")
       .Case("hexagonv3", "3")
       .Case("hexagonv4", "4")
+      .Case("hexagonv5", "5")
       .Default(0);
   }
 
@@ -3109,6 +3110,14 @@ void HexagonTargetInfo::getTargetDefines(const LangOptions &Opts,
     if(Opts.HexagonQdsp6Compat) {
       Builder.defineMacro("__QDSP6_V4__");
       Builder.defineMacro("__QDSP6_ARCH__", "4");
+    }
+  }
+  else if(CPU == "hexagonv5") {
+    Builder.defineMacro("__HEXAGON_V5__");
+    Builder.defineMacro("__HEXAGON_ARCH__", "5");
+    if(Opts.HexagonQdsp6Compat) {
+      Builder.defineMacro("__QDSP6_V5__");
+      Builder.defineMacro("__QDSP6_ARCH__", "5");
     }
   }
 }
