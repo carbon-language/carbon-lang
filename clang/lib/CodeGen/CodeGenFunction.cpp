@@ -42,10 +42,6 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     TerminateHandler(0), TrapBB(0) {
 
   CatchUndefined = getContext().getLangOpts().CatchUndefined;
-  if (getContext().getLangOpts().FastMath) {
-    llvm::MDBuilder MDHelper(Builder.getContext());
-    Builder.SetDefaultFPMathTag(MDHelper.createFastFPMath());
-  }
   CGM.getCXXABI().getMangleContext().startNewFunction();
 }
 
