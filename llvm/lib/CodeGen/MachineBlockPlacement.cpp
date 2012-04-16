@@ -211,6 +211,8 @@ class MachineBlockPlacement : public MachineFunctionPass {
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
                   SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
                   const BlockFilterSet *BlockFilter = 0);
+  MachineBasicBlock *findBestLoopTop(MachineLoop &L,
+                                     const BlockFilterSet &LoopBlockSet);
   MachineBasicBlock *findBestLoopExit(MachineFunction &F,
                                       MachineLoop &L,
                                       const BlockFilterSet &LoopBlockSet);
@@ -541,6 +543,67 @@ void MachineBlockPlacement::buildChain(
 
 /// \brief Find the best loop top block for layout.
 ///
+/// Look for a block which is strictly better than the loop header for laying
+/// out at the top of the loop. This looks for one and only one pattern:
+/// a latch block with no conditional exit. This block will cause a conditional
+/// jump around it or will be the bottom of the loop if we lay it out in place,
+/// but if it it doesn't end up at the bottom of the loop for any reason,
+/// rotation alone won't fix it. Because such a block will always result in an
+/// unconditional jump (for the backedge) rotating it in front of the loop
+/// header is always profitable.
+MachineBasicBlock *
+MachineBlockPlacement::findBestLoopTop(MachineLoop &L,
+                                       const BlockFilterSet &LoopBlockSet) {
+  // Check that the header hasn't been fused with a preheader block due to
+  // crazy branches. If it has, we need to start with the header at the top to
+  // prevent pulling the preheader into the loop body.
+  BlockChain &HeaderChain = *BlockToChain[L.getHeader()];
+  if (!LoopBlockSet.count(*HeaderChain.begin()))
+    return L.getHeader();
+
+  DEBUG(dbgs() << "Finding best loop top for: "
+               << getBlockName(L.getHeader()) << "\n");
+
+  BlockFrequency BestPredFreq;
+  MachineBasicBlock *BestPred = 0;
+  for (MachineBasicBlock::pred_iterator PI = L.getHeader()->pred_begin(),
+                                        PE = L.getHeader()->pred_end();
+       PI != PE; ++PI) {
+    MachineBasicBlock *Pred = *PI;
+    if (!LoopBlockSet.count(Pred))
+      continue;
+    DEBUG(dbgs() << "    header pred: " << getBlockName(Pred) << ", "
+                 << Pred->succ_size() << " successors, "
+                 << MBFI->getBlockFreq(Pred) << " freq\n");
+    if (Pred->succ_size() > 1)
+      continue;
+
+    BlockFrequency PredFreq = MBFI->getBlockFreq(Pred);
+    if (!BestPred || PredFreq > BestPredFreq ||
+        (!(PredFreq < BestPredFreq) &&
+         Pred->isLayoutSuccessor(L.getHeader()))) {
+      BestPred = Pred;
+      BestPredFreq = PredFreq;
+    }
+  }
+
+  // If no direct predecessor is fine, just use the loop header.
+  if (!BestPred)
+    return L.getHeader();
+
+  // Walk backwards through any straight line of predecessors.
+  while (BestPred->pred_size() == 1 &&
+         (*BestPred->pred_begin())->succ_size() == 1 &&
+         *BestPred->pred_begin() != L.getHeader())
+    BestPred = *BestPred->pred_begin();
+
+  DEBUG(dbgs() << "    final top: " << getBlockName(BestPred) << "\n");
+  return BestPred;
+}
+
+
+/// \brief Find the best loop exiting block for layout.
+///
 /// This routine implements the logic to analyze the loop looking for the best
 /// block to layout at the top of the loop. Typically this is done to maximize
 /// fallthrough opportunities.
@@ -725,8 +788,20 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   SmallVector<MachineBasicBlock *, 16> BlockWorkList;
   BlockFilterSet LoopBlockSet(L.block_begin(), L.block_end());
 
-  MachineBasicBlock *ExitingBB = findBestLoopExit(F, L, LoopBlockSet);
-  BlockChain &LoopChain = *BlockToChain[L.getHeader()];
+  // First check to see if there is an obviously preferable top block for the
+  // loop. This will default to the header, but may end up as one of the
+  // predecessors to the header if there is one which will result in strictly
+  // fewer branches in the loop body.
+  MachineBasicBlock *LoopTop = findBestLoopTop(L, LoopBlockSet);
+
+  // If we selected just the header for the loop top, look for a potentially
+  // profitable exit block in the event that rotating the loop can eliminate
+  // branches by placing an exit edge at the bottom.
+  MachineBasicBlock *ExitingBB = 0;
+  if (LoopTop == L.getHeader())
+    ExitingBB = findBestLoopExit(F, L, LoopBlockSet);
+
+  BlockChain &LoopChain = *BlockToChain[LoopTop];
 
   // FIXME: This is a really lame way of walking the chains in the loop: we
   // walk the blocks, and use a set to prevent visiting a particular chain
@@ -758,7 +833,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
       BlockWorkList.push_back(*Chain.begin());
   }
 
-  buildChain(L.getHeader(), LoopChain, BlockWorkList, &LoopBlockSet);
+  buildChain(LoopTop, LoopChain, BlockWorkList, &LoopBlockSet);
   rotateLoop(LoopChain, ExitingBB, LoopBlockSet);
 
   DEBUG({

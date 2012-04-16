@@ -974,9 +974,14 @@ define void @benchmark_heapsort(i32 %n, double* nocapture %ra) {
 ; CHECK: %entry
 ; First rotated loop top.
 ; CHECK: .align
+; CHECK: %while.end
+; CHECK: %for.cond
+; CHECK: %if.then
+; CHECK: %if.else
 ; CHECK: %if.end10
 ; Second rotated loop top
 ; CHECK: .align
+; CHECK: %if.then24
 ; CHECK: %while.cond.outer
 ; Third rotated loop top
 ; CHECK: .align
@@ -985,11 +990,6 @@ define void @benchmark_heapsort(i32 %n, double* nocapture %ra) {
 ; CHECK: %land.lhs.true
 ; CHECK: %if.then19
 ; CHECK: %if.then19
-; CHECK: %if.then24
-; CHECK: %while.end
-; CHECK: %for.cond
-; CHECK: %if.then
-; CHECK: %if.else
 ; CHECK: %if.then8
 ; CHECK: ret
 
