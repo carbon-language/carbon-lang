@@ -92,10 +92,10 @@ for.body.i.i:                                     ; preds = %entry, %for.body.i.
 ; CHECK: {1,+,1}<nuw><nsw><%for.body.i.i>
   %ptrincdec.i.i = getelementptr inbounds i32* %begin, i64 %tmp
 ; CHECK: %ptrincdec.i.i =
-; CHECK: {(4 + %begin),+,4}<nuw><%for.body.i.i>
+; CHECK: {(4 + %begin),+,4}<nsw><%for.body.i.i>
   %__first.addr.08.i.i = getelementptr inbounds i32* %begin, i64 %indvar.i.i
 ; CHECK: %__first.addr.08.i.i
-; CHECK: {%begin,+,4}<nuw><%for.body.i.i>
+; CHECK: {%begin,+,4}<nsw><%for.body.i.i>
   store i32 0, i32* %__first.addr.08.i.i, align 4
   %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
   br i1 %cmp.i.i, label %_ZSt4fillIPiiEvT_S1_RKT0_.exit, label %for.body.i.i

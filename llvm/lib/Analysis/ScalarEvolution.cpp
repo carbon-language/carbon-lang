@@ -3187,7 +3187,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
 
   // Add the total offset from all the GEP indices to the base.
   return getAddExpr(BaseS, TotalOffset,
-                    isInBounds ? SCEV::FlagNUW : SCEV::FlagAnyWrap);
+                    isInBounds ? SCEV::FlagNSW : SCEV::FlagAnyWrap);
 }
 
 /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
