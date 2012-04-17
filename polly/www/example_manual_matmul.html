@@ -22,9 +22,9 @@ which analysis is performed or what transformation is applied. In this example
 the polyhedral transformation is user-provided to show how much performance
 improvement can be expected by an optimal automatic optimizer.</p>
 
-The files used and created in this example are available <a
-href="experiments/matmul">here</a>. They can be created automatically by running
-the <a href="experiments/matmul/runall.sh">runall.sh</a> script.
+The files used and created in this example are available in the Polly checkout
+in the folder <em>www/experiments/matmul</em>. They can be created automatically
+by running the <em>www/experiments/matmul/runall.sh</em> script.
 
 <ol>
 <li><h4>Create LLVM-IR from the C code</h4>
@@ -57,7 +57,7 @@ the LLVM-IR into this form we use a set of canonicalication passes. For this
 example only three passes are necessary. To get good coverage on more
 complicated input files often more canonicalization passes are needed. pollycc
 contains a list of passes that have shown to be beneficial.
-<pre class="code">opt -S -mem2reg -loop-simplify -indvars matmul.s &gt; matmul.preopt.ll</pre></li>
+<pre class="code">opt -S -mem2reg -loop-simplify -polly-indvars matmul.s &gt; matmul.preopt.ll</pre></li>
 
 <li><h4>Show the SCoPs detected by Polly (optional)</h4>
 
@@ -232,9 +232,8 @@ changed. These changed schedules are used to descripe transformations.
 It is possible to import different jscop files by providing the postfix
 of the jscop file that is imported.</p>
 <p> We apply three different transformations on the SCoP in the main function.
-The jscop files describing these transformations are hand written. If PoCC is
-installed Polly can sometimes calculate such schedules fully automatically.
-Hwever, this is still an area we are actively working on.</p>
+The jscop files describing these transformations are hand written (and available
+in <em>www/experiments/matmul</em>).
 
 <h5>No Polly</h5>
 
