@@ -134,6 +134,11 @@ bool ExprEngine::shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred) {
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
   const CFG *CalleeCFG = CalleeADC->getCFG();
 
+  // It is possible that the CFG cannot be constructed.
+  // Be safe, and check if the CalleeCFG is valid.
+  if (!CalleeCFG)
+    return false;
+
   if (getNumberStackFrames(Pred->getLocationContext())
         == AMgr.InlineMaxStackDepth)
     return false;
