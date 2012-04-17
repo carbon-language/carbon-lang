@@ -3912,7 +3912,7 @@ def err_nosetter_property_incdec : Error<
 def err_nogetter_property_compound_assignment : Error<
   "a getter method is needed to perform a compound assignment on a property">;
 def err_nogetter_property_incdec : Error<
-  "no getter method %1 for %select{increment|decrement} of property">;
+  "no getter method %1 for %select{increment|decrement}0 of property">;
 def error_no_subobject_property_setting : Error<
   "expression is not assignable">;
 def err_qualified_objc_access : Error<
