@@ -105,3 +105,16 @@ namespace core_19754_example {
 
   base<types> val = base<types>();
 }
+
+namespace pr9485 {
+  template <typename T> void f1(T) throw(typename T::exception); // expected-note {{candidate}}
+  template <typename T> void f1(T, int = 0) throw(typename T::noitpecxe); // expected-note {{candidate}}
+
+  template <typename T> void f2(T) noexcept(T::throws); // expected-note {{candidate}}
+  template <typename T> void f2(T, int = 0) noexcept(T::sworht); // expected-note {{candidate}}
+
+  void test() {
+    f1(0); // expected-error {{ambiguous}}
+    f2(0); // expected-error {{ambiguous}}
+  }
+}

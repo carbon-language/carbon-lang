@@ -7185,8 +7185,7 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
   }
 }
 
-Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
-                                         Declarator &D) {
+Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   assert(getCurFunctionDecl() == 0 && "Function parsing confused");
   assert(D.isFunctionDeclarator() && "Not a function declarator!");
   Scope *ParentScope = FnBodyScope->getParent();
@@ -7358,6 +7357,10 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
       }
     }
   }
+
+  // Ensure that the function's exception specification is instantiated.
+  if (const FunctionProtoType *FPT = FD->getType()->getAs<FunctionProtoType>())
+    ResolveExceptionSpec(D->getLocation(), FPT);
 
   // Checking attributes of current function definition
   // dllimport attribute.

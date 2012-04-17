@@ -2377,7 +2377,16 @@ static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
 
 void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
                                     FunctionDecl *Decl) {
-  FunctionDecl *Tmpl = Decl->getTemplateInstantiationPattern();
+  // Find the template declaration which contains the exception specification.
+  // Per [except.spec]p4, prefer the exception spec on the primary template
+  // if this is an explicit instantiation.
+  FunctionDecl *Tmpl = 0;
+  if (Decl->getPrimaryTemplate())
+    Tmpl = Decl->getPrimaryTemplate()->getTemplatedDecl();
+  else if (FunctionDecl *MemTmpl = Decl->getInstantiatedFromMemberFunction())
+    Tmpl = MemTmpl;
+  else
+    Tmpl = Decl->getTemplateInstantiationPattern();
   assert(Tmpl && "can't instantiate non-template");
 
   if (Decl->getType()->castAs<FunctionProtoType>()->getExceptionSpecType()
