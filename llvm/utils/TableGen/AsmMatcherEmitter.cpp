@@ -1329,6 +1329,9 @@ void AsmMatcherInfo::BuildInfo() {
     Record *Rec = AllTokenAliases[i];
     ClassInfo *FromClass = getTokenClass(Rec->getValueAsString("FromToken"));
     ClassInfo *ToClass = getTokenClass(Rec->getValueAsString("ToToken"));
+    if (FromClass == ToClass)
+      throw TGError(Rec->getLoc(),
+                    "error: Destination value identical to source value.");
     FromClass->SuperClasses.push_back(ToClass);
   }
 
