@@ -516,8 +516,11 @@ public:
   document_iterator() : Doc(NullDoc) {}
   document_iterator(OwningPtr<Document> &D) : Doc(D) {}
 
+  bool operator ==(const document_iterator &Other) {
+    return Doc == Other.Doc;
+  }
   bool operator !=(const document_iterator &Other) {
-    return Doc != Other.Doc;
+    return !(*this == Other);
   }
 
   document_iterator operator ++() {
