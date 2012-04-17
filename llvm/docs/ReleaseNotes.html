@@ -299,6 +299,8 @@ Release Notes</a>.</h1>
       Support to model instruction bundling / packing.</li>
   <li><a href="#armintegratedassembler">ARM Integrated Assembler</a>,
       A full featured assembler and direct-to-object support for ARM.</li>
+  <li><a href="#blockplacement">Basic Block Placement</a>
+      Probability driven basic block placement.</li>
   <li>....</li>
 </ul>
 
@@ -414,6 +416,16 @@ Release Notes</a>.</h1>
 <p> We have added a new target independent VLIW packetizer based on the
     DFA infrastructure to group machine instructions into bundles.</p>
 
+</div>
+
+<h4>
+<a name="blockplacement">Basic Block Placement</a>
+</h4>
+<div>
+<p>A probability based block placement and code layout algorithm was added to
+LLVM's code generator. This layout pass supports probabilities derived from
+static heuristics as well as source code annotations such as
+<code>__builtin_expect</code>.</p>
 </div>
 
 <!--=========================================================================-->
