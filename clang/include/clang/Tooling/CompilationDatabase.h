@@ -34,12 +34,10 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/YAMLParser.h"
 #include <string>
 #include <vector>
-
-namespace llvm {
-class MemoryBuffer;
-} // end namespace llvm
 
 namespace clang {
 namespace tooling {
@@ -139,7 +137,7 @@ public:
 private:
   /// \brief Constructs a JSON compilation database on a memory buffer.
   JSONCompilationDatabase(llvm::MemoryBuffer *Database)
-    : Database(Database) {}
+    : Database(Database), YAMLStream(Database->getBuffer(), SM) {}
 
   /// \brief Parses the database file and creates the index.
   ///
@@ -147,14 +145,17 @@ private:
   /// failed.
   bool parse(std::string &ErrorMessage);
 
-  // Tuple (directory, commandline) where 'commandline' is a JSON escaped bash
-  // escaped command line.
-  typedef std::pair<StringRef, StringRef> CompileCommandRef;
+  // Tuple (directory, commandline) where 'commandline' pointing to the
+  // corresponding nodes in the YAML stream.
+  typedef std::pair<llvm::yaml::ScalarNode*,
+                    llvm::yaml::ScalarNode*> CompileCommandRef;
 
   // Maps file paths to the compile command lines for that file.
   llvm::StringMap< std::vector<CompileCommandRef> > IndexByFile;
 
   llvm::OwningPtr<llvm::MemoryBuffer> Database;
+  llvm::SourceMgr SM;
+  llvm::yaml::Stream YAMLStream;
 };
 
 } // end namespace tooling

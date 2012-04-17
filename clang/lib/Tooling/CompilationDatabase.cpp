@@ -13,7 +13,7 @@
 
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/JSONParser.h"
+#include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 
@@ -22,10 +22,10 @@ namespace tooling {
 
 namespace {
 
-/// \brief A parser for JSON escaped strings of command line arguments.
+/// \brief A parser for escaped strings of command line arguments.
 ///
 /// Assumes \-escaping for quoted arguments (see the documentation of
-/// unescapeJSONCommandLine(...)).
+/// unescapeCommandLine(...)).
 class CommandLineArgumentParser {
  public:
   CommandLineArgumentParser(StringRef CommandLine)
@@ -90,9 +90,6 @@ class CommandLineArgumentParser {
 
   bool next() {
     ++Position;
-    if (Position == Input.end()) return false;
-    // Remove the JSON escaping first. This is done unconditionally.
-    if (*Position == '\\') ++Position;
     return Position != Input.end();
   }
 
@@ -101,9 +98,9 @@ class CommandLineArgumentParser {
   std::vector<std::string> CommandLine;
 };
 
-std::vector<std::string> unescapeJSONCommandLine(
-    StringRef JSONEscapedCommandLine) {
-  CommandLineArgumentParser parser(JSONEscapedCommandLine);
+std::vector<std::string> unescapeCommandLine(
+    StringRef EscapedCommandLine) {
+  CommandLineArgumentParser parser(EscapedCommandLine);
   return parser.parse();
 }
 
@@ -162,65 +159,77 @@ JSONCompilationDatabase::getCompileCommands(StringRef FilePath) const {
   const std::vector<CompileCommandRef> &CommandsRef = CommandsRefI->getValue();
   std::vector<CompileCommand> Commands;
   for (int I = 0, E = CommandsRef.size(); I != E; ++I) {
+    llvm::SmallString<8> DirectoryStorage;
+    llvm::SmallString<1024> CommandStorage;
     Commands.push_back(CompileCommand(
       // FIXME: Escape correctly:
-      CommandsRef[I].first,
-      unescapeJSONCommandLine(CommandsRef[I].second)));
+      CommandsRef[I].first->getValue(DirectoryStorage),
+      unescapeCommandLine(CommandsRef[I].second->getValue(CommandStorage))));
   }
   return Commands;
 }
 
 bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
-  llvm::SourceMgr SM;
-  llvm::JSONParser Parser(Database->getBuffer(), &SM);
-  llvm::JSONValue *Root = Parser.parseRoot();
-  if (Root == NULL) {
-    ErrorMessage = "Error while parsing JSON.";
+  llvm::yaml::document_iterator I = YAMLStream.begin();
+  if (I == YAMLStream.end()) {
+    ErrorMessage = "Error while parsing YAML.";
     return false;
   }
-  llvm::JSONArray *Array = dyn_cast<llvm::JSONArray>(Root);
+  llvm::yaml::Node *Root = I->getRoot();
+  if (Root == NULL) {
+    ErrorMessage = "Error while parsing YAML.";
+    return false;
+  }
+  llvm::yaml::SequenceNode *Array =
+    llvm::dyn_cast<llvm::yaml::SequenceNode>(Root);
   if (Array == NULL) {
     ErrorMessage = "Expected array.";
     return false;
   }
-  for (llvm::JSONArray::const_iterator AI = Array->begin(), AE = Array->end();
+  for (llvm::yaml::SequenceNode::iterator AI = Array->begin(),
+                                          AE = Array->end();
        AI != AE; ++AI) {
-    const llvm::JSONObject *Object = dyn_cast<llvm::JSONObject>(*AI);
+    llvm::yaml::MappingNode *Object =
+      llvm::dyn_cast<llvm::yaml::MappingNode>(&*AI);
     if (Object == NULL) {
       ErrorMessage = "Expected object.";
       return false;
     }
-    StringRef EntryDirectory;
-    StringRef EntryFile;
-    StringRef EntryCommand;
-    for (llvm::JSONObject::const_iterator KVI = Object->begin(),
-                                          KVE = Object->end();
+    llvm::yaml::ScalarNode *Directory;
+    llvm::yaml::ScalarNode *Command;
+    llvm::SmallString<8> FileStorage;
+    llvm::StringRef File;
+    for (llvm::yaml::MappingNode::iterator KVI = Object->begin(),
+                                           KVE = Object->end();
          KVI != KVE; ++KVI) {
-      const llvm::JSONValue *Value = (*KVI)->Value;
+      llvm::yaml::Node *Value = (*KVI).getValue();
       if (Value == NULL) {
         ErrorMessage = "Expected value.";
         return false;
       }
-      const llvm::JSONString *ValueString =
-        dyn_cast<llvm::JSONString>(Value);
+      llvm::yaml::ScalarNode *ValueString =
+        llvm::dyn_cast<llvm::yaml::ScalarNode>(Value);
       if (ValueString == NULL) {
         ErrorMessage = "Expected string as value.";
         return false;
       }
-      if ((*KVI)->Key->getRawText() == "directory") {
-        EntryDirectory = ValueString->getRawText();
-      } else if ((*KVI)->Key->getRawText() == "file") {
-        EntryFile = ValueString->getRawText();
-      } else if ((*KVI)->Key->getRawText() == "command") {
-        EntryCommand = ValueString->getRawText();
+      llvm::yaml::ScalarNode *KeyString =
+        llvm::dyn_cast<llvm::yaml::ScalarNode>((*KVI).getKey());
+      llvm::SmallString<8> KeyStorage;
+      if (KeyString->getValue(KeyStorage) == "directory") {
+        Directory = ValueString;
+      } else if (KeyString->getValue(KeyStorage) == "command") {
+        Command = ValueString;
+      } else if (KeyString->getValue(KeyStorage) == "file") {
+        File = ValueString->getValue(FileStorage);
       } else {
-        ErrorMessage = (Twine("Unknown key: \"") +
-                        (*KVI)->Key->getRawText() + "\"").str();
+        ErrorMessage = ("Unknown key: \"" +
+                        KeyString->getRawValue() + "\"").str();
         return false;
       }
     }
-    IndexByFile[EntryFile].push_back(
-      CompileCommandRef(EntryDirectory, EntryCommand));
+    IndexByFile[File].push_back(
+      CompileCommandRef(Directory, Command));
   }
   return true;
 }
