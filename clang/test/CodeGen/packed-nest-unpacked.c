@@ -4,6 +4,7 @@ struct X { int x[6]; };
 struct Y { char x[13]; struct X y; } __attribute((packed));
 struct Y g;
 void f(struct X);
+struct X foo(void);
 
 // <rdar://problem/10463337>
 struct X test1() {
@@ -36,4 +37,11 @@ int test5() {
   // CHECK: @test5
   // CHECK: load i32* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1, i32 0, i64 0), align 1
   return g.y.x[0];
+}
+
+// <rdar://problem/11220251>
+void test6() {
+  // CHECK: @test6
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i8* %0, i64 24, i32 1, i1 false)
+  g.y = foo();
 }

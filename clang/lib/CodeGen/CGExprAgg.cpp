@@ -238,7 +238,7 @@ void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue Src) {
 
   // Otherwise, do a final copy, 
   assert(Dest.getAddr() != Src.getAggregateAddr());
-  EmitFinalDestCopy(E, Src, /*Ignore*/ true);
+  EmitFinalDestCopy(E, Src, /*Ignore*/ true, Dest.getAlignment().getQuantity());
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
