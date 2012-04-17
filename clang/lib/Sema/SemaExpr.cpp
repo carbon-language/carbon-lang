@@ -9773,6 +9773,13 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   // FIXME: Is this really right?
   if (CurContext == Func) return;
 
+  // Instantiate the exception specification for any function which is
+  // used: CodeGen will need it.
+  if (Func->getTemplateInstantiationPattern() &&
+      Func->getType()->castAs<FunctionProtoType>()->getExceptionSpecType()
+        == EST_Uninstantiated)
+    InstantiateExceptionSpec(Loc, Func);
+
   // Implicit instantiation of function templates and member functions of
   // class templates.
   if (Func->isImplicitlyInstantiable()) {

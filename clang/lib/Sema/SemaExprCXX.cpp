@@ -3135,6 +3135,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
             FoundAssign = true;
             const FunctionProtoType *CPT
                 = Operator->getType()->getAs<FunctionProtoType>();
+            CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
+            if (!CPT)
+              return false;
             if (CPT->getExceptionSpecType() == EST_Delayed)
               return false;
             if (!CPT->isNothrow(Self.Context))
@@ -3174,6 +3177,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
           FoundConstructor = true;
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
+          CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
+          if (!CPT)
+            return false;
           if (CPT->getExceptionSpecType() == EST_Delayed)
             return false;
           // FIXME: check whether evaluating default arguments can throw.
@@ -3209,6 +3215,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
         if (Constructor->isDefaultConstructor()) {
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
+          CPT = Self.ResolveExceptionSpec(KeyLoc, CPT);
+          if (!CPT)
+            return false;
           if (CPT->getExceptionSpecType() == EST_Delayed)
             return false;
           // TODO: check whether evaluating default arguments can throw.
@@ -5203,9 +5212,9 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
 
 ExprResult Sema::BuildCXXNoexceptExpr(SourceLocation KeyLoc, Expr *Operand,
                                       SourceLocation RParen) {
+  CanThrowResult CanThrow = canThrow(Operand);
   return Owned(new (Context) CXXNoexceptExpr(Context.BoolTy, Operand,
-                                             Operand->CanThrow(Context),
-                                             KeyLoc, RParen));
+                                             CanThrow, KeyLoc, RParen));
 }
 
 ExprResult Sema::ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation,

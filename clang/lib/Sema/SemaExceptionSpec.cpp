@@ -96,6 +96,26 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
   return FnT->hasExceptionSpec();
 }
 
+const FunctionProtoType *
+Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
+  // FIXME: If FD is a special member, we should delay computing its exception
+  // specification until this point.
+  if (FPT->getExceptionSpecType() != EST_Uninstantiated)
+    return FPT;
+
+  FunctionDecl *SourceDecl = FPT->getExceptionSpecDecl();
+  const FunctionProtoType *SourceFPT =
+      SourceDecl->getType()->castAs<FunctionProtoType>();
+
+  if (SourceFPT->getExceptionSpecType() != EST_Uninstantiated)
+    return SourceFPT;
+
+  // Instantiate the exception specification now.
+  InstantiateExceptionSpec(Loc, SourceDecl);
+
+  return SourceDecl->getType()->castAs<FunctionProtoType>();
+}
+
 bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   OverloadedOperatorKind OO = New->getDeclName().getCXXOverloadedOperator();
   bool IsOperatorNew = OO == OO_New || OO == OO_Array_New;
@@ -104,7 +124,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   unsigned DiagID = diag::err_mismatched_exception_spec;
   if (getLangOpts().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
-  
+
   if (!CheckEquivalentExceptionSpec(PDiag(DiagID),
                                     PDiag(diag::note_previous_declaration),
                                     Old->getType()->getAs<FunctionProtoType>(),
@@ -295,6 +315,13 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   if (MissingEmptyExceptionSpecification)
     *MissingEmptyExceptionSpecification = false;
 
+  Old = ResolveExceptionSpec(NewLoc, Old);
+  if (!Old)
+    return false;
+  New = ResolveExceptionSpec(NewLoc, New);
+  if (!New)
+    return false;
+
   // C++0x [except.spec]p3: Two exception-specifications are compatible if:
   //   - both are non-throwing, regardless of their form,
   //   - both have the form noexcept(constant-expression) and the constant-
@@ -318,6 +345,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   ExceptionSpecificationType NewEST = New->getExceptionSpecType();
 
   assert(OldEST != EST_Delayed && NewEST != EST_Delayed &&
+         OldEST != EST_Uninstantiated && NewEST != EST_Uninstantiated &&
          "Shouldn't see unknown exception specifications here");
 
   // Shortcut the case where both have no spec.
@@ -483,6 +511,14 @@ bool Sema::CheckExceptionSpecSubset(
   if (!SubLoc.isValid())
     SubLoc = SuperLoc;
 
+  // Resolve the exception specifications, if needed.
+  Superset = ResolveExceptionSpec(SuperLoc, Superset);
+  if (!Superset)
+    return false;
+  Subset = ResolveExceptionSpec(SubLoc, Subset);
+  if (!Subset)
+    return false;
+
   ExceptionSpecificationType SuperEST = Superset->getExceptionSpecType();
 
   // If superset contains everything, we're done.
@@ -507,6 +543,7 @@ bool Sema::CheckExceptionSpecSubset(
   ExceptionSpecificationType SubEST = Subset->getExceptionSpecType();
 
   assert(SuperEST != EST_Delayed && SubEST != EST_Delayed &&
+         SuperEST != EST_Uninstantiated && SubEST != EST_Uninstantiated &&
          "Shouldn't see unknown exception specifications here");
 
   // It does not. If the subset contains everything, we've failed.
@@ -724,6 +761,326 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                   Old->getLocation(),
                                   New->getType()->getAs<FunctionProtoType>(),
                                   New->getLocation());
+}
+
+static CanThrowResult canSubExprsThrow(Sema &S, const Expr *CE) {
+  Expr *E = const_cast<Expr*>(CE);
+  CanThrowResult R = CT_Cannot;
+  for (Expr::child_range I = E->children(); I && R != CT_Can; ++I)
+    R = mergeCanThrow(R, S.canThrow(cast<Expr>(*I)));
+  return R;
+}
+
+static CanThrowResult canCalleeThrow(Sema &S, const Expr *E,
+                                           const Decl *D,
+                                           bool NullThrows = true) {
+  if (!D)
+    return NullThrows ? CT_Can : CT_Cannot;
+
+  // See if we can get a function type from the decl somehow.
+  const ValueDecl *VD = dyn_cast<ValueDecl>(D);
+  if (!VD) // If we have no clue what we're calling, assume the worst.
+    return CT_Can;
+
+  // As an extension, we assume that __attribute__((nothrow)) functions don't
+  // throw.
+  if (isa<FunctionDecl>(D) && D->hasAttr<NoThrowAttr>())
+    return CT_Cannot;
+
+  QualType T = VD->getType();
+  const FunctionProtoType *FT;
+  if ((FT = T->getAs<FunctionProtoType>())) {
+  } else if (const PointerType *PT = T->getAs<PointerType>())
+    FT = PT->getPointeeType()->getAs<FunctionProtoType>();
+  else if (const ReferenceType *RT = T->getAs<ReferenceType>())
+    FT = RT->getPointeeType()->getAs<FunctionProtoType>();
+  else if (const MemberPointerType *MT = T->getAs<MemberPointerType>())
+    FT = MT->getPointeeType()->getAs<FunctionProtoType>();
+  else if (const BlockPointerType *BT = T->getAs<BlockPointerType>())
+    FT = BT->getPointeeType()->getAs<FunctionProtoType>();
+
+  if (!FT)
+    return CT_Can;
+
+  FT = S.ResolveExceptionSpec(E->getLocStart(), FT);
+  if (!FT)
+    return CT_Can;
+
+  if (FT->getExceptionSpecType() == EST_Delayed) {
+    // FIXME: Try to resolve a delayed exception spec in ResolveExceptionSpec.
+    assert(isa<CXXConstructorDecl>(D) &&
+           "only constructor exception specs can be unknown");
+    S.Diag(E->getLocStart(), diag::err_exception_spec_unknown)
+      << E->getSourceRange();
+    return CT_Can;
+  }
+
+  return FT->isNothrow(S.Context) ? CT_Cannot : CT_Can;
+}
+
+static CanThrowResult canDynamicCastThrow(const CXXDynamicCastExpr *DC) {
+  if (DC->isTypeDependent())
+    return CT_Dependent;
+
+  if (!DC->getTypeAsWritten()->isReferenceType())
+    return CT_Cannot;
+
+  if (DC->getSubExpr()->isTypeDependent())
+    return CT_Dependent;
+
+  return DC->getCastKind() == clang::CK_Dynamic? CT_Can : CT_Cannot;
+}
+
+static CanThrowResult canTypeidThrow(Sema &S, const CXXTypeidExpr *DC) {
+  if (DC->isTypeOperand())
+    return CT_Cannot;
+
+  Expr *Op = DC->getExprOperand();
+  if (Op->isTypeDependent())
+    return CT_Dependent;
+
+  const RecordType *RT = Op->getType()->getAs<RecordType>();
+  if (!RT)
+    return CT_Cannot;
+
+  if (!cast<CXXRecordDecl>(RT->getDecl())->isPolymorphic())
+    return CT_Cannot;
+
+  if (Op->Classify(S.Context).isPRValue())
+    return CT_Cannot;
+
+  return CT_Can;
+}
+
+CanThrowResult Sema::canThrow(const Expr *E) {
+  // C++ [expr.unary.noexcept]p3:
+  //   [Can throw] if in a potentially-evaluated context the expression would
+  //   contain:
+  switch (E->getStmtClass()) {
+  case Expr::CXXThrowExprClass:
+    //   - a potentially evaluated throw-expression
+    return CT_Can;
+
+  case Expr::CXXDynamicCastExprClass: {
+    //   - a potentially evaluated dynamic_cast expression dynamic_cast<T>(v),
+    //     where T is a reference type, that requires a run-time check
+    CanThrowResult CT = canDynamicCastThrow(cast<CXXDynamicCastExpr>(E));
+    if (CT == CT_Can)
+      return CT;
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+  case Expr::CXXTypeidExprClass:
+    //   - a potentially evaluated typeid expression applied to a glvalue
+    //     expression whose type is a polymorphic class type
+    return canTypeidThrow(*this, cast<CXXTypeidExpr>(E));
+
+    //   - a potentially evaluated call to a function, member function, function
+    //     pointer, or member function pointer that does not have a non-throwing
+    //     exception-specification
+  case Expr::CallExprClass:
+  case Expr::CXXMemberCallExprClass:
+  case Expr::CXXOperatorCallExprClass:
+  case Expr::UserDefinedLiteralClass: {
+    const CallExpr *CE = cast<CallExpr>(E);
+    CanThrowResult CT;
+    if (E->isTypeDependent())
+      CT = CT_Dependent;
+    else if (isa<CXXPseudoDestructorExpr>(CE->getCallee()->IgnoreParens()))
+      CT = CT_Cannot;
+    else
+      CT = canCalleeThrow(*this, E, CE->getCalleeDecl());
+    if (CT == CT_Can)
+      return CT;
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+  case Expr::CXXConstructExprClass:
+  case Expr::CXXTemporaryObjectExprClass: {
+    CanThrowResult CT = canCalleeThrow(*this, E,
+        cast<CXXConstructExpr>(E)->getConstructor());
+    if (CT == CT_Can)
+      return CT;
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+  case Expr::LambdaExprClass: {
+    const LambdaExpr *Lambda = cast<LambdaExpr>(E);
+    CanThrowResult CT = CT_Cannot;
+    for (LambdaExpr::capture_init_iterator Cap = Lambda->capture_init_begin(),
+                                        CapEnd = Lambda->capture_init_end();
+         Cap != CapEnd; ++Cap)
+      CT = mergeCanThrow(CT, canThrow(*Cap));
+    return CT;
+  }
+
+  case Expr::CXXNewExprClass: {
+    CanThrowResult CT;
+    if (E->isTypeDependent())
+      CT = CT_Dependent;
+    else
+      CT = canCalleeThrow(*this, E, cast<CXXNewExpr>(E)->getOperatorNew());
+    if (CT == CT_Can)
+      return CT;
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+  case Expr::CXXDeleteExprClass: {
+    CanThrowResult CT;
+    QualType DTy = cast<CXXDeleteExpr>(E)->getDestroyedType();
+    if (DTy.isNull() || DTy->isDependentType()) {
+      CT = CT_Dependent;
+    } else {
+      CT = canCalleeThrow(*this, E,
+                          cast<CXXDeleteExpr>(E)->getOperatorDelete());
+      if (const RecordType *RT = DTy->getAs<RecordType>()) {
+        const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+        CT = mergeCanThrow(CT, canCalleeThrow(*this, E, RD->getDestructor()));
+      }
+      if (CT == CT_Can)
+        return CT;
+    }
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+  case Expr::CXXBindTemporaryExprClass: {
+    // The bound temporary has to be destroyed again, which might throw.
+    CanThrowResult CT = canCalleeThrow(*this, E,
+      cast<CXXBindTemporaryExpr>(E)->getTemporary()->getDestructor());
+    if (CT == CT_Can)
+      return CT;
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+    // ObjC message sends are like function calls, but never have exception
+    // specs.
+  case Expr::ObjCMessageExprClass:
+  case Expr::ObjCPropertyRefExprClass:
+  case Expr::ObjCSubscriptRefExprClass:
+    return CT_Can;
+
+    // All the ObjC literals that are implemented as calls are
+    // potentially throwing unless we decide to close off that
+    // possibility.
+  case Expr::ObjCArrayLiteralClass:
+  case Expr::ObjCDictionaryLiteralClass:
+  case Expr::ObjCNumericLiteralClass:
+    return CT_Can;
+
+    // Many other things have subexpressions, so we have to test those.
+    // Some are simple:
+  case Expr::ConditionalOperatorClass:
+  case Expr::CompoundLiteralExprClass:
+  case Expr::CXXConstCastExprClass:
+  case Expr::CXXDefaultArgExprClass:
+  case Expr::CXXReinterpretCastExprClass:
+  case Expr::DesignatedInitExprClass:
+  case Expr::ExprWithCleanupsClass:
+  case Expr::ExtVectorElementExprClass:
+  case Expr::InitListExprClass:
+  case Expr::MemberExprClass:
+  case Expr::ObjCIsaExprClass:
+  case Expr::ObjCIvarRefExprClass:
+  case Expr::ParenExprClass:
+  case Expr::ParenListExprClass:
+  case Expr::ShuffleVectorExprClass:
+  case Expr::VAArgExprClass:
+    return canSubExprsThrow(*this, E);
+
+    // Some might be dependent for other reasons.
+  case Expr::ArraySubscriptExprClass:
+  case Expr::BinaryOperatorClass:
+  case Expr::CompoundAssignOperatorClass:
+  case Expr::CStyleCastExprClass:
+  case Expr::CXXStaticCastExprClass:
+  case Expr::CXXFunctionalCastExprClass:
+  case Expr::ImplicitCastExprClass:
+  case Expr::MaterializeTemporaryExprClass:
+  case Expr::UnaryOperatorClass: {
+    CanThrowResult CT = E->isTypeDependent() ? CT_Dependent : CT_Cannot;
+    return mergeCanThrow(CT, canSubExprsThrow(*this, E));
+  }
+
+    // FIXME: We should handle StmtExpr, but that opens a MASSIVE can of worms.
+  case Expr::StmtExprClass:
+    return CT_Can;
+
+  case Expr::ChooseExprClass:
+    if (E->isTypeDependent() || E->isValueDependent())
+      return CT_Dependent;
+    return canThrow(cast<ChooseExpr>(E)->getChosenSubExpr(Context));
+
+  case Expr::GenericSelectionExprClass:
+    if (cast<GenericSelectionExpr>(E)->isResultDependent())
+      return CT_Dependent;
+    return canThrow(cast<GenericSelectionExpr>(E)->getResultExpr());
+
+    // Some expressions are always dependent.
+  case Expr::CXXDependentScopeMemberExprClass:
+  case Expr::CXXUnresolvedConstructExprClass:
+  case Expr::DependentScopeDeclRefExprClass:
+    return CT_Dependent;
+
+  case Expr::AsTypeExprClass:
+  case Expr::BinaryConditionalOperatorClass:
+  case Expr::BlockExprClass:
+  case Expr::CUDAKernelCallExprClass:
+  case Expr::DeclRefExprClass:
+  case Expr::ObjCBridgedCastExprClass:
+  case Expr::ObjCIndirectCopyRestoreExprClass:
+  case Expr::ObjCProtocolExprClass:
+  case Expr::ObjCSelectorExprClass:
+  case Expr::OffsetOfExprClass:
+  case Expr::PackExpansionExprClass:
+  case Expr::PseudoObjectExprClass:
+  case Expr::SubstNonTypeTemplateParmExprClass:
+  case Expr::SubstNonTypeTemplateParmPackExprClass:
+  case Expr::UnaryExprOrTypeTraitExprClass:
+  case Expr::UnresolvedLookupExprClass:
+  case Expr::UnresolvedMemberExprClass:
+    // FIXME: Can any of the above throw?  If so, when?
+    return CT_Cannot;
+
+  case Expr::AddrLabelExprClass:
+  case Expr::ArrayTypeTraitExprClass:
+  case Expr::AtomicExprClass:
+  case Expr::BinaryTypeTraitExprClass:
+  case Expr::TypeTraitExprClass:
+  case Expr::CXXBoolLiteralExprClass:
+  case Expr::CXXNoexceptExprClass:
+  case Expr::CXXNullPtrLiteralExprClass:
+  case Expr::CXXPseudoDestructorExprClass:
+  case Expr::CXXScalarValueInitExprClass:
+  case Expr::CXXThisExprClass:
+  case Expr::CXXUuidofExprClass:
+  case Expr::CharacterLiteralClass:
+  case Expr::ExpressionTraitExprClass:
+  case Expr::FloatingLiteralClass:
+  case Expr::GNUNullExprClass:
+  case Expr::ImaginaryLiteralClass:
+  case Expr::ImplicitValueInitExprClass:
+  case Expr::IntegerLiteralClass:
+  case Expr::ObjCEncodeExprClass:
+  case Expr::ObjCStringLiteralClass:
+  case Expr::ObjCBoolLiteralExprClass:
+  case Expr::OpaqueValueExprClass:
+  case Expr::PredefinedExprClass:
+  case Expr::SizeOfPackExprClass:
+  case Expr::StringLiteralClass:
+  case Expr::UnaryTypeTraitExprClass:
+    // These expressions can never throw.
+    return CT_Cannot;
+
+#define STMT(CLASS, PARENT) case Expr::CLASS##Class:
+#define STMT_RANGE(Base, First, Last)
+#define LAST_STMT_RANGE(BASE, FIRST, LAST)
+#define EXPR(CLASS, PARENT)
+#define ABSTRACT_STMT(STMT)
+#include "clang/AST/StmtNodes.inc"
+  case Expr::NoStmtClass:
+    llvm_unreachable("Invalid class for expression");
+  }
+  llvm_unreachable("Bogus StmtClass");
 }
 
 } // end namespace clang

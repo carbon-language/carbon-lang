@@ -907,6 +907,9 @@ public:
   DeclarationNameInfo GetNameForDeclarator(Declarator &D);
   DeclarationNameInfo GetNameFromUnqualifiedId(const UnqualifiedId &Name);
   static QualType GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo = 0);
+  CanThrowResult canThrow(const Expr *E);
+  const FunctionProtoType *ResolveExceptionSpec(SourceLocation Loc,
+                                                const FunctionProtoType *FPT);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
   bool CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New);
@@ -3050,7 +3053,7 @@ public:
   /// implicitly-declared special member functions.
   class ImplicitExceptionSpecification {
     // Pointer to allow copying
-    ASTContext *Context;
+    Sema *Self;
     // We order exception specifications thus:
     // noexcept is the most restrictive, but is only used in C++0x.
     // throw() comes next.
@@ -3074,9 +3077,9 @@ public:
     }
 
   public:
-    explicit ImplicitExceptionSpecification(ASTContext &Context)
-      : Context(&Context), ComputedEST(EST_BasicNoexcept) {
-      if (!Context.getLangOpts().CPlusPlus0x)
+    explicit ImplicitExceptionSpecification(Sema &Self)
+      : Self(&Self), ComputedEST(EST_BasicNoexcept) {
+      if (!Self.Context.getLangOpts().CPlusPlus0x)
         ComputedEST = EST_DynamicNone;
     }
 
@@ -3094,7 +3097,7 @@ public:
     const QualType *data() const { return Exceptions.data(); }
 
     /// \brief Integrate another called method into the collected data.
-    void CalledDecl(CXXMethodDecl *Method);
+    void CalledDecl(SourceLocation CallLoc, CXXMethodDecl *Method);
 
     /// \brief Integrate an invoked expression into the collected data.
     void CalledExpr(Expr *E);
@@ -5194,7 +5197,11 @@ public:
 
       /// We are checking the validity of a default template argument that
       /// has been used when naming a template-id.
-      DefaultTemplateArgumentChecking
+      DefaultTemplateArgumentChecking,
+
+      /// We are instantiating the exception specification for a function
+      /// template which was deferred until it was needed.
+      ExceptionSpecInstantiation
     } Kind;
 
     /// \brief The point of instantiation within the source code.
@@ -5242,6 +5249,7 @@ public:
 
       switch (X.Kind) {
       case TemplateInstantiation:
+      case ExceptionSpecInstantiation:
         return true;
 
       case PriorTemplateArgumentSubstitution:
@@ -5357,6 +5365,13 @@ public:
     /// function template, or a member thereof.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           Decl *Entity,
+                          SourceRange InstantiationRange = SourceRange());
+
+    struct ExceptionSpecification {};
+    /// \brief Note that we are instantiating an exception specification
+    /// of a function template.
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          FunctionDecl *Entity, ExceptionSpecification,
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are instantiating a default argument in a
@@ -5658,6 +5673,8 @@ public:
              TemplateArgumentListInfo &Result,
              const MultiLevelTemplateArgumentList &TemplateArgs);
 
+  void InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
+                                FunctionDecl *Function);
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function,
                                      bool Recursive = false,

@@ -1284,7 +1284,8 @@ static bool CanThrow(Expr *E, ASTContext &Ctx) {
   const FunctionType *FT = Ty->getAs<FunctionType>();
   if (FT) {
     if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
-      if (Proto->isNothrow(Ctx))
+      if (Proto->getExceptionSpecType() != EST_Uninstantiated &&
+          Proto->isNothrow(Ctx))
         return false;
   }
   return true;

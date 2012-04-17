@@ -153,6 +153,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
 bool Sema::ActiveTemplateInstantiation::isInstantiationRecord() const {
   switch (Kind) {
   case TemplateInstantiation:
+  case ExceptionSpecInstantiation:
   case DefaultTemplateArgumentInstantiation:
   case DefaultFunctionArgumentInstantiation:
     return true;
@@ -180,6 +181,29 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
   if (!Invalid) {
     ActiveTemplateInstantiation Inst;
     Inst.Kind = ActiveTemplateInstantiation::TemplateInstantiation;
+    Inst.PointOfInstantiation = PointOfInstantiation;
+    Inst.Entity = reinterpret_cast<uintptr_t>(Entity);
+    Inst.TemplateArgs = 0;
+    Inst.NumTemplateArgs = 0;
+    Inst.InstantiationRange = InstantiationRange;
+    SemaRef.InNonInstantiationSFINAEContext = false;
+    SemaRef.ActiveTemplateInstantiations.push_back(Inst);
+  }
+}
+
+Sema::InstantiatingTemplate::
+InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                      FunctionDecl *Entity, ExceptionSpecification,
+                      SourceRange InstantiationRange)
+  : SemaRef(SemaRef),
+    SavedInNonInstantiationSFINAEContext(
+                                        SemaRef.InNonInstantiationSFINAEContext)
+{
+  Invalid = CheckInstantiationDepth(PointOfInstantiation,
+                                    InstantiationRange);
+  if (!Invalid) {
+    ActiveTemplateInstantiation Inst;
+    Inst.Kind = ActiveTemplateInstantiation::ExceptionSpecInstantiation;
     Inst.PointOfInstantiation = PointOfInstantiation;
     Inst.Entity = reinterpret_cast<uintptr_t>(Entity);
     Inst.TemplateArgs = 0;
@@ -592,6 +616,13 @@ void Sema::PrintInstantiationStack() {
         << Active->InstantiationRange;
       break;
     }
+
+    case ActiveTemplateInstantiation::ExceptionSpecInstantiation:
+      Diags.Report(Active->PointOfInstantiation,
+                   diag::note_template_exception_spec_instantiation_here)
+        << cast<FunctionDecl>((Decl *)Active->Entity)
+        << Active->InstantiationRange;
+      break;
     }
   }
 }
@@ -609,6 +640,7 @@ llvm::Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
     switch(Active->Kind) {
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
     case ActiveTemplateInstantiation::TemplateInstantiation:
+    case ActiveTemplateInstantiation::ExceptionSpecInstantiation:
       // This is a template instantiation, so there is no SFINAE.
       return llvm::Optional<TemplateDeductionInfo *>();
 

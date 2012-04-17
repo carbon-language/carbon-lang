@@ -11150,6 +11150,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                            VK_LValue,
                                            Found.getDecl(),
                                            TemplateArgs);
+    MarkDeclRefReferenced(DRE);
     DRE->setHadMultipleCandidates(ULE->getNumDecls() > 1);
     return DRE;
   }
@@ -11178,6 +11179,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                                VK_LValue,
                                                Found.getDecl(),
                                                TemplateArgs);
+        MarkDeclRefReferenced(DRE);
         DRE->setHadMultipleCandidates(MemExpr->getNumDecls() > 1);
         return DRE;
       } else {

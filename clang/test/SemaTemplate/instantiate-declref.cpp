@@ -105,3 +105,13 @@ namespace test1 {
   }
   template void f(int const &); // expected-note {{requested here}}
 }
+
+namespace test2 {
+  template<typename T> void f() {
+    T::error; // expected-error {{no member}}
+  }
+  void g() {
+    // This counts as an odr-use, so should trigger the instantiation of f<int>.
+    (void)&f<int>; // expected-note {{here}}
+  }
+}

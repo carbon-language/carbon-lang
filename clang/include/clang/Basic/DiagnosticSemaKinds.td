@@ -2583,6 +2583,8 @@ def note_template_enum_def_here : Note<
   "in instantiation of enumeration %q0 requested here">;
 def note_template_type_alias_instantiation_here : Note<
   "in instantiation of template type alias %0 requested here">;
+def note_template_exception_spec_instantiation_here : Note<
+  "in instantiation of exception specification for %0 requested here">;
   
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;

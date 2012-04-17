@@ -4181,10 +4181,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    unsigned ThisTypeQuals) {
   // Transform the parameters and return type.
   //
-  // We instantiate in source order, with the return type first followed by
-  // the parameters, because users tend to expect this (even if they shouldn't
-  // rely on it!).
-  //
+  // We are required to instantiate the params and return type in source order.
   // When the function has a trailing return type, we instantiate the
   // parameters before the return type,  since the return type can then refer
   // to the parameters themselves (via decltype, sizeof, etc.).
@@ -4229,6 +4226,8 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                  ParamTypes, &ParamDecls))
       return QualType();
   }
+
+  // FIXME: Need to transform the exception-specification too.
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
