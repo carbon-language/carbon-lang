@@ -18,7 +18,7 @@ else
     MAKE=make
 fi
 
-projects="llvm cfe dragonegg test-suite"
+projects="llvm cfe dragonegg compiler-rt test-suite"
 
 # Base SVN URL for the sources.
 Base_url="http://llvm.org/svn/llvm-project"
@@ -213,6 +213,9 @@ function export_sources() {
     cd $BuildDir/llvm.src/projects
     if [ ! -h llvm-test ]; then
         ln -s ../../test-suite.src llvm-test
+    fi
+    if [ ! -h compiler-rt ]; then
+        ln -s ../../compiler-rt.src compiler-rt
     fi
     cd $BuildDir
 }
