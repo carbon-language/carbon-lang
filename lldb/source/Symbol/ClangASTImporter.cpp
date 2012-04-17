@@ -61,9 +61,14 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
             if (log)
             {
                 if (NamedDecl *named_decl = dyn_cast<NamedDecl>(decl))
-                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s'", decl->getDeclKindName(), named_decl->getNameAsString().c_str());
+                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s '%s', metadata 0x%llx",
+                                decl->getDeclKindName(),
+                                named_decl->getNameAsString().c_str(),
+                                GetDeclMetadata(decl));
                 else
-                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s", decl->getDeclKindName());
+                    log->Printf("  [ClangASTImporter] WARNING: Failed to import a %s, metadata 0x%llx",
+                                decl->getDeclKindName(),
+                                GetDeclMetadata(decl));
             }
         }
         
