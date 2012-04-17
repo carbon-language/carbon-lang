@@ -9,10 +9,6 @@
 // This describes the calling conventions for MBlaze architecture.
 //===----------------------------------------------------------------------===//
 
-/// CCIfSubtarget - Match if the current subtarget has a feature F.
-class CCIfSubtarget<string F, CCAction A>:
-  CCIf<!strconcat("State.getTarget().getSubtarget<MBlazeSubtarget>().", F), A>;
-
 //===----------------------------------------------------------------------===//
 // MBlaze ABI Calling Convention
 //===----------------------------------------------------------------------===//

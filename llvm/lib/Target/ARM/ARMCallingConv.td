@@ -9,10 +9,6 @@
 // This describes the calling conventions for ARM architecture.
 //===----------------------------------------------------------------------===//
 
-/// CCIfSubtarget - Match if the current subtarget has a feature F.
-class CCIfSubtarget<string F, CCAction A>:
-  CCIf<!strconcat("State.getTarget().getSubtarget<ARMSubtarget>().", F), A>;
-
 /// CCIfAlign - Match of the original alignment of the arg
 class CCIfAlign<string Align, CCAction A>:
   CCIf<!strconcat("ArgFlags.getOrigAlign() == ", Align), A>;
