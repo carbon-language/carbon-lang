@@ -1,4 +1,4 @@
-;===- ./lib/Target/Mips/LLVMBuild.txt --------------------------*- Conf -*--===;
+;===- ./lib/Target/Mips/Disassembler/LLVMBuild.txt --------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,21 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = AsmParser Disassembler InstPrinter MCTargetDesc TargetInfo
-
 [component_0]
-type = TargetGroup
-name = Mips
-parent = Target
-has_asmparser = 1
-has_asmprinter = 1
-has_disassembler = 1
-has_jit = 1
-
-[component_1]
 type = Library
-name = MipsCodeGen
+name = MipsDisassembler
 parent = Mips
-required_libraries = AsmPrinter CodeGen Core MC MipsAsmPrinter MipsDesc MipsInfo SelectionDAG Support Target
+required_libraries = MC Support MipsInfo
 add_to_library_groups = Mips

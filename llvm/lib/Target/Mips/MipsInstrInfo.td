@@ -121,21 +121,36 @@ def MipsIns :  SDNode<"MipsISD::Ins", SDT_Ins>;
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasSEInReg  : Predicate<"Subtarget.hasSEInReg()">;
-def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
-def HasSwap     : Predicate<"Subtarget.hasSwap()">;
-def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
-def HasMips32    : Predicate<"Subtarget.hasMips32()">;
-def HasMips32r2  : Predicate<"Subtarget.hasMips32r2()">;
-def HasMips64    : Predicate<"Subtarget.hasMips64()">;
-def HasMips32r2Or64 : Predicate<"Subtarget.hasMips32r2Or64()">;
-def NotMips64    : Predicate<"!Subtarget.hasMips64()">;
-def HasMips64r2  : Predicate<"Subtarget.hasMips64r2()">;
-def IsN64       : Predicate<"Subtarget.isABI_N64()">;
-def NotN64      : Predicate<"!Subtarget.isABI_N64()">;
-def RelocStatic : Predicate<"TM.getRelocationModel() == Reloc::Static">;
-def RelocPIC    : Predicate<"TM.getRelocationModel() == Reloc::PIC_">;
-def NoNaNsFPMath : Predicate<"TM.Options.NoNaNsFPMath">;
+def HasSEInReg  :     Predicate<"Subtarget.hasSEInReg()">,
+                      AssemblerPredicate<"FeatureSEInReg">;
+def HasBitCount :     Predicate<"Subtarget.hasBitCount()">,
+                      AssemblerPredicate<"FeatureBitCount">;
+def HasSwap     :     Predicate<"Subtarget.hasSwap()">,
+                      AssemblerPredicate<"FeatureSwap">;
+def HasCondMov  :     Predicate<"Subtarget.hasCondMov()">,
+                      AssemblerPredicate<"FeatureCondMov">;
+def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
+                      AssemblerPredicate<"FeatureMips32">;
+def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
+                      AssemblerPredicate<"FeatureMips32r2">;
+def HasMips64    :    Predicate<"Subtarget.hasMips64()">,
+                      AssemblerPredicate<"FeatureMips64">;
+def HasMips32r2Or64 : Predicate<"Subtarget.hasMips32r2Or64()">,
+                      AssemblerPredicate<"FeatureMips32r2,FeatureMips64">;
+def NotMips64    :    Predicate<"!Subtarget.hasMips64()">,
+                      AssemblerPredicate<"!FeatureMips64">;
+def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
+                      AssemblerPredicate<"FeatureMips64r2">;
+def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
+                      AssemblerPredicate<"FeatureN64">;
+def NotN64      :     Predicate<"!Subtarget.isABI_N64()">,
+                      AssemblerPredicate<"!FeatureN64">;
+def RelocStatic :     Predicate<"TM.getRelocationModel() == Reloc::Static">,
+                      AssemblerPredicate<"FeatureMips32">;
+def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
+                      AssemblerPredicate<"FeatureMips32">;
+def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
+                      AssemblerPredicate<"FeatureMips32">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -148,12 +163,15 @@ def jmptarget   : Operand<OtherVT> {
 def brtarget    : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
+  let DecoderMethod = "DecodeBranchTarget";
 }
 def calltarget  : Operand<iPTR> {
   let EncoderMethod = "getJumpTargetOpValue";
 }
 def calltarget64: Operand<i64>;
-def simm16      : Operand<i32>;
+def simm16      : Operand<i32> {
+  let DecoderMethod= "DecodeSimm16";
+}
 def simm16_64   : Operand<i64>;
 def shamt       : Operand<i32>;
 
@@ -189,11 +207,13 @@ def mem_ea_64 : Operand<i64> {
 // size operand of ext instruction
 def size_ext : Operand<i32> {
   let EncoderMethod = "getSizeExtEncoding";
+  let DecoderMethod = "DecodeExtSize";
 }
 
 // size operand of ins instruction
 def size_ins : Operand<i32> {
   let EncoderMethod = "getSizeInsEncoding";
+  let DecoderMethod = "DecodeInsSize";
 }
 
 // Transformation Function - get the lower 16 bits.
@@ -373,6 +393,7 @@ class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   bits<21> addr;
   let Inst{25-21} = addr{20-16};
   let Inst{15-0}  = addr{15-0};
+  let DecoderMethod = "DecodeMem";
 }
 
 // Memory Load/Store
@@ -407,7 +428,10 @@ multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
   def #NAME# : LoadM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
                Requires<[NotN64]>;
   def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
-               Requires<[IsN64]>;
+               Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
 }
 
 // 64-bit load.
@@ -416,7 +440,10 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
   def #NAME# : LoadM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
                Requires<[NotN64]>;
   def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
-               Requires<[IsN64]>;
+               Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
 }
 
 // 32-bit load.
@@ -424,7 +451,10 @@ multiclass LoadUnAlign32<bits<6> op> {
   def #NAME# : LoadUnAlign<op, CPURegs, mem>,
                Requires<[NotN64]>;
   def _P8    : LoadUnAlign<op, CPURegs, mem64>,
-               Requires<[IsN64]>;
+               Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
 }
 // 32-bit store.
 multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
@@ -432,7 +462,10 @@ multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
   def #NAME# : StoreM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
                Requires<[NotN64]>;
   def _P8    : StoreM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
-               Requires<[IsN64]>;
+               Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
 }
 
 // 64-bit store.
@@ -441,7 +474,10 @@ multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
   def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
                Requires<[NotN64]>;
   def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
-               Requires<[IsN64]>;
+               Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
 }
 
 // 32-bit store.
@@ -449,7 +485,10 @@ multiclass StoreUnAlign32<bits<6> op> {
   def #NAME# : StoreUnAlign<op, CPURegs, mem>,
                Requires<[NotN64]>;
   def _P8    : StoreUnAlign<op, CPURegs, mem64>,
-               Requires<[IsN64]>;
+               Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
 }
 
 // Conditional Branch
@@ -499,6 +538,7 @@ class JumpFJ<bits<6> op, string instr_asm>:
   let isBarrier=1;
   let hasDelaySlot = 1;
   let Predicates = [RelocStatic];
+  let DecoderMethod = "DecodeJumpTarget";
 }
 
 // Unconditional branch
@@ -529,7 +569,9 @@ let isCall=1, hasDelaySlot=1 in {
   class JumpLink<bits<6> op, string instr_asm>:
     FJ<op, (outs), (ins calltarget:$target, variable_ops),
        !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
-       IIBranch>;
+       IIBranch> {
+       let DecoderMethod = "DecodeJumpTarget";
+       }
 
   class JumpLinkReg<bits<6> op, bits<6> func, string instr_asm,
                     RegisterClass RC>:
@@ -685,7 +727,9 @@ class Atomic2Ops<PatFrag Op, string Opstr, RegisterClass DRC,
 
 multiclass Atomic2Ops32<PatFrag Op, string Opstr> {
   def #NAME# : Atomic2Ops<Op, Opstr, CPURegs, CPURegs>, Requires<[NotN64]>;
-  def _P8    : Atomic2Ops<Op, Opstr, CPURegs, CPU64Regs>, Requires<[IsN64]>;
+  def _P8    : Atomic2Ops<Op, Opstr, CPURegs, CPU64Regs>, Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+  }
 }
 
 // Atomic Compare & Swap.
@@ -697,7 +741,9 @@ class AtomicCmpSwap<PatFrag Op, string Width, RegisterClass DRC,
 
 multiclass AtomicCmpSwap32<PatFrag Op, string Width>  {
   def #NAME# : AtomicCmpSwap<Op, Width, CPURegs, CPURegs>, Requires<[NotN64]>;
-  def _P8    : AtomicCmpSwap<Op, Width, CPURegs, CPU64Regs>, Requires<[IsN64]>;
+  def _P8    : AtomicCmpSwap<Op, Width, CPURegs, CPU64Regs>, Requires<[IsN64]> {
+    let DecoderNamespace = "Mips64";
+  }
 }
 
 class LLBase<bits<6> Opc, string opstring, RegisterClass RC, Operand Mem> :
@@ -868,9 +914,14 @@ def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
 
 /// Load-linked, Store-conditional
 def LL    : LLBase<0x30, "ll", CPURegs, mem>, Requires<[NotN64]>;
-def LL_P8 : LLBase<0x30, "ll", CPURegs, mem64>, Requires<[IsN64]>;
+def LL_P8 : LLBase<0x30, "ll", CPURegs, mem64>, Requires<[IsN64]> {
+  let DecoderNamespace = "Mips64";
+}
+
 def SC    : SCBase<0x38, "sc", CPURegs, mem>, Requires<[NotN64]>;
-def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]>;
+def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]> {
+  let DecoderNamespace = "Mips64";
+}
 
 /// Jump and Branch Instructions
 def J       : JumpFJ<0x02, "j">;
@@ -888,7 +939,7 @@ def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
 def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
 def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
 
-let isReturn=1, isTerminator=1, hasDelaySlot=1,
+let isReturn=1, isTerminator=1, hasDelaySlot=1, isCodeGenOnly=1,
     isBarrier=1, hasCtrlDep=1, rd=0, rt=0, shamt=0 in
   def RET : FR <0x00, 0x08, (outs), (ins CPURegs:$target),
                 "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
@@ -923,13 +974,17 @@ let addr=0 in
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea>;
+def LEA_ADDiu : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea> {
+  let isCodeGenOnly = 1;
+}
 
 // DynAlloc node points to dynamically allocated stack space.
 // $sp is added to the list of implicitly used registers to prevent dead code
 // elimination from removing instructions that modify $sp.
 let Uses = [SP] in
-def DynAlloc : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea>;
+def DynAlloc : EffectiveAddress<"addiu\t$rt, $addr", CPURegs, mem_ea> {
+  let isCodeGenOnly = 1;
+}
 
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
