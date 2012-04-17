@@ -32,6 +32,7 @@ add_llvm_library(LLVMSupport
   IntrusiveRefCntPtr.cpp
   IsInf.cpp
   IsNAN.cpp
+  Locale.cpp
   LockFileManager.cpp
   ManagedStatic.cpp
   MemoryBuffer.cpp
