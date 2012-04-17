@@ -324,6 +324,9 @@ Release Notes</a>.</h1>
         module as a whole to LLVM subsystems.</li>
     <li>Loads can now have range metadata attached to them to describe the
         possible values being loaded.</li>
+    <li>Inline cost heuristics have been completely overhauled and now closely
+        model constant propagation through call sites, disregard trivially dead
+        code costs, and can model C++ STL iterator patterns.</li>
     <li>....</li>
   </ul>
 </div>
