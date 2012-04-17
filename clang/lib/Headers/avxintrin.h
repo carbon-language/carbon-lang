@@ -289,37 +289,17 @@ _mm256_permutevar_ps(__m256 a, __m256i c)
 #define _mm256_permute2f128_pd(V1, V2, M) __extension__ ({ \
   __m256d __V1 = (V1); \
   __m256d __V2 = (V2); \
-  (__m256d)__builtin_shufflevector((__v4df)__V1, (__v4df)__V2, \
-                                   ((M) & 0x3) * 2, \
-                                   ((M) & 0x3) * 2 + 1, \
-                                   (((M) & 0x30) >> 4) * 2, \
-                                   (((M) & 0x30) >> 4) * 2 + 1); })
+  (__m256d)__builtin_ia32_vperm2f128_pd256((__v4df)__V1, (__v4df)__V2, (M)); })
 
 #define _mm256_permute2f128_ps(V1, V2, M) __extension__ ({ \
   __m256 __V1 = (V1); \
   __m256 __V2 = (V2); \
-  (__m256)__builtin_shufflevector((__v8sf)__V1, (__v8sf)__V2, \
-                                  ((M) & 0x3) * 4, \
-                                  ((M) & 0x3) * 4 + 1, \
-                                  ((M) & 0x3) * 4 + 2, \
-                                  ((M) & 0x3) * 4 + 3, \
-                                  (((M) & 0x30) >> 4) * 4, \
-                                  (((M) & 0x30) >> 4) * 4 + 1, \
-                                  (((M) & 0x30) >> 4) * 4 + 2, \
-                                  (((M) & 0x30) >> 4) * 4 + 3); })
+  (__m256)__builtin_ia32_vperm2f128_ps256((__v8sf)__V1, (__v8sf)__V2, (M)); })
 
 #define _mm256_permute2f128_si256(V1, V2, M) __extension__ ({ \
   __m256i __V1 = (V1); \
   __m256i __V2 = (V2); \
-  (__m256i)__builtin_shufflevector((__v8si)__V1, (__v8si)__V2, \
-                                   ((M) & 0x3) * 4, \
-                                   ((M) & 0x3) * 4 + 1, \
-                                   ((M) & 0x3) * 4 + 2, \
-                                   ((M) & 0x3) * 4 + 3, \
-                                   (((M) & 0x30) >> 4) * 4, \
-                                   (((M) & 0x30) >> 4) * 4 + 1, \
-                                   (((M) & 0x30) >> 4) * 4 + 2, \
-                                   (((M) & 0x30) >> 4) * 4 + 3); })
+  (__m256i)__builtin_ia32_vperm2f128_si256((__v8si)__V1, (__v8si)__V2, (M)); })
 
 /* Vector Blend */
 #define _mm256_blend_pd(V1, V2, M) __extension__ ({ \

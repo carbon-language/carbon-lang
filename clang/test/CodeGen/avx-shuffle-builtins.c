@@ -48,18 +48,18 @@ __m256 test_mm256_permute_ps(__m256 a) {
 
 __m256d test_mm256_permute2f128_pd(__m256d a, __m256d b) {
   // Check if the mask is correct
-  // CHECK: shufflevector{{.*}}<i32 2, i32 3, i32 6, i32 7>
+  // CHECK: @llvm.x86.avx.vperm2f128.pd.256
   return _mm256_permute2f128_pd(a, b, 0x31);
 }
 
 __m256 test_mm256_permute2f128_ps(__m256 a, __m256 b) {
   // Check if the mask is correct
-  // CHECK: shufflevector{{.*}}<i32 12, i32 13, i32 14, i32 15, i32 4, i32 5, i32 6, i32 7>
+  // CHECK: @llvm.x86.avx.vperm2f128.ps.256
   return _mm256_permute2f128_ps(a, b, 0x13);
 }
 
 __m256i test_mm256_permute2f128_si256(__m256i a, __m256i b) {
   // Check if the mask is correct
-  // CHECK: shufflevector{{.*}}<i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
+  // CHECK: @llvm.x86.avx.vperm2f128.si.256
   return _mm256_permute2f128_si256(a, b, 0x20);
 }

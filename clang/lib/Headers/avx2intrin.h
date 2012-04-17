@@ -841,11 +841,7 @@ _mm256_permutevar8x32_ps(__m256 a, __m256 b)
 #define _mm256_permute2x128_si256(V1, V2, M) __extension__ ({ \
   __m256i __V1 = (V1); \
   __m256i __V2 = (V2); \
-  __builtin_shufflevector(__V1, __V2, \
-                          ((M) & 0x3) * 2, \
-                          ((M) & 0x3) * 2 + 1, \
-                          (((M) & 0x30) >> 4) * 2, \
-                          (((M) & 0x30) >> 4) * 2 + 1); })
+  (__m256i)__builtin_ia32_permti256(__V1, __V2, (M)); })
 
 #define _mm256_extracti128_si256(A, O) __extension__ ({ \
   __m256i __A = (A); \
