@@ -396,7 +396,6 @@ add_subdirectory(utils/FileUpdate)
 add_subdirectory(utils/count)
 add_subdirectory(utils/not)
 add_subdirectory(utils/llvm-lit)
-add_subdirectory(utils/json-bench)
 add_subdirectory(utils/yaml-bench)
 
 add_subdirectory(projects)

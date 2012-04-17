@@ -32,7 +32,6 @@ add_llvm_library(LLVMSupport
   IntrusiveRefCntPtr.cpp
   IsInf.cpp
   IsNAN.cpp
-  JSONParser.cpp
   LockFileManager.cpp
   ManagedStatic.cpp
   MemoryBuffer.cpp
