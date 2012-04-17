@@ -401,7 +401,7 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
     //  Look up for existing stub.
     StubMap::const_iterator i = Stubs.find(Value);
     if (i != Stubs.end()) {
-      resolveRelocation(Target, Section.LoadAddress, (uint64_t)Section.Address +
+      resolveRelocation(Target, (uint64_t)Target, (uint64_t)Section.Address +
                         i->second, RelType, 0);
       DEBUG(dbgs() << " Stub function found\n");
     } else {
@@ -412,7 +412,7 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
                                                    Section.StubOffset);
       AddRelocation(Value, Rel.SectionID,
                     StubTargetAddr - Section.Address, ELF::R_ARM_ABS32);
-      resolveRelocation(Target, Section.LoadAddress, (uint64_t)Section.Address +
+      resolveRelocation(Target, (uint64_t)Target, (uint64_t)Section.Address +
                         Section.StubOffset, RelType, 0);
       Section.StubOffset += getMaxStubSize();
     }
