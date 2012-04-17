@@ -325,8 +325,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       LinkageInfo TypeLV = getLVForType(Var->getType());
       if (TypeLV.linkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
-      LV.mergeVisibilityWithMin(TypeLV.visibility(),
-                                TypeLV.visibilityExplicit());
+      LV.mergeVisibilityWithMin(TypeLV);
     }
 
     if (Var->getStorageClass() == SC_PrivateExtern)
@@ -581,7 +580,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     if (TypeLV.linkage() != ExternalLinkage)
       LV.mergeLinkage(UniqueExternalLinkage);
     if (!LV.visibilityExplicit())
-      LV.mergeVisibility(TypeLV.visibility(), TypeLV.visibilityExplicit());
+      LV.mergeVisibility(TypeLV);
   }
 
   return LV;
