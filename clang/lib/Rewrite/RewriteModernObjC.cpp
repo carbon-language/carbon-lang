@@ -304,7 +304,6 @@ namespace {
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteBlockPointerType(std::string& Str, QualType Type);
     void RewriteBlockPointerTypeVariable(std::string& Str, ValueDecl *VD);
-    void RewriteBlockLiteralFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     void RewriteTypeOfDecl(VarDecl *VD);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
@@ -2246,30 +2245,6 @@ void RewriteModernObjC::RewriteBlockPointerTypeVariable(std::string& Str,
   }
 }
 
-
-void RewriteModernObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
-  SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
-  const FunctionType *funcType = FD->getType()->getAs<FunctionType>();
-  const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(funcType);
-  if (!proto)
-    return;
-  QualType Type = proto->getResultType();
-  std::string FdStr = Type.getAsString(Context->getPrintingPolicy());
-  FdStr += " ";
-  FdStr += FD->getName();
-  FdStr +=  "(";
-  unsigned numArgs = proto->getNumArgs();
-  for (unsigned i = 0; i < numArgs; i++) {
-    QualType ArgType = proto->getArgType(i);
-    RewriteBlockPointerType(FdStr, ArgType);
-    if (i+1 < numArgs)
-      FdStr += ", ";
-  }
-  FdStr +=  ");\n";
-  InsertText(FunLocStart, FdStr);
-  CurFunctionDeclToDeclareForBlock = 0;
-}
-
 // SynthSuperContructorFunctionDecl - id __rw_objc_super(id obj, id super);
 void RewriteModernObjC::SynthSuperContructorFunctionDecl() {
   if (SuperContructorFunctionDecl)
@@ -4008,11 +3983,25 @@ std::string RewriteModernObjC::SynthesizeBlockDescriptor(std::string DescTag,
   return S;
 }
 
+/// getFunctionSourceLocation - returns start location of a function
+/// definition. Complication arises when function has declared as
+/// extern "C" or extern "C" {...}
+static SourceLocation getFunctionSourceLocation (FunctionDecl *FD) {
+  if (!FD->isExternC() || FD->isMain())
+    return FD->getTypeSpecStartLoc();
+  const DeclContext *DC = FD->getDeclContext();
+  if (const LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(DC)) {
+    SourceLocation BodyRBrace = LSD->getRBraceLoc();
+    // if it is extern "C" {...}, return function decl's own location.
+    if (BodyRBrace.isValid())
+      return FD->getTypeSpecStartLoc();
+    return LSD->getExternLoc();
+  }
+  return FD->getTypeSpecStartLoc();
+}
+
 void RewriteModernObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                           StringRef FunName) {
-  // Insert declaration for the function in which block literal is used.
-  if (CurFunctionDeclToDeclareForBlock && !Blocks.empty())
-    RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   bool RewriteSC = (GlobalVarDecl &&
                     !Blocks.empty() &&
                     GlobalVarDecl->getStorageClass() == SC_Static &&
@@ -4121,7 +4110,7 @@ void RewriteModernObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 }
 
 void RewriteModernObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
-  SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
+  SourceLocation FunLocStart = getFunctionSourceLocation(FD);
   StringRef FuncName = FD->getName();
 
   SynthesizeBlockLiterals(FunLocStart, FuncName);
@@ -4731,10 +4720,6 @@ std::string RewriteModernObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD,
 ///
 ///
 void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
-  // Insert declaration for the function in which block literal is
-  // used.
-  if (CurFunctionDeclToDeclareForBlock)
-    RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   int flag = 0;
   int isa = 0;
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
@@ -4773,7 +4758,7 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
   // Insert this type in global scope. It is needed by helper function.
   SourceLocation FunLocStart;
   if (CurFunctionDef)
-     FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
+     FunLocStart = getFunctionSourceLocation(CurFunctionDef);
   else {
     assert(CurMethodDef && "RewriteByRefVar - CurMethodDef is null");
     FunLocStart = CurMethodDef->getLocStart();
