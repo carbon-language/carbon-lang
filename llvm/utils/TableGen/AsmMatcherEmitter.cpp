@@ -1181,7 +1181,8 @@ void AsmMatcherInfo::BuildInfo() {
   unsigned VariantCount = Target.getAsmParserVariantCount();
   for (unsigned VC = 0; VC != VariantCount; ++VC) {
     Record *AsmVariant = Target.getAsmParserVariant(VC);
-    std::string CommentDelimiter = AsmVariant->getValueAsString("CommentDelimiter");
+    std::string CommentDelimiter =
+      AsmVariant->getValueAsString("CommentDelimiter");
     std::string RegisterPrefix = AsmVariant->getValueAsString("RegisterPrefix");
     int AsmVariantNo = AsmVariant->getValueAsInt("Variant");
 
@@ -1208,11 +1209,11 @@ void AsmMatcherInfo::BuildInfo() {
           // reject it.  We reject aliases and ignore instructions for now.
           if (OI.MINumOperands != 1) {
             // FIXME: Should reject these.  The ARM backend hits this with $lane
-            // in a bunch of instructions. It is unclear what the right answer is.
+            // in a bunch of instructions. The right answer is unclear.
             DEBUG({
                 errs() << "warning: '" << CGI.TheDef->getName() << "': "
-                       << "ignoring instruction with multi-operand tied operand '"
-                       << OI.Name << "'\n";
+                     << "ignoring instruction with multi-operand tied operand '"
+                     << OI.Name << "'\n";
               });
             continue;
           }
@@ -1248,8 +1249,8 @@ void AsmMatcherInfo::BuildInfo() {
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instruction aliases we consider, based on the target
       // instruction.
-      if (!StringRef(Alias->ResultInst->TheDef->getName()).startswith(
-                                                                      MatchPrefix))
+      if (!StringRef(Alias->ResultInst->TheDef->getName())
+            .startswith( MatchPrefix))
         continue;
 
       OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
@@ -1868,7 +1869,8 @@ static void EmitComputeAvailableFeatures(AsmMatcherInfo &Info,
     SubtargetFeatureInfo &SFI = *it->second;
 
     OS << "  if (";
-    std::string CondStorage = SFI.TheDef->getValueAsString("AssemblerCondString");
+    std::string CondStorage =
+      SFI.TheDef->getValueAsString("AssemblerCondString");
     StringRef Conds = CondStorage;
     std::pair<StringRef,StringRef> Comma = Conds.split(',');
     bool First = true;
