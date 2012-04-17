@@ -44,3 +44,17 @@ define <4 x i8> @h(<4 x float> %v) {
   %1 = fptoui <4 x float> %v to <4 x i8>
   ret <4 x i8> %1
 }
+
+; CHECK: i:
+define <4 x i8> @i(<4 x i8>* %x) {
+  ; CHECK: vldr
+  ; CHECK: vmovl.s8
+  ; CHECK: vmovl.s16
+  ; CHECK: vrecpe
+  ; CHECK: vrecps
+  ; CHECK: vmul
+  ; CHECK: vmovn
+  %1 = load <4 x i8>* %x, align 4
+  %2 = sdiv <4 x i8> zeroinitializer, %1
+  ret <4 x i8> %2
+}
