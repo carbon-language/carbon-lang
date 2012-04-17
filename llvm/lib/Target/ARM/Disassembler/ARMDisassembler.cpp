@@ -2690,7 +2690,6 @@ static DecodeStatus DecodeVLD2DupInstruction(MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   unsigned align = fieldFromInstruction32(Insn, 4, 1);
   unsigned size = 1 << fieldFromInstruction32(Insn, 6, 2);
-  unsigned pred = fieldFromInstruction32(Insn, 22, 4);
   align *= 2*size;
 
   switch (Inst.getOpcode()) {
@@ -2721,15 +2720,10 @@ static DecodeStatus DecodeVLD2DupInstruction(MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateImm(align));
 
-  if (Rm == 0xD)
-    Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF) {
+  if (Rm != 0xD && Rm != 0xF) {
     if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
       return MCDisassembler::Fail;
   }
-
-  if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
-    return MCDisassembler::Fail;
 
   return S;
 }
