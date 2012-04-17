@@ -779,6 +779,13 @@ static AccessResult HasAccess(Sema &S,
         // that the naming class has to be derived from the effective
         // context.
 
+        // Emulate a MSVC bug where the creation of pointer-to-member
+        // to protected member of base class is allowed but only from
+        // a static function.
+        if (S.getLangOpts().MicrosoftMode && !EC.Functions.empty() &&
+            EC.Functions.front()->getStorageClass() == SC_Static)
+           return AR_accessible;
+
         // Despite the standard's confident wording, there is a case
         // where you can have an instance member that's neither in a
         // pointer-to-member expression nor in a member access:  when
