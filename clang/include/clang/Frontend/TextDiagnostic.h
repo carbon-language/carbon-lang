@@ -18,8 +18,6 @@
 
 #include "clang/Frontend/DiagnosticRenderer.h"
 
-struct SourceColumnMap;
-
 namespace clang {
 
 /// \brief Class to encapsulate the logic for formatting and printing a textual
@@ -105,16 +103,15 @@ private:
                            SmallVectorImpl<CharSourceRange>& Ranges,
                            ArrayRef<FixItHint> Hints);
 
-  void emitSnippet(StringRef SourceLine);
-
   void highlightRange(const CharSourceRange &R,
                       unsigned LineNo, FileID FID,
-                      const SourceColumnMap &map,
+                      const std::string &SourceLine,
                       std::string &CaretLine);
-
   std::string buildFixItInsertionLine(unsigned LineNo,
-                                      const SourceColumnMap &map,
+                                      const char *LineStart,
+                                      const char *LineEnd,
                                       ArrayRef<FixItHint> Hints);
+  void expandTabs(std::string &SourceLine, std::string &CaretLine);
   void emitParseableFixits(ArrayRef<FixItHint> Hints);
 };
 
