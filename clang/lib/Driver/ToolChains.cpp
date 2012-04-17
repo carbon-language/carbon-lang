@@ -1103,7 +1103,7 @@ static StringRef getGCCToolchainDir(const ArgList &Args) {
 /// \brief Construct a GCCInstallationDetector from the driver.
 ///
 /// This performs all of the autodetection and sets up the various paths.
-/// Once constructed, a GCCInstallation is esentially immutable.
+/// Once constructed, a GCCInstallationDetector is essentially immutable.
 ///
 /// FIXME: We shouldn't need an explicit TargetTriple parameter here, and
 /// should instead pull the target out of the driver. This is currently
