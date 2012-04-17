@@ -114,6 +114,9 @@ static cl::opt<bool>
 OptLevelO3("O3",
            cl::desc("Optimization level 3. Similar to llvm-gcc -O3"));
 
+static cl::opt<std::string>
+TargetTriple("mtriple", cl::desc("Override target triple for module"));
+
 static cl::opt<bool>
 UnitAtATime("funit-at-a-time",
             cl::desc("Enable IPO. This is same as llvm-gcc's -funit-at-a-time"),
@@ -511,6 +514,10 @@ int main(int argc, char **argv) {
     Err.print(argv[0], errs());
     return 1;
   }
+
+  // If we are supposed to override the target triple, do so now.
+  if (!TargetTriple.empty())
+    M->setTargetTriple(Triple::normalize(TargetTriple));
 
   // Figure out what stream we are supposed to write to...
   OwningPtr<tool_output_file> Out;
