@@ -205,7 +205,7 @@ struct TargetRegisterInfoDesc {
 /// Each TargetRegisterClass has a per register weight, and weight
 /// limit which must be less than the limits of its pressure sets.
 struct RegClassWeight {
-  unsigned RegWeigt;
+  unsigned RegWeight;
   unsigned WeightLimit;
 };
 
