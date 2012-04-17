@@ -238,7 +238,10 @@ void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue Src) {
 
   // Otherwise, do a final copy, 
   assert(Dest.getAddr() != Src.getAggregateAddr());
-  EmitFinalDestCopy(E, Src, /*Ignore*/ true, Dest.getAlignment().getQuantity());
+  std::pair<CharUnits, CharUnits> TypeInfo = 
+    CGF.getContext().getTypeInfoInChars(E->getType());
+  CharUnits Alignment = std::min(TypeInfo.second, Dest.getAlignment());
+  EmitFinalDestCopy(E, Src, /*Ignore*/ true, Alignment.getQuantity());
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
