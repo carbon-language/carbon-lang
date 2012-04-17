@@ -169,6 +169,9 @@ void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<int> &ShuffleMask) {
 
 void DecodeVPERM2X128Mask(EVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask) {
+  if (Imm & 0x88)
+    return; // Not a shuffle
+
   unsigned HalfSize = VT.getVectorNumElements()/2;
   unsigned FstHalfBegin = (Imm & 0x3) * HalfSize;
   unsigned SndHalfBegin = ((Imm >> 4) & 0x3) * HalfSize;

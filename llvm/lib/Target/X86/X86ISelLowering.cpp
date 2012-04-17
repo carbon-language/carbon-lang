@@ -4430,6 +4430,7 @@ static bool getTargetShuffleMask(SDNode *N, EVT VT,
   case X86ISD::VPERM2X128:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    if (Mask.empty()) return false;
     break;
   case X86ISD::MOVDDUP:
   case X86ISD::MOVLHPD:
