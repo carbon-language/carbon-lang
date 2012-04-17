@@ -56,7 +56,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "exp2f",
     "expm1",
     "expm1l",
-    "expl1f",
+    "expm1f",
     "fabs",
     "fabsl",
     "fabsf",
@@ -95,6 +95,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "rint",
     "rintf",
     "rintl",
+    "round",
+    "roundf",
+    "roundl",
     "sin",
     "sinl",
     "sinf",
@@ -154,6 +157,81 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T) {
     TLI.setUnavailable(LibFunc::iprintf);
     TLI.setUnavailable(LibFunc::siprintf);
     TLI.setUnavailable(LibFunc::fiprintf);
+  }
+
+  if (T.getOS() == Triple::Win32) {
+    // Win32 does not support long double
+    TLI.setUnavailable(LibFunc::acosl);
+    TLI.setUnavailable(LibFunc::asinl);
+    TLI.setUnavailable(LibFunc::atanl);
+    TLI.setUnavailable(LibFunc::atan2l);
+    TLI.setUnavailable(LibFunc::ceill);
+    TLI.setUnavailable(LibFunc::copysignl);
+    TLI.setUnavailable(LibFunc::cosl);
+    TLI.setUnavailable(LibFunc::coshl);
+    TLI.setUnavailable(LibFunc::expl);
+    TLI.setUnavailable(LibFunc::fabsf); // Win32 and Win64 both lack fabsf
+    TLI.setUnavailable(LibFunc::fabsl);
+    TLI.setUnavailable(LibFunc::floorl);
+    TLI.setUnavailable(LibFunc::fmodl);
+    TLI.setUnavailable(LibFunc::logl);
+    TLI.setUnavailable(LibFunc::powl);
+    TLI.setUnavailable(LibFunc::sinl);
+    TLI.setUnavailable(LibFunc::sinhl);
+    TLI.setUnavailable(LibFunc::sqrtl);
+    TLI.setUnavailable(LibFunc::tanl);
+    TLI.setUnavailable(LibFunc::tanhl);
+
+    // Win32 only has C89 math
+    TLI.setUnavailable(LibFunc::exp2);
+    TLI.setUnavailable(LibFunc::exp2f);
+    TLI.setUnavailable(LibFunc::exp2l);
+    TLI.setUnavailable(LibFunc::expm1);
+    TLI.setUnavailable(LibFunc::expm1f);
+    TLI.setUnavailable(LibFunc::expm1l);
+    TLI.setUnavailable(LibFunc::log2);
+    TLI.setUnavailable(LibFunc::log2f);
+    TLI.setUnavailable(LibFunc::log2l);
+    TLI.setUnavailable(LibFunc::log1p);
+    TLI.setUnavailable(LibFunc::log1pf);
+    TLI.setUnavailable(LibFunc::log1pl);
+    TLI.setUnavailable(LibFunc::nearbyint);
+    TLI.setUnavailable(LibFunc::nearbyintf);
+    TLI.setUnavailable(LibFunc::nearbyintl);
+    TLI.setUnavailable(LibFunc::rint);
+    TLI.setUnavailable(LibFunc::rintf);
+    TLI.setUnavailable(LibFunc::rintl);
+    TLI.setUnavailable(LibFunc::round);
+    TLI.setUnavailable(LibFunc::roundf);
+    TLI.setUnavailable(LibFunc::roundl);
+    TLI.setUnavailable(LibFunc::trunc);
+    TLI.setUnavailable(LibFunc::truncf);
+    TLI.setUnavailable(LibFunc::truncl);
+
+    // Win32 provides some C99 math with mangled names
+    TLI.setAvailableWithName(LibFunc::copysign, "_copysign");
+
+    if (T.getArch() == Triple::x86) {
+      // Win32 on x86 implements single-precision math functions as macros
+      TLI.setUnavailable(LibFunc::acosf);
+      TLI.setUnavailable(LibFunc::asinf);
+      TLI.setUnavailable(LibFunc::atanf);
+      TLI.setUnavailable(LibFunc::atan2f);
+      TLI.setUnavailable(LibFunc::ceilf);
+      TLI.setUnavailable(LibFunc::copysignf);
+      TLI.setUnavailable(LibFunc::cosf);
+      TLI.setUnavailable(LibFunc::coshf);
+      TLI.setUnavailable(LibFunc::expf);
+      TLI.setUnavailable(LibFunc::floorf);
+      TLI.setUnavailable(LibFunc::fmodf);
+      TLI.setUnavailable(LibFunc::logf);
+      TLI.setUnavailable(LibFunc::powf);
+      TLI.setUnavailable(LibFunc::sinf);
+      TLI.setUnavailable(LibFunc::sinhf);
+      TLI.setUnavailable(LibFunc::sqrtf);
+      TLI.setUnavailable(LibFunc::tanf);
+      TLI.setUnavailable(LibFunc::tanhf);
+    }
   }
 }
 

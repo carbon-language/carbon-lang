@@ -1583,21 +1583,16 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["llvm.exp2.f64"] = &Exp2;
   Optimizations["llvm.exp2.f32"] = &Exp2;
 
-#ifdef HAVE_FLOORF
-  Optimizations["floor"] = &UnaryDoubleFP;
-#endif
-#ifdef HAVE_CEILF
-  Optimizations["ceil"] = &UnaryDoubleFP;
-#endif
-#ifdef HAVE_ROUNDF
-  Optimizations["round"] = &UnaryDoubleFP;
-#endif
-#ifdef HAVE_RINTF
-  Optimizations["rint"] = &UnaryDoubleFP;
-#endif
-#ifdef HAVE_NEARBYINTF
-  Optimizations["nearbyint"] = &UnaryDoubleFP;
-#endif
+  if (TLI->has(LibFunc::floor) && TLI->has(LibFunc::floorf))
+    Optimizations["floor"] = &UnaryDoubleFP;
+  if (TLI->has(LibFunc::ceil) && TLI->has(LibFunc::ceilf))
+    Optimizations["ceil"] = &UnaryDoubleFP;
+  if (TLI->has(LibFunc::round) && TLI->has(LibFunc::roundf))
+    Optimizations["round"] = &UnaryDoubleFP;
+  if (TLI->has(LibFunc::rint) && TLI->has(LibFunc::rintf))
+    Optimizations["rint"] = &UnaryDoubleFP;
+  if (TLI->has(LibFunc::nearbyint) && TLI->has(LibFunc::nearbyintf))
+    Optimizations["nearbyint"] = &UnaryDoubleFP;
 
   // Integer Optimizations
   Optimizations["ffs"] = &FFS;

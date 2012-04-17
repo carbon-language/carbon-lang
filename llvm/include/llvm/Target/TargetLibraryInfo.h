@@ -83,7 +83,7 @@ namespace llvm {
       /// long double expm1l(long double x);
       expm1l,
       /// float expm1f(float x);
-      expl1f,
+      expm1f,
       /// double fabs(double x);
       fabs,
       /// long double fabsl(long double x);
@@ -159,8 +159,14 @@ namespace llvm {
       rint,
       /// float rintf(float x);
       rintf,
-      /// long dobule rintl(long double x);
+      /// long double rintl(long double x);
       rintl,
+      /// double round(double x);
+      round,
+      /// float roundf(float x);
+      roundf,
+      /// long double roundl(long double x);
+      roundl,
       /// double sin(double x);
       sin,
       /// long double sinl(long double x);
