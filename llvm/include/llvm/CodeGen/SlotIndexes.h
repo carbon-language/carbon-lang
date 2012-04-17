@@ -605,7 +605,7 @@ namespace llvm {
       } else {
         // Insert mi's index immediately after the preceeding instruction.
         prevItr = getIndexBefore(mi).listEntry();
-        nextItr = next(prevItr);
+        nextItr = llvm::next(prevItr);
       }
 
       // Get a number for the new instr, or 0 if there's no room currently.
