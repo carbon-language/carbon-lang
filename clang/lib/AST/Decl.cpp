@@ -785,7 +785,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
       LinkageInfo LV;
       if (Flags.ConsiderVisibilityAttributes) {
         if (llvm::Optional<Visibility> Vis = Function->getExplicitVisibility())
-          LV.setVisibility(*Vis);
+          LV.setVisibility(*Vis, true);
       }
       
       if (const FunctionDecl *Prev = Function->getPreviousDecl()) {
@@ -806,10 +806,10 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
 
         LinkageInfo LV;
         if (Var->getStorageClass() == SC_PrivateExtern)
-          LV.setVisibility(HiddenVisibility);
+          LV.setVisibility(HiddenVisibility, true);
         else if (Flags.ConsiderVisibilityAttributes) {
           if (llvm::Optional<Visibility> Vis = Var->getExplicitVisibility())
-            LV.setVisibility(*Vis);
+            LV.setVisibility(*Vis, true);
         }
         
         if (const VarDecl *Prev = Var->getPreviousDecl()) {

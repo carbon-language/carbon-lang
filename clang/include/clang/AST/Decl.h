@@ -245,7 +245,6 @@ public:
     bool visibilityExplicit() const { return explicit_; }
 
     void setLinkage(Linkage L) { linkage_ = L; }
-    void setVisibility(Visibility V) { visibility_ = V; }
     void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
 
     void mergeLinkage(Linkage L) {
