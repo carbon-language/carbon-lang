@@ -724,7 +724,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     Records.getAllDerivedDefinitions("InstAlias");
 
   // Create a map from the qualified name to a list of potential matches.
-  std::map<std::string, std::vector<CodeGenInstAlias*> > AliasMap;
+  StringMap<std::vector<CodeGenInstAlias*> > AliasMap;
   for (std::vector<Record*>::iterator
          I = AllInstAliases.begin(), E = AllInstAliases.end(); I != E; ++I) {
     CodeGenInstAlias *Alias = new CodeGenInstAlias(*I, Target);
@@ -738,9 +738,9 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   // A map of which conditions need to be met for each instruction operand
   // before it can be matched to the mnemonic.
-  std::map<std::string, std::vector<IAPrinter*> > IAPrinterMap;
+  StringMap<std::vector<IAPrinter*> > IAPrinterMap;
 
-  for (std::map<std::string, std::vector<CodeGenInstAlias*> >::iterator
+  for (StringMap<std::vector<CodeGenInstAlias*> >::iterator
          I = AliasMap.begin(), E = AliasMap.end(); I != E; ++I) {
     std::vector<CodeGenInstAlias*> &Aliases = I->second;
 
@@ -828,7 +828,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       }
 
       if (CantHandle) continue;
-      IAPrinterMap[I->first].push_back(IAP);
+      IAPrinterMap[I->first()].push_back(IAP);
     }
   }
 
@@ -842,7 +842,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   std::string Cases;
   raw_string_ostream CasesO(Cases);
 
-  for (std::map<std::string, std::vector<IAPrinter*> >::iterator
+  for (StringMap<std::vector<IAPrinter*> >::iterator
          I = IAPrinterMap.begin(), E = IAPrinterMap.end(); I != E; ++I) {
     std::vector<IAPrinter*> &IAPs = I->second;
     std::vector<IAPrinter*> UniqueIAPs;
@@ -865,7 +865,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
     if (UniqueIAPs.empty()) continue;
 
-    CasesO.indent(2) << "case " << I->first << ":\n";
+    CasesO.indent(2) << "case " << I->first() << ":\n";
 
     for (std::vector<IAPrinter*>::iterator
            II = UniqueIAPs.begin(), IE = UniqueIAPs.end(); II != IE; ++II) {
