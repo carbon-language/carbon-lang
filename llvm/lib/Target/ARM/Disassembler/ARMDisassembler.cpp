@@ -326,6 +326,8 @@ static DecodeStatus DecodeT2ShifterImmOperand(MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeLDR(MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeMRRC2(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
 #include "ARMGenEDInfo.inc"
@@ -4399,6 +4401,34 @@ static DecodeStatus DecodeLDR(MCInst &Inst, unsigned Val,
     return MCDisassembler::Fail;
   if (!Check(S, DecodePredicateOperand(Inst, Cond, Address, Decoder)))
     return MCDisassembler::Fail;
+
+  return S;
+}
+
+static DecodeStatus DecodeMRRC2(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder) {
+
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned CRm = fieldFromInstruction32(Val, 0, 4);
+  unsigned opc1 = fieldFromInstruction32(Val, 4, 4);
+  unsigned cop = fieldFromInstruction32(Val, 8, 4);
+  unsigned Rt = fieldFromInstruction32(Val, 12, 4);
+  unsigned Rt2 = fieldFromInstruction32(Val, 16, 4);
+
+  if ((cop & ~0x1) == 0xa)
+    return MCDisassembler::Fail;
+
+  if (Rt == Rt2)
+    S = MCDisassembler::SoftFail;
+
+  Inst.addOperand(MCOperand::CreateImm(cop));
+  Inst.addOperand(MCOperand::CreateImm(opc1));
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt2, Address, Decoder)))
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::CreateImm(CRm));
 
   return S;
 }

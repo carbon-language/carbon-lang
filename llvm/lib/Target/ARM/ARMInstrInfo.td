@@ -4590,7 +4590,7 @@ def : ARMV5TPat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
 
 class MovRRCopro<string opc, bit direction, list<dag> pattern = []>
   : ABI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
-        GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+        GPRnopc:$Rt, GPRnopc:$Rt2, c_imm:$CRm),
         NoItinerary, opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm", pattern> {
   let Inst{23-21} = 0b010;
   let Inst{20} = direction;
@@ -4609,13 +4609,13 @@ class MovRRCopro<string opc, bit direction, list<dag> pattern = []>
 }
 
 def MCRR : MovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */,
-                      [(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2,
+                      [(int_arm_mcrr imm:$cop, imm:$opc1, GPRnopc:$Rt, GPRnopc:$Rt2,
                                      imm:$CRm)]>;
 def MRRC : MovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
 class MovRRCopro2<string opc, bit direction, list<dag> pattern = []>
   : ABXI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
-         GPR:$Rt, GPR:$Rt2, c_imm:$CRm), NoItinerary,
+         GPRnopc:$Rt, GPRnopc:$Rt2, c_imm:$CRm), NoItinerary,
          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
   let Inst{31-28} = 0b1111;
   let Inst{23-21} = 0b010;
@@ -4632,10 +4632,12 @@ class MovRRCopro2<string opc, bit direction, list<dag> pattern = []>
   let Inst{11-8}  = cop;
   let Inst{7-4}   = opc1;
   let Inst{3-0}   = CRm;
+
+  let DecoderMethod = "DecodeMRRC2";
 }
 
 def MCRR2 : MovRRCopro2<"mcrr2", 0 /* from ARM core register to coprocessor */,
-                        [(int_arm_mcrr2 imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2,
+                        [(int_arm_mcrr2 imm:$cop, imm:$opc1, GPRnopc:$Rt, GPRnopc:$Rt2,
                                         imm:$CRm)]>;
 def MRRC2 : MovRRCopro2<"mrrc2", 1 /* from coprocessor to ARM core register */>;
 
