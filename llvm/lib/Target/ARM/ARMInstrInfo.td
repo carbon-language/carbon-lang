@@ -4280,9 +4280,9 @@ def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex", []>,
 
 // SWP/SWPB are deprecated in V6/V7.
 let mayLoad = 1, mayStore = 1 in {
-def SWP : AIswp<0, (outs GPR:$Rt), (ins GPR:$Rt2, addr_offset_none:$addr),
+def SWP : AIswp<0, (outs GPRnopc:$Rt), (ins GPRnopc:$Rt2, addr_offset_none:$addr),
                 "swp", []>;
-def SWPB: AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, addr_offset_none:$addr),
+def SWPB: AIswp<1, (outs GPRnopc:$Rt), (ins GPRnopc:$Rt2, addr_offset_none:$addr),
                 "swpb", []>;
 }
 

@@ -4310,6 +4310,10 @@ static DecodeStatus DecodeSwap(MCInst &Inst, unsigned Insn,
     return DecodeCPSInstruction(Inst, Insn, Address, Decoder);
 
   DecodeStatus S = MCDisassembler::Success;
+
+  if (Rt == Rn || Rn == Rt2)
+    S = MCDisassembler::SoftFail;
+
   if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt, Address, Decoder)))
     return MCDisassembler::Fail;
   if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rt2, Address, Decoder)))
