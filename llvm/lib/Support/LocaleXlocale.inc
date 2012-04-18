@@ -21,7 +21,7 @@ namespace {
       assert(s.size()==strlen(s.c_str()));
 
       size_t size = mbstowcs_l(NULL,s.c_str(),0,l);
-      assert(size>=0);
+      assert(size!=(size_t)-1);
       if (size==0)
         return 0;
       llvm::SmallVector<wchar_t,200> ws(size);
