@@ -26,7 +26,9 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
@@ -1252,18 +1254,56 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 const addr_t linkedit_file_offset = linkedit_section_sp->GetFileOffset();
                 const addr_t symoff_addr = linkedit_load_addr + symtab_load_command.symoff - linkedit_file_offset;
                 const addr_t stroff_addr = linkedit_load_addr + symtab_load_command.stroff - linkedit_file_offset;
-                DataBufferSP nlist_data_sp (ReadMemory (process_sp, symoff_addr, nlist_data_byte_size));
-                if (nlist_data_sp)
-                    nlist_data.SetData (nlist_data_sp, 0, nlist_data_sp->GetByteSize());
-                DataBufferSP strtab_data_sp (ReadMemory (process_sp, stroff_addr, strtab_data_byte_size));
-                if (strtab_data_sp)
-                    strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
-                if (function_starts_load_command.cmd)
+
+                bool data_was_read = false;
+
+#if defined (__APPLE__) && defined (__arm__)
+                if (m_header.flags & 0x80000000u)
                 {
-                    const addr_t func_start_addr = linkedit_load_addr + function_starts_load_command.dataoff - linkedit_file_offset;
-                    DataBufferSP func_start_data_sp (ReadMemory (process_sp, func_start_addr, function_starts_load_command.datasize));
-                    if (func_start_data_sp)
-                        function_starts_data.SetData (func_start_data_sp, 0, func_start_data_sp->GetByteSize());
+                    // This mach-o memory file is in the dyld shared cache. If this
+                    // program is not remote and this is iOS, then this process will
+                    // share the same shared cache as the process we are debugging and
+                    // we can read the entire __LINKEDIT from the address space in this
+                    // process. This is a needed optimization that is used for local iOS
+                    // debugging only since all shared libraries in the shared cache do
+                    // not have corresponding files that exist in the file system of the
+                    // device. They have been combined into a single file. This means we
+                    // always have to load these files from memory. All of the symbol and
+                    // string tables from all of the __LINKEDIT sections from the shared
+                    // libraries in the shared cache have been merged into a single large
+                    // symbol and string table. Reading all of this symbol and string table
+                    // data across can slow down debug launch times, so we optimize this by
+                    // reading the memory for the __LINKEDIT section from this process.
+                    PlatformSP platform_sp (target.GetPlatform());
+                    if (platform_sp && platform_sp->IsHost())
+                    {
+                        data_was_read = true;
+                        nlist_data.SetData((void *)symoff_addr, nlist_data_byte_size, eByteOrderLittle);
+                        strtab_data.SetData((void *)stroff_addr, strtab_data_byte_size, eByteOrderLittle);
+                        if (function_starts_load_command.cmd)
+                        {
+                            const addr_t func_start_addr = linkedit_load_addr + function_starts_load_command.dataoff - linkedit_file_offset;
+                            function_starts_data.SetData ((void *)func_start_addr, function_starts_load_command.datasize, eByteOrderLittle);
+                        }
+                    }
+                }
+#endif
+
+                if (!data_was_read)
+                {
+                    DataBufferSP nlist_data_sp (ReadMemory (process_sp, symoff_addr, nlist_data_byte_size));
+                    if (nlist_data_sp)
+                        nlist_data.SetData (nlist_data_sp, 0, nlist_data_sp->GetByteSize());
+                    DataBufferSP strtab_data_sp (ReadMemory (process_sp, stroff_addr, strtab_data_byte_size));
+                    if (strtab_data_sp)
+                        strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
+                    if (function_starts_load_command.cmd)
+                    {
+                        const addr_t func_start_addr = linkedit_load_addr + function_starts_load_command.dataoff - linkedit_file_offset;
+                        DataBufferSP func_start_data_sp (ReadMemory (process_sp, func_start_addr, function_starts_load_command.datasize));
+                        if (func_start_data_sp)
+                            function_starts_data.SetData (func_start_data_sp, 0, func_start_data_sp->GetByteSize());
+                    }
                 }
             }
         }
