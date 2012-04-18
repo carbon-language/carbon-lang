@@ -12780,18 +12780,18 @@ EmulateInstructionARM::SetArchitecture (const ArchSpec &arch)
     if (arch_cstr)
     {
         if      (0 == ::strcasecmp(arch_cstr, "armv4t"))    m_arm_isa = ARMv4T;
-        else if (0 == ::strcasecmp(arch_cstr, "armv4"))     m_arm_isa = ARMv4;
         else if (0 == ::strcasecmp(arch_cstr, "armv5tej"))  m_arm_isa = ARMv5TEJ;
         else if (0 == ::strcasecmp(arch_cstr, "armv5te"))   m_arm_isa = ARMv5TE;
         else if (0 == ::strcasecmp(arch_cstr, "armv5t"))    m_arm_isa = ARMv5T;
         else if (0 == ::strcasecmp(arch_cstr, "armv6k"))    m_arm_isa = ARMv6K;
-        else if (0 == ::strcasecmp(arch_cstr, "armv6"))     m_arm_isa = ARMv6;
         else if (0 == ::strcasecmp(arch_cstr, "armv6t2"))   m_arm_isa = ARMv6T2;
-        else if (0 == ::strcasecmp(arch_cstr, "armv7"))     m_arm_isa = ARMv7;
         else if (0 == ::strcasecmp(arch_cstr, "armv7s"))    m_arm_isa = ARMv7S;
-        else if (0 == ::strcasecmp(arch_cstr, "armv8"))     m_arm_isa = ARMv8;
         else if (0 == ::strcasecmp(arch_cstr, "arm"))       m_arm_isa = ARMvAll;
         else if (0 == ::strcasecmp(arch_cstr, "thumb"))     m_arm_isa = ARMvAll;
+        else if (0 == ::strncasecmp(arch_cstr,"armv4", 5))  m_arm_isa = ARMv4;
+        else if (0 == ::strncasecmp(arch_cstr,"armv6", 5))  m_arm_isa = ARMv6;
+        else if (0 == ::strncasecmp(arch_cstr,"armv7", 5))  m_arm_isa = ARMv7;
+        else if (0 == ::strncasecmp(arch_cstr,"armv8", 5))  m_arm_isa = ARMv8;
     }
     return m_arm_isa != 0;
 }
