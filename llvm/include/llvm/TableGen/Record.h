@@ -454,7 +454,7 @@ public:
   /// without adding quote markers.  This primaruly affects
   /// StringInits where we will not surround the string value with
   /// quotes.
-  virtual std::string getAsUnquotedString() const { return getAsString(); }  
+  virtual std::string getAsUnquotedString() const { return getAsString(); }
 
   /// dump - Debugging method that may be called through a debugger, just
   /// invokes print on stderr.
@@ -1529,7 +1529,7 @@ struct MultiClass {
 
   void dump() const;
 
-  MultiClass(const std::string &Name, SMLoc Loc, RecordKeeper &Records) : 
+  MultiClass(const std::string &Name, SMLoc Loc, RecordKeeper &Records) :
     Rec(Name, Loc, Records) {}
 };
 
