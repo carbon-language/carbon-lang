@@ -1391,6 +1391,9 @@ Process::GetImageInfoAddress()
 uint32_t
 Process::LoadImage (const FileSpec &image_spec, Error &error)
 {
+    char path[PATH_MAX];
+    image_spec.GetPath(path, sizeof(path));
+
     DynamicLoader *loader = GetDynamicLoader();
     if (loader)
     {
@@ -1413,8 +1416,6 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 frame_sp->CalculateExecutionContext (exe_ctx);
                 bool unwind_on_error = true;
                 StreamString expr;
-                char path[PATH_MAX];
-                image_spec.GetPath(path, sizeof(path));
                 expr.Printf("dlopen (\"%s\", 2)", path);
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
                 lldb::ValueObjectSP result_valobj_sp;
@@ -1437,6 +1438,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
             }
         }
     }
+    if (!error.AsCString())
+        error.SetErrorStringWithFormat("unable to load '%s'", path);
     return LLDB_INVALID_IMAGE_TOKEN;
 }
 
