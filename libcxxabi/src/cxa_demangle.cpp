@@ -5241,7 +5241,7 @@ public:
     }
 };
 
-class __int128
+class __signed_int128
     : public __node
 {
     static const size_t n = sizeof("__int128") - 1;
@@ -6444,7 +6444,7 @@ __demangle_tree::__parse_builtin_type(const char* first, const char* last)
                 ++first;
             break;
         case 'n':
-            if (__make<__int128>())
+            if (__make<__signed_int128>())
                 ++first;
             break;
         case 'o':
