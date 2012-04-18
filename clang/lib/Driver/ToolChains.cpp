@@ -580,7 +580,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
 
     // If no '-miphoneos-version-min' specified on the command line and
     // IPHONEOS_DEPLOYMENT_TARGET is not defined, see if we can set the default
-    // based on isysroot.
+    // based on -isysroot.
     if (iOSTarget.empty()) {
       if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
         StringRef first, second;
@@ -1086,6 +1086,7 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
   // a patch.
   if (RHS.Patch == -1) return true;   if (Patch == -1) return false;
   if (Patch < RHS.Patch) return true; if (Patch > RHS.Patch) return false;
+  if (PatchSuffix == RHS.PatchSuffix) return false;
 
   // Finally, between completely tied version numbers, the version with the
   // suffix loses as we prefer full releases.
@@ -2063,7 +2064,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // If the GCC installation we found is inside of the sysroot, we want to
     // prefer libraries installed in the parent prefix of the GCC installation.
     // It is important to *not* use these paths when the GCC installation is
-    // outside of the system root as that can pick up un-intented libraries.
+    // outside of the system root as that can pick up unintended libraries.
     // This usually happens when there is an external cross compiler on the
     // host system, and a more minimal sysroot available that is the target of
     // the cross.
