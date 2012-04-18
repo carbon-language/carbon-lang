@@ -27,9 +27,8 @@
 using namespace llvm;
 
 // runEnums - Print out enum values for all of the registers.
-void
-RegisterInfoEmitter::runEnums(raw_ostream &OS,
-                              CodeGenTarget &Target, CodeGenRegBank &Bank) {
+void RegisterInfoEmitter::runEnums(raw_ostream &OS,
+                                   CodeGenTarget &Target, CodeGenRegBank &Bank) {
   const std::vector<CodeGenRegister*> &Registers = Bank.getRegisters();
 
   // Register enums are stored as uint16_t in the tables. Make sure we'll fit.
