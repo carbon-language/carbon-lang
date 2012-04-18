@@ -77,6 +77,12 @@
 #include <algorithm>
 using namespace llvm;
 
+/// MaxIVUsers is an arbitrary threshold that provides an early opportunitiy for
+/// bail out. This threshold is far beyond the number of users that LSR can
+/// conceivably solve, so it should not affect generated code, but catches the
+/// worst cases before LSR burns too much compile time and stack space.
+static const unsigned MaxIVUsers = 200;
+
 // Temporary flag to cleanup congruent phis after LSR phi expansion.
 // It's currently disabled until we can determine whether it's truly useful or
 // not. The flag should be removed after the v3.0 release.
@@ -4518,6 +4524,17 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 
   // If there's no interesting work to be done, bail early.
   if (IU.empty()) return;
+
+  // If there's too much analysis to be done, bail early. We won't be able to
+  // model the problem anyway.
+  unsigned NumUsers = 0;
+  for (IVUsers::const_iterator UI = IU.begin(), E = IU.end(); UI != E; ++UI) {
+    if (++NumUsers > MaxIVUsers) {
+      DEBUG(dbgs() << "LSR skipping loop, too many IV Users in " << *L
+            << "\n");
+      return;
+    }
+  }
 
 #ifndef NDEBUG
   // All dominating loops must have preheaders, or SCEVExpander may not be able
