@@ -590,7 +590,7 @@ class IAPrinter {
   std::map<StringRef, unsigned> OpMap;
   std::string Result;
   std::string AsmString;
-  std::vector<Record*> ReqFeatures;
+  SmallVector<Record*, 4> ReqFeatures;
 public:
   IAPrinter(std::string R, std::string AS)
     : Result(R), AsmString(AS) {}
