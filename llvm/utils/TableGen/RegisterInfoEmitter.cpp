@@ -17,10 +17,12 @@
 #include "CodeGenTarget.h"
 #include "CodeGenRegisters.h"
 #include "SequenceToOffsetTable.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include <algorithm>
 #include <set>
@@ -207,8 +209,8 @@ RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
     std::vector<int64_t> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
     maxLength = std::max((size_t)maxLength, RegNums.size());
     if (DwarfRegNums.count(Reg))
-      errs() << "Warning: DWARF numbers for register " << getQualifiedName(Reg)
-             << "specified multiple times\n";
+      PrintWarning(Reg->getLoc(), Twine("DWARF numbers for register ") +
+                   getQualifiedName(Reg) + "specified multiple times\n");
     DwarfRegNums[Reg] = RegNums;
   }
 

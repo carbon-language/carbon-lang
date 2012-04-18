@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Twine.h"
 
 using namespace llvm;
 
@@ -896,11 +897,10 @@ void CodeGenRegBank::computeComposites() {
           if (i1d->second == Reg3) {
             // Conflicting composition? Emit a warning but allow it.
             if (CodeGenSubRegIndex *Prev = Idx1->addComposite(Idx2, i1d->first))
-              errs() << "Warning: SubRegIndex " << Idx1->getQualifiedName()
-                     << " and " << Idx2->getQualifiedName()
-                     << " compose ambiguously as "
-                     << Prev->getQualifiedName() << " or "
-                     << i1d->first->getQualifiedName() << "\n";
+              PrintWarning(Twine("SubRegIndex") + Idx1->getQualifiedName() +
+                     " and " + Idx2->getQualifiedName() +
+                     " compose ambiguously as " + Prev->getQualifiedName() +
+                     " or " + i1d->first->getQualifiedName() +"\n");
           }
         }
       }
