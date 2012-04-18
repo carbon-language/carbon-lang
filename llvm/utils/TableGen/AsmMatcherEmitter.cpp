@@ -1127,7 +1127,7 @@ AsmMatcherInfo::AsmMatcherInfo(Record *asmParser,
 /// defined operand parsing methods.
 void AsmMatcherInfo::BuildOperandMatchInfo() {
 
-  /// Map containing a mask with all operands indicies that can be found for
+  /// Map containing a mask with all operands indices that can be found for
   /// that class inside a instruction.
   std::map<ClassInfo*, unsigned> OpClassMask;
 
