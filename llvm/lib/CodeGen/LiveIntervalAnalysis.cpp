@@ -1068,9 +1068,9 @@ public:
 
 #ifndef NDEBUG
     LIValidator validator;
-    std::for_each(Entering.begin(), Entering.end(), validator);
-    std::for_each(Internal.begin(), Internal.end(), validator);
-    std::for_each(Exiting.begin(), Exiting.end(), validator);
+    validator = std::for_each(Entering.begin(), Entering.end(), validator);
+    validator = std::for_each(Internal.begin(), Internal.end(), validator);
+    validator = std::for_each(Exiting.begin(), Exiting.end(), validator);
     assert(validator.rangesOk() && "moveAllOperandsFrom broke liveness.");
 #endif
 
@@ -1115,9 +1115,9 @@ public:
 
 #ifndef NDEBUG
     LIValidator validator;
-    std::for_each(Entering.begin(), Entering.end(), validator);
-    std::for_each(Internal.begin(), Internal.end(), validator);
-    std::for_each(Exiting.begin(), Exiting.end(), validator);
+    validator = std::for_each(Entering.begin(), Entering.end(), validator);
+    validator = std::for_each(Internal.begin(), Internal.end(), validator);
+    validator = std::for_each(Exiting.begin(), Exiting.end(), validator);
     assert(validator.rangesOk() && "moveAllOperandsInto broke liveness.");
 #endif
   }
