@@ -214,6 +214,7 @@ namespace {
 
     ObjCMethodDecl *Setter;
     Selector SetterSelector;
+    Selector GetterSelector;
 
   public:
     ObjCPropertyOpBuilder(Sema &S, ObjCPropertyRefExpr *refExpr) :
@@ -475,8 +476,24 @@ bool ObjCPropertyOpBuilder::findGetter() {
 
   // For implicit properties, just trust the lookup we already did.
   if (RefExpr->isImplicitProperty()) {
-    Getter = RefExpr->getImplicitPropertyGetter();
-    return (Getter != 0);
+    if ((Getter = RefExpr->getImplicitPropertyGetter())) {
+      GetterSelector = Getter->getSelector();
+      return true;
+    }
+    else {
+      // Must build the getter selector the hard way.
+      ObjCMethodDecl *setter = RefExpr->getImplicitPropertySetter();
+      assert(setter && "both setter and getter are null - cannot happen");
+      IdentifierInfo *setterName = 
+        setter->getSelector().getIdentifierInfoForSlot(0);
+      const char *compStr = setterName->getNameStart();
+      compStr += 3;
+      IdentifierInfo *getterName = &S.Context.Idents.get(compStr);
+      GetterSelector = 
+        S.PP.getSelectorTable().getNullarySelector(getterName);
+      return false;
+
+    }
   }
 
   ObjCPropertyDecl *prop = RefExpr->getExplicitProperty();
@@ -776,7 +793,7 @@ ObjCPropertyOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
     assert(RefExpr->isImplicitProperty());
     S.Diag(opcLoc, diag::err_nogetter_property_incdec)
       << unsigned(UnaryOperator::isDecrementOp(opcode))
-      << RefExpr->getImplicitPropertyGetter()->getSelector() // FIXME!
+      << GetterSelector
       << op->getSourceRange();
     return ExprError();
   }
