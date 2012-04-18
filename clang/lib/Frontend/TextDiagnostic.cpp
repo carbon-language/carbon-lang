@@ -839,9 +839,12 @@ void TextDiagnostic::emitSnippetAndCaret(
 
   // Get information about the buffer it points into.
   bool Invalid = false;
-  const char *BufStart = SM.getBufferData(FID, &Invalid).data();
+  StringRef BufData = SM.getBufferData(FID, &Invalid);
   if (Invalid)
     return;
+
+  const char *BufStart = BufData.data();
+  const char *BufEnd = BufStart + BufData.size();
 
   unsigned LineNo = SM.getLineNumber(FID, FileOffset);
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
@@ -856,7 +859,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   // Compute the line end.  Scan forward from the error position to the end of
   // the line.
   const char *LineEnd = TokPtr;
-  while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
+  while (*LineEnd != '\n' && *LineEnd != '\r' && LineEnd!=BufEnd)
     ++LineEnd;
 
   // FIXME: This shouldn't be necessary, but the CaretEndColNo can extend past
