@@ -225,22 +225,6 @@ class Hexagon_qi_didi_Intrinsic<string GCCIntSuffix>
                           [llvm_i1_ty], [llvm_i64_ty, llvm_i64_ty],
                           [IntrNoMem]>;
 //
-// DEF_FUNCTION_TYPE_2(QI_ftype_SIDI,BT_BOOL,BT_INT,BT_LONGLONG) ->
-// Hexagon_qi_didi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_sidi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_i32_ty, llvm_i64_ty],
-                          [IntrNoMem]>;
-//
-// DEF_FUNCTION_TYPE_2(QI_ftype_DISI,BT_BOOL,BT_LONGLONG,BT_INT) ->
-// Hexagon_qi_disi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_disi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_i64_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
-//
 // DEF_FUNCTION_TYPE_2(QI_ftype_QIQI,BT_BOOL,BT_BOOL,BT_BOOL) ->
 // Hexagon_qi_qiqi_Intrinsic<string GCCIntSuffix>
 //
@@ -422,654 +406,174 @@ class Hexagon_di_didisisi_Intrinsic<string GCCIntSuffix>
                            llvm_i32_ty, llvm_i32_ty],
                           [IntrNoMem]>;
 
-class Hexagon_mem_memmemsisi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_ptr_ty], [llvm_ptr_ty, llvm_ptr_ty,
-                           llvm_i32_ty, llvm_i32_ty],
-                          [IntrReadWriteArgMem]>;
-
-//
-// Hexagon_sf_df_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_si_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_sf_df_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_df_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_sf_di_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_di_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_i64_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_df_sf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_sf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_di_sf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_di_sf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i64_ty], [llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_sf_sf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_sf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_si_sf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_si_sf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i32_ty], [llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_si_df_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_si_df_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i32_ty], [llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_sf_sfsf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_sfsf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_float_ty, llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_qi_sfsf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_sfsf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_float_ty, llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_qi_sfsi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_sfsi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_float_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_qi_sfqi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_sfqi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_float_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_sf_sfsfsf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_sfsfsf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_float_ty, llvm_float_ty,
-                                            llvm_float_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_sf_sfsfsfqi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_sf_sfsfsfqi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_float_ty], [llvm_float_ty, llvm_float_ty,
-                                            llvm_float_ty,
-                           llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_di_dididi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_di_dididisi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty,
-                           llvm_i64_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_df_si_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_si_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_df_di_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_di_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_i64_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_di_df_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_di_df_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i64_ty], [llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_df_df_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_df_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_df_dfdf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_dfdf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_double_ty, llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_qi_dfdf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_dfdf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_double_ty, llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_qi_dfsi_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_qi_dfsi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_double_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
-//
-//
-// Hexagon_df_dfdfdf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_dfdfdf_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_double_ty, llvm_double_ty,
-                                             llvm_double_ty],
-                          [IntrNoMem]>;
-//
-// Hexagon_df_dfdfdf_Intrinsic<string GCCIntSuffix>
-//
-class Hexagon_df_dfdfdfqi_Intrinsic<string GCCIntSuffix>
-  : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_double_ty], [llvm_double_ty, llvm_double_ty,
-                                             llvm_double_ty,
-                          llvm_i32_ty],
-                          [IntrNoMem]>;
-
-
-// This one below will not be generated from iset.py.
-// So make sure, you don't overwrite this one.
-//
-// BUILTIN_INFO(SI_to_SXTHI_asrh,SI_ftype_SI,1)
-//
-def int_hexagon_SI_to_SXTHI_asrh :
-Hexagon_si_si_Intrinsic<"SI.to.SXTHI.asrh">;
-//
-// BUILTIN_INFO_NONCONST(circ_ldd,PTR_ftype_PTRPTRSISI,4)
-//
-def int_hexagon_circ_ldd :
-Hexagon_mem_memmemsisi_Intrinsic<"circ_ldd">;
-// This one above will not be generated from iset.py.
-// So make sure, you don't overwrite this one.
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpeq,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpeq :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpeq">;
+def int_hexagon_C2_cmpeq : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpeq">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgt,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpgt :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgt">;
+def int_hexagon_C2_cmpgt : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgt">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgtu,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpgtu :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgtu">;
+def int_hexagon_C2_cmpgtu : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgtu">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpeqp,QI_ftype_DIDI,2)
 //
-def int_hexagon_C2_cmpeqp :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.C2.cmpeqp">;
+def int_hexagon_C2_cmpeqp : Hexagon_qi_didi_Intrinsic<"HEXAGON.C2.cmpeqp">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgtp,QI_ftype_DIDI,2)
 //
-def int_hexagon_C2_cmpgtp :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.C2.cmpgtp">;
+def int_hexagon_C2_cmpgtp : Hexagon_qi_didi_Intrinsic<"HEXAGON.C2.cmpgtp">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgtup,QI_ftype_DIDI,2)
 //
-def int_hexagon_C2_cmpgtup :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.C2.cmpgtup">;
-//
-// BUILTIN_INFO(HEXAGON.A4_rcmpeqi,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_rcmpeqi :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpeqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_rcmpneqi,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_rcmpneqi :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpneqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_rcmpeq,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_rcmpeq :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpeq">;
-//
-// BUILTIN_INFO(HEXAGON.A4_rcmpneq,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_rcmpneq :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpneq">;
+def int_hexagon_C2_cmpgtup : Hexagon_qi_didi_Intrinsic<"HEXAGON.C2.cmpgtup">;
 //
 // BUILTIN_INFO(HEXAGON.C2_bitsset,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_bitsset :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.bitsset">;
+def int_hexagon_C2_bitsset : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.bitsset">;
 //
 // BUILTIN_INFO(HEXAGON.C2_bitsclr,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_bitsclr :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.bitsclr">;
-//
-// BUILTIN_INFO(HEXAGON.C4_nbitsset,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_nbitsset :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.nbitsset">;
-//
-// BUILTIN_INFO(HEXAGON.C4_nbitsclr,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_nbitsclr :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.nbitsclr">;
+def int_hexagon_C2_bitsclr : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.bitsclr">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpeqi,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpeqi :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpeqi">;
+def int_hexagon_C2_cmpeqi : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpeqi">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgti,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpgti :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgti">;
+def int_hexagon_C2_cmpgti : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgti">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgtui,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpgtui :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgtui">;
+def int_hexagon_C2_cmpgtui : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgtui">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgei,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpgei :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgei">;
+def int_hexagon_C2_cmpgei : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgei">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpgeui,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpgeui :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgeui">;
+def int_hexagon_C2_cmpgeui : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpgeui">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmplt,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmplt :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmplt">;
+def int_hexagon_C2_cmplt : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmplt">;
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpltu,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_cmpltu :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpltu">;
+def int_hexagon_C2_cmpltu : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.cmpltu">;
 //
 // BUILTIN_INFO(HEXAGON.C2_bitsclri,QI_ftype_SISI,2)
 //
-def int_hexagon_C2_bitsclri :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.bitsclri">;
-//
-// BUILTIN_INFO(HEXAGON.C4_nbitsclri,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_nbitsclri :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.nbitsclri">;
-//
-// BUILTIN_INFO(HEXAGON.C4_cmpneqi,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_cmpneqi :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmpneqi">;
-//
-// BUILTIN_INFO(HEXAGON.C4_cmpltei,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_cmpltei :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmpltei">;
-//
-// BUILTIN_INFO(HEXAGON.C4_cmplteui,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_cmplteui :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmplteui">;
-//
-// BUILTIN_INFO(HEXAGON.C4_cmpneq,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_cmpneq :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmpneq">;
-//
-// BUILTIN_INFO(HEXAGON.C4_cmplte,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_cmplte :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmplte">;
-//
-// BUILTIN_INFO(HEXAGON.C4_cmplteu,QI_ftype_SISI,2)
-//
-def int_hexagon_C4_cmplteu :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmplteu">;
+def int_hexagon_C2_bitsclri : Hexagon_qi_sisi_Intrinsic<"HEXAGON.C2.bitsclri">;
 //
 // BUILTIN_INFO(HEXAGON.C2_and,QI_ftype_QIQI,2)
 //
-def int_hexagon_C2_and :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.and">;
+def int_hexagon_C2_and : Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.and">;
 //
 // BUILTIN_INFO(HEXAGON.C2_or,QI_ftype_QIQI,2)
 //
-def int_hexagon_C2_or :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.or">;
+def int_hexagon_C2_or : Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.or">;
 //
 // BUILTIN_INFO(HEXAGON.C2_xor,QI_ftype_QIQI,2)
 //
-def int_hexagon_C2_xor :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.xor">;
+def int_hexagon_C2_xor : Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.xor">;
 //
 // BUILTIN_INFO(HEXAGON.C2_andn,QI_ftype_QIQI,2)
 //
-def int_hexagon_C2_andn :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.andn">;
+def int_hexagon_C2_andn : Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.andn">;
 //
 // BUILTIN_INFO(HEXAGON.C2_not,QI_ftype_QI,1)
 //
-def int_hexagon_C2_not :
-Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.not">;
+def int_hexagon_C2_not : Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.not">;
 //
 // BUILTIN_INFO(HEXAGON.C2_orn,QI_ftype_QIQI,2)
 //
-def int_hexagon_C2_orn :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.orn">;
-//
-// BUILTIN_INFO(HEXAGON.C4_and_and,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_and_and :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and.and">;
-//
-// BUILTIN_INFO(HEXAGON.C4_and_or,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_and_or :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and.or">;
-//
-// BUILTIN_INFO(HEXAGON.C4_or_and,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_or_and :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or.and">;
-//
-// BUILTIN_INFO(HEXAGON.C4_or_or,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_or_or :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or.or">;
-//
-// BUILTIN_INFO(HEXAGON.C4_and_andn,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_and_andn :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and.andn">;
-//
-// BUILTIN_INFO(HEXAGON.C4_and_orn,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_and_orn :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and.orn">;
-//
-// BUILTIN_INFO(HEXAGON.C4_or_andn,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_or_andn :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or.andn">;
-//
-// BUILTIN_INFO(HEXAGON.C4_or_orn,QI_ftype_QIQIQI,3)
-//
-def int_hexagon_C4_or_orn :
-Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or.orn">;
+def int_hexagon_C2_orn : Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C2.orn">;
 //
 // BUILTIN_INFO(HEXAGON.C2_pxfer_map,QI_ftype_QI,1)
 //
-def int_hexagon_C2_pxfer_map :
-Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.pxfer.map">;
+def int_hexagon_C2_pxfer_map : Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.pxfer.map">;
 //
 // BUILTIN_INFO(HEXAGON.C2_any8,QI_ftype_QI,1)
 //
-def int_hexagon_C2_any8 :
-Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.any8">;
+def int_hexagon_C2_any8 : Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.any8">;
 //
 // BUILTIN_INFO(HEXAGON.C2_all8,QI_ftype_QI,1)
 //
-def int_hexagon_C2_all8 :
-Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.all8">;
+def int_hexagon_C2_all8 : Hexagon_qi_qi_Intrinsic<"HEXAGON.C2.all8">;
 //
 // BUILTIN_INFO(HEXAGON.C2_vitpack,SI_ftype_QIQI,2)
 //
-def int_hexagon_C2_vitpack :
-Hexagon_si_qiqi_Intrinsic<"HEXAGON.C2.vitpack">;
+def int_hexagon_C2_vitpack : Hexagon_si_qiqi_Intrinsic<"HEXAGON.C2.vitpack">;
 //
 // BUILTIN_INFO(HEXAGON.C2_mux,SI_ftype_QISISI,3)
 //
-def int_hexagon_C2_mux :
-Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.mux">;
+def int_hexagon_C2_mux : Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.mux">;
 //
 // BUILTIN_INFO(HEXAGON.C2_muxii,SI_ftype_QISISI,3)
 //
-def int_hexagon_C2_muxii :
-Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.muxii">;
+def int_hexagon_C2_muxii : Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.muxii">;
 //
 // BUILTIN_INFO(HEXAGON.C2_muxir,SI_ftype_QISISI,3)
 //
-def int_hexagon_C2_muxir :
-Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.muxir">;
+def int_hexagon_C2_muxir : Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.muxir">;
 //
 // BUILTIN_INFO(HEXAGON.C2_muxri,SI_ftype_QISISI,3)
 //
-def int_hexagon_C2_muxri :
-Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.muxri">;
+def int_hexagon_C2_muxri : Hexagon_si_qisisi_Intrinsic<"HEXAGON.C2.muxri">;
 //
 // BUILTIN_INFO(HEXAGON.C2_vmux,DI_ftype_QIDIDI,3)
 //
-def int_hexagon_C2_vmux :
-Hexagon_di_qididi_Intrinsic<"HEXAGON.C2.vmux">;
+def int_hexagon_C2_vmux : Hexagon_di_qididi_Intrinsic<"HEXAGON.C2.vmux">;
 //
 // BUILTIN_INFO(HEXAGON.C2_mask,DI_ftype_QI,1)
 //
-def int_hexagon_C2_mask :
-Hexagon_di_qi_Intrinsic<"HEXAGON.C2.mask">;
+def int_hexagon_C2_mask : Hexagon_di_qi_Intrinsic<"HEXAGON.C2.mask">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmpbeq,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmpbeq :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpbeq">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpbeqi,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpbeqi :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpbeqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpbeq_any,QI_ftype_DIDI,2)
-//
-def int_hexagon_A4_vcmpbeq_any :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A4.vcmpbeq.any">;
+def int_hexagon_A2_vcmpbeq : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpbeq">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmpbgtu,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmpbgtu :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpbgtu">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpbgtui,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpbgtui :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpbgtui">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpbgt,QI_ftype_DIDI,2)
-//
-def int_hexagon_A4_vcmpbgt :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A4.vcmpbgt">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpbgti,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpbgti :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpbgti">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpbeq,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpbeq :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpbeq">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpbeqi,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpbeqi :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpbeqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpbgtu,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpbgtu :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpbgtu">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpbgtui,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpbgtui :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpbgtui">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpbgt,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpbgt :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpbgt">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpbgti,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpbgti :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpbgti">;
+def int_hexagon_A2_vcmpbgtu : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpbgtu">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmpheq,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmpheq :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpheq">;
+def int_hexagon_A2_vcmpheq : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpheq">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmphgt,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmphgt :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmphgt">;
+def int_hexagon_A2_vcmphgt : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmphgt">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmphgtu,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmphgtu :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmphgtu">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpheqi,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpheqi :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpheqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmphgti,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmphgti :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmphgti">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmphgtui,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmphgtui :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmphgtui">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpheq,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpheq :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpheq">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmphgt,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmphgt :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmphgt">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmphgtu,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmphgtu :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmphgtu">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmpheqi,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmpheqi :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmpheqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmphgti,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmphgti :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmphgti">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cmphgtui,QI_ftype_SISI,2)
-//
-def int_hexagon_A4_cmphgtui :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.A4.cmphgtui">;
+def int_hexagon_A2_vcmphgtu : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmphgtu">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmpweq,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmpweq :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpweq">;
+def int_hexagon_A2_vcmpweq : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpweq">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmpwgt,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmpwgt :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpwgt">;
+def int_hexagon_A2_vcmpwgt : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpwgt">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vcmpwgtu,QI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vcmpwgtu :
-Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpwgtu">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpweqi,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpweqi :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpweqi">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpwgti,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpwgti :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpwgti">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vcmpwgtui,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_vcmpwgtui :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.vcmpwgtui">;
-//
-// BUILTIN_INFO(HEXAGON.A4_boundscheck,QI_ftype_SIDI,2)
-//
-def int_hexagon_A4_boundscheck :
-Hexagon_qi_sidi_Intrinsic<"HEXAGON.A4.boundscheck">;
-//
-// BUILTIN_INFO(HEXAGON.A4_tlbmatch,QI_ftype_DISI,2)
-//
-def int_hexagon_A4_tlbmatch :
-Hexagon_qi_disi_Intrinsic<"HEXAGON.A4.tlbmatch">;
+def int_hexagon_A2_vcmpwgtu : Hexagon_qi_didi_Intrinsic<"HEXAGON.A2.vcmpwgtu">;
 //
 // BUILTIN_INFO(HEXAGON.C2_tfrpr,SI_ftype_QI,1)
 //
-def int_hexagon_C2_tfrpr :
-Hexagon_si_qi_Intrinsic<"HEXAGON.C2.tfrpr">;
+def int_hexagon_C2_tfrpr : Hexagon_si_qi_Intrinsic<"HEXAGON.C2.tfrpr">;
 //
 // BUILTIN_INFO(HEXAGON.C2_tfrrp,QI_ftype_SI,1)
 //
-def int_hexagon_C2_tfrrp :
-Hexagon_qi_si_Intrinsic<"HEXAGON.C2.tfrrp">;
-//
-// BUILTIN_INFO(HEXAGON.C4_fastcorner9,QI_ftype_QIQI,2)
-//
-def int_hexagon_C4_fastcorner9 :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C4.fastcorner9">;
-//
-// BUILTIN_INFO(HEXAGON.C4_fastcorner9_not,QI_ftype_QIQI,2)
-//
-def int_hexagon_C4_fastcorner9_not :
-Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C4.fastcorner9.not">;
+def int_hexagon_C2_tfrrp : Hexagon_qi_si_Intrinsic<"HEXAGON.C2.tfrrp">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpy_acc_hh_s0,SI_ftype_SISISI,3)
 //
@@ -1634,42 +1138,42 @@ Hexagon_si_sisisi_Intrinsic<"HEXAGON.M2.mpyu.nac.ll.s1">;
 // BUILTIN_INFO(HEXAGON.M2_mpyu_hh_s0,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_hh_s0 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.hh.s0">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.hh.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_hh_s1,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_hh_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.hh.s1">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.hh.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_hl_s0,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_hl_s0 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.hl.s0">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.hl.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_hl_s1,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_hl_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.hl.s1">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.hl.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_lh_s0,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_lh_s0 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.lh.s0">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.lh.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_lh_s1,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_lh_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.lh.s1">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.lh.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_ll_s0,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_ll_s0 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.ll.s0">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.ll.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyu_ll_s1,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_ll_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.ll.s1">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.ll.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_acc_hh_s0,DI_ftype_DISISI,3)
 //
@@ -1754,42 +1258,42 @@ Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.mpyud.nac.ll.s1">;
 // BUILTIN_INFO(HEXAGON.M2_mpyud_hh_s0,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_hh_s0 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.hh.s0">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.hh.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_hh_s1,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_hh_s1 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.hh.s1">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.hh.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_hl_s0,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_hl_s0 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.hl.s0">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.hl.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_hl_s1,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_hl_s1 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.hl.s1">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.hl.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_lh_s0,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_lh_s0 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.lh.s0">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.lh.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_lh_s1,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_lh_s1 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.lh.s1">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.lh.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_ll_s0,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_ll_s0 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.ll.s0">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.ll.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyud_ll_s1,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyud_ll_s1 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.mpyud.ll.s1">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.mpyud.ll.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpysmi,SI_ftype_SISI,2)
 //
@@ -1824,7 +1328,7 @@ Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.dpmpyss.nac.s0">;
 // BUILTIN_INFO(HEXAGON.M2_dpmpyuu_s0,UDI_ftype_SISI,2)
 //
 def int_hexagon_M2_dpmpyuu_s0 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.dpmpyuu.s0">;
+Hexagon_udi_sisi_Intrinsic<"HEXAGON.M2.dpmpyuu.s0">;
 //
 // BUILTIN_INFO(HEXAGON.M2_dpmpyuu_acc_s0,DI_ftype_DISISI,3)
 //
@@ -1841,40 +1345,15 @@ Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.dpmpyuu.nac.s0">;
 def int_hexagon_M2_mpy_up :
 Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpy.up">;
 //
-// BUILTIN_INFO(HEXAGON.M2_mpy_up_s1,SI_ftype_SISI,2)
-//
-def int_hexagon_M2_mpy_up_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpy.up.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M2_mpy_up_s1_sat,SI_ftype_SISI,2)
-//
-def int_hexagon_M2_mpy_up_s1_sat :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpy.up.s1.sat">;
-//
 // BUILTIN_INFO(HEXAGON.M2_mpyu_up,USI_ftype_SISI,2)
 //
 def int_hexagon_M2_mpyu_up :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpyu.up">;
-//
-// BUILTIN_INFO(HEXAGON.M2_mpysu_up,SI_ftype_SISI,2)
-//
-def int_hexagon_M2_mpysu_up :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.mpysu.up">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.M2.mpyu.up">;
 //
 // BUILTIN_INFO(HEXAGON.M2_dpmpyss_rnd_s0,SI_ftype_SISI,2)
 //
 def int_hexagon_M2_dpmpyss_rnd_s0 :
 Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.dpmpyss.rnd.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M4_mac_up_s1_sat,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_mac_up_s1_sat :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.mac.up.s1.sat">;
-//
-// BUILTIN_INFO(HEXAGON.M4_nac_up_s1_sat,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_nac_up_s1_sat :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.nac.up.s1.sat">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mpyi,SI_ftype_SISI,2)
 //
@@ -1916,31 +1395,6 @@ Hexagon_si_sisisi_Intrinsic<"HEXAGON.M2.naccii">;
 def int_hexagon_M2_subacc :
 Hexagon_si_sisisi_Intrinsic<"HEXAGON.M2.subacc">;
 //
-// BUILTIN_INFO(HEXAGON.M4_mpyrr_addr,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_mpyrr_addr :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.mpyrr.addr">;
-//
-// BUILTIN_INFO(HEXAGON.M4_mpyri_addr_u2,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_mpyri_addr_u2 :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.mpyri.addr.u2">;
-//
-// BUILTIN_INFO(HEXAGON.M4_mpyri_addr,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_mpyri_addr :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.mpyri.addr">;
-//
-// BUILTIN_INFO(HEXAGON.M4_mpyri_addi,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_mpyri_addi :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.mpyri.addi">;
-//
-// BUILTIN_INFO(HEXAGON.M4_mpyrr_addi,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_mpyrr_addi :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.mpyrr.addi">;
-//
 // BUILTIN_INFO(HEXAGON.M2_vmpy2s_s0,DI_ftype_SISI,2)
 //
 def int_hexagon_M2_vmpy2s_s0 :
@@ -1960,26 +1414,6 @@ Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.vmac2s.s0">;
 //
 def int_hexagon_M2_vmac2s_s1 :
 Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.vmac2s.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M2_vmpy2su_s0,DI_ftype_SISI,2)
-//
-def int_hexagon_M2_vmpy2su_s0 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.vmpy2su.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M2_vmpy2su_s1,DI_ftype_SISI,2)
-//
-def int_hexagon_M2_vmpy2su_s1 :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.vmpy2su.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M2_vmac2su_s0,DI_ftype_DISISI,3)
-//
-def int_hexagon_M2_vmac2su_s0 :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.vmac2su.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M2_vmac2su_s1,DI_ftype_DISISI,3)
-//
-def int_hexagon_M2_vmac2su_s1 :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.M2.vmac2su.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_vmpy2s_s0pack,SI_ftype_SISI,2)
 //
@@ -2040,56 +1474,6 @@ Hexagon_si_didi_Intrinsic<"HEXAGON.M2.vdmpyrs.s0">;
 //
 def int_hexagon_M2_vdmpyrs_s1 :
 Hexagon_si_didi_Intrinsic<"HEXAGON.M2.vdmpyrs.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vrmpybuu,DI_ftype_DIDI,2)
-//
-def int_hexagon_M5_vrmpybuu :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M5.vrmpybuu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vrmacbuu,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M5_vrmacbuu :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M5.vrmacbuu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vrmpybsu,DI_ftype_DIDI,2)
-//
-def int_hexagon_M5_vrmpybsu :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M5.vrmpybsu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vrmacbsu,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M5_vrmacbsu :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M5.vrmacbsu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vmpybuu,DI_ftype_SISI,2)
-//
-def int_hexagon_M5_vmpybuu :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M5.vmpybuu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vmpybsu,DI_ftype_SISI,2)
-//
-def int_hexagon_M5_vmpybsu :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M5.vmpybsu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vmacbuu,DI_ftype_DISISI,3)
-//
-def int_hexagon_M5_vmacbuu :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.M5.vmacbuu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vmacbsu,DI_ftype_DISISI,3)
-//
-def int_hexagon_M5_vmacbsu :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.M5.vmacbsu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vdmpybsu,DI_ftype_DIDI,2)
-//
-def int_hexagon_M5_vdmpybsu :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M5.vdmpybsu">;
-//
-// BUILTIN_INFO(HEXAGON.M5_vdmacbsu,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M5_vdmacbsu :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M5.vdmacbsu">;
 //
 // BUILTIN_INFO(HEXAGON.M2_vdmacs_s0,DI_ftype_DIDIDI,3)
 //
@@ -2286,46 +1670,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.M2.mmpyh.rs0">;
 def int_hexagon_M2_mmpyh_rs1 :
 Hexagon_di_didi_Intrinsic<"HEXAGON.M2.mmpyh.rs1">;
 //
-// BUILTIN_INFO(HEXAGON.M4_vrmpyeh_s0,DI_ftype_DIDI,2)
-//
-def int_hexagon_M4_vrmpyeh_s0 :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M4.vrmpyeh.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyeh_s1,DI_ftype_DIDI,2)
-//
-def int_hexagon_M4_vrmpyeh_s1 :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M4.vrmpyeh.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyeh_acc_s0,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M4_vrmpyeh_acc_s0 :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M4.vrmpyeh.acc.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyeh_acc_s1,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M4_vrmpyeh_acc_s1 :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M4.vrmpyeh.acc.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyoh_s0,DI_ftype_DIDI,2)
-//
-def int_hexagon_M4_vrmpyoh_s0 :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M4.vrmpyoh.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyoh_s1,DI_ftype_DIDI,2)
-//
-def int_hexagon_M4_vrmpyoh_s1 :
-Hexagon_di_didi_Intrinsic<"HEXAGON.M4.vrmpyoh.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyoh_acc_s0,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M4_vrmpyoh_acc_s0 :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M4.vrmpyoh.acc.s0">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vrmpyoh_acc_s1,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M4_vrmpyoh_acc_s1 :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M4.vrmpyoh.acc.s1">;
-//
 // BUILTIN_INFO(HEXAGON.M2_hmmpyl_rs1,SI_ftype_SISI,2)
 //
 def int_hexagon_M2_hmmpyl_rs1 :
@@ -2335,16 +1679,6 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.hmmpyl.rs1">;
 //
 def int_hexagon_M2_hmmpyh_rs1 :
 Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.hmmpyh.rs1">;
-//
-// BUILTIN_INFO(HEXAGON.M2_hmmpyl_s1,SI_ftype_SISI,2)
-//
-def int_hexagon_M2_hmmpyl_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.hmmpyl.s1">;
-//
-// BUILTIN_INFO(HEXAGON.M2_hmmpyh_s1,SI_ftype_SISI,2)
-//
-def int_hexagon_M2_hmmpyh_s1 :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.M2.hmmpyh.s1">;
 //
 // BUILTIN_INFO(HEXAGON.M2_mmaculs_s0,DI_ftype_DIDIDI,3)
 //
@@ -2486,26 +1820,6 @@ Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.cmpyi.s0">;
 def int_hexagon_M2_cmpyr_s0 :
 Hexagon_di_sisi_Intrinsic<"HEXAGON.M2.cmpyr.s0">;
 //
-// BUILTIN_INFO(HEXAGON.M4_cmpyi_wh,SI_ftype_DISI,2)
-//
-def int_hexagon_M4_cmpyi_wh :
-Hexagon_si_disi_Intrinsic<"HEXAGON.M4.cmpyi.wh">;
-//
-// BUILTIN_INFO(HEXAGON.M4_cmpyr_wh,SI_ftype_DISI,2)
-//
-def int_hexagon_M4_cmpyr_wh :
-Hexagon_si_disi_Intrinsic<"HEXAGON.M4.cmpyr.wh">;
-//
-// BUILTIN_INFO(HEXAGON.M4_cmpyi_whc,SI_ftype_DISI,2)
-//
-def int_hexagon_M4_cmpyi_whc :
-Hexagon_si_disi_Intrinsic<"HEXAGON.M4.cmpyi.whc">;
-//
-// BUILTIN_INFO(HEXAGON.M4_cmpyr_whc,SI_ftype_DISI,2)
-//
-def int_hexagon_M4_cmpyr_whc :
-Hexagon_si_disi_Intrinsic<"HEXAGON.M4.cmpyr.whc">;
-//
 // BUILTIN_INFO(HEXAGON.M2_vcmpy_s0_sat_i,DI_ftype_DIDI,2)
 //
 def int_hexagon_M2_vcmpy_s0_sat_i :
@@ -2541,46 +1855,6 @@ Hexagon_di_dididi_Intrinsic<"HEXAGON.M2.vcmac.s0.sat.r">;
 def int_hexagon_S2_vcrotate :
 Hexagon_di_disi_Intrinsic<"HEXAGON.S2.vcrotate">;
 //
-// BUILTIN_INFO(HEXAGON.S4_vrcrotate_acc,DI_ftype_DIDISISI,4)
-//
-def int_hexagon_S4_vrcrotate_acc :
-Hexagon_di_didisisi_Intrinsic<"HEXAGON.S4.vrcrotate.acc">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vrcrotate,DI_ftype_DISISI,3)
-//
-def int_hexagon_S4_vrcrotate :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.S4.vrcrotate">;
-//
-// BUILTIN_INFO(HEXAGON.S2_vcnegh,DI_ftype_DISI,2)
-//
-def int_hexagon_S2_vcnegh :
-Hexagon_di_disi_Intrinsic<"HEXAGON.S2.vcnegh">;
-//
-// BUILTIN_INFO(HEXAGON.S2_vrcnegh,DI_ftype_DIDISI,3)
-//
-def int_hexagon_S2_vrcnegh :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.vrcnegh">;
-//
-// BUILTIN_INFO(HEXAGON.M4_pmpyw,DI_ftype_SISI,2)
-//
-def int_hexagon_M4_pmpyw :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M4.pmpyw">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vpmpyh,DI_ftype_SISI,2)
-//
-def int_hexagon_M4_vpmpyh :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.M4.vpmpyh">;
-//
-// BUILTIN_INFO(HEXAGON.M4_pmpyw_acc,DI_ftype_DISISI,3)
-//
-def int_hexagon_M4_pmpyw_acc :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.M4.pmpyw.acc">;
-//
-// BUILTIN_INFO(HEXAGON.M4_vpmpyh_acc,DI_ftype_DISISI,3)
-//
-def int_hexagon_M4_vpmpyh_acc :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.M4.vpmpyh.acc">;
-//
 // BUILTIN_INFO(HEXAGON.A2_add,SI_ftype_SISI,2)
 //
 def int_hexagon_A2_add :
@@ -2615,6 +1889,10 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.ll">;
 //
 def int_hexagon_A2_addh_l16_hl :
 Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.hl">;
+def int_hexagon_A2_addh_l16_lh :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.lh">;
+def int_hexagon_A2_addh_l16_hh :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.hh">;
 //
 // BUILTIN_INFO(HEXAGON.A2_addh_l16_sat_ll,SI_ftype_SISI,2)
 //
@@ -2625,6 +1903,10 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.sat.ll">;
 //
 def int_hexagon_A2_addh_l16_sat_hl :
 Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.sat.hl">;
+def int_hexagon_A2_addh_l16_sat_lh :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.sat.lh">;
+def int_hexagon_A2_addh_l16_sat_hh :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.addh.l16.sat.hh">;
 //
 // BUILTIN_INFO(HEXAGON.A2_subh_l16_ll,SI_ftype_SISI,2)
 //
@@ -2799,7 +2081,7 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.max">;
 // BUILTIN_INFO(HEXAGON.A2_maxu,USI_ftype_SISI,2)
 //
 def int_hexagon_A2_maxu :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.maxu">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.A2.maxu">;
 //
 // BUILTIN_INFO(HEXAGON.A2_min,SI_ftype_SISI,2)
 //
@@ -2809,7 +2091,7 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.min">;
 // BUILTIN_INFO(HEXAGON.A2_minu,USI_ftype_SISI,2)
 //
 def int_hexagon_A2_minu :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A2.minu">;
+Hexagon_usi_sisi_Intrinsic<"HEXAGON.A2.minu">;
 //
 // BUILTIN_INFO(HEXAGON.A2_maxp,DI_ftype_DIDI,2)
 //
@@ -2819,7 +2101,7 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.maxp">;
 // BUILTIN_INFO(HEXAGON.A2_maxup,UDI_ftype_DIDI,2)
 //
 def int_hexagon_A2_maxup :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.maxup">;
+Hexagon_udi_didi_Intrinsic<"HEXAGON.A2.maxup">;
 //
 // BUILTIN_INFO(HEXAGON.A2_minp,DI_ftype_DIDI,2)
 //
@@ -2829,7 +2111,7 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.minp">;
 // BUILTIN_INFO(HEXAGON.A2_minup,UDI_ftype_DIDI,2)
 //
 def int_hexagon_A2_minup :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.minup">;
+Hexagon_udi_didi_Intrinsic<"HEXAGON.A2.minup">;
 //
 // BUILTIN_INFO(HEXAGON.A2_tfr,SI_ftype_SI,1)
 //
@@ -2875,16 +2157,6 @@ Hexagon_si_si_Intrinsic<"HEXAGON.A2.sxth">;
 //
 def int_hexagon_A2_combinew :
 Hexagon_di_sisi_Intrinsic<"HEXAGON.A2.combinew">;
-//
-// BUILTIN_INFO(HEXAGON.A4_combineri,DI_ftype_SISI,2)
-//
-def int_hexagon_A4_combineri :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.A4.combineri">;
-//
-// BUILTIN_INFO(HEXAGON.A4_combineir,DI_ftype_SISI,2)
-//
-def int_hexagon_A4_combineir :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.A4.combineir">;
 //
 // BUILTIN_INFO(HEXAGON.A2_combineii,DI_ftype_SISI,2)
 //
@@ -2946,111 +2218,6 @@ Hexagon_si_si_Intrinsic<"HEXAGON.A2.not">;
 def int_hexagon_M2_xor_xacc :
 Hexagon_si_sisisi_Intrinsic<"HEXAGON.M2.xor.xacc">;
 //
-// BUILTIN_INFO(HEXAGON.M4_xor_xacc,DI_ftype_DIDIDI,3)
-//
-def int_hexagon_M4_xor_xacc :
-Hexagon_di_dididi_Intrinsic<"HEXAGON.M4.xor.xacc">;
-//
-// BUILTIN_INFO(HEXAGON.A4_andn,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_andn :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.andn">;
-//
-// BUILTIN_INFO(HEXAGON.A4_orn,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_orn :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.orn">;
-//
-// BUILTIN_INFO(HEXAGON.A4_andnp,DI_ftype_DIDI,2)
-//
-def int_hexagon_A4_andnp :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A4.andnp">;
-//
-// BUILTIN_INFO(HEXAGON.A4_ornp,DI_ftype_DIDI,2)
-//
-def int_hexagon_A4_ornp :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A4.ornp">;
-//
-// BUILTIN_INFO(HEXAGON.S4_addaddi,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_addaddi :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.addaddi">;
-//
-// BUILTIN_INFO(HEXAGON.S4_subaddi,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_subaddi :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.subaddi">;
-//
-// BUILTIN_INFO(HEXAGON.M4_and_and,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_and_and :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and.and">;
-//
-// BUILTIN_INFO(HEXAGON.M4_and_andn,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_and_andn :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and.andn">;
-//
-// BUILTIN_INFO(HEXAGON.M4_and_or,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_and_or :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and.or">;
-//
-// BUILTIN_INFO(HEXAGON.M4_and_xor,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_and_xor :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and.xor">;
-//
-// BUILTIN_INFO(HEXAGON.M4_or_and,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_or_and :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or.and">;
-//
-// BUILTIN_INFO(HEXAGON.M4_or_andn,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_or_andn :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or.andn">;
-//
-// BUILTIN_INFO(HEXAGON.M4_or_or,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_or_or :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or.or">;
-//
-// BUILTIN_INFO(HEXAGON.M4_or_xor,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_or_xor :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or.xor">;
-//
-// BUILTIN_INFO(HEXAGON.S4_or_andix,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_or_andix :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.or.andix">;
-//
-// BUILTIN_INFO(HEXAGON.S4_or_andi,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_or_andi :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.or.andi">;
-//
-// BUILTIN_INFO(HEXAGON.S4_or_ori,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_or_ori :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.or.ori">;
-//
-// BUILTIN_INFO(HEXAGON.M4_xor_and,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_xor_and :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.xor.and">;
-//
-// BUILTIN_INFO(HEXAGON.M4_xor_or,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_xor_or :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.xor.or">;
-//
-// BUILTIN_INFO(HEXAGON.M4_xor_andn,SI_ftype_SISISI,3)
-//
-def int_hexagon_M4_xor_andn :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.xor.andn">;
-//
 // BUILTIN_INFO(HEXAGON.A2_subri,SI_ftype_SISI,2)
 //
 def int_hexagon_A2_subri :
@@ -3096,11 +2263,6 @@ Hexagon_di_si_Intrinsic<"HEXAGON.A2.sxtw">;
 def int_hexagon_A2_sat :
 Hexagon_si_di_Intrinsic<"HEXAGON.A2.sat">;
 //
-// BUILTIN_INFO(HEXAGON.A2_roundsat,SI_ftype_DI,1)
-//
-def int_hexagon_A2_roundsat :
-Hexagon_si_di_Intrinsic<"HEXAGON.A2.roundsat">;
-//
 // BUILTIN_INFO(HEXAGON.A2_sath,SI_ftype_SI,1)
 //
 def int_hexagon_A2_sath :
@@ -3126,11 +2288,6 @@ Hexagon_si_si_Intrinsic<"HEXAGON.A2.satb">;
 def int_hexagon_A2_vaddub :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddub">;
 //
-// BUILTIN_INFO(HEXAGON.A2_vaddb_map,DI_ftype_DIDI,2)
-//
-def int_hexagon_A2_vaddb_map :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddb.map">;
-//
 // BUILTIN_INFO(HEXAGON.A2_vaddubs,DI_ftype_DIDI,2)
 //
 def int_hexagon_A2_vaddubs :
@@ -3138,7 +2295,7 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddubs">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vaddh,DI_ftype_DIDI,2)
 //
-def int_hexagon_A2_vaddh :
+def int_hexagon_A2_vaddh  :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddh">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vaddhs,DI_ftype_DIDI,2)
@@ -3151,11 +2308,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddhs">;
 def int_hexagon_A2_vadduhs :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vadduhs">;
 //
-// BUILTIN_INFO(HEXAGON.A5_vaddhubs,SI_ftype_DIDI,2)
-//
-def int_hexagon_A5_vaddhubs :
-Hexagon_si_didi_Intrinsic<"HEXAGON.A5.vaddhubs">;
-//
 // BUILTIN_INFO(HEXAGON.A2_vaddw,DI_ftype_DIDI,2)
 //
 def int_hexagon_A2_vaddw :
@@ -3165,36 +2317,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddw">;
 //
 def int_hexagon_A2_vaddws :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vaddws">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vxaddsubw,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_vxaddsubw :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.vxaddsubw">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vxsubaddw,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_vxsubaddw :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.vxsubaddw">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vxaddsubh,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_vxaddsubh :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.vxaddsubh">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vxsubaddh,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_vxsubaddh :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.vxsubaddh">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vxaddsubhr,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_vxaddsubhr :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.vxaddsubhr">;
-//
-// BUILTIN_INFO(HEXAGON.S4_vxsubaddhr,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_vxsubaddhr :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.vxsubaddhr">;
 //
 // BUILTIN_INFO(HEXAGON.A2_svavgh,SI_ftype_SISI,2)
 //
@@ -3251,11 +2373,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vraddub">;
 def int_hexagon_A2_vraddub_acc :
 Hexagon_di_dididi_Intrinsic<"HEXAGON.A2.vraddub.acc">;
 //
-// BUILTIN_INFO(HEXAGON.M2_vraddh,SI_ftype_DIDI,2)
-//
-def int_hexagon_M2_vraddh :
-Hexagon_si_didi_Intrinsic<"HEXAGON.M2.vraddh">;
-//
 // BUILTIN_INFO(HEXAGON.M2_vradduh,SI_ftype_DIDI,2)
 //
 def int_hexagon_M2_vradduh :
@@ -3265,11 +2382,6 @@ Hexagon_si_didi_Intrinsic<"HEXAGON.M2.vradduh">;
 //
 def int_hexagon_A2_vsubub :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vsubub">;
-//
-// BUILTIN_INFO(HEXAGON.A2_vsubb_map,DI_ftype_DIDI,2)
-//
-def int_hexagon_A2_vsubb_map :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vsubb.map">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vsububs,DI_ftype_DIDI,2)
 //
@@ -3431,85 +2543,15 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vavghr">;
 def int_hexagon_A2_vnavghr :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vnavghr">;
 //
-// BUILTIN_INFO(HEXAGON.A4_round_ri,SI_ftype_SISI,2)
+// BUILTIN_INFO(HEXAGON.A2_vminh,DI_ftype_DIDI,2)
 //
-def int_hexagon_A4_round_ri :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round.ri">;
+def int_hexagon_A2_vminh :
+Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vminh">;
 //
-// BUILTIN_INFO(HEXAGON.A4_round_rr,SI_ftype_SISI,2)
+// BUILTIN_INFO(HEXAGON.A2_vmaxh,DI_ftype_DIDI,2)
 //
-def int_hexagon_A4_round_rr :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round.rr">;
-//
-// BUILTIN_INFO(HEXAGON.A4_round_ri_sat,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_round_ri_sat :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round.ri.sat">;
-//
-// BUILTIN_INFO(HEXAGON.A4_round_rr_sat,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_round_rr_sat :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round.rr.sat">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cround_ri,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_cround_ri :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.cround.ri">;
-//
-// BUILTIN_INFO(HEXAGON.A4_cround_rr,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_cround_rr :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.cround.rr">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrminh,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrminh :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrminh">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrmaxh,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrmaxh :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrmaxh">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrminuh,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrminuh :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrminuh">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrmaxuh,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrmaxuh :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrmaxuh">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrminw,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrminw :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrminw">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrmaxw,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrmaxw :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrmaxw">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrminuw,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrminuw :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrminuw">;
-//
-// BUILTIN_INFO(HEXAGON.A4_vrmaxuw,DI_ftype_DIDISI,3)
-//
-def int_hexagon_A4_vrmaxuw :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.A4.vrmaxuw">;
-//
-// BUILTIN_INFO(HEXAGON.A2_vminb,DI_ftype_DIDI,2)
-//
-def int_hexagon_A2_vminb :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vminb">;
-//
-// BUILTIN_INFO(HEXAGON.A2_vmaxb,DI_ftype_DIDI,2)
-//
-def int_hexagon_A2_vmaxb :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vmaxb">;
+def int_hexagon_A2_vmaxh :
+Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vmaxh">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vminub,DI_ftype_DIDI,2)
 //
@@ -3520,16 +2562,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vminub">;
 //
 def int_hexagon_A2_vmaxub :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vmaxub">;
-//
-// BUILTIN_INFO(HEXAGON.A2_vminh,DI_ftype_DIDI,2)
-//
-def int_hexagon_A2_vminh :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vminh">;
-//
-// BUILTIN_INFO(HEXAGON.A2_vmaxh,DI_ftype_DIDI,2)
-//
-def int_hexagon_A2_vmaxh :
-Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vmaxh">;
 //
 // BUILTIN_INFO(HEXAGON.A2_vminuh,DI_ftype_DIDI,2)
 //
@@ -3560,341 +2592,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vminuw">;
 //
 def int_hexagon_A2_vmaxuw :
 Hexagon_di_didi_Intrinsic<"HEXAGON.A2.vmaxuw">;
-//
-// BUILTIN_INFO(HEXAGON.A4_modwrapu,SI_ftype_SISI,2)
-//
-def int_hexagon_A4_modwrapu :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.modwrapu">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfadd,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfadd :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sfadd">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfsub,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfsub :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sfsub">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfmpy,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfmpy :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sfmpy">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffma,SF_ftype_SFSFSF,3)
-//
-def int_hexagon_F2_sffma :
-Hexagon_sf_sfsfsf_Intrinsic<"HEXAGON.F2.sffma">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffma_sc,SF_ftype_SFSFSFQI,4)
-//
-def int_hexagon_F2_sffma_sc :
-Hexagon_sf_sfsfsfqi_Intrinsic<"HEXAGON.F2.sffma.sc">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffms,SF_ftype_SFSFSF,3)
-//
-def int_hexagon_F2_sffms :
-Hexagon_sf_sfsfsf_Intrinsic<"HEXAGON.F2.sffms">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffma_lib,SF_ftype_SFSFSF,3)
-//
-def int_hexagon_F2_sffma_lib :
-Hexagon_sf_sfsfsf_Intrinsic<"HEXAGON.F2.sffma.lib">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffms_lib,SF_ftype_SFSFSF,3)
-//
-def int_hexagon_F2_sffms_lib :
-Hexagon_sf_sfsfsf_Intrinsic<"HEXAGON.F2.sffms.lib">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfcmpeq,QI_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfcmpeq :
-Hexagon_qi_sfsf_Intrinsic<"HEXAGON.F2.sfcmpeq">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfcmpgt,QI_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfcmpgt :
-Hexagon_qi_sfsf_Intrinsic<"HEXAGON.F2.sfcmpgt">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfcmpge,QI_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfcmpge :
-Hexagon_qi_sfsf_Intrinsic<"HEXAGON.F2.sfcmpge">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfcmpuo,QI_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfcmpuo :
-Hexagon_qi_sfsf_Intrinsic<"HEXAGON.F2.sfcmpuo">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfmax,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfmax :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sfmax">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfmin,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sfmin :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sfmin">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfclass,QI_ftype_SFSI,2)
-//
-def int_hexagon_F2_sfclass :
-Hexagon_qi_sfsi_Intrinsic<"HEXAGON.F2.sfclass">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfimm_p,SF_ftype_SI,1)
-//
-def int_hexagon_F2_sfimm_p :
-Hexagon_sf_si_Intrinsic<"HEXAGON.F2.sfimm.p">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sfimm_n,SF_ftype_SI,1)
-//
-def int_hexagon_F2_sfimm_n :
-Hexagon_sf_si_Intrinsic<"HEXAGON.F2.sfimm.n">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffixupn,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sffixupn :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sffixupn">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffixupd,SF_ftype_SFSF,2)
-//
-def int_hexagon_F2_sffixupd :
-Hexagon_sf_sfsf_Intrinsic<"HEXAGON.F2.sffixupd">;
-//
-// BUILTIN_INFO(HEXAGON.F2_sffixupr,SF_ftype_SF,1)
-//
-def int_hexagon_F2_sffixupr :
-Hexagon_sf_sf_Intrinsic<"HEXAGON.F2.sffixupr">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfadd,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfadd :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dfadd">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfsub,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfsub :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dfsub">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfmpy,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfmpy :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dfmpy">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffma,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffma :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON.F2.dffma">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffms,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffms :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON.F2.dffms">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffma_lib,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffma_lib :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON.F2.dffma.lib">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffms_lib,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffms_lib :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON.F2.dffms.lib">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffma_sc,DF_ftype_DFDFDFQI,4)
-//
-def int_hexagon_F2_dffma_sc :
-Hexagon_df_dfdfdfqi_Intrinsic<"HEXAGON.F2.dffma.sc">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfmax,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfmax :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dfmax">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfmin,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfmin :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dfmin">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfcmpeq,QI_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfcmpeq :
-Hexagon_qi_dfdf_Intrinsic<"HEXAGON.F2.dfcmpeq">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfcmpgt,QI_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfcmpgt :
-Hexagon_qi_dfdf_Intrinsic<"HEXAGON.F2.dfcmpgt">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfcmpge,QI_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfcmpge :
-Hexagon_qi_dfdf_Intrinsic<"HEXAGON.F2.dfcmpge">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfcmpuo,QI_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfcmpuo :
-Hexagon_qi_dfdf_Intrinsic<"HEXAGON.F2.dfcmpuo">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfclass,QI_ftype_DFSI,2)
-//
-def int_hexagon_F2_dfclass :
-Hexagon_qi_dfsi_Intrinsic<"HEXAGON.F2.dfclass">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfimm_p,DF_ftype_SI,1)
-//
-def int_hexagon_F2_dfimm_p :
-Hexagon_df_si_Intrinsic<"HEXAGON.F2.dfimm.p">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfimm_n,DF_ftype_SI,1)
-//
-def int_hexagon_F2_dfimm_n :
-Hexagon_df_si_Intrinsic<"HEXAGON.F2.dfimm.n">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffixupn,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dffixupn :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dffixupn">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffixupd,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dffixupd :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON.F2.dffixupd">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffixupr,DF_ftype_DF,1)
-//
-def int_hexagon_F2_dffixupr :
-Hexagon_df_df_Intrinsic<"HEXAGON.F2.dffixupr">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2df,DF_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2df :
-Hexagon_df_sf_Intrinsic<"HEXAGON.F2.conv.sf2df">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2sf,SF_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2sf :
-Hexagon_sf_df_Intrinsic<"HEXAGON.F2.conv.df2sf">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_uw2sf,SF_ftype_SI,1)
-//
-def int_hexagon_F2_conv_uw2sf :
-Hexagon_sf_si_Intrinsic<"HEXAGON.F2.conv.uw2sf">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_uw2df,DF_ftype_SI,1)
-//
-def int_hexagon_F2_conv_uw2df :
-Hexagon_df_si_Intrinsic<"HEXAGON.F2.conv.uw2df">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_w2sf,SF_ftype_SI,1)
-//
-def int_hexagon_F2_conv_w2sf :
-Hexagon_sf_si_Intrinsic<"HEXAGON.F2.conv.w2sf">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_w2df,DF_ftype_SI,1)
-//
-def int_hexagon_F2_conv_w2df :
-Hexagon_df_si_Intrinsic<"HEXAGON.F2.conv.w2df">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_ud2sf,SF_ftype_DI,1)
-//
-def int_hexagon_F2_conv_ud2sf :
-Hexagon_sf_di_Intrinsic<"HEXAGON.F2.conv.ud2sf">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_ud2df,DF_ftype_DI,1)
-//
-def int_hexagon_F2_conv_ud2df :
-Hexagon_df_di_Intrinsic<"HEXAGON.F2.conv.ud2df">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_d2sf,SF_ftype_DI,1)
-//
-def int_hexagon_F2_conv_d2sf :
-Hexagon_sf_di_Intrinsic<"HEXAGON.F2.conv.d2sf">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_d2df,DF_ftype_DI,1)
-//
-def int_hexagon_F2_conv_d2df :
-Hexagon_df_di_Intrinsic<"HEXAGON.F2.conv.d2df">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2uw,SI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2uw :
-Hexagon_si_sf_Intrinsic<"HEXAGON.F2.conv.sf2uw">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2w,SI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2w :
-Hexagon_si_sf_Intrinsic<"HEXAGON.F2.conv.sf2w">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2ud,DI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2ud :
-Hexagon_di_sf_Intrinsic<"HEXAGON.F2.conv.sf2ud">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2d,DI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2d :
-Hexagon_di_sf_Intrinsic<"HEXAGON.F2.conv.sf2d">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2uw,SI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2uw :
-Hexagon_si_df_Intrinsic<"HEXAGON.F2.conv.df2uw">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2w,SI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2w :
-Hexagon_si_df_Intrinsic<"HEXAGON.F2.conv.df2w">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2ud,DI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2ud :
-Hexagon_di_df_Intrinsic<"HEXAGON.F2.conv.df2ud">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2d,DI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2d :
-Hexagon_di_df_Intrinsic<"HEXAGON.F2.conv.df2d">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2uw_chop,SI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2uw_chop :
-Hexagon_si_sf_Intrinsic<"HEXAGON.F2.conv.sf2uw.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2w_chop,SI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2w_chop :
-Hexagon_si_sf_Intrinsic<"HEXAGON.F2.conv.sf2w.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2ud_chop,DI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2ud_chop :
-Hexagon_di_sf_Intrinsic<"HEXAGON.F2.conv.sf2ud.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_sf2d_chop,DI_ftype_SF,1)
-//
-def int_hexagon_F2_conv_sf2d_chop :
-Hexagon_di_sf_Intrinsic<"HEXAGON.F2.conv.sf2d.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2uw_chop,SI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2uw_chop :
-Hexagon_si_df_Intrinsic<"HEXAGON.F2.conv.df2uw.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2w_chop,SI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2w_chop :
-Hexagon_si_df_Intrinsic<"HEXAGON.F2.conv.df2w.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2ud_chop,DI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2ud_chop :
-Hexagon_di_df_Intrinsic<"HEXAGON.F2.conv.df2ud.chop">;
-//
-// BUILTIN_INFO(HEXAGON.F2_conv_df2d_chop,DI_ftype_DF,1)
-//
-def int_hexagon_F2_conv_df2d_chop :
-Hexagon_di_df_Intrinsic<"HEXAGON.F2.conv.df2d.chop">;
 //
 // BUILTIN_INFO(HEXAGON.S2_asr_r_r,SI_ftype_SISI,2)
 //
@@ -4096,26 +2793,6 @@ Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.lsr.r.p.or">;
 def int_hexagon_S2_lsl_r_p_or :
 Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.lsl.r.p.or">;
 //
-// BUILTIN_INFO(HEXAGON.S2_asr_r_p_xor,DI_ftype_DIDISI,3)
-//
-def int_hexagon_S2_asr_r_p_xor :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.asr.r.p.xor">;
-//
-// BUILTIN_INFO(HEXAGON.S2_asl_r_p_xor,DI_ftype_DIDISI,3)
-//
-def int_hexagon_S2_asl_r_p_xor :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.asl.r.p.xor">;
-//
-// BUILTIN_INFO(HEXAGON.S2_lsr_r_p_xor,DI_ftype_DIDISI,3)
-//
-def int_hexagon_S2_lsr_r_p_xor :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.lsr.r.p.xor">;
-//
-// BUILTIN_INFO(HEXAGON.S2_lsl_r_p_xor,DI_ftype_DIDISI,3)
-//
-def int_hexagon_S2_lsl_r_p_xor :
-Hexagon_di_didisi_Intrinsic<"HEXAGON.S2.lsl.r.p.xor">;
-//
 // BUILTIN_INFO(HEXAGON.S2_asr_r_r_sat,SI_ftype_SISI,2)
 //
 def int_hexagon_S2_asr_r_r_sat :
@@ -4311,65 +2988,10 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.S2.asr.i.r.rnd">;
 def int_hexagon_S2_asr_i_r_rnd_goodsyntax :
 Hexagon_si_sisi_Intrinsic<"HEXAGON.S2.asr.i.r.rnd.goodsyntax">;
 //
-// BUILTIN_INFO(HEXAGON.S2_asr_i_p_rnd,DI_ftype_DISI,2)
-//
-def int_hexagon_S2_asr_i_p_rnd :
-Hexagon_di_disi_Intrinsic<"HEXAGON.S2.asr.i.p.rnd">;
-//
-// BUILTIN_INFO(HEXAGON.S2_asr_i_p_rnd_goodsyntax,DI_ftype_DISI,2)
-//
-def int_hexagon_S2_asr_i_p_rnd_goodsyntax :
-Hexagon_di_disi_Intrinsic<"HEXAGON.S2.asr.i.p.rnd.goodsyntax">;
-//
-// BUILTIN_INFO(HEXAGON.S4_lsli,SI_ftype_SISI,2)
-//
-def int_hexagon_S4_lsli :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.S4.lsli">;
-//
 // BUILTIN_INFO(HEXAGON.S2_addasl_rrri,SI_ftype_SISISI,3)
 //
 def int_hexagon_S2_addasl_rrri :
 Hexagon_si_sisisi_Intrinsic<"HEXAGON.S2.addasl.rrri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_andi_asl_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_andi_asl_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.andi.asl.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_ori_asl_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_ori_asl_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.ori.asl.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_addi_asl_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_addi_asl_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.addi.asl.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_subi_asl_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_subi_asl_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.subi.asl.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_andi_lsr_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_andi_lsr_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.andi.lsr.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_ori_lsr_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_ori_lsr_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.ori.lsr.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_addi_lsr_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_addi_lsr_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.addi.lsr.ri">;
-//
-// BUILTIN_INFO(HEXAGON.S4_subi_lsr_ri,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_subi_lsr_ri :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.subi.lsr.ri">;
 //
 // BUILTIN_INFO(HEXAGON.S2_valignib,DI_ftype_DIDISI,3)
 //
@@ -4426,21 +3048,6 @@ Hexagon_si_sisisisi_Intrinsic<"HEXAGON.S2.tableidxw.goodsyntax">;
 def int_hexagon_S2_tableidxd_goodsyntax :
 Hexagon_si_sisisisi_Intrinsic<"HEXAGON.S2.tableidxd.goodsyntax">;
 //
-// BUILTIN_INFO(HEXAGON.A4_bitspliti,DI_ftype_SISI,2)
-//
-def int_hexagon_A4_bitspliti :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.A4.bitspliti">;
-//
-// BUILTIN_INFO(HEXAGON.A4_bitsplit,DI_ftype_SISI,2)
-//
-def int_hexagon_A4_bitsplit :
-Hexagon_di_sisi_Intrinsic<"HEXAGON.A4.bitsplit">;
-//
-// BUILTIN_INFO(HEXAGON.S4_extract,SI_ftype_SISISI,3)
-//
-def int_hexagon_S4_extract :
-Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.extract">;
-//
 // BUILTIN_INFO(HEXAGON.S2_extractu,SI_ftype_SISISI,3)
 //
 def int_hexagon_S2_extractu :
@@ -4450,11 +3057,6 @@ Hexagon_si_sisisi_Intrinsic<"HEXAGON.S2.extractu">;
 //
 def int_hexagon_S2_insertp :
 Hexagon_di_didisisi_Intrinsic<"HEXAGON.S2.insertp">;
-//
-// BUILTIN_INFO(HEXAGON.S4_extractp,DI_ftype_DISISI,3)
-//
-def int_hexagon_S4_extractp :
-Hexagon_di_disisi_Intrinsic<"HEXAGON.S4.extractp">;
 //
 // BUILTIN_INFO(HEXAGON.S2_extractup,DI_ftype_DISISI,3)
 //
@@ -4466,11 +3068,6 @@ Hexagon_di_disisi_Intrinsic<"HEXAGON.S2.extractup">;
 def int_hexagon_S2_insert_rp :
 Hexagon_si_sisidi_Intrinsic<"HEXAGON.S2.insert.rp">;
 //
-// BUILTIN_INFO(HEXAGON.S4_extract_rp,SI_ftype_SIDI,2)
-//
-def int_hexagon_S4_extract_rp :
-Hexagon_si_sidi_Intrinsic<"HEXAGON.S4.extract.rp">;
-//
 // BUILTIN_INFO(HEXAGON.S2_extractu_rp,SI_ftype_SIDI,2)
 //
 def int_hexagon_S2_extractu_rp :
@@ -4481,11 +3078,6 @@ Hexagon_si_sidi_Intrinsic<"HEXAGON.S2.extractu.rp">;
 def int_hexagon_S2_insertp_rp :
 Hexagon_di_dididi_Intrinsic<"HEXAGON.S2.insertp.rp">;
 //
-// BUILTIN_INFO(HEXAGON.S4_extractp_rp,DI_ftype_DIDI,2)
-//
-def int_hexagon_S4_extractp_rp :
-Hexagon_di_didi_Intrinsic<"HEXAGON.S4.extractp.rp">;
-//
 // BUILTIN_INFO(HEXAGON.S2_extractup_rp,DI_ftype_DIDI,2)
 //
 def int_hexagon_S2_extractup_rp :
@@ -4495,11 +3087,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.S2.extractup.rp">;
 //
 def int_hexagon_S2_tstbit_i :
 Hexagon_qi_sisi_Intrinsic<"HEXAGON.S2.tstbit.i">;
-//
-// BUILTIN_INFO(HEXAGON.S4_ntstbit_i,QI_ftype_SISI,2)
-//
-def int_hexagon_S4_ntstbit_i :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.S4.ntstbit.i">;
 //
 // BUILTIN_INFO(HEXAGON.S2_setbit_i,SI_ftype_SISI,2)
 //
@@ -4520,11 +3107,6 @@ Hexagon_si_sisi_Intrinsic<"HEXAGON.S2.clrbit.i">;
 //
 def int_hexagon_S2_tstbit_r :
 Hexagon_qi_sisi_Intrinsic<"HEXAGON.S2.tstbit.r">;
-//
-// BUILTIN_INFO(HEXAGON.S4_ntstbit_r,QI_ftype_SISI,2)
-//
-def int_hexagon_S4_ntstbit_r :
-Hexagon_qi_sisi_Intrinsic<"HEXAGON.S4.ntstbit.r">;
 //
 // BUILTIN_INFO(HEXAGON.S2_setbit_r,SI_ftype_SISI,2)
 //
@@ -4560,21 +3142,6 @@ Hexagon_di_disi_Intrinsic<"HEXAGON.S2.asl.i.vh">;
 //
 def int_hexagon_S2_asr_r_vh :
 Hexagon_di_disi_Intrinsic<"HEXAGON.S2.asr.r.vh">;
-//
-// BUILTIN_INFO(HEXAGON.S5_asrhub_rnd_sat_goodsyntax,SI_ftype_DISI,2)
-//
-def int_hexagon_S5_asrhub_rnd_sat_goodsyntax :
-Hexagon_si_disi_Intrinsic<"HEXAGON.S5.asrhub.rnd.sat.goodsyntax">;
-//
-// BUILTIN_INFO(HEXAGON.S5_asrhub_sat,SI_ftype_DISI,2)
-//
-def int_hexagon_S5_asrhub_sat :
-Hexagon_si_disi_Intrinsic<"HEXAGON.S5.asrhub.sat">;
-//
-// BUILTIN_INFO(HEXAGON.S5_vasrhrnd_goodsyntax,DI_ftype_DISI,2)
-//
-def int_hexagon_S5_vasrhrnd_goodsyntax :
-Hexagon_di_disi_Intrinsic<"HEXAGON.S5.vasrhrnd.goodsyntax">;
 //
 // BUILTIN_INFO(HEXAGON.S2_asl_r_vh,DI_ftype_DISI,2)
 //
@@ -4766,16 +3333,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.S2.shuffoh">;
 def int_hexagon_S2_shuffeh :
 Hexagon_di_didi_Intrinsic<"HEXAGON.S2.shuffeh">;
 //
-// BUILTIN_INFO(HEXAGON.S5_popcountp,SI_ftype_DI,1)
-//
-def int_hexagon_S5_popcountp :
-Hexagon_si_di_Intrinsic<"HEXAGON.S5.popcountp">;
-//
-// BUILTIN_INFO(HEXAGON.S4_parity,SI_ftype_SISI,2)
-//
-def int_hexagon_S4_parity :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.S4.parity">;
-//
 // BUILTIN_INFO(HEXAGON.S2_parityp,SI_ftype_DIDI,2)
 //
 def int_hexagon_S2_parityp :
@@ -4790,21 +3347,6 @@ Hexagon_di_didi_Intrinsic<"HEXAGON.S2.lfsp">;
 //
 def int_hexagon_S2_clbnorm :
 Hexagon_si_si_Intrinsic<"HEXAGON.S2.clbnorm">;
-//
-// BUILTIN_INFO(HEXAGON.S4_clbaddi,SI_ftype_SISI,2)
-//
-def int_hexagon_S4_clbaddi :
-Hexagon_si_sisi_Intrinsic<"HEXAGON.S4.clbaddi">;
-//
-// BUILTIN_INFO(HEXAGON.S4_clbpnorm,SI_ftype_DI,1)
-//
-def int_hexagon_S4_clbpnorm :
-Hexagon_si_di_Intrinsic<"HEXAGON.S4.clbpnorm">;
-//
-// BUILTIN_INFO(HEXAGON.S4_clbpaddi,SI_ftype_DISI,2)
-//
-def int_hexagon_S4_clbpaddi :
-Hexagon_si_disi_Intrinsic<"HEXAGON.S4.clbpaddi">;
 //
 // BUILTIN_INFO(HEXAGON.S2_clb,SI_ftype_SI,1)
 //
@@ -4841,11 +3383,6 @@ Hexagon_si_di_Intrinsic<"HEXAGON.S2.cl1p">;
 def int_hexagon_S2_brev :
 Hexagon_si_si_Intrinsic<"HEXAGON.S2.brev">;
 //
-// BUILTIN_INFO(HEXAGON.S2_brevp,DI_ftype_DI,1)
-//
-def int_hexagon_S2_brevp :
-Hexagon_di_di_Intrinsic<"HEXAGON.S2.brevp">;
-//
 // BUILTIN_INFO(HEXAGON.S2_ct0,SI_ftype_SI,1)
 //
 def int_hexagon_S2_ct0 :
@@ -4856,16 +3393,6 @@ Hexagon_si_si_Intrinsic<"HEXAGON.S2.ct0">;
 def int_hexagon_S2_ct1 :
 Hexagon_si_si_Intrinsic<"HEXAGON.S2.ct1">;
 //
-// BUILTIN_INFO(HEXAGON.S2_ct0p,SI_ftype_DI,1)
-//
-def int_hexagon_S2_ct0p :
-Hexagon_si_di_Intrinsic<"HEXAGON.S2.ct0p">;
-//
-// BUILTIN_INFO(HEXAGON.S2_ct1p,SI_ftype_DI,1)
-//
-def int_hexagon_S2_ct1p :
-Hexagon_si_di_Intrinsic<"HEXAGON.S2.ct1p">;
-//
 // BUILTIN_INFO(HEXAGON.S2_interleave,DI_ftype_DI,1)
 //
 def int_hexagon_S2_interleave :
@@ -4875,3 +3402,270 @@ Hexagon_di_di_Intrinsic<"HEXAGON.S2.interleave">;
 //
 def int_hexagon_S2_deinterleave :
 Hexagon_di_di_Intrinsic<"HEXAGON.S2.deinterleave">;
+
+//
+// BUILTIN_INFO(SI_to_SXTHI_asrh,SI_ftype_SI,1)
+//
+def int_hexagon_SI_to_SXTHI_asrh :
+Hexagon_si_si_Intrinsic<"SI.to.SXTHI.asrh">;
+
+//
+// BUILTIN_INFO(HEXAGON.A4_orn,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_orn :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.orn">;
+//
+// BUILTIN_INFO(HEXAGON.A4_andn,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_andn :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.andn">;
+//
+// BUILTIN_INFO(HEXAGON.A4_orn,DI_ftype_DIDI,2)
+//
+def int_hexagon_A4_ornp :
+Hexagon_di_didi_Intrinsic<"HEXAGON.A4.ornp">;
+//
+// BUILTIN_INFO(HEXAGON.A4_andn,DI_ftype_DIDI,2)
+//
+def int_hexagon_A4_andnp :
+Hexagon_di_didi_Intrinsic<"HEXAGON.A4.andnp">;
+//
+// BUILTIN_INFO(HEXAGON.A4_combineir,DI_ftype_sisi,2)
+//
+def int_hexagon_A4_combineir :
+Hexagon_di_sisi_Intrinsic<"HEXAGON.A4.combineir">;
+//
+// BUILTIN_INFO(HEXAGON.A4_combineir,DI_ftype_sisi,2)
+//
+def int_hexagon_A4_combineri :
+Hexagon_di_sisi_Intrinsic<"HEXAGON.A4.combineri">;
+//
+// BUILTIN_INFO(HEXAGON.C4_cmpneq,QI_ftype_SISI,2)
+//
+def int_hexagon_C4_cmpneq :
+Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmpneq">;
+//
+// BUILTIN_INFO(HEXAGON.C4_cmpneqi,QI_ftype_SISI,2)
+//
+def int_hexagon_C4_cmpneqi :
+Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmpneqi">;
+//
+// BUILTIN_INFO(HEXAGON.C4_cmplte,QI_ftype_SISI,2)
+//
+def int_hexagon_C4_cmplte :
+Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmplte">;
+//
+// BUILTIN_INFO(HEXAGON.C4_cmpltei,QI_ftype_SISI,2)
+//
+def int_hexagon_C4_cmpltei :
+Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmpltei">;
+//
+// BUILTIN_INFO(HEXAGON.C4_cmplteu,QI_ftype_SISI,2)
+//
+def int_hexagon_C4_cmplteu :
+Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmplteu">;
+//
+// BUILTIN_INFO(HEXAGON.C4_cmplteui,QI_ftype_SISI,2)
+//
+def int_hexagon_C4_cmplteui :
+Hexagon_qi_sisi_Intrinsic<"HEXAGON.C4.cmplteui">;
+//
+// BUILTIN_INFO(HEXAGON.A4_rcmpneq,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_rcmpneq :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpneq">;
+//
+// BUILTIN_INFO(HEXAGON.A4_rcmpneqi,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_rcmpneqi :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpneqi">;
+//
+// BUILTIN_INFO(HEXAGON.A4_rcmpeq,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_rcmpeq :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpeq">;
+//
+// BUILTIN_INFO(HEXAGON.A4_rcmpeqi,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_rcmpeqi :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.rcmpeqi">;
+//
+// BUILTIN_INFO(HEXAGON.C4_fastcorner9,QI_ftype_QIQI,2)
+//
+def int_hexagon_C4_fastcorner9 :
+Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C4.fastcorner9">;
+//
+// BUILTIN_INFO(HEXAGON.C4_fastcorner9_not,QI_ftype_QIQI,2)
+//
+def int_hexagon_C4_fastcorner9_not :
+Hexagon_qi_qiqi_Intrinsic<"HEXAGON.C4.fastcorner9_not">;
+//
+// BUILTIN_INFO(HEXAGON.C4_and_andn,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_and_andn :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and_andn">;
+//
+// BUILTIN_INFO(HEXAGON.C4_and_and,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_and_and :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and_and">;
+//
+// BUILTIN_INFO(HEXAGON.C4_and_orn,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_and_orn :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and_orn">;
+//
+// BUILTIN_INFO(HEXAGON.C4_and_or,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_and_or :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.and_or">;
+//
+// BUILTIN_INFO(HEXAGON.C4_or_andn,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_or_andn :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or_andn">;
+//
+// BUILTIN_INFO(HEXAGON.C4_or_and,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_or_and :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or_and">;
+//
+// BUILTIN_INFO(HEXAGON.C4_or_orn,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_or_orn :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or_orn">;
+//
+// BUILTIN_INFO(HEXAGON.C4_or_or,QI_ftype_QIQIQI,3)
+//
+def int_hexagon_C4_or_or :
+Hexagon_qi_qiqiqi_Intrinsic<"HEXAGON.C4.or_or">;
+//
+// BUILTIN_INFO(HEXAGON.S4_addaddi,SI_ftype_SISISI,3)
+//
+def int_hexagon_S4_addaddi :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.addaddi">;
+//
+// BUILTIN_INFO(HEXAGON.S4_subaddi,SI_ftype_SISISI,3)
+//
+def int_hexagon_S4_subaddi :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.subaddi">;
+//
+// BUILTIN_INFO(HEXAGON.S4_andnp,DI_ftype_DIDI,2)
+//
+def int_hexagon_S4_andnp :
+Hexagon_di_didi_Intrinsic<"HEXAGON.S4.andnp">;
+//
+// BUILTIN_INFO(HEXAGON.S4_ornp,DI_ftype_DIDI,2)
+//
+def int_hexagon_S4_ornp :
+Hexagon_di_didi_Intrinsic<"HEXAGON.S4.ornp">;
+//
+// BUILTIN_INFO(HEXAGON.M4_xor_xacc,DI_ftype_DIDIDI,3)
+//
+def int_hexagon_M4_xor_xacc :
+Hexagon_di_dididi_Intrinsic<"HEXAGON.M4.xor_xacc">;
+//
+// BUILTIN_INFO(HEXAGON.M4_and_and,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_and_and :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and_and">;
+//
+// BUILTIN_INFO(HEXAGON.M4_and_andn,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_and_andn :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and_andn">;
+//
+// BUILTIN_INFO(HEXAGON.M4_and_or,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_and_or :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and_or">;
+//
+// BUILTIN_INFO(HEXAGON.M4_and_xor,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_and_xor :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.and_xor">;
+//
+// BUILTIN_INFO(HEXAGON.M4_xor_and,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_xor_or :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.xor_or">;
+//
+// BUILTIN_INFO(HEXAGON.M4_xor_or,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_xor_and :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.xor_and">;
+//
+// BUILTIN_INFO(HEXAGON.M4_xor_andn,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_xor_andn :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.xor_andn">;
+//
+// BUILTIN_INFO(HEXAGON.M4_or_and,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_or_and :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or_and">;
+//
+// BUILTIN_INFO(HEXAGON.M4_or_or,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_or_or :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or_or">;
+//
+// BUILTIN_INFO(HEXAGON.M4_or_xor,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_or_xor :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or_xor">;
+//
+// BUILTIN_INFO(HEXAGON.M4_or_andn,SI_ftype_SISISI,3)
+//
+def int_hexagon_M4_or_andn :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.M4.or_andn">;
+//
+// BUILTIN_INFO(HEXAGON.S4_or_andix,SI_ftype_SISISI,3)
+//
+def int_hexagon_S4_or_andix :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.or_andix">;
+//
+// BUILTIN_INFO(HEXAGON.S4_or_andi,SI_ftype_SISISI,3)
+//
+def int_hexagon_S4_or_andi :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.or_andi">;
+//
+// BUILTIN_INFO(HEXAGON.S4_or_ori,SI_ftype_SISISI,3)
+//
+def int_hexagon_S4_or_ori :
+Hexagon_si_sisisi_Intrinsic<"HEXAGON.S4.or_ori">;
+//
+// BUILTIN_INFO(HEXAGON.A4_modwrapu,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_modwrapu :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.modwrapu">;
+//
+// BUILTIN_INFO(HEXAGON.A4_cround_ri,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_cround_ri :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.cround_ri">;
+//
+// BUILTIN_INFO(HEXAGON.A4_cround_rr,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_cround_rr :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.cround_rr">;
+//
+// BUILTIN_INFO(HEXAGON.A4_round_ri,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_round_ri :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round_ri">;
+//
+// BUILTIN_INFO(HEXAGON.A4_round_rr,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_round_rr :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round_rr">;
+//
+// BUILTIN_INFO(HEXAGON.A4_round_ri_sat,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_round_ri_sat :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round_ri_sat">;
+//
+// BUILTIN_INFO(HEXAGON.A4_round_rr_sat,SI_ftype_SISI,2)
+//
+def int_hexagon_A4_round_rr_sat :
+Hexagon_si_sisi_Intrinsic<"HEXAGON.A4.round_rr_sat">;

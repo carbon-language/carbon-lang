@@ -27,7 +27,6 @@ namespace llvm {
 
       CONST32,
       CONST32_GP,  // For marking data present in GP.
-      FCONST32,
       SETCC,
       ADJDYNALLOC,
       ARGEXTEND,
@@ -49,7 +48,6 @@ namespace llvm {
       BR_JT,       // Jump table.
       BARRIER,     // Memory barrier.
       WrapperJT,
-      WrapperCP,
       TC_RETURN
     };
   }
@@ -130,7 +128,6 @@ namespace llvm {
                                  MachineBasicBlock *BB) const;
 
     SDValue  LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
-    SDValue  LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
     virtual EVT getSetCCResultType(EVT VT) const {
       return MVT::i1;
     }
@@ -153,7 +150,6 @@ namespace llvm {
     /// mode is legal for a load/store of any legal type.
     /// TODO: Handle pre/postinc as well.
     virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const;
-    virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
 
     /// isLegalICmpImmediate - Return true if the specified immediate is legal
     /// icmp immediate, that is the target has icmp instructions which can

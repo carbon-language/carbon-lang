@@ -14,7 +14,6 @@
 #ifndef HEXAGONINSTPRINTER_H
 #define HEXAGONINSTPRINTER_H
 
-#include "HexagonMCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 
 namespace llvm {
@@ -26,7 +25,6 @@ namespace llvm {
       : MCInstPrinter(MAI, MII, MRI) {}
 
     virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
-    void printInst(const HexagonMCInst *MI, raw_ostream &O, StringRef Annot);
     virtual StringRef getOpcodeName(unsigned Opcode) const;
     void printInstruction(const MCInst *MI, raw_ostream &O);
     StringRef getRegName(unsigned RegNo) const;

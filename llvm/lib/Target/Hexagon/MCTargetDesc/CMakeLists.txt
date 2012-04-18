@@ -1,6 +1,6 @@
 add_llvm_library(LLVMHexagonDesc
-  HexagonMCAsmInfo.cpp
   HexagonMCTargetDesc.cpp
+  HexagonMCAsmInfo.cpp
   )
 
 add_dependencies(LLVMHexagonDesc HexagonCommonTableGen)

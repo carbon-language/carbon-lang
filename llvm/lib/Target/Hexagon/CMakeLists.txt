@@ -11,15 +11,15 @@ add_public_tablegen_target(HexagonCommonTableGen)
 
 add_llvm_target(HexagonCodeGen
   HexagonAsmPrinter.cpp
-  HexagonCFGOptimizer.cpp
   HexagonCallingConvLower.cpp
+  HexagonCFGOptimizer.cpp
   HexagonExpandPredSpillCode.cpp
   HexagonFrameLowering.cpp
   HexagonHardwareLoops.cpp
+  HexagonMCInstLower.cpp
+  HexagonInstrInfo.cpp
   HexagonISelDAGToDAG.cpp
   HexagonISelLowering.cpp
-  HexagonInstrInfo.cpp
-  HexagonMCInstLower.cpp
   HexagonPeephole.cpp
   HexagonRegisterInfo.cpp
   HexagonRemoveSZExtArgs.cpp
@@ -28,9 +28,6 @@ add_llvm_target(HexagonCodeGen
   HexagonSubtarget.cpp
   HexagonTargetMachine.cpp
   HexagonTargetObjectFile.cpp
-  HexagonVLIWPacketizer.cpp
-  HexagonNewValueJump.cpp
-  HexagonCopyToCombine.cpp
 )
 
 add_subdirectory(TargetInfo)

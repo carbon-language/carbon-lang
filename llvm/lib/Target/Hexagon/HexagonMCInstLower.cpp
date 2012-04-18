@@ -49,7 +49,7 @@ void llvm::HexagonLowerToMC(const MachineInstr* MI, MCInst& MCI,
     switch (MO.getType()) {
     default:
       MI->dump();
-      llvm_unreachable("unknown operand type");
+      assert(0 && "unknown operand type");
     case MachineOperand::MO_Register:
       // Ignore all implicit register operands.
       if (MO.isImplicit()) continue;
