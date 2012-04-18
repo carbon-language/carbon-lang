@@ -219,5 +219,74 @@ TEST(unescapeJsonCommandLine, ParsesQuotedStringWithoutClosingQuote) {
   EXPECT_EQ("", Empty[0]);
 }
 
+TEST(FixedCompilationDatabase, ReturnsFixedCommandLine) {
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("one");
+  CommandLine.push_back("two");
+  FixedCompilationDatabase Database(".", CommandLine);
+  std::vector<CompileCommand> Result =
+    Database.getCompileCommands("source");
+  ASSERT_EQ(1ul, Result.size());
+  std::vector<std::string> ExpectedCommandLine(1, "clang-tool");
+  ExpectedCommandLine.insert(ExpectedCommandLine.end(),
+                             CommandLine.begin(), CommandLine.end());
+  ExpectedCommandLine.push_back("source");
+  EXPECT_EQ(".", Result[0].Directory);
+  EXPECT_EQ(ExpectedCommandLine, Result[0].CommandLine);
+}
+
+TEST(ParseFixedCompilationDatabase, ReturnsNullOnEmptyArgumentList) {
+  int Argc = 0;
+  llvm::OwningPtr<FixedCompilationDatabase> Database(
+      FixedCompilationDatabase::loadFromCommandLine(Argc, NULL));
+  EXPECT_FALSE(Database);
+  EXPECT_EQ(0, Argc);
+}
+
+TEST(ParseFixedCompilationDatabase, ReturnsNullWithoutDoubleDash) {
+  int Argc = 2;
+  const char *Argv[] = { "1", "2" };
+  llvm::OwningPtr<FixedCompilationDatabase> Database(
+      FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
+  EXPECT_FALSE(Database);
+  EXPECT_EQ(2, Argc);
+}
+
+TEST(ParseFixedCompilationDatabase, ReturnsArgumentsAfterDoubleDash) {
+  int Argc = 5;
+  const char *Argv[] = { "1", "2", "--\0no-constant-folding", "3", "4" };
+  llvm::OwningPtr<FixedCompilationDatabase> Database(
+      FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
+  ASSERT_TRUE(Database);
+  std::vector<CompileCommand> Result =
+    Database->getCompileCommands("source");
+  ASSERT_EQ(1ul, Result.size());
+  ASSERT_EQ(".", Result[0].Directory);
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("clang-tool");
+  CommandLine.push_back("3");
+  CommandLine.push_back("4");
+  CommandLine.push_back("source");
+  ASSERT_EQ(CommandLine, Result[0].CommandLine);
+  EXPECT_EQ(2, Argc);
+}
+
+TEST(ParseFixedCompilationDatabase, ReturnsEmptyCommandLine) {
+  int Argc = 3;
+  const char *Argv[] = { "1", "2", "--\0no-constant-folding" };
+  llvm::OwningPtr<FixedCompilationDatabase> Database(
+      FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
+  ASSERT_TRUE(Database);
+  std::vector<CompileCommand> Result =
+    Database->getCompileCommands("source");
+  ASSERT_EQ(1ul, Result.size());
+  ASSERT_EQ(".", Result[0].Directory);
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("clang-tool");
+  CommandLine.push_back("source");
+  ASSERT_EQ(CommandLine, Result[0].CommandLine);
+  EXPECT_EQ(2, Argc);
+}
+
 } // end namespace tooling
 } // end namespace clang

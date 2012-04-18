@@ -121,6 +121,33 @@ CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
   return Database.take();
 }
 
+FixedCompilationDatabase *
+FixedCompilationDatabase::loadFromCommandLine(int &Argc,
+                                              const char **Argv,
+                                              Twine Directory) {
+  const char **DoubleDash = std::find(Argv, Argv + Argc, StringRef("--"));
+  if (DoubleDash == Argv + Argc)
+    return NULL;
+  std::vector<std::string> CommandLine(DoubleDash + 1, Argv + Argc);
+  Argc = DoubleDash - Argv;
+  return new FixedCompilationDatabase(Directory, CommandLine);
+}
+
+FixedCompilationDatabase::
+FixedCompilationDatabase(Twine Directory, ArrayRef<std::string> CommandLine) {
+  std::vector<std::string> ToolCommandLine(1, "clang-tool");
+  ToolCommandLine.insert(ToolCommandLine.end(),
+                         CommandLine.begin(), CommandLine.end());
+  CompileCommands.push_back(CompileCommand(Directory, ToolCommandLine));
+}
+
+std::vector<CompileCommand>
+FixedCompilationDatabase::getCompileCommands(StringRef FilePath) const {
+  std::vector<CompileCommand> Result(CompileCommands);
+  Result[0].CommandLine.push_back(FilePath);
+  return Result;
+}
+
 JSONCompilationDatabase *
 JSONCompilationDatabase::loadFromFile(StringRef FilePath,
                                       std::string &ErrorMessage) {

@@ -33,6 +33,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/YAMLParser.h"
@@ -45,8 +46,8 @@ namespace tooling {
 /// \brief Specifies the working directory and command of a compilation.
 struct CompileCommand {
   CompileCommand() {}
-  CompileCommand(StringRef Directory, ArrayRef<std::string> CommandLine)
-    : Directory(Directory), CommandLine(CommandLine) {}
+  CompileCommand(Twine Directory, ArrayRef<std::string> CommandLine)
+    : Directory(Directory.str()), CommandLine(CommandLine) {}
 
   /// \brief The working directory the command was executed from.
   std::string Directory;
@@ -93,6 +94,59 @@ public:
     StringRef FilePath) const = 0;
 };
 
+/// \brief A compilation database that returns a single compile command line.
+///
+/// Useful when we want a tool to behave more like a compiler invocation.
+class FixedCompilationDatabase : public CompilationDatabase {
+public:
+  /// \brief Creates a FixedCompilationDatabase from the arguments after "--".
+  ///
+  /// Parses the given command line for "--". If "--" is found, the rest of
+  /// the arguments will make up the command line in the returned
+  /// FixedCompilationDatabase.
+  /// The arguments after "--" must not include positional parameters or the
+  /// argv[0] of the tool. Those will be added by the FixedCompilationDatabase
+  /// when a CompileCommand is requested. The argv[0] of the returned command
+  /// line will be "clang-tool".
+  ///
+  /// Returns NULL in case "--" is not found.
+  ///
+  /// The argument list is meant to be compatible with normal llvm command line
+  /// parsing in main methods.
+  /// int main(int argc, char **argv) {
+  ///   llvm::OwningPtr<FixedCompilationDatabase> Compilations(
+  ///     FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  ///   cl::ParseCommandLineOptions(argc, argv);
+  ///   ...
+  /// }
+  ///
+  /// \param Argc The number of command line arguments - will be changed to
+  /// the number of arguments before "--", if "--" was found in the argument
+  /// list.
+  /// \param Argv Points to the command line arguments.
+  /// \param Directory The base directory used in the FixedCompilationDatabase.
+  static FixedCompilationDatabase *loadFromCommandLine(int &Argc,
+                                                       const char **Argv,
+                                                       Twine Directory = ".");
+
+  /// \brief Constructs a compilation data base from a specified directory
+  /// and command line.
+  FixedCompilationDatabase(Twine Directory, ArrayRef<std::string> CommandLine);
+
+  /// \brief Returns the given compile command.
+  ///
+  /// Will always return a vector with one entry that contains the directory
+  /// and command line specified at construction with "clang-tool" as argv[0]
+  /// and 'FilePath' as positional argument.
+  virtual std::vector<CompileCommand> getCompileCommands(
+    StringRef FilePath) const;
+
+private:
+  /// This is built up to contain a single entry vector to be returned from
+  /// getCompileCommands after adding the positional argument.
+  std::vector<CompileCommand> CompileCommands;
+};
+
 /// \brief A JSON based compilation database.
 ///
 /// JSON compilation database files must contain a list of JSON objects which
@@ -112,7 +166,6 @@ public:
 /// by setting the flag -DCMAKE_EXPORT_COMPILE_COMMANDS.
 class JSONCompilationDatabase : public CompilationDatabase {
 public:
-
   /// \brief Loads a JSON compilation database from the specified file.
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be
