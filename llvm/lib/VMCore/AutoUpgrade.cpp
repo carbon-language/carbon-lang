@@ -18,9 +18,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -59,7 +56,8 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (Name.startswith("x86.sse2.pcmpeq.") ||
         Name.startswith("x86.sse2.pcmpgt.") ||
         Name.startswith("x86.avx2.pcmpeq.") ||
-        Name.startswith("x86.avx2.pcmpgt.")) {
+        Name.startswith("x86.avx2.pcmpgt.") ||
+        Name.startswith("x86.avx.vpermil.")) {
       NewFn = 0;
       return true;
     }
@@ -121,7 +119,42 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // need to sign extend since icmp returns vector of i1
       Rep = Builder.CreateSExt(Rep, CI->getType(), "");
     } else {
-      llvm_unreachable("Unknown function for CallInst upgrade.");
+      bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;
+      if (Name.startswith("llvm.x86.avx.vpermil.pd.256"))
+        PD256 = true;
+      else if (Name.startswith("llvm.x86.avx.vpermil.pd"))
+        PD128 = true;
+      else if (Name.startswith("llvm.x86.avx.vpermil.ps.256"))
+        PS256 = true;
+      else if (Name.startswith("llvm.x86.avx.vpermil.ps"))
+        PS128 = true;
+
+      if (PD256 || PD128 || PS256 || PS128) {
+        Value *Op0 = CI->getArgOperand(0);
+        unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+        SmallVector<Constant*, 8> Idxs;
+
+        if (PD128)
+          for (unsigned i = 0; i != 2; ++i)
+            Idxs.push_back(Builder.getInt32((Imm >> i) & 0x1));
+        else if (PD256)
+          for (unsigned l = 0; l != 4; l+=2)
+            for (unsigned i = 0; i != 2; ++i)
+              Idxs.push_back(Builder.getInt32(((Imm >> (l+i)) & 0x1) + l));
+        else if (PS128)
+          for (unsigned i = 0; i != 4; ++i)
+            Idxs.push_back(Builder.getInt32((Imm >> (2 * i)) & 0x3));
+        else if (PS256)
+          for (unsigned l = 0; l != 8; l+=4)
+            for (unsigned i = 0; i != 4; ++i)
+              Idxs.push_back(Builder.getInt32(((Imm >> (2 * i)) & 0x3) + l));
+        else
+          llvm_unreachable("Unexpected function");
+
+        Rep = Builder.CreateShuffleVector(Op0, Op0, ConstantVector::get(Idxs));
+      } else {
+        llvm_unreachable("Unknown function for CallInst upgrade.");
+      }
     }
 
     CI->replaceAllUsesWith(Rep);
