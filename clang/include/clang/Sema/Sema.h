@@ -6556,11 +6556,11 @@ public:
   /// and reports the appropriate diagnostics. Returns false on success.
   /// Can optionally return the value of the expression.
   ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
-                                             PartialDiagnostic Diag,
+                                             const PartialDiagnostic &Diag,
                                              bool AllowFold,
-                                             PartialDiagnostic FoldDiag);
+                                             const PartialDiagnostic &FoldDiag);
   ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
-                                             PartialDiagnostic Diag,
+                                             const PartialDiagnostic &Diag,
                                              bool AllowFold = true) {
     return VerifyIntegerConstantExpression(E, Result, Diag, AllowFold,
                                            PDiag(0));

@@ -9438,10 +9438,11 @@ ExprResult Sema::VerifyIntegerConstantExpression(Expr *E,
       PDiag(diag::err_expr_not_ice) << LangOpts.CPlusPlus);
 }
 
-ExprResult Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
-                                                 PartialDiagnostic NotIceDiag,
-                                                 bool AllowFold,
-                                                 PartialDiagnostic FoldDiag) {
+ExprResult
+Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
+                                      const PartialDiagnostic &NotIceDiag,
+                                      bool AllowFold,
+                                      const PartialDiagnostic &FoldDiag) {
   SourceLocation DiagLoc = E->getLocStart();
 
   if (getLangOpts().CPlusPlus0x) {
