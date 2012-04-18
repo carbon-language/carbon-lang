@@ -1187,6 +1187,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{19-16} = Rn;
     let Inst{15-12} = 0b0000;
     let Inst{11-0} = imm;
+
+    let Unpredictable{15-12} = 0b1111;
   }
   def rr : AI1<opcod, (outs), (ins GPR:$Rn, GPR:$Rm), DPFrm, iir,
                opc, "\t$Rn, $Rm",
@@ -1200,6 +1202,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{15-12} = 0b0000;
     let Inst{11-4} = 0b00000000;
     let Inst{3-0} = Rm;
+
+    let Unpredictable{15-12} = 0b1111;
   }
   def rsi : AI1<opcod, (outs),
                (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm, iis,
@@ -1214,11 +1218,13 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{11-5} = shift{11-5};
     let Inst{4} = 0;
     let Inst{3-0} = shift{3-0};
+
+    let Unpredictable{15-12} = 0b1111;
   }
   def rsr : AI1<opcod, (outs),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm, iis,
+               (ins GPRnopc:$Rn, so_reg_reg:$shift), DPSoRegRegFrm, iis,
                opc, "\t$Rn, $shift",
-               [(opnode GPR:$Rn, so_reg_reg:$shift)]> {
+               [(opnode GPRnopc:$Rn, so_reg_reg:$shift)]> {
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
@@ -1230,6 +1236,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{6-5} = shift{6-5};
     let Inst{4} = 1;
     let Inst{3-0} = shift{3-0};
+
+    let Unpredictable{15-12} = 0b1111;
   }
 
 }
