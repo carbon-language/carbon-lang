@@ -299,15 +299,15 @@ clang/test directory. </p>
   you.</p>
 
   <p>In order for the regression tests to work, each directory of tests must
-  have a <tt>dg.exp</tt> file. Lit looks for this file to determine how to
-  run the tests. This file is just a Tcl script and it can do anything you want,
+  have a <tt>lit.local.cfg</tt> file. Lit looks for this file to determine how
+  to run the tests. This file is just Python code and thus is very flexible,
   but we've standardized it for the LLVM regression tests. If you're adding a
-  directory of tests, just copy <tt>dg.exp</tt> from another directory to get
-  running. The standard <tt>dg.exp</tt> simply loads a Tcl library
-  (<tt>test/lib/llvm.exp</tt>) and calls the <tt>llvm_runtests</tt> function
-  defined in that library with a list of file names to run. The names are
-  obtained by using Tcl's glob command.  Any directory that contains only
-  directories does not need the <tt>dg.exp</tt> file.</p>
+  directory of tests, just copy <tt>lit.local.cfg</tt> from another directory to
+  get running. The standard <tt>lit.local.cfg</tt> simply specifies which files
+  to look in for tests. Any directory that contains only directories does not
+  need the <tt>lit.local.cfg</tt> file. Read the
+  <a href="http://llvm.org/cmds/lit.html">Lit documentation</a> for more
+  information. </p>
 
   <p>The <tt>llvm-runtests</tt> function looks at each file that is passed to
   it and gathers any lines together that match "RUN:". These are the "RUN" lines
@@ -473,7 +473,7 @@ negatives).</p>
 llc, then pipe the output of llc into FileCheck.  This means that FileCheck will
 be verifying its standard input (the llc output) against the filename argument
 specified (the original .ll file specified by "%s").  To see how this works,
-lets look at the rest of the .ll file (after the RUN line):</p>
+let's look at the rest of the .ll file (after the RUN line):</p>
 
 <div class="doc_code">
 <pre>
