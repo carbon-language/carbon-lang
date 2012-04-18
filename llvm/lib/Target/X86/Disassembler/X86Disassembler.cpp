@@ -322,7 +322,12 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
 
   OperandType type = (OperandType)operand.type;
 
+  bool isBranch = false;
+  uint64_t pcrel = 0;
   if (type == TYPE_RELv) {
+    isBranch = true;
+    pcrel = insn.startLocation +
+            insn.displacementOffset + insn.displacementSize;
     switch (insn.displacementSize) {
     default:
       break;
@@ -373,8 +378,6 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
     }
   }
 
-  bool isBranch = false;
-  uint64_t pcrel = 0;
   switch (type) {
   case TYPE_XMM128:
     mcInst.addOperand(MCOperand::CreateReg(X86::XMM0 + (immediate >> 4)));
