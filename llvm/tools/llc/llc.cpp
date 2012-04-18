@@ -210,29 +210,6 @@ DontPlaceZerosInBSS("nozero-initialized-in-bss",
   cl::init(false));
 
 static cl::opt<bool>
-EnableJITExceptionHandling("jit-enable-eh",
-  cl::desc("Emit exception handling information"),
-  cl::init(false));
-
-// In debug builds, make this default to true.
-#ifdef NDEBUG
-#define EMIT_DEBUG false
-#else
-#define EMIT_DEBUG true
-#endif
-static cl::opt<bool>
-EmitJitDebugInfo("jit-emit-debug",
-  cl::desc("Emit debug information to debugger"),
-  cl::init(EMIT_DEBUG));
-#undef EMIT_DEBUG
-
-static cl::opt<bool>
-EmitJitDebugInfoToDisk("jit-emit-debug-to-disk",
-  cl::Hidden,
-  cl::desc("Emit debug info objfiles to disk"),
-  cl::init(false));
-
-static cl::opt<bool>
 EnableGuaranteedTailCallOpt("tailcallopt",
   cl::desc("Turn fastcc calls into tail calls by (potentially) changing ABI."),
   cl::init(false));
@@ -463,9 +440,6 @@ int main(int argc, char **argv) {
   if (FloatABIForCalls != FloatABI::Default)
     Options.FloatABIType = FloatABIForCalls;
   Options.NoZerosInBSS = DontPlaceZerosInBSS;
-  Options.JITExceptionHandling = EnableJITExceptionHandling;
-  Options.JITEmitDebugInfo = EmitJitDebugInfo;
-  Options.JITEmitDebugInfoToDisk = EmitJitDebugInfoToDisk;
   Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
   Options.DisableTailCalls = DisableTailCalls;
   Options.StackAlignmentOverride = OverrideStackAlignment;
