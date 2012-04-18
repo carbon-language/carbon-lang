@@ -13,11 +13,11 @@
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Core/Platform.h"
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <algorithm>
 #include <cassert>
@@ -63,17 +63,6 @@ private:
 };
 
 
-
-
-void Resolver::initializeState() {
-  _platform.initialize();
-}
-
-// add initial undefines from -u option
-void Resolver::addInitialUndefines() {
-
-}
-
 // add all atoms from all initial .o files
 void Resolver::buildInitialAtomList() {
   // each input files contributes initial atoms
@@ -86,8 +75,6 @@ void Resolver::buildInitialAtomList() {
 
 // called before the first atom in any file is added with doAtom()
 void Resolver::doFile(const File &file) {
-  // notify platform
-  _platform.fileAdded(file);
 }
 
 
@@ -102,35 +89,19 @@ void Resolver::doUndefinedAtom(const class UndefinedAtom& atom) {
 
 // called on each atom when a file is added
 void Resolver::doDefinedAtom(const DefinedAtom &atom) {
-  // notify platform
-  _platform.atomAdded(atom);
-
   // add to list of known atoms
   _atoms.push_back(&atom);
-
-  // adjust scope (e.g. force some globals to be hidden)
-  _platform.adjustScope(atom);
 
   // non-static atoms need extra handling
   if (atom.scope() != DefinedAtom::scopeTranslationUnit) {
     // tell symbol table about non-static atoms
     _symbolTable.add(atom);
-
-    // platform can add aliases for any symbol
-    std::vector<const DefinedAtom *> aliases;
-    if (_platform.getAliasAtoms(atom, aliases))
-      this->addAtoms(aliases);
   }
-
-  if (_platform.deadCodeStripping()) {
+  
+  if (_options.deadCodeStripping()) {
     // add to set of dead-strip-roots, all symbols that
     // the compiler marks as don't strip
-    if (!atom.deadStrip())
-      _deadStripRoots.insert(&atom);
-
-    // add to set of dead-strip-roots, all symbols that
-    // the platform decided must remain
-    if (_platform.isDeadStripRoot(atom))
+    if (atom.deadStrip() == DefinedAtom::deadStripNever)
       _deadStripRoots.insert(&atom);
   }
 }
@@ -165,9 +136,9 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
   const bool searchArchives =
-    _platform.searchArchivesToOverrideTentativeDefinitions();
+    _options.searchArchivesToOverrideTentativeDefinitions();
   const bool searchDylibs =
-    _platform.searchSharedLibrariesToOverrideTentativeDefinitions();
+    _options.searchSharedLibrariesToOverrideTentativeDefinitions();
 
   // keep looping until no more undefines were added in last loop
   unsigned int undefineGenCount = 0xFFFFFFFF;
@@ -180,14 +151,6 @@ void Resolver::resolveUndefines() {
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName)) {
         _inputFiles.searchLibraries(undefName, true, true, false, *this);
-
-        // give platform a chance to instantiate platform
-        // specific atoms (e.g. section boundary)
-        if (!_symbolTable.isDefined(undefName)) {
-          std::vector<const DefinedAtom *> platAtoms;
-          if (_platform.getPlatformAtoms(undefName, platAtoms))
-            this->addAtoms(platAtoms);
-        }
       }
     }
     // search libraries for overrides of common symbols
@@ -230,21 +193,8 @@ void Resolver::updateReferences() {
 }
 
 
-// for dead code stripping, recursively mark atom "live"
-void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
-  // if -why_live cares about this symbol, then dump chain
-  if ((previous->referer != nullptr) && _platform.printWhyLive(atom.name())) {
-    llvm::errs() << atom.name() << " from " << atom.file().path() << "\n";
-    int depth = 1;
-    for (WhyLiveBackChain *p = previous; p != nullptr;
-         p = p->previous, ++depth) {
-      for (int i = depth; i > 0; --i)
-        llvm::errs() << "  ";
-      llvm::errs() << p->referer->name() << " from "
-                   << p->referer->file().path() << "\n";
-    }
-  }
-
+// for dead code stripping, recursively mark atoms "live"
+void Resolver::markLive(const Atom &atom) {
   // if already marked live, then done (stop recursion)
   if ( _liveAtoms.count(&atom) )
     return;
@@ -253,56 +203,54 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   _liveAtoms.insert(&atom);
 
   // mark all atoms it references as live
-  WhyLiveBackChain thisChain;
-  thisChain.previous = previous;
-  thisChain.referer = &atom;
   if ( const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(&atom)) {
     for (const Reference *ref : *defAtom) {
-      this->markLive(*ref->target(), &thisChain);
+      const Atom *target = ref->target();
+      if ( target != nullptr )
+        this->markLive(*target);
     }
   }
 }
 
+
 // remove all atoms not actually used
 void Resolver::deadStripOptimize() {
   // only do this optimization with -dead_strip
-  if (!_platform.deadCodeStripping())
+  if (!_options.deadCodeStripping())
     return;
 
   // clear liveness on all atoms
   _liveAtoms.clear();
 
-  // add entry point (main) to live roots
-  const Atom *entry = this->entryPoint();
-  if (entry != nullptr)
-    _deadStripRoots.insert(entry);
-
-  // add -exported_symbols_list, -init, and -u entries to live roots
-  for (Platform::UndefinesIterator uit = _platform.initialUndefinesBegin();
-       uit != _platform.initialUndefinesEnd(); ++uit) {
-    StringRef sym = *uit;
-    const Atom *symAtom = _symbolTable.findByName(sym);
+  // By default, shared libraries are built with all globals as dead strip roots
+  if ( _options.allGlobalsAreDeadStripRoots() ) {
+    for ( const Atom *atom : _atoms ) {
+      const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom);
+      if (defAtom == nullptr)
+        continue;
+      if ( defAtom->scope() == DefinedAtom::scopeGlobal )
+        _deadStripRoots.insert(defAtom);
+    }
+  }
+  
+  // Or, use list of names that are dead stip roots.
+  const std::vector<StringRef> &names = _options.deadStripRootNames();
+  for ( const StringRef &name : names ) {
+    const Atom *symAtom = _symbolTable.findByName(name);
     assert(symAtom->definition() != Atom::definitionUndefined);
     _deadStripRoots.insert(symAtom);
   }
 
-  // add platform specific helper atoms
-  std::vector<const DefinedAtom *> platRootAtoms;
-  if (_platform.getImplicitDeadStripRoots(platRootAtoms))
-    this->addAtoms(platRootAtoms);
-
   // mark all roots as live, and recursively all atoms they reference
   for ( const Atom *dsrAtom : _deadStripRoots) {
-    WhyLiveBackChain rootChain;
-    rootChain.previous = nullptr;
-    rootChain.referer = dsrAtom;
-    this->markLive(*dsrAtom, &rootChain);
+    this->markLive(*dsrAtom);
   }
 
   // now remove all non-live atoms from _atoms
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
                               NotLive(_liveAtoms)), _atoms.end());
 }
+
 
 // error out if some undefines remain
 void Resolver::checkUndefines(bool final) {
@@ -313,17 +261,24 @@ void Resolver::checkUndefines(bool final) {
   // build vector of remaining undefined symbols
   std::vector<const Atom *> undefinedAtoms;
   _symbolTable.undefines(undefinedAtoms);
-  if (_platform.deadCodeStripping()) {
-    // when dead code stripping we don't care if dead atoms are undefined
+  if (_options.deadCodeStripping()) {
+    // When dead code stripping, we don't care if dead atoms are undefined.
     undefinedAtoms.erase(std::remove_if(
                            undefinedAtoms.begin(), undefinedAtoms.end(),
                            NotLive(_liveAtoms)), undefinedAtoms.end());
   }
 
-  // let platform make error message about missing symbols
-  if (undefinedAtoms.size() != 0)
-    _platform.errorWithUndefines(undefinedAtoms, _atoms);
+  // error message about missing symbols
+  if ( (undefinedAtoms.size() != 0) && _options.undefinesAreErrors() ) {
+    // FIXME: need diagonstics interface for writing error messages
+    llvm::errs() << "Undefined symbols:\n";
+    for ( const Atom *undefAtom : undefinedAtoms ) {
+      llvm::errs() << "  " << undefAtom->name() << "\n";
+    }
+    llvm::report_fatal_error("symbol(s) not found");
+  }
 }
+
 
 // remove from _atoms all coaleseced away atoms
 void Resolver::removeCoalescedAwayAtoms() {
@@ -348,27 +303,12 @@ void Resolver::checkDylibSymbolCollisions() {
   }
 }
 
-// get "main" atom for linkage unit
-const Atom *Resolver::entryPoint() {
-  StringRef symbolName = _platform.entryPointName();
-  if ( !symbolName.empty() )
-    return _symbolTable.findByName(symbolName);
-
-  return nullptr;
-}
-
-// give platform a chance to tweak the set of atoms
-void Resolver::tweakAtoms() {
-  _platform.postResolveTweaks(_atoms);
-}
 
 void Resolver::linkTimeOptimize() {
   // FIX ME
 }
 
 void Resolver::resolve() {
-  this->initializeState();
-  this->addInitialUndefines();
   this->buildInitialAtomList();
   this->resolveUndefines();
   this->updateReferences();
@@ -377,9 +317,7 @@ void Resolver::resolve() {
   this->removeCoalescedAwayAtoms();
   this->checkDylibSymbolCollisions();
   this->linkTimeOptimize();
-  this->tweakAtoms();
   this->_result.addAtoms(_atoms);
-  this->_result._mainAtom = this->entryPoint();
 }
 
 void Resolver::MergedFile::addAtom(const Atom& atom) {

@@ -27,7 +27,7 @@ class DefinedAtom;
 class UndefinedAtom;
 class SharedLibraryAtom;
 class AbsoluteAtom;
-class Platform;
+class ResolverOptions;
 
 /// The SymbolTable class is responsible for coalescing atoms.
 ///
@@ -36,7 +36,7 @@ class Platform;
 /// if an atom has been coalesced away.
 class SymbolTable {
 public:
-      SymbolTable(Platform& plat);
+      SymbolTable(ResolverOptions&);
 
   /// @brief add atom to symbol table
   void add(const DefinedAtom &);
@@ -92,10 +92,10 @@ private:
   void addByName(const Atom &);
   void addByContent(const DefinedAtom &);
 
-  Platform&  _platform;
-  AtomToAtom _replacedAtoms;
-  NameToAtom _nameTable;
-  AtomContentSet _contentTable;
+  ResolverOptions &_options;
+  AtomToAtom       _replacedAtoms;
+  NameToAtom       _nameTable;
+  AtomContentSet   _contentTable;
 };
 
 } // namespace lld

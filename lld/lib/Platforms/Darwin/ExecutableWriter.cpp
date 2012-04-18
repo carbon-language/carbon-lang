@@ -554,7 +554,10 @@ void SectionChunk::write(raw_ostream &out) {
     }
     // Copy raw content of atom.
     ArrayRef<uint8_t> content = atomInfo.atom->rawContent();
-    buffer.resize(content.size());
+    uint64_t contentSize = content.size();
+    buffer.resize(contentSize);
+    if ( contentSize == 0 )
+      continue;
     ::memcpy(buffer.data(), content.data(), content.size());
     for (const Reference *ref : *atomInfo.atom) {
       uint32_t offset = ref->offsetInAtom();
@@ -808,7 +811,7 @@ void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
 
   // Update entry point
   if ( _entryPointLoadCommand != nullptr ) {
-    const Atom *mainAtom = file.entryPoint();
+    const Atom *mainAtom = _platform.mainAtom();
     assert(mainAtom != nullptr);
     uint32_t entryOffset = _writer.addressOfAtom(mainAtom) - _mh.address();
     _entryPointLoadCommand->entryoff = entryOffset;

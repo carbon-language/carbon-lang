@@ -18,8 +18,4 @@ StringRef File::translationUnitSource() const {
   return StringRef();
 }
 
-const Atom *File::entryPoint() const {
-  return nullptr;
-}
-
 }

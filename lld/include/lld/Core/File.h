@@ -49,12 +49,6 @@ public:
   /// be ascertained, this method returns the empty string.
   virtual StringRef translationUnitSource() const;
 
-  /// Returns pointer to "main" atom, or nullptr. All object files can
-  /// use the default implementation which just returns nullptr.  
-  /// But the master merged File operated on by Passes, needs override
-  /// this and return the atom for "main". 
-  virtual const Atom *entryPoint() const; 
-
 protected:
   template <typename T> class atom_iterator; // forward reference
 public:

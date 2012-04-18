@@ -1,0 +1,40 @@
+# RUN: not lld-core -undefines_are_errors %s 2> %t.err
+# RUN: FileCheck < %t.err %s
+
+#
+# Test that any remaining undefined symbols cause an error
+#
+
+---
+atoms:
+    - name:              foo
+      type:              code
+      
+    - name:              malloc
+      definition:        undefined
+
+    - name:              free
+      definition:        undefined
+---
+atoms:
+    - name:              bar
+      type:              code
+      
+    - name:              malloc
+      definition:        undefined
+  
+    - name:              myfunc
+      definition:        undefined
+---
+atoms:
+    - name:              myfunc
+      scope:             global
+      type:              code
+      
+    - name:              free
+      definition:        undefined
+...
+
+# CHECK:       free
+# CHECK:       malloc
+# CHECK:       symbol(s) not found

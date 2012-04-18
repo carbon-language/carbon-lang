@@ -73,6 +73,13 @@ if (NOT MSVC)
   else( SUPPORTS_CXX11_FLAG )
     message(WARNING "-std=c++0x not supported.")
   endif()
+  check_cxx_compiler_flag("-stdlib=libc++" SUPPORTS_LIBCXX_FLAG)
+  if( SUPPORTS_LIBCXX_FLAG )
+    message(STATUS "Building with -stdlib=libc++")
+    set(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}")
+  else( SUPPORTS_LIBCXX_FLAG )
+    message(WARNING "-stdlib=libc++ not supported.")
+  endif()
 endif()
 
 

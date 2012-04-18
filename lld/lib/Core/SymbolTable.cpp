@@ -14,7 +14,6 @@
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Core/Platform.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/UndefinedAtom.h"
@@ -22,6 +21,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
 #include <cassert>
@@ -30,8 +30,8 @@
 
 namespace lld {
 
-SymbolTable::SymbolTable(Platform& plat)
-  : _platform(plat) {
+SymbolTable::SymbolTable(ResolverOptions &opts)
+  : _options(opts) {
 }
 
 void SymbolTable::add(const UndefinedAtom &atom) {
@@ -171,29 +171,56 @@ void SymbolTable::addByName(const Atom & newAtom) {
             useNew = false;
           }
           else {
+            if ( _options.warnIfCoalesableAtomsHaveDifferentCanBeNull() ) {
+              // FIXME: need diagonstics interface for writing warning messages
+              llvm::errs() << "lld warning: undefined symbol " 
+                           << existingUndef->name()
+                           << " has different weakness in "
+                           << existingUndef->file().path()
+                           << " and in "
+                           << newUndef->file().path();
+            }
             useNew = (newUndef->canBeNull() < existingUndef->canBeNull());
-            // give platform a change to override which to use
-            _platform.undefineCanBeNullMismatch(*existingUndef,
-                                                 *newUndef, useNew);
           }
         }
         break;
       case NCR_DupShLib: {
-          const SharedLibraryAtom* existingShLib =
+          const SharedLibraryAtom* curShLib =
             dyn_cast<SharedLibraryAtom>(existing);
           const SharedLibraryAtom* newShLib =
             dyn_cast<SharedLibraryAtom>(&newAtom);
-          assert(existingShLib != nullptr);
+          assert(curShLib != nullptr);
           assert(newShLib != nullptr);
-          if ( (existingShLib->canBeNullAtRuntime()
-                  == newShLib->canBeNullAtRuntime()) &&
-               existingShLib->loadName().equals(newShLib->loadName()) ) {
+          bool sameNullness = (curShLib->canBeNullAtRuntime()
+                                          == newShLib->canBeNullAtRuntime());
+          bool sameName = curShLib->loadName().equals(newShLib->loadName());
+          if ( !sameName ) {
             useNew = false;
+            if ( _options.warnIfCoalesableAtomsHaveDifferentLoadName() ) {
+              // FIXME: need diagonstics interface for writing warning messages
+              llvm::errs() << "lld warning: shared library symbol " 
+                           << curShLib->name()
+                           << " has different load path in "
+                           << curShLib->file().path()
+                           << " and in "
+                           << newShLib->file().path();
+            }
+          }
+          else if ( ! sameNullness ) {
+            useNew = false;
+            if ( _options.warnIfCoalesableAtomsHaveDifferentCanBeNull() ) {
+              // FIXME: need diagonstics interface for writing warning messages
+              llvm::errs() << "lld warning: shared library symbol " 
+                           << curShLib->name()
+                           << " has different weakness in "
+                           << curShLib->file().path()
+                           << " and in "
+                           << newShLib->file().path();
+            }
           }
           else {
-            useNew = false; // use existing shared library by default
-            // give platform a change to override which to use
-            _platform.sharedLibrarylMismatch(*existingShLib, *newShLib, useNew);
+            // Both shlib atoms are identical and can be coalesced.
+            useNew = false;
           }
         }
         break;

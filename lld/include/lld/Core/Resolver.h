@@ -23,20 +23,104 @@ namespace lld {
 
 class Atom;
 class InputFiles;
-class Platform;
 class SymbolTable;
 
+/// 
+/// The ResolverOptions class encapsulates options needed during core linking.
+/// To use, create a subclass whose constructor sets up the ivars.
+///
+class ResolverOptions {
+public:
+  ResolverOptions()
+    : _deadCodeStrip(false)
+    , _globalsAreDeadStripRoots(false)
+    , _searchArchivesToOverrideTentativeDefinitions(false)
+    , _searchSharedLibrariesToOverrideTentativeDefinitions(false)
+    , _warnSharedLibrariesOverridesTentativeDefinitions(false)
+    , _undefinesAreErrors(false)
+    , _warnIfCoalesableAtomsHaveDifferentCanBeNull(false)
+    , _warnIfCoalesableAtomsHaveDifferentLoadName(false) {
+  }
+  
+  /// Whether the resolver should removed unreferenced atoms.
+  bool deadCodeStripping() const {
+    return _deadCodeStrip;
+  }
+  
+  /// If dead stripping, whether all global symbols are kept. 
+  bool allGlobalsAreDeadStripRoots() const {
+    return _globalsAreDeadStripRoots;
+  }
+  
+  /// If dead stripping, names of atoms that must be kept. 
+  const std::vector<StringRef>& deadStripRootNames() const {
+    return _deadStripRootNames;
+  }
+  
+  /// Whether resolver should look in archives for a definition to 
+  /// replace a tentative defintion.
+  bool searchArchivesToOverrideTentativeDefinitions() const {
+    return _searchArchivesToOverrideTentativeDefinitions;
+  }
+  
+  /// Whether resolver should look in shared libraries for a definition to 
+  /// replace a tentative defintion.
+  bool searchSharedLibrariesToOverrideTentativeDefinitions() const {
+    return _searchSharedLibrariesToOverrideTentativeDefinitions;
+  }
+  
+  /// Whether resolver should look warn if shared library definition replaced
+  /// a tentative defintion.
+  bool warnSharedLibrariesOverridesTentativeDefinitions() const {
+    return _warnSharedLibrariesOverridesTentativeDefinitions;
+  }
+
+  /// Whether resolver should error if there are any UndefinedAtoms 
+  /// left when resolving is done.
+  bool undefinesAreErrors() const {
+    return _undefinesAreErrors;
+  }
+  
+  /// Whether resolver should warn if it discovers two UndefinedAtoms 
+  /// or two SharedLibraryAtoms with the same name, but different 
+  /// canBeNull attributes.
+  bool warnIfCoalesableAtomsHaveDifferentCanBeNull() const {
+    return _warnIfCoalesableAtomsHaveDifferentCanBeNull;
+  }
+ 
+  /// Whether resolver should warn if it discovers two SharedLibraryAtoms
+  /// with the same name, but different loadNames.
+   bool warnIfCoalesableAtomsHaveDifferentLoadName() const {
+    return _warnIfCoalesableAtomsHaveDifferentLoadName;
+  }
+ 
+protected:
+  bool  _deadCodeStrip;
+  bool  _globalsAreDeadStripRoots;
+  bool  _searchArchivesToOverrideTentativeDefinitions;
+  bool  _searchSharedLibrariesToOverrideTentativeDefinitions;
+  bool  _warnSharedLibrariesOverridesTentativeDefinitions;
+  bool  _undefinesAreErrors;
+  bool  _warnIfCoalesableAtomsHaveDifferentCanBeNull;
+  bool  _warnIfCoalesableAtomsHaveDifferentLoadName;
+  std::vector<StringRef> _deadStripRootNames;
+};
+
+
+
+///
 /// The Resolver is responsible for merging all input object files
 /// and producing a merged graph.
 ///
-/// All platform specific resolving is done by delegating to the
-/// Platform object specified.
+/// All variations in resolving are controlled by the 
+/// ResolverOptions object specified.
+///
 class Resolver : public InputFiles::Handler {
 public:
-  Resolver(Platform &plat, const InputFiles &inputs)
-    : _platform(plat)
+  Resolver(ResolverOptions &opts, const InputFiles &inputs)
+    : _options(opts)
     , _inputFiles(inputs)
-    , _symbolTable(plat)
+    , _symbolTable(opts)
     , _haveLLVMObjs(false)
     , _addToFinalSection(false)
     , _completedInitialObjectFiles(false) {}
@@ -56,13 +140,7 @@ public:
   }
 
 private:
-  struct WhyLiveBackChain {
-    WhyLiveBackChain *previous;
-    const Atom *referer;
-  };
 
-  void initializeState();
-  void addInitialUndefines();
   void buildInitialAtomList();
   void resolveUndefines();
   void updateReferences();
@@ -73,18 +151,14 @@ private:
   void linkTimeOptimize();
   void tweakAtoms();
 
-  const Atom *entryPoint();
-  void markLive(const Atom &atom, WhyLiveBackChain *previous);
+  void markLive(const Atom &atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
 
 
   class MergedFile : public File {
   public:
-    MergedFile() : File("<linker-internal>"), _mainAtom(nullptr) { }
+    MergedFile() : File("<linker-internal>") { }
 
-  virtual const Atom *entryPoint() const {
-    return _mainAtom;
-  }
   virtual const atom_collection<DefinedAtom>& defined() const {
     return _definedAtoms;
   }
@@ -104,7 +178,6 @@ private:
 
   private:
     friend class Resolver;
-    const Atom*                                 _mainAtom;
     atom_collection_vector<DefinedAtom>         _definedAtoms;
     atom_collection_vector<UndefinedAtom>       _undefinedAtoms;
     atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;
@@ -112,9 +185,8 @@ private:
   };
 
 
-
-  Platform&                     _platform;
-  const InputFiles&             _inputFiles;
+  ResolverOptions              &_options;
+  const InputFiles             &_inputFiles;
   SymbolTable                   _symbolTable;
   std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;

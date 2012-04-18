@@ -144,7 +144,7 @@ executable) and follows each references and marks each Atom that it visits as
 "live".  When done, all atoms not marked "live" are removed.
 
 The result of the Resolving phase is the creation of an lld::File object.  The
-goal is that the lld::File model is <b>the</b> internal representation
+goal is that the lld::File model is **the** internal representation
 throughout the linker. The file readers parse (mach-o, ELF, COFF) into an
 lld::File.  The file writers (mach-o, ELF, COFF) taken an lld::File and produce
 their file kind, and every Pass only operates on an lld::File.  This is not only
@@ -195,6 +195,19 @@ Generate Output File
 Once the passes are done, the output file writer is given current lld::File
 object.  The writer's job is to create the executable content file wrapper and
 place the content of the atoms into it.
+
+Sometimes the output generator needs access to particular atoms (for instance,
+it may need to know which atom is "main" in order to specifiy the entry 
+point in the executable.  The way to do this is to have the platform create
+an Atom with a Reference to the required atom(s) and provide this atom
+in the initialize set of atoms for the resolver.  If a particular symbol name
+is required, this arrangment will also cause core linking to fail if the
+symbol is not defined (e.g. "main" is undefined).
+
+Sometimes a platform supports lazily created symbols.  To support this, the
+platform can create a File object which vends no initial atoms, but does
+lazily supply atoms by name as needed.  
+
 
 lld::File representations
 -------------------------

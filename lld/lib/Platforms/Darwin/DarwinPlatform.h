@@ -23,35 +23,7 @@ public:
                 
 /// @name Platform methods
 /// @{
-  virtual void initialize();
-  virtual void fileAdded(const File &file);
-  virtual void atomAdded(const Atom &file);
-  virtual void adjustScope(const DefinedAtom &atom);
-  virtual bool getAliasAtoms(const Atom &atom,
-                             std::vector<const DefinedAtom *>&);
-  virtual bool getPlatformAtoms(llvm::StringRef undefined,
-                                std::vector<const DefinedAtom *>&);
-  virtual bool deadCodeStripping();
-  virtual bool isDeadStripRoot(const Atom &atom);
-  virtual bool getImplicitDeadStripRoots(std::vector<const DefinedAtom *>&);
-  virtual llvm::StringRef entryPointName();
-  virtual UndefinesIterator  initialUndefinesBegin() const;
-  virtual UndefinesIterator  initialUndefinesEnd() const;
-  virtual bool searchArchivesToOverrideTentativeDefinitions();
-  virtual bool searchSharedLibrariesToOverrideTentativeDefinitions();
-  virtual bool allowUndefinedSymbol(llvm::StringRef name);
-  virtual bool printWhyLive(llvm::StringRef name);
-  virtual const Atom& handleMultipleDefinitions(const Atom& def1, 
-                                                const Atom& def2);
-  virtual void errorWithUndefines(const std::vector<const Atom *>& undefs,
-                                  const std::vector<const Atom *>& all);
-  virtual void undefineCanBeNullMismatch(const UndefinedAtom& undef1,
-                                         const UndefinedAtom& undef2,
-                                         bool& useUndef2);
-  virtual void sharedLibrarylMismatch(const SharedLibraryAtom& shLib1,
-                                      const SharedLibraryAtom& shLib2,
-                                      bool& useShlib2);
-  virtual void postResolveTweaks(std::vector<const Atom *>& all);
+  virtual void addFiles(InputFiles&);
   virtual Reference::Kind kindFromString(llvm::StringRef);
   virtual llvm::StringRef kindToString(Reference::Kind);
   virtual bool noTextRelocs();
@@ -69,6 +41,7 @@ public:
 /// @{
   uint64_t  pageZeroSize();
   void initializeMachHeader(const lld::File& file, class mach_header& mh);
+  const Atom *mainAtom();
 /// @}
 
 private:
@@ -79,6 +52,7 @@ private:
   const DefinedAtom*                              _helperCommonAtom;
   const DefinedAtom*                              _helperCacheAtom;
   const DefinedAtom*                              _helperBinderAtom;
+  class CRuntimeFile                             *_cRuntimeFile;
 };
 
 } // namespace darwin

@@ -56,11 +56,12 @@ public:
       // Find references to unnamed atoms and create ref-names for them.
       for (const Reference *ref : *atom) {
         // create refname for any unnamed reference target
-        if ( ref->target()->name().empty() ) {
+        const Atom *target = ref->target();
+        if ( (target != nullptr) && target->name().empty() ) {
           std::string Storage;
           llvm::raw_string_ostream Buffer(Storage);
           Buffer << llvm::format("L%03d", _unnamedCounter++);
-          _refNames[ref->target()] = Buffer.str();
+          _refNames[target] = Buffer.str();
         }
       }
     }

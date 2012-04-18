@@ -32,6 +32,7 @@ enum {
 
 
 static const Mapping sKindMappings[] = {
+  { "none",           ReferenceKind::none,        flagsNone },
   { "call32",         ReferenceKind::call32,      flagsIsCallSite | flags32RipRel },
   { "pcrel32",        ReferenceKind::pcRel32,     flags32RipRel },
   { "gotLoad32",      ReferenceKind::gotLoad32,   flagsisGOTLoad | flags32RipRel },

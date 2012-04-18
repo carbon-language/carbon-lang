@@ -35,6 +35,13 @@ public:
   };
 
 
+  /// Used by platforms to insert platform specific files.
+  virtual void prependFile(const File&) = 0;
+  
+  /// Used by platforms to insert platform specific files.
+  virtual void appendFile(const File&) = 0;
+ 
+
   /// @brief iterates all atoms in initial files
   virtual void forEachInitialAtom(Handler &) const = 0;
 

@@ -10,12 +10,14 @@
 #include "DarwinPlatform.h"
 #include "MachOFormat.hpp"
 #include "StubAtoms.hpp"
+#include "ExecutableAtoms.hpp"
 #include "DarwinReferenceKinds.h"
 #include "ExecutableWriter.h"
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
+#include "lld/Core/InputFiles.h"
 
 #include "llvm/Support/ErrorHandling.h"
 
@@ -29,109 +31,13 @@ Platform *createDarwinPlatform() {
 namespace darwin {
 
 DarwinPlatform::DarwinPlatform()
-  : _helperCommonAtom(nullptr) {
+  : _helperCommonAtom(nullptr), _cRuntimeFile(nullptr) {
 }
 
-void DarwinPlatform::initialize() {
+void DarwinPlatform::addFiles(InputFiles &inputFiles) {
+  _cRuntimeFile = new CRuntimeFile();
+  inputFiles.prependFile(*_cRuntimeFile);
 }
-
-void DarwinPlatform::fileAdded(const File &file) {
-}
-
-
-void DarwinPlatform::atomAdded(const Atom &file) {
-}
-
-
-void DarwinPlatform::adjustScope(const DefinedAtom &atom) {
-}
-
-
-bool DarwinPlatform::getAliasAtoms(const Atom &atom,
-                           std::vector<const DefinedAtom *>&) {
-  return false;
-}
-
-
-bool DarwinPlatform::getPlatformAtoms(StringRef undefined,
-                              std::vector<const DefinedAtom *>&) {
-  return false;
-}
-
-
-bool DarwinPlatform::deadCodeStripping() {
-  return false;
-}
-
-
-bool DarwinPlatform::isDeadStripRoot(const Atom &atom) {
-  return false;
-}
-
-
-bool DarwinPlatform::getImplicitDeadStripRoots(std::vector<const DefinedAtom *>&) {
-  return false;
-}
-
-
-StringRef DarwinPlatform::entryPointName() {
-  return StringRef("_main");
-}
-
-
-Platform::UndefinesIterator DarwinPlatform::initialUndefinesBegin() const {
-  return nullptr;
-}
-
-Platform::UndefinesIterator DarwinPlatform::initialUndefinesEnd() const {
-  return nullptr;
-}
-
-
-bool DarwinPlatform::searchArchivesToOverrideTentativeDefinitions() {
-  return false;
-}
-
-bool DarwinPlatform::searchSharedLibrariesToOverrideTentativeDefinitions() {
-  return false;
-}
-
-
-bool DarwinPlatform::allowUndefinedSymbol(StringRef name) {
-  return false;
-}
-
-bool DarwinPlatform::printWhyLive(StringRef name) {
-  return false;
-}
-
-
-const Atom& DarwinPlatform::handleMultipleDefinitions(const Atom& def1, 
-                                              const Atom& def2) {
-  llvm::report_fatal_error("multiple definitions");
-}
-
-
-void DarwinPlatform::errorWithUndefines(const std::vector<const Atom *>& undefs,
-                                const std::vector<const Atom *>& all) {
-}
-
-
-void DarwinPlatform::undefineCanBeNullMismatch(const UndefinedAtom& undef1,
-                                       const UndefinedAtom& undef2,
-                                       bool& useUndef2) {
-}
-
-
-void DarwinPlatform::sharedLibrarylMismatch(const SharedLibraryAtom& shLib1,
-                                    const SharedLibraryAtom& shLib2,
-                                    bool& useShlib2) {
-}
-
-
-void DarwinPlatform::postResolveTweaks(std::vector<const Atom *>& all) {
-}
-
 
 Reference::Kind DarwinPlatform::kindFromString(StringRef kindName) {
   return ReferenceKind::fromString(kindName);
@@ -258,6 +164,16 @@ void DarwinPlatform::initializeMachHeader(const lld::File& file,
   mh.flags      = 0;
   mh.reserved   = 0;
 }
+
+const Atom *DarwinPlatform::mainAtom() {
+  assert(_cRuntimeFile != nullptr);
+  const Atom *result = _cRuntimeFile->mainAtom();
+  assert(result != nullptr);
+  if ( result->definition() == Atom::definitionUndefined )
+    llvm::report_fatal_error("_main not found");
+  return _cRuntimeFile->mainAtom();
+}
+
 
 
 } // namespace darwin 
