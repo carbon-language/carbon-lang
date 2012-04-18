@@ -900,7 +900,7 @@ void CodeGenRegBank::computeComposites() {
               PrintWarning(Twine("SubRegIndex") + Idx1->getQualifiedName() +
                      " and " + Idx2->getQualifiedName() +
                      " compose ambiguously as " + Prev->getQualifiedName() +
-                     " or " + i1d->first->getQualifiedName() +"\n");
+                     " or " + i1d->first->getQualifiedName());
           }
         }
       }

@@ -2486,7 +2486,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     if (MayStore)
       PrintWarning(Inst.TheDef->getLoc(),
                    "mayStore flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.\n");
+                   "instruction, but flag already inferred from pattern.");
     MayStore = true;
   }
 
@@ -2496,7 +2496,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     if (MayLoad)
       PrintWarning(Inst.TheDef->getLoc(),
                    "mayLoad flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.\n");
+                   "instruction, but flag already inferred from pattern.");
     MayLoad = true;
   }
 
@@ -2504,7 +2504,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     if (HadPattern)
       PrintWarning(Inst.TheDef->getLoc(),
                    "neverHasSideEffects flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.\n");
+                   "instruction, but flag already inferred from pattern.");
     HasSideEffects = false;
   }
 
@@ -2512,7 +2512,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     if (HasSideEffects)
       PrintWarning(Inst.TheDef->getLoc(),
                    "hasSideEffects flag explicitly set on "
-                   "instruction, but flag already inferred from pattern.\n");
+                   "instruction, but flag already inferred from pattern.");
     HasSideEffects = true;
   }
 

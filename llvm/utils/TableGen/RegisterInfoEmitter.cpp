@@ -210,7 +210,7 @@ RegisterInfoEmitter::EmitRegMappingTables(raw_ostream &OS,
     maxLength = std::max((size_t)maxLength, RegNums.size());
     if (DwarfRegNums.count(Reg))
       PrintWarning(Reg->getLoc(), Twine("DWARF numbers for register ") +
-                   getQualifiedName(Reg) + "specified multiple times\n");
+                   getQualifiedName(Reg) + "specified multiple times");
     DwarfRegNums[Reg] = RegNums;
   }
 
