@@ -198,7 +198,6 @@ def DINS : InsBase<7, "dins", CPU64Regs>;
 
 def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
                    "dsll\t$rd, $rt, 32", [], IIAlu>;
-
 def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
                   "sll\t$rd, $rt, 0", [], IIAlu>;
 let isCodeGenOnly = 1 in
