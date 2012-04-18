@@ -128,8 +128,11 @@ public:
   /// PrintMessage - Emit a message about the specified location with the
   /// specified string.
   ///
+  /// @param ShowColors - Display colored messages if output is a terminal and
+  /// the default error handler is used.
   void PrintMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg,
-                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) const;
+                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
+                    bool ShowColors = true) const;
 
 
   /// GetMessage - Return an SMDiagnostic at the specified location with the
@@ -188,7 +191,7 @@ public:
   const std::vector<std::pair<unsigned, unsigned> > &getRanges() const {
     return Ranges;
   }
-  void print(const char *ProgName, raw_ostream &S) const;
+  void print(const char *ProgName, raw_ostream &S, bool ShowColors = true) const;
 };
 
 }  // end llvm namespace

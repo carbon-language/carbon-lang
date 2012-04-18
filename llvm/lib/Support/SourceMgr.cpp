@@ -193,7 +193,8 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
-                             const Twine &Msg, ArrayRef<SMRange> Ranges) const {
+                             const Twine &Msg, ArrayRef<SMRange> Ranges,
+                             bool ShowColors) const {
   SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges);
   
   // Report the message with the diagnostic handler if present.
@@ -208,7 +209,7 @@ void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
   assert(CurBuf != -1 && "Invalid or unspecified location!");
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
 
-  Diagnostic.print(0, OS);
+  Diagnostic.print(0, OS, ShowColors);
 }
 
 //===----------------------------------------------------------------------===//
@@ -225,7 +226,14 @@ SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
 }
 
 
-void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
+void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
+                         bool ShowColors) const {
+  // Display colors only if OS goes to a tty.
+  ShowColors &= S.is_displayed();
+
+  if (ShowColors)
+    S.changeColor(raw_ostream::SAVEDCOLOR, true);
+
   if (ProgName && ProgName[0])
     S << ProgName << ": ";
 
@@ -244,12 +252,32 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
   }
 
   switch (Kind) {
-  case SourceMgr::DK_Error: S << "error: "; break;
-  case SourceMgr::DK_Warning: S << "warning: "; break;
-  case SourceMgr::DK_Note: S << "note: "; break;
+  case SourceMgr::DK_Error:
+    if (ShowColors)
+      S.changeColor(raw_ostream::RED, true);
+    S << "error: ";
+    break;
+  case SourceMgr::DK_Warning:
+    if (ShowColors)
+      S.changeColor(raw_ostream::MAGENTA, true);
+    S << "warning: ";
+    break;
+  case SourceMgr::DK_Note:
+    if (ShowColors)
+      S.changeColor(raw_ostream::BLACK, true);
+    S << "note: ";
+    break;
   }
-  
+
+  if (ShowColors) {
+    S.resetColor();
+    S.changeColor(raw_ostream::SAVEDCOLOR, true);
+  }
+
   S << Message << '\n';
+
+  if (ShowColors)
+    S.resetColor();
 
   if (LineNo == -1 || ColumnNo == -1)
     return;
@@ -292,6 +320,9 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
   }
   S << '\n';
 
+  if (ShowColors)
+    S.changeColor(raw_ostream::GREEN, true);
+
   // Print out the caret line, matching tabs in the source line.
   for (unsigned i = 0, e = CaretLine.size(), OutCol = 0; i != e; ++i) {
     if (i >= LineContents.size() || LineContents[i] != '\t') {
@@ -306,6 +337,9 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
       ++OutCol;
     } while (OutCol & 7);
   }
+
+  if (ShowColors)
+    S.resetColor();
   
   S << '\n';
 }
