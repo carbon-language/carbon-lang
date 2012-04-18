@@ -1,4 +1,4 @@
-; This test makes sure that shit instructions are properly eliminated
+; This test makes sure that shift instructions are properly eliminated
 ; even with arbitrary precision integers.
 ; RUN: opt < %s -instcombine -S | not grep sh
 ; END.
