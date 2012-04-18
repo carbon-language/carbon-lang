@@ -4646,22 +4646,32 @@ def MRRC2 : MovRRCopro2<"mrrc2", 1 /* from coprocessor to ARM core register */>;
 //
 
 // Move to ARM core register from Special Register
-def MRS : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,
+def MRS : ABI<0b0001, (outs GPRnopc:$Rd), (ins), NoItinerary,
               "mrs", "\t$Rd, apsr", []> {
   bits<4> Rd;
   let Inst{23-16} = 0b00001111;
+  let Unpredictable{19-17} = 0b111;
+
   let Inst{15-12} = Rd;
-  let Inst{7-4} = 0b0000;
+
+  let Inst{11-0} = 0b000000000000;
+  let Unpredictable{11-0} = 0b110100001111;
 }
 
-def : InstAlias<"mrs${p} $Rd, cpsr", (MRS GPR:$Rd, pred:$p)>, Requires<[IsARM]>;
+def : InstAlias<"mrs${p} $Rd, cpsr", (MRS GPRnopc:$Rd, pred:$p)>, Requires<[IsARM]>;
 
-def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,
+// The MRSsys instruction is the MRS instruction from the ARM ARM,
+// section B9.3.9, with the R bit set to 1.
+def MRSsys : ABI<0b0001, (outs GPRnopc:$Rd), (ins), NoItinerary,
                  "mrs", "\t$Rd, spsr", []> {
   bits<4> Rd;
   let Inst{23-16} = 0b01001111;
+  let Unpredictable{19-16} = 0b1111;
+
   let Inst{15-12} = Rd;
-  let Inst{7-4} = 0b0000;
+
+  let Inst{11-0} = 0b000000000000;
+  let Unpredictable{11-0} = 0b110100001111;
 }
 
 // Move from ARM core register to Special Register
