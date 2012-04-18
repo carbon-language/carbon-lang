@@ -129,7 +129,7 @@ public:
   static bool classof(const ProgramPoint*) { return true; }
 
   bool operator==(const ProgramPoint & RHS) const {
-    return Data1 == Data1 &&
+    return Data1 == RHS.Data1 &&
            Data2 == RHS.Data2 &&
            L == RHS.L &&
            Tag == RHS.Tag;
