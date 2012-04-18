@@ -126,9 +126,6 @@ protected:
 private:
   bool isSmall() const { return CurArray == SmallArray; }
 
-  unsigned Hash(const void *Ptr) const {
-    return static_cast<unsigned>(((uintptr_t)Ptr >> 4) & (CurArraySize-1));
-  }
   const void * const *FindBucketFor(const void *Ptr) const;
   void shrink_and_clear();
 

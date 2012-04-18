@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cstdlib>
@@ -102,7 +103,7 @@ bool SmallPtrSetImpl::erase_imp(const void * Ptr) {
 }
 
 const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
-  unsigned Bucket = Hash(Ptr);
+  unsigned Bucket = DenseMapInfo<void *>::getHashValue(Ptr) & (CurArraySize-1);
   unsigned ArraySize = CurArraySize;
   unsigned ProbeAmt = 1;
   const void *const *Array = CurArray;
