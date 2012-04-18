@@ -114,6 +114,7 @@ printableTextForNextCharacter(StringRef SourceLine, size_t *i,
 
     ConversionResult res = ConvertUTF8toUTF32(&begin, cp_end, &cptr, cptr+1,
                                               strictConversion);
+    (void)res;
     assert(conversionOK==res);
     assert(0 < begin-original_begin
            && "we must be further along in the string now");
@@ -1161,4 +1162,3 @@ void TextDiagnostic::emitParseableFixits(ArrayRef<FixItHint> Hints) {
     OS << "\"\n";
   }
 }
-
