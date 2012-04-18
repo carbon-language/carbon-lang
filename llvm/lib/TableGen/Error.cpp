@@ -29,7 +29,7 @@ void PrintWarning(const char *Loc, const Twine &Msg) {
 }
 
 void PrintWarning(const Twine &Msg) {
-  errs() << "error:" << Msg << "\n";
+  errs() << "warning:" << Msg << "\n";
 }
 
 void PrintWarning(const TGError &Warning) {
