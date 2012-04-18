@@ -315,6 +315,7 @@ class ArithLogicR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
      [(set RC:$rd, (OpNode RC:$rs, RC:$rt))], itin> {
   let shamt = 0;
   let isCommutable = isComm;
+  let isReMaterializable = 1;
 }
 
 class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm,
@@ -330,7 +331,9 @@ class ArithLogicI<bits<6> op, string instr_asm, SDNode OpNode,
                   Operand Od, PatLeaf imm_type, RegisterClass RC> :
   FI<op, (outs RC:$rt), (ins RC:$rs, Od:$imm16),
      !strconcat(instr_asm, "\t$rt, $rs, $imm16"),
-     [(set RC:$rt, (OpNode RC:$rs, imm_type:$imm16))], IIAlu>;
+     [(set RC:$rt, (OpNode RC:$rs, imm_type:$imm16))], IIAlu> {
+  let isReMaterializable = 1;
+}
 
 class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
                      Operand Od, PatLeaf imm_type, RegisterClass RC> :
@@ -386,6 +389,7 @@ class LoadUpper<bits<6> op, string instr_asm, RegisterClass RC, Operand Imm>:
      !strconcat(instr_asm, "\t$rt, $imm16"), [], IIAlu> {
   let rs = 0;
   let neverHasSideEffects = 1;
+  let isReMaterializable = 1;
 }
 
 class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
