@@ -409,6 +409,15 @@ bool LoopUnswitch::processCurrentLoop() {
   if (!currentLoop->isSafeToClone())
     return false;
 
+  // Loops with invokes, whose unwind edge escapes the loop, cannot be
+  // unswitched because splitting their edges are non-trivial and don't preserve
+  // loop simplify information.
+  for (Loop::block_iterator I = currentLoop->block_begin(),
+         E = currentLoop->block_end(); I != E; ++I)
+    if (const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator()))
+      if (!currentLoop->contains(II->getUnwindDest()))
+        return false;
+
   // Without dedicated exits, splitting the exit edge may fail.
   if (!currentLoop->hasDedicatedExits())
     return false;
