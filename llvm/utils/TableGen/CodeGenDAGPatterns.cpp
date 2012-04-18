@@ -17,6 +17,7 @@
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
@@ -2483,10 +2484,9 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     // If we decided that this is a store from the pattern, then the .td file
     // entry is redundant.
     if (MayStore)
-      fprintf(stderr,
-              "Warning: mayStore flag explicitly set on instruction '%s'"
-              " but flag already inferred from pattern.\n",
-              Inst.TheDef->getName().c_str());
+      PrintWarning(Inst.TheDef->getLoc(),
+                   Twine("Warning: mayStore flag explicitly set on ") +
+                   "instruction, but flag already inferred from pattern.\n");
     MayStore = true;
   }
 
@@ -2494,24 +2494,25 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     // If we decided that this is a load from the pattern, then the .td file
     // entry is redundant.
     if (MayLoad)
-      fprintf(stderr,
-              "Warning: mayLoad flag explicitly set on instruction '%s'"
-              " but flag already inferred from pattern.\n",
-              Inst.TheDef->getName().c_str());
+      PrintWarning(Inst.TheDef->getLoc(),
+                   Twine("Warning: mayLoad flag explicitly set on ") +
+                   "instruction, but flag already inferred from pattern.\n");
     MayLoad = true;
   }
 
   if (Inst.neverHasSideEffects) {
     if (HadPattern)
-      fprintf(stderr, "Warning: neverHasSideEffects set on instruction '%s' "
-              "which already has a pattern\n", Inst.TheDef->getName().c_str());
+      PrintWarning(Inst.TheDef->getLoc(),
+                   Twine("Warning: neverHasSideEffects flag explicitly set on ") +
+                   "instruction, but flag already inferred from pattern.\n");
     HasSideEffects = false;
   }
 
   if (Inst.hasSideEffects) {
     if (HasSideEffects)
-      fprintf(stderr, "Warning: hasSideEffects set on instruction '%s' "
-              "which already inferred this.\n", Inst.TheDef->getName().c_str());
+      PrintWarning(Inst.TheDef->getLoc(),
+                   Twine("Warning: hasSideEffects flag explicitly set on ") +
+                   "instruction, but flag already inferred from pattern.\n");
     HasSideEffects = true;
   }
 
