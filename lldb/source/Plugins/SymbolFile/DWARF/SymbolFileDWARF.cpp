@@ -1737,9 +1737,11 @@ SymbolFileDWARF::ParseChildMembers
                                                                        ivar_decl,
                                                                        prop_setter_name,
                                                                        prop_getter_name,
-                                                                       prop_attributes);
+                                                                       prop_attributes,
+                                                                       MakeUserID(die->GetOffset()));
                             
-                            GetClangASTContext().SetMetadata((uintptr_t)ivar_decl, MakeUserID(die->GetOffset()));
+                            if (ivar_decl)
+                                GetClangASTContext().SetMetadata((uintptr_t)ivar_decl, MakeUserID(die->GetOffset()));
                         }
                     }
                 }
@@ -5176,14 +5178,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (!clang_type_was_created)
                         {
                             clang_type_was_created = true;
-                            clang::CXXRecordDecl *record_decl;
                             clang_type = ast.CreateRecordType (decl_ctx, 
                                                                accessibility, 
                                                                type_name_cstr, 
                                                                tag_decl_kind, 
                                                                class_language,
-                                                               &record_decl);
-                            GetClangASTContext().SetMetadata((uintptr_t)record_decl, MakeUserID(die->GetOffset()));
+                                                               MakeUserID(die->GetOffset()));
                         }
                     }
 

@@ -407,7 +407,8 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
         lldb::clang_type_t objc_object_type = ast.CreateObjCClass (name.AsCString(), 
                                                                    ast.GetTranslationUnitDecl(), 
                                                                    isForwardDecl, 
-                                                                   isInternal);
+                                                                   isInternal,
+                                                                   0xffaaffaaffaaffaall);
         
         Declaration decl;
         

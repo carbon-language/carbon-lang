@@ -291,7 +291,7 @@ public:
                       const char *name,
                       int kind,
                       lldb::LanguageType language,
-                      clang::CXXRecordDecl **decl = NULL);
+                      uint64_t metadata = 0);
 
     static clang::FieldDecl *
     AddFieldToRecordType (clang::ASTContext *ast,
@@ -449,7 +449,8 @@ public:
     CreateObjCClass (const char *name, 
                      clang::DeclContext *decl_ctx, 
                      bool isForwardDecl, 
-                     bool isInternal);
+                     bool isInternal,
+                     uint64_t metadata = 0);
     
     static clang::FieldDecl *
     AddObjCClassIVar (clang::ASTContext *ast,
@@ -487,7 +488,8 @@ public:
         clang::ObjCIvarDecl *ivar_decl,   
         const char *property_setter_name,
         const char *property_getter_name,
-        uint32_t property_attributes
+        uint32_t property_attributes,
+        uint64_t metadata = 0
     );
 
     bool
@@ -499,7 +501,8 @@ public:
         clang::ObjCIvarDecl *ivar_decl,   
         const char *property_setter_name,
         const char *property_getter_name,
-        uint32_t property_attributes
+        uint32_t property_attributes,
+        uint64_t metadata = 0
     )
     {
         return ClangASTContext::AddObjCClassProperty (getASTContext(),
@@ -509,7 +512,8 @@ public:
                                                       ivar_decl,
                                                       property_setter_name,
                                                       property_getter_name,
-                                                      property_attributes);
+                                                      property_attributes,
+                                                      metadata);
     }
     
     bool
