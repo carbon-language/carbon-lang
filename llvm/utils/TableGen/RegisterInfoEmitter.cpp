@@ -32,7 +32,7 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
                               CodeGenTarget &Target, CodeGenRegBank &Bank) {
   const std::vector<CodeGenRegister*> &Registers = Bank.getRegisters();
 
-  // Register enums are stored as uint16_t in the tables. Make sure we'll fit
+  // Register enums are stored as uint16_t in the tables. Make sure we'll fit.
   assert(Registers.size() <= 0xffff && "Too many regs to fit in tables");
 
   std::string Namespace = Registers[0]->TheDef->getValueAsString("Namespace");
