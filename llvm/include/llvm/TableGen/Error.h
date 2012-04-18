@@ -29,6 +29,11 @@ public:
   const std::string &getMessage() const { return Message; }
 };
 
+void PrintWarning(SMLoc WarningLoc, const Twine &Msg);
+void PrintWarning(const char *Loc, const Twine &Msg);
+void PrintWarning(const Twine &Msg);
+void PrintWarning(const TGError &Warning);
+
 void PrintError(SMLoc ErrorLoc, const Twine &Msg);
 void PrintError(const char *Loc, const Twine &Msg);
 void PrintError(const Twine &Msg);
