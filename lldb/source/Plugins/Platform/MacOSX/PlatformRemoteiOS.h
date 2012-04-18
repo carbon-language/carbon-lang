@@ -117,12 +117,13 @@ public:
 protected:
     struct SDKDirectoryInfo
     {
-        SDKDirectoryInfo (const lldb_private::ConstString &dirname);
-        lldb_private::ConstString directory;
+        SDKDirectoryInfo (const lldb_private::FileSpec &sdk_dir_spec);
+        lldb_private::FileSpec directory;
         lldb_private::ConstString build;
         uint32_t version_major;
         uint32_t version_minor;
         uint32_t version_update;
+        bool user_cached;
     };
     typedef std::vector<SDKDirectoryInfo> SDKDirectoryInfoCollection;
     std::string m_device_support_directory;

@@ -28,11 +28,15 @@
 using namespace lldb;
 using namespace lldb_private;
 
-PlatformRemoteiOS::SDKDirectoryInfo::SDKDirectoryInfo (const lldb_private::ConstString &dirname) :
-    directory(dirname),
-    build()
+PlatformRemoteiOS::SDKDirectoryInfo::SDKDirectoryInfo (const lldb_private::FileSpec &sdk_dir) :
+    directory(sdk_dir),
+    build(),
+    version_major(0),
+    version_minor(0),
+    version_update(0),
+    user_cached(false)
 {
-    const char *dirname_cstr = dirname.GetCString();
+    const char *dirname_cstr = sdk_dir.GetFilename().GetCString();
     const char *pos = Args::StringToVersion (dirname_cstr,
                                              version_major,
                                              version_minor,
@@ -155,6 +159,16 @@ PlatformRemoteiOS::GetStatus (Stream &strm)
         strm.Printf ("  SDK Path: \"%s\"\n", sdk_directory);
     else
         strm.PutCString ("  SDK Path: error: unable to locate SDK\n");
+    
+//    const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
+//    for (uint32_t i=0; i<num_sdk_infos; ++i)
+//    {
+//        const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
+//        strm.Printf (" SDK Roots: [%2u] \"%s/%s\"\n",
+//                     i,
+//                     sdk_dir_info.directory.GetDirectory().GetCString(),
+//                     sdk_dir_info.directory.GetFilename().GetCString());
+//    }
 }
 
 
@@ -247,7 +261,7 @@ PlatformRemoteiOS::GetContainedFilesIntoVectorOfStringsCallback (void *baton,
                                                                  FileSpec::FileType file_type,
                                                                  const FileSpec &file_spec)
 {
-    ((PlatformRemoteiOS::SDKDirectoryInfoCollection *)baton)->push_back(PlatformRemoteiOS::SDKDirectoryInfo(file_spec.GetFilename()));
+    ((PlatformRemoteiOS::SDKDirectoryInfoCollection *)baton)->push_back(PlatformRemoteiOS::SDKDirectoryInfo(file_spec));
     return FileSpec::eEnumerateDirectoryResultNext;
 }
 
@@ -268,6 +282,28 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosInNeeded()
                                           find_other,
                                           GetContainedFilesIntoVectorOfStringsCallback,
                                           &m_sdk_directory_infos);
+            
+            const uint32_t num_installed = m_sdk_directory_infos.size();
+            FileSpec local_sdk_cache("~/Library/Developer/Xcode/iOS DeviceSupport", true);
+            if (local_sdk_cache.Exists())
+            {
+                char path[PATH_MAX];
+                if (local_sdk_cache.GetPath(path, sizeof(path)))
+                {
+                    FileSpec::EnumerateDirectory (path,
+                                                  find_directories,
+                                                  find_files,
+                                                  find_other,
+                                                  GetContainedFilesIntoVectorOfStringsCallback,
+                                                  &m_sdk_directory_infos);
+                    const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
+                    // First try for an exact match of major, minor and update
+                    for (uint32_t i=num_installed; i<num_sdk_infos; ++i)
+                    {
+                        m_sdk_directory_infos[i].user_cached = true;
+                    }
+                }
+            }
         }
     }
     return !m_sdk_directory_infos.empty();
@@ -276,43 +312,72 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosInNeeded()
 const PlatformRemoteiOS::SDKDirectoryInfo *
 PlatformRemoteiOS::GetSDKDirectoryForCurrentOSVersion ()
 {
-    uint32_t major, minor, update;
-    if (GetOSVersion(major, minor, update))
+    uint32_t i;
+    if (UpdateSDKDirectoryInfosInNeeded())
     {
-        if (UpdateSDKDirectoryInfosInNeeded())
+        const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
+
+        // Check to see if the user specified a build string. If they did, then
+        // be sure to match it.
+        std::vector<bool> check_sdk_info(num_sdk_infos, true);
+        ConstString build(m_sdk_build);
+        if (build)
         {
-            uint32_t i;
-            const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
-            // First try for an exact match of major, minor and update
             for (i=0; i<num_sdk_infos; ++i)
+                check_sdk_info[i] = m_sdk_directory_infos[i].build == build;
+        }
+        
+        // If we are connected we can find the version of the OS the platform
+        // us running on and select the right SDK
+        uint32_t major, minor, update;
+        if (GetOSVersion(major, minor, update))
+        {
+            if (UpdateSDKDirectoryInfosInNeeded())
             {
-                const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
-                if (sdk_dir_info.version_major == major &&
-                    sdk_dir_info.version_minor == minor &&
-                    sdk_dir_info.version_update == update)
+                // First try for an exact match of major, minor and update
+                for (i=0; i<num_sdk_infos; ++i)
                 {
-                    return &sdk_dir_info;
+                    if (check_sdk_info[i])
+                    {
+                        if (m_sdk_directory_infos[i].version_major == major &&
+                            m_sdk_directory_infos[i].version_minor == minor &&
+                            m_sdk_directory_infos[i].version_update == update)
+                        {
+                            return &m_sdk_directory_infos[i];
+                        }
+                    }
+                }
+                // First try for an exact match of major and minor
+                for (i=0; i<num_sdk_infos; ++i)
+                {
+                    if (check_sdk_info[i])
+                    {
+                        if (m_sdk_directory_infos[i].version_major == major &&
+                            m_sdk_directory_infos[i].version_minor == minor)
+                        {
+                            return &m_sdk_directory_infos[i];
+                        }
+                    }
+                }
+                // Lastly try to match of major version only..
+                for (i=0; i<num_sdk_infos; ++i)
+                {
+                    if (check_sdk_info[i])
+                    {
+                        if (m_sdk_directory_infos[i].version_major == major)
+                        {
+                            return &m_sdk_directory_infos[i];
+                        }
+                    }
                 }
             }
-            // First try for an exact match of major and minor
+        }
+        else if (build)
+        {
+            // No version, just a build number, search for the first one that matches
             for (i=0; i<num_sdk_infos; ++i)
-            {
-                const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
-                if (sdk_dir_info.version_major == major &&
-                    sdk_dir_info.version_minor == minor)
-                {
-                    return &sdk_dir_info;
-                }
-            }
-            // Lastly try to match of major version only..
-            for (i=0; i<num_sdk_infos; ++i)
-            {
-                const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
-                if (sdk_dir_info.version_major == major)
-                {
-                    return &sdk_dir_info;
-                }
-            }
+                if (check_sdk_info[i])
+                    return &m_sdk_directory_infos[i];
         }
     }
     return NULL;
@@ -397,9 +462,12 @@ PlatformRemoteiOS::GetDeviceSupportDirectoryForOSVersion()
             sdk_dir_info = GetSDKDirectoryForLatestOSVersion ();
         if (sdk_dir_info)
         {
-            m_device_support_directory_for_os_version = GetDeviceSupportDirectory();
-            m_device_support_directory_for_os_version.append(1, '/');
-            m_device_support_directory_for_os_version.append(sdk_dir_info->directory.GetCString());
+            char path[PATH_MAX];
+            if (sdk_dir_info->directory.GetPath(path, sizeof(path)))
+            {
+                m_device_support_directory_for_os_version = path;
+                return m_device_support_directory_for_os_version.c_str();
+            }
         }
         else
         {
