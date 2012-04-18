@@ -2485,7 +2485,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     // entry is redundant.
     if (MayStore)
       PrintWarning(Inst.TheDef->getLoc(),
-                   Twine("mayStore flag explicitly set on ") +
+                   "mayStore flag explicitly set on "
                    "instruction, but flag already inferred from pattern.\n");
     MayStore = true;
   }
@@ -2495,7 +2495,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     // entry is redundant.
     if (MayLoad)
       PrintWarning(Inst.TheDef->getLoc(),
-                   Twine("mayLoad flag explicitly set on ") +
+                   "mayLoad flag explicitly set on "
                    "instruction, but flag already inferred from pattern.\n");
     MayLoad = true;
   }
@@ -2503,7 +2503,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
   if (Inst.neverHasSideEffects) {
     if (HadPattern)
       PrintWarning(Inst.TheDef->getLoc(),
-                   Twine("neverHasSideEffects flag explicitly set on ") +
+                   "neverHasSideEffects flag explicitly set on "
                    "instruction, but flag already inferred from pattern.\n");
     HasSideEffects = false;
   }
@@ -2511,7 +2511,7 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
   if (Inst.hasSideEffects) {
     if (HasSideEffects)
       PrintWarning(Inst.TheDef->getLoc(),
-                   Twine("hasSideEffects flag explicitly set on ") +
+                   "hasSideEffects flag explicitly set on "
                    "instruction, but flag already inferred from pattern.\n");
     HasSideEffects = true;
   }
