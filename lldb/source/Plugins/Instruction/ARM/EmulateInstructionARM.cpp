@@ -130,16 +130,17 @@ uint32_t ITSession::GetCond()
 #define ARMv6K    (1u << 6)
 #define ARMv6T2   (1u << 7)
 #define ARMv7     (1u << 8)
-#define ARMv8     (1u << 9)
+#define ARMv7S    (1u << 9)
+#define ARMv8     (1u << 10)
 #define ARMvAll   (0xffffffffu)
 
-#define ARMV4T_ABOVE  (ARMv4T|ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
-#define ARMV5_ABOVE   (ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
-#define ARMV5TE_ABOVE (ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
-#define ARMV5J_ABOVE  (ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
-#define ARMV6_ABOVE   (ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8) 
-#define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
-#define ARMV7_ABOVE   (ARMv7|ARMv8)
+#define ARMV4T_ABOVE  (ARMv4T|ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv7S|ARMv8)
+#define ARMV5_ABOVE   (ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv7S|ARMv8)
+#define ARMV5TE_ABOVE (ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv7S|ARMv8)
+#define ARMV5J_ABOVE  (ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv7S|ARMv8)
+#define ARMV6_ABOVE   (ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv7S|ARMv8) 
+#define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv7S|ARMv8)
+#define ARMV7_ABOVE   (ARMv7|ARMv7S|ARMv8)
 
 #define No_VFP  0
 #define VFPv1   (1u << 1)
@@ -12787,6 +12788,7 @@ EmulateInstructionARM::SetArchitecture (const ArchSpec &arch)
         else if (0 == ::strcasecmp(arch_cstr, "armv6"))     m_arm_isa = ARMv6;
         else if (0 == ::strcasecmp(arch_cstr, "armv6t2"))   m_arm_isa = ARMv6T2;
         else if (0 == ::strcasecmp(arch_cstr, "armv7"))     m_arm_isa = ARMv7;
+        else if (0 == ::strcasecmp(arch_cstr, "armv7s"))    m_arm_isa = ARMv7S;
         else if (0 == ::strcasecmp(arch_cstr, "armv8"))     m_arm_isa = ARMv8;
         else if (0 == ::strcasecmp(arch_cstr, "arm"))       m_arm_isa = ARMvAll;
         else if (0 == ::strcasecmp(arch_cstr, "thumb"))     m_arm_isa = ARMvAll;
