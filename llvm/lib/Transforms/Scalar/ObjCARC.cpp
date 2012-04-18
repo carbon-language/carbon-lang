@@ -1033,7 +1033,11 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
     Value *Op = *OI;
     // llvm.global_ctors is an array of pairs where the second members
     // are constructor functions.
-    Function *F = cast<Function>(cast<ConstantStruct>(Op)->getOperand(1));
+    Function *F = dyn_cast<Function>(cast<ConstantStruct>(Op)->getOperand(1));
+    // If the user used a constructor function with the wrong signature and
+    // it got bitcasted or whatever, look the other way.
+    if (!F)
+      continue;
     // Only look at function definitions.
     if (F->isDeclaration())
       continue;
