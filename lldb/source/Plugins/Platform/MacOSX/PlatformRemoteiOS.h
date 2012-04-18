@@ -13,6 +13,8 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Host/FileSpec.h"
+
 // Project includes
 #include "PlatformDarwin.h"
 
@@ -113,12 +115,41 @@ public:
                                      lldb_private::ArchSpec &arch);
 
 protected:
+    struct SDKDirectoryInfo
+    {
+        SDKDirectoryInfo (const lldb_private::ConstString &dirname);
+        lldb_private::ConstString directory;
+        lldb_private::ConstString build;
+        uint32_t version_major;
+        uint32_t version_minor;
+        uint32_t version_update;
+    };
+    typedef std::vector<SDKDirectoryInfo> SDKDirectoryInfoCollection;
+    std::string m_device_support_directory;
+    SDKDirectoryInfoCollection m_sdk_directory_infos;
     std::string m_device_support_directory_for_os_version;
     std::string m_build_update;
     //std::vector<FileSpec> m_device_support_os_dirs;
-    
+
+    bool
+    UpdateSDKDirectoryInfosInNeeded();
+
+    const char *
+    GetDeviceSupportDirectory();
+
     const char *
     GetDeviceSupportDirectoryForOSVersion();
+
+    const SDKDirectoryInfo *
+    GetSDKDirectoryForLatestOSVersion ();
+
+    const SDKDirectoryInfo *
+    GetSDKDirectoryForCurrentOSVersion ();
+
+    static lldb_private::FileSpec::EnumerateDirectoryResult
+    GetContainedFilesIntoVectorOfStringsCallback (void *baton,
+                                                  lldb_private::FileSpec::FileType file_type,
+                                                  const lldb_private::FileSpec &file_spec);
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);

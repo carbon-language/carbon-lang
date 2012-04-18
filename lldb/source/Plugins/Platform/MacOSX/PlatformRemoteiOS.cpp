@@ -28,6 +28,25 @@
 using namespace lldb;
 using namespace lldb_private;
 
+PlatformRemoteiOS::SDKDirectoryInfo::SDKDirectoryInfo (const lldb_private::ConstString &dirname) :
+    directory(dirname),
+    build()
+{
+    const char *dirname_cstr = dirname.GetCString();
+    const char *pos = Args::StringToVersion (dirname_cstr,
+                                             version_major,
+                                             version_minor,
+                                             version_update);
+    
+    if (pos && pos[0] == ' ' && pos[1] == '(')
+    {
+        const char *build_start = pos + 2;
+        const char *end_paren = strchr (build_start, ')');
+        if (end_paren && build_start < end_paren)
+            build.SetCStringWithLength(build_start, end_paren - build_start);
+    }
+}
+
 //------------------------------------------------------------------
 // Static Variables
 //------------------------------------------------------------------
@@ -223,6 +242,148 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
     return error;
 }
 
+FileSpec::EnumerateDirectoryResult 
+PlatformRemoteiOS::GetContainedFilesIntoVectorOfStringsCallback (void *baton,
+                                                                 FileSpec::FileType file_type,
+                                                                 const FileSpec &file_spec)
+{
+    ((PlatformRemoteiOS::SDKDirectoryInfoCollection *)baton)->push_back(PlatformRemoteiOS::SDKDirectoryInfo(file_spec.GetFilename()));
+    return FileSpec::eEnumerateDirectoryResultNext;
+}
+
+bool
+PlatformRemoteiOS::UpdateSDKDirectoryInfosInNeeded()
+{
+    if (m_sdk_directory_infos.empty())
+    {
+        const char *device_support_dir = GetDeviceSupportDirectory();
+        if (device_support_dir)
+        {
+            const bool find_directories = true;
+            const bool find_files = false;
+            const bool find_other = false;
+            FileSpec::EnumerateDirectory (m_device_support_directory.c_str(),
+                                          find_directories,
+                                          find_files,
+                                          find_other,
+                                          GetContainedFilesIntoVectorOfStringsCallback,
+                                          &m_sdk_directory_infos);
+        }
+    }
+    return !m_sdk_directory_infos.empty();
+}
+
+const PlatformRemoteiOS::SDKDirectoryInfo *
+PlatformRemoteiOS::GetSDKDirectoryForCurrentOSVersion ()
+{
+    uint32_t major, minor, update;
+    if (GetOSVersion(major, minor, update))
+    {
+        if (UpdateSDKDirectoryInfosInNeeded())
+        {
+            uint32_t i;
+            const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
+            // First try for an exact match of major, minor and update
+            for (i=0; i<num_sdk_infos; ++i)
+            {
+                const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
+                if (sdk_dir_info.version_major == major &&
+                    sdk_dir_info.version_minor == minor &&
+                    sdk_dir_info.version_update == update)
+                {
+                    return &sdk_dir_info;
+                }
+            }
+            // First try for an exact match of major and minor
+            for (i=0; i<num_sdk_infos; ++i)
+            {
+                const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
+                if (sdk_dir_info.version_major == major &&
+                    sdk_dir_info.version_minor == minor)
+                {
+                    return &sdk_dir_info;
+                }
+            }
+            // Lastly try to match of major version only..
+            for (i=0; i<num_sdk_infos; ++i)
+            {
+                const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
+                if (sdk_dir_info.version_major == major)
+                {
+                    return &sdk_dir_info;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+const PlatformRemoteiOS::SDKDirectoryInfo *
+PlatformRemoteiOS::GetSDKDirectoryForLatestOSVersion ()
+{
+    const PlatformRemoteiOS::SDKDirectoryInfo *result = NULL;
+    if (UpdateSDKDirectoryInfosInNeeded())
+    {
+        const uint32_t num_sdk_infos = m_sdk_directory_infos.size();
+        // First try for an exact match of major, minor and update
+        for (uint32_t i=0; i<num_sdk_infos; ++i)
+        {
+            const SDKDirectoryInfo &sdk_dir_info = m_sdk_directory_infos[i];
+            if (sdk_dir_info.version_major != UINT32_MAX)
+            {
+                if (result == NULL || sdk_dir_info.version_major > result->version_major)
+                {
+                    result = &sdk_dir_info;
+                }
+                else if (sdk_dir_info.version_major == result->version_major)
+                {
+                    if (sdk_dir_info.version_minor > result->version_minor)
+                    {
+                        result = &sdk_dir_info;
+                    }
+                    else if (sdk_dir_info.version_minor == result->version_minor)
+                    {
+                        if (sdk_dir_info.version_update > result->version_update)
+                        {
+                            result = &sdk_dir_info;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+
+
+const char *
+PlatformRemoteiOS::GetDeviceSupportDirectory()
+{
+    if (m_device_support_directory.empty())
+    {
+        const char *device_support_dir = GetDeveloperDirectory();
+        if (device_support_dir)
+        {
+            m_device_support_directory.assign (device_support_dir);
+            m_device_support_directory.append ("/Platforms/iPhoneOS.platform/DeviceSupport");
+        }
+        else
+        {
+            // Assign a single NULL character so we know we tried to find the device
+            // support directory and we don't keep trying to find it over and over.
+            m_device_support_directory.assign (1, '\0');
+        }
+    }
+    // We should have put a single NULL character into m_device_support_directory
+    // or it should have a valid path if the code gets here
+    assert (m_device_support_directory.empty() == false);
+    if (m_device_support_directory[0])
+        return m_device_support_directory.c_str();
+    return NULL;
+}
+            
+
 const char *
 PlatformRemoteiOS::GetDeviceSupportDirectoryForOSVersion()
 {
@@ -231,85 +392,21 @@ PlatformRemoteiOS::GetDeviceSupportDirectoryForOSVersion()
 
     if (m_device_support_directory_for_os_version.empty())
     {
-        const char *device_support_dir = GetDeveloperDirectory();
-        const bool resolve_path = true;
-        if (device_support_dir)
+        const PlatformRemoteiOS::SDKDirectoryInfo *sdk_dir_info = GetSDKDirectoryForCurrentOSVersion ();
+        if (sdk_dir_info == NULL)
+            sdk_dir_info = GetSDKDirectoryForLatestOSVersion ();
+        if (sdk_dir_info)
         {
-            m_device_support_directory_for_os_version.assign (device_support_dir);
-            m_device_support_directory_for_os_version.append ("/Platforms/iPhoneOS.platform/DeviceSupport");
-
-            uint32_t major = 0;
-            uint32_t minor = 0;
-            uint32_t update = 0;
-            FileSpec file_spec;
-            char resolved_path[PATH_MAX];
-            if (GetOSVersion(major, minor, update))
-            {
-                if (major != UINT32_MAX && minor != UINT32_MAX && update != UINT32_MAX)
-                {
-                    ::snprintf (resolved_path, 
-                                sizeof(resolved_path), 
-                                "%s/%i.%i.%i", 
-                                m_device_support_directory_for_os_version.c_str(), 
-                                major, 
-                                minor, 
-                                update);
-                    
-                    file_spec.SetFile(resolved_path, resolve_path);
-                    if (file_spec.Exists() && file_spec.GetPath(resolved_path, sizeof(resolved_path)))
-                    {
-                        m_device_support_directory_for_os_version.assign (resolved_path);
-                        return m_device_support_directory_for_os_version.c_str();
-                    }
-                }
-
-                if (major != UINT32_MAX && minor != UINT32_MAX)
-                {
-                    ::snprintf (resolved_path, 
-                                sizeof(resolved_path), 
-                                "%s/%i.%i", 
-                                m_device_support_directory_for_os_version.c_str(), 
-                                major, 
-                                minor);
-                    
-                    file_spec.SetFile(resolved_path, resolve_path);
-                    if (file_spec.Exists() && file_spec.GetPath(resolved_path, sizeof(resolved_path)))
-                    {
-                        m_device_support_directory_for_os_version.assign (resolved_path);
-                        return m_device_support_directory_for_os_version.c_str();
-                    }
-                }
-            }
-            else
-            {
-                // Use the default as we have no OS version selected
-                m_device_support_directory_for_os_version.append ("/Latest");
-                file_spec.SetFile(m_device_support_directory_for_os_version.c_str(), resolve_path);
-                
-                if (file_spec.Exists() && file_spec.GetPath(resolved_path, sizeof(resolved_path)))
-                {
-                    if (m_major_os_version == UINT32_MAX)
-                    {
-                        const char *resolved_latest_dirname = file_spec.GetFilename().GetCString();
-                        const char *pos = Args::StringToVersion (resolved_latest_dirname, 
-                                                                 m_major_os_version,
-                                                                 m_minor_os_version,
-                                                                 m_update_os_version);
-
-                        if (m_build_update.empty() && pos[0] == ' ' && pos[1] == '(')
-                        {
-                            const char *end_paren = strchr (pos + 2, ')');
-                            m_build_update.assign (pos + 2, end_paren);
-                        }
-                    }
-                    m_device_support_directory_for_os_version.assign (resolved_path);
-                    return m_device_support_directory_for_os_version.c_str();
-                }
-            }
+            m_device_support_directory_for_os_version = GetDeviceSupportDirectory();
+            m_device_support_directory_for_os_version.append(1, '/');
+            m_device_support_directory_for_os_version.append(sdk_dir_info->directory.GetCString());
         }
-        // Assign a single NULL character so we know we tried to find the device
-        // support directory and we don't keep trying to find it over and over.
-        m_device_support_directory_for_os_version.assign (1, '\0');
+        else
+        {
+            // Assign a single NULL character so we know we tried to find the device
+            // support directory and we don't keep trying to find it over and over.
+            m_device_support_directory_for_os_version.assign (1, '\0');
+        }
     }
     // We should have put a single NULL character into m_device_support_directory_for_os_version
     // or it should have a valid path if the code gets here
