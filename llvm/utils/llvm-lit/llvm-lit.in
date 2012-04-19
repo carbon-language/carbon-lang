@@ -8,7 +8,7 @@ llvm_source_root = "@LLVM_SOURCE_DIR@"
 llvm_obj_root = "@LLVM_BINARY_DIR@"
 
 # Make sure we can find the lit package.
-sys.path.append(os.path.join(llvm_source_root, 'utils', 'lit'))
+sys.path.insert(0, os.path.join(llvm_source_root, 'utils', 'lit'))
 
 # Set up some builtin parameters, so that by default the LLVM test suite
 # configuration file knows how to find the object tree.
@@ -18,7 +18,8 @@ builtin_parameters = {
     'llvm_site_config' : os.path.join(llvm_obj_root, 'test', 'lit.site.cfg')
     }
 
-clang_site_config = os.path.join(llvm_obj_root, 'tools', 'clang', 'test', 'lit.site.cfg')
+clang_site_config = os.path.join(llvm_obj_root, 'tools', 'clang', 'test',
+                                 'lit.site.cfg')
 if os.path.exists(clang_site_config):
     builtin_parameters['clang_site_config'] = clang_site_config
 
