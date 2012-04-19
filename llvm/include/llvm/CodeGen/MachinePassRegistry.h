@@ -26,7 +26,7 @@ namespace llvm {
 typedef void *(*MachinePassCtor)();
 
 
-//===----------------------------------------------------------------------===// 
+//===----------------------------------------------------------------------===//
 ///
 /// MachinePassRegistryListener - Listener to adds and removals of nodes in
 /// registration list.
@@ -42,7 +42,7 @@ public:
 };
 
 
-//===----------------------------------------------------------------------===// 
+//===----------------------------------------------------------------------===//
 ///
 /// MachinePassRegistryNode - Machine pass node stored in registration list.
 ///
@@ -55,7 +55,7 @@ private:
   const char *Name;                     // Name of function pass.
   const char *Description;              // Description string.
   MachinePassCtor Ctor;                 // Function pass creator.
-  
+
 public:
 
   MachinePassRegistryNode(const char *N, const char *D, MachinePassCtor C)
@@ -72,11 +72,11 @@ public:
   const char *getDescription()            const { return Description; }
   MachinePassCtor getCtor()               const { return Ctor; }
   void setNext(MachinePassRegistryNode *N)      { Next = N; }
-  
+
 };
 
 
-//===----------------------------------------------------------------------===// 
+//===----------------------------------------------------------------------===//
 ///
 /// MachinePassRegistry - Track the registration of machine passes.
 ///
@@ -88,7 +88,7 @@ private:
   MachinePassRegistryNode *List;        // List of registry nodes.
   MachinePassCtor Default;              // Default function pass creator.
   MachinePassRegistryListener* Listener;// Listener for list adds are removes.
-  
+
 public:
 
   // NO CONSTRUCTOR - we don't want static constructor ordering to mess
@@ -126,7 +126,7 @@ public:
 
   void initialize(cl::Option &O) {
     cl::parser<typename RegistryClass::FunctionPassCtor>::initialize(O);
-    
+
     // Add existing passes to option.
     for (RegistryClass *Node = RegistryClass::getList();
          Node; Node = Node->getNext()) {
@@ -134,7 +134,7 @@ public:
                       (typename RegistryClass::FunctionPassCtor)Node->getCtor(),
                              Node->getDescription());
     }
-    
+
     // Make sure we listen for list changes.
     RegistryClass::setListener(this);
   }
