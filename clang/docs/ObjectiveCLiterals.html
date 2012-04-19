@@ -111,15 +111,15 @@ are supported:</p>
 
 <pre>
 // numbers.
-NSNumber *smallestInt = @(-INT_MAX - 1);
-NSNumber *piOverTwo = @(M_PI / 2);
+NSNumber *smallestInt = @(-INT_MAX - 1);  // [NSNumber numberWithInt:(-INT_MAX - 1)]
+NSNumber *piOverTwo = @(M_PI / 2);        // [NSNumber numberWithDouble:(M_PI / 2)]
 
 // enumerated types.
 typedef enum { Red, Green, Blue } Color;
-NSNumber *favoriteColor = @(Green);
+NSNumber *favoriteColor = @(Green);       // [NSNumber numberWithInt:((int)Green)]
 
 // strings.
-NSString *path = @(getenv("PATH"));
+NSString *path = @(getenv("PATH"));       // [NSString stringWithUTF8String:(getenv("PATH"))]
 NSArray *pathComponents = [path componentsSeparatedByString:@":"];
 </pre>
 
