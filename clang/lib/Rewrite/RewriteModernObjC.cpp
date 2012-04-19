@@ -102,7 +102,6 @@ namespace {
     FunctionDecl *CFStringFunctionDecl;
     FunctionDecl *SuperContructorFunctionDecl;
     FunctionDecl *CurFunctionDef;
-    FunctionDecl *CurFunctionDeclToDeclareForBlock;
 
     /* Misc. containers needed for meta-data rewrite. */
     SmallVector<ObjCImplementationDecl *, 8> ClassImplementation;
@@ -304,6 +303,7 @@ namespace {
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteBlockPointerType(std::string& Str, QualType Type);
     void RewriteBlockPointerTypeVariable(std::string& Str, ValueDecl *VD);
+    void RewriteBlockLiteralFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     void RewriteTypeOfDecl(VarDecl *VD);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
@@ -622,7 +622,6 @@ void RewriteModernObjC::InitializeCommon(ASTContext &context) {
   NSStringRecord = 0;
   CurMethodDef = 0;
   CurFunctionDef = 0;
-  CurFunctionDeclToDeclareForBlock = 0;
   GlobalVarDecl = 0;
   GlobalConstructionExp = 0;
   SuperStructDecl = 0;
@@ -2243,6 +2242,28 @@ void RewriteModernObjC::RewriteBlockPointerTypeVariable(std::string& Str,
     }
     argPtr++;
   }
+}
+
+void RewriteModernObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
+  SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
+  const FunctionType *funcType = FD->getType()->getAs<FunctionType>();
+  const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(funcType);
+  if (!proto)
+    return;
+  QualType Type = proto->getResultType();
+  std::string FdStr = Type.getAsString(Context->getPrintingPolicy());
+  FdStr += " ";
+  FdStr += FD->getName();
+  FdStr +=  "(";
+  unsigned numArgs = proto->getNumArgs();
+  for (unsigned i = 0; i < numArgs; i++) {
+  QualType ArgType = proto->getArgType(i);
+  RewriteBlockPointerType(FdStr, ArgType);
+  if (i+1 < numArgs)
+    FdStr += ", ";
+  }
+  FdStr +=  ");\n";
+  InsertText(FunLocStart, FdStr);
 }
 
 // SynthSuperContructorFunctionDecl - id __rw_objc_super(id obj, id super);
@@ -3984,9 +4005,13 @@ std::string RewriteModernObjC::SynthesizeBlockDescriptor(std::string DescTag,
 /// getFunctionSourceLocation - returns start location of a function
 /// definition. Complication arises when function has declared as
 /// extern "C" or extern "C" {...}
-static SourceLocation getFunctionSourceLocation (FunctionDecl *FD) {
-  if (!FD->isExternC() || FD->isMain())
+static SourceLocation getFunctionSourceLocation (RewriteModernObjC &R,
+                                                 FunctionDecl *FD) {
+  if (!FD->isExternC() || FD->isMain()) {
+    if (FD->getStorageClassAsWritten() != SC_None)
+      R.RewriteBlockLiteralFunctionDecl(FD);
     return FD->getTypeSpecStartLoc();
+  }
   const DeclContext *DC = FD->getDeclContext();
   if (const LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(DC)) {
     SourceLocation BodyRBrace = LSD->getRBraceLoc();
@@ -4108,7 +4133,7 @@ void RewriteModernObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 }
 
 void RewriteModernObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
-  SourceLocation FunLocStart = getFunctionSourceLocation(FD);
+  SourceLocation FunLocStart = getFunctionSourceLocation(*this, FD);
   StringRef FuncName = FD->getName();
 
   SynthesizeBlockLiterals(FunLocStart, FuncName);
@@ -4756,7 +4781,7 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
   // Insert this type in global scope. It is needed by helper function.
   SourceLocation FunLocStart;
   if (CurFunctionDef)
-     FunLocStart = getFunctionSourceLocation(CurFunctionDef);
+     FunLocStart = getFunctionSourceLocation(*this, CurFunctionDef);
   else {
     assert(CurMethodDef && "RewriteByRefVar - CurMethodDef is null");
     FunLocStart = CurMethodDef->getLocStart();
@@ -5400,7 +5425,6 @@ void RewriteModernObjC::HandleDeclInMainFile(Decl *D) {
       // FIXME: If this should support Obj-C++, support CXXTryStmt
       if (CompoundStmt *Body = dyn_cast_or_null<CompoundStmt>(FD->getBody())) {
         CurFunctionDef = FD;
-        CurFunctionDeclToDeclareForBlock = FD;
         CurrentBody = Body;
         Body =
         cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
@@ -5414,7 +5438,6 @@ void RewriteModernObjC::HandleDeclInMainFile(Decl *D) {
         // and any copy/dispose helper functions.
         InsertBlockLiteralsWithinFunction(FD);
         CurFunctionDef = 0;
-        CurFunctionDeclToDeclareForBlock = 0;
       }
       break;
     }

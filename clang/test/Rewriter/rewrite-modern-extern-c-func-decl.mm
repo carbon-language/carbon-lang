@@ -43,3 +43,14 @@ main (int argc, char *argv[])
                 bBlockVariable = 42;
         };
 }
+
+// rdar://11275241
+static char stringtype;
+char CFStringGetTypeID();
+void x(void (^)());
+
+static void initStatics() {
+    x(^{
+        stringtype = CFStringGetTypeID();
+    });
+}
