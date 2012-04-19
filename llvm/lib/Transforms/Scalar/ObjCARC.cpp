@@ -3379,7 +3379,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
 
     // Ok, everything checks out and we're all set. Let's move some code!
     Changed = true;
-    AnyPairsCompletelyEliminated = NewCount == 0;
+    AnyPairsCompletelyEliminated = OldCount != 0 && NewCount == 0;
     NumRRs += OldCount - NewCount;
     MoveCalls(Arg, RetainsToMove, ReleasesToMove,
               Retains, Releases, DeadInsts, M);
