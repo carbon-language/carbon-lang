@@ -216,3 +216,4 @@ class Foo {
   Bar bar_; // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}
 };
 void Foo::SetBar(Bar bar) { bar_ = bar; } // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}
+}
