@@ -1656,72 +1656,79 @@ def warn_availability_version_ordering : Warning<
   "attribute ignored">;
   
 // Thread Safety Attributes
-// Errors when parsing the attributes
+def warn_thread_attribute_ignored : Warning<
+  "ignoring %0 attribute because its argument is invalid">,
+  InGroup<ThreadSafetyAttributes>, DefaultIgnore;
+def warn_thread_attribute_argument_not_lockable : Warning<
+  "%0 attribute requires arguments whose type is annotated "
+  "with 'lockable' attribute; type here is '%1'">,
+  InGroup<ThreadSafetyAttributes>, DefaultIgnore;
+def warn_thread_attribute_argument_not_class : Warning<
+  "%0 attribute requires arguments that are class type or point to"
+  " class type; type here is '%1'">,
+  InGroup<ThreadSafetyAttributes>, DefaultIgnore;  
+def warn_thread_attribute_decl_not_lockable : Warning<
+  "%0 attribute can only be applied in a context annotated "
+  "with 'lockable' attribute">,
+  InGroup<ThreadSafetyAttributes>, DefaultIgnore;
+def warn_thread_attribute_decl_not_pointer : Warning<
+  "'%0' only applies to pointer types; type here is %1">,
+  InGroup<ThreadSafetyAttributes>, DefaultIgnore;
 def err_attribute_argument_out_of_range : Error<
   "%0 attribute parameter %1 is out of bounds: "
   "%plural{0:no parameters to index into|"
   "1:can only be 1, since there is one parameter|"
   ":must be between 1 and %2}2">;
-def warn_attribute_argument_not_lockable : Warning<
-  "%0 attribute requires arguments whose type is annotated "
-  "with 'lockable' attribute; type here is '%1'">,
-  InGroup<ThreadSafety>, DefaultIgnore;
-def warn_attribute_decl_not_lockable : Warning<
-  "%0 attribute can only be applied in a context annotated "
-  "with 'lockable' attribute">,
-  InGroup<ThreadSafety>, DefaultIgnore;
-def warn_attribute_argument_not_class : Warning<
-  "%0 attribute requires arguments that are class type or point to"
-  " class type; type here is '%1'">,
-  InGroup<ThreadSafety>, DefaultIgnore;   
+
+// Thread Safety Analysis   
 def warn_unlock_but_no_lock : Warning<
   "unlocking '%0' that was not locked">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_double_lock : Warning<
   "locking '%0' that is already locked">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_no_unlock : Warning<
   "mutex '%0' is still locked at the end of function">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 // FIXME: improve the error message about locks not in scope
 def warn_lock_some_predecessors : Warning<
   "mutex '%0' is not locked on every path through here">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_expecting_lock_held_on_loop : Warning<
   "expecting mutex '%0' to be locked at start of each loop">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def note_locked_here : Note<"mutex acquired here">;
 def warn_lock_exclusive_and_shared : Warning<
   "mutex '%0' is locked exclusively and shared in the same scope">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def note_lock_exclusive_and_shared : Note<
   "the other lock of mutex '%0' is here">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_variable_requires_lock : Warning<
   "%select{reading|writing}2 variable '%0' requires locking "
   "%select{'%1'|'%1' exclusively}2">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_var_deref_requires_lock : Warning<
   "%select{reading|writing}2 the value pointed to by '%0' requires locking "
   "%select{'%1'|'%1' exclusively}2">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_variable_requires_any_lock : Warning<
   "%select{reading|writing}1 variable '%0' requires locking "
   "%select{any mutex|any mutex exclusively}1">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_var_deref_requires_any_lock : Warning<
   "%select{reading|writing}1 the value pointed to by '%0' requires locking "
   "%select{any mutex|any mutex exclusively}1">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_fun_requires_lock : Warning<
   "calling function '%0' requires %select{shared|exclusive}2 lock on '%1'">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_fun_excludes_mutex : Warning<
   "cannot call function '%0' while mutex '%1' is locked">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def warn_cannot_resolve_lock : Warning<
   "cannot resolve lock expression">,
-  InGroup<ThreadSafety>, DefaultIgnore;
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 
 
 def warn_impcast_vector_scalar : Warning<

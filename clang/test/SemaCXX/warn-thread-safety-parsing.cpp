@@ -343,7 +343,7 @@ int gb_var_arg_8 __attribute__((guarded_by(muPointer)));
 int gb_var_arg_bad_1 __attribute__((guarded_by(1))); // \
   // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'int'}}
 int gb_var_arg_bad_2 __attribute__((guarded_by("mu"))); // \
-  // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'const char [3]'}}
+  // expected-warning {{ignoring 'guarded_by' attribute because its argument is invalid}}
 int gb_var_arg_bad_3 __attribute__((guarded_by(muDoublePointer))); // \
   // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'class Mu **'}}
 int gb_var_arg_bad_4 __attribute__((guarded_by(umu))); // \
@@ -414,7 +414,7 @@ int * pgb_var_arg_8 __attribute__((pt_guarded_by(muPointer)));
 int * pgb_var_arg_bad_1 __attribute__((pt_guarded_by(1))); // \
   // expected-warning {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
 int * pgb_var_arg_bad_2 __attribute__((pt_guarded_by("mu"))); // \
-  // expected-warning {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'pt_guarded_by' attribute because its argument is invalid}}
 int * pgb_var_arg_bad_3 __attribute__((pt_guarded_by(muDoublePointer))); // \
   // expected-warning {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
 int * pgb_var_arg_bad_4 __attribute__((pt_guarded_by(umu))); // \
@@ -475,7 +475,7 @@ Mu aa_var_arg_8 __attribute__((acquired_after(muPointer)));
 Mu aa_var_arg_bad_1 __attribute__((acquired_after(1))); // \
   // expected-warning {{'acquired_after' attribute requires arguments that are class type or point to class type}}
 Mu aa_var_arg_bad_2 __attribute__((acquired_after("mu"))); // \
-  // expected-warning {{'acquired_after' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'acquired_after' attribute because its argument is invalid}}
 Mu aa_var_arg_bad_3 __attribute__((acquired_after(muDoublePointer))); // \
   // expected-warning {{'acquired_after' attribute requires arguments that are class type or point to class type}}
 Mu aa_var_arg_bad_4 __attribute__((acquired_after(umu))); // \
@@ -538,7 +538,7 @@ Mu ab_var_arg_8 __attribute__((acquired_before(muPointer)));
 Mu ab_var_arg_bad_1 __attribute__((acquired_before(1))); // \
   // expected-warning {{'acquired_before' attribute requires arguments that are class type or point to class type}}
 Mu ab_var_arg_bad_2 __attribute__((acquired_before("mu"))); // \
-  // expected-warning {{'acquired_before' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'acquired_before' attribute because its argument is invalid}}
 Mu ab_var_arg_bad_3 __attribute__((acquired_before(muDoublePointer))); // \
   // expected-warning {{'acquired_before' attribute requires arguments that are class type or point to class type}}
 Mu ab_var_arg_bad_4 __attribute__((acquired_before(umu))); // \
@@ -603,7 +603,7 @@ int elf_function_9(Mu x, Mu y) __attribute__((exclusive_lock_function(1,2)));
 
 // illegal attribute arguments
 int elf_function_bad_2() __attribute__((exclusive_lock_function("mu"))); // \
-  // expected-warning {{'exclusive_lock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'exclusive_lock_function' attribute because its argument is invalid}}
 int elf_function_bad_3() __attribute__((exclusive_lock_function(muDoublePointer))); // \
   // expected-warning {{'exclusive_lock_function' attribute requires arguments that are class type or point to class type}}
 int elf_function_bad_4() __attribute__((exclusive_lock_function(umu))); // \
@@ -675,7 +675,7 @@ int slf_function_9(Mu x, Mu y) __attribute__((shared_lock_function(1,2)));
 
 // illegal attribute arguments
 int slf_function_bad_2() __attribute__((shared_lock_function("mu"))); // \
-  // expected-warning {{'shared_lock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'shared_lock_function' attribute because its argument is invalid}}
 int slf_function_bad_3() __attribute__((shared_lock_function(muDoublePointer))); // \
   // expected-warning {{'shared_lock_function' attribute requires arguments that are class type or point to class type}}
 int slf_function_bad_4() __attribute__((shared_lock_function(umu))); // \
@@ -757,7 +757,7 @@ int etf_function_bad_3() __attribute__((exclusive_trylock_function(muDoublePoint
   // expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
 
 int etf_function_bad_4() __attribute__((exclusive_trylock_function(1, "mu"))); // \
-  // expected-warning {{'exclusive_trylock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'exclusive_trylock_function' attribute because its argument is invalid}}
 int etf_function_bad_5() __attribute__((exclusive_trylock_function(1, muDoublePointer))); // \
   // expected-warning {{'exclusive_trylock_function' attribute requires arguments that are class type or point to class type}}
 int etf_function_bad_6() __attribute__((exclusive_trylock_function(1, umu))); // \
@@ -831,7 +831,7 @@ int stf_function_bad_3() __attribute__((shared_trylock_function(muDoublePointer)
   // expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
 
 int stf_function_bad_4() __attribute__((shared_trylock_function(1, "mu"))); // \
-  // expected-warning {{'shared_trylock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'shared_trylock_function' attribute because its argument is invalid}}
 int stf_function_bad_5() __attribute__((shared_trylock_function(1, muDoublePointer))); // \
   // expected-warning {{'shared_trylock_function' attribute requires arguments that are class type or point to class type}}
 int stf_function_bad_6() __attribute__((shared_trylock_function(1, umu))); // \
@@ -894,7 +894,7 @@ int uf_function_9(Mu x, Mu y) __attribute__((unlock_function(1,2)));
 
 // illegal attribute arguments
 int uf_function_bad_2() __attribute__((unlock_function("mu"))); // \
-  // expected-warning {{'unlock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'unlock_function' attribute because its argument is invalid}}
 int uf_function_bad_3() __attribute__((unlock_function(muDoublePointer))); // \
   // expected-warning {{'unlock_function' attribute requires arguments that are class type or point to class type}}
 int uf_function_bad_4() __attribute__((unlock_function(umu))); // \
@@ -1037,7 +1037,7 @@ int le_function_8() __attribute__((locks_excluded(muPointer)));
 int le_function_bad_1() __attribute__((locks_excluded(1))); // \
   // expected-warning {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
 int le_function_bad_2() __attribute__((locks_excluded("mu"))); // \
-  // expected-warning {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'locks_excluded' attribute because its argument is invalid}}
 int le_function_bad_3() __attribute__((locks_excluded(muDoublePointer))); // \
   // expected-warning {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
 int le_function_bad_4() __attribute__((locks_excluded(umu))); // \
@@ -1104,7 +1104,7 @@ int elr_function_8() __attribute__((exclusive_locks_required(muPointer)));
 int elr_function_bad_1() __attribute__((exclusive_locks_required(1))); // \
   // expected-warning {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
 int elr_function_bad_2() __attribute__((exclusive_locks_required("mu"))); // \
-  // expected-warning {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'exclusive_locks_required' attribute because its argument is invalid}}
 int elr_function_bad_3() __attribute__((exclusive_locks_required(muDoublePointer))); // \
   // expected-warning {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
 int elr_function_bad_4() __attribute__((exclusive_locks_required(umu))); // \
@@ -1172,7 +1172,7 @@ int slr_function_8() __attribute__((shared_locks_required(muPointer)));
 int slr_function_bad_1() __attribute__((shared_locks_required(1))); // \
   // expected-warning {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
 int slr_function_bad_2() __attribute__((shared_locks_required("mu"))); // \
-  // expected-warning {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'shared_locks_required' attribute because its argument is invalid}}
 int slr_function_bad_3() __attribute__((shared_locks_required(muDoublePointer))); // \
   // expected-warning {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
 int slr_function_bad_4() __attribute__((shared_locks_required(umu))); // \
