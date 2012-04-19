@@ -18,6 +18,7 @@
 //     atomic_compare_exchange_strong(atomic<T>* obj, T* expc, T desr);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

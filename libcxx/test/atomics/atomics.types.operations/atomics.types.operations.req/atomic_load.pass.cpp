@@ -18,6 +18,7 @@
 //     atomic_load(const atomic<T>* obj);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

@@ -21,6 +21,7 @@
 //                                           memory_order s, memory_order f);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

@@ -18,6 +18,7 @@
 //     atomic_store_explicit(atomic<T>* obj, T desr, memory_order m);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

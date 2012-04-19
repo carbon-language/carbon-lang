@@ -18,6 +18,7 @@
 //     atomic_load_explicit(const atomic<T>* obj, memory_order m);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

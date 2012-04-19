@@ -26,6 +26,7 @@
 //     atomic_fetch_add_explicit(atomic<T*>* obj, ptrdiff_t op, memory_order m);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

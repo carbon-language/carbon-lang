@@ -18,6 +18,7 @@
 //     atomic_init(atomic<T>* obj, T desr);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

@@ -66,6 +66,7 @@
 // };
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class A, class T>

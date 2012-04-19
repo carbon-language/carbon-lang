@@ -47,3 +47,6 @@ D: Linux fixes.
 
 N: Jonathan Sauer
 D: Minor patches, mostly related to constexpr
+
+N: Richard Smith
+D: Minor patches.

@@ -12,6 +12,7 @@
 // #define ATOMIC_VAR_INIT(value)
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 int main()

@@ -18,6 +18,7 @@
 //     atomic_fetch_and(atomic<Integral>* obj, Integral op);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>

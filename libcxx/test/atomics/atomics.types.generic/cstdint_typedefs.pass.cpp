@@ -36,6 +36,7 @@
 
 #include <atomic>
 #include <type_traits>
+#include <cstdint>
 
 int main()
 {

@@ -26,6 +26,7 @@
 //     atomic_fetch_sub(atomic<T*>* obj, ptrdiff_t op);
 
 #include <atomic>
+#include <type_traits>
 #include <cassert>
 
 template <class T>
