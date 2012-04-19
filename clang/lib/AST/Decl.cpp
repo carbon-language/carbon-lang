@@ -484,18 +484,14 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
 
   LinkageInfo LV;
 
-  bool DHasExplicitVisibility = false;
   // If we have an explicit visibility attribute, merge that in.
   if (F.ConsiderVisibilityAttributes) {
-    if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
+    if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility())
       LV.mergeVisibility(*Vis, true);
-
-      DHasExplicitVisibility = true;
-    }
   }
   // Ignore both global visibility and attributes when computing our
   // parent's visibility if we already have an explicit one.
-  LVFlags ClassF =  DHasExplicitVisibility ?
+  LVFlags ClassF =  LV.visibilityExplicit() ?
     LVFlags::CreateOnlyDeclLinkage() : F;
 
   // If we're paying attention to global visibility, apply
