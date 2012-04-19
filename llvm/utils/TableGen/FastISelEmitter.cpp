@@ -639,7 +639,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
                 Operands.PrintManglingSuffix(OS, *Memo.PhysRegs,
                                              ImmediatePredicates, true);
                 OS << "(" << InstNS << Memo.Name << ", ";
-                OS << InstNS << Memo.RC->getName() << "RegisterClass";
+                OS << "&" << InstNS << Memo.RC->getName() << "RegClass";
                 if (!Operands.empty())
                   OS << ", ";
                 Operands.PrintArguments(OS, *Memo.PhysRegs);
@@ -731,7 +731,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
               Operands.PrintManglingSuffix(OS, *Memo.PhysRegs,
                                            ImmediatePredicates, true);
               OS << "(" << InstNS << Memo.Name << ", ";
-              OS << InstNS << Memo.RC->getName() << "RegisterClass";
+              OS << "&" << InstNS << Memo.RC->getName() << "RegClass";
               if (!Operands.empty())
                 OS << ", ";
               Operands.PrintArguments(OS, *Memo.PhysRegs);
