@@ -490,8 +490,10 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility())
       LV.mergeVisibility(*Vis, true);
   }
-  // Ignore both global visibility and attributes when computing our
-  // parent's visibility if we already have an explicit one.
+
+  // If this class member has an explicit visibility attribute, the only
+  // thing that can change its visibility is the template arguments, so
+  // only look for them when processing the the class.
   LVFlags ClassF =  LV.visibilityExplicit() ?
     LVFlags::CreateOnlyDeclLinkage() : F;
 
@@ -523,9 +525,12 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
       LV.mergeVisibility(HiddenVisibility, true);
   }
 
-  // Class members only have linkage if their class has external
-  // linkage.
-  LV.merge(getLVForDecl(cast<RecordDecl>(D->getDeclContext()), ClassF));
+  // If this member has an visibility attribute, ClassF will exclude
+  // attributes on the class or command line options, keeping only information
+  // about the template instantiation. If the member has no visibility
+  // attributes, mergeWithMin behaves like merge, so in both cases mergeWithMin
+  // produces the desired result.
+  LV.mergeWithMin(getLVForDecl(cast<RecordDecl>(D->getDeclContext()), ClassF));
   if (!isExternalLinkage(LV.linkage()))
     return LinkageInfo::none();
 
@@ -579,8 +584,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     LinkageInfo TypeLV = getLVForType(VD->getType());
     if (TypeLV.linkage() != ExternalLinkage)
       LV.mergeLinkage(UniqueExternalLinkage);
-    if (!LV.visibilityExplicit())
-      LV.mergeVisibility(TypeLV);
+    LV.mergeVisibility(TypeLV);
   }
 
   return LV;

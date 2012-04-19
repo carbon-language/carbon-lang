@@ -262,15 +262,11 @@ public:
       if (visibility() < V)
         return;
 
-      // If one has explicit visibility and the other doesn't, keep the
-      // explicit one.
-      if (visibilityExplicit() && !E)
+      // If we have an explicit visibility, keep it
+      if (visibilityExplicit())
         return;
-      if (!visibilityExplicit() && E)
-        setVisibility(V, E);
 
-      // If both are explicit or both are implicit, keep the minimum.
-      setVisibility(minVisibility(visibility(), V), visibilityExplicit() || E);
+      setVisibility(V, E);
     }
     // Merge the visibility V, keeping the most restrictive one.
     // This is used for cases like merging the visibility of a template
