@@ -1275,16 +1275,6 @@ for ia in range(len(archs) if iterArchs else 1):
                     self.stream.write(self.fmt % self.counter)
                 super(LLDBTestResult, self).startTest(test)
 
-            def stopTest(self, test):
-                """Called when the given test has been run"""
-                if progress_bar:
-                    sys.__stdout__.write('.')
-                    sys.__stdout__.flush()
-                    if self.counter == suite.countTestCases():
-                        sys.__stdout__.write('\n')
-
-                super(LLDBTestResult, self).stopTest(test)
-
             def addError(self, test, err):
                 global sdir_has_content
                 sdir_has_content = True
@@ -1328,7 +1318,7 @@ for ia in range(len(archs) if iterArchs else 1):
         # Invoke the test runner.
         if count == 1:
             result = unittest2.TextTestRunner(stream=sys.stderr,
-                                              verbosity=verbose,
+                                              verbosity=(1 if progress_bar else verbose),
                                               failfast=failfast,
                                               resultclass=LLDBTestResult).run(suite)
         else:
@@ -1338,7 +1328,7 @@ for ia in range(len(archs) if iterArchs else 1):
             LLDBTestResult.__ignore_singleton__ = True
             for i in range(count):
                 result = unittest2.TextTestRunner(stream=sys.stderr,
-                                                  verbosity=verbose,
+                                                  verbosity=(1 if progress_bar else verbose),
                                                   failfast=failfast,
                                                   resultclass=LLDBTestResult).run(suite)
         
