@@ -15,7 +15,11 @@
 #include <cstdint>
 #include <cstddef>
 #include "system_error"
+
+// Use <cxxabi.h> to determine whether we're linking against libc++abi.
+#if __has_include(<cxxabi.h>)
 #include <cxxabi.h>
+#endif
 
 // Note:  optimize for size
 
