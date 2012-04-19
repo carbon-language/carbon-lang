@@ -204,3 +204,15 @@ template<template<typename> Foo, // expected-error {{template template parameter
          template<typename> typename Bar, // expected-error {{template template parameter requires 'class' after the parameter list}}
          template<typename> struct Baz> // expected-error {{template template parameter requires 'class' after the parameter list}}
 void func();
+
+
+namespace ShadowedTagType {
+class Foo {
+ public:
+  enum Bar { X, Y };
+  void SetBar(Bar bar);
+  Bar Bar();
+ private:
+  Bar bar_; // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}
+};
+void Foo::SetBar(Bar bar) { bar_ = bar; } // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}

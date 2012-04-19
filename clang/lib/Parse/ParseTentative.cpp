@@ -931,8 +931,12 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return TPResult::Error();
-    if (Tok.is(tok::identifier))
-      return TPResult::False();
+    if (Tok.is(tok::identifier)) {
+      const Token &Next = NextToken();
+      bool NotObjC = !(getLangOpts().ObjC1 || getLangOpts().ObjC2);
+      return (NotObjC && Next.is(tok::identifier)) ?
+          TPResult::True() : TPResult::False();
+    }
     return isCXXDeclarationSpecifier(BracedCastResult);
 
   case tok::coloncolon: {    // ::foo::bar
