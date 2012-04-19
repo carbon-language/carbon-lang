@@ -40,3 +40,5 @@ projects/*
 tools/clang
 # LLDB, which is tracked independently.
 tools/lldb
+# Sphinx build tree, if building in-source dir.
+docs/_build
