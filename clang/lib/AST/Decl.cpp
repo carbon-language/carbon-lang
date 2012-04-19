@@ -327,7 +327,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       LinkageInfo TypeLV = getLVForType(Var->getType());
       if (TypeLV.linkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
-      LV.mergeVisibilityWithMin(TypeLV);
+      LV.mergeVisibility(TypeLV);
     }
 
     if (Var->getStorageClass() == SC_PrivateExtern)

@@ -258,6 +258,10 @@ public:
     // down to one of its members. If the member has no explicit visibility,
     // the class visibility wins.
     void mergeVisibility(Visibility V, bool E = false) {
+      // Never increase the visibility
+      if (visibility() < V)
+        return;
+
       // If one has explicit visibility and the other doesn't, keep the
       // explicit one.
       if (visibilityExplicit() && !E)
