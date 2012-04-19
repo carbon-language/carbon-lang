@@ -3070,6 +3070,15 @@ def err_empty_scalar_initializer : Error<"scalar initializer cannot be empty">;
 def warn_cxx98_compat_empty_scalar_initializer : Warning<
   "scalar initialized from empty initializer list is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_reference_list_init : Warning<
+  "reference initialized from initializer list is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_initializer_list_init : Warning<
+  "initialization of initializer_list object is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+def warn_cxx98_compat_ctor_list_init : Warning<
+  "constructor call from initializer list is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_illegal_initializer : Error<
   "illegal initializer (only variables can be initialized)">;
 def err_illegal_initializer_type : Error<"illegal initializer type %0">;

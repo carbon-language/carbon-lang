@@ -1,7 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -verify %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 %s
 
-namespace std { struct type_info; }
+namespace std {
+  struct type_info;
+  using size_t = decltype(sizeof(0)); // expected-warning {{decltype}} expected-warning {{alias}}
+  template<typename T> struct initializer_list {
+    initializer_list(T*, size_t);
+    T *p;
+    size_t n;
+  };
+}
 
 template<typename ...T>  // expected-warning {{variadic templates are incompatible with C++98}}
 class Variadic1 {};
@@ -39,6 +47,14 @@ void Lambda() {
   []{}(); // expected-warning {{lambda expressions are incompatible with C++98}}
 }
 
+struct Ctor {
+  Ctor(int, char);
+  Ctor(double, long);
+};
+struct InitListCtor {
+  InitListCtor(std::initializer_list<bool>);
+};
+
 int InitList(int i = {}) { // expected-warning {{generalized initializer lists are incompatible with C++98}} \
                            // expected-warning {{scalar initialized from empty initializer list is incompatible with C++98}}
   (void)new int {}; // expected-warning {{generalized initializer lists are incompatible with C++98}} \
@@ -48,6 +64,14 @@ int InitList(int i = {}) { // expected-warning {{generalized initializer lists a
   int x { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
   S<int> s = {}; // ok, aggregate
   s = {}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  std::initializer_list<int> xs = { 1, 2, 3 }; // expected-warning {{initialization of initializer_list object is incompatible with C++98}}
+  auto ys = { 1, 2, 3 }; // expected-warning {{initialization of initializer_list object is incompatible with C++98}} \
+                         // expected-warning {{'auto' type specifier is incompatible with C++98}}
+  Ctor c1 = { 1, 2 }; // expected-warning {{constructor call from initializer list is incompatible with C++98}}
+  Ctor c2 = { 3.0, 4l }; // expected-warning {{constructor call from initializer list is incompatible with C++98}}
+  InitListCtor ilc = { true, false }; // expected-warning {{initialization of initializer_list object is incompatible with C++98}}
+  const int &r = { 0 }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
+  struct { int a; const int &r; } rr = { 0, {{0}} }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
   return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
 }
 struct DelayedDefaultArgumentParseInitList {

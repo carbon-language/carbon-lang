@@ -4816,6 +4816,17 @@ InitializationSequence::Perform(Sema &S,
   if (Steps.empty())
     return S.Owned((Expr *)0);
 
+  if (S.getLangOpts().CPlusPlus0x && Entity.getType()->isReferenceType() &&
+      Args.size() == 1 && isa<InitListExpr>(Args.get()[0]) &&
+      Entity.getKind() != InitializedEntity::EK_Parameter) {
+    // Produce a C++98 compatibility warning if we are initializing a reference
+    // from an initializer list. For parameters, we produce a better warning
+    // elsewhere.
+    Expr *Init = Args.get()[0];
+    S.Diag(Init->getLocStart(), diag::warn_cxx98_compat_reference_list_init)
+      << Init->getSourceRange();
+  }
+
   QualType DestType = Entity.getType().getNonReferenceType();
   // FIXME: Ugly hack around the fact that Entity.getType() is not
   // the same as Entity.getDecl()->getType() in cases involving type merging,
@@ -5153,6 +5164,8 @@ InitializationSequence::Perform(Sema &S,
                                         Entity.getType().getNonReferenceType());
       bool UseTemporary = Entity.getType()->isReferenceType();
       InitListExpr *InitList = cast<InitListExpr>(CurInit.get());
+      S.Diag(InitList->getExprLoc(), diag::warn_cxx98_compat_ctor_list_init)
+        << InitList->getSourceRange();
       MultiExprArg Arg(InitList->getInits(), InitList->getNumInits());
       CurInit = PerformConstructorInitialization(S, UseTemporary ? TempEntity :
                                                                    Entity,
@@ -5330,6 +5343,8 @@ InitializationSequence::Perform(Sema &S,
       }
 
       InitListExpr *ILE = cast<InitListExpr>(CurInit.take());
+      S.Diag(ILE->getExprLoc(), diag::warn_cxx98_compat_initializer_list_init)
+        << ILE->getSourceRange();
       unsigned NumInits = ILE->getNumInits();
       SmallVector<Expr*, 16> Converted(NumInits);
       InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
