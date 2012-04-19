@@ -106,7 +106,7 @@ class BenchBase(TestBase):
 
     def tearDown(self):
         """Fixture for unittest test case teardown."""
-        super(BenchBase, self).setUp()
+        super(BenchBase, self).tearDown()
         #TestBase.tearDown(self)
         del self.stopwatch
 
