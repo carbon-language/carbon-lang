@@ -781,7 +781,7 @@ static AccessResult HasAccess(Sema &S,
 
         // Emulate a MSVC bug where the creation of pointer-to-member
         // to protected member of base class is allowed but only from
-        // a static function member functions.
+        // static member functions.
         if (S.getLangOpts().MicrosoftMode && !EC.Functions.empty())
           if (CXXMethodDecl* MD = dyn_cast<CXXMethodDecl>(EC.Functions.front()))
             if (MD->isStatic()) return AR_accessible;
