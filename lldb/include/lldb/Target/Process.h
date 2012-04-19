@@ -1769,6 +1769,12 @@ public:
     /// re-enabling breakpoints, and enabling the basic flow control
     /// that the plug-in instances need not worry about.
     ///
+    /// N.B. This function also sets the Write side of the Run Lock,
+    /// which is unset when the corresponding stop event is pulled off
+    /// the Public Event Queue.  If you need to resume the process without
+    /// setting the Run Lock, use PrivateResume (though you should only do
+    /// that from inside the Process class.
+    ///
     /// @return
     ///     Returns an error object.
     ///
@@ -1777,8 +1783,8 @@ public:
     /// @see Thread:Suspend()
     //------------------------------------------------------------------
     Error
-    Resume ();
-
+    Resume();
+    
     //------------------------------------------------------------------
     /// Halts a running process.
     ///
@@ -2304,6 +2310,16 @@ protected:
 
     lldb::StateType
     GetPrivateState ();
+
+    //------------------------------------------------------------------
+    /// The "private" side of resuming a process.  This doesn't alter the
+    /// state of m_run_lock, but just causes the process to resume.
+    ///
+    /// @return
+    ///     An Error object describing the success or failure of the resume.
+    //------------------------------------------------------------------
+    Error
+    PrivateResume ();
 
     //------------------------------------------------------------------
     // Called internally

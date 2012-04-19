@@ -1293,6 +1293,10 @@ Process::SetPublicState (StateType new_state)
         log->Printf("Process::SetPublicState (%s)", StateAsCString(new_state));
     const StateType old_state = m_public_state.GetValue();
     m_public_state.SetValue (new_state);
+    
+    // On the transition from Run to Stopped, we unlock the writer end of the
+    // run lock.  The lock gets locked in Resume, which is the public API
+    // to tell the program to run.
     if (!IsHijackedForEvent(eBroadcastBitStateChanged))
     {
         const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
@@ -1305,14 +1309,24 @@ Process::SetPublicState (StateType new_state)
                     log->Printf("Process::SetPublicState (%s) -- unlocking run lock", StateAsCString(new_state));
                 m_run_lock.WriteUnlock();
             }
-            else
-            {
-                if (log)
-                    log->Printf("Process::SetPublicState (%s) -- locking run lock", StateAsCString(new_state));
-                m_run_lock.WriteLock();
-            }
         }
     }
+}
+
+Error
+Process::Resume ()
+{
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("Process::Resume -- locking run lock");
+    if (!m_run_lock.WriteTryLock())
+    {
+        Error error("Resume request failed - process still running.");
+        if (log)
+            log->Printf ("Process::Resume: -- WriteTryLock failed, not resuming.");
+        return error;
+    }
+    return PrivateResume();
 }
 
 StateType
@@ -2495,7 +2509,7 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
                 if (m_exec_count > 0)
                 {
                     --m_exec_count;
-                    m_process->Resume();
+                    m_process->PrivateResume ();
                     return eEventActionRetry;
                 }
                 else
@@ -2797,7 +2811,7 @@ Process::ConnectRemote (const char *remote_url)
 
 
 Error
-Process::Resume ()
+Process::PrivateResume ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
@@ -3096,7 +3110,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
 
                     if (log)
                         log->Printf ("Process::ShouldBroadcastEvent (%p) Restarting process from state: %s", event_ptr, StateAsCString(state));
-                    Resume ();
+                    PrivateResume ();
                 }
                 else
                 {
@@ -3503,6 +3517,8 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             {
                 // We've been asked to continue, so do that here.
                 SetRestarted(true);
+                // Use the public resume method here, since this is just
+                // extending a public resume.
                 m_process_sp->Resume();
             }
             else
@@ -4042,7 +4058,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         {
             // Do the initial resume and wait for the running event before going further.
     
-            Error resume_error = Resume ();
+            Error resume_error = PrivateResume ();
             if (!resume_error.Success())
             {
                 errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
