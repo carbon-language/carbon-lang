@@ -5901,6 +5901,9 @@ public:
                                            bool IsInstance);
 
   bool inferObjCARCLifetime(ValueDecl *decl);
+  
+  void DiagnoseARCUseOfWeakReceiver(NamedDecl *PDecl,
+                                    QualType T, SourceLocation Loc);
 
   ExprResult
   HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,

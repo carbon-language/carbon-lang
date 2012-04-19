@@ -478,6 +478,8 @@ bool ObjCPropertyOpBuilder::findGetter() {
   if (RefExpr->isImplicitProperty()) {
     if ((Getter = RefExpr->getImplicitPropertyGetter())) {
       GetterSelector = Getter->getSelector();
+      S.DiagnoseARCUseOfWeakReceiver(Getter, Getter->getResultType(),
+                                     RefExpr->getLocation());
       return true;
     }
     else {
@@ -497,6 +499,8 @@ bool ObjCPropertyOpBuilder::findGetter() {
   }
 
   ObjCPropertyDecl *prop = RefExpr->getExplicitProperty();
+  S.DiagnoseARCUseOfWeakReceiver(prop, prop->getType(),
+                                 RefExpr->getLocation());
   Getter = LookupMethodInReceiverType(S, prop->getGetterName(), RefExpr);
   return (Getter != 0);
 }

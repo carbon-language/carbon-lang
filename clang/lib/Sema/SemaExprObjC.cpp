@@ -1323,6 +1323,32 @@ ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
   return 0;
 }
 
+void 
+Sema::DiagnoseARCUseOfWeakReceiver(NamedDecl *PDecl,
+                                   QualType T, SourceLocation Loc) {
+  if (!getLangOpts().ObjCAutoRefCount)
+    return;
+  
+  if (T.getObjCLifetime() == Qualifiers::OCL_Weak) {
+    Diag(Loc, diag::warn_receiver_is_weak) 
+      << (!PDecl ? 0 : (isa<ObjCPropertyDecl>(PDecl) ? 1 : 2));
+    if (PDecl) {
+      if (isa<ObjCPropertyDecl>(PDecl))
+        Diag(PDecl->getLocation(), diag::note_property_declare);
+      else
+        Diag(PDecl->getLocation(), diag::note_method_declared_at) << PDecl;
+    }
+    return;
+  }
+  
+  if (PDecl)
+    if (ObjCPropertyDecl *Prop = dyn_cast<ObjCPropertyDecl>(PDecl))
+      if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak) {
+        Diag(Loc, diag::warn_receiver_is_weak) << 1;
+        Diag(Prop->getLocation(), diag::note_property_declare);
+      }
+}
+
 /// HandleExprPropertyRefExpr - Handle foo.bar where foo is a pointer to an
 /// objective C interface.  This is a property reference expression.
 ExprResult Sema::
@@ -1354,7 +1380,6 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     // Check whether we can reference this property.
     if (DiagnoseUseOfDecl(PD, MemberLoc))
       return ExprError();
-             
     if (Super)
       return Owned(new (Context) ObjCPropertyRefExpr(PD, Context.PseudoObjectTy,
                                                      VK_LValue, OK_ObjCProperty,
@@ -1372,7 +1397,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       // Check whether we can reference this property.
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
-      
+
       if (Super)
         return Owned(new (Context) ObjCPropertyRefExpr(PD,
                                                        Context.PseudoObjectTy,
@@ -2379,10 +2404,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   }
 
   if (getLangOpts().ObjCAutoRefCount) {
-    if (Receiver &&
-        (Receiver->IgnoreParenImpCasts()->getType().getObjCLifetime() 
-          == Qualifiers::OCL_Weak))
-      Diag(Receiver->getLocStart(), diag::warn_receiver_is_weak);
+    if (Receiver)
+      DiagnoseARCUseOfWeakReceiver(0 /* PDecl */,
+                                   Receiver->IgnoreParenImpCasts()->getType(),
+                                   Receiver->getLocStart());
     
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&
