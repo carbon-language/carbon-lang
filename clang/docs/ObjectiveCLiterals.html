@@ -24,21 +24,21 @@
 
 <h2>Introduction</h2>
 
-Three new features were introduced into clang at the same time:  <i>NSNumber Literals</i> provide a syntax for creating <code>NSNumber</code> from scalar literal expressions; <i>Collection Literals</i> provide a short-hand for creating arrays and dictionaries; <i>Object Subscripting</i> provides a way to use subscripting with Objective-C objects. Users of Apple compiler releases can use these features starting with the Apple LLVM Compiler 4.0.  Users of open-source LLVM.org compiler releases can use these features starting with clang v3.1.<p>
+<p>Three new features were introduced into clang at the same time:  <i>NSNumber Literals</i> provide a syntax for creating <code>NSNumber</code> from scalar literal expressions; <i>Collection Literals</i> provide a short-hand for creating arrays and dictionaries; <i>Object Subscripting</i> provides a way to use subscripting with Objective-C objects. Users of Apple compiler releases can use these features starting with the Apple LLVM Compiler 4.0.  Users of open-source LLVM.org compiler releases can use these features starting with clang v3.1.</p>
 
-These language additions simplify common Objective-C programming patterns, make programs more concise, and improve the safety of container creation.<p>
+<p>These language additions simplify common Objective-C programming patterns, make programs more concise, and improve the safety of container creation.</p>
 
-This document describes how the features are implemented in clang, and how to use them in your own programs.<p>
+<p>This document describes how the features are implemented in clang, and how to use them in your own programs.</p>
 
 <h2>NSNumber Literals</h2>
 
-The framework class <code>NSNumber</code> is used to wrap scalar values inside objects:  signed and unsigned integers (<code>char</code>, <code>short</code>, <code>int</code>, <code>long</code>, <code>long long</code>), floating point numbers (<code>float</code>, <code>double</code>), and boolean values (<code>BOOL</code>, C++ <code>bool</code>). Scalar values wrapped in objects are also known as <i>boxed</i> values.<p>
+<p>The framework class <code>NSNumber</code> is used to wrap scalar values inside objects:  signed and unsigned integers (<code>char</code>, <code>short</code>, <code>int</code>, <code>long</code>, <code>long long</code>), floating point numbers (<code>float</code>, <code>double</code>), and boolean values (<code>BOOL</code>, C++ <code>bool</code>). Scalar values wrapped in objects are also known as <i>boxed</i> values.</p>
 
-In Objective-C, any character, numeric or boolean literal prefixed with the <code>'@'</code> character will evaluate to a pointer to an <code>NSNumber</code> object initialized with that value. C's type suffixes may be used to control the size of numeric literals.
+<p>In Objective-C, any character, numeric or boolean literal prefixed with the <code>'@'</code> character will evaluate to a pointer to an <code>NSNumber</code> object initialized with that value. C's type suffixes may be used to control the size of numeric literals.</p>
 
 <h3>Examples</h3>
 
-The following program illustrates the rules for <code>NSNumber</code> literals:<p>
+<p>The following program illustrates the rules for <code>NSNumber</code> literals:</p>
 
 <pre>
 void main(int argc, const char *argv[]) {
@@ -68,19 +68,19 @@ void main(int argc, const char *argv[]) {
 
 <h3>Discussion</h3>
 
-NSNumber literals only support literal scalar values after the <code>'@'</code>. Consequently, <code>@INT_MAX</code> works, but <code>@INT_MIN</code> does not, because they are defined like this:<p>
+<p>NSNumber literals only support literal scalar values after the <code>'@'</code>. Consequently, <code>@INT_MAX</code> works, but <code>@INT_MIN</code> does not, because they are defined like this:</p>
 
 <pre>
 #define INT_MAX   2147483647  /* max value for an int */
 #define INT_MIN   (-2147483647-1) /* min value for an int */
 </pre>
 
-The definition of <code>INT_MIN</code> is not a simple literal, but a parenthesized expression. Parenthesized
-expressions are supported using the <a href="#objc_boxed_expressions">boxed expression</a> syntax, which is described in the next section.<p>
+<p>The definition of <code>INT_MIN</code> is not a simple literal, but a parenthesized expression. Parenthesized
+expressions are supported using the <a href="#objc_boxed_expressions">boxed expression</a> syntax, which is described in the next section.</p>
 
-Because <code>NSNumber</code> does not currently support wrapping <code>long double</code> values, the use of a <code>long double NSNumber</code> literal (e.g. <code>@123.23L</code>) will be rejected by the compiler.<p>
+<p>Because <code>NSNumber</code> does not currently support wrapping <code>long double</code> values, the use of a <code>long double NSNumber</code> literal (e.g. <code>@123.23L</code>) will be rejected by the compiler.</p>
 
-Previously, the <code>BOOL</code> type was simply a typedef for <code>signed char</code>, and <code>YES</code> and <code>NO</code> were macros that expand to <code>(BOOL)1</code> and <code>(BOOL)0</code> respectively. To support <code>@YES</code> and <code>@NO</code> expressions, these macros are now defined using new language keywords in <code>&LT;objc/objc.h&GT;</code>:<p>
+<p>Previously, the <code>BOOL</code> type was simply a typedef for <code>signed char</code>, and <code>YES</code> and <code>NO</code> were macros that expand to <code>(BOOL)1</code> and <code>(BOOL)0</code> respectively. To support <code>@YES</code> and <code>@NO</code> expressions, these macros are now defined using new language keywords in <code>&LT;objc/objc.h&GT;</code>:</p>
 
 <pre>
 #if __has_feature(objc_bool)
@@ -92,9 +92,9 @@ Previously, the <code>BOOL</code> type was simply a typedef for <code>signed cha
 #endif
 </pre>
 
-The compiler implicitly converts <code>__objc_yes</code> and <code>__objc_no</code> to <code>(BOOL)1</code> and <code>(BOOL)0</code>. The keywords are used to disambiguate <code>BOOL</code> and integer literals.<p>
+<p>The compiler implicitly converts <code>__objc_yes</code> and <code>__objc_no</code> to <code>(BOOL)1</code> and <code>(BOOL)0</code>. The keywords are used to disambiguate <code>BOOL</code> and integer literals.</p>
 
-Objective-C++ also supports <code>@true</code> and <code>@false</code> expressions, which are equivalent to <code>@YES</code> and <code>@NO</code>.
+<p>Objective-C++ also supports <code>@true</code> and <code>@false</code> expressions, which are equivalent to <code>@YES</code> and <code>@NO</code>.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objc_boxed_expressions">Boxed Expressions</h2>
@@ -160,7 +160,7 @@ then the fixed underlying type will be used to select the correct <code>NSNumber
 <h3>Boxed C Strings</h3>
 
 <p>
-A C string literal prefixed by the <code>'@'</code> token denotes an <code>NSString</code> literal in the same way a numeric literal prefixed by the <code>'@'</code> token denotes an <code>NSNumber</code> literal. When the type of the parenthesized expression is <code>(char *)</code> or <code>(const char *)</code>, the result of the boxed expression is a pointer to an <code>NSString</code> object containing equivalent character data. The following example converts C-style command line arguments into <code>NSString</code> objects.
+A C string literal prefixed by the <code>'@'</code> token denotes an <code>NSString</code> literal in the same way a numeric literal prefixed by the <code>'@'</code> token denotes an <code>NSNumber</code> literal. When the type of the parenthesized expression is <code>(char *)</code> or <code>(const char *)</code>, the result of the boxed expression is a pointer to an <code>NSString</code> object containing equivalent character data, which is assumed to be '\0'-terminated and UTF-8 encoded. The following example converts C-style command line arguments into <code>NSString</code> objects.
 </p>
 
 <pre>
@@ -183,25 +183,23 @@ As with all C pointers, character pointer expressions can involve arbitrary poin
 
 <h3>Availability</h3>
 
-<p>This feature will be available after clang 3.1. It is not currently available in any Apple compiler.</p>
+<p>Boxed expressions will be available in clang 3.2. It is not currently available in any Apple compiler.</p>
 
 <h2>Container Literals</h2>
 
-Objective-C now supports a new expression syntax for creating immutable array and dictionary container objects.
+<p>Objective-C now supports a new expression syntax for creating immutable array and dictionary container objects.</p>
 
 <h3>Examples</h3>
 
-Immutable array expression:<p>
+<p>Immutable array expression:</p>
  
-<blockquote>
 <pre>
 NSArray *array = @[ @"Hello", NSApp, [NSNumber numberWithInt:42] ];
 </pre>
-</blockquote>
 
-This creates an <code>NSArray</code> with 3 elements. The comma-separated sub-expressions of an array literal can be any Objective-C object pointer typed expression.<p>
+<p>This creates an <code>NSArray</code> with 3 elements. The comma-separated sub-expressions of an array literal can be any Objective-C object pointer typed expression.</p>
 
-Immutable dictionary expression:<p>
+<p>Immutable dictionary expression:</p>
 
 <pre>
 NSDictionary *dictionary = @{
@@ -211,21 +209,21 @@ NSDictionary *dictionary = @{
 };
 </pre>
 
-This creates an <code>NSDictionary</code> with 3 key/value pairs. Value sub-expressions of a dictionary literal must be Objective-C object pointer typed, as in array literals. Key sub-expressions must be of an Objective-C object pointer type that implements the <code>&LT;NSCopying&GT;</code> protocol.<p>
+<p>This creates an <code>NSDictionary</code> with 3 key/value pairs. Value sub-expressions of a dictionary literal must be Objective-C object pointer typed, as in array literals. Key sub-expressions must be of an Objective-C object pointer type that implements the <code>&LT;NSCopying&GT;</code> protocol.</p>
 
 <h3>Discussion</h3>
 
-Neither keys nor values can have the value <code>nil</code> in containers. If the compiler can prove that a key or value is <code>nil</code> at compile time, then a warning will be emitted. Otherwise, a runtime error will occur.<p>
+<p>Neither keys nor values can have the value <code>nil</code> in containers. If the compiler can prove that a key or value is <code>nil</code> at compile time, then a warning will be emitted. Otherwise, a runtime error will occur.</p>
 
-Using array and dictionary literals is safer than the variadic creation forms commonly in use today. Array literal expressions expand to calls to <code>+[NSArray arrayWithObjects:count:]</code>, which validates that all objects are non-<code>nil</code>. The variadic form, <code>+[NSArray arrayWithObjects:]</code> uses <code>nil</code> as an argument list terminator, which can lead to malformed array objects. Dictionary literals are similarly created with <code>+[NSDictionary dictionaryWithObjects:forKeys:count:]</code> which validates all objects and keys, unlike <code>+[NSDictionary dictionaryWithObjectsAndKeys:]</code> which also uses a <code>nil</code> parameter as an argument list terminator.<p>
+<p>Using array and dictionary literals is safer than the variadic creation forms commonly in use today. Array literal expressions expand to calls to <code>+[NSArray arrayWithObjects:count:]</code>, which validates that all objects are non-<code>nil</code>. The variadic form, <code>+[NSArray arrayWithObjects:]</code> uses <code>nil</code> as an argument list terminator, which can lead to malformed array objects. Dictionary literals are similarly created with <code>+[NSDictionary dictionaryWithObjects:forKeys:count:]</code> which validates all objects and keys, unlike <code>+[NSDictionary dictionaryWithObjectsAndKeys:]</code> which also uses a <code>nil</code> parameter as an argument list terminator.</p>
 
 <h2>Object Subscripting</h2>
 
-Objective-C object pointer values can now be used with C's subscripting operator.<p>
+<p>Objective-C object pointer values can now be used with C's subscripting operator.</p>
 
 <h3>Examples</h3>
 
-The following code demonstrates the use of object subscripting syntax with <code>NSMutableArray</code> and <code>NSMutableDictionary</code> objects:<p>
+<p>The following code demonstrates the use of object subscripting syntax with <code>NSMutableArray</code> and <code>NSMutableDictionary</code> objects:</p>
 
 <pre>
 NSMutableArray *array = ...;
@@ -240,87 +238,87 @@ oldObject = dictionary[key];
 dictionary[key] = newObject;	// replace oldObject with newObject
 </pre>
 
-The next section explains how subscripting expressions map to accessor methods.<p>
+<p>The next section explains how subscripting expressions map to accessor methods.</p>
 
 <h3>Subscripting Methods</h3>
 
-Objective-C supports two kinds of subscript expressions:  <i>array-style</i> subscript expressions use integer typed subscripts; <i>dictionary-style</i> subscript expressions use Objective-C object pointer typed subscripts. Each type of subscript expression is mapped to a message send using a predefined selector. The advantage of this design is flexibility:  class designers are free to introduce subscripting by declaring methods or by adopting protocols. Moreover, because the method names are selected by the type of the subscript, an object can be subscripted using both array and dictionary styles.
+<p>Objective-C supports two kinds of subscript expressions:  <i>array-style</i> subscript expressions use integer typed subscripts; <i>dictionary-style</i> subscript expressions use Objective-C object pointer typed subscripts. Each type of subscript expression is mapped to a message send using a predefined selector. The advantage of this design is flexibility:  class designers are free to introduce subscripting by declaring methods or by adopting protocols. Moreover, because the method names are selected by the type of the subscript, an object can be subscripted using both array and dictionary styles.</p>
 
 <h4>Array-Style Subscripting</h4>
 
-When the subscript operand has an integral type, the expression is rewritten to use one of two different selectors, depending on whether the element is being read or written. When an expression reads an element using an integral index, as in the following example:<p>
+<p>When the subscript operand has an integral type, the expression is rewritten to use one of two different selectors, depending on whether the element is being read or written. When an expression reads an element using an integral index, as in the following example:</p>
 
 <pre>
 NSUInteger idx = ...;
 id value = object[idx];
 </pre>
 
-it is translated into a call to <code>objectAtIndexedSubscript:</code><p>
+<p>it is translated into a call to <code>objectAtIndexedSubscript:</code></p>
 
 <pre>
 id value = [object objectAtIndexedSubscript:idx];
 </pre>
 
-When an expression writes an element using an integral index:<p>
+<p>When an expression writes an element using an integral index:</p>
 
 <pre>
 object[idx] = newValue;
 </pre>
 
-it is translated to a call to <code>setObject:atIndexedSubscript:</code><p>
+<p>it is translated to a call to <code>setObject:atIndexedSubscript:</code></p>
 
 <pre>
 [object setObject:newValue atIndexedSubscript:idx];
 </pre>
 
-These message sends are then type-checked and performed just like explicit message sends. The method used for objectAtIndexedSubscript: must be declared with an argument of integral type and a return value of some Objective-C object pointer type. The method used for setObject:atIndexedSubscript: must be declared with its first argument having some Objective-C pointer type and its second argument having integral type.<p>
+<p>These message sends are then type-checked and performed just like explicit message sends. The method used for objectAtIndexedSubscript: must be declared with an argument of integral type and a return value of some Objective-C object pointer type. The method used for setObject:atIndexedSubscript: must be declared with its first argument having some Objective-C pointer type and its second argument having integral type.</p>
 
-The meaning of indexes is left up to the declaring class. The compiler will coerce the index to the appropriate argument type of the method it uses for type-checking.  For an instance of <code>NSArray</code>, reading an element using an index outside the range <code>[0, array.count)</code> will raise an exception. For an instance of <code>NSMutableArray</code>, assigning to an element using an index within this range will replace that element, but assigning to an element using an index outside this range will raise an exception;  no syntax is provided for inserting, appending, or removing elements for mutable arrays.<p>
+<p>The meaning of indexes is left up to the declaring class. The compiler will coerce the index to the appropriate argument type of the method it uses for type-checking.  For an instance of <code>NSArray</code>, reading an element using an index outside the range <code>[0, array.count)</code> will raise an exception. For an instance of <code>NSMutableArray</code>, assigning to an element using an index within this range will replace that element, but assigning to an element using an index outside this range will raise an exception;  no syntax is provided for inserting, appending, or removing elements for mutable arrays.</p>
 
-A class need not declare both methods in order to take advantage of this language feature.  For example, the class <code>NSArray</code> declares only <code>objectAtIndexedSubscript:</code>, so that assignments to elements will fail to type-check; moreover, its subclass <code>NSMutableArray</code> declares <code>setObject:atIndexedSubscript:</code>.
+<p>A class need not declare both methods in order to take advantage of this language feature.  For example, the class <code>NSArray</code> declares only <code>objectAtIndexedSubscript:</code>, so that assignments to elements will fail to type-check; moreover, its subclass <code>NSMutableArray</code> declares <code>setObject:atIndexedSubscript:</code>.</p>
 
 <h4>Dictionary-Style Subscripting</h4>
 
-When the subscript operand has an Objective-C object pointer type, the expression is rewritten to use one of two different selectors, depending on whether the element is being read from or written to. When an expression reads an element using an Objective-C object pointer subscript operand, as in the following example:<p>
+<p>When the subscript operand has an Objective-C object pointer type, the expression is rewritten to use one of two different selectors, depending on whether the element is being read from or written to. When an expression reads an element using an Objective-C object pointer subscript operand, as in the following example:</p>
 
 <pre>
 id key = ...;
 id value = object[key];
 </pre>
 
-it is translated into a call to the <code>objectForKeyedSubscript:</code> method:<p>
+<p>it is translated into a call to the <code>objectForKeyedSubscript:</code> method:</p>
 
 <pre>
 id value = [object objectForKeyedSubscript:key];
 </pre>
 
-When an expression writes an element using an Objective-C object pointer subscript:<p>
+<p>When an expression writes an element using an Objective-C object pointer subscript:</p>
 
 <pre>
 object[key] = newValue;
 </pre>
 
-it is translated to a call to <code>setObject:forKeyedSubscript:</code>
+<p>it is translated to a call to <code>setObject:forKeyedSubscript:</code></p>
 
 <pre>
 [object setObject:newValue forKeyedSubscript:key];
 </pre>
 
-The behavior of <code>setObject:forKeyedSubscript:</code> is class-specific; but in general it should replace an existing value if one is already associated with a key, otherwise it should add a new value for the key. No syntax is provided for removing elements from mutable dictionaries.<p>
+<p>The behavior of <code>setObject:forKeyedSubscript:</code> is class-specific; but in general it should replace an existing value if one is already associated with a key, otherwise it should add a new value for the key. No syntax is provided for removing elements from mutable dictionaries.</p>
 
 <h3>Discussion</h3>
 
-An Objective-C subscript expression occurs when the base operand of the C subscript operator has an Objective-C object pointer type.  Since this potentially collides with pointer arithmetic on the value, these expressions are only supported under the modern Objective-C runtime, which categorically forbids such arithmetic.<p>
+<p>An Objective-C subscript expression occurs when the base operand of the C subscript operator has an Objective-C object pointer type.  Since this potentially collides with pointer arithmetic on the value, these expressions are only supported under the modern Objective-C runtime, which categorically forbids such arithmetic.</p>
  
-Currently, only subscripts of integral or Objective-C object pointer type are supported.  In C++, a class type can be used if it has a single conversion function to an integral or Objective-C pointer type, in which case that conversion is applied and analysis continues as appropriate.  Otherwise, the expression is ill-formed.<p>
+<p>Currently, only subscripts of integral or Objective-C object pointer type are supported.  In C++, a class type can be used if it has a single conversion function to an integral or Objective-C pointer type, in which case that conversion is applied and analysis continues as appropriate.  Otherwise, the expression is ill-formed.</p>
  
-An Objective-C object subscript expression is always an l-value.  If the expression appears on the left-hand side of a simple assignment operator (=), the element is written as described below.  If the expression appears on the left-hand side of a compound assignment operator (e.g. +=), the program is ill-formed, because the result of reading an element is always an Objective-C object pointer and no binary operators are legal on such pointers.  If the expression appears in any other position, the element is read as described below.  It is an error to take the address of a subscript expression, or (in C++) to bind a reference to it.<p>
+<p>An Objective-C object subscript expression is always an l-value.  If the expression appears on the left-hand side of a simple assignment operator (=), the element is written as described below.  If the expression appears on the left-hand side of a compound assignment operator (e.g. +=), the program is ill-formed, because the result of reading an element is always an Objective-C object pointer and no binary operators are legal on such pointers.  If the expression appears in any other position, the element is read as described below.  It is an error to take the address of a subscript expression, or (in C++) to bind a reference to it.</p>
 
-Programs can use object subscripting with Objective-C object pointers of type <code>id</code>. Normal dynamic message send rules apply; the compiler must see <i>some</i> declaration of the subscripting methods, and will pick the declaration seen first.<p>
+<p>Programs can use object subscripting with Objective-C object pointers of type <code>id</code>. Normal dynamic message send rules apply; the compiler must see <i>some</i> declaration of the subscripting methods, and will pick the declaration seen first.</p>
 
 <h2>Grammar Additions</h2>
 
-To support the new syntax described above, the Objective-C <code>@</code>-expression grammar has the following new productions:<p>
+<p>To support the new syntax described above, the Objective-C <code>@</code>-expression grammar has the following new productions:</p>
 
 <pre>
 objc-at-expression : '@' (string-literal | encode-literal | selector-literal | protocol-literal | object-literal)
@@ -354,11 +352,11 @@ key-value-pair : assignment-expression ':' assignment-expression
                ;
 </pre>
 
-Note:  <code>@true</code> and <code>@false</code> are only supported in Objective-C++.<p>
+<p>Note:  <code>@true</code> and <code>@false</code> are only supported in Objective-C++.</p>
 
 <h2>Availability Checks</h2>
 
-Programs test for the new features by using clang's __has_feature checks. Here are examples of their use:<p>
+<p>Programs test for the new features by using clang's __has_feature checks. Here are examples of their use:</p>
 
 <pre>
 #if __has_feature(objc_array_literals)
@@ -398,10 +396,9 @@ Programs test for the new features by using clang's __has_feature checks. Here a
 #endif
 </pre>
 
-Code can use also <code>__has_feature(objc_bool)</code> to check for the availability of numeric literals support. This checks for the new <code>__objc_yes / __objc_no</code> keywords, which enable the use of <code>@YES / @NO</code> literals.<p>
+<p>Code can use also <code>__has_feature(objc_bool)</code> to check for the availability of numeric literals support. This checks for the new <code>__objc_yes / __objc_no</code> keywords, which enable the use of <code>@YES / @NO</code> literals.</p>
 
-<p>To check whether boxed expressions are supported, use
-<code>__has_feature(objc_boxed_expressions)</code> feature macro.</p>
+<p>To check whether boxed expressions are supported, use <code>__has_feature(objc_boxed_expressions)</code> feature macro.</p>
 
 </div>
 </body>
