@@ -2,10 +2,9 @@
 ; that error is printed out.
 ; RUN: llvm-as %s -o %t.one.bc
 ; RUN: llvm-as %s -o %t.two.bc
-; RUN: not llvm-ld -disable-opt -link-as-library %t.one.bc %t.two.bc \
-; RUN:   -o %t.bc 2>%t.err 
-; RUN: grep "symbol multiply defined" %t.err
+; RUN: not llvm-link %t.one.bc %t.two.bc -o %t.bc |& FileCheck %s
 
+; CHECK: symbol multiply defined
 define i32 @bar() {
-	ret i32 0
+  ret i32 0
 }

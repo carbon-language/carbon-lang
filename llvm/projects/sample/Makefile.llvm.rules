@@ -463,9 +463,6 @@ ifndef LLVM_TBLGEN
   endif
 endif
 LLVM_CONFIG := $(LLVMToolDir)/llvm-config
-ifndef LLVMLD
-LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)
-endif
 ifndef LLVMDIS
 LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
 endif

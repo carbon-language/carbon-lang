@@ -537,9 +537,6 @@ ifeq ($(LLVM_CROSS_COMPILING),1)
 else
   LLVM_CONFIG := $(LLVMToolDir)/llvm-config$(EXEEXT)
 endif
-ifndef LLVMLD
-LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)
-endif
 ifndef LLVMDIS
 LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
 endif

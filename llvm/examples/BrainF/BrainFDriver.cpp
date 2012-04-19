@@ -21,7 +21,6 @@
 // ./BrainF           prog.bf          #Write as BitCode
 //
 // lli prog.bf.bc                      #Run generated BitCode
-// llvm-ld -native -o=prog prog.bf.bc  #Compile BitCode into native executable
 //
 //===--------------------------------------------------------------------===//
 

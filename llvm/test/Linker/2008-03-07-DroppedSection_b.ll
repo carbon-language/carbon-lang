@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s > %t.bc
 ; RUN: llvm-as < %p/2008-03-07-DroppedSection_a.ll > %t2.bc
-; RUN: llvm-ld -r -disable-opt %t.bc %t2.bc -o %t3.bc
+; RUN: llvm-link %t.bc %t2.bc -o %t3.bc
 ; RUN: llvm-dis < %t3.bc | grep ".data.init_task"
 
 ; ModuleID = 'u.bc'
