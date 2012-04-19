@@ -16,7 +16,7 @@ table       { text-align: center; border: 2px solid black;
               margin-right: 1em; margin-bottom: 1em; }
 tr, td      { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
 th          { border: 2px solid gray; font-weight: bold; font-size: 105%;
-              background: url("img/lines.gif");
+              background: url("lines.gif");
               font-family: "Georgia,Palatino,Times,Roman,SanSerif";
               text-align: center; vertical-align: middle; }
 /*
@@ -24,7 +24,7 @@ th          { border: 2px solid gray; font-weight: bold; font-size: 105%;
  */
 /* Common for title and header */
 .doc_title, .doc_section, .doc_subsection, h1, h2, h3 {
-  color: black; background: url("img/lines.gif");
+  color: black; background: url("lines.gif");
   font-family: "Georgia,Palatino,Times,Roman,SanSerif"; font-weight: bold;
   border-width: 1px;
   border-style: solid none solid none;
