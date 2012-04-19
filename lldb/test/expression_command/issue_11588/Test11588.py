@@ -13,6 +13,7 @@ class Issue11581TestCase(TestBase):
 
     mydir = os.path.join("expression_command", "issue_11588")
 
+    @expectedFailurei386
     def test_11581_commands(self):
         # This is the function to remove the custom commands in order to have a
         # clean slate for the next test case.

@@ -19,6 +19,7 @@ class ExprCommands2TestCase(TestBase):
         self.line = line_number('main.cpp',
                                 '// Please test many expressions while stopped at this line:')
 
+    @expectedFailurei386
     def test_more_expr_commands(self):
         """Test some more expression commands."""
         self.buildDefault()

@@ -42,8 +42,8 @@ class LoadUnloadTestCase(TestBase):
 
         self.expect("target modules list",
             substrs = [old_dylib])
-        self.expect("target modules list -t 3",
-            patterns = ["%s-[^-]*-[^-]*" % self.getArchitecture()])
+        #self.expect("target modules list -t 3",
+        #    patterns = ["%s-[^-]*-[^-]*" % self.getArchitecture()])
         # Add an image search path substitution pair.
         self.runCmd("target modules search-paths add %s %s" % (os.getcwd(), new_dir))
         # Add teardown hook to clear image-search-paths after the test.

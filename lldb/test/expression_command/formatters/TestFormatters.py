@@ -20,12 +20,14 @@ class ExprFormattersTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @expectedFailurei386
     def test_with_dsym(self):
         """Test expr + formatters for good interoperability."""
         self.buildDsym()
         self.do_my_test()
 
     @dwarf_test
+    @expectedFailurei386
     def test_with_dwarf(self):
         """Test expr + formatters for good interoperability."""
         self.buildDsym()
