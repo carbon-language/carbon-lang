@@ -78,6 +78,12 @@ public:
     }
     
     bool
+    WriteTryLock()
+    {
+        return ::pthread_rwlock_trywrlock (&m_rwlock) == 0;
+    }
+    
+    bool
     WriteUnlock ()
     {
         return ::pthread_rwlock_unlock (&m_rwlock) == 0;
