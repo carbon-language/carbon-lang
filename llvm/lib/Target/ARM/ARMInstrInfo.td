@@ -940,6 +940,7 @@ include "ARMInstrFormats.td"
 
 /// AsI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
+let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AsI1_bin_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                         PatFrag opnode, string baseOpc, bit Commutable = 0> {
@@ -1003,35 +1004,12 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
     let Inst{4} = 1;
     let Inst{3-0} = shift{3-0};
   }
-
-  // Assembly aliases for optional destination operand when it's the same
-  // as the source operand.
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "ri")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_imm:$imm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $Rm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rr")) GPR:$Rdn, GPR:$Rdn,
-                                                    GPR:$Rm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsi")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_imm:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsr")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_reg:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-
 }
 
 /// AsI1_rbin_irs - Same as AsI1_bin_irs except the order of operands are
 /// reversed.  The 'rr' form is only defined for the disassembler; for codegen
 /// it is equivalent to the AsI1_bin_irs counterpart.
+let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                         PatFrag opnode, string baseOpc, bit Commutable = 0> {
@@ -1094,30 +1072,6 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
     let Inst{4} = 1;
     let Inst{3-0} = shift{3-0};
   }
-
-  // Assembly aliases for optional destination operand when it's the same
-  // as the source operand.
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "ri")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_imm:$imm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $Rm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rr")) GPR:$Rdn, GPR:$Rdn,
-                                                    GPR:$Rm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsi")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_imm:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsr")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_reg:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-
 }
 
 /// AsI1_bin_s_irs - Same as AsI1_bin_irs except it sets the 's' bit by default.
@@ -1304,6 +1258,7 @@ class AI_exta_rrot_np<bits<8> opcod, string opc>
 }
 
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
+let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                              string baseOpc, bit Commutable = 0> {
   let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
@@ -1366,32 +1321,10 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{3-0} = shift{3-0};
   }
   }
-
-  // Assembly aliases for optional destination operand when it's the same
-  // as the source operand.
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "ri")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_imm:$imm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $Rm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rr")) GPR:$Rdn, GPR:$Rdn,
-                                                    GPR:$Rm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsi")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_imm:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsr")) GPRnopc:$Rdn, GPRnopc:$Rdn,
-                                                    so_reg_reg:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
 }
 
 /// AI1_rsc_irs - Define instructions and patterns for rsc
+let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode,
                        string baseOpc> {
   let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
@@ -1450,29 +1383,6 @@ multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{3-0} = shift{3-0};
   }
   }
-
-  // Assembly aliases for optional destination operand when it's the same
-  // as the source operand.
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "ri")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_imm:$imm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $Rm"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rr")) GPR:$Rdn, GPR:$Rdn,
-                                                    GPR:$Rm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsi")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_imm:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
-     (!cast<Instruction>(!strconcat(baseOpc, "rsr")) GPR:$Rdn, GPR:$Rdn,
-                                                    so_reg_reg:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsARM]>;
 }
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
@@ -3483,7 +3393,7 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
 // FIXME: The v5 pseudos are only necessary for the additional Constraint
 //        property. Remove them when it's possible to add those properties
 //        on an individual MachineInstr, not just an instuction description.
-let isCommutable = 1 in {
+let isCommutable = 1, TwoOperandAliasConstraint = "$Rn = $Rd" in {
 def MUL  : AsMul1I32<0b0000000, (outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm),
                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
                    [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))]>,
@@ -5123,6 +5033,7 @@ def : ARMInstAlias<"cmn${p} $Rd, $imm",
 // FIXME: We need C++ parser hooks to map the alias to the MOV
 //        encoding. It seems we should be able to do that sort of thing
 //        in tblgen, but it could get ugly.
+let TwoOperandAliasConstraint = "$Rm = $Rd" in {
 def ASRi : ARMAsmPseudo<"asr${s}${p} $Rd, $Rm, $imm",
                         (ins GPR:$Rd, GPR:$Rm, imm0_32:$imm, pred:$p,
                              cc_out:$s)>;
@@ -5135,8 +5046,10 @@ def LSLi : ARMAsmPseudo<"lsl${s}${p} $Rd, $Rm, $imm",
 def RORi : ARMAsmPseudo<"ror${s}${p} $Rd, $Rm, $imm",
                         (ins GPR:$Rd, GPR:$Rm, imm0_31:$imm, pred:$p,
                              cc_out:$s)>;
+}
 def RRXi : ARMAsmPseudo<"rrx${s}${p} $Rd, $Rm",
                         (ins GPRnopc:$Rd, GPRnopc:$Rm, pred:$p, cc_out:$s)>;
+let TwoOperandAliasConstraint = "$Rn = $Rd" in {
 def ASRr : ARMAsmPseudo<"asr${s}${p} $Rd, $Rn, $Rm",
                         (ins GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
                              cc_out:$s)>;
@@ -5149,32 +5062,7 @@ def LSLr : ARMAsmPseudo<"lsl${s}${p} $Rd, $Rn, $Rm",
 def RORr : ARMAsmPseudo<"ror${s}${p} $Rd, $Rn, $Rm",
                         (ins GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
                              cc_out:$s)>;
-// shifter instructions also support a two-operand form.
-def : ARMInstAlias<"asr${s}${p} $Rm, $imm",
-                   (ASRi GPR:$Rm, GPR:$Rm, imm0_32:$imm, pred:$p, cc_out:$s)>;
-def : ARMInstAlias<"lsr${s}${p} $Rm, $imm",
-                   (LSRi GPR:$Rm, GPR:$Rm, imm0_32:$imm, pred:$p, cc_out:$s)>;
-def : ARMInstAlias<"lsl${s}${p} $Rm, $imm",
-                   (LSLi GPR:$Rm, GPR:$Rm, imm0_31:$imm, pred:$p, cc_out:$s)>;
-def : ARMInstAlias<"ror${s}${p} $Rm, $imm",
-                   (RORi GPR:$Rm, GPR:$Rm, imm0_31:$imm, pred:$p, cc_out:$s)>;
-def : ARMInstAlias<"asr${s}${p} $Rn, $Rm",
-                   (ASRr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
-                         cc_out:$s)>;
-def : ARMInstAlias<"lsr${s}${p} $Rn, $Rm",
-                   (LSRr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
-                         cc_out:$s)>;
-def : ARMInstAlias<"lsl${s}${p} $Rn, $Rm",
-                   (LSLr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
-                         cc_out:$s)>;
-def : ARMInstAlias<"ror${s}${p} $Rn, $Rm",
-                   (RORr GPRnopc:$Rn, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,
-                         cc_out:$s)>;
-
-
-// 'mul' instruction can be specified with only two operands.
-def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
-                   (MUL rGPR:$Rn, rGPR:$Rm, rGPR:$Rn, pred:$p, cc_out:$s)>;
+}
 
 // "neg" is and alias for "rsb rd, rn, #0"
 def : ARMInstAlias<"neg${s}${p} $Rd, $Rm",
