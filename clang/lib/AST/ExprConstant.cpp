@@ -3073,7 +3073,7 @@ public:
   bool VisitUnaryAddrOf(const UnaryOperator *E);
   bool VisitObjCStringLiteral(const ObjCStringLiteral *E)
       { return Success(E); }
-  bool VisitObjCNumericLiteral(const ObjCNumericLiteral *E)
+  bool VisitObjCBoxedExpr(const ObjCBoxedExpr *E)
       { return Success(E); }    
   bool VisitAddrLabelExpr(const AddrLabelExpr *E)
       { return Success(E); }
@@ -6501,7 +6501,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXDependentScopeMemberExprClass:
   case Expr::UnresolvedMemberExprClass:
   case Expr::ObjCStringLiteralClass:
-  case Expr::ObjCNumericLiteralClass:
+  case Expr::ObjCBoxedExprClass:
   case Expr::ObjCArrayLiteralClass:
   case Expr::ObjCDictionaryLiteralClass:
   case Expr::ObjCEncodeExprClass:

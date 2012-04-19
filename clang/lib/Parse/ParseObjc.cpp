@@ -2066,6 +2066,10 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
     // Objective-C dictionary literal
     return ParsePostfixExpressionSuffix(ParseObjCDictionaryLiteral(AtLoc));
           
+  case tok::l_paren:
+    // Objective-C boxed expression
+    return ParsePostfixExpressionSuffix(ParseObjCBoxedExpr(AtLoc));
+          
   default:
     if (Tok.getIdentifierInfo() == 0)
       return ExprError(Diag(AtLoc, diag::err_unexpected_at));
@@ -2578,6 +2582,28 @@ ExprResult Parser::ParseObjCNumericLiteral(SourceLocation AtLoc) {
   }
   ConsumeToken(); // Consume the literal token.
   return Owned(Actions.BuildObjCNumericLiteral(AtLoc, Lit.take()));
+}
+
+/// ParseObjCBoxedExpr -
+/// objc-box-expression:
+///       @( assignment-expression )
+ExprResult
+Parser::ParseObjCBoxedExpr(SourceLocation AtLoc) {
+  if (Tok.isNot(tok::l_paren))
+    return ExprError(Diag(Tok, diag::err_expected_lparen_after) << "@");
+
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  T.consumeOpen();
+  ExprResult ValueExpr(ParseAssignmentExpression());
+  if (T.consumeClose())
+    return ExprError();
+  
+  // Wrap the sub-expression in a parenthesized expression, to distinguish
+  // a boxed expression from a literal.
+  SourceLocation LPLoc = T.getOpenLocation(), RPLoc = T.getCloseLocation();
+  ValueExpr = Actions.ActOnParenExpr(LPLoc, RPLoc, ValueExpr.take());
+  return Owned(Actions.BuildObjCBoxedExpr(SourceRange(AtLoc, RPLoc),
+                                          ValueExpr.take()));
 }
 
 ExprResult Parser::ParseObjCArrayLiteral(SourceLocation AtLoc) {

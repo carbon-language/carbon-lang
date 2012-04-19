@@ -90,13 +90,13 @@ public:
     return true;
   }
 
-  bool VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
-    if (ObjCMethodDecl *MD = E->getObjCNumericLiteralMethod())
+  bool VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
+    if (ObjCMethodDecl *MD = E->getBoxingMethod())
       IndexCtx.handleReference(MD, E->getLocStart(),
                                Parent, ParentDC, E, CXIdxEntityRef_Implicit);
     return true;
   }
-
+  
   bool VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
     if (ObjCMethodDecl *MD = E->getDictWithObjectsMethod())
       IndexCtx.handleReference(MD, E->getLocStart(),

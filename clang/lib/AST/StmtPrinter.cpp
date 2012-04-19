@@ -1727,9 +1727,9 @@ void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
   VisitStringLiteral(Node->getString());
 }
 
-void StmtPrinter::VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
+void StmtPrinter::VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
   OS << "@";
-  Visit(E->getNumber());
+  Visit(E->getSubExpr());
 }
 
 void StmtPrinter::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {

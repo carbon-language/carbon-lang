@@ -68,14 +68,15 @@ void main(int argc, const char *argv[]) {
 
 <h3>Discussion</h3>
 
-NSNumber literals only support literal scalar values after the '@'. Consequently, @INT_MAX works, but @INT_MIN does not, because they are defined like this:<p>
+NSNumber literals only support literal scalar values after the <code>'@'</code>. Consequently, <code>@INT_MAX</code> works, but <code>@INT_MIN</code> does not, because they are defined like this:<p>
 
 <pre>
 #define INT_MAX   2147483647  /* max value for an int */
 #define INT_MIN   (-2147483647-1) /* min value for an int */
 </pre>
 
-The definition of INT_MIN is not a simple literal, but a parenthesized expression. This is by design, but may be improved in subsequent compiler releases.<p>
+The definition of <code>INT_MIN</code> is not a simple literal, but a parenthesized expression. Parenthesized
+expressions are supported using the <a href="#objc_boxed_expressions">boxed expression</a> syntax, which is described in the next section.<p>
 
 Because <code>NSNumber</code> does not currently support wrapping <code>long double</code> values, the use of a <code>long double NSNumber</code> literal (e.g. <code>@123.23L</code>) will be rejected by the compiler.<p>
 
@@ -95,6 +96,94 @@ The compiler implicitly converts <code>__objc_yes</code> and <code>__objc_no</co
 
 Objective-C++ also supports <code>@true</code> and <code>@false</code> expressions, which are equivalent to <code>@YES</code> and <code>@NO</code>.
 
+<!-- ======================================================================= -->
+<h2 id="objc_boxed_expressions">Boxed Expressions</h2>
+<!-- ======================================================================= -->
+
+<p>Objective-C provides a new syntax for boxing C expressions:</p>
+
+<pre>
+<code>@( <em>expression</em> )</code>
+</pre>
+
+<p>Expressions of scalar (numeric, enumerated, BOOL) and C string pointer types
+are supported:</p>
+
+<pre>
+// numbers.
+NSNumber *smallestInt = @(-INT_MAX - 1);
+NSNumber *piOverTwo = @(M_PI / 2);
+
+// enumerated types.
+typedef enum { Red, Green, Blue } Color;
+NSNumber *favoriteColor = @(Green);
+
+// strings.
+NSString *path = @(getenv("PATH"));
+NSArray *pathComponents = [path componentsSeparatedByString:@":"];
+</pre>
+
+<h3>Boxed Enums</h3>
+
+<p>
+Cocoa frameworks frequently define constant values using <em>enums.</em> Although enum values are integral, they may not be used directly as boxed literals (this avoids conflicts with future <code>'@'</code>-prefixed Objective-C keywords). Instead, an enum value must be placed inside a boxed expression. The following example demonstrates configuring an <code>AVAudioRecorder</code> using a dictionary that contains a boxed enumeration value:
+</p>
+
+<pre>
+enum {
+  AVAudioQualityMin = 0,
+  AVAudioQualityLow = 0x20,
+  AVAudioQualityMedium = 0x40,
+  AVAudioQualityHigh = 0x60,
+  AVAudioQualityMax = 0x7F
+};
+
+- (AVAudioRecorder *)recordToFile:(NSURL *)fileURL {
+  NSDictionary *settings = @{ AVEncoderAudioQualityKey : @(AVAudioQualityMax) };
+  return [[AVAudioRecorder alloc] initWithURL:fileURL settings:settings error:NULL];
+}
+</pre>
+
+<p>
+The expression <code>@(AVAudioQualityMax)</code> converts <code>AVAudioQualityMax</code> to an integer type, and boxes the value accordingly. If the enum has a <a href="http://clang.llvm.org/docs/LanguageExtensions.html#objc_fixed_enum">fixed underlying type</a> as in:
+</p>
+
+<pre>
+typedef enum : unsigned char { Red, Green, Blue } Color;
+NSNumber *red = @(Red), *green = @(Green), *blue = @(Blue); // => [NSNumber numberWithUnsignedChar:]
+</pre>
+
+<p>
+then the fixed underlying type will be used to select the correct <code>NSNumber</code> creation method.
+</p>
+
+<h3>Boxed C Strings</h3>
+
+<p>
+A C string literal prefixed by the <code>'@'</code> token denotes an <code>NSString</code> literal in the same way a numeric literal prefixed by the <code>'@'</code> token denotes an <code>NSNumber</code> literal. When the type of the parenthesized expression is <code>(char *)</code> or <code>(const char *)</code>, the result of the boxed expression is a pointer to an <code>NSString</code> object containing equivalent character data. The following example converts C-style command line arguments into <code>NSString</code> objects.
+</p>
+
+<pre>
+// Partition command line arguments into positional and option arguments.
+NSMutableArray *args = [NSMutableArray new];
+NSMutableDictionary *options = [NSMutableArray new];
+while (--argc) {
+    const char *arg = *++argv;
+    if (strncmp(arg, "--", 2) == 0) {
+        options[@(arg + 2)] = @(*++argv);   // --key value
+    } else {
+        [args addObject:@(arg)];            // positional argument
+    }
+}
+</pre>
+
+<p>
+As with all C pointers, character pointer expressions can involve arbitrary pointer arithmetic, therefore programmers must ensure that the character data is valid. Passing <code>NULL</code> as the character pointer will raise an exception at runtime. When possible, the compiler will reject <code>NULL</code> character pointers used in boxed expressions.
+</p>
+
+<h3>Availability</h3>
+
+<p>This feature will be available in clang 3.2. It is not currently available in any Apple compiler.</p>
 
 <h2>Container Literals</h2>
 
@@ -104,9 +193,11 @@ Objective-C now supports a new expression syntax for creating immutable array an
 
 Immutable array expression:<p>
  
- <pre>
+<blockquote>
+<pre>
 NSArray *array = @[ @"Hello", NSApp, [NSNumber numberWithInt:42] ];
 </pre>
+</blockquote>
 
 This creates an <code>NSArray</code> with 3 elements. The comma-separated sub-expressions of an array literal can be any Objective-C object pointer typed expression.<p>
 
@@ -308,6 +399,9 @@ Programs test for the new features by using clang's __has_feature checks. Here a
 </pre>
 
 Code can use also <code>__has_feature(objc_bool)</code> to check for the availability of numeric literals support. This checks for the new <code>__objc_yes / __objc_no</code> keywords, which enable the use of <code>@YES / @NO</code> literals.<p>
+
+<p>To check whether boxed expressions are supported, use
+<code>__has_feature(objc_boxed_expressions)</code> feature macro.</p>
 
 </div>
 </body>

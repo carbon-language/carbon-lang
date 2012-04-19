@@ -816,12 +816,12 @@ void ASTStmtReader::VisitObjCStringLiteral(ObjCStringLiteral *E) {
   E->setAtLoc(ReadSourceLocation(Record, Idx));
 }
 
-void ASTStmtReader::VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
+void ASTStmtReader::VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
   VisitExpr(E);
   // could be one of several IntegerLiteral, FloatLiteral, etc.
-  E->Number = Reader.ReadSubStmt();
-  E->ObjCNumericLiteralMethod = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
-  E->AtLoc = ReadSourceLocation(Record, Idx);
+  E->SubExpr = Reader.ReadSubStmt();
+  E->BoxingMethod = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
+  E->Range = ReadSourceRange(Record, Idx);
 }
 
 void ASTStmtReader::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
@@ -1888,8 +1888,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case EXPR_OBJC_STRING_LITERAL:
       S = new (Context) ObjCStringLiteral(Empty);
       break;
-    case EXPR_OBJC_NUMERIC_LITERAL:
-      S = new (Context) ObjCNumericLiteral(Empty);
+    case EXPR_OBJC_BOXED_EXPRESSION:
+      S = new (Context) ObjCBoxedExpr(Empty);
       break;
     case EXPR_OBJC_ARRAY_LITERAL:
       S = ObjCArrayLiteral::CreateEmpty(Context,

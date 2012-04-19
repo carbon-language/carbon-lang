@@ -964,7 +964,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
     // possibility.
   case Expr::ObjCArrayLiteralClass:
   case Expr::ObjCDictionaryLiteralClass:
-  case Expr::ObjCNumericLiteralClass:
+  case Expr::ObjCBoxedExprClass:
     return CT_Can;
 
     // Many other things have subexpressions, so we have to test those.

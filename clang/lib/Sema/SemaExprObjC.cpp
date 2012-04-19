@@ -111,7 +111,7 @@ ExprResult Sema::BuildObjCStringLiteral(SourceLocation AtLoc, StringLiteral *S){
       Ty = Context.getObjCIdType();
     }
   } else {
-    IdentifierInfo *NSIdent = &Context.Idents.get("NSString");
+    IdentifierInfo *NSIdent = NSAPIObj->getNSClassId(NSAPI::ClassId_NSString);
     NamedDecl *IF = LookupSingleName(TUScope, NSIdent, AtLoc,
                                      LookupOrdinaryName);
     if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
@@ -143,17 +143,20 @@ ExprResult Sema::BuildObjCStringLiteral(SourceLocation AtLoc, StringLiteral *S){
 /// \brief Retrieve the NSNumber factory method that should be used to create
 /// an Objective-C literal for the given type.
 static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
-                                                QualType T, QualType ReturnType,
-                                                SourceRange Range) {
+                                                QualType NumberType,
+                                                bool isLiteral = false,
+                                                SourceRange R = SourceRange()) {
   llvm::Optional<NSAPI::NSNumberLiteralMethodKind> Kind 
-    = S.NSAPIObj->getNSNumberFactoryMethodKind(T);
+    = S.NSAPIObj->getNSNumberFactoryMethodKind(NumberType);
   
   if (!Kind) {
-    S.Diag(Loc, diag::err_invalid_nsnumber_type)
-      << T << Range;
+    if (isLiteral) {
+      S.Diag(Loc, diag::err_invalid_nsnumber_type)
+        << NumberType << R;
+    }
     return 0;
   }
-    
+  
   // If we already looked up this method, we're done.
   if (S.NSNumberLiteralMethods[*Kind])
     return S.NSNumberLiteralMethods[*Kind];
@@ -161,23 +164,52 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
   Selector Sel = S.NSAPIObj->getNSNumberLiteralSelector(*Kind,
                                                         /*Instance=*/false);
   
+  ASTContext &CX = S.Context;
+  
+  // Look up the NSNumber class, if we haven't done so already. It's cached
+  // in the Sema instance.
+  if (!S.NSNumberDecl) {
+    IdentifierInfo *NSNumberId = S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSNumber);
+    NamedDecl *IF = S.LookupSingleName(S.TUScope, NSNumberId,
+                                       Loc, Sema::LookupOrdinaryName);
+    S.NSNumberDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+    if (!S.NSNumberDecl) {
+      if (S.getLangOpts().DebuggerObjCLiteral) {
+        // Create a stub definition of NSNumber.
+        S.NSNumberDecl =  ObjCInterfaceDecl::Create (CX,
+                                                     CX.getTranslationUnitDecl(),
+                                                     SourceLocation(),  NSNumberId,
+                                                     0, SourceLocation());
+      } else {
+        // Otherwise, require a declaration of NSNumber.
+        S.Diag(Loc, diag::err_undeclared_nsnumber);
+        return 0;
+      }
+    } else if (!S.NSNumberDecl->hasDefinition()) {
+      S.Diag(Loc, diag::err_undeclared_nsnumber);
+      return 0;
+    }
+    
+    // generate the pointer to NSNumber type.
+    S.NSNumberPointer = CX.getObjCObjectPointerType(CX.getObjCInterfaceType(S.NSNumberDecl));
+  }
+  
   // Look for the appropriate method within NSNumber.
   ObjCMethodDecl *Method = S.NSNumberDecl->lookupClassMethod(Sel);;
   if (!Method && S.getLangOpts().DebuggerObjCLiteral) {
+    // create a stub definition this NSNumber factory method.
     TypeSourceInfo *ResultTInfo = 0;
-    Method = ObjCMethodDecl::Create(S.Context, SourceLocation(), SourceLocation(), Sel,
-                           ReturnType,
-                           ResultTInfo,
-                           S.Context.getTranslationUnitDecl(),
-                           false /*Instance*/, false/*isVariadic*/,
-                           /*isSynthesized=*/false,
-                           /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
-                           ObjCMethodDecl::Required,
-                           false);
+    Method = ObjCMethodDecl::Create(CX, SourceLocation(), SourceLocation(), Sel,
+                                    S.NSNumberPointer, ResultTInfo, S.NSNumberDecl,
+                                    /*isInstance=*/false, /*isVariadic=*/false,
+                                    /*isSynthesized=*/false,
+                                    /*isImplicitlyDeclared=*/true,
+                                    /*isDefined=*/false, ObjCMethodDecl::Required,
+                                    /*HasRelatedResultType=*/false);
     ParmVarDecl *value = ParmVarDecl::Create(S.Context, Method,
                                              SourceLocation(), SourceLocation(),
-                                             &S.Context.Idents.get("value"),
-                                             T, /*TInfo=*/0, SC_None, SC_None, 0);
+                                             &CX.Idents.get("value"),
+                                             NumberType, /*TInfo=*/0, SC_None, SC_None, 0);
     Method->setMethodParams(S.Context, value, ArrayRef<SourceLocation>());
   }
 
@@ -202,29 +234,12 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
   return Method;
 }
 
-/// BuildObjCNumericLiteral - builds an ObjCNumericLiteral AST node for the
-/// numeric literal expression. Type of the expression will be "NSNumber *"
-/// or "id" if NSNumber is unavailable.
+/// BuildObjCNumericLiteral - builds an ObjCBoxedExpr AST node for the
+/// numeric literal expression. Type of the expression will be "NSNumber *".
 ExprResult Sema::BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number) {
-  // Look up the NSNumber class, if we haven't done so already.
-  if (!NSNumberDecl) {
-    NamedDecl *IF = LookupSingleName(TUScope,
-                                NSAPIObj->getNSClassId(NSAPI::ClassId_NSNumber),
-                                AtLoc, LookupOrdinaryName);
-    NSNumberDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+  // compute the effective range of the literal, including the leading '@'.
+  SourceRange SR(AtLoc, Number->getSourceRange().getEnd());
     
-    if (!NSNumberDecl && getLangOpts().DebuggerObjCLiteral)
-      NSNumberDecl =  ObjCInterfaceDecl::Create (Context,
-                        Context.getTranslationUnitDecl(),
-                        SourceLocation(), 
-                        NSAPIObj->getNSClassId(NSAPI::ClassId_NSNumber),
-                        0, SourceLocation());
-    if (!NSNumberDecl) {
-      Diag(AtLoc, diag::err_undeclared_nsnumber);
-      return ExprError();
-    }
-  }
-  
   // Determine the type of the literal.
   QualType NumberType = Number->getType();
   if (CharacterLiteral *Char = dyn_cast<CharacterLiteral>(Number)) {
@@ -249,29 +264,23 @@ ExprResult Sema::BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number) {
     }
   }
   
-  ObjCMethodDecl *Method = 0;
   // Look for the appropriate method within NSNumber.
   // Construct the literal.
-  QualType Ty
-    = Context.getObjCObjectPointerType(
-                                    Context.getObjCInterfaceType(NSNumberDecl));
-  Method  = getNSNumberFactoryMethod(*this, AtLoc, 
-                                     NumberType, Ty, 
-                                     Number->getSourceRange());
-
+  ObjCMethodDecl *Method = getNSNumberFactoryMethod(*this, AtLoc, NumberType,
+                                                    true, Number->getSourceRange());
   if (!Method)
     return ExprError();
 
   // Convert the number to the type that the parameter expects.
-  QualType ElementT = Method->param_begin()[0]->getType();
-  ExprResult ConvertedNumber = PerformImplicitConversion(Number, ElementT,
+  QualType ArgType = Method->param_begin()[0]->getType();
+  ExprResult ConvertedNumber = PerformImplicitConversion(Number, ArgType,
                                                          AA_Sending);
   if (ConvertedNumber.isInvalid())
     return ExprError();
   Number = ConvertedNumber.get();
   
   return MaybeBindToTemporary(
-           new (Context) ObjCNumericLiteral(Number, Ty, Method, AtLoc));
+           new (Context) ObjCBoxedExpr(Number, NSNumberPointer, Method, SR));
 }
 
 ExprResult Sema::ActOnObjCBoolLiteral(SourceLocation AtLoc, 
@@ -383,6 +392,144 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
            InitializedEntity::InitializeParameter(S.Context, T, 
                                                   /*Consumed=*/false),
            Element->getLocStart(), Element);
+}
+
+ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
+  if (ValueExpr->isTypeDependent()) {
+    ObjCBoxedExpr *BoxedExpr = 
+      new (Context) ObjCBoxedExpr(ValueExpr, Context.DependentTy, NULL, SR);
+    return Owned(BoxedExpr);
+  }
+  ObjCMethodDecl *BoxingMethod = NULL;
+  QualType BoxedType;
+  // Convert the expression to an RValue, so we can check for pointer types...
+  ExprResult RValue = DefaultFunctionArrayLvalueConversion(ValueExpr);
+  if (RValue.isInvalid()) {
+    return ExprError();
+  }
+  ValueExpr = RValue.get();
+  QualType ValueType(ValueExpr->getType().getCanonicalType());
+  if (const PointerType *PT = ValueType->getAs<PointerType>()) {
+    QualType PointeeType = PT->getPointeeType();
+    if (Context.hasSameUnqualifiedType(PointeeType, Context.CharTy)) {
+
+      if (!NSStringDecl) {
+        IdentifierInfo *NSStringId =
+          NSAPIObj->getNSClassId(NSAPI::ClassId_NSString);
+        NamedDecl *Decl = LookupSingleName(TUScope, NSStringId,
+                                           SR.getBegin(), LookupOrdinaryName);
+        NSStringDecl = dyn_cast_or_null<ObjCInterfaceDecl>(Decl);
+        if (!NSStringDecl) {
+          if (getLangOpts().DebuggerObjCLiteral) {
+            // Support boxed expressions in the debugger w/o NSString declaration.
+            NSStringDecl = ObjCInterfaceDecl::Create(Context,
+                                                     Context.getTranslationUnitDecl(),
+                                                     SourceLocation(), NSStringId,
+                                                     0, SourceLocation());
+          } else {
+            Diag(SR.getBegin(), diag::err_undeclared_nsstring);
+            return ExprError();
+          }
+        } else if (!NSStringDecl->hasDefinition()) {
+          Diag(SR.getBegin(), diag::err_undeclared_nsstring);
+          return ExprError();
+        }
+        assert(NSStringDecl && "NSStringDecl should not be NULL");
+        NSStringPointer =
+          Context.getObjCObjectPointerType(Context.getObjCInterfaceType(NSStringDecl));
+      }
+      
+      if (!StringWithUTF8StringMethod) {
+        IdentifierInfo *II = &Context.Idents.get("stringWithUTF8String");
+        Selector stringWithUTF8String = Context.Selectors.getUnarySelector(II);
+
+        // Look for the appropriate method within NSString.
+        StringWithUTF8StringMethod = NSStringDecl->lookupClassMethod(stringWithUTF8String);
+        if (!StringWithUTF8StringMethod && getLangOpts().DebuggerObjCLiteral) {
+          // Debugger needs to work even if NSString hasn't been defined.
+          TypeSourceInfo *ResultTInfo = 0;
+          ObjCMethodDecl *M =
+            ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(),
+                                   stringWithUTF8String, NSStringPointer,
+                                   ResultTInfo, NSStringDecl,
+                                   /*isInstance=*/false, /*isVariadic=*/false,
+                                   /*isSynthesized=*/false,
+                                   /*isImplicitlyDeclared=*/true,
+                                   /*isDefined=*/false,
+                                   ObjCMethodDecl::Required,
+                                   /*HasRelatedResultType=*/false);
+          ParmVarDecl *value =
+            ParmVarDecl::Create(Context, M,
+                                SourceLocation(), SourceLocation(),
+                                &Context.Idents.get("value"),
+                                Context.getPointerType(Context.CharTy.withConst()),
+                                /*TInfo=*/0,
+                                SC_None, SC_None, 0);
+          M->setMethodParams(Context, value, ArrayRef<SourceLocation>());
+          StringWithUTF8StringMethod = M;
+        }
+        assert(StringWithUTF8StringMethod &&
+               "StringWithUTF8StringMethod should not be NULL");
+      }
+      
+      BoxingMethod = StringWithUTF8StringMethod;
+      BoxedType = NSStringPointer;
+    }
+  } else if (isa<BuiltinType>(ValueType)) {
+    // The other types we support are numeric, char and BOOL/bool. We could also
+    // provide limited support for structure types, such as NSRange, NSRect, and
+    // NSSize. See NSValue (NSValueGeometryExtensions) in <Foundation/NSGeometry.h>
+    // for more details.
+
+    // Check for a top-level character literal.
+    if (const CharacterLiteral *Char =
+        dyn_cast<CharacterLiteral>(ValueExpr->IgnoreParens())) {
+      // In C, character literals have type 'int'. That's not the type we want
+      // to use to determine the Objective-c literal kind.
+      switch (Char->getKind()) {
+      case CharacterLiteral::Ascii:
+        ValueType = Context.CharTy;
+        break;
+        
+      case CharacterLiteral::Wide:
+        ValueType = Context.getWCharType();
+        break;
+        
+      case CharacterLiteral::UTF16:
+        ValueType = Context.Char16Ty;
+        break;
+        
+      case CharacterLiteral::UTF32:
+        ValueType = Context.Char32Ty;
+        break;
+      }
+    }
+    
+    // FIXME:  Do I need to do anything special with BoolTy expressions?
+    
+    // Look for the appropriate method within NSNumber.
+    BoxingMethod = getNSNumberFactoryMethod(*this, SR.getBegin(), ValueType);
+    BoxedType = NSNumberPointer;
+  }
+
+  if (!BoxingMethod) {
+    Diag(SR.getBegin(), diag::err_objc_illegal_boxed_expression_type)
+      << ValueType << ValueExpr->getSourceRange();
+    return ExprError();
+  }
+  
+  // Convert the expression to the type that the parameter requires.
+  QualType ArgType = BoxingMethod->param_begin()[0]->getType();
+  ExprResult ConvertedValueExpr = PerformImplicitConversion(ValueExpr, ArgType,
+                                                            AA_Sending);
+  if (ConvertedValueExpr.isInvalid())
+    return ExprError();
+  ValueExpr = ConvertedValueExpr.get();
+  
+  ObjCBoxedExpr *BoxedExpr = 
+    new (Context) ObjCBoxedExpr(ValueExpr, BoxedType,
+                                      BoxingMethod, SR);
+  return MaybeBindToTemporary(BoxedExpr);
 }
 
 ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,

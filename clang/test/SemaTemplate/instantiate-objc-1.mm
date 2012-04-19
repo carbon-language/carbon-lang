@@ -46,3 +46,24 @@ template <typename T> struct EncodeTest {
 template struct EncodeTest<int>;
 template struct EncodeTest<double>;
 template struct EncodeTest<wchar_t>;
+
+// @() boxing expressions.
+template <typename T> struct BoxingTest {
+  static id box(T value) {
+    return @(value);                     // expected-error {{Illegal type 'int *' used in a boxed expression}} \
+                                         // expected-error {{Illegal type 'long double' used in a boxed expression}}
+  }
+};
+
+@interface NSNumber
++ (NSNumber *)numberWithInt:(int)value;
+@end
+
+@interface NSString
++ (id)stringWithUTF8String:(const char *)str;
+@end
+
+template struct BoxingTest<int>;
+template struct BoxingTest<const char *>;
+template struct BoxingTest<int *>;        // expected-note {{in instantiation of member function 'BoxingTest<int *>::box' requested here}}
+template struct BoxingTest<long double>;  // expected-note {{in instantiation of member function 'BoxingTest<long double>::box' requested here}}

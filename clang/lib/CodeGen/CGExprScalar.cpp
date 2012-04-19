@@ -498,8 +498,8 @@ public:
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
   }
-  Value *VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
-    return CGF.EmitObjCNumericLiteral(E);
+  Value *VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
+    return CGF.EmitObjCBoxedExpr(E);
   }
   Value *VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
     return CGF.EmitObjCArrayLiteral(E);

@@ -2264,7 +2264,7 @@ public:
 
   llvm::Value *EmitObjCProtocolExpr(const ObjCProtocolExpr *E);
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
-  llvm::Value *EmitObjCNumericLiteral(const ObjCNumericLiteral *E);
+  llvm::Value *EmitObjCBoxedExpr(const ObjCBoxedExpr *E);
   llvm::Value *EmitObjCArrayLiteral(const ObjCArrayLiteral *E);
   llvm::Value *EmitObjCDictionaryLiteral(const ObjCDictionaryLiteral *E);
   llvm::Value *EmitObjCCollectionLiteral(const Expr *E,

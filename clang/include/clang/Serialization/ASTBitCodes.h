@@ -1066,7 +1066,7 @@ namespace clang {
       /// \brief An ObjCStringLiteral record.
       EXPR_OBJC_STRING_LITERAL,
 
-      EXPR_OBJC_NUMERIC_LITERAL,
+      EXPR_OBJC_BOXED_EXPRESSION,
       EXPR_OBJC_ARRAY_LITERAL,
       EXPR_OBJC_DICTIONARY_LITERAL,
 

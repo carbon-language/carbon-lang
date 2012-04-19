@@ -158,7 +158,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::ObjCSelectorExprClass:
   case Expr::ObjCProtocolExprClass:
   case Expr::ObjCStringLiteralClass:
-  case Expr::ObjCNumericLiteralClass:
+  case Expr::ObjCBoxedExprClass:
   case Expr::ObjCArrayLiteralClass:
   case Expr::ObjCDictionaryLiteralClass:
   case Expr::ObjCBoolLiteralExprClass:

@@ -523,9 +523,21 @@ public:
   /// \brief The declaration of the Objective-C NSNumber class.
   ObjCInterfaceDecl *NSNumberDecl;
   
+  /// \brief Pointer to NSNumber type (NSNumber *).
+  QualType NSNumberPointer;
+  
   /// \brief The Objective-C NSNumber methods used to create NSNumber literals.
   ObjCMethodDecl *NSNumberLiteralMethods[NSAPI::NumNSNumberLiteralMethods];
   
+  /// \brief The declaration of the Objective-C NSString class.
+  ObjCInterfaceDecl *NSStringDecl;
+
+  /// \brief Pointer to NSString type (NSString *).
+  QualType NSStringPointer;
+  
+  /// \brief The declaration of the stringWithUTF8String: method.
+  ObjCMethodDecl *StringWithUTF8StringMethod;
+
   /// \brief The declaration of the Objective-C NSArray class.
   ObjCInterfaceDecl *NSArrayDecl;
 
@@ -3848,13 +3860,20 @@ public:
     
   ExprResult BuildObjCStringLiteral(SourceLocation AtLoc, StringLiteral *S);
   
-  /// BuildObjCNumericLiteral - builds an ObjCNumericLiteral AST node for the
+  /// BuildObjCNumericLiteral - builds an ObjCBoxedExpr AST node for the
   /// numeric literal expression. Type of the expression will be "NSNumber *"
   /// or "id" if NSNumber is unavailable.
   ExprResult BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number);
   ExprResult ActOnObjCBoolLiteral(SourceLocation AtLoc, SourceLocation ValueLoc,
                                   bool Value);
   ExprResult BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements);
+  
+  // BuildObjCBoxedExpr - builds an ObjCBoxedExpr AST node for the
+  // '@' prefixed parenthesized expression. The type of the expression will
+  // either be "NSNumber *" or "NSString *" depending on the type of
+  // ValueType, which is allowed to be a built-in numeric type or
+  // "char *" or "const char *".
+  ExprResult BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr);
   
   ExprResult BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
                                           Expr *IndexExpr,

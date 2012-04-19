@@ -87,43 +87,45 @@ public:
   child_range children() { return child_range(); }
 };
 
-/// ObjCNumericLiteral - used for objective-c numeric literals;
-/// as in: @42 or @true (c++/objc++) or @__yes (c/objc)
-class ObjCNumericLiteral : public Expr {
-  /// Number - expression AST node for the numeric literal
-  Stmt *Number;
-  ObjCMethodDecl *ObjCNumericLiteralMethod;
-  SourceLocation AtLoc;
+/// ObjCBoxedExpr - used for generalized expression boxing.
+/// as in: @(strdup("hello world")) or @(random())
+/// Also used for boxing non-parenthesized numeric literals;
+/// as in: @42 or @true (c++/objc++) or @__yes (c/objc).
+class ObjCBoxedExpr : public Expr {
+  Stmt *SubExpr;
+  ObjCMethodDecl *BoxingMethod;
+  SourceRange Range;
 public:
-  ObjCNumericLiteral(Stmt *NL, QualType T, ObjCMethodDecl *method,
-                     SourceLocation L)
-  : Expr(ObjCNumericLiteralClass, T, VK_RValue, OK_Ordinary, 
-         false, false, false, false), Number(NL), 
-    ObjCNumericLiteralMethod(method), AtLoc(L) {}
-  explicit ObjCNumericLiteral(EmptyShell Empty)
-  : Expr(ObjCNumericLiteralClass, Empty) {}
+  ObjCBoxedExpr(Expr *E, QualType T, ObjCMethodDecl *method,
+                     SourceRange R)
+  : Expr(ObjCBoxedExprClass, T, VK_RValue, OK_Ordinary, 
+         E->isTypeDependent(), E->isValueDependent(), 
+         E->isInstantiationDependent(), E->containsUnexpandedParameterPack()), 
+         SubExpr(E), BoxingMethod(method), Range(R) {}
+  explicit ObjCBoxedExpr(EmptyShell Empty)
+  : Expr(ObjCBoxedExprClass, Empty) {}
   
-  Expr *getNumber() { return cast<Expr>(Number); }
-  const Expr *getNumber() const { return cast<Expr>(Number); }
+  Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+  const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   
-  ObjCMethodDecl *getObjCNumericLiteralMethod() const {
-    return ObjCNumericLiteralMethod; 
+  ObjCMethodDecl *getBoxingMethod() const {
+    return BoxingMethod; 
   }
-    
-  SourceLocation getAtLoc() const { return AtLoc; }
+  
+  SourceLocation getAtLoc() const { return Range.getBegin(); }
   
   SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(AtLoc, Number->getSourceRange().getEnd());
+    return Range;
   }
-
+  
   static bool classof(const Stmt *T) {
-      return T->getStmtClass() == ObjCNumericLiteralClass;
+    return T->getStmtClass() == ObjCBoxedExprClass;
   }
-  static bool classof(const ObjCNumericLiteral *) { return true; }
+  static bool classof(const ObjCBoxedExpr *) { return true; }
   
   // Iterators
-  child_range children() { return child_range(&Number, &Number+1); }
-    
+  child_range children() { return child_range(&SubExpr, &SubExpr+1); }
+  
   friend class ASTStmtReader;
 };
 

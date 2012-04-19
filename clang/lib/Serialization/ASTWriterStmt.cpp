@@ -777,12 +777,12 @@ void ASTStmtWriter::VisitObjCStringLiteral(ObjCStringLiteral *E) {
   Code = serialization::EXPR_OBJC_STRING_LITERAL;
 }
 
-void ASTStmtWriter::VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
+void ASTStmtWriter::VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
   VisitExpr(E);
-  Writer.AddStmt(E->getNumber());
-  Writer.AddDeclRef(E->getObjCNumericLiteralMethod(), Record);
-  Writer.AddSourceLocation(E->getAtLoc(), Record);
-  Code = serialization::EXPR_OBJC_NUMERIC_LITERAL;
+  Writer.AddStmt(E->getSubExpr());
+  Writer.AddDeclRef(E->getBoxingMethod(), Record);
+  Writer.AddSourceRange(E->getSourceRange(), Record);
+  Code = serialization::EXPR_OBJC_BOXED_EXPRESSION;
 }
 
 void ASTStmtWriter::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {

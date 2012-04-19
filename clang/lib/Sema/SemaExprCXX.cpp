@@ -4522,8 +4522,8 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
       ObjCMethodDecl *D = 0;
       if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
         D = Send->getMethodDecl();
-      } else if (ObjCNumericLiteral *NumLit = dyn_cast<ObjCNumericLiteral>(E)) {
-        D = NumLit->getObjCNumericLiteralMethod();
+      } else if (ObjCBoxedExpr *BoxedExpr = dyn_cast<ObjCBoxedExpr>(E)) {
+        D = BoxedExpr->getBoxingMethod();
       } else if (ObjCArrayLiteral *ArrayLit = dyn_cast<ObjCArrayLiteral>(E)) {
         D = ArrayLit->getArrayWithObjectsMethod();
       } else if (ObjCDictionaryLiteral *DictLit

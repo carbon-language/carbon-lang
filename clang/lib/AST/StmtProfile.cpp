@@ -981,7 +981,7 @@ void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {
   VisitExpr(S);
 }
 
-void StmtProfiler::VisitObjCNumericLiteral(const ObjCNumericLiteral *E) {
+void StmtProfiler::VisitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   VisitExpr(E);
 }
 

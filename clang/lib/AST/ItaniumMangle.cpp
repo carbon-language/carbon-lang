@@ -2390,7 +2390,7 @@ recurse:
   case Expr::ObjCProtocolExprClass:
   case Expr::ObjCSelectorExprClass:
   case Expr::ObjCStringLiteralClass:
-  case Expr::ObjCNumericLiteralClass:
+  case Expr::ObjCBoxedExprClass:
   case Expr::ObjCArrayLiteralClass:
   case Expr::ObjCDictionaryLiteralClass:
   case Expr::ObjCSubscriptRefExprClass:
