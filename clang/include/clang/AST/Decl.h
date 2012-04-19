@@ -281,9 +281,10 @@ public:
       if (visibility() < V)
         return;
 
-      // If this visibility is explicit, keep it.
-      if (visibilityExplicit() && !E)
+      // Don't lose the explicit bit for nothing
+      if (visibility() == V && visibilityExplicit())
         return;
+
       setVisibility(V, E);
     }
     void mergeVisibility(LinkageInfo Other) {
