@@ -271,7 +271,6 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   //   scope and no storage-class specifier, its linkage is
   //   external.
   LinkageInfo LV;
-  LV.mergeVisibility(Context.getLangOpts().getVisibilityMode());
 
   if (F.ConsiderVisibilityAttributes) {
     if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
@@ -291,6 +290,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       }
     }
   }
+
+  LV.mergeVisibility(Context.getLangOpts().getVisibilityMode());
 
   // C++ [basic.link]p4:
 
@@ -482,7 +483,6 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     return LinkageInfo::none();
 
   LinkageInfo LV;
-  LV.mergeVisibility(D->getASTContext().getLangOpts().getVisibilityMode());
 
   bool DHasExplicitVisibility = false;
   // If we have an explicit visibility attribute, merge that in.
@@ -535,6 +535,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
   // If the class already has unique-external linkage, we can't improve.
   if (LV.linkage() == UniqueExternalLinkage)
     return LinkageInfo::uniqueExternal();
+
+  LV.mergeVisibility(D->getASTContext().getLangOpts().getVisibilityMode());
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     // If the type of the function uses a type with unique-external
