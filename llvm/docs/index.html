@@ -1,0 +1,286 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Documentation for the LLVM System at SVN head</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<h1>Documentation for the LLVM System at SVN head</h1>
+
+<p class="doc_warning">If you are using a released version of LLVM,
+see <a href="http://llvm.org/releases/">the download page</a> to find
+your documentation.</p>
+
+<table class="layout" width="95%"><tr class="layout"><td class="left">
+<ul>
+  <li><a href="#llvmdesign">LLVM Design</a></li>
+  <li><a href="/pubs/">LLVM Publications</a></li>
+  <li><a href="#userguide">LLVM User Guides</a></li>
+  <li><a href="#llvmprog">LLVM Programming Documentation</a></li>
+  <li><a href="#subsystems">LLVM Subsystem Documentation</a></li>
+  <li><a href="#develprocess">LLVM Development Process Documentation</a></li>
+  <li><a href="#maillist">LLVM Mailing Lists</a></li>
+</ul>
+</td><td class="right">
+  <form action="http://www.google.com/search" method=get>
+    <p>
+      <input type="hidden" name="sitesearch" value="llvm.org/docs">
+      <input type=text name=q size=25><br>
+      <input type=submit value="Search the LLVM Docs" name="submit">
+    </p>
+  </form>
+</td></tr></table>
+
+<div class="doc_author">
+  <p>Written by <a href="http://llvm.org/">The LLVM Team</a></p>
+</div>
+
+<!--=======================================================================-->
+<h2><a name="llvmdesign">LLVM Design &amp; Overview</a></h2>
+<!--=======================================================================-->
+
+<ul>
+<li><a href="LangRef.html">LLVM Language Reference Manual</a> - Defines the LLVM
+intermediate representation.</li>
+<li><a href="http://llvm.org/pubs/2008-10-04-ACAT-LLVM-Intro.html">Introduction to the LLVM Compiler </a> - Presentation providing a users introduction to LLVM.</li>
+<li><a href="http://www.aosabook.org/en/llvm.html">Intro to LLVM</a> - book chapter providing a compiler hacker's introduction to LLVM.</li>
+<li><a href="http://llvm.org/pubs/2004-01-30-CGO-LLVM.html">LLVM: A Compilation Framework for
+Lifelong Program Analysis &amp; Transformation</a> - Design overview.</li>
+<li><a href="http://llvm.org/pubs/2002-12-LattnerMSThesis.html">LLVM: An Infrastructure for
+Multi-Stage Optimization</a> - More details (quite old now).</li>
+<li><a href="GetElementPtr.html">GetElementPtr FAQ</a> - Answers to some very
+frequent questions about LLVM's most frequently misunderstood instruction.</li>
+</ul>
+
+<!--=======================================================================-->
+<h2><a name="userguide">LLVM User Guides</a></h2>
+<!--=======================================================================-->
+
+<ul>
+<li><a href="GettingStarted.html">The LLVM Getting Started Guide</a> -
+Discusses how to get up and running quickly with the LLVM infrastructure.
+Everything from unpacking and compilation of the distribution to execution of
+some tools.</li>
+
+<li><a href="CMake.html">LLVM CMake guide</a> - An addendum to the main Getting
+Started guide for those using the <a href="http://www.cmake.org/">CMake build
+system</a>.
+</li>
+
+<li><a href="GettingStartedVS.html">Getting Started with the LLVM System using
+Microsoft Visual Studio</a> - An addendum to the main Getting Started guide for
+those using Visual Studio on Windows.</li>
+
+<li><a href="tutorial/">LLVM Tutorial</a> - A walk through the process of using
+LLVM for a custom language, and the facilities LLVM offers in tutorial form.</li>
+<li><a href="DeveloperPolicy.html">Developer Policy</a> - The LLVM project's
+policy towards developers and their contributions.</li>
+
+<li><a href="CommandGuide/index.html">LLVM Command Guide</a> - A reference
+manual for the LLVM command line utilities ("man" pages for LLVM tools).</li>
+
+<li><a href="Passes.html">LLVM's Analysis and Transform Passes</a> - A list of
+optimizations and analyses implemented in LLVM.</li>
+
+<li><a href="FAQ.html">Frequently Asked Questions</a> - A list of common
+questions and problems and their solutions.</li>
+
+<li><a href="ReleaseNotes.html">Release notes for the current release</a>
+- This describes new features, known bugs, and other limitations.</li>
+
+<li><a href="HowToSubmitABug.html">How to Submit A Bug Report</a> -
+Instructions for properly submitting information about any bugs you run into in
+the LLVM system.</li>
+
+<li><a href="TestingGuide.html">LLVM Testing Infrastructure Guide</a> - A reference
+manual for using the LLVM testing infrastructure.</li>
+
+<li><a href="http://clang.llvm.org/get_started.html">How to build the C, C++, ObjC,
+and ObjC++ front end</a> - Instructions for building the clang front-end from
+source.</li>
+
+<li><a href="Packaging.html">Packaging guide</a> - Advice on packaging
+LLVM into a distribution.</li>
+
+<li><a href="Lexicon.html">The LLVM Lexicon</a> - Definition of acronyms, terms
+and concepts used in LLVM.</li>
+
+<li><a name="irc">You can probably find help on the unofficial LLVM IRC
+channel</a>.  We often are on irc.oftc.net in the #llvm channel.  If you are
+using the mozilla browser, and have chatzilla installed, you can <a
+href="irc://irc.oftc.net/llvm">join #llvm on irc.oftc.net</a> directly.</li>
+
+<li><a href="HowToAddABuilder.html">How To Add Your Build Configuration 
+To LLVM Buildbot Infrastructure</a> - Instructions for adding new builder to
+LLVM buildbot master.</li>
+
+</ul>
+
+
+<!--=======================================================================-->
+<h2><a name="llvmprog">LLVM Programming Documentation</a></h2>
+<!--=======================================================================-->
+
+<ul>
+<li><a href="LangRef.html">LLVM Language Reference Manual</a> - Defines the LLVM
+intermediate representation and the assembly form of the different nodes.</li>
+
+<li><a href="ProgrammersManual.html">The LLVM Programmers Manual</a> -
+Introduction to the general layout of the LLVM sourcebase, important classes
+and APIs, and some tips &amp; tricks.</li>
+
+<li><a href="CommandLine.html">CommandLine library Reference Manual</a> -
+Provides information on using the command line parsing library.</li>
+
+<li><a href="CodingStandards.html">LLVM Coding standards</a> -
+Details the LLVM coding standards and provides useful information on writing
+efficient C++ code.</li>
+
+<li><a href="ExtendingLLVM.html">Extending LLVM</a> - Look here to see how
+to add instructions and intrinsics to LLVM.</li>
+
+<li><a href="http://llvm.org/doxygen/">Doxygen generated
+documentation</a> (<a
+href="http://llvm.org/doxygen/inherits.html">classes</a>)
+
+(<a href="http://llvm.org/doxygen/doxygen.tar.gz">tarball</a>)
+</li>
+
+<li><a href="http://llvm.org/viewvc/">ViewVC Repository Browser</a></li>
+
+</ul>
+
+<!--=======================================================================-->
+<h2><a name="subsystems">LLVM Subsystem Documentation</a></h2>
+<!--=======================================================================-->
+
+<ul>
+
+<li><a href="WritingAnLLVMPass.html">Writing an LLVM Pass</a> - Information
+on how to write LLVM transformations and analyses.</li>
+
+<li><a href="WritingAnLLVMBackend.html">Writing an LLVM Backend</a> - Information
+on how to write LLVM backends for machine targets.</li>
+
+<li><a href="CodeGenerator.html">The LLVM Target-Independent Code
+Generator</a> - The design and implementation of the LLVM code generator.
+Useful if you are working on retargetting LLVM to a new architecture, designing
+a new codegen pass, or enhancing existing components.</li>
+
+<li><a href="TableGenFundamentals.html">TableGen Fundamentals</a> -
+Describes the TableGen tool, which is used heavily by the LLVM code
+generator.</li>
+
+<li><a href="AliasAnalysis.html">Alias Analysis in LLVM</a> - Information
+on how to write a new alias analysis implementation or how to use existing
+analyses.</li>
+
+<li><a href="GarbageCollection.html">Accurate Garbage Collection with
+LLVM</a> - The interfaces source-language compilers should use for compiling
+GC'd programs.</li>
+
+<li><a href="SourceLevelDebugging.html">Source Level Debugging with
+LLVM</a> - This document describes the design and philosophy behind the LLVM
+source-level debugger.</li>
+
+<li><a href="ExceptionHandling.html">Zero Cost Exception handling in LLVM</a>
+- This document describes the design and implementation of exception handling
+in LLVM.</li>
+
+<li><a href="Bugpoint.html">Bugpoint</a> - automatic bug finder and test-case
+reducer description and usage information.</li>
+
+<li><a href="BitCodeFormat.html">LLVM Bitcode File Format</a> - This describes
+the file format and encoding used for LLVM "bc" files.</li>
+
+<li><a href="SystemLibrary.html">System Library</a> - This document describes
+the LLVM System Library (<tt>lib/System</tt>) and how to keep LLVM source code
+portable</li>
+
+<li><a href="LinkTimeOptimization.html">Link Time Optimization</a> - This
+document describes the interface between LLVM intermodular optimizer and
+the linker and its design</li>
+
+<li><a href="GoldPlugin.html">The LLVM gold plugin</a> - How to build your
+programs with link-time optimization on Linux.</li>
+
+<li><a href="DebuggingJITedCode.html">The GDB JIT interface</a> - How to debug
+JITed code with GDB.</li>
+
+<li><a href="BranchWeightMetadata.html">Branch Weight Metadata</a> - Provides
+information about Branch Prediction Information.</li>
+
+</ul>
+
+<!--=======================================================================-->
+<h2><a name="develprocess">LLVM Development Process Documentation</a></h2>
+<!--=======================================================================-->
+
+<ul>
+
+<li><a href="Projects.html">LLVM Project Guide</a> - How-to guide and
+templates for new projects that <em>use</em> the LLVM infrastructure.  The
+templates (directory organization, Makefiles, and test tree) allow the project
+code to be located outside (or inside) the <tt>llvm/</tt> tree, while using LLVM
+header files and libraries.</li>
+
+<li><a href="LLVMBuild.html">LLVMBuild Documentation</a> - Describes the
+LLVMBuild organization and files used by LLVM to specify component
+descriptions.</li>
+
+<li><a href="MakefileGuide.html">LLVM Makefile Guide</a> - Describes how the
+LLVM makefiles work and how to use them.</li>
+
+<li><a href="HowToReleaseLLVM.html">How To Release LLVM To The Public</a> - This
+is a guide to preparing LLVM releases. Most developers can ignore it.</li>
+
+</ul>
+
+<!--=======================================================================-->
+<h2><a name="maillist">LLVM Mailing Lists</a></h2>
+<!--=======================================================================-->
+
+<ul>
+<li>The <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-announce">
+LLVM Announcements List</a>: This is a low volume list that provides important
+announcements regarding LLVM.  It gets email about once a month.</li>
+
+<li>The <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">Developer's
+List</a>: This list is for people who want to be included in technical
+discussions of LLVM. People post to this list when they have questions about
+writing code for or using the LLVM tools. It is relatively low volume.</li>
+
+<li>The <a href="http://lists.cs.uiuc.edu/pipermail/llvmbugs/">Bugs &amp;
+Patches Archive</a>: This list gets emailed every time a bug is opened and
+closed, and when people submit patches to be included in LLVM.  It is higher
+volume than the LLVMdev list.</li>
+
+<li>The <a href="http://lists.cs.uiuc.edu/pipermail/llvm-commits/">Commits
+Archive</a>: This list contains all commit messages that are made when LLVM
+developers commit code changes to the repository. It is useful for those who
+want to stay on the bleeding edge of LLVM development. This list is very high
+volume.</li>
+
+<li>The <a href="http://lists.cs.uiuc.edu/pipermail/llvm-testresults/">
+Test Results Archive</a>: A message is automatically sent to this list by every
+active nightly tester when it completes.  As such, this list gets email several
+times each day, making it a high volume list.</li>
+
+</ul>
+
+<!-- *********************************************************************** -->
+
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
+
+  <a href="http://llvm.org/">LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
+</body></html>
