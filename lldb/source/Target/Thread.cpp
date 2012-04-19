@@ -606,10 +606,11 @@ Thread::DiscardPlan ()
 ThreadPlan *
 Thread::GetCurrentPlan ()
 {
-    if (m_plan_stack.empty())
-        return NULL;
-    else
-        return m_plan_stack.back().get();
+    // There will always be at least the base plan.  If somebody is mucking with a
+    // thread with an empty plan stack, we should assert right away.
+    assert (!m_plan_stack.empty());
+
+    return m_plan_stack.back().get();
 }
 
 ThreadPlanSP
