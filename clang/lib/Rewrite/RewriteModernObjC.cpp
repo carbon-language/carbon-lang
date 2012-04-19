@@ -2262,7 +2262,11 @@ void RewriteModernObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   if (i+1 < numArgs)
     FdStr += ", ";
   }
-  FdStr +=  ");\n";
+  if (FD->isVariadic()) {
+    FdStr +=  (numArgs > 0) ? ", ...);\n" : "...);\n";
+  }
+  else
+    FdStr +=  ");\n";
   InsertText(FunLocStart, FdStr);
 }
 
@@ -4007,19 +4011,15 @@ std::string RewriteModernObjC::SynthesizeBlockDescriptor(std::string DescTag,
 /// extern "C" or extern "C" {...}
 static SourceLocation getFunctionSourceLocation (RewriteModernObjC &R,
                                                  FunctionDecl *FD) {
-  if (!FD->isExternC() || FD->isMain()) {
-    if (FD->getStorageClassAsWritten() != SC_None)
-      R.RewriteBlockLiteralFunctionDecl(FD);
-    return FD->getTypeSpecStartLoc();
+  if (FD->isExternC()  && !FD->isMain()) {
+    const DeclContext *DC = FD->getDeclContext();
+    if (const LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(DC))
+      // if it is extern "C" {...}, return function decl's own location.
+      if (!LSD->getRBraceLoc().isValid())
+        return LSD->getExternLoc();
   }
-  const DeclContext *DC = FD->getDeclContext();
-  if (const LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(DC)) {
-    SourceLocation BodyRBrace = LSD->getRBraceLoc();
-    // if it is extern "C" {...}, return function decl's own location.
-    if (BodyRBrace.isValid())
-      return FD->getTypeSpecStartLoc();
-    return LSD->getExternLoc();
-  }
+  if (FD->getStorageClassAsWritten() != SC_None)
+    R.RewriteBlockLiteralFunctionDecl(FD);
   return FD->getTypeSpecStartLoc();
 }
 

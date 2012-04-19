@@ -49,8 +49,19 @@ static char stringtype;
 char CFStringGetTypeID();
 void x(void (^)());
 
-static void initStatics() {
+static void initStatics(int arg, ...) {
     x(^{
         stringtype = CFStringGetTypeID();
     });
 }
+static void initStatics1(...) {
+    x(^{
+        stringtype = CFStringGetTypeID();
+    });
+}
+static void initStatics2() {
+    x(^{
+        stringtype = CFStringGetTypeID();
+    });
+}
+
