@@ -1834,6 +1834,16 @@ TEST(AddressSanitizer, DISABLED_DemoTooMuchMemoryTest) {
   }
 }
 
+// http://code.google.com/p/address-sanitizer/issues/detail?id=66
+TEST(AddressSanitizer, DISABLED_BufferOverflowAfterManyFrees) {
+  for (int i = 0; i < 1000000; i++) {
+    delete [] (Ident(new char [8644]));
+  }
+  char *x = new char[8192];
+  x[Ident(8192)] = 0;
+  delete [] Ident(x);
+}
+
 #ifdef __APPLE__
 #include "asan_mac_test.h"
 // TODO(glider): figure out whether we still need these tests. Is it correct
