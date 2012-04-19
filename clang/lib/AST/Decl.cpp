@@ -291,7 +291,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     }
   }
 
-  LV.mergeVisibility(Context.getLangOpts().getVisibilityMode());
+  if (F.ConsiderGlobalVisibility)
+    LV.mergeVisibility(Context.getLangOpts().getVisibilityMode());
 
   // C++ [basic.link]p4:
 
@@ -532,7 +533,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
   if (LV.linkage() == UniqueExternalLinkage)
     return LinkageInfo::uniqueExternal();
 
-  LV.mergeVisibility(D->getASTContext().getLangOpts().getVisibilityMode());
+  if (F.ConsiderGlobalVisibility)
+    LV.mergeVisibility(D->getASTContext().getLangOpts().getVisibilityMode());
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     // If the type of the function uses a type with unique-external
