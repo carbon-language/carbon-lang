@@ -1262,6 +1262,14 @@ for ia in range(len(archs) if iterArchs else 1):
                 # This counts from 1 .. suite.countTestCases().
                 self.counter = 0
 
+            def _exc_info_to_string(self, err, test):
+                """Overrides superclass TestResult's method in order to append
+                our test config info string to the exception info string."""
+                modified_exc_string = '%sConfig=%s-%s' % (super(LLDBTestResult, self)._exc_info_to_string(err, test),
+                                                          test.getArchitecture(),
+                                                          test.getCompiler())
+                return modified_exc_string
+
             def getDescription(self, test):
                 doc_first_line = test.shortDescription()
                 if self.descriptions and doc_first_line:
