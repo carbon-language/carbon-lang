@@ -99,6 +99,7 @@ public:
   MachinePassRegistryNode *getList()                    { return List; }
   MachinePassCtor getDefault()                          { return Default; }
   void setDefault(MachinePassCtor C)                    { Default = C; }
+  void setDefault(StringRef Name);
   void setListener(MachinePassRegistryListener *L)      { Listener = L; }
 
   /// Add - Adds a function pass to the registration list.

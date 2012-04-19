@@ -81,6 +81,9 @@ public:
   static void setDefault(ScheduleDAGCtor C) {
     Registry.setDefault((MachinePassCtor)C);
   }
+  static void setDefault(StringRef Name) {
+    Registry.setDefault(Name);
+  }
   static void setListener(MachinePassRegistryListener *L) {
     Registry.setListener(L);
   }
