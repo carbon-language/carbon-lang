@@ -626,6 +626,8 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
 
 <div>
 
+<!-- {% raw %} -->
+
 <p>The CHECK: and CHECK-NOT: directives both take a pattern to match.  For most
 uses of FileCheck, fixed string matching is perfectly sufficient.  For some
 things, a more flexible form of matching is desired.  To support this, FileCheck
@@ -650,6 +652,8 @@ braces like you would in C.  In the rare case that you want to match double
 braces explicitly from the input, you can use something ugly like
 <b>{{[{][{]}}</b> as your pattern.</p>
 
+<!-- {% endraw %} -->
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -658,6 +662,9 @@ braces explicitly from the input, you can use something ugly like
 </h4>
 
 <div>
+
+
+<!-- {% raw %} -->
 
 <p>It is often useful to match a pattern and then verify that it occurs again
 later in the file.  For codegen tests, this can be useful to allow any register,
@@ -689,6 +696,8 @@ you need to do something like this you can probably take advantage of the fact
 that FileCheck is not actually line-oriented when it matches, this allows you to
 define two separate CHECK lines that match on the same line.
 </p>
+
+<!-- {% endraw %} -->
 
 </div>
 

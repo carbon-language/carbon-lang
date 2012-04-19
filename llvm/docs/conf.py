@@ -36,7 +36,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'index'
 
 # General information about the project.
 project = u'LLVM'
@@ -134,7 +134,14 @@ html_sidebars = {'index': 'indexsidebar.html'}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {'index': 'index.html'}
+#
+# We load all the old-school HTML documentation pages into Sphinx here.
+basedir = os.path.dirname(__file__)
+html_additional_pages = {}
+for file in os.listdir(basedir):
+    if file.endswith('.html'):
+        name,_ = os.path.splitext(file)
+        html_additional_pages[name] = file
 
 # If false, no module index is generated.
 #html_domain_indices = True
@@ -182,7 +189,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('contents', 'LLVM.tex', u'LLVM Documentation',
+  ('index', 'LLVM.tex', u'LLVM Documentation',
    u'LLVM project', 'manual'),
 ]
 
@@ -212,7 +219,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('contents', 'LLVM', u'LLVM Documentation',
+    ('index', 'LLVM', u'LLVM Documentation',
      [u'LLVM project'], 1)
 ]
 
@@ -226,7 +233,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('contents', 'LLVM', u'LLVM Documentation',
+  ('index', 'LLVM', u'LLVM Documentation',
    u'LLVM project', 'LLVM', 'One line description of project.',
    'Miscellaneous'),
 ]
