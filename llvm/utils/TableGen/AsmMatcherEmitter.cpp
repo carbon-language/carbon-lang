@@ -385,7 +385,7 @@ struct MatchableInfo {
 
   /// ResOperands - This is the operand list that should be built for the result
   /// MCInst.
-  std::vector<ResOperand> ResOperands;
+  SmallVector<ResOperand, 8> ResOperands;
 
   /// AsmString - The assembly string for this instruction (with variants
   /// removed), e.g. "movsx $src, $dst".
@@ -399,7 +399,7 @@ struct MatchableInfo {
   /// annotated with a class and where in the OperandList they were defined.
   /// This directly corresponds to the tokenized AsmString after the mnemonic is
   /// removed.
-  SmallVector<AsmOperand, 4> AsmOperands;
+  SmallVector<AsmOperand, 8> AsmOperands;
 
   /// Predicates - The required subtarget features to match this instruction.
   SmallVector<SubtargetFeatureInfo*, 4> RequiredFeatures;
