@@ -402,6 +402,8 @@ class Instruction {
 
   string AsmMatchConverter = "";
 
+  string TwoOperandAliasConstraint = "";
+
   ///@}
 }
 

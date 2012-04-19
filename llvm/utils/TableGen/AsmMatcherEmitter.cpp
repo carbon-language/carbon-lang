@@ -419,6 +419,10 @@ struct MatchableInfo {
       AsmString(Alias->AsmString) {
   }
 
+  // Two-operand aliases clone from the main matchable, but mark the second
+  // operand as a tied operand of the first for purposes of the assembler.
+  void formTwoOperandAlias(StringRef Constraint);
+
   void initialize(const AsmMatcherInfo &Info,
                   SmallPtrSet<Record*, 16> &SingletonRegisters,
                   int AsmVariantNo, std::string &RegisterPrefix);
@@ -647,6 +651,78 @@ void MatchableInfo::dump() {
     AsmOperand &Op = AsmOperands[i];
     errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
     errs() << '\"' << Op.Token << "\"\n";
+  }
+}
+
+static std::pair<StringRef, StringRef>
+parseTwoOperandConstraint(StringRef S, SMLoc Loc) {
+  // Split via the '='.
+  std::pair<StringRef, StringRef> Ops = S.split('=');
+  if (Ops.second == "")
+    throw TGError(Loc, "missing '=' in two-operand alias constraint");
+  // Trim whitespace and the leading '$' on the operand names.
+  size_t start = Ops.first.find_first_of('$');
+  if (start == std::string::npos)
+    throw TGError(Loc, "expected '$' prefix on asm operand name");
+  Ops.first = Ops.first.slice(start + 1, std::string::npos);
+  size_t end = Ops.first.find_last_of(" \t");
+  Ops.first = Ops.first.slice(0, end);
+  // Now the second operand.
+  start = Ops.second.find_first_of('$');
+  if (start == std::string::npos)
+    throw TGError(Loc, "expected '$' prefix on asm operand name");
+  Ops.second = Ops.second.slice(start + 1, std::string::npos);
+  end = Ops.second.find_last_of(" \t");
+  Ops.first = Ops.first.slice(0, end);
+  return Ops;
+}
+
+void MatchableInfo::formTwoOperandAlias(StringRef Constraint) {
+  // Figure out which operands are aliased and mark them as tied.
+  std::pair<StringRef, StringRef> Ops =
+    parseTwoOperandConstraint(Constraint, TheDef->getLoc());
+
+  // Find the AsmOperands that refer to the operands we're aliasing.
+  int SrcAsmOperand = findAsmOperandNamed(Ops.first);
+  int DstAsmOperand = findAsmOperandNamed(Ops.second);
+  if (SrcAsmOperand == -1)
+    throw TGError(TheDef->getLoc(),
+                  "unknown source two-operand alias operand '" +
+                  Ops.first.str() + "'.");
+  if (DstAsmOperand == -1)
+    throw TGError(TheDef->getLoc(),
+                  "unknown destination two-operand alias operand '" +
+                  Ops.second.str() + "'.");
+
+  // Find the ResOperand that refers to the operand we're aliasing away
+  // and update it to refer to the combined operand instead.
+  for (unsigned i = 0, e = ResOperands.size(); i != e; ++i) {
+    ResOperand &Op = ResOperands[i];
+    if (Op.Kind == ResOperand::RenderAsmOperand &&
+        Op.AsmOperandNum == (unsigned)SrcAsmOperand) {
+      Op.AsmOperandNum = DstAsmOperand;
+      break;
+    }
+  }
+  // Remove the AsmOperand for the alias operand.
+  AsmOperands.erase(AsmOperands.begin() + SrcAsmOperand);
+  // Adjust the ResOperand references to any AsmOperands that followed
+  // the one we just deleted.
+  for (unsigned i = 0, e = ResOperands.size(); i != e; ++i) {
+    ResOperand &Op = ResOperands[i];
+    switch(Op.Kind) {
+    default:
+      // Nothing to do for operands that don't reference AsmOperands.
+      break;
+    case ResOperand::RenderAsmOperand:
+      if (Op.AsmOperandNum > (unsigned)SrcAsmOperand)
+        --Op.AsmOperandNum;
+      break;
+    case ResOperand::TiedOperand:
+      if (Op.TiedOperandNum > (unsigned)SrcAsmOperand)
+        --Op.TiedOperandNum;
+      break;
+    }
   }
 }
 
@@ -1272,6 +1348,7 @@ void AsmMatcherInfo::buildInfo() {
 
   // Build the information about matchables, now that we have fully formed
   // classes.
+  std::vector<MatchableInfo*> NewMatchables;
   for (std::vector<MatchableInfo*>::iterator it = Matchables.begin(),
          ie = Matchables.end(); it != ie; ++it) {
     MatchableInfo *II = *it;
@@ -1315,11 +1392,29 @@ void AsmMatcherInfo::buildInfo() {
         buildAliasOperandReference(II, OperandName, Op);
     }
 
-    if (II->DefRec.is<const CodeGenInstruction*>())
+    if (II->DefRec.is<const CodeGenInstruction*>()) {
       II->buildInstructionResultOperands();
-    else
+      // If the instruction has a two-operand alias, build up the
+      // matchable here. We'll add them in bulk at the end to avoid
+      // confusing this loop.
+      std::string Constraint =
+        II->TheDef->getValueAsString("TwoOperandAliasConstraint");
+      if (Constraint != "") {
+        // Start by making a copy of the original matchable.
+        OwningPtr<MatchableInfo> AliasII(new MatchableInfo(*II));
+
+        // Adjust it to be a two-operand alias.
+        AliasII->formTwoOperandAlias(Constraint);
+
+        // Add the alias to the matchables list.
+        NewMatchables.push_back(AliasII.take());
+      }
+    } else
       II->buildAliasResultOperands();
   }
+  if (!NewMatchables.empty())
+    Matchables.insert(Matchables.end(), NewMatchables.begin(),
+                      NewMatchables.end());
 
   // Process token alias definitions and set up the associated superclass
   // information.
