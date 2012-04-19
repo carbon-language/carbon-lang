@@ -221,6 +221,7 @@ public:
     Visibility visibility_;
     bool explicit_;
 
+    void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
   public:
     LinkageInfo() : linkage_(ExternalLinkage), visibility_(DefaultVisibility),
                     explicit_(false) {}
@@ -245,8 +246,6 @@ public:
     bool visibilityExplicit() const { return explicit_; }
 
     void setLinkage(Linkage L) { linkage_ = L; }
-    void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
-
     void mergeLinkage(Linkage L) {
       setLinkage(minLinkage(linkage(), L));
     }

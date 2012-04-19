@@ -275,7 +275,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
 
   if (F.ConsiderVisibilityAttributes) {
     if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
-      LV.setVisibility(*Vis, true);
+      LV.mergeVisibility(*Vis, true);
     } else {
       // If we're declared in a namespace with a visibility attribute,
       // use that namespace's visibility, but don't call it explicit.
@@ -285,7 +285,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
         const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
         if (!ND) continue;
         if (llvm::Optional<Visibility> Vis = ND->getExplicitVisibility()) {
-          LV.setVisibility(*Vis, true);
+          LV.mergeVisibility(*Vis, true);
           break;
         }
       }
@@ -329,7 +329,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     }
 
     if (Var->getStorageClass() == SC_PrivateExtern)
-      LV.setVisibility(HiddenVisibility, true);
+      LV.mergeVisibility(HiddenVisibility, true);
 
     if (!Context.getLangOpts().CPlusPlus &&
         (Var->getStorageClass() == SC_Extern ||
@@ -359,7 +359,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     // just too painful to make work.
 
     if (Function->getStorageClass() == SC_PrivateExtern)
-      LV.setVisibility(HiddenVisibility, true);
+      LV.mergeVisibility(HiddenVisibility, true);
 
     // C99 6.2.2p5:
     //   If the declaration of an identifier for a function has no
@@ -785,7 +785,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
       LinkageInfo LV;
       if (Flags.ConsiderVisibilityAttributes) {
         if (llvm::Optional<Visibility> Vis = Function->getExplicitVisibility())
-          LV.setVisibility(*Vis, true);
+          LV.mergeVisibility(*Vis, true);
       }
       
       if (const FunctionDecl *Prev = Function->getPreviousDecl()) {
@@ -806,10 +806,10 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
 
         LinkageInfo LV;
         if (Var->getStorageClass() == SC_PrivateExtern)
-          LV.setVisibility(HiddenVisibility, true);
+          LV.mergeVisibility(HiddenVisibility, true);
         else if (Flags.ConsiderVisibilityAttributes) {
           if (llvm::Optional<Visibility> Vis = Var->getExplicitVisibility())
-            LV.setVisibility(*Vis, true);
+            LV.mergeVisibility(*Vis, true);
         }
         
         if (const VarDecl *Prev = Var->getPreviousDecl()) {
