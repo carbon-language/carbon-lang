@@ -1044,13 +1044,11 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
 
     if (frame && target)
     {
+        Mutex::Locker api_locker (target->GetAPIMutex());
+            
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-
-            Mutex::Locker api_locker (target->GetAPIMutex());
-            
-            
             StreamString frame_description;
             frame->DumpUsingSettingsFormat (&frame_description);
 
