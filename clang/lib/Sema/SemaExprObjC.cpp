@@ -1323,30 +1323,48 @@ ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
   return 0;
 }
 
-void 
-Sema::DiagnoseARCUseOfWeakReceiver(NamedDecl *PDecl,
-                                   QualType T, SourceLocation Loc) {
-  if (!getLangOpts().ObjCAutoRefCount)
+static void DiagnoseARCUseOfWeakReceiver(Sema &S, Expr *Receiver) {
+  if (!Receiver)
     return;
   
-  if (T.getObjCLifetime() == Qualifiers::OCL_Weak) {
-    Diag(Loc, diag::warn_receiver_is_weak) 
-      << (!PDecl ? 0 : (isa<ObjCPropertyDecl>(PDecl) ? 1 : 2));
-    if (PDecl) {
-      if (isa<ObjCPropertyDecl>(PDecl))
-        Diag(PDecl->getLocation(), diag::note_property_declare);
-      else
-        Diag(PDecl->getLocation(), diag::note_method_declared_at) << PDecl;
+  Expr *RExpr = Receiver->IgnoreParenImpCasts();
+  SourceLocation Loc = RExpr->getLocStart();
+  QualType T = RExpr->getType();
+  ObjCPropertyDecl *PDecl = 0;
+  ObjCMethodDecl *GDecl = 0;
+  if (PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(RExpr)) {
+    RExpr = POE->getSyntacticForm();
+    if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(RExpr)) {
+      if (PRE->isImplicitProperty()) {
+        GDecl = PRE->getImplicitPropertyGetter();
+        if (GDecl) {
+          T = GDecl->getResultType();
+        }
+      }
+      else {
+        PDecl = PRE->getExplicitProperty();
+        if (PDecl) {
+          T = PDecl->getType();
+        }
+      }
     }
+  }
+  
+  if (T.getObjCLifetime() == Qualifiers::OCL_Weak) {
+    S.Diag(Loc, diag::warn_receiver_is_weak) 
+      << ((!PDecl && !GDecl) ? 0 : (PDecl ? 1 : 2));
+    if (PDecl)
+      S.Diag(PDecl->getLocation(), diag::note_property_declare);
+    else if (GDecl)
+      S.Diag(GDecl->getLocation(), diag::note_method_declared_at) << GDecl;
     return;
   }
   
-  if (PDecl)
-    if (ObjCPropertyDecl *Prop = dyn_cast<ObjCPropertyDecl>(PDecl))
-      if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak) {
-        Diag(Loc, diag::warn_receiver_is_weak) << 1;
-        Diag(Prop->getLocation(), diag::note_property_declare);
-      }
+  if (PDecl && 
+      (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)) {
+    S.Diag(Loc, diag::warn_receiver_is_weak) << 1;
+    S.Diag(PDecl->getLocation(), diag::note_property_declare);
+  }
 }
 
 /// HandleExprPropertyRefExpr - Handle foo.bar where foo is a pointer to an
@@ -2404,10 +2422,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   }
 
   if (getLangOpts().ObjCAutoRefCount) {
-    if (Receiver)
-      DiagnoseARCUseOfWeakReceiver(0 /* PDecl */,
-                                   Receiver->IgnoreParenImpCasts()->getType(),
-                                   Receiver->getLocStart());
+    DiagnoseARCUseOfWeakReceiver(*this, Receiver);
     
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&
