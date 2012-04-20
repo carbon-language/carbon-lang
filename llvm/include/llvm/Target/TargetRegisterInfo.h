@@ -515,12 +515,15 @@ public:
     return 0;
   }
 
-  /// Get the weight in units of pressure for this register class.
+// Get the weight in units of pressure for this register class.
   virtual const RegClassWeight &getRegClassWeight(
     const TargetRegisterClass *RC) const = 0;
 
   /// Get the number of dimensions of register pressure.
   virtual unsigned getNumRegPressureSets() const = 0;
+
+  /// Get the name of this register unit pressure set.
+  virtual const char *getRegPressureSetName(unsigned Idx) const = 0;
 
   /// Get the register unit pressure limit for this dimension.
   /// This limit must be adjusted dynamically for reserved registers.
