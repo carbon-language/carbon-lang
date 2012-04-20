@@ -156,7 +156,10 @@ public:
       assert((!mi || !mi->isInsideBundle()) &&
              "It's not legal to initialize bundle_iterator with a bundled MI");
     }
-    bundle_iterator(const bundle_iterator &I) : MII(I.MII) {}
+    // Template allows conversion from const to nonconst.
+    template<class OtherTy, class OtherIterTy>
+    bundle_iterator(const bundle_iterator<OtherTy, OtherIterTy> &I)
+      : MII(I.getInstrIterator()) {}
     bundle_iterator() : MII(0) {}
 
     Ty &operator*() const { return *MII; }
