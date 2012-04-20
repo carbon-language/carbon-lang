@@ -1782,12 +1782,13 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
       unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
+      const TargetRegisterClass *RC = MIOpc == X86::INC64r ?
+        (const TargetRegisterClass*)&X86::GR64_NOSPRegClass :
+        (const TargetRegisterClass*)&X86::GR32_NOSPRegClass;
 
       // LEA can't handle RSP.
       if (TargetRegisterInfo::isVirtualRegister(Src) &&
-          !MF.getRegInfo().constrainRegClass(Src,
-                            MIOpc == X86::INC64r ? X86::GR64_NOSPRegisterClass :
-                                                   X86::GR32_NOSPRegisterClass))
+          !MF.getRegInfo().constrainRegClass(Src, RC))
         return 0;
 
       NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
@@ -1812,11 +1813,12 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
       unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
+      const TargetRegisterClass *RC = MIOpc == X86::DEC64r ?
+        (const TargetRegisterClass*)&X86::GR64_NOSPRegClass :
+        (const TargetRegisterClass*)&X86::GR32_NOSPRegClass;
       // LEA can't handle RSP.
       if (TargetRegisterInfo::isVirtualRegister(Src) &&
-          !MF.getRegInfo().constrainRegClass(Src,
-                            MIOpc == X86::DEC64r ? X86::GR64_NOSPRegisterClass :
-                                                   X86::GR32_NOSPRegisterClass))
+          !MF.getRegInfo().constrainRegClass(Src, RC))
         return 0;
 
       NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(Opc))
@@ -1844,10 +1846,10 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       const TargetRegisterClass *RC;
       if (MIOpc == X86::ADD64rr || MIOpc == X86::ADD64rr_DB) {
         Opc = X86::LEA64r;
-        RC = X86::GR64_NOSPRegisterClass;
+        RC = &X86::GR64_NOSPRegClass;
       } else {
         Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
-        RC = X86::GR32_NOSPRegisterClass;
+        RC = &X86::GR32_NOSPRegClass;
       }
 
 
@@ -3625,7 +3627,7 @@ unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   // Create the register. The code to initialize it is inserted
   // later, by the CGBR pass (below).
   MachineRegisterInfo &RegInfo = MF->getRegInfo();
-  GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
+  GlobalBaseReg = RegInfo.createVirtualRegister(&X86::GR32RegClass);
   X86FI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
 }
@@ -3835,7 +3837,7 @@ namespace {
 
       unsigned PC;
       if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT())
-        PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
+        PC = RegInfo.createVirtualRegister(&X86::GR32RegClass);
       else
         PC = GlobalBaseReg;
 

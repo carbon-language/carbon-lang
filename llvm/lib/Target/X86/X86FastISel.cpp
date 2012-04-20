@@ -183,37 +183,37 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
   case MVT::i1:
   case MVT::i8:
     Opc = X86::MOV8rm;
-    RC  = X86::GR8RegisterClass;
+    RC  = &X86::GR8RegClass;
     break;
   case MVT::i16:
     Opc = X86::MOV16rm;
-    RC  = X86::GR16RegisterClass;
+    RC  = &X86::GR16RegClass;
     break;
   case MVT::i32:
     Opc = X86::MOV32rm;
-    RC  = X86::GR32RegisterClass;
+    RC  = &X86::GR32RegClass;
     break;
   case MVT::i64:
     // Must be in x86-64 mode.
     Opc = X86::MOV64rm;
-    RC  = X86::GR64RegisterClass;
+    RC  = &X86::GR64RegClass;
     break;
   case MVT::f32:
     if (X86ScalarSSEf32) {
       Opc = Subtarget->hasAVX() ? X86::VMOVSSrm : X86::MOVSSrm;
-      RC  = X86::FR32RegisterClass;
+      RC  = &X86::FR32RegClass;
     } else {
       Opc = X86::LD_Fp32m;
-      RC  = X86::RFP32RegisterClass;
+      RC  = &X86::RFP32RegClass;
     }
     break;
   case MVT::f64:
     if (X86ScalarSSEf64) {
       Opc = Subtarget->hasAVX() ? X86::VMOVSDrm : X86::MOVSDrm;
-      RC  = X86::FR64RegisterClass;
+      RC  = &X86::FR64RegClass;
     } else {
       Opc = X86::LD_Fp64m;
-      RC  = X86::RFP64RegisterClass;
+      RC  = &X86::RFP64RegClass;
     }
     break;
   case MVT::f80:
@@ -240,7 +240,7 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
   default: return false;
   case MVT::i1: {
     // Mask out all but lowest bit.
-    unsigned AndResult = createResultReg(X86::GR8RegisterClass);
+    unsigned AndResult = createResultReg(&X86::GR8RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
             TII.get(X86::AND8ri), AndResult).addReg(Val).addImm(1);
     Val = AndResult;
@@ -547,13 +547,13 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
 
         if (TLI.getPointerTy() == MVT::i64) {
           Opc = X86::MOV64rm;
-          RC  = X86::GR64RegisterClass;
+          RC  = &X86::GR64RegClass;
 
           if (Subtarget->isPICStyleRIPRel())
             StubAM.Base.Reg = X86::RIP;
         } else {
           Opc = X86::MOV32rm;
-          RC  = X86::GR32RegisterClass;
+          RC  = &X86::GR32RegClass;
         }
 
         LoadReg = createResultReg(RC);
@@ -1258,7 +1258,7 @@ bool X86FastISel::X86SelectFPExt(const Instruction *I) {
     if (V->getType()->isFloatTy()) {
       unsigned OpReg = getRegForValue(V);
       if (OpReg == 0) return false;
-      unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
+      unsigned ResultReg = createResultReg(&X86::FR64RegClass);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
               TII.get(X86::CVTSS2SDrr), ResultReg)
         .addReg(OpReg);
@@ -1277,7 +1277,7 @@ bool X86FastISel::X86SelectFPTrunc(const Instruction *I) {
       if (V->getType()->isDoubleTy()) {
         unsigned OpReg = getRegForValue(V);
         if (OpReg == 0) return false;
-        unsigned ResultReg = createResultReg(X86::FR32RegisterClass);
+        unsigned ResultReg = createResultReg(&X86::FR32RegClass);
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                 TII.get(X86::CVTSD2SSrr), ResultReg)
           .addReg(OpReg);
@@ -1314,8 +1314,9 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
   if (!Subtarget->is64Bit()) {
     // If we're on x86-32; we can't extract an i8 from a general register.
     // First issue a copy to GR16_ABCD or GR32_ABCD.
-    const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
-      ? X86::GR16_ABCDRegisterClass : X86::GR32_ABCDRegisterClass;
+    const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16) ?
+      (const TargetRegisterClass*)&X86::GR16_ABCDRegClass :
+      (const TargetRegisterClass*)&X86::GR32_ABCDRegClass;
     unsigned CopyReg = createResultReg(CopyRC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
             CopyReg).addReg(InputReg);
@@ -1903,7 +1904,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
          RVLocs[i].getLocReg() == X86::ST1)) {
       if (isScalarFPTypeInSSEReg(RVLocs[i].getValVT())) {
         CopyVT = MVT::f80;
-        CopyReg = createResultReg(X86::RFP80RegisterClass);
+        CopyReg = createResultReg(&X86::RFP80RegClass);
       }
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::FpPOP_RETVAL),
               CopyReg);
@@ -2001,37 +2002,37 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   default: return false;
   case MVT::i8:
     Opc = X86::MOV8rm;
-    RC  = X86::GR8RegisterClass;
+    RC  = &X86::GR8RegClass;
     break;
   case MVT::i16:
     Opc = X86::MOV16rm;
-    RC  = X86::GR16RegisterClass;
+    RC  = &X86::GR16RegClass;
     break;
   case MVT::i32:
     Opc = X86::MOV32rm;
-    RC  = X86::GR32RegisterClass;
+    RC  = &X86::GR32RegClass;
     break;
   case MVT::i64:
     // Must be in x86-64 mode.
     Opc = X86::MOV64rm;
-    RC  = X86::GR64RegisterClass;
+    RC  = &X86::GR64RegClass;
     break;
   case MVT::f32:
     if (X86ScalarSSEf32) {
       Opc = Subtarget->hasAVX() ? X86::VMOVSSrm : X86::MOVSSrm;
-      RC  = X86::FR32RegisterClass;
+      RC  = &X86::FR32RegClass;
     } else {
       Opc = X86::LD_Fp32m;
-      RC  = X86::RFP32RegisterClass;
+      RC  = &X86::RFP32RegClass;
     }
     break;
   case MVT::f64:
     if (X86ScalarSSEf64) {
       Opc = Subtarget->hasAVX() ? X86::VMOVSDrm : X86::MOVSDrm;
-      RC  = X86::FR64RegisterClass;
+      RC  = &X86::FR64RegClass;
     } else {
       Opc = X86::LD_Fp64m;
-      RC  = X86::RFP64RegisterClass;
+      RC  = &X86::RFP64RegClass;
     }
     break;
   case MVT::f80:
@@ -2124,19 +2125,19 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
     case MVT::f32:
       if (X86ScalarSSEf32) {
         Opc = X86::FsFLD0SS;
-        RC  = X86::FR32RegisterClass;
+        RC  = &X86::FR32RegClass;
       } else {
         Opc = X86::LD_Fp032;
-        RC  = X86::RFP32RegisterClass;
+        RC  = &X86::RFP32RegClass;
       }
       break;
     case MVT::f64:
       if (X86ScalarSSEf64) {
         Opc = X86::FsFLD0SD;
-        RC  = X86::FR64RegisterClass;
+        RC  = &X86::FR64RegClass;
       } else {
         Opc = X86::LD_Fp064;
-        RC  = X86::RFP64RegisterClass;
+        RC  = &X86::RFP64RegClass;
       }
       break;
     case MVT::f80:

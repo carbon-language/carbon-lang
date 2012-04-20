@@ -145,7 +145,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   // to insert any VZEROUPPER instructions.  This is constant-time, so it is
   // cheap in the common case of no ymm use.
   bool YMMUsed = false;
-  const TargetRegisterClass *RC = X86::VR256RegisterClass;
+  const TargetRegisterClass *RC = &X86::VR256RegClass;
   for (TargetRegisterClass::iterator i = RC->begin(), e = RC->end();
        i != e; i++) {
     if (MRI.isPhysRegUsed(*i)) {

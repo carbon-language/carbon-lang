@@ -689,9 +689,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
 
   // Set up the register classes.
-  addRegisterClass(MVT::i32, SP::IntRegsRegisterClass);
-  addRegisterClass(MVT::f32, SP::FPRegsRegisterClass);
-  addRegisterClass(MVT::f64, SP::DFPRegsRegisterClass);
+  addRegisterClass(MVT::i32, &SP::IntRegsRegClass);
+  addRegisterClass(MVT::f32, &SP::FPRegsRegClass);
+  addRegisterClass(MVT::f64, &SP::DFPRegsRegClass);
 
   // Turn FP extload into load/fextend
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
@@ -1259,7 +1259,7 @@ SparcTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':
-      return std::make_pair(0U, SP::IntRegsRegisterClass);
+      return std::make_pair(0U, &SP::IntRegsRegClass);
     }
   }
 

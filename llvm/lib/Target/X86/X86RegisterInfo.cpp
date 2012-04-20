@@ -146,7 +146,7 @@ X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC) const{
   // The GR8_NOREX class is always used in a way that won't be constrained to a
   // sub-class, so sub-classes like GR8_ABCD_L are allowed to expand to the
   // full GR8 class.
-  if (RC == X86::GR8_NOREXRegisterClass)
+  if (RC == &X86::GR8_NOREXRegClass)
     return RC;
 
   const TargetRegisterClass *Super = RC;

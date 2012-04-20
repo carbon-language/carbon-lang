@@ -303,13 +303,13 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  if (RC == SP::IntRegsRegisterClass)
+  if (RC == &SP::IntRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill));
-  else if (RC == SP::FPRegsRegisterClass)
+  else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STFri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg,  getKillRegState(isKill));
-  else if (RC == SP::DFPRegsRegisterClass)
+  else if (RC == &SP::DFPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STDFri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg,  getKillRegState(isKill));
   else
@@ -324,11 +324,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  if (RC == SP::IntRegsRegisterClass)
+  if (RC == &SP::IntRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDri), DestReg).addFrameIndex(FI).addImm(0);
-  else if (RC == SP::FPRegsRegisterClass)
+  else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDFri), DestReg).addFrameIndex(FI).addImm(0);
-  else if (RC == SP::DFPRegsRegisterClass)
+  else if (RC == &SP::DFPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDDFri), DestReg).addFrameIndex(FI).addImm(0);
   else
     llvm_unreachable("Can't load this register from stack slot");

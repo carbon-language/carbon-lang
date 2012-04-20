@@ -215,11 +215,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   // Set up the register classes.
-  addRegisterClass(MVT::i8, X86::GR8RegisterClass);
-  addRegisterClass(MVT::i16, X86::GR16RegisterClass);
-  addRegisterClass(MVT::i32, X86::GR32RegisterClass);
+  addRegisterClass(MVT::i8, &X86::GR8RegClass);
+  addRegisterClass(MVT::i16, &X86::GR16RegClass);
+  addRegisterClass(MVT::i32, &X86::GR32RegClass);
   if (Subtarget->is64Bit())
-    addRegisterClass(MVT::i64, X86::GR64RegisterClass);
+    addRegisterClass(MVT::i64, &X86::GR64RegClass);
 
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
 
@@ -567,8 +567,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (!TM.Options.UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
     // Set up the FP register classes.
-    addRegisterClass(MVT::f32, X86::FR32RegisterClass);
-    addRegisterClass(MVT::f64, X86::FR64RegisterClass);
+    addRegisterClass(MVT::f32, &X86::FR32RegClass);
+    addRegisterClass(MVT::f64, &X86::FR64RegClass);
 
     // Use ANDPD to simulate FABS.
     setOperationAction(ISD::FABS , MVT::f64, Custom);
@@ -599,8 +599,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   } else if (!TM.Options.UseSoftFloat && X86ScalarSSEf32) {
     // Use SSE for f32, x87 for f64.
     // Set up the FP register classes.
-    addRegisterClass(MVT::f32, X86::FR32RegisterClass);
-    addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
+    addRegisterClass(MVT::f32, &X86::FR32RegClass);
+    addRegisterClass(MVT::f64, &X86::RFP64RegClass);
 
     // Use ANDPS to simulate FABS.
     setOperationAction(ISD::FABS , MVT::f32, Custom);
@@ -632,8 +632,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   } else if (!TM.Options.UseSoftFloat) {
     // f32 and f64 in x87.
     // Set up the FP register classes.
-    addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
-    addRegisterClass(MVT::f32, X86::RFP32RegisterClass);
+    addRegisterClass(MVT::f64, &X86::RFP64RegClass);
+    addRegisterClass(MVT::f32, &X86::RFP32RegClass);
 
     setOperationAction(ISD::UNDEF,     MVT::f64, Expand);
     setOperationAction(ISD::UNDEF,     MVT::f32, Expand);
@@ -660,7 +660,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // Long double always uses X87.
   if (!TM.Options.UseSoftFloat) {
-    addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
+    addRegisterClass(MVT::f80, &X86::RFP80RegClass);
     setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
     {
@@ -776,7 +776,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
   // with -msoft-float, disable use of MMX as well.
   if (!TM.Options.UseSoftFloat && Subtarget->hasMMX()) {
-    addRegisterClass(MVT::x86mmx, X86::VR64RegisterClass);
+    addRegisterClass(MVT::x86mmx, &X86::VR64RegClass);
     // No operations on x86mmx supported, everything uses intrinsics.
   }
 
@@ -813,7 +813,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::BITCAST,            MVT::v1i64, Expand);
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE1()) {
-    addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v4f32, &X86::VR128RegClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
     setOperationAction(ISD::FSUB,               MVT::v4f32, Legal);
@@ -830,14 +830,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE2()) {
-    addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v2f64, &X86::VR128RegClass);
 
     // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
     // registers cannot be used even for integer operations.
-    addRegisterClass(MVT::v16i8, X86::VR128RegisterClass);
-    addRegisterClass(MVT::v8i16, X86::VR128RegisterClass);
-    addRegisterClass(MVT::v4i32, X86::VR128RegisterClass);
-    addRegisterClass(MVT::v2i64, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v16i8, &X86::VR128RegClass);
+    addRegisterClass(MVT::v8i16, &X86::VR128RegClass);
+    addRegisterClass(MVT::v4i32, &X86::VR128RegClass);
+    addRegisterClass(MVT::v2i64, &X86::VR128RegClass);
 
     setOperationAction(ISD::ADD,                MVT::v16i8, Legal);
     setOperationAction(ISD::ADD,                MVT::v8i16, Legal);
@@ -1011,12 +1011,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SETCC,             MVT::v2i64, Custom);
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasAVX()) {
-    addRegisterClass(MVT::v32i8,  X86::VR256RegisterClass);
-    addRegisterClass(MVT::v16i16, X86::VR256RegisterClass);
-    addRegisterClass(MVT::v8i32,  X86::VR256RegisterClass);
-    addRegisterClass(MVT::v8f32,  X86::VR256RegisterClass);
-    addRegisterClass(MVT::v4i64,  X86::VR256RegisterClass);
-    addRegisterClass(MVT::v4f64,  X86::VR256RegisterClass);
+    addRegisterClass(MVT::v32i8,  &X86::VR256RegClass);
+    addRegisterClass(MVT::v16i16, &X86::VR256RegClass);
+    addRegisterClass(MVT::v8i32,  &X86::VR256RegClass);
+    addRegisterClass(MVT::v8f32,  &X86::VR256RegClass);
+    addRegisterClass(MVT::v4i64,  &X86::VR256RegClass);
+    addRegisterClass(MVT::v4f64,  &X86::VR256RegClass);
 
     setOperationAction(ISD::LOAD,               MVT::v8f32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4f64, Legal);
@@ -1411,18 +1411,19 @@ X86TargetLowering::findRepresentativeClass(EVT VT) const{
   default:
     return TargetLowering::findRepresentativeClass(VT);
   case MVT::i8: case MVT::i16: case MVT::i32: case MVT::i64:
-    RRC = (Subtarget->is64Bit()
-           ? X86::GR64RegisterClass : X86::GR32RegisterClass);
+    RRC = Subtarget->is64Bit() ?
+      (const TargetRegisterClass*)&X86::GR64RegClass :
+      (const TargetRegisterClass*)&X86::GR32RegClass;
     break;
   case MVT::x86mmx:
-    RRC = X86::VR64RegisterClass;
+    RRC = &X86::VR64RegClass;
     break;
   case MVT::f32: case MVT::f64:
   case MVT::v16i8: case MVT::v8i16: case MVT::v4i32: case MVT::v2i64:
   case MVT::v4f32: case MVT::v2f64:
   case MVT::v32i8: case MVT::v8i32: case MVT::v4i64: case MVT::v8f32:
   case MVT::v4f64:
-    RRC = X86::VR128RegisterClass;
+    RRC = &X86::VR128RegClass;
     break;
   }
   return std::make_pair(RRC, Cost);
@@ -1850,19 +1851,19 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       EVT RegVT = VA.getLocVT();
       const TargetRegisterClass *RC;
       if (RegVT == MVT::i32)
-        RC = X86::GR32RegisterClass;
+        RC = &X86::GR32RegClass;
       else if (Is64Bit && RegVT == MVT::i64)
-        RC = X86::GR64RegisterClass;
+        RC = &X86::GR64RegClass;
       else if (RegVT == MVT::f32)
-        RC = X86::FR32RegisterClass;
+        RC = &X86::FR32RegClass;
       else if (RegVT == MVT::f64)
-        RC = X86::FR64RegisterClass;
+        RC = &X86::FR64RegClass;
       else if (RegVT.isVector() && RegVT.getSizeInBits() == 256)
-        RC = X86::VR256RegisterClass;
+        RC = &X86::VR256RegClass;
       else if (RegVT.isVector() && RegVT.getSizeInBits() == 128)
-        RC = X86::VR128RegisterClass;
+        RC = &X86::VR128RegClass;
       else if (RegVT == MVT::x86mmx)
-        RC = X86::VR64RegisterClass;
+        RC = &X86::VR64RegClass;
       else
         llvm_unreachable("Unknown argument type!");
 
@@ -2004,7 +2005,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
                                   DAG.getIntPtrConstant(Offset));
         unsigned VReg = MF.addLiveIn(GPR64ArgRegs[NumIntRegs],
-                                     X86::GR64RegisterClass);
+                                     &X86::GR64RegClass);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
@@ -2020,7 +2021,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         SmallVector<SDValue, 11> SaveXMMOps;
         SaveXMMOps.push_back(Chain);
 
-        unsigned AL = MF.addLiveIn(X86::AL, X86::GR8RegisterClass);
+        unsigned AL = MF.addLiveIn(X86::AL, &X86::GR8RegClass);
         SDValue ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
         SaveXMMOps.push_back(ALVal);
 
@@ -2031,7 +2032,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
         for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
           unsigned VReg = MF.addLiveIn(XMMArgRegs64Bit[NumXMMRegs],
-                                       X86::VR128RegisterClass);
+                                       &X86::VR128RegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::v4f32);
           SaveXMMOps.push_back(Val);
         }
@@ -11460,7 +11461,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   //     result in out1, out2
   //     fallthrough -->nextMBB
 
-  const TargetRegisterClass *RC = X86::GR32RegisterClass;
+  const TargetRegisterClass *RC = &X86::GR32RegClass;
   const unsigned LoadOpc = X86::MOV32rm;
   const unsigned NotOpc = X86::NOT32r;
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -11662,7 +11663,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   int lastAddrIndx = X86::AddrNumOperands - 1; // [0,3]
   int valArgIndx = lastAddrIndx + 1;
 
-  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  unsigned t1 = F->getRegInfo().createVirtualRegister(&X86::GR32RegClass);
   MachineInstrBuilder MIB = BuildMI(newMBB, dl, TII->get(X86::MOV32rm), t1);
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
@@ -11672,7 +11673,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
           argOpers[valArgIndx]->isImm()) &&
          "invalid operand");
 
-  unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  unsigned t2 = F->getRegInfo().createVirtualRegister(&X86::GR32RegClass);
   if (argOpers[valArgIndx]->isReg())
     MIB = BuildMI(newMBB, dl, TII->get(TargetOpcode::COPY), t2);
   else
@@ -11687,7 +11688,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   MIB.addReg(t2);
 
   // Generate movc
-  unsigned t3 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  unsigned t3 = F->getRegInfo().createVirtualRegister(&X86::GR32RegClass);
   MIB = BuildMI(newMBB, dl, TII->get(cmovOpc),t3);
   MIB.addReg(t2);
   MIB.addReg(t1);
@@ -12517,7 +12518,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     // Load the old value of the high byte of the control word...
     unsigned OldCW =
-      F->getRegInfo().createVirtualRegister(X86::GR16RegisterClass);
+      F->getRegInfo().createVirtualRegister(&X86::GR16RegClass);
     addFrameReference(BuildMI(*BB, MI, DL, TII->get(X86::MOV16rm), OldCW),
                       CWFrameIdx);
 
@@ -12605,25 +12606,25 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::AND32ri, X86::MOV32rm,
                                                X86::LCMPXCHG32,
                                                X86::NOT32r, X86::EAX,
-                                               X86::GR32RegisterClass);
+                                               &X86::GR32RegClass);
   case X86::ATOMOR32:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR32rr,
                                                X86::OR32ri, X86::MOV32rm,
                                                X86::LCMPXCHG32,
                                                X86::NOT32r, X86::EAX,
-                                               X86::GR32RegisterClass);
+                                               &X86::GR32RegClass);
   case X86::ATOMXOR32:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR32rr,
                                                X86::XOR32ri, X86::MOV32rm,
                                                X86::LCMPXCHG32,
                                                X86::NOT32r, X86::EAX,
-                                               X86::GR32RegisterClass);
+                                               &X86::GR32RegClass);
   case X86::ATOMNAND32:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND32rr,
                                                X86::AND32ri, X86::MOV32rm,
                                                X86::LCMPXCHG32,
                                                X86::NOT32r, X86::EAX,
-                                               X86::GR32RegisterClass, true);
+                                               &X86::GR32RegClass, true);
   case X86::ATOMMIN32:
     return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL32rr);
   case X86::ATOMMAX32:
@@ -12638,25 +12639,25 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::AND16ri, X86::MOV16rm,
                                                X86::LCMPXCHG16,
                                                X86::NOT16r, X86::AX,
-                                               X86::GR16RegisterClass);
+                                               &X86::GR16RegClass);
   case X86::ATOMOR16:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR16rr,
                                                X86::OR16ri, X86::MOV16rm,
                                                X86::LCMPXCHG16,
                                                X86::NOT16r, X86::AX,
-                                               X86::GR16RegisterClass);
+                                               &X86::GR16RegClass);
   case X86::ATOMXOR16:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR16rr,
                                                X86::XOR16ri, X86::MOV16rm,
                                                X86::LCMPXCHG16,
                                                X86::NOT16r, X86::AX,
-                                               X86::GR16RegisterClass);
+                                               &X86::GR16RegClass);
   case X86::ATOMNAND16:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND16rr,
                                                X86::AND16ri, X86::MOV16rm,
                                                X86::LCMPXCHG16,
                                                X86::NOT16r, X86::AX,
-                                               X86::GR16RegisterClass, true);
+                                               &X86::GR16RegClass, true);
   case X86::ATOMMIN16:
     return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL16rr);
   case X86::ATOMMAX16:
@@ -12671,25 +12672,25 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::AND8ri, X86::MOV8rm,
                                                X86::LCMPXCHG8,
                                                X86::NOT8r, X86::AL,
-                                               X86::GR8RegisterClass);
+                                               &X86::GR8RegClass);
   case X86::ATOMOR8:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR8rr,
                                                X86::OR8ri, X86::MOV8rm,
                                                X86::LCMPXCHG8,
                                                X86::NOT8r, X86::AL,
-                                               X86::GR8RegisterClass);
+                                               &X86::GR8RegClass);
   case X86::ATOMXOR8:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR8rr,
                                                X86::XOR8ri, X86::MOV8rm,
                                                X86::LCMPXCHG8,
                                                X86::NOT8r, X86::AL,
-                                               X86::GR8RegisterClass);
+                                               &X86::GR8RegClass);
   case X86::ATOMNAND8:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND8rr,
                                                X86::AND8ri, X86::MOV8rm,
                                                X86::LCMPXCHG8,
                                                X86::NOT8r, X86::AL,
-                                               X86::GR8RegisterClass, true);
+                                               &X86::GR8RegClass, true);
   // FIXME: There are no CMOV8 instructions; MIN/MAX need some other way.
   // This group is for 64-bit host.
   case X86::ATOMAND64:
@@ -12697,25 +12698,25 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::AND64ri32, X86::MOV64rm,
                                                X86::LCMPXCHG64,
                                                X86::NOT64r, X86::RAX,
-                                               X86::GR64RegisterClass);
+                                               &X86::GR64RegClass);
   case X86::ATOMOR64:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR64rr,
                                                X86::OR64ri32, X86::MOV64rm,
                                                X86::LCMPXCHG64,
                                                X86::NOT64r, X86::RAX,
-                                               X86::GR64RegisterClass);
+                                               &X86::GR64RegClass);
   case X86::ATOMXOR64:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR64rr,
                                                X86::XOR64ri32, X86::MOV64rm,
                                                X86::LCMPXCHG64,
                                                X86::NOT64r, X86::RAX,
-                                               X86::GR64RegisterClass);
+                                               &X86::GR64RegClass);
   case X86::ATOMNAND64:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND64rr,
                                                X86::AND64ri32, X86::MOV64rm,
                                                X86::LCMPXCHG64,
                                                X86::NOT64r, X86::RAX,
-                                               X86::GR64RegisterClass, true);
+                                               &X86::GR64RegClass, true);
   case X86::ATOMMIN64:
     return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL64rr);
   case X86::ATOMMAX64:
@@ -15652,55 +15653,55 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       // in the normal allocation?
     case 'q':   // GENERAL_REGS in 64-bit mode, Q_REGS in 32-bit mode.
       if (Subtarget->is64Bit()) {
-	if (VT == MVT::i32 || VT == MVT::f32)
-	  return std::make_pair(0U, X86::GR32RegisterClass);
-	else if (VT == MVT::i16)
-	  return std::make_pair(0U, X86::GR16RegisterClass);
-	else if (VT == MVT::i8 || VT == MVT::i1)
-	  return std::make_pair(0U, X86::GR8RegisterClass);
-	else if (VT == MVT::i64 || VT == MVT::f64)
-	  return std::make_pair(0U, X86::GR64RegisterClass);
-	break;
+        if (VT == MVT::i32 || VT == MVT::f32)
+          return std::make_pair(0U, &X86::GR32RegClass);
+        if (VT == MVT::i16)
+          return std::make_pair(0U, &X86::GR16RegClass);
+        if (VT == MVT::i8 || VT == MVT::i1)
+          return std::make_pair(0U, &X86::GR8RegClass);
+        if (VT == MVT::i64 || VT == MVT::f64)
+          return std::make_pair(0U, &X86::GR64RegClass);
+        break;
       }
       // 32-bit fallthrough
     case 'Q':   // Q_REGS
       if (VT == MVT::i32 || VT == MVT::f32)
-	return std::make_pair(0U, X86::GR32_ABCDRegisterClass);
-      else if (VT == MVT::i16)
-	return std::make_pair(0U, X86::GR16_ABCDRegisterClass);
-      else if (VT == MVT::i8 || VT == MVT::i1)
-	return std::make_pair(0U, X86::GR8_ABCD_LRegisterClass);
-      else if (VT == MVT::i64)
-	return std::make_pair(0U, X86::GR64_ABCDRegisterClass);
+        return std::make_pair(0U, &X86::GR32_ABCDRegClass);
+      if (VT == MVT::i16)
+        return std::make_pair(0U, &X86::GR16_ABCDRegClass);
+      if (VT == MVT::i8 || VT == MVT::i1)
+        return std::make_pair(0U, &X86::GR8_ABCD_LRegClass);
+      if (VT == MVT::i64)
+        return std::make_pair(0U, &X86::GR64_ABCDRegClass);
       break;
     case 'r':   // GENERAL_REGS
     case 'l':   // INDEX_REGS
       if (VT == MVT::i8 || VT == MVT::i1)
-        return std::make_pair(0U, X86::GR8RegisterClass);
+        return std::make_pair(0U, &X86::GR8RegClass);
       if (VT == MVT::i16)
-        return std::make_pair(0U, X86::GR16RegisterClass);
+        return std::make_pair(0U, &X86::GR16RegClass);
       if (VT == MVT::i32 || VT == MVT::f32 || !Subtarget->is64Bit())
-        return std::make_pair(0U, X86::GR32RegisterClass);
-      return std::make_pair(0U, X86::GR64RegisterClass);
+        return std::make_pair(0U, &X86::GR32RegClass);
+      return std::make_pair(0U, &X86::GR64RegClass);
     case 'R':   // LEGACY_REGS
       if (VT == MVT::i8 || VT == MVT::i1)
-        return std::make_pair(0U, X86::GR8_NOREXRegisterClass);
+        return std::make_pair(0U, &X86::GR8_NOREXRegClass);
       if (VT == MVT::i16)
-        return std::make_pair(0U, X86::GR16_NOREXRegisterClass);
+        return std::make_pair(0U, &X86::GR16_NOREXRegClass);
       if (VT == MVT::i32 || !Subtarget->is64Bit())
-        return std::make_pair(0U, X86::GR32_NOREXRegisterClass);
-      return std::make_pair(0U, X86::GR64_NOREXRegisterClass);
+        return std::make_pair(0U, &X86::GR32_NOREXRegClass);
+      return std::make_pair(0U, &X86::GR64_NOREXRegClass);
     case 'f':  // FP Stack registers.
       // If SSE is enabled for this VT, use f80 to ensure the isel moves the
       // value to the correct fpstack register class.
       if (VT == MVT::f32 && !isScalarFPTypeInSSEReg(VT))
-        return std::make_pair(0U, X86::RFP32RegisterClass);
+        return std::make_pair(0U, &X86::RFP32RegClass);
       if (VT == MVT::f64 && !isScalarFPTypeInSSEReg(VT))
-        return std::make_pair(0U, X86::RFP64RegisterClass);
-      return std::make_pair(0U, X86::RFP80RegisterClass);
+        return std::make_pair(0U, &X86::RFP64RegClass);
+      return std::make_pair(0U, &X86::RFP80RegClass);
     case 'y':   // MMX_REGS if MMX allowed.
       if (!Subtarget->hasMMX()) break;
-      return std::make_pair(0U, X86::VR64RegisterClass);
+      return std::make_pair(0U, &X86::VR64RegClass);
     case 'Y':   // SSE_REGS if SSE2 allowed
       if (!Subtarget->hasSSE2()) break;
       // FALL THROUGH.
@@ -15712,10 +15713,10 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       // Scalar SSE types.
       case MVT::f32:
       case MVT::i32:
-        return std::make_pair(0U, X86::FR32RegisterClass);
+        return std::make_pair(0U, &X86::FR32RegClass);
       case MVT::f64:
       case MVT::i64:
-        return std::make_pair(0U, X86::FR64RegisterClass);
+        return std::make_pair(0U, &X86::FR64RegClass);
       // Vector types.
       case MVT::v16i8:
       case MVT::v8i16:
@@ -15723,7 +15724,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       case MVT::v2i64:
       case MVT::v4f32:
       case MVT::v2f64:
-        return std::make_pair(0U, X86::VR128RegisterClass);
+        return std::make_pair(0U, &X86::VR128RegClass);
       // AVX types.
       case MVT::v32i8:
       case MVT::v16i16:
@@ -15731,8 +15732,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       case MVT::v4i64:
       case MVT::v8f32:
       case MVT::v4f64:
-        return std::make_pair(0U, X86::VR256RegisterClass);
-        
+        return std::make_pair(0U, &X86::VR256RegClass);
       }
       break;
     }
@@ -15755,28 +15755,28 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         Constraint[6] == '}') {
 
       Res.first = X86::ST0+Constraint[4]-'0';
-      Res.second = X86::RFP80RegisterClass;
+      Res.second = &X86::RFP80RegClass;
       return Res;
     }
 
     // GCC allows "st(0)" to be called just plain "st".
     if (StringRef("{st}").equals_lower(Constraint)) {
       Res.first = X86::ST0;
-      Res.second = X86::RFP80RegisterClass;
+      Res.second = &X86::RFP80RegClass;
       return Res;
     }
 
     // flags -> EFLAGS
     if (StringRef("{flags}").equals_lower(Constraint)) {
       Res.first = X86::EFLAGS;
-      Res.second = X86::CCRRegisterClass;
+      Res.second = &X86::CCRRegClass;
       return Res;
     }
 
     // 'A' means EAX + EDX.
     if (Constraint == "A") {
       Res.first = X86::EAX;
-      Res.second = X86::GR32_ADRegisterClass;
+      Res.second = &X86::GR32_ADRegClass;
       return Res;
     }
     return Res;
@@ -15792,7 +15792,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   // 16-bit register pieces "ax","dx","cx","bx","si","di","bp","sp".  If we
   // really want an 8-bit or 32-bit register, map to the appropriate register
   // class and return the appropriate register.
-  if (Res.second == X86::GR16RegisterClass) {
+  if (Res.second == &X86::GR16RegClass) {
     if (VT == MVT::i8) {
       unsigned DestReg = 0;
       switch (Res.first) {
@@ -15804,7 +15804,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       }
       if (DestReg) {
         Res.first = DestReg;
-        Res.second = X86::GR8RegisterClass;
+        Res.second = &X86::GR8RegClass;
       }
     } else if (VT == MVT::i32) {
       unsigned DestReg = 0;
@@ -15821,7 +15821,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       }
       if (DestReg) {
         Res.first = DestReg;
-        Res.second = X86::GR32RegisterClass;
+        Res.second = &X86::GR32RegClass;
       }
     } else if (VT == MVT::i64) {
       unsigned DestReg = 0;
@@ -15838,22 +15838,22 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       }
       if (DestReg) {
         Res.first = DestReg;
-        Res.second = X86::GR64RegisterClass;
+        Res.second = &X86::GR64RegClass;
       }
     }
-  } else if (Res.second == X86::FR32RegisterClass ||
-             Res.second == X86::FR64RegisterClass ||
-             Res.second == X86::VR128RegisterClass) {
+  } else if (Res.second == &X86::FR32RegClass ||
+             Res.second == &X86::FR64RegClass ||
+             Res.second == &X86::VR128RegClass) {
     // Handle references to XMM physical registers that got mapped into the
     // wrong class.  This can happen with constraints like {xmm0} where the
     // target independent register mapper will just pick the first match it can
     // find, ignoring the required type.
     if (VT == MVT::f32)
-      Res.second = X86::FR32RegisterClass;
+      Res.second = &X86::FR32RegClass;
     else if (VT == MVT::f64)
-      Res.second = X86::FR64RegisterClass;
-    else if (X86::VR128RegisterClass->hasType(VT))
-      Res.second = X86::VR128RegisterClass;
+      Res.second = &X86::FR64RegClass;
+    else if (X86::VR128RegClass.hasType(VT))
+      Res.second = &X86::VR128RegClass;
   }
 
   return Res;

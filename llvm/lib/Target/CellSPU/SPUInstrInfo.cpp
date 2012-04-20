@@ -140,29 +140,27 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
                                   unsigned SrcReg, bool isKill, int FrameIdx,
                                   const TargetRegisterClass *RC,
-                                  const TargetRegisterInfo *TRI) const
-{
+                                  const TargetRegisterInfo *TRI) const {
   unsigned opc;
   bool isValidFrameIdx = (FrameIdx < SPUFrameLowering::maxFrameOffset());
-  if (RC == SPU::GPRCRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr128 : SPU::STQXr128);
-  } else if (RC == SPU::R64CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64);
-  } else if (RC == SPU::R64FPRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64);
-  } else if (RC == SPU::R32CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32);
-  } else if (RC == SPU::R32FPRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32);
-  } else if (RC == SPU::R16CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr16 : SPU::STQXr16);
-  } else if (RC == SPU::R8CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::STQDr8 : SPU::STQXr8);
-  } else if (RC == SPU::VECREGRegisterClass) {
-    opc = (isValidFrameIdx) ? SPU::STQDv16i8 : SPU::STQXv16i8;
-  } else {
+  if (RC == SPU::GPRCRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr128 : SPU::STQXr128;
+  else if (RC == SPU::R64CRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64;
+  else if (RC == SPU::R64FPRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64;
+  else if (RC == SPU::R32CRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32;
+  else if (RC == SPU::R32FPRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32;
+  else if (RC == SPU::R16CRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr16 : SPU::STQXr16;
+  else if (RC == SPU::R8CRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDr8 : SPU::STQXr8;
+  else if (RC == SPU::VECREGRegisterClass)
+    opc = isValidFrameIdx ? SPU::STQDv16i8 : SPU::STQXv16i8;
+  else
     llvm_unreachable("Unknown regclass!");
-  }
 
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
@@ -175,29 +173,27 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, int FrameIdx,
                                    const TargetRegisterClass *RC,
-                                   const TargetRegisterInfo *TRI) const
-{
+                                   const TargetRegisterInfo *TRI) const {
   unsigned opc;
   bool isValidFrameIdx = (FrameIdx < SPUFrameLowering::maxFrameOffset());
-  if (RC == SPU::GPRCRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr128 : SPU::LQXr128);
-  } else if (RC == SPU::R64CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64);
-  } else if (RC == SPU::R64FPRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64);
-  } else if (RC == SPU::R32CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32);
-  } else if (RC == SPU::R32FPRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32);
-  } else if (RC == SPU::R16CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr16 : SPU::LQXr16);
-  } else if (RC == SPU::R8CRegisterClass) {
-    opc = (isValidFrameIdx ? SPU::LQDr8 : SPU::LQXr8);
-  } else if (RC == SPU::VECREGRegisterClass) {
-    opc = (isValidFrameIdx) ? SPU::LQDv16i8 : SPU::LQXv16i8;
-  } else {
+  if (RC == SPU::GPRCRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr128 : SPU::LQXr128;
+  else if (RC == SPU::R64CRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64;
+  else if (RC == SPU::R64FPRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64;
+  else if (RC == SPU::R32CRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32;
+  else if (RC == SPU::R32FPRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32;
+  else if (RC == SPU::R16CRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr16 : SPU::LQXr16;
+  else if (RC == SPU::R8CRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDr8 : SPU::LQXr8;
+  else if (RC == SPU::VECREGRegisterClass)
+    opc = isValidFrameIdx ? SPU::LQDv16i8 : SPU::LQXv16i8;
+  else
     llvm_unreachable("Unknown regclass in loadRegFromStackSlot!");
-  }
 
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
