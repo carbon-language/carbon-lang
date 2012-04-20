@@ -168,3 +168,8 @@ void foo(Baz *f) {
         f.realy_strong_attr_prop = [[Baz alloc] init];
         f.implicit = [[Baz alloc] init];
 }
+
+// rdar://11253688
+@interface Boom 
+@property (readonly) const void * innerPointer __attribute__((objc_returns_inner_pointer)); // expected-error {{'objc_returns_inner_pointer' attribute only applies to methods}}
+@end
