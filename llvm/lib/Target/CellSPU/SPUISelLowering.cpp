@@ -100,13 +100,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setLibcallName(RTLIB::DIV_F64, "__fast_divdf3");
 
   // Set up the SPU's register classes:
-  addRegisterClass(MVT::i8,   SPU::R8CRegisterClass);
-  addRegisterClass(MVT::i16,  SPU::R16CRegisterClass);
-  addRegisterClass(MVT::i32,  SPU::R32CRegisterClass);
-  addRegisterClass(MVT::i64,  SPU::R64CRegisterClass);
-  addRegisterClass(MVT::f32,  SPU::R32FPRegisterClass);
-  addRegisterClass(MVT::f64,  SPU::R64FPRegisterClass);
-  addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
+  addRegisterClass(MVT::i8,   &SPU::R8CRegClass);
+  addRegisterClass(MVT::i16,  &SPU::R16CRegClass);
+  addRegisterClass(MVT::i32,  &SPU::R32CRegClass);
+  addRegisterClass(MVT::i64,  &SPU::R64CRegClass);
+  addRegisterClass(MVT::f32,  &SPU::R32FPRegClass);
+  addRegisterClass(MVT::f64,  &SPU::R64FPRegClass);
+  addRegisterClass(MVT::i128, &SPU::GPRCRegClass);
 
   // SPU has no sign or zero extended loads for i1, i8, i16:
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
@@ -397,12 +397,12 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.
-  addRegisterClass(MVT::v16i8, SPU::VECREGRegisterClass);
-  addRegisterClass(MVT::v8i16, SPU::VECREGRegisterClass);
-  addRegisterClass(MVT::v4i32, SPU::VECREGRegisterClass);
-  addRegisterClass(MVT::v2i64, SPU::VECREGRegisterClass);
-  addRegisterClass(MVT::v4f32, SPU::VECREGRegisterClass);
-  addRegisterClass(MVT::v2f64, SPU::VECREGRegisterClass);
+  addRegisterClass(MVT::v16i8, &SPU::VECREGRegClass);
+  addRegisterClass(MVT::v8i16, &SPU::VECREGRegClass);
+  addRegisterClass(MVT::v4i32, &SPU::VECREGRegClass);
+  addRegisterClass(MVT::v2i64, &SPU::VECREGRegClass);
+  addRegisterClass(MVT::v4f32, &SPU::VECREGRegClass);
+  addRegisterClass(MVT::v2f64, &SPU::VECREGRegClass);
 
   for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
@@ -3139,16 +3139,16 @@ SPUTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'b':   // R1-R31
     case 'r':   // R0-R31
       if (VT == MVT::i64)
-        return std::make_pair(0U, SPU::R64CRegisterClass);
-      return std::make_pair(0U, SPU::R32CRegisterClass);
+        return std::make_pair(0U, &SPU::R64CRegClass);
+      return std::make_pair(0U, &SPU::R32CRegClass);
     case 'f':
       if (VT == MVT::f32)
-        return std::make_pair(0U, SPU::R32FPRegisterClass);
-      else if (VT == MVT::f64)
-        return std::make_pair(0U, SPU::R64FPRegisterClass);
+        return std::make_pair(0U, &SPU::R32FPRegClass);
+      if (VT == MVT::f64)
+        return std::make_pair(0U, &SPU::R64FPRegClass);
       break;
     case 'v':
-      return std::make_pair(0U, SPU::GPRCRegisterClass);
+      return std::make_pair(0U, &SPU::GPRCRegClass);
     }
   }
 

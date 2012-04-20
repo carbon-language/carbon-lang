@@ -910,8 +910,9 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
   // put the alloca address into a register, set the base type back to
   // register and continue. This should almost never happen.
   if (needsLowering && Addr.BaseType == Address::FrameIndexBase) {
-    const TargetRegisterClass *RC = isThumb2 ? ARM::tGPRRegisterClass
-                                             : ARM::GPRRegisterClass;
+    const TargetRegisterClass *RC = isThumb2 ?
+      (const TargetRegisterClass*)&ARM::tGPRRegClass :
+      (const TargetRegisterClass*)&ARM::GPRRegClass;
     unsigned ResultReg = createResultReg(RC);
     unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -1005,7 +1006,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
           useAM3 = true;
         }
       }
-      RC = ARM::GPRRegisterClass;
+      RC = &ARM::GPRRegClass;
       break;
     case MVT::i16:
       if (isThumb2) {
@@ -1017,7 +1018,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
         Opc = isZExt ? ARM::LDRH : ARM::LDRSH;
         useAM3 = true;
       }
-      RC = ARM::GPRRegisterClass;
+      RC = &ARM::GPRRegClass;
       break;
     case MVT::i32:
       if (isThumb2) {
@@ -1028,7 +1029,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
       } else {
         Opc = ARM::LDRi12;
       }
-      RC = ARM::GPRRegisterClass;
+      RC = &ARM::GPRRegClass;
       break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
@@ -1037,7 +1038,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
         needVMOV = true;
         VT = MVT::i32;
         Opc = isThumb2 ? ARM::t2LDRi12 : ARM::LDRi12;
-        RC = ARM::GPRRegisterClass;
+        RC = &ARM::GPRRegClass;
       } else {
         Opc = ARM::VLDRS;
         RC = TLI.getRegClassFor(VT);
@@ -1106,8 +1107,9 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
     // This is mostly going to be Neon/vector support.
     default: return false;
     case MVT::i1: {
-      unsigned Res = createResultReg(isThumb2 ? ARM::tGPRRegisterClass :
-                                               ARM::GPRRegisterClass);
+      unsigned Res = createResultReg(isThumb2 ?
+        (const TargetRegisterClass*)&ARM::tGPRRegClass :
+        (const TargetRegisterClass*)&ARM::GPRRegClass);
       unsigned Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(Opc), Res)
@@ -1491,8 +1493,9 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   // Now set a register based on the comparison. Explicitly set the predicates
   // here.
   unsigned MovCCOpc = isThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi;
-  const TargetRegisterClass *RC = isThumb2 ? ARM::rGPRRegisterClass
-                                           : ARM::GPRRegisterClass;
+  const TargetRegisterClass *RC = isThumb2 ?
+    (const TargetRegisterClass*)&ARM::rGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned DestReg = createResultReg(RC);
   Constant *Zero = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = TargetMaterializeConstant(Zero);
@@ -1516,7 +1519,7 @@ bool ARMFastISel::SelectFPExt(const Instruction *I) {
   unsigned Op = getRegForValue(V);
   if (Op == 0) return false;
 
-  unsigned Result = createResultReg(ARM::DPRRegisterClass);
+  unsigned Result = createResultReg(&ARM::DPRRegClass);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VCVTDS), Result)
                   .addReg(Op));
@@ -1535,7 +1538,7 @@ bool ARMFastISel::SelectFPTrunc(const Instruction *I) {
   unsigned Op = getRegForValue(V);
   if (Op == 0) return false;
 
-  unsigned Result = createResultReg(ARM::SPRRegisterClass);
+  unsigned Result = createResultReg(&ARM::SPRRegClass);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(ARM::VCVTSD), Result)
                   .addReg(Op));

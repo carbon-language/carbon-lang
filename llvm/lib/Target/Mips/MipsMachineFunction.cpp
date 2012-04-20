@@ -40,9 +40,9 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
   if (FixGlobalBaseReg) // $gp is the global base register.
     return GlobalBaseReg = ST.isABI_N64() ? Mips::GP_64 : Mips::GP;
 
-  const TargetRegisterClass *RC;
-  RC = ST.isABI_N64() ?
-    Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
+  const TargetRegisterClass *RC = ST.isABI_N64() ?
+    (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
+    (const TargetRegisterClass*)&Mips::CPURegsRegClass;
 
   return GlobalBaseReg = MF.getRegInfo().createVirtualRegister(RC);
 }

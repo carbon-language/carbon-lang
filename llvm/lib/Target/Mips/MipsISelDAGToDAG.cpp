@@ -134,7 +134,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   else {
     const TargetRegisterClass *RC;
     RC = Subtarget.isABI_N64() ?
-         Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
+      (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
+      (const TargetRegisterClass*)&Mips::CPURegsRegClass;
 
     V0 = RegInfo.createVirtualRegister(RC);
     V1 = RegInfo.createVirtualRegister(RC);

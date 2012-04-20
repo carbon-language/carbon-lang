@@ -153,12 +153,12 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
 }
 
 void ARMTargetLowering::addDRTypeForNEON(EVT VT) {
-  addRegisterClass(VT, ARM::DPRRegisterClass);
+  addRegisterClass(VT, &ARM::DPRRegClass);
   addTypeForNEON(VT, MVT::f64, MVT::v2i32);
 }
 
 void ARMTargetLowering::addQRTypeForNEON(EVT VT) {
-  addRegisterClass(VT, ARM::QPRRegisterClass);
+  addRegisterClass(VT, &ARM::QPRRegClass);
   addTypeForNEON(VT, MVT::v2f64, MVT::v4i32);
 }
 
@@ -431,14 +431,14 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
 
   if (Subtarget->isThumb1Only())
-    addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
+    addRegisterClass(MVT::i32, &ARM::tGPRRegClass);
   else
-    addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
+    addRegisterClass(MVT::i32, &ARM::GPRRegClass);
   if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
       !Subtarget->isThumb1Only()) {
-    addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
+    addRegisterClass(MVT::f32, &ARM::SPRRegClass);
     if (!Subtarget->isFPOnlySP())
-      addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
+      addRegisterClass(MVT::f64, &ARM::DPRRegClass);
 
     setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   }
@@ -849,7 +849,7 @@ ARMTargetLowering::findRepresentativeClass(EVT VT) const{
   // the cost is 1 for both f32 and f64.
   case MVT::f32: case MVT::f64: case MVT::v8i8: case MVT::v4i16:
   case MVT::v2i32: case MVT::v1i64: case MVT::v2f32:
-    RRC = ARM::DPRRegisterClass;
+    RRC = &ARM::DPRRegClass;
     // When NEON is used for SP, only half of the register file is available
     // because operations that define both SP and DP results will be constrained
     // to the VFP2 class (D0-D15). We currently model this constraint prior to
@@ -859,15 +859,15 @@ ARMTargetLowering::findRepresentativeClass(EVT VT) const{
     break;
   case MVT::v16i8: case MVT::v8i16: case MVT::v4i32: case MVT::v2i64:
   case MVT::v4f32: case MVT::v2f64:
-    RRC = ARM::DPRRegisterClass;
+    RRC = &ARM::DPRRegClass;
     Cost = 2;
     break;
   case MVT::v4i64:
-    RRC = ARM::DPRRegisterClass;
+    RRC = &ARM::DPRRegClass;
     Cost = 4;
     break;
   case MVT::v8i64:
-    RRC = ARM::DPRRegisterClass;
+    RRC = &ARM::DPRRegClass;
     Cost = 8;
     break;
   }
@@ -1027,9 +1027,9 @@ const TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
   // load / store 4 to 8 consecutive D registers.
   if (Subtarget->hasNEON()) {
     if (VT == MVT::v4i64)
-      return ARM::QQPRRegisterClass;
-    else if (VT == MVT::v8i64)
-      return ARM::QQQQPRRegisterClass;
+      return &ARM::QQPRRegClass;
+    if (VT == MVT::v8i64)
+      return &ARM::QQQQPRRegClass;
   }
   return TargetLowering::getRegClassFor(VT);
 }
@@ -2457,9 +2457,9 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
 
   const TargetRegisterClass *RC;
   if (AFI->isThumb1OnlyFunction())
-    RC = ARM::tGPRRegisterClass;
+    RC = &ARM::tGPRRegClass;
   else
-    RC = ARM::GPRRegisterClass;
+    RC = &ARM::GPRRegClass;
 
   // Transform the arguments stored in physical registers into virtual ones.
   unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
@@ -2543,9 +2543,9 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
     for (; firstRegToSaveIndex < 4; ++firstRegToSaveIndex) {
       const TargetRegisterClass *RC;
       if (AFI->isThumb1OnlyFunction())
-        RC = ARM::tGPRRegisterClass;
+        RC = &ARM::tGPRRegClass;
       else
-        RC = ARM::GPRRegisterClass;
+        RC = &ARM::GPRRegClass;
 
       unsigned VReg = MF.addLiveIn(GPRArgRegs[firstRegToSaveIndex], RC);
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
@@ -2627,14 +2627,15 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
         const TargetRegisterClass *RC;
 
         if (RegVT == MVT::f32)
-          RC = ARM::SPRRegisterClass;
+          RC = &ARM::SPRRegClass;
         else if (RegVT == MVT::f64)
-          RC = ARM::DPRRegisterClass;
+          RC = &ARM::DPRRegClass;
         else if (RegVT == MVT::v2f64)
-          RC = ARM::QPRRegisterClass;
+          RC = &ARM::QPRRegClass;
         else if (RegVT == MVT::i32)
-          RC = (AFI->isThumb1OnlyFunction() ?
-                ARM::tGPRRegisterClass : ARM::GPRRegisterClass);
+          RC = AFI->isThumb1OnlyFunction() ?
+            (const TargetRegisterClass*)&ARM::tGPRRegClass :
+            (const TargetRegisterClass*)&ARM::GPRRegClass;
         else
           llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
@@ -5252,14 +5253,14 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   bool isThumb2 = Subtarget->isThumb2();
 
   MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
-  unsigned scratch =
-    MRI.createVirtualRegister(isThumb2 ? ARM::rGPRRegisterClass
-                                       : ARM::GPRRegisterClass);
+  unsigned scratch = MRI.createVirtualRegister(isThumb2 ?
+    (const TargetRegisterClass*)&ARM::rGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass);
 
   if (isThumb2) {
-    MRI.constrainRegClass(dest, ARM::rGPRRegisterClass);
-    MRI.constrainRegClass(oldval, ARM::rGPRRegisterClass);
-    MRI.constrainRegClass(newval, ARM::rGPRRegisterClass);
+    MRI.constrainRegClass(dest, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(oldval, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(newval, &ARM::rGPRRegClass);
   }
 
   unsigned ldrOpc, strOpc;
@@ -5362,8 +5363,8 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
   if (isThumb2) {
-    MRI.constrainRegClass(dest, ARM::rGPRRegisterClass);
-    MRI.constrainRegClass(ptr, ARM::rGPRRegisterClass);
+    MRI.constrainRegClass(dest, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(ptr, &ARM::rGPRRegClass);
   }
 
   unsigned ldrOpc, strOpc;
@@ -5394,8 +5395,9 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  const TargetRegisterClass *TRC =
-    isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+  const TargetRegisterClass *TRC = isThumb2 ?
+    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned scratch = MRI.createVirtualRegister(TRC);
   unsigned scratch2 = (!BinOpcode) ? incr : MRI.createVirtualRegister(TRC);
 
@@ -5469,8 +5471,8 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
 
   MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
   if (isThumb2) {
-    MRI.constrainRegClass(dest, ARM::rGPRRegisterClass);
-    MRI.constrainRegClass(ptr, ARM::rGPRRegisterClass);
+    MRI.constrainRegClass(dest, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(ptr, &ARM::rGPRRegClass);
   }
 
   unsigned ldrOpc, strOpc, extendOpc;
@@ -5504,8 +5506,9 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  const TargetRegisterClass *TRC =
-    isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+  const TargetRegisterClass *TRC = isThumb2 ?
+    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned scratch = MRI.createVirtualRegister(TRC);
   unsigned scratch2 = MRI.createVirtualRegister(TRC);
 
@@ -5531,7 +5534,7 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
 
   // Sign extend the value, if necessary.
   if (signExtend && extendOpc) {
-    oldval = MRI.createVirtualRegister(ARM::GPRRegisterClass);
+    oldval = MRI.createVirtualRegister(&ARM::GPRRegClass);
     AddDefaultPred(BuildMI(BB, dl, TII->get(extendOpc), oldval)
                      .addReg(dest)
                      .addImm(0));
@@ -5586,9 +5589,9 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
 
   MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
   if (isThumb2) {
-    MRI.constrainRegClass(destlo, ARM::rGPRRegisterClass);
-    MRI.constrainRegClass(desthi, ARM::rGPRRegisterClass);
-    MRI.constrainRegClass(ptr, ARM::rGPRRegisterClass);
+    MRI.constrainRegClass(destlo, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(desthi, &ARM::rGPRRegClass);
+    MRI.constrainRegClass(ptr, &ARM::rGPRRegClass);
   }
 
   unsigned ldrOpc = isThumb2 ? ARM::t2LDREXD : ARM::LDREXD;
@@ -5614,8 +5617,9 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  const TargetRegisterClass *TRC =
-    isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+  const TargetRegisterClass *TRC = isThumb2 ?
+    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned storesuccess = MRI.createVirtualRegister(TRC);
 
   //  thisMBB:
@@ -5722,8 +5726,9 @@ SetupEntryBlockForSjLj(MachineInstr *MI, MachineBasicBlock *MBB,
     ARMConstantPoolMBB::Create(F->getContext(), DispatchBB, PCLabelId, PCAdj);
   unsigned CPI = MCP->getConstantPoolIndex(CPV, 4);
 
-  const TargetRegisterClass *TRC =
-    isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+  const TargetRegisterClass *TRC = isThumb ?
+    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass;
 
   // Grab constant pool and fixed stack memory operands.
   MachineMemOperand *CPMMO =
@@ -5827,8 +5832,9 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   MachineFrameInfo *MFI = MF->getFrameInfo();
   int FI = MFI->getFunctionContextIndex();
 
-  const TargetRegisterClass *TRC =
-    Subtarget->isThumb() ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+  const TargetRegisterClass *TRC = Subtarget->isThumb() ?
+    (const TargetRegisterClass*)&ARM::tGPRRegClass :
+    (const TargetRegisterClass*)&ARM::GPRRegClass;
 
   // Get a mapping of the call site numbers to all of the landing pads they're
   // associated with.
@@ -6176,14 +6182,12 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       for (unsigned i = 0; SavedRegs[i] != 0; ++i) {
         unsigned Reg = SavedRegs[i];
         if (Subtarget->isThumb2() &&
-            !ARM::tGPRRegisterClass->contains(Reg) &&
-            !ARM::hGPRRegisterClass->contains(Reg))
+            !ARM::tGPRRegClass.contains(Reg) &&
+            !ARM::hGPRRegClass.contains(Reg))
           continue;
-        else if (Subtarget->isThumb1Only() &&
-                 !ARM::tGPRRegisterClass->contains(Reg))
+        if (Subtarget->isThumb1Only() && !ARM::tGPRRegClass.contains(Reg))
           continue;
-        else if (!Subtarget->isThumb() &&
-                 !ARM::GPRRegisterClass->contains(Reg))
+        if (!Subtarget->isThumb() && !ARM::GPRRegClass.contains(Reg))
           continue;
         if (!DefRegs[Reg])
           MIB.addReg(Reg, RegState::ImplicitDefine | RegState::Dead);
@@ -6517,10 +6521,12 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineRegisterInfo &MRI = Fn->getRegInfo();
     // In Thumb mode S must not be specified if source register is the SP or
     // PC and if destination register is the SP, so restrict register class
-    unsigned NewMovDstReg = MRI.createVirtualRegister(
-      isThumb2 ? ARM::rGPRRegisterClass : ARM::GPRRegisterClass);
-    unsigned NewRsbDstReg = MRI.createVirtualRegister(
-      isThumb2 ? ARM::rGPRRegisterClass : ARM::GPRRegisterClass);
+    unsigned NewMovDstReg = MRI.createVirtualRegister(isThumb2 ?
+      (const TargetRegisterClass*)&ARM::rGPRRegClass :
+      (const TargetRegisterClass*)&ARM::GPRRegClass);
+    unsigned NewRsbDstReg = MRI.createVirtualRegister(isThumb2 ?
+      (const TargetRegisterClass*)&ARM::rGPRRegClass :
+      (const TargetRegisterClass*)&ARM::GPRRegClass);
 
     // Transfer the remainder of BB and its successor edges to sinkMBB.
     SinkBB->splice(SinkBB->begin(), BB,
@@ -9030,39 +9036,38 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     case 'l': // Low regs or general regs.
       if (Subtarget->isThumb())
-        return RCPair(0U, ARM::tGPRRegisterClass);
-      else
-        return RCPair(0U, ARM::GPRRegisterClass);
+        return RCPair(0U, &ARM::tGPRRegClass);
+      return RCPair(0U, &ARM::GPRRegClass);
     case 'h': // High regs or no regs.
       if (Subtarget->isThumb())
-        return RCPair(0U, ARM::hGPRRegisterClass);
+        return RCPair(0U, &ARM::hGPRRegClass);
       break;
     case 'r':
-      return RCPair(0U, ARM::GPRRegisterClass);
+      return RCPair(0U, &ARM::GPRRegClass);
     case 'w':
       if (VT == MVT::f32)
-        return RCPair(0U, ARM::SPRRegisterClass);
+        return RCPair(0U, &ARM::SPRRegClass);
       if (VT.getSizeInBits() == 64)
-        return RCPair(0U, ARM::DPRRegisterClass);
+        return RCPair(0U, &ARM::DPRRegClass);
       if (VT.getSizeInBits() == 128)
-        return RCPair(0U, ARM::QPRRegisterClass);
+        return RCPair(0U, &ARM::QPRRegClass);
       break;
     case 'x':
       if (VT == MVT::f32)
-        return RCPair(0U, ARM::SPR_8RegisterClass);
+        return RCPair(0U, &ARM::SPR_8RegClass);
       if (VT.getSizeInBits() == 64)
-        return RCPair(0U, ARM::DPR_8RegisterClass);
+        return RCPair(0U, &ARM::DPR_8RegClass);
       if (VT.getSizeInBits() == 128)
-        return RCPair(0U, ARM::QPR_8RegisterClass);
+        return RCPair(0U, &ARM::QPR_8RegClass);
       break;
     case 't':
       if (VT == MVT::f32)
-        return RCPair(0U, ARM::SPRRegisterClass);
+        return RCPair(0U, &ARM::SPRRegClass);
       break;
     }
   }
   if (StringRef("{cc}").equals_lower(Constraint))
-    return std::make_pair(unsigned(ARM::CPSR), ARM::CCRRegisterClass);
+    return std::make_pair(unsigned(ARM::CPSR), &ARM::CCRRegClass);
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }

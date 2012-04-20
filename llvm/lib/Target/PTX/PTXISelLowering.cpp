@@ -36,12 +36,12 @@ using namespace llvm;
 PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the register classes.
-  addRegisterClass(MVT::i1,  PTX::RegPredRegisterClass);
-  addRegisterClass(MVT::i16, PTX::RegI16RegisterClass);
-  addRegisterClass(MVT::i32, PTX::RegI32RegisterClass);
-  addRegisterClass(MVT::i64, PTX::RegI64RegisterClass);
-  addRegisterClass(MVT::f32, PTX::RegF32RegisterClass);
-  addRegisterClass(MVT::f64, PTX::RegF64RegisterClass);
+  addRegisterClass(MVT::i1,  &PTX::RegPredRegClass);
+  addRegisterClass(MVT::i16, &PTX::RegI16RegClass);
+  addRegisterClass(MVT::i32, &PTX::RegI32RegClass);
+  addRegisterClass(MVT::i64, &PTX::RegI64RegClass);
+  addRegisterClass(MVT::f32, &PTX::RegF32RegClass);
+  addRegisterClass(MVT::f64, &PTX::RegF64RegClass);
 
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
@@ -328,36 +328,30 @@ SDValue PTXTargetLowering::
     }
   } else {
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-      EVT                  RegVT = Outs[i].VT;
+      EVT                        RegVT = Outs[i].VT;
       const TargetRegisterClass* TRC;
-      unsigned             RegType;
+      unsigned                   RegType;
 
       // Determine which register class we need
       if (RegVT == MVT::i1) {
-        TRC = PTX::RegPredRegisterClass;
+        TRC = &PTX::RegPredRegClass;
         RegType = PTXRegisterType::Pred;
-      }
-      else if (RegVT == MVT::i16) {
-        TRC = PTX::RegI16RegisterClass;
+      } else if (RegVT == MVT::i16) {
+        TRC = &PTX::RegI16RegClass;
         RegType = PTXRegisterType::B16;
-      }
-      else if (RegVT == MVT::i32) {
-        TRC = PTX::RegI32RegisterClass;
+      } else if (RegVT == MVT::i32) {
+        TRC = &PTX::RegI32RegClass;
         RegType = PTXRegisterType::B32;
-      }
-      else if (RegVT == MVT::i64) {
-        TRC = PTX::RegI64RegisterClass;
+      } else if (RegVT == MVT::i64) {
+        TRC = &PTX::RegI64RegClass;
         RegType = PTXRegisterType::B64;
-      }
-      else if (RegVT == MVT::f32) {
-        TRC = PTX::RegF32RegisterClass;
+      } else if (RegVT == MVT::f32) {
+        TRC = &PTX::RegF32RegClass;
         RegType = PTXRegisterType::F32;
-      }
-      else if (RegVT == MVT::f64) {
-        TRC = PTX::RegF64RegisterClass;
+      } else if (RegVT == MVT::f64) {
+        TRC = &PTX::RegF64RegClass;
         RegType = PTXRegisterType::F64;
-      }
-      else {
+      } else {
         llvm_unreachable("Unknown parameter type");
       }
 

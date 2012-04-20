@@ -370,15 +370,15 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       MFI.getObjectSize(FI),
                       Align);
 
-  if (Hexagon::IntRegsRegisterClass->hasSubClassEq(RC)) {
+  if (Hexagon::IntRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::STriw))
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
-  } else if (Hexagon::DoubleRegsRegisterClass->hasSubClassEq(RC)) {
+  } else if (Hexagon::DoubleRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::STrid))
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
-  } else if (Hexagon::PredRegsRegisterClass->hasSubClassEq(RC)) {
+  } else if (Hexagon::PredRegsRegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, I, DL, get(Hexagon::STriw_pred))
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
@@ -416,13 +416,13 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       MFI.getObjectSize(FI),
                       Align);
 
-  if (RC == Hexagon::IntRegsRegisterClass) {
+  if (RC == &Hexagon::IntRegsRegClass) {
     BuildMI(MBB, I, DL, get(Hexagon::LDriw), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
-  } else if (RC == Hexagon::DoubleRegsRegisterClass) {
+  } else if (RC == &Hexagon::DoubleRegsRegClass) {
     BuildMI(MBB, I, DL, get(Hexagon::LDrid), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
-  } else if (RC == Hexagon::PredRegsRegisterClass) {
+  } else if (RC == &Hexagon::PredRegsRegClass) {
     BuildMI(MBB, I, DL, get(Hexagon::LDriw_pred), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else {
@@ -452,15 +452,14 @@ unsigned HexagonInstrInfo::createVR(MachineFunction* MF, MVT VT) const {
 
   MachineRegisterInfo &RegInfo = MF->getRegInfo();
   const TargetRegisterClass *TRC;
-  if (VT == MVT::i1) {
-    TRC =  Hexagon::PredRegsRegisterClass;
-  } else if (VT == MVT::i32) {
-    TRC =  Hexagon::IntRegsRegisterClass;
-  } else if (VT == MVT::i64) {
-    TRC =  Hexagon::DoubleRegsRegisterClass;
-  } else {
+  if (VT == MVT::i1)
+    TRC = &Hexagon::PredRegsRegClass;
+  else if (VT == MVT::i32)
+    TRC = &Hexagon::IntRegsRegClass;
+  else if (VT == MVT::i64)
+    TRC = &Hexagon::DoubleRegsRegClass;
+  else
     llvm_unreachable("Cannot handle this register class");
-  }
 
   unsigned NewReg = RegInfo.createVirtualRegister(TRC);
   return NewReg;
@@ -1331,7 +1330,7 @@ HexagonInstrInfo::DefinesPredicate(MachineInstr *MI,
     MachineOperand MO = MI->getOperand(oper);
     if (MO.isReg() && MO.isDef()) {
       const TargetRegisterClass* RC = RI.getMinimalPhysRegClass(MO.getReg());
-      if (RC == Hexagon::PredRegsRegisterClass) {
+      if (RC == &Hexagon::PredRegsRegClass) {
         Pred.push_back(MO);
         return true;
       }

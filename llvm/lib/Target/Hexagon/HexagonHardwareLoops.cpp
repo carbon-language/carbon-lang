@@ -623,7 +623,7 @@ void HexagonFixupHwLoops::convertLoopInstr(MachineFunction &MF,
   const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
   MachineBasicBlock *MBB = MII->getParent();
   DebugLoc DL = MII->getDebugLoc();
-  unsigned Scratch = RS.scavengeRegister(Hexagon::IntRegsRegisterClass, MII, 0);
+  unsigned Scratch = RS.scavengeRegister(&Hexagon::IntRegsRegClass, MII, 0);
 
   // First, set the LC0 with the trip count.
   if (MII->getOperand(1).isReg()) {

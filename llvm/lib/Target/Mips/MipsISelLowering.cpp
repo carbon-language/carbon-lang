@@ -96,20 +96,20 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
 
   // Set up the register classes
-  addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
+  addRegisterClass(MVT::i32, &Mips::CPURegsRegClass);
 
   if (HasMips64)
-    addRegisterClass(MVT::i64, Mips::CPU64RegsRegisterClass);
+    addRegisterClass(MVT::i64, &Mips::CPU64RegsRegClass);
 
   if (!TM.Options.UseSoftFloat) {
-    addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
+    addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
 
     // When dealing with single precision only, use libcalls
     if (!Subtarget->isSingleFloat()) {
       if (HasMips64)
-        addRegisterClass(MVT::f64, Mips::FGR64RegisterClass);
+        addRegisterClass(MVT::f64, &Mips::FGR64RegClass);
       else
-        addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
+        addRegisterClass(MVT::f64, &Mips::AFGR64RegClass);
     }
   }
 
@@ -2666,7 +2666,7 @@ static void ReadByValArg(MachineFunction &MF, SDValue Chain, DebugLoc dl,
       break;
 
     unsigned SrcReg = O32IntRegs[CurWord];
-    unsigned Reg = AddLiveIn(MF, SrcReg, Mips::CPURegsRegisterClass);
+    unsigned Reg = AddLiveIn(MF, SrcReg, &Mips::CPURegsRegClass);
     SDValue StorePtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIN,
                                    DAG.getConstant(i * 4, MVT::i32));
     SDValue Store = DAG.getStore(Chain, dl, DAG.getRegister(Reg, MVT::i32),
@@ -2703,7 +2703,7 @@ CopyMips64ByValRegs(MachineFunction &MF, SDValue Chain, DebugLoc dl,
   // Copy arg registers.
   for (unsigned I = 0; (Reg != Mips64IntRegs + 8) && (I < NumRegs);
        ++Reg, ++I) {
-    unsigned VReg = AddLiveIn(MF, *Reg, Mips::CPU64RegsRegisterClass);
+    unsigned VReg = AddLiveIn(MF, *Reg, &Mips::CPU64RegsRegClass);
     SDValue StorePtr = DAG.getNode(ISD::ADD, dl, PtrTy, FIN,
                                    DAG.getConstant(I * 8, PtrTy));
     SDValue Store = DAG.getStore(Chain, dl, DAG.getRegister(VReg, MVT::i64),
@@ -2779,13 +2779,13 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       const TargetRegisterClass *RC;
 
       if (RegVT == MVT::i32)
-        RC = Mips::CPURegsRegisterClass;
+        RC = &Mips::CPURegsRegClass;
       else if (RegVT == MVT::i64)
-        RC = Mips::CPU64RegsRegisterClass;
+        RC = &Mips::CPU64RegsRegClass;
       else if (RegVT == MVT::f32)
-        RC = Mips::FGR32RegisterClass;
+        RC = &Mips::FGR32RegClass;
       else if (RegVT == MVT::f64)
-        RC = HasMips64 ? Mips::FGR64RegisterClass : Mips::AFGR64RegisterClass;
+        RC = HasMips64 ? &Mips::FGR64RegClass : &Mips::AFGR64RegClass;
       else
         llvm_unreachable("RegVT not supported by FormalArguments Lowering");
 
@@ -2859,8 +2859,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     const uint16_t *ArgRegs = IsO32 ? O32IntRegs : Mips64IntRegs;
     unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumOfRegs);
     int FirstRegSlotOffset = IsO32 ? 0 : -64 ; // offset of $a0's slot.
-    const TargetRegisterClass *RC
-      = IsO32 ? Mips::CPURegsRegisterClass : Mips::CPU64RegsRegisterClass;
+    const TargetRegisterClass *RC = IsO32 ?
+      (const TargetRegisterClass*)&Mips::CPURegsRegClass :
+      (const TargetRegisterClass*)&Mips::CPU64RegsRegClass;
     unsigned RegSize = RC->getSize();
     int RegSlotOffset = FirstRegSlotOffset + Idx * RegSize;
 
@@ -3049,17 +3050,16 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
       if (VT == MVT::i32)
-        return std::make_pair(0U, Mips::CPURegsRegisterClass);
+        return std::make_pair(0U, &Mips::CPURegsRegClass);
       assert(VT == MVT::i64 && "Unexpected type.");
-      return std::make_pair(0U, Mips::CPU64RegsRegisterClass);
+      return std::make_pair(0U, &Mips::CPU64RegsRegClass);
     case 'f':
       if (VT == MVT::f32)
-        return std::make_pair(0U, Mips::FGR32RegisterClass);
+        return std::make_pair(0U, &Mips::FGR32RegClass);
       if ((VT == MVT::f64) && (!Subtarget->isSingleFloat())) {
         if (Subtarget->isFP64bit())
-          return std::make_pair(0U, Mips::FGR64RegisterClass);
-        else
-          return std::make_pair(0U, Mips::AFGR64RegisterClass);
+          return std::make_pair(0U, &Mips::FGR64RegClass);
+        return std::make_pair(0U, &Mips::AFGR64RegClass);
       }
     }
   }

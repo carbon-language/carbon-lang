@@ -839,12 +839,12 @@ const {
       EVT RegVT = VA.getLocVT();
       if (RegVT == MVT::i8 || RegVT == MVT::i16 || RegVT == MVT::i32) {
         unsigned VReg =
-          RegInfo.createVirtualRegister(Hexagon::IntRegsRegisterClass);
+          RegInfo.createVirtualRegister(&Hexagon::IntRegsRegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         InVals.push_back(DAG.getCopyFromReg(Chain, dl, VReg, RegVT));
       } else if (RegVT == MVT::i64) {
         unsigned VReg =
-          RegInfo.createVirtualRegister(Hexagon::DoubleRegsRegisterClass);
+          RegInfo.createVirtualRegister(&Hexagon::DoubleRegsRegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         InVals.push_back(DAG.getCopyFromReg(Chain, dl, VReg, RegVT));
       } else {
@@ -1009,10 +1009,10 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     TM(targetmachine) {
 
     // Set up the register classes.
-    addRegisterClass(MVT::i32, Hexagon::IntRegsRegisterClass);
-    addRegisterClass(MVT::i64, Hexagon::DoubleRegsRegisterClass);
+    addRegisterClass(MVT::i32, &Hexagon::IntRegsRegClass);
+    addRegisterClass(MVT::i64, &Hexagon::DoubleRegsRegClass);
 
-    addRegisterClass(MVT::i1, Hexagon::PredRegsRegisterClass);
+    addRegisterClass(MVT::i1, &Hexagon::PredRegsRegClass);
 
     computeRegisterProperties();
 
@@ -1402,9 +1402,9 @@ HexagonTargetLowering::getRegForInlineAsmConstraint(const
        case MVT::i32:
        case MVT::i16:
        case MVT::i8:
-         return std::make_pair(0U, Hexagon::IntRegsRegisterClass);
+         return std::make_pair(0U, &Hexagon::IntRegsRegClass);
        case MVT::i64:
-         return std::make_pair(0U, Hexagon::DoubleRegsRegisterClass);
+         return std::make_pair(0U, &Hexagon::DoubleRegsRegClass);
       }
     default:
       llvm_unreachable("Unknown asm register class");

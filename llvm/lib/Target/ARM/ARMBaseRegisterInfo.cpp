@@ -258,7 +258,7 @@ ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
 
 const TargetRegisterClass *
 ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
-  return ARM::GPRRegisterClass;
+  return &ARM::GPRRegClass;
 }
 
 const TargetRegisterClass *
@@ -369,7 +369,7 @@ ARMBaseRegisterInfo::getRawAllocationOrder(const TargetRegisterClass *RC,
   };
 
   // We only support even/odd hints for GPR and rGPR.
-  if (RC != ARM::GPRRegisterClass && RC != ARM::rGPRRegisterClass)
+  if (RC != &ARM::GPRRegClass && RC != &ARM::rGPRRegClass)
     return RC->getRawAllocationOrder(MF);
 
   if (HintType == ARMRI::RegPairEven) {
@@ -1110,7 +1110,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Must be addrmode4/6.
     MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
   else {
-    ScratchReg = MF.getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
+    ScratchReg = MF.getRegInfo().createVirtualRegister(&ARM::GPRRegClass);
     if (!AFI->isThumbFunction())
       emitARMRegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
                               Offset, Pred, PredReg, TII);

@@ -205,8 +205,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned Reg = MI.getOperand(0).getReg();
   bool isKill = MI.getOpcode() == XCore::STWFI && MI.getOperand(0).isKill();
 
-  assert(XCore::GRRegsRegisterClass->contains(Reg) &&
-         "Unexpected register operand");
+  assert(XCore::GRRegsRegClass.contains(Reg) && "Unexpected register operand");
   
   MachineBasicBlock &MBB = *MI.getParent();
   
@@ -217,7 +216,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       if (!RS)
         report_fatal_error("eliminateFrameIndex Frame size too big: " +
                            Twine(Offset));
-      unsigned ScratchReg = RS->scavengeRegister(XCore::GRRegsRegisterClass, II,
+      unsigned ScratchReg = RS->scavengeRegister(&XCore::GRRegsRegClass, II,
                                                  SPAdj);
       loadConstant(MBB, II, ScratchReg, Offset, dl);
       switch (MI.getOpcode()) {

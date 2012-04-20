@@ -59,17 +59,17 @@ bool PTXMFInfoExtract::runOnMachineFunction(MachineFunction &MF) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     const TargetRegisterClass *TRC = MRI.getRegClass(Reg);
     unsigned RegType;
-    if (TRC == PTX::RegPredRegisterClass)
+    if (TRC == &PTX::RegPredRegClass)
       RegType = PTXRegisterType::Pred;
-    else if (TRC == PTX::RegI16RegisterClass)
+    else if (TRC == &PTX::RegI16RegClass)
       RegType = PTXRegisterType::B16;
-    else if (TRC == PTX::RegI32RegisterClass)
+    else if (TRC == &PTX::RegI32RegClass)
       RegType = PTXRegisterType::B32;
-    else if (TRC == PTX::RegI64RegisterClass)
+    else if (TRC == &PTX::RegI64RegClass)
       RegType = PTXRegisterType::B64;
-    else if (TRC == PTX::RegF32RegisterClass)
+    else if (TRC == &PTX::RegF32RegClass)
       RegType = PTXRegisterType::F32;
-    else if (TRC == PTX::RegF64RegisterClass)
+    else if (TRC == &PTX::RegF64RegClass)
       RegType = PTXRegisterType::F64;
     else
       llvm_unreachable("Unkown register class.");

@@ -94,7 +94,7 @@ getReservedRegs(const MachineFunction &MF) const {
   };
 
   BitVector Reserved(getNumRegs());
-  typedef TargetRegisterClass::iterator RegIter;
+  typedef TargetRegisterClass::const_iterator RegIter;
 
   for (unsigned I = 0; I < array_lengthof(ReservedCPURegs); ++I)
     Reserved.set(ReservedCPURegs[I]);
@@ -104,18 +104,17 @@ getReservedRegs(const MachineFunction &MF) const {
       Reserved.set(ReservedCPU64Regs[I]);
 
     // Reserve all registers in AFGR64.
-    for (RegIter Reg = Mips::AFGR64RegisterClass->begin();
-         Reg != Mips::AFGR64RegisterClass->end(); ++Reg)
+    for (RegIter Reg = Mips::AFGR64RegClass.begin(),
+         EReg = Mips::AFGR64RegClass.end(); Reg != EReg; ++Reg)
       Reserved.set(*Reg);
-  }
-  else {
+  } else {
     // Reserve all registers in CPU64Regs & FGR64.
-    for (RegIter Reg = Mips::CPU64RegsRegisterClass->begin();
-         Reg != Mips::CPU64RegsRegisterClass->end(); ++Reg)
+    for (RegIter Reg = Mips::CPU64RegsRegClass.begin(),
+         EReg = Mips::CPU64RegsRegClass.end(); Reg != EReg; ++Reg)
       Reserved.set(*Reg);
 
-    for (RegIter Reg = Mips::FGR64RegisterClass->begin();
-         Reg != Mips::FGR64RegisterClass->end(); ++Reg)
+    for (RegIter Reg = Mips::FGR64RegClass.begin(),
+         EReg = Mips::FGR64RegClass.end(); Reg != EReg; ++Reg)
       Reserved.set(*Reg);
   }
 

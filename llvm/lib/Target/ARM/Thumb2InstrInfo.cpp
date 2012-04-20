@@ -126,9 +126,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC,
                     const TargetRegisterInfo *TRI) const {
-  if (RC == ARM::GPRRegisterClass   || RC == ARM::tGPRRegisterClass ||
-      RC == ARM::tcGPRRegisterClass || RC == ARM::rGPRRegisterClass ||
-      RC == ARM::GPRnopcRegisterClass) {
+  if (RC == &ARM::GPRRegClass   || RC == &ARM::tGPRRegClass ||
+      RC == &ARM::tcGPRRegClass || RC == &ARM::rGPRRegClass ||
+      RC == &ARM::GPRnopcRegClass) {
     DebugLoc DL;
     if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -153,9 +153,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC,
                      const TargetRegisterInfo *TRI) const {
-  if (RC == ARM::GPRRegisterClass   || RC == ARM::tGPRRegisterClass ||
-      RC == ARM::tcGPRRegisterClass || RC == ARM::rGPRRegisterClass ||
-      RC == ARM::GPRnopcRegisterClass) {
+  if (RC == &ARM::GPRRegClass   || RC == &ARM::tGPRRegClass ||
+      RC == &ARM::tcGPRRegClass || RC == &ARM::rGPRRegClass ||
+      RC == &ARM::GPRnopcRegClass) {
     DebugLoc DL;
     if (I != MBB.end()) DL = I->getDebugLoc();
 

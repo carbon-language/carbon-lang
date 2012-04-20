@@ -53,11 +53,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC,
                     const TargetRegisterInfo *TRI) const {
-  assert((RC == ARM::tGPRRegisterClass ||
+  assert((RC == &ARM::tGPRRegClass ||
           (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
            isARMLowRegister(SrcReg))) && "Unknown regclass!");
 
-  if (RC == ARM::tGPRRegisterClass ||
+  if (RC == &ARM::tGPRRegClass ||
       (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
        isARMLowRegister(SrcReg))) {
     DebugLoc DL;
@@ -81,11 +81,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC,
                      const TargetRegisterInfo *TRI) const {
-  assert((RC == ARM::tGPRRegisterClass ||
+  assert((RC == &ARM::tGPRRegClass ||
           (TargetRegisterInfo::isPhysicalRegister(DestReg) &&
            isARMLowRegister(DestReg))) && "Unknown regclass!");
 
-  if (RC == ARM::tGPRRegisterClass ||
+  if (RC == &ARM::tGPRRegClass ||
       (TargetRegisterInfo::isPhysicalRegister(DestReg) &&
        isARMLowRegister(DestReg))) {
     DebugLoc DL;

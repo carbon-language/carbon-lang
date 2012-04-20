@@ -66,7 +66,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
     Subtarget(*XTM.getSubtargetImpl()) {
 
   // Set up the register classes.
-  addRegisterClass(MVT::i32, XCore::GRRegsRegisterClass);
+  addRegisterClass(MVT::i32, &XCore::GRRegsRegClass);
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -1121,8 +1121,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
           llvm_unreachable(0);
         }
       case MVT::i32:
-        unsigned VReg = RegInfo.createVirtualRegister(
-                          XCore::GRRegsRegisterClass);
+        unsigned VReg = RegInfo.createVirtualRegister(&XCore::GRRegsRegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         InVals.push_back(DAG.getCopyFromReg(Chain, dl, VReg, RegVT));
       }
@@ -1172,8 +1171,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
         offset -= StackSlotSize;
         SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
         // Move argument from phys reg -> virt reg
-        unsigned VReg = RegInfo.createVirtualRegister(
-                          XCore::GRRegsRegisterClass);
+        unsigned VReg = RegInfo.createVirtualRegister(&XCore::GRRegsRegClass);
         RegInfo.addLiveIn(ArgRegs[i], VReg);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
         // Move argument from virt reg -> stack
@@ -1611,7 +1609,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     default : break;
     case 'r':
-      return std::make_pair(0U, XCore::GRRegsRegisterClass);
+      return std::make_pair(0U, &XCore::GRRegsRegClass);
     }
   }
   // Use the default implementation in TargetLowering to convert the register

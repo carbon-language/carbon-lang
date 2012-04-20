@@ -1130,10 +1130,10 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
       SDNode *Arg = N->getOperand(i).getNode();
       const TargetRegisterClass *RC = TII->getRegClass(MCID, i, TRI);
 
-      if (RC == Hexagon::IntRegsRegisterClass ||
-          RC == Hexagon::DoubleRegsRegisterClass) {
+      if (RC == &Hexagon::IntRegsRegClass ||
+          RC == &Hexagon::DoubleRegsRegClass) {
         Ops.push_back(SDValue(Arg, 0));
-      } else if (RC == Hexagon::PredRegsRegisterClass) {
+      } else if (RC == &Hexagon::PredRegsRegClass) {
         // Do the transfer.
         SDNode *PdRs = CurDAG->getMachineNode(Hexagon::TFR_PdRs, dl, MVT::i1,
                                               SDValue(Arg, 0));

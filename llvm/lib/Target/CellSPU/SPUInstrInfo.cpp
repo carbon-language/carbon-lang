@@ -143,21 +143,21 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                   const TargetRegisterInfo *TRI) const {
   unsigned opc;
   bool isValidFrameIdx = (FrameIdx < SPUFrameLowering::maxFrameOffset());
-  if (RC == SPU::GPRCRegisterClass)
+  if (RC == &SPU::GPRCRegClass)
     opc = isValidFrameIdx ? SPU::STQDr128 : SPU::STQXr128;
-  else if (RC == SPU::R64CRegisterClass)
+  else if (RC == &SPU::R64CRegClass)
     opc = isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64;
-  else if (RC == SPU::R64FPRegisterClass)
+  else if (RC == &SPU::R64FPRegClass)
     opc = isValidFrameIdx ? SPU::STQDr64 : SPU::STQXr64;
-  else if (RC == SPU::R32CRegisterClass)
+  else if (RC == &SPU::R32CRegClass)
     opc = isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32;
-  else if (RC == SPU::R32FPRegisterClass)
+  else if (RC == &SPU::R32FPRegClass)
     opc = isValidFrameIdx ? SPU::STQDr32 : SPU::STQXr32;
-  else if (RC == SPU::R16CRegisterClass)
+  else if (RC == &SPU::R16CRegClass)
     opc = isValidFrameIdx ? SPU::STQDr16 : SPU::STQXr16;
-  else if (RC == SPU::R8CRegisterClass)
+  else if (RC == &SPU::R8CRegClass)
     opc = isValidFrameIdx ? SPU::STQDr8 : SPU::STQXr8;
-  else if (RC == SPU::VECREGRegisterClass)
+  else if (RC == &SPU::VECREGRegClass)
     opc = isValidFrameIdx ? SPU::STQDv16i8 : SPU::STQXv16i8;
   else
     llvm_unreachable("Unknown regclass!");
@@ -176,21 +176,21 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                    const TargetRegisterInfo *TRI) const {
   unsigned opc;
   bool isValidFrameIdx = (FrameIdx < SPUFrameLowering::maxFrameOffset());
-  if (RC == SPU::GPRCRegisterClass)
+  if (RC == &SPU::GPRCRegClass)
     opc = isValidFrameIdx ? SPU::LQDr128 : SPU::LQXr128;
-  else if (RC == SPU::R64CRegisterClass)
+  else if (RC == &SPU::R64CRegClass)
     opc = isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64;
-  else if (RC == SPU::R64FPRegisterClass)
+  else if (RC == &SPU::R64FPRegClass)
     opc = isValidFrameIdx ? SPU::LQDr64 : SPU::LQXr64;
-  else if (RC == SPU::R32CRegisterClass)
+  else if (RC == &SPU::R32CRegClass)
     opc = isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32;
-  else if (RC == SPU::R32FPRegisterClass)
+  else if (RC == &SPU::R32FPRegClass)
     opc = isValidFrameIdx ? SPU::LQDr32 : SPU::LQXr32;
-  else if (RC == SPU::R16CRegisterClass)
+  else if (RC == &SPU::R16CRegClass)
     opc = isValidFrameIdx ? SPU::LQDr16 : SPU::LQXr16;
-  else if (RC == SPU::R8CRegisterClass)
+  else if (RC == &SPU::R8CRegClass)
     opc = isValidFrameIdx ? SPU::LQDr8 : SPU::LQXr8;
-  else if (RC == SPU::VECREGRegisterClass)
+  else if (RC == &SPU::VECREGRegClass)
     opc = isValidFrameIdx ? SPU::LQDv16i8 : SPU::LQXv16i8;
   else
     llvm_unreachable("Unknown regclass in loadRegFromStackSlot!");

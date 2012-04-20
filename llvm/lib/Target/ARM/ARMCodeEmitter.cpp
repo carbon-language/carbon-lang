@@ -1541,7 +1541,7 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
 static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegD = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
-  bool isSPVFP = ARM::SPRRegisterClass->contains(RegD);
+  bool isSPVFP = ARM::SPRRegClass.contains(RegD);
   RegD = getARMRegisterNumbering(RegD);
   if (!isSPVFP)
     Binary |=   RegD               << ARMII::RegRdShift;
@@ -1555,7 +1555,7 @@ static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
 static unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegN = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
-  bool isSPVFP = ARM::SPRRegisterClass->contains(RegN);
+  bool isSPVFP = ARM::SPRRegClass.contains(RegN);
   RegN = getARMRegisterNumbering(RegN);
   if (!isSPVFP)
     Binary |=   RegN               << ARMII::RegRnShift;
@@ -1569,7 +1569,7 @@ static unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) {
 static unsigned encodeVFPRm(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegM = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
-  bool isSPVFP = ARM::SPRRegisterClass->contains(RegM);
+  bool isSPVFP = ARM::SPRRegClass.contains(RegM);
   RegM = getARMRegisterNumbering(RegM);
   if (!isSPVFP)
     Binary |=   RegM;
