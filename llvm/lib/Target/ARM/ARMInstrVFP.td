@@ -221,11 +221,13 @@ defm : VFPDTAnyInstAlias<"vpop${p}", "$r",
 // FP Binary Operations.
 //
 
+let TwoOperandAliasConstraint = "$Dn = $Dd" in
 def VADDD  : ADbI<0b11100, 0b11, 0, 0,
                   (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                   IIC_fpALU64, "vadd", ".f64\t$Dd, $Dn, $Dm",
                   [(set DPR:$Dd, (fadd DPR:$Dn, (f64 DPR:$Dm)))]>;
 
+let TwoOperandAliasConstraint = "$Sn = $Sd" in
 def VADDS  : ASbIn<0b11100, 0b11, 0, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    IIC_fpALU32, "vadd", ".f32\t$Sd, $Sn, $Sm",
@@ -235,11 +237,13 @@ def VADDS  : ASbIn<0b11100, 0b11, 0, 0,
   let D = VFPNeonA8Domain;
 }
 
+let TwoOperandAliasConstraint = "$Dn = $Dd" in
 def VSUBD  : ADbI<0b11100, 0b11, 1, 0,
                   (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                   IIC_fpALU64, "vsub", ".f64\t$Dd, $Dn, $Dm",
                   [(set DPR:$Dd, (fsub DPR:$Dn, (f64 DPR:$Dm)))]>;
 
+let TwoOperandAliasConstraint = "$Sn = $Sd" in
 def VSUBS  : ASbIn<0b11100, 0b11, 1, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    IIC_fpALU32, "vsub", ".f32\t$Sd, $Sn, $Sm",
@@ -249,21 +253,25 @@ def VSUBS  : ASbIn<0b11100, 0b11, 1, 0,
   let D = VFPNeonA8Domain;
 }
 
+let TwoOperandAliasConstraint = "$Dn = $Dd" in
 def VDIVD  : ADbI<0b11101, 0b00, 0, 0,
                   (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                   IIC_fpDIV64, "vdiv", ".f64\t$Dd, $Dn, $Dm",
                   [(set DPR:$Dd, (fdiv DPR:$Dn, (f64 DPR:$Dm)))]>;
 
+let TwoOperandAliasConstraint = "$Sn = $Sd" in
 def VDIVS  : ASbI<0b11101, 0b00, 0, 0,
                   (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                   IIC_fpDIV32, "vdiv", ".f32\t$Sd, $Sn, $Sm",
                   [(set SPR:$Sd, (fdiv SPR:$Sn, SPR:$Sm))]>;
 
+let TwoOperandAliasConstraint = "$Dn = $Dd" in
 def VMULD  : ADbI<0b11100, 0b10, 0, 0,
                   (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                   IIC_fpMUL64, "vmul", ".f64\t$Dd, $Dn, $Dm",
                   [(set DPR:$Dd, (fmul DPR:$Dn, (f64 DPR:$Dm)))]>;
 
+let TwoOperandAliasConstraint = "$Sn = $Sd" in
 def VMULS  : ASbIn<0b11100, 0b10, 0, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    IIC_fpMUL32, "vmul", ".f32\t$Sd, $Sn, $Sm",
@@ -1425,22 +1433,6 @@ def : VFP2InstAlias<"vldr${p}.64 $Dd, $addr",
                     (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
 def : VFP2InstAlias<"vstr${p}.64 $Dd, $addr",
                     (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
-
-// VMUL has a two-operand form (implied destination operand)
-def : VFP2InstAlias<"vmul${p}.f64 $Dn, $Dm",
-                    (VMULD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
-def : VFP2InstAlias<"vmul${p}.f32 $Sn, $Sm",
-                    (VMULS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
-// VADD has a two-operand form (implied destination operand)
-def : VFP2InstAlias<"vadd${p}.f64 $Dn, $Dm",
-                    (VADDD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
-def : VFP2InstAlias<"vadd${p}.f32 $Sn, $Sm",
-                    (VADDS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
-// VSUB has a two-operand form (implied destination operand)
-def : VFP2InstAlias<"vsub${p}.f64 $Dn, $Dm",
-                    (VSUBD DPR:$Dn, DPR:$Dn, DPR:$Dm, pred:$p)>;
-def : VFP2InstAlias<"vsub${p}.f32 $Sn, $Sm",
-                    (VSUBS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
 
 // VMOV can accept optional 32-bit or less data type suffix suffix.
 def : VFP2InstAlias<"vmov${p}.8 $Rt, $Sn",

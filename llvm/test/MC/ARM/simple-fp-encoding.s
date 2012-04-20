@@ -12,9 +12,14 @@
 
         vdiv.f64  d16, d17, d16
         vdiv.f32  s0, s1, s0
+        vdiv.f32 s5, s7
+        vdiv.f64 d5, d7
 
-@ CHECK: vdiv.f64 d16, d17, d16      @ encoding: [0xa0,0x0b,0xc1,0xee]
-@ CHECK: vdiv.f32 s0, s1, s0         @ encoding: [0x80,0x0a,0x80,0xee]
+@ CHECK: vdiv.f64 d16, d17, d16         @ encoding: [0xa0,0x0b,0xc1,0xee]
+@ CHECK: vdiv.f32 s0, s1, s0            @ encoding: [0x80,0x0a,0x80,0xee]
+@ CHECK: vdiv.f32	s5, s5, s7      @ encoding: [0xa3,0x2a,0xc2,0xee]
+@ CHECK: vdiv.f64	d5, d5, d7      @ encoding: [0x07,0x5b,0x85,0xee]
+
 
         vmul.f64  d16, d17, d16
 	vmul.f64  d20, d17
