@@ -126,7 +126,8 @@ static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI,
   return 0;
 }
 
-void ScheduleDAGInstrs::startBlock(MachineBasicBlock *BB) {
+void ScheduleDAGInstrs::startBlock(MachineBasicBlock *bb) {
+  BB = bb;
   LoopRegs.Deps.clear();
   if (MachineLoop *ML = MLI.getLoopFor(BB))
     if (BB == ML->getLoopLatch())
@@ -134,6 +135,7 @@ void ScheduleDAGInstrs::startBlock(MachineBasicBlock *BB) {
 }
 
 void ScheduleDAGInstrs::finishBlock() {
+  BB = 0;
   // Nothing to do.
 }
 
@@ -159,7 +161,7 @@ void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
                                     MachineBasicBlock::iterator begin,
                                     MachineBasicBlock::iterator end,
                                     unsigned endcount) {
-  BB = bb;
+  assert(bb == BB && "startBlock should set BB");
   RegionBegin = begin;
   RegionEnd = end;
   EndIndex = endcount;
