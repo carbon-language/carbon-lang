@@ -135,7 +135,7 @@ public:
   uint32_t  initprot;  
   uint32_t  nsects;    
   uint32_t  flags;  
-  section_64 sections[];
+  section_64 sections[1];
   
   // The segment_command_64 load commands has a nsect trailing
   // section_64 records appended to the end.
@@ -160,7 +160,7 @@ enum {
 class dylinker_command : public load_command {
 public:
   uint32_t  name_offset;
-  char      name[];
+  char      name[1];
   
   static dylinker_command* make(const char* path) {
     unsigned size = (sizeof(dylinker_command) + strlen(path) + 7) & (-8);
@@ -280,7 +280,7 @@ struct dylib_command : public load_command {
   uint32_t  timestamp;
   uint32_t  current_version;    
   uint32_t  compatibility_version;
-  char      name[];
+  char      name[1];
   
   static dylib_command* make(const char* path) {
     unsigned size = (sizeof(dylib_command) + strlen(path) + 7) & (-8);

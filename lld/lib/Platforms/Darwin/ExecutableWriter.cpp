@@ -527,7 +527,8 @@ void SectionChunk::appendAtom(const DefinedAtom *atom) {
   if ( align2 > _align2 )
     _align2 = align2;
   // Assign atom to this section with this offset.
-  _atoms.push_back({atom, offset});
+  SectionChunk::AtomInfo ai = {atom, offset};
+  _atoms.push_back(ai);
   // Update section size to include this atom.
   _size = offset + atom->size();
   // Update permissions
@@ -820,7 +821,8 @@ void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
 
 
 void LoadCommandsChunk::addSection(SectionChunk* chunk) {
-  _sectionInfo.push_back({chunk, nullptr, nullptr});
+  LoadCommandsChunk::ChunkSegInfo csi = {chunk, nullptr, nullptr};
+  _sectionInfo.push_back(csi);
 }
 
 void LoadCommandsChunk::addLoadCommand(load_command* lc) {
