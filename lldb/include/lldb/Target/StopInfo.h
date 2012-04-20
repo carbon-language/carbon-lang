@@ -74,9 +74,22 @@ public:
     }
 
     // Stop the thread by default. Subclasses can override this to allow
-    // the thread to continue if desired.
+    // the thread to continue if desired.  The ShouldStop method should not do anything
+    // that might run code.  If you need to run code when deciding whether to stop
+    // at this StopInfo, that must be done in the PerformAction.  The PerformAction will
+    // always get called before the ShouldStop.
     virtual bool
     ShouldStop (Event *event_ptr)
+    {
+        return true;
+    }
+    
+    // ShouldStopSynchronous will get called before any thread plans are consulted, and if it says we should
+    // resume the target, then we will just immediately resume.  This should not run any code in or resume the
+    // target.
+    
+    virtual bool
+    ShouldStopSynchronous (Event *event_ptr)
     {
         return true;
     }

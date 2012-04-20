@@ -79,15 +79,91 @@ public:
 
     //------------------------------------------------------------------
     // Callbacks
+    //
+    // Breakpoint callbacks come in two forms, synchronous and asynchronous.  Synchronous callbacks will get
+    // run before any of the thread plans are consulted, and if they return false the target will continue
+    // "under the radar" of the thread plans.  There are a couple of restrictions to synchronous callbacks:
+    // 1) They should NOT resume the target themselves.  Just return false if you want the target to restart.
+    // 2) Breakpoints with synchronous callbacks can't have conditions (or rather, they can have them, but they
+    //    won't do anything.  Ditto with ignore counts, etc...  You are supposed to control that all through the
+    //    callback.
+    // Asynchronous callbacks get run as part of the "ShouldStop" logic in the thread plan.  The logic there is:
+    //   a) If the breakpoint is thread specific and not for this thread, continue w/o running the callback.
+    //   b) If the ignore count says we shouldn't stop, then ditto.
+    //   c) If the condition says we shouldn't stop, then ditto.
+    //   d) Otherwise, the callback will get run, and if it returns true we will stop, and if false we won't.
+    //  The asynchronous callback can run the target itself, but at present that should be the last action the
+    //  callback does.  We will relax this condition at some point, but it will take a bit of plumbing to get
+    //  that to work.
+    // 
+    //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// Adds a callback to the breakpoint option set.
+    ///
+    /// @param[in] callback
+    ///    The function to be called when the breakpoint gets hit.
+    ///
+    /// @param[in] baton_sp
+    ///    A baton which will get passed back to the callback when it is invoked.
+    ///
+    /// @param[in] synchronous
+    ///    Whether this is a synchronous or asynchronous callback.  See discussion above.
     //------------------------------------------------------------------
     void SetCallback (BreakpointHitCallback callback, const lldb::BatonSP &baton_sp, bool synchronous = false);
+    
+    
+    //------------------------------------------------------------------
+    /// Remove the callback from this option set.
+    //------------------------------------------------------------------
+    void ClearCallback ();
+
+    // The rest of these functions are meant to be used only within the breakpoint handling mechanism.
+    
+    //------------------------------------------------------------------
+    /// Use this function to invoke the callback for a specific stop.
+    ///
+    /// @param[in] context
+    ///    The context in which the callback is to be invoked.  This includes the stop event, the
+    ///    execution context of the stop (since you might hit the same breakpoint on multiple threads) and
+    ///    whether we are currently executing synchronous or asynchronous callbacks.
+    /// 
+    /// @param[in] break_id
+    ///    The breakpoint ID that owns this option set.
+    ///
+    /// @param[in] break_loc_id
+    ///    The breakpoint location ID that owns this option set.
+    ///
+    /// @return
+    ///     The callback return value.
+    //------------------------------------------------------------------
     bool InvokeCallback (StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+    
+    //------------------------------------------------------------------
+    /// Used in InvokeCallback to tell whether it is the right time to run this kind of callback.
+    ///
+    /// @param[in] condition
+    ///    The condition expression to evaluate when the breakpoint is hit.
+    //------------------------------------------------------------------
     bool IsCallbackSynchronous () {
         return m_callback_is_synchronous;
     }
+    
+    //------------------------------------------------------------------
+    /// Fetch the baton from the callback.
+    ///
+    /// @return
+    ///     The baton.
+    //------------------------------------------------------------------
     Baton *GetBaton ();
+    
+    //------------------------------------------------------------------
+    /// Fetch  a const version of the baton from the callback.
+    ///
+    /// @return
+    ///     The baton.
+    //------------------------------------------------------------------
     const Baton *GetBaton () const;
-    void ClearCallback ();
     
     //------------------------------------------------------------------
     // Condition

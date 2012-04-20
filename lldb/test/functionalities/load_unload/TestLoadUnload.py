@@ -222,6 +222,33 @@ class LoadUnloadTestCase(TestBase):
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 2'])
 
+    def test_step_over_load (self):
+        """Test stepping over code that loads a shared library works correctly."""
+
+        # Invoke the default build rule.
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Break by function name a_function (not yet loaded).
+        self.expect("breakpoint set -f main.c -l %d"%(self.line), BREAKPOINT_CREATED,
+            substrs = ['Breakpoint created:',
+                      "file ='main.c', line = %d, locations = 1"%(self.line)])
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint and at a_function.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        self.runCmd("thread step-over", "Stepping over function that loads library")
+        
+        # The stop reason should be step end.
+        self.expect("thread list", "step over succeeded.", 
+            substrs = ['stopped',
+                      'stop reason = step over'])
 
 if __name__ == '__main__':
     import atexit

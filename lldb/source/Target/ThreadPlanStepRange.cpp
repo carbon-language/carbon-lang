@@ -368,6 +368,9 @@ ThreadPlanStepRange::PlanExplainsStop ()
         case eStopReasonBreakpoint:
             if (NextRangeBreakpointExplainsStop(stop_info_sp))
                 return true;
+            else
+                return false;
+            break;
         case eStopReasonWatchpoint:
         case eStopReasonSignal:
         case eStopReasonException:

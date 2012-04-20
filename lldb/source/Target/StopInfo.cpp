@@ -134,7 +134,7 @@ public:
     }
 
     virtual bool
-    ShouldStop (Event *event_ptr)
+    ShouldStopSynchronous (Event *event_ptr)
     {
         if (!m_should_stop_is_valid)
         {
@@ -157,6 +157,15 @@ public:
             }
             m_should_stop_is_valid = true;
         }
+        return m_should_stop;
+    }
+    
+    bool
+    ShouldStop (Event *event_ptr)
+    {
+        // This just reports the work done by PerformAction or the synchronous stop.  It should
+        // only ever get called after they have had a chance to run.
+        assert (m_should_stop_is_valid);
         return m_should_stop;
     }
     
@@ -216,7 +225,7 @@ public:
                         const bool discard_on_error = true;
                         Error error;
                         result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
-                                                                              eExecutionPolicyAlways,
+                                                                              eExecutionPolicyOnlyWhenNeeded,
                                                                               lldb::eLanguageTypeUnknown,
                                                                               ClangUserExpression::eResultTypeAny,
                                                                               discard_on_error,

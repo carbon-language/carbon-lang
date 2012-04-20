@@ -333,6 +333,17 @@ Thread::ShouldStop (Event* event_ptr)
     
     // The top most plan always gets to do the trace log...
     current_plan->DoTraceLog ();
+    
+    // First query the stop info's ShouldStopSynchronous.  This handles "synchronous" stop reasons, for example the breakpoint
+    // command on internal breakpoints.  If a synchronous stop reason says we should not stop, then we don't have to
+    // do any more work on this stop.
+    StopInfoSP private_stop_info (GetPrivateStopReason());
+    if (private_stop_info && private_stop_info->ShouldStopSynchronous(event_ptr) == false)
+    {
+        if (log)
+            log->Printf ("StopInfo::ShouldStop async callback says we should not stop, returning ShouldStop of false.");
+        return false;
+    }
 
     // If the base plan doesn't understand why we stopped, then we have to find a plan that does.
     // If that plan is still working, then we don't need to do any more work.  If the plan that explains 
