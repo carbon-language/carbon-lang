@@ -580,9 +580,9 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
 
 
 Error
-PlatformRemoteiOS::GetFile (const FileSpec &platform_file, 
-                            const UUID *uuid_ptr,
-                            FileSpec &local_file)
+PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file, 
+                                  const UUID *uuid_ptr,
+                                  FileSpec &local_file)
 {
     Error error;
     char platform_file_path[PATH_MAX];
@@ -653,7 +653,7 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
 
     FileSpec local_file;
     const UUID *module_uuid_ptr = module_spec.GetUUIDPtr();
-    Error error (GetFile (platform_file, module_uuid_ptr, local_file));
+    Error error (GetSymbolFile (platform_file, module_uuid_ptr, local_file));
     if (error.Success())
     {
         error = ResolveExecutable (local_file, module_spec.GetArchitecture(), module_sp, NULL);
