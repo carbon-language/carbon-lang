@@ -135,8 +135,8 @@ void ScheduleDAGInstrs::startBlock(MachineBasicBlock *bb) {
 }
 
 void ScheduleDAGInstrs::finishBlock() {
+  // Subclasses should no longer refer to the old block.
   BB = 0;
-  // Nothing to do.
 }
 
 /// Initialize the map with the number of registers.
