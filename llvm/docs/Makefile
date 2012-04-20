@@ -26,10 +26,9 @@ include $(LEVEL)/Makefile.common
 
 HTML       := $(wildcard $(PROJ_SRC_DIR)/*.html) \
               $(wildcard $(PROJ_SRC_DIR)/*.css)
-IMAGES     := $(wildcard $(PROJ_SRC_DIR)/img/*.*)
 DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
               doxygen.intro
-EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
+EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide
 
 .PHONY: install-html install-doxygen doxygen install-ocamldoc ocamldoc generated
 
@@ -56,9 +55,7 @@ generated:: $(generated_targets)
 install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
 	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/html
-	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/html/img
 	$(Verb) $(DataInstall) $(HTML) $(DESTDIR)$(PROJ_docsdir)/html
-	$(Verb) $(DataInstall) $(IMAGES) $(DESTDIR)$(PROJ_docsdir)/html/img
 	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/html.tar.gz $(DESTDIR)$(PROJ_docsdir)
 
 $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
