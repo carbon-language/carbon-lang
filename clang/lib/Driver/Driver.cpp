@@ -1468,15 +1468,24 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
   }
 
-  // If we're saving temps and the temp filename conflicts with the input
-  // filename, then avoid overwriting input file.
+  // If we're saving temps and the temp file conflicts with the input file, 
+  // then avoid overwriting input file.
   if (!AtTopLevel && C.getArgs().hasArg(options::OPT_save_temps) &&
       NamedOutput == BaseName) {
-    StringRef Name = llvm::sys::path::filename(BaseInput);
-    std::pair<StringRef, StringRef> Split = Name.split('.');
-    std::string TmpName =
-      GetTemporaryPath(Split.first, types::getTypeTempSuffix(JA.getType()));
-    return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
+
+    bool SameFile = false;
+    SmallString<256> Result;
+    llvm::sys::fs::current_path(Result);
+    llvm::sys::path::append(Result, BaseName);
+    llvm::sys::fs::equivalent(BaseInput, Result.c_str(), SameFile);
+    // Must share the same path to conflict.
+    if (SameFile) {
+      StringRef Name = llvm::sys::path::filename(BaseInput);
+      std::pair<StringRef, StringRef> Split = Name.split('.');
+      std::string TmpName =
+        GetTemporaryPath(Split.first, types::getTypeTempSuffix(JA.getType()));
+      return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
+    }
   }
 
   // As an annoying special case, PCH generation doesn't strip the pathname.
