@@ -309,9 +309,6 @@ public:
   /// is none by that name.
   StructType *getTypeByName(StringRef Name) const;
 
-  /// getNumNamedStructTypes - Return the number of named struct types.
-  unsigned getNumNamedStructTypes() const;
-
 /// @}
 /// @name Function Accessors
 /// @{
