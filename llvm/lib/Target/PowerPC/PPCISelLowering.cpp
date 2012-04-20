@@ -902,7 +902,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-     assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getZExtValue()
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(0))->getZExtValue()
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
@@ -1006,7 +1006,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
   if (N.getOpcode() == ISD::ADD) {
     short imm = 0;
     if (isIntS16Immediate(N.getOperand(1), imm) && (imm & 3) == 0) {
-      Disp =  DAG.getTargetConstant(((int)imm & 0xFFFF) >> 2, MVT::i32);
+      Disp = DAG.getTargetConstant(((int)imm & 0xFFFF) >> 2, MVT::i32);
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
         Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
       } else {
@@ -1015,7 +1015,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-     assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getZExtValue()
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(0))->getZExtValue()
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
