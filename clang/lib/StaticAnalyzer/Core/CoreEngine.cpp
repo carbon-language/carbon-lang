@@ -248,7 +248,7 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
       break;
     }
 
-    case ProgramPoint::CallExitKind:
+    case ProgramPoint::CallExitBeginKind:
       SubEng.processCallExit(Pred);
       break;
 
@@ -531,14 +531,14 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
     WList->enqueue(Succ, Block, Idx+1);
 }
 
-ExplodedNode *CoreEngine::generateCallExitNode(ExplodedNode *N) {
-  // Create a CallExit node and enqueue it.
+ExplodedNode *CoreEngine::generateCallExitBeginNode(ExplodedNode *N) {
+  // Create a CallExitBegin node and enqueue it.
   const StackFrameContext *LocCtx
                          = cast<StackFrameContext>(N->getLocationContext());
   const Stmt *CE = LocCtx->getCallSite();
 
   // Use the the callee location context.
-  CallExit Loc(CE, LocCtx);
+  CallExitBegin Loc(CE, LocCtx);
 
   bool isNew;
   ExplodedNode *Node = G->getNode(Loc, N->getState(), false, &isNew);
@@ -565,12 +565,13 @@ void CoreEngine::enqueue(ExplodedNodeSet &Set,
 void CoreEngine::enqueueEndOfFunction(ExplodedNodeSet &Set) {
   for (ExplodedNodeSet::iterator I = Set.begin(), E = Set.end(); I != E; ++I) {
     ExplodedNode *N = *I;
-    // If we are in an inlined call, generate CallExit node.
+    // If we are in an inlined call, generate CallExitBegin node.
     if (N->getLocationContext()->getParent()) {
-      N = generateCallExitNode(N);
+      N = generateCallExitBeginNode(N);
       if (N)
         WList->enqueue(N);
     } else {
+      // TODO: We should run remove dead bindings here.
       G->addEndOfPath(N);
       NumPathsExplored++;
     }

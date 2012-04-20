@@ -104,7 +104,7 @@ private:
   CoreEngine(const CoreEngine&); // Do not implement.
   CoreEngine& operator=(const CoreEngine&);
 
-  ExplodedNode *generateCallExitNode(ExplodedNode *N);
+  ExplodedNode *generateCallExitBeginNode(ExplodedNode *N);
 
 public:
   /// Construct a CoreEngine object to analyze the provided CFG using

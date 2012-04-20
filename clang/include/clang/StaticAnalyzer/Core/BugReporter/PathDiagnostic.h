@@ -362,7 +362,7 @@ public:
 /// \brief Interface for classes constructing Stack hints.
 ///
 /// If a PathDiagnosticEvent occurs in a different frame than the final 
-/// diagnostic the hints can be used to summarise the effect of the call.
+/// diagnostic the hints can be used to summarize the effect of the call.
 class StackHintGenerator {
 public:
   virtual ~StackHintGenerator() = 0;
@@ -510,7 +510,7 @@ public:
   }
   
   static PathDiagnosticCallPiece *construct(const ExplodedNode *N,
-                                            const CallExit &CE,
+                                            const CallExitEnd &CE,
                                             const SourceManager &SM);
   
   static PathDiagnosticCallPiece *construct(PathPieces &pieces,

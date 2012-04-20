@@ -272,7 +272,8 @@ public:
   void runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
                                  const ExplodedNodeSet &Src,
                                  SymbolReaper &SymReaper, const Stmt *S,
-                                 ExprEngine &Eng);
+                                 ExprEngine &Eng,
+                                 ProgramPoint::Kind K);
 
   /// \brief True if at least one checker wants to check region changes.
   bool wantsRegionChangeUpdate(ProgramStateRef state);

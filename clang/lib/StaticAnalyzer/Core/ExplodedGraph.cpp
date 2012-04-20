@@ -57,7 +57,7 @@ ExplodedGraph::~ExplodedGraph() {}
 //===----------------------------------------------------------------------===//
 
 bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
-  // Reclaimn all nodes that match *all* the following criteria:
+  // Reclaim all nodes that match *all* the following criteria:
   //
   // (1) 1 predecessor (that has one successor)
   // (2) 1 successor (that has one predecessor)
@@ -83,7 +83,8 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // Condition 3.
   ProgramPoint progPoint = node->getLocation();
   if (!isa<PostStmt>(progPoint) ||
-      (isa<CallEnter>(progPoint) || isa<CallExit>(progPoint)))
+      (isa<CallEnter>(progPoint) ||
+       isa<CallExitBegin>(progPoint) || isa<CallExitEnd>(progPoint)))
     return false;
 
   // Condition 4.

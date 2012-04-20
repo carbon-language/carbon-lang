@@ -151,6 +151,25 @@ public:
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }
 
+  /// \brief Run the analyzer's garbage collection - remove dead symbols and
+  /// bindings.
+  ///
+  /// \param Node - The predecessor node, from which the processing should 
+  /// start.
+  /// \param Out - The returned set of output nodes.
+  /// \param ReferenceStmt - Run garbage collection using the symbols, 
+  /// which are live before the given statement.
+  /// \param LC - The location context of the ReferenceStmt.
+  /// \param DiagnosticStmt - the statement used to associate the diagnostic 
+  /// message, if any warnings should occur while removing the dead (leaks 
+  /// are usually reported here).
+  /// \param K - In some cases it is possible to use PreStmt kind. (Do 
+  /// not use it unless you know what you are doing.) 
+  void removeDead(ExplodedNode *Node, ExplodedNodeSet &Out,
+            const Stmt *ReferenceStmt, const LocationContext *LC,
+            const Stmt *DiagnosticStmt,
+            ProgramPoint::Kind K = ProgramPoint::PreStmtPurgeDeadSymbolsKind);
+
   /// processCFGElement - Called by CoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a CFG element.
   void processCFGElement(const CFGElement E, ExplodedNode *Pred,
@@ -199,7 +218,8 @@ public:
   /// Generate the entry node of the callee.
   void processCallEnter(CallEnter CE, ExplodedNode *Pred);
 
-  /// Generate the first post callsite node.
+  /// Generate the sequence of nodes that simulate the call exit and the post
+  /// visit for CallExpr.
   void processCallExit(ExplodedNode *Pred);
 
   /// Called by CoreEngine when the analysis worklist has terminated.

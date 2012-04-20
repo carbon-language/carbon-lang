@@ -381,21 +381,25 @@ namespace {
     SymbolReaper &SR;
     const Stmt *S;
     ExprEngine &Eng;
+    ProgramPoint::Kind ProgarmPointKind;
 
     CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
     CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckDeadSymbolsContext(const CheckersTy &checkers, SymbolReaper &sr,
-                            const Stmt *s, ExprEngine &eng)
-      : Checkers(checkers), SR(sr), S(s), Eng(eng) { }
+                            const Stmt *s, ExprEngine &eng,
+                            ProgramPoint::Kind K)
+      : Checkers(checkers), SR(sr), S(s), Eng(eng), ProgarmPointKind(K) { }
 
     void runChecker(CheckerManager::CheckDeadSymbolsFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
-      ProgramPoint::Kind K = ProgramPoint::PostPurgeDeadSymbolsKind;
-      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
+      const ProgramPoint &L = ProgramPoint::getProgramPoint(S, ProgarmPointKind,
                                 Pred->getLocationContext(), checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
 
+      // Note, do not pass the statement to the checkers without letting them
+      // differentiate if we ran remove dead bindings before or after the
+      // statement.
       checkFn(SR, C);
     }
   };
@@ -406,8 +410,9 @@ void CheckerManager::runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
                                                const ExplodedNodeSet &Src,
                                                SymbolReaper &SymReaper,
                                                const Stmt *S,
-                                               ExprEngine &Eng) {
-  CheckDeadSymbolsContext C(DeadSymbolsCheckers, SymReaper, S, Eng);
+                                               ExprEngine &Eng,
+                                               ProgramPoint::Kind K) {
+  CheckDeadSymbolsContext C(DeadSymbolsCheckers, SymReaper, S, Eng, K);
   expandGraphWithCheckers(C, Dst, Src);
 }
 

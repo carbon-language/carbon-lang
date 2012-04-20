@@ -427,7 +427,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
     ProgramPoint P = N->getLocation();
     
-    if (const CallExit *CE = dyn_cast<CallExit>(&P)) {
+    if (const CallExitEnd *CE = dyn_cast<CallExitEnd>(&P)) {
       PathDiagnosticCallPiece *C =
         PathDiagnosticCallPiece::construct(N, *CE, SMgr);
       PD.getActivePath().push_front(C);
@@ -440,7 +440,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       PD.popActivePath();
       // The current active path should never be empty.  Either we
       // just added a bunch of stuff to the top-level path, or
-      // we have a previous CallExit.  If the front of the active
+      // we have a previous CallExitEnd.  If the front of the active
       // path is not a PathDiagnosticCallPiece, it means that the
       // path terminated within a function call.  We must then take the
       // current contents of the active path and place it within
@@ -1066,10 +1066,10 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     ProgramPoint P = N->getLocation();
 
     do {
-      if (const CallExit *CE = dyn_cast<CallExit>(&P)) {
+      if (const CallExitEnd *CE = dyn_cast<CallExitEnd>(&P)) {
         const StackFrameContext *LCtx =
         CE->getLocationContext()->getCurrentStackFrame();
-        PathDiagnosticLocation Loc(LCtx->getCallSite(),
+        PathDiagnosticLocation Loc(CE->getStmt(),
                                    PDB.getSourceManager(),
                                    LCtx);
         EB.addEdge(Loc, true);
@@ -1099,7 +1099,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
         // The current active path should never be empty.  Either we
         // just added a bunch of stuff to the top-level path, or
-        // we have a previous CallExit.  If the front of the active
+        // we have a previous CallExitEnd.  If the front of the active
         // path is not a PathDiagnosticCallPiece, it means that the
         // path terminated within a function call.  We must then take the
         // current contents of the active path and place it within
