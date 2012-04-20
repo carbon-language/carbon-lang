@@ -240,11 +240,6 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
         Mutex::Locker locker (m_mutex);
         if (process_sp)
         {
-            StreamString s;
-            if (m_file.GetFilename())
-                s << m_file.GetFilename();
-                s.Printf("[0x%16.16llx]", header_addr);
-                m_file.GetFilename().SetCString (s.GetData());
             m_did_load_objfile = true;
             std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
             Error readmem_error;
@@ -258,7 +253,11 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
                 m_objfile_sp = ObjectFile::FindPlugin(shared_from_this(), process_sp, header_addr, data_sp);
                 if (m_objfile_sp)
                 {
-                    // Once we get the object file, update our module with the object file's 
+                    StreamString s;
+                    s.Printf("0x%16.16llx", header_addr);
+                    m_object_name.SetCString (s.GetData());
+
+                    // Once we get the object file, update our module with the object file's
                     // architecture since it might differ in vendor/os if some parts were
                     // unknown.
                     m_objfile_sp->GetArchitecture (m_arch);
