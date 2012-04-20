@@ -21,6 +21,7 @@
     <li><a href="#miscompilationdebug">Miscompilation debugger</a></li>
   </ul></li>
   <li><a href="#advice">Advice for using <tt>bugpoint</tt></a></li>
+  <li><a href="notEnough">What to do when <tt>bugpoint</tt> isn't enough</a></li>
 </ul>
 
 <div class="doc_author">
@@ -218,6 +219,82 @@ non-obvious ways.  Here are some hints and tips:<p>
     program. This process will repeat until a bug is found or the user
     kills <tt>bugpoint</tt>.
 </ol>
+
+</div>
+<!-- *********************************************************************** -->
+<h2>
+  <a name="notEnough">What to do when bugpoint isn't enough</a>
+</h2>
+<!-- *********************************************************************** -->
+
+<div>
+	
+<p>Sometimes, <tt>bugpoint</tt> is not enough. In particular, InstCombine and
+TargetLowering both have visitor structured code with lots of potential
+transformations.  If the process of using bugpoint has left you with
+still too much code to figure out and the problem seems
+to be in instcombine, the following steps may help.  These same techniques
+are useful with TargetLowering as well.</p>
+
+<p>Turn on <tt>-debug-only=instcombine</tt> and see which transformations
+within instcombine are firing by selecting out lines with "<tt>IC</tt>"
+in them.</p>
+
+<p>At this point, you have a decision to make.  Is the number
+of transformations small enough to step through them using a debugger?
+If so, then try that.</p>
+
+<p>If there are too many transformations, then a source modification
+approach may be helpful.
+In this approach, you can modify the source code of instcombine
+to disable just those transformations that are being performed on your
+test input and perform a binary search over the set of transformations.
+One set of places to modify are the "<tt>visit*</tt>" methods of
+<tt>InstCombiner</tt> (<I>e.g.</I> <tt>visitICmpInst</tt>) by adding a
+"<tt>return false</tt>" as the first line of the method.</p>
+
+<p>If that still doesn't remove enough, then change the caller of
+<tt>InstCombiner::DoOneIteration</tt>, <tt>InstCombiner::runOnFunction</tt>
+to limit the number of iterations.</p>
+
+<p>You may also find it useful to use "<tt>-stats</tt>" now to see what parts
+of instcombine are firing.  This can guide where to put additional reporting
+code.</p>
+
+<p>At this point, if the amount of transformations is still too large, then
+inserting code to limit whether or not to execute the body of the code
+in the visit function can be helpful.  Add a static counter which is
+incremented on every invocation of the function.  Then add code which
+simply returns false on desired ranges.  For example:</p>
+
+<div class="doc_code">
+<p><tt>static int calledCount = 0;</tt></p>
+<p><tt>calledCount++;</tt></p>
+<p><tt>DEBUG(if (calledCount &lt; 212) return false);</tt></p>
+<p><tt>DEBUG(if (calledCount &gt; 217) return false);</tt></p>
+<p><tt>DEBUG(if (calledCount == 213) return false);</tt></p>
+<p><tt>DEBUG(if (calledCount == 214) return false);</tt></p>
+<p><tt>DEBUG(if (calledCount == 215) return false);</tt></p>
+<p><tt>DEBUG(if (calledCount == 216) return false);</tt></p>
+<p><tt>DEBUG(dbgs() &lt;&lt; "visitXOR calledCount: " &lt;&lt; calledCount
+	&lt;&lt; "\n");</tt></p>
+<p><tt>DEBUG(dbgs() &lt;&lt; "I: "; I->dump());</tt></p>
+</div>
+
+<p>could be added to <tt>visitXOR</tt> to limit <tt>visitXor</tt> to being
+applied only to calls 212 and 217. This is from an actual test case and raises
+an important point---a simple binary search may not be sufficient, as
+transformations that interact may require isolating more than one call.
+In TargetLowering, use <tt>return SDNode();</tt> instead of
+<tt>return false;</tt>.</p>
+
+<p>Now that that the number of transformations is down to a manageable
+number, try examining the output to see if you can figure out which
+transformations are being done.  If that can be figured out, then
+do the usual debugging.  If which code corresponds to the transformation
+being performed isn't obvious, set a breakpoint after the call count
+based disabling and step through the code.  Alternatively, you can use
+"printf" style debugging to report waypoints.</p>
 
 </div>
 
