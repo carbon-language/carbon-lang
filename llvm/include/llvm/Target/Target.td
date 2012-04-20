@@ -402,6 +402,11 @@ class Instruction {
 
   string AsmMatchConverter = "";
 
+  /// TwoOperandAliasConstraint - Enable TableGen to auto-generate a
+  /// two-operand matcher inst-alias for a three operand instruction.
+  /// For example, the arm instruction "add r3, r3, r5" can be written
+  /// as "add r3, r5". The constraint is of the same form as a tied-operand
+  /// constraint. For example, "$Rn = $Rd".
   string TwoOperandAliasConstraint = "";
 
   ///@}
