@@ -77,7 +77,7 @@ namespace {
       explicit LiveReg(unsigned v)
         : LastUse(0), VirtReg(v), PhysReg(0), LastOpNum(0), Dirty(false) {}
 
-      unsigned getSparseSetKey() const {
+      unsigned getSparseSetIndex() const {
         return TargetRegisterInfo::virtReg2Index(VirtReg);
       }
     };

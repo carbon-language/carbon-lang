@@ -30,6 +30,16 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 template<class Ty>
+struct identity : public std::unary_function<Ty, Ty> {
+  Ty &operator()(Ty &self) const {
+    return self;
+  }
+  const Ty &operator()(const Ty &self) const {
+    return self;
+  }
+};
+
+template<class Ty>
 struct less_ptr : public std::binary_function<Ty, Ty, bool> {
   bool operator()(const Ty* left, const Ty* right) const {
     return *left < *right;
@@ -274,7 +284,7 @@ static inline void array_pod_sort(IteratorTy Start, IteratorTy End,
   if (Start == End) return;
   qsort(&*Start, End-Start, sizeof(*Start), Compare);
 }
-  
+
 //===----------------------------------------------------------------------===//
 //     Extra additions to <algorithm>
 //===----------------------------------------------------------------------===//

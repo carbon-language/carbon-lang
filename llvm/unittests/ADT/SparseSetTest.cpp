@@ -161,7 +161,7 @@ TEST(SparseSetTest, MultipleEntrySet) {
 struct Alt {
   unsigned Value;
   explicit Alt(unsigned x) : Value(x) {}
-  unsigned getSparseSetKey() const { return Value - 1000; }
+  unsigned getSparseSetIndex() const { return Value - 1000; }
 };
 
 TEST(SparseSetTest, AltStructSet) {

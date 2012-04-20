@@ -412,7 +412,7 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   // uses. We're conservative for now until we have a way to guarantee the uses
   // are not eliminated sometime during scheduling. The output dependence edge
   // is also useful if output latency exceeds def-use latency.
-  VReg2SUnitMap::iterator DefI = findVRegDef(Reg);
+  VReg2SUnitMap::iterator DefI = VRegDefs.find(Reg);
   if (DefI == VRegDefs.end())
     VRegDefs.insert(VReg2SUnit(Reg, SU));
   else {
@@ -464,7 +464,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
   }
 
   // Add antidependence to the following def of the vreg it uses.
-  VReg2SUnitMap::iterator DefI = findVRegDef(Reg);
+  VReg2SUnitMap::iterator DefI = VRegDefs.find(Reg);
   if (DefI != VRegDefs.end() && DefI->SU != SU)
     DefI->SU->addPred(SDep(SU, SDep::Anti, 0, Reg));
 }

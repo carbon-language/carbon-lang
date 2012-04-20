@@ -21,33 +21,62 @@
 #define LLVM_ADT_SPARSESET_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DataTypes.h"
 #include <limits>
 
 namespace llvm {
 
-/// SparseSetFunctor - Objects in a SparseSet are identified by small integer
-/// keys.  A functor object is used to compute the key of an object.  The
-/// functor's operator() must return an unsigned smaller than the universe.
+/// SparseSetValTraits - Objects in a SparseSet are identified by keys that can
+/// be uniquely converted to a small integer less than the set's universe. This
+/// class allows the set to hold values that differ from the set's key type as
+/// long as an index can still be derived from the value. SparseSet never
+/// directly compares ValueT, only their indices, so it can map keys to
+/// arbitrary values. SparseSetValTraits computes the index from the value
+/// object. To compute the index from a key, SparseSet uses a separate
+/// KeyFunctorT template argument.
 ///
-/// The default functor implementation forwards to a getSparseSetKey() method
-/// on the object.  It is intended for sparse sets holding ad-hoc structs.
+/// A simple type declaration, SparseSet<Type>, handles these cases:
+/// - unsigned key, identity index, identity value
+/// - unsigned key, identity index, fat value providing getSparseSetIndex()
+///
+/// The type declaration SparseSet<Type, UnaryFunction> handles:
+/// - unsigned key, remapped index, identity value (virtual registers)
+/// - pointer key, pointer-derived index, identity value (node+ID)
+/// - pointer key, pointer-derived index, fat value with getSparseSetIndex()
+///
+/// Only other, unexpected cases require specializing SparseSetValTraits.
+///
+/// For best results, ValueT should not require a destructor.
 ///
 template<typename ValueT>
-struct SparseSetFunctor {
-  unsigned operator()(const ValueT &Val) {
-    return Val.getSparseSetKey();
+struct SparseSetValTraits {
+  static unsigned getValIndex(const ValueT &Val) {
+    return Val.getSparseSetIndex();
   }
 };
 
-/// SparseSetFunctor<unsigned> - Provide a trivial identity functor for
-/// SparseSet<unsigned>.
+/// SparseSetValFunctor - Helper class for selecting SparseSetValTraits. The
+/// generic implementation handles ValueT classes which either provide
+/// getSparseSetIndex() or specialize SparseSetValTraits<>.
 ///
-template<> struct SparseSetFunctor<unsigned> {
-  unsigned operator()(unsigned Val) { return Val; }
+template<typename KeyT, typename ValueT, typename KeyFunctorT>
+struct SparseSetValFunctor {
+  unsigned operator()(const ValueT &Val) const {
+    return SparseSetValTraits<ValueT>::getValIndex(Val);
+  }
 };
 
-/// SparseSet - Fast set implementation for objects that can be identified by
+/// SparseSetValFunctor<KeyT, KeyT> - Helper class for the common case of
+/// identity key/value sets.
+template<typename KeyT, typename KeyFunctorT>
+struct SparseSetValFunctor<KeyT, KeyT, KeyFunctorT> {
+  unsigned operator()(const KeyT &Key) const {
+    return KeyFunctorT()(Key);
+  }
+};
+
+/// SparseSet - Fast set implmentation for objects that can be identified by
 /// small unsigned keys.
 ///
 /// SparseSet allocates memory proportional to the size of the key universe, so
@@ -82,18 +111,20 @@ template<> struct SparseSetFunctor<unsigned> {
 /// uint16_t or uint32_t.
 ///
 /// @param ValueT      The type of objects in the set.
+/// @param KeyFunctorT A functor that computes an unsigned index from KeyT.
 /// @param SparseT     An unsigned integer type. See above.
-/// @param KeyFunctorT A functor that computes the unsigned key of a ValueT.
 ///
 template<typename ValueT,
-         typename SparseT = uint8_t,
-         typename KeyFunctorT = SparseSetFunctor<ValueT> >
+         typename KeyFunctorT = llvm::identity<unsigned>,
+         typename SparseT = uint8_t>
 class SparseSet {
+  typedef typename KeyFunctorT::argument_type KeyT;
   typedef SmallVector<ValueT, 8> DenseT;
   DenseT Dense;
   SparseT *Sparse;
   unsigned Universe;
-  KeyFunctorT KeyOf;
+  KeyFunctorT KeyIndexOf;
+  SparseSetValFunctor<KeyT, ValueT, KeyFunctorT> ValIndexOf;
 
   // Disable copy construction and assignment.
   // This data structure is not meant to be used that way.
@@ -160,21 +191,21 @@ public:
     Dense.clear();
   }
 
-  /// find - Find an element by its key.
+  /// findIndex - Find an element by its index.
   ///
-  /// @param   Key A valid key to find.
+  /// @param   Idx A valid index to find.
   /// @returns An iterator to the element identified by key, or end().
   ///
-  iterator find(unsigned Key) {
-    assert(Key < Universe && "Key out of range");
+  iterator findIndex(unsigned Idx) {
+    assert(Idx < Universe && "Key out of range");
     assert(std::numeric_limits<SparseT>::is_integer &&
            !std::numeric_limits<SparseT>::is_signed &&
            "SparseT must be an unsigned integer type");
     const unsigned Stride = std::numeric_limits<SparseT>::max() + 1u;
-    for (unsigned i = Sparse[Key], e = size(); i < e; i += Stride) {
-      const unsigned FoundKey = KeyOf(Dense[i]);
-      assert(FoundKey < Universe && "Invalid key in set. Did object mutate?");
-      if (Key == FoundKey)
+    for (unsigned i = Sparse[Idx], e = size(); i < e; i += Stride) {
+      const unsigned FoundIdx = ValIndexOf(Dense[i]);
+      assert(FoundIdx < Universe && "Invalid key in set. Did object mutate?");
+      if (Idx == FoundIdx)
         return begin() + i;
       // Stride is 0 when SparseT >= unsigned.  We don't need to loop.
       if (!Stride)
@@ -183,13 +214,22 @@ public:
     return end();
   }
 
-  const_iterator find(unsigned Key) const {
-    return const_cast<SparseSet*>(this)->find(Key);
+  /// find - Find an element by its key.
+  ///
+  /// @param   Key A valid key to find.
+  /// @returns An iterator to the element identified by key, or end().
+  ///
+  iterator find(const KeyT &Key) {
+    return findIndex(KeyIndexOf(Key));
+  }
+
+  const_iterator find(const KeyT &Key) const {
+    return const_cast<SparseSet*>(this)->findIndex(KeyIndexOf(Key));
   }
 
   /// count - Returns true if this set contains an element identified by Key.
   ///
-  bool count(unsigned Key) const {
+  bool count(const KeyT &Key) const {
     return find(Key) != end();
   }
 
@@ -204,11 +244,11 @@ public:
   /// Insertion invalidates all iterators.
   ///
   std::pair<iterator, bool> insert(const ValueT &Val) {
-    unsigned Key = KeyOf(Val);
-    iterator I = find(Key);
+    unsigned Idx = ValIndexOf(Val);
+    iterator I = findIndex(Idx);
     if (I != end())
       return std::make_pair(I, false);
-    Sparse[Key] = size();
+    Sparse[Idx] = size();
     Dense.push_back(Val);
     return std::make_pair(end() - 1, true);
   }
@@ -216,7 +256,7 @@ public:
   /// array subscript - If an element already exists with this key, return it.
   /// Otherwise, automatically construct a new value from Key, insert it,
   /// and return the newly inserted element.
-  ValueT &operator[](unsigned Key) {
+  ValueT &operator[](const KeyT &Key) {
     return *insert(ValueT(Key)).first;
   }
 
@@ -238,9 +278,9 @@ public:
     assert(unsigned(I - begin()) < size() && "Invalid iterator");
     if (I != end() - 1) {
       *I = Dense.back();
-      unsigned BackKey = KeyOf(Dense.back());
-      assert(BackKey < Universe && "Invalid key in set. Did object mutate?");
-      Sparse[BackKey] = I - begin();
+      unsigned BackIdx = ValIndexOf(Dense.back());
+      assert(BackIdx < Universe && "Invalid key in set. Did object mutate?");
+      Sparse[BackIdx] = I - begin();
     }
     // This depends on SmallVector::pop_back() not invalidating iterators.
     // std::vector::pop_back() doesn't give that guarantee.
@@ -253,7 +293,7 @@ public:
   /// @param   Key The key identifying the element to erase.
   /// @returns True when an element was erased, false if no element was found.
   ///
-  bool erase(unsigned Key) {
+  bool erase(const KeyT &Key) {
     iterator I = find(Key);
     if (I == end())
       return false;

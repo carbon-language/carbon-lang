@@ -105,7 +105,7 @@ namespace llvm {
 
     VReg2SUnit(unsigned reg, SUnit *su): VirtReg(reg), SU(su) {}
 
-    unsigned getSparseSetKey() const {
+    unsigned getSparseSetIndex() const {
       return TargetRegisterInfo::virtReg2Index(VirtReg);
     }
   };
@@ -160,7 +160,7 @@ namespace llvm {
   /// compares ValueT's, only unsigned keys. This allows the set to be cleared
   /// between scheduling regions in constant time as long as ValueT does not
   /// require a destructor.
-  typedef SparseSet<VReg2SUnit> VReg2SUnitMap;
+  typedef SparseSet<VReg2SUnit, VirtReg2IndexFunctor> VReg2SUnitMap;
 
   /// ScheduleDAGInstrs - A ScheduleDAG subclass for scheduling lists of
   /// MachineInstrs.
@@ -321,10 +321,6 @@ namespace llvm {
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
     void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
-
-    VReg2SUnitMap::iterator findVRegDef(unsigned VirtReg) {
-      return VRegDefs.find(TargetRegisterInfo::virtReg2Index(VirtReg));
-    }
   };
 
   /// newSUnit - Creates a new SUnit and return a ptr to it.

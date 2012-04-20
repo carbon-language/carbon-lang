@@ -20,19 +20,14 @@
 #ifndef LLVM_ADT_INDEXEDMAP_H
 #define LLVM_ADT_INDEXEDMAP_H
 
+#include "llvm/ADT/STLExtras.h"
 #include <cassert>
 #include <functional>
 #include <vector>
 
 namespace llvm {
 
-  struct IdentityFunctor : public std::unary_function<unsigned, unsigned> {
-    unsigned operator()(unsigned Index) const {
-      return Index;
-    }
-  };
-
-  template <typename T, typename ToIndexT = IdentityFunctor>
+template <typename T, typename ToIndexT = llvm::identity<unsigned> >
   class IndexedMap {
     typedef typename ToIndexT::argument_type IndexT;
     typedef std::vector<T> StorageT;
