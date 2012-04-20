@@ -114,7 +114,7 @@ class CrashLog(symbolication.Symbolicator):
         def locate_module_and_debug_symbols(self):
             if self.resolved_path:
                 # Don't load a module twice...
-                return 0
+                return True
             print 'Locating %s %s...' % (self.uuid, self.path),
             if os.path.exists(self.dsymForUUIDBinary):
                 dsym_for_uuid_command = '%s %s' % (self.dsymForUUIDBinary, self.uuid)
@@ -144,16 +144,15 @@ class CrashLog(symbolication.Symbolicator):
                             break;
                 if not self.resolved_path:
                     print "error: file %s '%s' doesn't match the UUID in the installed file" % (self.uuid, self.path)
-                    return 0
+                    return False
             if (self.resolved_path and os.path.exists(self.resolved_path)) or (self.path and os.path.exists(self.path)):
                 print 'ok'
-                if self.path != self.resolved_path:
+                if self.resolved_path:
                     print '  exe = "%s"' % self.resolved_path 
                 if self.symfile:
                     print ' dsym = "%s"' % self.symfile
-                return 1
-            else:
-                return 0
+                return True
+            return False
         
     
         

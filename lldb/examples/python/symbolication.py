@@ -282,17 +282,16 @@ class Image:
     def add_module(self, target):
         '''Add the Image described in this object to "target" and load the sections if "load" is True.'''
         if target:
-            resolved_path = self.get_resolved_path();
             # Try and find using UUID only first so that paths need not match up
             if self.uuid:
                 self.module = target.AddModule (None, None, str(self.uuid))
             if not self.module:
-                if self.locate_module_and_debug_symbols ():
-                    path_spec = lldb.SBFileSpec (resolved_path)
-                    #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (resolved_path, self.arch, self.uuid)
-                    self.module = target.AddModule (resolved_path, self.arch, self.uuid)
+                self.locate_module_and_debug_symbols ()
+                resolved_path = self.get_resolved_path()
+                print 'target.AddModule (path="%s", arch="%s", uuid=%s, symfile="%s")' % (resolved_path, self.arch, self.uuid, self.symfile)
+                self.module = target.AddModule (resolved_path, self.arch, self.uuid)#, self.symfile)
             if not self.module:
-                return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
+                return 'error: unable to get module for (%s) "%s"' % (self.arch, self.get_resolved_path())
             if self.has_section_load_info():
                 return self.load_module(target)
             else:
