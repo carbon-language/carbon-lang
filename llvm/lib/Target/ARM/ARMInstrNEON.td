@@ -2395,6 +2395,8 @@ class N3VDSL<bits<2> op21_20, bits<4> op11_8,
         [(set (Ty DPR:$Vd),
               (Ty (ShOp (Ty DPR:$Vn),
                         (Ty (NEONvduplane (Ty DPR_VFP2:$Vm),imm:$lane)))))]> {
+  // All of these have a two-operand InstAlias.
+  let TwoOperandAliasConstraint = "$Vn = $Vd";
   let isCommutable = 0;
 }
 class N3VDSL16<bits<2> op21_20, bits<4> op11_8,
@@ -2405,6 +2407,8 @@ class N3VDSL16<bits<2> op21_20, bits<4> op11_8,
         [(set (Ty DPR:$Vd),
               (Ty (ShOp (Ty DPR:$Vn),
                         (Ty (NEONvduplane (Ty DPR_8:$Vm), imm:$lane)))))]> {
+  // All of these have a two-operand InstAlias.
+  let TwoOperandAliasConstraint = "$Vn = $Vd";
   let isCommutable = 0;
 }
 
@@ -2440,6 +2444,8 @@ class N3VQSL<bits<2> op21_20, bits<4> op11_8,
               (ResTy (ShOp (ResTy QPR:$Vn),
                            (ResTy (NEONvduplane (OpTy DPR_VFP2:$Vm),
                                                 imm:$lane)))))]> {
+  // All of these have a two-operand InstAlias.
+  let TwoOperandAliasConstraint = "$Vn = $Vd";
   let isCommutable = 0;
 }
 class N3VQSL16<bits<2> op21_20, bits<4> op11_8, string OpcodeStr, string Dt,
@@ -2451,6 +2457,8 @@ class N3VQSL16<bits<2> op21_20, bits<4> op11_8, string OpcodeStr, string Dt,
               (ResTy (ShOp (ResTy QPR:$Vn),
                            (ResTy (NEONvduplane (OpTy DPR_8:$Vm),
                                                 imm:$lane)))))]> {
+  // All of these have a two-operand InstAlias.
+  let TwoOperandAliasConstraint = "$Vn = $Vd";
   let isCommutable = 0;
 }
 
@@ -5299,6 +5307,9 @@ def : AlignedVEXTq<v2f32, v4f32, DSubReg_i32_reg>;
 
 //   VEXT     : Vector Extract
 
+
+// All of these have a two-operand InstAlias.
+let TwoOperandAliasConstraint = "$Vn = $Vd" in {
 class VEXTd<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
   : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$Vd),
         (ins DPR:$Vn, DPR:$Vm, immTy:$index), NVExtFrm,
@@ -5317,6 +5328,7 @@ class VEXTq<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
                                      (Ty QPR:$Vm), imm:$index)))]> {
   bits<4> index;
   let Inst{11-8} = index{3-0};
+}
 }
 
 def VEXTd8  : VEXTd<"vext", "8",  v8i8, imm0_7> {
@@ -5763,28 +5775,6 @@ defm : NEONDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
                          (VORRd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 defm : NEONDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
                          (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
-
-// VMUL two-operand aliases.
-def : NEONInstAlias<"vmul${p}.i16 $Ddn, $Dm$lane",
-                    (VMULslv4i16 DPR:$Ddn, DPR:$Ddn, DPR_8:$Dm,
-                                 VectorIndex16:$lane, pred:$p)>;
-def : NEONInstAlias<"vmul${p}.i16 $Qdn, $Dm$lane",
-                    (VMULslv8i16 QPR:$Qdn, QPR:$Qdn, DPR_8:$Dm,
-                                 VectorIndex16:$lane, pred:$p)>;
-
-def : NEONInstAlias<"vmul${p}.i32 $Ddn, $Dm$lane",
-                    (VMULslv2i32 DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
-                                 VectorIndex32:$lane, pred:$p)>;
-def : NEONInstAlias<"vmul${p}.i32 $Qdn, $Dm$lane",
-                    (VMULslv4i32 QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
-                                 VectorIndex32:$lane, pred:$p)>;
-
-def : NEONInstAlias<"vmul${p}.f32 $Ddn, $Dm$lane",
-                    (VMULslfd DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
-                              VectorIndex32:$lane, pred:$p)>;
-def : NEONInstAlias<"vmul${p}.f32 $Qdn, $Dm$lane",
-                    (VMULslfq QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
-                              VectorIndex32:$lane, pred:$p)>;
 
 // VLD1 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
@@ -6571,23 +6561,6 @@ def : NEONInstAlias<"vclt${p}.u32 $Qd, $Qn, $Qm",
                     (VCGTuv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
 def : NEONInstAlias<"vclt${p}.f32 $Qd, $Qn, $Qm",
                     (VCGTfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
-
-// Two-operand variants for VEXT
-def : NEONInstAlias<"vext${p}.8 $Vdn, $Vm, $imm",
-                  (VEXTd8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, imm0_7:$imm, pred:$p)>;
-def : NEONInstAlias<"vext${p}.16 $Vdn, $Vm, $imm",
-                  (VEXTd16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, imm0_3:$imm, pred:$p)>;
-def : NEONInstAlias<"vext${p}.32 $Vdn, $Vm, $imm",
-                  (VEXTd32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, imm0_1:$imm, pred:$p)>;
-
-def : NEONInstAlias<"vext${p}.8 $Vdn, $Vm, $imm",
-                  (VEXTq8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_15:$imm, pred:$p)>;
-def : NEONInstAlias<"vext${p}.16 $Vdn, $Vm, $imm",
-                  (VEXTq16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_7:$imm, pred:$p)>;
-def : NEONInstAlias<"vext${p}.32 $Vdn, $Vm, $imm",
-                  (VEXTq32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_3:$imm, pred:$p)>;
-def : NEONInstAlias<"vext${p}.64 $Vdn, $Vm, $imm",
-                  (VEXTq64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_1:$imm, pred:$p)>;
 
 // Two-operand variants for VQDMULH
 def : NEONInstAlias<"vqdmulh${p}.s16 $Vdn, $Vm",
