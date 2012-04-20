@@ -4561,6 +4561,18 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
     if (cu == NULL || die == NULL || !type_name)
         return type_sp;
 
+    LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_TYPE_COMPLETION|DWARF_LOG_LOOKUPS));
+    if (log)
+    {
+        std::string qualified_name;
+        die->GetQualifiedName(this, cu, qualified_name);
+        GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                  "SymbolFileDWARF::FindDefinitionTypeForDIE(die=0x%8.8x (%s), name='%s')",
+                                                  die->GetOffset(),
+                                                  qualified_name.c_str(),
+                                                  type_name.GetCString());
+    }
+
     DIEArray die_offsets;
 
     if (m_using_apple_tables)
@@ -4639,6 +4651,18 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                         
                 if (try_resolving_type)
                 {
+                    if (log)
+                    {
+                        std::string qualified_name;
+                        type_die->GetQualifiedName(this, cu, qualified_name);
+                        GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                                  "SymbolFileDWARF::FindDefinitionTypeForDIE(die=0x%8.8x, name='%s') trying die=0x%8.8x (%s)",
+                                                                  die->GetOffset(),
+                                                                  type_name.GetCString(),
+                                                                  type_die->GetOffset(),
+                                                                  qualified_name.c_str());
+                    }
+                    
                     // Make sure the decl contexts match all the way up
                     if (DIEDeclContextsMatch(cu, die, type_cu, type_die))
                     {
@@ -4656,6 +4680,20 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                             type_sp = resolved_type->shared_from_this();
                             break;
                         }
+                    }
+                }
+                else
+                {
+                    if (log)
+                    {
+                        std::string qualified_name;
+                        type_die->GetQualifiedName(this, cu, qualified_name);
+                        GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                                  "SymbolFileDWARF::FindDefinitionTypeForDIE(die=0x%8.8x, name='%s') ignoring die=0x%8.8x (%s)",
+                                                                  die->GetOffset(),
+                                                                  type_name.GetCString(),
+                                                                  type_die->GetOffset(),
+                                                                  qualified_name.c_str());
                     }
                 }
             }
