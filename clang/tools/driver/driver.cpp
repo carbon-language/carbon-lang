@@ -475,6 +475,10 @@ int main(int argc_, const char **argv_) {
   if (C.get())
     Res = TheDriver.ExecuteCompilation(*C, FailingCommand);
 
+  // Force a crash to test the diagnostics.
+  if(::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH"))
+     Res = -1;
+
   // If result status is < 0, then the driver command signalled an error.
   // In this case, generate additional diagnostic information if possible.
   if (Res < 0)
