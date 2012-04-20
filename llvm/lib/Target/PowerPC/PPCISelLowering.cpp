@@ -902,7 +902,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(0))->getZExtValue()
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getZExtValue()
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
@@ -1015,7 +1015,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDValue N, SDValue &Disp,
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(0))->getZExtValue()
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getZExtValue()
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
