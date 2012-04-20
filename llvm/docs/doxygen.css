@@ -327,7 +327,7 @@ HR { height: 1px;
 }
 .title {
   font-size: 25pt; 
-  color: black; background: url("../img/lines.gif");
+  color: black;
   font-weight: bold;
   border-width: 1px;
   border-style: solid none solid none;
