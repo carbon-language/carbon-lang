@@ -452,7 +452,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
             StreamString strm;
             gdb_comm.DumpHistory(strm);
             Host::SetCrashDescription (strm.GetData());
-            assert (!"Didn't get sequence mutex.");
+            assert (!"Didn't get sequence mutex for write register.");
 #else
             if (log)
             {
@@ -529,7 +529,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
         StreamString strm;
         gdb_comm.DumpHistory(strm);
         Host::SetCrashDescription (strm.GetData());
-        assert (!"Didn't get sequence mutex.");
+        assert (!"Didn't get sequence mutex for read all registers.");
 #else
         if (log)
         {
@@ -665,19 +665,24 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
     else
     {
         LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_THREAD | GDBR_LOG_PACKETS));
-        if (1 /* log */)
+#if LLDB_CONFIGURATION_DEBUG
+        StreamString strm;
+        gdb_comm.DumpHistory(strm);
+        Host::SetCrashDescription (strm.GetData());
+        assert (!"Didn't get sequence mutex for write all registers.");
+#else
+        if (log)
         {
-            if (1 /*log->GetVerbose() */)
+            if (log->GetVerbose())
             {
                 StreamString strm;
                 gdb_comm.DumpHistory(strm);
-                Host::SetCrashDescription (strm.GetData());
-                assert (!"Didn't get sequence mutex.");
                 log->Printf("error: failed to get packet sequence mutex, not sending write all registers:\n%s", strm.GetData());
             }
             else
                 log->Printf("error: failed to get packet sequence mutex, not sending write all registers");
         }
+#endif
     }
     return false;
 }
