@@ -263,8 +263,6 @@ void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
-void SelectionDAGISel::ISelUpdater::anchor() { }
-
 SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm,
                                    CodeGenOpt::Level OL) :
   MachineFunctionPass(ID), TM(tm), TLI(*tm.getTargetLowering()),
@@ -703,6 +701,25 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   CurDAG->clear();
 }
 
+namespace {
+/// ISelUpdater - helper class to handle updates of the instruction selection
+/// graph.
+class ISelUpdater : public SelectionDAG::DAGUpdateListener {
+  SelectionDAG::allnodes_iterator &ISelPosition;
+public:
+  ISelUpdater(SelectionDAG &DAG, SelectionDAG::allnodes_iterator &isp)
+    : SelectionDAG::DAGUpdateListener(DAG), ISelPosition(isp) {}
+
+  /// NodeDeleted - Handle nodes deleted from the graph. If the node being
+  /// deleted is the current ISelPosition node, update ISelPosition.
+  ///
+  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+    if (ISelPosition == SelectionDAG::allnodes_iterator(N))
+      ++ISelPosition;
+  }
+};
+} // end anonymous namespace
+
 void SelectionDAGISel::DoInstructionSelection() {
   DEBUG(errs() << "===== Instruction selection begins: BB#"
         << FuncInfo->MBB->getNumber()
@@ -719,8 +736,12 @@ void SelectionDAGISel::DoInstructionSelection() {
     // a reference to the root node, preventing it from being deleted,
     // and tracking any changes of the root.
     HandleSDNode Dummy(CurDAG->getRoot());
-    ISelPosition = SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode());
+    SelectionDAG::allnodes_iterator ISelPosition (CurDAG->getRoot().getNode());
     ++ISelPosition;
+
+    // Make sure that ISelPosition gets properly updated when nodes are deleted
+    // in calls made from this function.
+    ISelUpdater ISU(*CurDAG, ISelPosition);
 
     // The AllNodes list is now topological-sorted. Visit the
     // nodes by starting at the end of the list (the root of the
@@ -748,10 +769,8 @@ void SelectionDAGISel::DoInstructionSelection() {
 
       // If after the replacement this node is not used any more,
       // remove this dead node.
-      if (Node->use_empty()) { // Don't delete EntryToken, etc.
-        ISelUpdater ISU(*CurDAG, ISelPosition);
+      if (Node->use_empty()) // Don't delete EntryToken, etc.
         CurDAG->RemoveDeadNode(Node);
-      }
     }
 
     CurDAG->setRoot(Dummy.getValue());
@@ -1679,8 +1698,6 @@ UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
                     const SmallVectorImpl<SDNode*> &GlueResultNodesMatched,
                     bool isMorphNodeTo) {
   SmallVector<SDNode*, 4> NowDeadNodes;
-
-  ISelUpdater ISU(*CurDAG, ISelPosition);
 
   // Now that all the normal results are replaced, we replace the chain and
   // glue results if present.
