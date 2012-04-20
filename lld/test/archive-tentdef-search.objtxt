@@ -1,0 +1,45 @@
+# RUN: lld-core -commons-search-archives=false  %s | FileCheck -check-prefix=CHK1 %s
+# RUN: lld-core -commons-search-archives=true   %s | FileCheck -check-prefix=CHK2 %s
+
+#
+# Tests that -commons_search_archives cause core linker to look for overrides
+# of tentative definition in archives, and that not using that option
+# does not search.
+#
+
+---
+atoms:
+    - name:              foo
+      type:              code
+      
+    - name:              bar
+      scope:             global
+      content:           zero-fill
+      merge:             asTentative
+
+---
+name: bar.o
+atoms:
+    - name:              bar
+      scope:             global
+      type:              data
+      
+    - name:              bar2
+      type:              data
+  
+---
+kind: archive
+members:  
+    - name:    bar.o
+...
+
+# CHK1:       name:       foo
+# CHK1:       name:       bar
+# CHK1:       merge:      asTentative
+# CHK1:       ...
+
+# CHK2:       name:       foo
+# CHK2:       name:       bar
+# CHK2-NOT:  merge:      asTentative
+# CHK2:       name:       bar2
+# CHK2:       ...

@@ -1,4 +1,4 @@
-# RUN: lld-core -platform darwin -stubs_pass %s -o %t && llvm-nm %t | FileCheck %s
+# RUN: lld-core -platform darwin -stubs-pass %s -o %t && llvm-nm %t | FileCheck %s
 
 #
 # Test that hello-world can be linked into a mach-o executable

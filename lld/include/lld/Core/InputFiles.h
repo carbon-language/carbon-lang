@@ -34,23 +34,30 @@ public:
     virtual void doAbsoluteAtom(const class AbsoluteAtom &) = 0;
   };
 
+  InputFiles();
+  virtual ~InputFiles();
 
   /// Used by platforms to insert platform specific files.
-  virtual void prependFile(const File&) = 0;
+  virtual void prependFile(const File&);
   
   /// Used by platforms to insert platform specific files.
-  virtual void appendFile(const File&) = 0;
+  virtual void appendFile(const File&);
  
 
   /// @brief iterates all atoms in initial files
-  virtual void forEachInitialAtom(Handler &) const = 0;
+  virtual void forEachInitialAtom(Handler &) const;
 
   /// @brief searches libraries for name
   virtual bool searchLibraries(  StringRef name
-                               , bool searchDylibs
+                               , bool searchSharedLibs
                                , bool searchArchives
                                , bool dataSymbolOnly
-                               , Handler &) const = 0;
+                               , Handler &) const;
+
+protected:
+  void handleFile(const File *file, InputFiles::Handler &handler) const;
+  
+  std::vector<const File*>        _files;
 };
 
 } // namespace lld

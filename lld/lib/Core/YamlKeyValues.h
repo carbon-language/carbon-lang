@@ -13,6 +13,7 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "lld/Core/File.h"
 
 
 namespace lld {
@@ -28,6 +29,13 @@ public:
   static const char* const                loadNameKeyword;
   static const char* const                valueKeyword;
   static const char* const                fixupsKeyword;
+  static const char* const                fileAtomsKeyword;
+  static const char* const                fileMembersKeyword;
+
+  static const char* const                fileKindKeyword;
+  static const File::Kind                 fileKindDefault;
+  static File::Kind                       fileKind(const char*);
+  static const char*                      fileKind(File::Kind);
 
   static const char* const                definitionKeyword;
   static const Atom::Definition           definitionDefault;

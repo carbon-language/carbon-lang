@@ -13,6 +13,7 @@
 #include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
@@ -30,6 +31,7 @@
 
 #include <cstring>
 #include <vector>
+#include <set>
 
 
 
@@ -300,28 +302,37 @@ public:
 
 class YAMLDefinedAtom;
 
-class YAMLFile : public File {
+class YAMLFile : public ArchiveLibraryFile {
 public:
   YAMLFile()
-    : File("path")
-    , _lastRefIndex(0) {}
+    : ArchiveLibraryFile("<anonymous>")
+    , _lastRefIndex(0) 
+    , _kind(File::kindObject)
+    , _inArchive(false) {
+  }
+
+  virtual File::Kind kind() const {
+    return _kind;
+  }
 
   virtual const atom_collection<DefinedAtom>& defined() const {
     return _definedAtoms;
   }
   virtual const atom_collection<UndefinedAtom>& undefined() const {
-      return _undefinedAtoms;
+    return _undefinedAtoms;
   }
   virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
-      return _sharedLibraryAtoms;
+    return _sharedLibraryAtoms;
   }
   virtual const atom_collection<AbsoluteAtom>& absolute() const {
-      return _absoluteAtoms;
+    return _absoluteAtoms;
   }
 
   virtual void addAtom(const Atom&) {
     assert(0 && "cannot add atoms to YAML files");
   }
+
+  virtual const File *find(StringRef name, bool dataSymbolOnly) const;
 
   void bindTargetReferences();
   void addDefinedAtom(YAMLDefinedAtom* atom, const char* refName);
@@ -329,7 +340,9 @@ public:
   void addSharedLibraryAtom(SharedLibraryAtom* atom);
   void addAbsoluteAtom(AbsoluteAtom* atom);
   Atom* findAtom(const char* name);
-
+  void addMember(const char*);
+  void setName(const char*);
+ 
   struct NameAtomPair {
                  NameAtomPair(const char* n, Atom* a) : name(n), atom(a) {}
     const char*  name;
@@ -342,7 +355,11 @@ public:
   atom_collection_vector<AbsoluteAtom>        _absoluteAtoms;
   std::vector<YAMLReference>                  _references;
   std::vector<NameAtomPair>                   _nameToAtomMapping;
+  std::vector<const char*>                    _memberNames;
+  std::vector<YAMLFile*>                      _memberFiles;
   unsigned int                                _lastRefIndex;
+  File::Kind                                  _kind;
+  bool                                        _inArchive;
 };
 
 
@@ -643,6 +660,25 @@ void YAMLFile::addAbsoluteAtom(AbsoluteAtom* atom) {
   _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
 }
 
+void YAMLFile::addMember(const char* name) {
+  _memberNames.push_back(name);
+}
+
+void YAMLFile::setName(const char* name) {
+  _path = StringRef(name);
+}
+
+const File *YAMLFile::find(StringRef name, bool dataSymbolOnly) const {
+  for (YAMLFile *file : _memberFiles) {
+    for (const DefinedAtom *atom : file->defined() ) {
+      if ( name.equals(atom->name()) )
+        return file;
+    }
+  }
+  return NULL;
+}
+
+
 
 class YAMLAtomState {
 public:
@@ -810,17 +846,21 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
                           , Platform& platform
                           , std::vector<const File *> &result) {
   std::vector<const YAML::Entry *> entries;
+  std::vector<YAMLFile*> allFiles;
   YAML::parse(mb, entries);
 
   YAMLFile *file = nullptr;
   YAMLAtomState atomState(platform);
   bool inAtoms       = false;
   bool inFixups      = false;
+  bool inMembers     = false;
   int depthForAtoms  = -1;
   int depthForFixups = -1;
+  int depthForMembers= -1;
   int lastDepth      = -1;
   bool haveAtom      = false;
   bool haveFixup     = false;
+  bool hasArchives = false;
 
   for (std::vector<const YAML::Entry *>::iterator it = entries.begin();
        it != entries.end(); ++it) {
@@ -833,7 +873,7 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
           haveAtom = false;
         }
         file->bindTargetReferences();
-        result.push_back(file);
+        allFiles.push_back(file);
       }
       file = new YAMLFile();
       inAtoms = false;
@@ -853,8 +893,23 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
     if (inFixups && (depthForFixups == -1)) {
       depthForFixups = entry->depth;
     }
-    if (strcmp(entry->key, "atoms") == 0) {
+    if (inMembers && (depthForMembers == -1)) {
+      depthForMembers = entry->depth;
+    }
+    if ( !inFixups && (strcmp(entry->key, KeyValues::fileKindKeyword) == 0) ) {
+      file->_kind = KeyValues::fileKind(entry->value);
+      if ( file->_kind == File::kindArchiveLibrary ) 
+        hasArchives = true;
+    }
+    else if (strcmp(entry->key, KeyValues::fileMembersKeyword) == 0) {
+      inMembers = true;
+    }
+    else if (strcmp(entry->key, KeyValues::fileAtomsKeyword) == 0) {
       inAtoms = true;
+    }
+    else if ( !inAtoms && !inMembers 
+                       && (strcmp(entry->key, KeyValues::nameKeyword) == 0) ) {
+      file->setName(entry->value);
     }
     if (inAtoms) {
       if (depthForAtoms == entry->depth) {
@@ -980,6 +1035,15 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
         }
       }
     }
+    else if (inMembers) {
+      if (depthForMembers == entry->depth) {
+        if (entry->beginSequence) {
+          if (strcmp(entry->key, KeyValues::nameKeyword) == 0) {
+            file->addMember(entry->value);
+          }
+        }
+      }
+    }
     lastDepth = entry->depth;
   }
   if (haveAtom) {
@@ -987,8 +1051,31 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
   }
   if (file != nullptr) {
     file->bindTargetReferences();
-    result.push_back(file);
+    allFiles.push_back(file);
   }
+  
+  // If yaml contained archive files, push members down into archives
+  if ( hasArchives ) {
+    for (YAMLFile *f : allFiles) {
+      if ( f->kind() == File::kindArchiveLibrary ) {
+        for (const char *memberName : f->_memberNames ) {
+          for (YAMLFile *f2 : allFiles) {
+            if ( f2->path().equals(memberName) ) {
+              f2->_inArchive = true;
+              f->_memberFiles.push_back(f2);
+            }
+          }
+        }
+      }
+    }
+  }
+  // Copy files that have not been pushed into archives to result.
+  for (YAMLFile *f : allFiles) {
+    if ( ! f->_inArchive ) {
+      result.push_back(f);
+    }
+  }
+  
   return make_error_code(yaml_reader_error::success);
 }
 

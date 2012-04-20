@@ -10,6 +10,7 @@
 #include "YamlKeyValues.h"
 
 #include "llvm/Support/ErrorHandling.h"
+#include "lld/Core/File.h"
 
 #include <cstring>
 
@@ -40,6 +41,9 @@ const char* const KeyValues::fixupsKindKeyword      = "kind";
 const char* const KeyValues::fixupsOffsetKeyword    = "offset";
 const char* const KeyValues::fixupsTargetKeyword    = "target";
 const char* const KeyValues::fixupsAddendKeyword    = "addend";
+const char* const KeyValues::fileAtomsKeyword       = "atoms";
+const char* const KeyValues::fileKindKeyword        = "kind";
+const char* const KeyValues::fileMembersKeyword     = "members";
 
 
 
@@ -54,9 +58,36 @@ const DefinedAtom::ContentPermissions KeyValues::permissionsDefault = DefinedAto
 const bool                            KeyValues::isThumbDefault = false;
 const bool                            KeyValues::isAliasDefault = false;
 const UndefinedAtom::CanBeNull        KeyValues::canBeNullDefault = UndefinedAtom::canBeNullNever;
+const File::Kind                      KeyValues::fileKindDefault = File::kindObject;
 
 
+struct FileKindMapping {
+  const char*       string;
+  File::Kind        value;
+};
 
+static const FileKindMapping fileKindMappings[] = {
+  { "object",         File::kindObject },
+  { "archive",        File::kindArchiveLibrary },
+  { "shared-library", File::kindSharedLibrary },
+  { nullptr,          File::kindObject }
+};
+
+ File::Kind KeyValues::fileKind(const char* str) {
+  for (const FileKindMapping* p = fileKindMappings; p->string != nullptr; ++p) {
+    if ( strcmp(p->string, str) == 0 )
+      return p->value;
+  }
+  llvm::report_fatal_error("bad file kind value");
+}
+
+const char* KeyValues::fileKind(File::Kind k) {
+  for (const FileKindMapping* p = fileKindMappings; p->string != nullptr; ++p) {
+    if ( p->value == k )
+      return p->string;
+  }
+  llvm::report_fatal_error("bad file kind value");
+}
 
 
 struct DefinitionMapping {

@@ -137,7 +137,7 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 void Resolver::resolveUndefines() {
   const bool searchArchives =
     _options.searchArchivesToOverrideTentativeDefinitions();
-  const bool searchDylibs =
+  const bool searchSharedLibs =
     _options.searchSharedLibrariesToOverrideTentativeDefinitions();
 
   // keep looping until no more undefines were added in last loop
@@ -154,24 +154,20 @@ void Resolver::resolveUndefines() {
       }
     }
     // search libraries for overrides of common symbols
-    if (searchArchives || searchDylibs) {
-      std::vector<const Atom *> tents;
-      for ( const Atom *tent : tents ) {
-        if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(tent)) {
-          if ( defAtom->merge() == DefinedAtom::mergeAsTentative )
-            tents.push_back(defAtom);
-        }
-      }
-      for ( const Atom *tent : tents ) {
-        // load for previous tentative may also have loaded
-        // this tentative, so check again
-        StringRef tentName = tent->name();
-        const Atom *curAtom = _symbolTable.findByName(tentName);
+    if (searchArchives || searchSharedLibs) {
+      std::vector<StringRef> tentDefNames;
+      _symbolTable.tentativeDefinitions(tentDefNames);
+      for ( StringRef tentDefName : tentDefNames ) {
+        // Load for previous tentative may also have loaded
+        // something that overrode this tentative, so always check. 
+        const Atom *curAtom = _symbolTable.findByName(tentDefName);
         assert(curAtom != nullptr);
         if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
-          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative )
-            _inputFiles.searchLibraries(tentName, searchDylibs,
-                                        true, true, *this);
+          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative ) {
+            // Still tentative definition, so look for override.
+            _inputFiles.searchLibraries(tentDefName, searchSharedLibs,
+                                        searchArchives, true, *this);
+          }
         }
       }
     }

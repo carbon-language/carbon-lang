@@ -59,6 +59,9 @@ public:
 
   /// @brief returns vector of remaining UndefinedAtoms
   void undefines(std::vector<const Atom *>&);
+  
+  /// returns vector of tentative definitions
+  void tentativeDefinitions(std::vector<StringRef> &);
 
   /// @brief count of by-name entries in symbol table
   unsigned int size();

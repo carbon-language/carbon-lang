@@ -345,77 +345,42 @@ const TestingPlatform::KindMapping TestingPlatform::_s_kindMappings[] = {
   };
 
 
-
-//
-// A simple input files wrapper for testing.
-//
-class TestingInputFiles : public InputFiles {
-public:
-  TestingInputFiles(std::vector<const File*>& f) : _files(f) { }
-
-  // InputFiles interface
-  virtual void forEachInitialAtom(InputFiles::Handler& handler) const {
-    for ( const File *file : _files ) {
-      handler.doFile(*file);
-      for( const DefinedAtom *atom : file->defined() ) {
-        handler.doDefinedAtom(*atom);
-      }
-      for( const UndefinedAtom *undefAtom : file->undefined() ) {
-        handler.doUndefinedAtom(*undefAtom);
-      }
-      for( const SharedLibraryAtom *shlibAtom : file->sharedLibrary() ) {
-        handler.doSharedLibraryAtom(*shlibAtom);
-      }
-      for( const AbsoluteAtom *absAtom : file->absolute() ) {
-        handler.doAbsoluteAtom(*absAtom);
-      }
-    }
-  }
-
-  virtual void prependFile(const File &file) {
-    _files.insert(_files.begin(), &file);
-  }
-  
-  virtual void appendFile(const File &file) {
-    _files.push_back(&file);
-  }
-
-  virtual bool searchLibraries(StringRef name, bool searchDylibs,
-                               bool searchArchives, bool dataSymbolOnly,
-                               InputFiles::Handler &) const {
-    return false;
-  }
-
-
-private:
-  std::vector<const File*>&        _files;
-};
-}
-
-
+} // anon namespace
 
 
 llvm::cl::opt<std::string> 
-gInputFilePath(llvm::cl::Positional,
+cmdLineInputFilePath(llvm::cl::Positional,
               llvm::cl::desc("<input file>"),
               llvm::cl::init("-"));
 
 llvm::cl::opt<std::string> 
-gOutputFilePath("o", 
+cmdLineOutputFilePath("o", 
               llvm::cl::desc("Specify output filename"), 
               llvm::cl::value_desc("filename"));
 
 llvm::cl::opt<bool> 
-gDoStubsPass("stubs_pass", 
+cmdLineDoStubsPass("stubs-pass", 
           llvm::cl::desc("Run pass to create stub atoms"));
 
 llvm::cl::opt<bool> 
-gDoGotPass("got_pass", 
+cmdLineDoGotPass("got-pass", 
           llvm::cl::desc("Run pass to create GOT atoms"));
 
 llvm::cl::opt<bool> 
-gUndefinesIsError("undefines_are_errors", 
+cmdLineUndefinesIsError("undefines-are-errors", 
           llvm::cl::desc("Any undefined symbols at end is an error"));
+
+llvm::cl::opt<bool> 
+cmdLineCommonsSearchArchives("commons-search-archives", 
+          llvm::cl::desc("Tentative definitions trigger archive search"));
+
+llvm::cl::opt<bool> 
+cmdLineDeadStrip("dead-strip", 
+          llvm::cl::desc("Remove unreachable code and data"));
+
+llvm::cl::opt<bool> 
+cmdLineGlobalsNotDeadStrip("keep-globals", 
+          llvm::cl::desc("All global symbols are roots for dead-strip"));
 
 
 enum PlatformChoice {
@@ -435,7 +400,10 @@ platformSelected("platform",
 class TestingResolverOptions : public ResolverOptions {
 public:
   TestingResolverOptions() {
-    _undefinesAreErrors = gUndefinesIsError;
+    _undefinesAreErrors = cmdLineUndefinesIsError;
+    _searchArchivesToOverrideTentativeDefinitions = cmdLineCommonsSearchArchives;
+    _deadCodeStrip = cmdLineDeadStrip;
+    _globalsAreDeadStripRoots = cmdLineGlobalsNotDeadStrip;
   }
 
 };
@@ -466,7 +434,7 @@ int main(int argc, char *argv[]) {
   
   // read input YAML doc into object file(s)
   std::vector<const File *> files;
-  if (error(yaml::parseObjectTextFileOrSTDIN(gInputFilePath, 
+  if (error(yaml::parseObjectTextFileOrSTDIN(cmdLineInputFilePath, 
                                             *platform, files))) {
     return 1;
   }
@@ -475,7 +443,10 @@ int main(int argc, char *argv[]) {
   TestingResolverOptions options;
 
   // create object to mange input files
-  TestingInputFiles inputFiles(files);
+  InputFiles inputFiles;
+  for (const File *file : files) {
+    inputFiles.appendFile(*file);
+  }
   
   platform->addFiles(inputFiles);
 
@@ -484,11 +455,11 @@ int main(int argc, char *argv[]) {
   resolver.resolve();
 
   // run passes
-  if ( gDoGotPass ) {
+  if ( cmdLineDoGotPass ) {
     GOTPass  addGot(resolver.resultFile(), *platform);
     addGot.perform();
   }
-  if ( gDoStubsPass ) {
+  if ( cmdLineDoStubsPass ) {
     StubsPass  addStubs(resolver.resultFile(), *platform);
     addStubs.perform();
   }
@@ -515,7 +486,8 @@ int main(int argc, char *argv[]) {
 
   // write new atom graph
   std::string errorInfo;
-  const char* outPath = gOutputFilePath.empty() ? "-" : gOutputFilePath.c_str();
+  const char* outPath = (cmdLineOutputFilePath.empty() ? "-" 
+                                              : cmdLineOutputFilePath.c_str());
   llvm::raw_fd_ostream out(outPath, errorInfo);
   if ( platformSelected == platformTesting) {
     // write atom graph out as YAML doc
