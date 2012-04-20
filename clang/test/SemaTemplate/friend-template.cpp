@@ -243,3 +243,27 @@ namespace rdar11147355 {
   
   A<double>::B<double>  ab;
 }
+
+namespace RedeclUnrelated {
+  struct S {
+    int packaged_task;
+    template<typename> class future {
+      template<typename> friend class packaged_task;
+    };
+    future<void> share;
+  };
+}
+
+namespace PR12557 {
+  template <typename>
+  struct Foo;
+
+  template <typename Foo_>
+  struct Bar {
+    typedef Foo_  Foo; // expected-note {{previous}}
+
+    template <typename> friend struct Foo; // expected-error {{redefinition of 'Foo' as different kind of symbol}}
+  };
+
+  Bar<int> b;
+}
