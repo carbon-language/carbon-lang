@@ -628,7 +628,8 @@ namespace {
   public:
     explicit NodeUpdateListener(DAGTypeLegalizer &dtl,
                                 SmallSetVector<SDNode*, 16> &nta)
-      : DTL(dtl), NodesToAnalyze(nta) {}
+      : SelectionDAG::DAGUpdateListener(dtl.getDAG()),
+        DTL(dtl), NodesToAnalyze(nta) {}
 
     virtual void NodeDeleted(SDNode *N, SDNode *E) {
       assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
@@ -680,7 +681,7 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
   SmallSetVector<SDNode*, 16> NodesToAnalyze;
   NodeUpdateListener NUL(*this, NodesToAnalyze);
   do {
-    DAG.ReplaceAllUsesOfValueWith(From, To, &NUL);
+    DAG.ReplaceAllUsesOfValueWith(From, To);
 
     // The old node may still be present in a map like ExpandedIntegers or
     // PromotedIntegers.  Inform maps about the replacement.
@@ -709,7 +710,7 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
           SDValue NewVal(M, i);
           if (M->getNodeId() == Processed)
             RemapValue(NewVal);
-          DAG.ReplaceAllUsesOfValueWith(OldVal, NewVal, &NUL);
+          DAG.ReplaceAllUsesOfValueWith(OldVal, NewVal);
           // OldVal may be a target of the ReplacedValues map which was marked
           // NewNode to force reanalysis because it was updated.  Ensure that
           // anything that ReplacedValues mapped to OldVal will now be mapped

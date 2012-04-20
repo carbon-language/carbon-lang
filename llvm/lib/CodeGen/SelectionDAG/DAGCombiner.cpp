@@ -328,14 +328,11 @@ namespace {
 class WorkListRemover : public SelectionDAG::DAGUpdateListener {
   DAGCombiner &DC;
 public:
-  explicit WorkListRemover(DAGCombiner &dc) : DC(dc) {}
+  explicit WorkListRemover(DAGCombiner &dc)
+    : SelectionDAG::DAGUpdateListener(dc.getDAG()), DC(dc) {}
 
   virtual void NodeDeleted(SDNode *N, SDNode *E) {
     DC.removeFromWorkList(N);
-  }
-
-  virtual void NodeUpdated(SDNode *N) {
-    // Ignore updates.
   }
 };
 }
@@ -619,8 +616,7 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
                   N->getValueType(i) == To[i].getValueType()) &&
                  "Cannot combine value to value of different type!"));
   WorkListRemover DeadNodes(*this);
-  DAG.ReplaceAllUsesWith(N, To, &DeadNodes);
-
+  DAG.ReplaceAllUsesWith(N, To);
   if (AddTo) {
     // Push the new nodes and any users onto the worklist
     for (unsigned i = 0, e = NumTo; i != e; ++i) {
@@ -650,7 +646,7 @@ CommitTargetLoweringOpt(const TargetLowering::TargetLoweringOpt &TLO) {
   // Replace all uses.  If any nodes become isomorphic to other nodes and
   // are deleted, make sure to remove them from our worklist.
   WorkListRemover DeadNodes(*this);
-  DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &DeadNodes);
+  DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New);
 
   // Push the new node and any (possibly new) users onto the worklist.
   AddToWorkList(TLO.New.getNode());
@@ -707,9 +703,8 @@ void DAGCombiner::ReplaceLoadWithPromotedLoad(SDNode *Load, SDNode *ExtLoad) {
         Trunc.getNode()->dump(&DAG);
         dbgs() << '\n');
   WorkListRemover DeadNodes(*this);
-  DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 0), Trunc, &DeadNodes);
-  DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 1), SDValue(ExtLoad, 1),
-                                &DeadNodes);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 0), Trunc);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Load, 1), SDValue(ExtLoad, 1));
   removeFromWorkList(Load);
   DAG.DeleteNode(Load);
   AddToWorkList(Trunc.getNode());
@@ -961,8 +956,8 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
           Result.getNode()->dump(&DAG);
           dbgs() << '\n');
     WorkListRemover DeadNodes(*this);
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result, &DeadNodes);
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), NewLD.getValue(1), &DeadNodes);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), NewLD.getValue(1));
     removeFromWorkList(N);
     DAG.DeleteNode(N);
     AddToWorkList(Result.getNode());
@@ -1047,12 +1042,12 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     DAG.TransferDbgValues(SDValue(N, 0), RV);
     WorkListRemover DeadNodes(*this);
     if (N->getNumValues() == RV.getNode()->getNumValues())
-      DAG.ReplaceAllUsesWith(N, RV.getNode(), &DeadNodes);
+      DAG.ReplaceAllUsesWith(N, RV.getNode());
     else {
       assert(N->getValueType(0) == RV.getValueType() &&
              N->getNumValues() == 1 && "Type mismatch");
       SDValue OpV = RV;
-      DAG.ReplaceAllUsesWith(N, &OpV, &DeadNodes);
+      DAG.ReplaceAllUsesWith(N, &OpV);
     }
 
     // Push the new node and any users onto the worklist
@@ -1327,8 +1322,7 @@ SDValue DAGCombiner::visitMERGE_VALUES(SDNode *N) {
   // uses remain, to ensure that the node can be safely deleted.
   do {
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      DAG.ReplaceAllUsesOfValueWith(SDValue(N, i), N->getOperand(i),
-                                    &DeadNodes);
+      DAG.ReplaceAllUsesOfValueWith(SDValue(N, i), N->getOperand(i));
   } while (!N->use_empty());
   removeFromWorkList(N);
   DAG.DeleteNode(N);
@@ -5041,8 +5035,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   // Replace the old load's chain with the new load's chain.
   WorkListRemover DeadNodes(*this);
-  DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
-                                &DeadNodes);
+  DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1));
 
   // Shift the result left, if we've swallowed a left shift.
   SDValue Result = Load;
@@ -6185,7 +6178,7 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
           }
           // Replace the uses of SRL with SETCC
           WorkListRemover DeadNodes(*this);
-          DAG.ReplaceAllUsesOfValueWith(N1, SetCC, &DeadNodes);
+          DAG.ReplaceAllUsesOfValueWith(N1, SetCC);
           removeFromWorkList(N1.getNode());
           DAG.DeleteNode(N1.getNode());
           return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -6214,7 +6207,7 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
               Tmp.getNode()->dump(&DAG);
               dbgs() << '\n');
         WorkListRemover DeadNodes(*this);
-        DAG.ReplaceAllUsesOfValueWith(N1, Tmp, &DeadNodes);
+        DAG.ReplaceAllUsesOfValueWith(N1, Tmp);
         removeFromWorkList(TheXor);
         DAG.DeleteNode(TheXor);
         return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
@@ -6240,7 +6233,7 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
                                    Equal ? ISD::SETEQ : ISD::SETNE);
       // Replace the uses of XOR with SETCC
       WorkListRemover DeadNodes(*this);
-      DAG.ReplaceAllUsesOfValueWith(N1, SetCC, &DeadNodes);
+      DAG.ReplaceAllUsesOfValueWith(N1, SetCC);
       removeFromWorkList(N1.getNode());
       DAG.DeleteNode(N1.getNode());
       return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
@@ -6431,21 +6424,17 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
         dbgs() << '\n');
   WorkListRemover DeadNodes(*this);
   if (isLoad) {
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(0),
-                                  &DeadNodes);
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Result.getValue(2),
-                                  &DeadNodes);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(0));
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Result.getValue(2));
   } else {
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(1),
-                                  &DeadNodes);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(1));
   }
 
   // Finally, since the node is now dead, remove it from the graph.
   DAG.DeleteNode(N);
 
   // Replace the uses of Ptr with uses of the updated base value.
-  DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(isLoad ? 1 : 0),
-                                &DeadNodes);
+  DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(isLoad ? 1 : 0));
   removeFromWorkList(Ptr.getNode());
   DAG.DeleteNode(Ptr.getNode());
 
@@ -6559,13 +6548,10 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
               dbgs() << '\n');
         WorkListRemover DeadNodes(*this);
         if (isLoad) {
-          DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(0),
-                                        &DeadNodes);
-          DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Result.getValue(2),
-                                        &DeadNodes);
+          DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(0));
+          DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Result.getValue(2));
         } else {
-          DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(1),
-                                        &DeadNodes);
+          DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Result.getValue(1));
         }
 
         // Finally, since the node is now dead, remove it from the graph.
@@ -6573,8 +6559,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
 
         // Replace the uses of Use with uses of the updated base value.
         DAG.ReplaceAllUsesOfValueWith(SDValue(Op, 0),
-                                      Result.getValue(isLoad ? 1 : 0),
-                                      &DeadNodes);
+                                      Result.getValue(isLoad ? 1 : 0));
         removeFromWorkList(Op);
         DAG.DeleteNode(Op);
         return true;
@@ -6609,7 +6594,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
               Chain.getNode()->dump(&DAG);
               dbgs() << "\n");
         WorkListRemover DeadNodes(*this);
-        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Chain, &DeadNodes);
+        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Chain);
 
         if (N->use_empty()) {
           removeFromWorkList(N);
@@ -6629,11 +6614,10 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
               Undef.getNode()->dump(&DAG);
               dbgs() << " and 2 other values\n");
         WorkListRemover DeadNodes(*this);
-        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Undef, &DeadNodes);
+        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Undef);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1),
-                                      DAG.getUNDEF(N->getValueType(1)),
-                                      &DeadNodes);
-        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), Chain, &DeadNodes);
+                                      DAG.getUNDEF(N->getValueType(1)));
+        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), Chain);
         removeFromWorkList(N);
         DAG.DeleteNode(N);
         return SDValue(N, 0);   // Return N so it doesn't get rechecked!
@@ -6955,8 +6939,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
       AddToWorkList(NewLD.getNode());
       AddToWorkList(NewVal.getNode());
       WorkListRemover DeadNodes(*this);
-      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), NewLD.getValue(1),
-                                    &DeadNodes);
+      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), NewLD.getValue(1));
       ++OpsNarrowed;
       return NewST;
     }
@@ -7013,8 +6996,7 @@ SDValue DAGCombiner::TransformFPLoadStorePair(SDNode *N) {
     AddToWorkList(NewLD.getNode());
     AddToWorkList(NewST.getNode());
     WorkListRemover DeadNodes(*this);
-    DAG.ReplaceAllUsesOfValueWith(Value.getValue(1), NewLD.getValue(1),
-                                  &DeadNodes);
+    DAG.ReplaceAllUsesOfValueWith(Value.getValue(1), NewLD.getValue(1));
     ++LdStFP2Int;
     return NewST;
   }
@@ -7472,7 +7454,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     WorkListRemover DeadNodes(*this);
     SDValue From[] = { SDValue(N, 0), SDValue(LN0,1) };
     SDValue To[] = { Load, Chain };
-    DAG.ReplaceAllUsesOfValuesWith(From, To, 2, &DeadNodes);
+    DAG.ReplaceAllUsesOfValuesWith(From, To, 2);
     // Since we're explcitly calling ReplaceAllUses, add the new node to the
     // worklist explicitly as well.
     AddToWorkList(Load.getNode());

@@ -177,6 +177,44 @@ class SelectionDAG {
   /// DbgInfo - Tracks dbg_value information through SDISel.
   SDDbgInfo *DbgInfo;
 
+public:
+  /// DAGUpdateListener - Clients of various APIs that cause global effects on
+  /// the DAG can optionally implement this interface.  This allows the clients
+  /// to handle the various sorts of updates that happen.
+  ///
+  /// A DAGUpdateListener automatically registers itself with DAG when it is
+  /// constructed, and removes itself when destroyed in RAII fashion.
+  struct DAGUpdateListener {
+    DAGUpdateListener *const Next;
+    SelectionDAG &DAG;
+
+    explicit DAGUpdateListener(SelectionDAG &D)
+      : Next(D.UpdateListeners), DAG(D) {
+      DAG.UpdateListeners = this;
+    }
+
+    virtual ~DAGUpdateListener() {
+      assert(DAG.UpdateListeners == this &&
+             "DAGUpdateListeners must be destroyed in LIFO order");
+      DAG.UpdateListeners = Next;
+    }
+
+    /// NodeDeleted - The node N that was deleted and, if E is not null, an
+    /// equivalent node E that replaced it.
+    virtual void NodeDeleted(SDNode *N, SDNode *E);
+
+    /// NodeUpdated - The node N that was updated.
+    virtual void NodeUpdated(SDNode *N);
+  };
+
+private:
+  /// DAGUpdateListener is a friend so it can manipulate the listener stack.
+  friend struct DAGUpdateListener;
+
+  /// UpdateListeners - Linked list of registered DAGUpdateListener instances.
+  /// This stack is maintained by DAGUpdateListener RAII.
+  DAGUpdateListener *UpdateListeners;
+
   /// setGraphColorHelper - Implementation of setSubgraphColor.
   /// Return whether we had to truncate the search.
   ///
@@ -817,30 +855,14 @@ public:
   SDDbgValue *getDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
                           DebugLoc DL, unsigned O);
 
-  /// DAGUpdateListener - Clients of various APIs that cause global effects on
-  /// the DAG can optionally implement this interface.  This allows the clients
-  /// to handle the various sorts of updates that happen.
-  class DAGUpdateListener {
-  public:
-    virtual ~DAGUpdateListener();
-
-    /// NodeDeleted - The node N that was deleted and, if E is not null, an
-    /// equivalent node E that replaced it.
-    virtual void NodeDeleted(SDNode *N, SDNode *E) = 0;
-
-    /// NodeUpdated - The node N that was updated.
-    virtual void NodeUpdated(SDNode *N) = 0;
-  };
-
   /// RemoveDeadNode - Remove the specified node from the system. If any of its
   /// operands then becomes dead, remove them as well. Inform UpdateListener
   /// for each node deleted.
-  void RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener = 0);
+  void RemoveDeadNode(SDNode *N);
 
   /// RemoveDeadNodes - This method deletes the unreachable nodes in the
   /// given list, and any nodes that become unreachable as a result.
-  void RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
-                       DAGUpdateListener *UpdateListener = 0);
+  void RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes);
 
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
@@ -857,24 +879,19 @@ public:
   /// to be given new uses. These new uses of From are left in place, and
   /// not automatically transferred to To.
   ///
-  void ReplaceAllUsesWith(SDValue From, SDValue Op,
-                          DAGUpdateListener *UpdateListener = 0);
-  void ReplaceAllUsesWith(SDNode *From, SDNode *To,
-                          DAGUpdateListener *UpdateListener = 0);
-  void ReplaceAllUsesWith(SDNode *From, const SDValue *To,
-                          DAGUpdateListener *UpdateListener = 0);
+  void ReplaceAllUsesWith(SDValue From, SDValue Op);
+  void ReplaceAllUsesWith(SDNode *From, SDNode *To);
+  void ReplaceAllUsesWith(SDNode *From, const SDValue *To);
 
   /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
   /// uses of other values produced by From.Val alone.
-  void ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
-                                 DAGUpdateListener *UpdateListener = 0);
+  void ReplaceAllUsesOfValueWith(SDValue From, SDValue To);
 
   /// ReplaceAllUsesOfValuesWith - Like ReplaceAllUsesOfValueWith, but
   /// for multiple values at once. This correctly handles the case where
   /// there is an overlap between the From values and the To values.
   void ReplaceAllUsesOfValuesWith(const SDValue *From, const SDValue *To,
-                                  unsigned Num,
-                                  DAGUpdateListener *UpdateListener = 0);
+                                  unsigned Num);
 
   /// AssignTopologicalOrder - Topological-sort the AllNodes list and a
   /// assign a unique node id for each node in the DAG based on their
@@ -1031,7 +1048,7 @@ public:
 
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
-  void AddModifiedNodeToCSEMaps(SDNode *N, DAGUpdateListener *UpdateListener);
+  void AddModifiedNodeToCSEMaps(SDNode *N);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op, void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op1, SDValue Op2,
                                void *&InsertPos);

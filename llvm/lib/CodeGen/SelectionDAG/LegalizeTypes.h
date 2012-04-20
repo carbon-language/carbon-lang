@@ -135,6 +135,8 @@ public:
       ReplacedValues[SDValue(Old, i)] = SDValue(New, i);
   }
 
+  SelectionDAG &getDAG() const { return DAG; }
+
 private:
   SDNode *AnalyzeNewNode(SDNode *N);
   void AnalyzeNewValue(SDValue &Val);

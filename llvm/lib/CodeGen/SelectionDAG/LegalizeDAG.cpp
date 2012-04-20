@@ -150,21 +150,21 @@ public:
   // Node replacement helpers
   void ReplacedNode(SDNode *N) {
     if (N->use_empty()) {
-      DAG.RemoveDeadNode(N, this);
+      DAG.RemoveDeadNode(N);
     } else {
       ForgetNode(N);
     }
   }
   void ReplaceNode(SDNode *Old, SDNode *New) {
-    DAG.ReplaceAllUsesWith(Old, New, this);
+    DAG.ReplaceAllUsesWith(Old, New);
     ReplacedNode(Old);
   }
   void ReplaceNode(SDValue Old, SDValue New) {
-    DAG.ReplaceAllUsesWith(Old, New, this);
+    DAG.ReplaceAllUsesWith(Old, New);
     ReplacedNode(Old.getNode());
   }
   void ReplaceNode(SDNode *Old, const SDValue *New) {
-    DAG.ReplaceAllUsesWith(Old, New, this);
+    DAG.ReplaceAllUsesWith(Old, New);
     ReplacedNode(Old);
   }
 };
@@ -203,7 +203,8 @@ SelectionDAGLegalize::ShuffleWithNarrowerEltType(EVT NVT, EVT VT,  DebugLoc dl,
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
-  : TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
+  : SelectionDAG::DAGUpdateListener(dag),
+    TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
     DAG(dag) {
 }
 
@@ -851,7 +852,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
 
     SDNode *NewNode = DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
     if (NewNode != Node) {
-      DAG.ReplaceAllUsesWith(Node, NewNode, this);
+      DAG.ReplaceAllUsesWith(Node, NewNode);
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         DAG.TransferDbgValues(SDValue(Node, i), SDValue(NewNode, i));
       ReplacedNode(Node);
@@ -873,7 +874,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
             ResultVals.push_back(Tmp1.getValue(i));
         }
         if (Tmp1.getNode() != Node || Tmp1.getResNo() != 0) {
-          DAG.ReplaceAllUsesWith(Node, ResultVals.data(), this);
+          DAG.ReplaceAllUsesWith(Node, ResultVals.data());
           for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
             DAG.TransferDbgValues(SDValue(Node, i), ResultVals[i]);
           ReplacedNode(Node);

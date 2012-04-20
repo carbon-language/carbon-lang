@@ -749,8 +749,8 @@ void SelectionDAGISel::DoInstructionSelection() {
       // If after the replacement this node is not used any more,
       // remove this dead node.
       if (Node->use_empty()) { // Don't delete EntryToken, etc.
-        ISelUpdater ISU(ISelPosition);
-        CurDAG->RemoveDeadNode(Node, &ISU);
+        ISelUpdater ISU(*CurDAG, ISelPosition);
+        CurDAG->RemoveDeadNode(Node);
       }
     }
 
@@ -1680,7 +1680,7 @@ UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
                     bool isMorphNodeTo) {
   SmallVector<SDNode*, 4> NowDeadNodes;
 
-  ISelUpdater ISU(ISelPosition);
+  ISelUpdater ISU(*CurDAG, ISelPosition);
 
   // Now that all the normal results are replaced, we replace the chain and
   // glue results if present.
@@ -1705,7 +1705,7 @@ UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
       if (ChainVal.getValueType() == MVT::Glue)
         ChainVal = ChainVal.getValue(ChainVal->getNumValues()-2);
       assert(ChainVal.getValueType() == MVT::Other && "Not a chain?");
-      CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain, &ISU);
+      CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain);
 
       // If the node became dead and we haven't already seen it, delete it.
       if (ChainNode->use_empty() &&
@@ -1728,7 +1728,7 @@ UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
       assert(FRN->getValueType(FRN->getNumValues()-1) == MVT::Glue &&
              "Doesn't have a glue result");
       CurDAG->ReplaceAllUsesOfValueWith(SDValue(FRN, FRN->getNumValues()-1),
-                                        InputGlue, &ISU);
+                                        InputGlue);
 
       // If the node became dead and we haven't already seen it, delete it.
       if (FRN->use_empty() &&
@@ -1738,7 +1738,7 @@ UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
   }
 
   if (!NowDeadNodes.empty())
-    CurDAG->RemoveDeadNodes(NowDeadNodes, &ISU);
+    CurDAG->RemoveDeadNodes(NowDeadNodes);
 
   DEBUG(errs() << "ISEL: Match complete!\n");
 }
