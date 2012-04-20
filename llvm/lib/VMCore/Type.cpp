@@ -638,6 +638,10 @@ StructType *Module::getTypeByName(StringRef Name) const {
   return 0;
 }
 
+/// getNumNamedStructTypes - Return the number of named struct types.
+unsigned Module::getNumNamedStructTypes() const {
+  return getContext().pImpl->NamedStructTypes.size();
+}
 
 //===----------------------------------------------------------------------===//
 //                       CompositeType Implementation

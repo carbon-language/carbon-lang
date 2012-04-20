@@ -481,76 +481,116 @@ namespace {
     // objects, we keep several helper maps.
     DenseSet<const Value*> VisitedConstants;
     DenseSet<Type*> VisitedTypes;
-    
     std::vector<StructType*> &StructTypes;
+
+    const Module *M;
+    unsigned NumNamedStructTypes;
+    unsigned StructTypesSize;
   public:
     TypeFinder(std::vector<StructType*> &structTypes)
-      : StructTypes(structTypes) {}
+      : StructTypes(structTypes), M(0), NumNamedStructTypes(0),
+        StructTypesSize(0) {}
     
-    void run(const Module &M) {
+    void run(const Module &Mod) {
+      M = &Mod;
+      NumNamedStructTypes = M->getNumNamedStructTypes();
+
+      if (NumNamedStructTypes == 0)
+        return;
+
       // Get types from global variables.
-      for (Module::const_global_iterator I = M.global_begin(),
-           E = M.global_end(); I != E; ++I) {
+      for (Module::const_global_iterator I = M->global_begin(),
+           E = M->global_end(); I != E; ++I) {
         incorporateType(I->getType());
         if (I->hasInitializer())
           incorporateValue(I->getInitializer());
       }
       
       // Get types from aliases.
-      for (Module::const_alias_iterator I = M.alias_begin(),
-           E = M.alias_end(); I != E; ++I) {
+      for (Module::const_alias_iterator I = M->alias_begin(),
+           E = M->alias_end(); I != E; ++I) {
         incorporateType(I->getType());
         if (const Value *Aliasee = I->getAliasee())
           incorporateValue(Aliasee);
       }
+
+      if (foundAllStructTypes()) return;
       
       SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
 
       // Get types from functions.
-      for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
+      for (Module::const_iterator FI = M->begin(),
+             E = M->end(); FI != E; ++FI) {
         incorporateType(FI->getType());
-        
+        if (foundAllStructTypes()) return;
+
         for (Function::const_iterator BB = FI->begin(), E = FI->end();
              BB != E;++BB)
           for (BasicBlock::const_iterator II = BB->begin(),
                E = BB->end(); II != E; ++II) {
             const Instruction &I = *II;
+
+
             // Incorporate the type of the instruction and all its operands.
             incorporateType(I.getType());
             for (User::const_op_iterator OI = I.op_begin(), OE = I.op_end();
-                 OI != OE; ++OI)
+                 OI != OE; ++OI) {
               incorporateValue(*OI);
-            
+              if (foundAllStructTypes()) return;
+            }
+
             // Incorporate types hiding in metadata.
             I.getAllMetadataOtherThanDebugLoc(MDForInst);
-            for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
+            for (unsigned i = 0, e = MDForInst.size(); i != e; ++i) {
               incorporateMDNode(MDForInst[i].second);
+              if (foundAllStructTypes()) return;
+            }
+
             MDForInst.clear();
           }
       }
       
-      for (Module::const_named_metadata_iterator I = M.named_metadata_begin(),
-           E = M.named_metadata_end(); I != E; ++I) {
+      for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
+           E = M->named_metadata_end(); I != E; ++I) {
         const NamedMDNode *NMD = I;
-        for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+        for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
           incorporateMDNode(NMD->getOperand(i));
+          if (foundAllStructTypes()) return;
+        }
       }
     }
     
   private:
+    bool foundAllStructTypes() {
+      return StructTypesSize == NumNamedStructTypes;
+    }
+
+    bool addStructType(StructType *ST) {
+      if (foundAllStructTypes()) return false;
+      StructTypes.push_back(ST);
+      ++StructTypesSize;
+      return true;
+    }
+
     void incorporateType(Type *Ty) {
+      if (StructTypesSize == NumNamedStructTypes)
+        return;
+
       // Check to see if we're already visited this type.
       if (!VisitedTypes.insert(Ty).second)
         return;
       
       // If this is a structure or opaque type, add a name for the type.
       if (StructType *STy = dyn_cast<StructType>(Ty))
-        StructTypes.push_back(STy);
+        if (!addStructType(STy))
+          return;
       
       // Recursively walk all contained types.
       for (Type::subtype_iterator I = Ty->subtype_begin(),
-           E = Ty->subtype_end(); I != E; ++I)
+             E = Ty->subtype_end(); I != E; ++I) {
         incorporateType(*I);
+        if (foundAllStructTypes()) return;
+      }
     }
     
     /// incorporateValue - This method is used to walk operand lists finding
@@ -560,7 +600,9 @@ namespace {
     void incorporateValue(const Value *V) {
       if (const MDNode *M = dyn_cast<MDNode>(V))
         return incorporateMDNode(M);
-      if (!isa<Constant>(V) || isa<GlobalValue>(V)) return;
+
+      if (!isa<Constant>(V) || isa<GlobalValue>(V))
+        return;
       
       // Already visited?
       if (!VisitedConstants.insert(V).second)
@@ -577,15 +619,18 @@ namespace {
     }
     
     void incorporateMDNode(const MDNode *V) {
-      
+      if (foundAllStructTypes()) return;
+
       // Already visited?
       if (!VisitedConstants.insert(V).second)
         return;
       
       // Look in operands for types.
       for (unsigned i = 0, e = V->getNumOperands(); i != e; ++i)
-        if (Value *Op = V->getOperand(i))
+        if (Value *Op = V->getOperand(i)) {
           incorporateValue(Op);
+          if (foundAllStructTypes()) return;
+        }
     }
   };
 } // end anonymous namespace
