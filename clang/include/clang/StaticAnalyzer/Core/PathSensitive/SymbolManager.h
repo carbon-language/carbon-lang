@@ -583,7 +583,6 @@ public:
   ~SymbolReaper() {}
 
   const LocationContext *getLocationContext() const { return LCtx; }
-  const Stmt *getCurrentStatement() const { return Loc; }
 
   bool isLive(SymbolRef sym);
   bool isLiveRegion(const MemRegion *region);
