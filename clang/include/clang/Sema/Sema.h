@@ -666,12 +666,7 @@ public:
   /// function.
   ///
   /// This is basically a wrapper around PointerIntPair. The lowest bits of the
-  /// integer are used to determine whether overload resolution succeeded, and
-  /// whether, when looking up a copy constructor or assignment operator, we
-  /// found a potential copy constructor/assignment operator whose first
-  /// parameter is const-qualified. This is used for determining parameter types
-  /// of other objects and is utterly meaningless on other types of special
-  /// members.
+  /// integer are used to determine whether overload resolution succeeded.
   class SpecialMemberOverloadResult : public llvm::FastFoldingSetNode {
   public:
     enum Kind {
