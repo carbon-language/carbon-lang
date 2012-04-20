@@ -130,7 +130,7 @@ public:
   void setError(const Twine &Message, Token &Location) const;
   bool failed() const;
 
-  virtual void skip() {};
+  virtual void skip() {}
 
   unsigned int getType() const { return TypeID; }
   static inline bool classof(const Node *) { return true; }
