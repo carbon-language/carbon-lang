@@ -24,6 +24,8 @@ int main() {
   b = @(__objc_yes);
   b = @(__objc_no);
   b = @("hello");
+#else
+#error "boxed expressions not supported"
 #endif
 }
 
