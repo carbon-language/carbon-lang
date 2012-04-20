@@ -489,6 +489,20 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Diag(clang::diag::note_drv_command_failed_diag_msg)
           << "Error generating run script: " + Script + " " + Err;
       } else {
+        // Strip -D, -F, and -I.
+        // FIXME: This doesn't work with quotes (e.g., -D "foo bar").
+        std::string Flag[3] = {"-D ", "-F", "-I "};
+        for (unsigned i = 0; i < 3; ++i) {
+          size_t I = 0, E = 0;
+          do {
+            I = Cmd.find(Flag[i], I);
+            if (I == std::string::npos) break;
+            
+            E = Cmd.find(" ", I + Flag[i].length());
+            if (E == std::string::npos) break;
+            Cmd.erase(I, E - I + 1);
+          } while(1);
+        }
         ScriptOS << Cmd;
         Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
       }
