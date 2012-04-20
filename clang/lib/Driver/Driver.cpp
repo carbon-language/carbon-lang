@@ -491,8 +491,8 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       } else {
         // Strip -D, -F, and -I.
         // FIXME: This doesn't work with quotes (e.g., -D "foo bar").
-        std::string Flag[3] = {"-D ", "-F", "-I "};
-        for (unsigned i = 0; i < 3; ++i) {
+        std::string Flag[4] = {"-D ", "-F", "-I ", "-o "};
+        for (unsigned i = 0; i < 4; ++i) {
           size_t I = 0, E = 0;
           do {
             I = Cmd.find(Flag[i], I);
@@ -503,6 +503,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
             Cmd.erase(I, E - I + 1);
           } while(1);
         }
+        // FIXME: Append the new filename with correct preprocessed suffix.
         ScriptOS << Cmd;
         Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
       }
