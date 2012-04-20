@@ -158,3 +158,18 @@
 @ CHECK: vhsub.u8	q4, q4, q9      @ encoding: [0x62,0x82,0x08,0xf3]
 @ CHECK: vhsub.u16	q5, q5, q8      @ encoding: [0x60,0xa2,0x1a,0xf3]
 @ CHECK: vhsub.u32	q6, q6, q7      @ encoding: [0x4e,0xc2,0x2c,0xf3]
+
+
+	vsubw.s8  q6, d5
+	vsubw.s16 q7, d1
+	vsubw.s32 q8, d2
+	vsubw.u8  q6, d5
+	vsubw.u16 q7, d1
+	vsubw.u32 q8, d2
+
+@ CHECK: vsubw.s8	q6, q6, d5      @ encoding: [0x05,0xc3,0x8c,0xf2]
+@ CHECK: vsubw.s16	q7, q7, d1      @ encoding: [0x01,0xe3,0x9e,0xf2]
+@ CHECK: vsubw.s32	q8, q8, d2      @ encoding: [0x82,0x03,0xe0,0xf2]
+@ CHECK: vsubw.u8	q6, q6, d5      @ encoding: [0x05,0xc3,0x8c,0xf3]
+@ CHECK: vsubw.u16	q7, q7, d1      @ encoding: [0x01,0xe3,0x9e,0xf3]
+@ CHECK: vsubw.u32	q8, q8, d2      @ encoding: [0x82,0x03,0xe0,0xf3]

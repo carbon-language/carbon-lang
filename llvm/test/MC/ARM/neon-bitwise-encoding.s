@@ -232,31 +232,37 @@
 @ CHECK: vorr	q4, q7, q3              @ encoding: [0x56,0x81,0x2e,0xf2]
 
 @ Two-operand aliases
+	vand  q6, q5
 	vand.s8  q6, q5
 	vand.s16 q7, q1
 	vand.s32 q8, q2
 	vand.f64 q8, q2
 
+	veor   q6, q5
 	veor.8   q6, q5
 	veor.p16 q7, q1
 	veor.u32 q8, q2
 	veor.d   q8, q2
 
+	veor  q6, q5
 	veor.i8  q6, q5
 	veor.16  q7, q1
 	veor.f   q8, q2
 	veor.i64 q8, q2
 
 @ CHECK: vand	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf2]
+@ CHECK: vand	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf2]
 @ CHECK: vand	q7, q7, q1              @ encoding: [0x52,0xe1,0x0e,0xf2]
 @ CHECK: vand	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf2]
 @ CHECK: vand	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf2]
 
 @ CHECK: veor	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf3]
+@ CHECK: veor	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf3]
 @ CHECK: veor	q7, q7, q1              @ encoding: [0x52,0xe1,0x0e,0xf3]
 @ CHECK: veor	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf3]
 @ CHECK: veor	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf3]
 
+@ CHECK: veor	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf3]
 @ CHECK: veor	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf3]
 @ CHECK: veor	q7, q7, q1              @ encoding: [0x52,0xe1,0x0e,0xf3]
 @ CHECK: veor	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf3]
