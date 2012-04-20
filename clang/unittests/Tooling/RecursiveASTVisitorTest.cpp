@@ -38,7 +38,6 @@ public:
 
 protected:
   clang::ASTContext *Context;
-  clang::SourceManager *SM;
 
 private:
   class FindConsumer : public clang::ASTConsumer {
@@ -59,7 +58,6 @@ private:
 
     virtual clang::ASTConsumer* CreateASTConsumer(
         clang::CompilerInstance& compiler, llvm::StringRef dummy) {
-      Visitor->SM = &compiler.getSourceManager();
       Visitor->Context = &compiler.getASTContext();
       /// TestConsumer will be deleted by the framework calling us.
       return new FindConsumer(Visitor);
@@ -116,7 +114,7 @@ protected:
       // If we did not match, record information about partial matches.
       llvm::raw_string_ostream Stream(PartialMatches);
       Stream << ", partial match: \"" << Name << "\" at ";
-      Location.print(Stream, *this->SM);
+      Location.print(Stream, this->Context->getSourceManager());
     }
   }
 
