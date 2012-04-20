@@ -255,6 +255,10 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
           OS << "imp-";
         OS << "def";
         NeedComma = true;
+        // <def,read-undef> only makes sense when getSubReg() is set.
+        // Don't clutter the output otherwise.
+        if (isUndef() && getSubReg())
+          OS << ",read-undef";
       } else if (isImplicit()) {
           OS << "imp-use";
           NeedComma = true;
@@ -271,7 +275,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
           OS << "dead";
           NeedComma = true;
         }
-        if (isUndef()) {
+        if (isUndef() && isUse()) {
           if (NeedComma) OS << ',';
           OS << "undef";
           NeedComma = true;
