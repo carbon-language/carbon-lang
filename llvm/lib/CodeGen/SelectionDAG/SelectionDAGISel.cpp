@@ -2776,9 +2776,14 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                                                              (SDNode*) 0));
         }
 
-      } else {
+      } else if (NodeToMatch->getOpcode() != ISD::DELETED_NODE) {
         Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops.data(), Ops.size(),
                         EmitNodeInfo);
+      } else {
+        // NodeToMatch was eliminated by CSE when the target changed the DAG.
+        // We will visit the equivalent node later.
+        DEBUG(dbgs() << "Node was eliminated by CSE\n");
+        return 0;
       }
 
       // If the node had chain/glue results, update our notion of the current
