@@ -151,6 +151,17 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "unsigned " << ClassName << "::getNumRegPressureSets() const {\n"
      << "  return " << NumSets << ";\n}\n\n";
 
+  OS << "// Get the name of this register unit pressure set.\n"
+     << "const char *" << ClassName << "::\n"
+     << "getRegPressureSetName(unsigned Idx) const {\n"
+     << "  static const char *PressureNameTable[] = {\n";
+  for (unsigned i = 0; i < NumSets; ++i ) {
+    OS << "    \"" << RegBank.getRegPressureSet(i).Name << "\",\n";
+  }
+  OS << "    0 };\n"
+     << "  return PressureNameTable[Idx];\n"
+     << "}\n\n";
+
   OS << "// Get the register unit pressure limit for this dimension.\n"
      << "// This limit must be adjusted dynamically for reserved registers.\n"
      << "unsigned " << ClassName << "::\n"
@@ -159,7 +170,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
   for (unsigned i = 0; i < NumSets; ++i ) {
     const RegUnitSet &RegUnits = RegBank.getRegPressureSet(i);
     OS << "    " << RegBank.getRegUnitSetWeight(RegUnits.Units)
-       << ",  \t// " << i << ": " << RegBank.getRegPressureSet(i).Name << "\n";
+       << ",  \t// " << i << ": " << RegUnits.Name << "\n";
   }
   OS << "    0 };\n"
      << "  return PressureLimitTable[Idx];\n"
@@ -671,6 +682,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  const RegClassWeight &getRegClassWeight("
      << "const TargetRegisterClass *RC) const;\n"
      << "  unsigned getNumRegPressureSets() const;\n"
+     << "  const char *getRegPressureSetName(unsigned Idx) const;\n"
      << "  unsigned getRegPressureSetLimit(unsigned Idx) const;\n"
      << "  const int *getRegClassPressureSets("
      << "const TargetRegisterClass *RC) const;\n"
