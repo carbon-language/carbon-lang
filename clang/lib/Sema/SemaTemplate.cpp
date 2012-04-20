@@ -938,7 +938,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       while (!OutermostContext->isFileContext())
         OutermostContext = OutermostContext->getLookupParent();
 
-      if (PrevDecl &&
+      if (PrevClassTemplate &&
           (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
            OutermostContext->Encloses(PrevDecl->getDeclContext()))) {
         SemanticContext = PrevDecl->getDeclContext();

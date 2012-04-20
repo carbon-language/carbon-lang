@@ -95,3 +95,12 @@ namespace rdar9676205 {
   };
 }
 
+namespace Redecl {
+  struct S {
+    int packaged_task;
+    template<typename> class future {
+      template<typename> friend class packaged_task;
+    };
+    future<void> share;
+  };
+}
