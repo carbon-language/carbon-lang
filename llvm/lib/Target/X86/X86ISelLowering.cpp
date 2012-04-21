@@ -162,7 +162,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   TD = getTargetData();
 
   // Set up the TargetLowering object.
-  static MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
+  static const MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
   setBooleanContents(ZeroOrOneBooleanContent);
@@ -345,7 +345,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // (low) operations are left as Legal, as there are single-result
   // instructions for this in x86. Using the two-result multiply instructions
   // when both high and low results are needed must be arranged by dagcombine.
-  for (unsigned i = 0, e = 4; i != e; ++i) {
+  for (unsigned i = 0; i != array_lengthof(IntVTs); ++i) {
     MVT VT = IntVTs[i];
     setOperationAction(ISD::MULHS, VT, Expand);
     setOperationAction(ISD::MULHU, VT, Expand);
@@ -492,7 +492,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setShouldFoldAtomicFences(true);
 
   // Expand certain atomics
-  for (unsigned i = 0, e = 4; i != e; ++i) {
+  for (unsigned i = 0; i != array_lengthof(IntVTs); ++i) {
     MVT VT = IntVTs[i];
     setOperationAction(ISD::ATOMIC_CMP_SWAP, VT, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
@@ -13043,7 +13043,7 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
 
     // PSHUFD
-    int ShufMask1[] = {0, 2, 0, 0};
+    static const int ShufMask1[] = {0, 2, 0, 0};
 
     OpLo = DAG.getVectorShuffle(VT, dl, OpLo, DAG.getUNDEF(VT),
                                 ShufMask1);
@@ -13051,7 +13051,7 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
                                 ShufMask1);
 
     // MOVLHPS
-    int ShufMask2[] = {0, 1, 4, 5};
+    static const int ShufMask2[] = {0, 1, 4, 5};
 
     return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2);
   }
@@ -13067,8 +13067,8 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpHi);
 
     // PSHUFB
-    int ShufMask1[] = {0,  1,  4,  5,  8,  9, 12, 13, 
-                      -1, -1, -1, -1, -1, -1, -1, -1};
+    static const int ShufMask1[] = {0,  1,  4,  5,  8,  9, 12, 13,
+                                   -1, -1, -1, -1, -1, -1, -1, -1};
 
     OpLo = DAG.getVectorShuffle(MVT::v16i8, dl, OpLo,
                                 DAG.getUNDEF(MVT::v16i8),
@@ -13081,7 +13081,7 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
 
     // MOVLHPS
-    int ShufMask2[] = {0, 1, 4, 5};
+    static const int ShufMask2[] = {0, 1, 4, 5};
 
     SDValue res = DAG.getVectorShuffle(MVT::v4i32, dl, OpLo, OpHi, ShufMask2);
     return DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, res);
