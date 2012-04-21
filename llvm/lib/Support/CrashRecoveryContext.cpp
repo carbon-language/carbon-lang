@@ -223,7 +223,7 @@ void CrashRecoveryContext::Disable() {
 
 #include <signal.h>
 
-static int Signals[] = { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP };
+static const int Signals[] = { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP };
 static const unsigned NumSignals = sizeof(Signals) / sizeof(Signals[0]);
 static struct sigaction PrevActions[NumSignals];
 
