@@ -14888,6 +14888,7 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
                                    N00.getOperand(0), N00.getOperand(1)),
                        DAG.getConstant(1, VT));
   }
+
   // Optimize vectors in AVX mode:
   //
   //   v8i16 -> v8i32
@@ -14902,15 +14903,17 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
   //
   if (Subtarget->hasAVX()) {
 
-    if (((VT == MVT::v8i32) && (OpVT == MVT::v8i16))  ||
-      ((VT == MVT::v4i64) && (OpVT == MVT::v4i32)))  {
+    if (((VT == MVT::v8i32) && (OpVT == MVT::v8i16)) ||
+        ((VT == MVT::v4i64) && (OpVT == MVT::v4i32)))  {
 
       SDValue ZeroVec = getZeroVector(OpVT, Subtarget, DAG, dl);
-      SDValue OpLo = getTargetShuffleNode(X86ISD::UNPCKL, dl, OpVT, N0, ZeroVec, DAG);
-      SDValue OpHi = getTargetShuffleNode(X86ISD::UNPCKH, dl, OpVT, N0, ZeroVec, DAG);
+      SDValue OpLo = getTargetShuffleNode(X86ISD::UNPCKL, dl, OpVT, N0, ZeroVec,
+                                          DAG);
+      SDValue OpHi = getTargetShuffleNode(X86ISD::UNPCKH, dl, OpVT, N0, ZeroVec,
+                                          DAG);
 
-      EVT HVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(), 
-        VT.getVectorNumElements()/2);
+      EVT HVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
+                                 VT.getVectorNumElements()/2);
 
       OpLo = DAG.getNode(ISD::BITCAST, dl, HVT, OpLo);
       OpHi = DAG.getNode(ISD::BITCAST, dl, HVT, OpHi);
@@ -14918,7 +14921,6 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
     }
   }
-
 
   return SDValue();
 }
