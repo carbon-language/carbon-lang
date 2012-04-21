@@ -13,7 +13,6 @@ class AppleTypesTestCase(TestBase):
     mydir = os.path.join("macosx", "debug-info", "apple_types")
 
     #rdar://problem/11166975
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_debug_info_for_apple_types(self):
         """Test that __apple_types section does get produced by clang."""
