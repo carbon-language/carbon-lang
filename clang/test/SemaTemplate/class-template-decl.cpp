@@ -94,3 +94,46 @@ namespace rdar9676205 {
     };
   };
 }
+
+namespace redecl {
+  int A; // expected-note {{here}}
+  template<typename T> struct A; // expected-error {{different kind of symbol}}
+
+  int B;
+  template<typename T> struct B { // expected-error {{different kind of symbol}}
+  };
+
+  template<typename T> struct F;
+  template<typename T> struct K;
+
+  int G, H;
+
+  struct S {
+    int C; // expected-note {{here}}
+    template<typename T> struct C; // expected-error {{different kind of symbol}}
+
+    int D;
+    template<typename T> struct D { // expected-error {{different kind of symbol}}
+    };
+
+    int E;
+    template<typename T> friend struct E { // expected-error {{cannot define a type in a friend}}
+    };
+
+    int F;
+    template<typename T> friend struct F; // ok, redecl::F
+
+    template<typename T> struct G; // ok
+
+    template<typename T> friend struct H; // expected-error {{different kind of symbol}}
+
+    int I, J, K;
+
+    struct U {
+      template<typename T> struct I; // ok
+      template<typename T> struct J { // ok
+      };
+      template<typename T> friend struct K; // ok, redecl::K
+    };
+  };
+}

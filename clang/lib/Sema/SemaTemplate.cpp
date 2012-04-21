@@ -865,9 +865,13 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     return true;
   }
 
-  // Find any previous declaration with this name.
+  // Find any previous declaration with this name. For a friend with no
+  // scope explicitly specified, we only look for tag declarations (per
+  // C++11 [basic.lookup.elab]p2).
   DeclContext *SemanticContext;
-  LookupResult Previous(*this, Name, NameLoc, LookupTagName,
+  LookupResult Previous(*this, Name, NameLoc,
+                        (SS.isEmpty() && TUK == TUK_Friend)
+                          ? LookupTagName : LookupOrdinaryName,
                         ForRedeclaration);
   if (SS.isNotEmpty() && !SS.isInvalid()) {
     SemanticContext = computeDeclContext(SS, true);
@@ -893,7 +897,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
         Invalid = true;
     } else if (TUK != TUK_Friend && TUK != TUK_Reference)
       diagnoseQualifiedDeclaration(SS, SemanticContext, Name, NameLoc);
-        
+
     LookupQualifiedName(Previous, SemanticContext);
   } else {
     SemanticContext = CurContext;
@@ -948,6 +952,21 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // declaration.
         PrevDecl = PrevClassTemplate = 0;
         SemanticContext = OutermostContext;
+
+        // Check that the chosen semantic context doesn't already contain a
+        // declaration of this name as a non-tag type.
+        LookupResult Previous(*this, Name, NameLoc, LookupOrdinaryName,
+                              ForRedeclaration);
+        DeclContext *LookupContext = SemanticContext;
+        while (LookupContext->isTransparentContext())
+          LookupContext = LookupContext->getLookupParent();
+        LookupQualifiedName(Previous, LookupContext);
+
+        if (Previous.isAmbiguous())
+          return true;
+
+        if (Previous.begin() != Previous.end())
+          PrevDecl = (*Previous.begin())->getUnderlyingDecl();
       }
     }
 
