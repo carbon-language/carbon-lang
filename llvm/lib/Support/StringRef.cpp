@@ -272,14 +272,22 @@ static unsigned GetAutoSenseRadix(StringRef &Str) {
   if (Str.startswith("0x")) {
     Str = Str.substr(2);
     return 16;
-  } else if (Str.startswith("0b")) {
+  }
+  
+  if (Str.startswith("0b")) {
     Str = Str.substr(2);
     return 2;
-  } else if (Str.startswith("0")) {
-    return 8;
-  } else {
-    return 10;
   }
+
+  if (Str.startswith("0o")) {
+    Str = Str.substr(2);
+    return 8;
+  }
+
+  if (Str.startswith("0"))
+    return 8;
+  
+  return 10;
 }
 
 
