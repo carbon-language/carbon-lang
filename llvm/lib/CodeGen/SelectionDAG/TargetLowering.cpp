@@ -940,9 +940,12 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
   unsigned NumElts = VT.getVectorNumElements();
 
   // If there is a wider vector type with the same element type as this one,
-  // we should widen to that legal vector type.  This handles things like
-  // <2 x float> -> <4 x float>.
-  if (NumElts != 1 && getTypeAction(Context, VT) == TypeWidenVector) {
+  // or a promoted vector type that has the same number of elements which
+  // are wider, then we should convert to that legal vector type.
+  // This handles things like <2 x float> -> <4 x float> and
+  // <4 x i1> -> <4 x i32>.
+  LegalizeTypeAction TA = getTypeAction(Context, VT);
+  if (NumElts != 1 && (TA == TypeWidenVector || TA == TypePromoteInteger)) {
     RegisterVT = getTypeToTransformTo(Context, VT);
     if (isTypeLegal(RegisterVT)) {
       IntermediateVT = RegisterVT;
