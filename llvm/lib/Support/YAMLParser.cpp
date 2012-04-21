@@ -658,7 +658,7 @@ std::string yaml::escape(StringRef Input) {
       EscapedInput += "\\r";
     else if (*i == 0x1B)
       EscapedInput += "\\e";
-    else if (*i >= 0 && *i < 0x20) { // Control characters not handled above.
+    else if ((unsigned char)*i < 0x20) { // Control characters not handled above.
       std::string HexStr = utohexstr(*i);
       EscapedInput += "\\x" + std::string(2 - HexStr.size(), '0') + HexStr;
     } else if (*i & 0x80) { // UTF-8 multiple code unit subsequence.
