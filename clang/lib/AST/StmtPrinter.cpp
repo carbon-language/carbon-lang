@@ -742,7 +742,7 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   case StringLiteral::UTF32: OS << 'U'; break;
   }
   OS << '"';
-  static char Hex[] = "0123456789ABCDEF";
+  static const char Hex[] = "0123456789ABCDEF";
 
   unsigned LastSlashX = Str->getLength();
   for (unsigned I = 0, N = Str->getLength(); I != N; ++I) {
