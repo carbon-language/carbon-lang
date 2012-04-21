@@ -331,6 +331,11 @@ public:
   /// cycle detection at the end of the TU.
   DelegatingCtorDeclsType DelegatingCtorDecls;
 
+  /// \brief All the destructors seen during a class definition that had their
+  /// exception spec computation delayed because it depended on an unparsed
+  /// exception spec.
+  SmallVector<CXXDestructorDecl*, 2> DelayedDestructorExceptionSpecs;
+
   /// \brief All the overriding destructors seen during a class definition
   /// (there could be multiple due to nested classes) that had their exception
   /// spec checks delayed, plus the overridden destructor.
@@ -3203,7 +3208,8 @@ public:
   /// C++11 says that user-defined destructors with no exception spec get one
   /// that looks as if the destructor was implicitly declared.
   void AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
-                                     CXXDestructorDecl *Destructor);
+                                     CXXDestructorDecl *Destructor,
+                                     bool WasDelayed = false);
 
   /// \brief Declare all inherited constructors for the given class.
   ///
@@ -4048,6 +4054,7 @@ public:
                                          SourceLocation LBrac,
                                          SourceLocation RBrac,
                                          AttributeList *AttrList);
+  void ActOnFinishCXXMemberDecls();
 
   void ActOnReenterTemplateScope(Scope *S, Decl *Template);
   void ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D);
