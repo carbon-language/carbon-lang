@@ -99,20 +99,20 @@ namespace redecl {
   int A; // expected-note {{here}}
   template<typename T> struct A; // expected-error {{different kind of symbol}}
 
-  int B;
+  int B; // expected-note {{here}}
   template<typename T> struct B { // expected-error {{different kind of symbol}}
   };
 
   template<typename T> struct F;
   template<typename T> struct K;
 
-  int G, H;
+  int G, H; // expected-note {{here}}
 
   struct S {
     int C; // expected-note {{here}}
     template<typename T> struct C; // expected-error {{different kind of symbol}}
 
-    int D;
+    int D; // expected-note {{here}}
     template<typename T> struct D { // expected-error {{different kind of symbol}}
     };
 
