@@ -3334,7 +3334,7 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
 
   ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(D);
 
-  if (!method || !isa<ObjCMethodDecl>(method)) {
+  if (!method) {
     S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
       << SourceRange(loc, loc) << attr.getName() << ExpectedMethod;
     return;
