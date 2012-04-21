@@ -73,6 +73,7 @@
 #include <stdlib.h>
 #include <vector>
 
+#define MAX_FRAMES 1024
 typedef void range_callback_t (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size);
 typedef void zone_callback_t (void *info, const malloc_zone_t *zone);
 
@@ -118,6 +119,8 @@ struct malloc_match
 
 std::vector<malloc_match> g_matches;
 const void *g_lookup_addr = 0;
+mach_vm_address_t g_stack_frames[MAX_FRAMES];
+uint32_t g_stack_frames_count = 0;
 
 //----------------------------------------------------------------------
 // task_peek

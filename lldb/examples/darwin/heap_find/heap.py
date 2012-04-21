@@ -20,14 +20,57 @@ import commands
 import optparse
 import os
 import shlex
+import symbolication # from lldb/examples/python/symbolication.py
 
+def load_dylib():
+    if lldb.target:
+        python_module_directory = os.path.dirname(__file__)
+        libheap_dylib_path = python_module_directory + '/libheap.dylib'
+        if not os.path.exists(libheap_dylib_path):
+            make_command = '(cd "%s" ; make)' % python_module_directory
+            print make_command
+            print commands.getoutput(make_command)
+        if os.path.exists(libheap_dylib_path):
+            libheap_dylib_spec = lldb.SBFileSpec(libheap_dylib_path)
+            if lldb.target.FindModule(libheap_dylib_spec):
+                return None # success, 'libheap.dylib' already loaded
+            if lldb.process:
+                state = lldb.process.state
+                if state == lldb.eStateStopped:
+                    (libheap_dylib_path)
+                    error = lldb.SBError()
+                    image_idx = lldb.process.LoadImage(libheap_dylib_spec, error)
+                    if error.Success():
+                        return None
+                    else:
+                        if error:
+                            return 'error: %s' % error
+                        else:
+                            return 'error: "process load \'%s\'" failed' % libheap_dylib_spec
+                else:
+                    return 'error: process is not stopped'
+            else:
+                return 'error: invalid process'
+        else:
+            return 'error: file does not exist "%s"' % libheap_dylib_path
+    else:
+        return 'error: invalid target'
+        
+    debugger.HandleCommand('process load "%s"' % libheap_dylib_path)
+    
 def add_common_options(parser):
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('-o', '--po', action='store_true', dest='print_object_description', help='print the object descriptions for any matches', default=False)
     parser.add_option('-m', '--memory', action='store_true', dest='memory', help='dump the memory for each matching block', default=False)
     parser.add_option('-f', '--format', type='string', dest='format', help='the format to use when dumping memory if --memory is specified', default=None)
+    parser.add_option('-s', '--stack', action='store_true', dest='stack', help='gets the stack that allocated each malloc block if MallocStackLogging is enabled', default=False)
+    #parser.add_option('-S', '--stack-history', action='store_true', dest='stack_history', help='gets the stack history for all allocations whose start address matches each malloc block if MallocStackLogging is enabled', default=False)
     
 def heap_search(options, arg_str):
+    dylid_load_err = load_dylib()
+    if dylid_load_err:
+        print dylid_load_err
+        return
     expr = None
     arg_str_description = arg_str
     default_memory_format = "Y" # 'Y' is "bytes with ASCII" format
@@ -128,6 +171,41 @@ def heap_search(options, arg_str):
                     memory_command = "memory read -f %s 0x%x 0x%x" % (memory_format, malloc_addr, malloc_addr + malloc_size)
                     lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
                     print cmd_result.GetOutput()
+                if options.stack:
+                    symbolicator = symbolication.Symbolicator()
+                    symbolicator.target = lldb.target
+                    expr_str = "g_stack_frames_count = sizeof(g_stack_frames)/sizeof(uint64_t); (int)__mach_stack_logging_get_frames((unsigned)mach_task_self(), 0x%xull, g_stack_frames, g_stack_frames_count, &g_stack_frames_count)" % (malloc_addr)
+                    #print expr_str
+                    expr = lldb.frame.EvaluateExpression (expr_str);
+                    expr_error = expr.GetError()
+                    if expr_error.Success():
+                        err = expr.unsigned
+                        if err:
+                            print 'error: __mach_stack_logging_get_frames() returned error %i' % (err)
+                        else:
+                            count_expr = lldb.frame.EvaluateExpression ("g_stack_frames_count")
+                            count = count_expr.unsigned
+                            #print 'g_stack_frames_count is %u' % (count)
+                            if count > 0:
+                                frame_idx = 0
+                                frames_expr = lldb.value(lldb.frame.EvaluateExpression ("g_stack_frames"))
+                                done = False
+                                for stack_frame_idx in range(count):
+                                    if not done:
+                                        frame_load_addr = int(frames_expr[stack_frame_idx])
+                                        if frame_load_addr >= 0x1000:
+                                            frames = symbolicator.symbolicate(frame_load_addr)
+                                            if frames:
+                                                for frame in frames:
+                                                    print '[%3u] %s' % (frame_idx, frame)
+                                                    frame_idx += 1
+                                            else:
+                                                print '[%3u] 0x%x' % (frame_idx, frame_load_addr)
+                                                frame_idx += 1
+                                        else:
+                                            done = True
+                    else:
+                        print 'error: %s' % (expr_error)
         else:
             print '%s %s was not found in any malloc blocks' % (options.type, arg_str)
     else:
@@ -209,8 +287,6 @@ def malloc_info(debugger, command, result, dict):
 def __lldb_init_module (debugger, dict):
     # This initializer is being run from LLDB in the embedded command interpreter
     # Add any commands contained in this module to LLDB
-    libheap_dylib_path = os.path.dirname(__file__) + '/libheap.dylib'
-    debugger.HandleCommand('process load "%s"' % libheap_dylib_path)
     debugger.HandleCommand('command script add -f heap.ptr_refs ptr_refs')
     debugger.HandleCommand('command script add -f heap.cstr_refs cstr_refs')
     debugger.HandleCommand('command script add -f heap.malloc_info malloc_info')
