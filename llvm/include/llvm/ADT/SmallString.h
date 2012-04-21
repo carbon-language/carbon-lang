@@ -45,7 +45,7 @@ public:
   /// @{
 
   /// Assign from a repeated element
-  void assign(unsigned NumElts, char Elt) {
+  void assign(size_t NumElts, char Elt) {
     this->SmallVectorImpl<char>::assign(NumElts, Elt);
   }
 
@@ -77,6 +77,11 @@ public:
   void append(in_iter S, in_iter E) {
     SmallVectorImpl<char>::append(S, E);
   }
+  
+  void append(size_t NumInputs, char Elt) {
+    SmallVectorImpl<char>::append(NumInputs, Elt);
+  }
+
 
   /// Append from a StringRef
   void append(StringRef RHS) {
