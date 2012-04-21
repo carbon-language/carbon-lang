@@ -436,7 +436,7 @@ Sema::ActOnDependentMemberExpr(Expr *BaseExpr, QualType BaseType,
     if (PT && (!getLangOpts().ObjC1 ||
                PT->getPointeeType()->isRecordType())) {
       assert(BaseExpr && "cannot happen with implicit member accesses");
-      Diag(NameInfo.getLoc(), diag::err_typecheck_member_reference_struct_union)
+      Diag(OpLoc, diag::err_typecheck_member_reference_struct_union)
         << BaseType << BaseExpr->getSourceRange();
       return ExprError();
     }
@@ -1418,7 +1418,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                             ObjCImpDecl, HasTemplateArgs);
   }
 
-  Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
+  Diag(OpLoc, diag::err_typecheck_member_reference_struct_union)
     << BaseType << BaseExpr.get()->getSourceRange();
 
   return ExprError();

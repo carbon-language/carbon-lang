@@ -157,3 +157,13 @@ namespace FuncInMemberExpr {
   Vec fun3(int x = 0);
   int test3() { return fun3.size(); } // expected-error {{base of member reference is a function; perhaps you meant to call it with no arguments}}
 }
+
+namespace DotForSemiTypo {
+void f(int i) {
+  // If the programmer typo'd '.' for ';', make sure we point at the '.' rather
+  // than the "field name" (whatever the first token on the next line happens to
+  // be).
+  int j = i. // expected-error {{member reference base type 'int' is not a structure or union}}
+  j = 0;
+}
+}
