@@ -700,9 +700,6 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
 
       // Output the extern for the instance.
       OS << "  extern const TargetRegisterClass " << Name << "RegClass;\n";
-      // Output the extern for the pointer to the instance (should remove).
-      OS << "  static const TargetRegisterClass * const " << Name
-         << "RegisterClass = &" << Name << "RegClass;\n";
     }
     OS << "} // end of namespace " << TargetName << "\n\n";
   }
