@@ -595,12 +595,12 @@ void ModuleLinker::computeTypeMapping() {
   // example.  When the source module got loaded into the same LLVMContext, if
   // it had the same type, it would have been renamed to "%foo.42 = { i32 }".
   std::vector<StructType*> SrcStructTypes;
-  SrcM->findUsedStructTypes(SrcStructTypes);
+  SrcM->findUsedStructTypes(SrcStructTypes, true);
   SmallPtrSet<StructType*, 32> SrcStructTypesSet(SrcStructTypes.begin(),
                                                  SrcStructTypes.end());
 
   std::vector<StructType*> DstStructTypes;
-  DstM->findUsedStructTypes(DstStructTypes);
+  DstM->findUsedStructTypes(DstStructTypes, true);
   SmallPtrSet<StructType*, 32> DstStructTypesSet(DstStructTypes.begin(),
                                                  DstStructTypes.end());
 

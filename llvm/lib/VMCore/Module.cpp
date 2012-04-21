@@ -483,9 +483,10 @@ namespace {
     DenseSet<Type*> VisitedTypes;
     
     std::vector<StructType*> &StructTypes;
+    bool OnlyNamed;
   public:
-    TypeFinder(std::vector<StructType*> &structTypes)
-      : StructTypes(structTypes) {}
+    TypeFinder(std::vector<StructType*> &structTypes, bool onlyNamed)
+      : StructTypes(structTypes), OnlyNamed(onlyNamed) {}
     
     void run(const Module &M) {
       // Get types from global variables.
@@ -545,7 +546,8 @@ namespace {
       
       // If this is a structure or opaque type, add a name for the type.
       if (StructType *STy = dyn_cast<StructType>(Ty))
-        StructTypes.push_back(STy);
+        if (!OnlyNamed || STy->hasName())
+          StructTypes.push_back(STy);
       
       // Recursively walk all contained types.
       for (Type::subtype_iterator I = Ty->subtype_begin(),
@@ -590,6 +592,7 @@ namespace {
   };
 } // end anonymous namespace
 
-void Module::findUsedStructTypes(std::vector<StructType*> &StructTypes) const {
-  TypeFinder(StructTypes).run(*this);
+void Module::findUsedStructTypes(std::vector<StructType*> &StructTypes,
+                                 bool OnlyNamed) const {
+  TypeFinder(StructTypes, OnlyNamed).run(*this);
 }
