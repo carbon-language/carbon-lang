@@ -631,3 +631,16 @@ namespace test26 {
   // CHECK: define void @_ZN6test261CIiE1fEv
   // CHECK-HIDDEN: define void @_ZN6test261CIiE1fEv
 }
+
+namespace test31 {
+  struct A {
+    struct HIDDEN B {
+      static void DEFAULT baz();
+    };
+  };
+  void f() {
+    A::B::baz();
+  }
+  // CHECK: declare void @_ZN6test311A1B3bazEv()
+  // CHECK-HIDDEN: declare void @_ZN6test311A1B3bazEv()
+}
