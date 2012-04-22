@@ -134,6 +134,19 @@ static SDValue Insert128BitVector(SDValue Result,
   return SDValue();
 }
 
+/// Concat two 128-bit vectors into a 256 bit vector using VINSERTF128
+/// instructions. This is used because creating CONCAT_VECTOR nodes of
+/// BUILD_VECTORS returns a larger BUILD_VECTOR while we're trying to lower
+/// large BUILD_VECTORS.
+static SDValue Concat128BitVectors(SDValue V1, SDValue V2, EVT VT,
+                                   unsigned NumElems, SelectionDAG &DAG,
+                                   DebugLoc dl) {
+  SDValue V = Insert128BitVector(DAG.getUNDEF(VT), V1,
+                                 DAG.getConstant(0, MVT::i32), DAG, dl);
+  return Insert128BitVector(V, V2, DAG.getConstant(NumElems/2, MVT::i32),
+                            DAG, dl);
+}
+
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
@@ -4207,10 +4220,7 @@ static SDValue getOnesVector(EVT VT, bool HasAVX2, SelectionDAG &DAG,
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops, 8);
     } else { // AVX
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
-      SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, MVT::v8i32),
-                                Vec, DAG.getConstant(0, MVT::i32), DAG, dl);
-      Vec = Insert128BitVector(InsV, Vec,
-                    DAG.getConstant(4 /* NumElems/2 */, MVT::i32), DAG, dl);
+      Vec = Concat128BitVectors(Vec, Vec, MVT::v8i32, 8, DAG, dl);
     }
   } else {
     Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
@@ -4348,10 +4358,7 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   // into the low and high part. This is necessary because we want
   // to use VPERM* to shuffle the vectors
   if (Size == 256) {
-    SDValue InsV = Insert128BitVector(DAG.getUNDEF(SrcVT), V1,
-                         DAG.getConstant(0, MVT::i32), DAG, dl);
-    V1 = Insert128BitVector(InsV, V1,
-               DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
+    V1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, SrcVT, V1, V1);
   }
 
   return getLegalSplat(DAG, V1, EltNo);
@@ -5214,10 +5221,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
                                 NumElems/2);
 
     // Recreate the wider vector with the lower and upper part.
-    SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Lower,
-                                DAG.getConstant(0, MVT::i32), DAG, dl);
-    return Insert128BitVector(Vec, Upper, DAG.getConstant(NumElems/2, MVT::i32),
-                              DAG, dl);
+    return Concat128BitVectors(Lower, Upper, VT, NumElems, DAG, dl);
   }
 
   // Let legalizer expand 2-wide build_vectors.
@@ -5384,10 +5388,7 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   SDValue V2 = Op.getOperand(1);
   unsigned NumElems = ResVT.getVectorNumElements();
 
-  SDValue V = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, ResVT), V1,
-                                 DAG.getConstant(0, MVT::i32), DAG, dl);
-  return Insert128BitVector(V, V2, DAG.getConstant(NumElems/2, MVT::i32),
-                            DAG, dl);
+  return Concat128BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
 }
 
 SDValue
@@ -6050,10 +6051,7 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   }
 
   // Concatenate the result back
-  SDValue V = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Shufs[0],
-                                 DAG.getConstant(0, MVT::i32), DAG, dl);
-  return Insert128BitVector(V, Shufs[1],DAG.getConstant(NumLaneElems, MVT::i32),
-                            DAG, dl);
+  return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Shufs[0], Shufs[1]);
 }
 
 /// LowerVECTOR_SHUFFLE_128v4 - Handle all 128-bit wide vectors with
