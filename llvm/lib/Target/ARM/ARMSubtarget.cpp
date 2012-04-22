@@ -67,6 +67,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , HasDataBarrier(false)
   , Pref32BitThumb(false)
   , AvoidCPSRPartialUpdate(false)
+  , HasRAS(false)
   , HasMPExtension(false)
   , FPOnlySP(false)
   , AllowsUnalignedMem(false)
