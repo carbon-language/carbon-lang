@@ -75,7 +75,7 @@ static SDValue Extract128BitVector(SDValue Vec,
 
   // Extract from UNDEF is UNDEF.
   if (Vec.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, dl, ResultVT);
+    return DAG.getUNDEF(ResultVT);
 
   if (isa<ConstantSDNode>(Idx)) {
     unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
@@ -6962,7 +6962,7 @@ X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     Op = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Op.getOperand(0));
 
     // Insert the 128-bit vector.
-    return Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, OpVT), Op,
+    return Insert128BitVector(DAG.getUNDEF(OpVT), Op,
                               DAG.getConstant(0, MVT::i32),
                               DAG, dl);
   }
@@ -12965,16 +12965,17 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   if (isShuffleHigh128VectorInsertLow(SVOp)) {
     SDValue V = Extract128BitVector(V1, DAG.getConstant(NumElems/2, MVT::i32),
                                     DAG, dl);
-    SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT),
-                                      V, DAG.getConstant(0, MVT::i32), DAG, dl);
+    SDValue InsV = Insert128BitVector(DAG.getUNDEF(VT), V,
+                                      DAG.getConstant(0, MVT::i32), DAG, dl);
     return DCI.CombineTo(N, InsV);
   }
 
   // vector_shuffle <u, u, u, u, 0, 1, 2, 3> or <u, u, 0, 1>
   if (isShuffleLow128VectorInsertHigh(SVOp)) {
     SDValue V = Extract128BitVector(V1, DAG.getConstant(0, MVT::i32), DAG, dl);
-    SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT),
-                             V, DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
+    SDValue InsV = Insert128BitVector(DAG.getUNDEF(VT), V,
+                                      DAG.getConstant(NumElems/2, MVT::i32),
+                                      DAG, dl);
     return DCI.CombineTo(N, InsV);
   }
 
