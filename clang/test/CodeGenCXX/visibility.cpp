@@ -5,6 +5,20 @@
 #define PROTECTED __attribute__((visibility("protected")))
 #define DEFAULT __attribute__((visibility("default")))
 
+namespace test30 {
+  // When H is hidden, it should make X hidden, even if the template argument
+  // is not.
+  struct H {
+  };
+  template<H *T>
+  struct X {
+  };
+  H DEFAULT a;
+  X<&a> b;
+  // CHECK: _ZN6test301bE = global
+  // CHECK-HIDDEN: _ZN6test301bE = hidden global
+}
+
 namespace test25 {
   template<typename T>
   struct X {

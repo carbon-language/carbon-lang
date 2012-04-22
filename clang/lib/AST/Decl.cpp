@@ -423,9 +423,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   //     - a template, unless it is a function template that has
   //       internal linkage (Clause 14);
   } else if (const TemplateDecl *temp = dyn_cast<TemplateDecl>(D)) {
-    if (!OnlyTemplate)
-      LV.merge(getLVForTemplateParameterList(temp->getTemplateParameters()));
-
+    LV.merge(getLVForTemplateParameterList(temp->getTemplateParameters()));
   //     - a namespace (7.3), unless it is declared within an unnamed
   //       namespace.
   } else if (isa<NamespaceDecl>(D) && !D->isInAnonymousNamespace()) {
