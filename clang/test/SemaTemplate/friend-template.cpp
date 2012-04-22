@@ -267,3 +267,38 @@ namespace PR12557 {
 
   Bar<int> b;
 }
+
+namespace PR12585 {
+  struct A { };
+  template<typename> struct B {
+    template<typename> friend class A::does_not_exist; // \
+     // expected-error {{friend declaration of 'does_not_exist' does not match any declaration in 'PR12585::A'}}
+  };
+
+  struct C {
+    template<typename> struct D;
+  };
+  template<typename> class E {
+    int n;
+    template<typename> friend struct C::D;
+  };
+  template<typename T> struct C::D {
+    int f() {
+      return E<int>().n;
+    }
+  };
+  int n = C::D<void*>().f();
+
+  struct F {
+    template<int> struct G;
+  };
+  template<typename T> struct H {
+    // FIXME: As with cases above, the note here is on an unhelpful declaration,
+    // and should point to the declaration of G within F.
+    template<T> friend struct F::G; // \
+      // expected-error {{different type 'char' in template redeclaration}} \
+      // expected-note {{previous}}
+  };
+  H<int> h1; // ok
+  H<char> h2; // expected-note {{instantiation}}
+}

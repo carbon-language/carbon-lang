@@ -11,3 +11,11 @@ class F {
     a->x = 0;
   }
 };
+
+template<typename T> class PR12585::future_base::setter {
+public:
+  int f() {
+    return promise<T*>().k;
+  }
+};
+int k = PR12585::future_base::setter<int>().f();
