@@ -2847,7 +2847,7 @@ IdentifierInfo *Parser::TryParseCXX11AttributeIdentifier(SourceLocation &Loc) {
     StringRef Spelling = PP.getSpelling(Tok.getLocation(), SpellingBuf);
     if (std::isalpha(Spelling[0])) {
       Loc = ConsumeToken();
-      return &PP.getIdentifierTable().get(Spelling.data());
+      return &PP.getIdentifierTable().get(Spelling);
     }
     return 0;
   }
