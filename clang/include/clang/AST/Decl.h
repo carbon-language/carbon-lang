@@ -277,9 +277,15 @@ public:
       if (visibility() < V)
         return;
 
-      // Don't lose the explicit bit for nothing
-      if (visibility() == V && visibilityExplicit())
+      // FIXME: this
+      // If this visibility is explicit, keep it.
+      if (visibilityExplicit() && !E)
         return;
+
+      // should be replaced with this
+      // Don't lose the explicit bit for nothing
+      //      if (visibility() == V && visibilityExplicit())
+      //        return;
 
       setVisibility(V, E);
     }
