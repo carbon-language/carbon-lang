@@ -644,3 +644,15 @@ namespace test31 {
   // CHECK: declare void @_ZN6test311A1B3bazEv()
   // CHECK-HIDDEN: declare void @_ZN6test311A1B3bazEv()
 }
+
+namespace test32 {
+  struct HIDDEN A {
+    struct DEFAULT B {
+      void DEFAULT baz();
+    };
+  };
+  void A::B::baz() {
+  }
+  // CHECK: define void @_ZN6test321A1B3bazEv
+  // CHECK-HIDDEN: define void @_ZN6test321A1B3bazEv
+}
