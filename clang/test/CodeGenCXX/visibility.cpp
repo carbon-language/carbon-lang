@@ -672,3 +672,13 @@ namespace test33 {
   // CHECK: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
 }
+
+namespace test34 {
+  struct foo {
+  };
+  template<class T>
+  void bar() {}
+  template DEFAULT void bar<foo>();
+  // CHECK: define weak_odr void @_ZN6test343barINS_3fooEEEvv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test343barINS_3fooEEEvv
+}
