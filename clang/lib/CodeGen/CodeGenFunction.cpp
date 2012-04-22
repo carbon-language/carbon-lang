@@ -881,33 +881,49 @@ llvm::Value *CodeGenFunction::emitArrayLength(const ArrayType *origArrayType,
   llvm::ConstantInt *zero = Builder.getInt32(0);
   gepIndices.push_back(zero);
 
-  // It's more efficient to calculate the count from the LLVM
-  // constant-length arrays than to re-evaluate the array bounds.
   uint64_t countFromCLAs = 1;
+  QualType eltType;
 
   llvm::ArrayType *llvmArrayType =
-    cast<llvm::ArrayType>(
+    dyn_cast<llvm::ArrayType>(
       cast<llvm::PointerType>(addr->getType())->getElementType());
-  while (true) {
+  while (llvmArrayType) {
     assert(isa<ConstantArrayType>(arrayType));
     assert(cast<ConstantArrayType>(arrayType)->getSize().getZExtValue()
              == llvmArrayType->getNumElements());
 
     gepIndices.push_back(zero);
     countFromCLAs *= llvmArrayType->getNumElements();
+    eltType = arrayType->getElementType();
 
     llvmArrayType =
       dyn_cast<llvm::ArrayType>(llvmArrayType->getElementType());
-    if (!llvmArrayType) break;
-
     arrayType = getContext().getAsArrayType(arrayType->getElementType());
-    assert(arrayType && "LLVM and Clang types are out-of-synch");
+    assert((!llvmArrayType || arrayType) &&
+           "LLVM and Clang types are out-of-synch");
   }
 
-  baseType = arrayType->getElementType();
+  if (arrayType) {
+    // From this point onwards, the Clang array type has been emitted
+    // as some other type (probably a packed struct). Compute the array
+    // size, and just emit the 'begin' expression as a bitcast.
+    while (arrayType) {
+      countFromCLAs *=
+          cast<ConstantArrayType>(arrayType)->getSize().getZExtValue();
+      eltType = arrayType->getElementType();
+      arrayType = getContext().getAsArrayType(eltType);
+    }
 
-  // Create the actual GEP.
-  addr = Builder.CreateInBoundsGEP(addr, gepIndices, "array.begin");
+    unsigned AddressSpace =
+        cast<llvm::PointerType>(addr->getType())->getAddressSpace();
+    llvm::Type *BaseType = ConvertType(eltType)->getPointerTo(AddressSpace);
+    addr = Builder.CreateBitCast(addr, BaseType, "array.begin");
+  } else {
+    // Create the actual GEP.
+    addr = Builder.CreateInBoundsGEP(addr, gepIndices, "array.begin");
+  }
+
+  baseType = eltType;
 
   llvm::Value *numElements
     = llvm::ConstantInt::get(SizeTy, countFromCLAs);

@@ -1,6 +1,4 @@
-// REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -S %s -o %t-64.s
-// RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -emit-llvm %s -o - | FileCheck %s
 
 extern "C" int printf(...);
 
@@ -24,11 +22,24 @@ static S sarr1[4];
 S s2;
 S arr3[3];
 
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
-// CHECK-LP64: callq    ___cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: call {{.*}} @__cxa_atexit
+
+struct T {
+  double d;
+  int n;
+  ~T();
+};
+T t[2][3] = { 1.0, 2, 3.0, 4, 5.0, 6, 7.0, 8, 9.0, 10, 11.0, 12 };
+
+// CHECK: call {{.*}} @__cxa_atexit
+// CHECK: getelementptr inbounds ({{.*}} bitcast {{.*}}* @t to %struct.T*), i64 6
+// CHECK: call void @_ZN1TD1Ev
+// CHECK: icmp eq {{.*}} @t
+// CHECK: br i1 {{.*}}
