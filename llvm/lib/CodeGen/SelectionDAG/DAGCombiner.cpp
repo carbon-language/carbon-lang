@@ -4520,8 +4520,10 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     SDValue Op = N0.getOperand(0);
     if (Op.getValueType().bitsLT(VT)) {
       Op = DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, Op);
+      AddToWorkList(Op.getNode());
     } else if (Op.getValueType().bitsGT(VT)) {
       Op = DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, Op);
+      AddToWorkList(Op.getNode());
     }
     return DAG.getZeroExtendInReg(Op, N->getDebugLoc(),
                                   N0.getValueType().getScalarType());

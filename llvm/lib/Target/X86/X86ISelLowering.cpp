@@ -1222,6 +1222,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
+  setTargetDAGCombine(ISD::ANY_EXTEND);
   setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::TRUNCATE);
   setTargetDAGCombine(ISD::SINT_TO_FP);
@@ -13033,6 +13034,20 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
 
   if ((VT == MVT::v4i32) && (OpVT == MVT::v4i64)) {
 
+    if (Subtarget->hasAVX2()) {
+      // AVX2: v4i64 -> v4i32
+
+      // VPERMD
+      static const int ShufMask[] = {0, 2, 4, 6, -1, -1, -1, -1};
+
+      Op = DAG.getNode(ISD::BITCAST, dl, MVT::v8i32, Op);
+      Op = DAG.getVectorShuffle(MVT::v8i32, dl, Op, DAG.getUNDEF(MVT::v8i32),
+                                ShufMask);
+
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Op, DAG.getIntPtrConstant(0));
+    }
+
+    // AVX: v4i64 -> v4i32
     SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
                           DAG.getIntPtrConstant(0));
 
@@ -13056,6 +13071,40 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2);
   }
   if ((VT == MVT::v8i16) && (OpVT == MVT::v8i32)) {
+
+    if (Subtarget->hasAVX2()) {
+      // AVX2: v8i32 -> v8i16
+
+      Op = DAG.getNode(ISD::BITCAST, dl, MVT::v32i8, Op);
+      // PSHUFB
+      SmallVector<SDValue,32> pshufbMask;
+      for (unsigned i = 0; i < 2; ++i) {
+        pshufbMask.push_back(DAG.getConstant(0x0, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x1, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x4, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x5, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x8, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0x9, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0xc, MVT::i8));
+        pshufbMask.push_back(DAG.getConstant(0xd, MVT::i8));
+        for (unsigned j = 0; j < 8; ++j)
+          pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
+      }
+      SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v32i8, &pshufbMask[0], 
+                               32);
+      Op = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v32i8, Op, BV);
+
+      Op = DAG.getNode(ISD::BITCAST, dl, MVT::v4i64, Op);
+
+      static const int ShufMask[] = {0,  2,  -1,  -1};
+      Op = DAG.getVectorShuffle(MVT::v4i64, dl,  Op, DAG.getUNDEF(MVT::v4i64), 
+                                &ShufMask[0]);
+
+      Op =  DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
+                        DAG.getIntPtrConstant(0));
+
+      return DAG.getNode(ISD::BITCAST, dl, VT, Op);
+    }
 
     SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v4i32, Op,
                           DAG.getIntPtrConstant(0));
@@ -14822,15 +14871,6 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   if (!Subtarget->hasAVX()) 
     return SDValue();
 
-  // Optimize vectors in AVX mode
-  // Sign extend  v8i16 to v8i32 and
-  //              v4i32 to v4i64
-  //
-  // Divide input vector into two parts
-  // for v4i32 the shuffle mask will be { 0, 1, -1, -1} {2, 3, -1, -1}
-  // use vpmovsx instruction to extend v4i32 -> v2i64; v8i16 -> v4i32
-  // concat the vectors to original VT
-
   EVT VT = N->getValueType(0);
   SDValue Op = N->getOperand(0);
   EVT OpVT = Op.getValueType();
@@ -14838,6 +14878,19 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
 
   if ((VT == MVT::v4i64 && OpVT == MVT::v4i32) ||
       (VT == MVT::v8i32 && OpVT == MVT::v8i16)) {
+
+    if (Subtarget->hasAVX2()) {
+      return DAG.getNode(X86ISD::VSEXT_MOVL, dl, VT, Op);
+    }
+
+    // Optimize vectors in AVX mode
+    // Sign extend  v8i16 to v8i32 and
+    //              v4i32 to v4i64
+    //
+    // Divide input vector into two parts
+    // for v4i32 the shuffle mask will be { 0, 1, -1, -1} {2, 3, -1, -1}
+    // use vpmovsx instruction to extend v4i32 -> v2i64; v8i16 -> v4i32
+    // concat the vectors to original VT
 
     unsigned NumElems = OpVT.getVectorNumElements();
     SmallVector<int,8> ShufMask1(NumElems, -1);
@@ -14905,6 +14958,9 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
 
     if (((VT == MVT::v8i32) && (OpVT == MVT::v8i16)) ||
         ((VT == MVT::v4i64) && (OpVT == MVT::v4i32)))  {
+
+      if (Subtarget->hasAVX2())
+        return DAG.getNode(X86ISD::VZEXT_MOVL, dl, VT, N0);
 
       SDValue ZeroVec = getZeroVector(OpVT, Subtarget, DAG, dl);
       SDValue OpLo = getTargetShuffleNode(X86ISD::UNPCKL, dl, OpVT, N0, ZeroVec,
@@ -15108,6 +15164,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
+  case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, Subtarget);
   case ISD::SIGN_EXTEND:    return PerformSExtCombine(N, DAG, DCI, Subtarget);
   case ISD::TRUNCATE:       return PerformTruncateCombine(N, DAG, DCI);
