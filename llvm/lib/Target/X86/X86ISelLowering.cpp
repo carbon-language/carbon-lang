@@ -13042,15 +13042,16 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
       Op = DAG.getVectorShuffle(MVT::v8i32, dl, Op, DAG.getUNDEF(MVT::v8i32),
                                 ShufMask);
 
-      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Op, DAG.getIntPtrConstant(0));
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Op,
+                         DAG.getIntPtrConstant(0));
     }
 
     // AVX: v4i64 -> v4i32
     SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
-                          DAG.getIntPtrConstant(0));
+                               DAG.getIntPtrConstant(0));
 
     SDValue OpHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
-                          DAG.getIntPtrConstant(2));
+                               DAG.getIntPtrConstant(2));
 
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
@@ -13058,22 +13059,22 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     // PSHUFD
     static const int ShufMask1[] = {0, 2, 0, 0};
 
-    OpLo = DAG.getVectorShuffle(VT, dl, OpLo, DAG.getUNDEF(VT),
-                                ShufMask1);
-    OpHi = DAG.getVectorShuffle(VT, dl, OpHi, DAG.getUNDEF(VT),
-                                ShufMask1);
+    OpLo = DAG.getVectorShuffle(VT, dl, OpLo, DAG.getUNDEF(VT), ShufMask1);
+    OpHi = DAG.getVectorShuffle(VT, dl, OpHi, DAG.getUNDEF(VT), ShufMask1);
 
     // MOVLHPS
     static const int ShufMask2[] = {0, 1, 4, 5};
 
     return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2);
   }
+
   if ((VT == MVT::v8i16) && (OpVT == MVT::v8i32)) {
 
     if (Subtarget->hasAVX2()) {
       // AVX2: v8i32 -> v8i16
 
       Op = DAG.getNode(ISD::BITCAST, dl, MVT::v32i8, Op);
+
       // PSHUFB
       SmallVector<SDValue,32> pshufbMask;
       for (unsigned i = 0; i < 2; ++i) {
@@ -13088,27 +13089,27 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
         for (unsigned j = 0; j < 8; ++j)
           pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
       }
-      SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v32i8, &pshufbMask[0], 
-                               32);
+      SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v32i8,
+                               &pshufbMask[0], 32);
       Op = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v32i8, Op, BV);
 
       Op = DAG.getNode(ISD::BITCAST, dl, MVT::v4i64, Op);
 
       static const int ShufMask[] = {0,  2,  -1,  -1};
-      Op = DAG.getVectorShuffle(MVT::v4i64, dl,  Op, DAG.getUNDEF(MVT::v4i64), 
+      Op = DAG.getVectorShuffle(MVT::v4i64, dl,  Op, DAG.getUNDEF(MVT::v4i64),
                                 &ShufMask[0]);
 
-      Op =  DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
-                        DAG.getIntPtrConstant(0));
+      Op = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
+                       DAG.getIntPtrConstant(0));
 
       return DAG.getNode(ISD::BITCAST, dl, VT, Op);
     }
 
     SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v4i32, Op,
-                          DAG.getIntPtrConstant(0));
+                               DAG.getIntPtrConstant(0));
 
     SDValue OpHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v4i32, Op,
-                          DAG.getIntPtrConstant(4));
+                               DAG.getIntPtrConstant(4));
 
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpLo);
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpHi);
@@ -13117,11 +13118,9 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     static const int ShufMask1[] = {0,  1,  4,  5,  8,  9, 12, 13,
                                    -1, -1, -1, -1, -1, -1, -1, -1};
 
-    OpLo = DAG.getVectorShuffle(MVT::v16i8, dl, OpLo,
-                                DAG.getUNDEF(MVT::v16i8),
+    OpLo = DAG.getVectorShuffle(MVT::v16i8, dl, OpLo, DAG.getUNDEF(MVT::v16i8),
                                 ShufMask1);
-    OpHi = DAG.getVectorShuffle(MVT::v16i8, dl, OpHi,
-                                DAG.getUNDEF(MVT::v16i8),
+    OpHi = DAG.getVectorShuffle(MVT::v16i8, dl, OpHi, DAG.getUNDEF(MVT::v16i8),
                                 ShufMask1);
 
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
