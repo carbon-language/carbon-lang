@@ -5111,8 +5111,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
           Mask.push_back(Idx);
           for (unsigned i = 1; i != VecElts; ++i)
             Mask.push_back(i);
-          Item = DAG.getVectorShuffle(VecVT, dl, Item,
-                                      DAG.getUNDEF(Item.getValueType()),
+          Item = DAG.getVectorShuffle(VecVT, dl, Item, DAG.getUNDEF(VecVT),
                                       &Mask[0]);
         }
         return DAG.getNode(ISD::BITCAST, dl, VT, Item);
@@ -14409,8 +14408,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     for (unsigned i = 0; i < NumElems; i++) ShuffleVec[i*SizeRatio] = i;
 
     SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
-                                DAG.getUNDEF(SlicedVec.getValueType()),
-                                ShuffleVec.data());
+                                         DAG.getUNDEF(WideVecVT),
+                                         &ShuffleVec[0]);
 
     // Bitcast to the requested type.
     Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
@@ -14491,8 +14490,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
 
     SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, WideVec,
-                                DAG.getUNDEF(WideVec.getValueType()),
-                                ShuffleVec.data());
+                                         DAG.getUNDEF(WideVecVT),
+                                         &ShuffleVec[0]);
     // At this point all of the data is stored at the bottom of the
     // register. We now need to save it to mem.
 
@@ -14894,13 +14893,13 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
     for (unsigned i = 0; i < NumElems/2; i++) ShufMask1[i] = i;
 
     SDValue OpLo = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
-                                        ShufMask1.data());
+                                        &ShufMask1[0]);
 
     SmallVector<int,8> ShufMask2(NumElems, -1);
     for (unsigned i = 0; i < NumElems/2; i++) ShufMask2[i] = i + NumElems/2;
 
     SDValue OpHi = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
-                                        ShufMask2.data());
+                                        &ShufMask2[0]);
 
     EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(), 
                                   VT.getVectorNumElements()/2);
