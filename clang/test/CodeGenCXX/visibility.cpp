@@ -665,11 +665,10 @@ namespace test33 {
   template<typename T>
   class foo {
     void bar() {}
-    int a;
   };
-  struct __attribute__((visibility("hidden"))) zed {
+  struct HIDDEN zed {
   };
-  template class __attribute__((visibility("default"))) foo<zed>;
+  template class DEFAULT foo<zed>;
   // CHECK: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
 }
