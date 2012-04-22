@@ -660,3 +660,16 @@ namespace test32 {
   // CHECK: define void @_ZN6test321A1B3bazEv
   // CHECK-HIDDEN: define void @_ZN6test321A1B3bazEv
 }
+
+namespace test33 {
+  template<typename T>
+  class foo {
+    void bar() {}
+    int a;
+  };
+  struct __attribute__((visibility("hidden"))) zed {
+  };
+  template class __attribute__((visibility("default"))) foo<zed>;
+  // CHECK: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
+}

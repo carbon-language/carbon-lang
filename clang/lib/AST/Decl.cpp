@@ -407,8 +407,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
 
         // The arguments at which the template was instantiated.
         const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
-        LV.mergeWithMin(getLVForTemplateArgumentList(TemplateArgs,
-                                                     OnlyTemplate));
+        LV.merge(getLVForTemplateArgumentList(TemplateArgs,
+                                              OnlyTemplate));
       }
     }
 
