@@ -55,9 +55,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
                                            CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    DataLayout("e-p:32:32:32-"
-                "i64:64:64-i32:32:32-i16:16:16-i1:32:32-"
-                "f64:64:64-f32:32:32-a0:0-n32") ,
+    DataLayout("e-p:32:32:32-i64:64:64-i32:32:32-i16:16:16-i1:32:32-a0:0") ,
     Subtarget(TT, CPU, FS), InstrInfo(Subtarget), TLInfo(*this),
     TSInfo(*this),
     FrameLowering(Subtarget),
@@ -134,16 +132,11 @@ bool HexagonPassConfig::addPreEmitPass() {
     PM.add(createHexagonFixupHwLoops());
   }
 
-  PM.add(createHexagonNewValueJump());
-
   // Expand Spill code for predicate registers.
   PM.add(createHexagonExpandPredSpillCode(getHexagonTargetMachine()));
 
   // Split up TFRcondsets into conditional transfers.
   PM.add(createHexagonSplitTFRCondSets(getHexagonTargetMachine()));
-
-  // Create Packets.
-  PM.add(createHexagonPacketizer());
 
   return false;
 }

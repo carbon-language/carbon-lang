@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 // The Hexagon processor has no instructions that load or store predicate
-// registers directly.  So, when these registers must be spilled a general
-// purpose register must be found and the value copied to/from it from/to
-// the predicate register.  This code currently does not use the register
+// registers directly.  So, when these registers must be spilled a general 
+// purpose register must be found and the value copied to/from it from/to 
+// the predicate register.  This code currently does not use the register 
 // scavenger mechanism available in the allocator.  There are two registers
 // reserved to allow spilling/restoring predicate registers.  One is used to
 // hold the predicate value.  The other is used when stack frame offsets are
@@ -84,7 +84,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
         int SrcReg = MI->getOperand(2).getReg();
         assert(Hexagon::PredRegsRegClass.contains(SrcReg) &&
                "Not a predicate register");
-        if (!TII->isValidOffset(Hexagon::STriw_indexed, Offset)) {
+        if (!TII->isValidOffset(Hexagon::STriw, Offset)) {
           if (!TII->isValidOffset(Hexagon::ADD_ri, Offset)) {
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                     TII->get(Hexagon::CONST32_Int_Real),
@@ -95,7 +95,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_RsPd),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
             BuildMI(*MBB, MII, MI->getDebugLoc(),
-                    TII->get(Hexagon::STriw_indexed))
+                    TII->get(Hexagon::STriw))
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0).addReg(HEXAGON_RESERVED_REG_2);
           } else {
@@ -103,7 +103,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
                       HEXAGON_RESERVED_REG_1).addReg(FP).addImm(Offset);
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_RsPd),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::STriw_indexed))
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::STriw))
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0)
               .addReg(HEXAGON_RESERVED_REG_2);
@@ -111,7 +111,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
         } else {
           BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::TFR_RsPd),
                     HEXAGON_RESERVED_REG_2).addReg(SrcReg);
-          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::STriw_indexed)).
+          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::STriw)).
                     addReg(FP).addImm(Offset).addReg(HEXAGON_RESERVED_REG_2);
         }
         MII = MBB->erase(MI);

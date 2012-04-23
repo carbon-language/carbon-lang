@@ -11,25 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-//----------------------------------------------------------------------------//
-//                         Hexagon Intruction Flags +
-//
-//                        *** Must match BaseInfo.h ***
-//----------------------------------------------------------------------------//
-
-def TypeMEMOP  : Type<9>;
-def TypeNV     : Type<10>;
-def TypePREFIX : Type<30>;
-
-//----------------------------------------------------------------------------//
-//                         Intruction Classes Definitions +
-//----------------------------------------------------------------------------//
-
 //
 // NV type instructions.
 //
 class NVInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
-  : InstHexagon<outs, ins, asmstr, pattern, "", NV_V4, TypeNV> {
+  : InstHexagon<outs, ins, asmstr, pattern, "", NV_V4> {
   bits<5> rd;
   bits<5> rs;
   bits<13> imm13;
@@ -38,7 +24,7 @@ class NVInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
 // Definition of Post increment new value store.
 class NVInstPost_V4<dag outs, dag ins, string asmstr, list<dag> pattern,
                     string cstr>
-  : InstHexagon<outs, ins, asmstr, pattern, cstr, NV_V4, TypeNV> {
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, NV_V4> {
   bits<5> rd;
   bits<5> rs;
   bits<5> rt;
@@ -53,15 +39,8 @@ class NVInstPI_V4<dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
-  : InstHexagon<outs, ins, asmstr, pattern, "", MEM_V4, TypeMEMOP> {
+  : InstHexagon<outs, ins, asmstr, pattern, "",  MEM_V4> {
   bits<5> rd;
   bits<5> rs;
   bits<6> imm6;
-}
-
-class Immext<dag outs, dag ins, string asmstr, list<dag> pattern>
-  : InstHexagon<outs, ins, asmstr, pattern, "", PREFIX, TypePREFIX> {
-  let isCodeGenOnly = 1;
-
-  bits<26> imm26;
 }
