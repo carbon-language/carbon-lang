@@ -1341,5 +1341,20 @@ class Foo {
 
 }
 
+namespace PointerToMemberTest {
+
+class Graph {
+public:
+  Mu mu_;
+};
+
+class Node {
+public:
+  void foo() EXCLUSIVE_LOCKS_REQUIRED(&Graph::mu_);
+  int a GUARDED_BY(&Graph::mu_);
+};
+
+}
+
 } // end namespace TestMultiDecl
 

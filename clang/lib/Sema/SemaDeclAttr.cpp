@@ -313,7 +313,11 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
       continue;
     }
 
-    if (isa<StringLiteral>(ArgExp)) {
+    if (StringLiteral *StrLit = dyn_cast<StringLiteral>(ArgExp)) {
+      // Ignore empty strings without warnings
+      if (StrLit->getLength() == 0)
+        continue;
+
       // We allow constant strings to be used as a placeholder for expressions
       // that are not valid C++ syntax, but warn that they are ignored.
       S.Diag(Attr.getLoc(), diag::warn_thread_attribute_ignored) <<
@@ -322,6 +326,14 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
     }
 
     QualType ArgTy = ArgExp->getType();
+
+    // A pointer to member expression of the form  &MyClass::mu is treated
+    // specially -- we need to look at the type of the member.
+    if (UnaryOperator *UOp = dyn_cast<UnaryOperator>(ArgExp))
+      if (UOp->getOpcode() == UO_AddrOf)
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(UOp->getSubExpr()))
+          if (DRE->getDecl()->isCXXInstanceMember())
+            ArgTy = DRE->getDecl()->getType();
 
     // First see if we can just cast to record type, or point to record type.
     const RecordType *RT = getRecordType(ArgTy);
