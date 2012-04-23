@@ -72,8 +72,11 @@ BreakpointResolverFileLine::SearchCallback
     for (uint32_t i = 0; i < num_comp_units; i++)
     {
         CompUnitSP cu_sp (context.module_sp->GetCompileUnitAtIndex (i));
-        if (filter.CompUnitPasses(*(cu_sp.get())))
-            cu_sp->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything, sc_list);
+        if (cu_sp)
+        {
+            if (filter.CompUnitPasses(*cu_sp))
+                cu_sp->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything, sc_list);
+        }
     }
     
     while (sc_list.GetSize() > 0)

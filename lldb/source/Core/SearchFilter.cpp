@@ -247,25 +247,27 @@ SearchFilter::DoCUIteration (const ModuleSP &module_sp, const SymbolContext &con
         for (uint32_t i = 0; i < num_comp_units; i++)
         {
             CompUnitSP cu_sp (module_sp->GetCompileUnitAtIndex (i));
-            if (!CompUnitPasses (*(cu_sp.get())))
-                continue;
-
-            if (searcher.GetDepth () == Searcher::eDepthCompUnit)
+            if (cu_sp)
             {
-                SymbolContext matchingContext(m_target_sp, module_sp, cu_sp.get());
+                if (!CompUnitPasses (*(cu_sp.get())))
+                    continue;
 
-                shouldContinue = searcher.SearchCallback (*this, matchingContext, NULL, false);
+                if (searcher.GetDepth () == Searcher::eDepthCompUnit)
+                {
+                    SymbolContext matchingContext(m_target_sp, module_sp, cu_sp.get());
 
-                if (shouldContinue == Searcher::eCallbackReturnPop)
-                    return Searcher::eCallbackReturnContinue;
-                else if (shouldContinue == Searcher::eCallbackReturnStop)
-                    return shouldContinue;
+                    shouldContinue = searcher.SearchCallback (*this, matchingContext, NULL, false);
+
+                    if (shouldContinue == Searcher::eCallbackReturnPop)
+                        return Searcher::eCallbackReturnContinue;
+                    else if (shouldContinue == Searcher::eCallbackReturnStop)
+                        return shouldContinue;
+                }
+                else
+                {
+                    // FIXME Descend to block.
+                }
             }
-            else
-            {
-                // FIXME Descend to block.
-            }
-
         }
     }
     else
@@ -781,11 +783,14 @@ SearchFilterByModuleListAndCU::Search (Searcher &searcher)
                 {
                     CompUnitSP cu_sp = module_sp->GetCompileUnitAtIndex(cu_idx);
                     matchingContext.comp_unit = cu_sp.get();
-                    if (m_cu_spec_list.FindFileIndex(0, static_cast<FileSpec>(matchingContext.comp_unit), false) != UINT32_MAX)
+                    if (matchingContext.comp_unit)
                     {
-                        shouldContinue = DoCUIteration(module_sp, matchingContext, searcher);
-                        if (shouldContinue == Searcher::eCallbackReturnStop)
-                            return;
+                        if (m_cu_spec_list.FindFileIndex(0, *matchingContext.comp_unit, false) != UINT32_MAX)
+                        {
+                            shouldContinue = DoCUIteration(module_sp, matchingContext, searcher);
+                            if (shouldContinue == Searcher::eCallbackReturnStop)
+                                return;
+                        }
                     }
                 }
             }
