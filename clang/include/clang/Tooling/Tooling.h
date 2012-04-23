@@ -15,7 +15,7 @@
 //  all TUs in which the given files are compiled.
 //
 //  It is also possible to run a FrontendAction over a snippet of code by
-//  calling runSyntaxOnlyToolOnCode, which is useful for unit testing.
+//  calling runToolOnCode, which is useful for unit testing.
 //
 //  Applications that need more fine grained control over how to run
 //  multiple FrontendActions over code can use ToolInvocation.
