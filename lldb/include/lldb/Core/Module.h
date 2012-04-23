@@ -1016,6 +1016,9 @@ public:
     void                    
     LogMessage (Log *log, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
 
+    void                    
+    LogMessageVerboseBacktrace (Log *log, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
+    
     void
     ReportWarning (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 

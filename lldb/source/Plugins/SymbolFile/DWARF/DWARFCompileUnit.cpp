@@ -172,9 +172,9 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_LOOKUPS));
         if (log)
         {
-            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 
-                                                                    "DWARFCompileUnit::ExtractDIEsIfNeeded () for compile unit at .debug_info[0x%8.8x]", 
-                                                                    GetOffset());
+            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessageVerboseBacktrace (log.get(),
+                                                                                    "DWARFCompileUnit::ExtractDIEsIfNeeded () for compile unit at .debug_info[0x%8.8x]",
+                                                                                    GetOffset());
         }
     }
 

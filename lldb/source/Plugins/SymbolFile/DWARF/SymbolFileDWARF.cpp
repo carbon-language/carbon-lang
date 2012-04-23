@@ -1995,19 +1995,12 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
     LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO|DWARF_LOG_TYPE_COMPLETION));
     if (log)
     {
-        GetObjectFile()->GetModule()->LogMessage (log.get(),
-                                                  "0x%8.8llx: %s '%s' resolving forward declaration...", 
-                                                  MakeUserID(die->GetOffset()), 
-                                                  DW_TAG_value_to_name(tag), 
-                                                  type->GetName().AsCString());
+        GetObjectFile()->GetModule()->LogMessageVerboseBacktrace (log.get(),
+                                                                  "0x%8.8llx: %s '%s' resolving forward declaration...",
+                                                                  MakeUserID(die->GetOffset()),
+                                                                  DW_TAG_value_to_name(tag),
+                                                                  type->GetName().AsCString());
     
-        if (log->GetVerbose())
-        {
-            StreamString strm;
-            Host::Backtrace (strm, 1024);
-            if (strm.GetData())
-                log->PutCString(strm.GetData());
-        }
     }
     assert (clang_type);
     DWARFDebugInfoEntry::Attributes attributes;

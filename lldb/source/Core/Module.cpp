@@ -879,6 +879,24 @@ Module::LogMessage (Log *log, const char *format, ...)
     }
 }
 
+void
+Module::LogMessageVerboseBacktrace (Log *log, const char *format, ...)
+{
+    if (log)
+    {
+        StreamString log_message;
+        GetDescription(&log_message, lldb::eDescriptionLevelFull);
+        log_message.PutCString (": ");
+        va_list args;
+        va_start (args, format);
+        log_message.PrintfVarArg (format, args);
+        va_end (args);
+        if (log->GetVerbose())
+            Host::Backtrace (log_message, 1024);
+        log->PutCString(log_message.GetString().c_str());
+    }
+}
+
 bool
 Module::GetModified (bool use_cached_only)
 {
