@@ -4158,11 +4158,12 @@ static bool isZeroShuffle(ShuffleVectorSDNode *N) {
 static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
                              SelectionDAG &DAG, DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
+  unsigned Size = VT.getSizeInBits();
 
   // Always build SSE zero vectors as <4 x i32> bitcasted
   // to their dest type. This ensures they get CSE'd.
   SDValue Vec;
-  if (VT.getSizeInBits() == 128) {  // SSE
+  if (Size == 128) {  // SSE
     if (Subtarget->hasSSE2()) {  // SSE2
       SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
@@ -4170,7 +4171,7 @@ static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
       SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f32, Cst, Cst, Cst, Cst);
     }
-  } else if (VT.getSizeInBits() == 256) { // AVX
+  } else if (Size == 256) { // AVX
     if (Subtarget->hasAVX2()) { // AVX2
       SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
@@ -4182,7 +4183,9 @@ static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8f32, Ops, 8);
     }
-  }
+  } else
+    llvm_unreachable("Unexpected vector type");
+
   return DAG.getNode(ISD::BITCAST, dl, VT, Vec);
 }
 
@@ -4193,12 +4196,11 @@ static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
 static SDValue getOnesVector(EVT VT, bool HasAVX2, SelectionDAG &DAG,
                              DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
-  assert((VT.is128BitVector() || VT.is256BitVector())
-         && "Expected a 128-bit or 256-bit vector type");
+  unsigned Size = VT.getSizeInBits();
 
   SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
   SDValue Vec;
-  if (VT.getSizeInBits() == 256) {
+  if (Size == 256) {
     if (HasAVX2) { // AVX2
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops, 8);
@@ -4206,9 +4208,10 @@ static SDValue getOnesVector(EVT VT, bool HasAVX2, SelectionDAG &DAG,
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
       Vec = Concat128BitVectors(Vec, Vec, MVT::v8i32, 8, DAG, dl);
     }
-  } else {
+  } else if (Size == 128) {
     Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
-  }
+  } else
+    llvm_unreachable("Unexpected vector type");
 
   return DAG.getNode(ISD::BITCAST, dl, VT, Vec);
 }
@@ -4285,15 +4288,14 @@ static SDValue PromoteSplati8i16(SDValue V, SelectionDAG &DAG, int &EltNo) {
 static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
   EVT VT = V.getValueType();
   DebugLoc dl = V.getDebugLoc();
-  assert((VT.getSizeInBits() == 128 || VT.getSizeInBits() == 256)
-         && "Vector size not supported");
+  unsigned Size = VT.getSizeInBits();
 
-  if (VT.getSizeInBits() == 128) {
+  if (Size == 128) {
     V = DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, V);
     int SplatMask[4] = { EltNo, EltNo, EltNo, EltNo };
     V = DAG.getVectorShuffle(MVT::v4f32, dl, V, DAG.getUNDEF(MVT::v4f32),
                              &SplatMask[0]);
-  } else {
+  } else if (Size == 256) {
     // To use VPERMILPS to splat scalars, the second half of indicies must
     // refer to the higher part, which is a duplication of the lower one,
     // because VPERMILPS can only handle in-lane permutations.
@@ -4303,7 +4305,8 @@ static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
     V = DAG.getNode(ISD::BITCAST, dl, MVT::v8f32, V);
     V = DAG.getVectorShuffle(MVT::v8f32, dl, V, DAG.getUNDEF(MVT::v8f32),
                              &SplatMask[0]);
-  }
+  } else
+    llvm_unreachable("Vector size not supported");
 
   return DAG.getNode(ISD::BITCAST, dl, VT, V);
 }
