@@ -716,6 +716,12 @@ bool HexagonInstrInfo::isExtended(const MachineInstr *MI) const {
 
     // TFR_FI
     case Hexagon::TFR_FI_immext_V4:
+
+    // TFRI_F
+    case Hexagon::TFRI_f:
+    case Hexagon::TFRI_cPt_f:
+    case Hexagon::TFRI_cNotPt_f:
+    case Hexagon::CONST64_Float_Real:
       return true;
   }
 }
@@ -1893,6 +1899,9 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::TFR:
     return !invertPredicate ? Hexagon::TFR_cPt :
                               Hexagon::TFR_cNotPt;
+  case Hexagon::TFRI_f:
+    return !invertPredicate ? Hexagon::TFRI_cPt_f :
+                              Hexagon::TFRI_cNotPt_f;
   case Hexagon::TFRI:
     return !invertPredicate ? Hexagon::TFRI_cPt :
                               Hexagon::TFRI_cNotPt;
@@ -2337,13 +2346,17 @@ isValidOffset(const int Opcode, const int Offset) const {
   switch(Opcode) {
 
   case Hexagon::LDriw:
+  case Hexagon::LDriw_f:
   case Hexagon::STriw:
+  case Hexagon::STriw_f:
     assert((Offset % 4 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
   case Hexagon::LDrid:
+  case Hexagon::LDrid_f:
   case Hexagon::STrid:
+  case Hexagon::STrid_f:
     assert((Offset % 8 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMD_OFFSET_MAX);

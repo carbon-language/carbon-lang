@@ -178,7 +178,7 @@ class MInst<dag outs, dag ins, string asmstr, list<dag> pattern>
 // Definition of the instruction class NOT CHANGED.
 // Name of the Instruction Class changed from M to XTYPE from V2/V3 to V4.
 class MInst_acc<dag outs, dag ins, string asmstr, list<dag> pattern,
-		string cstr>
+    string cstr>
     : InstHexagon<outs, ins, asmstr, pattern, cstr, M, TypeXTYPE> {
   bits<5> rd;
   bits<5> rs;
@@ -201,7 +201,7 @@ class SInst<dag outs, dag ins, string asmstr, list<dag> pattern>
 // Definition of the instruction class NOT CHANGED.
 // Name of the Instruction Class changed from S to XTYPE from V2/V3 to V4.
 class SInst_acc<dag outs, dag ins, string asmstr, list<dag> pattern,
-		string cstr>
+   string cstr>
   : InstHexagon<outs, ins, asmstr, pattern, cstr, S, TypeXTYPE> {
 //  : InstHexagon<outs, ins, asmstr, pattern, cstr,  S> {
 //  : InstHexagon<outs, ins, asmstr, pattern, cstr, !if(V4T, XTYPE_V4, S)> {
