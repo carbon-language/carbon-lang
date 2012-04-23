@@ -47,15 +47,15 @@ void DIBuilder::finalize() {
   DIType(TempSubprograms).replaceAllUsesWith(SPs);
   for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
     DISubprogram SP(SPs.getElement(i));
+    SmallVector<Value *, 4> Variables;
     if (NamedMDNode *NMD = getFnSpecificMDNode(M, SP)) {
-      SmallVector<Value *, 4> Variables;
       for (unsigned ii = 0, ee = NMD->getNumOperands(); ii != ee; ++ii)
         Variables.push_back(NMD->getOperand(ii));
-      if (MDNode *Temp = SP.getVariablesNodes()) {
-        DIArray AV = getOrCreateArray(Variables);
-        DIType(Temp).replaceAllUsesWith(AV);
-      }
       NMD->eraseFromParent();
+    }
+    if (MDNode *Temp = SP.getVariablesNodes()) {
+      DIArray AV = getOrCreateArray(Variables);
+      DIType(Temp).replaceAllUsesWith(AV);
     }
   }
 
@@ -677,12 +677,13 @@ DIType DIBuilder::createTemporaryType(DIFile F) {
 
 /// createForwardDecl - Create a temporary forward-declared type that
 /// can be RAUW'd if the full type is seen.
-DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIFile F,
+DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
+                                    DIDescriptor Scope, DIFile F,
                                     unsigned Line, unsigned RuntimeLang) {
   // Create a temporary MDNode.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
-    NULL, // TheCU
+    getNonCompileUnitScope(Scope),
     MDString::get(VMContext, Name),
     F,
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
