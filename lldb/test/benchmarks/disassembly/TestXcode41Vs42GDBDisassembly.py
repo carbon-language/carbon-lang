@@ -6,13 +6,13 @@ import lldb
 import pexpect
 from lldbbench import *
 
-class FlintVsSlateGDBDisassembly(BenchBase):
+class XCode41Vs42GDBDisassembly(BenchBase):
 
     mydir = os.path.join("benchmarks", "disassembly")
 
     def setUp(self):
         BenchBase.setUp(self)
-        self.gdb_41_exe = '/Flint/usr/bin/gdb'
+        self.gdb_41_exe = '/Xcode41/usr/bin/gdb'
         self.gdb_42_exe = '/Developer/usr/bin/gdb'
         self.exe = self.lldbHere
         self.function = 'Driver::MainLoop()'
