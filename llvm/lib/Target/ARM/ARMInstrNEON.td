@@ -6562,17 +6562,6 @@ def : NEONInstAlias<"vclt${p}.u32 $Qd, $Qn, $Qm",
 def : NEONInstAlias<"vclt${p}.f32 $Qd, $Qn, $Qm",
                     (VCGTfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
 
-// Two-operand variants for VQDMULH
-def : NEONInstAlias<"vqdmulh${p}.s16 $Vdn, $Vm",
-                    (VQDMULHv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
-def : NEONInstAlias<"vqdmulh${p}.s32 $Vdn, $Vm",
-                    (VQDMULHv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
-
-def : NEONInstAlias<"vqdmulh${p}.s16 $Vdn, $Vm",
-                    (VQDMULHv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
-def : NEONInstAlias<"vqdmulh${p}.s32 $Vdn, $Vm",
-                    (VQDMULHv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
-
 // Two-operand variants for VSRA.
     // Signed.
 def : NEONInstAlias<"vsra${p}.s8 $Vdm, $imm",
