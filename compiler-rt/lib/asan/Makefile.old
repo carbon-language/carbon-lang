@@ -121,7 +121,7 @@ endif
 # This will build libasan on linux for both x86_64 and i386 in the
 # desired location. The Mac library is already build by the clang's make.
 # $(CLANG_BUILD)/lib/clang/3.1/lib/$(OS)/libclang_rt.asan-$(ARCH).a
-LIBASAN_INST_DIR=$(CLANG_BUILD)/lib/clang/3.1/lib/$(OS)
+LIBASAN_INST_DIR=$(CLANG_BUILD)/lib/clang/3.2/lib/$(OS)
 LIBASAN_A=$(LIBASAN_INST_DIR)/libclang_rt.asan-$(ARCH).a
 
 BLACKLIST=
