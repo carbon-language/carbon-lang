@@ -33,7 +33,7 @@ EnableMemOps(
 
 HexagonSubtarget::HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS):
   HexagonGenSubtargetInfo(TT, CPU, FS),
-  HexagonArchVersion(V1),
+  HexagonArchVersion(V2),
   CPUString(CPU.str()) {
   ParseSubtargetFeatures(CPU, FS);
 

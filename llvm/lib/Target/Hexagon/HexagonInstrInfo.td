@@ -121,10 +121,10 @@ multiclass CMP32_rr_ri_u9<string OpcStr, PatFrag OpNode> {
                  [(set PredRegs:$dst, (OpNode IntRegs:$b, u9ImmPred:$c))]>;
 }
 
-multiclass CMP32_ri_u9<string OpcStr, PatFrag OpNode> {
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u9Imm:$c),
+multiclass CMP32_ri_u8<string OpcStr, PatFrag OpNode> {
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u8Imm:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
-                 [(set PredRegs:$dst, (OpNode IntRegs:$b, u9ImmPred:$c))]>;
+                 [(set PredRegs:$dst, (OpNode IntRegs:$b, u8ImmPred:$c))]>;
 }
 
 multiclass CMP32_ri_s8<string OpcStr, PatFrag OpNode> {
@@ -548,9 +548,10 @@ def TFRI_cdnNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
 defm CMPGTU : CMP32_rr_ri_u9<"cmp.gtu", setugt>;
 defm CMPGT : CMP32_rr_ri_s10<"cmp.gt", setgt>;
 defm CMPLT : CMP32_rr<"cmp.lt", setlt>;
+defm CMPLTU : CMP32_rr<"cmp.ltu", setult>;
 defm CMPEQ : CMP32_rr_ri_s10<"cmp.eq", seteq>;
 defm CMPGE : CMP32_ri_s8<"cmp.ge", setge>;
-defm CMPGEU : CMP32_ri_u9<"cmp.geu", setuge>;
+defm CMPGEU : CMP32_ri_u8<"cmp.geu", setuge>;
 //===----------------------------------------------------------------------===//
 // ALU32/PRED -
 //===----------------------------------------------------------------------===//

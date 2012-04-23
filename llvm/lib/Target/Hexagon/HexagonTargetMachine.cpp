@@ -132,6 +132,8 @@ bool HexagonPassConfig::addPreEmitPass() {
     PM.add(createHexagonFixupHwLoops());
   }
 
+  PM.add(createHexagonNewValueJump());
+
   // Expand Spill code for predicate registers.
   PM.add(createHexagonExpandPredSpillCode(getHexagonTargetMachine()));
 

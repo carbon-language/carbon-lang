@@ -2523,6 +2523,26 @@ isSpillPredRegOp(const MachineInstr *MI) const {
   }
 }
 
+bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+    case Hexagon::CMPEQrr:
+    case Hexagon::CMPEQri:
+    case Hexagon::CMPLTrr:
+    case Hexagon::CMPGTrr:
+    case Hexagon::CMPGTri:
+    case Hexagon::CMPLTUrr:
+    case Hexagon::CMPGTUrr:
+    case Hexagon::CMPGTUri:
+    case Hexagon::CMPGEri:
+    case Hexagon::CMPGEUri:
+      return true;
+
+    default:
+      return false;
+  }
+  return false;
+}
+
 bool HexagonInstrInfo::
 isConditionalTransfer (const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
