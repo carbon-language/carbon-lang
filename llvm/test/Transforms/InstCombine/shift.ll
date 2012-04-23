@@ -65,8 +65,17 @@ define i32 @test6(i32 %A) {
 ; CHECK: @test6
 ; CHECK-NEXT: mul i32 %A, 6
 ; CHECK-NEXT: ret i32
-        %B = shl i32 %A, 1      ;; convert to an mul instruction 
-        %C = mul i32 %B, 3             
+        %B = shl i32 %A, 1      ;; convert to an mul instruction
+        %C = mul i32 %B, 3
+        ret i32 %C
+}
+
+define i32 @test6a(i32 %A) {
+; CHECK: @test6a
+; CHECK-NEXT: mul i32 %A, 6
+; CHECK-NEXT: ret i32
+        %B = mul i32 %A, 3
+        %C = shl i32 %B, 1      ;; convert to an mul instruction
         ret i32 %C
 }
 
@@ -97,7 +106,9 @@ define i8 @test9(i8 %A) {
         ret i8 %C
 }
 
+;; This transformation is deferred to DAGCombine:
 ;; (A >> 7) << 7 === A & 128
+;; The shl may be valuable to scalar evolution.
 define i8 @test10(i8 %A) {
 ; CHECK: @test10
 ; CHECK-NEXT: and i8 %A, -128
@@ -107,11 +118,21 @@ define i8 @test10(i8 %A) {
         ret i8 %C
 }
 
+;; Allow the simplification when the lshr shift is exact.
+define i8 @test10a(i8 %A) {
+; CHECK: @test10a
+; CHECK-NEXT: ret i8 %A
+        %B = lshr exact i8 %A, 7
+        %C = shl i8 %B, 7
+        ret i8 %C
+}
+
+;; This transformation is deferred to DAGCombine:
 ;; (A >> 3) << 4 === (A & 0x1F) << 1
+;; The shl may be valuable to scalar evolution.
 define i8 @test11(i8 %A) {
 ; CHECK: @test11
-; CHECK-NEXT: mul i8 %A, 6
-; CHECK-NEXT: and i8
+; CHECK: shl i8
 ; CHECK-NEXT: ret i8
         %a = mul i8 %A, 3               ; <i8> [#uses=1]
         %B = lshr i8 %a, 3              ; <i8> [#uses=1]
@@ -119,6 +140,18 @@ define i8 @test11(i8 %A) {
         ret i8 %C
 }
 
+;; Allow the simplification in InstCombine when the lshr shift is exact.
+define i8 @test11a(i8 %A) {
+; CHECK: @test11a
+; CHECK-NEXT: mul i8 %A, 6
+; CHECK-NEXT: ret i8
+        %a = mul i8 %A, 3
+        %B = lshr exact i8 %a, 3
+        %C = shl i8 %B, 4
+        ret i8 %C
+}
+
+;; This is deferred to DAGCombine unless %B is single-use.
 ;; (A >> 8) << 8 === A & -256
 define i32 @test12(i32 %A) {
 ; CHECK: @test12
@@ -129,15 +162,26 @@ define i32 @test12(i32 %A) {
         ret i32 %C
 }
 
+;; This transformation is deferred to DAGCombine:
 ;; (A >> 3) << 4 === (A & -8) * 2
+;; The shl may be valuable to scalar evolution.
 define i8 @test13(i8 %A) {
 ; CHECK: @test13
-; CHECK-NEXT: mul i8 %A, 6
-; CHECK-NEXT: and i8
+; CHECK: shl i8
 ; CHECK-NEXT: ret i8
         %a = mul i8 %A, 3               ; <i8> [#uses=1]
         %B = ashr i8 %a, 3              ; <i8> [#uses=1]
         %C = shl i8 %B, 4               ; <i8> [#uses=1]
+        ret i8 %C
+}
+
+define i8 @test13a(i8 %A) {
+; CHECK: @test13a
+; CHECK-NEXT: mul i8 %A, 6
+; CHECK-NEXT: ret i8
+        %a = mul i8 %A, 3
+        %B = ashr exact i8 %a, 3
+        %C = shl i8 %B, 4
         ret i8 %C
 }
 
@@ -477,10 +521,11 @@ entry:
   %tmp49 = lshr i8 %tmp48, 5
   %tmp50 = mul i8 %tmp49, 64
   %tmp51 = xor i8 %tmp50, %tmp5
-; CHECK: and i8 %0, 16
   %tmp52 = and i8 %tmp51, -128
   %tmp53 = lshr i8 %tmp52, 7
+; CHECK: lshr i8 %tmp51, 7
   %tmp54 = mul i8 %tmp53, 16
+; CHECK: shl nuw nsw i8 %tmp53, 4
   %tmp55 = xor i8 %tmp54, %tmp51
 ; CHECK: ret i8 %tmp551
   ret i8 %tmp55

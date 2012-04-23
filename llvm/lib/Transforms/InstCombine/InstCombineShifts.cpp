@@ -529,6 +529,19 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     ShiftOp = 0;
   
   if (ShiftOp && isa<ConstantInt>(ShiftOp->getOperand(1))) {
+
+    // This is a constant shift of a constant shift. Be careful about hiding
+    // shl instructions behind bit masks. They are used to represent multiplies
+    // by a constant, and it is important that simple arithmetic expressions
+    // are still recognizable by scalar evolution.
+    //
+    // The transforms applied to shl are very similar to the transforms applied
+    // to mul by constant. We can be more aggressive about optimizing right
+    // shifts.
+    //
+    // Combinations of right and left shifts will still be optimized in
+    // DAGCombine where scalar evolution no longer applies.
+
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
     uint32_t ShiftAmt1 = ShiftAmt1C->getLimitedValue(TypeBits);
     uint32_t ShiftAmt2 = Op1->getLimitedValue(TypeBits);
@@ -554,13 +567,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     }
     
     if (ShiftAmt1 == ShiftAmt2) {
-      // If we have ((X >>? C) << C), turn this into X & (-1 << C).
-      if (I.getOpcode() == Instruction::Shl &&
-          ShiftOp->getOpcode() != Instruction::Shl) {
-        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt1));
-        return BinaryOperator::CreateAnd(X,
-                                         ConstantInt::get(I.getContext(),Mask));
-      }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
       if (I.getOpcode() == Instruction::LShr &&
           ShiftOp->getOpcode() == Instruction::Shl) {
@@ -570,28 +576,23 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       }
     } else if (ShiftAmt1 < ShiftAmt2) {
       uint32_t ShiftDiff = ShiftAmt2-ShiftAmt1;
-      
-      // (X >>? C1) << C2 --> X << (C2-C1) & (-1 << C2)
+
+      // (X >>?,exact C1) << C2 --> X << (C2-C1)
+      // The inexact version is deferred to DAGCombine so we don't hide shl
+      // behind a bit mask.
       if (I.getOpcode() == Instruction::Shl &&
-          ShiftOp->getOpcode() != Instruction::Shl) {
+          ShiftOp->getOpcode() != Instruction::Shl &&
+          ShiftOp->isExact()) {
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
         ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
-        if (ShiftOp->isExact()) {
-          // (X >>?,exact C1) << C2 --> X << (C2-C1)
-          BinaryOperator *NewShl = BinaryOperator::Create(Instruction::Shl,
-                                                          X, ShiftDiffCst);
-          NewShl->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
-          NewShl->setHasNoSignedWrap(I.hasNoSignedWrap());
-          return NewShl;
-        }
-        Value *Shift = Builder->CreateShl(X, ShiftDiffCst);
-        
-        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::CreateAnd(Shift,
-                                         ConstantInt::get(I.getContext(),Mask));
+        BinaryOperator *NewShl = BinaryOperator::Create(Instruction::Shl,
+                                                        X, ShiftDiffCst);
+        NewShl->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
+        NewShl->setHasNoSignedWrap(I.hasNoSignedWrap());
+        return NewShl;
       }
-      
+
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr &&
           ShiftOp->getOpcode() == Instruction::Shl) {
@@ -627,24 +628,19 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       assert(ShiftAmt2 < ShiftAmt1);
       uint32_t ShiftDiff = ShiftAmt1-ShiftAmt2;
 
-      // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C2)
+      // (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
+      // The inexact version is deferred to DAGCombine so we don't hide shl
+      // behind a bit mask.
       if (I.getOpcode() == Instruction::Shl &&
-          ShiftOp->getOpcode() != Instruction::Shl) {
+          ShiftOp->getOpcode() != Instruction::Shl &&
+          ShiftOp->isExact()) {
         ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
-        if (ShiftOp->isExact()) {
-          // (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
-          BinaryOperator *NewShr = BinaryOperator::Create(ShiftOp->getOpcode(),
-                                                          X, ShiftDiffCst);
-          NewShr->setIsExact(true);
-          return NewShr;
-        }
-        Value *Shift = Builder->CreateBinOp(ShiftOp->getOpcode(),
-                                            X, ShiftDiffCst);
-        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::CreateAnd(Shift,
-                                         ConstantInt::get(I.getContext(),Mask));
+        BinaryOperator *NewShr = BinaryOperator::Create(ShiftOp->getOpcode(),
+                                                        X, ShiftDiffCst);
+        NewShr->setIsExact(true);
+        return NewShr;
       }
-      
+
       // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr &&
           ShiftOp->getOpcode() == Instruction::Shl) {

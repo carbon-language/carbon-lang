@@ -457,10 +457,12 @@ define i64 @test50(i64 %A) {
   %E = sext i32 %D to i64
   ret i64 %E
 ; CHECK: @test50
-; CHECK-NEXT: shl i64 %A, 30
+; lshr+shl will be handled by DAGCombine.
+; CHECK-NEXT: lshr i64 %A, 2
+; CHECK-NEXT: shl i64 %a, 32
 ; CHECK-NEXT: add i64 {{.*}}, -4294967296
-; CHECK-NEXT: %sext = ashr i64 {{.*}}, 32
-; CHECK-NEXT: ret i64 %sext
+; CHECK-NEXT: %E = ashr exact i64 {{.*}}, 32
+; CHECK-NEXT: ret i64 %E
 }
 
 define i64 @test51(i64 %A, i1 %cond) {

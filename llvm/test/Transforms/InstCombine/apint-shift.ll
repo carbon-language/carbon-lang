@@ -47,10 +47,18 @@ define i32 @test5a(i32 %A) {
 }
 
 ; CHECK: @test6
-; CHECK-NOT: sh
+; CHECK: mul i55 %A, 6
 define i55 @test6(i55 %A) {
 	%B = shl i55 %A, 1		; <i55> [#uses=1]
 	%C = mul i55 %B, 3		; <i55> [#uses=1]
+	ret i55 %C
+}
+
+; CHECK: @test6a
+; CHECK: mul i55 %A, 6
+define i55 @test6a(i55 %A) {
+	%B = mul i55 %A, 3		; <i55> [#uses=1]
+	%C = shl i55 %B, 1		; <i55> [#uses=1]
 	ret i55 %C
 }
 
@@ -87,7 +95,8 @@ define i19 @test10(i19 %A) {
 }
 
 ; CHECK: @test11
-; CHECK-NOT: sh
+; Don't hide the shl from scalar evolution. DAGCombine will get it.
+; CHECK: shl
 define i23 @test11(i23 %A) {
 	%a = mul i23 %A, 3		; <i23> [#uses=1]
 	%B = lshr i23 %a, 11		; <i23> [#uses=1]
@@ -104,7 +113,8 @@ define i47 @test12(i47 %A) {
 }
 
 ; CHECK: @test13
-; CHECK-NOT: sh
+; Don't hide the shl from scalar evolution. DAGCombine will get it.
+; CHECK: shl
 define i18 @test13(i18 %A) {
 	%a = mul i18 %A, 3		; <i18> [#uses=1]
 	%B = ashr i18 %a, 8		; <i18> [#uses=1]
