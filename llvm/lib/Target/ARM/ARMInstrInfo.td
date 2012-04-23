@@ -1306,7 +1306,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   def rsr : AsI1<opcod, (outs GPRnopc:$Rd),
                 (ins GPRnopc:$Rn, so_reg_reg:$shift),
                 DPSoRegRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
-              [(set GPRnopc:$Rd, CPSR, (opnode GPRnopc:$Rn, so_reg_reg:$shift, CPSR))]>,
+              [(set GPRnopc:$Rd, CPSR,
+                    (opnode GPRnopc:$Rn, so_reg_reg:$shift, CPSR))]>,
                Requires<[IsARM]> {
     bits<4> Rd;
     bits<4> Rn;
@@ -1421,9 +1422,10 @@ multiclass AI_ldr1nopc<bit isByte, string opc, InstrItinClass iii,
   // Note: We use the complex addrmode_imm12 rather than just an input
   // GPR and a constrained immediate so that we can use this to match
   // frame index references and avoid matching constant pool references.
-  def i12: AI2ldst<0b010, 1, isByte, (outs GPRnopc:$Rt), (ins addrmode_imm12:$addr),
+  def i12: AI2ldst<0b010, 1, isByte, (outs GPRnopc:$Rt),
+                   (ins addrmode_imm12:$addr),
                    AddrMode_i12, LdFrm, iii, opc, "\t$Rt, $addr",
-                  [(set GPRnopc:$Rt, (opnode addrmode_imm12:$addr))]> {
+                   [(set GPRnopc:$Rt, (opnode addrmode_imm12:$addr))]> {
     bits<4>  Rt;
     bits<17> addr;
     let Inst{23}    = addr{12};     // U (add = ('U' == 1))
@@ -1431,9 +1433,10 @@ multiclass AI_ldr1nopc<bit isByte, string opc, InstrItinClass iii,
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
-  def rs : AI2ldst<0b011, 1, isByte, (outs GPRnopc:$Rt), (ins ldst_so_reg:$shift),
-                  AddrModeNone, LdFrm, iir, opc, "\t$Rt, $shift",
-                 [(set GPRnopc:$Rt, (opnode ldst_so_reg:$shift))]> {
+  def rs : AI2ldst<0b011, 1, isByte, (outs GPRnopc:$Rt),
+                   (ins ldst_so_reg:$shift),
+                   AddrModeNone, LdFrm, iir, opc, "\t$Rt, $shift",
+                   [(set GPRnopc:$Rt, (opnode ldst_so_reg:$shift))]> {
     bits<4>  Rt;
     bits<17> shift;
     let shift{4}    = 0;            // Inst{4} = 0
@@ -1491,9 +1494,10 @@ multiclass AI_str1nopc<bit isByte, string opc, InstrItinClass iii,
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
-  def rs : AI2ldst<0b011, 0, isByte, (outs), (ins GPRnopc:$Rt, ldst_so_reg:$shift),
-                  AddrModeNone, StFrm, iir, opc, "\t$Rt, $shift",
-                 [(opnode GPRnopc:$Rt, ldst_so_reg:$shift)]> {
+  def rs : AI2ldst<0b011, 0, isByte, (outs),
+                   (ins GPRnopc:$Rt, ldst_so_reg:$shift),
+                   AddrModeNone, StFrm, iir, opc, "\t$Rt, $shift",
+                   [(opnode GPRnopc:$Rt, ldst_so_reg:$shift)]> {
     bits<4> Rt;
     bits<17> shift;
     let shift{4}    = 0;            // Inst{4} = 0
@@ -3100,7 +3104,7 @@ class AAI<bits<8> op27_20, bits<8> op11_4, string opc,
   let Inst{19-16} = Rn;
   let Inst{15-12} = Rd;
   let Inst{3-0}   = Rm;
-  
+
   let Unpredictable{11-8} = 0b1111;
 }
 
@@ -3394,25 +3398,26 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
 //        property. Remove them when it's possible to add those properties
 //        on an individual MachineInstr, not just an instuction description.
 let isCommutable = 1, TwoOperandAliasConstraint = "$Rn = $Rd" in {
-def MUL  : AsMul1I32<0b0000000, (outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                   IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
-                   [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))]>,
-                   Requires<[IsARM, HasV6]> {
+def MUL : AsMul1I32<0b0000000, (outs GPRnopc:$Rd),
+                    (ins GPRnopc:$Rn, GPRnopc:$Rm),
+                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
+                  [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))]>,
+                  Requires<[IsARM, HasV6]> {
   let Inst{15-12} = 0b0000;
   let Unpredictable{15-12} = 0b1111;
 }
 
 let Constraints = "@earlyclobber $Rd" in
 def MULv5: ARMPseudoExpand<(outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm,
-                                            pred:$p, cc_out:$s),
-                          4, IIC_iMUL32,
-                         [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))],
-                         (MUL GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p, cc_out:$s)>,
-                        Requires<[IsARM, NoV6]>;
+                                                    pred:$p, cc_out:$s),
+                           4, IIC_iMUL32,
+               [(set GPRnopc:$Rd, (mul GPRnopc:$Rn, GPRnopc:$Rm))],
+               (MUL GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p, cc_out:$s)>,
+               Requires<[IsARM, NoV6]>;
 }
 
 def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
-                    IIC_iMAC32, "mla", "\t$Rd, $Rn, $Rm, $Ra",
+                     IIC_iMAC32, "mla", "\t$Rd, $Rn, $Rm, $Ra",
                    [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
                    Requires<[IsARM, HasV6]> {
   bits<4> Ra;
@@ -3421,8 +3426,8 @@ def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 
 let Constraints = "@earlyclobber $Rd" in
 def MLAv5: ARMPseudoExpand<(outs GPR:$Rd),
-                          (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
-                          4, IIC_iMAC32,
+                           (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
+                           4, IIC_iMAC32,
                         [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))],
                   (MLA GPR:$Rd, GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s)>,
                         Requires<[IsARM, NoV6]>;
@@ -4190,10 +4195,10 @@ def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex", []>,
 
 // SWP/SWPB are deprecated in V6/V7.
 let mayLoad = 1, mayStore = 1 in {
-def SWP : AIswp<0, (outs GPRnopc:$Rt), (ins GPRnopc:$Rt2, addr_offset_none:$addr),
-                "swp", []>;
-def SWPB: AIswp<1, (outs GPRnopc:$Rt), (ins GPRnopc:$Rt2, addr_offset_none:$addr),
-                "swpb", []>;
+def SWP : AIswp<0, (outs GPRnopc:$Rt),
+                (ins GPRnopc:$Rt2, addr_offset_none:$addr), "swp", []>;
+def SWPB: AIswp<1, (outs GPRnopc:$Rt),
+                (ins GPRnopc:$Rt2, addr_offset_none:$addr), "swpb", []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4519,8 +4524,8 @@ class MovRRCopro<string opc, bit direction, list<dag> pattern = []>
 }
 
 def MCRR : MovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */,
-                      [(int_arm_mcrr imm:$cop, imm:$opc1, GPRnopc:$Rt, GPRnopc:$Rt2,
-                                     imm:$CRm)]>;
+                      [(int_arm_mcrr imm:$cop, imm:$opc1, GPRnopc:$Rt,
+                                     GPRnopc:$Rt2, imm:$CRm)]>;
 def MRRC : MovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
 class MovRRCopro2<string opc, bit direction, list<dag> pattern = []>
@@ -4547,8 +4552,8 @@ class MovRRCopro2<string opc, bit direction, list<dag> pattern = []>
 }
 
 def MCRR2 : MovRRCopro2<"mcrr2", 0 /* from ARM core register to coprocessor */,
-                        [(int_arm_mcrr2 imm:$cop, imm:$opc1, GPRnopc:$Rt, GPRnopc:$Rt2,
-                                        imm:$CRm)]>;
+                        [(int_arm_mcrr2 imm:$cop, imm:$opc1, GPRnopc:$Rt,
+                                        GPRnopc:$Rt2, imm:$CRm)]>;
 def MRRC2 : MovRRCopro2<"mrrc2", 1 /* from coprocessor to ARM core register */>;
 
 //===----------------------------------------------------------------------===//
@@ -4568,7 +4573,8 @@ def MRS : ABI<0b0001, (outs GPRnopc:$Rd), (ins), NoItinerary,
   let Unpredictable{11-0} = 0b110100001111;
 }
 
-def : InstAlias<"mrs${p} $Rd, cpsr", (MRS GPRnopc:$Rd, pred:$p)>, Requires<[IsARM]>;
+def : InstAlias<"mrs${p} $Rd, cpsr", (MRS GPRnopc:$Rd, pred:$p)>,
+         Requires<[IsARM]>;
 
 // The MRSsys instruction is the MRS instruction from the ARM ARM,
 // section B9.3.9, with the R bit set to 1.
