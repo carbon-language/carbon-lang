@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Function.h"
@@ -46,28 +47,23 @@ using namespace llvm;
 static cl::opt<std::string>  ClBlackListFile("tsan-blacklist",
        cl::desc("Blacklist file"), cl::Hidden);
 
-static cl::opt<bool> ClPrintStats("tsan-print-stats",
-       cl::desc("Print ThreadSanitizer instrumentation stats"), cl::Hidden);
+STATISTIC(NumInstrumentedReads, "Number of instrumented reads");
+STATISTIC(NumInstrumentedWrites, "Number of instrumented writes");
+STATISTIC(NumOmittedReadsBeforeWrite, 
+          "Number of reads ignored due to following writes");
+STATISTIC(NumAccessesWithBadSize, "Number of accesses with bad size");
+STATISTIC(NumInstrumentedVtableWrites, "Number of vtable ptr writes");
+STATISTIC(NumOmittedReadsFromConstantGlobals,
+          "Number of reads from constant globals");
+STATISTIC(NumOmittedReadsFromVtable, "Number of vtable reads");
 
 namespace {
-
-// Stats counters for ThreadSanitizer instrumentation.
-struct ThreadSanitizerStats {
-  size_t NumInstrumentedReads;
-  size_t NumInstrumentedWrites;
-  size_t NumOmittedReadsBeforeWrite;
-  size_t NumAccessesWithBadSize;
-  size_t NumInstrumentedVtableWrites;
-  size_t NumOmittedReadsFromConstantGlobals;
-  size_t NumOmittedReadsFromVtable;
-};
 
 /// ThreadSanitizer: instrument the code in module to find races.
 struct ThreadSanitizer : public FunctionPass {
   ThreadSanitizer();
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
-  bool doFinalization(Module &M);
   bool instrumentLoadOrStore(Instruction *I);
   static char ID;  // Pass identification, replacement for typeid.
 
@@ -86,9 +82,6 @@ struct ThreadSanitizer : public FunctionPass {
   Value *TsanRead[kNumberOfAccessSizes];
   Value *TsanWrite[kNumberOfAccessSizes];
   Value *TsanVptrUpdate;
-
-  // Stats are modified w/o synchronization.
-  ThreadSanitizerStats stats;
 };
 }  // namespace
 
@@ -111,7 +104,6 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   if (!TD)
     return false;
   BL.reset(new FunctionBlackList(ClBlackListFile));
-  memset(&stats, 0, sizeof(stats));
 
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());
@@ -140,21 +132,6 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   return true;
 }
 
-bool ThreadSanitizer::doFinalization(Module &M) {
-  if (ClPrintStats) {
-    errs() << "ThreadSanitizerStats " << M.getModuleIdentifier()
-           << ": wr " << stats.NumInstrumentedWrites
-           << "; rd " << stats.NumInstrumentedReads
-           << "; vt " << stats.NumInstrumentedVtableWrites
-           << "; bs " << stats.NumAccessesWithBadSize
-           << "; rbw " << stats.NumOmittedReadsBeforeWrite
-           << "; rcg " << stats.NumOmittedReadsFromConstantGlobals
-           << "; rvt " << stats.NumOmittedReadsFromVtable
-           << "\n";
-  }
-  return true;
-}
-
 static bool isVtableAccess(Instruction *I) {
   if (MDNode *Tag = I->getMetadata(LLVMContext::MD_tbaa)) {
     if (Tag->getNumOperands() < 1) return false;
@@ -173,13 +150,13 @@ bool ThreadSanitizer::addrPointsToConstantData(Value *Addr) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Addr)) {
     if (GV->isConstant()) {
       // Reads from constant globals can not race with any writes.
-      stats.NumOmittedReadsFromConstantGlobals++;
+      NumOmittedReadsFromConstantGlobals++;
       return true;
     }
   } else if(LoadInst *L = dyn_cast<LoadInst>(Addr)) {
     if (isVtableAccess(L)) {
       // Reads from a vtable pointer can not race with any writes.
-      stats.NumOmittedReadsFromVtable++;
+      NumOmittedReadsFromVtable++;
       return true;
     }
   }
@@ -212,7 +189,7 @@ void ThreadSanitizer::choseInstructionsToInstrument(
       Value *Addr = Load->getPointerOperand();
       if (WriteTargets.count(Addr)) {
         // We will write to this temp, so no reason to analyze the read.
-        stats.NumOmittedReadsBeforeWrite++;
+        NumOmittedReadsBeforeWrite++;
         continue;
       }
       if (addrPointsToConstantData(Addr)) {
@@ -289,7 +266,7 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
   uint32_t TypeSize = TD->getTypeStoreSizeInBits(OrigTy);
   if (TypeSize != 8  && TypeSize != 16 &&
       TypeSize != 32 && TypeSize != 64 && TypeSize != 128) {
-    stats.NumAccessesWithBadSize++;
+    NumAccessesWithBadSize++;
     // Ignore all unusual sizes.
     return false;
   }
@@ -298,14 +275,14 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
     IRB.CreateCall2(TsanVptrUpdate,
                     IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
                     IRB.CreatePointerCast(StoredValue, IRB.getInt8PtrTy()));
-    stats.NumInstrumentedVtableWrites++;
+    NumInstrumentedVtableWrites++;
     return true;
   }
   size_t Idx = CountTrailingZeros_32(TypeSize / 8);
   assert(Idx < kNumberOfAccessSizes);
   Value *OnAccessFunc = IsWrite ? TsanWrite[Idx] : TsanRead[Idx];
   IRB.CreateCall(OnAccessFunc, IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()));
-  if (IsWrite) stats.NumInstrumentedWrites++;
-  else         stats.NumInstrumentedReads++;
+  if (IsWrite) NumInstrumentedWrites++;
+  else         NumInstrumentedReads++;
   return true;
 }
