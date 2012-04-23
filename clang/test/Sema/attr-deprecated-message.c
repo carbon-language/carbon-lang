@@ -21,7 +21,7 @@ typedef enum {red, green, blue} Color __attribute__((deprecated("Please avoid Co
 Color c1; // expected-warning {{'Color' is deprecated: Please avoid Color}}
 
 int g1;
-int g2 __attribute__ ((deprecated("Please avoid g2")));
+int g2 __attribute__ ((deprecated("Please avoid g2"))); // expected-note {{'g2' declared here}}
 
 int func1()
 {

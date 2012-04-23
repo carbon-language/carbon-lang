@@ -8,7 +8,7 @@ void f3() __attribute__((availability(otheros,introduced=2.2))); // expected-war
 
 // rdar://10095131
 extern void 
-ATSFontGetName(const char *oName) __attribute__((availability(macosx,introduced=8.0,deprecated=9.0, message="use CTFontCopyFullName")));
+ATSFontGetName(const char *oName) __attribute__((availability(macosx,introduced=8.0,deprecated=9.0, message="use CTFontCopyFullName"))); // expected-note {{'ATSFontGetName' declared here}}
 
 extern void
 ATSFontGetPostScriptName(int flags) __attribute__((availability(macosx,introduced=8.0,obsoleted=9.0, message="use ATSFontGetFullPostScriptName"))); // expected-note {{function has been explicitly marked unavailable here}}

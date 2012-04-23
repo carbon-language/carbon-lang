@@ -4189,9 +4189,13 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
   // Otherwise, don't warn if our current context is deprecated.
   if (isDeclDeprecated(cast<Decl>(getCurLexicalContext())))
     return;
-  if (!Message.empty())
+  if (!Message.empty()) {
     Diag(Loc, diag::warn_deprecated_message) << D->getDeclName() 
                                              << Message;
+    Diag(D->getLocation(), 
+         isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at 
+                                : diag::note_previous_decl) << D->getDeclName();
+  }
   else {
     if (!UnknownObjCClass)
       Diag(Loc, diag::warn_deprecated) << D->getDeclName();
