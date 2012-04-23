@@ -21,14 +21,16 @@
 
 <h1>AddressSanitizer</h1>
 <ul> 
-  <li> <a href="intro">Introduction</a>
-  <li> <a href="howtobuild">How to Build</a>
-  <li> <a href="usage">Usage</a>
-    <ul><li> <a href="has_feature">__has_feature(address_sanitizer)</a></ul>
-  <li> <a href="platforms">Supported Platforms</a>
-  <li> <a href="limitations">Limitations</a>
-  <li> <a href="status">Current Status</a>
-  <li> <a href="moreinfo">More Information</a>
+  <li> <a href="#intro">Introduction</a>
+  <li> <a href="#howtobuild">How to Build</a>
+  <li> <a href="#usage">Usage</a>
+    <ul><li> <a href="#has_feature">__has_feature(address_sanitizer)</a></ul>
+    <ul><li> <a href="#no_address_safety_analysis">
+        __attribute__((no_address_safety_analysis))</a></ul>
+  <li> <a href="#platforms">Supported Platforms</a>
+  <li> <a href="#limitations">Limitations</a>
+  <li> <a href="#status">Current Status</a>
+  <li> <a href="#moreinfo">More Information</a>
 </ul>
 
 <h2 id="intro">Introduction</h2>
@@ -104,6 +106,14 @@ can be used for this purpose.
 #endif
 </pre>
 
+<h3 id="no_address_safety_analysis">__attribute__((no_address_safety_analysis))</h3>
+Some code should not be instrumentated by AddressSanitizer.
+One may use the function attribute 
+<a href="LanguageExtensions.html#address_sanitizer">
+  <tt>no_address_safety_analysis</tt></a>
+to disable instrumentation of a particular function.
+Note: currently, this attribute will be lost if the function is inlined.
+
 <h2 id="platforms">Supported Platforms</h2>
 AddressSanitizer is supported on
 <ul><li>Linux x86_64 (tested on Ubuntu 10.04).
@@ -115,18 +125,19 @@ Support for Linux i386/ARM and MacOS 10.7 is in progress
 
 <h2 id="limitations">Limitations</h2>
 <ul>
-  <li> AddressSanitizer uses more real memory than a native run.
-  How much -- depends on the allocations sizes. The smaller the
-  allocations you make the bigger the overhead.
-  <li> On 64-bit platforms AddressSanitizer maps (but not reserves)
-  16+ Terabytes of virtual address space.
-  This means that tools like <tt>ulimit</tt> may not work as usually expected.
-  <li> Static linking is not supported.
+<li> AddressSanitizer uses more real memory than a native run.
+How much -- depends on the allocations sizes. The smaller the
+allocations you make the bigger the overhead.
+<li> AddressSanitizer uses more stack memory. We have seen up to 3x increase.
+<li> On 64-bit platforms AddressSanitizer maps (but not reserves)
+16+ Terabytes of virtual address space.
+This means that tools like <tt>ulimit</tt> may not work as usually expected.
+<li> Static linking is not supported.
 </ul>
 
 
 <h2 id="status">Current Status</h2>
-AddressSanitizer is fully functional on supported platforms in LLVM head.
+AddressSanitizer is fully functional on supported platforms strating from LLVM 3.1.
 However, the test suite is not fully integrated yet and we lack the testing
 process (buildbots).
 
