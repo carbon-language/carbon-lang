@@ -238,6 +238,24 @@ static bool isIntOrBool(Expr *Exp) {
   return QT->isBooleanType() || QT->isIntegerType();
 }
 
+
+// Check to see if the type is a smart pointer of some kind.  We assume
+// it's a smart pointer if it defines both operator-> and operator*.
+static bool threadSafetyCheckIsSmartPointer(Sema &S, const QualType QT) {
+  if (const RecordType *RT = QT->getAs<RecordType>()) {
+    DeclContextLookupConstResult Res1 = RT->getDecl()->lookup(
+      S.Context.DeclarationNames.getCXXOperatorName(OO_Star));
+    if (Res1.first == Res1.second)
+      return false;
+
+    DeclContextLookupConstResult Res2 = RT->getDecl()->lookup(
+      S.Context.DeclarationNames.getCXXOperatorName(OO_Arrow));
+    if (Res2.first != Res2.second)
+      return true;
+  }
+  return false;
+}
+
 ///
 /// \brief Check if passed in Decl is a pointer type.
 /// Note that this function may produce an error message.
@@ -249,6 +267,10 @@ static bool threadSafetyCheckIsPointer(Sema &S, const Decl *D,
     QualType QT = vd->getType();
     if (QT->isAnyPointerType())
       return true;
+
+    if (threadSafetyCheckIsSmartPointer(S, QT))
+      return true;
+
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_pointer)
       << Attr.getName()->getName() << QT;
   } else {

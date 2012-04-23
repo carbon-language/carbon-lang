@@ -1343,6 +1343,10 @@ class Foo {
 
 namespace PointerToMemberTest {
 
+// Empty string should be ignored.
+int  testEmptyAttribute GUARDED_BY("");
+void testEmptyAttributeFunction() EXCLUSIVE_LOCKS_REQUIRED("");
+
 class Graph {
 public:
   Mu mu_;
@@ -1355,6 +1359,32 @@ public:
 };
 
 }
+
+
+namespace SmartPointerTest {
+
+template<class T>
+class smart_ptr {
+ public:
+  smart_ptr(T* p) : ptr_(p) { };
+
+  T* operator->() { return ptr_; }
+  T& operator*()  { return ptr_; }
+
+ private:
+  T* ptr_;
+};
+
+
+class MyClass {
+public:
+  Mu mu_;
+
+  smart_ptr<int> a PT_GUARDED_BY(mu_);
+};
+
+}
+
 
 } // end namespace TestMultiDecl
 
