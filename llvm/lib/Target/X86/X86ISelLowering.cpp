@@ -1273,7 +1273,6 @@ static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign) {
         break;
     }
   }
-  return;
 }
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
@@ -7321,7 +7320,10 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
         return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
                                    Subtarget->is64Bit());
     }
-  } else if (Subtarget->isTargetDarwin()) {
+    llvm_unreachable("Unknown TLS model.");
+  }
+
+  if (Subtarget->isTargetDarwin()) {
     // Darwin only has one model of TLS.  Lower to that.
     unsigned char OpFlag = 0;
     unsigned WrapperKind = Subtarget->isPICStyleRIPRel() ?
@@ -7364,7 +7366,9 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     unsigned Reg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
     return DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy(),
                               Chain.getValue(1));
-  } else if (Subtarget->isTargetWindows()) {
+  }
+
+  if (Subtarget->isTargetWindows()) {
     // Just use the implicit TLS architecture
     // Need to generate someting similar to:
     //   mov     rdx, qword [gs:abs 58H]; Load pointer to ThreadLocalStorage
