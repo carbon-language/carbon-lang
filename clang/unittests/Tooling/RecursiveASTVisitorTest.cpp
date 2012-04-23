@@ -106,6 +106,7 @@ protected:
         FullLocation.isValid() &&
         FullLocation.getSpellingLineNumber() == ExpectedLine &&
         FullLocation.getSpellingColumnNumber() == ExpectedColumn) {
+      EXPECT_TRUE(!Found);
       Found = true;
     } else if (Name == ExpectedMatch ||
                (FullLocation.isValid() &&
@@ -155,6 +156,31 @@ TEST(RecursiveASTVisitor, VisitsBaseClassDeclarations) {
   TypeLocVisitor Visitor;
   Visitor.ExpectMatch("class X", 1, 30);
   EXPECT_TRUE(Visitor.runOver("class X {}; class Y : public X {};"));
+}
+
+TEST(RecursiveASTVisitor, VisitsCXXBaseSpecifiersOfForwardDeclaredClass) {
+  TypeLocVisitor Visitor;
+  Visitor.ExpectMatch("class X", 3, 18);
+  EXPECT_TRUE(Visitor.runOver(
+    "class Y;\n"
+    "class X {};\n"
+    "class Y : public X {};"));
+}
+
+TEST(RecursiveASTVisitor, VisitsCXXBaseSpecifiersWithIncompleteInnerClass) {
+  TypeLocVisitor Visitor;
+  Visitor.ExpectMatch("class X", 2, 18);
+  EXPECT_TRUE(Visitor.runOver(
+    "class X {};\n"
+    "class Y : public X { class Z; };"));
+}
+
+TEST(RecursiveASTVisitor, VisitsCXXBaseSpecifiersOfSelfReferentialType) {
+  TypeLocVisitor Visitor;
+  Visitor.ExpectMatch("X<class Y>", 2, 18);
+  EXPECT_TRUE(Visitor.runOver(
+    "template<typename T> class X {};\n"
+    "class Y : public X<Y> {};"));
 }
 
 TEST(RecursiveASTVisitor, VisitsBaseClassTemplateArguments) {
