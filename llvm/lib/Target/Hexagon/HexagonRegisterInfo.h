@@ -73,6 +73,10 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
     return true;
   }
 
+  bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
+    return true;
+  }
+
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;

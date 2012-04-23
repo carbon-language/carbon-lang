@@ -63,6 +63,11 @@ namespace llvm {
     virtual bool requiresRegisterScavenging(const MachineFunction &MF) const
     { return true; }
 
+    //! Enable tracking of liveness after register allocation, since register
+    // scavenging is enabled.
+    virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const
+    { return true; }
+
     //! Return the reserved registers
     BitVector getReservedRegs(const MachineFunction &MF) const;
 

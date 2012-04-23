@@ -206,6 +206,10 @@ SchedulePostRATDList::SchedulePostRATDList(
   const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
   HazardRec =
     TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins, this);
+
+  assert((AntiDepMode == TargetSubtargetInfo::ANTIDEP_NONE ||
+          MRI.tracksLiveness()) &&
+         "Live-ins must be accurate for anti-dependency breaking");
   AntiDepBreak =
     ((AntiDepMode == TargetSubtargetInfo::ANTIDEP_ALL) ?
      (AntiDepBreaker *)new AggressiveAntiDepBreaker(MF, RCI, CriticalPathRCs) :

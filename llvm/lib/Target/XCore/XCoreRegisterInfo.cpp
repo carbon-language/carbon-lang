@@ -92,6 +92,11 @@ XCoreRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
 }
 
 bool
+XCoreRegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
+  return requiresRegisterScavenging(MF);
+}
+
+bool
 XCoreRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF) const {
   return false;
 }

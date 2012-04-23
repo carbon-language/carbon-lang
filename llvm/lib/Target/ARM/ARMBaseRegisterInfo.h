@@ -173,6 +173,8 @@ public:
 
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
+  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
+
   virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
 
   virtual bool requiresVirtualBaseRegisters(const MachineFunction &MF) const;

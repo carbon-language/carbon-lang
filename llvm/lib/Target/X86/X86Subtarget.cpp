@@ -424,9 +424,7 @@ bool X86Subtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtargetInfo::AntiDepBreakMode& Mode,
            RegClassVector& CriticalPathRCs) const {
-  //TODO: change back to ANTIDEP_CRITICAL when the
-  // X86 subtarget properly sets up post RA liveness.
-  Mode = TargetSubtargetInfo::ANTIDEP_NONE;
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
 }

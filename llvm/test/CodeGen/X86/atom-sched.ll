@@ -1,9 +1,6 @@
-; XFAIL: *
 ; RUN: llc <%s -O2 -mcpu=atom -march=x86 -relocation-model=static | FileCheck -check-prefix=atom %s
 ; RUN: llc <%s -O2 -mcpu=core2 -march=x86 -relocation-model=static | FileCheck %s
 ;
-; FIXME: Atom's scheduler is temporarily disabled.
-; XFAIL: *
 
 @a = common global i32 0, align 4
 @b = common global i32 0, align 4

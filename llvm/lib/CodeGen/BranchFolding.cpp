@@ -188,7 +188,7 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
 
   // Use a RegScavenger to help update liveness when required.
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  if (MRI.tracksLiveness() && TRI->requiresRegisterScavenging(MF))
+  if (MRI.tracksLiveness() && TRI->trackLivenessAfterRegAlloc(MF))
     RS = new RegScavenger();
   else
     MRI.invalidateLiveness();

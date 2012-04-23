@@ -50,6 +50,8 @@ public:
   
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
+  bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
+
   bool useFPForScavengingIndex(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

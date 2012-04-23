@@ -49,6 +49,8 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
 
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
+  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

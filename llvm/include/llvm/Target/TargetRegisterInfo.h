@@ -612,6 +612,12 @@ public:
     return false;
   }
 
+  /// trackLivenessAfterRegAlloc - returns true if the live-ins should be tracked
+  /// after register allocation.
+  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
+    return false;
+  }
+
   /// needsStackRealignment - true if storage within the function requires the
   /// stack pointer to be aligned more than the normal calling convention calls
   /// for.

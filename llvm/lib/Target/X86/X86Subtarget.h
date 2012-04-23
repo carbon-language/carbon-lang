@@ -307,6 +307,8 @@ public:
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,
                              RegClassVector& CriticalPathRCs) const;
 
+  bool postRAScheduler() const { return PostRAScheduler; }
+
   /// getInstrItins = Return the instruction itineraries based on the
   /// subtarget selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }

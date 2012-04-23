@@ -90,6 +90,12 @@ int X86RegisterInfo::getCompactUnwindRegNum(unsigned RegNum, bool isEH) const {
   return -1;
 }
 
+bool
+X86RegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
+  // Only enable when post-RA scheduling is enabled and this is needed.
+  return TM.getSubtargetImpl()->postRAScheduler();
+}
+
 int
 X86RegisterInfo::getSEHRegNum(unsigned i) const {
   int reg = X86_MC::getX86RegNum(i);

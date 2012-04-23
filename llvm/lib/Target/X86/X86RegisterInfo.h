@@ -65,7 +65,8 @@ public:
   int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const;
 
   /// Code Generation virtual methods...
-  /// 
+  ///
+  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
 
   /// getMatchingSuperRegClass - Return a subclass of the specified register
   /// class A so that each register in it has a sub-register of the

@@ -136,6 +136,11 @@ MipsRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
   return true;
 }
 
+bool
+MipsRegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
+  return true;
+}
+
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void MipsRegisterInfo::
