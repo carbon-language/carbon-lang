@@ -350,8 +350,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     return llvm::DIType();
   case BuiltinType::ObjCClass:
     return DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                      "objc_class", getOrCreateMainFile(),
-                                      0);
+                                      "objc_class", TheCU,
+                                      getOrCreateMainFile(), 0);
   case BuiltinType::ObjCId: {
     // typedef struct objc_class *Class;
     // typedef struct objc_object {
@@ -361,8 +361,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     // TODO: Cache these two types to avoid duplicates.
     llvm::DIType OCTy =
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                 "objc_class", getOrCreateMainFile(),
-                                 0);
+                                 "objc_class", TheCU, getOrCreateMainFile(), 0);
     unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
     
     llvm::DIType ISATy = DBuilder.createPointerType(OCTy, Size);
@@ -382,7 +381,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::ObjCSel: {
     return
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                 "objc_selector", getOrCreateMainFile(),
+                                 "objc_selector", TheCU, getOrCreateMainFile(),
                                  0);
   }
   case BuiltinType::UChar:
@@ -514,7 +513,7 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
     llvm_unreachable("Unknown RecordDecl type!");
 
   // Create the type.
-  return DBuilder.createForwardDecl(Tag, RDName, DefUnit, Line);
+  return DBuilder.createForwardDecl(Tag, RDName, Ctx, DefUnit, Line);
 }
 
 // Walk up the context chain and create forward decls for record decls,
@@ -1287,7 +1286,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   if (!Def) {
     llvm::DIType FwdDecl =
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-				 ID->getName(), DefUnit, Line,
+				 ID->getName(), TheCU, DefUnit, Line,
 				 RuntimeLang);
     return FwdDecl;
   }
