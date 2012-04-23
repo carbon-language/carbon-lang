@@ -994,6 +994,7 @@ IRInterpreter::supportsFunction (Function &llvm_function,
             case Instruction::Store:
             case Instruction::Sub:
             case Instruction::UDiv:
+            case Instruction::ZExt:
                 break;
             }
         }
@@ -1221,19 +1222,20 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
             }
             break;
         case Instruction::BitCast:
+        case Instruction::ZExt:
             {
-                const BitCastInst *bit_cast_inst = dyn_cast<BitCastInst>(inst);
+                const CastInst *cast_inst = dyn_cast<CastInst>(inst);
                 
-                if (!bit_cast_inst)
+                if (!cast_inst)
                 {
                     if (log)
-                        log->Printf("getOpcode() returns BitCast, but instruction is not a BitCastInst");
+                        log->Printf("getOpcode() returns %s, but instruction is not a BitCastInst", cast_inst->getOpcodeName());
                     err.SetErrorToGenericError();
                     err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
-                Value *source = bit_cast_inst->getOperand(0);
+                Value *source = cast_inst->getOperand(0);
                 
                 lldb_private::Scalar S;
                 
