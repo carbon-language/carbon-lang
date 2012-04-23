@@ -1726,6 +1726,15 @@ SBTarget::AddModule (const char *path,
                      const char *triple,
                      const char *uuid_cstr)
 {
+    return AddModule (path, triple, uuid_cstr, NULL);
+}
+
+lldb::SBModule
+SBTarget::AddModule (const char *path,
+                     const char *triple,
+                     const char *uuid_cstr,
+                     const char *symfile)
+{
     lldb::SBModule sb_module;
     TargetSP target_sp(GetSP());
     if (target_sp)
@@ -1733,12 +1742,15 @@ SBTarget::AddModule (const char *path,
         ModuleSpec module_spec;
         if (path)
             module_spec.GetFileSpec().SetFile(path, false);
-
+        
         if (uuid_cstr)
             module_spec.GetUUID().SetfromCString(uuid_cstr);
-
+        
         if (triple)
             module_spec.GetArchitecture().SetTriple (triple, target_sp->GetPlatform ().get());
+        
+        if (symfile)
+            module_spec.GetSymbolFileSpec ().SetFile(symfile, false);
 
         sb_module.SetSP(target_sp->GetSharedModule (module_spec));
     }

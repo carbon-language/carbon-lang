@@ -481,6 +481,12 @@ public:
                const char *triple,
                const char *uuid);
 
+    lldb::SBModule
+    AddModule (const char *path,
+               const char *triple,
+               const char *uuid_cstr,
+               const char *symfile);
+
     uint32_t
     GetNumModules () const;
 
