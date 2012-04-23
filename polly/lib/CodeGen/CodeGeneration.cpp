@@ -1231,7 +1231,7 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
   UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
   Stride = Builder.getInt(APInt_from_MPZ(f->stride));
 
-  IV = createLoop(LowerBound, UpperBound, Stride, &Builder, P, &AfterBB);
+  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB);
 
   // Add loop iv to symbols.
   ClastVars[f->iterator] = IV;

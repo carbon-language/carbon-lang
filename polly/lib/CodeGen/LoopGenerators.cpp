@@ -21,23 +21,25 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
+using namespace polly;
 
-Value *createLoop(Value *LB, Value *UB, Value *Stride,
-                  IRBuilder<> *Builder, Pass *P, BasicBlock **AfterBlock) {
+Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
+                         IRBuilder<> &Builder, Pass *P,
+                         BasicBlock *&AfterBlock) {
   DominatorTree &DT = P->getAnalysis<DominatorTree>();
-  Function *F = Builder->GetInsertBlock()->getParent();
+  Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
-  BasicBlock *PreheaderBB = Builder->GetInsertBlock();
+  BasicBlock *PreheaderBB = Builder.GetInsertBlock();
   BasicBlock *HeaderBB = BasicBlock::Create(Context, "polly.loop_header", F);
   BasicBlock *BodyBB = BasicBlock::Create(Context, "polly.loop_body", F);
-  BasicBlock *AfterBB = SplitBlock(PreheaderBB, Builder->GetInsertPoint()++, P);
+  BasicBlock *AfterBB = SplitBlock(PreheaderBB, Builder.GetInsertPoint()++, P);
   AfterBB->setName("polly.loop_after");
 
   PreheaderBB->getTerminator()->setSuccessor(0, HeaderBB);
   DT.addNewBlock(HeaderBB, PreheaderBB);
 
-  Builder->SetInsertPoint(HeaderBB);
+  Builder.SetInsertPoint(HeaderBB);
 
   // Use the type of upper and lower bound.
   assert(LB->getType() == UB->getType()
@@ -47,26 +49,26 @@ Value *createLoop(Value *LB, Value *UB, Value *Stride,
   assert(LoopIVType && "UB is not integer?");
 
   // IV
-  PHINode *IV = Builder->CreatePHI(LoopIVType, 2, "polly.loopiv");
+  PHINode *IV = Builder.CreatePHI(LoopIVType, 2, "polly.loopiv");
   IV->addIncoming(LB, PreheaderBB);
 
-  Stride = Builder->CreateZExtOrBitCast(Stride, LoopIVType);
-  Value *IncrementedIV = Builder->CreateAdd(IV, Stride, "polly.next_loopiv");
+  Stride = Builder.CreateZExtOrBitCast(Stride, LoopIVType);
+  Value *IncrementedIV = Builder.CreateAdd(IV, Stride, "polly.next_loopiv");
 
   // Exit condition.
   Value *CMP;
-  CMP = Builder->CreateICmpSLE(IV, UB);
+  CMP = Builder.CreateICmpSLE(IV, UB);
 
-  Builder->CreateCondBr(CMP, BodyBB, AfterBB);
+  Builder.CreateCondBr(CMP, BodyBB, AfterBB);
   DT.addNewBlock(BodyBB, HeaderBB);
 
-  Builder->SetInsertPoint(BodyBB);
-  Builder->CreateBr(HeaderBB);
+  Builder.SetInsertPoint(BodyBB);
+  Builder.CreateBr(HeaderBB);
   IV->addIncoming(IncrementedIV, BodyBB);
   DT.changeImmediateDominator(AfterBB, HeaderBB);
 
-  Builder->SetInsertPoint(BodyBB->begin());
-  *AfterBlock = AfterBB;
+  Builder.SetInsertPoint(BodyBB->begin());
+  AfterBlock = AfterBB;
 
   return IV;
 }
@@ -284,7 +286,7 @@ Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
 
   Builder.CreateBr(CheckNextBB);
   Builder.SetInsertPoint(--Builder.GetInsertPoint());
-  IV = createLoop(LowerBound, UpperBound, Stride, &Builder, P, &AfterBB);
+  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB);
 
   BasicBlock::iterator LoopBody = Builder.GetInsertPoint();
   Builder.SetInsertPoint(AfterBB->begin());
