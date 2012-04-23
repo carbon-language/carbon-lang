@@ -6566,25 +6566,6 @@ def : NEONInstAlias<"vclt${p}.u32 $Qd, $Qn, $Qm",
 def : NEONInstAlias<"vclt${p}.f32 $Qd, $Qn, $Qm",
                     (VCGTfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
 
-// Two-operand variants for VSLI.
-def : NEONInstAlias<"vsli${p}.8 $Vdm, $imm",
-                    (VSLIv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsli${p}.16 $Vdm, $imm",
-                    (VSLIv4i16 DPR:$Vdm, DPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsli${p}.32 $Vdm, $imm",
-                    (VSLIv2i32 DPR:$Vdm, DPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsli${p}.64 $Vdm, $imm",
-                    (VSLIv1i64 DPR:$Vdm, DPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
-def : NEONInstAlias<"vsli${p}.8 $Vdm, $imm",
-                    (VSLIv16i8 QPR:$Vdm, QPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsli${p}.16 $Vdm, $imm",
-                    (VSLIv8i16 QPR:$Vdm, QPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsli${p}.32 $Vdm, $imm",
-                    (VSLIv4i32 QPR:$Vdm, QPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsli${p}.64 $Vdm, $imm",
-                    (VSLIv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
 // VSWP allows, but does not require, a type suffix.
 defm : NEONDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
                          (VSWPd DPR:$Vd, DPR:$Vm, pred:$p)>;
