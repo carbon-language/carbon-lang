@@ -130,7 +130,7 @@ static LinkageInfo getLVForTemplateArgumentList(const TemplateArgument *Args,
       // arguments, valid only in C++0x.
       if (Decl *D = Args[I].getAsDecl()) {
         if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
-          LV = merge(LV, getLVForDecl(ND, OnlyTemplate));
+          LV.merge(getLVForDecl(ND, OnlyTemplate));
       }
       break;
 

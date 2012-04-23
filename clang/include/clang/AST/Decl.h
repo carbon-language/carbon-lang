@@ -304,11 +304,6 @@ public:
       mergeLinkage(Other);
       mergeVisibilityWithMin(Other);
     }
-
-    friend LinkageInfo merge(LinkageInfo L, LinkageInfo R) {
-      L.merge(R);
-      return L;
-    }
   };
 
   /// \brief Determine what kind of linkage this entity has.
