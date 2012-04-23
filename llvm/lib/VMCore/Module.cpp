@@ -505,22 +505,30 @@ namespace {
           incorporateValue(Aliasee);
       }
       
-      SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
-
       // Get types from functions.
+      SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
       for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
         incorporateType(FI->getType());
         
+        // First incorporate the arguments.
+        for (Function::const_arg_iterator AI = FI->arg_begin(),
+               AE = FI->arg_end(); AI != AE; ++AI)
+          incorporateValue(AI);
+
         for (Function::const_iterator BB = FI->begin(), E = FI->end();
              BB != E;++BB)
           for (BasicBlock::const_iterator II = BB->begin(),
                E = BB->end(); II != E; ++II) {
             const Instruction &I = *II;
-            // Incorporate the type of the instruction and all its operands.
+            // Incorporate the type of the instruction.
             incorporateType(I.getType());
+
+            // Incorporate non-instruction operand types. (We are incorporating
+            // all instructions with this loop.)
             for (User::const_op_iterator OI = I.op_begin(), OE = I.op_end();
                  OI != OE; ++OI)
-              incorporateValue(*OI);
+              if (!isa<Instruction>(OI))
+                incorporateValue(*OI);
             
             // Incorporate types hiding in metadata.
             I.getAllMetadataOtherThanDebugLoc(MDForInst);
@@ -570,7 +578,11 @@ namespace {
       
       // Check this type.
       incorporateType(V->getType());
-      
+
+      // If this is an instruction, we incorporate it separately.
+      if (isa<Instruction>(V))
+        return;
+
       // Look in operands for types.
       const User *U = cast<User>(V);
       for (Constant::const_op_iterator I = U->op_begin(),
