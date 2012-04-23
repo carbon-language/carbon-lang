@@ -5390,75 +5390,70 @@ X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
 }
 
 // Try to lower a shuffle node into a simple blend instruction.
-static SDValue LowerVECTOR_SHUFFLEtoBlend(SDValue Op,
+static SDValue LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
                                           const X86Subtarget *Subtarget,
                                           SelectionDAG &DAG) {
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
-  EVT VT = Op.getValueType();
-  EVT InVT = V1.getValueType();
-  int MaskSize = VT.getVectorNumElements();
-  int InSize = InVT.getVectorNumElements();
+  EVT VT = SVOp->getValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
 
   if (!Subtarget->hasSSE41())
     return SDValue();
 
-  if (MaskSize != InSize)
-    return SDValue();
-
-  int ISDNo = 0;
+  unsigned ISDNo = 0;
   MVT OpTy;
 
   switch (VT.getSimpleVT().SimpleTy) {
   default: return SDValue();
   case MVT::v8i16:
-           ISDNo = X86ISD::BLENDPW;
-           OpTy = MVT::v8i16;
-           break;
+    ISDNo = X86ISD::BLENDPW;
+    OpTy = MVT::v8i16;
+    break;
   case MVT::v4i32:
   case MVT::v4f32:
-           ISDNo = X86ISD::BLENDPS;
-           OpTy = MVT::v4f32;
-           break;
+    ISDNo = X86ISD::BLENDPS;
+    OpTy = MVT::v4f32;
+    break;
   case MVT::v2i64:
   case MVT::v2f64:
-           ISDNo = X86ISD::BLENDPD;
-           OpTy = MVT::v2f64;
-           break;
+    ISDNo = X86ISD::BLENDPD;
+    OpTy = MVT::v2f64;
+    break;
   case MVT::v8i32:
   case MVT::v8f32:
-           if (!Subtarget->hasAVX())
-             return SDValue();
-           ISDNo = X86ISD::BLENDPS;
-           OpTy = MVT::v8f32;
-           break;
+    if (!Subtarget->hasAVX())
+      return SDValue();
+    ISDNo = X86ISD::BLENDPS;
+    OpTy = MVT::v8f32;
+    break;
   case MVT::v4i64:
   case MVT::v4f64:
-           if (!Subtarget->hasAVX())
-             return SDValue();
-           ISDNo = X86ISD::BLENDPD;
-           OpTy = MVT::v4f64;
-           break;
+    if (!Subtarget->hasAVX())
+      return SDValue();
+    ISDNo = X86ISD::BLENDPD;
+    OpTy = MVT::v4f64;
+    break;
   case MVT::v16i16:
-           if (!Subtarget->hasAVX2())
-             return SDValue();
-           ISDNo = X86ISD::BLENDPW;
-           OpTy = MVT::v16i16;
-           break;
+    if (!Subtarget->hasAVX2())
+      return SDValue();
+    ISDNo = X86ISD::BLENDPW;
+    OpTy = MVT::v16i16;
+    break;
   }
   assert(ISDNo && "Invalid Op Number");
 
   unsigned MaskVals = 0;
 
-  for (int i = 0; i < MaskSize; ++i) {
+  for (unsigned i = 0; i != NumElems; ++i) {
     int EltIdx = SVOp->getMaskElt(i);
-    if (EltIdx == i || EltIdx == -1)
+    if (EltIdx == (int)i || EltIdx < 0)
       MaskVals |= (1<<i);
-    else if (EltIdx == (i + MaskSize))
+    else if (EltIdx == (int)(i + NumElems))
       continue; // Bit is set to zero;
-    else return SDValue();
+    else
+      return SDValue();
   }
 
   V1 = DAG.getNode(ISD::BITCAST, dl, OpTy, V1);
@@ -6626,7 +6621,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::VPERM2X128, dl, VT, V1,
                                 V2, getShuffleVPERM2X128Immediate(SVOp), DAG);
 
-  SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(Op, Subtarget, DAG);
+  SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(SVOp, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
 
