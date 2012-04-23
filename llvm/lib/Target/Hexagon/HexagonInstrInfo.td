@@ -875,19 +875,19 @@ def LDrid_indexed : LDInst<(outs DoubleRegs:$dst),
                                               s11_3ImmPred:$offset)))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_GP : LDInst<(outs DoubleRegs:$dst),
+def LDrid_GP : LDInst2<(outs DoubleRegs:$dst),
             (ins globaladdress:$global, u16Imm:$offset),
             "$dst=memd(#$global+$offset)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDd_GP : LDInst<(outs DoubleRegs:$dst),
+def LDd_GP : LDInst2<(outs DoubleRegs:$dst),
             (ins globaladdress:$global),
             "$dst=memd(#$global)",
             []>;
 
 let isPredicable = 1, mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrid : LDInstPI<(outs DoubleRegs:$dst, IntRegs:$dst2),
+def POST_LDrid : LDInst2PI<(outs DoubleRegs:$dst, IntRegs:$dst2),
             (ins IntRegs:$src1, s4Imm:$offset),
             "$dst = memd($src1++#$offset)",
             [],
@@ -895,64 +895,64 @@ def POST_LDrid : LDInstPI<(outs DoubleRegs:$dst, IntRegs:$dst2),
 
 // Load doubleword conditionally.
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_cPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_cPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1) $dst = memd($addr)",
             []>;
 
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_cNotPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_cNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1) $dst = memd($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_indexed_cPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_indexed_cPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if ($src1) $dst=memd($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_indexed_cNotPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_indexed_cNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if (!$src1) $dst=memd($src2+#$src3)",
             []>;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrid_cPt : LDInstPI<(outs DoubleRegs:$dst1, IntRegs:$dst2),
+def POST_LDrid_cPt : LDInst2PI<(outs DoubleRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_3Imm:$src3),
             "if ($src1) $dst1 = memd($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrid_cNotPt : LDInstPI<(outs DoubleRegs:$dst1, IntRegs:$dst2),
+def POST_LDrid_cNotPt : LDInst2PI<(outs DoubleRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_3Imm:$src3),
             "if (!$src1) $dst1 = memd($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_cdnPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_cdnPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1.new) $dst = memd($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_cdnNotPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_cdnNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1.new) $dst = memd($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_indexed_cdnPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_indexed_cdnPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if ($src1.new) $dst=memd($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrid_indexed_cdnNotPt : LDInst<(outs DoubleRegs:$dst),
+def LDrid_indexed_cdnNotPt : LDInst2<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
             "if (!$src1.new) $dst=memd($src2+#$src3)",
             []>;
@@ -988,25 +988,25 @@ def LDrib_ae_indexed : LDInst<(outs IntRegs:$dst),
                                                 s11_0ImmPred:$offset)))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_GP : LDInst<(outs IntRegs:$dst),
+def LDrib_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global, u16Imm:$offset),
             "$dst=memb(#$global+$offset)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDb_GP : LDInst<(outs IntRegs:$dst),
+def LDb_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst=memb(#$global)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDub_GP : LDInst<(outs IntRegs:$dst),
+def LDub_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst=memub(#$global)",
             []>;
 
 let isPredicable = 1, mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrib : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
+def POST_LDrib : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
             (ins IntRegs:$src1, s4Imm:$offset),
             "$dst = memb($src1++#$offset)",
             [],
@@ -1014,63 +1014,63 @@ def POST_LDrib : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
 
 // Load byte conditionally.
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_cPt : LDInst<(outs IntRegs:$dst),
+def LDrib_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1) $dst = memb($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDrib_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1) $dst = memb($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_indexed_cPt : LDInst<(outs IntRegs:$dst),
+def LDrib_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if ($src1) $dst = memb($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_indexed_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDrib_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1) $dst = memb($src2+#$src3)",
             []>;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrib_cPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDrib_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
             "if ($src1) $dst1 = memb($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrib_cNotPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDrib_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
             "if (!$src1) $dst1 = memb($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDrib_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1.new) $dst = memb($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDrib_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1.new) $dst = memb($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_indexed_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDrib_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if ($src1.new) $dst = memb($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrib_indexed_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDrib_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1.new) $dst = memb($src2+#$src3)",
             []>;
@@ -1103,26 +1103,26 @@ def LDrih_ae_indexed : LDInst<(outs IntRegs:$dst),
                                                  s11_1ImmPred:$offset)))] >;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_GP : LDInst<(outs IntRegs:$dst),
+def LDrih_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global, u16Imm:$offset),
             "$dst=memh(#$global+$offset)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDh_GP : LDInst<(outs IntRegs:$dst),
+def LDh_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst=memh(#$global)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDuh_GP : LDInst<(outs IntRegs:$dst),
+def LDuh_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst=memuh(#$global)",
             []>;
 
 
 let isPredicable = 1, mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrih : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
+def POST_LDrih : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
             (ins IntRegs:$src1, s4Imm:$offset),
             "$dst = memh($src1++#$offset)",
             [],
@@ -1130,63 +1130,63 @@ def POST_LDrih : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
 
 // Load halfword conditionally.
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_cPt : LDInst<(outs IntRegs:$dst),
+def LDrih_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1) $dst = memh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDrih_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1) $dst = memh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_indexed_cPt : LDInst<(outs IntRegs:$dst),
+def LDrih_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if ($src1) $dst = memh($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_indexed_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDrih_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1) $dst = memh($src2+#$src3)",
             []>;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrih_cPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDrih_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
             "if ($src1) $dst1 = memh($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDrih_cNotPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDrih_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
             "if (!$src1) $dst1 = memh($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDrih_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1.new) $dst = memh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDrih_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1.new) $dst = memh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_indexed_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDrih_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if ($src1.new) $dst = memh($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDrih_indexed_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDrih_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1.new) $dst = memh($src2+#$src3)",
             []>;
@@ -1232,13 +1232,13 @@ def LDriub_ae_indexed : LDInst<(outs IntRegs:$dst),
                                                 s11_0ImmPred:$offset)))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_GP : LDInst<(outs IntRegs:$dst),
+def LDriub_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global, u16Imm:$offset),
             "$dst=memub(#$global+$offset)",
             []>;
 
 let isPredicable = 1, mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriub : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
+def POST_LDriub : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
             (ins IntRegs:$src1, s4Imm:$offset),
             "$dst = memub($src1++#$offset)",
             [],
@@ -1246,63 +1246,63 @@ def POST_LDriub : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
 
 // Load unsigned byte conditionally.
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_cPt : LDInst<(outs IntRegs:$dst),
+def LDriub_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1) $dst = memub($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDriub_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1) $dst = memub($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_indexed_cPt : LDInst<(outs IntRegs:$dst),
+def LDriub_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if ($src1) $dst = memub($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_indexed_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDriub_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1) $dst = memub($src2+#$src3)",
             []>;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriub_cPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDriub_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
             "if ($src1) $dst1 = memub($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriub_cNotPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDriub_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_0Imm:$src3),
             "if (!$src1) $dst1 = memub($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDriub_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1.new) $dst = memub($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDriub_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1.new) $dst = memub($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_indexed_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDriub_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if ($src1.new) $dst = memub($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriub_indexed_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDriub_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
             "if (!$src1.new) $dst = memub($src2+#$src3)",
             []>;
@@ -1337,13 +1337,13 @@ def LDriuh_ae_indexed : LDInst<(outs IntRegs:$dst),
                                                  s11_1ImmPred:$offset)))] >;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_GP : LDInst<(outs IntRegs:$dst),
+def LDriuh_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global, u16Imm:$offset),
             "$dst=memuh(#$global+$offset)",
             []>;
 
 let isPredicable = 1, mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriuh : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
+def POST_LDriuh : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
             (ins IntRegs:$src1, s4Imm:$offset),
             "$dst = memuh($src1++#$offset)",
             [],
@@ -1351,63 +1351,63 @@ def POST_LDriuh : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
 
 // Load unsigned halfword conditionally.
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_cPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1) $dst = memuh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1) $dst = memuh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_indexed_cPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if ($src1) $dst = memuh($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_indexed_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1) $dst = memuh($src2+#$src3)",
             []>;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriuh_cPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDriuh_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
             "if ($src1) $dst1 = memuh($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriuh_cNotPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDriuh_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_1Imm:$src3),
             "if (!$src1) $dst1 = memuh($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1.new) $dst = memuh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1.new) $dst = memuh($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_indexed_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if ($src1.new) $dst = memuh($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriuh_indexed_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDriuh_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
             "if (!$src1.new) $dst = memuh($src2+#$src3)",
             []>;
@@ -1421,7 +1421,7 @@ def LDriw : LDInst<(outs IntRegs:$dst),
 
 // Load predicate.
 let mayLoad = 1, Defs = [R10,R11] in
-def LDriw_pred : LDInst<(outs PredRegs:$dst),
+def LDriw_pred : LDInst2<(outs PredRegs:$dst),
             (ins MEMri:$addr),
             "Error; should not emit",
             []>;
@@ -1435,19 +1435,19 @@ def LDriw_indexed : LDInst<(outs IntRegs:$dst),
                                            s11_2ImmPred:$offset)))]>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_GP : LDInst<(outs IntRegs:$dst),
+def LDriw_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global, u16Imm:$offset),
             "$dst=memw(#$global+$offset)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDw_GP : LDInst<(outs IntRegs:$dst),
+def LDw_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst=memw(#$global)",
             []>;
 
 let isPredicable = 1, mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriw : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
+def POST_LDriw : LDInst2PI<(outs IntRegs:$dst, IntRegs:$dst2),
             (ins IntRegs:$src1, s4Imm:$offset),
             "$dst = memw($src1++#$offset)",
             [],
@@ -1456,70 +1456,70 @@ def POST_LDriw : LDInstPI<(outs IntRegs:$dst, IntRegs:$dst2),
 // Load word conditionally.
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_cPt : LDInst<(outs IntRegs:$dst),
+def LDriw_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1) $dst = memw($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDriw_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1) $dst = memw($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_indexed_cPt : LDInst<(outs IntRegs:$dst),
+def LDriw_indexed_cPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
             "if ($src1) $dst=memw($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_indexed_cNotPt : LDInst<(outs IntRegs:$dst),
+def LDriw_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
             "if (!$src1) $dst=memw($src2+#$src3)",
             []>;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriw_cPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDriw_cPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_2Imm:$src3),
             "if ($src1) $dst1 = memw($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, hasCtrlDep = 1, neverHasSideEffects = 1 in
-def POST_LDriw_cNotPt : LDInstPI<(outs IntRegs:$dst1, IntRegs:$dst2),
+def POST_LDriw_cNotPt : LDInst2PI<(outs IntRegs:$dst1, IntRegs:$dst2),
             (ins PredRegs:$src1, IntRegs:$src2, s4_2Imm:$src3),
             "if (!$src1) $dst1 = memw($src2++#$src3)",
             [],
             "$src2 = $dst2">;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDriw_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if ($src1.new) $dst = memw($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDriw_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, MEMri:$addr),
             "if (!$src1.new) $dst = memw($addr)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_indexed_cdnPt : LDInst<(outs IntRegs:$dst),
+def LDriw_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
             "if ($src1.new) $dst=memw($src2+#$src3)",
             []>;
 
 let mayLoad = 1, neverHasSideEffects = 1 in
-def LDriw_indexed_cdnNotPt : LDInst<(outs IntRegs:$dst),
+def LDriw_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
             "if (!$src1.new) $dst=memw($src2+#$src3)",
             []>;
 
 // Deallocate stack frame.
 let Defs = [R29, R30, R31], Uses = [R29], neverHasSideEffects = 1 in {
-  def DEALLOCFRAME : LDInst<(outs), (ins i32imm:$amt1),
+  def DEALLOCFRAME : LDInst2<(outs), (ins i32imm:$amt1),
                      "deallocframe",
                      []>;
 }
@@ -1741,8 +1741,8 @@ def STrid_indexed : STInst<(outs),
             [(store DoubleRegs:$src3,
                                 (add IntRegs:$src1, s11_3ImmPred:$src2))]>;
 
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrid_GP : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrid_GP : STInst2<(outs),
             (ins globaladdress:$global, u16Imm:$offset, DoubleRegs:$src),
             "memd(#$global+$offset) = $src",
             []>;
@@ -1758,30 +1758,30 @@ def POST_STdri : STInstPI<(outs IntRegs:$dst),
 // Store doubleword conditionally.
 // if ([!]Pv) memd(Rs+#u6:3)=Rtt
 // if (Pv) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1 in
-def STrid_cPt : STInst<(outs),
+let AddedComplexity = 10, neverHasSideEffects = 1 in
+def STrid_cPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, DoubleRegs:$src2),
             "if ($src1) memd($addr) = $src2",
             []>;
 
 // if (!Pv) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1 in
-def STrid_cNotPt : STInst<(outs),
+let AddedComplexity = 10, neverHasSideEffects = 1 in
+def STrid_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, DoubleRegs:$src2),
             "if (!$src1) memd($addr) = $src2",
             []>;
 
 // if (Pv) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1 in
-def STrid_indexed_cPt : STInst<(outs),
+let AddedComplexity = 10, neverHasSideEffects = 1 in
+def STrid_indexed_cPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
                  DoubleRegs:$src4),
             "if ($src1) memd($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memd(Rs+#u6:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1 in
-def STrid_indexed_cNotPt : STInst<(outs),
+let AddedComplexity = 10, neverHasSideEffects = 1 in
+def STrid_indexed_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
                  DoubleRegs:$src4),
             "if (!$src1) memd($src2+#$src3) = $src4",
@@ -1789,8 +1789,8 @@ def STrid_indexed_cNotPt : STInst<(outs),
 
 // if ([!]Pv) memd(Rx++#s4:3)=Rtt
 // if (Pv) memd(Rx++#s4:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1 in
-def POST_STdri_cPt : STInstPI<(outs IntRegs:$dst),
+let AddedComplexity = 10, neverHasSideEffects = 1 in
+def POST_STdri_cPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, DoubleRegs:$src2, IntRegs:$src3,
                  s4_3Imm:$offset),
             "if ($src1) memd($src3++#$offset) = $src2",
@@ -1798,9 +1798,9 @@ def POST_STdri_cPt : STInstPI<(outs IntRegs:$dst),
             "$src3 = $dst">;
 
 // if (!Pv) memd(Rx++#s4:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1,
+let AddedComplexity = 10, neverHasSideEffects = 1,
     isPredicated = 1 in
-def POST_STdri_cNotPt : STInstPI<(outs IntRegs:$dst),
+def POST_STdri_cNotPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, DoubleRegs:$src2, IntRegs:$src3,
                  s4_3Imm:$offset),
             "if (!$src1) memd($src3++#$offset) = $src2",
@@ -1824,14 +1824,14 @@ def STrib_indexed : STInst<(outs),
                                                s11_0ImmPred:$src2))]>;
 
 // memb(gp+#u16:0)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrib_GP : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrib_GP : STInst2<(outs),
             (ins globaladdress:$global, u16Imm:$offset, IntRegs:$src),
             "memb(#$global+$offset) = $src",
             []>;
 
-let mayStore = 1, neverHasSideEffects = 1 in
-def STb_GP   : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STb_GP   : STInst2<(outs),
             (ins globaladdress:$global, IntRegs:$src),
             "memb(#$global) = $src",
             []>;
@@ -1850,44 +1850,44 @@ def POST_STbri : STInstPI<(outs IntRegs:$dst), (ins IntRegs:$src1,
 // Store byte conditionally.
 // if ([!]Pv) memb(Rs+#u6:0)=Rt
 // if (Pv) memb(Rs+#u6:0)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrib_cPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrib_cPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
             "if ($src1) memb($addr) = $src2",
             []>;
 
 // if (!Pv) memb(Rs+#u6:0)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrib_cNotPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrib_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
             "if (!$src1) memb($addr) = $src2",
             []>;
 
 // if (Pv) memb(Rs+#u6:0)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrib_indexed_cPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrib_indexed_cPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
             "if ($src1) memb($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memb(Rs+#u6:0)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrib_indexed_cNotPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrib_indexed_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
             "if (!$src1) memb($src2+#$src3) = $src4",
             []>;
 
 // if ([!]Pv) memb(Rx++#s4:0)=Rt
 // if (Pv) memb(Rx++#s4:0)=Rt
-let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
-def POST_STbri_cPt : STInstPI<(outs IntRegs:$dst),
+let hasCtrlDep = 1, isPredicated = 1 in
+def POST_STbri_cPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
             "if ($src1) memb($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
 
 // if (!Pv) memb(Rx++#s4:0)=Rt
-let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
-def POST_STbri_cNotPt : STInstPI<(outs IntRegs:$dst),
+let hasCtrlDep = 1, isPredicated = 1 in
+def POST_STbri_cNotPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
             "if (!$src1) memb($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
@@ -1909,14 +1909,14 @@ def STrih_indexed : STInst<(outs),
             [(truncstorei16 IntRegs:$src3, (add IntRegs:$src1,
                                                 s11_1ImmPred:$src2))]>;
 
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrih_GP : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrih_GP : STInst2<(outs),
             (ins globaladdress:$global, u16Imm:$offset, IntRegs:$src),
             "memh(#$global+$offset) = $src",
             []>;
 
-let mayStore = 1, neverHasSideEffects = 1 in
-def STh_GP   : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STh_GP   : STInst2<(outs),
             (ins globaladdress:$global, IntRegs:$src),
             "memh(#$global) = $src",
             []>;
@@ -1935,44 +1935,44 @@ def POST_SThri : STInstPI<(outs IntRegs:$dst),
 // Store halfword conditionally.
 // if ([!]Pv) memh(Rs+#u6:1)=Rt
 // if (Pv) memh(Rs+#u6:1)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrih_cPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrih_cPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
             "if ($src1) memh($addr) = $src2",
             []>;
 
 // if (!Pv) memh(Rs+#u6:1)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrih_cNotPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrih_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
             "if (!$src1) memh($addr) = $src2",
             []>;
 
 // if (Pv) memh(Rs+#u6:1)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrih_indexed_cPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrih_indexed_cPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
             "if ($src1) memh($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memh(Rs+#u6:1)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STrih_indexed_cNotPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STrih_indexed_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
             "if (!$src1) memh($src2+#$src3) = $src4",
             []>;
 
 // if ([!]Pv) memh(Rx++#s4:1)=Rt
 // if (Pv) memh(Rx++#s4:1)=Rt
-let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
-def POST_SThri_cPt : STInstPI<(outs IntRegs:$dst),
+let hasCtrlDep = 1, isPredicated = 1 in
+def POST_SThri_cPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_1Imm:$offset),
             "if ($src1) memh($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
 
 // if (!Pv) memh(Rx++#s4:1)=Rt
-let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
-def POST_SThri_cNotPt : STInstPI<(outs IntRegs:$dst),
+let hasCtrlDep = 1, isPredicated = 1 in
+def POST_SThri_cNotPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_1Imm:$offset),
             "if (!$src1) memh($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
@@ -1981,7 +1981,7 @@ def POST_SThri_cNotPt : STInstPI<(outs IntRegs:$dst),
 // Store word.
 // Store predicate.
 let Defs = [R10,R11] in
-def STriw_pred : STInst<(outs),
+def STriw_pred : STInst2<(outs),
             (ins MEMri:$addr, PredRegs:$src1),
             "Error; should not emit",
             []>;
@@ -1999,8 +1999,8 @@ def STriw_indexed : STInst<(outs),
             "memw($src1+#$src2) = $src3",
             [(store IntRegs:$src3, (add IntRegs:$src1, s11_2ImmPred:$src2))]>;
 
-let mayStore = 1, neverHasSideEffects = 1 in
-def STriw_GP : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STriw_GP : STInst2<(outs),
             (ins globaladdress:$global, u16Imm:$offset, IntRegs:$src),
             "memw(#$global+$offset) = $src",
             []>;
@@ -2016,44 +2016,44 @@ def POST_STwri : STInstPI<(outs IntRegs:$dst),
 // Store word conditionally.
 // if ([!]Pv) memw(Rs+#u6:2)=Rt
 // if (Pv) memw(Rs+#u6:2)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STriw_cPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STriw_cPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
             "if ($src1) memw($addr) = $src2",
             []>;
 
 // if (!Pv) memw(Rs+#u6:2)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STriw_cNotPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STriw_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
             "if (!$src1) memw($addr) = $src2",
             []>;
 
 // if (Pv) memw(Rs+#u6:2)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STriw_indexed_cPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STriw_indexed_cPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
             "if ($src1) memw($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memw(Rs+#u6:2)=Rt
-let mayStore = 1, neverHasSideEffects = 1 in
-def STriw_indexed_cNotPt : STInst<(outs),
+let neverHasSideEffects = 1 in
+def STriw_indexed_cNotPt : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
             "if (!$src1) memw($src2+#$src3) = $src4",
             []>;
 
 // if ([!]Pv) memw(Rx++#s4:2)=Rt
 // if (Pv) memw(Rx++#s4:2)=Rt
-let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
-def POST_STwri_cPt : STInstPI<(outs IntRegs:$dst),
+let hasCtrlDep = 1, isPredicated = 1 in
+def POST_STwri_cPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_2Imm:$offset),
             "if ($src1) memw($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
 
 // if (!Pv) memw(Rx++#s4:2)=Rt
-let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
-def POST_STwri_cNotPt : STInstPI<(outs IntRegs:$dst),
+let hasCtrlDep = 1, isPredicated = 1 in
+def POST_STwri_cNotPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_2Imm:$offset),
             "if (!$src1) memw($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
@@ -2062,7 +2062,7 @@ def POST_STwri_cNotPt : STInstPI<(outs IntRegs:$dst),
 
 // Allocate stack frame.
 let Defs = [R29, R30], Uses = [R31, R30], neverHasSideEffects = 1 in {
-  def ALLOCFRAME : STInst<(outs),
+  def ALLOCFRAME : STInst2<(outs),
              (ins i32imm:$amt),
              "allocframe(#$amt)",
              []>;
@@ -2232,7 +2232,7 @@ def HexagonBARRIER: SDNode<"HexagonISD::BARRIER", SDHexagonBARRIER,
                            [SDNPHasChain]>;
 
 let hasSideEffects = 1 in
-def BARRIER : STInst<(outs), (ins),
+def BARRIER : STInst2<(outs), (ins),
                      "barrier",
                      [(HexagonBARRIER)]>;
 
@@ -2324,35 +2324,35 @@ def CONST32 : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
               (load (HexagonCONST32 tglobaltlsaddr:$global)))]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32_set : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
+def CONST32_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst = CONST32(#$global)",
                   [(set IntRegs:$dst,
                   (HexagonCONST32 tglobaladdr:$global))]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32_set_jt : LDInst<(outs IntRegs:$dst), (ins jumptablebase:$jt),
+def CONST32_set_jt : LDInst2<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                      "$dst = CONST32(#$jt)",
                      [(set IntRegs:$dst,
                      (HexagonCONST32 tjumptable:$jt))]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32GP_set : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
+def CONST32GP_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
                     "$dst = CONST32(#$global)",
                     [(set IntRegs:$dst,
                     (HexagonCONST32_GP tglobaladdr:$global))]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32_Int_Real : LDInst<(outs IntRegs:$dst), (ins i32imm:$global),
+def CONST32_Int_Real : LDInst2<(outs IntRegs:$dst), (ins i32imm:$global),
                        "$dst = CONST32(#$global)",
                        [(set IntRegs:$dst, imm:$global) ]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32_Label : LDInst<(outs IntRegs:$dst), (ins bblabel:$label),
+def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),
                     "$dst = CONST32($label)",
                     [(set IntRegs:$dst, (HexagonCONST32 bbl:$label))]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST64_Int_Real : LDInst<(outs DoubleRegs:$dst), (ins i64imm:$global),
+def CONST64_Int_Real : LDInst2<(outs DoubleRegs:$dst), (ins i64imm:$global),
                        "$dst = CONST64(#$global)",
                        [(set DoubleRegs:$dst, imm:$global) ]>;
 
@@ -3046,3 +3046,7 @@ include "HexagonInstrInfoV3.td"
 //===----------------------------------------------------------------------===//
 
 include "HexagonInstrInfoV4.td"
+
+//===----------------------------------------------------------------------===//
+// V4 Instructions -
+//===----------------------------------------------------------------------===//
