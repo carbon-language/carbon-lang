@@ -498,6 +498,7 @@ class MallocInfo {
 
     CHECK(m->chunk_state == CHUNK_QUARANTINE);
     m->chunk_state = CHUNK_AVAILABLE;
+    PoisonShadow((uintptr_t)m, m->Size(), kAsanHeapLeftRedzoneMagic);
     CHECK(m->alloc_tid >= 0);
     CHECK(m->free_tid >= 0);
 

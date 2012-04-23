@@ -1835,12 +1835,12 @@ TEST(AddressSanitizer, DISABLED_DemoTooMuchMemoryTest) {
 }
 
 // http://code.google.com/p/address-sanitizer/issues/detail?id=66
-TEST(AddressSanitizer, DISABLED_BufferOverflowAfterManyFrees) {
+TEST(AddressSanitizer, BufferOverflowAfterManyFrees) {
   for (int i = 0; i < 1000000; i++) {
     delete [] (Ident(new char [8644]));
   }
   char *x = new char[8192];
-  x[Ident(8192)] = 0;
+  EXPECT_DEATH(x[Ident(8192)] = 0, "AddressSanitizer heap-buffer-overflow");
   delete [] Ident(x);
 }
 
