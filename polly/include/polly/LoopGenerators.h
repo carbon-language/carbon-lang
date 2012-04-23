@@ -11,6 +11,8 @@
 // as LLVM-IR.
 //
 //===----------------------------------------------------------------------===//
+#ifndef POLLY_LOOP_GENERATORS_H
+#define POLLY_LOOP_GENERATORS_H
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/ADT/SetVector.h"
 
@@ -22,6 +24,7 @@ namespace llvm {
   class BasicBlock;
 }
 
+namespace polly {
 using namespace llvm;
 
 /// @brief Create a scalar loop.
@@ -105,4 +108,6 @@ private:
   /// @brief Create the definition of the OpenMP subfunction.
   Function *createSubfunctionDefinition();
 };
+} // end namespace polly
+#endif
 
