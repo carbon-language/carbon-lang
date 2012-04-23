@@ -58,6 +58,7 @@ ifeq ($(ARCH), arm)
 endif
 
 CLANG_FLAGS=
+CLANG_VERSION=3.2
 CLANG_BUILD=$(ROOT)/../../../../build/Release+Asserts
 CLANG_CC=$(CLANG_BUILD)/bin/clang $(CLANG_FLAGS)
 CLANG_CXX=$(CLANG_BUILD)/bin/clang++ $(CLANG_FLAGS)
@@ -120,8 +121,8 @@ endif
 
 # This will build libasan on linux for both x86_64 and i386 in the
 # desired location. The Mac library is already build by the clang's make.
-# $(CLANG_BUILD)/lib/clang/3.1/lib/$(OS)/libclang_rt.asan-$(ARCH).a
-LIBASAN_INST_DIR=$(CLANG_BUILD)/lib/clang/3.2/lib/$(OS)
+# $(CLANG_BUILD)/lib/clang/$(CLANG_VERSION)/lib/$(OS)/libclang_rt.asan-$(ARCH).a
+LIBASAN_INST_DIR=$(CLANG_BUILD)/lib/clang/$(CLANG_VERSION)/lib/$(OS)
 LIBASAN_A=$(LIBASAN_INST_DIR)/libclang_rt.asan-$(ARCH).a
 
 BLACKLIST=
