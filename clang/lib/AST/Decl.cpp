@@ -122,7 +122,7 @@ static LinkageInfo getLVForTemplateArgumentList(const TemplateArgument *Args,
       break;
 
     case TemplateArgument::Type:
-      LV.merge(getLVForType(Args[I].getAsType()));
+      LV.mergeWithMin(getLVForType(Args[I].getAsType()));
       break;
 
     case TemplateArgument::Declaration:
@@ -130,7 +130,7 @@ static LinkageInfo getLVForTemplateArgumentList(const TemplateArgument *Args,
       // arguments, valid only in C++0x.
       if (Decl *D = Args[I].getAsDecl()) {
         if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
-          LV.merge(getLVForDecl(ND, OnlyTemplate));
+          LV.mergeWithMin(getLVForDecl(ND, OnlyTemplate));
       }
       break;
 
@@ -138,7 +138,7 @@ static LinkageInfo getLVForTemplateArgumentList(const TemplateArgument *Args,
     case TemplateArgument::TemplateExpansion:
       if (TemplateDecl *Template
                 = Args[I].getAsTemplateOrTemplatePattern().getAsTemplateDecl())
-        LV.merge(getLVForDecl(Template, OnlyTemplate));
+        LV.mergeWithMin(getLVForDecl(Template, OnlyTemplate));
       break;
 
     case TemplateArgument::Pack:
