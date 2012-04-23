@@ -5402,7 +5402,7 @@ static SDValue LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
   unsigned NumElems = VT.getVectorNumElements();
 
   if (!Subtarget->hasSSE41())
@@ -5411,7 +5411,7 @@ static SDValue LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   unsigned ISDNo = 0;
   MVT OpTy;
 
-  switch (VT.getSimpleVT().SimpleTy) {
+  switch (VT.SimpleTy) {
   default: return SDValue();
   case MVT::v8i16:
     ISDNo = X86ISD::BLENDPW;
