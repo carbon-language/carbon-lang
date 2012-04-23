@@ -2934,6 +2934,7 @@ class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 
 // Shift right by immediate and accumulate,
 // both double- and quad-register.
+let TwoOperandAliasConstraint = "$Vm = $Vd" in {
 class N2VDShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 Operand ImmTy, string OpcodeStr, string Dt,
                 ValueType Ty, SDNode ShOp>
@@ -2950,9 +2951,11 @@ class N2VQShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
            OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "$src1 = $Vd",
            [(set QPR:$Vd, (Ty (add QPR:$src1,
                                 (Ty (ShOp QPR:$Vm, (i32 imm:$SIMM))))))]>;
+}
 
 // Shift by immediate and insert,
 // both double- and quad-register.
+let TwoOperandAliasConstraint = "$Vm = $Vd" in {
 class N2VDShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 Operand ImmTy, Format f, string OpcodeStr, string Dt,
                 ValueType Ty,SDNode ShOp>
@@ -2967,6 +2970,7 @@ class N2VQShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
            (ins QPR:$src1, QPR:$Vm, ImmTy:$SIMM), f, IIC_VSHLiQ,
            OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "$src1 = $Vd",
            [(set QPR:$Vd, (Ty (ShOp QPR:$src1, QPR:$Vm, (i32 imm:$SIMM))))]>;
+}
 
 // Convert, with fractional bits immediate,
 // both double- and quad-register.
@@ -6561,64 +6565,6 @@ def : NEONInstAlias<"vclt${p}.u32 $Qd, $Qn, $Qm",
                     (VCGTuv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
 def : NEONInstAlias<"vclt${p}.f32 $Qd, $Qn, $Qm",
                     (VCGTfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
-
-// Two-operand variants for VSRA.
-    // Signed.
-def : NEONInstAlias<"vsra${p}.s8 $Vdm, $imm",
-                    (VSRAsv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.s16 $Vdm, $imm",
-                    (VSRAsv4i16 DPR:$Vdm, DPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.s32 $Vdm, $imm",
-                    (VSRAsv2i32 DPR:$Vdm, DPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.s64 $Vdm, $imm",
-                    (VSRAsv1i64 DPR:$Vdm, DPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
-def : NEONInstAlias<"vsra${p}.s8 $Vdm, $imm",
-                    (VSRAsv16i8 QPR:$Vdm, QPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.s16 $Vdm, $imm",
-                    (VSRAsv8i16 QPR:$Vdm, QPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.s32 $Vdm, $imm",
-                    (VSRAsv4i32 QPR:$Vdm, QPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.s64 $Vdm, $imm",
-                    (VSRAsv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
-    // Unsigned.
-def : NEONInstAlias<"vsra${p}.u8 $Vdm, $imm",
-                    (VSRAuv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.u16 $Vdm, $imm",
-                    (VSRAuv4i16 DPR:$Vdm, DPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.u32 $Vdm, $imm",
-                    (VSRAuv2i32 DPR:$Vdm, DPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.u64 $Vdm, $imm",
-                    (VSRAuv1i64 DPR:$Vdm, DPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
-def : NEONInstAlias<"vsra${p}.u8 $Vdm, $imm",
-                    (VSRAuv16i8 QPR:$Vdm, QPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.u16 $Vdm, $imm",
-                    (VSRAuv8i16 QPR:$Vdm, QPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.u32 $Vdm, $imm",
-                    (VSRAuv4i32 QPR:$Vdm, QPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsra${p}.u64 $Vdm, $imm",
-                    (VSRAuv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
-// Two-operand variants for VSRI.
-def : NEONInstAlias<"vsri${p}.8 $Vdm, $imm",
-                    (VSRIv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsri${p}.16 $Vdm, $imm",
-                    (VSRIv4i16 DPR:$Vdm, DPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsri${p}.32 $Vdm, $imm",
-                    (VSRIv2i32 DPR:$Vdm, DPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsri${p}.64 $Vdm, $imm",
-                    (VSRIv1i64 DPR:$Vdm, DPR:$Vdm, shr_imm64:$imm, pred:$p)>;
-
-def : NEONInstAlias<"vsri${p}.8 $Vdm, $imm",
-                    (VSRIv16i8 QPR:$Vdm, QPR:$Vdm, shr_imm8:$imm, pred:$p)>;
-def : NEONInstAlias<"vsri${p}.16 $Vdm, $imm",
-                    (VSRIv8i16 QPR:$Vdm, QPR:$Vdm, shr_imm16:$imm, pred:$p)>;
-def : NEONInstAlias<"vsri${p}.32 $Vdm, $imm",
-                    (VSRIv4i32 QPR:$Vdm, QPR:$Vdm, shr_imm32:$imm, pred:$p)>;
-def : NEONInstAlias<"vsri${p}.64 $Vdm, $imm",
-                    (VSRIv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
 
 // Two-operand variants for VSLI.
 def : NEONInstAlias<"vsli${p}.8 $Vdm, $imm",
