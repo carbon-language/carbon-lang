@@ -10291,6 +10291,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
           Res = DAG.getNode(ISD::SUB, dl, VT, Res, Mask);
           return Res;
         }
+        llvm_unreachable("Unknown shift opcode.");
       }
 
       if (Subtarget->hasAVX2() && VT == MVT::v32i8) {
@@ -10334,6 +10335,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
           Res = DAG.getNode(ISD::SUB, dl, VT, Res, Mask);
           return Res;
         }
+        llvm_unreachable("Unknown shift opcode.");
       }
     }
   }
