@@ -230,6 +230,10 @@ std::string sys::getHostCPUName() {
       case 45:
         return "corei7-avx";
 
+      // Ivy Bridge:
+      case 58:
+        return "core-avx-i";
+
       case 28: // Intel Atom processor. All processors are manufactured using
                // the 45 nm process
         return "atom";
