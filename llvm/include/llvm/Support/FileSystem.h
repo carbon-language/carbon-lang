@@ -99,8 +99,8 @@ struct space_info {
 class file_status
 {
   #if defined(LLVM_ON_UNIX)
-  dev_t st_dev;
-  ino_t st_ino;
+  dev_t fs_st_dev;
+  ino_t fs_st_ino;
   #elif defined (LLVM_ON_WIN32)
   uint32_t LastWriteTimeHigh;
   uint32_t LastWriteTimeLow;

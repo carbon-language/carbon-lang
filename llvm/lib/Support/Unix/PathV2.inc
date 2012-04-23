@@ -285,8 +285,8 @@ error_code exists(const Twine &path, bool &result) {
 
 bool equivalent(file_status A, file_status B) {
   assert(status_known(A) && status_known(B));
-  return A.st_dev == B.st_dev &&
-         A.st_ino == B.st_ino;
+  return A.fs_st_dev == B.fs_st_dev &&
+         A.fs_st_ino == B.fs_st_ino;
 }
 
 error_code equivalent(const Twine &A, const Twine &B, bool &result) {
@@ -340,8 +340,8 @@ error_code status(const Twine &path, file_status &result) {
   else
     result = file_status(file_type::type_unknown);
 
-  result.st_dev = status.st_dev;
-  result.st_ino = status.st_ino;
+  result.fs_st_dev = status.st_dev;
+  result.fs_st_ino = status.st_ino;
 
   return error_code::success();
 }
