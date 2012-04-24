@@ -90,7 +90,8 @@ class LoadUnloadTestCase(TestBase):
             dylibPath = 'DYLD_LIBRARY_PATH'
 
         # The directory to relocate the dynamic library and its debugging info.
-        new_dir = os.path.join(os.getcwd(), "hidden")
+        special_dir = "hidden"
+        new_dir = os.path.join(os.getcwd(), special_dir)
 
         old_dylib = os.path.join(os.getcwd(), dylibName)
         new_dylib = os.path.join(new_dir, dylibName)
@@ -118,7 +119,7 @@ class LoadUnloadTestCase(TestBase):
         # For now we don't track DYLD_LIBRARY_PATH, so the old library will be in
         # the modules list.
         self.expect("target modules list",
-            substrs = [old_dylib],
+            substrs = [os.path.basename(old_dylib)],
             matching=True)
 
         self.runCmd("run")
@@ -128,10 +129,7 @@ class LoadUnloadTestCase(TestBase):
         # After run, make sure the hidden library is present, and the one we didn't 
         # load is not.
         self.expect("target modules list",
-            substrs = [new_dylib])
-        self.expect("target modules list",
-            substrs = [old_dylib],
-            matching=False)
+            substrs = [special_dir, os.path.basename(new_dylib)])
 
     def test_lldb_process_load_and_unload_commands(self):
         """Test that lldb process load/unload command work correctly."""
