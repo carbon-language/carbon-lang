@@ -208,8 +208,7 @@ TEST(RecursiveASTVisitor, VisitsCallInTemplateInstantiation) {
     "void foo() { y<Y>(Y()); }"));
 }
 
-/* FIXME:
-TEST(RecursiveASTVisitor, VisitsCallInNestedTemplateInstantiation) {
+TEST(RecursiveASTVisitor, VisitsCallInNestedFunctionTemplateInstantiation) {
   CXXMemberCallVisitor Visitor;
   Visitor.ExpectMatch("Y::x", 4, 5);
   EXPECT_TRUE(Visitor.runOver(
@@ -221,7 +220,24 @@ TEST(RecursiveASTVisitor, VisitsCallInNestedTemplateInstantiation) {
     "};\n"
     "void foo() { Z<Y>::f<int>(); }"));
 }
-*/
+
+TEST(RecursiveASTVisitor, VisitsCallInNestedClassTemplateInstantiation) {
+  CXXMemberCallVisitor Visitor;
+  Visitor.ExpectMatch("A::x", 5, 7);
+  EXPECT_TRUE(Visitor.runOver(
+    "template <typename T1> struct X {\n"
+    "  template <typename T2> struct Y {\n"
+    "    void f() {\n"
+    "      T2 y;\n"
+    "      y.x();\n"
+    "    }\n"
+    "  };\n"
+    "};\n"
+    "struct A { void x(); };\n"
+    "int main() {\n"
+    "  (new X<A>::Y<A>())->f();\n"
+    "}"));
+}
 
 /* FIXME: According to Richard Smith this is a bug in the AST.
 TEST(RecursiveASTVisitor, VisitsBaseClassTemplateArgumentsInInstantiation) {
@@ -236,4 +252,3 @@ TEST(RecursiveASTVisitor, VisitsBaseClassTemplateArgumentsInInstantiation) {
 */
 
 } // end namespace clang
-

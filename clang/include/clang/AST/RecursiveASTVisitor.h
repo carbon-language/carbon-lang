@@ -1436,7 +1436,8 @@ DEF_TRAVERSE_DECL(ClassTemplateDecl, {
     if (getDerived().shouldVisitTemplateInstantiations()) {
       // If this is the definition of the primary template, visit
       // instantiations which were formed from this pattern.
-      if (D->isThisDeclarationADefinition())
+      if (D->isThisDeclarationADefinition() ||
+          D->getInstantiatedFromMemberTemplate())
         TRY_TO(TraverseClassInstantiations(D, D));
     }
 
@@ -1489,7 +1490,8 @@ DEF_TRAVERSE_DECL(FunctionTemplateDecl, {
       //
       // In addition, we only traverse the function instantiations when
       // the function template is a function template definition.
-      if (D->isThisDeclarationADefinition()) {
+      if (D->isThisDeclarationADefinition() ||
+          D->getInstantiatedFromMemberTemplate()) {
         TRY_TO(TraverseFunctionInstantiations(D));
       }
     }
