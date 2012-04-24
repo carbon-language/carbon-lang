@@ -24,10 +24,64 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include <vector>
 
 using namespace llvm;
 
 typedef MCDisassembler::DecodeStatus DecodeStatus;
+
+namespace {
+  // Handles the condition code status of instructions in IT blocks
+  class ITStatus
+  {
+    public:
+      // Returns the condition code for instruction in IT block
+      unsigned getITCC() {
+        unsigned CC = ARMCC::AL;
+        if (instrInITBlock())
+          CC = ITStates.back();
+        return CC;
+      }
+
+      // Advances the IT block state to the next T or E
+      void advanceITState() {
+        ITStates.pop_back();
+      }
+
+      // Returns true if the current instruction is in an IT block
+      bool instrInITBlock() {
+        return !ITStates.empty();
+      }
+
+      // Returns true if current instruction is the last instruction in an IT block
+      bool instrLastInITBlock() {
+        return ITStates.size() == 1;
+      }
+
+      // Called when decoding an IT instruction. Sets the IT state for the following
+      // instructions that for the IT block. Firstcond and Mask correspond to the 
+      // fields in the IT instruction encoding.
+      void setITState(char Firstcond, char Mask) {
+        // (3 - the number of trailing zeros) is the number of then / else.
+        unsigned CondBit0 = Mask >> 4 & 1;
+        unsigned NumTZ = CountTrailingZeros_32(Mask);
+        unsigned char CCBits = static_cast<unsigned char>(Firstcond & 0xf);
+        assert(NumTZ <= 3 && "Invalid IT mask!");
+        // push condition codes onto the stack the correct order for the pops
+        for (unsigned Pos = NumTZ+1; Pos <= 3; ++Pos) {
+          bool T = ((Mask >> Pos) & 1) == CondBit0;
+          if (T)
+            ITStates.push_back(CCBits);
+          else
+            ITStates.push_back(CCBits ^ 1);
+        }
+        ITStates.push_back(CCBits);
+      }
+
+    private:
+      std::vector<unsigned char> ITStates;
+  };
+}
 
 namespace {
 /// ARMDisassembler - ARM disassembler for all ARM platforms.
@@ -78,7 +132,7 @@ public:
   /// getEDInfo - See MCDisassembler.
   const EDInstInfo *getEDInfo() const;
 private:
-  mutable std::vector<unsigned> ITBlock;
+  mutable ITStatus ITBlock;
   DecodeStatus AddThumbPredicate(MCInst&) const;
   void UpdateThumbVFPPredicate(MCInst&) const;
 };
@@ -612,7 +666,7 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
     case ARM::tSETEND:
       // Some instructions (mostly conditional branches) are not
       // allowed in IT blocks.
-      if (!ITBlock.empty())
+      if (ITBlock.instrInITBlock())
         S = SoftFail;
       else
         return Success;
@@ -623,7 +677,7 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
     case ARM::t2TBH:
       // Some instructions (mostly unconditional branches) can
       // only appears at the end of, or outside of, an IT.
-      if (ITBlock.size() > 1)
+      if (ITBlock.instrInITBlock() && !ITBlock.instrLastInITBlock())
         S = SoftFail;
       break;
     default:
@@ -633,13 +687,11 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
   // If we're in an IT block, base the predicate on that.  Otherwise,
   // assume a predicate of AL.
   unsigned CC;
-  if (!ITBlock.empty()) {
-    CC = ITBlock.back();
-    if (CC == 0xF)
-      CC = ARMCC::AL;
-    ITBlock.pop_back();
-  } else
+  CC = ITBlock.getITCC();
+  if (CC == 0xF) 
     CC = ARMCC::AL;
+  if (ITBlock.instrInITBlock())
+    ITBlock.advanceITState();
 
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
   unsigned short NumOps = ARMInsts[MI.getOpcode()].NumOperands;
@@ -674,11 +726,9 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
 // context as a post-pass.
 void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
   unsigned CC;
-  if (!ITBlock.empty()) {
-    CC = ITBlock.back();
-    ITBlock.pop_back();
-  } else
-    CC = ARMCC::AL;
+  CC = ITBlock.getITCC();
+  if (ITBlock.instrInITBlock())
+    ITBlock.advanceITState();
 
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
   MCInst::iterator I = MI.begin();
@@ -726,7 +776,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeThumbSBitInstruction16(MI, insn16, Address, this, STI);
   if (result) {
     Size = 2;
-    bool InITBlock = !ITBlock.empty();
+    bool InITBlock = ITBlock.instrInITBlock();
     Check(result, AddThumbPredicate(MI));
     AddThumb1SBit(MI, InITBlock);
     return result;
@@ -739,7 +789,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
     // Nested IT blocks are UNPREDICTABLE.  Must be checked before we add
     // the Thumb predicate.
-    if (MI.getOpcode() == ARM::t2IT && !ITBlock.empty())
+    if (MI.getOpcode() == ARM::t2IT && ITBlock.instrInITBlock())
       result = MCDisassembler::SoftFail;
 
     Check(result, AddThumbPredicate(MI));
@@ -749,21 +799,9 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     // to the subsequent instructions.
     if (MI.getOpcode() == ARM::t2IT) {
 
-      // (3 - the number of trailing zeros) is the number of then / else.
-      unsigned firstcond = MI.getOperand(0).getImm();
+      unsigned Firstcond = MI.getOperand(0).getImm();
       unsigned Mask = MI.getOperand(1).getImm();
-      unsigned CondBit0 = Mask >> 4 & 1;
-      unsigned NumTZ = CountTrailingZeros_32(Mask);
-      assert(NumTZ <= 3 && "Invalid IT mask!");
-      for (unsigned Pos = 3, e = NumTZ; Pos > e; --Pos) {
-        bool T = ((Mask >> Pos) & 1) == CondBit0;
-        if (T)
-          ITBlock.insert(ITBlock.begin(), firstcond);
-        else
-          ITBlock.insert(ITBlock.begin(), firstcond ^ 1);
-      }
-
-      ITBlock.push_back(firstcond);
+      ITBlock.setITState(Firstcond, Mask);
     }
 
     return result;
@@ -783,7 +821,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeThumbInstruction32(MI, insn32, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 4;
-    bool InITBlock = ITBlock.size();
+    bool InITBlock = ITBlock.instrInITBlock();
     Check(result, AddThumbPredicate(MI));
     AddThumb1SBit(MI, InITBlock);
     return result;
