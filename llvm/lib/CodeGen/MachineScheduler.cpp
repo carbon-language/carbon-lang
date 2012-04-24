@@ -359,6 +359,8 @@ protected:
   void releaseSuccessors(SUnit *SU);
   void releasePred(SUnit *SU, SDep *PredEdge);
   void releasePredecessors(SUnit *SU);
+
+  void placeDebugValues();
 };
 } // namespace
 
@@ -526,6 +528,29 @@ void ScheduleDAGMI::schedule() {
     SU->isScheduled = true;
   }
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
+
+  placeDebugValues();
+}
+
+/// Reinsert any remaining debug_values, just like the PostRA scheduler.
+void ScheduleDAGMI::placeDebugValues() {
+  // If first instruction was a DBG_VALUE then put it back.
+  if (FirstDbgValue) {
+    BB->splice(RegionBegin, BB, FirstDbgValue);
+    RegionBegin = FirstDbgValue;
+  }
+
+  for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
+         DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
+    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
+    MachineInstr *DbgValue = P.first;
+    MachineBasicBlock::iterator OrigPrevMI = P.second;
+    BB->splice(++OrigPrevMI, BB, DbgValue);
+    if (OrigPrevMI == llvm::prior(RegionEnd))
+      RegionEnd = DbgValue;
+  }
+  DbgValues.clear();
+  FirstDbgValue = NULL;
 }
 
 //===----------------------------------------------------------------------===//
