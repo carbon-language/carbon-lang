@@ -78,7 +78,7 @@ static void default_handler(const char* cause)
 __attribute__((noreturn))
 static void default_terminate_handler() 
 {
-	default_handler("terminate");
+	default_handler("uncaught");
 }
 
 __attribute__((noreturn))
