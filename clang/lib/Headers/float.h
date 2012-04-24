@@ -28,7 +28,7 @@
  * additional definitions provided for Windows.
  * For more details see http://msdn.microsoft.com/en-us/library/y0ybw9fy.aspx
  */
-#if defined(__MINGW32__) && \
+#if (defined(__MINGW32__) || defined(_MSC_VER)) && \
     defined(__has_include_next) && __has_include_next(<float.h>)
 #  include_next <float.h>
 
