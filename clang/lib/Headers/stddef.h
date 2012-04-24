@@ -43,10 +43,13 @@ typedef __WCHAR_TYPE__ wchar_t;
 
 #undef NULL
 #ifdef __cplusplus
-#undef __null  // VC++ hack.
-#define NULL __null
+#  if !defined(__MINGW32__) && !defined(_MSC_VER)
+#    define NULL __null
+#  else
+#    define NULL 0
+#  endif
 #else
-#define NULL ((void*)0)
+#  define NULL ((void*)0)
 #endif
 
 #define offsetof(t, d) __builtin_offsetof(t, d)
