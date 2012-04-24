@@ -161,53 +161,59 @@ def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
 // ARM Instruction Predicate Definitions.
 //
 def HasV4T           : Predicate<"Subtarget->hasV4TOps()">,
-                                 AssemblerPredicate<"HasV4TOps">;
+                                 AssemblerPredicate<"HasV4TOps", "armv4t">;
 def NoV4T            : Predicate<"!Subtarget->hasV4TOps()">;
 def HasV5T           : Predicate<"Subtarget->hasV5TOps()">;
 def HasV5TE          : Predicate<"Subtarget->hasV5TEOps()">,
-                                 AssemblerPredicate<"HasV5TEOps">;
+                                 AssemblerPredicate<"HasV5TEOps", "armv5te">;
 def HasV6            : Predicate<"Subtarget->hasV6Ops()">,
-                                 AssemblerPredicate<"HasV6Ops">;
+                                 AssemblerPredicate<"HasV6Ops", "armv6">;
 def NoV6             : Predicate<"!Subtarget->hasV6Ops()">;
 def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">,
-                                 AssemblerPredicate<"HasV6T2Ops">;
+                                 AssemblerPredicate<"HasV6T2Ops", "armv6t2">;
 def NoV6T2           : Predicate<"!Subtarget->hasV6T2Ops()">;
 def HasV7            : Predicate<"Subtarget->hasV7Ops()">,
-                                 AssemblerPredicate<"HasV7Ops">;
+                                 AssemblerPredicate<"HasV7Ops", "armv7">;
 def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
 def HasVFP2          : Predicate<"Subtarget->hasVFP2()">,
-                                 AssemblerPredicate<"FeatureVFP2">;
+                                 AssemblerPredicate<"FeatureVFP2", "VFP2">;
 def HasVFP3          : Predicate<"Subtarget->hasVFP3()">,
-                                 AssemblerPredicate<"FeatureVFP3">;
+                                 AssemblerPredicate<"FeatureVFP3", "VFP3">;
 def HasVFP4          : Predicate<"Subtarget->hasVFP4()">,
-                                 AssemblerPredicate<"FeatureVFP4">;
+                                 AssemblerPredicate<"FeatureVFP4", "VFP4">;
 def HasNEON          : Predicate<"Subtarget->hasNEON()">,
-                                 AssemblerPredicate<"FeatureNEON">;
+                                 AssemblerPredicate<"FeatureNEON", "NEON">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
-                                 AssemblerPredicate<"FeatureFP16">;
+                                 AssemblerPredicate<"FeatureFP16","half-float">;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">,
-                                 AssemblerPredicate<"FeatureHWDiv">;
+                                 AssemblerPredicate<"FeatureHWDiv", "divide">;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
-                                 AssemblerPredicate<"FeatureT2XtPk">;
+                                 AssemblerPredicate<"FeatureT2XtPk",
+                                                     "pack/extract">;
 def HasThumb2DSP     : Predicate<"Subtarget->hasThumb2DSP()">,
-                                 AssemblerPredicate<"FeatureDSPThumb2">;
+                                 AssemblerPredicate<"FeatureDSPThumb2",
+                                                    "thumb2-dsp">;
 def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
-                                 AssemblerPredicate<"FeatureDB">;
+                                 AssemblerPredicate<"FeatureDB",
+                                                    "data-barriers">;
 def HasMP            : Predicate<"Subtarget->hasMPExtension()">,
-                                 AssemblerPredicate<"FeatureMP">;
+                                 AssemblerPredicate<"FeatureMP",
+                                                    "mp-extensions">;
 def UseNEONForFP     : Predicate<"Subtarget->useNEONForSinglePrecisionFP()">;
 def DontUseNEONForFP : Predicate<"!Subtarget->useNEONForSinglePrecisionFP()">;
 def IsThumb          : Predicate<"Subtarget->isThumb()">,
-                                 AssemblerPredicate<"ModeThumb">;
+                                 AssemblerPredicate<"ModeThumb", "thumb">;
 def IsThumb1Only     : Predicate<"Subtarget->isThumb1Only()">;
 def IsThumb2         : Predicate<"Subtarget->isThumb2()">,
-                                 AssemblerPredicate<"ModeThumb,FeatureThumb2">;
+                                 AssemblerPredicate<"ModeThumb,FeatureThumb2",
+                                                    "thumb2">;
 def IsMClass         : Predicate<"Subtarget->isMClass()">,
-                                 AssemblerPredicate<"FeatureMClass">;
+                                 AssemblerPredicate<"FeatureMClass", "armv7m">;
 def IsARClass        : Predicate<"!Subtarget->isMClass()">,
-                                 AssemblerPredicate<"!FeatureMClass">;
+                                 AssemblerPredicate<"!FeatureMClass",
+                                                    "armv7a/r">;
 def IsARM            : Predicate<"!Subtarget->isThumb()">,
-                                 AssemblerPredicate<"!ModeThumb">;
+                                 AssemblerPredicate<"!ModeThumb", "arm-mode">;
 def IsIOS            : Predicate<"Subtarget->isTargetIOS()">;
 def IsNotIOS         : Predicate<"!Subtarget->isTargetIOS()">;
 def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;

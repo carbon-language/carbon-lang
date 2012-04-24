@@ -438,6 +438,10 @@ class Predicate<string cond> {
   /// e.g. "ModeThumb,FeatureThumb2" is translated to
   ///      "(Bits & ModeThumb) != 0 && (Bits & FeatureThumb2) != 0".
   string AssemblerCondString = "";
+
+  /// PredicateName - User-level name to use for the predicate. Mainly for use
+  /// in diagnostics such as missing feature errors in the asm matcher.
+  string PredicateName = "";
 }
 
 /// NoHonorSignDependentRounding - This predicate is true if support for
@@ -761,9 +765,10 @@ def DefaultAsmParserVariant : AsmParserVariant;
 
 /// AssemblerPredicate - This is a Predicate that can be used when the assembler
 /// matches instructions and aliases.
-class AssemblerPredicate<string cond> {
+class AssemblerPredicate<string cond, string name = ""> {
   bit AssemblerMatcherPredicate = 1;
   string AssemblerCondString = cond;
+  string PredicateName = name;
 }
 
 /// TokenAlias - This class allows targets to define assembler token

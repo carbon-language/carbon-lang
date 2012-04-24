@@ -67,7 +67,7 @@ error: invalid operand for instruction
 @ Invalid writeback and register lists for STM
         stm r1, {r2, r6}
         stm r1!, {r2, r9}
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         stm r1, {r2, r6}
 @ CHECK-ERRORS:         ^
 @ CHECK-ERRORS: error: registers must be in range r0-r7
@@ -95,13 +95,13 @@ error: invalid operand for instruction
         str r2, [r7, #-1]
         str r5, [r1, #3]
         str r3, [r7, #128]
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         str r2, [r7, #-1]
 @ CHECK-ERRORS:         ^
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         str r5, [r1, #3]
 @ CHECK-ERRORS:         ^
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         str r3, [r7, #128]
 @ CHECK-ERRORS:         ^
 
@@ -111,7 +111,7 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         svc #-1
 @ CHECK-ERRORS:             ^
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: arm-mode
 @ CHECK-ERRORS:         svc #256
 @ CHECK-ERRORS:         ^
 
@@ -121,15 +121,15 @@ error: invalid operand for instruction
         add sp, #3
         add sp, sp, #512
         add r2, sp, #1024
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         add sp, #-1
 @ CHECK-ERRORS:                 ^
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         add sp, #3
 @ CHECK-ERRORS:                 ^
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: thumb2
 @ CHECK-ERRORS:         add sp, sp, #512
 @ CHECK-ERRORS:                     ^
-@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS: error: instruction requires: arm-mode
 @ CHECK-ERRORS:         add r2, sp, #1024
 @ CHECK-ERRORS:         ^
