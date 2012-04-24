@@ -596,6 +596,11 @@ bool MachineBasicBlock::canFallThrough() {
 
 MachineBasicBlock *
 MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
+  // Splitting the critical edge to a landing pad block is non-trivial. Don't do
+  // it in this generic function.
+  if (Succ->isLandingPad())
+    return NULL;
+
   MachineFunction *MF = getParent();
   DebugLoc dl;  // FIXME: this is nowhere
 
