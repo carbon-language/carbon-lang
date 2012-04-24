@@ -5443,12 +5443,6 @@ static SDValue LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
     ISDNo = X86ISD::BLENDPD;
     OpTy = MVT::v4f64;
     break;
-  case MVT::v16i16:
-    if (!Subtarget->hasAVX2())
-      return SDValue();
-    ISDNo = X86ISD::BLENDPW;
-    OpTy = MVT::v16i16;
-    break;
   }
   assert(ISDNo && "Invalid Op Number");
 
