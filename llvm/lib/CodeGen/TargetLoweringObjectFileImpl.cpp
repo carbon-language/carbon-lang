@@ -379,7 +379,7 @@ emitModuleFlags(MCStreamer &Streamer,
                 ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
                 Mangler *Mang, const TargetMachine &TM) const {
   unsigned VersionVal = 0;
-  unsigned GCFlags = 0;
+  unsigned ImageInfoFlags = 0;
   StringRef SectionVal;
 
   for (ArrayRef<Module::ModuleFlagEntry>::iterator
@@ -396,8 +396,9 @@ emitModuleFlags(MCStreamer &Streamer,
     if (Key == "Objective-C Image Info Version")
       VersionVal = cast<ConstantInt>(Val)->getZExtValue();
     else if (Key == "Objective-C Garbage Collection" ||
-             Key == "Objective-C GC Only")
-      GCFlags |= cast<ConstantInt>(Val)->getZExtValue();
+             Key == "Objective-C GC Only" ||
+             Key == "Objective-C Is Simulated")
+      ImageInfoFlags |= cast<ConstantInt>(Val)->getZExtValue();
     else if (Key == "Objective-C Image Info Section")
       SectionVal = cast<MDString>(Val)->getString();
   }
@@ -424,7 +425,7 @@ emitModuleFlags(MCStreamer &Streamer,
   Streamer.EmitLabel(getContext().
                      GetOrCreateSymbol(StringRef("L_OBJC_IMAGE_INFO")));
   Streamer.EmitIntValue(VersionVal, 4);
-  Streamer.EmitIntValue(GCFlags, 4);
+  Streamer.EmitIntValue(ImageInfoFlags, 4);
   Streamer.AddBlankLine();
 }
 
