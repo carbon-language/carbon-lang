@@ -120,10 +120,12 @@ no aliasing is possible. In case the user knows no aliasing can happen in the
 code the <b>-polly-ignore-aliasing</b> can be used to disable the check for
 possible aliasing.
 
-<h3>Importing and exporting JScop files</h3>
-The flags <b>-polly-run-import-jscop</b> and <b>-polly-run-export-jscop</b>
-allow the export and reimport of the polyhedral representation that Polly
-generates for the Scops.
+<h3>Import / Export</h3>
+The flags <b>-polly-import</b> and <b>-polly-export</b> allow the export and
+reimport of the polyhedral representation. By exporting, modifying and
+reimporting the polyhedral representation externally calculated transformations
+can be applied. This enables external optimizers or the manual optimization of
+specific SCoPs.
 </div>
 </body>
 </html>

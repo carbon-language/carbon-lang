@@ -62,17 +62,14 @@ Optimizer("polly-optimizer",
           cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore);
 
 static cl::opt<bool>
-ImportJScop("polly-run-import-jscop",
-            cl::desc("Export the JScop description of the detected Scops"),
+ImportJScop("polly-import",
+            cl::desc("Export the polyhedral description of the detected Scops"),
             cl::Hidden, cl::init(false), cl::ZeroOrMore);
 static cl::opt<bool>
-ExportJScop("polly-run-export-jscop",
-            cl::desc("Export the JScop description of the detected Scops"),
+ExportJScop("polly-export",
+            cl::desc("Export the polyhedral description of the detected Scops"),
             cl::Hidden, cl::init(false), cl::ZeroOrMore);
-static cl::opt<bool>
-ExportCLooG("polly-run-export-cloog",
-            cl::desc("Export the CLooG input files for the detected Scops"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore);
+
 static cl::opt<bool>
 PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
@@ -212,9 +209,6 @@ void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) {
 
   if (ExportJScop)
     PM.add(polly::createJSONExporterPass());
-
-  if (ExportCLooG)
-    PM.add(polly::createCloogExporterPass());
 
   if (RunCodegen)
     PM.add(polly::createCodeGenerationPass());
