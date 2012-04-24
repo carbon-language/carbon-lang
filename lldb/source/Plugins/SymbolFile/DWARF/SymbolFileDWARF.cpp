@@ -57,6 +57,7 @@
 #include "DWARFDebugLine.h"
 #include "DWARFDebugPubnames.h"
 #include "DWARFDebugRanges.h"
+#include "DWARFDeclContext.h"
 #include "DWARFDIECollection.h"
 #include "DWARFFormValue.h"
 #include "DWARFLocationList.h"
@@ -4447,6 +4448,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
     return type_sp;
 }
 
+
 //----------------------------------------------------------------------
 // This function helps to ensure that the declaration contexts match for
 // two different DIEs. Often times debug information will refer to a 
@@ -4463,7 +4465,16 @@ bool
 SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugInfoEntry *die1,
                                        DWARFCompileUnit* cu2, const DWARFDebugInfoEntry *die2)
 {
-    assert (die1 != die2);
+    if (die1 == die2)
+        return true;
+
+#if defined (LLDB_CONFIGURATION_DEBUG)
+    // You can't and shouldn't call this function with a compile unit from
+    // two different SymbolFileDWARF instances.
+    assert (DebugInfo()->ContainsCompileUnit (cu1));
+    assert (DebugInfo()->ContainsCompileUnit (cu2));
+#endif
+
     DWARFDIECollection decl_ctx_1;
     DWARFDIECollection decl_ctx_2;
     //The declaration DIE stack is a stack of the declaration context 
@@ -4544,12 +4555,19 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
                                           
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
+// "cu" and "die" must be from this SymbolFileDWARF
 TypeSP
-SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu, 
+SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                                            const DWARFDebugInfoEntry *die, 
                                            const ConstString &type_name)
 {
     TypeSP type_sp;
+
+#if defined (LLDB_CONFIGURATION_DEBUG)
+    // You can't and shouldn't call this function with a compile unit from
+    // another SymbolFileDWARF instance.
+    assert (DebugInfo()->ContainsCompileUnit (cu));
+#endif
 
     if (cu == NULL || die == NULL || !type_name)
         return type_sp;
@@ -4703,6 +4721,158 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
     }
     return type_sp;
 }
+
+TypeSP
+SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &dwarf_decl_ctx)
+{
+    TypeSP type_sp;
+
+    const uint32_t dwarf_decl_ctx_count = dwarf_decl_ctx.GetSize();
+    if (dwarf_decl_ctx_count > 0)
+    {
+        const ConstString type_name(dwarf_decl_ctx[0].name);
+        const dw_tag_t tag = dwarf_decl_ctx[0].tag;
+
+        if (type_name)
+        {
+            LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_TYPE_COMPLETION|DWARF_LOG_LOOKUPS));
+            if (log)
+            {
+                GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                          "SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext(tag=%s, qualified-name='%s')",
+                                                          DW_TAG_value_to_name(dwarf_decl_ctx[0].tag),
+                                                          dwarf_decl_ctx.GetQualifiedName());
+            }
+            
+            DIEArray die_offsets;
+            
+            if (m_using_apple_tables)
+            {
+                if (m_apple_types_ap.get())
+                {
+                    if (m_apple_types_ap->GetHeader().header_data.atoms.size() > 1)
+                    {
+                        m_apple_types_ap->FindByNameAndTag (type_name.GetCString(), tag, die_offsets);
+                    }
+                    else
+                    {
+                        m_apple_types_ap->FindByName (type_name.GetCString(), die_offsets);
+                    }
+                }
+            }
+            else
+            {
+                if (!m_indexed)
+                    Index ();
+                
+                m_type_index.Find (type_name, die_offsets);
+            }
+            
+            const size_t num_matches = die_offsets.size();
+            
+            
+            DWARFCompileUnit* type_cu = NULL;
+            const DWARFDebugInfoEntry* type_die = NULL;
+            if (num_matches)
+            {
+                DWARFDebugInfo* debug_info = DebugInfo();
+                for (size_t i=0; i<num_matches; ++i)
+                {
+                    const dw_offset_t die_offset = die_offsets[i];
+                    type_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &type_cu);
+                    
+                    if (type_die)
+                    {
+                        bool try_resolving_type = false;
+                        
+                        // Don't try and resolve the DIE we are looking for with the DIE itself!
+                        const dw_tag_t type_tag = type_die->Tag();
+                        // Make sure the tags match
+                        if (type_tag == tag)
+                        {
+                            // The tags match, lets try resolving this type
+                            try_resolving_type = true;
+                        }
+                        else
+                        {
+                            // The tags don't match, but we need to watch our for a
+                            // forward declaration for a struct and ("struct foo")
+                            // ends up being a class ("class foo { ... };") or
+                            // vice versa.
+                            switch (type_tag)
+                            {
+                                case DW_TAG_class_type:
+                                    // We had a "class foo", see if we ended up with a "struct foo { ... };"
+                                    try_resolving_type = (tag == DW_TAG_structure_type);
+                                    break;
+                                case DW_TAG_structure_type:
+                                    // We had a "struct foo", see if we ended up with a "class foo { ... };"
+                                    try_resolving_type = (tag == DW_TAG_class_type);
+                                    break;
+                                default:
+                                    // Tags don't match, don't event try to resolve
+                                    // using this type whose name matches....
+                                    break;
+                            }
+                        }
+                        
+                        if (try_resolving_type)
+                        {
+                            DWARFDeclContext type_dwarf_decl_ctx;
+                            type_die->GetDWARFDeclContext (this, type_cu, type_dwarf_decl_ctx);
+
+                            if (log)
+                            {
+                                GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                                          "SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext(tag=%s, qualified-name='%s') trying die=0x%8.8x (%s)",
+                                                                          DW_TAG_value_to_name(dwarf_decl_ctx[0].tag),
+                                                                          dwarf_decl_ctx.GetQualifiedName(),
+                                                                          type_die->GetOffset(),
+                                                                          type_dwarf_decl_ctx.GetQualifiedName());
+                            }
+                            
+                            // Make sure the decl contexts match all the way up
+                            if (dwarf_decl_ctx == type_dwarf_decl_ctx)
+                            {
+                                Type *resolved_type = ResolveType (type_cu, type_die, false);
+                                if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                                {
+                                    type_sp = resolved_type->shared_from_this();
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (log)
+                            {
+                                std::string qualified_name;
+                                type_die->GetQualifiedName(this, type_cu, qualified_name);
+                                GetObjectFile()->GetModule()->LogMessage (log.get(),
+                                                                          "SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext(tag=%s, qualified-name='%s') ignoring die=0x%8.8x (%s)",
+                                                                          DW_TAG_value_to_name(dwarf_decl_ctx[0].tag),
+                                                                          dwarf_decl_ctx.GetQualifiedName(),
+                                                                          type_die->GetOffset(),
+                                                                          qualified_name.c_str());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (m_using_apple_tables)
+                        {
+                            GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_types accelerator table had bad die 0x%8.8x for '%s')\n",
+                                                                                       die_offset, type_name.GetCString());
+                        }
+                    }            
+                    
+                }
+            }
+        }
+    }
+    return type_sp;
+}
+
 
 TypeSP
 SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new_ptr)
@@ -5136,14 +5306,18 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                       type_name_cstr);
                         }
                     
-                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                        DWARFDeclContext die_decl_ctx;
+                        die->GetDWARFDeclContext(this, dwarf_cu, die_decl_ctx);
+
+                        //type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                        type_sp = FindDefinitionTypeForDWARFDeclContext (die_decl_ctx);
 
                         if (!type_sp && m_debug_map_symfile)
                         {
                             // We weren't able to find a full declaration in
                             // this DWARF, see if we have a declaration anywhere    
                             // else...
-                            type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                            type_sp = m_debug_map_symfile->FindDefinitionTypeForDWARFDeclContext (die_decl_ctx);
                         }
 
                         if (type_sp)

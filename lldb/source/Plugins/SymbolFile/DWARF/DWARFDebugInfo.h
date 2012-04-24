@@ -46,6 +46,7 @@ public:
 
     void AddCompileUnit(DWARFCompileUnitSP& cu);
     uint32_t GetNumCompileUnits();
+    bool ContainsCompileUnit (const DWARFCompileUnit *cu) const;
     DWARFCompileUnit* GetCompileUnitAtIndex(uint32_t idx);
     DWARFCompileUnitSP GetCompileUnit(dw_offset_t cu_offset, uint32_t* idx_ptr = NULL);
     DWARFCompileUnitSP GetCompileUnitContainingDIE(dw_offset_t die_offset);

@@ -957,15 +957,13 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool inc
 }
 
 TypeSP
-SymbolFileDWARFDebugMap::FindDefinitionTypeForDIE (DWARFCompileUnit* cu, 
-                                                   const DWARFDebugInfoEntry *die, 
-                                                   const ConstString &type_name)
+SymbolFileDWARFDebugMap::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx)
 {
     TypeSP type_sp;
     SymbolFileDWARF *oso_dwarf;
     for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
     {
-        type_sp = oso_dwarf->FindDefinitionTypeForDIE (cu, die, type_name);
+        type_sp = oso_dwarf->FindDefinitionTypeForDWARFDeclContext (die_decl_ctx);
         if (type_sp)
             break;
     }

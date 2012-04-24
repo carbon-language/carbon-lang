@@ -23,6 +23,7 @@
 class SymbolFileDWARF;
 class DWARFCompileUnit;
 class DWARFDebugInfoEntry;
+class DWARFDeclContext;
 
 class SymbolFileDWARFDebugMap : public lldb_private::SymbolFile
 {
@@ -227,9 +228,7 @@ protected:
     SetCompileUnit (SymbolFileDWARF *oso_dwarf, const lldb::CompUnitSP &cu_sp);
 
     lldb::TypeSP
-    FindDefinitionTypeForDIE (DWARFCompileUnit* cu, 
-                              const DWARFDebugInfoEntry *die, 
-                              const lldb_private::ConstString &type_name);    
+    FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx);    
 
     bool
     Supports_DW_AT_APPLE_objc_complete_type (SymbolFileDWARF *skip_dwarf_oso);

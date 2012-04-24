@@ -40,13 +40,12 @@
 #include "NameToDIE.h"
 #include "UniqueDWARFASTType.h"
 
-
 //----------------------------------------------------------------------
 // Forward Declarations for this DWARF plugin
 //----------------------------------------------------------------------
 class DWARFAbbreviationDeclaration;
 class DWARFAbbreviationDeclarationSet;
-class DWARFCompileUnit;
+class DWARFileUnit;
 class DWARFDebugAbbrev;
 class DWARFDebugAranges;
 class DWARFDebugInfo;
@@ -54,6 +53,7 @@ class DWARFDebugInfoEntry;
 class DWARFDebugLine;
 class DWARFDebugPubnames;
 class DWARFDebugRanges;
+class DWARFDeclContext;
 class DWARFDIECollection;
 class DWARFFormValue;
 class SymbolFileDWARFDebugMap;
@@ -409,6 +409,9 @@ protected:
                                 DWARFCompileUnit* dwarf_cu, 
                                 const DWARFDebugInfoEntry *die, 
                                 const lldb_private::ConstString &type_name);
+    
+    lldb::TypeSP            FindDefinitionTypeForDWARFDeclContext (
+                                const DWARFDeclContext &die_decl_ctx);
 
     lldb::TypeSP            FindCompleteObjCDefinitionTypeForDIE (
                                 const DWARFDebugInfoEntry *die, 

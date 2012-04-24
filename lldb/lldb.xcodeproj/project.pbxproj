@@ -386,6 +386,8 @@
 		26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527C014E24F5F00F3A14A /* ThreadMachCore.h */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
+		26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */; };
+		26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
 		26B1FCBC13381071002886E2 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26B1FCC21338115F002886E2 /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
@@ -923,6 +925,8 @@
 		26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NamedOptionValue.cpp; path = source/Interpreter/NamedOptionValue.cpp; sourceTree = "<group>"; };
 		26A7A036135E6E5300FB369E /* NamedOptionValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NamedOptionValue.h; path = include/lldb/Interpreter/NamedOptionValue.h; sourceTree = "<group>"; };
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
+		26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFDeclContext.cpp; sourceTree = "<group>"; };
+		26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDeclContext.h; sourceTree = "<group>"; };
 		26B42C4C1187ABA50079C8C8 /* LLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LLDB.h; path = include/lldb/API/LLDB.h; sourceTree = "<group>"; };
 		26B4E26E112F35F700AB3F64 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeValue.h; path = include/lldb/Host/TimeValue.h; sourceTree = "<group>"; };
 		26B7564C14F89356008D9CB3 /* PlatformiOSSimulator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformiOSSimulator.cpp; sourceTree = "<group>"; };
@@ -1832,6 +1836,8 @@
 				260C89CC10F57C5600BB2B04 /* DWARFDebugPubnamesSet.h */,
 				260C89CD10F57C5600BB2B04 /* DWARFDebugRanges.cpp */,
 				260C89CE10F57C5600BB2B04 /* DWARFDebugRanges.h */,
+				26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */,
+				26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */,
 				260C89CF10F57C5600BB2B04 /* DWARFDefines.cpp */,
 				260C89D010F57C5600BB2B04 /* DWARFDefines.h */,
 				260C89D110F57C5600BB2B04 /* DWARFDIECollection.cpp */,
@@ -3195,6 +3201,7 @@
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
 				2663E379152BD1890091EC22 /* ReadWriteLock.h in Headers */,
+				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3907,6 +3914,7 @@
 				26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */,
 				2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */,
 				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
+				26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
