@@ -50,7 +50,7 @@
 #include <stddef.h>
 
 /* Microsoft includes all of the intrinsics, and then restricts their
- * availability based on the particular target CPU; with Clang te rely on the
+ * availability based on the particular target CPU; with Clang we rely on the
  * guarded includes used in our generic x86intrin header to pull in the
  * intrinsic declarations / definitions which should be available for the
  * target CPU variant.
