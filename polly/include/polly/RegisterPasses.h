@@ -23,5 +23,4 @@ void registerPollyPreoptPasses(llvm::PassManagerBase &PM);
 
 // Register the Polly optimizer (including its preoptimizations).
 void registerPollyPasses(llvm::PassManagerBase &PM,
-                         bool DisableScheduler = false,
                          bool DisableCodegen = false);

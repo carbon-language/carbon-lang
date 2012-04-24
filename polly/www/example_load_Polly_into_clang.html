@@ -96,18 +96,16 @@ function a dot file that highlights the detected SCoPs. If 'only' is appended at
 the end of the option, the basic blocks are shown without the statements the
 contain.
 
-<h3>Disable the polyhedral optimizer</h3>
-
-Polly automatically runs by default a polyhedral optimizer to optimize the
-schedules. <b>-polly-no-optimizer</b> disables this optimizer.
-
-<h3>Change the Polly optimizer</h3>
-Polly uses by default the isl scheduling optimizer, a new implementation of the
-well known Pluto algorithm. The main reason for the isl scheduler being the
-default is that it does not require any additional libraries or tools to be
-installed. As the new scheduler may still have some bugs and because being
-able to compare is good in general, it is possible to switch the used optimizer
-back to PoCC. For this add the option <b>-polly-optimizer=pocc</b>.
+<h3>Change/Disable the Optimizer</h3>
+Polly uses by default the isl scheduling optimizer. The isl optimizer optimizes
+for data-locality and parallelism using the <a
+href=http://pluto-compiler.sf.net">Pluto</a> algorithm. For research it is also
+possible to run <a
+href="http://www-rocq.inria.fr/~pouchet/software/pocc/">PoCC</a> as external
+optimizer. PoCC provides access to the original Pluto implementation. To use
+PoCC add <b>-polly-optimizer=pocc</b> to the command line (only available if
+Polly was compiled with scoplib support). To disable the
+optimizer entirely use the option <b>-polly-optimizer=none</b>.
 
 <h3>Disable tiling in the optimizer</h3>
 By default both optimizers perform tiling, if possible. In case this is not
