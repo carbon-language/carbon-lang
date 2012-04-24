@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched-instrs"
+#include "RegisterPressure.h"
 #include "llvm/Operator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -504,7 +505,11 @@ void ScheduleDAGInstrs::initSUnits() {
   }
 }
 
-void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA) {
+/// If RegPressure is non null, compute register pressure as a side effect. The
+/// DAG builder is an efficient place to do it because it already visits
+/// operands.
+void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
+                                        RegPressureTracker *RPTracker) {
   // Create an SUnit for each real instruction.
   initSUnits();
 
@@ -554,6 +559,10 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA) {
     if (MI->isDebugValue()) {
       PrevMI = MI;
       continue;
+    }
+    if (RPTracker) {
+      RPTracker->recede();
+      assert(RPTracker->getPos() == prior(MII) && "RPTracker can't find MI");
     }
 
     assert((!MI->isTerminator() || CanHandleTerminators) && !MI->isLabel() &&

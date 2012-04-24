@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "misched"
 
+#include "RegisterPressure.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/Passes.h"
@@ -149,6 +150,8 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   LIS = &getAnalysis<LiveIntervals>();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
+  RegClassInfo.runOnMachineFunction(*MF);
+
   // Select the scheduler, or set the default.
   MachineSchedRegistry::ScheduleDAGCtor Ctor = MachineSchedOpt;
   if (Ctor == useDefaultMachineSched) {
@@ -163,6 +166,9 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   OwningPtr<ScheduleDAGInstrs> Scheduler(Ctor(this));
 
   // Visit all machine basic blocks.
+  //
+  // TODO: Visit blocks in global postorder or postorder within the bottom-up
+  // loop tree. Then we can optionally compute global RegPressure.
   for (MachineFunction::iterator MBB = MF->begin(), MBBEnd = MF->end();
        MBB != MBBEnd; ++MBB) {
 
@@ -181,6 +187,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     unsigned RemainingCount = MBB->size();
     for(MachineBasicBlock::iterator RegionEnd = MBB->end();
         RegionEnd != MBB->begin(); RegionEnd = Scheduler->begin()) {
+
       // Avoid decrementing RegionEnd for blocks with no terminator.
       if (RegionEnd != MBB->end()
           || TII->isSchedulingBoundary(llvm::prior(RegionEnd), MBB, *MF)) {
@@ -279,7 +286,12 @@ namespace {
 /// machine instructions while updating LiveIntervals.
 class ScheduleDAGMI : public ScheduleDAGInstrs {
   AliasAnalysis *AA;
+  RegisterClassInfo *RegClassInfo;
   MachineSchedStrategy *SchedImpl;
+
+  // Register pressure in this region computed by buildSchedGraph.
+  IntervalPressure RegPressure;
+  RegPressureTracker RPTracker;
 
   /// The top of the unscheduled zone.
   MachineBasicBlock::iterator CurrentTop;
@@ -293,7 +305,8 @@ class ScheduleDAGMI : public ScheduleDAGInstrs {
 public:
   ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), SchedImpl(S), CurrentTop(), CurrentBottom(),
+    AA(C->AA), RegClassInfo(&C->RegClassInfo), SchedImpl(S),
+    RPTracker(RegPressure), CurrentTop(), CurrentBottom(),
     NumInstrsScheduled(0) {}
 
   ~ScheduleDAGMI() {
@@ -303,7 +316,16 @@ public:
   MachineBasicBlock::iterator top() const { return CurrentTop; }
   MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
 
-  /// Implement ScheduleDAGInstrs interface.
+  /// Implement the ScheduleDAGInstrs interface for handling the next scheduling
+  /// region. This covers all instructions in a block, while schedule() may only
+  /// cover a subset.
+  void enterRegion(MachineBasicBlock *bb,
+                   MachineBasicBlock::iterator begin,
+                   MachineBasicBlock::iterator end,
+                   unsigned endcount);
+
+  /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
+  /// reorderable instructions.
   void schedule();
 
 protected:
@@ -392,10 +414,32 @@ bool ScheduleDAGMI::checkSchedLimit() {
   return true;
 }
 
+/// enterRegion - Called back from MachineScheduler::runOnMachineFunction after
+/// crossing a scheduling boundary. [begin, end) includes all instructions in
+/// the region, including the boundary itself and single-instruction regions
+/// that don't get scheduled.
+void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
+                                MachineBasicBlock::iterator begin,
+                                MachineBasicBlock::iterator end,
+                                unsigned endcount)
+{
+  ScheduleDAGInstrs::enterRegion(bb, begin, end, endcount);
+  // Setup the register pressure tracker to begin tracking at the end of this
+  // region.
+  RPTracker.init(&MF, RegClassInfo, LIS, BB, end);
+}
+
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
-/// after setting up the current scheduling region.
+/// after setting up the current scheduling region. [RegionBegin, RegionEnd)
+/// only includes instructions that have DAG nodes, not scheduling boundaries.
 void ScheduleDAGMI::schedule() {
-  buildSchedGraph(AA);
+  while(RPTracker.getPos() != RegionEnd) {
+    bool Moved = RPTracker.recede();
+    assert(Moved && "Regpressure tracker cannot find RegionEnd"); (void)Moved;
+  }
+
+  // Build the DAG.
+  buildSchedGraph(AA, &RPTracker);
 
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)

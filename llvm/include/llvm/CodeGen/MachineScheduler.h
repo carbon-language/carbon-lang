@@ -27,6 +27,7 @@
 #ifndef MACHINESCHEDULER_H
 #define MACHINESCHEDULER_H
 
+#include "RegisterClassInfo.h"
 #include "llvm/CodeGen/MachinePassRegistry.h"
 
 namespace llvm {
@@ -47,7 +48,10 @@ struct MachineSchedContext {
   AliasAnalysis *AA;
   LiveIntervals *LIS;
 
-  MachineSchedContext(): MF(0), MLI(0), MDT(0), PassConfig(0), AA(0), LIS(0) {}
+  RegisterClassInfo RegClassInfo;
+
+  MachineSchedContext():
+    MF(0), MLI(0), MDT(0), PassConfig(0), AA(0), LIS(0) {}
 };
 
 /// MachineSchedRegistry provides a selection of available machine instruction

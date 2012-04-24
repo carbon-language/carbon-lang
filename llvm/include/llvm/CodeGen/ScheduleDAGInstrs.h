@@ -28,6 +28,7 @@ namespace llvm {
   class MachineLoopInfo;
   class MachineDominatorTree;
   class LiveIntervals;
+  class RegPressureTracker;
 
   /// LoopDependencies - This class analyzes loop-oriented register
   /// dependencies, which are used to guide scheduling decisions.
@@ -275,7 +276,7 @@ namespace llvm {
 
     /// buildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    void buildSchedGraph(AliasAnalysis *AA);
+    void buildSchedGraph(AliasAnalysis *AA, RegPressureTracker *RPTracker = 0);
 
     /// addSchedBarrierDeps - Add dependencies from instructions in the current
     /// list of instructions being scheduled to scheduling barrier. We want to
