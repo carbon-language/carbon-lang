@@ -700,7 +700,7 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
       ConstantInt *Cond = dyn_cast<ConstantInt>(CondV->getOperand(i));
       if (Cond == 0) break;
       
-      Constant *Res = (Cond->getZExtValue() ? V2 : V1)->getAggregateElement(i);
+      Constant *Res = (Cond->getZExtValue() ? V1 : V2)->getAggregateElement(i);
       if (Res == 0) break;
       Result.push_back(Res);
     }
