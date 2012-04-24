@@ -13014,7 +13014,8 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
   if (!DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  if (!Subtarget->hasAVX()) return SDValue();
+  if (!Subtarget->hasAVX())
+    return SDValue();
 
   EVT VT = N->getValueType(0);
   SDValue Op = N->getOperand(0);
@@ -14856,7 +14857,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   if (!DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  if (!Subtarget->hasAVX()) 
+  if (!Subtarget->hasAVX())
     return SDValue();
 
   EVT VT = N->getValueType(0);
@@ -14867,9 +14868,8 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   if ((VT == MVT::v4i64 && OpVT == MVT::v4i32) ||
       (VT == MVT::v8i32 && OpVT == MVT::v8i16)) {
 
-    if (Subtarget->hasAVX2()) {
+    if (Subtarget->hasAVX2())
       return DAG.getNode(X86ISD::VSEXT_MOVL, dl, VT, Op);
-    }
 
     // Optimize vectors in AVX mode
     // Sign extend  v8i16 to v8i32 and
@@ -14882,21 +14882,23 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
 
     unsigned NumElems = OpVT.getVectorNumElements();
     SmallVector<int,8> ShufMask1(NumElems, -1);
-    for (unsigned i = 0; i < NumElems/2; i++) ShufMask1[i] = i;
+    for (unsigned i = 0; i != NumElems/2; ++i)
+      ShufMask1[i] = i;
 
     SDValue OpLo = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
                                         &ShufMask1[0]);
 
     SmallVector<int,8> ShufMask2(NumElems, -1);
-    for (unsigned i = 0; i < NumElems/2; i++) ShufMask2[i] = i + NumElems/2;
+    for (unsigned i = 0; i != NumElems/2; ++i)
+      ShufMask2[i] = i + NumElems/2;
 
     SDValue OpHi = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
                                         &ShufMask2[0]);
 
-    EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(), 
+    EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(),
                                   VT.getVectorNumElements()/2);
 
-    OpLo = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpLo); 
+    OpLo = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpLo);
     OpHi = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpHi);
 
     return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
