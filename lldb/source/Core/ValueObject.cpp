@@ -3485,7 +3485,13 @@ ValueObject::CreateConstantValue (const ConstString &name)
         data.SetByteOrder (m_data.GetByteOrder());
         data.SetAddressByteSize(m_data.GetAddressByteSize());
         
-        m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0, GetModule().get());
+        if (IsBitfield())
+        {
+            Value v(Scalar(GetValueAsUnsigned(UINT64_MAX)));
+            m_error = v.GetValueAsData (&exe_ctx, ast, data, 0, GetModule().get());
+        }
+        else
+            m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0, GetModule().get());
         
         valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), 
                                                     ast,

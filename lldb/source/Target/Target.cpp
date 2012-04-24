@@ -1594,6 +1594,9 @@ Target::EvaluateExpression
                                                                          expr_path_options, 
                                                                          var_sp, 
                                                                          error);
+            // if this expression results in a bitfield, we give up and let the IR handle it
+            if (result_valobj_sp && result_valobj_sp->IsBitfield())
+                result_valobj_sp.reset();
         }
     }
     else if (m_process_sp)
