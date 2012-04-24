@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -globalsmodref-aa -gvn -S | not grep load
+; RUN: opt < %s -basicaa -globalsmodref-aa -gvn -S | FileCheck %s
 
 ; This test requires the use of previous analyses to determine that
 ; doesnotmodX does not modify X (because 'sin' doesn't).
@@ -8,6 +8,10 @@
 declare double @sin(double) readnone
 
 define i32 @test(i32* %P) {
+; CHECK:      @test
+; CHECK-NEXT: store i32 12, i32* @X
+; CHECK-NEXT: call double @doesnotmodX(double 1.000000e+00)
+; CHECK-NEXT: ret i32 12
 	store i32 12, i32* @X
 	call double @doesnotmodX( double 1.000000e+00 )		; <double>:1 [#uses=0]
 	%V = load i32* @X		; <i32> [#uses=1]

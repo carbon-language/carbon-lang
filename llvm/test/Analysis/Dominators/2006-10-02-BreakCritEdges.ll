@@ -1,6 +1,7 @@
-; RUN: opt < %s -domtree -break-crit-edges -analyze \
-; RUN:  -domtree | grep {3.*%brtrue }
+; RUN: opt < %s -domtree -break-crit-edges -analyze -domtree | FileCheck %s
 ; PR932
+
+; CHECK: [3] %brtrue {1,2}
 
 declare void @use1(i32)
 

@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalsmodref-aa -gvn -S | grep call | count 2
+; RUN: opt < %s -globalsmodref-aa -gvn -S | FileCheck %s
 
 @g = internal global i32 0		; <i32*> [#uses=2]
 
@@ -8,6 +8,8 @@ define i32 @r() {
 }
 
 define i32 @f() {
+; CHECK: call i32 @e()
+; CHECK: call i32 @e()
 entry:
 	%tmp = call i32 @e( )		; <i32> [#uses=1]
 	store i32 %tmp, i32* @g
