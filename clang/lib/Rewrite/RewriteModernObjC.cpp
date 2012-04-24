@@ -337,7 +337,7 @@ namespace {
     
     // Block specific rewrite rules.
     void RewriteBlockPointerDecl(NamedDecl *VD);
-    void RewriteByRefVar(VarDecl *VD);
+    void RewriteByRefVar(VarDecl *VD, bool firstDecl);
     Stmt *RewriteBlockDeclRefExpr(DeclRefExpr *VD);
     Stmt *RewriteLocalVariableExternalStorage(DeclRefExpr *DRE);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
@@ -4742,7 +4742,7 @@ std::string RewriteModernObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD,
 ///                               ND=initializer-if-any};
 ///
 ///
-void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
+void RewriteModernObjC::RewriteByRefVar(VarDecl *ND, bool firstDecl) {
   int flag = 0;
   int isa = 0;
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
@@ -4843,6 +4843,19 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
     // part of the declaration.
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType())
       nameSize = 1;
+    if (!firstDecl) {
+      // In multiple __block declarations, and for all but 1st declaration,
+      // find location of the separating comma. This would be start location
+      // where new text is to be inserted.
+      DeclLoc = ND->getLocation();
+      const char *startDeclBuf = SM->getCharacterData(DeclLoc);
+      const char *commaBuf = startDeclBuf;
+      while (*commaBuf != ',')
+        commaBuf--;
+      assert((*commaBuf == ',') && "RewriteByRefVar: can't find ','");
+      DeclLoc = DeclLoc.getLocWithOffset(commaBuf - startDeclBuf);
+      startBuf = commaBuf;
+    }
     ReplaceText(DeclLoc, endBuf-startBuf+nameSize, ByrefType);
   }
   else {
@@ -5309,7 +5322,7 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
             assert(!BlockByRefDeclNo.count(ND) &&
               "RewriteFunctionBodyOrGlobalInitializer: Duplicate byref decl");
             BlockByRefDeclNo[ND] = uniqueByrefDeclCount++;
-            RewriteByRefVar(VD);
+            RewriteByRefVar(VD, (DI == DS->decl_begin()));
           }
           else           
             RewriteTypeOfDecl(VD);

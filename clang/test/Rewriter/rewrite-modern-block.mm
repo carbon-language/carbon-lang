@@ -21,3 +21,15 @@ void y() {
 int foo() {
     __block int hello;
 }
+
+// rdar://7547630
+// rewriting multiple __block decls on wintin same decl stmt.
+int radar7547630() {
+  __block int BI1, BI2;
+
+  __block float FLOAT1, FT2, FFFFFFFF3,
+   FFFXXX4;
+
+  __block void (^B)(), (^BB)();
+}
+
