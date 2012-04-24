@@ -2676,7 +2676,8 @@ IRForTarget::runOnModule (Module &llvm_module)
     }
     
     if (m_execution_policy == lldb_private::eExecutionPolicyNever) {
-        m_decl_map->RemoveResultVariable(m_result_name);
+        if (m_result_name)
+            m_decl_map->RemoveResultVariable(m_result_name);
         return false;
     }
     
