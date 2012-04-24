@@ -3612,7 +3612,8 @@ enum ImageInfoFlags {
 
   // A flag indicating that the module has no instances of a @synthesize of a
   // superclass variable. <rdar://problem/6803242>
-  eImageInfo_CorrectedSynthesize = (1 << 4)
+  eImageInfo_CorrectedSynthesize = (1 << 4),
+  eImageInfo_ImageIsSimulated    = (1 << 5)
 };
 
 void CGObjCCommonMac::EmitImageInfo() {
@@ -3657,6 +3658,14 @@ void CGObjCCommonMac::EmitImageInfo() {
                         llvm::MDNode::get(VMContext, Ops));
     }
   }
+
+  // Indicate whether we're compiling this to run on a simulator.
+  const llvm::Triple &Triple = CGM.getTarget().getTriple();
+  if (Triple.getOS() == llvm::Triple::IOS &&
+      (Triple.getArch() == llvm::Triple::x86 ||
+       Triple.getArch() == llvm::Triple::x86_64))
+    Mod.addModuleFlag(llvm::Module::Error, "Objective-C Is Simulated",
+                      eImageInfo_ImageIsSimulated);
 }
 
 // struct objc_module {
