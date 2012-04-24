@@ -1525,6 +1525,11 @@ namespace {
     /// known about a pointer at the top of each block.
     MapTy PerPtrBottomUp;
 
+    /// Preds, Succs - Effective successors and predecessors of the current
+    /// block (this ignores ignorable edges and ignored backedges).
+    SmallVector<BasicBlock *, 2> Preds;
+    SmallVector<BasicBlock *, 2> Succs;
+
   public:
     BBState() : TopDownPathCount(0), BottomUpPathCount(0) {}
 
@@ -1582,14 +1587,22 @@ namespace {
     /// entry to an exit which pass through this block. This is only valid
     /// after both the top-down and bottom-up traversals are complete.
     unsigned GetAllPathCount() const {
+      assert(TopDownPathCount != 0);
+      assert(BottomUpPathCount != 0);
       return TopDownPathCount * BottomUpPathCount;
     }
 
-    /// IsVisitedTopDown - Test whether the block for this BBState has been
-    /// visited by the top-down portion of the algorithm.
-    bool isVisitedTopDown() const {
-      return TopDownPathCount != 0;
-    }
+    // Specialized CFG utilities.
+    typedef SmallVectorImpl<BasicBlock *>::iterator edge_iterator;
+    edge_iterator pred_begin() { return Preds.begin(); }
+    edge_iterator pred_end() { return Preds.end(); }
+    edge_iterator succ_begin() { return Succs.begin(); }
+    edge_iterator succ_end() { return Succs.end(); }
+
+    void addSucc(BasicBlock *Succ) { Succs.push_back(Succ); }
+    void addPred(BasicBlock *Pred) { Preds.push_back(Pred); }
+
+    bool isExit() const { return Succs.empty(); }
   };
 }
 
@@ -2763,37 +2776,20 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
 
   // Merge the states from each successor to compute the initial state
   // for the current block.
-  const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
-  succ_const_iterator SI(TI), SE(TI, false);
-  if (SI == SE)
-    MyStates.SetAsExit();
-  else {
-    // If the terminator is an invoke marked with the
-    // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
-    // ignored, for ARC purposes.
-    if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
-      --SE;
-
-    do {
-      const BasicBlock *Succ = *SI++;
-      if (Succ == BB)
-        continue;
-      DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Succ);
-      // If we haven't seen this node yet, then we've found a CFG cycle.
-      // Be optimistic here; it's CheckForCFGHazards' job detect trouble.
-      if (I == BBStates.end())
-        continue;
-      MyStates.InitFromSucc(I->second);
-      while (SI != SE) {
-        Succ = *SI++;
-        if (Succ != BB) {
-          I = BBStates.find(Succ);
-          if (I != BBStates.end())
-            MyStates.MergeSucc(I->second);
-        }
-      }
-      break;
-    } while (SI != SE);
+  for (BBState::edge_iterator SI(MyStates.succ_begin()),
+       SE(MyStates.succ_end()); SI != SE; ++SI) {
+    const BasicBlock *Succ = *SI;
+    DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Succ);
+    assert(I != BBStates.end());
+    MyStates.InitFromSucc(I->second);
+    ++SI;
+    for (; SI != SE; ++SI) {
+      Succ = *SI;
+      I = BBStates.find(Succ);
+      assert(I != BBStates.end());
+      MyStates.MergeSucc(I->second);
+    }
+    break;
   }
 
   // Visit all the instructions, bottom-up.
@@ -2811,7 +2807,8 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
   // if it were part of this block, since we can't insert code after
   // an invoke in its own block, and we don't want to split critical
   // edges.
-  for (pred_iterator PI(BB), PE(BB, false); PI != PE; ++PI) {
+  for (BBState::edge_iterator PI(MyStates.pred_begin()),
+       PE(MyStates.pred_end()); PI != PE; ++PI) {
     BasicBlock *Pred = *PI;
     TerminatorInst *PredTI = cast<TerminatorInst>(&Pred->back());
     if (isa<InvokeInst>(PredTI))
@@ -2971,41 +2968,21 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 
   // Merge the states from each predecessor to compute the initial state
   // for the current block.
-  const_pred_iterator PI(BB), PE(BB, false);
-  if (PI == PE)
-    MyStates.SetAsEntry();
-  else
-    do {
-      unsigned OperandNo = PI.getOperandNo();
-      const Use &Us = PI.getUse();
-      ++PI;
-
-      // Skip invoke unwind edges on invoke instructions marked with
-      // clang.arc.no_objc_arc_exceptions.
-      if (const InvokeInst *II = dyn_cast<InvokeInst>(Us.getUser()))
-        if (OperandNo == II->getNumArgOperands() + 2 &&
-            II->getMetadata(NoObjCARCExceptionsMDKind))
-          continue;
-
-      const BasicBlock *Pred = cast<TerminatorInst>(Us.getUser())->getParent();
-      if (Pred == BB)
-        continue;
-      DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Pred);
-      // If we haven't seen this node yet, then we've found a CFG cycle.
-      // Be optimistic here; it's CheckForCFGHazards' job detect trouble.
-      if (I == BBStates.end() || !I->second.isVisitedTopDown())
-        continue;
-      MyStates.InitFromPred(I->second);
-      while (PI != PE) {
-        Pred = *PI++;
-        if (Pred != BB) {
-          I = BBStates.find(Pred);
-          if (I != BBStates.end() && I->second.isVisitedTopDown())
-            MyStates.MergePred(I->second);
-        }
-      }
-      break;
-    } while (PI != PE);
+  for (BBState::edge_iterator PI(MyStates.pred_begin()),
+       PE(MyStates.pred_end()); PI != PE; ++PI) {
+    const BasicBlock *Pred = *PI;
+    DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Pred);
+    assert(I != BBStates.end());
+    MyStates.InitFromPred(I->second);
+    ++PI;
+    for (; PI != PE; ++PI) {
+      Pred = *PI;
+      I = BBStates.find(Pred);
+      assert(I != BBStates.end());
+      MyStates.MergePred(I->second);
+    }
+    break;
+  }
 
   // Visit all the instructions, top-down.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
@@ -3020,73 +2997,79 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 static void
 ComputePostOrders(Function &F,
                   SmallVectorImpl<BasicBlock *> &PostOrder,
-                  SmallVectorImpl<BasicBlock *> &ReverseCFGPostOrder) {
-  /// Backedges - Backedges detected in the DFS. These edges will be
-  /// ignored in the reverse-CFG DFS, so that loops with multiple exits will be
-  /// traversed in the desired order.
-  DenseSet<std::pair<BasicBlock *, BasicBlock *> > Backedges;
-
+                  SmallVectorImpl<BasicBlock *> &ReverseCFGPostOrder,
+                  unsigned NoObjCARCExceptionsMDKind,
+                  DenseMap<const BasicBlock *, BBState> &BBStates) {
   /// Visited - The visited set, for doing DFS walks.
   SmallPtrSet<BasicBlock *, 16> Visited;
 
   // Do DFS, computing the PostOrder.
   SmallPtrSet<BasicBlock *, 16> OnStack;
   SmallVector<std::pair<BasicBlock *, succ_iterator>, 16> SuccStack;
+
+  // Functions always have exactly one entry block, and we don't have
+  // any other block that we treat like an entry block.
   BasicBlock *EntryBB = &F.getEntryBlock();
+  BBStates[EntryBB].SetAsEntry();
+
   SuccStack.push_back(std::make_pair(EntryBB, succ_begin(EntryBB)));
   Visited.insert(EntryBB);
   OnStack.insert(EntryBB);
   do {
   dfs_next_succ:
-    TerminatorInst *TI = cast<TerminatorInst>(&SuccStack.back().first->back());
-    succ_iterator End = succ_iterator(TI, true);
-    while (SuccStack.back().second != End) {
-      BasicBlock *BB = *SuccStack.back().second++;
-      if (Visited.insert(BB)) {
-        SuccStack.push_back(std::make_pair(BB, succ_begin(BB)));
-        OnStack.insert(BB);
+    BasicBlock *CurrBB = SuccStack.back().first;
+    TerminatorInst *TI = cast<TerminatorInst>(&CurrBB->back());
+    succ_iterator SE(TI, false);
+    
+    // If the terminator is an invoke marked with the
+    // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
+    // ignored, for ARC purposes.
+    if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+      --SE;
+
+    while (SuccStack.back().second != SE) {
+      BasicBlock *SuccBB = *SuccStack.back().second++;
+      if (Visited.insert(SuccBB)) {
+        SuccStack.push_back(std::make_pair(SuccBB, succ_begin(SuccBB)));
+        BBStates[CurrBB].addSucc(SuccBB);
+        BBStates[SuccBB].addPred(CurrBB);
+        OnStack.insert(SuccBB);
         goto dfs_next_succ;
       }
-      if (OnStack.count(BB))
-        Backedges.insert(std::make_pair(SuccStack.back().first, BB));
+
+      if (!OnStack.count(SuccBB)) {
+        BBStates[CurrBB].addSucc(SuccBB);
+        BBStates[SuccBB].addPred(CurrBB);
+      }
     }
-    OnStack.erase(SuccStack.back().first);
-    PostOrder.push_back(SuccStack.pop_back_val().first);
+    OnStack.erase(CurrBB);
+    PostOrder.push_back(CurrBB);
+    SuccStack.pop_back();
   } while (!SuccStack.empty());
 
   Visited.clear();
 
-  // Compute the exits, which are the starting points for reverse-CFG DFS.
-  // This includes blocks where all the successors are backedges that
-  // we're skipping.
-  SmallVector<BasicBlock *, 4> Exits;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *BB = I;
-    TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
-    for (succ_iterator SI(TI), SE(TI, true); SI != SE; ++SI)
-      if (!Backedges.count(std::make_pair(BB, *SI)))
-        goto HasNonBackedgeSucc;
-    Exits.push_back(BB);
-  HasNonBackedgeSucc:;
-  }
-
   // Do reverse-CFG DFS, computing the reverse-CFG PostOrder.
-  SmallVector<std::pair<BasicBlock *, pred_iterator>, 16> PredStack;
-  for (SmallVectorImpl<BasicBlock *>::iterator I = Exits.begin(), E = Exits.end();
-       I != E; ++I) {
-    BasicBlock *ExitBB = *I;
-    PredStack.push_back(std::make_pair(ExitBB, pred_begin(ExitBB)));
+  // Functions may have many exits, and there also blocks which we treat
+  // as exits due to ignored edges.
+  SmallVector<std::pair<BasicBlock *, BBState::edge_iterator>, 16> PredStack;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    BasicBlock *ExitBB = I;
+    BBState &MyStates = BBStates[ExitBB];
+    if (!MyStates.isExit())
+      continue;
+
+    BBStates[ExitBB].SetAsExit();
+
+    PredStack.push_back(std::make_pair(ExitBB, MyStates.pred_begin()));
     Visited.insert(ExitBB);
     while (!PredStack.empty()) {
     reverse_dfs_next_succ:
-      pred_iterator End = pred_end(PredStack.back().first);
-      while (PredStack.back().second != End) {
+      BBState::edge_iterator PE = BBStates[PredStack.back().first].pred_end();
+      while (PredStack.back().second != PE) {
         BasicBlock *BB = *PredStack.back().second++;
-        // Skip backedges detected in the forward-CFG DFS.
-        if (Backedges.count(std::make_pair(BB, PredStack.back().first)))
-          continue;
         if (Visited.insert(BB)) {
-          PredStack.push_back(std::make_pair(BB, pred_begin(BB)));
+          PredStack.push_back(std::make_pair(BB, BBStates[BB].pred_begin()));
           goto reverse_dfs_next_succ;
         }
       }
@@ -3109,7 +3092,9 @@ ObjCARCOpt::Visit(Function &F,
   // function exit point, and we want to ignore selected cycle edges.
   SmallVector<BasicBlock *, 16> PostOrder;
   SmallVector<BasicBlock *, 16> ReverseCFGPostOrder;
-  ComputePostOrders(F, PostOrder, ReverseCFGPostOrder);
+  ComputePostOrders(F, PostOrder, ReverseCFGPostOrder,
+                    NoObjCARCExceptionsMDKind,
+                    BBStates);
 
   // Use reverse-postorder on the reverse CFG for bottom-up.
   bool BottomUpNestingDetected = false;
@@ -3379,7 +3364,8 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
 
     // Ok, everything checks out and we're all set. Let's move some code!
     Changed = true;
-    AnyPairsCompletelyEliminated = OldCount != 0 && NewCount == 0;
+    assert(OldCount != 0 && "Unreachable code?");
+    AnyPairsCompletelyEliminated = NewCount == 0;
     NumRRs += OldCount - NewCount;
     MoveCalls(Arg, RetainsToMove, ReleasesToMove,
               Retains, Releases, DeadInsts, M);
