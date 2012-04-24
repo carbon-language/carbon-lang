@@ -2272,20 +2272,23 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 
         if (!success || !tmp_result.Succeeded())
         {
+            const char *error_msg = tmp_result.GetErrorData();
+            if (error_msg == NULL || error_msg[0] == '\0')
+                error_msg = "<unknown error>.\n";
             if (stop_on_error)
             {
-                result.AppendErrorWithFormat("Aborting reading of commands after command #%d: '%s' failed.\n", 
-                                         idx, cmd);
+                result.AppendErrorWithFormat("Aborting reading of commands after command #%d: '%s' failed with %s",
+                                         idx, cmd, error_msg);
                 result.SetStatus (eReturnStatusFailed);
                 m_debugger.SetAsyncExecution (old_async_execution);
                 return;
             }
             else if (print_results)
             {
-                result.AppendMessageWithFormat ("Command #%d '%s' failed with error: %s.\n", 
+                result.AppendMessageWithFormat ("Command #%d '%s' failed with %s",
                                                 idx + 1, 
                                                 cmd, 
-                                                tmp_result.GetErrorData());
+                                                error_msg);
             }
         }
         
