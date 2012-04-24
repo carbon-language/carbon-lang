@@ -670,7 +670,7 @@ public:
     bool
     IsBitfield ()
     {
-        return (GetBitfieldBitSize() != 0) || (GetBitfieldOffset() != 0);
+        return (GetBitfieldBitSize() != 0) || (GetBitfieldBitOffset() != 0);
     }
     
     virtual bool
