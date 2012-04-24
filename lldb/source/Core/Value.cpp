@@ -492,9 +492,20 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
 
     case eValueTypeHostAddress:
         address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
+        address_type = eAddressTypeHost;
+        if (exe_ctx)
+        {
+            Target *target = exe_ctx->GetTargetPtr();
+            if (target)
+            {
+                data.SetByteOrder(target->GetArchitecture().GetByteOrder());
+                data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
+                break;
+            }
+        }
+        // fallback to host settings
         data.SetByteOrder(lldb::endian::InlHostByteOrder());
         data.SetAddressByteSize(sizeof(void *));
-        address_type = eAddressTypeHost;
         break;
     }
 
