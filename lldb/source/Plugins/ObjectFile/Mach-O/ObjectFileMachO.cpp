@@ -17,6 +17,7 @@
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
@@ -756,6 +757,27 @@ ObjectFileMachO::ParseSections ()
     const bool is_core = GetType() == eTypeCoreFile;
     //bool dump_sections = false;
     ModuleSP module_sp (GetModule());
+    // First look up any LC_ENCRYPTION_INFO load commands
+    typedef RangeArray<uint32_t, uint32_t, 8> EncryptedFileRanges;
+    EncryptedFileRanges encrypted_file_ranges;
+    for (i=0; i<m_header.ncmds; ++i)
+    {
+        const uint32_t load_cmd_offset = offset;
+        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+            break;
+        
+        if (load_cmd.cmd == LoadCommandEncryptionInfo)
+        {
+            EncryptedFileRanges::Entry entry;
+            entry.SetRangeBase(m_data.GetU32(&offset));
+            entry.SetByteSize(m_data.GetU32(&offset));
+            encrypted_file_ranges.Append(entry);
+        }
+        offset = load_cmd_offset + load_cmd.cmdsize;
+    }
+
+    offset = MachHeaderSizeFromMagic(m_header.magic);
+
     for (i=0; i<m_header.ncmds; ++i)
     {
         const uint32_t load_cmd_offset = offset;
@@ -785,7 +807,7 @@ ObjectFileMachO::ParseSections ()
                     SectionSP segment_sp;
                     if (segment_name || is_core)
                     {
-                        segment_sp.reset(new Section (module_sp,            // Module to which this section belongs
+                        segment_sp.reset(new Section (module_sp,              // Module to which this section belongs
                                                       ++segID << 8,           // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                       segment_name,           // Name of this section
                                                       eSectionTypeContainer,  // This section is a container of other sections.
@@ -1020,8 +1042,12 @@ ObjectFileMachO::ParseSections ()
                                                           sect64.offset == 0 ? 0 : sect64.size,
                                                           sect64.flags));
                         // Set the section to be encrypted to match the segment
-                        section_sp->SetIsEncrypted (segment_is_encrypted);
+                        
+                        bool section_is_encrypted = false;
+                        if (!segment_is_encrypted && load_cmd.filesize != 0)
+                            section_is_encrypted = encrypted_file_ranges.FindEntryThatContains(sect64.offset) != NULL;
 
+                        section_sp->SetIsEncrypted (segment_is_encrypted || section_is_encrypted);
                         segment_sp->GetChildren().AddSection(section_sp);
 
                         if (segment_sp->IsFake())
