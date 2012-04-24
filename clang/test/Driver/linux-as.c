@@ -49,3 +49,8 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=ARM-HARDFP %s
 // CHECK-ARM-HARDFP: as{{(.exe)?}}" "-mfloat-abi=hard"
+//
+// RUN: %clang -target ppc-linux -mcpu=invalid-cpu -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=PPC-NO-MCPU %s
+// CHECK-PPC-NO-MCPU-NOT: as{{.*}} "-mcpu=invalid-cpu"
