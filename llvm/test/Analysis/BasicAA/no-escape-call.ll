@@ -1,9 +1,10 @@
-; RUN: opt < %s -basicaa -gvn -instcombine -S | grep {ret i1 true}
+; RUN: opt < %s -basicaa -gvn -instcombine -S | FileCheck %s
 ; PR2436
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin8"
 
 define i1 @foo(i32 %i) nounwind  {
+; CHECK: ret i1 true
 entry:
 	%arr = alloca [10 x i8*]		; <[10 x i8*]*> [#uses=1]
 	%tmp2 = call i8* @getPtr( ) nounwind 		; <i8*> [#uses=2]

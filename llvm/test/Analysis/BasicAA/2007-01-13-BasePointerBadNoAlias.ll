@@ -1,9 +1,5 @@
+; RUN: opt < %s -basicaa -gvn -instcombine -S | FileCheck %s
 ; PR1109
-; RUN: opt < %s -basicaa -gvn -instcombine -S | \
-; RUN:   grep {sub i32}
-; RUN: opt < %s -basicaa -gvn -instcombine -S | \
-; RUN:   not grep {ret i32 0}
-; END.
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8"
@@ -20,6 +16,9 @@ target triple = "i686-apple-darwin8"
 	%struct.head_type = type { [2 x %struct.LIST], %struct.FIRST_UNION, %struct.SECOND_UNION, %struct.THIRD_UNION, %struct.FOURTH_UNION, %struct.rec*, { %struct.rec* }, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, i32 }
 	%struct.rec = type { %struct.head_type }
 
+; CHECK: define i32 @test
+; CHECK:   %Z = sub i32 %A, %Q
+; CHECK:   ret i32 %Z
 
 define i32 @test(%struct.closure_type* %tmp18169) {
 	%tmp18174 = getelementptr %struct.closure_type* %tmp18169, i32 0, i32 4, i32 0, i32 0		; <i32*> [#uses=2]

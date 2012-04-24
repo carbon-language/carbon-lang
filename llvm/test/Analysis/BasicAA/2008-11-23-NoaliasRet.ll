@@ -1,6 +1,8 @@
-; RUN: opt < %s -basicaa -aa-eval |& grep {1 no alias response}
+; RUN: opt < %s -basicaa -aa-eval -disable-output |& FileCheck %s
 
 declare noalias i32* @_Znwj(i32 %x) nounwind
+
+; CHECK: 1 no alias response
 
 define i32 @foo() {
   %A = call i32* @_Znwj(i32 4)

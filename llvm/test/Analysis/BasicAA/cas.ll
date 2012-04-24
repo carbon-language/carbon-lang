@@ -1,8 +1,9 @@
-; RUN: opt < %s -basicaa -gvn -instcombine -S | grep {ret i32 0}
+; RUN: opt < %s -basicaa -gvn -instcombine -S | FileCheck %s
 
 @flag0 = internal global i32 zeroinitializer
 @turn = internal global i32 zeroinitializer
 
+; CHECK: ret i32 0
 
 define i32 @main() {
   %a = load i32* @flag0

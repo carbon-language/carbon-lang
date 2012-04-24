@@ -2,11 +2,14 @@
 ; disambiguating some obvious cases.  All loads should be removable in 
 ; this testcase.
 
-; RUN: opt < %s -basicaa -gvn -instcombine -dce -S \
-; RUN: | not grep load
+; RUN: opt < %s -basicaa -gvn -instcombine -dce -S | FileCheck %s
 
 @A = global i32 7
 @B = global i32 8
+
+; CHECK:      define i32 @test()
+; CHECK-NEXT:   store i32 123, i32* @B
+; CHECK-NEXT:   ret i32 0
 
 define i32 @test() {
 	%A1 = load i32* @A
@@ -17,6 +20,14 @@ define i32 @test() {
 	%X = sub i32 %A1, %A2
 	ret i32 %X
 }
+
+; CHECK:      define i32 @test2()
+; CHECK-NEXT:   br label %Loop
+; CHECK:      Loop:
+; CHECK-NEXT:   store i32 0, i32* @B
+; CHECK-NEXT:   br i1 true, label %out, label %Loop
+; CHECK:      out:
+; CHECK-NEXT:   ret i32 0
 
 define i32 @test2() {
         %A1 = load i32* @A
@@ -35,6 +46,10 @@ out:
 }
 
 declare void @external()
+
+; CHECK:      define i32 @test3()
+; CHECK-NEXT:   call void @external()
+; CHECK-NEXT:   ret i32 7
 
 define i32 @test3() {
 	%X = alloca i32

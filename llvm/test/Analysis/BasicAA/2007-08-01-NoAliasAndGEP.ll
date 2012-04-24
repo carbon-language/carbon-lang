@@ -1,6 +1,9 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {9 no alias}
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {6 may alias}
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {MayAlias:.*i32\\* %Ipointer, i32\\* %Jpointer}
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
+
+; CHECK: Function: foo
+; CHECK:   MayAlias: i32* %Ipointer, i32* %Jpointer
+; CHECK: 9 no alias responses
+; CHECK: 6 may alias responses
 
 define void @foo(i32* noalias %p, i32* noalias %q, i32 %i, i32 %j) {
   %Ipointer = getelementptr i32* %p, i32 %i

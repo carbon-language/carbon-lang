@@ -1,11 +1,10 @@
+; RUN: opt < %s -basicaa -gvn -instcombine -S | FileCheck %s
 ; PR1600
-; RUN: opt < %s -basicaa -gvn -instcombine -S | \
-; RUN:   grep {ret i32 0}
-; END.
 
 declare i16 @llvm.cttz.i16(i16, i1)
 
 define i32 @test(i32* %P, i16* %Q) {
+; CHECK: ret i32 0
         %A = load i16* %Q               ; <i16> [#uses=1]
         %x = load i32* %P               ; <i32> [#uses=1]
         %B = call i16 @llvm.cttz.i16( i16 %A, i1 true )          ; <i16> [#uses=1]

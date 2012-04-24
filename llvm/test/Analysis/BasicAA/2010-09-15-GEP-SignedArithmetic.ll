@@ -1,7 +1,9 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {1 partial alias}
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
 ; PR7959
 
 target datalayout = "e-p:32:32:32"
+
+; CHECK: 1 partial alias response
 
 define i32 @test(i32* %tab, i32 %indvar) nounwind {
   %tmp31 = mul i32 %indvar, -2

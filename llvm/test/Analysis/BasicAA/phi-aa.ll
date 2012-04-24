@@ -1,9 +1,11 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {NoAlias:.*%P,.*@Z}
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
 ; rdar://7282591
 
 @X = common global i32 0
 @Y = common global i32 0
 @Z = common global i32 0
+
+; CHECK:  NoAlias: i32* %P, i32* @Z
 
 define void @foo(i32 %cond) nounwind {
 entry:

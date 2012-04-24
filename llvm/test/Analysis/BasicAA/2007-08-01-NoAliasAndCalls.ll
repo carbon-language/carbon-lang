@@ -1,6 +1,7 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {MayAlias:.*i32\\* %., i32\\* %.} | grep {%x} | grep {%y}
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
 
-declare i32* @unclear(i32* %a)
+; CHECK: Function: foo
+; CHECK:   MayAlias: i32* %x, i32* %y
 
 define void @foo(i32* noalias %x) {
   %y = call i32* @unclear(i32* %x)
@@ -8,3 +9,5 @@ define void @foo(i32* noalias %x) {
   store i32 0, i32* %y
   ret void
 }
+
+declare i32* @unclear(i32* %a)

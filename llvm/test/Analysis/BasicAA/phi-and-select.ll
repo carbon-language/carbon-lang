@@ -1,7 +1,16 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output \
-; RUN:   |& grep {NoAlias:	double\\* \[%\]a, double\\* \[%\]b\$} | count 4
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
 
 ; BasicAA should detect NoAliases in PHIs and Selects.
+
+; CHECK: Function: foo
+; CHECK:  NoAlias: double* %a, double* %b
+; CHECK: Function: bar
+; CHECK:  NoAlias: double* %a, double* %b
+; CHECK: Function: qux
+; CHECK:  NoAlias: double* %a, double* %b
+; CHECK: Function: fin
+; CHECK:  NoAlias: double* %a, double* %b
+; CHECK: ===== Alias Analysis Evaluator Report =====
 
 ; Two PHIs in the same block.
 define void @foo(i1 %m, double* noalias %x, double* noalias %y) {

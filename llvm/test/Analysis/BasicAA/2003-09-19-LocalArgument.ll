@@ -1,6 +1,9 @@
 ; In this test, a local alloca cannot alias an incoming argument.
 
-; RUN: opt < %s -basicaa -gvn -instcombine -S | not grep sub
+; RUN: opt < %s -basicaa -gvn -instcombine -S | FileCheck %s
+
+; CHECK:      define i32 @test
+; CHECK-NEXT: ret i32 0
 
 define i32 @test(i32* %P) {
 	%X = alloca i32

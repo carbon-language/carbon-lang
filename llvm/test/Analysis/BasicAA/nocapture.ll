@@ -1,8 +1,9 @@
-; RUN: opt < %s -basicaa -gvn -instcombine -S | grep {ret i32 0}
+; RUN: opt < %s -basicaa -gvn -instcombine -S | FileCheck %s
 
 declare i32* @test(i32* nocapture)
 
 define i32 @test2() {
+; CHECK: ret i32 0
        %P = alloca i32
        %Q = call i32* @test(i32* %P)
        %a = load i32* %P

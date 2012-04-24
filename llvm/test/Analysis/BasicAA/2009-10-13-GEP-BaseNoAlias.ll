@@ -1,9 +1,12 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {NoAlias:.*%P,.*@Z}
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
 ; If GEP base doesn't alias Z, then GEP doesn't alias Z.
 ; rdar://7282591
 
 @Y = common global i32 0
 @Z = common global i32 0
+
+; CHECK: Function: foo
+; CHECK:   NoAlias: i32* %P, i32* @Z
 
 define void @foo(i32 %cond) nounwind {
 entry:
