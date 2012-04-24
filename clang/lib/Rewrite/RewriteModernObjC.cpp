@@ -4787,11 +4787,11 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
     FunLocStart = CurMethodDef->getLocStart();
   }
   InsertText(FunLocStart, ByrefType);
+  
   if (Ty.isObjCGCWeak()) {
     flag |= BLOCK_FIELD_IS_WEAK;
     isa = 1;
   }
-  
   if (HasCopyAndDispose) {
     flag = BLOCK_BYREF_CALLER;
     QualType Ty = ND->getType();
@@ -4821,21 +4821,22 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
   RewriteByRefString(ByrefType, Name, ND);
   std::string ForwardingCastType("(");
   ForwardingCastType += ByrefType + " *)";
+  ByrefType += " " + Name + " = {(void*)";
+  ByrefType += utostr(isa);
+  ByrefType += "," +  ForwardingCastType + "&" + Name + ", ";
+  ByrefType += utostr(flags);
+  ByrefType += ", ";
+  ByrefType += "sizeof(";
+  RewriteByRefString(ByrefType, Name, ND);
+  ByrefType += ")";
+  if (HasCopyAndDispose) {
+    ByrefType += ", __Block_byref_id_object_copy_";
+    ByrefType += utostr(flag);
+    ByrefType += ", __Block_byref_id_object_dispose_";
+    ByrefType += utostr(flag);
+  }
+  
   if (!hasInit) {
-    ByrefType += " " + Name + " = {(void*)";
-    ByrefType += utostr(isa);
-    ByrefType += "," +  ForwardingCastType + "&" + Name + ", ";
-    ByrefType += utostr(flags);
-    ByrefType += ", ";
-    ByrefType += "sizeof(";
-    RewriteByRefString(ByrefType, Name, ND);
-    ByrefType += ")";
-    if (HasCopyAndDispose) {
-      ByrefType += ", __Block_byref_id_object_copy_";
-      ByrefType += utostr(flag);
-      ByrefType += ", __Block_byref_id_object_dispose_";
-      ByrefType += utostr(flag);
-    }
     ByrefType += "};\n";
     unsigned nameSize = Name.size();
     // for block or function pointer declaration. Name is aleady
@@ -4845,6 +4846,7 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
     ReplaceText(DeclLoc, endBuf-startBuf+nameSize, ByrefType);
   }
   else {
+    ByrefType += ", ";
     SourceLocation startLoc;
     Expr *E = ND->getInit();
     if (const CStyleCastExpr *ECE = dyn_cast<CStyleCastExpr>(E))
@@ -4853,22 +4855,6 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND) {
       startLoc = E->getLocStart();
     startLoc = SM->getExpansionLoc(startLoc);
     endBuf = SM->getCharacterData(startLoc);
-    ByrefType += " " + Name;
-    ByrefType += " = {(void*)";
-    ByrefType += utostr(isa);
-    ByrefType += "," +  ForwardingCastType + "&" + Name + ", ";
-    ByrefType += utostr(flags);
-    ByrefType += ", ";
-    ByrefType += "sizeof(";
-    RewriteByRefString(ByrefType, Name, ND);
-    ByrefType += "), ";
-    if (HasCopyAndDispose) {
-      ByrefType += "__Block_byref_id_object_copy_";
-      ByrefType += utostr(flag);
-      ByrefType += ", __Block_byref_id_object_dispose_";
-      ByrefType += utostr(flag);
-      ByrefType += ", ";
-    }
     ReplaceText(DeclLoc, endBuf-startBuf, ByrefType);
     
     // Complete the newly synthesized compound expression by inserting a right
