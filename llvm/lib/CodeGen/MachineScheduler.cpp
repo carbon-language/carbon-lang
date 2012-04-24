@@ -123,6 +123,29 @@ DefaultSchedRegistry("default", "Use the target's default scheduler choice.",
 /// default scheduler if the target does not set a default.
 static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C);
 
+
+/// Decrement this iterator until reaching the top or a non-debug instr.
+static MachineBasicBlock::iterator
+priorNonDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator Beg) {
+  assert(I != Beg && "reached the top of the region, cannot decrement");
+  while (--I != Beg) {
+    if (!I->isDebugValue())
+      break;
+  }
+  return I;
+}
+
+/// If this iterator is a debug value, increment until reaching the End or a
+/// non-debug instruction.
+static MachineBasicBlock::iterator
+nextIfDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator End) {
+  while(I != End) {
+    if (!I->isDebugValue())
+      break;
+  }
+  return I;
+}
+
 /// Top-level MachineScheduler pass driver.
 ///
 /// Visit blocks in function order. Divide each block into scheduling regions
@@ -464,7 +487,7 @@ void ScheduleDAGMI::schedule() {
       SchedImpl->releaseBottomNode(&(*I));
   }
 
-  CurrentTop = RegionBegin;
+  CurrentTop = nextIfDebug(RegionBegin, RegionEnd);
   CurrentBottom = RegionEnd;
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
@@ -479,7 +502,7 @@ void ScheduleDAGMI::schedule() {
     if (IsTopNode) {
       assert(SU->isTopReady() && "node still has unscheduled dependencies");
       if (&*CurrentTop == MI)
-        ++CurrentTop;
+        CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
       else
         moveInstruction(MI, CurrentTop);
       // Release dependent instructions for scheduling.
@@ -487,11 +510,13 @@ void ScheduleDAGMI::schedule() {
     }
     else {
       assert(SU->isBottomReady() && "node still has unscheduled dependencies");
-      if (&*llvm::prior(CurrentBottom) == MI)
-        --CurrentBottom;
+      MachineBasicBlock::iterator priorII =
+        priorNonDebug(CurrentBottom, CurrentTop);
+      if (&*priorII == MI)
+        CurrentBottom = priorII;
       else {
         if (&*CurrentTop == MI)
-          CurrentTop = llvm::next(CurrentTop);
+          CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
         moveInstruction(MI, CurrentBottom);
         CurrentBottom = MI;
       }
@@ -536,7 +561,7 @@ public:
       IsTopNode = true;
     }
     else {
-      SU = DAG->getSUnit(llvm::prior(DAG->bottom()));
+      SU = DAG->getSUnit(priorNonDebug(DAG->bottom(), DAG->top()));
       IsTopNode = false;
     }
     if (SU->isTopReady()) {
