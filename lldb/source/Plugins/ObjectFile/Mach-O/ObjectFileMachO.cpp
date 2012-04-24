@@ -2236,10 +2236,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     else
                                     {
                                         // Make a synthetic symbol to describe the trampoline stub
+                                        Mangled stub_symbol_mangled_name(stub_symbol->GetMangled());
                                         if (sym_idx >= num_syms)
+                                        {
                                             sym = symtab->Resize (++num_syms);
+                                            stub_symbol = NULL;  // this pointer no longer valid
+                                        }
                                         sym[sym_idx].SetID (synthetic_sym_id++);
-                                        sym[sym_idx].GetMangled() = stub_symbol->GetMangled();
+                                        sym[sym_idx].GetMangled() = stub_symbol_mangled_name;
                                         sym[sym_idx].SetType (eSymbolTypeTrampoline);
                                         sym[sym_idx].SetIsSynthetic (true);
                                         sym[sym_idx].GetAddress() = so_addr;
