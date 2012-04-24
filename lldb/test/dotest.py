@@ -241,9 +241,11 @@ where options:
 -l   : don't skip long running test
 -n   : don't print the headers like build dir, lldb version, and svn info at all
 -p   : specify a regexp filename pattern for inclusion in the test suite
--r   : specify a dir to relocate the tests and their intermediate files to;
-       the directory must not exist before running this test driver;
+-R   : specify a dir to relocate the tests and their intermediate files to;
+       BE WARNED THAT the directory, if exists, will be deleted before running this test driver;
        no cleanup of intermediate test files is performed in this case
+-r   : similar to '-R',
+       except that the directory must not exist before running this test driver
 -S   : skip the build and cleanup while running the test
        use this option with care as you would need to build the inferior(s) by hand
        and build the executable(s) with the correct name(s)
@@ -532,6 +534,17 @@ def parseOptionsAndInitTestdirs():
                 usage()
             regexp = sys.argv[index]
             index += 1
+        elif sys.argv[index].startswith('-R'):
+            # Increment by 1 to fetch the relocated directory argument.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            rdir = os.path.abspath(sys.argv[index])
+            if os.path.exists(rdir):
+                import shutil
+                print "Removing tree:", rdir
+                shutil.rmtree(rdir)
+            index += 1
         elif sys.argv[index].startswith('-r'):
             # Increment by 1 to fetch the relocated directory argument.
             index += 1
@@ -621,12 +634,17 @@ def parseOptionsAndInitTestdirs():
         from shutil import copytree, ignore_patterns
 
         tmpdirs = []
+        orig_testdirs = testdirs[:]
         for srcdir in testdirs:
             # For example, /Volumes/data/lldb/svn/ToT/test/functionalities/watchpoint/hello_watchpoint
             # shall be split into ['/Volumes/data/lldb/svn/ToT/', 'functionalities/watchpoint/hello_watchpoint'].
             # Utilize the relative path to the 'test' directory to make our destination dir path.
-            dstdir = os.path.join(rdir, srcdir.split("test"+os.sep)[1])
-            #print "(srcdir, dstdir)=(%s, %s)" % (srcdir, dstdir)
+            if ("test"+os.sep) in srcdir:
+                to_split_on = "test"+os.sep
+            else:
+                to_split_on = "test"
+            dstdir = os.path.join(rdir, srcdir.split(to_split_on)[1])
+            dstdir = dstdir.rstrip(os.sep)
             # Don't copy the *.pyc and .svn stuffs.
             copytree(srcdir, dstdir, ignore=ignore_patterns('*.pyc', '.svn'))
             tmpdirs.append(dstdir)
@@ -637,7 +655,7 @@ def parseOptionsAndInitTestdirs():
         # With '-r dir' specified, there's no cleanup of intermediate test files.
         os.environ["LLDB_DO_CLEANUP"] = 'NO'
 
-        # If testdirs is ['test'], the make directory has already been copied
+        # If the original testdirs is ['test'], the make directory has already been copied
         # recursively and is contained within the rdir/test dir.  For anything
         # else, we would need to copy over the make directory and its contents,
         # so that, os.listdir(rdir) looks like, for example:
@@ -645,7 +663,7 @@ def parseOptionsAndInitTestdirs():
         #     array_types conditional_break make
         #
         # where the make directory contains the Makefile.rules file.
-        if len(testdirs) != 1 or os.path.basename(testdirs[0]) != 'test':
+        if len(testdirs) != 1 or os.path.basename(orig_testdirs[0]) != 'test':
             # Don't copy the .svn stuffs.
             copytree('make', os.path.join(rdir, 'make'),
                      ignore=ignore_patterns('.svn'))
@@ -1204,11 +1222,13 @@ for ia in range(len(archs) if iterArchs else 1):
             # The purpose is to separate the configuration-specific directories
             # from each other.
             if rdir:
-                from shutil import copytree, ignore_patterns
+                from shutil import copytree, rmtree, ignore_patterns
 
                 newrdir = "%s.%s" % (rdir, configPostfix)
 
                 # Copy the tree to a new directory with postfix name configPostfix.
+                if os.path.exists(newrdir):
+                    rmtree(newrdir)
                 copytree(rdir, newrdir, ignore=ignore_patterns('*.pyc', '*.o', '*.d'))
 
                # Update the LLDB_TEST environment variable to reflect new top
