@@ -804,6 +804,14 @@ LIBBUILTIN(NSLog, "vG.", "fp:0:", "Foundation/NSObjCRuntime.h", OBJC_LANG)
 LIBBUILTIN(NSLogv, "vGa", "fP:0:", "Foundation/NSObjCRuntime.h", OBJC_LANG)
 
 // Builtin math library functions
+LIBBUILTIN(acos, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(acosl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(acosf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(asin, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(asinl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(asinf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
 LIBBUILTIN(atan, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atanl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atanf, "ff", "fe", "math.h", ALL_LANGUAGES)
@@ -811,6 +819,10 @@ LIBBUILTIN(atanf, "ff", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atan2, "ddd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atan2l, "LdLdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(atan2f, "fff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(ceil, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(ceill, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(ceilf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(cos, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(cosl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
@@ -820,9 +832,25 @@ LIBBUILTIN(exp, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(expl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(expf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
+LIBBUILTIN(fabs, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fabsl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fabsf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(floor, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(floorl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(floorf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
 LIBBUILTIN(fma, "dddd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(fmal, "LdLdLdLd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(fmaf, "ffff", "fc", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(fmax, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fmaxl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fmaxf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(fmin, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fminl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(fminf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
 LIBBUILTIN(log, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(logl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
@@ -832,6 +860,10 @@ LIBBUILTIN(pow, "ddd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(powl, "LdLdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(powf, "fff", "fe", "math.h", ALL_LANGUAGES)
 
+LIBBUILTIN(round, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(roundl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(roundf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
 LIBBUILTIN(sin, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(sinl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(sinf, "ff", "fe", "math.h", ALL_LANGUAGES)
@@ -839,6 +871,10 @@ LIBBUILTIN(sinf, "ff", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(sqrt, "dd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(sqrtl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(sqrtf, "ff", "fe", "math.h", ALL_LANGUAGES)
+
+LIBBUILTIN(tan, "dd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(tanl, "LdLd", "fe", "math.h", ALL_LANGUAGES)
+LIBBUILTIN(tanf, "ff", "fe", "math.h", ALL_LANGUAGES)
 
 // Blocks runtime Builtin math library functions
 LIBBUILTIN(_Block_object_assign, "vv*vC*iC", "f", "Blocks.h", ALL_LANGUAGES)
