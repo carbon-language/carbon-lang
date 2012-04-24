@@ -76,27 +76,27 @@ class SBFormattersAPITestCase(TestBase):
         self.expect("frame variable foo.A",
              substrs = ['0x00000001'])
         self.expect("frame variable foo.E", matching=False,
-             substrs = ['0x00000000b8cca70a'])
+             substrs = ['b8cca70a'])
 
         category.AddTypeFormat(lldb.SBTypeNameSpecifier("long"),format)
         self.expect("frame variable foo.A",
              substrs = ['0x00000001'])
         self.expect("frame variable foo.E",
-             substrs = ['0x00000000b8cca70a'])
+             substrs = ['b8cca70a'])
         
         format.format = lldb.eFormatOctal
         category.AddTypeFormat(lldb.SBTypeNameSpecifier("int"),format)
         self.expect("frame variable foo.A",
              substrs = ['01'])
         self.expect("frame variable foo.E",
-             substrs = ['0x00000000b8cca70a'])
+             substrs = ['b8cca70a'])
         
         category.DeleteTypeFormat(lldb.SBTypeNameSpecifier("int"))
         category.DeleteTypeFormat(lldb.SBTypeNameSpecifier("long"))
         self.expect("frame variable foo.A", matching=False,
              substrs = ['01'])
         self.expect("frame variable foo.E", matching=False,
-             substrs = ['0x00000000b8cca70a'])
+             substrs = ['b8cca70a'])
 
         summary = lldb.SBTypeSummary.CreateWithSummaryString("the hello world you'll never see")
         summary.SetSummaryString('hello world')
