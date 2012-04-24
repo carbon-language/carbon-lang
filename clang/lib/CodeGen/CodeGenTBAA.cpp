@@ -18,6 +18,7 @@
 #include "CodeGenTBAA.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Mangle.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Constants.h"
@@ -26,8 +27,10 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenTBAA::CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext& VMContext,
+                         const CodeGenOptions &CGO,
                          const LangOptions &Features, MangleContext &MContext)
-  : Context(Ctx), VMContext(VMContext), Features(Features), MContext(MContext),
+  : Context(Ctx), VMContext(VMContext), CodeGenOpts(CGO),
+    Features(Features), MContext(MContext),
     MDHelper(VMContext), Root(0), Char(0) {
 }
 
@@ -74,6 +77,10 @@ static bool TypeHasMayAlias(QualType QTy) {
 
 llvm::MDNode *
 CodeGenTBAA::getTBAAInfo(QualType QTy) {
+  // At -O0 TBAA is not emitted for regular types.
+  if (CodeGenOpts.OptimizationLevel == 0 || CodeGenOpts.RelaxedAliasing)
+    return NULL;
+
   // If the type has the may_alias attribute (even on a typedef), it is
   // effectively in the general char alias class.
   if (TypeHasMayAlias(QTy))

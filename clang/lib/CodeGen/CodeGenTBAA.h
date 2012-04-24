@@ -26,6 +26,7 @@ namespace llvm {
 
 namespace clang {
   class ASTContext;
+  class CodeGenOptions;
   class LangOptions;
   class MangleContext;
   class QualType;
@@ -39,6 +40,7 @@ namespace CodeGen {
 class CodeGenTBAA {
   ASTContext &Context;
   llvm::LLVMContext& VMContext;
+  const CodeGenOptions &CodeGenOpts;
   const LangOptions &Features;
   MangleContext &MContext;
 
@@ -61,6 +63,7 @@ class CodeGenTBAA {
 
 public:
   CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext &VMContext,
+              const CodeGenOptions &CGO,
               const LangOptions &Features,
               MangleContext &MContext);
   ~CodeGenTBAA();
