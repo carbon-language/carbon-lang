@@ -20,14 +20,12 @@ class ExprCommandCallFunctionTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @expectedFailurei386
     def test_with_dsym(self):
         """Test calling std::String member function."""
         self.buildDsym()
         self.call_function()
 
     @dwarf_test
-    @expectedFailurei386
     def test_with_dwarf(self):
         """Test calling std::String member function."""
         self.buildDsym()
