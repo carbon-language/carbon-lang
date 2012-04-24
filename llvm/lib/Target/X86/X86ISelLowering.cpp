@@ -14987,18 +14987,14 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-static SDValue PerformUINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
-                                        const X86TargetLowering *XTLI) {
+static SDValue PerformUINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG) {
   SDValue Op0 = N->getOperand(0);
   EVT InVT = Op0->getValueType(0);
-  if (!InVT.isSimple())
-    return SDValue();
 
   // UINT_TO_FP(v4i8) -> SINT_TO_FP(ZEXT(v4i8 to v4i32))
-  MVT SrcVT = InVT.getSimpleVT();
-  if (SrcVT == MVT::v8i8 || SrcVT == MVT::v4i8) {
+  if (InVT == MVT::v8i8 || InVT == MVT::v4i8) {
     DebugLoc dl = N->getDebugLoc();
-    MVT DstVT = (SrcVT.getVectorNumElements() == 4 ? MVT::v4i32 : MVT::v8i32);
+    MVT DstVT = InVT == MVT::v4i8 ? MVT::v4i32 : MVT::v8i32;
     SDValue P = DAG.getNode(ISD::ZERO_EXTEND, dl, DstVT, Op0);
     // Notice that we use SINT_TO_FP because we know that the high bits
     // are zero and SINT_TO_FP is better supported by the hardware.
@@ -15012,14 +15008,11 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
                                         const X86TargetLowering *XTLI) {
   SDValue Op0 = N->getOperand(0);
   EVT InVT = Op0->getValueType(0);
-  if (!InVT.isSimple())
-    return SDValue();
 
   // SINT_TO_FP(v4i8) -> SINT_TO_FP(SEXT(v4i8 to v4i32))
-  MVT SrcVT = InVT.getSimpleVT();
-  if (SrcVT == MVT::v8i8 || SrcVT == MVT::v4i8) {
+  if (InVT == MVT::v8i8 || InVT == MVT::v4i8) {
     DebugLoc dl = N->getDebugLoc();
-    MVT DstVT = (SrcVT.getVectorNumElements() == 4 ? MVT::v4i32 : MVT::v8i32);
+    MVT DstVT = InVT == MVT::v4i8 ? MVT::v4i32 : MVT::v8i32;
     SDValue P = DAG.getNode(ISD::SIGN_EXTEND, dl, DstVT, Op0);
     return DAG.getNode(ISD::SINT_TO_FP, dl, N->getValueType(0), P);
   }
@@ -15042,17 +15035,13 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue PerformFP_TO_SINTCombine(SDNode *N, SelectionDAG &DAG,
-                                        const X86TargetLowering *XTLI) {
-  EVT InVT = N->getValueType(0);
-  if (!InVT.isSimple())
-    return SDValue();
+static SDValue PerformFP_TO_SINTCombine(SDNode *N, SelectionDAG &DAG) {
+  EVT VT = N->getValueType(0);
 
   // v4i8 = FP_TO_SINT() -> v4i8 = TRUNCATE (V4i32 = FP_TO_SINT()
-  MVT VT = InVT.getSimpleVT();
   if (VT == MVT::v8i8 || VT == MVT::v4i8) {
     DebugLoc dl = N->getDebugLoc();
-    MVT DstVT = (VT.getVectorNumElements() == 4 ? MVT::v4i32 : MVT::v8i32);
+    MVT DstVT = VT == MVT::v4i8 ? MVT::v4i32 : MVT::v8i32;
     SDValue I = DAG.getNode(ISD::FP_TO_SINT, dl, DstVT, N->getOperand(0));
     return DAG.getNode(ISD::TRUNCATE, dl, VT, I);
   }
@@ -15196,9 +15185,9 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::XOR:            return PerformXorCombine(N, DAG, DCI, Subtarget);
   case ISD::LOAD:           return PerformLOADCombine(N, DAG, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
-  case ISD::UINT_TO_FP:     return PerformUINT_TO_FPCombine(N, DAG, this);
+  case ISD::UINT_TO_FP:     return PerformUINT_TO_FPCombine(N, DAG);
   case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, this);
-  case ISD::FP_TO_SINT:     return PerformFP_TO_SINTCombine(N, DAG, this);
+  case ISD::FP_TO_SINT:     return PerformFP_TO_SINTCombine(N, DAG);
   case ISD::FADD:           return PerformFADDCombine(N, DAG, Subtarget);
   case ISD::FSUB:           return PerformFSUBCombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
