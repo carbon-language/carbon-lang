@@ -95,7 +95,7 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
     (delq nil
           (mapcar (lambda (x) (and (funcall condp x) x)) lst)))
 
-;; Determine whether 
+;; Determine whether FIXME: explain better
 (defun is-completion-line (line)
   (or (string-match "OVERLOAD:" line)
       (string-match (concat "COMPLETION: " clang-completion-substring) line)))
@@ -105,14 +105,14 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
          (completion-lines (filter 'is-completion-line all-lines)))
     (if (consp completion-lines)
         (progn
-         ;; Erase the process buffer
+         ;; Erase the process buffer.
          (let ((cur (current-buffer)))
            (set-buffer buffer)
            (goto-char (point-min))
            (erase-buffer)
            (set-buffer cur))
          
-         ;; Display the process buffer
+         ;; Display the process buffer.
          (display-buffer buffer)
          
          ;; Insert the code-completion string into the process buffer.
@@ -120,7 +120,7 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
            (insert (mapconcat 'identity completion-lines "\n")))
          ))))
 
-;; Process "sentinal" that, on successful code completion, replaces the 
+;; Process "sentinel" that, on successful code completion, replaces the 
 ;; contents of the code-completion buffer with the new code-completion results
 ;; and ensures that the buffer is visible.
 (defun clang-completion-sentinel (proc event)
@@ -128,14 +128,14 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
          (completion-lines (filter 'is-completion-line all-lines)))
     (if (consp completion-lines)
         (progn
-         ;; Erase the process buffer
+         ;; Erase the process buffer.
          (let ((cur (current-buffer)))
            (set-buffer (process-buffer proc))
            (goto-char (point-min))
            (erase-buffer)
            (set-buffer cur))
          
-         ;; Display the process buffer
+         ;; Display the process buffer.
          (display-buffer (process-buffer proc))
          
          ;; Insert the code-completion string into the process buffer.
@@ -159,7 +159,7 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
                              `("-code-completion-at" ,cc-point)
                              (list (buffer-file-name))))
          (cc-buffer-name (concat "*Clang Completion for " (buffer-name) "*")))
-    ;; Start the code-completion process
+    ;; Start the code-completion process.
     (if (buffer-file-name)
         (progn
           ;; If there is already a code-completion process, kill it first.
