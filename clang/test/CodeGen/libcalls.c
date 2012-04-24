@@ -73,3 +73,48 @@ void test_fma(float a0, double a1, long double a2) {
 // CHECK-NO: declare float @llvm.fma.f32(float, float, float) nounwind readnone
 // CHECK-NO: declare double @llvm.fma.f64(double, double, double) nounwind readnone
 // CHECK-NO: declare x86_fp80 @llvm.fma.f80(x86_fp80, x86_fp80, x86_fp80) nounwind readnone
+
+// Just checking to make sure these library functions are marked readnone
+void test_builtins(double d, float f, long double ld) {
+// CHEC-NO: @test_builtins
+// CHEC-YES: @test_builtins
+  double atan_ = atan(d);
+  long double atanl_ = atanl(ld);
+  float atanf_ = atanf(f);
+// CHECK-NO: declare double @atan(double) nounwind readnone
+// CHECK-NO: declare x86_fp80 @atanl(x86_fp80) nounwind readnone
+// CHECK-NO: declare float @atanf(float) nounwind readnone
+// CHECK-YES-NOT: declare double @atan(double) nounwind readnone
+// CHECK-YES-NOT: declare x86_fp80 @atanl(x86_fp80) nounwind readnone
+// CHECK-YES-NOT: declare float @atanf(float) nounwind readnone
+
+  double atan2_ = atan2(d, 2);
+  long double atan2l_ = atan2l(ld, ld);
+  float atan2f_ = atan2f(f, f);
+// CHECK-NO: declare double @atan2(double, double) nounwind readnone
+// CHECK-NO: declare x86_fp80 @atan2l(x86_fp80, x86_fp80) nounwind readnone
+// CHECK-NO: declare float @atan2f(float, float) nounwind readnone
+// CHECK-YES-NOT: declare double @atan2(double, double) nounwind readnone
+// CHECK-YES-NOT: declare x86_fp80 @atan2l(x86_fp80, x86_fp80) nounwind readnone
+// CHECK-YES-NOT: declare float @atan2f(float, float) nounwind readnone
+
+  double exp_ = exp(d);
+  long double expl_ = expl(ld);
+  float expf_ = expf(f);
+// CHECK-NO: declare double @exp(double) nounwind readnone
+// CHECK-NO: declare x86_fp80 @expl(x86_fp80) nounwind readnone
+// CHECK-NO: declare float @expf(float) nounwind readnone
+// CHECK-YES-NOT: declare double @exp(double) nounwind readnone
+// CHECK-YES-NOT: declare x86_fp80 @expl(x86_fp80) nounwind readnone
+// CHECK-YES-NOT: declare float @expf(float) nounwind readnone
+
+  double log_ = log(d);
+  long double logl_ = logl(ld);
+  float logf_ = logf(f);
+// CHECK-NO: declare double @log(double) nounwind readnone
+// CHECK-NO: declare x86_fp80 @logl(x86_fp80) nounwind readnone
+// CHECK-NO: declare float @logf(float) nounwind readnone
+// CHECK-YES-NOT: declare double @log(double) nounwind readnone
+// CHECK-YES-NOT: declare x86_fp80 @logl(x86_fp80) nounwind readnone
+// CHECK-YES-NOT: declare float @logf(float) nounwind readnone
+}

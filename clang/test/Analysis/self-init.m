@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit -fobjc-default-synthesize-properties %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit -fobjc-default-synthesize-properties -fno-builtin %s -verify
 
 @class NSZone, NSCoder;
 @protocol NSObject- (id)self;
