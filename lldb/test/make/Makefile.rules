@@ -136,7 +136,7 @@ ifneq "$(strip $(OBJCXX_SOURCES))" ""
 	OBJECTS +=$(strip $(OBJCXX_SOURCES:.mm=.o))
 	CXX = $(call cxx_compiler,$(CC))
 	LD = $(call cxx_linker,$(CC))
-	ifeq $(findstring lobjc,$(LDFLAGS)) ""
+	ifeq "$(findstring lobjc,$(LDFLAGS))" ""
 		LDFLAGS +=-lobjc
 	endif
 endif
@@ -172,7 +172,7 @@ ifneq "$(strip $(ARCHIVE_OBJCXX_SOURCES))" ""
 	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_OBJCXX_SOURCES:.mm=.o))
 	CXX = $(call cxx_compiler,$(CC))
 	LD = $(call cxx_linker,$(CC))
-	ifeq $(findstring lobjc,$(LDFLAGS)) ""
+	ifeq "$(findstring lobjc,$(LDFLAGS))" ""
 		LDFLAGS +=-lobjc
 	endif
 endif
@@ -282,6 +282,11 @@ sinclude $(PREREQS)
 ifneq "$(DYLIB_NAME)" ""
 	sinclude $(DYLIB_PREREQS)
 endif
+
+# Define a suffix rule for .mm -> .o
+.SUFFIXES: .mm .o
+.mm.o:
+	$(CXX) $(CXXFLAGS) -c $<
 
 .PHONY: clean
 dsym:	$(DSYM)
