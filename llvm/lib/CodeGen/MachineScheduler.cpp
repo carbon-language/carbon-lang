@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "misched"
 
+#include "RegisterClassInfo.h"
 #include "RegisterPressure.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -50,6 +51,15 @@ static bool ViewMISchedDAGs = false;
 //===----------------------------------------------------------------------===//
 // Machine Instruction Scheduling Pass and Registry
 //===----------------------------------------------------------------------===//
+
+MachineSchedContext::MachineSchedContext():
+    MF(0), MLI(0), MDT(0), PassConfig(0), AA(0), LIS(0) {
+  RegClassInfo = new RegisterClassInfo();
+}
+
+MachineSchedContext::~MachineSchedContext() {
+  delete RegClassInfo;
+}
 
 namespace {
 /// MachineScheduler runs after coalescing and before register allocation.
@@ -173,7 +183,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   LIS = &getAnalysis<LiveIntervals>();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
-  RegClassInfo.runOnMachineFunction(*MF);
+  RegClassInfo->runOnMachineFunction(*MF);
 
   // Select the scheduler, or set the default.
   MachineSchedRegistry::ScheduleDAGCtor Ctor = MachineSchedOpt;
@@ -328,7 +338,7 @@ class ScheduleDAGMI : public ScheduleDAGInstrs {
 public:
   ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), RegClassInfo(&C->RegClassInfo), SchedImpl(S),
+    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
     RPTracker(RegPressure), CurrentTop(), CurrentBottom(),
     NumInstrsScheduled(0) {}
 
