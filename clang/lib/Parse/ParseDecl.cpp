@@ -4270,6 +4270,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                       D.getDeclSpec().getStorageClassSpec()
                         != DeclSpec::SCS_typedef &&
                       !D.getDeclSpec().isFriendSpecified());
+      for (unsigned i = 0, e = D.getNumTypeObjects(); Delayed && i != e; ++i)
+        Delayed &= D.getTypeObject(i).Kind == DeclaratorChunk::Paren;
       ESpecType = tryParseExceptionSpecification(Delayed,
                                                  ESpecRange,
                                                  DynamicExceptions,
