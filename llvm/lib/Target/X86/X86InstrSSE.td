@@ -7736,6 +7736,16 @@ let Predicates = [HasAVX2] in {
     def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
               (VBROADCASTSDrr
               (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd))>;
+
+    def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
+              (VBROADCASTSSrr
+              (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss))>;
+    def : Pat<(v8i32 (X86VBroadcast GR32:$src)),
+              (VBROADCASTSSYrr
+              (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss))>;
+    def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
+              (VBROADCASTSDrr
+              (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd))>;
   }
 }
 
@@ -7758,9 +7768,6 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
   // is used by additional users, which prevents the pattern selection.
   let AddedComplexity = 20 in {
   // 128bit broadcasts:
-  def : Pat<(v2f64 (X86VBroadcast FR64:$src)),
-            (VPSHUFDri
-            (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd), 0)>;
   def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
             (VPSHUFDri
             (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss), 0)>;
@@ -7779,6 +7786,26 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
                   sub_xmm),
               (VPSHUFDri
                 (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd),
+              0), 1)>;
+
+  def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
+            (VPSHUFDri
+            (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss), 0)>;
+  def : Pat<(v8i32 (X86VBroadcast GR32:$src)),
+            (VINSERTF128rr (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)),
+              (VPSHUFDri
+                (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss), 0),
+                  sub_xmm),
+              (VPSHUFDri
+                (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss),
+               0), 1)>;
+  def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
+            (VINSERTF128rr (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
+              (VPSHUFDri
+                (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd), 0),
+                  sub_xmm),
+              (VPSHUFDri
+                (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd),
               0), 1)>;
   }
 }
