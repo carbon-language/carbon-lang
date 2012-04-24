@@ -41,9 +41,10 @@ bb:
   ret i32 %tmp1
 }
 
-; CHECK: insertelement <4 x float> undef, float %p_tmp4, i32 0
-; CHECK: insertelement <4 x float> %0, float %p_tmp410, i32 1
-; CHECK: insertelement <4 x float> %1, float %p_tmp411, i32 2
-; CHECK: insertelement <4 x float> %2, float %p_tmp412, i32 3
+
+; CHECK: insertelement <4 x float> undef, float %{{[^,]+}}, i32 0
+; CHECK: insertelement <4 x float> %0, float %{{[^,]+}}, i32 1
+; CHECK: insertelement <4 x float> %1, float %{{[^,]+}}, i32 2
+; CHECK: insertelement <4 x float> %2, float %{{[^,]+}}, i32 3
 ; CHECK: fadd <4 x float> %tmp_p_vec_full, %3
 

@@ -43,10 +43,8 @@ define i32 @main() nounwind {
   ret i32 %2
 }
 
-; CHECK: bitcast float* {{.*}} to <4 x float>*
-; CHECK: load <4 x float>*
-; CHECK: store <4 x float> %tmp1_p_vec_full, <4 x float>* %vector_ptr7
-; CHECK: bitcast float* {{.*}} to <4 x float>*
-; CHECK: load <4 x float>*
-; CHECK: store <4 x float> %tmp2_p_vec_full, <4 x float>* %vector_ptr15
+; CHECK: [[LOAD1:%[a-zA-Z0-9_]+_full]] = load <4 x float>*
+; CHECK: store <4 x float> [[LOAD1]]
+; CHECK: [[LOAD2:%[a-zA-Z0-9_]+_full]] = load <4 x float>*
+; CHECK: store <4 x float> [[LOAD2]]
 

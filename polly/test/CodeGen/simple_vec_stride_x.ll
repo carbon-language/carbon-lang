@@ -39,21 +39,19 @@ bb:
   ret i32 %tmp1
 }
 
-; CHECK: load float* %p_scevgep1.moved.to.bb3
-; CHECK: insertelement <4 x float> undef, float %tmp4_p_scalar_, i32 0
-; CHECK: load float* %p_scevgep1.moved.to.bb34
-; CHECK: insertelement <4 x float> %tmp4_p_vec_, float %tmp4_p_scalar_10, i32 1
-; CHECK: load float* %p_scevgep1.moved.to.bb35
-; CHECK: insertelement <4 x float> %tmp4_p_vec_11, float %tmp4_p_scalar_12, i32 2
-; CHECK: load float* %p_scevgep1.moved.to.bb36
-; CHECK: insertelement <4 x float> %tmp4_p_vec_13, float %tmp4_p_scalar_14, i32 3
-; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 0
-; CHECK: store float %0, float* %p_scevgep.moved.to.bb3
-; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 1
-; CHECK: store float %1, float* %p_scevgep.moved.to.bb37
-; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 2
-; CHECK: store float %2, float* %p_scevgep.moved.to.bb38
-; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 3
-; CHECK: store float %3, float* %p_scevgep.moved.to.bb39
-
-
+; CHECK: [[LOAD1:%[a-zA-Z0-9_]+_scalar_]] = load float*
+; CHECK: [[VEC1:%[a-zA-Z0-9_]+]] = insertelement <4 x float> undef, float [[LOAD1]], i32 0
+; CHECK: [[LOAD2:%[a-zA-Z0-9_]+]] = load float*
+; CHECK: [[VEC2:%[a-zA-Z0-9_]+]] = insertelement <4 x float> [[VEC1]], float [[LOAD2]], i32 1
+; CHECK: [[LOAD3:%[a-zA-Z0-9_]+]] = load float*
+; CHECK: [[VEC3:%[a-zA-Z0-9_]+]] = insertelement <4 x float> [[VEC2]], float [[LOAD3]], i32 2
+; CHECK: [[LOAD4:%[a-zA-Z0-9_]+]] = load float*
+; CHECK: [[VEC4:%[a-zA-Z0-9_]+]] = insertelement <4 x float> [[VEC3]], float [[LOAD4]], i32 3
+; CHECK: [[EL1:%[a-zA-Z0-9_]+]] = extractelement <4 x float> [[VEC4]], i32 0
+; CHECK: store float [[EL1]]
+; CHECK: [[EL2:%[a-zA-Z0-9_]+]] = extractelement <4 x float> [[VEC4]], i32 1
+; CHECK: store float [[EL2]]
+; CHECK: [[EL3:%[a-zA-Z0-9_]+]] = extractelement <4 x float> [[VEC4]], i32 2
+; CHECK: store float [[EL3]]
+; CHECK: [[EL4:%[a-zA-Z0-9_]+]] = extractelement <4 x float> [[VEC4]], i32 3
+; CHECK: store float [[EL4]]
