@@ -17,6 +17,8 @@ class ObjCCheckerTestCase(TestBase):
     @dsym_test
     def test_objc_checker_with_dsym(self):
         """Test that checkers catch unrecognized selectors"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires Objective-C 2.0 runtime")
         self.buildDsym()
         self.do_test_checkers()
 
@@ -24,6 +26,8 @@ class ObjCCheckerTestCase(TestBase):
     @dwarf_test
     def test_objc_checker_with_dwarf(self):
         """Test that checkers catch unrecognized selectors"""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("requires Objective-C 2.0 runtime")
         self.buildDwarf()
         self.do_test_checkers()
 
