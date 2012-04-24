@@ -7723,6 +7723,20 @@ let Predicates = [HasAVX2] in {
           (VPBROADCASTQrm addr:$src)>;
   def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
           (VPBROADCASTQYrm addr:$src)>;
+
+  // Provide fallback in case the load node that is used in the patterns above
+  // is used by additional users, which prevents the pattern selection.
+  let AddedComplexity = 20 in {
+    def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
+              (VBROADCASTSSrr
+              (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss))>;
+    def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
+              (VBROADCASTSSYrr
+              (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss))>;
+    def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
+              (VBROADCASTSDrr
+              (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd))>;
+  }
 }
 
 // AVX1 broadcast patterns
@@ -7735,11 +7749,38 @@ def : Pat<(v8f32 (X86VBroadcast (loadf32 addr:$src))),
           (VBROADCASTSSYrm addr:$src)>;
 def : Pat<(v4f64 (X86VBroadcast (loadf64 addr:$src))),
           (VBROADCASTSDrm addr:$src)>;
-
 def : Pat<(v4f32 (X86VBroadcast (loadf32 addr:$src))),
           (VBROADCASTSSrm addr:$src)>;
 def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
           (VBROADCASTSSrm addr:$src)>;
+
+  // Provide fallback in case the load node that is used in the patterns above
+  // is used by additional users, which prevents the pattern selection.
+  let AddedComplexity = 20 in {
+  // 128bit broadcasts:
+  def : Pat<(v2f64 (X86VBroadcast FR64:$src)),
+            (VPSHUFDri
+            (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd), 0)>;
+  def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
+            (VPSHUFDri
+            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss), 0)>;
+  def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
+            (VINSERTF128rr (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
+              (VPSHUFDri
+                (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss), 0),
+                  sub_xmm),
+              (VPSHUFDri
+                (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss),
+               0), 1)>;
+  def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
+            (VINSERTF128rr (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
+              (VPSHUFDri
+                (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd), 0),
+                  sub_xmm),
+              (VPSHUFDri
+                (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd),
+              0), 1)>;
+  }
 }
 
 //===----------------------------------------------------------------------===//

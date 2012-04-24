@@ -160,6 +160,15 @@ entry:
   ret <8 x i32> %g
 }
 
+; CHECK: V113
+; CHECK: vbroadcastss
+; CHECK: ret
+define <8 x float> @V113(<8 x float> %in) nounwind uwtable readnone ssp {
+entry:
+  %g = fadd <8 x float> %in, <float 0xbf80000000000000, float 0xbf80000000000000, float 0xbf80000000000000, float 0xbf80000000000000, float 0xbf80000000000000, float 0xbf80000000000000, float 0xbf80000000000000, float 0xbf80000000000000>
+  ret <8 x float> %g
+}
+
 ; CHECK: _e2
 ; CHECK: vbroadcastss
 ; CHECK: ret
@@ -179,9 +188,37 @@ define <8 x i8> @_e4(i8* %ptr) nounwind uwtable readnone ssp {
   %vecinit1.i = insertelement <8 x i8> %vecinit0.i, i8 52, i32 1
   %vecinit2.i = insertelement <8 x i8> %vecinit1.i, i8 52, i32 2
   %vecinit3.i = insertelement <8 x i8> %vecinit2.i, i8 52, i32 3
-  %vecinit4.i = insertelement <8 x i8> %vecinit3.i, i8 52, i32 3
-  %vecinit5.i = insertelement <8 x i8> %vecinit4.i, i8 52, i32 3
-  %vecinit6.i = insertelement <8 x i8> %vecinit5.i, i8 52, i32 3
-  %vecinit7.i = insertelement <8 x i8> %vecinit6.i, i8 52, i32 3
+  %vecinit4.i = insertelement <8 x i8> %vecinit3.i, i8 52, i32 4
+  %vecinit5.i = insertelement <8 x i8> %vecinit4.i, i8 52, i32 5
+  %vecinit6.i = insertelement <8 x i8> %vecinit5.i, i8 52, i32 6
+  %vecinit7.i = insertelement <8 x i8> %vecinit6.i, i8 52, i32 7
   ret <8 x i8> %vecinit7.i
+}
+
+
+define void @crash() nounwind alwaysinline {
+WGLoopsEntry:
+  br i1 undef, label %ret, label %footer329VF
+
+footer329VF:
+  %A.0.inVF = fmul float undef, 6.553600e+04
+  %B.0.in407VF = fmul <8 x float> undef, <float 6.553600e+04, float 6.553600e+04, float 6.553600e+04, float 6.553600e+04, float 6.553600e+04, float 6.553600e+04, float 6.553600e+04, float 6.553600e+04>
+  %A.0VF = fptosi float %A.0.inVF to i32
+  %B.0408VF = fptosi <8 x float> %B.0.in407VF to <8 x i32>
+  %0 = and <8 x i32> %B.0408VF, <i32 65535, i32 65535, i32 65535, i32 65535, i32 65535, i32 65535, i32 65535, i32 65535>
+  %1 = and i32 %A.0VF, 65535
+  %temp1098VF = insertelement <8 x i32> undef, i32 %1, i32 0
+  %vector1099VF = shufflevector <8 x i32> %temp1098VF, <8 x i32> undef, <8 x i32> zeroinitializer
+  br i1 undef, label %preload1201VF, label %footer349VF
+
+preload1201VF:
+  br label %footer349VF
+
+footer349VF:
+  %2 = mul nsw <8 x i32> undef, %0
+  %3 = mul nsw <8 x i32> undef, %vector1099VF
+  br label %footer329VF
+
+ret:
+  ret void
 }
