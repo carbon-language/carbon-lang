@@ -5247,7 +5247,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         is_forward_declaration = true;
                     }
 
-                    if (class_language == eLanguageTypeObjC)
+                    if (class_language == eLanguageTypeObjC ||
+                        class_language == eLanguageTypeObjC_plus_plus)
                     {
                         if (!is_complete_objc_class && Supports_DW_AT_APPLE_objc_complete_type(dwarf_cu))
                         {
@@ -5444,7 +5445,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             // declaration context for a contained class or type without the need
                             // to complete that type..
                             
-                            if (class_language != eLanguageTypeObjC)
+                            if (class_language != eLanguageTypeObjC &&
+                                class_language != eLanguageTypeObjC_plus_plus)
                                 ast.StartTagDeclarationDefinition (clang_type);
 
                             // Leave this as a forward declaration until we need
