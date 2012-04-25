@@ -95,6 +95,9 @@ option</a></li>
       <li><a href="#dss_stringmap">"llvm/ADT/StringMap.h"</a></li>
       <li><a href="#dss_indexedmap">"llvm/ADT/IndexedMap.h"</a></li>
       <li><a href="#dss_densemap">"llvm/ADT/DenseMap.h"</a></li>
+      <li><a href="#dss_multiimplmap">"llvm/ADT/MultiImplMap.h"</a></li>
+      <li><a href="#dss_flatarraymap">"llvm/ADT/FlatArrayMap.h"</a></li>
+      <li><a href="#dss_smallmap">"llvm/ADT/SmallMap.h"</a></li>
       <li><a href="#dss_valuemap">"llvm/ADT/ValueMap.h"</a></li>
       <li><a href="#dss_intervalmap">"llvm/ADT/IntervalMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
@@ -1807,6 +1810,84 @@ ValueMap will update itself so the new version of the key is mapped to the same
 value, just as if the key were a WeakVH.  You can configure exactly how this
 happens, and what else happens on these two events, by passing
 a <code>Config</code> parameter to the ValueMap template.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_multiimplmap">"llvm/ADT/MultiImplMap.h"</a>
+</h4>
+
+<div>
+
+<p>
+MultiImplMap is map that has two modes, one for small amount of elements and
+one for big amount. User should set map implementation for both of them.
+User also should set the maximum possible number of elements for small mode.
+</p>
+
+<p>
+If user want to use MultiImplMap instead of
+<a href="#dss_densemap">DenseMap</a>, he should pass template parameter
+DenseMapCompatible = true. Note, that in this case map implementations
+should present additional DenseMap specific methods (see below):
+<code>isPointerIntoBucketsArray</code>, <code>getPointerIntoBucketsArray</code>
+and <code>FindAndConstruct</code>.
+</p>
+
+<p>
+Initially MultiImplMap uses small mode and small map implementation. It 
+triggered to the big mode when the number of contained elements exceeds
+maximum possible elements for small mode.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_flatarraymap">"llvm/ADT/FlatArrayMap.h"</a>
+</h4>
+
+<div>
+
+<p>
+FlatArrayMap optimized for small amount of elements. It uses flat array
+implementation inside:
+</p>
+<pre>[ key0, value0, key1, value1, ... keyN, valueN ]</pre>
+
+
+<p>
+User should pass key type, mapped type (type of value), and maximum
+number of elements.
+</p>
+
+<p>
+After maximum number of elements is reached, map declines any further
+attempts to insert new elements ("insert" method returns &#60;end(),
+false&#62;).
+</p>
+
+<p>
+FlatArrayMap has interface that is compatible with
+<a href="#dss_densemap">DenseMap</a>, so user can replace it with DenseMap
+without any code changing and vice versa.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_smallmap">"llvm/ADT/SmallMap.h"</a>
+</h4>
+
+<div>
+
+<p>
+SmallMap is wrapper around <a href="#dss_multiimplmap">MultiImplMap</a>.
+It uses <a href="#dss_flatarraymap">FlatArrayMap</a> for small mode, and
+<a href="#dss_densemap">DenseMap</a> for big mode.
+</p>
 
 </div>
 
