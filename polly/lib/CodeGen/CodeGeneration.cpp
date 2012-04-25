@@ -23,13 +23,13 @@
 #define DEBUG_TYPE "polly-codegen"
 
 #include "polly/Cloog.h"
-#include "polly/CodeGeneration.h"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
-#include "polly/BlockGenerators.h"
-#include "polly/LoopGenerators.h"
+#include "polly/CodeGen/CodeGeneration.h"
+#include "polly/CodeGen/BlockGenerators.h"
+#include "polly/CodeGen/LoopGenerators.h"
 #include "polly/Support/GICHelper.h"
 
 #include "llvm/Module.h"

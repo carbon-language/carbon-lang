@@ -19,7 +19,7 @@
 
 #include "polly/ScheduleOptimizer.h"
 
-#include "polly/CodeGeneration.h"
+#include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"

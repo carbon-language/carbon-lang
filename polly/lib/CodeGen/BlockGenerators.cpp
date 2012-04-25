@@ -14,8 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/ScopInfo.h"
-#include "polly/BlockGenerators.h"
-#include "polly/CodeGeneration.h"
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/GICHelper.h"
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
