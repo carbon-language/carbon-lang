@@ -31,6 +31,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 
 #define DEBUG_TYPE "polly-scops"
@@ -52,23 +53,6 @@ using namespace polly;
 
 STATISTIC(ScopFound,  "Number of valid Scops");
 STATISTIC(RichScopFound,   "Number of Scops containing a loop");
-
-/// Convert an int into a string.
-static std::string convertInt(int number)
-{
-  if (number == 0)
-    return "0";
-  std::string temp = "";
-  std::string returnvalue = "";
-  while (number > 0)
-  {
-    temp += number % 10 + 48;
-    number /= 10;
-  }
-  for (unsigned i = 0; i < temp.length(); i++)
-    returnvalue+=temp[temp.length() - i - 1];
-  return returnvalue;
-}
 
 /// Translate a SCEVExpression into an isl_pw_aff object.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff*> {
@@ -775,7 +759,7 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   }
 
   if (ParameterName == "" || ParameterName.substr(0, 2) == "p_")
-    ParameterName = "p_" + convertInt(IdIter->second);
+    ParameterName = "p_" + utostr_32(IdIter->second);
 
   return isl_id_alloc(getIslCtx(), ParameterName.c_str(), (void *) Parameter);
 }
