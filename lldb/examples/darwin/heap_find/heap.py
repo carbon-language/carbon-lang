@@ -26,21 +26,25 @@ def load_dylib():
         global g_libheap_dylib_dir
         global g_libheap_dylib_dict
         triple = lldb.target.triple
-        if triple not in g_libheap_dylib_dict:
+        if triple in g_libheap_dylib_dict:
+            libheap_dylib_path = g_libheap_dylib_dict[triple]
+        else:
             if not g_libheap_dylib_dir:
-                g_libheap_dylib_dir = tempfile.mkdtemp()
-            triple_dir = g_libheap_dylib_dir + '/' + triple
+                g_libheap_dylib_dir = tempfile.gettempdir() + '/lldb-dylibs'
+            triple_dir = g_libheap_dylib_dir + '/' + triple + '/' + __name__
             if not os.path.exists(triple_dir):
-                os.mkdir(triple_dir)
+                os.makedirs(triple_dir)
             libheap_dylib_path = triple_dir + '/libheap.dylib'
             g_libheap_dylib_dict[triple] = libheap_dylib_path
-        libheap_dylib_path = g_libheap_dylib_dict[triple]
-        if not os.path.exists(libheap_dylib_path):
-            heap_code_directory = os.path.dirname(__file__) + '/heap'
+        heap_code_directory = os.path.dirname(__file__) + '/heap'
+        heap_source_file = heap_code_directory + '/heap_find.cpp'
+        # Check if the dylib doesn't exist, or if "heap_find.cpp" is newer than the dylib
+        if not os.path.exists(libheap_dylib_path) or os.stat(heap_source_file).st_mtime > os.stat(libheap_dylib_path).st_mtime:
+            # Remake the dylib
             make_command = '(cd "%s" ; make EXE="%s" ARCH=%s)' % (heap_code_directory, libheap_dylib_path, string.split(triple, '-')[0])
-            #print make_command
+            # print make_command
             make_output = commands.getoutput(make_command)
-            #print make_output
+            # print make_output
         if os.path.exists(libheap_dylib_path):
             libheap_dylib_spec = lldb.SBFileSpec(libheap_dylib_path)
             if lldb.target.FindModule(libheap_dylib_spec):
