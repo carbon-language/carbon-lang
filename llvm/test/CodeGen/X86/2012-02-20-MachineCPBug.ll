@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-macosx -mattr=+sse | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-macosx -mcpu=core2 -mattr=+sse | FileCheck %s
 ; PR11940: Do not optimize away movb %al, %ch
 
 %struct.APInt = type { i64* }
