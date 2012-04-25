@@ -147,8 +147,7 @@ namespace llvm {
     /// getApproximateInstructionCount - computes an estimate of the number
     /// of instructions in a given LiveInterval.
     unsigned getApproximateInstructionCount(LiveInterval& I) {
-      double IntervalPercentage = getScaledIntervalSize(I) / 1000.0;
-      return (unsigned)(IntervalPercentage * indexes_->getFunctionSize());
+      return I.getSize()/SlotIndex::InstrDist;
     }
 
     // Interval creation
