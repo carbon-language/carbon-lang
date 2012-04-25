@@ -15,10 +15,11 @@ entry:
 ; PIC-O32: sll ${{[0-9]+}}, ${{[0-9]+}}, 2
 ; PIC-O32: addu $[[R1:[0-9]+]], ${{[0-9]+}}, $gp
 ; PIC-O32: jr  $[[R1]]
+; PIC-N64: daddiu $[[R2:[0-9]+]], ${{[0-9]+}}, %lo(%neg(%gp_rel(main)))
 ; PIC-N64: ld $[[R0:[0-9]+]], %got_page($JTI0_0)
 ; PIC-N64: daddiu ${{[0-9]+}}, $[[R0]], %got_ofst($JTI0_0)
 ; PIC-N64: dsll ${{[0-9]+}}, ${{[0-9]+}}, 3
-; PIC-N64: daddu $[[R1:[0-9]+]], ${{[0-9]+}}, $gp
+; PIC-N64: daddu $[[R1:[0-9]+]], ${{[0-9]+}}, $[[R2]]
 ; PIC-N64: jr  $[[R1]]
   switch i32 %0, label %bb4 [
     i32 0, label %bb5

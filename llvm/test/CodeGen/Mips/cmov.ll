@@ -7,8 +7,8 @@
 
 ; O32:  lw  ${{[0-9]+}}, %got(i3)($gp)
 ; O32:  addiu ${{[0-9]+}}, $gp, %got(i1)
-; N64:  ld  ${{[0-9]+}}, %got_disp(i3)($gp)
-; N64:  daddiu ${{[0-9]+}}, $gp, %got_disp(i1)
+; N64:  ld  ${{[0-9]+}}, %got_disp(i3)
+; N64:  daddiu ${{[0-9]+}}, ${{[0-9]+}}, %got_disp(i1)
 define i32* @cmov1(i32 %s) nounwind readonly {
 entry:
   %tobool = icmp ne i32 %s, 0
@@ -25,8 +25,8 @@ entry:
 ; O32: addiu $[[R0:[0-9]+]], $gp, %got(c)
 ; O32: movn  $[[R1]], $[[R0]], ${{[0-9]+}}
 ; N64: cmov2:
-; N64: daddiu $[[R1:[0-9]+]], $gp, %got_disp(d)
-; N64: daddiu $[[R0:[0-9]+]], $gp, %got_disp(c)
+; N64: daddiu $[[R1:[0-9]+]], ${{[0-9]+}}, %got_disp(d)
+; N64: daddiu $[[R0:[0-9]+]], ${{[0-9]+}}, %got_disp(c)
 ; N64: movn  $[[R1]], $[[R0]], ${{[0-9]+}}
 define i32 @cmov2(i32 %s) nounwind readonly {
 entry:
