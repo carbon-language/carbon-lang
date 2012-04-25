@@ -144,12 +144,6 @@ namespace llvm {
       return (1000.0 * I.getSize()) / indexes_->getIndexesLength();
     }
 
-    /// getFuncInstructionCount - Return the number of instructions in the
-    /// current function.
-    unsigned getFuncInstructionCount() {
-      return indexes_->getFunctionSize();
-    }
-
     /// getApproximateInstructionCount - computes an estimate of the number
     /// of instructions in a given LiveInterval.
     unsigned getApproximateInstructionCount(LiveInterval& I) {
