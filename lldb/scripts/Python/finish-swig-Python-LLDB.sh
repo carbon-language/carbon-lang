@@ -191,14 +191,12 @@ cp "${CONFIG_BUILD_DIR}/lldb.py" "${framework_python_dir}/__init__.py"
 package_files="${SRC_ROOT}/source/Interpreter/embedded_interpreter.py"
 create_python_package "" "${package_files}"
 
-
 # lldb/formatters/cpp
 package_files="${SRC_ROOT}/examples/synthetic/gnu_libstdcpp.py
 ${SRC_ROOT}/examples/synthetic/libcxx.py"
 create_python_package "/formatters/cpp" "${package_files}"
 
 # lldb/formatters/objc
-
 package_files="${SRC_ROOT}/examples/summaries/cocoa/Selector.py
 ${SRC_ROOT}/examples/summaries/objc.py
 ${SRC_ROOT}/examples/summaries/cocoa/Class.py
@@ -221,11 +219,17 @@ ${SRC_ROOT}/examples/summaries/cocoa/NSURL.py"
 create_python_package "/formatters/objc" "${package_files}"
 
 
+# make an empty __init__.py in lldb/runtime
+# this is required for Python to recognize lldb.runtime as a valid package
+# (and hence, lldb.runtime.objc as a valid contained package)
+create_python_package "/runtime" ""
+
 # lldb/runtime/objc
 package_files="${SRC_ROOT}/examples/summaries/cocoa/objc_runtime.py"
 create_python_package "/runtime/objc" "${package_files}"
 
 # lldb/formatters
+# having these files copied here ensures that lldb/formatters is a valid package itself
 package_files="${SRC_ROOT}/examples/summaries/cocoa/cache.py
 ${SRC_ROOT}/examples/summaries/cocoa/metrics.py
 ${SRC_ROOT}/examples/summaries/cocoa/attrib_fromdict.py
