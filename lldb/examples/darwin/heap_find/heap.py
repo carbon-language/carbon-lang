@@ -1,36 +1,46 @@
 #!/usr/bin/python
 
 #----------------------------------------------------------------------
-# Be sure to add the python path that points to the LLDB shared library.
+# This module is designed to live inside the "lldb" python package
+# in the "lldb.macosx" package. To use this in the embedded python
+# interpreter using "lldb" just import it:
 #
-# # To use this in the embedded python interpreter using "lldb" just
-# import it with the full path using the "command script import" 
-# command
-#   (lldb) command script import /path/to/heap.py
-#
-# For the shells csh, tcsh:
-#   ( setenv PYTHONPATH /path/to/LLDB.framework/Resources/Python ; ./heap.py )
-#
-# For the shells sh, bash:
-#   PYTHONPATH=/path/to/LLDB.framework/Resources/Python ./heap.py 
+#   (lldb) script import lldb.macosx.heap
 #----------------------------------------------------------------------
 
 import lldb
 import commands
 import optparse
 import os
+import os.path
 import shlex
+import string
+import tempfile
 import lldb.utils.symbolication
+
+g_libheap_dylib_dir = None
+g_libheap_dylib_dict = dict()
 
 def load_dylib():
     if lldb.target:
-        python_module_directory = os.path.dirname(__file__)
-        heap_code_directory = python_module_directory + '/heap'
-        libheap_dylib_path = heap_code_directory + '/heap/libheap.dylib'
+        global g_libheap_dylib_dir
+        global g_libheap_dylib_dict
+        triple = lldb.target.triple
+        if triple not in g_libheap_dylib_dict:
+            if not g_libheap_dylib_dir:
+                g_libheap_dylib_dir = tempfile.mkdtemp()
+            triple_dir = g_libheap_dylib_dir + '/' + triple
+            if not os.path.exists(triple_dir):
+                os.mkdir(triple_dir)
+            libheap_dylib_path = triple_dir + '/libheap.dylib'
+            g_libheap_dylib_dict[triple] = libheap_dylib_path
+        libheap_dylib_path = g_libheap_dylib_dict[triple]
         if not os.path.exists(libheap_dylib_path):
-            make_command = '(cd "%s" ; make)' % heap_code_directory
-            print make_command
-            print commands.getoutput(make_command)
+            heap_code_directory = os.path.dirname(__file__) + '/heap'
+            make_command = '(cd "%s" ; make EXE="%s" ARCH=%s)' % (heap_code_directory, libheap_dylib_path, string.split(triple, '-')[0])
+            #print make_command
+            make_output = commands.getoutput(make_command)
+            #print make_output
         if os.path.exists(libheap_dylib_path):
             libheap_dylib_spec = lldb.SBFileSpec(libheap_dylib_path)
             if lldb.target.FindModule(libheap_dylib_spec):
@@ -77,7 +87,7 @@ def heap_search(options, arg_str):
     default_memory_format = "Y" # 'Y' is "bytes with ASCII" format
     #memory_chunk_size = 1
     if options.type == 'pointer':
-        expr = 'find_pointer_in_heap((void *)%s)' % arg_str
+        expr = 'find_pointer_in_heap((void *)%s)' % (arg_str)
         arg_str_description = 'malloc block containing pointer %s' % arg_str
         default_memory_format = "A" # 'A' is "address" format
         #memory_chunk_size = lldb.process.GetAddressByteSize()
@@ -285,13 +295,15 @@ def malloc_info(debugger, command, result, dict):
     else:
         print 'error: no c string arguments were given to search for'
 
-def __lldb_init_module (debugger, dict):
-    # This initializer is being run from LLDB in the embedded command interpreter
-    # Add any commands contained in this module to LLDB
-    debugger.HandleCommand('command script add -f heap.ptr_refs ptr_refs')
-    debugger.HandleCommand('command script add -f heap.cstr_refs cstr_refs')
-    debugger.HandleCommand('command script add -f heap.malloc_info malloc_info')
-    print '"ptr_refs", "cstr_refs", and "malloc_info" commands have been installed, use the "--help" options on these commands for detailed help.'
+if __name__ == '__main__':
+    lldb.debugger = lldb.SBDebugger.Create()
+
+# This initializer is being run from LLDB in the embedded command interpreter
+# Add any commands contained in this module to LLDB
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.ptr_refs ptr_refs')
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.cstr_refs cstr_refs')
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_info malloc_info')
+print '"ptr_refs", "cstr_refs", and "malloc_info" commands have been installed, use the "--help" options on these commands for detailed help.'
 
 
 

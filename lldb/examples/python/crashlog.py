@@ -115,7 +115,7 @@ class CrashLog(lldb.utils.symbolication.Symbolicator):
             if self.resolved_path:
                 # Don't load a module twice...
                 return True
-            print 'Locating %s %s...' % (self.uuid, self.path),
+            print 'Getting symbols for %s %s...' % (self.uuid, self.path),
             if os.path.exists(self.dsymForUUIDBinary):
                 dsym_for_uuid_command = '%s %s' % (self.dsymForUUIDBinary, self.uuid)
                 s = commands.getoutput(dsym_for_uuid_command)
@@ -147,10 +147,10 @@ class CrashLog(lldb.utils.symbolication.Symbolicator):
                     return False
             if (self.resolved_path and os.path.exists(self.resolved_path)) or (self.path and os.path.exists(self.path)):
                 print 'ok'
-                if self.resolved_path:
-                    print '  exe = "%s"' % self.resolved_path 
-                if self.symfile:
-                    print ' dsym = "%s"' % self.symfile
+                # if self.resolved_path:
+                #     print '  exe = "%s"' % self.resolved_path 
+                # if self.symfile:
+                #     print ' dsym = "%s"' % self.symfile
                 return True
             return False
         
@@ -424,7 +424,7 @@ be disassembled and lookups can be performed using the addresses found in the cr
                     if err:
                         print err
                     else:
-                        print 'loaded %s' % image
+                        #print 'loaded %s' % image
                         loaded_images.append(image)
             
             for thread in crash_log.threads:

@@ -288,7 +288,6 @@ class Image:
             if not self.module:
                 self.locate_module_and_debug_symbols ()
                 resolved_path = self.get_resolved_path()
-                print 'target.AddModule (path="%s", arch="%s", uuid=%s, symfile="%s")' % (resolved_path, self.arch, self.uuid, self.symfile)
                 self.module = target.AddModule (resolved_path, self.arch, self.uuid)#, self.symfile)
             if not self.module:
                 return 'error: unable to get module for (%s) "%s"' % (self.arch, self.get_resolved_path())
