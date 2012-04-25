@@ -3641,6 +3641,8 @@ def warn_subscript_is_char : Warning<"array subscript is of type 'char'">,
 
 def err_typecheck_incomplete_tag : Error<"incomplete definition of type %0">;
 def err_no_member : Error<"no member named %0 in %1">;
+def err_no_member_overloaded_arrow : Error<
+  "no member named %0 in %1; did you mean to use '->' instead of '.'?">;
 
 def err_member_not_yet_instantiated : Error<
   "no member %0 in %1; it has not yet been instantiated">;

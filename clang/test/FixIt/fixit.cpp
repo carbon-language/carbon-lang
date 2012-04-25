@@ -217,3 +217,26 @@ class Foo {
 };
 void Foo::SetBar(Bar bar) { bar_ = bar; } // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}
 }
+
+namespace arrow_suggest {
+
+template <typename T>
+class wrapped_ptr {
+ public:
+  wrapped_ptr(T* ptr) : ptr_(ptr) {}
+  T* operator->() { return ptr_; }
+ private:
+  T *ptr_;
+};
+
+class Worker {
+ public:
+  void DoSomething();
+};
+
+void test() {
+  wrapped_ptr<Worker> worker(new Worker);
+  worker.DoSomething(); // expected-error {{no member named 'DoSomething' in 'arrow_suggest::wrapped_ptr<arrow_suggest::Worker>'; did you mean to use '->' instead of '.'?}}
+}
+
+} // namespace arrow_suggest
