@@ -14,7 +14,6 @@
 #include "InstCombine.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -692,40 +691,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
                                          MemAlign, false));
       return II;
     }
-    break;
-  }
-
-  case Intrinsic::arm_neon_vmulls:
-  case Intrinsic::arm_neon_vmullu: {
-    // Zext/sext intrinsic operands according to the intrinsic type, then try to
-    // simplify them. This lets us try a SimplifyMulInst on the extended
-    // operands. If the zext/sext instructions are unused when we're done then
-    // delete them from the block. 
-    Value* Arg0 = II->getArgOperand(0);
-    Value* Arg1 = II->getArgOperand(1);
-    bool Zext = (II->getIntrinsicID() == Intrinsic::arm_neon_vmullu);
-    Instruction *Arg0W =
-      Zext ? CastInst::CreateZExtOrBitCast(Arg0, II->getType(), "", II) :
-             CastInst::CreateSExtOrBitCast(Arg0, II->getType(), "", II);
-    Value* Arg0WS = SimplifyInstruction(Arg0W);
-    if (Arg0WS == 0) // If simplification fails just pass through the ext'd val.
-      Arg0WS = Arg0W;
-    Instruction *Arg1W =
-      Zext ? CastInst::CreateZExtOrBitCast(Arg1, II->getType(), "", II) :
-             CastInst::CreateSExtOrBitCast(Arg1, II->getType(), "", II);
-    Value* Arg1WS = SimplifyInstruction(Arg1W);
-    if (Arg1WS == 0)
-      Arg1WS = Arg1W;
-    Instruction *SimplifiedInst = 0;
-    if (Value* V = SimplifyMulInst(Arg0WS, Arg1WS, TD)) {
-      SimplifiedInst = ReplaceInstUsesWith(CI, V);
-    }
-    if (Arg0W->use_empty())
-      Arg0W->eraseFromParent();
-    if (Arg1W->use_empty())
-      Arg1W->eraseFromParent();
-    if (SimplifiedInst != 0)
-      return SimplifiedInst;
     break;
   }
 
