@@ -152,7 +152,7 @@ class NSArray_SynthProvider:
 		logger = lldb.formatters.Logger.Logger()
 		if self.valobj.GetValueAsUnsigned() == 0:
 			self.error = True
-			returnlldb.runtime.objc.objc_runtime.InvalidPointer_Description(True)
+			return lldb.runtime.objc.objc_runtime.InvalidPointer_Description(True)
 		else:
 			global statistics
 			class_data,wrapper =lldb.runtime.objc.objc_runtime.Utilities.prepare_class_detection(self.valobj,statistics)
