@@ -12999,7 +12999,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
 }
 
 
-/// PerformTruncateCombine - Converts truncate operation to
+/// DCI, PerformTruncateCombine - Converts truncate operation to
 /// a sequence of vector shuffle operations.
 /// It is possible when we truncate 256-bit vector to 128-bit vector
 
@@ -14901,6 +14901,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
 }
 
 static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
+                                  TargetLowering::DAGCombinerInfo &DCI,
                                   const X86Subtarget *Subtarget) {
   // (i32 zext (and (i8  x86isd::setcc_carry), 1)) ->
   //           (and (i32 x86isd::setcc_carry), 1)
@@ -14938,28 +14939,29 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
   //   Use vpunpckhdq for 4 upper elements  v4i32 -> v2i64.
   //   Concat upper and lower parts.
   //
-  if (Subtarget->hasAVX()) {
+  if (!DCI.isBeforeLegalizeOps())
+    return SDValue();
 
-    if (((VT == MVT::v8i32) && (OpVT == MVT::v8i16)) ||
-        ((VT == MVT::v4i64) && (OpVT == MVT::v4i32)))  {
+  if (!Subtarget->hasAVX())
+    return SDValue();
 
-      if (Subtarget->hasAVX2())
-        return DAG.getNode(X86ISD::VZEXT_MOVL, dl, VT, N0);
+  if (((VT == MVT::v8i32) && (OpVT == MVT::v8i16)) ||
+      ((VT == MVT::v4i64) && (OpVT == MVT::v4i32)))  {
 
-      SDValue ZeroVec = getZeroVector(OpVT, Subtarget, DAG, dl);
-      SDValue OpLo = getTargetShuffleNode(X86ISD::UNPCKL, dl, OpVT, N0, ZeroVec,
-                                          DAG);
-      SDValue OpHi = getTargetShuffleNode(X86ISD::UNPCKH, dl, OpVT, N0, ZeroVec,
-                                          DAG);
+    if (Subtarget->hasAVX2())
+      return DAG.getNode(X86ISD::VZEXT_MOVL, dl, VT, N0);
 
-      EVT HVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
-                                 VT.getVectorNumElements()/2);
+    SDValue ZeroVec = getZeroVector(OpVT, Subtarget, DAG, dl);
+    SDValue OpLo = getUnpackl(DAG, dl, OpVT, N0, ZeroVec);
+    SDValue OpHi = getUnpackh(DAG, dl, OpVT, N0, ZeroVec);
 
-      OpLo = DAG.getNode(ISD::BITCAST, dl, HVT, OpLo);
-      OpHi = DAG.getNode(ISD::BITCAST, dl, HVT, OpHi);
+    EVT HVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
+                               VT.getVectorNumElements()/2);
 
-      return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
-    }
+    OpLo = DAG.getNode(ISD::BITCAST, dl, HVT, OpLo);
+    OpHi = DAG.getNode(ISD::BITCAST, dl, HVT, OpHi);
+
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
   }
 
   return SDValue();
@@ -15192,7 +15194,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ANY_EXTEND:
-  case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, Subtarget);
+  case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND:    return PerformSExtCombine(N, DAG, DCI, Subtarget);
   case ISD::TRUNCATE:       return PerformTruncateCombine(N, DAG, DCI);
   case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG);
