@@ -834,17 +834,17 @@ def setupSysPath():
     baiPath2 = os.path.join(base, *(xcode4_build_dir + bai + python_resource_dir))
 
     lldbPath = None
-    if os.path.isfile(os.path.join(dbgPath, 'lldb.py')):
+    if os.path.isfile(os.path.join(dbgPath, 'lldb/__init__.py')):
         lldbPath = dbgPath
-    elif os.path.isfile(os.path.join(dbgPath2, 'lldb.py')):
+    elif os.path.isfile(os.path.join(dbgPath2, 'lldb/__init__.py')):
         lldbPath = dbgPath2
-    elif os.path.isfile(os.path.join(relPath, 'lldb.py')):
+    elif os.path.isfile(os.path.join(relPath, 'lldb/__init__.py')):
         lldbPath = relPath
-    elif os.path.isfile(os.path.join(relPath2, 'lldb.py')):
+    elif os.path.isfile(os.path.join(relPath2, 'lldb/__init__.py')):
         lldbPath = relPath2
-    elif os.path.isfile(os.path.join(baiPath, 'lldb.py')):
+    elif os.path.isfile(os.path.join(baiPath, 'lldb/__init__.py')):
         lldbPath = baiPath
-    elif os.path.isfile(os.path.join(baiPath2, 'lldb.py')):
+    elif os.path.isfile(os.path.join(baiPath2, 'lldb/__init__.py')):
         lldbPath = baiPath2
 
     if not lldbPath:
