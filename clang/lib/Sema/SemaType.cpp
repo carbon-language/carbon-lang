@@ -4301,9 +4301,14 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
 
   const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
 
-  // FIXME: Better diagnostic for incomplete class?
-  if (!RD->isCompleteDefinition())
+  // A partially-defined class type can't be a literal type, because a literal
+  // class type must have a trivial destructor (which can't be checked until
+  // the class definition is complete).
+  if (!RD->isCompleteDefinition()) {
+    RequireCompleteType(Loc, ElemType,
+                        PDiag(diag::note_non_literal_incomplete) << T);
     return true;
+  }
 
   // If the class has virtual base classes, then it's not an aggregate, and
   // cannot have any constexpr constructors or a trivial default constructor,
