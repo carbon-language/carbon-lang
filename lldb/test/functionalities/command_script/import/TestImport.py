@@ -33,10 +33,10 @@ class ImportTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("command script import ./foo/foo.py")
-        self.runCmd("command script import ./foo/foo2.py")
-        self.runCmd("command script import ./foo/bar/foobar.py")
-        self.runCmd("command script import ./bar/bar.py")
+        self.runCmd("command script import ./foo/foo.py --allow-reload")
+        self.runCmd("command script import ./foo/foo2.py --allow-reload")
+        self.runCmd("command script import ./foo/bar/foobar.py --allow-reload")
+        self.runCmd("command script import ./bar/bar.py --allow-reload")
 
         self.expect("command script import ./nosuchfile.py",
                 error=True, startstr='error: module importing failed')

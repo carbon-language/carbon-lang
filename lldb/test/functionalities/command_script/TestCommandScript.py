@@ -84,7 +84,7 @@ class CmdPythonTestCase(TestBase):
 
         self.expect("help targetname",
                     substrs = ['Run Python function welcome.target_name_imp',
-                               'This command takes \'raw\' input',
+                               'This command takes','\'raw\' input',
                                'quote stuff'])
 
         self.expect("longwait",
