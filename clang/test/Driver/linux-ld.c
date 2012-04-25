@@ -268,3 +268,39 @@
 // CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/lib"
 // CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/usr/lib"
 //
+// Test linker invocation on Android.
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-androideabi \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
+// CHECK-ANDROID: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ANDROID: "{{.*}}/crtbegin_dynamic.o"
+// CHECK-ANDROID: "-L[[SYSROOT]]/usr/lib"
+// CHECK-ANDROID-NOT: "gcc_s"
+// CHECK-ANDROID: "-lgcc"
+// CHECK-ANDROID-NOT: "gcc_s"
+// CHECK-ANDROID: "{{.*}}/crtend_android.o"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-androideabi \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree \
+// RUN:     -shared \
+// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-SO %s
+// CHECK-ANDROID-SO: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ANDROID-SO: "{{.*}}/crtbegin_so.o"
+// CHECK-ANDROID-SO: "-L[[SYSROOT]]/usr/lib"
+// CHECK-ANDROID-SO-NOT: "gcc_s"
+// CHECK-ANDROID-SO: "-lgcc"
+// CHECK-ANDROID-SO-NOT: "gcc_s"
+// CHECK-ANDROID-SO: "{{.*}}/crtend_so.o"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target arm-linux-androideabi \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree \
+// RUN:     -static \
+// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-STATIC %s
+// CHECK-ANDROID-STATIC: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ANDROID-STATIC: "{{.*}}/crtbegin_static.o"
+// CHECK-ANDROID-STATIC: "-L[[SYSROOT]]/usr/lib"
+// CHECK-ANDROID-STATIC-NOT: "gcc_s"
+// CHECK-ANDROID-STATIC: "-lgcc"
+// CHECK-ANDROID-STATIC-NOT: "gcc_s"
+// CHECK-ANDROID-STATIC: "{{.*}}/crtend_android.o"
