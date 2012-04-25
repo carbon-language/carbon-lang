@@ -2395,12 +2395,16 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "#endif // GET_REGISTER_MATCHER\n\n";
 
-
-  OS << "\n#ifdef GET_MATCHER_IMPLEMENTATION\n";
-  OS << "#undef GET_MATCHER_IMPLEMENTATION\n\n";
+  OS << "\n#ifdef GET_SUBTARGET_FEATURE_NAME\n";
+  OS << "#undef GET_SUBTARGET_FEATURE_NAME\n\n";
 
   // Generate the helper function to get the names for subtarget features.
   emitGetSubtargetFeatureName(Info, OS);
+
+  OS << "#endif // GET_SUBTARGET_FEATURE_NAME\n\n";
+
+  OS << "\n#ifdef GET_MATCHER_IMPLEMENTATION\n";
+  OS << "#undef GET_MATCHER_IMPLEMENTATION\n\n";
 
   // Generate the function that remaps for mnemonic aliases.
   bool HasMnemonicAliases = emitMnemonicAliases(OS, Info);
