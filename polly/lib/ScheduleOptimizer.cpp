@@ -88,6 +88,97 @@ namespace {
     virtual bool runOnScop(Scop &S);
     void printScop(llvm::raw_ostream &OS) const;
     void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  private:
+    static void extendScattering(Scop &S, unsigned NewDimensions);
+
+    /// @brief Create a map that describes a n-dimensonal tiling.
+    ///
+    /// getTileMap creates a map from a n-dimensional scattering space into an
+    /// 2*n-dimensional scattering space. The map describes a rectangular
+    /// tiling.
+    ///
+    /// Example:
+    ///   scheduleDimensions = 2, parameterDimensions = 1, tileSize = 32
+    ///
+    ///   tileMap := [p0] -> {[s0, s1] -> [t0, t1, s0, s1]:
+    ///                        t0 % 32 = 0 and t0 <= s0 < t0 + 32 and
+    ///                        t1 % 32 = 0 and t1 <= s1 < t1 + 32}
+    ///
+    ///  Before tiling:
+    ///
+    ///  for (i = 0; i < N; i++)
+    ///    for (j = 0; j < M; j++)
+    ///	S(i,j)
+    ///
+    ///  After tiling:
+    ///
+    ///  for (t_i = 0; t_i < N; i+=32)
+    ///    for (t_j = 0; t_j < M; j+=32)
+    ///	for (i = t_i; i < min(t_i + 32, N); i++)  | Unknown that N % 32 = 0
+    ///	  for (j = t_j; j < t_j + 32; j++)        |   Known that M % 32 = 0
+    ///	    S(i,j)
+    ///
+    static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
+                                     isl_space *SpaceModel, int tileSize = 32);
+
+    /// @brief Get the schedule for this band.
+    ///
+    /// Polly applies transformations like tiling on top of the isl calculated
+    /// value.  This can influence the number of scheduling dimension. The
+    /// number of schedule dimensions is returned in the parameter 'Dimension'.
+    static isl_union_map *getScheduleForBand(isl_band *Band, int *Dimensions);
+
+    /// @brief Create a map that pre-vectorizes one scheduling dimension.
+    ///
+    /// getPrevectorMap creates a map that maps each input dimension to the same
+    /// output dimension, except for the dimension DimToVectorize.
+    /// DimToVectorize is strip mined by 'VectorWidth' and the newly created
+    /// point loop of DimToVectorize is moved to the innermost level.
+    ///
+    /// Example (DimToVectorize=0, ScheduleDimensions=2, VectorWidth=4):
+    ///
+    /// | Before transformation
+    /// |
+    /// | A[i,j] -> [i,j]
+    /// |
+    /// | for (i = 0; i < 128; i++)
+    /// |    for (j = 0; j < 128; j++)
+    /// |      A(i,j);
+    ///
+    ///   Prevector map:
+    ///   [i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and i = ip
+    ///
+    /// | After transformation:
+    /// |
+    /// | A[i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and i = ip
+    /// |
+    /// | for (it = 0; it < 128; it+=4)
+    /// |    for (j = 0; j < 128; j++)
+    /// |      for (ip = max(0,it); ip < min(128, it + 3); ip++)
+    /// |        A(ip,j);
+    ///
+    /// The goal of this transformation is to create a trivially vectorizable
+    /// loop.  This means a parallel loop at the innermost level that has a
+    /// constant number of iterations corresponding to the target vector width.
+    ///
+    /// This transformation creates a loop at the innermost level. The loop has
+    /// a constant number of iterations, if the number of loop iterations at
+    /// DimToVectorize can be divided by VectorWidth. The default VectorWidth is
+    /// currently constant and not yet target specific. This function does not
+    /// reason about parallelism.
+    static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
+				    int ScheduleDimensions,
+                                    int VectorWidth = 4);
+
+    /// @brief Get the scheduling map for a list of bands.
+    ///
+    /// Walk recursively the forest of bands to combine the schedules of the
+    /// individual bands to the overall schedule. In case tiling is requested,
+    /// the individual bands are tiled.
+    static isl_union_map *getScheduleForBandList(isl_band_list *BandList);
+
+    static isl_union_map *getScheduleMap(isl_schedule *Schedule);
   };
 
 }
@@ -101,7 +192,7 @@ static int getSingleMap(__isl_take isl_map *map, void *user) {
   return 0;
 }
 
-static void extendScattering(Scop &S, unsigned NewDimensions) {
+void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
     unsigned OldDimensions = Stmt->getNumScattering();
@@ -136,34 +227,10 @@ static void extendScattering(Scop &S, unsigned NewDimensions) {
   }
 }
 
-// getTileMap - Create a map that describes a n-dimensonal tiling.
-//
-// getTileMap creates a map from a n-dimensional scattering space into an
-// 2*n-dimensional scattering space. The map describes a rectangular tiling.
-//
-// Example:
-//   scheduleDimensions = 2, parameterDimensions = 1, tileSize = 32
-//
-//   tileMap := [p0] -> {[s0, s1] -> [t0, t1, s0, s1]:
-//                        t0 % 32 = 0 and t0 <= s0 < t0 + 32 and
-//                        t1 % 32 = 0 and t1 <= s1 < t1 + 32}
-//
-//  Before tiling:
-//
-//  for (i = 0; i < N; i++)
-//    for (j = 0; j < M; j++)
-//	S(i,j)
-//
-//  After tiling:
-//
-//  for (t_i = 0; t_i < N; i+=32)
-//    for (t_j = 0; t_j < M; j+=32)
-//	for (i = t_i; i < min(t_i + 32, N); i++)  | Unknown that N % 32 = 0
-//	  for (j = t_j; j < t_j + 32; j++)        |   Known that M % 32 = 0
-//	    S(i,j)
-//
-static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
-				 isl_space *SpaceModel, int tileSize = 32) {
+isl_basic_map *IslScheduleOptimizer::getTileMap(isl_ctx *ctx,
+                                                int scheduleDimensions,
+				                isl_space *SpaceModel,
+                                                int tileSize) {
   // We construct
   //
   // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
@@ -223,12 +290,8 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
   return tileMap;
 }
 
-// getScheduleForBand - Get the schedule for this band.
-//
-// Polly applies transformations like tiling on top of the isl calculated value.
-// This can influence the number of scheduling dimension. The number of
-// schedule dimensions is returned in the parameter 'Dimension'.
-isl_union_map *getScheduleForBand(isl_band *Band, int *Dimensions) {
+isl_union_map *IslScheduleOptimizer::getScheduleForBand(isl_band *Band,
+                                                        int *Dimensions) {
   isl_union_map *PartialSchedule;
   isl_ctx *ctx;
   isl_space *Space;
@@ -256,47 +319,10 @@ isl_union_map *getScheduleForBand(isl_band *Band, int *Dimensions) {
   return isl_union_map_apply_range(PartialSchedule, TileUMap);
 }
 
-// Create a map that pre-vectorizes one scheduling dimension.
-//
-// getPrevectorMap creates a map that maps each input dimension to the same
-// output dimension, except for the dimension DimToVectorize. DimToVectorize is
-// strip mined by 'VectorWidth' and the newly created point loop of
-// DimToVectorize is moved to the innermost level.
-//
-// Example (DimToVectorize=0, ScheduleDimensions=2, VectorWidth=4):
-//
-// | Before transformation
-// |
-// | A[i,j] -> [i,j]
-// |
-// | for (i = 0; i < 128; i++)
-// |    for (j = 0; j < 128; j++)
-// |      A(i,j);
-//
-//   Prevector map:
-//   [i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and i = ip
-//
-// | After transformation:
-// |
-// | A[i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and i = ip
-// |
-// | for (it = 0; it < 128; it+=4)
-// |    for (j = 0; j < 128; j++)
-// |      for (ip = max(0,it); ip < min(128, it + 3); ip++)
-// |        A(ip,j);
-//
-// The goal of this transformation is to create a trivially vectorizable loop.
-// This means a parallel loop at the innermost level that has a constant number
-// of iterations corresponding to the target vector width.
-//
-// This transformation creates a loop at the innermost level. The loop has a
-// constant number of iterations, if the number of loop iterations at
-// DimToVectorize can be divided by VectorWidth. The default VectorWidth is
-// currently constant and not yet target specific. This function does not reason
-// about parallelism.
-static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
-				int ScheduleDimensions,
-				int VectorWidth = 4) {
+isl_map *IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx,
+                                               int DimToVectorize,
+				               int ScheduleDimensions,
+				               int VectorWidth) {
   isl_space *Space;
   isl_local_space *LocalSpace, *LocalSpaceRange;
   isl_set *Modulo;
@@ -357,12 +383,8 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   return TilingMap;
 }
 
-// getScheduleForBandList - Get the scheduling map for a list of bands.
-//
-// We walk recursively the forest of bands to combine the schedules of the
-// individual bands to the overall schedule. In case tiling is requested,
-// the individual bands are tiled.
-static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
+isl_union_map *IslScheduleOptimizer::getScheduleForBandList(
+  isl_band_list *BandList) {
   int NumBands;
   isl_union_map *Schedule;
   isl_ctx *ctx;
@@ -417,7 +439,7 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
   return Schedule;
 }
 
-static isl_union_map *getScheduleMap(isl_schedule *Schedule) {
+isl_union_map *IslScheduleOptimizer::getScheduleMap(isl_schedule *Schedule) {
   isl_band_list *BandList = isl_schedule_get_band_forest(Schedule);
   isl_union_map *ScheduleMap = getScheduleForBandList(BandList);
   isl_band_list_free(BandList);
