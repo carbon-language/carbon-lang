@@ -28,7 +28,7 @@ live atoms, and then delete the non-live atoms.
 Atom Model
 ----------
 
-An atom is an indivisible chuck of code or data.  Typically each user written
+An atom is an indivisible chunk of code or data.  Typically each user written
 function or global variable is an atom.  In addition, the compiler may emit
 other atoms, such as for literal c-strings or floating point constants, or for
 runtime data structures like dwarf unwind info or pointers to initializers.
@@ -40,7 +40,7 @@ A simple "hello world" object file would be modeled like this:
 There are three atoms: main, a proxy for printf, and an anonymous atom
 containing the c-string literal "hello world".  The Atom "main" has two
 references. One is the call site for the call to printf, and the other is a
-refernce for the instruction that loads the address of the c-string literal.
+reference for the instruction that loads the address of the c-string literal.
 
 File Model
 ----------
