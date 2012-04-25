@@ -534,7 +534,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         if (script_interpreter_dict != NULL)
         {
             PyObject *pfunc = (PyObject*)m_run_one_line;
-            PyObject *pmod = PyImport_AddModule ("embedded_interpreter");
+            PyObject *pmod = PyImport_AddModule ("lldb.embedded_interpreter");
             if (pmod != NULL)
             {
                 PyObject *pmod_dict = PyModule_GetDict (pmod);

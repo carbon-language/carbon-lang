@@ -240,12 +240,24 @@ create_python_package "/formatters" "${package_files}"
 package_files="${SRC_ROOT}/examples/python/symbolication.py"
 create_python_package "/utils" "${package_files}"
 
-# lldb/macosx
-package_files="${SRC_ROOT}/examples/python/crashlog.py
-${SRC_ROOT}/examples/darwin/heap_find/heap.py"
-create_python_package "/macosx" "${package_files}"
+if [ ${OS_NAME} == "Darwin" ]
+then
+    # lldb/macosx
+    package_files="${SRC_ROOT}/examples/python/crashlog.py
+    ${SRC_ROOT}/examples/darwin/heap_find/heap.py"
+    create_python_package "/macosx" "${package_files}"
 
+    # Copy files needed by lldb/macosx/heap.py to build libheap.dylib
+    heap_dir="${framework_python_dir}/macosx/heap"
+    if [ ! -d "${heap_dir}" ]
+    then
+        mkdir -p "${heap_dir}"
+        cp "${SRC_ROOT}/examples/darwin/heap_find/heap/heap_find.cpp" "${heap_dir}"
+        cp "${SRC_ROOT}/examples/darwin/heap_find/heap/Makefile" "${heap_dir}"
+    fi
+fi
 
 fi
+
 exit 0
 

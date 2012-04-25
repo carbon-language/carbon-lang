@@ -20,14 +20,15 @@ import commands
 import optparse
 import os
 import shlex
-import symbolication # from lldb/examples/python/symbolication.py
+import lldb.utils.symbolication
 
 def load_dylib():
     if lldb.target:
         python_module_directory = os.path.dirname(__file__)
-        libheap_dylib_path = python_module_directory + '/libheap.dylib'
+        heap_code_directory = python_module_directory + '/heap'
+        libheap_dylib_path = heap_code_directory + '/heap/libheap.dylib'
         if not os.path.exists(libheap_dylib_path):
-            make_command = '(cd "%s" ; make)' % python_module_directory
+            make_command = '(cd "%s" ; make)' % heap_code_directory
             print make_command
             print commands.getoutput(make_command)
         if os.path.exists(libheap_dylib_path):
@@ -172,7 +173,7 @@ def heap_search(options, arg_str):
                     lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
                     print cmd_result.GetOutput()
                 if options.stack:
-                    symbolicator = symbolication.Symbolicator()
+                    symbolicator = lldb.utils.symbolication.Symbolicator()
                     symbolicator.target = lldb.target
                     expr_str = "g_stack_frames_count = sizeof(g_stack_frames)/sizeof(uint64_t); (int)__mach_stack_logging_get_frames((unsigned)mach_task_self(), 0x%xull, g_stack_frames, g_stack_frames_count, &g_stack_frames_count)" % (malloc_addr)
                     #print expr_str
