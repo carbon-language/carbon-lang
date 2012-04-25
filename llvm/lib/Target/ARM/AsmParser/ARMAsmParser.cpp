@@ -1446,8 +1446,10 @@ public:
     assert(isRegShiftedImm() &&
            "addRegShiftedImmOperands() on non RegShiftedImm!");
     Inst.addOperand(MCOperand::CreateReg(RegShiftedImm.SrcReg));
+    // Shift of #32 is encoded as 0 where permitted
+    unsigned Imm = (RegShiftedImm.ShiftImm == 32 ? 0 : RegShiftedImm.ShiftImm);
     Inst.addOperand(MCOperand::CreateImm(
-      ARM_AM::getSORegOpc(RegShiftedImm.ShiftTy, RegShiftedImm.ShiftImm)));
+      ARM_AM::getSORegOpc(RegShiftedImm.ShiftTy, Imm)));
   }
 
   void addShifterImmOperands(MCInst &Inst, unsigned N) const {
@@ -6809,6 +6811,9 @@ processInstruction(MCInst &Inst,
     // A shift by zero is a plain MOVr, not a MOVsi.
     unsigned Amt = Inst.getOperand(2).getImm();
     unsigned Opc = Amt == 0 ? ARM::MOVr : ARM::MOVsi;
+    // A shift by 32 should be encoded as 0 when permitted
+    if (Amt == 32 && (ShiftTy == ARM_AM::lsr || ShiftTy == ARM_AM::asr))
+      Amt = 0;
     unsigned Shifter = ARM_AM::getSORegOpc(ShiftTy, Amt);
     MCInst TmpInst;
     TmpInst.setOpcode(Opc);
@@ -7154,7 +7159,9 @@ processInstruction(MCInst &Inst,
   }
   case ARM::MOVsi: {
     ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(Inst.getOperand(2).getImm());
-    if (SOpc == ARM_AM::rrx) return false;
+    // rrx shifts and asr/lsr of #32 is encoded as 0
+    if (SOpc == ARM_AM::rrx || SOpc == ARM_AM::asr || SOpc == ARM_AM::lsr) 
+      return false;
     if (ARM_AM::getSORegOffset(Inst.getOperand(2).getImm()) == 0) {
       // Shifting by zero is accepted as a vanilla 'MOVr'
       MCInst TmpInst;

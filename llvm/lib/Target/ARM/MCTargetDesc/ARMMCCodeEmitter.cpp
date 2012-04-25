@@ -1192,8 +1192,7 @@ getSORegImmOpValue(const MCInst &MI, unsigned OpIdx,
   // Encode shift_imm bit[11:7].
   Binary |= SBits << 4;
   unsigned Offset = ARM_AM::getSORegOffset(MO1.getImm());
-  assert(Offset && "Offset must be in range 1-32!");
-  if (Offset == 32) Offset = 0;
+  assert(Offset < 32 && "Offset must be in range 0-31!");
   return Binary | (Offset << 7);
 }
 
