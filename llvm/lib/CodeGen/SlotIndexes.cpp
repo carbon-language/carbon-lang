@@ -62,7 +62,6 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
   assert(mi2iMap.empty() &&
          "MachineInstr -> Index mapping non-empty at initial numbering?");
 
-  functionSize = 0;
   unsigned index = 0;
   MBBRanges.resize(mf->getNumBlockIDs());
   idx2MBBMap.reserve(mf->size());
@@ -89,8 +88,6 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
       // Save this base index in the maps.
       mi2iMap.insert(std::make_pair(mi, SlotIndex(&indexList.back(),
                                                   SlotIndex::Slot_Block)));
-
-      ++functionSize;
     }
 
     // We insert one blank instructions between basic blocks.

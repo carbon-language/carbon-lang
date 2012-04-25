@@ -137,13 +137,6 @@ namespace llvm {
       return reservedRegs_.test(reg);
     }
 
-    /// getScaledIntervalSize - get the size of an interval in "units,"
-    /// where every function is composed of one thousand units.  This
-    /// measure scales properly with empty index slots in the function.
-    double getScaledIntervalSize(LiveInterval& I) {
-      return (1000.0 * I.getSize()) / indexes_->getIndexesLength();
-    }
-
     /// getApproximateInstructionCount - computes an estimate of the number
     /// of instructions in a given LiveInterval.
     unsigned getApproximateInstructionCount(LiveInterval& I) {

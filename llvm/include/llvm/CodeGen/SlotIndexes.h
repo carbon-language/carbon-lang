@@ -344,7 +344,6 @@ namespace llvm {
     IndexList indexList;
 
     MachineFunction *mf;
-    unsigned functionSize;
 
     typedef DenseMap<const MachineInstr*, SlotIndex> Mi2IndexMap;
     Mi2IndexMap mi2iMap;
@@ -400,19 +399,6 @@ namespace llvm {
     /// Returns the base index of the last slot in this analysis.
     SlotIndex getLastIndex() {
       return SlotIndex(&indexList.back(), 0);
-    }
-
-    /// Returns the distance between the highest and lowest indexes allocated
-    /// so far.
-    unsigned getIndexesLength() const {
-      assert(indexList.front().getIndex() == 0 &&
-             "Initial index isn't zero?");
-      return indexList.back().getIndex();
-    }
-
-    /// Returns the number of instructions in the function.
-    unsigned getFunctionSize() const {
-      return functionSize;
     }
 
     /// Returns true if the given machine instr is mapped to an index,
