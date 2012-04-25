@@ -2487,12 +2487,12 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
     ++NChains;
     IVChainVec.resize(NChains);
     ChainUsersVec.resize(NChains);
-    DEBUG(dbgs() << "IV Head: (" << *UserInst << ") IV=" << *LastIncExpr
-          << "\n");
+    DEBUG(dbgs() << "IV Chain#" << ChainIdx << " Head: (" << *UserInst
+                 << ") IV=" << *LastIncExpr << "\n");
   }
   else
-    DEBUG(dbgs() << "IV  Inc: (" << *UserInst << ") IV+" << *LastIncExpr
-          << "\n");
+    DEBUG(dbgs() << "IV Chain#" << ChainIdx << "  Inc: (" << *UserInst
+                 << ") IV+" << *LastIncExpr << "\n");
 
   // Add this IV user to the end of the chain.
   IVChainVec[ChainIdx].push_back(IVInc(UserInst, IVOper, LastIncExpr));
@@ -2551,6 +2551,7 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
 /// loop latch. This will discover chains on side paths, but requires
 /// maintaining multiple copies of the Chains state.
 void LSRInstance::CollectChains() {
+  DEBUG(dbgs() << "Collecting IV Chains.\n");
   SmallVector<ChainUsers, 8> ChainUsersVec;
 
   SmallVector<BasicBlock *,8> LatchPath;
