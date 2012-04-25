@@ -35,7 +35,7 @@ class AliasAnalysis;
 class LiveIntervals;
 class MachineDominatorTree;
 class MachineLoopInfo;
-class RegClassInfo;
+class RegisterClassInfo;
 class ScheduleDAGInstrs;
 
 /// MachineSchedContext provides enough context from the MachineScheduler pass
