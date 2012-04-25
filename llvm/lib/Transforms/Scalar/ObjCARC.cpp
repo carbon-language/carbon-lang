@@ -1361,12 +1361,6 @@ namespace {
     /// with the "tail" keyword.
     bool IsTailCallRelease;
 
-    /// Partial - True of we've seen an opportunity for partial RR elimination,
-    /// such as pushing calls into a CFG triangle or into one side of a
-    /// CFG diamond.
-    /// TODO: Consider moving this to PtrState.
-    bool Partial;
-
     /// ReleaseMetadata - If the Calls are objc_release calls and they all have
     /// a clang.imprecise_release tag, this is the metadata tag.
     MDNode *ReleaseMetadata;
@@ -1381,7 +1375,7 @@ namespace {
 
     RRInfo() :
       KnownSafe(false), IsRetainBlock(false),
-      IsTailCallRelease(false), Partial(false),
+      IsTailCallRelease(false),
       ReleaseMetadata(0) {}
 
     void clear();
@@ -1392,7 +1386,6 @@ void RRInfo::clear() {
   KnownSafe = false;
   IsRetainBlock = false;
   IsTailCallRelease = false;
-  Partial = false;
   ReleaseMetadata = 0;
   Calls.clear();
   ReverseInsertPts.clear();
@@ -1402,8 +1395,14 @@ namespace {
   /// PtrState - This class summarizes several per-pointer runtime properties
   /// which are propogated through the flow graph.
   class PtrState {
-    /// RefCount - The known minimum number of reference count increments.
-    unsigned RefCount;
+    /// KnownPositiveRefCount - True if the reference count is known to
+    /// be incremented.
+    bool KnownPositiveRefCount;
+
+    /// Partial - True of we've seen an opportunity for partial RR elimination,
+    /// such as pushing calls into a CFG triangle or into one side of a
+    /// CFG diamond.
+    bool Partial;
 
     /// NestCount - The known minimum level of retain+release nesting.
     unsigned NestCount;
@@ -1416,22 +1415,19 @@ namespace {
     /// TODO: Encapsulate this better.
     RRInfo RRI;
 
-    PtrState() : RefCount(0), NestCount(0), Seq(S_None) {}
+    PtrState() : KnownPositiveRefCount(false), Partial(false),
+                 NestCount(0), Seq(S_None) {}
 
-    void SetAtLeastOneRefCount()  {
-      if (RefCount == 0) RefCount = 1;
+    void SetKnownPositiveRefCount() {
+      KnownPositiveRefCount = true;
     }
 
-    void IncrementRefCount() {
-      if (RefCount != UINT_MAX) ++RefCount;
-    }
-
-    void DecrementRefCount() {
-      if (RefCount != 0) --RefCount;
+    void ClearRefCount() {
+      KnownPositiveRefCount = false;
     }
 
     bool IsKnownIncremented() const {
-      return RefCount > 0;
+      return KnownPositiveRefCount;
     }
 
     void IncrementNestCount() {
@@ -1455,7 +1451,12 @@ namespace {
     }
 
     void ClearSequenceProgress() {
-      Seq = S_None;
+      ResetSequenceProgress(S_None);
+    }
+
+    void ResetSequenceProgress(Sequence NewSeq) {
+      Seq = NewSeq;
+      Partial = false;
       RRI.clear();
     }
 
@@ -1466,7 +1467,7 @@ namespace {
 void
 PtrState::Merge(const PtrState &Other, bool TopDown) {
   Seq = MergeSeqs(Seq, Other.Seq, TopDown);
-  RefCount = std::min(RefCount, Other.RefCount);
+  KnownPositiveRefCount = KnownPositiveRefCount && Other.KnownPositiveRefCount;
   NestCount = std::min(NestCount, Other.NestCount);
 
   // We can't merge a plain objc_retain with an objc_retainBlock.
@@ -1475,14 +1476,14 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
 
   // If we're not in a sequence (anymore), drop all associated state.
   if (Seq == S_None) {
+    Partial = false;
     RRI.clear();
-  } else if (RRI.Partial || Other.RRI.Partial) {
+  } else if (Partial || Other.Partial) {
     // If we're doing a merge on a path that's previously seen a partial
     // merge, conservatively drop the sequence, to avoid doing partial
     // RR elimination. If the branch predicates for the two merge differ,
     // mixing them is unsafe.
-    Seq = S_None;
-    RRI.clear();
+    ClearSequenceProgress();
   } else {
     // Conservatively merge the ReleaseMetadata information.
     if (RRI.ReleaseMetadata != Other.RRI.ReleaseMetadata)
@@ -1494,12 +1495,12 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
 
     // Merge the insert point sets. If there are any differences,
     // that makes this a partial merge.
-    RRI.Partial = RRI.ReverseInsertPts.size() !=
-                  Other.RRI.ReverseInsertPts.size();
+    Partial = RRI.ReverseInsertPts.size() !=
+              Other.RRI.ReverseInsertPts.size();
     for (SmallPtrSet<Instruction *, 2>::const_iterator
          I = Other.RRI.ReverseInsertPts.begin(),
          E = Other.RRI.ReverseInsertPts.end(); I != E; ++I)
-      RRI.Partial |= RRI.ReverseInsertPts.insert(*I);
+      Partial |= RRI.ReverseInsertPts.insert(*I);
   }
 }
 
@@ -2634,16 +2635,13 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     if (S.GetSeq() == S_Release || S.GetSeq() == S_MovableRelease)
       NestingDetected = true;
 
-    S.RRI.clear();
-
     MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
-    S.SetSeq(ReleaseMetadata ? S_MovableRelease : S_Release);
+    S.ResetSequenceProgress(ReleaseMetadata ? S_MovableRelease : S_Release);
     S.RRI.ReleaseMetadata = ReleaseMetadata;
     S.RRI.KnownSafe = S.IsKnownNested() || S.IsKnownIncremented();
     S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
     S.RRI.Calls.insert(Inst);
 
-    S.IncrementRefCount();
     S.IncrementNestCount();
     break;
   }
@@ -2658,8 +2656,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     Arg = GetObjCArg(Inst);
 
     PtrState &S = MyStates.getPtrBottomUpState(Arg);
-    S.DecrementRefCount();
-    S.SetAtLeastOneRefCount();
+    S.SetKnownPositiveRefCount();
     S.DecrementNestCount();
 
     switch (S.GetSeq()) {
@@ -2709,7 +2706,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
 
     // Check for possible releases.
     if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-      S.DecrementRefCount();
+      S.ClearRefCount();
       switch (Seq) {
       case S_Use:
         S.SetSeq(S_CanRelease);
@@ -2852,8 +2849,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       if (S.GetSeq() == S_Retain)
         NestingDetected = true;
 
-      S.SetSeq(S_Retain);
-      S.RRI.clear();
+      S.ResetSequenceProgress(S_Retain);
       S.RRI.IsRetainBlock = Class == IC_RetainBlock;
       // Don't check S.IsKnownIncremented() here because it's not
       // sufficient.
@@ -2861,8 +2857,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       S.RRI.Calls.insert(Inst);
     }
 
-    S.SetAtLeastOneRefCount();
-    S.IncrementRefCount();
     S.IncrementNestCount();
     return NestingDetected;
   }
@@ -2870,7 +2864,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     Arg = GetObjCArg(Inst);
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
-    S.DecrementRefCount();
     S.DecrementNestCount();
 
     switch (S.GetSeq()) {
@@ -2917,7 +2910,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     // Check for possible releases.
     if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-      S.DecrementRefCount();
+      S.ClearRefCount();
       switch (Seq) {
       case S_Retain:
         S.SetSeq(S_CanRelease);
