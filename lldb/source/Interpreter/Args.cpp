@@ -114,7 +114,7 @@ Args::Dump (Stream *s)
 }
 
 bool
-Args::GetCommandString (std::string &command)
+Args::GetCommandString (std::string &command) const
 {
     command.clear();
     int argc = GetArgumentCount();
@@ -128,7 +128,7 @@ Args::GetCommandString (std::string &command)
 }
 
 bool
-Args::GetQuotedCommandString (std::string &command)
+Args::GetQuotedCommandString (std::string &command) const
 {
     command.clear ();
     size_t argc = GetArgumentCount ();

@@ -125,10 +125,10 @@ public:
     SetCommandString (const char *command, size_t len);
 
     bool
-    GetCommandString (std::string &command);
+    GetCommandString (std::string &command) const;
 
     bool
-    GetQuotedCommandString (std::string &command);
+    GetQuotedCommandString (std::string &command) const;
 
     //------------------------------------------------------------------
     /// Gets the number of arguments left in this command object.
