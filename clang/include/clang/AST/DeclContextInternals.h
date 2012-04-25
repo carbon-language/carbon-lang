@@ -17,8 +17,8 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclCXX.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/SmallMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 
@@ -196,7 +196,7 @@ public:
 };
 
 class StoredDeclsMap
-  : public llvm::DenseMap<DeclarationName, StoredDeclsList> {
+  : public llvm::SmallMap<DeclarationName, StoredDeclsList, 4> {
 
 public:
   static void DestroyAll(StoredDeclsMap *Map, bool Dependent);
