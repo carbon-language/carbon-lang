@@ -335,7 +335,7 @@ bool
 MachProcess::Kill (const struct timespec *timeout_abstime)
 {
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill ()");
-    nub_state_t state = DoSIGSTOP(true);
+    nub_state_t state = DoSIGSTOP(true, false, NULL);
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() state = %s", DNBStateAsString(state));
     errno = 0;
     ::ptrace (PT_KILL, m_pid, 0, 0);
@@ -373,7 +373,7 @@ MachProcess::Signal (int signal, const struct timespec *timeout_abstime)
 }
 
 nub_state_t
-MachProcess::DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr)
+MachProcess::DoSIGSTOP (bool clear_bps_and_wps, bool allow_running, uint32_t *thread_idx_ptr)
 {
     nub_state_t state = GetState();
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::DoSIGSTOP() state = %s", DNBStateAsString (state));
@@ -398,7 +398,11 @@ MachProcess::DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr)
         // No threads were stopped with a SIGSTOP, we need to run and halt the
         // process with a signal
         DNBLogThreadedIf(LOG_PROCESS, "MachProcess::DoSIGSTOP() state = %s -- resuming process", DNBStateAsString (state));
-        m_thread_actions = DNBThreadResumeActions (eStateRunning, 0);
+        if (allow_running)
+            m_thread_actions = DNBThreadResumeActions (eStateRunning, 0);
+        else
+            m_thread_actions = DNBThreadResumeActions (eStateSuspended, 0);
+            
         PrivateResume ();
 
         // Reset the event that says we were indeed running
@@ -432,7 +436,7 @@ MachProcess::Detach()
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Detach()");
 
     uint32_t thread_idx = UINT32_MAX;
-    nub_state_t state = DoSIGSTOP(true, &thread_idx);
+    nub_state_t state = DoSIGSTOP(true, true, &thread_idx);
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Detach() DoSIGSTOP() returned %s", DNBStateAsString(state));
 
     {
