@@ -28,7 +28,7 @@ def extract_short_size(value):
 # no external significance - we access them by index since this saves a name lookup that would add
 # no information for readers of the code, but when possible try to use meaningful variable names
 def stdstring_SummaryProvider(valobj,dict):
-	logger = lldb.formatters.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	r = valobj.GetChildAtIndex(0)
 	B = r.GetChildAtIndex(0)
 	first = B.GetChildAtIndex(0)
@@ -57,11 +57,11 @@ def stdstring_SummaryProvider(valobj,dict):
 class stdvector_SynthProvider:
 
 	def __init__(self, valobj, dict):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 
 	def num_children(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			start_val = self.start.GetValueAsUnsigned(0)
 			finish_val = self.finish.GetValueAsUnsigned(0)
@@ -89,14 +89,14 @@ class stdvector_SynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		logger >> "Retrieving child " + str(index)
 		if index < 0:
 			return None;
@@ -109,7 +109,7 @@ class stdvector_SynthProvider:
 			return None
 
 	def update(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			self.start = self.valobj.GetChildMemberWithName('__begin_')
 			self.finish = self.valobj.GetChildMemberWithName('__end_')
@@ -129,27 +129,27 @@ def stdvector_SummaryProvider(valobj,dict):
 class stdlist_entry:
 
 	def __init__(self,entry):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.entry = entry
 
 	def _next_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return stdlist_entry(self.entry.GetChildMemberWithName('__next_'))
 
 	def _prev_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return stdlist_entry(self.entry.GetChildMemberWithName('__prev_'))
 
 	def _value_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.entry.GetValueAsUnsigned(0)
 
 	def _isnull_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self._value_impl() == 0
 
 	def _sbvalue_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.entry
 
 	next = property(_next_impl,None)
@@ -160,21 +160,21 @@ class stdlist_entry:
 class stdlist_iterator:
 
 	def increment_node(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if node.is_null:
 			return None
 		return node.next
 
 	def __init__(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.node = stdlist_entry(node) # we convert the SBValue to an internal node object on entry
 
 	def value(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.node.sbvalue # and return the SBValue back on exit
 
 	def next(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		node = self.increment_node(self.node)
 		if node != None and node.sbvalue.IsValid() and not(node.is_null):
 			self.node = node
@@ -183,7 +183,7 @@ class stdlist_iterator:
 			return None
 
 	def advance(self,N):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if N < 0:
 			return None
 		if N == 0:
@@ -198,22 +198,22 @@ class stdlist_iterator:
 
 class stdlist_SynthProvider:
 	def __init__(self, valobj, dict):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj
 
 	def next_node(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetChildMemberWithName('__next_')
 
 	def value(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetValueAsUnsigned()
 
 	# Floyd's cyle-finding algorithm
 	# try to detect if this list has a loop
 	def has_loop(self):
 		global _list_uses_loop_detector
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if _list_uses_loop_detector == False:
 			logger >> "Asked not to use loop detection"
 			return False
@@ -231,7 +231,7 @@ class stdlist_SynthProvider:
 
 	def num_children(self):
 		global _list_capping_size
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
 			if self.count > _list_capping_size:
@@ -240,7 +240,7 @@ class stdlist_SynthProvider:
 
 	def num_children_impl(self):
 		global _list_capping_size
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			next_val = self.head.GetValueAsUnsigned(0)
 			prev_val = self.tail.GetValueAsUnsigned(0)
@@ -265,14 +265,14 @@ class stdlist_SynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		logger >> "Fetching child " + str(index)
 		if index < 0:
 			return None;
@@ -290,7 +290,7 @@ class stdlist_SynthProvider:
 			return None
 
 	def extract_type(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		list_type = self.valobj.GetType().GetUnqualifiedType()
 		if list_type.IsReferenceType():
 			list_type = list_type.GetDereferencedType()
@@ -301,7 +301,7 @@ class stdlist_SynthProvider:
 		return data_type
 
 	def update(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.count = None
 		try:
 			impl = self.valobj.GetChildMemberWithName('__end_')
@@ -321,31 +321,31 @@ def stdlist_SummaryProvider(valobj,dict):
 # a tree node - this class makes the syntax in the actual iterator nicer to read and maintain
 class stdmap_iterator_node:
 	def _left_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return stdmap_iterator_node(self.node.GetChildMemberWithName("__left_"))
 
 	def _right_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return stdmap_iterator_node(self.node.GetChildMemberWithName("__right_"))
 
 	def _parent_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return stdmap_iterator_node(self.node.GetChildMemberWithName("__parent_"))
 
 	def _value_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.node.GetValueAsUnsigned(0)
 
 	def _sbvalue_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.node
 
 	def _null_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.value == 0
 
 	def __init__(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.node = node
 
 	left = property(_left_impl,None)
@@ -359,7 +359,7 @@ class stdmap_iterator_node:
 class stdmap_iterator:
 
 	def tree_min(self,x):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		steps = 0
 		if x.is_null:
 			return None
@@ -372,7 +372,7 @@ class stdmap_iterator:
 		return x
 
 	def tree_max(self,x):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if x.is_null:
 			return None
 		while (not x.right.is_null):
@@ -380,13 +380,13 @@ class stdmap_iterator:
 		return x
 
 	def tree_is_left_child(self,x):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if x.is_null:
 			return None
 		return True if x.value == x.parent.left.value else False
 
 	def increment_node(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if node.is_null:
 			return None
 		if not node.right.is_null:
@@ -401,16 +401,16 @@ class stdmap_iterator:
 		return node.parent
 
 	def __init__(self,node,max_count=0):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.node = stdmap_iterator_node(node) # we convert the SBValue to an internal node object on entry
 		self.max_count = max_count
 
 	def value(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.node.sbvalue # and return the SBValue back on exit
 
 	def next(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		node = self.increment_node(self.node)
 		if node != None and node.sbvalue.IsValid() and not(node.is_null):
 			self.node = node
@@ -419,7 +419,7 @@ class stdmap_iterator:
 			return None
 
 	def advance(self,N):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if N < 0:
 			return None
 		if N == 0:
@@ -435,12 +435,12 @@ class stdmap_iterator:
 class stdmap_SynthProvider:
 
 	def __init__(self, valobj, dict):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.pointer_size = self.valobj.GetProcess().GetAddressByteSize()
 
 	def update(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.count = None
 		try:
 			# we will set this to True if we find out that discovering a node in the map takes more steps than the overall size of the RB tree
@@ -458,7 +458,7 @@ class stdmap_SynthProvider:
 
 	def num_children(self):
 		global _map_capping_size
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
 			if self.count > _map_capping_size:
@@ -466,14 +466,14 @@ class stdmap_SynthProvider:
 		return self.count
 
 	def num_children_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return self.valobj.GetChildMemberWithName('__tree_').GetChildMemberWithName('__pair3_').GetChildMemberWithName('__first_').GetValueAsUnsigned()
 		except:
 			return 0;
 
 	def get_data_type(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.data_type == None or self.data_size == None:
 			if self.num_children() == 0:
 				return False
@@ -491,7 +491,7 @@ class stdmap_SynthProvider:
 			return True
 
 	def get_value_offset(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.skip_size == None:
 			node_type = node.GetType()
 			fields_count = node_type.GetNumberOfFields()
@@ -503,14 +503,14 @@ class stdmap_SynthProvider:
 		return (self.skip_size != None)
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		logger >> "Retrieving child " + str(index)
 		if index < 0:
 			return None

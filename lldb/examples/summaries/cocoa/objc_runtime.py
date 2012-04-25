@@ -593,7 +593,7 @@ class SystemParameters:
 		if types_caches.look_for_key(self.pid):
 			self.types_cache = types_caches.get_value(self.pid)
 		else:
-			self.types_cache = attrib_fromdict.AttributesDictionary(allow_reset=False)
+			self.types_cache = lldb.formatters.attrib_fromdict.AttributesDictionary(allow_reset=False)
 			self.types_cache.addr_type = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 			self.types_cache.addr_ptr_type = self.types_cache.addr_type.GetPointerType()
 			self.types_cache.uint32_t = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)

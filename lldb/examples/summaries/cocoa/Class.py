@@ -11,7 +11,7 @@ import lldb.formatters.Logger
 
 def Class_Summary(valobj,dict):
 	logger = lldb.formatters.Logger.Logger()
-	runtime = objc_runtime.ObjCRuntime.runtime_from_isa(valobj)
+	runtime =lldb.runtime.objc.objc_runtime.ObjCRuntime.runtime_from_isa(valobj)
 	if runtime == None or not runtime.is_valid():
 		return '<error: unknown Class>'
 	class_data = runtime.read_class_data()

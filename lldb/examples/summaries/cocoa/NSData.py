@@ -92,7 +92,7 @@ def GetSummary_Impl(valobj):
 	global statistics
 	logger = lldb.formatters.Logger.Logger()
 	logger >> "NSData GetSummary_Impl"
-	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	class_data,wrapper =lldb.runtime.objc.objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		logger >> "got a wrapper summary - using it"
 		return wrapper
@@ -138,7 +138,7 @@ def NSData_SummaryProvider2 (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	logger >> "found a summary provider, it is: " + str(provider)
 	if provider != None:
-		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+		if isinstance(provider,lldb.runtime.objc.objc_runtime.SpecialSituation_Description):
 			return provider.message()
 		try:
 			summary = provider.length();

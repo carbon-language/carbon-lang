@@ -147,6 +147,8 @@ fi
 function create_python_package {
     package_dir="${framework_python_dir}$1"
     package_files="$2"
+    package_name=`echo $1 | tr '/' '.'`
+    package_name="lldb${package_name}"
 
     if [ ! -d "${package_dir}" ]
     then
@@ -179,6 +181,8 @@ function create_python_package {
             fi
         done
         echo "]" >> "${package_init_file}"
+        echo "for x in __all__:" >> "${package_init_file}"
+        echo "    __import__('${package_name}.'+x)" >> "${package_init_file}"
     fi
 
 

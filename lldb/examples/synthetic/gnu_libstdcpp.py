@@ -10,28 +10,28 @@ import lldb.formatters.Logger
 class StdListSynthProvider:
 
 	def __init__(self, valobj, dict):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj
 		self.count = None
 		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
 
 	def next_node(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetChildMemberWithName('_M_next')
 
 	def is_valid(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.value(self.next_node(node)) != self.node_address
 
 	def value(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetValueAsUnsigned()
 
 	# Floyd's cyle-finding algorithm
 	# try to detect if this list has a loop
 	def has_loop(self):
 		global _list_uses_loop_detector
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if _list_uses_loop_detector == False:
 			logger >> "Asked not to use loop detection"
 			return False
@@ -49,7 +49,7 @@ class StdListSynthProvider:
 
 	def num_children(self):
 		global _list_capping_size
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
 			if self.count > _list_capping_size:
@@ -57,7 +57,7 @@ class StdListSynthProvider:
 		return self.count
 
 	def num_children_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		global _list_capping_size
 		try:
 			next_val = self.next.GetValueAsUnsigned(0)
@@ -83,14 +83,14 @@ class StdListSynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		logger >> "Fetching child " + str(index)
 		if index < 0:
 			return None;
@@ -107,7 +107,7 @@ class StdListSynthProvider:
 			return None
 
 	def extract_type(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		list_type = self.valobj.GetType().GetUnqualifiedType()
 		if list_type.IsReferenceType():
 			list_type = list_type.GetDereferencedType()
@@ -118,7 +118,7 @@ class StdListSynthProvider:
 		return data_type
 
 	def update(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		# preemptively setting this to None - we might end up changing our mind later
 		self.count = None
 		try:
@@ -135,25 +135,25 @@ class StdListSynthProvider:
 class StdVectorSynthProvider:
 
 	def __init__(self, valobj, dict):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.count = None
 		self.valobj = valobj
 		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
 
 	def num_children(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
 		return self.count
 
 	def is_valid_pointer(ptr,process):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		error = lldb.SBError()
 		process.ReadMemory(ptr,1,error)
 		return False if error.Fail() else True
 
 	def num_children_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			start_val = self.start.GetValueAsUnsigned(0)
 			finish_val = self.finish.GetValueAsUnsigned(0)
@@ -188,14 +188,14 @@ class StdVectorSynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		logger >> "Retrieving child " + str(index)
 		if index < 0:
 			return None;
@@ -208,7 +208,7 @@ class StdVectorSynthProvider:
 			return None
 
 	def update(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		# preemptively setting this to None - we might end up changing our mind later
 		self.count = None
 		try:
@@ -230,7 +230,7 @@ class StdVectorSynthProvider:
 class StdMapSynthProvider:
 
 	def __init__(self, valobj, dict):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.count = None
 		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
@@ -243,7 +243,7 @@ class StdMapSynthProvider:
 	# to replace the longer versions of std::string with the shorter one in order to be able
 	# to find the type name
 	def fixup_class_name(self, class_name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if class_name == 'std::basic_string<char, std::char_traits<char>, std::allocator<char> >':
 			return 'std::basic_string<char>',True
 		if class_name == 'basic_string<char, std::char_traits<char>, std::allocator<char> >':
@@ -255,7 +255,7 @@ class StdMapSynthProvider:
 		return class_name,False
 
 	def update(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		# preemptively setting this to None - we might end up changing our mind later
 		self.count = None
 		try:
@@ -313,7 +313,7 @@ class StdMapSynthProvider:
 
 	def num_children(self):
 		global _map_capping_size
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
 			if self.count > _map_capping_size:
@@ -321,7 +321,7 @@ class StdMapSynthProvider:
 		return self.count
 
 	def num_children_impl(self):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			root_ptr_val = self.node_ptr_value(self.Mroot)
 			if root_ptr_val == 0:
@@ -333,14 +333,14 @@ class StdMapSynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
 			return -1
 
 	def get_child_at_index(self,index):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		logger >> "Being asked to fetch child[" + str(index) + "]"
 		if index < 0:
 			return None
@@ -362,24 +362,24 @@ class StdMapSynthProvider:
 
 	# utility functions
 	def node_ptr_value(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetValueAsUnsigned(0)
 
 	def right(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetChildMemberWithName("_M_right");
 
 	def left(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetChildMemberWithName("_M_left");
 
 	def parent(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return node.GetChildMemberWithName("_M_parent");
 
 	# from libstdc++ implementation of iterator for rbtree
 	def increment_node(self,node):
-		logger = lldb.formatters.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		max_steps = self.num_children()
 		if self.node_ptr_value(self.right(node)) != 0:
 			x = self.right(node);

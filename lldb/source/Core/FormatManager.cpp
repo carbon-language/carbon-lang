@@ -641,13 +641,13 @@ FormatManager::LoadSTLFormatters()
     
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::vector<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                                                 "gnu_libstdcpp.StdVectorSynthProvider")));
+                                                                                                 "lldb.formatters.cpp.gnu_libstdcpp.StdVectorSynthProvider")));
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::map<.+> >(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                                                 "gnu_libstdcpp.StdMapSynthProvider")));
+                                                                                                 "lldb.formatters.cpp.gnu_libstdcpp.StdMapSynthProvider")));
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::list<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                                                 "gnu_libstdcpp.StdListSynthProvider")));
+                                                                                                 "lldb.formatters.cpp.gnu_libstdcpp.StdListSynthProvider")));
     
     stl_summary_flags.SetDontShowChildren(false);
     gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::vector<.+>(( )?&)?$")),
@@ -675,8 +675,8 @@ FormatManager::LoadLibcxxFormatters()
     .SetHideItemNames(false);
     
 #ifndef LLDB_DISABLE_PYTHON
-    std::string code("     libcxx.stdstring_SummaryProvider(valobj,dict)");
-    lldb::TypeSummaryImplSP std_string_summary_sp(new ScriptSummaryFormat(stl_summary_flags, "libcxx.stdstring_SummaryProvider",code.c_str()));
+    std::string code("     lldb.formatters.cpp.libcxx.stdstring_SummaryProvider(valobj,dict)");
+    lldb::TypeSummaryImplSP std_string_summary_sp(new ScriptSummaryFormat(stl_summary_flags, "lldb.formatters.cpp.libcxx.stdstring_SummaryProvider",code.c_str()));
     
     TypeCategoryImpl::SharedPointer libcxx_category_sp = GetCategory(m_libcxx_category_name);
     
@@ -690,13 +690,13 @@ FormatManager::LoadLibcxxFormatters()
     
     libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                                                 "libcxx.stdvector_SynthProvider")));
+                                                                                                 "lldb.formatters.cpp.libcxx.stdvector_SynthProvider")));
     libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::list<.+>(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                                                 "libcxx.stdlist_SynthProvider")));
+                                                                                                 "lldb.formatters.cpp.libcxx.stdlist_SynthProvider")));
     libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                                                 "libcxx.stdmap_SynthProvider")));
+                                                                                                 "lldb.formatters.cpp.libcxx.stdmap_SynthProvider")));
     
     stl_summary_flags.SetDontShowChildren(false);
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?")),
@@ -784,7 +784,7 @@ FormatManager::LoadObjCFormatters()
     .SetHideItemNames(false);
     
     lldb::TypeSummaryImplSP ObjC_BOOL_summary(new ScriptSummaryFormat(objc_flags,
-                                                                      "objc.BOOL_SummaryProvider",
+                                                                      "lldb.formatters.objc.objc.BOOL_SummaryProvider",
                                                                       ""));
     TypeCategoryImpl::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);
     objc_category_sp->GetSummaryNavigator()->Add(ConstString("BOOL"),
@@ -792,11 +792,11 @@ FormatManager::LoadObjCFormatters()
     
     // we need to skip pointers here since we are special casing a SEL* when retrieving its value
     objc_flags.SetSkipPointers(true);
-    AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("SEL"), objc_flags);
-    AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("struct objc_selector"), objc_flags);
-    AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("objc_selector"), objc_flags);
-    AddScriptSummary(objc_category_sp, "Selector.SELPointer_Summary", ConstString("objc_selector *"), objc_flags);
-    AddScriptSummary(objc_category_sp, "Class.Class_Summary", ConstString("Class"), objc_flags);
+    AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Selector.SEL_Summary", ConstString("SEL"), objc_flags);
+    AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Selector.SEL_Summary", ConstString("struct objc_selector"), objc_flags);
+    AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Selector.SEL_Summary", ConstString("objc_selector"), objc_flags);
+    AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Selector.SELPointer_Summary", ConstString("objc_selector *"), objc_flags);
+    AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Class.Class_Summary", ConstString("Class"), objc_flags);
     objc_flags.SetSkipPointers(false);
 
     TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
@@ -887,94 +887,94 @@ FormatManager::LoadObjCFormatters()
     .SetShowMembersOneLiner(false)
     .SetHideItemNames(false);
 
-    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("NSArray"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("__NSArrayI"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("__NSArrayM"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("__NSCFArray"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("CFArrayRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("CFMutableArrayRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFArray.CFArray_SummaryProvider", ConstString("NSArray"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFArray.CFArray_SummaryProvider", ConstString("__NSArrayI"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFArray.CFArray_SummaryProvider", ConstString("__NSArrayM"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFArray.CFArray_SummaryProvider", ConstString("__NSCFArray"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFArray.CFArray_SummaryProvider", ConstString("CFArrayRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFArray.CFArray_SummaryProvider", ConstString("CFMutableArrayRef"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("CFBagRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("__CFBag"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("const struct __CFBag"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("CFMutableBagRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("CFBagRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("__CFBag"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("const struct __CFBag"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBag.CFBag_SummaryProvider", ConstString("CFMutableBagRef"), appkit_flags);
     
-    AddScriptSummary(appkit_category_sp, "CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("CFBinaryHeapRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("__CFBinaryHeap"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("CFBinaryHeapRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("__CFBinaryHeap"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("NSDictionary"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFDictionaryRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFMutableDictionaryRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSCFDictionary"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSDictionaryI"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSDictionaryM"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFDictionary.CFDictionary_SummaryProvider", ConstString("NSDictionary"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFDictionaryRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFMutableDictionaryRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSCFDictionary"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSDictionaryI"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFDictionary.CFDictionary_SummaryProvider", ConstString("__NSDictionaryM"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSString"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("CFStringRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("CFMutableStringRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFAttributedString_SummaryProvider", ConstString("NSAttributedString"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("__NSCFConstantString"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("__NSCFString"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSCFConstantString"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSCFString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("NSString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("CFStringRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("CFMutableStringRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFAttributedString_SummaryProvider", ConstString("NSAttributedString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("__NSCFConstantString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("__NSCFString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("NSCFConstantString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("NSCFString"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
     
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSData"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider2", ConstString("CFDataRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider2", ConstString("CFMutableDataRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSConcreteData"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSConcreteMutableData"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("__NSCFData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider", ConstString("NSData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider2", ConstString("CFDataRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider2", ConstString("CFMutableDataRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider", ConstString("NSConcreteData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider", ConstString("NSConcreteMutableData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider", ConstString("__NSCFData"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSException.NSException_SummaryProvider", ConstString("NSException"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSException.NSException_SummaryProvider", ConstString("NSException"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSMachPort.NSMachPort_SummaryProvider", ConstString("NSMachPort"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSMachPort.NSMachPort_SummaryProvider", ConstString("NSMachPort"), appkit_flags);
     
-    AddScriptSummary(appkit_category_sp, "NSNotification.NSNotification_SummaryProvider", ConstString("NSNotification"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSNotification.NSNotification_SummaryProvider", ConstString("NSConcreteNotification"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNotification.NSNotification_SummaryProvider", ConstString("NSNotification"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNotification.NSNotification_SummaryProvider", ConstString("NSConcreteNotification"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSNumber"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFBoolean"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFNumber"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSCFBoolean"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSCFNumber"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNumber.NSNumber_SummaryProvider", ConstString("NSNumber"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFBoolean"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNumber.NSNumber_SummaryProvider", ConstString("__NSCFNumber"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNumber.NSNumber_SummaryProvider", ConstString("NSCFBoolean"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNumber.NSNumber_SummaryProvider", ConstString("NSCFNumber"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("NSSet"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFSetRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFMutableSetRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("__NSCFSet"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("__NSSetI"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("__NSSetM"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("NSCountedSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("NSSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider2", ConstString("CFSetRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider2", ConstString("CFMutableSetRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("__NSCFSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("__NSSetI"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("__NSSetM"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("NSCountedSet"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("NSURL"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSURL.NSURL_SummaryProvider", ConstString("NSURL"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
     
-    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("__NSDate"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("__NSTaggedDate"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSCalendarDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("__NSDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("__NSTaggedDate"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("NSCalendarDate"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("NSTimeZone"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("CFTimeZoneRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("__NSTimeZone"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSTimeZone_SummaryProvider", ConstString("NSTimeZone"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSTimeZone_SummaryProvider", ConstString("CFTimeZoneRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSTimeZone_SummaryProvider", ConstString("__NSTimeZone"), appkit_flags);
 
     // CFAbsoluteTime is actually a double rather than a pointer to an object
     // we do not care about the numeric value, since it is probably meaningless to users
     appkit_flags.SetDontShowValue(true);
-    AddScriptSummary(appkit_category_sp, "NSDate.CFAbsoluteTime_SummaryProvider", ConstString("CFAbsoluteTime"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.CFAbsoluteTime_SummaryProvider", ConstString("CFAbsoluteTime"), appkit_flags);
     appkit_flags.SetDontShowValue(false);
     
-    AddScriptSummary(appkit_category_sp, "NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSIndexSet"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSMutableIndexSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSIndexSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSMutableIndexSet"), appkit_flags);
 
     AddSummary(appkit_category_sp, "@\"${var.month%d}/${var.day%d}/${var.year%d} ${var.hour%d}:${var.minute%d}:${var.second}\"", ConstString("CFGregorianDate"), appkit_flags);
     
-    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("CFBitVectorRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("CFMutableBitVectorRef"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("__CFBitVector"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("__CFMutableBitVector"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBitVector.CFBitVector_SummaryProvider", ConstString("CFBitVectorRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBitVector.CFBitVector_SummaryProvider", ConstString("CFMutableBitVectorRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBitVector.CFBitVector_SummaryProvider", ConstString("__CFBitVector"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBitVector.CFBitVector_SummaryProvider", ConstString("__CFMutableBitVector"), appkit_flags);
 
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 

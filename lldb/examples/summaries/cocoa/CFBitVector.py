@@ -126,7 +126,7 @@ class CFBitVectorUnknown_SummaryProvider:
 def GetSummary_Impl(valobj):
 	logger = lldb.formatters.Logger.Logger()
 	global statistics
-	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
+	class_data,wrapper =lldb.runtime.objc.objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
 		return wrapper
 
@@ -159,7 +159,7 @@ def CFBitVector_SummaryProvider (valobj,dict):
 	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
-		if isinstance(provider,objc_runtime.SpecialSituation_Description):
+		if isinstance(provider,lldb.runtime.objc.objc_runtime.SpecialSituation_Description):
 			return provider.message()
 		try:
 			summary = provider.contents();
