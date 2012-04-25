@@ -5,7 +5,7 @@ Development
 
 lld is developed as part of the `LLVM <http://llvm.org>`_ project.
 
-.. todo:: Write "getting started" style instructions for developers.
+See the :ref:`getting started <getting_started>` guide.
 
 The project documentation is written in reStructuredText and generated using the
 `Sphinx <http://sphinx.pocoo.org/>`_ documentation generator. For more

@@ -66,6 +66,7 @@ Contents
    :maxdepth: 2
 
    design
+   getting_started
    development
    open_projects
    sphinx_intro
