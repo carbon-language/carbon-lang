@@ -321,6 +321,12 @@ public:
     return *InstructionToAccess[Inst];
   }
 
+  MemoryAccess *lookupAccessFor(const Instruction *Inst) const {
+    std::map<const Instruction*, MemoryAccess*>::const_iterator at
+      = InstructionToAccess.find(Inst);
+    return at == InstructionToAccess.end() ? NULL : at->second;
+  }
+
   void setBasicBlock(BasicBlock *Block) { BB = Block; }
 
   typedef MemoryAccessVec::iterator memacc_iterator;
