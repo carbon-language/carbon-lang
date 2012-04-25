@@ -234,3 +234,10 @@ namespace DR1402 {
     friend NoMove11 &NoMove11::operator=(NoMove11 &&); // expected-error {{no matching function}}
   };
 }
+
+namespace PR12625 {
+  struct X; // expected-note {{forward decl}}
+  struct Y {
+    X x; // expected-error {{incomplete}}
+  } y = Y();
+}
