@@ -564,7 +564,12 @@ Function::GetPrologueByteSize ()
                 // of the function.
                 const addr_t func_start_file_addr = m_range.GetBaseAddress().GetFileAddress();
                 const addr_t line_entry_end_file_addr = line_entry.range.GetBaseAddress().GetFileAddress() + line_entry.range.GetByteSize();
-                if (line_entry_end_file_addr > func_start_file_addr)
+                // Watch out for the case where the end of the first line is at or past the end of the function, in that
+                // case, set the prologue  byte size to 0.  This happens, for instance, with a function that is one
+                // instruction long...
+                if (!GetAddressRange().ContainsFileAddress(line_entry_end_file_addr))
+                    m_prologue_byte_size = 0;
+                else if (line_entry_end_file_addr > func_start_file_addr)
                     m_prologue_byte_size = line_entry_end_file_addr - func_start_file_addr;
             }
         }
