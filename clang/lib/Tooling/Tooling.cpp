@@ -29,6 +29,9 @@
 namespace clang {
 namespace tooling {
 
+// Exists solely for the purpose of lookup of the resource path.
+static int StaticSymbol;
+
 FrontendActionFactory::~FrontendActionFactory() {}
 
 // FIXME: This file contains structural duplication with other parts of the
@@ -39,9 +42,20 @@ FrontendActionFactory::~FrontendActionFactory() {}
 static clang::driver::Driver *newDriver(clang::DiagnosticsEngine *Diagnostics,
                                         const char *BinaryName) {
   const std::string DefaultOutputName = "a.out";
+  // This just needs to be some symbol in the binary.
+  void *const SymbolAddr = &StaticSymbol;
+  // The driver detects the builtin header path based on the path of
+  // the executable.
+  // FIXME: On linux, GetMainExecutable is independent of the content
+  // of BinaryName, thus allowing ClangTool and runToolOnCode to just
+  // pass in made-up names here (in the case of ClangTool this being
+  // the original compiler invocation). Make sure this works on other
+  // platforms.
+  llvm::sys::Path MainExecutable =
+    llvm::sys::Path::GetMainExecutable(BinaryName, SymbolAddr);
   clang::driver::Driver *CompilerDriver = new clang::driver::Driver(
-      BinaryName, llvm::sys::getDefaultTargetTriple(),
-      DefaultOutputName, false, *Diagnostics);
+    MainExecutable.str(), llvm::sys::getDefaultTargetTriple(),
+    DefaultOutputName, false, *Diagnostics);
   CompilerDriver->setTitle("clang_based_tool");
   return CompilerDriver;
 }
@@ -170,9 +184,6 @@ bool ToolInvocation::run() {
   return runInvocation(BinaryName, Compilation.get(),
                        Invocation.take(), *CC1Args, ToolAction.take());
 }
-
-// Exists solely for the purpose of lookup of the resource path.
-static int StaticSymbol;
 
 bool ToolInvocation::runInvocation(
     const char *BinaryName,
