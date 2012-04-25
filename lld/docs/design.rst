@@ -111,7 +111,7 @@ they have no notion of file formats such as mach-o or ELF.
 Resolving
 ~~~~~~~~~
 
-The resolving step takes all the atoms graphs from each object file and combines
+The resolving step takes all the atoms' graphs from each object file and combines
 them into one master object graph.  Unfortunately, it is not as simple as
 appending the atom list from each file into one big list.  There are many cases
 where atoms need to be coalesced.  That is, two or more atoms need to be
@@ -126,7 +126,7 @@ that can be merged.
 
 The resolving process maintains some global linking "state", including a "symbol
 table" which is a map from llvm::StringRef to lld::Atom*.  With these data
-structures, the linker iterates all atoms in all input files. F or each atom, it
+structures, the linker iterates all atoms in all input files. For each atom, it
 checks if the atom is named and has a global or hidden scope.  If so, the atom
 is added to the symbol table map.  If there already is a matching atom in that
 table, that means the current atom needs to be coalesced with the found atom, or
@@ -260,7 +260,7 @@ data in existing native object files.
 
 With this model for the native file format, files can be read and turned
 into the in-memory graph of lld::Atoms with just a few memory allocations.  
-And the format can easily adapt over time to new features
+And the format can easily adapt over time to new features.
 
 
 Textual representations in YAML
@@ -393,7 +393,7 @@ File Attributes
 ~~~~~~~~~~~~~~~
 
 Currently, lld::File just has a path and a way to iterate its atoms. We will
-need to add mores attributes on a File.  For example, some equivalent to the
+need to add more attributes on a File.  For example, some equivalent to the
 target triple.  There is also a number of cached or computed attributes that
 could make various Passes more efficient.  For instance, on Darwin there are a
 number of Objective-C optimizations that can be done by a Pass.  But it would
