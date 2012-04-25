@@ -37,7 +37,7 @@ class Issue11581TestCase(TestBase):
         self.runCmd("next", RUN_SUCCEEDED)
         self.runCmd("next", RUN_SUCCEEDED)
 
-        self.runCmd("command script import s11588.py")
+        self.runCmd("command script import --allow-reload s11588.py")
         self.runCmd("type synthetic add --python-class s11588.Issue11581SyntheticProvider StgClosure")
 
         self.expect("print *((StgClosure*)(r14-1))",
