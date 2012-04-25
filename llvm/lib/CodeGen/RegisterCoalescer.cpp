@@ -63,11 +63,6 @@ EnableJoining("join-liveintervals",
               cl::init(true));
 
 static cl::opt<bool>
-DisableCrossClassJoin("disable-cross-class-join",
-               cl::desc("Avoid coalescing cross register class copies"),
-               cl::init(false), cl::Hidden);
-
-static cl::opt<bool>
 EnablePhysicalJoin("join-physregs",
                    cl::desc("Join physical register copies"),
                    cl::init(false), cl::Hidden);
@@ -1094,14 +1089,10 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
       return false;
     }
   } else {
-    // Avoid constraining virtual register regclass too much.
-    if (CP.isCrossClass()) {
-      DEBUG(dbgs() << "\tCross-class to " << CP.getNewRC()->getName() << ".\n");
-      if (DisableCrossClassJoin) {
-        DEBUG(dbgs() << "\tCross-class joins disabled.\n");
-        return false;
-      }
-    }
+    DEBUG({
+      if (CP.isCrossClass())
+        dbgs() << "\tCross-class to " << CP.getNewRC()->getName() << ".\n";
+    });
 
     // When possible, let DstReg be the larger interval.
     if (!CP.getSubIdx() && LIS->getInterval(CP.getSrcReg()).ranges.size() >
