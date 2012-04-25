@@ -76,8 +76,15 @@ ClangASTSource::FindExternalVisibleDeclsByName
     switch (clang_decl_name.getNameKind()) {
     // Normal identifiers.
     case DeclarationName::Identifier:
-        if (clang_decl_name.getAsIdentifierInfo()->getBuiltinID() != 0)
-            return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        {
+            clang::IdentifierInfo *identifier_info = clang_decl_name.getAsIdentifierInfo();
+        
+            if (!identifier_info ||
+                identifier_info->getBuiltinID() != 0)
+            {
+                return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+            }
+        }
         break;
             
     // Operator names.  Not important for now.
