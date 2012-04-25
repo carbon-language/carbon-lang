@@ -68,3 +68,5 @@ static void initStatics2() {
     });
 }
 
+// rdar://11314329
+static inline const void *auto_zone_base_pointer(void *zone, const void *ptr) { return 0; }

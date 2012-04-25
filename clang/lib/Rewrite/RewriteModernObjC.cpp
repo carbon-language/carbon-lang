@@ -4133,7 +4133,9 @@ void RewriteModernObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 }
 
 void RewriteModernObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
-  SourceLocation FunLocStart = getFunctionSourceLocation(*this, FD);
+  SourceLocation FunLocStart = 
+    (!Blocks.empty()) ? getFunctionSourceLocation(*this, FD)
+                      : FD->getTypeSpecStartLoc();
   StringRef FuncName = FD->getName();
 
   SynthesizeBlockLiterals(FunLocStart, FuncName);
