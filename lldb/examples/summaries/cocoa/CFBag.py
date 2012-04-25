@@ -8,11 +8,11 @@ License. See LICENSE.TXT for details.
 # summary provider for CFBag
 import lldb
 import ctypes
-import objc_runtime
-import metrics
-import Logger
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -26,7 +26,7 @@ class CFBagRef_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -37,21 +37,21 @@ class CFBagRef_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# 12 bytes on i386
 	# 20 bytes on x64
 	# most probably 2 pointers and 4 bytes of data
 	def offset(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
 
 	def length(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		size = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -63,17 +63,17 @@ class CFBagUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def length(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)CFBagGetCount(" + stream.GetData() + " )")
@@ -83,7 +83,7 @@ class CFBagUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -112,7 +112,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def CFBag_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

@@ -8,11 +8,11 @@ License. See LICENSE.TXT for details.
 # summary provider for NS(Mutable)IndexSet
 import lldb
 import ctypes
-import objc_runtime
-import metrics
-import Logger
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -26,7 +26,7 @@ class NSIndexSetClass_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -37,7 +37,7 @@ class NSIndexSetClass_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# NS(Mutable)IndexSet works in one of two modes: when having a compact block of data (e.g. a Range)
@@ -48,7 +48,7 @@ class NSIndexSetClass_SummaryProvider:
 	# is set, then we are in mode 1, using that area to store flags, otherwise, the read pointer is the
 	# location to go look for count in mode 2
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		mode_chooser_vo = self.valobj.CreateChildAtOffset("mode_chooser",
 							2*self.sys_params.pointer_size,
 							self.sys_params.types_cache.NSUInteger)
@@ -78,17 +78,17 @@ class NSIndexSetUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		expr = "(int)[" + stream.GetData() + " count]"
@@ -99,7 +99,7 @@ class NSIndexSetUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -118,7 +118,7 @@ def GetSummary_Impl(valobj):
 
 
 def NSIndexSet_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

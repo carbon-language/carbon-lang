@@ -6,13 +6,13 @@ This file is distributed under the University of Illinois Open Source
 License. See LICENSE.TXT for details.
 """
 # summary provider for class NSException
-import objc_runtime
-import metrics
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
 import CFString
 import lldb
-import Logger
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -23,7 +23,7 @@ class NSKnownException_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.id):
@@ -31,18 +31,18 @@ class NSKnownException_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def offset_name(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.sys_params.pointer_size
 	def offset_reason(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return 2*self.sys_params.pointer_size
 
 	def description(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		name_ptr = self.valobj.CreateChildAtOffset("name",
 							self.offset_name(),
 							self.sys_params.types_cache.id)
@@ -56,17 +56,17 @@ class NSUnknownException_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def description(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		name_vo = self.valobj.CreateValueFromExpression("name","(NSString*)[" + stream.GetData() + " name]");
@@ -77,7 +77,7 @@ class NSUnknownException_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -95,7 +95,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def NSException_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

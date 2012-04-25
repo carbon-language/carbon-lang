@@ -8,12 +8,12 @@ License. See LICENSE.TXT for details.
 # summary provider for NSNumber
 import lldb
 import ctypes
-import objc_runtime
-import metrics
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
 import struct
-import Logger
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -27,7 +27,7 @@ class NSTaggedNumber_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, info_bits, data, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.info_bits = info_bits
@@ -35,11 +35,11 @@ class NSTaggedNumber_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def value(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		# in spite of the plenty of types made available by the public NSNumber API
 		# only a bunch of these are actually used in the internal implementation
 		# unfortunately, the original type information appears to be lost
@@ -61,7 +61,7 @@ class NSUntaggedNumber_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.char):
@@ -87,11 +87,11 @@ class NSUntaggedNumber_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def value(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		global statistics
 		# we need to skip the ISA, then the next byte tells us what to read
 		# we then skip one other full pointer worth of data and then fetch the contents
@@ -165,17 +165,17 @@ class NSUnknownNumber_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def value(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		expr = "(NSString*)[" + stream.GetData() + " stringValue]"
@@ -185,7 +185,7 @@ class NSUnknownNumber_SummaryProvider:
 		return '<variable is not NSNumber>'
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -209,7 +209,7 @@ def GetSummary_Impl(valobj):
 
 
 def NSNumber_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

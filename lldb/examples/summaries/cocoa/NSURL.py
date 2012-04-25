@@ -8,12 +8,12 @@ License. See LICENSE.TXT for details.
 # summary provider for NSURL
 import lldb
 import ctypes
-import objc_runtime
-import metrics
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
 import CFString
-import Logger
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -27,7 +27,7 @@ class NSURLKnown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSString):
@@ -37,7 +37,7 @@ class NSURLKnown_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# one pointer is the ISA
@@ -45,14 +45,14 @@ class NSURLKnown_SummaryProvider:
 	# (which are also present on a 32-bit system)
 	# plus another pointer, and then the real data
 	def offset_text(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return 24 if self.sys_params.is_64_bit else 16
 	def offset_base(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.offset_text()+self.sys_params.pointer_size
 
 	def url_text(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		text = self.valobj.CreateChildAtOffset("text",
 							self.offset_text(),
 							self.sys_params.types_cache.NSString)
@@ -77,17 +77,17 @@ class NSURLUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update()
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def url_text(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		url_text_vo = self.valobj.CreateValueFromExpression("url","(NSString*)[" + stream.GetData() + " description]")
@@ -97,7 +97,7 @@ class NSURLUnknown_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -115,7 +115,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def NSURL_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

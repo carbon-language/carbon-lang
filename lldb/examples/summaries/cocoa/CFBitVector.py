@@ -8,30 +8,30 @@ License. See LICENSE.TXT for details.
 # summary provider for CF(Mutable)BitVector
 import lldb
 import ctypes
-import objc_runtime
-import metrics
-import Logger
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
+import lldb.formatters.Logger
 
 # first define some utility functions
 def byte_index(abs_pos):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	return abs_pos/8
 
 def bit_index(abs_pos):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	return abs_pos & 7
 
 def get_bit(byte,index):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	if index < 0 or index > 7:
 		return None
 	return (byte >> (7-index)) & 1
 
 def grab_array_item_data(pointer,index):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	return pointer.GetPointeeData(index,1)
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -42,12 +42,12 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class CFBitVectorKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.uiint_size = self.sys_params.types_cache.NSUInteger.GetByteSize()
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -60,7 +60,7 @@ class CFBitVectorKnown_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# we skip the CFRuntimeBase
@@ -69,7 +69,7 @@ class CFBitVectorKnown_SummaryProvider:
 	# that wraps the individual bits
 
 	def contents(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		count_vo = self.valobj.CreateChildAtOffset("count",self.sys_params.cfruntime_size,
 													self.sys_params.types_cache.NSUInteger)
 		count = count_vo.GetValueAsUnsigned(0)
@@ -109,22 +109,22 @@ class CFBitVectorUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def contents(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return '<unable to summarize this CFBitVector>'
 
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -156,7 +156,7 @@ def GetSummary_Impl(valobj):
 	return wrapper;
 
 def CFBitVector_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

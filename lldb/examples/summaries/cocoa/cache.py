@@ -5,12 +5,12 @@ part of The LLVM Compiler Infrastructure
 This file is distributed under the University of Illinois Open Source
 License. See LICENSE.TXT for details.
 """
-import metrics
+import lldb.formatters.metrics
 
 class Cache:
 	def __init__(self):
 		self.data = {}
-		self.statistics = metrics.Metrics()
+		self.statistics = lldb.formatters.metrics.Metrics()
 		self.statistics.add_metric('hit')
 		self.statistics.add_metric('miss')
 

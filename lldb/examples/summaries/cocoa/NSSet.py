@@ -8,12 +8,12 @@ License. See LICENSE.TXT for details.
 # summary provider for NSSet
 import lldb
 import ctypes
-import objc_runtime
-import metrics
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
 import CFBag
-import Logger
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -27,7 +27,7 @@ class NSCFSet_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -38,21 +38,21 @@ class NSCFSet_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# one pointer is the ISA
 	# then we have one other internal pointer, plus
 	# 4 bytes worth of flags. hence, these values
 	def offset(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
 
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		vcount = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -64,17 +64,17 @@ class NSSetUnknown_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		expr = "(int)[" + stream.GetData() + " count]"
@@ -88,7 +88,7 @@ class NSSetI_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -99,16 +99,16 @@ class NSSetI_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -129,7 +129,7 @@ class NSSetM_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.NSUInteger):
@@ -140,16 +140,16 @@ class NSSetM_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
 							self.sys_params.types_cache.NSUInteger)
@@ -161,7 +161,7 @@ class NSCountedSet_SummaryProvider:
 		pass
 
 	def __init__(self, valobj, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.voidptr):
@@ -169,16 +169,16 @@ class NSCountedSet_SummaryProvider:
 		self.update();
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# an NSCountedSet is implemented using a CFBag whose pointer just follows the ISA
 	def offset(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		return self.sys_params.pointer_size
 
 	def count(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		cfbag_vo = self.valobj.CreateChildAtOffset("bag_impl",
 							self.offset(),
 							self.sys_params.types_cache.voidptr)
@@ -186,7 +186,7 @@ class NSCountedSet_SummaryProvider:
 
 
 def GetSummary_Impl(valobj):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	global statistics
 	class_data,wrapper = objc_runtime.Utilities.prepare_class_detection(valobj,statistics)
 	if wrapper:
@@ -214,7 +214,7 @@ def GetSummary_Impl(valobj):
 
 
 def NSSet_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		try:
@@ -231,7 +231,7 @@ def NSSet_SummaryProvider (valobj,dict):
 	return 'Summary Unavailable'
 
 def NSSet_SummaryProvider2 (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		if isinstance(provider,objc_runtime.SpecialSituation_Description):

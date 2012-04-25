@@ -6,11 +6,11 @@ This file is distributed under the University of Illinois Open Source
 License. See LICENSE.TXT for details.
 """
 import lldb
-import objc_runtime
-import Logger
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.Logger
 
 def Class_Summary(valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	runtime = objc_runtime.ObjCRuntime.runtime_from_isa(valobj)
 	if runtime == None or not runtime.is_valid():
 		return '<error: unknown Class>'

@@ -8,11 +8,11 @@ License. See LICENSE.TXT for details.
 # synthetic children provider for NSArray
 import lldb
 import ctypes
-import objc_runtime
-import metrics
-import Logger
+import lldb.runtime.objc.objc_runtime
+import lldb.formatters.metrics
+import lldb.formatters.Logger
 
-statistics = metrics.Metrics()
+statistics = lldb.formatters.metrics.Metrics()
 statistics.add_metric('invalid_isa')
 statistics.add_metric('invalid_pointer')
 statistics.add_metric('unknown_class')
@@ -27,16 +27,16 @@ class NSArrayKVC_SynthProvider:
 		pass
 
 	def __init__(self, valobj, dict, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.update()
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def num_children(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		stream = lldb.SBStream()
 		self.valobj.GetExpressionPath(stream)
 		num_children_vo = self.valobj.CreateValueFromExpression("count","(int)[" + stream.GetData() + " count]");
@@ -53,7 +53,7 @@ class NSArrayCF_SynthProvider:
 		pass
 
 	def __init__(self, valobj, dict, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not (self.sys_params.types_cache.ulong):
@@ -61,11 +61,11 @@ class NSArrayCF_SynthProvider:
 		self.update()
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	def num_children(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.sys_params.cfruntime_size,
 							self.sys_params.types_cache.ulong)
@@ -76,7 +76,7 @@ class NSArrayI_SynthProvider:
 		pass
 
 	def __init__(self, valobj, dict, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.long):
@@ -84,12 +84,12 @@ class NSArrayI_SynthProvider:
 		self.update()
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# skip the isa pointer and get at the size
 	def num_children(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		count = self.valobj.CreateChildAtOffset("count",
 				self.sys_params.pointer_size,
 				self.sys_params.types_cache.long);
@@ -100,7 +100,7 @@ class NSArrayM_SynthProvider:
 		pass
 
 	def __init__(self, valobj, dict, params):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.sys_params = params
 		if not(self.sys_params.types_cache.long):
@@ -108,12 +108,12 @@ class NSArrayM_SynthProvider:
 		self.update()
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.adjust_for_architecture();
 
 	# skip the isa pointer and get at the size
 	def num_children(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		count = self.valobj.CreateChildAtOffset("count",
 				self.sys_params.pointer_size,
 				self.sys_params.types_cache.long);
@@ -127,7 +127,7 @@ class NSArray_SynthProvider:
 		pass
 
 	def __init__(self, valobj, dict):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		self.valobj = valobj;
 		self.adjust_for_architecture()
 		self.error = False
@@ -135,13 +135,13 @@ class NSArray_SynthProvider:
 		self.invalid = (self.wrapper == None)
 
 	def num_children(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.wrapper == None:
 			return 0;
 		return self.wrapper.num_children()
 
 	def update(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.wrapper == None:
 			return
 		self.wrapper.update()
@@ -149,7 +149,7 @@ class NSArray_SynthProvider:
 	# this code acts as our defense against NULL and unitialized
 	# NSArray pointers, which makes it much longer than it would be otherwise
 	def make_wrapper(self):
-		logger = Logger.Logger()
+		logger = lldb.formatters.Logger.Logger()
 		if self.valobj.GetValueAsUnsigned() == 0:
 			self.error = True
 			return objc_runtime.InvalidPointer_Description(True)
@@ -179,7 +179,7 @@ class NSArray_SynthProvider:
 		return wrapper;
 
 def CFArray_SummaryProvider (valobj,dict):
-	logger = Logger.Logger()
+	logger = lldb.formatters.Logger.Logger()
 	provider = NSArray_SynthProvider(valobj,dict);
 	if provider.invalid == False:
 		if provider.error == True:
