@@ -6,7 +6,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-LINUX %s
 // CHECK-LINUX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-LINUX-NOT: "-lc"
-// CHECK-LINUX: lib/linux/libclang_rt.asan-i386.a"
+// CHECK-LINUX: libclang_rt.asan-i386.a"
 // CHECK-LINUX: "-lpthread"
 // CHECK-LINUX: "-ldl"
 // CHECK-LINUX: "-export-dynamic"
