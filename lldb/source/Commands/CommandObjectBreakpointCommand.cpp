@@ -184,27 +184,38 @@ your breakpoint command does not appear to be getting executed, go \n\
 back and check your syntax. \n\
  \n\
  \n\
-Special information about PYTHON breakpoint commands \n\
----------------------------------------------------- \n\
- \n\
-You may enter either one line of Python or multiple lines of Python \n\
-(including defining whole functions, if desired).  If you enter a \n\
-single line of Python, that will be passed to the Python interpreter \n\
-'as is' when the breakpoint gets hit.  If you enter function \n\
-definitions, they will be passed to the Python interpreter as soon as \n\
-you finish entering the breakpoint command, and they can be called \n\
-later (don't forget to add calls to them, if you want them called when \n\
-the breakpoint is hit).  If you enter multiple lines of Python that \n\
-are not function definitions, they will be collected into a new, \n\
-automatically generated Python function, and a call to the newly \n\
-generated function will be attached to the breakpoint.  Important \n\
-Note: Because loose Python code gets collected into functions, if you \n\
-want to access global variables in the 'loose' code, you need to \n\
-specify that they are global, using the 'global' keyword.  Be sure to \n\
-use correct Python syntax, including indentation, when entering Python \n\
-breakpoint commands. \nAs a third option, you can pass the name of an already \
-existing Python function and that function will be attached to the breakpoint. \n\
- \n\
+Special information about PYTHON breakpoint commands                            \n\
+----------------------------------------------------                            \n\
+                                                                                \n\
+You may enter either one line of Python or multiple lines of Python             \n\
+(including defining whole functions, if desired).  If you enter a               \n\
+single line of Python, that will be passed to the Python interpreter            \n\
+'as is' when the breakpoint gets hit.  If you enter function                    \n\
+definitions, they will be passed to the Python interpreter as soon as           \n\
+you finish entering the breakpoint command, and they can be called              \n\
+later (don't forget to add calls to them, if you want them called when          \n\
+the breakpoint is hit).  If you enter multiple lines of Python that             \n\
+are not function definitions, they will be collected into a new,                \n\
+automatically generated Python function, and a call to the newly                \n\
+generated function will be attached to the breakpoint.                          \n\
+                                                                                \n\
+This auto-generated function is passed in two arguments:                        \n\
+                                                                                \n\
+    frame:  an SBFrame object representing the frame which hit the breakpoint.  \n\
+            From the frame you can get back to the thread and process.          \n\
+    bp_loc: the number of the breakpoint location that was hit.                 \n\
+            This is useful since one breakpoint can have many locations.        \n\
+                                                                                \n\
+Important Note: Because loose Python code gets collected into functions,        \n\
+if you want to access global variables in the 'loose' code, you need to         \n\
+specify that they are global, using the 'global' keyword.  Be sure to           \n\
+use correct Python syntax, including indentation, when entering Python          \n\
+breakpoint commands.                                                            \n\
+                                                                                \n\
+As a third option, you can pass the name of an already existing Python function \n\
+and that function will be attached to the breakpoint. It will get passed the    \n\
+frame and bp_loc arguments mentioned above.                                     \n\
+                                                                                \n\
 Example Python one-line breakpoint command: \n\
  \n\
 (lldb) breakpoint command add -s python 1 \n\
