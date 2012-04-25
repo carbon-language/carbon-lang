@@ -44,3 +44,10 @@
 // ARMV7_HARDFLOAT: "-mfloat-abi" "hard"
 // ARMV7_HARDFLOAT-NOT: "-msoft-float"
 // ARMV7_HARDFLOAT: "-x" "c"
+
+// RUN: %clang -target arm-linux -### -S %s 2> %t.log \
+// RUN:   -march=armv5e
+// RUN: FileCheck -check-prefix=ARMV5E %s < %t.log
+// ARMV5E: clang
+// ARMV5E: "-cc1"
+// ARMV5E: "-target-cpu" "arm1022e"

@@ -448,7 +448,7 @@ static const char *getARMTargetCPU(const ArgList &Args,
     .Case("armv3m", "arm7m")
     .Cases("armv4", "armv4t", "arm7tdmi")
     .Cases("armv5", "armv5t", "arm10tdmi")
-    .Cases("armv5e", "armv5te", "arm1026ejs")
+    .Cases("armv5e", "armv5te", "arm1022e")
     .Case("armv5tej", "arm926ej-s")
     .Cases("armv6", "armv6k", "arm1136jf-s")
     .Case("armv6j", "arm1136j-s")
