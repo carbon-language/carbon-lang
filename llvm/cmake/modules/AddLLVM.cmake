@@ -130,3 +130,21 @@ macro(add_llvm_target target_name)
   add_llvm_library(LLVM${target_name} ${ARGN} ${TABLEGEN_OUTPUT})
   set( CURRENT_LLVM_TARGET LLVM${target_name} )
 endmacro(add_llvm_target)
+
+# Add external project that may want to be built as part of llvm such as Clang,
+# lld, and Polly. This adds two options. One for the source directory of the
+# project, which defaults to ${CMAKE_CURRENT_SOURCE_DIR}/${name}. Another to
+# enable or disable building it with everthing else.
+macro(add_llvm_external_project name)
+  string(TOUPPER ${name} nameUPPER)
+  set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${name}"
+      CACHE PATH "Path to ${name} source directory")
+  if (NOT ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} STREQUAL ""
+      AND EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}/CMakeLists.txt)
+    option(LLVM_EXTERNAL_${nameUPPER}_BUILD
+           "Whether to build ${name} as part of LLVM" ON)
+    if (LLVM_EXTERNAL_${nameUPPER}_BUILD)
+      add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${name})
+    endif()
+  endif()
+endmacro(add_llvm_external_project)

@@ -353,10 +353,10 @@
     installed on a custom location, you can set the variables
     FFI_INCLUDE_DIR and FFI_LIBRARY_DIR. Defaults to OFF.</dd>
 
-  <dt><b>LLVM_CLANG_SOURCE_DIR</b>:PATH</dt>
-  <dd>Path to Clang's source directory. Defaults to tools/clang.
-    Clang will not be built when it is empty or it does not point valid
-    path.</dd>
+  <dt><b>LLVM_EXTERNAL_{CLANG,LLD,POLLY}_SOURCE_DIR</b>:PATH</dt>
+  <dd>Path to {Clang,lld,Polly}'s source directory. Defaults to
+    tools/{clang,lld,polly}. {Clang,lld,Polly} will not be built when it is
+    empty or it does not point valid path.</dd>
 
   <dt><b>LLVM_USE_OPROFILE</b>:BOOL</dt>
   <dd> Enable building OProfile JIT support. Defaults to OFF</dd>
