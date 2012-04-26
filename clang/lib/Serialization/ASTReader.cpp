@@ -5025,6 +5025,7 @@ void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
          I = Decls.begin(), E = Decls.end(); I != E; ++I) {
     SetExternalVisibleDeclsForName(DC, I->first, I->second);
   }
+  const_cast<DeclContext *>(DC)->setHasExternalVisibleStorage(false);
 }
 
 /// \brief Under non-PCH compilation the consumer receives the objc methods
