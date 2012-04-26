@@ -424,7 +424,6 @@ MachTask::ShutDownExcecptionThread()
     err = ::mach_port_deallocate (task_self, exception_port);
     if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())
         err.LogThreaded("::mach_port_deallocate ( task = 0x%4.4x, name = 0x%4.4x )", task_self, exception_port);
-    exception_port = NULL;
 
     return err.Error();
 }
