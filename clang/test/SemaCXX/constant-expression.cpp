@@ -117,3 +117,10 @@ namespace FloatConvert {
   typedef int a[(int)42.997];
   typedef int b[(int)4e10]; // expected-warning {{variable length}} expected-error {{variable length}}
 }
+
+// PR12626
+namespace test3 {
+  struct X; // expected-note {{forward declaration of 'test3::X'}}
+  struct Y { bool b; X x; }; // expected-error {{field has incomplete type 'test3::X'}}
+  int f() { return Y().b; }
+}
