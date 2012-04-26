@@ -54,16 +54,11 @@ class DataFormatterOneIsSingularTestCase(TestBase):
             self.runCmd('type format clear', check=False)
             self.runCmd('type summary clear', check=False)
             self.runCmd('type synth clear', check=False)
-            self.runCmd('type category disable CoreFoundation', check=False)
-            self.runCmd('type category disable CoreGraphics', check=False)
-            self.runCmd('type category disable CoreServices', check=False)
-            self.runCmd('type category disable AppKit', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        # Now enable AppKit and check we are displaying Cocoa classes correctly
-        self.runCmd("type category enable AppKit")
+        # Now check that we are displaying Cocoa classes correctly
         self.expect('frame variable key',
                     substrs = ['@"1 object"'])
         self.expect('frame variable key', matching=False,

@@ -597,13 +597,13 @@ FormatManager::FormatManager() :
 #endif
     
     EnableCategory(m_objc_category_name,CategoryMap::Last);
-    //EnableCategory(m_corefoundation_category_name,CategoryMap::Last);
-    //EnableCategory(m_appkit_category_name,CategoryMap::Last);
-    //EnableCategory(m_coreservices_category_name,CategoryMap::Last);
-    //EnableCategory(m_coregraphics_category_name,CategoryMap::Last);
+    EnableCategory(m_corefoundation_category_name,CategoryMap::Last);
+    EnableCategory(m_appkit_category_name,CategoryMap::Last);
+    EnableCategory(m_coreservices_category_name,CategoryMap::Last);
+    EnableCategory(m_coregraphics_category_name,CategoryMap::Last);
     EnableCategory(m_gnu_cpp_category_name,CategoryMap::Last);
     EnableCategory(m_libcxx_category_name,CategoryMap::Last);
-    //EnableCategory(m_vectortypes_category_name,CategoryMap::Last);
+    EnableCategory(m_vectortypes_category_name,CategoryMap::Last);
     EnableCategory(m_system_category_name,CategoryMap::Last);
 }
 

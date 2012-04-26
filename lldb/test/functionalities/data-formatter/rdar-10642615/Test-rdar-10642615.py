@@ -51,12 +51,9 @@ class Radar10642615DataFormatterTestCase(TestBase):
         # clean slate for the next test case.
         def cleanup():
             self.runCmd('type summary clear', check=False)
-            self.runCmd('type category disable VectorTypes', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
-
-        self.runCmd('type category enable VectorTypes')
 
         self.expect('frame variable',
             substrs = ['(vFloat) valueFL = (1, 0, 4, 0)',

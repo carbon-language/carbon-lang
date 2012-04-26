@@ -49,10 +49,10 @@ class Rdar10967107TestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
         # check that each type is correctly bound to its list of children
-        self.expect("frame variable cf_greg_date", substrs = ['year','month','day','hour','minute','second'])
-        self.expect("frame variable cf_range", substrs = ['location','length'])
+        self.expect("frame variable cf_greg_date --raw", substrs = ['year','month','day','hour','minute','second'])
+        self.expect("frame variable cf_range --raw", substrs = ['location','length'])
         # check that printing both does not somehow confuse LLDB
-        self.expect("frame variable", substrs = ['year','month','day','hour','minute','second','location','length'])
+        self.expect("frame variable  --raw", substrs = ['year','month','day','hour','minute','second','location','length'])
 
 if __name__ == '__main__':
     import atexit
