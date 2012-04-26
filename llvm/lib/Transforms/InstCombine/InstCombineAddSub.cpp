@@ -329,6 +329,20 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
+  // Check for (x & y) + (x ^ y)
+  {
+    Value *A = 0, *B = 0;
+    if (match(RHS, m_Xor(m_Value(A), m_Value(B))) &&
+        (match(LHS, m_And(m_Specific(A), m_Specific(B))) ||
+         match(LHS, m_And(m_Specific(B), m_Specific(A)))))
+      return BinaryOperator::CreateOr(A, B);
+
+    if (match(LHS, m_Xor(m_Value(A), m_Value(B))) &&
+        (match(RHS, m_And(m_Specific(A), m_Specific(B))) ||
+         match(RHS, m_And(m_Specific(B), m_Specific(A)))))
+      return BinaryOperator::CreateOr(A, B);
+  }
+
   return Changed ? &I : 0;
 }
 
