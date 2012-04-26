@@ -40,3 +40,11 @@ void f3() {
   _Bool b = 0;
   f3_helper(^{ if (b) {} });
 }
+
+// rdar://problem/11322251
+void f4_helper(long long (^)(void));
+void f4(void) {
+  _Bool b = 0;
+  long long ll = 0;
+  f4_helper(^{ if (b) return ll; return 0LL; });
+}
