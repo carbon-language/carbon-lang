@@ -33,3 +33,102 @@ entry:
 	ret i32 %d
 }
 
+define i32 @test3(i32 %x) {
+; (x^8)
+; CHECK: @test3
+; CHECK: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: ret
+
+entry:
+  %a = mul i32 %x, %x
+  %b = mul i32 %a, %x
+  %c = mul i32 %b, %x
+  %d = mul i32 %c, %x
+  %e = mul i32 %d, %x
+  %f = mul i32 %e, %x
+  %g = mul i32 %f, %x
+  ret i32 %g
+}
+
+define i32 @test4(i32 %x) {
+; (x^7)
+; CHECK: @test4
+; CHECK: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: ret
+
+entry:
+  %a = mul i32 %x, %x
+  %b = mul i32 %a, %x
+  %c = mul i32 %b, %x
+  %d = mul i32 %c, %x
+  %e = mul i32 %d, %x
+  %f = mul i32 %e, %x
+  ret i32 %f
+}
+
+define i32 @test5(i32 %x, i32 %y) {
+; (x^4) * (y^2)
+; CHECK: @test5
+; CHECK: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: ret
+
+entry:
+  %a = mul i32 %x, %y
+  %b = mul i32 %a, %y
+  %c = mul i32 %b, %x
+  %d = mul i32 %c, %x
+  %e = mul i32 %d, %x
+  ret i32 %e
+}
+
+define i32 @test6(i32 %x, i32 %y, i32 %z) {
+; (x^5) * (y^3) * z
+; CHECK: @test6
+; CHECK: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: ret
+
+entry:
+  %a = mul i32 %x, %y
+  %b = mul i32 %a, %x
+  %c = mul i32 %b, %y
+  %d = mul i32 %c, %x
+  %e = mul i32 %d, %y
+  %f = mul i32 %e, %x
+  %g = mul i32 %f, %z
+  %h = mul i32 %g, %x
+  ret i32 %h
+}
+
+define i32 @test7(i32 %x, i32 %y, i32 %z) {
+; (x^4) * (y^3) * (z^2)
+; CHECK: @test7
+; CHECK: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: mul
+; CHECK-NEXT: ret
+
+entry:
+  %a = mul i32 %y, %x
+  %b = mul i32 %a, %z
+  %c = mul i32 %b, %z
+  %d = mul i32 %c, %x
+  %e = mul i32 %d, %y
+  %f = mul i32 %e, %y
+  %g = mul i32 %f, %x
+  %h = mul i32 %g, %x
+  ret i32 %h
+}
