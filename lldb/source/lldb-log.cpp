@@ -174,7 +174,6 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
 
     if (log)
     {
-        bool got_unknown_category = false;
         for (size_t i=0; categories[i] != NULL; ++i)
         {
             const char *arg = categories[i];
@@ -205,12 +204,8 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
-                if (got_unknown_category == false)
-                {
-                    got_unknown_category = true;
-                    ListLogCategories (feedback_strm);
-                    return log;
-                }
+                ListLogCategories (feedback_strm);
+                return log;
             }
         }
 
