@@ -19,8 +19,15 @@
 // CHECK-MATH-ERRNO: "-cc1"
 // CHECK-MATH-ERRNO: "-fmath-errno"
 //
-// RUN: %clang -### -fassociative-math -freciprocal-math -fno-signed-zeros \
-// RUN:     -fno-trapping-math -c %s 2>&1 \
+// RUN: %clang -### -fmath-errno -fno-math-errno -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
+// RUN: %clang -### -target i686-apple-darwin -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
+// CHECK-NO-MATH-ERRNO: "-cc1"
+// CHECK-NO-MATH-ERRNO-NOT: "-fmath-errno"
+//
+// RUN: %clang -### -fno-math-errno -fassociative-math -freciprocal-math \
+// RUN:     -fno-signed-zeros -fno-trapping-math -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-UNSAFE-MATH %s
 // CHECK-UNSAFE-MATH: "-cc1"
 // CHECK-UNSAFE-MATH: "-menable-unsafe-fp-math"
@@ -36,7 +43,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NO-INFS %s
 // RUN: %clang -### -ffinite-math-only -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-NANS %s
-// RUN: %clang -### -funsafe-math-optimizations -c %s 2>&1 \
+// RUN: %clang -### -funsafe-math-optimizations -fno-math-errno -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-UNSAFE-MATH %s
 //
 // One umbrella flag is *really* weird and also changes the semantics of the
