@@ -196,8 +196,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if ((ECX >> 9)  & 1) { X86SSELevel = SSSE3; ToggleFeature(X86::FeatureSSSE3);}
   if ((ECX >> 19) & 1) { X86SSELevel = SSE41; ToggleFeature(X86::FeatureSSE41);}
   if ((ECX >> 20) & 1) { X86SSELevel = SSE42; ToggleFeature(X86::FeatureSSE42);}
-  // FIXME: AVX codegen support is not ready.
-  //if ((ECX >> 28) & 1) { X86SSELevel = AVX;  ToggleFeature(X86::FeatureAVX); }
+  if ((ECX >> 28) & 1) { X86SSELevel = AVX;   ToggleFeature(X86::FeatureAVX); }
 
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
@@ -299,11 +298,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasBMI = true;
         ToggleFeature(X86::FeatureBMI);
       }
-      // FIXME: AVX2 codegen support is not ready.
-      //if ((EBX >> 5) & 0x1) {
-      //  X86SSELevel = AVX2;
-      //  ToggleFeature(X86::FeatureAVX2);
-      //}
+      if ((EBX >> 5) & 0x1) {
+        X86SSELevel = AVX2;
+        ToggleFeature(X86::FeatureAVX2);
+      }
       if ((EBX >> 8) & 0x1) {
         HasBMI2 = true;
         ToggleFeature(X86::FeatureBMI2);
