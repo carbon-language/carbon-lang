@@ -17,7 +17,6 @@
 #include "clang/AST/AST.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "llvm/Support/raw_ostream.h"
-#include "clang/Frontend/FrontendActions.h"
 using namespace clang;
 
 namespace {
@@ -68,5 +67,5 @@ protected:
 
 }
 
-static FrontendPluginRegistry::Add<SyntaxOnlyAction>
+static FrontendPluginRegistry::Add<PrintFunctionNamesAction>
 X("print-fns", "print function names");
