@@ -1762,3 +1762,6 @@
 // NORTTI: __GXX_ABI_VERSION
 // NORTTI-NOT:#define __GXX_RTTI
 // NORTTI: __STDC__
+//
+// RUN: %clang_cc1 -triple arm-linux-androideabi -E -dM < /dev/null | FileCheck -check-prefix ANDROID %s
+// ANDROID: __ANDROID__ 1
