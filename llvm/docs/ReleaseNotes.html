@@ -536,6 +536,9 @@ syntax, there are still significant gaps in that support.</p>
   <li>The <tt>unwind</tt> instruction is now gone. With the introduction of the
       new exception handling system in LLVM 3.0, the <tt>unwind</tt> instruction
       became obsolete.</li>
+  <li>LLVM 3.0 and earlier automatically added the returns_twice fo functions
+      like setjmp based on the name. This functionality was removed in 3.1.
+      This affects Clang users, if -ffreestanding is used.</li>
   <li>....</li>
 </ul>
 
