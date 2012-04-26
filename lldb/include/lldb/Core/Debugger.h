@@ -88,7 +88,9 @@ public:
     void
     SetTerminalWidth (uint32_t term_width)
     {
-        m_term_width = term_width;
+        Error err;
+        if (ValidTermWidthValue(term_width, err))
+            m_term_width = term_width;
     }
 
     uint32_t
@@ -228,6 +230,9 @@ protected:
 
     bool
     ValidTermWidthValue (const char *value, Error err);
+
+    bool
+    ValidTermWidthValue (uint32_t value, Error err);
 
     const ConstString
     CreateInstanceName ();

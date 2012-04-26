@@ -1484,11 +1484,9 @@ sigwinch_handler (int signo)
     if (isatty (STDIN_FILENO)
         && ::ioctl (STDIN_FILENO, TIOCGWINSZ, &window_size) == 0)
     {
-        if ((window_size.ws_col > 0) && (strlen (g_debugger_name) > 0))
+        if ((window_size.ws_col > 0) && g_driver != NULL)
         {
-            char width_str_buffer[25];
-            ::sprintf (width_str_buffer, "%d", window_size.ws_col);
-            SBDebugger::SetInternalVariable ("term-width", width_str_buffer, g_debugger_name);
+            g_driver->GetDebugger().SetTerminalWidth (window_size.ws_col);
         }
     }
 }

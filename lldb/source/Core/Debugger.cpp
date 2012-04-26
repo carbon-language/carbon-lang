@@ -2523,10 +2523,7 @@ DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
         
         if (end && end[0] == '\0')
         {
-            if (width >= 10 && width <= 1024)
-                valid = true;
-            else
-                err.SetErrorString ("invalid term-width value; value must be between 10 and 1024");
+            return ValidTermWidthValue (width, err);
         }
         else
             err.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string", value);
@@ -2535,6 +2532,17 @@ DebuggerInstanceSettings::ValidTermWidthValue (const char *value, Error err)
     return valid;
 }
 
+bool
+DebuggerInstanceSettings::ValidTermWidthValue (uint32_t value, Error err)
+{
+    if (value >= 10 && value <= 1024)
+        return true;
+    else
+    {
+        err.SetErrorString ("invalid term-width value; value must be between 10 and 1024");
+        return false;
+    }
+}
 
 void
 DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
