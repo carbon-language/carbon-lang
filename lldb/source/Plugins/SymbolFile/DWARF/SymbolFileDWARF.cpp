@@ -508,21 +508,6 @@ SymbolFileDWARF::CalculateAbilities ()
 
         if (debug_line_file_size > 0)
             abilities |= LineTables;
-
-        if (debug_aranges_file_size > 0)
-            abilities |= AddressAcceleratorTable;
-
-        if (debug_pubnames_file_size > 0)
-            abilities |= FunctionAcceleratorTable;
-
-        if (debug_pubtypes_file_size > 0)
-            abilities |= TypeAcceleratorTable;
-
-        if (debug_macinfo_file_size > 0)
-            abilities |= MacroInformation;
-
-        if (debug_frame_file_size > 0)
-            abilities |= CallFrameInformation;
     }
     return abilities;
 }

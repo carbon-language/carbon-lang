@@ -27,9 +27,6 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
         // TODO: Load any plug-ins in the appropriate plug-in search paths and
         // iterate over all of them to find the best one for the job.
 
-        //----------------------------------------------------------------------
-        // We currently only have one debug symbol parser...
-        //----------------------------------------------------------------------
         uint32_t best_symfile_abilities = 0;
 
         SymbolFileCreateInstance create_callback;
@@ -39,11 +36,15 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
 
             if (curr_symfile_ap.get())
             {
-                uint32_t sym_file_abilities = curr_symfile_ap->GetAbilities();
+                const uint32_t sym_file_abilities = curr_symfile_ap->GetAbilities();
                 if (sym_file_abilities > best_symfile_abilities)
                 {
                     best_symfile_abilities = sym_file_abilities;
                     best_symfile_ap = curr_symfile_ap;
+                    // If any symbol file parser has all of the abilities, then
+                    // we should just stop looking.
+                    if ((kAllAbilities & sym_file_abilities) == kAllAbilities)
+                        break;
                 }
             }
         }

@@ -61,7 +61,12 @@ AppleObjCSymbolVendor::FindTypes (const SymbolContext& sc,
         
         SymbolFile *symbol_file = image->GetSymbolVendor()->GetSymbolFile();
         
-        if (!symbol_file || !(symbol_file->GetAbilities() & SymbolFile::RuntimeTypes))
+        // Don't use a symbol file if it actually has types. We are specifically
+        // looking for something in runtime information, not from debug information,
+        // as the data in debug information will get parsed by the debug info
+        // symbol files. So we veto any symbol file that has actual variable
+        // type parsing abilities.
+        if (symbol_file == NULL || (symbol_file->GetAbilities() & SymbolFile::VariableTypes))
             continue;
         
         const bool inferior_append = true;
