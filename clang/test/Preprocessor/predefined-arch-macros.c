@@ -372,8 +372,7 @@
 // RUN: %clang -march=corei7-avx -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_AVX_M32
 // CHECK_COREI7_AVX_M32: #define __AES__ 1
-// FIXME: AVX is not yet enabled with Clang.
-// CHECK_COREI7_AVX_M32-NOT: #define __AVX__ 1
+// CHECK_COREI7_AVX_M32: #define __AVX__ 1
 // CHECK_COREI7_AVX_M32: #define __MMX__ 1
 // CHECK_COREI7_AVX_M32: #define __SSE2__ 1
 // CHECK_COREI7_AVX_M32: #define __SSE3__ 1
@@ -390,8 +389,7 @@
 // RUN: %clang -march=corei7-avx -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_AVX_M64
 // CHECK_COREI7_AVX_M64: #define __AES__ 1
-// FIXME: AVX is not yet enabled with Clang.
-// CHECK_COREI7_AVX_M64-NOT: #define __AVX__ 1
+// CHECK_COREI7_AVX_M64: #define __AVX__ 1
 // CHECK_COREI7_AVX_M64: #define __MMX__ 1
 // CHECK_COREI7_AVX_M64: #define __SSE2_MATH__ 1
 // CHECK_COREI7_AVX_M64: #define __SSE2__ 1
@@ -412,8 +410,7 @@
 // RUN: %clang -march=core-avx-i -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE_AVX_I_M32
 // CHECK_CORE_AVX_I_M32: #define __AES__ 1
-// FIXME: AVX is not yet enabled with Clang.
-// CHECK_CORE_AVX_I_M32-NOT: #define __AVX__ 1
+// CHECK_CORE_AVX_I_M32: #define __AVX__ 1
 // CHECK_CORE_AVX_I_M32: #define __MMX__ 1
 // CHECK_CORE_AVX_I_M32: #define __SSE2__ 1
 // CHECK_CORE_AVX_I_M32: #define __SSE3__ 1
@@ -430,8 +427,7 @@
 // RUN: %clang -march=core-avx-i -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE_AVX_I_M64
 // CHECK_CORE_AVX_I_M64: #define __AES__ 1
-// FIXME: AVX is not yet enabled with Clang.
-// CHECK_CORE_AVX_I_M64-NOT: #define __AVX__ 1
+// CHECK_CORE_AVX_I_M64: #define __AVX__ 1
 // CHECK_CORE_AVX_I_M64: #define __MMX__ 1
 // CHECK_CORE_AVX_I_M64: #define __SSE2_MATH__ 1
 // CHECK_CORE_AVX_I_M64: #define __SSE2__ 1
