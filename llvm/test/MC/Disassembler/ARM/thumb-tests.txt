@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 -mattr +t2xtpk,+mp | FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 -mcpu=cortex-a9-mp | FileCheck %s
 
 # CHECK:	add	r5, sp, #68
 0x11 0xad

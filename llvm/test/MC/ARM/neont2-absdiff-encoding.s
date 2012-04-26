@@ -1,4 +1,4 @@
-@RUN: llvm-mc -triple thumbv7-unknown-unknown -show-encoding < %s | FileCheck %s
+@RUN: llvm-mc -triple thumbv7-unknown-unknown -mcpu=cortex-a8 -show-encoding < %s | FileCheck %s
 
 .code 16
 

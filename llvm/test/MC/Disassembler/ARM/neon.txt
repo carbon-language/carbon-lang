@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple armv7-unknown-unknown -disassemble -mattr +fp16 < %s | FileCheck %s
+# RUN: llvm-mc -triple armv7-unknown-unknown -mcpu=cortex-a9 -disassemble < %s | FileCheck %s
 
 0x20 0x03 0xf1 0xf3
 # CHECK: vabs.s8	d16, d16

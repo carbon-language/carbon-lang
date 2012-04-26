@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=armv7-apple-darwin9 |& grep {invalid instruction encoding}
+# RUN: llvm-mc --disassemble %s -triple=armv7-unknown-unknwon -mcpu=cortex-a8 |& grep {invalid instruction encoding}
 # XFAIL: *
 
 # Opcode=1225 Name=VQADDsv16i8 Format=ARM_FORMAT_N3Reg(37)

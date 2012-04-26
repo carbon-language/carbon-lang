@@ -1,5 +1,5 @@
-@ RUN: llvm-mc -triple armv7-unknown-unknown -show-encoding < %s | FileCheck --check-prefix=CHECK-ARM %s
-@ RUN: llvm-mc -triple thumbv7-unknown-unknown -show-encoding < %s | FileCheck --check-prefix=CHECK-THUMB %s
+@ RUN: llvm-mc -triple armv7-unknown-unknown -mcpu=cortex-a8 -show-encoding < %s | FileCheck --check-prefix=CHECK-ARM %s
+@ RUN: llvm-mc -triple thumbv7-unknown-unknown -mcpu=cortex-a8 -show-encoding < %s | FileCheck --check-prefix=CHECK-THUMB %s
 
 foo:
 @ CHECK: foo

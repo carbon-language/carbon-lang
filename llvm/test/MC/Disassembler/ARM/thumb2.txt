@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=thumbv7-apple-darwin -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=thumbv7-apple-darwin -mcpu=cortex-a8 -disassemble < %s | FileCheck %s
 
 #------------------------------------------------------------------------------
 # ADC (immediate)

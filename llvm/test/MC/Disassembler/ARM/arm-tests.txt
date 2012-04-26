@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=armv7-apple-darwin9 -mattr +mp | FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=armv7-apple-darwin9 -mcpu=cortex-a9-mp | FileCheck %s
 
 # CHECK:	addpl	r4, pc, #318767104
 0x4c 0x45 0x8f 0x52

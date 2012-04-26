@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple=armv7-apple-darwin -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=armv7-apple-darwin -mcpu=cortex-a8 -show-encoding < %s | FileCheck %s
   .syntax unified
   .globl _func
 
