@@ -1,4 +1,4 @@
-//===- unittest/AST/RecursiveASTMatcherTest.cpp ---------------------------===//
+//===- unittest/Tooling/RecursiveASTVisitorTest.cpp -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
