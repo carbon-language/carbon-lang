@@ -352,10 +352,8 @@ def fno_honor_nans : Flag<"-fno-honor-nans">, Group<f_Group>;
 def fhonor_infinities : Flag<"-fhonor-infinities">, Group<f_Group>;
 def fno_honor_infinities : Flag<"-fno-honor-infinities">, Group<f_Group>;
 // Sic. This option was misspelled originally.
-def fhonor_infinites : Flag<"-fhonor-infinites">, Group<f_Group>,
-    Alias<fhonor_infinities>;
-def fno_honor_infinites : Flag<"-fno-honor-infinites">, Group<f_Group>,
-    Alias<fno_honor_infinities>;
+def fhonor_infinites : Flag<"-fhonor-infinites">, Alias<fhonor_infinities>;
+def fno_honor_infinites : Flag<"-fno-honor-infinites">, Alias<fno_honor_infinities>;
 def ftrapping_math : Flag<"-ftrapping-math">, Group<f_Group>;
 def fno_trapping_math : Flag<"-fno-trapping-math">, Group<f_Group>;
 
