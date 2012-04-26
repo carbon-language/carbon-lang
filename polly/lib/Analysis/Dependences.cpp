@@ -202,10 +202,7 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
   ScheduleDeps = isl_map_intersect_range(ScheduleDeps, ScheduleSubset);
 
   isl_set *Distances = isl_map_deltas(ScheduleDeps);
-
-  isl_space *Space = isl_space_set_alloc(S->getIslCtx(), 0, ParallelDim);
-  Space = isl_space_align_params(Space, S->getParamSpace());
-
+  isl_space *Space = isl_set_get_space(Distances);
   isl_set *Invalid = isl_set_universe(Space);
 
   // [0, ..., 0, +] - All zeros and last dimension larger than zero
@@ -213,7 +210,6 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
     Invalid = isl_set_fix_si(Invalid, isl_dim_set, i, 0);
 
   Invalid = isl_set_lower_bound_si(Invalid, isl_dim_set, ParallelDim - 1, 1);
-
   Invalid = isl_set_intersect(Invalid, Distances);
 
   bool IsParallel = isl_set_is_empty(Invalid);
