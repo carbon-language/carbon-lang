@@ -116,12 +116,10 @@ Timer::~Timer()
     if (m_total_start.IsValid())
     {
         TimeValue stop_time = TimeValue::Now();
-        bool notify = false;
         if (m_total_start.IsValid())
         {
             m_total_ticks += (stop_time - m_total_start);
             m_total_start.Clear();
-            notify = true;
         }
         if (m_timer_start.IsValid())
         {
