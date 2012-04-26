@@ -11,10 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef POLLY_REGISTER_PASSES_H
+#define POLLY_REGISTER_PASSES_H
 namespace llvm {
   class PassManagerBase;
 }
 
+namespace polly {
 // Register the Polly preoptimization passes. Preoptimizations are used to
 // prepare the LLVM-IR for Polly. They increase the amount of code that can be
 // optimized.
@@ -24,3 +27,5 @@ void registerPollyPreoptPasses(llvm::PassManagerBase &PM);
 // Register the Polly optimizer (including its preoptimizations).
 void registerPollyPasses(llvm::PassManagerBase &PM,
                          bool DisableCodegen = false);
+}
+#endif

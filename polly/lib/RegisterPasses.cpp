@@ -105,7 +105,7 @@ CFGPrinter("polly-view-cfg",
        cl::Hidden,
        cl::init(false));
 
-void initializePollyPasses(PassRegistry &Registry) {
+static void initializePollyPasses(PassRegistry &Registry) {
   initializeCloogInfoPass(Registry);
   initializeCodeGenerationPass(Registry);
   initializeCodePreparationPass(Registry);
@@ -125,6 +125,7 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializeTempScopInfoPass(Registry);
 }
 
+namespace {
 // Statically register all Polly passes such that they are available after
 // loading Polly.
 class StaticInitializer {
@@ -135,10 +136,11 @@ public:
       initializePollyPasses(Registry);
     }
 };
+} // end of anonymous namespace.
 
 static StaticInitializer InitializeEverything;
 
-void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
+void polly::registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   // A standard set of optimization passes partially taken/copied from the
   // set of default optimization passes. It is used to bring the code into
   // a canonical form that can than be analyzed by Polly. This set of passes is
@@ -170,7 +172,7 @@ void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   PM.add(polly::createRegionSimplifyPass());
 }
 
-void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) {
+void polly::registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) {
   bool RunCodegen = !DisableCodegen;
 
   registerPollyPreoptPasses(PM);
