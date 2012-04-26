@@ -859,7 +859,7 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     // always objects so we don't need to worry about complex or
     // aggregates.
     RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
-                                           getTypes().ConvertType(propType)));
+           getTypes().ConvertType(getterMethod->getResultType())));
 
     EmitReturnOfRValue(RV, propType);
 
