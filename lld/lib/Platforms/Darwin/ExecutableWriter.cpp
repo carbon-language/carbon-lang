@@ -335,8 +335,8 @@ public:
   const std::vector<Chunk*> chunks() { return _chunks; }
 
 private:
-  friend LoadCommandsChunk;
-  friend LazyBindingInfoChunk;
+  friend class LoadCommandsChunk;
+  friend class LazyBindingInfoChunk;
 
   void        createChunks(const lld::File &file);
   void        buildAtomToAddressMap();
