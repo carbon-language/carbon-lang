@@ -583,8 +583,6 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
 }
 
 
-
-
 //-----
 
 AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
