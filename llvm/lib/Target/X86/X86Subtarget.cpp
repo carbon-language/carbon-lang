@@ -255,6 +255,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     // Set processor type. Currently only Atom is detected.
     if (Family == 6 && Model == 28) {
       X86ProcFamily = IntelAtom;
+
+      UseLeaForSP = true;
       ToggleFeature(X86::FeatureLeaForSP);
     }
 
