@@ -43,3 +43,19 @@ using F::X;
 // Should have some errors here.  Waiting for implementation.
 void X(int);
 struct X *x;
+
+
+namespace ShadowedTagNotes {
+
+namespace foo {
+  class Bar {};
+}
+
+void Bar(int); // expected-note{{non-type 'Bar' shadowing class 'Bar' declared here}}
+using foo::Bar;
+
+void ambiguity() {
+   const Bar *x; // expected-error{{must use 'class' tag to refer to type 'Bar' in this scope}}
+}
+
+} // namespace ShadowedTagNotes

@@ -564,6 +564,14 @@ Corrected:
         Diag(NameLoc, diag::err_use_of_tag_name_without_tag)
           << Name << TagName << getLangOpts().CPlusPlus
           << FixItHint::CreateInsertion(NameLoc, FixItTagName);
+
+        LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
+        if (LookupParsedName(R, S, &SS)) {
+          for (LookupResult::iterator I = R.begin(), IEnd = R.end();
+               I != IEnd; ++I)
+            Diag((*I)->getLocation(), diag::note_decl_shadowing_tag_type)
+              << Name << TagName;
+        }
         break;
       }
       

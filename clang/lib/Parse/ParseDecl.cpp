@@ -14,6 +14,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Basic/OpenCL.h"
+#include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
@@ -1671,9 +1672,20 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     }
 
     if (TagName) {
+      IdentifierInfo *TokenName = Tok.getIdentifierInfo();
+      LookupResult R(Actions, TokenName, SourceLocation(),
+                     Sema::LookupOrdinaryName);
+
       Diag(Loc, diag::err_use_of_tag_name_without_tag)
-        << Tok.getIdentifierInfo() << TagName << getLangOpts().CPlusPlus
-        << FixItHint::CreateInsertion(Tok.getLocation(),FixitTagName);
+        << TokenName << TagName << getLangOpts().CPlusPlus
+        << FixItHint::CreateInsertion(Tok.getLocation(), FixitTagName);
+
+      if (Actions.LookupParsedName(R, getCurScope(), SS)) {
+        for (LookupResult::iterator I = R.begin(), IEnd = R.end();
+             I != IEnd; ++I)
+          Diag((*I)->getLocation(), diag::note_decl_shadowing_tag_type)
+            << TokenName << TagName;
+      }
 
       // Parse this as a tag as if the missing tag were present.
       if (TagKind == tok::kw_enum)
