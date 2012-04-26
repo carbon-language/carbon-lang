@@ -1752,6 +1752,15 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
+  VisibilityAttr *PrevAttr = D->getCanonicalDecl()->getAttr<VisibilityAttr>();
+  if (PrevAttr) {
+    VisibilityAttr::VisibilityType PrevVisibility = PrevAttr->getVisibility();
+    if (PrevVisibility != type) {
+      S.Diag(Attr.getLoc(), diag::err_mismatched_visibilit);
+      S.Diag(PrevAttr->getLocation(), diag::note_previous_attribute);
+      return;
+    }
+  }
   D->addAttr(::new (S.Context) VisibilityAttr(Attr.getRange(), S.Context, type));
 }
 
