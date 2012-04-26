@@ -46,3 +46,19 @@ int  rdar7547630(const char *keybuf, const char *valuebuf) {
   return BI2;
 }
 
+// rdar://11326988
+typedef struct _z {
+    int location;
+    int length;
+} z;
+
+z w(int loc, int len);
+
+@interface rdar11326988
+@end
+@implementation rdar11326988 
+- (void)y:(int)options {
+    __attribute__((__blocks__(byref))) z firstRange = w(1, 0);
+    options &= ~(1 | 2);
+}
+@end
