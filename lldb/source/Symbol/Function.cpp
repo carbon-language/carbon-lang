@@ -555,22 +555,50 @@ Function::GetPrologueByteSize ()
         LineTable* line_table = m_comp_unit->GetLineTable ();
         if (line_table)
         {
-            LineEntry line_entry;
-            if (line_table->FindLineEntryByAddress(GetAddressRange().GetBaseAddress(), line_entry))
+            LineEntry first_line_entry;
+            uint32_t first_line_entry_idx = UINT32_MAX;
+            if (line_table->FindLineEntryByAddress(GetAddressRange().GetBaseAddress(), first_line_entry, &first_line_entry_idx))
             {
-                // We need to take the delta of the end of the first line entry
-                // as a file address and the start file address of the function
-                // in case the first line entry doesn't start at the beginning 
-                // of the function.
+                // Make sure the first line entry isn't already the end of the prologue
+                addr_t prologue_end_file_addr = LLDB_INVALID_ADDRESS;
+                if (first_line_entry.is_prologue_end)
+                {
+                    prologue_end_file_addr = first_line_entry.range.GetBaseAddress().GetFileAddress();
+                }
+                else
+                {
+                    // Check the first few instructions and look for one that has
+                    // is_prologue_end set to true.
+                    const uint32_t last_line_entry_idx = first_line_entry_idx + 6;
+                    LineEntry line_entry;
+                    for (uint32_t idx = first_line_entry_idx + 1; idx < last_line_entry_idx; ++idx)
+                    {
+                        if (line_table->GetLineEntryAtIndex (idx, line_entry))
+                        {
+                            if (line_entry.is_prologue_end)
+                            {
+                                prologue_end_file_addr = line_entry.range.GetBaseAddress().GetFileAddress();
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // If we didn't find the end of the prologue in the line tables,
+                // then just use the end address of the first line table entry
+                if (prologue_end_file_addr == LLDB_INVALID_ADDRESS)
+                {
+                    prologue_end_file_addr = first_line_entry.range.GetBaseAddress().GetFileAddress() + first_line_entry.range.GetByteSize();
+                }
                 const addr_t func_start_file_addr = m_range.GetBaseAddress().GetFileAddress();
-                const addr_t line_entry_end_file_addr = line_entry.range.GetBaseAddress().GetFileAddress() + line_entry.range.GetByteSize();
-                // Watch out for the case where the end of the first line is at or past the end of the function, in that
-                // case, set the prologue  byte size to 0.  This happens, for instance, with a function that is one
-                // instruction long...
-                if (!GetAddressRange().ContainsFileAddress(line_entry_end_file_addr))
-                    m_prologue_byte_size = 0;
-                else if (line_entry_end_file_addr > func_start_file_addr)
-                    m_prologue_byte_size = line_entry_end_file_addr - func_start_file_addr;
+                const addr_t func_end_file_addr = func_start_file_addr + m_range.GetByteSize();
+
+                // Verify that this prologue end file address in the function's
+                // address range just to be sure
+                if (func_start_file_addr < prologue_end_file_addr && prologue_end_file_addr < func_end_file_addr)
+                {
+                    m_prologue_byte_size = prologue_end_file_addr - func_start_file_addr;
+                }
             }
         }
     }
