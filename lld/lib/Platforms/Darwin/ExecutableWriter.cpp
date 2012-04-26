@@ -35,31 +35,31 @@
 namespace lld {
 namespace darwin {
 
-// 
-// A mach-o file consists of some meta data (header and load commands), 
+//
+// A mach-o file consists of some meta data (header and load commands),
 // then atom content (e.g. function instructions), then more meta data
 // (symbol table, etc).  Before you can write a mach-o file, you need to
 // compute what will be the file offsets and "addresses" of various things
-// in the file.  
+// in the file.
 //
-// The design here is to break up what will be the mach-o file into chunks.  
+// The design here is to break up what will be the mach-o file into chunks.
 // Each Chunk has an object to manage its size and content.  There is a
 // chunk for the mach_header, one for the load commands, and one for each
 // part of the LINKEDIT segment.  There is also one chunk for each traditional
 // mach-o section.  The MachOWriter manages the list of chunks.  And
 // asks each to determine its size in the correct order.  Many chunks
 // cannot be sized until other chunks are sized (e.g. the dyld info
-// in the LINKEDIT cannot be sized until all atoms have been assigned 
+// in the LINKEDIT cannot be sized until all atoms have been assigned
 // addresses).
 //
 // Once all chunks have a size, the MachOWriter iterates through them and
-// asks each to write out their content.   
+// asks each to write out their content.
 //
 
 
 
 //
-// A Chunk is an abstrace contiguous range of a generated 
+// A Chunk is an abstrace contiguous range of a generated
 // mach-o executable file.
 //
 class Chunk {
@@ -75,10 +75,10 @@ public:
   uint64_t            fileOffset() const;
   uint64_t            align2() const;
   static uint64_t     alignTo(uint64_t value, uint8_t align2);
-  
+
 protected:
                       Chunk();
-  
+
   uint64_t            _size;
   uint64_t            _address;
   uint64_t            _fileOffset;
@@ -88,13 +88,13 @@ protected:
 
 
 //
-// A SectionChunk represents a set of Atoms assigned to a specific 
-// mach-o section (which is a subrange of a mach-o segment).  
+// A SectionChunk represents a set of Atoms assigned to a specific
+// mach-o section (which is a subrange of a mach-o segment).
 // For example, there is one SectionChunk for the __TEXT,__text section.
 //
 class SectionChunk : public Chunk {
 public:
-  static SectionChunk*  make(DefinedAtom::ContentType, 
+  static SectionChunk*  make(DefinedAtom::ContentType,
                              DarwinPlatform &platform,
                              class MachOWriter &writer);
   virtual StringRef     segmentName() const;
@@ -114,9 +114,9 @@ public:
   const std::vector<AtomInfo>& atoms() const;
 
 private:
-                SectionChunk(StringRef seg, 
-                             StringRef sect, 
-                             uint32_t flags, 
+                SectionChunk(StringRef seg,
+                             StringRef sect,
+                             uint32_t flags,
                              DarwinPlatform &platform,
                              class MachOWriter &writer);
 
@@ -132,7 +132,7 @@ private:
 
 
 //
-// A MachHeaderChunk represents the mach_header struct at the start 
+// A MachHeaderChunk represents the mach_header struct at the start
 // of a mach-o executable file.
 //
 class MachHeaderChunk : public Chunk {
@@ -140,7 +140,7 @@ public:
                 MachHeaderChunk(DarwinPlatform &plat, const File &file);
   virtual StringRef     segmentName() const;
   virtual void          write(raw_ostream &out);
-  virtual const char*   info(); 
+  virtual const char*   info();
   void                  recordLoadCommand(load_command*);
   uint64_t              loadCommandsSize();
 
@@ -157,12 +157,12 @@ private:
 //
 class LoadCommandsChunk : public Chunk {
 public:
-                      LoadCommandsChunk(MachHeaderChunk&, 
+                      LoadCommandsChunk(MachHeaderChunk&,
                                         DarwinPlatform&,
                                         class MachOWriter&);
   virtual StringRef   segmentName() const;
   virtual void        write(raw_ostream &out);
-  virtual const char* info(); 
+  virtual const char* info();
   void                computeSize(const lld::File &file);
   void                addSection(SectionChunk*);
   void                updateLoadCommandContent(const lld::File &file);
@@ -171,7 +171,7 @@ private:
   friend class LoadCommandPaddingChunk;
 
   void                addLoadCommand(load_command* lc);
-  void                setMachOSection(SectionChunk *chunk, 
+  void                setMachOSection(SectionChunk *chunk,
                                       segment_command_64 *seg, uint32_t index);
   uint32_t            permissionsFromSections(
                                   const SmallVector<SectionChunk*,16> &);
@@ -196,7 +196,7 @@ private:
 
 
 //
-// A LoadCommandPaddingChunk represents the padding space between the last 
+// A LoadCommandPaddingChunk represents the padding space between the last
 // load commmand and the first section (usually __text) in the __TEXT
 // segment.
 //
@@ -205,7 +205,7 @@ public:
                       LoadCommandPaddingChunk(LoadCommandsChunk&);
   virtual StringRef   segmentName() const;
   virtual void        write(raw_ostream &out);
-  virtual const char* info(); 
+  virtual const char* info();
   void                computeSize();
 private:
   LoadCommandsChunk&  _loadCommandsChunk;
@@ -215,7 +215,7 @@ private:
 
 //
 // LinkEditChunk is the base class for all chunks in the
-// __LINKEDIT segment at the end of a mach-o executable. 
+// __LINKEDIT segment at the end of a mach-o executable.
 //
 class LinkEditChunk : public Chunk {
 public:
@@ -229,7 +229,7 @@ public:
 
 //
 // A DyldInfoChunk represents the bytes for any of the dyld info areas
-// in the __LINKEDIT segment at the end of a mach-o executable. 
+// in the __LINKEDIT segment at the end of a mach-o executable.
 //
 class DyldInfoChunk : public LinkEditChunk {
 public:
@@ -249,36 +249,36 @@ protected:
 
 //
 // A BindingInfoChunk represents the bytes containing binding info
-// in the __LINKEDIT segment at the end of a mach-o executable. 
+// in the __LINKEDIT segment at the end of a mach-o executable.
 //
 class BindingInfoChunk : public DyldInfoChunk {
 public:
                       BindingInfoChunk(class MachOWriter &);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
-  virtual const char* info(); 
+  virtual const char* info();
 };
 
 
 
 //
 // A LazyBindingInfoChunk represents the bytes containing lazy binding info
-// in the __LINKEDIT segment at the end of a mach-o executable. 
+// in the __LINKEDIT segment at the end of a mach-o executable.
 //
 class LazyBindingInfoChunk : public DyldInfoChunk {
 public:
                       LazyBindingInfoChunk(class MachOWriter &);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
-  virtual const char* info(); 
+  virtual const char* info();
 private:
   void                 updateHelper(const DefinedAtom *, uint32_t );
 };
-  
+
 
 //
 // A SymbolTableChunk represents the array of nlist structs in the
-// __LINKEDIT segment at the end of a mach-o executable. 
+// __LINKEDIT segment at the end of a mach-o executable.
 //
 class SymbolTableChunk : public LinkEditChunk {
 public:
@@ -286,7 +286,7 @@ public:
   virtual void        write(raw_ostream &out);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
-  virtual const char* info(); 
+  virtual const char* info();
   uint32_t            count();
 
 private:
@@ -301,8 +301,8 @@ private:
 
 //
 // A SymbolStringsChunk represents the strings pointed to
-// by nlist structs in the __LINKEDIT segment at the end 
-// of a mach-o executable. 
+// by nlist structs in the __LINKEDIT segment at the end
+// of a mach-o executable.
 //
 class SymbolStringsChunk : public LinkEditChunk {
 public:
@@ -310,7 +310,7 @@ public:
   virtual void        write(raw_ostream &out);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
-  virtual const char* info(); 
+  virtual const char* info();
   uint32_t            stringIndex(StringRef);
 
 private:
@@ -348,7 +348,7 @@ private:
 
 
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
-  
+
   DarwinPlatform             &_platform;
   LoadCommandsChunk          *_loadCommandsChunk;
   LoadCommandPaddingChunk    *_paddingChunk;
@@ -370,12 +370,12 @@ private:
 //  Chunk
 //===----------------------------------------------------------------------===//
 
-Chunk::Chunk() 
+Chunk::Chunk()
  : _size(0), _address(0), _fileOffset(0), _align2(0) {
 }
 
-bool Chunk::occupiesNoDiskSpace() { 
-  return false; 
+bool Chunk::occupiesNoDiskSpace() {
+  return false;
 }
 
 uint64_t Chunk::size() const {
@@ -425,7 +425,7 @@ void Chunk::assignFileOffset(uint64_t &curOffset, uint64_t &curAddress) {
         llvm::dbgs() << " address=0x";
         llvm::dbgs().write_hex(_address);
         llvm::dbgs() << " info=" << this->info() << "\n");
-} 
+}
 
 
 
@@ -433,45 +433,45 @@ void Chunk::assignFileOffset(uint64_t &curOffset, uint64_t &curAddress) {
 //  SectionChunk
 //===----------------------------------------------------------------------===//
 
-SectionChunk::SectionChunk(StringRef seg, StringRef sect, 
+SectionChunk::SectionChunk(StringRef seg, StringRef sect,
                            uint32_t flags, DarwinPlatform &platform,
                                                 MachOWriter &writer)
- : _segmentName(seg), _sectionName(sect), _platform(platform), 
+ : _segmentName(seg), _sectionName(sect), _platform(platform),
    _writer(writer), _flags(flags), _permissions(0) {
-  
+
 }
 
-SectionChunk* SectionChunk::make(DefinedAtom::ContentType type, 
+SectionChunk* SectionChunk::make(DefinedAtom::ContentType type,
                                  DarwinPlatform &platform,
                                  MachOWriter &writer) {
   switch ( type ) {
     case DefinedAtom::typeCode:
-      return new SectionChunk("__TEXT", "__text", 
+      return new SectionChunk("__TEXT", "__text",
                               S_REGULAR | S_ATTR_PURE_INSTRUCTIONS,
                               platform, writer);
       break;
     case DefinedAtom::typeCString:
-       return new SectionChunk("__TEXT", "__cstring", 
+       return new SectionChunk("__TEXT", "__cstring",
                                S_CSTRING_LITERALS,
                               platform, writer);
        break;
     case DefinedAtom::typeStub:
-      return new SectionChunk("__TEXT", "__stubs", 
+      return new SectionChunk("__TEXT", "__stubs",
                               S_SYMBOL_STUBS | S_ATTR_PURE_INSTRUCTIONS,
                               platform, writer);
       break;
     case DefinedAtom::typeStubHelper:
-      return new SectionChunk("__TEXT", "__stub_helper", 
+      return new SectionChunk("__TEXT", "__stub_helper",
                               S_REGULAR | S_ATTR_PURE_INSTRUCTIONS,
                               platform, writer);
       break;
     case DefinedAtom::typeLazyPointer:
-      return new SectionChunk("__DATA", "__la_symbol_ptr", 
+      return new SectionChunk("__DATA", "__la_symbol_ptr",
                               S_LAZY_SYMBOL_POINTERS,
                               platform, writer);
       break;
     case DefinedAtom::typeGOT:
-      return new SectionChunk("__DATA", "__got", 
+      return new SectionChunk("__DATA", "__got",
                               S_NON_LAZY_SYMBOL_POINTERS,
                               platform, writer);
       break;
@@ -613,8 +613,8 @@ uint64_t MachHeaderChunk::loadCommandsSize() {
 //  LoadCommandsChunk
 //===----------------------------------------------------------------------===//
 
-LoadCommandsChunk::LoadCommandsChunk(MachHeaderChunk &mh, 
-                                     DarwinPlatform& platform, 
+LoadCommandsChunk::LoadCommandsChunk(MachHeaderChunk &mh,
+                                     DarwinPlatform& platform,
                                      MachOWriter& writer)
  : _mh(mh), _platform(platform), _writer(writer),
    _linkEditSegment(nullptr), _symbolTableLoadCommand(nullptr),
@@ -637,7 +637,7 @@ const char* LoadCommandsChunk::info() {
   return "load commands";
 }
 
-void LoadCommandsChunk::setMachOSection(SectionChunk *chunk, 
+void LoadCommandsChunk::setMachOSection(SectionChunk *chunk,
                                     segment_command_64 *seg, uint32_t index) {
   for (ChunkSegInfo &entry : _sectionInfo) {
     if ( entry.chunk == chunk ) {
@@ -732,19 +732,19 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
                             end=dylibNamesToOrdinal.end(); it != end; ++it) {
     this->addLoadCommand(dylib_command::make(it->first().data()));
   }
-  
+
   // Add symbol table load command
   _symbolTableLoadCommand = symtab_command::make();
   this->addLoadCommand(_symbolTableLoadCommand);
- 
+
   // Add dyld info load command
   _dyldInfoLoadCommand = dyld_info_command::make();
   this->addLoadCommand(_dyldInfoLoadCommand);
-  
+
   // Add entry point load command
   _entryPointLoadCommand = entry_point_command::make();
   this->addLoadCommand(_entryPointLoadCommand);
-    
+
   // Compute total size.
   _size = _mh.loadCommandsSize();
 }
@@ -776,7 +776,7 @@ void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
         entry.segment->vmaddr  = entry.chunk->address();
         entry.segment->fileoff = entry.chunk->fileOffset();
       }
-      
+
       lastSegment = entry.segment;
     }
     uint64_t sectionEndAddr = entry.section->addr + entry.section->size;
@@ -789,21 +789,21 @@ void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
       }
     }
   }
-  uint64_t linkEditSize = _writer._stringsChunk->fileOffset() 
+  uint64_t linkEditSize = _writer._stringsChunk->fileOffset()
                         + _writer._stringsChunk->size()
                         - _writer._linkEditStartOffset;
   _linkEditSegment->vmaddr   = _writer._linkEditStartAddress;
   _linkEditSegment->vmsize   = alignTo(linkEditSize,12);
   _linkEditSegment->fileoff  = _writer._linkEditStartOffset;
   _linkEditSegment->filesize = linkEditSize;
-  
+
   // Update dyld_info load command.
   _dyldInfoLoadCommand->bind_off       = _writer._bindingInfo->fileOffset();
   _dyldInfoLoadCommand->bind_size      = _writer._bindingInfo->size();
   _dyldInfoLoadCommand->lazy_bind_off  = _writer._lazyBindingInfo->fileOffset();
   _dyldInfoLoadCommand->lazy_bind_size = _writer._lazyBindingInfo->size();
-  
-  
+
+
   // Update symbol table load command.
   _symbolTableLoadCommand->symoff  = _writer._symbolTableChunk->fileOffset();
   _symbolTableLoadCommand->nsyms   = _writer._symbolTableChunk->count();
@@ -862,7 +862,7 @@ const char* LoadCommandPaddingChunk::info() {
 void LoadCommandPaddingChunk::computeSize() {
  // Layout __TEXT sections backwards from end of page to get padding up front.
   uint64_t addr = 0;
-  std::vector<LoadCommandsChunk::ChunkSegInfo>& sects 
+  std::vector<LoadCommandsChunk::ChunkSegInfo>& sects
                                         = _loadCommandsChunk._sectionInfo;
   for (auto it=sects.rbegin(), end=sects.rend(); it != end; ++it) {
     LoadCommandsChunk::ChunkSegInfo &entry = *it;
@@ -874,9 +874,9 @@ void LoadCommandPaddingChunk::computeSize() {
   // Subtract out size of mach_header and all load commands.
   addr -= _loadCommandsChunk._mh.size();
   addr -= _loadCommandsChunk.size();
-  // Modulo page size to get padding needed between load commands 
+  // Modulo page size to get padding needed between load commands
   // and first section.
-  _size = (addr % 4096); 
+  _size = (addr % 4096);
 }
 
 //===----------------------------------------------------------------------===//
@@ -891,7 +891,7 @@ StringRef LinkEditChunk::segmentName() const {
   return StringRef("__LINKEDIT");
 }
 
-  
+
 //===----------------------------------------------------------------------===//
 //  DyldInfoChunk
 //===----------------------------------------------------------------------===//
@@ -911,10 +911,7 @@ void DyldInfoChunk::append_byte(uint8_t b) {
 }
 
 void DyldInfoChunk::append_string(StringRef str) {
-  const char *s = str.data();
-  for (int i=str.size(); i > 0; --i) {
-    _bytes.push_back(*s++);
-  }
+  _bytes.insert(_bytes.end(), str.begin(), str.end());
   _bytes.push_back('\0');
 }
 
@@ -962,12 +959,12 @@ void BindingInfoChunk::computeSize(const lld::File &file,
       const DefinedAtom* atom = info.atom;
       StringRef targetName;
       int ordinal;
-  
+
       // look for fixups pointing to shlib atoms
       for (const Reference *ref : *atom ) {
         const Atom *target = ref->target();
         if ( target != nullptr ) {
-          const SharedLibraryAtom *shlTarget 
+          const SharedLibraryAtom *shlTarget
                                         = dyn_cast<SharedLibraryAtom>(target);
           if ( shlTarget != nullptr ) {
             assert(ref->kind() == ReferenceKind::pointer64);
@@ -976,10 +973,10 @@ void BindingInfoChunk::computeSize(const lld::File &file,
           }
         }
       }
-      
+
       if ( targetName.empty() )
         continue;
-      
+
       // write location of fixup
       this->append_byte(BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB | segIndex);
       uint64_t address = _writer.addressOfAtom(atom);
@@ -999,10 +996,10 @@ void BindingInfoChunk::computeSize(const lld::File &file,
         this->append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB);
         this->append_uleb128(ordinal);
       }
-      
+
       // write binding type
       this->append_byte(BIND_OPCODE_SET_TYPE_IMM | BIND_TYPE_POINTER);
-      
+
       // write symbol name and flags
       int flags = 0;
       this->append_byte(BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM | flags);
@@ -1082,7 +1079,7 @@ void LazyBindingInfoChunk::computeSize(const lld::File &file,
         this->append_byte(BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB);
         this->append_uleb128(ordinal);
       }
-      
+
       // write symbol name and flags
       int flags = 0;
       StringRef name;
@@ -1110,7 +1107,7 @@ void LazyBindingInfoChunk::computeSize(const lld::File &file,
 //  SymbolTableChunk
 //===----------------------------------------------------------------------===//
 
-SymbolTableChunk::SymbolTableChunk(SymbolStringsChunk& str) 
+SymbolTableChunk::SymbolTableChunk(SymbolStringsChunk& str)
   : _stringsChunk(str) {
 }
 
@@ -1132,7 +1129,7 @@ const char* SymbolTableChunk::info() {
 }
 
 uint32_t SymbolTableChunk::count() {
-  return _globalDefinedsymbols.size() 
+  return _globalDefinedsymbols.size()
        + _localDefinedsymbols.size()
        + _undefinedsymbols.size();
 }
@@ -1173,7 +1170,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
     }
     ++sectionIndex;
   }
-  
+
   // Add symbols for undefined/sharedLibrary symbols
   for (const SharedLibraryAtom* atom : file.sharedLibrary() ) {
     nlist_64 sym;
@@ -1183,7 +1180,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
     sym.n_value = 0;
     _undefinedsymbols.push_back(sym);
   }
-  
+
   _size = sizeof(nlist_64) * this->count();
 }
 
@@ -1193,7 +1190,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
 //===----------------------------------------------------------------------===//
 
 SymbolStringsChunk::SymbolStringsChunk() {
-  // mach-o reserves the first byte in the string pool so that 
+  // mach-o reserves the first byte in the string pool so that
   // zero is never a valid string index.
   _strings.push_back('\0');
 }
@@ -1218,10 +1215,7 @@ void SymbolStringsChunk::computeSize(const lld::File &file,
 
 uint32_t SymbolStringsChunk::stringIndex(StringRef str) {
   uint32_t result = _strings.size();
-  const char* s = str.data();
-  for (int i=0; i < str.size(); ++i) {
-    _strings.push_back(s[i]);
-  }
+  _strings.insert(_strings.end(), str.begin(), str.end());
   _strings.push_back('\0');
   return result;
 }
@@ -1236,29 +1230,29 @@ MachOWriter::MachOWriter(DarwinPlatform &platform)
     _symbolTableChunk(nullptr), _stringsChunk(nullptr),
     _linkEditStartOffset(0), _linkEditStartAddress(0) {
 }
- 
+
 void MachOWriter::build(const lld::File &file) {
   // Create objects for each chunk.
   this->createChunks(file);
-  
+
   // Now that SectionChunks have sizes, load commands can be laid out
   _loadCommandsChunk->computeSize(file);
- 
+
   // Now that load commands are sized, padding can be computed
   _paddingChunk->computeSize();
-  
+
   // Now that all chunks (except linkedit) have sizes, assign file offsets
   this->assignFileOffsets();
-  
+
   // Now chunks have file offsets each atom can be assigned an address
   this->buildAtomToAddressMap();
-  
+
   // Now that atoms have address, symbol table can be build
   this->buildLinkEdit(file);
-  
+
   // Assign file offsets to linkedit chunks
   this->assignLinkEditFileOffsets();
-  
+
   // Finally, update load commands to reflect linkEdit layout
   _loadCommandsChunk->updateLoadCommandContent(file);
 }
@@ -1280,26 +1274,26 @@ void MachOWriter::createChunks(const lld::File &file) {
       pos->second->appendAtom(atom);
     }
   }
-  
+
   // Sort Chunks so ones in same segment are contiguous.
-  
-  
+
+
   // Make chunks in __TEXT for mach_header and load commands at start.
   MachHeaderChunk *mhc = new MachHeaderChunk(_platform, file);
   _chunks.push_back(mhc);
-  
+
   _loadCommandsChunk = new LoadCommandsChunk(*mhc, _platform, *this);
   _chunks.push_back(_loadCommandsChunk);
-  
+
   _paddingChunk = new LoadCommandPaddingChunk(*_loadCommandsChunk);
   _chunks.push_back(_paddingChunk);
-  
+
   for (auto it=map.begin(); it != map.end(); ++it) {
      _chunks.push_back(it->second);
      _sectionChunks.push_back(it->second);
      _loadCommandsChunk->addSection(it->second);
   }
-  
+
   // Make LINKEDIT chunks.
   _bindingInfo = new BindingInfoChunk(*this);
   _lazyBindingInfo = new LazyBindingInfoChunk(*this);
@@ -1310,7 +1304,7 @@ void MachOWriter::createChunks(const lld::File &file) {
   this->addLinkEditChunk(_symbolTableChunk);
   this->addLinkEditChunk(_stringsChunk);
 }
- 
+
 
 void MachOWriter::addLinkEditChunk(LinkEditChunk *chunk) {
   _linkEditChunks.push_back(chunk);
@@ -1427,7 +1421,7 @@ void MachOWriter::write(raw_ostream &out) {
 // Creates a mach-o final linked image from the given atom graph and writes
 // it to the supplied output stream.
 //
-void writeExecutable(const lld::File &file, DarwinPlatform &platform, 
+void writeExecutable(const lld::File &file, DarwinPlatform &platform,
                                             raw_ostream &out) {
   MachOWriter writer(platform);
   writer.build(file);
