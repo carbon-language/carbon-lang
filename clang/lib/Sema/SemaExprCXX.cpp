@@ -693,6 +693,10 @@ Sema::CXXThisScopeRAII::~CXXThisScopeRAII() {
 }
 
 void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
+  if (getLangOpts().CPlusPlus0x &&
+      !dyn_cast_or_null<CXXMethodDecl>(getFunctionLevelDeclContext()))
+    Diag(Loc, diag::warn_cxx98_compat_this_outside_method);
+
   // We don't need to capture this in an unevaluated context.
   if (ExprEvalContexts.back().Context == Unevaluated && !Explicit)
     return;

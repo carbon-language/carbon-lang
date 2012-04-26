@@ -3589,6 +3589,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   if (ParamType->isPointerType() || ParamType->isNullPtrType()) {
     switch (isNullPointerValueTemplateArgument(S, Param, ParamType, Arg)) {
     case NPV_NullPointer:
+      S.Diag(Arg->getExprLoc(), diag::warn_cxx98_compat_template_arg_null);
       Converted = TemplateArgument((Decl *)0);
       return false;
 
@@ -3885,6 +3886,7 @@ static bool CheckTemplateArgumentPointerToMember(Sema &S,
   case NPV_Error:
     return true;
   case NPV_NullPointer:
+    S.Diag(Arg->getExprLoc(), diag::warn_cxx98_compat_template_arg_null);
     Converted = TemplateArgument((Decl *)0);
     return false;
   case NPV_NotNullPointer:
@@ -4320,6 +4322,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return ExprError();
       
     case NPV_NullPointer:
+      Diag(Arg->getExprLoc(), diag::warn_cxx98_compat_template_arg_null);
       Converted = TemplateArgument((Decl *)0);
       return Owned(Arg);;
     }

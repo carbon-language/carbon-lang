@@ -2365,6 +2365,9 @@ def err_template_arg_not_ice : Error<
   "expression">;
 def err_template_arg_not_address_constant : Error<
   "non-type template argument of type %0 is not a constant expression">;
+def warn_cxx98_compat_template_arg_null : Warning<
+  "use of null pointer as non-type template argument is incompatible with "
+  "C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def err_template_arg_untyped_null_constant : Error<
   "null non-type template argument must be cast to template parameter type %0">;
 def err_template_arg_wrongtype_null_constant : Error<
@@ -3834,6 +3837,9 @@ def err_this_static_member_func : Error<
   "declaration">;
 def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
+def warn_cxx98_compat_this_outside_method : Warning<
+  "use of 'this' outside a non-static member function is incompatible "
+  "with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def err_invalid_qualified_function_type : Error<
   "%select{static |non-}0member function %select{of type %2 |}1"
   "cannot have '%3' qualifier">;
