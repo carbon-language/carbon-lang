@@ -45,11 +45,6 @@ TEST(SmallMapTest, GeneralTest) {
   found = a.find(&buf[8]);
   EXPECT_EQ(found, a.end());
 
-  // Check increment for small mode.
-  found = a.begin();
-  ++found;
-  EXPECT_EQ(found->second, 10);
-
   b.insert(std::make_pair(&buf[2], 2));
 
   std::swap(a, b);
@@ -81,11 +76,6 @@ TEST(SmallMapTest, GeneralTest) {
   // Check not found case.
   found = b.find(&buf[8]);
   EXPECT_EQ(found, b.end());
-
-  // Check increment for big mode.
-  found = b.find(&buf[1]);
-  ++found;
-  EXPECT_EQ(found->second, 14);
 
   std::swap(a, b);
   a.swap(b);
@@ -130,4 +120,28 @@ TEST(SmallMapTest, GeneralTest) {
   SmallMap<int *, int, 3>::value_type Buf7;
   Buf7 = a.FindAndConstruct(&buf[7]);
   EXPECT_EQ(Buf7.second, 0);
+  
+  // Check increments
+  
+  SmallMap<int *, int, 2> c;
+  c.insert(std::make_pair(&buf[0], 0));
+  c.insert(std::make_pair(&buf[1], 1));
+  
+  // For small mode we know that flat array map is used and we know the
+  // order of items.
+  unsigned ii = 0;
+  for (SmallMap<int *, int, 2>::iterator i = c.begin(), e = c.end();
+       i != e; ++i, ++ii) {
+    EXPECT_TRUE((i->first == &buf[0] && i->second == 0 && ii == 0) ||
+                (i->first == &buf[1] && i->second == 1 && ii == 1));
+  }
+  
+  // For big mode DenseMap is used and final order of items is undefined.
+  c.insert(std::make_pair(&buf[2], 2));
+  for (SmallMap<int *, int, 2>::iterator i = c.begin(), e = c.end();
+       i != e; ++i) {
+    EXPECT_TRUE((i->first == &buf[0] && i->second == 0) ||
+                (i->first == &buf[1] && i->second == 1) ||
+                (i->first == &buf[2] && i->second == 2));
+  }
 }
