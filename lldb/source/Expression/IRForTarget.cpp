@@ -2041,7 +2041,7 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
             
             ConstantFP *operand_constant_fp = dyn_cast<ConstantFP>(operand_val);
             
-            if (operand_constant_fp && operand_constant_fp->getType()->isX86_FP80Ty())
+            if (operand_constant_fp/* && operand_constant_fp->getType()->isX86_FP80Ty()*/)
             {
                 static_constants.push_back(operand_val);
                 static_users.push_back(ii);
