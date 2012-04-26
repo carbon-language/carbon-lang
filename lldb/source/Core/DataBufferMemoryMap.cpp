@@ -207,6 +207,10 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                                 }
                             }
                         }
+                        if (error.GetError() == ENOMEM)
+                        {
+                           error.SetErrorStringWithFormat("could not allocate %lld bytes of memory to mmap in file", (uint64_t) length);
+                        }
                     }
                     else
                     {
