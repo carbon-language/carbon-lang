@@ -20,7 +20,9 @@ define float @f(<4 x i16>* nocapture %in) {
 
 ; CHECK: g:
 define float @g(<4 x i8>* nocapture %in) {
-  ; CHECK: vldr
+; Note: vld1 here is reasonably important. Mixing VFP and NEON
+; instructions is bad on some cores
+  ; CHECK: vld1
   ; CHECK: vmovl.u8
   ; CHECK: vmovl.u16
   %1 = load <4 x i8>* %in
@@ -47,7 +49,9 @@ define <4 x i8> @h(<4 x float> %v) {
 
 ; CHECK: i:
 define <4 x i8> @i(<4 x i8>* %x) {
-  ; CHECK: vldr
+; Note: vld1 here is reasonably important. Mixing VFP and NEON
+; instructions is bad on some cores
+  ; CHECK: vld1
   ; CHECK: vmovl.s8
   ; CHECK: vmovl.s16
   ; CHECK: vrecpe
