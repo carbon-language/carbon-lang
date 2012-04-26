@@ -119,7 +119,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                             if (pos < end)
                                 pos += snprintf(pos, end - pos, "%d", (int32_t)value.v_sint8[i]);
                         }
-                        strncat(str, " }", sizeof(str));
+                        strlcat(str, " }", sizeof(str));
                         break;
 
                     default:
@@ -201,7 +201,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                         }
                         break;
                     }
-                    strncat(str, " }", sizeof(str));
+                    strlcat(str, " }", sizeof(str));
                 }
                 else
                 {
