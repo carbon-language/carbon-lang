@@ -1439,7 +1439,29 @@ struct IVInc {
 
 // IVChain - The list of IV increments in program order.
 // We typically add the head of a chain without finding subsequent links.
-typedef SmallVector<IVInc,1> IVChain;
+struct IVChain {
+  SmallVector<IVInc,1> Incs;
+
+  typedef SmallVectorImpl<IVInc>::const_iterator const_iterator;
+
+  // begin - return the first increment in the chain.
+  const_iterator begin() const {
+    assert(!Incs.empty());
+    return llvm::next(Incs.begin());
+  }
+  const_iterator end() const {
+    return Incs.end();
+  }
+
+  // hasIncs - Returns true if this chain contains any increments.
+  bool hasIncs() const { return Incs.size() >= 2; }
+
+  // add - Add an IVInc to the end of this chain.
+  void add(const IVInc &X) { Incs.push_back(X); }
+
+  // tailUserInst - Returns the last UserInst in the chain.
+  Instruction *tailUserInst() const { return Incs.back().UserInst; }
+};
 
 /// ChainUsers - Helper for CollectChains to track multiple IV increment uses.
 /// Distinguish between FarUsers that definitely cross IV increments and
@@ -2344,7 +2366,7 @@ getProfitableChainIncrement(Value *NextIV, Value *PrevIV,
   // Do not replace a constant offset from IV head with a nonconstant IV
   // increment.
   if (!isa<SCEVConstant>(IncExpr)) {
-    const SCEV *HeadExpr = SE.getSCEV(getWideOperand(Chain[0].IVOperand));
+    const SCEV *HeadExpr = SE.getSCEV(getWideOperand(Chain.Incs[0].IVOperand));
     if (isa<SCEVConstant>(SE.getMinusSCEV(OperExpr, HeadExpr)))
       return 0;
   }
@@ -2372,18 +2394,18 @@ isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
   if (StressIVChain)
     return true;
 
-  if (Chain.size() <= 2)
+  if (!Chain.hasIncs())
     return false;
 
   if (!Users.empty()) {
-    DEBUG(dbgs() << "Chain: " << *Chain[0].UserInst << " users:\n";
+    DEBUG(dbgs() << "Chain: " << *Chain.Incs[0].UserInst << " users:\n";
           for (SmallPtrSet<Instruction*, 4>::const_iterator I = Users.begin(),
                  E = Users.end(); I != E; ++I) {
             dbgs() << "  " << **I << "\n";
           });
     return false;
   }
-  assert(!Chain.empty() && "empty IV chains are not allowed");
+  assert(!Chain.Incs.empty() && "empty IV chains are not allowed");
 
   // The chain itself may require a register, so intialize cost to 1.
   int cost = 1;
@@ -2391,15 +2413,15 @@ isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
   // A complete chain likely eliminates the need for keeping the original IV in
   // a register. LSR does not currently know how to form a complete chain unless
   // the header phi already exists.
-  if (isa<PHINode>(Chain.back().UserInst)
-      && SE.getSCEV(Chain.back().UserInst) == Chain[0].IncExpr) {
+  if (isa<PHINode>(Chain.tailUserInst())
+      && SE.getSCEV(Chain.tailUserInst()) == Chain.Incs[0].IncExpr) {
     --cost;
   }
   const SCEV *LastIncExpr = 0;
   unsigned NumConstIncrements = 0;
   unsigned NumVarIncrements = 0;
   unsigned NumReusedIncrements = 0;
-  for (IVChain::const_iterator I = llvm::next(Chain.begin()), E = Chain.end();
+  for (IVChain::const_iterator I = Chain.begin(), E = Chain.end();
        I != E; ++I) {
 
     if (I->IncExpr->isZero())
@@ -2435,7 +2457,8 @@ isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
   // the stride.
   cost -= NumReusedIncrements;
 
-  DEBUG(dbgs() << "Chain: " << *Chain[0].UserInst << " Cost: " << cost << "\n");
+  DEBUG(dbgs() << "Chain: " << *Chain.Incs[0].UserInst << " Cost: " << cost
+               << "\n");
 
   return cost < 0;
 }
@@ -2453,13 +2476,13 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
   unsigned ChainIdx = 0, NChains = IVChainVec.size();
   const SCEV *LastIncExpr = 0;
   for (; ChainIdx < NChains; ++ChainIdx) {
-    Value *PrevIV = getWideOperand(IVChainVec[ChainIdx].back().IVOperand);
+    Value *PrevIV = getWideOperand(IVChainVec[ChainIdx].Incs.back().IVOperand);
     if (!isCompatibleIVType(PrevIV, NextIV))
       continue;
 
     // A phi node terminates a chain.
     if (isa<PHINode>(UserInst)
-        && isa<PHINode>(IVChainVec[ChainIdx].back().UserInst))
+        && isa<PHINode>(IVChainVec[ChainIdx].tailUserInst()))
       continue;
 
     if (const SCEV *IncExpr =
@@ -2495,7 +2518,7 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
                  << ") IV+" << *LastIncExpr << "\n");
 
   // Add this IV user to the end of the chain.
-  IVChainVec[ChainIdx].push_back(IVInc(UserInst, IVOper, LastIncExpr));
+  IVChainVec[ChainIdx].add(IVInc(UserInst, IVOper, LastIncExpr));
 
   SmallPtrSet<Instruction*,4> &NearUsers = ChainUsersVec[ChainIdx].NearUsers;
   // This chain's NearUsers become FarUsers.
@@ -2623,10 +2646,10 @@ void LSRInstance::CollectChains() {
 }
 
 void LSRInstance::FinalizeChain(IVChain &Chain) {
-  assert(!Chain.empty() && "empty IV chains are not allowed");
-  DEBUG(dbgs() << "Final Chain: " << *Chain[0].UserInst << "\n");
+  assert(!Chain.Incs.empty() && "empty IV chains are not allowed");
+  DEBUG(dbgs() << "Final Chain: " << *Chain.Incs[0].UserInst << "\n");
 
-  for (IVChain::const_iterator I = llvm::next(Chain.begin()), E = Chain.end();
+  for (IVChain::const_iterator I = Chain.begin(), E = Chain.end();
        I != E; ++I) {
     DEBUG(dbgs() << "        Inc: " << *I->UserInst << "\n");
     User::op_iterator UseI =
@@ -2660,7 +2683,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
                                   SmallVectorImpl<WeakVH> &DeadInsts) {
   // Find the new IVOperand for the head of the chain. It may have been replaced
   // by LSR.
-  const IVInc &Head = Chain[0];
+  const IVInc &Head = Chain.Incs[0];
   User::op_iterator IVOpEnd = Head.UserInst->op_end();
   User::op_iterator IVOpIter = findIVOperand(Head.UserInst->op_begin(),
                                              IVOpEnd, L, SE);
@@ -2692,7 +2715,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
   Type *IVTy = IVSrc->getType();
   Type *IntTy = SE.getEffectiveSCEVType(IVTy);
   const SCEV *LeftOverExpr = 0;
-  for (IVChain::const_iterator IncI = llvm::next(Chain.begin()),
+  for (IVChain::const_iterator IncI = Chain.begin(),
          IncE = Chain.end(); IncI != IncE; ++IncI) {
 
     Instruction *InsertPt = IncI->UserInst;
@@ -2737,7 +2760,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
   }
   // If LSR created a new, wider phi, we may also replace its postinc. We only
   // do this if we also found a wide value for the head of the chain.
-  if (isa<PHINode>(Chain.back().UserInst)) {
+  if (isa<PHINode>(Chain.tailUserInst())) {
     for (BasicBlock::iterator I = L->getHeader()->begin();
          PHINode *Phi = dyn_cast<PHINode>(I); ++I) {
       if (!isCompatibleIVType(Phi, IVSrc))
@@ -4486,7 +4509,7 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   // Mark phi nodes that terminate chains so the expander tries to reuse them.
   for (SmallVectorImpl<IVChain>::const_iterator ChainI = IVChainVec.begin(),
          ChainE = IVChainVec.end(); ChainI != ChainE; ++ChainI) {
-    if (PHINode *PN = dyn_cast<PHINode>(ChainI->back().UserInst))
+    if (PHINode *PN = dyn_cast<PHINode>(ChainI->tailUserInst()))
       Rewriter.setChainedPhi(PN);
   }
 
