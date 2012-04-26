@@ -291,6 +291,28 @@
 // CHECK-DEBIAN-MIPSEL: "-L[[SYSROOT]]/usr/lib/gcc/mipsel-linux-gnu/4.5/../../.."
 // CHECK-DEBIAN-MIPSEL: "-L[[SYSROOT]]/lib"
 // CHECK-DEBIAN-MIPSEL: "-L[[SYSROOT]]/usr/lib"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target mips64-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-MIPS64 %s
+// CHECK-DEBIAN-MIPS64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-MIPS64: "{{.*}}/usr/lib/gcc/mips-linux-gnu/4.5/64/crtbegin.o"
+// CHECK-DEBIAN-MIPS64: "-L[[SYSROOT]]/usr/lib/gcc/mips-linux-gnu/4.5/64"
+// CHECK-DEBIAN-MIPS64: "-L[[SYSROOT]]/usr/lib/gcc/mips-linux-gnu/4.5"
+// CHECK-DEBIAN-MIPS64: "-L[[SYSROOT]]/usr/lib/gcc/mips-linux-gnu/4.5/../../.."
+// CHECK-DEBIAN-MIPS64: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-MIPS64: "-L[[SYSROOT]]/usr/lib"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target mips64el-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-MIPS64EL %s
+// CHECK-DEBIAN-MIPS64EL: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-MIPS64EL: "{{.*}}/usr/lib/gcc/mipsel-linux-gnu/4.5/64/crtbegin.o"
+// CHECK-DEBIAN-MIPS64EL: "-L[[SYSROOT]]/usr/lib/gcc/mipsel-linux-gnu/4.5/64"
+// CHECK-DEBIAN-MIPS64EL: "-L[[SYSROOT]]/usr/lib/gcc/mipsel-linux-gnu/4.5"
+// CHECK-DEBIAN-MIPS64EL: "-L[[SYSROOT]]/usr/lib/gcc/mipsel-linux-gnu/4.5/../../.."
+// CHECK-DEBIAN-MIPS64EL: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-MIPS64EL: "-L[[SYSROOT]]/usr/lib"
 //
 // Test linker invocation on Android.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \

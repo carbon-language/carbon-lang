@@ -1218,6 +1218,11 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   static const char *const MIPSELLibDirs[] = { "/lib" };
   static const char *const MIPSELTriples[] = { "mipsel-linux-gnu" };
 
+  static const char *const MIPS64LibDirs[] = { "/lib64", "/lib" };
+  static const char *const MIPS64Triples[] = { "mips64-linux-gnu" };
+  static const char *const MIPS64ELLibDirs[] = { "/lib64", "/lib" };
+  static const char *const MIPS64ELTriples[] = { "mips64el-linux-gnu" };
+
   static const char *const PPCLibDirs[] = { "/lib32", "/lib" };
   static const char *const PPCTriples[] = {
     "powerpc-linux-gnu",
@@ -1263,11 +1268,39 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
       MIPSLibDirs, MIPSLibDirs + llvm::array_lengthof(MIPSLibDirs));
     TripleAliases.append(
       MIPSTriples, MIPSTriples + llvm::array_lengthof(MIPSTriples));
+    MultiarchLibDirs.append(
+      MIPS64LibDirs, MIPS64LibDirs + llvm::array_lengthof(MIPS64LibDirs));
+    MultiarchTripleAliases.append(
+      MIPS64Triples, MIPS64Triples + llvm::array_lengthof(MIPS64Triples));
     break;
   case llvm::Triple::mipsel:
     LibDirs.append(
       MIPSELLibDirs, MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
     TripleAliases.append(
+      MIPSELTriples, MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
+    MultiarchLibDirs.append(
+      MIPS64ELLibDirs, MIPS64ELLibDirs + llvm::array_lengthof(MIPS64ELLibDirs));
+    MultiarchTripleAliases.append(
+      MIPS64ELTriples, MIPS64ELTriples + llvm::array_lengthof(MIPS64ELTriples));
+    break;
+  case llvm::Triple::mips64:
+    LibDirs.append(
+      MIPS64LibDirs, MIPS64LibDirs + llvm::array_lengthof(MIPS64LibDirs));
+    TripleAliases.append(
+      MIPS64Triples, MIPS64Triples + llvm::array_lengthof(MIPS64Triples));
+    MultiarchLibDirs.append(
+      MIPSLibDirs, MIPSLibDirs + llvm::array_lengthof(MIPSLibDirs));
+    MultiarchTripleAliases.append(
+      MIPSTriples, MIPSTriples + llvm::array_lengthof(MIPSTriples));
+    break;
+  case llvm::Triple::mips64el:
+    LibDirs.append(
+      MIPS64ELLibDirs, MIPS64ELLibDirs + llvm::array_lengthof(MIPS64ELLibDirs));
+    TripleAliases.append(
+      MIPS64ELTriples, MIPS64ELTriples + llvm::array_lengthof(MIPS64ELTriples));
+    MultiarchLibDirs.append(
+      MIPSELLibDirs, MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
+    MultiarchTripleAliases.append(
       MIPSELTriples, MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
     break;
   case llvm::Triple::ppc:
@@ -1350,7 +1383,9 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // crtbegin.o without the subdirectory.
       StringRef MultiarchSuffix
         = (TargetArch == llvm::Triple::x86_64 ||
-           TargetArch == llvm::Triple::ppc64) ? "/64" : "/32";
+           TargetArch == llvm::Triple::ppc64 ||
+           TargetArch == llvm::Triple::mips64 ||
+           TargetArch == llvm::Triple::mips64el) ? "/64" : "/32";
       if (llvm::sys::fs::exists(LI->path() + MultiarchSuffix + "/crtbegin.o")) {
         GCCMultiarchSuffix = MultiarchSuffix.str();
       } else {
