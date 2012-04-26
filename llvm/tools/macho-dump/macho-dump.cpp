@@ -194,7 +194,7 @@ static int DumpSegment64Command(MachOObject &Obj,
   }
   outs() << "  ])\n";
 
-  return 0;
+  return Res;
 }
 
 static void DumpSymbolTableEntryData(MachOObject &Obj,
