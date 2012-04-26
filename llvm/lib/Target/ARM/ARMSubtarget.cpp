@@ -83,7 +83,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
   // based on the architecture version.
-  std::string ArchFS = ARM_MC::ParseARMTriple(TT);
+  std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPUString);
   if (!FS.empty()) {
     if (!ArchFS.empty())
       ArchFS = ArchFS + "," + FS;
