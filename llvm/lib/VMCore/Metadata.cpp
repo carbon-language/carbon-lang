@@ -66,7 +66,11 @@ public:
   MDNodeOperand(Value *V) : CallbackVH(V) {}
   ~MDNodeOperand() {}
 
-  void set(Value *V) { this->setValPtr(V); }
+  void set(Value *V) {
+    unsigned IsFirst = this->getValPtrInt();
+    this->setValPtr(V);
+    this->setAsFirstOperand(IsFirst);
+  }
 
   /// setAsFirstOperand - Accessor method to mark the operand as the first in
   /// the list.
@@ -95,7 +99,7 @@ void MDNodeOperand::allUsesReplacedWith(Value *NV) {
 static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
   // Use <= instead of < to permit a one-past-the-end address.
   assert(Op <= N->getNumOperands() && "Invalid operand number");
-  return reinterpret_cast<MDNodeOperand*>(N+1)+Op;
+  return reinterpret_cast<MDNodeOperand*>(N + 1) + Op;
 }
 
 void MDNode::replaceOperandWith(unsigned i, Value *Val) {
@@ -121,7 +125,6 @@ MDNode::MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal)
       Op->setAsFirstOperand(1);
   }
 }
-
 
 /// ~MDNode - Destroy MDNode.
 MDNode::~MDNode() {
@@ -247,7 +250,7 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   }
 
   // Coallocate space for the node and Operands together, then placement new.
-  void *Ptr = malloc(sizeof(MDNode)+Vals.size()*sizeof(MDNodeOperand));
+  void *Ptr = malloc(sizeof(MDNode) + Vals.size() * sizeof(MDNodeOperand));
   N = new (Ptr) MDNode(Context, Vals, isFunctionLocal);
 
   // Cache the operand hash.
@@ -275,7 +278,7 @@ MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals) {
 
 MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
   MDNode *N =
-    (MDNode *)malloc(sizeof(MDNode)+Vals.size()*sizeof(MDNodeOperand));
+    (MDNode *)malloc(sizeof(MDNode) + Vals.size() * sizeof(MDNodeOperand));
   N = new (N) MDNode(Context, Vals, FL_No);
   N->setValueSubclassData(N->getSubclassDataFromValue() |
                           NotUniquedBit);
