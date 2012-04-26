@@ -638,8 +638,13 @@ llvm::Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
        ++Active) 
   {
     switch(Active->Kind) {
-    case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
     case ActiveTemplateInstantiation::TemplateInstantiation:
+      // An instantiation of an alias template may or may not be a SFINAE
+      // context, depending on what else is on the stack.
+      if (isa<TypeAliasTemplateDecl>(reinterpret_cast<Decl *>(Active->Entity)))
+        break;
+      // Fall through.
+    case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
     case ActiveTemplateInstantiation::ExceptionSpecInstantiation:
       // This is a template instantiation, so there is no SFINAE.
       return llvm::Optional<TemplateDeductionInfo *>();

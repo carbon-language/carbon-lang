@@ -145,3 +145,30 @@ namespace Curried {
   template<typename T, typename U> struct S;
   template<typename T> template<typename U> using SS = S<T, U>; // expected-error {{extraneous template parameter list in alias template declaration}}
 }
+
+// PR12647
+namespace SFINAE {
+  template<bool> struct enable_if; // expected-note 2{{here}}
+  template<> struct enable_if<true> { using type = void; };
+
+  template<typename T> struct is_enum { static constexpr bool value = __is_enum(T); };
+
+  template<typename T> using EnableIf = typename enable_if<T::value>::type; // expected-error {{undefined template}}
+  template<typename T> using DisableIf = typename enable_if<!T::value>::type; // expected-error {{undefined template}}
+
+  template<typename T> EnableIf<is_enum<T>> f();
+  template<typename T> DisableIf<is_enum<T>> f();
+
+  enum E { e };
+
+  int main() {
+    f<int>();
+    f<E>();
+  }
+
+  template<typename T, typename U = EnableIf<is_enum<T>>> struct fail1 {}; // expected-note {{here}}
+  template<typename T> struct fail2 : DisableIf<is_enum<T>> {}; // expected-note {{here}}
+
+  fail1<int> f1; // expected-note {{here}}
+  fail2<E> f2; // expected-note {{here}}
+}
