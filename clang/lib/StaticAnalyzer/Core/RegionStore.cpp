@@ -1274,7 +1274,15 @@ SVal RegionStoreManager::getBindingForFieldOrElementCommon(Store store,
   // At this point we have already checked in either getBindingForElement or
   // getBindingForField if 'R' has a direct binding.
   RegionBindings B = GetRegionBindings(store);
+
+  // Lazy binding?
+  Store lazyBindingStore = NULL;
+  const MemRegion *lazyBindingRegion = NULL;
+  llvm::tie(lazyBindingStore, lazyBindingRegion) = GetLazyBinding(B, R, R);
   
+  if (lazyBindingRegion)
+    return getLazyBinding(lazyBindingRegion, lazyBindingStore);
+
   // Record whether or not we see a symbolic index.  That can completely
   // be out of scope of our lookup.
   bool hasSymbolicIndex = false;
@@ -1298,14 +1306,6 @@ SVal RegionStoreManager::getBindingForFieldOrElementCommon(Store store,
     }
     break;
   }
-
-  // Lazy binding?
-  Store lazyBindingStore = NULL;
-  const MemRegion *lazyBindingRegion = NULL;
-  llvm::tie(lazyBindingStore, lazyBindingRegion) = GetLazyBinding(B, R, R);
-
-  if (lazyBindingRegion)
-    return getLazyBinding(lazyBindingRegion, lazyBindingStore);
 
   if (R->hasStackNonParametersStorage()) {
     if (isa<ElementRegion>(R)) {

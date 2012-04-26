@@ -760,6 +760,22 @@ void radar10978247_positive(int myValueSize) {
     return;
 }
 
+// <rdar://problem/11269741> Previously this triggered a false positive
+// because malloc() is known to return uninitialized memory and the binding
+// of 'o' to 'p->n' was not getting propertly handled.  Now we report a leak.
+struct rdar11269741_a_t {
+  struct rdar11269741_b_t {
+    int m;
+  } n;
+};
+
+int rdar11269741(struct rdar11269741_b_t o)
+{
+  struct rdar11269741_a_t *p = (struct rdar11269741_a_t *) malloc(sizeof(*p));
+  p->n = o;
+  return p->n.m; // expected-warning {{leak}}
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 
