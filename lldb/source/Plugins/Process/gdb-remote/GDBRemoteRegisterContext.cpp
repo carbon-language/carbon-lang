@@ -362,16 +362,12 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
             ProcessSP process_sp (m_thread.GetProcess());
             if (thread_suffix_supported || static_cast<ProcessGDBRemote *>(process_sp.get())->GetGDBRemote().SetCurrentThread(m_thread.GetID()))
             {
-                uint32_t offset, end_offset;
                 StreamString packet;
                 StringExtractorGDBRemote response;
                 if (m_read_all_at_once)
                 {
                     // Set all registers in one packet
                     packet.PutChar ('G');
-                    offset = 0;
-                    end_offset = m_reg_data.GetByteSize();
-
                     packet.PutBytesAsRawHex8 (m_reg_data.GetDataStart(),
                                               m_reg_data.GetByteSize(),
                                               lldb::endian::InlHostByteOrder(),
