@@ -444,7 +444,7 @@ static bool IsNoThrow(InstructionClass Class) {
          Class == IC_AutoreleasepoolPop;
 }
 
-/// EraseInstruction - Erase the given instruction. ObjC calls return their
+/// EraseInstruction - Erase the given instruction. Many ObjC calls return their
 /// argument verbatim, so if it's such a call and the return value has users,
 /// replace them with the argument value.
 static void EraseInstruction(Instruction *CI) {
@@ -692,7 +692,7 @@ namespace {
     /// specified pass info.
     virtual void *getAdjustedAnalysisPointer(const void *PI) {
       if (PI == &AliasAnalysis::ID)
-        return (AliasAnalysis*)this;
+        return static_cast<AliasAnalysis *>(this);
       return this;
     }
 
@@ -922,8 +922,8 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnModule(Module &M);
 
-    bool MayAutorelease(CallSite CS, unsigned Depth = 0);
-    bool OptimizeBB(BasicBlock *BB);
+    static bool MayAutorelease(ImmutableCallSite CS, unsigned Depth = 0);
+    static bool OptimizeBB(BasicBlock *BB);
 
   public:
     static char ID;
@@ -949,15 +949,16 @@ void ObjCARCAPElim::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// MayAutorelease - Interprocedurally determine if calls made by the
 /// given call site can possibly produce autoreleases.
-bool ObjCARCAPElim::MayAutorelease(CallSite CS, unsigned Depth) {
-  if (Function *Callee = CS.getCalledFunction()) {
+bool ObjCARCAPElim::MayAutorelease(ImmutableCallSite CS, unsigned Depth) {
+  if (const Function *Callee = CS.getCalledFunction()) {
     if (Callee->isDeclaration() || Callee->mayBeOverridden())
       return true;
-    for (Function::iterator I = Callee->begin(), E = Callee->end();
+    for (Function::const_iterator I = Callee->begin(), E = Callee->end();
          I != E; ++I) {
-      BasicBlock *BB = I;
-      for (BasicBlock::iterator J = BB->begin(), F = BB->end(); J != F; ++J)
-        if (CallSite JCS = CallSite(J))
+      const BasicBlock *BB = I;
+      for (BasicBlock::const_iterator J = BB->begin(), F = BB->end();
+           J != F; ++J)
+        if (ImmutableCallSite JCS = ImmutableCallSite(J))
           // This recursion depth limit is arbitrary. It's just great
           // enough to cover known interesting testcases.
           if (Depth < 3 &&
@@ -992,7 +993,7 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
       Push = 0;
       break;
     case IC_CallOrUser:
-      if (MayAutorelease(CallSite(Inst)))
+      if (MayAutorelease(ImmutableCallSite(Inst)))
         Push = 0;
       break;
     default:
@@ -1094,7 +1095,6 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
 // TODO: Delete release+retain pairs (rare).
 
 #include "llvm/GlobalAlias.h"
-#include "llvm/Constants.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CFG.h"
@@ -1148,22 +1148,13 @@ bool ProvenanceAnalysis::relatedSelect(const SelectInst *A, const Value *B) {
   // If the values are Selects with the same condition, we can do a more precise
   // check: just check for relations between the values on corresponding arms.
   if (const SelectInst *SB = dyn_cast<SelectInst>(B))
-    if (A->getCondition() == SB->getCondition()) {
-      if (related(A->getTrueValue(), SB->getTrueValue()))
-        return true;
-      if (related(A->getFalseValue(), SB->getFalseValue()))
-        return true;
-      return false;
-    }
+    if (A->getCondition() == SB->getCondition())
+      return related(A->getTrueValue(), SB->getTrueValue()) ||
+             related(A->getFalseValue(), SB->getFalseValue());
 
   // Check both arms of the Select node individually.
-  if (related(A->getTrueValue(), B))
-    return true;
-  if (related(A->getFalseValue(), B))
-    return true;
-
-  // The arms both checked out.
-  return false;
+  return related(A->getTrueValue(), B) ||
+         related(A->getFalseValue(), B);
 }
 
 bool ProvenanceAnalysis::relatedPHI(const PHINode *A, const Value *B) {
@@ -1594,7 +1585,7 @@ namespace {
     }
 
     // Specialized CFG utilities.
-    typedef SmallVectorImpl<BasicBlock *>::iterator edge_iterator;
+    typedef SmallVectorImpl<BasicBlock *>::const_iterator edge_iterator;
     edge_iterator pred_begin() { return Preds.begin(); }
     edge_iterator pred_end() { return Preds.end(); }
     edge_iterator succ_begin() { return Succs.begin(); }
@@ -2171,13 +2162,13 @@ static bool isNoopInstruction(const Instruction *I) {
 /// objc_retainAutoreleasedReturnValue if the operand is a return value.
 void
 ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
-  CallSite CS(GetObjCArg(Retain));
-  Instruction *Call = CS.getInstruction();
+  ImmutableCallSite CS(GetObjCArg(Retain));
+  const Instruction *Call = CS.getInstruction();
   if (!Call) return;
   if (Call->getParent() != Retain->getParent()) return;
 
   // Check that the call is next to the retain.
-  BasicBlock::iterator I = Call;
+  BasicBlock::const_iterator I = Call;
   ++I;
   while (isNoopInstruction(I)) ++I;
   if (&*I != Retain)
@@ -2190,25 +2181,24 @@ ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
 }
 
 /// OptimizeRetainRVCall - Turn objc_retainAutoreleasedReturnValue into
-/// objc_retain if the operand is not a return value.  Or, if it can be
-/// paired with an objc_autoreleaseReturnValue, delete the pair and
-/// return true.
+/// objc_retain if the operand is not a return value.  Or, if it can be paired
+/// with an objc_autoreleaseReturnValue, delete the pair and return true.
 bool
 ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
   // Check for the argument being from an immediately preceding call or invoke.
-  Value *Arg = GetObjCArg(RetainRV);
-  CallSite CS(Arg);
-  if (Instruction *Call = CS.getInstruction()) {
+  const Value *Arg = GetObjCArg(RetainRV);
+  ImmutableCallSite CS(Arg);
+  if (const Instruction *Call = CS.getInstruction()) {
     if (Call->getParent() == RetainRV->getParent()) {
-      BasicBlock::iterator I = Call;
+      BasicBlock::const_iterator I = Call;
       ++I;
       while (isNoopInstruction(I)) ++I;
       if (&*I == RetainRV)
         return false;
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
+    } else if (const InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       BasicBlock *RetainRVParent = RetainRV->getParent();
       if (II->getNormalDest() == RetainRVParent) {
-        BasicBlock::iterator I = RetainRVParent->begin();
+        BasicBlock::const_iterator I = RetainRVParent->begin();
         while (isNoopInstruction(I)) ++I;
         if (&*I == RetainRV)
           return false;
@@ -2518,13 +2508,14 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
         bool SuccSRRIKnownSafe = false;
-        // If VisitBottomUp has visited this successor, take what we know about it.
-        DenseMap<const BasicBlock *, BBState>::iterator BBI = BBStates.find(*SI);
-        if (BBI != BBStates.end()) {
-          const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
-          SuccSSeq = SuccS.GetSeq();
-          SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
-        }
+        // If VisitBottomUp has pointer information for this successor, take what we
+        // know about it.
+        DenseMap<const BasicBlock *, BBState>::iterator BBI =
+          BBStates.find(*SI);
+        assert(BBI != BBStates.end());
+        const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
+        SuccSSeq = SuccS.GetSeq();
+        SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
         switch (SuccSSeq) {
         case S_None:
         case S_CanRelease: {
@@ -2571,13 +2562,14 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
         bool SuccSRRIKnownSafe = false;
-        // If VisitBottomUp has visited this successor, take what we know about it.
-        DenseMap<const BasicBlock *, BBState>::iterator BBI = BBStates.find(*SI);
-        if (BBI != BBStates.end()) {
-          const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
-          SuccSSeq = SuccS.GetSeq();
-          SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
-        }
+        // If VisitBottomUp has pointer information for this successor, take what we
+        // know about it.
+        DenseMap<const BasicBlock *, BBState>::iterator BBI =
+          BBStates.find(*SI);
+        assert(BBI != BBStates.end());
+        const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
+        SuccSSeq = SuccS.GetSeq();
+        SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
         switch (SuccSSeq) {
         case S_None: {
           if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
@@ -2800,16 +2792,14 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
     NestingDetected |= VisitInstructionBottomUp(Inst, BB, Retains, MyStates);
   }
 
-  // If there's a predecessor with an invoke, visit the invoke as
-  // if it were part of this block, since we can't insert code after
-  // an invoke in its own block, and we don't want to split critical
-  // edges.
+  // If there's a predecessor with an invoke, visit the invoke as if it were
+  // part of this block, since we can't insert code after an invoke in its own
+  // block, and we don't want to split critical edges.
   for (BBState::edge_iterator PI(MyStates.pred_begin()),
        PE(MyStates.pred_end()); PI != PE; ++PI) {
     BasicBlock *Pred = *PI;
-    TerminatorInst *PredTI = cast<TerminatorInst>(&Pred->back());
-    if (isa<InvokeInst>(PredTI))
-      NestingDetected |= VisitInstructionBottomUp(PredTI, BB, Retains, MyStates);
+    if (InvokeInst *II = dyn_cast<InvokeInst>(&Pred->back()))
+      NestingDetected |= VisitInstructionBottomUp(II, BB, Retains, MyStates);
   }
 
   return NestingDetected;
@@ -2851,8 +2841,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
       S.ResetSequenceProgress(S_Retain);
       S.RRI.IsRetainBlock = Class == IC_RetainBlock;
-      // Don't check S.IsKnownIncremented() here because it's not
-      // sufficient.
+      // Don't check S.IsKnownIncremented() here because it's not sufficient.
       S.RRI.KnownSafe = S.IsKnownNested();
       S.RRI.Calls.insert(Inst);
     }
@@ -3052,7 +3041,7 @@ ComputePostOrders(Function &F,
     if (!MyStates.isExit())
       continue;
 
-    BBStates[ExitBB].SetAsExit();
+    MyStates.SetAsExit();
 
     PredStack.push_back(std::make_pair(ExitBB, MyStates.pred_begin()));
     Visited.insert(ExitBB);
@@ -3498,7 +3487,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     if (AllocaInst *Alloca = dyn_cast<AllocaInst>(Arg)) {
       for (Value::use_iterator UI = Alloca->use_begin(),
            UE = Alloca->use_end(); UI != UE; ++UI) {
-        Instruction *UserInst = cast<Instruction>(*UI);
+        const Instruction *UserInst = cast<Instruction>(*UI);
         switch (GetBasicInstructionClass(UserInst)) {
         case IC_InitWeak:
         case IC_StoreWeak:
@@ -3673,7 +3662,7 @@ bool ObjCARCOpt::doInitialization(Module &M) {
 
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release
-  // calls finalizers.
+  // calls finalizers which can have arbitrary side effects.
 
   // These are initialized lazily.
   RetainRVCallee = 0;
@@ -3875,8 +3864,7 @@ Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
   return RetainAutoreleaseRVCallee;
 }
 
-/// ContractAutorelease - Merge an autorelease with a retain into a fused
-/// call.
+/// ContractAutorelease - Merge an autorelease with a retain into a fused call.
 bool
 ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
                                      InstructionClass Class,
@@ -4143,8 +4131,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
             // While we're here, rewrite all edges for this PHI, rather
             // than just one use at a time, to minimize the number of
             // bitcasts we emit.
-            for (unsigned i = 0, e = PHI->getNumIncomingValues();
-                 i != e; ++i)
+            for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i)
               if (PHI->getIncomingBlock(i) == BB) {
                 // Keep the UI iterator valid.
                 if (&PHI->getOperandUse(
@@ -4162,8 +4149,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         }
       }
 
-      // If Arg is a no-op casted pointer, strip one level of casts and
-      // iterate.
+      // If Arg is a no-op casted pointer, strip one level of casts and iterate.
       if (const BitCastInst *BI = dyn_cast<BitCastInst>(Arg))
         Arg = BI->getOperand(0);
       else if (isa<GEPOperator>(Arg) &&
