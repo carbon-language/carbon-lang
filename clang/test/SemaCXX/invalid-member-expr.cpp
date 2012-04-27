@@ -37,3 +37,34 @@ namespace test3 {
     string::iterator i = s.foo(); // expected-error {{no member named 'foo'}}
   }
 }
+
+
+// Make sure we don't crash.
+namespace rdar11293995 {
+
+struct Length {
+  explicit Length(PassRefPtr<CalculationValue>); // expected-error {{unknown type name}} \
+                    expected-error {{expected ')'}} \
+                    expected-note {{to match this '('}}
+};
+
+struct LengthSize {
+    Length m_width;
+    Length m_height;
+};
+
+enum EFillSizeType { Contain, Cover, SizeLength, SizeNone };
+
+struct FillSize {
+    EFillSizeType type;
+    LengthSize size;
+};
+
+class FillLayer {
+public:
+    void setSize(FillSize f) { m_sizeType = f.type;}
+private:
+    unsigned m_sizeType : 2;
+};
+
+}
