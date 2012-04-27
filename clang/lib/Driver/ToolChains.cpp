@@ -886,7 +886,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       DAL->AddJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ), "core2");
 
   // Add the arch options based on the particular spelling of -arch, to match
-  // how the driver driver works.
+  // how the driver works.
   if (BoundArch) {
     StringRef Name = BoundArch;
     const Option *MCpu = Opts.getOption(options::OPT_mcpu_EQ);
