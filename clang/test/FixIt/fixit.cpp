@@ -211,7 +211,7 @@ class Foo {
  public:
   enum Bar { X, Y };
   void SetBar(Bar bar);
-  Bar Bar(); // expected-note 2 {{non-type 'Bar' shadowing enum 'Bar' declared here}}
+  Bar Bar(); // expected-note 2 {{enum 'Bar' is hidden by a non-type declaration of 'Bar' here}}
  private:
   Bar bar_; // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}
 };

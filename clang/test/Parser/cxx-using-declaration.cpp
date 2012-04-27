@@ -51,7 +51,7 @@ namespace foo {
   class Bar {};
 }
 
-void Bar(int); // expected-note{{non-type 'Bar' shadowing class 'Bar' declared here}}
+void Bar(int); // expected-note{{class 'Bar' is hidden by a non-type declaration of 'Bar' here}}
 using foo::Bar;
 
 void ambiguity() {

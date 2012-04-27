@@ -1683,7 +1683,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       if (Actions.LookupParsedName(R, getCurScope(), SS)) {
         for (LookupResult::iterator I = R.begin(), IEnd = R.end();
              I != IEnd; ++I)
-          Diag((*I)->getLocation(), diag::note_decl_shadowing_tag_type)
+          Diag((*I)->getLocation(), diag::note_decl_hiding_tag_type)
             << TokenName << TagName;
       }
 
