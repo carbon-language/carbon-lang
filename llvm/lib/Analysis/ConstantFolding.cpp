@@ -788,10 +788,6 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I,
       CommonValue = C;
     }
 
-    // Fold the PHI's operands.
-    if (ConstantExpr *NewCE = dyn_cast<ConstantExpr>(CommonValue))
-      CommonValue = ConstantFoldConstantExpression(NewCE, TD, TLI);
-
     // If we reach here, all incoming values are the same constant or undef.
     return CommonValue ? CommonValue : UndefValue::get(PN->getType());
   }
@@ -799,17 +795,11 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I,
   // Scan the operand list, checking to see if they are all constants, if so,
   // hand off to ConstantFoldInstOperands.
   SmallVector<Constant*, 8> Ops;
-  for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
-    Constant *Op = dyn_cast<Constant>(*i);
-    if (!Op)
+  for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+    if (Constant *Op = dyn_cast<Constant>(*i))
+      Ops.push_back(Op);
+    else
       return 0;  // All operands not constant!
-
-    // Fold the Instruction's operands.
-    if (ConstantExpr *NewCE = dyn_cast<ConstantExpr>(Op))
-      Op = ConstantFoldConstantExpression(NewCE, TD, TLI);
-
-    Ops.push_back(Op);
-  }
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(), Ops[0], Ops[1],
