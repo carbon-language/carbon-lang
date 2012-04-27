@@ -59,6 +59,11 @@ static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
 static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 
+// Maximum allowed recursion depth.
+static cl::opt<int>
+MaxRecurseDepth("max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
+                cl::desc("Max recurse depth (default = 1000)"));
+
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
 //===----------------------------------------------------------------------===//
@@ -647,7 +652,11 @@ void GVN::dump(DenseMap<uint32_t, Value*>& d) {
 ///   3) we are speculating for this block and have used that to speculate for
 ///      other blocks.
 static bool IsValueFullyAvailableInBlock(BasicBlock *BB,
-                            DenseMap<BasicBlock*, char> &FullyAvailableBlocks) {
+                            DenseMap<BasicBlock*, char> &FullyAvailableBlocks,
+                            uint32_t RecurseDepth) {
+  if (RecurseDepth > MaxRecurseDepth)
+    return false;
+
   // Optimistically assume that the block is fully available and check to see
   // if we already know about this block in one lookup.
   std::pair<DenseMap<BasicBlock*, char>::iterator, char> IV =
@@ -673,7 +682,7 @@ static bool IsValueFullyAvailableInBlock(BasicBlock *BB,
     // If the value isn't fully available in one of our predecessors, then it
     // isn't fully available in this block either.  Undo our previous
     // optimistic assumption and bail out.
-    if (!IsValueFullyAvailableInBlock(*PI, FullyAvailableBlocks))
+    if (!IsValueFullyAvailableInBlock(*PI, FullyAvailableBlocks,RecurseDepth+1))
       goto SpeculationFailure;
 
   return true;
@@ -1570,7 +1579,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB);
        PI != E; ++PI) {
     BasicBlock *Pred = *PI;
-    if (IsValueFullyAvailableInBlock(Pred, FullyAvailableBlocks)) {
+    if (IsValueFullyAvailableInBlock(Pred, FullyAvailableBlocks, 0)) {
       continue;
     }
     PredLoads[Pred] = 0;
