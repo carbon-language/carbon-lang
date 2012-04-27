@@ -1318,21 +1318,45 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                                                  &did_create_module);
         }
     }
+    
+    if (!module_sp)
+    {
+        // If we have a UUID, we can check our global shared module list in case
+        // we already have it. If we don't have a valid UUID, then we can't since
+        // the path in "module_spec" will be a platform path, and we will need to
+        // let the platform find that file. For example, we could be asking for
+        // "/usr/lib/dyld" and if we do not have a UUID, we don't want to pick
+        // the local copy of "/usr/lib/dyld" since our platform could be a remote
+        // platform that has its own "/usr/lib/dyld" in an SDK or in a local file
+        // cache.
+        if (module_spec.GetUUID().IsValid())
+        {
+            // We have a UUID, it is OK to check the global module list...
+            error = ModuleList::GetSharedModule (module_spec,
+                                                 module_sp, 
+                                                 &GetExecutableSearchPaths(),
+                                                 &old_module_sp, 
+                                                 &did_create_module);
+        }
 
-    // The platform is responsible for finding and caching an appropriate
-    // module in the shared module cache.
-    if (m_platform_sp)
-    {
-        FileSpec platform_file_spec;        
-        error = m_platform_sp->GetSharedModule (module_spec, 
-                                                module_sp, 
-                                                &GetExecutableSearchPaths(),
-                                                &old_module_sp, 
-                                                &did_create_module);
-    }
-    else
-    {
-        error.SetErrorString("no platform is currently set");
+        if (!module_sp)
+        {
+            // The platform is responsible for finding and caching an appropriate
+            // module in the shared module cache.
+            if (m_platform_sp)
+            {
+                FileSpec platform_file_spec;        
+                error = m_platform_sp->GetSharedModule (module_spec, 
+                                                        module_sp, 
+                                                        &GetExecutableSearchPaths(),
+                                                        &old_module_sp, 
+                                                        &did_create_module);
+            }
+            else
+            {
+                error.SetErrorString("no platform is currently set");
+            }
+        }
     }
 
     // If a module hasn't been found yet, use the unmodified path.
