@@ -67,7 +67,7 @@ static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
   EVT VT = Vec.getValueType();
   assert(VT.getSizeInBits() == 256 && "Unexpected vector size!");
   EVT ElVT = VT.getVectorElementType();
-  int Factor = VT.getSizeInBits()/128;
+  unsigned Factor = VT.getSizeInBits()/128;
   EVT ResultVT = EVT::getVectorVT(*DAG.getContext(), ElVT,
                                   VT.getVectorNumElements()/Factor);
 
@@ -4793,7 +4793,7 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
                         Ptr,DAG.getConstant(StartOffset, Ptr.getValueType()));
 
     int EltNo = (Offset - StartOffset) >> 2;
-    int NumElems = VT.getVectorNumElements();
+    unsigned NumElems = VT.getVectorNumElements();
 
     EVT NVT = EVT::getVectorVT(*DAG.getContext(), PVT, NumElems);
     SDValue V1 = DAG.getLoad(NVT, dl, Chain, Ptr,
@@ -4801,7 +4801,7 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
                              false, false, false, 0);
 
     SmallVector<int, 8> Mask;
-    for (int i = 0; i < NumElems; ++i)
+    for (unsigned i = 0; i != NumElems; ++i)
       Mask.push_back(EltNo);
 
     return DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), &Mask[0]);
@@ -8373,7 +8373,7 @@ static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
   assert(VT.getSizeInBits() == 256 && Op.getOpcode() == ISD::SETCC &&
          "Unsupported value type for operation");
 
-  int NumElems = VT.getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
   DebugLoc dl = Op.getDebugLoc();
   SDValue CC = Op.getOperand(2);
 
@@ -10177,7 +10177,7 @@ static SDValue Lower256IntArith(SDValue Op, SelectionDAG &DAG) {
   assert(VT.getSizeInBits() == 256 && VT.isInteger() &&
          "Unsupported value type for operation");
 
-  int NumElems = VT.getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
   DebugLoc dl = Op.getDebugLoc();
 
   // Extract the LHS vectors
@@ -10583,7 +10583,7 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
         return SDValue();
       if (!Subtarget->hasAVX2()) {
         // needs to be split
-        int NumElems = VT.getVectorNumElements();
+        unsigned NumElems = VT.getVectorNumElements();
 
         // Extract the LHS vectors
         SDValue LHS = Op.getOperand(0);
@@ -12893,10 +12893,10 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
 /// inserting the result into the low part of a new 256-bit vector
 static bool isShuffleHigh128VectorInsertLow(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
-  int NumElems = VT.getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
 
   // vector_shuffle <4, 5, 6, 7, u, u, u, u> or <2, 3, u, u>
-  for (int i = 0, j = NumElems/2; i < NumElems/2; ++i, ++j)
+  for (unsigned i = 0, j = NumElems/2; i != NumElems/2; ++i, ++j)
     if (!isUndefOrEqual(SVOp->getMaskElt(i), j) ||
         SVOp->getMaskElt(j) >= 0)
       return false;
@@ -12909,10 +12909,10 @@ static bool isShuffleHigh128VectorInsertLow(ShuffleVectorSDNode *SVOp) {
 /// inserting the result into the high part of a new 256-bit vector
 static bool isShuffleLow128VectorInsertHigh(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
-  int NumElems = VT.getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
 
   // vector_shuffle <u, u, u, u, 0, 1, 2, 3> or <u, u, 0, 1>
-  for (int i = NumElems/2, j = 0; i < NumElems; ++i, ++j)
+  for (unsigned i = NumElems/2, j = 0; i != NumElems; ++i, ++j)
     if (!isUndefOrEqual(SVOp->getMaskElt(i), j) ||
         SVOp->getMaskElt(j) >= 0)
       return false;
@@ -12929,7 +12929,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   EVT VT = SVOp->getValueType(0);
-  int NumElems = VT.getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
 
   if (V1.getOpcode() == ISD::CONCAT_VECTORS &&
       V2.getOpcode() == ISD::CONCAT_VECTORS) {
@@ -12954,7 +12954,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
     // To match the shuffle mask, the first half of the mask should
     // be exactly the first vector, and all the rest a splat with the
     // first element of the second one.
-    for (int i = 0; i < NumElems/2; ++i)
+    for (unsigned i = 0; i != NumElems/2; ++i)
       if (!isUndefOrEqual(SVOp->getMaskElt(i), i) ||
           !isUndefOrEqual(SVOp->getMaskElt(i+NumElems/2), NumElems))
         return SDValue();
