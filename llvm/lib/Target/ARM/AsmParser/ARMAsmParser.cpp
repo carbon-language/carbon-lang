@@ -2674,7 +2674,7 @@ parseITCondCode(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Identifier))
     return MatchOperand_NoMatch;
-  unsigned CC = StringSwitch<unsigned>(Tok.getString())
+  unsigned CC = StringSwitch<unsigned>(Tok.getString().lower())
     .Case("eq", ARMCC::EQ)
     .Case("ne", ARMCC::NE)
     .Case("hs", ARMCC::HS)

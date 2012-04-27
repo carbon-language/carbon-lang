@@ -509,6 +509,19 @@ _func:
 @ CHECK: subne	r5, r6, r7              @ encoding: [0xf5,0x1b]
 @ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
 
+@ Should also work for UPPER CASE condition codes.
+
+        ITEET EQ
+        ADDEQ R0, R1, R2
+        NOPNE
+        SUBNE R5, R6, R7
+        ADDEQ R1, R2, #4
+
+@ CHECK: iteet	eq                      @ encoding: [0x0d,0xbf]
+@ CHECK: addeq	r0, r1, r2              @ encoding: [0x88,0x18]
+@ CHECK: nopne                          @ encoding: [0x00,0xbf]
+@ CHECK: subne	r5, r6, r7              @ encoding: [0xf5,0x1b]
+@ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
 
 @------------------------------------------------------------------------------
 @ LDC{L}/LDC2{L}
