@@ -612,6 +612,12 @@ namespace {
         && (T1->isFPOrFPVectorTy() || T2->isFPOrFPVectorTy()))
       return false;
 
+    // Don't vectorize target-specific types.
+    if (T1->isX86_FP80Ty() || T1->isPPC_FP128Ty() || T1->isX86_MMXTy())
+      return false;
+    if (T2->isX86_FP80Ty() || T2->isPPC_FP128Ty() || T2->isX86_MMXTy())
+      return false;
+
     if ((!Config.VectorizePointers || TD == 0) &&
         (T1->getScalarType()->isPointerTy() ||
          T2->getScalarType()->isPointerTy()))
