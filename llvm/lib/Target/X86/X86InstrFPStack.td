@@ -27,6 +27,7 @@ def SDTX86Fst       : SDTypeProfile<0, 3, [SDTCisFP<0>,
                                            SDTCisVT<2, OtherVT>]>;
 def SDTX86Fild      : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisPtrTy<1>,
                                            SDTCisVT<2, OtherVT>]>;
+def SDTX86Fnstsw    : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
 def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
 def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
@@ -41,6 +42,7 @@ def X86fild         : SDNode<"X86ISD::FILD", SDTX86Fild,
 def X86fildflag     : SDNode<"X86ISD::FILD_FLAG", SDTX86Fild,
                              [SDNPHasChain, SDNPOutGlue, SDNPMayLoad,
                               SDNPMemOperand]>;
+def X86fp_stsw      : SDNode<"X86ISD::FNSTSW16r", SDTX86Fnstsw>;
 def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
                              [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
@@ -203,6 +205,7 @@ def _FI32m  : FPI<0xDA, fp, (outs), (ins i32mem:$src),
 }
 }
 
+let Defs = [FPSW] in {
 defm ADD : FPBinary_rr<fadd>;
 defm SUB : FPBinary_rr<fsub>;
 defm MUL : FPBinary_rr<fmul>;
@@ -213,6 +216,7 @@ defm SUBR: FPBinary<fsub ,MRM5m, "subr">;
 defm MUL : FPBinary<fmul, MRM1m, "mul">;
 defm DIV : FPBinary<fdiv, MRM6m, "div">;
 defm DIVR: FPBinary<fdiv, MRM7m, "divr">;
+}
 
 class FPST0rInst<bits<8> o, string asm>
   : FPI<o, AddRegFrm, (outs), (ins RST:$op), asm>, D8;
@@ -257,6 +261,7 @@ def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src), OneArgFPRW,
 def _F     : FPI<opcode, RawFrm, (outs), (ins), asmstring>, D9;
 }
 
+let Defs = [FPSW] in {
 defm CHS : FPUnary<fneg, 0xE0, "fchs">;
 defm ABS : FPUnary<fabs, 0xE1, "fabs">;
 defm SQRT: FPUnary<fsqrt,0xFA, "fsqrt">;
@@ -269,6 +274,7 @@ def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP, []>;
 def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP, []>;
 }
 def TST_F  : FPI<0xE4, RawFrm, (outs), (ins), "ftst">, D9;
+} // Defs = [FPSW]
 
 // Versions of FP instructions that take a single memory operand.  Added for the
 //   disassembler; remove as they are included with patterns elsewhere.
@@ -316,6 +322,7 @@ multiclass FPCMov<PatLeaf cc> {
                                         Requires<[HasCMov]>;
 }
 
+let Defs = [FPSW] in {
 let Uses = [EFLAGS], Constraints = "$src1 = $dst" in {
 defm CMOVB  : FPCMov<X86_COND_B>;
 defm CMOVBE : FPCMov<X86_COND_BE>;
@@ -492,15 +499,16 @@ def LD_F1 : FPI<0xE8, RawFrm, (outs), (ins), "fld1">, D9;
 
 
 // Floating point compares.
-let Defs = [EFLAGS] in {
 def UCOM_Fpr32 : FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
-                        []>;  // FPSW = cmp ST(0) with ST(i)
+                        [(set FPSW, (trunc (X86cmp RFP32:$lhs, RFP32:$rhs)))]>;
 def UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
-                        []>;  // FPSW = cmp ST(0) with ST(i)
+                        [(set FPSW, (trunc (X86cmp RFP64:$lhs, RFP64:$rhs)))]>;
 def UCOM_Fpr80 : FpI_  <(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
-                        []>;  // FPSW = cmp ST(0) with ST(i)
-                        
+                        [(set FPSW, (trunc (X86cmp RFP80:$lhs, RFP80:$rhs)))]>;
+} // Defs = [FPSW]
+
 // CC = ST(0) cmp ST(i)
+let Defs = [EFLAGS, FPSW] in {
 def UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
                   [(set EFLAGS, (X86cmp RFP32:$lhs, RFP32:$rhs))]>;
 def UCOM_FpIr64: FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
@@ -509,7 +517,7 @@ def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   [(set EFLAGS, (X86cmp RFP80:$lhs, RFP80:$rhs))]>;
 }
 
-let Defs = [EFLAGS], Uses = [ST0] in {
+let Defs = [FPSW], Uses = [ST0] in {
 def UCOM_Fr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
                     "fucom\t$reg">, DD;
@@ -519,7 +527,9 @@ def UCOM_FPr   : FPI<0xE8, AddRegFrm,    // FPSW = cmp ST(0) with ST(i), pop
 def UCOM_FPPr  : FPI<0xE9, RawFrm,       // cmp ST(0) with ST(1), pop, pop
                     (outs), (ins),
                     "fucompp">, DA;
+}
 
+let Defs = [EFLAGS, FPSW], Uses = [ST0] in {
 def UCOM_FIr   : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
                     "fucomi\t$reg">, DB;
@@ -528,15 +538,18 @@ def UCOM_FIPr  : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i), pop
                     "fucompi\t$reg">, DF;
 }
 
+let Defs = [EFLAGS, FPSW] in {
 def COM_FIr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
                   "fcomi\t$reg">, DB;
 def COM_FIPr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
                    "fcompi\t$reg">, DF;
+}
 
 // Floating point flag ops.
-let Defs = [AX] in
-def FNSTSW8r  : I<0xE0, RawFrm,                  // AX = fp flags
-                  (outs), (ins), "fnstsw %ax", []>, DF;
+let Defs = [AX], Uses = [FPSW] in
+def FNSTSW16r : I<0xE0, RawFrm,                  // AX = fp flags
+                  (outs), (ins), "fnstsw %ax",
+                  [(set AX, (X86fp_stsw FPSW))]>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
                   (outs), (ins i16mem:$dst), "fnstcw\t$dst",
@@ -547,12 +560,14 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
                   (outs), (ins i16mem:$dst), "fldcw\t$dst", []>;
 
 // FPU control instructions
+let Defs = [FPSW] in
 def FNINIT : I<0xE3, RawFrm, (outs), (ins), "fninit", []>, DB;
 def FFREE : FPI<0xC0, AddRegFrm, (outs), (ins RST:$reg),
                 "ffree\t$reg">, DD;
 
 // Clear exceptions
 
+let Defs = [FPSW] in
 def FNCLEX : I<0xE2, RawFrm, (outs), (ins), "fnclex", []>, DB;
 
 // Operandless floating-point instructions for the disassembler.

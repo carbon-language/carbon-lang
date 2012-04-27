@@ -315,6 +315,12 @@ namespace llvm {
       SFENCE,
       LFENCE,
 
+      // FNSTSW16r - Store FP status word into i16 register.
+      FNSTSW16r,
+
+      // SAHF - Store contents of %ah into %eflags.
+      SAHF,
+
       // ATOMADD64_DAG, ATOMSUB64_DAG, ATOMOR64_DAG, ATOMAND64_DAG,
       // ATOMXOR64_DAG, ATOMNAND64_DAG, ATOMSWAP64_DAG -
       // Atomic 64-bit binary operations.
@@ -909,6 +915,9 @@ namespace llvm {
     /// equivalent, for use with the given x86 condition code.
     SDValue EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
                     SelectionDAG &DAG) const;
+
+    /// Convert a comparison if required by the subtarget.
+    SDValue ConvertCmpIfNecessary(SDValue Cmp, SelectionDAG &DAG) const;
   };
 
   namespace X86 {

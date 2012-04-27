@@ -63,6 +63,8 @@ def SDTX86SetCC_C : SDTypeProfile<1, 2,
                                   [SDTCisInt<0>,
                                    SDTCisVT<1, i8>, SDTCisVT<2, i32>]>;
 
+def SDTX86sahf : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVT<1, i8>]>;
+
 def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>,
                                      SDTCisVT<2, i8>]>;
 def SDTX86caspair : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
@@ -130,6 +132,8 @@ def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
                         [SDNPHasChain]>;
 def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
 def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
+
+def X86sahf    : SDNode<"X86ISD::SAHF",     SDTX86sahf>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
@@ -1016,8 +1020,9 @@ def MOV8rm_NOREX : I<0x8A, MRMSrcMem,
 
 
 // Condition code ops, incl. set if equal/not equal/...
-let Defs = [EFLAGS], Uses = [AH], neverHasSideEffects = 1 in
-def SAHF     : I<0x9E, RawFrm, (outs),  (ins), "sahf", []>;  // flags = AH
+let Defs = [EFLAGS], Uses = [AH] in
+def SAHF     : I<0x9E, RawFrm, (outs),  (ins), "sahf",
+                 [(set EFLAGS, (X86sahf AH))]>;
 let Defs = [AH], Uses = [EFLAGS], neverHasSideEffects = 1 in
 def LAHF     : I<0x9F, RawFrm, (outs),  (ins), "lahf", []>;  // AH = flags
 
@@ -1774,9 +1779,9 @@ def : InstAlias<"fdivp %st(0), $op", (DIVR_FPrST0 RST:$op)>;
 def : InstAlias<"fdivrp %st(0), $op", (DIV_FPrST0 RST:$op)>;
 
 // We accept "fnstsw %eax" even though it only writes %ax.
-def : InstAlias<"fnstsw %eax", (FNSTSW8r)>;
-def : InstAlias<"fnstsw %al" , (FNSTSW8r)>;
-def : InstAlias<"fnstsw"     , (FNSTSW8r)>;
+def : InstAlias<"fnstsw %eax", (FNSTSW16r)>;
+def : InstAlias<"fnstsw %al" , (FNSTSW16r)>;
+def : InstAlias<"fnstsw"     , (FNSTSW16r)>;
 
 // lcall and ljmp aliases.  This seems to be an odd mapping in 64-bit mode, but
 // this is compatible with what GAS does.

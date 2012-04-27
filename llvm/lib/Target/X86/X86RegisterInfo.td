@@ -223,6 +223,9 @@ let Namespace = "X86" in {
   def ST6 : STRegister<"st(6)", [FP1]>, DwarfRegNum<[39, 18, 17]>;
   def ST7 : STRegister<"st(7)", [FP0]>, DwarfRegNum<[40, 19, 18]>;
 
+  // Floating-point status word
+  def FPSW : Register<"fpsw">;
+
   // Status flags register
   def EFLAGS : Register<"flags">;
 
@@ -469,6 +472,10 @@ def VR256 : RegisterClass<"X86", [v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
 
 // Status flags registers.
 def CCR : RegisterClass<"X86", [i32], 32, (add EFLAGS)> {
+  let CopyCost = -1;  // Don't allow copying of status registers.
+  let isAllocatable = 0;
+}
+def FPCCR : RegisterClass<"X86", [i16], 16, (add FPSW)> {
   let CopyCost = -1;  // Don't allow copying of status registers.
   let isAllocatable = 0;
 }
