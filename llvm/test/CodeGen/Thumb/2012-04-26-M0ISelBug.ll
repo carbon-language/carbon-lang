@@ -4,8 +4,8 @@
 
 define i32 @t(i32 %a) nounwind {
 ; CHECK: t:
-; CHECK: asrs r1, r0, #31
-; CHECK: eors r1, r0
+; CHECK: asrs [[REG1:(r[0-9]+)]], [[REG2:(r[0-9]+)]], #31
+; CHECK: eors [[REG1]], [[REG2]]
   %tmp0 = ashr i32 %a, 31
   %tmp1 = xor i32 %tmp0, %a
   ret i32 %tmp1
