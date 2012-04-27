@@ -363,8 +363,8 @@ def : tInstAlias<"sub${p} sp, sp, $imm",
                  (tSUBspi SP, t_imm0_508s4:$imm, pred:$p)>;
 
 // ADD <Rm>, sp
-def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPRsp:$sp), IIC_iALUr,
-                  "add", "\t$Rdn, $sp, $Rn", []>,
+def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPRsp:$sp, GPR:$Rn), IIC_iALUr,
+                    "add", "\t$Rdn, $sp, $Rn", []>,
               T1Special<{0,0,?,?}> {
   // A8.6.9 Encoding T1
   bits<4> Rdn;
