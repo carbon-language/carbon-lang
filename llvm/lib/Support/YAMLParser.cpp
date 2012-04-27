@@ -755,6 +755,8 @@ Token Scanner::getNext() {
 }
 
 StringRef::iterator Scanner::skip_nb_char(StringRef::iterator Position) {
+  if (Position == End)
+    return Position;
   // Check 7 bit c-printable - b-char.
   if (   *Position == 0x09
       || (*Position >= 0x20 && *Position <= 0x7E))
@@ -778,6 +780,8 @@ StringRef::iterator Scanner::skip_nb_char(StringRef::iterator Position) {
 }
 
 StringRef::iterator Scanner::skip_b_break(StringRef::iterator Position) {
+  if (Position == End)
+    return Position;
   if (*Position == 0x0D) {
     if (Position + 1 != End && *(Position + 1) == 0x0A)
       return Position + 2;
@@ -1211,7 +1215,9 @@ bool Scanner::scanFlowScalar(bool IsDoubleQuoted) {
         ++Current;
       // Repeat until the previous character was not a '\' or was an escaped
       // backslash.
-    } while (*(Current - 1) == '\\' && wasEscaped(Start + 1, Current));
+    } while (   Current != End
+             && *(Current - 1) == '\\'
+             && wasEscaped(Start + 1, Current));
   } else {
     skip(1);
     while (true) {
