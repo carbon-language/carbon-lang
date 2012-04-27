@@ -1,4 +1,4 @@
-; RUN: llc -asm-verbose=false -disable-branch-fold -disable-code-place -disable-tail-duplicate -march=x86-64 < %s | FileCheck %s
+; RUN: llc -asm-verbose=false -disable-branch-fold -disable-code-place -disable-tail-duplicate -march=x86-64 -mcpu=nehalem < %s | FileCheck %s
 ; rdar://7236213
 
 ; Xfailed now that scheduler 2-address hack is disabled a lea is generated.

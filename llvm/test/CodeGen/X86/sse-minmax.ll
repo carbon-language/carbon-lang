@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -promote-elements | FileCheck %s
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=UNSAFE %s
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=FINITE %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -join-physregs -promote-elements | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=UNSAFE %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -join-physregs -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=FINITE %s
 
 ; Some of these patterns can be matched as SSE min or max. Some of
 ; then can be matched provided that the operands are swapped.

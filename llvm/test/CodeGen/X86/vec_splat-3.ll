@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 -o %t
+; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=sse41 -o %t
 ; RUN: grep punpcklwd %t | count 4
 ; RUN: grep punpckhwd %t | count 4
 ; RUN: grep "pshufd" %t | count 8

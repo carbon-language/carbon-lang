@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 -stack-alignment=16 -join-physregs > %t
+; RUN: llc < %s -march=x86 -mattr=sse41 -mcpu=nehalem -stack-alignment=16 -join-physregs > %t
 ; RUN: grep pmul %t | count 12
 ; RUN: grep mov %t | count 11
 

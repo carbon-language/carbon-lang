@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -o %t
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=penryn -o %t
 ; RUN: grep pshufd %t | count 2
 
 define <4 x float> @test(float %a) nounwind {

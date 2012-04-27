@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=core2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=core2 | FileCheck %s
 ; RUN: llc -O0 < %s -march=x86 -mcpu=core2 | FileCheck %s --check-prefix=CHECK_O0
 
 define <4 x i32> @t00(<4 x i32>* %a0) nounwind ssp {

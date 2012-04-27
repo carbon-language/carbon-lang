@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -stats |& \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=penryn -stats |& \
 ; RUN:   grep {twoaddrinstr} | grep {Number of instructions aggressively commuted}
 ; rdar://6480363
 

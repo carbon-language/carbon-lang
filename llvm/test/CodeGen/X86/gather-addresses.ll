@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=x86_64-linux < %s | FileCheck %s
-; RUN: llc -mtriple=x86_64-win32 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -mcpu=nehalem < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-win32 -mcpu=nehalem < %s | FileCheck %s
 ; rdar://7398554
 
 ; When doing vector gather-scatter index calculation with 32-bit indices,

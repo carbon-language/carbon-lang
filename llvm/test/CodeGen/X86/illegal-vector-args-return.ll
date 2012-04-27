@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep {mulpd	%xmm3, %xmm1}
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep {mulpd	%xmm2, %xmm0}
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep {addps	%xmm3, %xmm1}
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep {addps	%xmm2, %xmm0}
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=nehalem | grep {mulpd	%xmm3, %xmm1}
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=nehalem | grep {mulpd	%xmm2, %xmm0}
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=nehalem | grep {addps	%xmm3, %xmm1}
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=nehalem | grep {addps	%xmm2, %xmm0}
 
 define <4 x double> @foo(<4 x double> %x, <4 x double> %z) {
   %y = fmul <4 x double> %x, %z

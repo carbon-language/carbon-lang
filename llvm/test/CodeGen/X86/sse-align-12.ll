@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem | FileCheck %s
 
 ; CHECK: a:
 ; CHECK: movdqu

@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+sse,-sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse
-; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse2
+; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=+sse,-sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse
+; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=+sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse2
 
 ; sse:  t1:
 ; sse2: t1:

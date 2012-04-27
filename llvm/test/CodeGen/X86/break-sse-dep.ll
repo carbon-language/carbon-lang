@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse2 | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse2 -mcpu=nehalem | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+sse2 -mcpu=nehalem | FileCheck %s
 
 define double @t1(float* nocapture %x) nounwind readonly ssp {
 entry:

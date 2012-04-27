@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=sse41 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=penryn -mattr=sse41 | FileCheck %s
 
 define <8 x i16> @shuf6(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 ; CHECK: pshufb

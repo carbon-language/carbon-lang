@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | grep pshufd | count 1
+; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=+sse2 | grep pshufd | count 1
 
 define void @test(<2 x i64>* %P, i8 %x) nounwind {
 	%tmp = insertelement <16 x i8> zeroinitializer, i8 %x, i32 0		; <<16 x i8>> [#uses=1]

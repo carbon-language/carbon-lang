@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i686-apple-darwin9 -mattr=sse41 | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=sse41 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=i686-apple-darwin9 -mattr=sse41 -mcpu=penryn | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=sse41 -mcpu=penryn | FileCheck %s -check-prefix=X64
 
 @g16 = external global i16
 
