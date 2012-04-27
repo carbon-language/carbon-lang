@@ -3017,7 +3017,7 @@ def t2DSB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
 
 def t2ISB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
                   "isb", "\t$opt",
-                  []>, Requires<[IsThumb2, HasDB]> {
+                  []>, Requires<[IsThumb, HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f6;
   let Inst{3-0} = opt;
@@ -3646,7 +3646,7 @@ def t2MRSsys_AR: T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
 // the A/R class (a full msr_mask).
 def t2MRS_M : T2I<(outs rGPR:$Rd), (ins msr_mask:$mask), NoItinerary,
                   "mrs", "\t$Rd, $mask", []>,
-              Requires<[IsThumb2,IsMClass]> {
+              Requires<[IsThumb,IsMClass]> {
   bits<4> Rd;
   bits<8> mask;
   let Inst{31-12} = 0b11110011111011111000;
@@ -3682,7 +3682,7 @@ def t2MSR_AR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
 // Move from ARM core register to Special Register
 def t2MSR_M : T2I<(outs), (ins msr_mask:$SYSm, rGPR:$Rn),
                   NoItinerary, "msr", "\t$SYSm, $Rn", []>,
-              Requires<[IsThumb2,IsMClass]> {
+              Requires<[IsThumb,IsMClass]> {
   bits<8> SYSm;
   bits<4> Rn;
   let Inst{31-21} = 0b11110011100;
@@ -4002,9 +4002,9 @@ def : t2InstAlias<"tst${p} $Rn, $Rm",
                   (t2TSTrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;
 
 // Memory barriers
-def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb2, HasDB]>;
-def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb2, HasDB]>;
-def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;
+def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb, HasDB]>;
+def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb, HasDB]>;
+def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb, HasDB]>;
 
 // Alias for LDR, LDRB, LDRH, LDRSB, and LDRSH without the ".w" optional
 // width specifier.

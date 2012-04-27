@@ -51,23 +51,32 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
       Idx = 6;
   }
 
+  bool NoCPU = CPU == "generic" || CPU.empty();
   std::string ARMArchFeature;
   if (Idx) {
     unsigned SubVer = TT[Idx];
     if (SubVer >= '7' && SubVer <= '9') {
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
-        // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureMClass
-        ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+mclass";
+        if (NoCPU)
+          // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureMClass
+          ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+mclass";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
       } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
-        // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
-        //       FeatureT2XtPk, FeatureMClass
-        ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk,+mclass";
+        if (NoCPU)
+          // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
+          //       FeatureT2XtPk, FeatureMClass
+          ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk,+mclass";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
       } else {
         // v7 CPUs have lots of different feature sets. If no CPU is specified,
         // then assume v7a (e.g. cortex-a8) feature set. Otherwise, return
         // the "minimum" feature set and use CPU string to figure out the exact
         // features.
-        if (CPU == "generic")
+        if (NoCPU)
           // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
           ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
         else
@@ -77,10 +86,13 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
     } else if (SubVer == '6') {
       if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
         ARMArchFeature = "+v6t2";
-      else if (Len >= Idx+2 && TT[Idx+1] == 'm')
-        // v6m: FeatureNoARM, FeatureMClass
-        ARMArchFeature = "+v6t2,+noarm,+mclass";
-      else
+      else if (Len >= Idx+2 && TT[Idx+1] == 'm') {
+        if (NoCPU)
+          // v6m: FeatureNoARM, FeatureMClass
+          ARMArchFeature = "+v6,+noarm,+mclass";
+        else
+          ARMArchFeature = "+v6";
+      } else
         ARMArchFeature = "+v6";
     } else if (SubVer == '5') {
       if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
