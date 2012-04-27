@@ -5538,7 +5538,7 @@ static void Write_ProtocolExprReferencedMetadata(ASTContext *Context,
                                                  std::string &Result) {
   // Also output .objc_protorefs$B section and its meta-data.
   if (Context->getLangOpts().MicrosoftExt)
-    Result += "__declspec(allocate(\".objc_protorefs$B\")) ";
+    Result += "static ";
   Result += "struct _protocol_t *";
   Result += "_OBJC_PROTOCOL_REFERENCE_$_";
   Result += PDecl->getNameAsString();
@@ -5628,7 +5628,6 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#pragma section(\".objc_imageinfo$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_nlclslist$B\", long, read, write)\n";
     Preamble += "#pragma section(\".objc_nlcatlist$B\", long, read, write)\n";
-    Preamble += "#pragma section(\".objc_protorefs$B\", long, read, write)\n";
     // These are generated but not necessary for functionality.
     Preamble += "#pragma section(\".cat_cls_meth$B\", long, read, write)\n";
     Preamble += "#pragma section(\".inst_meth$B\", long, read, write)\n";
