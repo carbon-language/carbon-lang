@@ -363,11 +363,12 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   size_t Granularity = 1 << MappingScale;
   if (TypeSize < 8 * Granularity) {
     // Addr & (Granularity - 1)
-    Value *Lower3Bits = IRB2.CreateAnd(
+    Value *LastAccessedByte = IRB2.CreateAnd(
         AddrLong, ConstantInt::get(IntptrTy, Granularity - 1));
     // (Addr & (Granularity - 1)) + size - 1
-    Value *LastAccessedByte = IRB2.CreateAdd(
-        Lower3Bits, ConstantInt::get(IntptrTy, TypeSize / 8 - 1));
+    if (TypeSize / 8 > 1)
+      LastAccessedByte = IRB2.CreateAdd(
+          LastAccessedByte, ConstantInt::get(IntptrTy, TypeSize / 8 - 1));
     // (uint8_t) ((Addr & (Granularity-1)) + size - 1)
     LastAccessedByte = IRB2.CreateIntCast(
         LastAccessedByte, IRB.getInt8Ty(), false);
