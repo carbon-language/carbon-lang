@@ -1347,11 +1347,13 @@ void Driver::BuildJobsForAction(Compilation &C,
   }
 
   if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
-    const ToolChain *TC = &C.getDefaultToolChain();
+    const ToolChain *TC;
     const char *ArchName = BAA->getArchName();
 
     if (ArchName)
       TC = &getToolChain(C.getArgs(), ArchName);
+    else
+      TC = &C.getDefaultToolChain();
 
     BuildJobsForAction(C, *BAA->begin(), TC, BAA->getArchName(),
                        AtTopLevel, LinkingOutput, Result);
