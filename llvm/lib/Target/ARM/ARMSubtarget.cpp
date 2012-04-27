@@ -103,7 +103,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   // After parsing Itineraries, set ItinData.IssueWidth.
   computeIssueWidth();
 
-  if (TT.find("eabi") != std::string::npos)
+  if ((TT.find("eabi") != std::string::npos) || (isTargetIOS() && isMClass()))
     // FIXME: We might want to separate AAPCS and EABI. Some systems, e.g.
     // Darwin-EABI conforms to AACPS but not the rest of EABI.
     TargetABI = ARM_ABI_AAPCS;
