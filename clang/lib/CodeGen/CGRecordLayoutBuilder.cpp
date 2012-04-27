@@ -721,7 +721,13 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
       llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
                               /*isVarArg=*/true);
     llvm::Type *VTableTy = FunctionType->getPointerTo();
-    
+
+    if (getTypeAlignment(VTableTy) > Alignment) {
+      // FIXME: Should we allow this to happen in Sema?
+      assert(!Packed && "Alignment is wrong even with packed struct!");
+      return false;
+    }
+
     assert(NextFieldOffset.isZero() &&
            "VTable pointer must come first!");
     AppendField(CharUnits::Zero(), VTableTy->getPointerTo());

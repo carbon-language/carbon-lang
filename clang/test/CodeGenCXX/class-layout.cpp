@@ -77,3 +77,17 @@ namespace Test6 {
   class E : public B {};
   E *e;
 }
+
+// <rdar://problem/11324125>: Make sure this doesn't crash.  (It's okay
+// if we start rejecting it at some point.)
+namespace Test7 {
+  #pragma pack (1)
+  class A {};
+  // CHECK: %"class.Test7::B" = type <{ i32 (...)**, %"class.Test7::A" }>
+  class B {
+     virtual ~B();
+     A a;
+  };
+  B* b;
+  #pragma pack ()
+}
