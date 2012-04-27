@@ -7214,9 +7214,7 @@ processInstruction(MCInst &Inst,
     // The mask bits for all but the first condition are represented as
     // the low bit of the condition code value implies 't'. We currently
     // always have 1 implies 't', so XOR toggle the bits if the low bit
-    // of the condition code is zero. The encoding also expects the low
-    // bit of the condition to be encoded as bit 4 of the mask operand,
-    // so mask that in if needed
+    // of the condition code is zero. 
     MCOperand &MO = Inst.getOperand(1);
     unsigned Mask = MO.getImm();
     unsigned OrigMask = Mask;
@@ -7225,8 +7223,7 @@ processInstruction(MCInst &Inst,
       assert(Mask && TZ <= 3 && "illegal IT mask value!");
       for (unsigned i = 3; i != TZ; --i)
         Mask ^= 1 << i;
-    } else
-      Mask |= 0x10;
+    }
     MO.setImm(Mask);
 
     // Set up the IT block state according to the IT instruction we just

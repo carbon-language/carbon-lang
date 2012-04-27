@@ -63,7 +63,7 @@ namespace {
       // fields in the IT instruction encoding.
       void setITState(char Firstcond, char Mask) {
         // (3 - the number of trailing zeros) is the number of then / else.
-        unsigned CondBit0 = Mask >> 4 & 1;
+        unsigned CondBit0 = Firstcond & 1;
         unsigned NumTZ = CountTrailingZeros_32(Mask);
         unsigned char CCBits = static_cast<unsigned char>(Firstcond & 0xf);
         assert(NumTZ <= 3 && "Invalid IT mask!");
@@ -4217,19 +4217,14 @@ static DecodeStatus DecodeIT(MCInst &Inst, unsigned Insn,
                              uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
   unsigned pred = fieldFromInstruction16(Insn, 4, 4);
-  // The InstPrinter needs to have the low bit of the predicate in
-  // the mask operand to be able to print it properly.
-  unsigned mask = fieldFromInstruction16(Insn, 0, 5);
+  unsigned mask = fieldFromInstruction16(Insn, 0, 4);
 
   if (pred == 0xF) {
     pred = 0xE;
     S = MCDisassembler::SoftFail;
   }
 
-  if ((mask & 0xF) == 0) {
-    // Preserve the high bit of the mask, which is the low bit of
-    // the predicate.
-    mask &= 0x10;
+  if (mask == 0x0) {
     mask |= 0x8;
     S = MCDisassembler::SoftFail;
   }
