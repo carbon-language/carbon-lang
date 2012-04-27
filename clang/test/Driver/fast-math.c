@@ -4,6 +4,9 @@
 // LLVM only supports three switches which is more coarse grained than GCC's
 // support.
 //
+// Both of them use gcc driver for as.
+// XFAIL: cygwin,mingw32
+//
 // RUN: %clang -### -fno-honor-infinities -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-INFS %s
 // CHECK-NO-INFS: "-cc1"
