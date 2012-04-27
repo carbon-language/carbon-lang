@@ -7245,13 +7245,50 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                               SourceLocation(),
                                               addExpr);
       QualType IvarT = D->getType();
+
+      if (IvarT->isRecordType()) {
+        RecordDecl *RD = IvarT->getAs<RecordType>()->getDecl();
+        RD = RD->getDefinition();
+        bool structIsInside = RD &&
+          Context->getSourceManager().isBeforeInTranslationUnit(
+            iFaceDecl->getDecl()->getLocation(), RD->getLocation());
+        if (structIsInside) {
+          // decltype(((Foo_IMPL*)0)->bar) *
+          std::string RecName = iFaceDecl->getDecl()->getName();
+          RecName += "_IMPL";
+          RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
+                                              SourceLocation(), SourceLocation(),
+                                              &Context->Idents.get(RecName.c_str()));
+          QualType PtrStructIMPL = Context->getPointerType(Context->getTagDeclType(RD));
+          unsigned UnsignedIntSize = 
+            static_cast<unsigned>(Context->getTypeSize(Context->UnsignedIntTy));
+          Expr *Zero = IntegerLiteral::Create(*Context,
+                                              llvm::APInt(UnsignedIntSize, 0),
+                                              Context->UnsignedIntTy, SourceLocation());
+          Zero = NoTypeInfoCStyleCastExpr(Context, PtrStructIMPL, CK_BitCast, Zero);
+          ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(),
+                                                  Zero);
+          FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                                            SourceLocation(),
+                                            &Context->Idents.get(D->getNameAsString()),
+                                            IvarT, 0,
+                                            /*BitWidth=*/0, /*Mutable=*/true,
+                                            /*HasInit=*/false);
+          MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
+                                                    FD->getType(), VK_LValue,
+                                                    OK_Ordinary);
+          IvarT = Context->getDecltypeType(ME, ME->getType());
+        }
+      }
       convertObjCTypeToCStyleType(IvarT);
       QualType castT = Context->getPointerType(IvarT);
-      
+          
       castExpr = NoTypeInfoCStyleCastExpr(Context, 
                                           castT,
                                           CK_BitCast,
                                           PE);
+      
+      
       Expr *Exp = new (Context) UnaryOperator(castExpr, UO_Deref, IvarT,
                                               VK_LValue, OK_Ordinary,
                                               SourceLocation());
