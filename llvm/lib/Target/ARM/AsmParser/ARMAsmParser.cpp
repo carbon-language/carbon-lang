@@ -5317,6 +5317,16 @@ validateInstruction(MCInst &Inst,
                    "registers must be in range r0-r7");
     break;
   }
+  case ARM::tADDrSP: {
+    // If the non-SP source operand and the destination operand are not the
+    // same, we need thumb2 (for the wide encoding), or we have an error.
+    if (!isThumbTwo() &&
+        Inst.getOperand(0).getReg() != Inst.getOperand(2).getReg()) {
+      return Error(Operands[4]->getStartLoc(),
+                   "source register must be the same as destination");
+    }
+    break;
+  }
   }
 
   return false;
@@ -6989,6 +6999,16 @@ processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;
     return true;
+  }
+  case ARM::tADDrSP: {
+    // If the non-SP source operand and the destination operand are not the
+    // same, we need to use the 32-bit encoding if it's available.
+    if (Inst.getOperand(0).getReg() != Inst.getOperand(2).getReg()) {
+      Inst.setOpcode(ARM::t2ADDrr);
+      Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
+      return true;
+    }
+    break;
   }
   case ARM::tB:
     // A Thumb conditional branch outside of an IT block is a tBcc.

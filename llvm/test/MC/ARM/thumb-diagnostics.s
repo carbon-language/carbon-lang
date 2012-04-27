@@ -133,3 +133,8 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: instruction requires: arm-mode
 @ CHECK-ERRORS:         add r2, sp, #1024
 @ CHECK-ERRORS:         ^
+
+        add r2, sp, ip
+@ CHECK-ERRORS: error: source register must be the same as destination
+@ CHECK-ERRORS:         add r2, sp, ip
+@ CHECK-ERRORS:                     ^
