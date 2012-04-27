@@ -138,8 +138,7 @@ entry:
 ; CHECK: vfms.f64
   %tmp1 = fsub double -0.0, %b
   %tmp2 = tail call double @llvm.fma.f64(double %a, double %tmp1, double %c) nounwind readnone
-  %tmp3 = fsub double -0.0, %tmp2
-  ret double %tmp3
+  ret double %tmp2
 }
 
 define double @test_fnms_f64(double %a, double %b, double %c) nounwind readnone ssp {
@@ -158,7 +157,8 @@ entry:
 ; CHECK: vfnms.f64
   %tmp1 = fsub double -0.0, %b
   %tmp2 = tail call double @llvm.fma.f64(double %a, double %tmp1, double %c) nounwind readnone
-  ret double %tmp2
+  %tmp3 = fsub double -0.0, %tmp2
+  ret double %tmp3
 }
 
 define double @test_fnma_f64(double %a, double %b, double %c) nounwind readnone ssp {

@@ -1089,10 +1089,11 @@ def : Pat<(fadd_mlx SPR:$dstin, (fmul_su SPR:$a, SPR:$b)),
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-def : Pat<(f64 (fma DPR:$Ddin, DPR:$Dn, DPR:$Dm)),
+// (fma x, y, z) -> (vfms z, x, y)
+def : Pat<(f64 (fma DPR:$Dn, DPR:$Dm, DPR:$Ddin)),
           (VFMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(f32 (fma SPR:$Sdin, SPR:$Sn, SPR:$Sm)),
+def : Pat<(f32 (fma SPR:$Sn, SPR:$Sm, SPR:$Sdin)),
           (VFMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
 
@@ -1123,18 +1124,18 @@ def : Pat<(fsub_mlx SPR:$dstin, (fmul_su SPR:$a, SPR:$b)),
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-// (fma (fneg x), y, z) -> (vfms x, y, z)
-def : Pat<(f64 (fma (fneg DPR:$Ddin), DPR:$Dn, DPR:$Dm)),
+// (fma (fneg x), y, z) -> (vfms z, x, y)
+def : Pat<(f64 (fma (fneg DPR:$Dn), DPR:$Dm, DPR:$Ddin)),
           (VFMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(f32 (fma (fneg SPR:$Sdin), SPR:$Sn, SPR:$Sm)),
+def : Pat<(f32 (fma (fneg SPR:$Sn), SPR:$Sm, SPR:$Sdin)),
           (VFMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
-// (fneg (fma x, (fneg y), z) -> (vfms x, y, z)
-def : Pat<(fneg (f64 (fma DPR:$Ddin, (fneg DPR:$Dn), DPR:$Dm))),
+// (fma x, (fneg y), z) -> (vfms z, x, y)
+def : Pat<(f64 (fma DPR:$Dn, (fneg DPR:$Dm), DPR:$Ddin)),
           (VFMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(fneg (f32 (fma SPR:$Sdin, (fneg SPR:$Sn), SPR:$Sm))),
+def : Pat<(f32 (fma SPR:$Sn, (fneg SPR:$Sm), SPR:$Sdin)),
           (VFMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
 
@@ -1165,18 +1166,18 @@ def : Pat<(fsub_mlx (fneg (fmul_su SPR:$a, SPR:$b)), SPR:$dstin),
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-// (fneg (fma x, y, z)) -> (vfnma x, y, z)
-def : Pat<(fneg (fma (f64 DPR:$Ddin), (f64 DPR:$Dn), (f64 DPR:$Dm))),
+// (fneg (fma x, y, z)) -> (vfnma z, x, y)
+def : Pat<(fneg (fma (f64 DPR:$Dn), (f64 DPR:$Dm), (f64 DPR:$Ddin))),
           (VFNMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(fneg (fma (f32 SPR:$Sdin), (f32 SPR:$Sn), (f32 SPR:$Sm))),
+def : Pat<(fneg (fma (f32 SPR:$Sn), (f32 SPR:$Sm), (f32 SPR:$Sdin))),
           (VFNMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
-// (fma (fneg x), y, (fneg z)) -> (vfnma x, y, z)
-def : Pat<(f64 (fma (fneg DPR:$Ddin), DPR:$Dn, (fneg DPR:$Dm))),
+// (fma (fneg x), y, (fneg z)) -> (vfnma z, x, y)
+def : Pat<(f64 (fma (fneg DPR:$Dn), DPR:$Dm, (fneg DPR:$Ddin))),
           (VFNMAD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(f32 (fma (fneg SPR:$Sdin), SPR:$Sn, (fneg SPR:$Sm))),
+def : Pat<(f32 (fma (fneg SPR:$Sn), SPR:$Sm, (fneg SPR:$Sdin))),
           (VFNMAS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
 
@@ -1206,18 +1207,18 @@ def : Pat<(fsub_mlx (fmul_su SPR:$a, SPR:$b), SPR:$dstin),
           Requires<[HasVFP4,DontUseNEONForFP,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-// (fneg (fma (fneg x), y, z)) -> (vnfms x, y, z)
-def : Pat<(fneg (f64 (fma (fneg DPR:$Ddin), DPR:$Dn, DPR:$Dm))),
+// (fneg (fma (fneg x), y, z)) -> (vfnms z, x, y)
+def : Pat<(fneg (f64 (fma (fneg DPR:$Dn), DPR:$Dm, DPR:$Ddin))),
           (VFNMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(fneg (f32 (fma (fneg SPR:$Sdin), SPR:$Sn, SPR:$Sm))),
+def : Pat<(fneg (f32 (fma (fneg SPR:$Sn), SPR:$Sm, SPR:$Sdin))),
           (VFNMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
-// (fma x, (fneg y), z) -> (vnfms x, y, z)
-def : Pat<(f64 (fma DPR:$Ddin, (fneg DPR:$Dn), DPR:$Dm)),
+// (fneg (fma x, (fneg y), z) -> (vfnms z, x, y)
+def : Pat<(fneg (f64 (fma DPR:$Dn, (fneg DPR:$Dm), DPR:$Ddin))),
           (VFNMSD DPR:$Ddin, DPR:$Dn, DPR:$Dm)>,
       Requires<[HasVFP4]>;
-def : Pat<(f32 (fma SPR:$Sdin, (fneg SPR:$Sn), SPR:$Sm)),
+def : Pat<(fneg (f32 (fma SPR:$Sn, (fneg SPR:$Sm), SPR:$Sdin))),
           (VFNMSS SPR:$Sdin, SPR:$Sn, SPR:$Sm)>,
       Requires<[HasVFP4]>;
 

@@ -4136,16 +4136,16 @@ def  VFMSfq   : N3VQMulOp<0, 0, 0b10, 0b1100, 1, IIC_VFMACQ, "vfms", "f32",
                 Requires<[HasVFP4,UseFusedMAC]>;
 
 // Match @llvm.fma.* intrinsics
-def : Pat<(v2f32 (fma DPR:$src1, DPR:$Vn, DPR:$Vm)),
+def : Pat<(v2f32 (fma DPR:$Vn, DPR:$Vm, DPR:$src1)),
           (VFMAfd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
           Requires<[HasVFP4]>;
-def : Pat<(v4f32 (fma QPR:$src1, QPR:$Vn, QPR:$Vm)),
+def : Pat<(v4f32 (fma QPR:$Vn, QPR:$Vm, QPR:$src1)),
           (VFMAfq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
           Requires<[HasVFP4]>;
-def : Pat<(v2f32 (fma (fneg DPR:$src1), DPR:$Vn, DPR:$Vm)),
+def : Pat<(v2f32 (fma (fneg DPR:$Vn), DPR:$Vm, DPR:$src1)),
           (VFMSfd DPR:$src1, DPR:$Vn, DPR:$Vm)>,
       Requires<[HasVFP4]>;
-def : Pat<(v4f32 (fma (fneg QPR:$src1), QPR:$Vn, QPR:$Vm)),
+def : Pat<(v4f32 (fma (fneg QPR:$Vn), QPR:$Vm, QPR:$src1)),
           (VFMSfq QPR:$src1, QPR:$Vn, QPR:$Vm)>,
       Requires<[HasVFP4]>;
 
