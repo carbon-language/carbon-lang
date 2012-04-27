@@ -55,13 +55,12 @@ static Constant *BitCastConstantVector(Constant *CV, VectorType *DstTy) {
   
   Type *DstEltTy = DstTy->getElementType();
 
-  // Check to verify that all elements of the input are simple.
   SmallVector<Constant*, 16> Result;
+  Type *Ty = IntegerType::get(CV->getContext(), 32);
   for (unsigned i = 0; i != NumElts; ++i) {
-    Constant *C = CV->getAggregateElement(i);
-    if (C == 0) return 0;
+    Constant *C =
+      ConstantExpr::getExtractElement(CV, ConstantInt::get(Ty, i));
     C = ConstantExpr::getBitCast(C, DstEltTy);
-    if (isa<ConstantExpr>(C)) return 0;
     Result.push_back(C);
   }
 
@@ -553,9 +552,12 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
     SmallVector<Constant*, 16> res;
     VectorType *DestVecTy = cast<VectorType>(DestTy);
     Type *DstEltTy = DestVecTy->getElementType();
-    for (unsigned i = 0, e = V->getType()->getVectorNumElements(); i != e; ++i)
-      res.push_back(ConstantExpr::getCast(opc,
-                                          V->getAggregateElement(i), DstEltTy));
+    Type *Ty = IntegerType::get(V->getContext(), 32);
+    for (unsigned i = 0, e = V->getType()->getVectorNumElements(); i != e; ++i) {
+      Constant *C =
+        ConstantExpr::getExtractElement(V, ConstantInt::get(Ty, i));
+      res.push_back(ConstantExpr::getCast(opc, C, DstEltTy));
+    }
     return ConstantVector::get(res);
   }
 
@@ -696,12 +698,13 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
   // If the condition is a vector constant, fold the result elementwise.
   if (ConstantVector *CondV = dyn_cast<ConstantVector>(Cond)) {
     SmallVector<Constant*, 16> Result;
+    Type *Ty = IntegerType::get(CondV->getContext(), 32);
     for (unsigned i = 0, e = V1->getType()->getVectorNumElements(); i != e;++i){
       ConstantInt *Cond = dyn_cast<ConstantInt>(CondV->getOperand(i));
       if (Cond == 0) break;
       
-      Constant *Res = (Cond->getZExtValue() ? V1 : V2)->getAggregateElement(i);
-      if (Res == 0) break;
+      Constant *V = Cond->isNullValue() ? V2 : V1;
+      Constant *Res = ConstantExpr::getExtractElement(V, ConstantInt::get(Ty, i));
       Result.push_back(Res);
     }
     
@@ -760,16 +763,16 @@ Constant *llvm::ConstantFoldInsertElementInstruction(Constant *Val,
   const APInt &IdxVal = CIdx->getValue();
   
   SmallVector<Constant*, 16> Result;
+  Type *Ty = IntegerType::get(Val->getContext(), 32);
   for (unsigned i = 0, e = Val->getType()->getVectorNumElements(); i != e; ++i){
     if (i == IdxVal) {
       Result.push_back(Elt);
       continue;
     }
     
-    if (Constant *C = Val->getAggregateElement(i))
-      Result.push_back(C);
-    else
-      return 0;
+    Constant *C =
+      ConstantExpr::getExtractElement(Val, ConstantInt::get(Ty, i));
+    Result.push_back(C);
   }
   
   return ConstantVector::get(Result);
@@ -801,11 +804,15 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(Constant *V1,
     Constant *InElt;
     if (unsigned(Elt) >= SrcNumElts*2)
       InElt = UndefValue::get(EltTy);
-    else if (unsigned(Elt) >= SrcNumElts)
-      InElt = V2->getAggregateElement(Elt - SrcNumElts);
-    else
-      InElt = V1->getAggregateElement(Elt);
-    if (InElt == 0) return 0;
+    else if (unsigned(Elt) >= SrcNumElts) {
+      Type *Ty = IntegerType::get(V2->getContext(), 32);
+      InElt =
+        ConstantExpr::getExtractElement(V2,
+                                        ConstantInt::get(Ty, Elt - SrcNumElts));
+    } else {
+      Type *Ty = IntegerType::get(V1->getContext(), 32);
+      InElt = ConstantExpr::getExtractElement(V1, ConstantInt::get(Ty, Elt));
+    }
     Result.push_back(InElt);
   }
 
@@ -1130,16 +1137,17 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   } else if (VectorType *VTy = dyn_cast<VectorType>(C1->getType())) {
     // Perform elementwise folding.
     SmallVector<Constant*, 16> Result;
+    Type *Ty = IntegerType::get(VTy->getContext(), 32);
     for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
-      Constant *LHS = C1->getAggregateElement(i);
-      Constant *RHS = C2->getAggregateElement(i);
-      if (LHS == 0 || RHS == 0) break;
+      Constant *LHS =
+        ConstantExpr::getExtractElement(C1, ConstantInt::get(Ty, i));
+      Constant *RHS =
+        ConstantExpr::getExtractElement(C2, ConstantInt::get(Ty, i));
       
       Result.push_back(ConstantExpr::get(Opcode, LHS, RHS));
     }
     
-    if (Result.size() == VTy->getNumElements())
-      return ConstantVector::get(Result);
+    return ConstantVector::get(Result);
   }
 
   if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
@@ -1697,17 +1705,18 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     // If we can constant fold the comparison of each element, constant fold
     // the whole vector comparison.
     SmallVector<Constant*, 4> ResElts;
+    Type *Ty = IntegerType::get(C1->getContext(), 32);
     // Compare the elements, producing an i1 result or constant expr.
     for (unsigned i = 0, e = C1->getType()->getVectorNumElements(); i != e;++i){
-      Constant *C1E = C1->getAggregateElement(i);
-      Constant *C2E = C2->getAggregateElement(i);
-      if (C1E == 0 || C2E == 0) break;
+      Constant *C1E =
+        ConstantExpr::getExtractElement(C1, ConstantInt::get(Ty, i));
+      Constant *C2E =
+        ConstantExpr::getExtractElement(C2, ConstantInt::get(Ty, i));
       
       ResElts.push_back(ConstantExpr::getCompare(pred, C1E, C2E));
     }
     
-    if (ResElts.size() == C1->getType()->getVectorNumElements())
-      return ConstantVector::get(ResElts);
+    return ConstantVector::get(ResElts);
   }
 
   if (C1->getType()->isFloatingPointTy()) {

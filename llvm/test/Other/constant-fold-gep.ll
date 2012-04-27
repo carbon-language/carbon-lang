@@ -263,10 +263,10 @@ define i1* @hoo1() nounwind {
 ; OPT:   ret i64 ptrtoint (double* getelementptr ({ i1, double }* null, i64 0, i32 1) to i64)
 ; OPT: }
 ; OPT: define i64 @fc() nounwind {
-; OPT:   ret i64 mul nuw (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2)
+; OPT:   ret i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2)
 ; OPT: }
 ; OPT: define i64 @fd() nounwind {
-; OPT:   ret i64 mul nuw (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 11)
+; OPT:   ret i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 11)
 ; OPT: }
 ; OPT: define i64 @fe() nounwind {
 ; OPT:   ret i64 ptrtoint (double* getelementptr ({ double, float, double, double }* null, i64 0, i32 2) to i64)
@@ -433,7 +433,7 @@ define i64* @fO() nounwind {
 ; PLAIN:   ret i32* %t
 ; PLAIN: }
 ; OPT: define i32* @fZ() nounwind {
-; OPT:   ret i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
+; OPT:   ret i32* getelementptr (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
 ; OPT: }
 ; TO: define i32* @fZ() nounwind {
 ; TO:   ret i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 1)

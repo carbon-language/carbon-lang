@@ -620,3 +620,13 @@ end:
 ; CHECK-NOT: phi i32
 ; CHECK: ret i1 %z
 }
+
+; CHECK: @test27(
+; CHECK: ret i32 undef
+define i32 @test27(i1 %b) {
+entry:
+  br label %done
+done:
+  %y = phi i32 [ undef, %entry ]
+  ret i32 %y
+}
