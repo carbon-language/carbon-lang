@@ -103,6 +103,8 @@ public:
   /// working with a PCH file.
   SetOfDecls LocalTUDecls;
 
+  SetOfDecls::Factory LocalTUDeclsFactory;
+                           
   // PD is owned by AnalysisManager.
   PathDiagnosticConsumer *PD;
 
@@ -306,7 +308,9 @@ void AnalysisConsumer::storeTopLevelDecls(DeclGroupRef DG) {
     if (isa<ObjCMethodDecl>(*I))
       continue;
 
-    LocalTUDecls.insert(*I);
+    // We use an ImmutableList to avoid issues with invalidating iterators
+    // to the list while we are traversing it.
+    LocalTUDecls = LocalTUDeclsFactory.add(*I, LocalTUDecls);
   }
 }
 
@@ -315,6 +319,9 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
   // Build the Call Graph.
   CallGraph CG;
   // Add all the top level declarations to the graph.
+  //
+  // NOTE: We use an ImmutableList to avoid issues with invalidating iterators
+  // to the list while we are traversing it.
   for (SetOfDecls::iterator I = LocalTUDecls.begin(),
                             E = LocalTUDecls.end(); I != E; ++I)
     CG.addToCallGraph(*I);
@@ -338,11 +345,11 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
   // translation unit. This step is very important for performance. It ensures 
   // that we analyze the root functions before the externally available 
   // subroutines.
-  std::queue<CallGraphNode*> BFSQueue;
+  std::deque<CallGraphNode*> BFSQueue;
   for (llvm::SmallVector<CallGraphNode*, 24>::reverse_iterator
          TI = TopLevelFunctions.rbegin(), TE = TopLevelFunctions.rend();
          TI != TE; ++TI)
-    BFSQueue.push(*TI);
+    BFSQueue.push_front(*TI);
 
   // BFS over all of the functions, while skipping the ones inlined into
   // the previously processed functions. Use external Visited set, which is
@@ -350,7 +357,7 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
   SmallPtrSet<CallGraphNode*,24> Visited;
   while(!BFSQueue.empty()) {
     CallGraphNode *N = BFSQueue.front();
-    BFSQueue.pop();
+    BFSQueue.pop_front();
 
     // Skip the functions which have been processed already or previously
     // inlined.
@@ -365,8 +372,8 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
                (Mgr->InliningMode == All ? 0 : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
-    for (SetOfConstDecls::const_iterator I = VisitedCallees.begin(),
-                                         E = VisitedCallees.end(); I != E; ++I){
+    for (SetOfConstDecls::iterator I = VisitedCallees.begin(),
+                                   E = VisitedCallees.end(); I != E; ++I) {
       CallGraphNode *VN = CG.getNode(*I);
       if (VN)
         Visited.insert(VN);
@@ -376,7 +383,7 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
     // Push the children into the queue.
     for (CallGraphNode::const_iterator CI = N->begin(),
                                        CE = N->end(); CI != CE; ++CI) {
-      BFSQueue.push(*CI);
+      BFSQueue.push_front(*CI);
     }
   }
 }
@@ -402,9 +409,14 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
     RecVisitorBR = &BR;
 
     // Process all the top level declarations.
+    //
+    // NOTE: We use an ImmutableList to avoid issues with invalidating iterators
+    // to the list while we are traversing it.
+    //
     for (SetOfDecls::iterator I = LocalTUDecls.begin(),
-                              E = LocalTUDecls.end(); I != E; ++I)
+         E = LocalTUDecls.end(); I != E; ++I) {
       TraverseDecl(*I);
+    }
 
     if (Mgr->shouldInlineCall())
       HandleDeclsGallGraph();

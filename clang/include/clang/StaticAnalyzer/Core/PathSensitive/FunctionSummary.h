@@ -16,13 +16,14 @@
 
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/ImmutableList.h"
 
 namespace clang {
 namespace ento {
-typedef llvm::SmallPtrSet<Decl*, 24> SetOfDecls;
-typedef llvm::SmallPtrSet<const Decl*, 24> SetOfConstDecls;
+typedef llvm::ImmutableList<Decl*> SetOfDecls;
+typedef llvm::DenseSet<const Decl*> SetOfConstDecls;
 
 class FunctionSummariesTy {
   struct FunctionSummary {
