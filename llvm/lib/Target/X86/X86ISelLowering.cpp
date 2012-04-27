@@ -14457,8 +14457,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   // 128-bit ones. If in the future the cost becomes only one memory access the
   // first version would be better.
   if (VT.getSizeInBits() == 256 &&
-    StoredVal.getNode()->getOpcode() == ISD::CONCAT_VECTORS &&
-    StoredVal.getNumOperands() == 2) {
+      StoredVal.getNode()->getOpcode() == ISD::CONCAT_VECTORS &&
+      StoredVal.getNumOperands() == 2) {
 
     SDValue Value0 = StoredVal.getOperand(0);
     SDValue Value1 = StoredVal.getOperand(1);
