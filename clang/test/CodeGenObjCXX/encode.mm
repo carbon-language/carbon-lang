@@ -187,3 +187,17 @@ class CefBrowser2 : public virtual CefBase2 {};
 class CefBrowserImpl2 : public CefBrowser2 {};
 // CHECK: @_ZL2g7 = internal constant [26 x i8] c"{CefBrowserImpl2=^^?^^?i}\00"
 const char g7[] = @encode(CefBrowserImpl2);
+
+// <rdar://problem/11324167>
+struct Empty {};
+
+struct X : Empty { 
+  int array[10];
+};
+
+struct Y : Empty {
+  X vec;
+};
+
+// CHECK: @_ZL2g8 = internal constant [14 x i8] c"{Y={X=[10i]}}\00"
+const char g8[] = @encode(Y);
