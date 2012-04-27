@@ -956,7 +956,8 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // Add an explicit version min argument for the deployment target. We do this
   // after argument translation because -Xarch_ arguments may add a version min
   // argument.
-  AddDeploymentTarget(*DAL);
+  if (BoundArch)
+    AddDeploymentTarget(*DAL);
 
   // Validate the C++ standard library choice.
   CXXStdlibType Type = GetCXXStdlibType(*DAL);
