@@ -311,7 +311,7 @@ def err_templated_using_directive : Error<
 def err_templated_using_declaration : Error<
   "cannot template a using declaration">;
 def err_unexected_colon_in_nested_name_spec : Error<
-  "unexpected ':' in nested name specifier">;
+  "unexpected ':' in nested name specifier; did you mean '::'?">;
 def err_bool_redeclaration : Error<
   "redeclaration of C++ built-in type 'bool'">;
 def ext_c11_static_assert : Extension<
