@@ -885,7 +885,9 @@ CommandObjectWatchpointSetVariable::CommandObjectWatchpointSetVariable (CommandI
                    "If no '-w' option is specified, it defaults to read_write. "
                    "If no '-x' option is specified, it defaults to the variable's "
                    "byte size. "
-                   "Note that hardware resources for watching are often limited.",
+                   "Note that there are limited hardware resources for watchpoints. "
+                   "If watchpoint setting fails, consider disable/delete existing ones "
+                   "to free up resources.",
                    NULL,
                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
     m_option_group (interpreter),
@@ -1036,7 +1038,9 @@ CommandObjectWatchpointSetExpression::CommandObjectWatchpointSetExpression (Comm
                    "If no '-w' option is specified, it defaults to read_write. "
                    "If no '-x' option is specified, it defaults to the target's "
                    "pointer byte size. "
-                   "Note that hardware resources for watching are often limited.",
+                   "Note that there are limited hardware resources for watchpoints. "
+                   "If watchpoint setting fails, consider disable/delete existing ones "
+                   "to free up resources.",
                    NULL,
                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
     m_option_group (interpreter),
