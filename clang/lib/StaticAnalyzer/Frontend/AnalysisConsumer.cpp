@@ -102,8 +102,6 @@ public:
   /// The local declaration to all declarations ratio might be very small when
   /// working with a PCH file.
   SetOfDecls LocalTUDecls;
-
-  SetOfDecls::Factory LocalTUDeclsFactory;
                            
   // PD is owned by AnalysisManager.
   PathDiagnosticConsumer *PD;
@@ -308,9 +306,7 @@ void AnalysisConsumer::storeTopLevelDecls(DeclGroupRef DG) {
     if (isa<ObjCMethodDecl>(*I))
       continue;
 
-    // We use an ImmutableList to avoid issues with invalidating iterators
-    // to the list while we are traversing it.
-    LocalTUDecls = LocalTUDeclsFactory.add(*I, LocalTUDecls);
+    LocalTUDecls.push_back(*I);
   }
 }
 
@@ -319,9 +315,6 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
   // Build the Call Graph.
   CallGraph CG;
   // Add all the top level declarations to the graph.
-  //
-  // NOTE: We use an ImmutableList to avoid issues with invalidating iterators
-  // to the list while we are traversing it.
   for (SetOfDecls::iterator I = LocalTUDecls.begin(),
                             E = LocalTUDecls.end(); I != E; ++I)
     CG.addToCallGraph(*I);
@@ -410,12 +403,13 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
     // Process all the top level declarations.
     //
-    // NOTE: We use an ImmutableList to avoid issues with invalidating iterators
-    // to the list while we are traversing it.
-    //
-    for (SetOfDecls::iterator I = LocalTUDecls.begin(),
-         E = LocalTUDecls.end(); I != E; ++I) {
-      TraverseDecl(*I);
+    // Note: TraverseDecl may modify LocalTUDecls, but only by appending more
+    // entries.  Thus we don't use an iterator, but rely on LocalTUDecls
+    // random access.  By doing so, we automatically compensate for iterators
+    // possibly being invalidated, although this is a bit slower.
+    const unsigned n = LocalTUDecls.size();
+    for (unsigned i = 0 ; i < n ; ++i) {
+      TraverseDecl(LocalTUDecls[i]);
     }
 
     if (Mgr->shouldInlineCall())
