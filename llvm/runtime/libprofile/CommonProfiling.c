@@ -65,9 +65,10 @@ int save_arguments(int argc, const char **argv) {
   for (Length = 0, i = 0; i != (unsigned)argc; ++i)
     Length += strlen(argv[i])+1;
 
-  // Defensively check for a zero length, even though this is unlikely
-  // to happen in practice.  This avoids calling malloc() below with a
-  // size of 0.
+  /* Defensively check for a zero length, even though this is unlikely
+   * to happen in practice.  This avoids calling malloc() below with a
+   * size of 0.
+   */
   if (Length == 0) {
     SavedArgs = 0;
     SavedArgsLength = 0;
