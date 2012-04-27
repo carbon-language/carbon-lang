@@ -60,7 +60,7 @@ static cl::opt<bool> EnablePRE("enable-pre",
 static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 
 // Maximum allowed recursion depth.
-static cl::opt<int>
+static cl::opt<uint32_t>
 MaxRecurseDepth("max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
                 cl::desc("Max recurse depth (default = 1000)"));
 
