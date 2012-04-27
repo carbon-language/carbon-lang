@@ -24,7 +24,8 @@
 #include <vector>
 
 namespace llvm {
-class Pass;
+  class Pass;
+  class ScalarEvolution;
 }
 
 namespace polly {
@@ -58,8 +59,15 @@ protected:
   IRBuilder<> &Builder;
   ScopStmt &Statement;
   Pass *P;
+  ScalarEvolution &SE;
 
   BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P);
+
+  /// @brief Check if an instruction can be 'SCEV-ignored'
+  ///
+  /// An instruction can be ignored if we can recreate it from its scalar
+  /// evolution expression.
+  bool isSCEVIgnore(const Instruction *Inst);
 
   /// @brief Get the new version of a Value.
   ///

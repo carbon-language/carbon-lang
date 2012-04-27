@@ -17,6 +17,9 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/GICHelper.h"
 
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -37,6 +40,211 @@ GroupedUnrolling("enable-polly-grouped-unroll",
                  cl::desc("Perform grouped unrolling, but don't generate SIMD "
                           "instuctions"), cl::Hidden, cl::init(false),
                  cl::ZeroOrMore);
+
+static cl::opt<bool>
+SCEVCodegen("polly-codegen-scev",
+            cl::desc("Use SCEV based code generation."), cl::Hidden,
+            cl::init(false), cl::ZeroOrMore);
+
+/// The SCEVRewriter takes a scalar evolution expression and updates the
+/// following components:
+///
+/// - SCEVUnknown
+///
+///   Values referenced in SCEVUnknown subexpressions are looked up in
+///   two Value to Value maps (GlobalMap and BBMap). If they are found they are
+///   replaced by a reference to the value they map to.
+///
+/// - SCEVAddRecExpr
+///
+///   Based on a Loop -> Value map {Loop_1: %Value}, an expression
+///   {%Base, +, %Step}<Loop_1> is rewritten to %Base + %Value * %Step.
+///   AddRecExpr's with more than two operands can not be translated.
+///
+///   FIXME: The comment above is not yet reality. At the moment we derive
+///   %Value by looking up the canonical IV of the loop and by defining
+///   %Value = GlobalMap[%IV]. This needs to be changed to remove the need for
+///   canonical induction variables.
+///
+///
+/// How can this be used?
+/// ====================
+///
+/// SCEVRewrite based code generation works on virtually independent blocks.
+/// This means we do not run the independent blocks pass to rewrite scalar
+/// instructions, but just ignore instructions that we can analyze with scalar
+/// evolution. Virtually independent blocks are blocks that only reference the
+/// following values:
+///
+/// o Values calculated within a basic block
+/// o Values representable by SCEV
+///
+/// During code generation we can ignore all instructions:
+///
+/// - Ignore all instructions except:
+///   - Load instructions
+///   - Instructions that reference operands already calculated within the
+///     basic block.
+///   - Store instructions
+struct SCEVRewriter : public SCEVVisitor<SCEVRewriter, const SCEV*> {
+public:
+  static const SCEV *rewrite(const SCEV *scev, Scop &S, ScalarEvolution &SE,
+                             ValueMapT &GlobalMap,  ValueMapT &BBMap) {
+    SCEVRewriter Rewriter(S, SE, GlobalMap, BBMap);
+    return Rewriter.visit(scev);
+  }
+
+  SCEVRewriter(Scop &S, ScalarEvolution &SE, ValueMapT &GlobalMap,
+               ValueMapT &BBMap) : S(S), SE(SE), GlobalMap(GlobalMap),
+               BBMap(BBMap) {}
+
+  const SCEV *visit(const SCEV *Expr) {
+    // FIXME: The parameter handling is incorrect.
+    //
+    // Polly does only detect parameters in Access function and loop iteration
+    // counters, but it does not get parameters that are just used by
+    // instructions within the basic block.
+    //
+    // There are two options to solve this:
+    //  o Iterate over all instructions of the SCoP and find the actual
+    //    parameters.
+    //  o Just check within the SCEVRewriter if Values lay outside of the SCoP
+    //    and detect parameters on the fly.
+    //
+    // This is especially important for OpenMP and GPGPU code generation, as
+    // they require us to detect and possibly rewrite the corresponding
+    // parameters.
+    if (isl_id *Id = S.getIdForParam(Expr)) {
+      isl_id_free(Id);
+      return Expr;
+    }
+
+
+    return SCEVVisitor<SCEVRewriter, const SCEV*>::visit(Expr);
+  }
+
+  const SCEV *visitConstant(const SCEVConstant *Constant) {
+    return Constant;
+  }
+
+  const SCEV *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+    const SCEV *Operand = visit(Expr->getOperand());
+    return SE.getTruncateExpr(Operand, Expr->getType());
+  }
+
+  const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+    const SCEV *Operand = visit(Expr->getOperand());
+    return SE.getZeroExtendExpr(Operand, Expr->getType());
+  }
+
+  const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+    const SCEV *Operand = visit(Expr->getOperand());
+    return SE.getSignExtendExpr(Operand, Expr->getType());
+  }
+
+  const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
+    SmallVector<const SCEV *, 2> Operands;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      const SCEV *Operand = visit(Expr->getOperand(i));
+      Operands.push_back(Operand);
+    }
+
+    return SE.getAddExpr(Operands);
+  }
+
+  const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
+    SmallVector<const SCEV *, 2> Operands;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      const SCEV *Operand = visit(Expr->getOperand(i));
+      Operands.push_back(Operand);
+    }
+
+    return SE.getMulExpr(Operands);
+  }
+
+  const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
+    return SE.getUDivExpr(visit(Expr->getLHS()), visit(Expr->getRHS()));
+  }
+
+  // Return a new induction variable if the loop is within the original SCoP
+  // or NULL otherwise.
+  Value *getNewIV(const Loop *L) {
+    Value *IV = L->getCanonicalInductionVariable();
+    if (!IV)
+      return NULL;
+
+    ValueMapT::iterator NewIV = GlobalMap.find(IV);
+
+    if (NewIV == GlobalMap.end())
+      return NULL;
+
+    return NewIV->second;
+  }
+
+  const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+    Value *IV;
+
+    IV = getNewIV(Expr->getLoop());
+
+    // The IV is not within the GlobalMaps. So do not rewrite it and also do
+    // not rewrite any descendants.
+    if (!IV)
+      return Expr;
+
+    assert(Expr->getNumOperands() == 2
+          && "An AddRecExpr with more than two operands can not be rewritten.");
+
+    const SCEV *Base, *Step, *IVExpr, *Product;
+
+    Base = visit(Expr->getStart());
+    Step = visit(Expr->getOperand(1));
+    IVExpr = SE.getUnknown(IV);
+    IVExpr = SE.getTruncateOrSignExtend(IVExpr, Step->getType());
+    Product = SE.getMulExpr(Step, IVExpr);
+
+    return SE.getAddExpr(Base, Product);
+  }
+
+  const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+    SmallVector<const SCEV *, 2> Operands;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      const SCEV *Operand = visit(Expr->getOperand(i));
+      Operands.push_back(Operand);
+    }
+
+    return SE.getSMaxExpr(Operands);
+  }
+
+  const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+    SmallVector<const SCEV *, 2> Operands;
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      const SCEV *Operand = visit(Expr->getOperand(i));
+      Operands.push_back(Operand);
+    }
+
+    return SE.getUMaxExpr(Operands);
+  }
+
+  const SCEV *visitUnknown(const SCEVUnknown *Expr) {
+    Value *V = Expr->getValue();
+
+    if (GlobalMap.count(V))
+      return SE.getUnknown(GlobalMap[V]);
+
+    if (BBMap.count(V))
+      return SE.getUnknown(BBMap[V]);
+
+    return Expr;
+  }
+
+private:
+  Scop &S;
+  ScalarEvolution &SE;
+  ValueMapT &GlobalMap;
+  ValueMapT &BBMap;
+};
+
+
 // Helper class to generate memory location.
 namespace {
 class IslGenerator {
@@ -141,7 +349,22 @@ Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
 
 
 BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P):
-  Builder(B), Statement(Stmt), P(P) {}
+  Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {}
+
+bool BlockGenerator::isSCEVIgnore(const Instruction *Inst) {
+  if (SCEVCodegen && SE.isSCEVable(Inst->getType()))
+    if (const SCEV *Scev = SE.getSCEV(const_cast<Instruction*>(Inst)))
+      if (!isa<SCEVCouldNotCompute>(Scev)) {
+        if (const SCEVUnknown *Unknown = dyn_cast<SCEVUnknown>(Scev)) {
+          if (Unknown->getValue() != Inst)
+            return true;
+        } else {
+          return true;
+        }
+      }
+
+  return false;
+}
 
 Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
                                    ValueMapT &GlobalMap) {
@@ -163,6 +386,20 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
   if (BBMap.count(Old)) {
     return BBMap[Old];
   }
+
+  if (SCEVCodegen && SE.isSCEVable(Old->getType()))
+    if (const SCEV *Scev = SE.getSCEV(const_cast<Value*>(Old)))
+      if (!isa<SCEVCouldNotCompute>(Scev)) {
+        const SCEV *NewScev = SCEVRewriter::rewrite(Scev,
+                                                    *Statement.getParent(), SE,
+                                                    GlobalMap, BBMap);
+        SCEVExpander Expander(SE, "polly");
+        Value *Expanded = Expander.expandCodeFor(NewScev, Old->getType(),
+                                                 Builder.GetInsertPoint());
+
+        BBMap[Old] = Expanded;
+        return Expanded;
+      }
 
   // 'Old' is within the original SCoP, but was not rewritten.
   //
@@ -297,6 +534,9 @@ void BlockGenerator::copyInstruction(const Instruction *Inst,
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
+    return;
+
+  if (isSCEVIgnore(Inst))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
@@ -587,6 +827,9 @@ void VectorBlockGenerator::copyInstruction(const Instruction *Inst,
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
+    return;
+
+  if (isSCEVIgnore(Inst))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
