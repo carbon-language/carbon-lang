@@ -219,7 +219,7 @@ void EmitAssemblyHelper::CreatePasses() {
                                     CodeGenOpts.EmitGcovArcs,
                                     TargetTriple.isMacOSX()));
 
-    if (!CodeGenOpts.DebugInfo)
+    if (CodeGenOpts.DebugInfo == CodeGenOptions::NoDebugInfo)
       MPM->add(createStripSymbolsPass(true));
   }
   

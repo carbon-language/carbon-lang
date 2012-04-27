@@ -798,14 +798,15 @@ Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
     return Builder.getInt(Value);
   }
 
-  // Emit debug info for aggregate now, if it was delayed to reduce 
+  // Emit debug info for aggregate now, if it was delayed to reduce
   // debug info size.
   CGDebugInfo *DI = CGF.getDebugInfo();
-  if (DI && CGF.CGM.getCodeGenOpts().LimitDebugInfo) {
+  if (DI &&
+      CGF.CGM.getCodeGenOpts().DebugInfo == CodeGenOptions::LimitedDebugInfo) {
     QualType PQTy = E->getBase()->IgnoreParenImpCasts()->getType();
     if (const PointerType * PTy = dyn_cast<PointerType>(PQTy))
       if (FieldDecl *M = dyn_cast<FieldDecl>(E->getMemberDecl()))
-        DI->getOrCreateRecordType(PTy->getPointeeType(), 
+        DI->getOrCreateRecordType(PTy->getPointeeType(),
                                   M->getParent()->getLocation());
   }
   return EmitLoadOfLValue(E);

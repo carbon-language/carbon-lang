@@ -546,7 +546,7 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
 /// then emit record's fwd if debug info size reduction is enabled.
 llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
                                             llvm::DIFile Unit) {
-  if (!CGM.getCodeGenOpts().LimitDebugInfo)
+  if (CGM.getCodeGenOpts().DebugInfo != CodeGenOptions::LimitedDebugInfo)
     return getOrCreateType(PointeeTy, Unit);
 
   // Limit debug info for the pointee type.
@@ -1823,7 +1823,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   StringRef RDName = RD->getName();
 
   llvm::DIDescriptor RDContext;
-  if (CGM.getCodeGenOpts().LimitDebugInfo)
+  if (CGM.getCodeGenOpts().DebugInfo == CodeGenOptions::LimitedDebugInfo)
     RDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
   else
     RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));

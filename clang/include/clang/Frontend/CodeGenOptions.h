@@ -35,6 +35,13 @@ public:
     Mixed = 2
   };
 
+  enum DebugInfoKind {
+    NoDebugInfo,          // Don't generate debug info.
+    LimitedDebugInfo,     // Limit generated debug info to reduce size
+                          // (-flimit-debug-info).
+    FullDebugInfo         // Generate complete debug info.
+  };
+
   unsigned AsmVerbose        : 1; /// -dA, -fverbose-asm.
   unsigned ObjCAutoRefCountExceptions : 1; /// Whether ARC should be EH-safe.
   unsigned CUDAIsDevice      : 1; /// Set when compiling for CUDA device.
@@ -42,8 +49,6 @@ public:
   unsigned CXXCtorDtorAliases: 1; /// Emit complete ctors/dtors as linker
                                   /// aliases to base ctors when possible.
   unsigned DataSections      : 1; /// Set when -fdata-sections is enabled
-  unsigned DebugInfo         : 1; /// Should generate debug info (-g).
-  unsigned LimitDebugInfo    : 1; /// Limit generated debug info to reduce size.
   unsigned DisableFPElim     : 1; /// Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
                                   /// getting .bc files that correspond to the
@@ -127,6 +132,9 @@ public:
   /// The string to embed in debug information as the current working directory.
   std::string DebugCompilationDir;
 
+  /// The kind of generated debug info.
+  DebugInfoKind DebugInfo;
+
   /// The string to embed in the debug information for the compile unit, if
   /// non-empty.
   std::string DwarfDebugFlags;
@@ -169,8 +177,6 @@ public:
     CXAAtExit = 1;
     CXXCtorDtorAliases = 0;
     DataSections = 0;
-    DebugInfo = 0;
-    LimitDebugInfo = 0;
     DisableFPElim = 0;
     DisableLLVMOpts = 0;
     DisableRedZone = 0;
@@ -217,6 +223,7 @@ public:
     StackRealignment = 0;
     StackAlignment = 0;
 
+    DebugInfo = NoDebugInfo;
     Inlining = NoInlining;
     RelocationModel = "pic";
   }

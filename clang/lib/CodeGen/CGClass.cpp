@@ -1227,7 +1227,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         CallExpr::const_arg_iterator ArgEnd) {
 
   CGDebugInfo *DI = getDebugInfo();
-  if (DI && CGM.getCodeGenOpts().LimitDebugInfo) {
+  if (DI &&
+      CGM.getCodeGenOpts().DebugInfo == CodeGenOptions::LimitedDebugInfo) {
     // If debug info for this class has not been emitted then this is the
     // right time to do so.
     const CXXRecordDecl *Parent = D->getParent();

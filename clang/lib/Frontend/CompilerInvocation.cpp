@@ -181,8 +181,18 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts, ToArgsList &Res) {
 }
 
 static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
-  if (Opts.DebugInfo)
-    Res.push_back("-g");
+  switch (Opts.DebugInfo) {
+    case CodeGenOptions::NoDebugInfo:
+      break;
+    case CodeGenOptions::LimitedDebugInfo:
+      Res.push_back("-g");
+      Res.push_back("-flimit-debug-info");
+      break;
+    case CodeGenOptions::FullDebugInfo:
+      Res.push_back("-g");
+      Res.push_back("-fno-limit-debug-info");
+      break;
+  }
   if (Opts.DisableLLVMOpts)
     Res.push_back("-disable-llvm-optzns");
   if (Opts.DisableRedZone)
@@ -1083,12 +1093,16 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     : CodeGenOptions::OnlyAlwaysInlining;
   // -fno-inline-functions overrides OptimizationLevel > 1.
   Opts.NoInline = Args.hasArg(OPT_fno_inline);
-  Opts.Inlining = Args.hasArg(OPT_fno_inline_functions) ? 
+  Opts.Inlining = Args.hasArg(OPT_fno_inline_functions) ?
     CodeGenOptions::OnlyAlwaysInlining : Opts.Inlining;
 
-  Opts.DebugInfo = Args.hasArg(OPT_g);
-  Opts.LimitDebugInfo = !Args.hasArg(OPT_fno_limit_debug_info)
-    || Args.hasArg(OPT_flimit_debug_info);
+  if (Args.hasArg(OPT_g)) {
+    if (Args.hasFlag(OPT_flimit_debug_info, OPT_fno_limit_debug_info, true))
+      Opts.DebugInfo = CodeGenOptions::LimitedDebugInfo;
+    else
+      Opts.DebugInfo = CodeGenOptions::FullDebugInfo;
+  }
+
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);
   Opts.ForbidGuardVariables = Args.hasArg(OPT_fforbid_guard_variables);

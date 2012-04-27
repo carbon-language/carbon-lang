@@ -110,7 +110,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 
   // If debug info or coverage generation is enabled, create the CGDebugInfo
   // object.
-  if (CodeGenOpts.DebugInfo || CodeGenOpts.EmitGcovArcs ||
+  if (CodeGenOpts.DebugInfo != CodeGenOptions::NoDebugInfo ||
+      CodeGenOpts.EmitGcovArcs ||
       CodeGenOpts.EmitGcovNotes)
     DebugInfo = new CGDebugInfo(*this);
 
