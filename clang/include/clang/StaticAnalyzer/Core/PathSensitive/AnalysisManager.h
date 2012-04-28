@@ -190,10 +190,6 @@ public:
     return AnaCtxMgr.getContext(D);
   }
 
-  AnalysisDeclContext *getAnalysisDeclContext(const Decl *D, idx::TranslationUnit *TU) {
-    return AnaCtxMgr.getContext(D, TU);
-  }
-
 };
 
 } // enAnaCtxMgrspace

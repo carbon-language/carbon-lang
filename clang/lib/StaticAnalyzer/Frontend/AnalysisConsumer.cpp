@@ -526,7 +526,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   }
 
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(Mgr->getAnalysisDeclContextManager().getStackFrame(D, 0),
+  Eng.ExecuteWorkList(Mgr->getAnalysisDeclContextManager().getStackFrame(D),
                       Mgr->getMaxNodes());
 
   // Release the auditor (if any) so that it doesn't monitor the graph

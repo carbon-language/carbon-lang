@@ -34,11 +34,9 @@ typedef llvm::DenseMap<const void *, ManagedAnalysis *> ManagedAnalysisMap;
 
 AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
                                  const Decl *d,
-                                 idx::TranslationUnit *tu,
                                  const CFG::BuildOptions &buildOptions)
   : Manager(Mgr),
     D(d),
-    TU(tu),
     cfgBuildOptions(buildOptions),
     forcedBlkExprs(0),
     builtCFG(false),
@@ -50,11 +48,9 @@ AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
 }
 
 AnalysisDeclContext::AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
-                                 const Decl *d,
-                                 idx::TranslationUnit *tu)
+                                 const Decl *d)
 : Manager(Mgr),
   D(d),
-  TU(tu),
   forcedBlkExprs(0),
   builtCFG(false),
   builtCompleteCFG(false),
@@ -195,11 +191,10 @@ PseudoConstantAnalysis *AnalysisDeclContext::getPseudoConstantAnalysis() {
   return PCA.get();
 }
 
-AnalysisDeclContext *AnalysisDeclContextManager::getContext(const Decl *D,
-                                                    idx::TranslationUnit *TU) {
+AnalysisDeclContext *AnalysisDeclContextManager::getContext(const Decl *D) {
   AnalysisDeclContext *&AC = Contexts[D];
   if (!AC)
-    AC = new AnalysisDeclContext(this, D, TU, cfgBuildOptions);
+    AC = new AnalysisDeclContext(this, D, cfgBuildOptions);
   return AC;
 }
 

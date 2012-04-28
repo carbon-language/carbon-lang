@@ -73,9 +73,6 @@ class AnalysisDeclContext {
 
   const Decl *D;
 
-  // TranslationUnit is NULL if we don't have multiple translation units.
-  idx::TranslationUnit *TU;
-
   OwningPtr<CFG> cfg, completeCFG;
   OwningPtr<CFGStmtMap> cfgStmtMap;
 
@@ -98,20 +95,16 @@ class AnalysisDeclContext {
 
 public:
   AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
-                  const Decl *D,
-                  idx::TranslationUnit *TU);
+                  const Decl *D);
 
   AnalysisDeclContext(AnalysisDeclContextManager *Mgr,
                   const Decl *D,
-                  idx::TranslationUnit *TU,
                   const CFG::BuildOptions &BuildOptions);
 
   ~AnalysisDeclContext();
 
   ASTContext &getASTContext() { return D->getASTContext(); }
   const Decl *getDecl() const { return D; }
-
-  idx::TranslationUnit *getTranslationUnit() const { return TU; }
 
   /// Return the build options used to construct the CFG.
   CFG::BuildOptions &getCFGBuildOptions() {
@@ -211,10 +204,6 @@ public:
   ContextKind getKind() const { return Kind; }
 
   AnalysisDeclContext *getAnalysisDeclContext() const { return Ctx; }
-
-  idx::TranslationUnit *getTranslationUnit() const {
-    return Ctx->getTranslationUnit();
-  }
 
   const LocationContext *getParent() const { return Parent; }
 
@@ -383,7 +372,7 @@ public:
 
   ~AnalysisDeclContextManager();
 
-  AnalysisDeclContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
+  AnalysisDeclContext *getContext(const Decl *D);
 
   bool getUseUnoptimizedCFG() const {
     return !cfgBuildOptions.PruneTriviallyFalseEdges;
@@ -402,9 +391,8 @@ public:
   }
 
   // Get the top level stack frame.
-  const StackFrameContext *getStackFrame(Decl const *D,
-                                         idx::TranslationUnit *TU) {
-    return LocContexts.getStackFrame(getContext(D, TU), 0, 0, 0, 0);
+  const StackFrameContext *getStackFrame(const Decl *D) {
+    return LocContexts.getStackFrame(getContext(D), 0, 0, 0, 0);
   }
 
   // Get a stack frame with parent.
