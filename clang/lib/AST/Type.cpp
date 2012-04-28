@@ -910,7 +910,7 @@ bool QualType::isCXX98PODType(ASTContext &Context) const {
     return 0;
   
   if ((*this)->isIncompleteArrayType())
-    return Context.getBaseElementType(*this).isPODType(Context);
+    return Context.getBaseElementType(*this).isCXX98PODType(Context);
     
   if ((*this)->isIncompleteType())
     return false;
@@ -937,7 +937,7 @@ bool QualType::isCXX98PODType(ASTContext &Context) const {
   case Type::VariableArray:
   case Type::ConstantArray:
     // IncompleteArray is handled above.
-    return Context.getBaseElementType(*this).isPODType(Context);
+    return Context.getBaseElementType(*this).isCXX98PODType(Context);
         
   case Type::ObjCObjectPointer:
   case Type::BlockPointer:
