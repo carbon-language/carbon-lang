@@ -474,10 +474,6 @@ namespace llvm {
       weight = HUGE_VALF;
     }
 
-    /// ComputeJoinedWeight - Set the weight of a live interval after
-    /// Other has been merged into it.
-    void ComputeJoinedWeight(const LiveInterval &Other);
-
     bool operator<(const LiveInterval& other) const {
       const SlotIndex &thisIndex = beginIndex();
       const SlotIndex &otherIndex = other.beginIndex();

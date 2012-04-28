@@ -436,8 +436,6 @@ void LiveInterval::join(LiveInterval &Other,
     assert(I->valno && "Adding a dead range?");
     InsertPos = addRangeFrom(*I, InsertPos);
   }
-
-  ComputeJoinedWeight(Other);
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
@@ -564,29 +562,6 @@ unsigned LiveInterval::getSize() const {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     Sum += I->start.distance(I->end);
   return Sum;
-}
-
-/// ComputeJoinedWeight - Set the weight of a live interval Joined
-/// after Other has been merged into it.
-void LiveInterval::ComputeJoinedWeight(const LiveInterval &Other) {
-  // If either of these intervals was spilled, the weight is the
-  // weight of the non-spilled interval.  This can only happen with
-  // iterative coalescers.
-
-  if (Other.weight != HUGE_VALF) {
-    weight += Other.weight;
-  }
-  else if (weight == HUGE_VALF &&
-      !TargetRegisterInfo::isPhysicalRegister(reg)) {
-    // Remove this assert if you have an iterative coalescer
-    assert(0 && "Joining to spilled interval");
-    weight = Other.weight;
-  }
-  else {
-    // Otherwise the weight stays the same
-    // Remove this assert if you have an iterative coalescer
-    assert(0 && "Joining from spilled interval");
-  }
 }
 
 raw_ostream& llvm::operator<<(raw_ostream& os, const LiveRange &LR) {
