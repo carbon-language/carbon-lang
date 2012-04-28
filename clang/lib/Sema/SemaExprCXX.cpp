@@ -3010,8 +3010,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsStandardLayout:
     return T->isStandardLayoutType();
   case UTT_IsPOD:
-    return Self.LangOpts.CPlusPlus0x ? T.isCXX11PODType(Self.Context)
-                                     : T.isPODType(Self.Context);
+    return T.isPODType(Self.Context);
   case UTT_IsLiteral:
     return T->isLiteralType();
   case UTT_IsEmpty:
