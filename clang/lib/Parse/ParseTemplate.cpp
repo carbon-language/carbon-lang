@@ -259,7 +259,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
     }
 
     // Eat the semi colon after the declaration.
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
+    ExpectAndConsumeSemi(diag::err_expected_semi_declaration);
     if (LateParsedAttrs.size() > 0)
       ParseLexedAttributeList(LateParsedAttrs, ThisDecl, true, false);
     DeclaratorInfo.complete(ThisDecl);

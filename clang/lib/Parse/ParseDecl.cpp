@@ -1312,10 +1312,9 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     *DeclEnd = Tok.getLocation();
 
   if (ExpectSemi &&
-      ExpectAndConsume(tok::semi,
-                       Context == Declarator::FileContext
-                         ? diag::err_invalid_token_after_toplevel_declarator
-                         : diag::err_expected_semi_declaration)) {
+      ExpectAndConsumeSemi(Context == Declarator::FileContext
+                           ? diag::err_invalid_token_after_toplevel_declarator
+                           : diag::err_expected_semi_declaration)) {
     // Okay, there was no semicolon and one was expected.  If we see a
     // declaration specifier, just assume it was missing and continue parsing.
     // Otherwise things are very confused and we skip to recover.

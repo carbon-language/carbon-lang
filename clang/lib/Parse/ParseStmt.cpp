@@ -771,7 +771,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
                                       DeclsInGroup.data(), DeclsInGroup.size());
     StmtResult R = Actions.ActOnDeclStmt(Res, LabelLoc, Tok.getLocation());
 
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
+    ExpectAndConsumeSemi(diag::err_expected_semi_declaration);
     if (R.isUsable())
       Stmts.push_back(R.release());
   }
