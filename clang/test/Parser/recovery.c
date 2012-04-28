@@ -37,8 +37,9 @@ void test(int a) {
     test(0);
   else
     ;
-  
-  if (x.i == 0))   // expected-error {{expected expression}}
+
+  // PR12595
+  if (x.i == 0))   // expected-error {{extraneous ')' after condition, expected a statement}}
     test(0);
   else
     ;

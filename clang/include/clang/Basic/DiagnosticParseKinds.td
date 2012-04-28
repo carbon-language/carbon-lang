@@ -396,6 +396,8 @@ def err_expected_init_in_condition : Error<
   "variable declaration in condition must have an initializer">;
 def err_expected_init_in_condition_lparen : Error<
   "variable declaration in condition cannot have a parenthesized initializer">;
+def err_extraneous_rparen_in_condition : Error<
+  "extraneous ')' after condition, expected a statement">;
 def warn_parens_disambiguated_as_function_decl : Warning<
   "parentheses were disambiguated as a function declarator">,
   InGroup<VexingParse>;
