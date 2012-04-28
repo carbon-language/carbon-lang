@@ -21,6 +21,11 @@
 #include <cstddef>
 #include <utility>
 
+#ifndef __has_feature
+#define LLVM_DEFINED_HAS_FEATURE
+#define __has_feature(x) 0
+#endif
+
 // This is actually the conforming implementation which works with abstract
 // classes.  However, enough compilers have trouble with it that most will use
 // the one in boost/type_traits/object_traits.hpp. This implementation actually
@@ -58,9 +63,15 @@ struct is_class
 /// type can be copied around with memcpy instead of running ctors etc.
 template <typename T>
 struct isPodLike {
+#if __has_feature(is_trivially_copyable)
+  // If the compiler supports the is_trivially_copyable trait use it, as it
+  // matches the definition of isPodLike closely.
+  static const bool value = __is_trivially_copyable(T);
+#else
   // If we don't know anything else, we can (at least) assume that all non-class
   // types are PODs.
   static const bool value = !is_class<T>::value;
+#endif
 };
 
 // std::pair's are pod-like if their elements are.
@@ -201,5 +212,9 @@ template <typename T, typename F>
 struct conditional<false, T, F> { typedef F type; };
 
 }
+
+#ifdef LLVM_DEFINED_HAS_FEATURE
+#undef __has_feature
+#endif
 
 #endif
