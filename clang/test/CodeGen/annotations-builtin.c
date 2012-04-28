@@ -25,9 +25,7 @@ int main(int argc, char **argv) {
 // CHECK: call i32 @llvm.annotation.i32
 
     long long lla = __builtin_annotation(llfoo, "annotation_a");
-// CHECK: trunc i64 {{.*}} to i32
-// CHECK-NEXT: call i32 @llvm.annotation.i32
-// CHECK-NEXT: zext i32 {{.*}} to i64
+// CHECK: call i64 @llvm.annotation.i64
 
     int inta = __builtin_annotation(intfoo, "annotation_a");
 // CHECK: load i32* @intfoo
@@ -35,15 +33,11 @@ int main(int argc, char **argv) {
 // CHECK-NEXT: store
 
     short shorta =  __builtin_annotation(shortfoo, "annotation_a");
-// CHECK: sext i16 {{.*}} to i32
-// CHECK-NEXT: call i32 @llvm.annotation.i32
-// CHECK-NEXT: trunc i32 {{.*}} to i16
+// CHECK: call i16 @llvm.annotation.i16
 
     char chara = __builtin_annotation(charfoo, "annotation_a");
-// CHECK: sext i8 {{.*}} to i32
-// CHECK-NEXT: call i32 @llvm.annotation.i32
-// CHECK-NEXT: trunc i32 {{.*}} to i8
-//
+// CHECK: call i8 @llvm.annotation.i8
+
     char **arg = (char**) __builtin_annotation((int) argv, "annotation_a");
 // CHECK: ptrtoint i8** {{.*}} to
 // CHECK: call i32 @llvm.annotation.i32

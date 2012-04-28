@@ -5178,9 +5178,11 @@ def err_blocks_disable : Error<"blocks support disabled - compile with -fblocks"
 def err_block_returning_array_function : Error<
   "block cannot return %select{array|function}0 type %1">;
 
-// Builtin annotation string.
-def err_builtin_annotation_not_string_constant : Error<
-  "__builtin_annotation requires a non wide string constant">;
+// Builtin annotation
+def err_builtin_annotation_first_arg : Error<
+  "first argument to __builtin_annotation must be an integer">;
+def err_builtin_annotation_second_arg : Error<
+  "second argument to __builtin_annotation must be a non-wide string constant">;
 
 // CFString checking
 def err_cfstring_literal_not_string_constant : Error<

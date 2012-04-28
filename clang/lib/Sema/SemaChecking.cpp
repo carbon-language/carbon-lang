@@ -66,16 +66,31 @@ static bool checkArgCount(Sema &S, CallExpr *call, unsigned desiredArgCount) {
     << call->getArg(1)->getSourceRange();
 }
 
-/// CheckBuiltinAnnotationString - Checks that string argument to the builtin
-/// annotation is a non wide string literal.
-static bool CheckBuiltinAnnotationString(Sema &S, Expr *Arg) {
-  Arg = Arg->IgnoreParenCasts();
-  StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
-  if (!Literal || !Literal->isAscii()) {
-    S.Diag(Arg->getLocStart(), diag::err_builtin_annotation_not_string_constant)
-      << Arg->getSourceRange();
+/// Check that the first argument to __builtin_annotation is an integer
+/// and the second argument is a non-wide string literal.
+static bool SemaBuiltinAnnotation(Sema &S, CallExpr *TheCall) {
+  if (checkArgCount(S, TheCall, 2))
+    return true;
+
+  // First argument should be an integer.
+  Expr *ValArg = TheCall->getArg(0);
+  QualType Ty = ValArg->getType();
+  if (!Ty->isIntegerType()) {
+    S.Diag(ValArg->getLocStart(), diag::err_builtin_annotation_first_arg)
+      << ValArg->getSourceRange();
     return true;
   }
+
+  // Second argument should be a constant string.
+  Expr *StrArg = TheCall->getArg(1)->IgnoreParenCasts();
+  StringLiteral *Literal = dyn_cast<StringLiteral>(StrArg);
+  if (!Literal || !Literal->isAscii()) {
+    S.Diag(StrArg->getLocStart(), diag::err_builtin_annotation_second_arg)
+      << StrArg->getSourceRange();
+    return true;
+  }
+
+  TheCall->setType(Ty);
   return false;
 }
 
@@ -256,7 +271,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::AO##ID);
 #include "clang/Basic/Builtins.def"
   case Builtin::BI__builtin_annotation:
-    if (CheckBuiltinAnnotationString(*this, TheCall->getArg(1)))
+    if (SemaBuiltinAnnotation(*this, TheCall))
       return ExprError();
     break;
   }
