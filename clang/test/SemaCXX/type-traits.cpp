@@ -131,25 +131,25 @@ void is_pod()
   { int arr[T(__is_pod(HasAnonymousUnion))]; }
   { int arr[T(__is_pod(Vector))]; }
   { int arr[T(__is_pod(VectorExt))]; }
+  { int arr[T(__is_pod(Derives))]; }
+  { int arr[T(__is_pod(DerivesAr))]; }
+  { int arr[T(__is_pod(DerivesArNB))]; }
+  { int arr[T(__is_pod(DerivesEmpty))]; }
+  { int arr[T(__is_pod(HasPriv))]; }
+  { int arr[T(__is_pod(HasProt))]; }
+  { int arr[T(__is_pod(DerivesHasPriv))]; }
+  { int arr[T(__is_pod(DerivesHasProt))]; }
 
-  { int arr[F(__is_pod(Derives))]; }
-  { int arr[F(__is_pod(DerivesAr))]; }
-  { int arr[F(__is_pod(DerivesArNB))]; }
-  { int arr[F(__is_pod(DerivesEmpty))]; }
   { int arr[F(__is_pod(HasCons))]; }
   { int arr[F(__is_pod(HasCopyAssign))]; }
   { int arr[F(__is_pod(HasMoveAssign))]; }
   { int arr[F(__is_pod(HasDest))]; }
-  { int arr[F(__is_pod(HasPriv))]; }
-  { int arr[F(__is_pod(HasProt))]; }
   { int arr[F(__is_pod(HasRef))]; }
   { int arr[F(__is_pod(HasVirt))]; }
   { int arr[F(__is_pod(DerivesHasCons))]; }
   { int arr[F(__is_pod(DerivesHasCopyAssign))]; }
   { int arr[F(__is_pod(DerivesHasMoveAssign))]; }
   { int arr[F(__is_pod(DerivesHasDest))]; }
-  { int arr[F(__is_pod(DerivesHasPriv))]; }
-  { int arr[F(__is_pod(DerivesHasProt))]; }
   { int arr[F(__is_pod(DerivesHasRef))]; }
   { int arr[F(__is_pod(DerivesHasVirt))]; }
   { int arr[F(__is_pod(NonPOD))]; }
