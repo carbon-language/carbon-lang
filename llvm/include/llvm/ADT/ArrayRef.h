@@ -60,7 +60,7 @@ namespace llvm {
       : Data(begin), Length(end - begin) {}
 
     /// Construct an ArrayRef from a SmallVector.
-    /*implicit*/ ArrayRef(const SmallVectorImpl<T> &Vec)
+    /*implicit*/ ArrayRef(const SmallVectorTemplateCommon<T> &Vec)
       : Data(Vec.data()), Length(Vec.size()) {}
 
     /// Construct an ArrayRef from a std::vector.
