@@ -1301,9 +1301,10 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
   // pool entries following this block; only the last one is in the water list.
   // Back past any possible branches (allow for a conditional and a maximally
   // long unconditional).
-  if (BaseInsertOffset >= BBInfo[UserMBB->getNumber()+1].Offset)
-    BaseInsertOffset = BBInfo[UserMBB->getNumber()+1].Offset -
-      (isThumb1 ? 6 : 8);
+  if (BaseInsertOffset + 8 >= UserBBI.postOffset()) {
+    BaseInsertOffset = UserBBI.postOffset() - UPad - 8;
+    DEBUG(dbgs() << format("Move inside block: %#x\n", BaseInsertOffset));
+  }
   unsigned EndInsertOffset = BaseInsertOffset + 4 + UPad +
     CPEMI->getOperand(2).getImm();
   MachineBasicBlock::iterator MI = UserMI;
@@ -1315,6 +1316,7 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
        Offset < BaseInsertOffset;
        Offset += TII->GetInstSizeInBytes(MI),
        MI = llvm::next(MI)) {
+    assert(MI != UserMBB->end() && "Fell off end of block");
     if (CPUIndex < NumCPUsers && CPUsers[CPUIndex].MI == MI) {
       CPUser &U = CPUsers[CPUIndex];
       if (!isOffsetInRange(Offset, EndInsertOffset, U)) {
