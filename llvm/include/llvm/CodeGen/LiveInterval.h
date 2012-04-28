@@ -288,17 +288,6 @@ namespace llvm {
     /// unused values.
     void RenumberValues(LiveIntervals &lis);
 
-    /// isOnlyLROfValNo - Return true if the specified live range is the only
-    /// one defined by the its val#.
-    bool isOnlyLROfValNo(const LiveRange *LR) {
-      for (const_iterator I = begin(), E = end(); I != E; ++I) {
-        const LiveRange *Tmp = I;
-        if (Tmp != LR && Tmp->valno == LR->valno)
-          return false;
-      }
-      return true;
-    }
-
     /// MergeValueNumberInto - This method is called when two value nubmers
     /// are found to be equivalent.  This eliminates V1, replacing all
     /// LiveRanges with the V1 value number with the V2 value number.  This can
@@ -377,14 +366,6 @@ namespace llvm {
       return I == end() ? 0 : &*I;
     }
 
-    const LiveRange *getLiveRangeBefore(SlotIndex Idx) const {
-      return getLiveRangeContaining(Idx.getPrevSlot());
-    }
-
-    LiveRange *getLiveRangeBefore(SlotIndex Idx) {
-      return getLiveRangeContaining(Idx.getPrevSlot());
-    }
-
     /// getVNInfoAt - Return the VNInfo that is live at Idx, or NULL.
     VNInfo *getVNInfoAt(SlotIndex Idx) const {
       const_iterator I = FindLiveRangeContaining(Idx);
@@ -410,11 +391,6 @@ namespace llvm {
       const_iterator I = find(Idx);
       return I != end() && I->start <= Idx ? I : end();
     }
-
-    /// findDefinedVNInfo - Find the by the specified
-    /// index (register interval) or defined
-    VNInfo *findDefinedVNInfoForRegInt(SlotIndex Idx) const;
-
 
     /// overlaps - Return true if the intersection of the two live intervals is
     /// not empty.
