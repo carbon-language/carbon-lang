@@ -3535,6 +3535,8 @@ def ext_offsetof_extended_field_designator : Extension<
   InGroup<DiagGroup<"extended-offsetof">>;
 def warn_offsetof_non_pod_type : ExtWarn<"offset of on non-POD type %0">,
   InGroup<InvalidOffsetof>;
+def warn_offsetof_non_standardlayout_type : ExtWarn<
+  "offset of on non-standard-layout type %0">, InGroup<InvalidOffsetof>;
 def err_offsetof_bitfield : Error<"cannot compute offset of bit-field %0">;
 
 def warn_floatingpoint_eq : Warning<

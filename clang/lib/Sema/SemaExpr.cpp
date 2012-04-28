@@ -8744,10 +8744,18 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     //   The macro offsetof accepts a restricted set of type arguments in this
     //   International Standard. type shall be a POD structure or a POD union
     //   (clause 9).
+    // C++11 [support.types]p4:
+    //   If type is not a standard-layout class (Clause 9), the results are
+    //   undefined.
     if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
-      if (!CRD->isPOD() && !DidWarnAboutNonPOD &&
+      bool IsSafe = LangOpts.CPlusPlus0x? CRD->isStandardLayout() : CRD->isPOD();
+      unsigned DiagID =
+        LangOpts.CPlusPlus0x? diag::warn_offsetof_non_standardlayout_type
+                            : diag::warn_offsetof_non_pod_type;
+
+      if (!IsSafe && !DidWarnAboutNonPOD &&
           DiagRuntimeBehavior(BuiltinLoc, 0,
-                              PDiag(diag::warn_offsetof_non_pod_type)
+                              PDiag(DiagID)
                               << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
                               << CurrentType))
         DidWarnAboutNonPOD = true;
