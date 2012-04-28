@@ -37,7 +37,8 @@ g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "num-per-line" ,'l', required_argument, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
     { LLDB_OPT_SET_2, false, "binary"       ,'b', no_argument      , NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
-    { LLDB_OPT_SET_3, true , "view-as"      ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."},
+    { LLDB_OPT_SET_3, true , "view-as"      ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."}, 
+    { LLDB_OPT_SET_4, false, "force"        ,'r', no_argument,       NULL, 0, eArgTypeNone          ,"Necessary if reading over 1024 bytes of memory."},
 };
 
 
@@ -93,6 +94,10 @@ public:
                 
             case 't':
                 error = m_view_as_type.SetValueFromCString (option_arg);
+                break;
+            
+            case 'r':
+                m_force = true;
                 break;
                 
             default:
@@ -270,6 +275,7 @@ public:
     OptionValueUInt64 m_num_per_line;
     bool m_output_as_binary;
     OptionValueString m_view_as_type;
+    bool m_force;
 };
 
 
@@ -589,6 +595,13 @@ public:
 
             total_byte_size = end_addr - addr;
             item_count = total_byte_size / item_byte_size;
+        }
+        
+        if (total_byte_size > 1024 && !m_memory_options.m_force)
+        {
+            result.AppendErrorWithFormat("Normally, \'memory read\' will not read over 1Kbyte of data.\n");
+            result.AppendErrorWithFormat("Please use --force to override this restriction.\n");
+            return false;
         }
         
         DataBufferSP data_sp;
