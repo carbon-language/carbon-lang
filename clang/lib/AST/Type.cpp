@@ -895,6 +895,14 @@ bool Type::isIncompleteType(NamedDecl **Def) const {
 }
 
 bool QualType::isPODType(ASTContext &Context) const {
+  // C++11 has a more relaxed definition of POD.
+  if (Context.getLangOpts().CPlusPlus0x)
+    return isCXX11PODType(Context);
+
+  return isCXX98PODType(Context);
+}
+
+bool QualType::isCXX98PODType(ASTContext &Context) const {
   // The compiler shouldn't query this for incomplete types, but the user might.
   // We return false for that case. Except for incomplete arrays of PODs, which
   // are PODs according to the standard.

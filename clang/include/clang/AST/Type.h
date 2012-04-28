@@ -634,6 +634,11 @@ public:
   /// \brief Determine whether this is a Plain Old Data (POD) type (C++ 3.9p10).
   bool isPODType(ASTContext &Context) const;
 
+  /// isCXX98PODType() - Return true if this is a POD type according to the
+  /// rules of the C++98 standard, regardless of the current compilation's
+  /// language.
+  bool isCXX98PODType(ASTContext &Context) const;
+
   /// isCXX11PODType() - Return true if this is a POD type according to the
   /// more relaxed rules of the C++11 standard, regardless of the current
   /// compilation's language.

@@ -131,25 +131,25 @@ void is_pod()
   { int arr[T(__is_pod(HasAnonymousUnion))]; }
   { int arr[T(__is_pod(Vector))]; }
   { int arr[T(__is_pod(VectorExt))]; }
+  { int arr[T(__is_pod(Derives))]; }
+  { int arr[T(__is_pod(DerivesAr))]; }
+  { int arr[T(__is_pod(DerivesArNB))]; }
+  { int arr[T(__is_pod(DerivesEmpty))]; }
+  { int arr[T(__is_pod(HasPriv))]; }
+  { int arr[T(__is_pod(HasProt))]; }
+  { int arr[T(__is_pod(DerivesHasPriv))]; }
+  { int arr[T(__is_pod(DerivesHasProt))]; }
 
-  { int arr[F(__is_pod(Derives))]; }
-  { int arr[F(__is_pod(DerivesAr))]; }
-  { int arr[F(__is_pod(DerivesArNB))]; }
-  { int arr[F(__is_pod(DerivesEmpty))]; }
   { int arr[F(__is_pod(HasCons))]; }
   { int arr[F(__is_pod(HasCopyAssign))]; }
   { int arr[F(__is_pod(HasMoveAssign))]; }
   { int arr[F(__is_pod(HasDest))]; }
-  { int arr[F(__is_pod(HasPriv))]; }
-  { int arr[F(__is_pod(HasProt))]; }
   { int arr[F(__is_pod(HasRef))]; }
   { int arr[F(__is_pod(HasVirt))]; }
   { int arr[F(__is_pod(DerivesHasCons))]; }
   { int arr[F(__is_pod(DerivesHasCopyAssign))]; }
   { int arr[F(__is_pod(DerivesHasMoveAssign))]; }
   { int arr[F(__is_pod(DerivesHasDest))]; }
-  { int arr[F(__is_pod(DerivesHasPriv))]; }
-  { int arr[F(__is_pod(DerivesHasProt))]; }
   { int arr[F(__is_pod(DerivesHasRef))]; }
   { int arr[F(__is_pod(DerivesHasVirt))]; }
   { int arr[F(__is_pod(NonPOD))]; }
@@ -1223,10 +1223,10 @@ void has_trivial_copy_constructor() {
   { int arr[T(__has_trivial_copy(const Int))]; }
   { int arr[T(__has_trivial_copy(AllDefaulted))]; }
   { int arr[T(__has_trivial_copy(AllDeleted))]; }
+  { int arr[T(__has_trivial_copy(DerivesAr))]; }
 
   { int arr[F(__has_trivial_copy(HasCopy))]; }
   { int arr[F(__has_trivial_copy(HasTemplateCons))]; }
-  { int arr[F(__has_trivial_copy(DerivesAr))]; }
   { int arr[F(__has_trivial_copy(VirtAr))]; }
   { int arr[F(__has_trivial_copy(void))]; }
   { int arr[F(__has_trivial_copy(cvoid))]; }
@@ -1250,13 +1250,13 @@ void has_trivial_copy_assignment() {
   { int arr[T(__has_trivial_assign(HasMoveAssign))]; }
   { int arr[T(__has_trivial_assign(AllDefaulted))]; }
   { int arr[T(__has_trivial_assign(AllDeleted))]; }
+  { int arr[T(__has_trivial_assign(DerivesAr))]; }
 
   { int arr[F(__has_trivial_assign(IntRef))]; }
   { int arr[F(__has_trivial_assign(HasCopyAssign))]; }
   { int arr[F(__has_trivial_assign(const Int))]; }
   { int arr[F(__has_trivial_assign(ConstIntAr))]; }
   { int arr[F(__has_trivial_assign(ConstIntArAr))]; }
-  { int arr[F(__has_trivial_assign(DerivesAr))]; }
   { int arr[F(__has_trivial_assign(VirtAr))]; }
   { int arr[F(__has_trivial_assign(void))]; }
   { int arr[F(__has_trivial_assign(cvoid))]; }
@@ -1338,6 +1338,7 @@ void has_nothrow_assign() {
   { int arr[T(__has_nothrow_assign(HasVirtDest))]; }
   { int arr[T(__has_nothrow_assign(AllPrivate))]; }
   { int arr[T(__has_nothrow_assign(UsingAssign))]; }
+  { int arr[T(__has_nothrow_assign(DerivesAr))]; }
 
   { int arr[F(__has_nothrow_assign(IntRef))]; }
   { int arr[F(__has_nothrow_assign(HasCopyAssign))]; }
@@ -1345,7 +1346,6 @@ void has_nothrow_assign() {
   { int arr[F(__has_nothrow_assign(const Int))]; }
   { int arr[F(__has_nothrow_assign(ConstIntAr))]; }
   { int arr[F(__has_nothrow_assign(ConstIntArAr))]; }
-  { int arr[F(__has_nothrow_assign(DerivesAr))]; }
   { int arr[F(__has_nothrow_assign(VirtAr))]; }
   { int arr[F(__has_nothrow_assign(void))]; }
   { int arr[F(__has_nothrow_assign(cvoid))]; }
@@ -1375,10 +1375,10 @@ void has_nothrow_copy() {
   { int arr[T(__has_nothrow_copy(HasVirtDest))]; }
   { int arr[T(__has_nothrow_copy(HasTemplateCons))]; }
   { int arr[T(__has_nothrow_copy(AllPrivate))]; }
+  { int arr[T(__has_nothrow_copy(DerivesAr))]; }
 
   { int arr[F(__has_nothrow_copy(HasCopy))]; }
   { int arr[F(__has_nothrow_copy(HasMultipleCopy))]; }
-  { int arr[F(__has_nothrow_copy(DerivesAr))]; }
   { int arr[F(__has_nothrow_copy(VirtAr))]; }
   { int arr[F(__has_nothrow_copy(void))]; }
   { int arr[F(__has_nothrow_copy(cvoid))]; }
