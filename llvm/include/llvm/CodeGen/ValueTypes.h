@@ -82,6 +82,8 @@ namespace llvm {
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
+      FIRST_INTEGER_VECTOR_VALUETYPE = v2i8,
+      LAST_INTEGER_VECTOR_VALUETYPE = v8i64,
       FIRST_FP_VECTOR_VALUETYPE = v2f16,
       LAST_FP_VECTOR_VALUETYPE = v4f64,
 
@@ -161,7 +163,8 @@ namespace llvm {
     bool isInteger() const {
       return ((SimpleTy >= MVT::FIRST_INTEGER_VALUETYPE &&
                SimpleTy <= MVT::LAST_INTEGER_VALUETYPE) ||
-              (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v8i64));
+              (SimpleTy >= MVT::FIRST_INTEGER_VECTOR_VALUETYPE &&
+               SimpleTy <= MVT::LAST_INTEGER_VECTOR_VALUETYPE));
     }
 
     /// isVector - Return true if this is a vector value type.
