@@ -37,6 +37,20 @@ to add 'spu' to configure's --enable-targets option, e.g.:
 ---------------------------------------------------------------------------
 
 TODO:
+* In commit r142152 vector legalization was set to element promotion per
+  default. This breaks half vectors (e.g. v2i32) badly as they get element
+  promoted to much slower types (v2i64).
+
+* Many CellSPU specific codegen tests only grep & count the number of 
+  instructions, not checking their place with FileCheck. There have also
+  been some commits that change the CellSPU checks, some of which might
+  have not been thoroughly scrutinized w.r.t. to the changes they cause in SPU
+  assembly. (especially since about the time of r142152)  
+
+* Some of the i64 math have huge tablegen rules, which sometime cause
+  tablegen to run out of memory. See e.g. bug 8850. i64 arithmetics 
+  should probably be done with libraries.
+
 * Create a machine pass for performing dual-pipeline scheduling specifically
   for CellSPU, and insert branch prediction instructions as needed.
 
