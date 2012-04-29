@@ -4549,7 +4549,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
         (!FieldRecord || !FieldRecord->hasUserProvidedDefaultConstructor())) {
       if (Diagnose)
         S.Diag(FD->getLocation(), diag::note_deleted_default_ctor_uninit_field)
-          << MD->getParent() << FD << FieldType << /*Const*/1;
+          << MD->getParent() << FD << FD->getType() << /*Const*/1;
       return true;
     }
 
@@ -4577,7 +4577,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
       // -- a non-static data member of const non-class type (or array thereof)
       if (Diagnose)
         S.Diag(FD->getLocation(), diag::note_deleted_assign_field)
-          << IsMove << MD->getParent() << FD << FieldType << /*Const*/1;
+          << IsMove << MD->getParent() << FD << FD->getType() << /*Const*/1;
       return true;
     }
   }

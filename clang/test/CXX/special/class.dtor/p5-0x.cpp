@@ -16,25 +16,25 @@ class InaccessibleDtor {
 // destructor.
 union A1 {
   A1();
-  NonTrivDtor n; // expected-note {{destructor of union 'A1' is implicitly deleted because field 'n' has a non-trivial destructor}}
+  NonTrivDtor n; // expected-note {{destructor of 'A1' is implicitly deleted because variant field 'n' has a non-trivial destructor}}
 };
 A1 a1; // expected-error {{deleted function}}
 struct A2 {
   A2();
   union {
-    NonTrivDtor n; // expected-note {{because field 'n' has a non-trivial destructor}}
+    NonTrivDtor n; // expected-note {{because variant field 'n' has a non-trivial destructor}}
   };
 };
 A2 a2; // expected-error {{deleted function}}
 union A3 {
   A3();
-  NonTrivDtor n[3]; // expected-note {{because field 'n' has a non-trivial destructor}}
+  NonTrivDtor n[3]; // expected-note {{because variant field 'n' has a non-trivial destructor}}
 };
 A3 a3; // expected-error {{deleted function}}
 struct A4 {
   A4();
   union {
-    NonTrivDtor n[3]; // expected-note {{because field 'n' has a non-trivial destructor}}
+    NonTrivDtor n[3]; // expected-note {{because variant field 'n' has a non-trivial destructor}}
   };
 };
 A4 a4; // expected-error {{deleted function}}
