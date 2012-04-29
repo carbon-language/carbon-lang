@@ -506,7 +506,7 @@ namespace llvm {
     }
 
     /// is256BitVector - Return true if this is a 256-bit vector type.
-    inline bool is256BitVector() const {
+    bool is256BitVector() const {
       if (!isSimple())
         return isExtended256BitVector();
       return (V == MVT::v8f32  || V == MVT::v4f64 || V == MVT::v32i8 ||
@@ -514,7 +514,7 @@ namespace llvm {
     }
 
     /// is512BitVector - Return true if this is a 512-bit vector type.
-    inline bool is512BitVector() const {
+    bool is512BitVector() const {
       return isSimple() ? (V == MVT::v8i64) : isExtended512BitVector();
     }
 
