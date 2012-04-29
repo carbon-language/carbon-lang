@@ -59,28 +59,34 @@ void RegisterPressure::decrease(const TargetRegisterClass *RC,
   decreaseSetPressure(MaxSetPressure, RC, TRI);
 }
 
-/// Increase the current pressure as impacted by this physical register and bump
-/// the high water mark if needed.
-void RegPressureTracker::increasePhysRegPressure(unsigned Reg) {
-  increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
-                      TRI->getMinimalPhysRegClass(Reg), TRI);
+/// Increase the current pressure as impacted by these physical registers and
+/// bump the high water mark if needed.
+void RegPressureTracker::increasePhysRegPressure(ArrayRef<unsigned> Regs) {
+  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
+    increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
+                        TRI->getMinimalPhysRegClass(Regs[I]), TRI);
 }
 
-/// Simply decrease the current pressure as impacted by this physcial register.
-void RegPressureTracker::decreasePhysRegPressure(unsigned Reg) {
-  decreaseSetPressure(CurrSetPressure, TRI->getMinimalPhysRegClass(Reg), TRI);
+/// Simply decrease the current pressure as impacted by these physcial
+/// registers.
+void RegPressureTracker::decreasePhysRegPressure(ArrayRef<unsigned> Regs) {
+  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
+    decreaseSetPressure(CurrSetPressure, TRI->getMinimalPhysRegClass(Regs[I]),
+                        TRI);
 }
 
-/// Increase the current pressure as impacted by this virtual register and bump
-/// the high water mark if needed.
-void RegPressureTracker::increaseVirtRegPressure(unsigned Reg) {
-  increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
-                      MRI->getRegClass(Reg), TRI);
+/// Increase the current pressure as impacted by these virtual registers and
+/// bump the high water mark if needed.
+void RegPressureTracker::increaseVirtRegPressure(ArrayRef<unsigned> Regs) {
+  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
+    increaseSetPressure(CurrSetPressure, P.MaxSetPressure,
+                        MRI->getRegClass(Regs[I]), TRI);
 }
 
-/// Simply decrease the current pressure as impacted by this virtual register.
-void RegPressureTracker::decreaseVirtRegPressure(unsigned Reg) {
-  decreaseSetPressure(CurrSetPressure, MRI->getRegClass(Reg), TRI);
+/// Simply decrease the current pressure as impacted by these virtual registers.
+void RegPressureTracker::decreaseVirtRegPressure(ArrayRef<unsigned> Regs) {
+  for (unsigned I = 0, E = Regs.size(); I != E; ++I)
+    decreaseSetPressure(CurrSetPressure, MRI->getRegClass(Regs[I]), TRI);
 }
 
 /// Clear the result so it can be used for another round of pressure tracking.
@@ -390,7 +396,9 @@ bool RegPressureTracker::recede() {
     static_cast<RegionPressure&>(P).openTop(CurrPos);
 
   // Find the previous instruction.
-  while (--CurrPos != MBB->begin() && CurrPos->isDebugValue());
+  do
+    --CurrPos;
+  while (CurrPos != MBB->begin() && CurrPos->isDebugValue());
 
   if (CurrPos->isDebugValue()) {
     closeRegion();
@@ -409,14 +417,10 @@ bool RegPressureTracker::recede() {
   collectOperands(CurrPos, PhysRegOpers, VirtRegOpers, TRI, RCI);
 
   // Boost pressure for all dead defs together.
-  for (unsigned i = 0; i < PhysRegOpers.DeadDefs.size(); ++i)
-      increasePhysRegPressure(PhysRegOpers.DeadDefs[i]);
-  for (unsigned i = 0; i < VirtRegOpers.DeadDefs.size(); ++i)
-      increaseVirtRegPressure(VirtRegOpers.DeadDefs[i]);
-  for (unsigned i = 0; i < PhysRegOpers.DeadDefs.size(); ++i)
-      decreasePhysRegPressure(PhysRegOpers.DeadDefs[i]);
-  for (unsigned i = 0; i < VirtRegOpers.DeadDefs.size(); ++i)
-      decreaseVirtRegPressure(VirtRegOpers.DeadDefs[i]);
+  increasePhysRegPressure(PhysRegOpers.DeadDefs);
+  increaseVirtRegPressure(VirtRegOpers.DeadDefs);
+  decreasePhysRegPressure(PhysRegOpers.DeadDefs);
+  decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
 
   // Kill liveness at live defs.
   // TODO: consider earlyclobbers?
@@ -528,16 +532,14 @@ bool RegPressureTracker::advance() {
   }
 
   // Boost pressure for all dead defs together.
-  for (unsigned i = 0; i < PhysRegOpers.DeadDefs.size(); ++i)
-      increasePhysRegPressure(PhysRegOpers.DeadDefs[i]);
-  for (unsigned i = 0; i < VirtRegOpers.DeadDefs.size(); ++i)
-      increaseVirtRegPressure(VirtRegOpers.DeadDefs[i]);
-  for (unsigned i = 0; i < PhysRegOpers.DeadDefs.size(); ++i)
-      decreasePhysRegPressure(PhysRegOpers.DeadDefs[i]);
-  for (unsigned i = 0; i < VirtRegOpers.DeadDefs.size(); ++i)
-      decreaseVirtRegPressure(VirtRegOpers.DeadDefs[i]);
+  increasePhysRegPressure(PhysRegOpers.DeadDefs);
+  increaseVirtRegPressure(VirtRegOpers.DeadDefs);
+  decreasePhysRegPressure(PhysRegOpers.DeadDefs);
+  decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
 
   // Find the next instruction.
-  while (++CurrPos != MBB->end() && CurrPos->isDebugValue());
+  do
+    ++CurrPos;
+  while (CurrPos != MBB->end() && CurrPos->isDebugValue());
   return true;
 }

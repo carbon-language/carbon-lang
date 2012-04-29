@@ -158,11 +158,11 @@ protected:
   void closeTop();
   void closeBottom();
 
-  void increasePhysRegPressure(unsigned Reg);
-  void decreasePhysRegPressure(unsigned Reg);
+  void increasePhysRegPressure(ArrayRef<unsigned> Regs);
+  void decreasePhysRegPressure(ArrayRef<unsigned> Regs);
 
-  void increaseVirtRegPressure(unsigned Reg);
-  void decreaseVirtRegPressure(unsigned Reg);
+  void increaseVirtRegPressure(ArrayRef<unsigned> Regs);
+  void decreaseVirtRegPressure(ArrayRef<unsigned> Regs);
 
   void discoverPhysLiveIn(unsigned Reg);
   void discoverPhysLiveOut(unsigned Reg);
