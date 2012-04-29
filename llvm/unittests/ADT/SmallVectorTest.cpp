@@ -413,4 +413,17 @@ TEST_F(SmallVectorTest, IteratorTest) {
   theVector.insert(theVector.end(), L.begin(), L.end());
 }
 
+struct notassignable {
+  int &x;
+  notassignable(int &x) : x(x) {}
+};
+
+TEST_F(SmallVectorTest, NoAssignTest) {
+  int x = 0;
+  SmallVector<notassignable, 2> vec;
+  vec.push_back(notassignable(x));
+  x = 42;
+  EXPECT_EQ(42, vec.pop_back_val().x);
+}
+
 }

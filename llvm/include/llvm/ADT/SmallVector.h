@@ -252,7 +252,7 @@ public:
   void push_back(const T &Elt) {
     if (this->EndX < this->CapacityX) {
     Retry:
-      *this->end() = Elt;
+      memcpy(this->end(), &Elt, sizeof(T));
       this->setEnd(this->end()+1);
       return;
     }
