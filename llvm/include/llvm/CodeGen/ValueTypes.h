@@ -196,7 +196,7 @@ namespace llvm {
     MVT getVectorElementType() const {
       switch (SimpleTy) {
       default:
-        return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
+        llvm_unreachable("Not a vector MVT!");
       case v2i8 :
       case v4i8 :
       case v8i8 :
@@ -225,7 +225,7 @@ namespace llvm {
     unsigned getVectorNumElements() const {
       switch (SimpleTy) {
       default:
-        return ~0U;
+        llvm_unreachable("Not a vector MVT!");
       case v32i8: return 32;
       case v16i8:
       case v16i16: return 16;
