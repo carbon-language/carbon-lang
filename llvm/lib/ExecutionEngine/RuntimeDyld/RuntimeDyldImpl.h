@@ -38,17 +38,17 @@ namespace llvm {
 
 class SectionEntry {
 public:
-  uint8_t* Address;
-  size_t Size;
+  uint8_t  *Address;
+  size_t   Size;
   uint64_t LoadAddress;   // For each section, the address it will be
                           // considered to live at for relocations. The same
                           // as the pointer to the above memory block for
                           // hosted JITs.
-  uintptr_t StubOffset;   // It's used for architecturies with stub
+  uintptr_t StubOffset;   // It's used for architectures with stub
                           // functions for far relocations like ARM.
-  uintptr_t ObjAddress;   // Section address in object file. It's use for
-                          // calculate MachO relocation addend
-  SectionEntry(uint8_t* address, size_t size, uintptr_t stubOffset,
+  uintptr_t ObjAddress;   // Section address in object file. It's used for
+                          // calculating the MachO relocation addend.
+  SectionEntry(uint8_t *address, size_t size, uintptr_t stubOffset,
                uintptr_t objAddress)
     : Address(address), Size(size), LoadAddress((uintptr_t)address),
       StubOffset(stubOffset), ObjAddress(objAddress) {}
@@ -58,8 +58,8 @@ class RelocationEntry {
 public:
   unsigned    SectionID;  // Section the relocation is contained in.
   uintptr_t   Offset;     // Offset into the section for the relocation.
-  uint32_t    Data;       // Relocatino data. Including type of relocation
-                          // and another flags and parameners from
+  uint32_t    Data;       // Relocation data. Including type of relocation
+                          // and other flags.
   intptr_t    Addend;     // Addend encoded in the instruction itself, if any,
                           // plus the offset into the source section for
                           // the symbol once the relocation is resolvable.
@@ -162,7 +162,7 @@ protected:
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be
-  ///        used for emmits, else allocateDataSection() will be used.
+  ///        used for emits, else allocateDataSection() will be used.
   /// \return SectionID.
   unsigned emitSection(ObjectImage &Obj,
                        const SectionRef &Section,
@@ -203,12 +203,13 @@ protected:
                                  uint32_t Type,
                                  int64_t Addend) = 0;
 
-  /// \brief Parses the object file relocation and store it to Relocations
-  ///        or SymbolRelocations. Its depend from object file type.
+  /// \brief Parses the object file relocation and stores it to Relocations
+  ///        or SymbolRelocations (this depends on the object file type).
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
-                                    LocalSymbolMap &Symbols, StubMap &Stubs) = 0;
+                                    LocalSymbolMap &Symbols,
+                                    StubMap &Stubs) = 0;
 
   void resolveSymbols();
   virtual ObjectImage *createObjectImage(const MemoryBuffer *InputBuffer);

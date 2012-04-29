@@ -59,7 +59,7 @@ void RuntimeDyldImpl::mapSectionAddress(void *LocalAddress,
   llvm_unreachable("Attempting to remap address of unknown section!");
 }
 
-// Subclasses can implement this method to create specialized image instances
+// Subclasses can implement this method to create specialized image instances.
 // The caller owns the the pointer that is returned.
 ObjectImage *RuntimeDyldImpl::createObjectImage(const MemoryBuffer *InputBuffer) {
   ObjectFile *ObjFile = ObjectFile::createObjectFile(const_cast<MemoryBuffer*>
@@ -75,7 +75,7 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
 
   Arch = (Triple::ArchType)obj->getArch();
 
-  LocalSymbolMap LocalSymbols;     // Functions and data symbols from the
+  LocalSymbolMap    LocalSymbols;  // Functions and data symbols from the
                                    // object file.
   ObjSectionToIDMap LocalSections; // Used sections from the object file
   CommonSymbolMap   CommonSymbols; // Common symbols requiring allocation
@@ -106,26 +106,27 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data) {
         uint64_t FileOffset;
-        StringRef sData;
+        StringRef SectionData;
         section_iterator si = obj->end_sections();
         Check(i->getFileOffset(FileOffset));
         Check(i->getSection(si));
         if (si == obj->end_sections()) continue;
-        Check(si->getContents(sData));
+        Check(si->getContents(SectionData));
         const uint8_t* SymPtr = (const uint8_t*)InputBuffer->getBufferStart() +
                                 (uintptr_t)FileOffset;
-        uintptr_t SectOffset = (uintptr_t)(SymPtr - (const uint8_t*)sData.begin());
+        uintptr_t SectOffset = (uintptr_t)(SymPtr -
+                                           (const uint8_t*)SectionData.begin());
         unsigned SectionID =
           findOrEmitSection(*obj,
                             *si,
                             SymType == object::SymbolRef::ST_Function,
                             LocalSections);
-        bool isGlobal = flags & SymbolRef::SF_Global;
         LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
         DEBUG(dbgs() << "\tFileOffset: " << format("%p", (uintptr_t)FileOffset)
                      << " flags: " << flags
                      << " SID: " << SectionID
                      << " Offset: " << format("%p", SectOffset));
+        bool isGlobal = flags & SymbolRef::SF_Global;
         if (isGlobal)
           SymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
       }
@@ -137,7 +138,7 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
   if (CommonSize != 0)
     emitCommonSymbols(*obj, CommonSymbols, CommonSize, LocalSymbols);
 
-  // Parse and proccess relocations
+  // Parse and process relocations
   DEBUG(dbgs() << "Parse relocations:\n");
   for (section_iterator si = obj->begin_sections(),
        se = obj->end_sections(); si != se; si.increment(err)) {
@@ -150,7 +151,7 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
          e = si->end_relocations(); i != e; i.increment(err)) {
       Check(err);
 
-      // If it's first relocation in this section, find its SectionID
+      // If it's the first relocation in this section, find its SectionID
       if (isFirstRelocation) {
         SectionID = findOrEmitSection(*obj, *si, true, LocalSections);
         DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
@@ -274,8 +275,8 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   }
   else {
     // Even if we didn't load the section, we need to record an entry for it
-    //   to handle later processing (and by 'handle' I mean don't do anything
-    //   with these sections).
+    // to handle later processing (and by 'handle' I mean don't do anything
+    // with these sections).
     Allocate = 0;
     Addr = 0;
     DEBUG(dbgs() << "emitSection SectionID: " << SectionID
@@ -308,8 +309,8 @@ unsigned RuntimeDyldImpl::findOrEmitSection(ObjectImage &Obj,
 }
 
 void RuntimeDyldImpl::AddRelocation(const RelocationValueRef &Value,
-                                   unsigned SectionID, uintptr_t Offset,
-                                   uint32_t RelType) {
+                                    unsigned SectionID, uintptr_t Offset,
+                                    uint32_t RelType) {
   DEBUG(dbgs() << "AddRelocation SymNamePtr: " << format("%p", Value.SymbolName)
                << " SID: " << Value.SectionID
                << " Addend: " << format("%p", Value.Addend)

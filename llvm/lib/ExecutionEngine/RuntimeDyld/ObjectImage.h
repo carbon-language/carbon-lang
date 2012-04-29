@@ -48,7 +48,7 @@ public:
   virtual void updateSymbolAddress(const object::SymbolRef &Sym, uint64_t Addr)
               {}
 
-  // Subclasses can override this method to provide JIT debugging support
+  // Subclasses can override these methods to provide JIT debugging support
   virtual void registerWithDebugger() {}
   virtual void deregisterWithDebugger() {}
 };

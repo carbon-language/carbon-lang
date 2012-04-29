@@ -217,7 +217,7 @@ GenericValue MCJIT::runFunction(Function *F,
 }
 
 void *MCJIT::getPointerToNamedFunction(const std::string &Name,
-                                       bool AbortOnFailure){
+                                       bool AbortOnFailure) {
   if (!isSymbolSearchingDisabled() && MemMgr) {
     void *ptr = MemMgr->getPointerToNamedFunction(Name, false);
     if (ptr)
@@ -231,7 +231,7 @@ void *MCJIT::getPointerToNamedFunction(const std::string &Name,
 
   if (AbortOnFailure) {
     report_fatal_error("Program used external function '"+Name+
-                      "' which could not be resolved!");
+                       "' which could not be resolved!");
   }
   return 0;
 }
