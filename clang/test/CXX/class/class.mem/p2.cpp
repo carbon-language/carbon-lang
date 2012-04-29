@@ -73,3 +73,16 @@ namespace PR12629 {
   static_assert(!noexcept(S().h()), "");
   static_assert(noexcept(S::i()), "");
 }
+
+namespace PR12688 {
+  struct S {
+    // FIXME: Producing one error saying this can't have the same name
+    //        as the class because it's not a constructor, then producing
+    //        another error saying this can't have a return type because
+    //        it is a constructor, is redundant and inconsistent.
+    nonsense S() throw (more_nonsense); // \
+    // expected-error {{'nonsense'}} \
+    // expected-error {{has the same name as its class}} \
+    // expected-error {{constructor cannot have a return type}}
+  };
+}
