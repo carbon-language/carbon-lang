@@ -6956,14 +6956,13 @@ X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return Insert128BitVector(DAG.getUNDEF(OpVT), Op, 0, DAG, dl);
   }
 
-  if (Op.getValueType() == MVT::v1i64 &&
+  if (OpVT == MVT::v1i64 &&
       Op.getOperand(0).getValueType() == MVT::i64)
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i64, Op.getOperand(0));
 
   SDValue AnyExt = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, Op.getOperand(0));
-  assert(Op.getValueType().getSimpleVT().getSizeInBits() == 128 &&
-         "Expected an SSE type!");
-  return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(),
+  assert(OpVT.getSizeInBits() == 128 && "Expected an SSE type!");
+  return DAG.getNode(ISD::BITCAST, dl, OpVT,
                      DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32,AnyExt));
 }
 
