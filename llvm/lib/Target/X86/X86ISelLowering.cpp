@@ -701,8 +701,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // First set operation action for all vector types to either promote
   // (for widening) or expand (for scalarization). Then we will selectively
   // turn on ones that can be effectively codegen'd.
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-       VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
+  for (int VT = MVT::FIRST_VECTOR_VALUETYPE;
+           VT <= MVT::LAST_VECTOR_VALUETYPE; ++VT) {
     setOperationAction(ISD::ADD , (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SUB , (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FADD, (MVT::SimpleValueType)VT, Expand);
@@ -760,8 +760,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ZERO_EXTEND,  (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::ANY_EXTEND,  (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::VSELECT,  (MVT::SimpleValueType)VT, Expand);
-    for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
+    for (int InnerVT = MVT::FIRST_VECTOR_VALUETYPE;
+             InnerVT <= MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
       setTruncStoreAction((MVT::SimpleValueType)VT,
                           (MVT::SimpleValueType)InnerVT, Expand);
     setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT, Expand);
@@ -870,7 +870,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i32, Custom);
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
-    for (unsigned i = (unsigned)MVT::v16i8; i != (unsigned)MVT::v2i64; ++i) {
+    for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
       EVT VT = (MVT::SimpleValueType)i;
       // Do not attempt to custom lower non-power-of-2 vectors
       if (!isPowerOf2_32(VT.getVectorNumElements()))
@@ -899,7 +899,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
-    for (unsigned i = (unsigned)MVT::v16i8; i != (unsigned)MVT::v2i64; i++) {
+    for (int i = MVT::v16i8; i != MVT::v2i64; i++) {
       MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
       EVT VT = SVT;
 
@@ -1117,8 +1117,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
 
     // Custom lower several nodes for 256-bit types.
-    for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-                  i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
+    for (int i = MVT::FIRST_VECTOR_VALUETYPE;
+             i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
       MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
       EVT VT = SVT;
 
@@ -1140,7 +1140,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
 
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
-    for (unsigned i = (unsigned)MVT::v32i8; i != (unsigned)MVT::v4i64; ++i) {
+    for (int i = MVT::v32i8; i != MVT::v4i64; ++i) {
       MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
       EVT VT = SVT;
 
@@ -1163,8 +1163,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
   // of this type with custom code.
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; VT++) {
+  for (int VT = MVT::FIRST_VECTOR_VALUETYPE;
+           VT != MVT::LAST_VECTOR_VALUETYPE; VT++) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
                        Custom);
   }
