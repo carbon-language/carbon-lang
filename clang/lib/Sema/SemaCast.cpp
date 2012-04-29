@@ -1504,10 +1504,9 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   }
 
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
-    bool LValue = DestTypeTmp->isLValueReferenceType();
-    if (LValue && !SrcExpr.get()->isLValue()) {
-      // Cannot cast non-lvalue to lvalue reference type. See the similar 
-      // comment in const_cast.
+    if (!SrcExpr.get()->isGLValue()) {
+      // Cannot cast non-glvalue to (lvalue or rvalue) reference type. See the
+      // similar comment in const_cast.
       msg = diag::err_bad_cxx_cast_rvalue;
       return TC_NotApplicable;
     }
