@@ -235,7 +235,6 @@ int main(int argc, char **argv, char * const *envp) {
   // Enable MCJIT if desired.
   if (UseMCJIT && !ForceInterpreter) {
     builder.setUseMCJIT(true);
-    builder.setJITMemoryManager(JITMemoryManager::CreateDefaultMemManager());
   }
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
