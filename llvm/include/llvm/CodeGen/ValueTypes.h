@@ -153,7 +153,7 @@ namespace llvm {
     bool isFloatingPoint() const {
       return ((SimpleTy >= MVT::FIRST_FP_VALUETYPE &&
                SimpleTy <= MVT::LAST_FP_VALUETYPE) ||
-	      (SimpleTy >= MVT::FIRST_FP_VECTOR_VALUETYPE &&
+              (SimpleTy >= MVT::FIRST_FP_VECTOR_VALUETYPE &&
          SimpleTy <= MVT::LAST_FP_VECTOR_VALUETYPE));
     }
 
@@ -161,7 +161,7 @@ namespace llvm {
     bool isInteger() const {
       return ((SimpleTy >= MVT::FIRST_INTEGER_VALUETYPE &&
                SimpleTy <= MVT::LAST_INTEGER_VALUETYPE) ||
-	      (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v8i64));
+              (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v8i64));
     }
 
     /// isVector - Return true if this is a vector value type.
