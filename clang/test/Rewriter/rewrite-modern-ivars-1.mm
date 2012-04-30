@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -Werror -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 
 @interface NSCheapMutableString {
 @private
@@ -84,6 +84,41 @@
         unsigned int freeWhenDone:1;
         unsigned int refs:30;
     } Last_flags;
+}
+@end
+
+enum OUTSIDE {
+  yes
+};
+
+@interface MoreEnumTests {
+@private
+    enum INSIDE {
+        no
+    } others;
+
+    enum OUTSIDE meetoo;
+
+    enum {
+       one,
+       two
+    } eu;
+}
+@end
+
+@interface I {
+    enum INSIDE I1;
+    enum OUTSIDE  I2;
+    enum ALSO_INSIDE {
+      maybe
+    } I3;
+
+   enum ALSO_INSIDE I4;
+
+    enum {
+       three,
+       four
+    } I5;
 }
 @end
 
