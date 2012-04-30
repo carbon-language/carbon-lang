@@ -46,3 +46,17 @@ entry:
 ; CHECK: addl $40
 }
 declare void @test3sret(%struct.a* sret)
+
+; Check that fast-isel sret works with fastcc (and does not callee-pop)
+define void @test4() nounwind ssp {
+entry:
+  %tmp = alloca %struct.a, align 8
+  call fastcc void @test4fastccsret(%struct.a* sret %tmp)
+  ret void
+; CHECK: test4:
+; CHECK: subl $28
+; CHECK: leal (%esp), %ecx
+; CHECK: calll _test4fastccsret
+; CHECK addl $28
+}
+declare fastcc void @test4fastccsret(%struct.a* sret)
