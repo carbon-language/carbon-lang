@@ -124,7 +124,12 @@ namespace {
       /// This number should be used to predict worst case padding when
       /// splitting the block.
       unsigned internalKnownBits() const {
-        return Unalign ? Unalign : KnownBits;
+        unsigned Bits = Unalign ? Unalign : KnownBits;
+        // If the block size isn't a multiple of the known bits, assume the
+        // worst case padding.
+        if (Size & ((1u << Bits) - 1))
+          Bits = CountTrailingZeros_32(Size);
+        return Bits;
       }
 
       /// Compute the offset immediately following this block.  If LogAlign is
