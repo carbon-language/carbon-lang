@@ -1152,6 +1152,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
   }
   return NULL;
 }
+} // end: extern C.
 
 namespace {
   struct OverridenCursorsPool {
@@ -1175,7 +1176,8 @@ void *cxcursor::createOverridenCXCursorsPool() {
 void cxcursor::disposeOverridenCXCursorsPool(void *pool) {
   delete static_cast<OverridenCursorsPool*>(pool);
 }
-  
+ 
+extern "C" {
 void clang_getOverriddenCursors(CXCursor cursor,
                                 CXCursor **overridden,
                                 unsigned *num_overridden) {
