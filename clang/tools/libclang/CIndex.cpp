@@ -61,6 +61,7 @@ CXTranslationUnit cxtu::MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *TU) {
   D->TUData = TU;
   D->StringPool = createCXStringPool();
   D->Diagnostics = 0;
+  D->OverridenCursorsPool = createOverridenCXCursorsPool();
   return D;
 }
 
@@ -2734,6 +2735,7 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
     delete static_cast<ASTUnit *>(CTUnit->TUData);
     disposeCXStringPool(CTUnit->StringPool);
     delete static_cast<CXDiagnosticSetImpl *>(CTUnit->Diagnostics);
+    disposeOverridenCXCursorsPool(CTUnit->OverridenCursorsPool);
     delete CTUnit;
   }
 }
@@ -5547,34 +5549,6 @@ CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
   // FIXME: Note that we can't easily compute the lexical context of a 
   // statement or expression, so we return nothing.
   return clang_getNullCursor();
-}
-
-void clang_getOverriddenCursors(CXCursor cursor, 
-                                CXCursor **overridden,
-                                unsigned *num_overridden) {
-  if (overridden)
-    *overridden = 0;
-  if (num_overridden)
-    *num_overridden = 0;
-  if (!overridden || !num_overridden)
-    return;
-  if (!clang_isDeclaration(cursor.kind))
-    return;
-
-  SmallVector<CXCursor, 8> Overridden;
-  cxcursor::getOverriddenCursors(cursor, Overridden);
-
-  // Don't allocate memory if we have no overriden cursors.
-  if (Overridden.size() == 0)
-    return;
-
-  *num_overridden = Overridden.size();
-  *overridden = new CXCursor [Overridden.size()];
-  std::copy(Overridden.begin(), Overridden.end(), *overridden);
-}
-
-void clang_disposeOverriddenCursors(CXCursor *overridden) {
-  delete [] overridden;
 }
 
 CXFile clang_getIncludedFile(CXCursor cursor) {

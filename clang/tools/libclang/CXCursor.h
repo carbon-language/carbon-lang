@@ -55,7 +55,7 @@ CXCursor MakeCXCursor(clang::Decl *D, CXTranslationUnit TU,
 CXCursor MakeCXCursor(clang::Stmt *S, clang::Decl *Parent,
                       CXTranslationUnit TU,
                       SourceRange RegionOfInterest = SourceRange());
-CXCursor MakeCXCursorInvalid(CXCursorKind K);
+CXCursor MakeCXCursorInvalid(CXCursorKind K, CXTranslationUnit TU = 0);
 
 /// \brief Create an Objective-C superclass reference at the given location.
 CXCursor MakeCursorObjCSuperClassRef(ObjCInterfaceDecl *Super, 
@@ -206,8 +206,15 @@ ASTUnit *getCursorASTUnit(CXCursor Cursor);
 CXTranslationUnit getCursorTU(CXCursor Cursor);
 
 void getOverriddenCursors(CXCursor cursor,
-                          SmallVectorImpl<CXCursor> &overridden); 
+                          SmallVectorImpl<CXCursor> &overridden);
+  
+/// \brief Create an opaque  pool used for fast generation of overriden
+/// CXCursor arrays.
+void *createOverridenCXCursorsPool();
 
+/// \brief Dispose of the overriden CXCursors pool.
+void disposeOverridenCXCursorsPool(void *pool);
+  
 /// \brief Returns a index/location pair for a selector identifier if the cursor
 /// points to one.
 std::pair<int, SourceLocation> getSelectorIdentifierIndexAndLoc(CXCursor);

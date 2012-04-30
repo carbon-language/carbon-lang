@@ -20,6 +20,7 @@ struct CXTranslationUnitImpl {
   void *TUData;
   void *StringPool;
   void *Diagnostics;
+  void *OverridenCursorsPool;
 };
 }
 

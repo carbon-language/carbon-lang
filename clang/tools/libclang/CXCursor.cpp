@@ -30,9 +30,9 @@
 using namespace clang;
 using namespace cxcursor;
 
-CXCursor cxcursor::MakeCXCursorInvalid(CXCursorKind K) {
+CXCursor cxcursor::MakeCXCursorInvalid(CXCursorKind K, CXTranslationUnit TU) {
   assert(K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid);
-  CXCursor C = { K, 0, { 0, 0, 0 } };
+  CXCursor C = { K, 0, { 0, 0, TU } };
   return C;
 }
 
@@ -1151,6 +1151,105 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
     return String;
   }
   return NULL;
+}
+
+namespace {
+  struct OverridenCursorsPool {
+    typedef llvm::SmallVector<CXCursor, 2> CursorVec;
+    std::vector<CursorVec*> AllCursors;
+    std::vector<CursorVec*> AvailableCursors;
+    
+    ~OverridenCursorsPool() {
+      for (std::vector<CursorVec*>::iterator I = AllCursors.begin(),
+           E = AllCursors.end(); I != E; ++I) {
+        delete *I;
+      }
+    }
+  };
+}
+
+void *cxcursor::createOverridenCXCursorsPool() {
+  return new OverridenCursorsPool();
+}
+  
+void cxcursor::disposeOverridenCXCursorsPool(void *pool) {
+  delete static_cast<OverridenCursorsPool*>(pool);
+}
+  
+void clang_getOverriddenCursors(CXCursor cursor,
+                                CXCursor **overridden,
+                                unsigned *num_overridden) {
+  if (overridden)
+    *overridden = 0;
+  if (num_overridden)
+    *num_overridden = 0;
+  
+  CXTranslationUnit TU = cxcursor::getCursorTU(cursor);
+  
+  if (!overridden || !num_overridden || !TU)
+    return;
+
+  if (!clang_isDeclaration(cursor.kind))
+    return;
+    
+  OverridenCursorsPool &pool =
+    *static_cast<OverridenCursorsPool*>(TU->OverridenCursorsPool);
+  
+  OverridenCursorsPool::CursorVec *Vec = 0;
+  
+  if (!pool.AvailableCursors.empty()) {
+    Vec = pool.AvailableCursors.back();
+    pool.AvailableCursors.pop_back();
+  }
+  else {
+    Vec = new OverridenCursorsPool::CursorVec();
+    pool.AllCursors.push_back(Vec);
+  }
+  
+  // Clear out the vector, but don't free the memory contents.  This
+  // reduces malloc() traffic.
+  Vec->clear();
+
+  // Use the first entry to contain a back reference to the vector.
+  // This is a complete hack.
+  CXCursor backRefCursor = MakeCXCursorInvalid(CXCursor_InvalidFile, TU);
+  backRefCursor.data[0] = Vec;
+  assert(cxcursor::getCursorTU(backRefCursor) == TU);
+  Vec->push_back(backRefCursor);
+
+  // Get the overriden cursors.
+  cxcursor::getOverriddenCursors(cursor, *Vec);
+  
+  // Did we get any overriden cursors?  If not, return Vec to the pool
+  // of available cursor vectors.
+  if (Vec->size() == 1) {
+    pool.AvailableCursors.push_back(Vec);
+    return;
+  }
+
+  // Now tell the caller about the overriden cursors.
+  assert(Vec->size() > 1);
+  *overridden = &((*Vec)[1]);
+  *num_overridden = Vec->size() - 1;
+}
+
+void clang_disposeOverriddenCursors(CXCursor *overridden) {
+  if (!overridden)
+    return;
+  
+  // Use pointer arithmetic to get back the first faux entry
+  // which has a back-reference to the TU and the vector.
+  --overridden;
+  OverridenCursorsPool::CursorVec *Vec =
+    static_cast<OverridenCursorsPool::CursorVec*>(overridden->data[0]);
+  CXTranslationUnit TU = getCursorTU(*overridden);
+  
+  assert(Vec && TU);
+
+  OverridenCursorsPool &pool =
+    *static_cast<OverridenCursorsPool*>(TU->OverridenCursorsPool);
+  
+  pool.AvailableCursors.push_back(Vec);
 }
   
 } // end: extern "C"
