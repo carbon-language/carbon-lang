@@ -30,7 +30,8 @@ void RuntimeDyldMachO::resolveRelocation(uint8_t *LocalAddress,
   unsigned MachoType = (Type >> 28) & 0xf;
   unsigned Size = 1 << ((Type >> 25) & 3);
 
-  DEBUG(dbgs() << "resolveRelocation LocalAddress: " << format("%p", LocalAddress)
+  DEBUG(dbgs() << "resolveRelocation LocalAddress: " 
+        << format("%p", LocalAddress)
         << " FinalAddress: " << format("%p", FinalAddress)
         << " Value: " << format("%p", Value)
         << " Addend: " << Addend
@@ -53,12 +54,12 @@ void RuntimeDyldMachO::resolveRelocation(uint8_t *LocalAddress,
     break;
   case Triple::x86:
     resolveI386Relocation(LocalAddress,
-                                 FinalAddress,
-                                 (uintptr_t)Value,
-                                 isPCRel,
-                                 Type,
-                                 Size,
-                                 Addend);
+                          FinalAddress,
+                          (uintptr_t)Value,
+                          isPCRel,
+                          Type,
+                          Size,
+                          Addend);
     break;
   case Triple::arm:    // Fall through.
   case Triple::thumb:
@@ -73,14 +74,13 @@ void RuntimeDyldMachO::resolveRelocation(uint8_t *LocalAddress,
   }
 }
 
-bool RuntimeDyldMachO::
-resolveI386Relocation(uint8_t *LocalAddress,
-                      uint64_t FinalAddress,
-                      uint64_t Value,
-                      bool isPCRel,
-                      unsigned Type,
-                      unsigned Size,
-                      int64_t Addend) {
+bool RuntimeDyldMachO::resolveI386Relocation(uint8_t *LocalAddress,
+                                             uint64_t FinalAddress,
+                                             uint64_t Value,
+                                             bool isPCRel,
+                                             unsigned Type,
+                                             unsigned Size,
+                                             int64_t Addend) {
   if (isPCRel)
     Value -= FinalAddress + 4; // see resolveX86_64Relocation
 
@@ -102,14 +102,13 @@ resolveI386Relocation(uint8_t *LocalAddress,
   }
 }
 
-bool RuntimeDyldMachO::
-resolveX86_64Relocation(uint8_t *LocalAddress,
-                        uint64_t FinalAddress,
-                        uint64_t Value,
-                        bool isPCRel,
-                        unsigned Type,
-                        unsigned Size,
-                        int64_t Addend) {
+bool RuntimeDyldMachO::resolveX86_64Relocation(uint8_t *LocalAddress,
+                                               uint64_t FinalAddress,
+                                               uint64_t Value,
+                                               bool isPCRel,
+                                               unsigned Type,
+                                               unsigned Size,
+                                               int64_t Addend) {
   // If the relocation is PC-relative, the value to be encoded is the
   // pointer difference.
   if (isPCRel)
@@ -144,14 +143,13 @@ resolveX86_64Relocation(uint8_t *LocalAddress,
   }
 }
 
-bool RuntimeDyldMachO::
-resolveARMRelocation(uint8_t *LocalAddress,
-                     uint64_t FinalAddress,
-                     uint64_t Value,
-                     bool isPCRel,
-                     unsigned Type,
-                     unsigned Size,
-                     int64_t Addend) {
+bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
+                                            uint64_t FinalAddress,
+                                            uint64_t Value,
+                                            bool isPCRel,
+                                            unsigned Type,
+                                            unsigned Size,
+                                            int64_t Addend) {
   // If the relocation is PC-relative, the value to be encoded is the
   // pointer difference.
   if (isPCRel) {
@@ -269,7 +267,7 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
       Stubs[Value] = Section.StubOffset;
       uint8_t *StubTargetAddr = createStubFunction(Section.Address +
                                                    Section.StubOffset);
-      AddRelocation(Value, Rel.SectionID, StubTargetAddr - Section.Address,
+      addRelocation(Value, Rel.SectionID, StubTargetAddr - Section.Address,
                     macho::RIT_Vanilla);
       resolveRelocation(Target, (uint64_t)Target,
                         (uint64_t)Section.Address + Section.StubOffset,
@@ -277,11 +275,12 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
       Section.StubOffset += getMaxStubSize();
     }
   } else
-    AddRelocation(Value, Rel.SectionID, Rel.Offset, RelType);
+    addRelocation(Value, Rel.SectionID, Rel.Offset, RelType);
 }
 
 
-bool RuntimeDyldMachO::isCompatibleFormat(const MemoryBuffer *InputBuffer) const {
+bool RuntimeDyldMachO::isCompatibleFormat(
+        const MemoryBuffer *InputBuffer) const {
   StringRef Magic = InputBuffer->getBuffer().slice(0, 4);
   if (Magic == "\xFE\xED\xFA\xCE") return true;
   if (Magic == "\xCE\xFA\xED\xFE") return true;

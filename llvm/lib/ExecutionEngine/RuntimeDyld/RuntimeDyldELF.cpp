@@ -410,14 +410,14 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
       Stubs[Value] = Section.StubOffset;
       uint8_t *StubTargetAddr = createStubFunction(Section.Address +
                                                    Section.StubOffset);
-      AddRelocation(Value, Rel.SectionID,
+      addRelocation(Value, Rel.SectionID,
                     StubTargetAddr - Section.Address, ELF::R_ARM_ABS32);
       resolveRelocation(Target, (uint64_t)Target, (uint64_t)Section.Address +
                         Section.StubOffset, RelType, 0);
       Section.StubOffset += getMaxStubSize();
     }
   } else
-    AddRelocation(Value, Rel.SectionID, Rel.Offset, RelType);
+    addRelocation(Value, Rel.SectionID, Rel.Offset, RelType);
 }
 
 bool RuntimeDyldELF::isCompatibleFormat(const MemoryBuffer *InputBuffer) const {

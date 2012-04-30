@@ -14,60 +14,83 @@
 #ifndef LLVM_RUNTIME_DYLD_IMPL_H
 #define LLVM_RUNTIME_DYLD_IMPL_H
 
+#include "ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
-#include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Memory.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/system_error.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/ADT/Triple.h"
-#include <map>
 #include "llvm/Support/Format.h"
-#include "ObjectImage.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
+#include <map>
 
 using namespace llvm;
 using namespace llvm::object;
 
 namespace llvm {
 
+class MemoryBuffer;
+class Twine;
+
+
+/// SectionEntry - represents a section emitted into memory by the dynamic
+/// linker.
 class SectionEntry {
 public:
-  uint8_t  *Address;
-  size_t   Size;
-  uint64_t LoadAddress;   // For each section, the address it will be
-                          // considered to live at for relocations. The same
-                          // as the pointer to the above memory block for
-                          // hosted JITs.
-  uintptr_t StubOffset;   // It's used for architectures with stub
-                          // functions for far relocations like ARM.
-  uintptr_t ObjAddress;   // Section address in object file. It's used for
-                          // calculating the MachO relocation addend.
+  /// Address - address in the linker's memory where the section resides.
+  uint8_t *Address;
+
+  /// Size - section size.
+  size_t Size;
+
+  /// LoadAddress - the address of the section in the target process's memory.
+  /// Used for situations in which JIT-ed code is being executed in the address
+  /// space of a separate process.  If the code executes in the same address
+  /// space where it was JIT-ed, this just equals Address.
+  uint64_t LoadAddress;
+
+  /// StubOffset - used for architectures with stub functions for far
+  /// relocations (like ARM).
+  uintptr_t StubOffset;
+
+  /// ObjAddress - address of the section in the in-memory object file.  Used
+  /// for calculating relocations in some object formats (like MachO).
+  uintptr_t ObjAddress;
+
   SectionEntry(uint8_t *address, size_t size, uintptr_t stubOffset,
                uintptr_t objAddress)
     : Address(address), Size(size), LoadAddress((uintptr_t)address),
       StubOffset(stubOffset), ObjAddress(objAddress) {}
 };
 
+/// RelocationEntry - used to represent relocations internally in the dynamic
+/// linker.
 class RelocationEntry {
 public:
-  unsigned    SectionID;  // Section the relocation is contained in.
-  uintptr_t   Offset;     // Offset into the section for the relocation.
-  uint32_t    Data;       // Relocation data. Including type of relocation
-                          // and other flags.
-  intptr_t    Addend;     // Addend encoded in the instruction itself, if any,
-                          // plus the offset into the source section for
-                          // the symbol once the relocation is resolvable.
-  RelocationEntry(unsigned id, uint64_t offset, uint32_t data, int64_t addend)
-    : SectionID(id), Offset(offset), Data(data), Addend(addend) {}
+  /// SectionID - the section this relocation points to.
+  unsigned SectionID;
+
+  /// Offset - offset into the section.
+  uintptr_t Offset;
+
+  /// RelType - relocation type.
+  uint32_t RelType;
+
+  /// Addend - the relocation addend encoded in the instruction itself.  Also
+  /// used to make a relocation section relative instead of symbol relative.
+  intptr_t Addend;
+
+  RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend)
+    : SectionID(id), Offset(offset), RelType(type), Addend(addend) {}
 };
 
-// Raw relocation data from object file
+/// ObjRelocationInfo - relocation information as read from the object file.
+/// Used to pass around data taken from object::RelocationRef, together with
+/// the section to which the relocation points (represented by a SectionID).
 class ObjRelocationInfo {
 public:
   unsigned  SectionID;
@@ -97,7 +120,8 @@ protected:
   // The MemoryManager to load objects into.
   RTDyldMemoryManager *MemMgr;
 
-  // A list of emmitted sections.
+  // A list of all sections emitted by the dynamic linker.  These sections are
+  // referenced in the code by means of their index in this list - SectionID.
   typedef SmallVector<SectionEntry, 64> SectionList;
   SectionList Sections;
 
@@ -180,7 +204,7 @@ protected:
 
   /// \brief If Value.SymbolName is NULL then store relocation to the
   ///        Relocations, else store it in the SymbolRelocations.
-  void AddRelocation(const RelocationValueRef &Value, unsigned SectionID,
+  void addRelocation(const RelocationValueRef &Value, unsigned SectionID,
                      uintptr_t Offset, uint32_t RelType);
 
   /// \brief Emits long jump instruction to Addr.

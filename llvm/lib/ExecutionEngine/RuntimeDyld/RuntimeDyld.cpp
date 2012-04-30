@@ -308,10 +308,10 @@ unsigned RuntimeDyldImpl::findOrEmitSection(ObjectImage &Obj,
   return SectionID;
 }
 
-void RuntimeDyldImpl::AddRelocation(const RelocationValueRef &Value,
+void RuntimeDyldImpl::addRelocation(const RelocationValueRef &Value,
                                     unsigned SectionID, uintptr_t Offset,
                                     uint32_t RelType) {
-  DEBUG(dbgs() << "AddRelocation SymNamePtr: " << format("%p", Value.SymbolName)
+  DEBUG(dbgs() << "addRelocation SymNamePtr: " << format("%p", Value.SymbolName)
                << " SID: " << Value.SectionID
                << " Addend: " << format("%p", Value.Addend)
                << " Offset: " << format("%p", Offset)
@@ -370,12 +370,12 @@ void RuntimeDyldImpl::resolveRelocationEntry(const RelocationEntry &RE,
       uint8_t *Target = Sections[RE.SectionID].Address + RE.Offset;
       DEBUG(dbgs() << "\tSectionID: " << RE.SectionID
             << " + " << RE.Offset << " (" << format("%p", Target) << ")"
-            << " Data: " << RE.Data
+            << " RelType: " << RE.RelType
             << " Addend: " << RE.Addend
             << "\n");
 
       resolveRelocation(Target, Sections[RE.SectionID].LoadAddress + RE.Offset,
-                        Value, RE.Data, RE.Addend);
+                        Value, RE.RelType, RE.Addend);
   }
 }
 
