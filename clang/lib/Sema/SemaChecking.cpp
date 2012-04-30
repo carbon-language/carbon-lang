@@ -4220,7 +4220,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     if (Loc.isMacroID())
       Loc = S.SourceMgr.getImmediateExpansionRange(Loc).first;
     S.Diag(Loc, diag::warn_impcast_null_pointer_to_integer)
-        << T << Loc << clang::SourceRange(CC);
+        << T << clang::SourceRange(CC)
+        << FixItHint::CreateReplacement(Loc, S.getFixItZeroLiteralForType(T));
     return;
   }
 

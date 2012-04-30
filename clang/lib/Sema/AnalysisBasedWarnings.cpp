@@ -438,8 +438,8 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
     return false;
   
   // Suggest possible initialization (if any).
-  const char *Init = S.getFixItZeroInitializerForType(VariableTy);
-  if (!Init)
+  std::string Init = S.getFixItZeroInitializerForType(VariableTy);
+  if (Init.empty())
     return false;
   SourceLocation Loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
   

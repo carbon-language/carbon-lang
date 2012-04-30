@@ -205,7 +205,6 @@ template<template<typename> Foo, // expected-error {{template template parameter
          template<typename> struct Baz> // expected-error {{template template parameter requires 'class' after the parameter list}}
 void func();
 
-
 namespace ShadowedTagType {
 class Foo {
  public:
@@ -217,6 +216,9 @@ class Foo {
 };
 void Foo::SetBar(Bar bar) { bar_ = bar; } // expected-error {{must use 'enum' tag to refer to type 'Bar' in this scope}}
 }
+
+#define NULL __null
+char c = NULL; // expected-warning {{implicit conversion of NULL constant to 'char'}}
 
 namespace arrow_suggest {
 

@@ -5090,12 +5090,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
             (RD->isEmpty() || RD->hasUserProvidedDefaultConstructor()))
           Diag(C.Loc, diag::note_empty_parens_default_ctor)
             << FixItHint::CreateRemoval(ParenRange);
-        else if (const char *Init = getFixItZeroInitializerForType(T))
-          Diag(C.Loc, diag::note_empty_parens_zero_initialize)
-            << FixItHint::CreateReplacement(ParenRange, Init);
-        else if (LangOpts.CPlusPlus0x)
-          Diag(C.Loc, diag::note_empty_parens_zero_initialize)
-            << FixItHint::CreateReplacement(ParenRange, "{}");
+        else {
+          std::string Init = getFixItZeroInitializerForType(T);
+          if (Init.empty() && LangOpts.CPlusPlus0x)
+            Init = "{}";
+          if (!Init.empty())
+            Diag(C.Loc, diag::note_empty_parens_zero_initialize)
+              << FixItHint::CreateReplacement(ParenRange, Init);
+        }
       }
     }
 
