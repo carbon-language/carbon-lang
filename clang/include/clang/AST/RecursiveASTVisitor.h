@@ -151,7 +151,8 @@ public:
   /// \brief Return whether \param S should be traversed using data recursion
   /// to avoid a stack overflow with extreme cases.
   bool shouldUseDataRecursionFor(Stmt *S) const {
-    return isa<BinaryOperator>(S) || isa<UnaryOperator>(S) || isa<CaseStmt>(S);
+    return isa<BinaryOperator>(S) || isa<UnaryOperator>(S) ||
+           isa<CaseStmt>(S) || isa<CXXOperatorCallExpr>(S);
   }
 
   /// \brief Recursively visit a statement or expression, by
