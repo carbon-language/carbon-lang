@@ -422,7 +422,7 @@ int main(int argc, char *argv[]) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
   // create platform for testing
-  Platform* platform = NULL;
+  Platform* platform = nullptr;
   switch ( platformSelected ) {
     case platformTesting:
       platform = new TestingPlatform();
@@ -433,7 +433,7 @@ int main(int argc, char *argv[]) {
   }
   
   // read input YAML doc into object file(s)
-  std::vector<const File *> files;
+  std::vector<std::unique_ptr<const File>> files;
   if (error(yaml::parseObjectTextFileOrSTDIN(cmdLineInputFilePath, 
                                             *platform, files))) {
     return 1;
@@ -444,7 +444,7 @@ int main(int argc, char *argv[]) {
 
   // create object to mange input files
   InputFiles inputFiles;
-  for (const File *file : files) {
+  for (const auto &file : files) {
     inputFiles.appendFile(*file);
   }
   

@@ -15,7 +15,6 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
 
-
 namespace lld {
 namespace yaml {
 
@@ -34,62 +33,60 @@ public:
 
   static const char* const                fileKindKeyword;
   static const File::Kind                 fileKindDefault;
-  static File::Kind                       fileKind(const char*);
+  static File::Kind                       fileKind(StringRef);
   static const char*                      fileKind(File::Kind);
 
   static const char* const                definitionKeyword;
   static const Atom::Definition           definitionDefault;
-  static Atom::Definition                 definition(const char*);
+  static Atom::Definition                 definition(StringRef);
   static const char*                      definition(Atom::Definition);
 
   static const char* const                scopeKeyword;
   static const DefinedAtom::Scope         scopeDefault;
-  static DefinedAtom::Scope               scope(const char*);
+  static DefinedAtom::Scope               scope(StringRef);
   static const char*                      scope(DefinedAtom::Scope);
 
   static const char* const                contentTypeKeyword;
   static const DefinedAtom::ContentType   contentTypeDefault;
-  static DefinedAtom::ContentType         contentType(const char*);
+  static DefinedAtom::ContentType         contentType(StringRef);
   static const char*                      contentType(DefinedAtom::ContentType);
 
   static const char* const                deadStripKindKeyword;
   static const DefinedAtom::DeadStripKind deadStripKindDefault;
-  static DefinedAtom::DeadStripKind       deadStripKind(const char*);
+  static DefinedAtom::DeadStripKind       deadStripKind(StringRef);
   static const char*                      deadStripKind(DefinedAtom::DeadStripKind);
 
   static const char* const                sectionChoiceKeyword;
   static const DefinedAtom::SectionChoice sectionChoiceDefault;
-  static DefinedAtom::SectionChoice       sectionChoice(const char*);
+  static DefinedAtom::SectionChoice       sectionChoice(StringRef);
   static const char*                      sectionChoice(DefinedAtom::SectionChoice);
 
   static const char* const                interposableKeyword;
   static const DefinedAtom::Interposable  interposableDefault;
-  static DefinedAtom::Interposable        interposable(const char*);
+  static DefinedAtom::Interposable        interposable(StringRef);
   static const char*                      interposable(DefinedAtom::Interposable);
 
   static const char* const                mergeKeyword;
   static const DefinedAtom::Merge         mergeDefault;
-  static DefinedAtom::Merge               merge(const char*);
+  static DefinedAtom::Merge               merge(StringRef);
   static const char*                      merge(DefinedAtom::Merge);
 
   static const char* const                      permissionsKeyword;
   static const DefinedAtom::ContentPermissions  permissionsDefault;
-  static DefinedAtom::ContentPermissions        permissions(const char*);
+  static DefinedAtom::ContentPermissions        permissions(StringRef);
   static const char*                            permissions(DefinedAtom::ContentPermissions);
 
   static const char* const                isThumbKeyword;
   static const bool                       isThumbDefault;
-  static bool                             isThumb(const char*);
   static const char*                      isThumb(bool);
 
   static const char* const                isAliasKeyword;
   static const bool                       isAliasDefault;
-  static bool                             isAlias(const char*);
   static const char*                      isAlias(bool);
 
   static const char* const                canBeNullKeyword;
   static const UndefinedAtom::CanBeNull   canBeNullDefault;
-  static UndefinedAtom::CanBeNull         canBeNull(const char*);
+  static UndefinedAtom::CanBeNull         canBeNull(StringRef);
   static const char*                      canBeNull(UndefinedAtom::CanBeNull);
 
 
@@ -104,4 +101,3 @@ public:
 } // namespace lld
 
 #endif // LLD_CORE_YAML_KEY_VALUES_H_
-

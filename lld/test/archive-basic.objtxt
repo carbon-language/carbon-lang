@@ -9,34 +9,29 @@
 atoms:
     - name:              foo
       type:              code
-      
+
     - name:              bar
       definition:        undefined
 
 ---
-name: bar.o
-atoms:
-    - name:              bar
-      scope:             global
-      type:              code
-      
-    - name:              bar2
-      type:              code
-  
----
-name: baz.o
-atoms:
-    - name:              baz
-      scope:             global
-      type:              code
-      
-    - name:              baz2
-      type:              code
----
-kind: archive
-members:  
-    - name:    bar.o
-    - name:    baz.o
+archive:
+    - name: bar.o
+      atoms:
+      - name:              bar
+        scope:             global
+        type:              code
+
+      - name:              bar2
+        type:              code
+
+    - name: baz.o
+      atoms:
+      - name:              baz
+        scope:             global
+        type:              code
+
+      - name:              baz2
+        type:              code
 ...
 
 # CHECK:       name:       foo

@@ -11,26 +11,22 @@
 atoms:
     - name:              foo
       type:              code
-      
+
     - name:              bar
       scope:             global
       content:           zero-fill
       merge:             asTentative
 
 ---
-name: bar.o
-atoms:
-    - name:              bar
-      scope:             global
-      type:              data
-      
-    - name:              bar2
-      type:              data
-  
----
-kind: archive
-members:  
-    - name:    bar.o
+archive:
+    - name: bar.o
+    - atoms:
+      - name:              bar
+        scope:             global
+        type:              data
+
+      - name:              bar2
+        type:              data
 ...
 
 # CHK1:       name:       foo

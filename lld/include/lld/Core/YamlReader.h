@@ -14,6 +14,7 @@
 
 #include "llvm/Support/system_error.h"
 
+#include <memory>
 #include <vector>
 
 namespace llvm {
@@ -33,14 +34,15 @@ namespace yaml {
   /// the specified vector<File*>.
   error_code parseObjectTextFileOrSTDIN( StringRef path
                                        , Platform&
-                                       , std::vector<const File *>&);
+                                       , std::vector<
+                                           std::unique_ptr<const File>>&);
 
 
   /// parseObjectText - Parse the specified YAML formatted MemoryBuffer
   /// into lld::File object(s) and append each to the specified vector<File*>.
   error_code parseObjectText( llvm::MemoryBuffer *mb
                             , Platform&
-                            , std::vector<const File *>&);
+                            , std::vector<std::unique_ptr<const File>>&);
 
 } // namespace yaml
 } // namespace lld
