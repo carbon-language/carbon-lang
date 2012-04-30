@@ -81,3 +81,22 @@ void test3() {
 #define FINIT int a3 = NULL;
   FINIT // expected-warning {{implicit conversion of NULL constant to 'int'}}
 }
+
+namespace test4 {
+  template<typename T>
+  void tmpl(char c = NULL, // expected-warning {{implicit conversion of NULL constant to 'char'}}
+            T a = NULL, // expected-warning {{implicit conversion of NULL constant to 'char'}} \
+                           expected-warning {{implicit conversion of NULL constant to 'int'}}
+            T b = 1024) { // expected-warning {{implicit conversion from 'int' to 'char' changes value from 1024 to 0}}
+  }
+
+  template<typename T>
+  void tmpl2(T t = NULL) {
+  }
+
+  void func() {
+    tmpl<char>(); // expected-note {{in instantiation of default function argument expression for 'tmpl<char>' required here}}
+    tmpl<int>(); // expected-note {{in instantiation of default function argument expression for 'tmpl<int>' required here}}
+    tmpl2<int*>();
+  }
+}

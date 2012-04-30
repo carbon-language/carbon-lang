@@ -3300,9 +3300,11 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
     if (Result.isInvalid())
       return ExprError();
 
+    Expr *Arg = Result.takeAs<Expr>();
+    CheckImplicitConversions(Arg, Arg->getExprLoc());
+    Param->setDefaultArg(Arg);
     // Build the default argument expression.
-    return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param,
-                                           Result.takeAs<Expr>()));
+    return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param, Arg));
   }
 
   // If the default expression creates temporaries, we need to
