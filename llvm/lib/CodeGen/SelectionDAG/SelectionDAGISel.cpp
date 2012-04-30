@@ -449,9 +449,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
         }
       }
     }
-  done:;
   }
 
+  done:
   // Determine if there is a call to setjmp in the machine function.
   MF->setExposesReturnsTwice(Fn.callsFunctionThatReturnsTwice());
 
@@ -466,8 +466,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
     // If To is also scheduled to be replaced, find what its ultimate
     // replacement is.
     for (;;) {
-      DenseMap<unsigned, unsigned>::iterator J =
-        FuncInfo->RegFixups.find(To);
+      DenseMap<unsigned, unsigned>::iterator J = FuncInfo->RegFixups.find(To);
       if (J == E) break;
       To = J->second;
     }
@@ -1776,7 +1775,7 @@ enum ChainResult {
 /// The walk we do here is guaranteed to be small because we quickly get down to
 /// already selected nodes "below" us.
 static ChainResult
-WalkChainUsers(SDNode *ChainedNode,
+WalkChainUsers(const SDNode *ChainedNode,
                SmallVectorImpl<SDNode*> &ChainedNodesInPattern,
                SmallVectorImpl<SDNode*> &InteriorChainedNodes) {
   ChainResult Result = CR_Simple;
@@ -2009,14 +2008,14 @@ CheckSame(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 /// CheckPatternPredicate - Implements OP_CheckPatternPredicate.
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckPatternPredicate(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-                      SelectionDAGISel &SDISel) {
+                      const SelectionDAGISel &SDISel) {
   return SDISel.CheckPatternPredicate(MatcherTable[MatcherIndex++]);
 }
 
 /// CheckNodePredicate - Implements OP_CheckNodePredicate.
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckNodePredicate(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-                   SelectionDAGISel &SDISel, SDNode *N) {
+                   const SelectionDAGISel &SDISel, SDNode *N) {
   return SDISel.CheckNodePredicate(N, MatcherTable[MatcherIndex++]);
 }
 
@@ -2079,7 +2078,7 @@ CheckInteger(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckAndImm(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-            SDValue N, SelectionDAGISel &SDISel) {
+            SDValue N, const SelectionDAGISel &SDISel) {
   int64_t Val = MatcherTable[MatcherIndex++];
   if (Val & 128)
     Val = GetVBR(Val, MatcherTable, MatcherIndex);
@@ -2092,7 +2091,7 @@ CheckAndImm(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckOrImm(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-           SDValue N, SelectionDAGISel &SDISel) {
+           SDValue N, const SelectionDAGISel &SDISel) {
   int64_t Val = MatcherTable[MatcherIndex++];
   if (Val & 128)
     Val = GetVBR(Val, MatcherTable, MatcherIndex);
@@ -2111,7 +2110,8 @@ CheckOrImm(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 /// MatcherIndex to continue with.
 static unsigned IsPredicateKnownToFail(const unsigned char *Table,
                                        unsigned Index, SDValue N,
-                                       bool &Result, SelectionDAGISel &SDISel,
+                                       bool &Result,
+                                       const SelectionDAGISel &SDISel,
                  SmallVectorImpl<std::pair<SDValue, SDNode*> > &RecordedNodes) {
   switch (Table[Index++]) {
   default:
