@@ -4792,7 +4792,9 @@ static SDValue SkipExtension(SDNode *N, SelectionDAG &DAG) {
   for (unsigned i = 0; i != NumElts; ++i) {
     ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(i));
     const APInt &CInt = C->getAPIntValue();
-    Ops.push_back(DAG.getConstant(CInt.trunc(EltSize), TruncVT));
+    // Element types smaller than 32 bits are not legal, so use i32 elements.
+    // The values are implicitly truncated so sext vs. zext doesn't matter.
+    Ops.push_back(DAG.getConstant(CInt.zextOrTrunc(32), MVT::i32));
   }
   return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
                      MVT::getVectorVT(TruncVT, NumElts), Ops.data(), NumElts);
