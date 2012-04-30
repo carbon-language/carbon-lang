@@ -488,7 +488,9 @@ namespace X86II {
   ///
   static inline int getMemoryOperandNo(uint64_t TSFlags, unsigned Opcode) {
     switch (TSFlags & X86II::FormMask) {
-    case X86II::MRMInitReg:  llvm_unreachable("FIXME: Remove this form");
+    case X86II::MRMInitReg:
+        // FIXME: Remove this form.
+        return -1;
     default: llvm_unreachable("Unknown FormMask value in getMemoryOperandNo!");
     case X86II::Pseudo:
     case X86II::RawFrm:
