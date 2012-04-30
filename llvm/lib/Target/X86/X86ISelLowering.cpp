@@ -3420,11 +3420,11 @@ static bool isMOVLPMask(ArrayRef<int> Mask, EVT VT) {
   if (NumElems != 2 && NumElems != 4)
     return false;
 
-  for (unsigned i = 0; i != NumElems/2; ++i)
+  for (unsigned i = 0, e = NumElems/2; i != e; ++i)
     if (!isUndefOrEqual(Mask[i], i + NumElems))
       return false;
 
-  for (unsigned i = NumElems/2; i != NumElems; ++i)
+  for (unsigned i = NumElems/2, e = NumElems; i != e; ++i)
     if (!isUndefOrEqual(Mask[i], i))
       return false;
 
@@ -3440,12 +3440,12 @@ static bool isMOVLHPSMask(ArrayRef<int> Mask, EVT VT) {
       || VT.getSizeInBits() > 128)
     return false;
 
-  for (unsigned i = 0; i != NumElems/2; ++i)
+  for (unsigned i = 0, e = NumElems/2; i != e; ++i)
     if (!isUndefOrEqual(Mask[i], i))
       return false;
 
-  for (unsigned i = 0; i != NumElems/2; ++i)
-    if (!isUndefOrEqual(Mask[i + NumElems/2], i + NumElems))
+  for (unsigned i = 0, e = NumElems/2; i != e; ++i)
+    if (!isUndefOrEqual(Mask[i + e], i + NumElems))
       return false;
 
   return true;
@@ -4109,7 +4109,7 @@ static bool ShouldXformToMOVLP(SDNode *V1, SDNode *V2,
   for (unsigned i = 0, e = NumElems/2; i != e; ++i)
     if (!isUndefOrEqual(Mask[i], i))
       return false;
-  for (unsigned i = NumElems/2; i != NumElems; ++i)
+  for (unsigned i = NumElems/2, e = NumElems; i != e; ++i)
     if (!isUndefOrEqual(Mask[i], i+NumElems))
       return false;
   return true;
@@ -4257,9 +4257,8 @@ static SDValue getUnpackl(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
 static SDValue getUnpackh(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                           SDValue V2) {
   unsigned NumElems = VT.getVectorNumElements();
-  unsigned Half = NumElems/2;
   SmallVector<int, 8> Mask;
-  for (unsigned i = 0; i != Half; ++i) {
+  for (unsigned i = 0, Half = NumElems/2; i != Half; ++i) {
     Mask.push_back(i + Half);
     Mask.push_back(i + NumElems + Half);
   }
