@@ -3494,6 +3494,22 @@ bool RewriteModernObjC::BufferContainsPPDirectives(const char *startBuf,
   return false;
 }
 
+static bool IsTagDefinedInsideClass(ASTContext *Context,
+                                    ObjCInterfaceDecl *IDecl, TagDecl *Tag) {
+  if (!IDecl)
+    return false;
+  SourceLocation TagLocation;
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(Tag)) {
+    RD = RD->getDefinition();
+    if (!RD)
+      return false;
+    TagLocation = RD->getLocation();
+    return Context->getSourceManager().isBeforeInTranslationUnit(
+             IDecl->getLocation(), TagLocation);
+  }
+  return false;
+}
+
 /// RewriteObjCFieldDeclType - This routine rewrites a type into the buffer.
 /// It handles elaborated types, as well as enum types in the process.
 bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type, 
@@ -7248,11 +7264,7 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
 
       if (IvarT->isRecordType()) {
         RecordDecl *RD = IvarT->getAs<RecordType>()->getDecl();
-        RD = RD->getDefinition();
-        bool structIsInside = RD &&
-          Context->getSourceManager().isBeforeInTranslationUnit(
-            iFaceDecl->getDecl()->getLocation(), RD->getLocation());
-        if (structIsInside) {
+        if (IsTagDefinedInsideClass(Context, iFaceDecl->getDecl(), RD)) {
           // decltype(((Foo_IMPL*)0)->bar) *
           std::string RecName = iFaceDecl->getDecl()->getName();
           RecName += "_IMPL";
