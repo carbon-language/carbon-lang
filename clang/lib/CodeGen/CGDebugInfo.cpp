@@ -797,7 +797,7 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
     for (RecordDecl::field_iterator I = record->field_begin(),
            E = record->field_end();
          I != E; ++I, ++fieldNo) {
-      FieldDecl *field = *I;
+      FieldDecl *field = &*I;
 
       if (IsMsStruct) {
         // Zero-length bitfields following non-bitfield members are ignored
@@ -1332,7 +1332,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   for (ObjCContainerDecl::prop_iterator I = ID->prop_begin(),
          E = ID->prop_end(); I != E; ++I) {
-    const ObjCPropertyDecl *PD = *I;
+    const ObjCPropertyDecl *PD = &*I;
     SourceLocation Loc = PD->getLocation();
     llvm::DIFile PUnit = getOrCreateFile(Loc);
     unsigned PLine = getLineNumber(Loc);
@@ -2293,7 +2293,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       for (RecordDecl::field_iterator I = RD->field_begin(),
              E = RD->field_end();
            I != E; ++I) {
-        FieldDecl *Field = *I;
+        FieldDecl *Field = &*I;
         llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
         StringRef FieldName = Field->getName();
           

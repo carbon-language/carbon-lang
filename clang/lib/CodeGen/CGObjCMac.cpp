@@ -2121,7 +2121,7 @@ PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*,16> &PropertySet,
     PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
   for (ObjCContainerDecl::prop_iterator I = PROTO->prop_begin(),
        E = PROTO->prop_end(); I != E; ++I) {
-    const ObjCPropertyDecl *PD = *I;
+    const ObjCPropertyDecl *PD = &*I;
     if (!PropertySet.insert(PD->getIdentifier()))
       continue;
     llvm::Constant *Prop[] = {
@@ -2152,7 +2152,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
   llvm::SmallPtrSet<const IdentifierInfo*, 16> PropertySet;
   for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(),
          E = OCD->prop_end(); I != E; ++I) {
-    const ObjCPropertyDecl *PD = *I;
+    const ObjCPropertyDecl *PD = &*I;
     PropertySet.insert(PD->getIdentifier());
     llvm::Constant *Prop[] = {
       GetPropertyName(PD->getIdentifier()),
@@ -2403,7 +2403,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
   for (ObjCImplementationDecl::propimpl_iterator
          i = ID->propimpl_begin(), e = ID->propimpl_end(); i != e; ++i) {
-    ObjCPropertyImplDecl *PID = *i;
+    ObjCPropertyImplDecl *PID = &*i;
 
     if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize) {
       ObjCPropertyDecl *PD = PID->getPropertyDecl();
@@ -3818,7 +3818,10 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
                                                 bool &HasUnion) {
   const RecordDecl *RD = RT->getDecl();
   // FIXME - Use iterator.
-  SmallVector<const FieldDecl*, 16> Fields(RD->field_begin(), RD->field_end());
+  SmallVector<const FieldDecl*, 16> Fields;
+  for (RecordDecl::field_iterator i = RD->field_begin(),
+                                  e = RD->field_end(); i != e; ++i)
+    Fields.push_back(&*i);
   llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
   const llvm::StructLayout *RecLayout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
@@ -5001,7 +5004,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
     }
     for (ObjCImplementationDecl::propimpl_iterator
            i = ID->propimpl_begin(), e = ID->propimpl_end(); i != e; ++i) {
-      ObjCPropertyImplDecl *PID = *i;
+      ObjCPropertyImplDecl *PID = &*i;
 
       if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize){
         ObjCPropertyDecl *PD = PID->getPropertyDecl();

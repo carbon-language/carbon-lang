@@ -386,20 +386,20 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((*Field), LastFD)) {
+      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield(&*Field, LastFD)) {
         --FieldNo;
         continue;
       }
-      LastFD = (*Field);
+      LastFD = &*Field;
     }
     
     // If this is a union, skip all the fields that aren't being initialized.
-    if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
+    if (RD->isUnion() && ILE->getInitializedFieldInUnion() != &*Field)
       continue;
 
     // Don't emit anonymous bitfields, they just affect layout.
     if (Field->isUnnamedBitfield()) {
-      LastFD = (*Field);
+      LastFD = &*Field;
       continue;
     }
 
@@ -417,10 +417,10 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
     
     if (!Field->isBitField()) {
       // Handle non-bitfield members.
-      AppendField(*Field, Layout.getFieldOffset(FieldNo), EltInit);
+      AppendField(&*Field, Layout.getFieldOffset(FieldNo), EltInit);
     } else {
       // Otherwise we have a bitfield.
-      AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
+      AppendBitField(&*Field, Layout.getFieldOffset(FieldNo),
                      cast<llvm::ConstantInt>(EltInit));
     }
   }
@@ -486,20 +486,20 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((*Field), LastFD)) {
+      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield(&*Field, LastFD)) {
         --FieldNo;
         continue;
       }
-      LastFD = (*Field);
+      LastFD = &*Field;
     }
 
     // If this is a union, skip all the fields that aren't being initialized.
-    if (RD->isUnion() && Val.getUnionField() != *Field)
+    if (RD->isUnion() && Val.getUnionField() != &*Field)
       continue;
 
     // Don't emit anonymous bitfields, they just affect layout.
     if (Field->isUnnamedBitfield()) {
-      LastFD = (*Field);
+      LastFD = &*Field;
       continue;
     }
 
@@ -512,10 +512,10 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 
     if (!Field->isBitField()) {
       // Handle non-bitfield members.
-      AppendField(*Field, Layout.getFieldOffset(FieldNo) + OffsetBits, EltInit);
+      AppendField(&*Field, Layout.getFieldOffset(FieldNo) + OffsetBits, EltInit);
     } else {
       // Otherwise we have a bitfield.
-      AppendBitField(*Field, Layout.getFieldOffset(FieldNo) + OffsetBits,
+      AppendBitField(&*Field, Layout.getFieldOffset(FieldNo) + OffsetBits,
                      cast<llvm::ConstantInt>(EltInit));
     }
   }
@@ -1374,7 +1374,7 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
   // Fill in all the fields.
   for (RecordDecl::field_iterator I = record->field_begin(),
          E = record->field_end(); I != E; ++I) {
-    const FieldDecl *field = *I;
+    const FieldDecl *field = &*I;
 
     // Fill in non-bitfields. (Bitfields always use a zero pattern, which we
     // will fill in later.)

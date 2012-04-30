@@ -1016,7 +1016,7 @@ RegionOffset MemRegion::getAsOffset() const {
       unsigned idx = 0;
       for (RecordDecl::field_iterator FI = RD->field_begin(), 
              FE = RD->field_end(); FI != FE; ++FI, ++idx)
-        if (FR->getDecl() == *FI)
+        if (FR->getDecl() == &*FI)
           break;
 
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);

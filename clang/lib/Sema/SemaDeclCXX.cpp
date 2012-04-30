@@ -833,8 +833,8 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
          I != E; ++I)
       // If an anonymous union contains an anonymous struct of which any member
       // is initialized, all members must be initialized.
-      if (!RD->isUnion() || Inits.count(*I))
-        CheckConstexprCtorInitializer(SemaRef, Dcl, *I, Inits, Diagnosed);
+      if (!RD->isUnion() || Inits.count(&*I))
+        CheckConstexprCtorInitializer(SemaRef, Dcl, &*I, Inits, Diagnosed);
   }
 }
 
@@ -920,7 +920,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
       unsigned Fields = 0;
       for (CXXRecordDecl::field_iterator I = RD->field_begin(),
            E = RD->field_end(); I != E; ++I, ++Fields) {
-        if ((*I)->isAnonymousStructOrUnion()) {
+        if (I->isAnonymousStructOrUnion()) {
           AnyAnonStructUnionMembers = true;
           break;
         }
@@ -943,7 +943,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
         bool Diagnosed = false;
         for (CXXRecordDecl::field_iterator I = RD->field_begin(),
              E = RD->field_end(); I != E; ++I)
-          CheckConstexprCtorInitializer(*this, Dcl, *I, Inits, Diagnosed);
+          CheckConstexprCtorInitializer(*this, Dcl, &*I, Inits, Diagnosed);
         if (Diagnosed)
           return false;
       }
@@ -3089,7 +3089,7 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
     if (Field->isUnnamedBitfield())
       continue;
     
-    IdealInitKeys.push_back(GetKeyForTopLevelField(*Field));
+    IdealInitKeys.push_back(GetKeyForTopLevelField(&*Field));
   }
   
   unsigned NumIdealInits = IdealInitKeys.size();
@@ -3289,7 +3289,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
   // Non-static data members.
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
-    FieldDecl *Field = *I;
+    FieldDecl *Field = &*I;
     if (Field->isInvalidDecl())
       continue;
     
@@ -3732,8 +3732,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     for (CXXRecordDecl::method_iterator M = Record->method_begin(),
                                      MEnd = Record->method_end();
          M != MEnd; ++M) {
-      if (!(*M)->isStatic())
-        DiagnoseHiddenVirtualMethods(Record, *M);
+      if (!M->isStatic())
+        DiagnoseHiddenVirtualMethods(Record, &*M);
     }
   }
 
@@ -3762,7 +3762,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 
         case TSK_Undeclared:
         case TSK_ExplicitSpecialization:
-          RequireLiteralType((*M)->getLocation(), Context.getRecordType(Record),
+          RequireLiteralType(M->getLocation(), Context.getRecordType(Record),
                              PDiag(diag::err_constexpr_method_non_literal));
           break;
         }
@@ -3791,30 +3791,30 @@ void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
                                       ME = Record->method_end();
        MI != ME; ++MI) {
     if (!MI->isInvalidDecl() && MI->isExplicitlyDefaulted()) {
-      switch (getSpecialMember(*MI)) {
+      switch (getSpecialMember(&*MI)) {
       case CXXDefaultConstructor:
         CheckExplicitlyDefaultedDefaultConstructor(
-                                                  cast<CXXConstructorDecl>(*MI));
+                                                cast<CXXConstructorDecl>(&*MI));
         break;
 
       case CXXDestructor:
-        CheckExplicitlyDefaultedDestructor(cast<CXXDestructorDecl>(*MI));
+        CheckExplicitlyDefaultedDestructor(cast<CXXDestructorDecl>(&*MI));
         break;
 
       case CXXCopyConstructor:
-        CheckExplicitlyDefaultedCopyConstructor(cast<CXXConstructorDecl>(*MI));
+        CheckExplicitlyDefaultedCopyConstructor(cast<CXXConstructorDecl>(&*MI));
         break;
 
       case CXXCopyAssignment:
-        CheckExplicitlyDefaultedCopyAssignment(*MI);
+        CheckExplicitlyDefaultedCopyAssignment(&*MI);
         break;
 
       case CXXMoveConstructor:
-        CheckExplicitlyDefaultedMoveConstructor(cast<CXXConstructorDecl>(*MI));
+        CheckExplicitlyDefaultedMoveConstructor(cast<CXXConstructorDecl>(&*MI));
         break;
 
       case CXXMoveAssignment:
-        CheckExplicitlyDefaultedMoveAssignment(*MI);
+        CheckExplicitlyDefaultedMoveAssignment(&*MI);
         break;
 
       case CXXInvalid:
@@ -4599,7 +4599,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
 
         CXXRecordDecl *UnionFieldRecord = UnionFieldType->getAsCXXRecordDecl();
         if (UnionFieldRecord &&
-            shouldDeleteForClassSubobject(UnionFieldRecord, *UI))
+            shouldDeleteForClassSubobject(UnionFieldRecord, &*UI))
           return true;
       }
 
@@ -4736,7 +4736,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
                                      FE = RD->field_end(); FI != FE; ++FI)
     if (!FI->isInvalidDecl() && !FI->isUnnamedBitfield() &&
-        SMI.shouldDeleteForField(*FI))
+        SMI.shouldDeleteForField(&*FI))
       return true;
 
   if (SMI.shouldDeleteForAllConstMembers())
@@ -7088,7 +7088,7 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
       //     results from omitting any ellipsis parameter specification and
       //     successively omitting parameters with a default argument from the
       //     end of the parameter-type-list.
-      CXXConstructorDecl *BaseCtor = *CtorIt;
+      CXXConstructorDecl *BaseCtor = &*CtorIt;
       bool CanBeCopyOrMove = BaseCtor->isCopyOrMoveConstructor();
       const FunctionProtoType *BaseCtorType =
           BaseCtor->getType()->getAs<FunctionProtoType>();
@@ -7641,7 +7641,7 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
                                   FieldEnd = ClassDecl->field_end();
        HasConstCopyAssignment && Field != FieldEnd;
        ++Field) {
-    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       HasConstCopyAssignment &=
         (bool)LookupCopyingAssignment(FieldClassDecl, Qualifiers::Const,
@@ -7693,7 +7693,7 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd;
        ++Field) {
-    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXMethodDecl *CopyAssign =
           LookupCopyingAssignment(FieldClassDecl, ArgQuals, false, 0))
@@ -7919,7 +7919,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     CXXScopeSpec SS; // Intentionally empty
     LookupResult MemberLookup(*this, Field->getDeclName(), Loc,
                               LookupMemberName);
-    MemberLookup.addDecl(*Field);
+    MemberLookup.addDecl(&*Field);
     MemberLookup.resolveKind();
     ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
                                                Loc, /*IsArrow=*/false,
@@ -8121,7 +8121,7 @@ Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXRecordDecl *ClassDecl) {
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd;
        ++Field) {
-    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(FieldClassDecl,
                                                              false, 0))
@@ -8209,7 +8209,7 @@ static bool subobjectsHaveMoveOrTrivialCopy(Sema &S, CXXRecordDecl *ClassDecl,
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                      FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
-    if (!hasMoveOrIsTriviallyCopyable(S, (*Field)->getType(), IsConstructor))
+    if (!hasMoveOrIsTriviallyCopyable(S, Field->getType(), IsConstructor))
       return false;
   }
 
@@ -8454,7 +8454,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     CXXScopeSpec SS; // Intentionally empty
     LookupResult MemberLookup(*this, Field->getDeclName(), Loc,
                               LookupMemberName);
-    MemberLookup.addDecl(*Field);
+    MemberLookup.addDecl(&*Field);
     MemberLookup.resolveKind();
     ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
                                                Loc, /*IsArrow=*/false,
@@ -8670,7 +8670,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
                                   FieldEnd = ClassDecl->field_end();
        HasConstCopyConstructor && Field != FieldEnd;
        ++Field) {
-    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       HasConstCopyConstructor &=
         (bool)LookupCopyingConstructor(FieldClassDecl, Qualifiers::Const);
@@ -8714,7 +8714,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd;
        ++Field) {
-    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXConstructorDecl *CopyConstructor =
         LookupCopyingConstructor(FieldClassDecl, Quals))
@@ -10939,7 +10939,7 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,
                                         const CXXRecordDecl *RD) {
   for (CXXRecordDecl::method_iterator i = RD->method_begin(), 
        e = RD->method_end(); i != e; ++i) {
-    CXXMethodDecl *MD = *i;
+    CXXMethodDecl *MD = &*i;
 
     // C++ [basic.def.odr]p2:
     //   [...] A virtual member function is used if it is not pure. [...]

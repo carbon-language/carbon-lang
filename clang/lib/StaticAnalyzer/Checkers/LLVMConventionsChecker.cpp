@@ -231,7 +231,7 @@ static void CheckASTMemory(const CXXRecordDecl *R, BugReporter &BR) {
   for (RecordDecl::field_iterator I = R->field_begin(), E = R->field_end();
        I != E; ++I) {
     ASTFieldVisitor walker(R, BR);
-    walker.Visit(*I);
+    walker.Visit(&*I);
   }
 }
 
@@ -247,7 +247,7 @@ void ASTFieldVisitor::Visit(FieldDecl *D) {
     const RecordDecl *RD = RT->getDecl()->getDefinition();
     for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
          I != E; ++I)
-      Visit(*I);
+      Visit(&*I);
   }
 
   FieldChain.pop_back();

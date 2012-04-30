@@ -472,8 +472,8 @@ static void GCRewriteFinalize(MigrationPass &pass) {
   for (impl_iterator I = impl_iterator(DC->decls_begin()),
        E = impl_iterator(DC->decls_end()); I != E; ++I) {
     for (ObjCImplementationDecl::instmeth_iterator
-         MI = (*I)->instmeth_begin(),
-         ME = (*I)->instmeth_end(); MI != ME; ++MI) {
+         MI = I->instmeth_begin(),
+         ME = I->instmeth_end(); MI != ME; ++MI) {
       ObjCMethodDecl *MD = *MI;
       if (!MD->hasBody())
         continue;

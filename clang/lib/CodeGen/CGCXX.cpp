@@ -53,7 +53,7 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   // destructor separately.
   for (CXXRecordDecl::field_iterator I = Class->field_begin(),
          E = Class->field_end(); I != E; ++I)
-    if ((*I)->getType().isDestructedType())
+    if (I->getType().isDestructedType())
       return true;
 
   // Try to find a unique base class with a non-trivial destructor.

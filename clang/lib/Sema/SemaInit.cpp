@@ -375,7 +375,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         if (hadError)
           return;
 
-        FillInValueInitForField(Init, *Field, Entity, ILE, RequiresSecondPass);
+        FillInValueInitForField(Init, &*Field, Entity, ILE, RequiresSecondPass);
         if (hadError)
           return;
 
@@ -1336,9 +1336,9 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
       if (Field->getDeclName()) {
         if (VerifyOnly)
           CheckValueInitializable(
-              InitializedEntity::InitializeMember(*Field, &Entity));
+              InitializedEntity::InitializeMember(&*Field, &Entity));
         else
-          StructuredList->setInitializedFieldInUnion(*Field);
+          StructuredList->setInitializedFieldInUnion(&*Field);
         break;
       }
     }
@@ -1401,9 +1401,9 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     // Make sure we can use this declaration.
     bool InvalidUse;
     if (VerifyOnly)
-      InvalidUse = !SemaRef.CanUseDecl(*Field);
+      InvalidUse = !SemaRef.CanUseDecl(&*Field);
     else
-      InvalidUse = SemaRef.DiagnoseUseOfDecl(*Field,
+      InvalidUse = SemaRef.DiagnoseUseOfDecl(&*Field,
                                           IList->getInit(Index)->getLocStart());
     if (InvalidUse) {
       ++Index;
@@ -1413,14 +1413,14 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     }
 
     InitializedEntity MemberEntity =
-      InitializedEntity::InitializeMember(*Field, &Entity);
+      InitializedEntity::InitializeMember(&*Field, &Entity);
     CheckSubElementType(MemberEntity, IList, Field->getType(), Index,
                         StructuredList, StructuredIndex);
     InitializedSomething = true;
 
     if (DeclType->isUnionType() && !VerifyOnly) {
       // Initialize the first field within the union.
-      StructuredList->setInitializedFieldInUnion(*Field);
+      StructuredList->setInitializedFieldInUnion(&*Field);
     }
 
     ++Field;
@@ -1449,7 +1449,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     for (; Field != FieldEnd && !hadError; ++Field) {
       if (!Field->isUnnamedBitfield())
         CheckValueInitializable(
-            InitializedEntity::InitializeMember(*Field, &Entity));
+            InitializedEntity::InitializeMember(&*Field, &Entity));
     }
   }
 
@@ -1457,7 +1457,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
       Index >= IList->getNumInits())
     return;
 
-  if (CheckFlexibleArrayInit(Entity, IList->getInit(Index), *Field,
+  if (CheckFlexibleArrayInit(Entity, IList->getInit(Index), &*Field,
                              TopLevelObject)) {
     hadError = true;
     ++Index;
@@ -1465,7 +1465,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   }
 
   InitializedEntity MemberEntity =
-    InitializedEntity::InitializeMember(*Field, &Entity);
+    InitializedEntity::InitializeMember(&*Field, &Entity);
 
   if (isa<InitListExpr>(IList->getInit(Index)))
     CheckSubElementType(MemberEntity, IList, Field->getType(), Index,
@@ -1679,7 +1679,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       // IndirectFieldDecl that follow for the designated initializer.
       if (!KnownField && Field->isAnonymousStructOrUnion()) {
         if (IndirectFieldDecl *IF =
-            FindIndirectFieldDesignator(*Field, FieldName)) {
+            FindIndirectFieldDesignator(&*Field, FieldName)) {
           // In verify mode, don't modify the original.
           if (VerifyOnly)
             DIE = CloneDesignatedInitExpr(SemaRef, DIE);
@@ -1688,7 +1688,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           break;
         }
       }
-      if (KnownField && KnownField == *Field)
+      if (KnownField && KnownField == &*Field)
         break;
       if (FieldName && FieldName == Field->getIdentifier())
         break;
@@ -1757,7 +1757,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           if (Field->isUnnamedBitfield())
             continue;
 
-          if (ReplacementField == *Field ||
+          if (ReplacementField == &*Field ||
               Field->getIdentifier() == ReplacementField->getIdentifier())
             break;
 
@@ -1771,15 +1771,15 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     if (RT->getDecl()->isUnion()) {
       FieldIndex = 0;
       if (!VerifyOnly)
-        StructuredList->setInitializedFieldInUnion(*Field);
+        StructuredList->setInitializedFieldInUnion(&*Field);
     }
 
     // Make sure we can use this declaration.
     bool InvalidUse;
     if (VerifyOnly)
-      InvalidUse = !SemaRef.CanUseDecl(*Field);
+      InvalidUse = !SemaRef.CanUseDecl(&*Field);
     else
-      InvalidUse = SemaRef.DiagnoseUseOfDecl(*Field, D->getFieldLoc());
+      InvalidUse = SemaRef.DiagnoseUseOfDecl(&*Field, D->getFieldLoc());
     if (InvalidUse) {
       ++Index;
       return true;
@@ -1787,7 +1787,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
 
     if (!VerifyOnly) {
       // Update the designator with the field declaration.
-      D->setField(*Field);
+      D->setField(&*Field);
 
       // Make sure that our non-designated initializer list has space
       // for a subobject corresponding to this field.
@@ -1809,7 +1809,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
             << SourceRange(NextD->getStartLocation(),
                            DIE->getSourceRange().getEnd());
           SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-            << *Field;
+            << &*Field;
         }
         Invalid = true;
       }
@@ -1822,13 +1822,13 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
                         diag::err_flexible_array_init_needs_braces)
             << DIE->getInit()->getSourceRange();
           SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-            << *Field;
+            << &*Field;
         }
         Invalid = true;
       }
 
       // Check GNU flexible array initializer.
-      if (!Invalid && CheckFlexibleArrayInit(Entity, DIE->getInit(), *Field,
+      if (!Invalid && CheckFlexibleArrayInit(Entity, DIE->getInit(), &*Field,
                                              TopLevelObject))
         Invalid = true;
 
@@ -1844,7 +1844,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       IList->setInit(Index, DIE->getInit());
 
       InitializedEntity MemberEntity =
-        InitializedEntity::InitializeMember(*Field, &Entity);
+        InitializedEntity::InitializeMember(&*Field, &Entity);
       CheckSubElementType(MemberEntity, IList, Field->getType(), Index,
                           StructuredList, newStructuredIndex);
 
@@ -1859,11 +1859,11 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       }
     } else {
       // Recurse to check later designated subobjects.
-      QualType FieldType = (*Field)->getType();
+      QualType FieldType = Field->getType();
       unsigned newStructuredIndex = FieldIndex;
 
       InitializedEntity MemberEntity =
-        InitializedEntity::InitializeMember(*Field, &Entity);
+        InitializedEntity::InitializeMember(&*Field, &Entity);
       if (CheckDesignatedInitializer(MemberEntity, IList, DIE, DesigIdx + 1,
                                      FieldType, 0, 0, Index,
                                      StructuredList, newStructuredIndex,

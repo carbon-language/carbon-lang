@@ -161,10 +161,10 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   // Check the fields.
   for (CXXRecordDecl::field_iterator I = Class->field_begin(),
        E = Class->field_end(); I != E; ++I) {
-    const FieldDecl *FD = *I;
+    const FieldDecl &FD = *I;
 
     const RecordType *RT =
-      Context.getBaseElementType(FD->getType())->getAs<RecordType>();
+      Context.getBaseElementType(FD.getType())->getAs<RecordType>();
 
     // We only care about record types.
     if (!RT)
@@ -261,7 +261,7 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
        E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = *I;
+    const FieldDecl *FD = &*I;
     if (FD->isBitField())
       continue;
   
@@ -310,7 +310,7 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
        E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = *I;
+    const FieldDecl *FD = &*I;
     if (FD->isBitField())
       continue;
 
@@ -380,7 +380,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = *I;
+    const FieldDecl *FD = &*I;
     if (FD->isBitField())
       continue;
 
@@ -491,7 +491,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = *I;
+    const FieldDecl *FD = &*I;
     if (FD->isBitField())
       continue;
 
@@ -1540,7 +1540,7 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
     if (IsMsStruct) {
-      FieldDecl *FD =  (*Field);
+      FieldDecl *FD = &*Field;
       if (Context.ZeroBitfieldFollowsBitfield(FD, LastFD))
         ZeroLengthBitfield = FD;
       // Zero-length bitfields following non-bitfield members are
@@ -1635,11 +1635,11 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     }
     else if (!Context.getTargetInfo().useBitFieldTypeAlignment() &&
              Context.getTargetInfo().useZeroLengthBitfieldAlignment()) {             
-      FieldDecl *FD =  (*Field);
+      FieldDecl *FD = &*Field;
       if (FD->isBitField() && FD->getBitWidthValue(Context) == 0)
         ZeroLengthBitfield = FD;
     }
-    LayoutField(*Field);
+    LayoutField(&*Field);
   }
   if (IsMsStruct && RemainingInAlignment &&
       LastFD && LastFD->isBitField() && LastFD->getBitWidthValue(Context)) {
@@ -2147,7 +2147,7 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
 
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
          E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
+    const CXXMethodDecl *MD = &*I;
 
     if (!MD->isVirtual())
       continue;
@@ -2417,21 +2417,21 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   uint64_t FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
-    const FieldDecl *Field = *I;
+    const FieldDecl &Field = *I;
     CharUnits FieldOffset = Offset + 
       C.toCharUnitsFromBits(Layout.getFieldOffset(FieldNo));
 
-    if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
+    if (const RecordType *RT = Field.getType()->getAs<RecordType>()) {
       if (const CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
         DumpCXXRecordLayout(OS, D, C, FieldOffset, IndentLevel,
-                            Field->getName().data(),
+                            Field.getName().data(),
                             /*IncludeVirtualBases=*/true);
         continue;
       }
     }
 
     PrintOffset(OS, FieldOffset, IndentLevel);
-    OS << Field->getType().getAsString() << ' ' << *Field << '\n';
+    OS << Field.getType().getAsString() << ' ' << Field << '\n';
   }
 
   if (!IncludeVirtualBases)

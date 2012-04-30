@@ -174,7 +174,7 @@ LayoutOverrideSource::layoutRecordType(const RecordDecl *Record,
     if (NumFields >= Known->second.FieldOffsets.size())
       continue;
     
-    FieldOffsets[*F] = Known->second.FieldOffsets[NumFields];
+    FieldOffsets[&*F] = Known->second.FieldOffsets[NumFields];
   }
   
   // Wrong number of fields.

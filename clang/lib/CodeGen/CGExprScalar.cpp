@@ -1521,8 +1521,8 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
       // FIXME: It would be nice if we didn't have to loop here!
       for (RecordDecl::field_iterator Field = RD->field_begin(),
                                       FieldEnd = RD->field_end();
-           Field != FieldEnd; (void)++Field, ++i) {
-        if (*Field == MemberDecl)
+           Field != FieldEnd; ++Field, ++i) {
+        if (&*Field == MemberDecl)
           break;
       }
       assert(i < RL.getFieldCount() && "offsetof field in wrong type");

@@ -467,9 +467,9 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
          FI != RD->field_end(); ++FI) {
       if (!First)
         Out << ", ";
-      if ((*FI)->isUnnamedBitfield()) continue;
-      getStructField((*FI)->getFieldIndex()).
-        printPretty(Out, Ctx, (*FI)->getType());
+      if (FI->isUnnamedBitfield()) continue;
+      getStructField(FI->getFieldIndex()).
+        printPretty(Out, Ctx, FI->getType());
       First = false;
     }
     Out << '}';

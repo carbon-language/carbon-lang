@@ -4336,11 +4336,11 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
     }
     for (CXXRecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I) {
-      if (!(*I)->getType()->isLiteralType() ||
-          (*I)->getType().isVolatileQualified()) {
-        Diag((*I)->getLocation(), diag::note_non_literal_field)
-          << RD << (*I) << (*I)->getType()
-          << (*I)->getType().isVolatileQualified();
+      if (!I->getType()->isLiteralType() ||
+          I->getType().isVolatileQualified()) {
+        Diag(I->getLocation(), diag::note_non_literal_field)
+          << RD << &*I << I->getType()
+          << I->getType().isVolatileQualified();
         return true;
       }
     }

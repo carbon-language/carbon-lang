@@ -136,7 +136,7 @@ public:
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
       for (CXXRecordDecl::method_iterator
              MI = RD->method_begin(), ME = RD->method_end(); MI != ME; ++MI) {
-        if ((*MI)->isOutOfLine())
+        if (MI->isOutOfLine())
           return true;
       }
       return false;

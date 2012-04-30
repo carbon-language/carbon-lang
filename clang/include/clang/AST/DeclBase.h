@@ -1237,8 +1237,8 @@ public:
     }
 
   public:
-    typedef SpecificDecl* value_type;
-    typedef SpecificDecl* reference;
+    typedef SpecificDecl value_type;
+    typedef SpecificDecl& reference;
     typedef SpecificDecl* pointer;
     typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
       difference_type;
@@ -1258,8 +1258,8 @@ public:
       SkipToNextDecl();
     }
 
-    reference operator*() const { return cast<SpecificDecl>(*Current); }
-    pointer operator->() const { return cast<SpecificDecl>(*Current); }
+    reference operator*() const { return *cast<SpecificDecl>(*Current); }
+    pointer operator->() const { return &**this; }
 
     specific_decl_iterator& operator++() {
       ++Current;

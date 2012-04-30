@@ -409,7 +409,7 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
   // Now dump the overriders for this base subobject.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
        E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
+    const CXXMethodDecl *MD = &*I;
 
     if (!MD->isVirtual())
       continue;
@@ -692,7 +692,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   // Add the vcall offsets.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
        E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
+    const CXXMethodDecl *MD = &*I;
     
     if (!MD->isVirtual())
       continue;
@@ -1469,7 +1469,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
   // Now go through all virtual member functions and add them.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
        E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
+    const CXXMethodDecl *MD = &*I;
   
     if (!MD->isVirtual())
       continue;
@@ -2105,7 +2105,7 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
 
   for (CXXRecordDecl::method_iterator i = MostDerivedClass->method_begin(),
        e = MostDerivedClass->method_end(); i != e; ++i) {
-    const CXXMethodDecl *MD = *i;
+    const CXXMethodDecl *MD = &*i;
     
     // We only want virtual member functions.
     if (!MD->isVirtual())
@@ -2217,7 +2217,7 @@ void VTableContext::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   
   for (CXXRecordDecl::method_iterator i = RD->method_begin(),
        e = RD->method_end(); i != e; ++i) {
-    const CXXMethodDecl *MD = *i;
+    const CXXMethodDecl *MD = &*i;
 
     // We only want virtual methods.
     if (!MD->isVirtual())

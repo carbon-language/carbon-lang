@@ -845,9 +845,9 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       bool leftFirst = (op == BO_LT || op == BO_LE);
       for (RecordDecl::field_iterator I = RD->field_begin(),
            E = RD->field_end(); I!=E; ++I) {
-        if (*I == LeftFD)
+        if (&*I == LeftFD)
           return makeTruthVal(leftFirst, resultTy);
-        if (*I == RightFD)
+        if (&*I == RightFD)
           return makeTruthVal(!leftFirst, resultTy);
       }
 

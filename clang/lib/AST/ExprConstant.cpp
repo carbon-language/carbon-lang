@@ -1072,8 +1072,8 @@ static bool CheckConstantExpression(EvalInfo &Info, SourceLocation DiagLoc,
     }
     for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
          I != E; ++I) {
-      if (!CheckConstantExpression(Info, DiagLoc, (*I)->getType(),
-                                   Value.getStructField((*I)->getFieldIndex())))
+      if (!CheckConstantExpression(Info, DiagLoc, I->getType(),
+                                   Value.getStructField(I->getFieldIndex())))
         return false;
     }
   }
@@ -3391,15 +3391,15 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
   for (RecordDecl::field_iterator I = RD->field_begin(), End = RD->field_end();
        I != End; ++I) {
     // -- if T is a reference type, no initialization is performed.
-    if ((*I)->getType()->isReferenceType())
+    if (I->getType()->isReferenceType())
       continue;
 
     LValue Subobject = This;
-    HandleLValueMember(Info, E, Subobject, *I, &Layout);
+    HandleLValueMember(Info, E, Subobject, &*I, &Layout);
 
-    ImplicitValueInitExpr VIE((*I)->getType());
+    ImplicitValueInitExpr VIE(I->getType());
     if (!EvaluateInPlace(
-          Result.getStructField((*I)->getFieldIndex()), Info, Subobject, &VIE))
+          Result.getStructField(I->getFieldIndex()), Info, Subobject, &VIE))
       return false;
   }
 
@@ -3419,9 +3419,9 @@ bool RecordExprEvaluator::ZeroInitialization(const Expr *E) {
     }
 
     LValue Subobject = This;
-    HandleLValueMember(Info, E, Subobject, *I);
-    Result = APValue(*I);
-    ImplicitValueInitExpr VIE((*I)->getType());
+    HandleLValueMember(Info, E, Subobject, &*I);
+    Result = APValue(&*I);
+    ImplicitValueInitExpr VIE(I->getType());
     return EvaluateInPlace(Result.getUnionValue(), Info, Subobject, &VIE);
   }
 
@@ -3511,14 +3511,14 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     // FIXME: Diagnostics here should point to the end of the initializer
     // list, not the start.
     HandleLValueMember(Info, HaveInit ? E->getInit(ElementNo) : E, Subobject,
-                       *Field, &Layout);
+                       &*Field, &Layout);
 
     // Perform an implicit value-initialization for members beyond the end of
     // the initializer list.
     ImplicitValueInitExpr VIE(HaveInit ? Info.Ctx.IntTy : Field->getType());
 
     if (!EvaluateInPlace(
-          Result.getStructField((*Field)->getFieldIndex()),
+          Result.getStructField(Field->getFieldIndex()),
           Info, Subobject, HaveInit ? E->getInit(ElementNo++) : &VIE)) {
       if (!Info.keepEvaluatingAfterFailure())
         return false;

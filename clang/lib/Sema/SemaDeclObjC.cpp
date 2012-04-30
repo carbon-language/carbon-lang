@@ -694,7 +694,7 @@ void Sema::DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
   llvm::DenseMap<Selector, const ObjCMethodDecl*> MethodMap;
   for (ObjCInterfaceDecl::method_iterator i = ID->meth_begin(),
        e =  ID->meth_end(); i != e; ++i) {
-    ObjCMethodDecl *MD = *i;
+    ObjCMethodDecl *MD = &*i;
     MethodMap[MD->getSelector()] = MD;
   }
 
@@ -702,7 +702,7 @@ void Sema::DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
     return;
   for (ObjCCategoryDecl::method_iterator i = CAT->meth_begin(),
        e =  CAT->meth_end(); i != e; ++i) {
-    ObjCMethodDecl *Method = *i;
+    ObjCMethodDecl *Method = &*i;
     const ObjCMethodDecl *&PrevMethod = MethodMap[Method->getSelector()];
     if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
       Diag(Method->getLocation(), diag::err_duplicate_method_decl)
@@ -1064,7 +1064,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     IVI = IDecl->ivar_begin(), IVE = IDecl->ivar_end();
   for (; numIvars > 0 && IVI != IVE; ++IVI) {
     ObjCIvarDecl* ImplIvar = ivars[j++];
-    ObjCIvarDecl* ClsIvar = *IVI;
+    ObjCIvarDecl* ClsIvar = &*IVI;
     assert (ImplIvar && "missing implementation ivar");
     assert (ClsIvar && "missing class ivar");
 
@@ -1094,7 +1094,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
   if (numIvars > 0)
     Diag(ivars[j]->getLocation(), diag::err_inconsistant_ivar_count);
   else if (IVI != IVE)
-    Diag((*IVI)->getLocation(), diag::err_inconsistant_ivar_count);
+    Diag(IVI->getLocation(), diag::err_inconsistant_ivar_count);
 }
 
 void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
@@ -2186,7 +2186,7 @@ void Sema::DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID,
                                   ObjCInterfaceDecl *SID) {
   for (ObjCInterfaceDecl::ivar_iterator IVI = ID->ivar_begin(),
        IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
-    ObjCIvarDecl* Ivar = (*IVI);
+    ObjCIvarDecl* Ivar = &*IVI;
     if (Ivar->isInvalidDecl())
       continue;
     if (IdentifierInfo *II = Ivar->getIdentifier()) {
@@ -2331,7 +2331,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
       for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
                                             E = CDecl->prop_end();
            I != E; ++I)
-        ProcessPropertyDecl(*I, CDecl);
+        ProcessPropertyDecl(&*I, CDecl);
     CDecl->setAtEndRange(AtEnd);
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
@@ -2347,7 +2347,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
            ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
         for (ObjCContainerDecl::prop_iterator I = ClsExtDecl->prop_begin(),
              E = ClsExtDecl->prop_end(); I != E; ++I) {
-          ObjCPropertyDecl *Property = (*I);
+          ObjCPropertyDecl *Property = &*I;
           // Skip over properties declared @dynamic
           if (const ObjCPropertyImplDecl *PIDecl
               = IC->FindPropertyImplDecl(Property->getIdentifier()))

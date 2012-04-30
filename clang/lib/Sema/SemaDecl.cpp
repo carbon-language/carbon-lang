@@ -7361,7 +7361,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
       if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
         for (EnumDecl::enumerator_iterator EI = ED->enumerator_begin(),
                EE = ED->enumerator_end(); EI != EE; ++EI)
-          PushOnScopeChains(*EI, FnBodyScope, /*AddToContext=*/false);
+          PushOnScopeChains(&*EI, FnBodyScope, /*AddToContext=*/false);
       }
     }
   }
@@ -9186,7 +9186,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
       for (ctor_iter CI = RD->ctor_begin(), CE = RD->ctor_end(); CI != CE; ++CI)
-        if (DiagnoseNontrivialUserProvidedCtor(*this, QT, *CI, member))
+        if (DiagnoseNontrivialUserProvidedCtor(*this, QT, &*CI, member))
           return;
 
       // No user-provided constructors; look for constructor templates.
@@ -9303,12 +9303,12 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   typedef RecordDecl::field_iterator field_iter;
   for (field_iter fi = RD->field_begin(), fe = RD->field_end(); fi != fe;
        ++fi) {
-    QualType EltTy = Context.getBaseElementType((*fi)->getType());
+    QualType EltTy = Context.getBaseElementType(fi->getType());
     if (const RecordType *EltRT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* EltRD = cast<CXXRecordDecl>(EltRT->getDecl());
 
       if (!(EltRD->*hasTrivial)()) {
-        SourceLocation FLoc = (*fi)->getLocation();
+        SourceLocation FLoc = fi->getLocation();
         Diag(FLoc, diag::note_nontrivial_has_nontrivial) << QT << 0 << member;
         DiagnoseNontrivial(EltRT, member);
         return;
@@ -9324,7 +9324,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
       case Qualifiers::OCL_Autoreleasing:
       case Qualifiers::OCL_Weak:
       case Qualifiers::OCL_Strong:
-        Diag((*fi)->getLocation(), diag::note_nontrivial_objc_ownership)
+        Diag(fi->getLocation(), diag::note_nontrivial_objc_ownership)
           << QT << EltTy.getObjCLifetime();
         return;
       }

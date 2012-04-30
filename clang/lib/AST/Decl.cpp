@@ -2463,15 +2463,15 @@ unsigned FieldDecl::getFieldIndex() const {
 
   for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++Index) {
-    (*I)->CachedFieldIndex = Index + 1;
+    I->CachedFieldIndex = Index + 1;
 
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are ignored.
-      if (getASTContext().ZeroBitfieldFollowsNonBitfield((*I), LastFD)) {
+      if (getASTContext().ZeroBitfieldFollowsNonBitfield(&*I, LastFD)) {
         --Index;
         continue;
       }
-      LastFD = (*I);
+      LastFD = &*I;
     }
   }
 

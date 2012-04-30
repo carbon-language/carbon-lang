@@ -144,9 +144,9 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
           assert(RD && "Referred record has no definition");
           for (RecordDecl::field_iterator I =
                RD->field_begin(), E = RD->field_end(); I!=E; ++I) {
-            const FieldRegion *FR = MrMgr.getFieldRegion(*I, R);
-            FieldChain.push_back(*I);
-            T = (*I)->getType();
+            const FieldRegion *FR = MrMgr.getFieldRegion(&*I, R);
+            FieldChain.push_back(&*I);
+            T = I->getType();
             if (T->getAsStructureType()) {
               if (Find(FR))
                 return true;

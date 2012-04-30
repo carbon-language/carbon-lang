@@ -210,8 +210,8 @@ static void cleanupDeallocOrFinalize(MigrationPass &pass) {
     ObjCMethodDecl *DeallocM = 0;
     ObjCMethodDecl *FinalizeM = 0;
     for (ObjCImplementationDecl::instmeth_iterator
-           MI = (*I)->instmeth_begin(),
-           ME = (*I)->instmeth_end(); MI != ME; ++MI) {
+           MI = I->instmeth_begin(),
+           ME = I->instmeth_end(); MI != ME; ++MI) {
       ObjCMethodDecl *MD = *MI;
       if (!MD->hasBody())
         continue;

@@ -808,7 +808,7 @@ HasTrivialDestructorBody(ASTContext &Context,
   // Check fields.
   for (CXXRecordDecl::field_iterator I = BaseClassDecl->field_begin(),
        E = BaseClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *Field = *I;
+    const FieldDecl *Field = &*I;
     
     if (!FieldHasTrivialDestructorBody(Context, Field))
       return false;
@@ -869,7 +869,7 @@ static bool CanSkipVTablePointerInitialization(ASTContext &Context,
   const CXXRecordDecl *ClassDecl = Dtor->getParent();
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *Field = *I;
+    const FieldDecl *Field = &*I;
 
     if (!FieldHasTrivialDestructorBody(Context, Field))
       return false;
@@ -1066,7 +1066,7 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   SmallVector<const FieldDecl *, 16> FieldDecls;
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *field = *I;
+    const FieldDecl *field = &*I;
     QualType type = field->getType();
     QualType::DestructionKind dtorKind = type.isDestructedType();
     if (!dtorKind) continue;

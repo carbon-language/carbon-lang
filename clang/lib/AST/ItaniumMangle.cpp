@@ -1032,7 +1032,7 @@ static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
   
   for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I) {
-    const FieldDecl *FD = *I;
+    const FieldDecl *FD = &*I;
     
     if (FD->getIdentifier())
       return FD;

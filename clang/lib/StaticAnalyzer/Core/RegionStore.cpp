@@ -1646,11 +1646,11 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
       break;
 
     // Skip any unnamed bitfields to stay in sync with the initializers.
-    if ((*FI)->isUnnamedBitfield())
+    if (FI->isUnnamedBitfield())
       continue;
 
-    QualType FTy = (*FI)->getType();
-    const FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
+    QualType FTy = FI->getType();
+    const FieldRegion* FR = MRMgr.getFieldRegion(&*FI, R);
 
     if (FTy->isArrayType())
       newStore = BindArray(newStore.getStore(), FR, *VI);

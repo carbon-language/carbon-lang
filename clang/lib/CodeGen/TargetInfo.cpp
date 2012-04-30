@@ -161,7 +161,7 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
 
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i)
-    if (!isEmptyField(Context, *i, AllowArrays))
+    if (!isEmptyField(Context, &*i, AllowArrays))
       return false;
   return true;
 }
@@ -229,7 +229,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
   // Check for single element.
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
-    const FieldDecl *FD = *i;
+    const FieldDecl *FD = &*i;
     QualType FT = FD->getType();
 
     // Ignore empty fields.
@@ -301,7 +301,7 @@ static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
 
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
-    const FieldDecl *FD = *i;
+    const FieldDecl *FD = &*i;
 
     if (!is32Or64BitBasicType(FD->getType(), Context))
       return false;
@@ -534,7 +534,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
   // passed in a register.
   for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(),
          e = RT->getDecl()->field_end(); i != e; ++i) {
-    const FieldDecl *FD = *i;
+    const FieldDecl *FD = &*i;
 
     // Empty fields are ignored.
     if (isEmptyField(Context, FD, true))
@@ -2540,7 +2540,7 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
     Members = 0;
     for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
-      const FieldDecl *FD = *i;
+      const FieldDecl *FD = &*i;
       uint64_t FldMembers;
       if (!isHomogeneousAggregate(FD->getType(), Base, Context, &FldMembers))
         return false;
@@ -2683,7 +2683,7 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
   unsigned idx = 0;
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
        i != e; ++i, ++idx) {
-    const FieldDecl *FD = *i;
+    const FieldDecl *FD = &*i;
 
     // Bit-fields are not addressable, we only need to verify they are "integer
     // like". We still have to disallow a subsequent non-bitfield, for example:
@@ -3161,7 +3161,7 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty) const {
   // double fields.
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
        i != e; ++i, ++idx) {
-    const QualType Ty = (*i)->getType();
+    const QualType Ty = i->getType();
     const BuiltinType *BT = Ty->getAs<BuiltinType>();
 
     if (!BT || BT->getKind() != BuiltinType::Double)
@@ -3272,12 +3272,12 @@ MipsABIInfo::returnAggregateInRegs(QualType RetTy, uint64_t Size) const {
     if (FieldCnt && (FieldCnt <= 2) && !Layout.getFieldOffset(0)) {
       RecordDecl::field_iterator b = RD->field_begin(), e = RD->field_end();
       for (; b != e; ++b) {
-        const BuiltinType *BT = (*b)->getType()->getAs<BuiltinType>();
+        const BuiltinType *BT = b->getType()->getAs<BuiltinType>();
 
         if (!BT || !BT->isFloatingPoint())
           break;
 
-        RTList.push_back(CGT.ConvertType((*b)->getType()));
+        RTList.push_back(CGT.ConvertType(b->getType()));
       }
 
       if (b == e)
