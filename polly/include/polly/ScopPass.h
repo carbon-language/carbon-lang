@@ -46,9 +46,6 @@ protected:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 public:
-  /// getIslContext - Get the isl_ctx of current SCoP.
-  isl_ctx *getIslContext();
-
   Scop &getCurScop() const {
     assert(S && "Not on a Scop!");
     return *S;
