@@ -387,23 +387,23 @@ namespace {
                                     std::string &Result);
     void RewriteObjCProtocolMetaData(ObjCProtocolDecl *Protocol,
                                      std::string &Result);
-    virtual void RewriteObjCProtocolListMetaData(
+    void RewriteObjCProtocolListMetaData(
                    const ObjCList<ObjCProtocolDecl> &Prots,
                    StringRef prefix, StringRef ClassName, std::string &Result);
-    virtual void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
+    void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                           std::string &Result);
-    virtual void RewriteClassSetupInitHook(std::string &Result);
+    void RewriteClassSetupInitHook(std::string &Result);
     
-    virtual void RewriteMetaDataIntoBuffer(std::string &Result);
-    virtual void WriteImageInfo(std::string &Result);
-    virtual void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
+    void RewriteMetaDataIntoBuffer(std::string &Result);
+    void WriteImageInfo(std::string &Result);
+    void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
                                              std::string &Result);
-    virtual void RewriteCategorySetupInitHook(std::string &Result);
+    void RewriteCategorySetupInitHook(std::string &Result);
     
     // Rewriting ivar
-    virtual void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
+    void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
                                               std::string &Result);
-    virtual Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV);
+    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV);
 
     
     std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD, int flag);
