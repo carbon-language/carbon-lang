@@ -39,7 +39,7 @@ namespace {
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
   // First, resolve relocations associated with external symbols.
-  resolveSymbols();
+  resolveExternalSymbols();
 
   // Just iterate over the sections we have and resolve all the relocations
   // in them. Gross overkill, but it gets the job done.
@@ -324,12 +324,20 @@ void RuntimeDyldImpl::addRelocation(const RelocationValueRef &Value,
       Offset,
       RelType,
       Value.Addend));
-  } else
-    SymbolRelocations[Value.SymbolName].push_back(RelocationEntry(
-      SectionID,
-      Offset,
-      RelType,
-      Value.Addend));
+  } else {
+    // Relocation by symbol.  If the symbol is found in the global symbol table,
+    // create an appropriate section relocation.  Otherwise, add it to
+    // ExternalSymbolRelocations.
+    RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
+
+    StringMap<SymbolLoc>::const_iterator Loc = SymbolTable.find(Value.SymbolName);
+    if (Loc == SymbolTable.end()) {
+      ExternalSymbolRelocations[Value.SymbolName].push_back(RE);
+    } else {
+      RE.Addend += Loc->second.second;
+      Relocations[Loc->second.first].push_back(RE);
+    }
+  }
 }
 
 uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
@@ -386,11 +394,9 @@ void RuntimeDyldImpl::resolveRelocationList(const RelocationList &Relocs,
   }
 }
 
-// resolveSymbols - Resolve any relocations to the specified symbols if
-// we know where it lives.
-void RuntimeDyldImpl::resolveSymbols() {
-  StringMap<RelocationList>::iterator i = SymbolRelocations.begin(),
-                                      e = SymbolRelocations.end();
+void RuntimeDyldImpl::resolveExternalSymbols() {
+  StringMap<RelocationList>::iterator i = ExternalSymbolRelocations.begin(),
+                                      e = ExternalSymbolRelocations.end();
   for (; i != e; i++) {
     StringRef Name = i->first();
     RelocationList &Relocs = i->second;
@@ -405,15 +411,7 @@ void RuntimeDyldImpl::resolveSymbols() {
               << "\n");
       resolveRelocationList(Relocs, (uintptr_t)Addr);
     } else {
-      // Change the relocation to be section relative rather than symbol
-      // relative and move it to the resolved relocation list.
-      DEBUG(dbgs() << "Resolving symbol '" << Name << "'\n");
-      for (int i = 0, e = Relocs.size(); i != e; ++i) {
-        RelocationEntry Entry = Relocs[i];
-        Entry.Addend += Loc->second.second;
-        Relocations[Loc->second.first].push_back(Entry);
-      }
-      Relocs.clear();
+      report_fatal_error("Expected external symbol");
     }
   }
 }

@@ -129,7 +129,7 @@ protected:
   // references it.
   typedef std::map<SectionRef, unsigned> ObjSectionToIDMap;
 
-  // Master symbol table. As modules are loaded and external symbols are
+  // Master symbol table. As modules are loaded and symbols are
   // resolved, their addresses are stored here as a SectionID/Offset pair.
   typedef std::pair<unsigned, uintptr_t> SymbolLoc;
   StringMap<SymbolLoc> SymbolTable;
@@ -148,9 +148,11 @@ protected:
   // source of the address. The target where the address will be writen is
   // SectionID/Offset in the relocation itself.
   DenseMap<unsigned, RelocationList> Relocations;
-  // Relocations to external symbols that are not yet resolved.
-  // Indexed by symbol name.
-  StringMap<RelocationList> SymbolRelocations;
+
+  // Relocations to external symbols that are not yet resolved.  Symbols are
+  // external when they aren't found in the global symbol table of all loaded
+  // modules.  This map is indexed by symbol name.
+  StringMap<RelocationList> ExternalSymbolRelocations;
 
   typedef std::map<RelocationValueRef, uintptr_t> StubMap;
 
@@ -235,7 +237,8 @@ protected:
                                     LocalSymbolMap &Symbols,
                                     StubMap &Stubs) = 0;
 
-  void resolveSymbols();
+  /// \brief Resolve relocations to external symbols.
+  void resolveExternalSymbols();
   virtual ObjectImage *createObjectImage(const MemoryBuffer *InputBuffer);
   virtual void handleObjectLoaded(ObjectImage *Obj)
   {
