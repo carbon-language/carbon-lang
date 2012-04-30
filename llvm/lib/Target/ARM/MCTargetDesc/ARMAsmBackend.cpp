@@ -12,6 +12,7 @@
 #include "MCTargetDesc/ARMFixupKinds.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
@@ -111,32 +112,7 @@ public:
   void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
                          const MCFixup &Fixup, const MCFragment *DF,
                          MCValue &Target, uint64_t &Value,
-                         bool &IsResolved) {
-    const MCSymbolRefExpr *A = Target.getSymA();
-    // Some fixups to thumb function symbols need the low bit (thumb bit)
-    // twiddled.
-    if ((unsigned)Fixup.getKind() != ARM::fixup_arm_ldst_pcrel_12 &&
-        (unsigned)Fixup.getKind() != ARM::fixup_t2_ldst_pcrel_12 &&
-        (unsigned)Fixup.getKind() != ARM::fixup_arm_adr_pcrel_12 &&
-        (unsigned)Fixup.getKind() != ARM::fixup_thumb_adr_pcrel_10 &&
-        (unsigned)Fixup.getKind() != ARM::fixup_t2_adr_pcrel_12 &&
-        (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
-      if (A) {
-        const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
-        if (Asm.isThumbFunc(&Sym))
-          Value |= 1;
-      }
-    }
-    // We must always generate a relocation for BL/BLX instructions if we have
-    // a symbol to reference, as the linker relies on knowing the destination
-    // symbol's thumb-ness to get interworking right.
-    if (A && ((unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_blx ||
-              (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl ||
-              (unsigned)Fixup.getKind() == ARM::fixup_arm_blx ||
-              (unsigned)Fixup.getKind() == ARM::fixup_arm_uncondbl ||
-              (unsigned)Fixup.getKind() == ARM::fixup_arm_condbl))
-      IsResolved = false;
-  }
+                         bool &IsResolved);
 
   bool mayNeedRelaxation(const MCInst &Inst) const;
 
@@ -270,7 +246,9 @@ bool ARMAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   return true;
 }
 
-static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
+static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
+                                 MCContext *Ctx = NULL) {
+  unsigned Kind = Fixup.getKind();
   switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
@@ -323,7 +301,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
       Value = -Value;
       isAdd = false;
     }
-    assert ((Value < 4096) && "Out of range pc-relative fixup value!");
+    if (Ctx && Value >= 4096)
+      Ctx->FatalError(Fixup.getLoc(), "out of range pc-relative fixup value");
     Value |= isAdd << 23;
 
     // Same addressing mode as fixup_arm_pcrel_10,
@@ -346,8 +325,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
       Value = -Value;
       opc = 2; // 0b0010
     }
-    assert(ARM_AM::getSOImmVal(Value) != -1 &&
-           "Out of range pc-relative fixup value!");
+    if (Ctx && ARM_AM::getSOImmVal(Value) == -1)
+      Ctx->FatalError(Fixup.getLoc(), "out of range pc-relative fixup value");
     // Encode the immediate and shift the opcode into place.
     return ARM_AM::getSOImmVal(Value) | (opc << 21);
   }
@@ -474,7 +453,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
       isAdd = false;
     }
     // The value has the low 4 bits encoded in [3:0] and the high 4 in [11:8].
-    assert ((Value < 256) && "Out of range pc-relative fixup value!");
+    if (Ctx && Value >= 256)
+      Ctx->FatalError(Fixup.getLoc(), "out of range pc-relative fixup value");
     Value = (Value & 0xf) | ((Value & 0xf0) << 4);
     return Value | (isAdd << 23);
   }
@@ -492,7 +472,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     }
     // These values don't encode the low two bits since they're always zero.
     Value >>= 2;
-    assert ((Value < 256) && "Out of range pc-relative fixup value!");
+    if (Ctx && Value >= 256)
+      Ctx->FatalError(Fixup.getLoc(), "out of range pc-relative fixup value");
     Value |= isAdd << 23;
 
     // Same addressing mode as fixup_arm_pcrel_10, but with 16-bit halfwords
@@ -506,6 +487,43 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     return Value;
   }
   }
+}
+
+void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
+                                      const MCAsmLayout &Layout,
+                                      const MCFixup &Fixup,
+                                      const MCFragment *DF,
+                                      MCValue &Target, uint64_t &Value,
+                                      bool &IsResolved) {
+  const MCSymbolRefExpr *A = Target.getSymA();
+  // Some fixups to thumb function symbols need the low bit (thumb bit)
+  // twiddled.
+  if ((unsigned)Fixup.getKind() != ARM::fixup_arm_ldst_pcrel_12 &&
+      (unsigned)Fixup.getKind() != ARM::fixup_t2_ldst_pcrel_12 &&
+      (unsigned)Fixup.getKind() != ARM::fixup_arm_adr_pcrel_12 &&
+      (unsigned)Fixup.getKind() != ARM::fixup_thumb_adr_pcrel_10 &&
+      (unsigned)Fixup.getKind() != ARM::fixup_t2_adr_pcrel_12 &&
+      (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
+    if (A) {
+      const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+      if (Asm.isThumbFunc(&Sym))
+        Value |= 1;
+    }
+  }
+  // We must always generate a relocation for BL/BLX instructions if we have
+  // a symbol to reference, as the linker relies on knowing the destination
+  // symbol's thumb-ness to get interworking right.
+  if (A && ((unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_blx ||
+            (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl ||
+            (unsigned)Fixup.getKind() == ARM::fixup_arm_blx ||
+            (unsigned)Fixup.getKind() == ARM::fixup_arm_uncondbl ||
+            (unsigned)Fixup.getKind() == ARM::fixup_arm_condbl))
+    IsResolved = false;
+
+  // Try to get the encoded value for the fixup as-if we're mapping it into
+  // the instruction. This allows adjustFixupValue() to issue a diagnostic
+  // if the value aren't invalid.
+  (void)adjustFixupValue(Fixup, Value, &Asm.getContext());
 }
 
 namespace {
@@ -531,7 +549,7 @@ public:
 void ELFARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                   unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = 4;        // FIXME: 2 for Thumb
-  Value = adjustFixupValue(Fixup.getKind(), Value);
+  Value = adjustFixupValue(Fixup, Value);
   if (!Value) return;           // Doesn't change encoding.
 
   unsigned Offset = Fixup.getOffset();
@@ -616,7 +634,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
 void DarwinARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                      unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
-  Value = adjustFixupValue(Fixup.getKind(), Value);
+  Value = adjustFixupValue(Fixup, Value);
   if (!Value) return;           // Doesn't change encoding.
 
   unsigned Offset = Fixup.getOffset();
