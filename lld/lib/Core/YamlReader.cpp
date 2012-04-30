@@ -282,7 +282,7 @@ public:
   virtual Addend addend() const {
     return _addend;
   }
-  
+
   virtual void setAddend(Addend a) {
     _addend = a;
   }
@@ -306,7 +306,7 @@ class YAMLFile : public ArchiveLibraryFile {
 public:
   YAMLFile()
     : ArchiveLibraryFile("<anonymous>")
-    , _lastRefIndex(0) 
+    , _lastRefIndex(0)
     , _kind(File::kindObject)
     , _inArchive(false) {
   }
@@ -342,7 +342,7 @@ public:
   Atom* findAtom(const char* name);
   void addMember(const char*);
   void setName(const char*);
- 
+
   struct NameAtomPair {
                  NameAtomPair(const char* n, Atom* a) : name(n), atom(a) {}
     const char*  name;
@@ -624,7 +624,7 @@ private:
 
 void YAMLFile::bindTargetReferences() {
     for (const DefinedAtom *defAtom : _definedAtoms) {
-      const YAMLDefinedAtom* atom = 
+      const YAMLDefinedAtom* atom =
                           reinterpret_cast<const YAMLDefinedAtom*>(defAtom);
       atom->bindTargetReferences();
     }
@@ -898,7 +898,7 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
     }
     if ( !inFixups && (strcmp(entry->key, KeyValues::fileKindKeyword) == 0) ) {
       file->_kind = KeyValues::fileKind(entry->value);
-      if ( file->_kind == File::kindArchiveLibrary ) 
+      if ( file->_kind == File::kindArchiveLibrary )
         hasArchives = true;
     }
     else if (strcmp(entry->key, KeyValues::fileMembersKeyword) == 0) {
@@ -907,7 +907,7 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
     else if (strcmp(entry->key, KeyValues::fileAtomsKeyword) == 0) {
       inAtoms = true;
     }
-    else if ( !inAtoms && !inMembers 
+    else if ( !inAtoms && !inMembers
                        && (strcmp(entry->key, KeyValues::nameKeyword) == 0) ) {
       file->setName(entry->value);
     }
@@ -1053,7 +1053,7 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
     file->bindTargetReferences();
     allFiles.push_back(file);
   }
-  
+
   // If yaml contained archive files, push members down into archives
   if ( hasArchives ) {
     for (YAMLFile *f : allFiles) {
@@ -1075,7 +1075,7 @@ error_code parseObjectText( llvm::MemoryBuffer *mb
       result.push_back(f);
     }
   }
-  
+
   return make_error_code(yaml_reader_error::success);
 }
 
