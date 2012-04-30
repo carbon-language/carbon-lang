@@ -2831,8 +2831,8 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
 }
 
 CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
-  CXCursor Result = { CXCursor_TranslationUnit, 0, { 0, 0, TU } };
-  return Result;
+  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
+  return MakeCXCursor(CXXUnit->getASTContext().getTranslationUnitDecl(), TU);
 }
 
 } // end: extern "C"
