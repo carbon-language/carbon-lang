@@ -1045,6 +1045,7 @@ void ASTStmtWriter::VisitMSDependentExistsStmt(MSDependentExistsStmt *S) {
 void ASTStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());
+  Writer.AddSourceRange(E->Range, Record);
   Code = serialization::EXPR_CXX_OPERATOR_CALL;
 }
 

@@ -415,7 +415,7 @@ SourceRange CXXConstructExpr::getSourceRange() const {
   return SourceRange(Loc, End);
 }
 
-SourceRange CXXOperatorCallExpr::getSourceRange() const {
+SourceRange CXXOperatorCallExpr::getSourceRangeImpl() const {
   OverloadedOperatorKind Kind = getOperator();
   if (Kind == OO_PlusPlus || Kind == OO_MinusMinus) {
     if (getNumArgs() == 1)
@@ -438,7 +438,7 @@ SourceRange CXXOperatorCallExpr::getSourceRange() const {
     return SourceRange(getArg(0)->getSourceRange().getBegin(),
                        getArg(1)->getSourceRange().getEnd());
   } else {
-    return SourceRange();
+    return getOperatorLoc();
   }
 }
 

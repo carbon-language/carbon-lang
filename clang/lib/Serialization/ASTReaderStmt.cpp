@@ -1074,7 +1074,8 @@ void ASTStmtReader::VisitMSDependentExistsStmt(MSDependentExistsStmt *S) {
 
 void ASTStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
-  E->setOperator((OverloadedOperatorKind)Record[Idx++]);
+  E->Operator = (OverloadedOperatorKind)Record[Idx++];
+  E->Range = Reader.ReadSourceRange(F, Record, Idx);
 }
 
 void ASTStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {

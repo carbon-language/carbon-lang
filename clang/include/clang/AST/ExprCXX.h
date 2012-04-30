@@ -50,14 +50,18 @@ class TemplateArgumentListInfo;
 class CXXOperatorCallExpr : public CallExpr {
   /// \brief The overloaded operator.
   OverloadedOperatorKind Operator;
+  SourceRange Range;
 
+  SourceRange getSourceRangeImpl() const LLVM_READONLY;
 public:
   CXXOperatorCallExpr(ASTContext& C, OverloadedOperatorKind Op, Expr *fn,
                       Expr **args, unsigned numargs, QualType t,
                       ExprValueKind VK, SourceLocation operatorloc)
     : CallExpr(C, CXXOperatorCallExprClass, fn, 0, args, numargs, t, VK,
                operatorloc),
-      Operator(Op) {}
+      Operator(Op) {
+    Range = getSourceRangeImpl();
+  }
   explicit CXXOperatorCallExpr(ASTContext& C, EmptyShell Empty) :
     CallExpr(C, CXXOperatorCallExprClass, Empty) { }
 
@@ -65,7 +69,6 @@ public:
   /// getOperator - Returns the kind of overloaded operator that this
   /// expression refers to.
   OverloadedOperatorKind getOperator() const { return Operator; }
-  void setOperator(OverloadedOperatorKind Kind) { Operator = Kind; }
 
   /// getOperatorLoc - Returns the location of the operator symbol in
   /// the expression. When @c getOperator()==OO_Call, this is the
@@ -74,12 +77,15 @@ public:
   /// bracket.
   SourceLocation getOperatorLoc() const { return getRParenLoc(); }
 
-  SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const { return Range; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXOperatorCallExprClass;
   }
   static bool classof(const CXXOperatorCallExpr *) { return true; }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// CXXMemberCallExpr - Represents a call to a member function that
