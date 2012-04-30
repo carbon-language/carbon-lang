@@ -3233,7 +3233,7 @@ Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
   Decl *Dcl = HandleDeclarator(S, D, MultiTemplateParamsArg(*this));
 
   if (OriginalLexicalContext && OriginalLexicalContext->isObjCContainer() &&
-      Dcl->getDeclContext()->isFileContext())
+      Dcl && Dcl->getDeclContext()->isFileContext())
     Dcl->setTopLevelDeclInObjCContainer();
 
   return Dcl;
