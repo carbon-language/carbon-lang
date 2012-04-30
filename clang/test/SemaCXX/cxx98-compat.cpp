@@ -328,16 +328,6 @@ namespace NonTypeTemplateArgs {
   S<void(&)(), f> s2; // expected-warning {{non-type template argument referring to function 'f' with internal linkage is incompatible with C++98}}
 }
 
-namespace ThisInExceptionSpec {
-  template<int> struct T {};
-  struct S {
-    int n;
-    void f() throw (T<sizeof(n)>); // expected-warning {{use of 'this' outside a non-static member function is incompatible with C++98}}
-    void g() throw (T<sizeof(S::n)>); // expected-warning {{use of 'this' outside a non-static member function is incompatible with C++98}}
-    void h() throw (T<sizeof(this)>); // expected-warning {{use of 'this' outside a non-static member function is incompatible with C++98}}
-  };
-}
-
 namespace NullPointerTemplateArg {
   struct A {};
   template<int*> struct X {};
