@@ -1248,3 +1248,13 @@ namespace Vector {
   }
   constexpr auto v2 = g(4);
 }
+
+// PR12626, redux
+namespace InvalidClasses {
+  void test0() {
+    struct X; // expected-note {{forward declaration}}
+    struct Y { bool b; X x; }; // expected-error {{field has incomplete type}}
+    Y y;
+    auto& b = y.b;
+  }
+}

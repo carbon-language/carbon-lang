@@ -1282,6 +1282,7 @@ static bool CastToDerivedClass(EvalInfo &Info, const Expr *E, LValue &Result,
   // Truncate the path to the subobject, and remove any derived-to-base offsets.
   const RecordDecl *RD = TruncatedType;
   for (unsigned I = TruncatedElements, N = D.Entries.size(); I != N; ++I) {
+    if (RD->isInvalidDecl()) return false;
     const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
     const CXXRecordDecl *Base = getAsBaseClass(D.Entries[I]);
     if (isVirtualBaseClass(D.Entries[I]))
@@ -1294,13 +1295,18 @@ static bool CastToDerivedClass(EvalInfo &Info, const Expr *E, LValue &Result,
   return true;
 }
 
-static void HandleLValueDirectBase(EvalInfo &Info, const Expr *E, LValue &Obj,
+static bool HandleLValueDirectBase(EvalInfo &Info, const Expr *E, LValue &Obj,
                                    const CXXRecordDecl *Derived,
                                    const CXXRecordDecl *Base,
                                    const ASTRecordLayout *RL = 0) {
-  if (!RL) RL = &Info.Ctx.getASTRecordLayout(Derived);
+  if (!RL) {
+    if (Derived->isInvalidDecl()) return false;
+    RL = &Info.Ctx.getASTRecordLayout(Derived);
+  }
+
   Obj.getLValueOffset() += RL->getBaseClassOffset(Base);
   Obj.addDecl(Info, E, Base, /*Virtual*/ false);
+  return true;
 }
 
 static bool HandleLValueBase(EvalInfo &Info, const Expr *E, LValue &Obj,
@@ -1308,10 +1314,8 @@ static bool HandleLValueBase(EvalInfo &Info, const Expr *E, LValue &Obj,
                              const CXXBaseSpecifier *Base) {
   const CXXRecordDecl *BaseDecl = Base->getType()->getAsCXXRecordDecl();
 
-  if (!Base->isVirtual()) {
-    HandleLValueDirectBase(Info, E, Obj, DerivedDecl, BaseDecl);
-    return true;
-  }
+  if (!Base->isVirtual())
+    return HandleLValueDirectBase(Info, E, Obj, DerivedDecl, BaseDecl);
 
   SubobjectDesignator &D = Obj.Designator;
   if (D.Invalid)
@@ -1323,6 +1327,7 @@ static bool HandleLValueBase(EvalInfo &Info, const Expr *E, LValue &Obj,
     return false;
 
   // Find the virtual base class.
+  if (DerivedDecl->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(DerivedDecl);
   Obj.getLValueOffset() += Layout.getVBaseClassOffset(BaseDecl);
   Obj.addDecl(Info, E, BaseDecl, /*Virtual*/ true);
@@ -1331,24 +1336,29 @@ static bool HandleLValueBase(EvalInfo &Info, const Expr *E, LValue &Obj,
 
 /// Update LVal to refer to the given field, which must be a member of the type
 /// currently described by LVal.
-static void HandleLValueMember(EvalInfo &Info, const Expr *E, LValue &LVal,
+static bool HandleLValueMember(EvalInfo &Info, const Expr *E, LValue &LVal,
                                const FieldDecl *FD,
                                const ASTRecordLayout *RL = 0) {
-  if (!RL)
+  if (!RL) {
+    if (FD->getParent()->isInvalidDecl()) return false;
     RL = &Info.Ctx.getASTRecordLayout(FD->getParent());
+  }
 
   unsigned I = FD->getFieldIndex();
   LVal.Offset += Info.Ctx.toCharUnitsFromBits(RL->getFieldOffset(I));
   LVal.addDecl(Info, E, FD);
+  return true;
 }
 
 /// Update LVal to refer to the given indirect field.
-static void HandleLValueIndirectMember(EvalInfo &Info, const Expr *E,
+static bool HandleLValueIndirectMember(EvalInfo &Info, const Expr *E,
                                        LValue &LVal,
                                        const IndirectFieldDecl *IFD) {
   for (IndirectFieldDecl::chain_iterator C = IFD->chain_begin(),
                                          CE = IFD->chain_end(); C != CE; ++C)
-    HandleLValueMember(Info, E, LVal, cast<FieldDecl>(*C));
+    if (!HandleLValueMember(Info, E, LVal, cast<FieldDecl>(*C)))
+      return false;
+  return true;
 }
 
 /// Get the size of the given type in char units.
@@ -1952,22 +1962,27 @@ static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
     // The first class in the path is that of the lvalue.
     for (unsigned I = 1, N = MemPtr.Path.size(); I != N; ++I) {
       const CXXRecordDecl *Base = MemPtr.Path[N - I - 1];
-      HandleLValueDirectBase(Info, BO, LV, RD, Base);
+      if (!HandleLValueDirectBase(Info, BO, LV, RD, Base))
+        return 0;
       RD = Base;
     }
     // Finally cast to the class containing the member.
-    HandleLValueDirectBase(Info, BO, LV, RD, MemPtr.getContainingRecord());
+    if (!HandleLValueDirectBase(Info, BO, LV, RD, MemPtr.getContainingRecord()))
+      return 0;
   }
 
   // Add the member. Note that we cannot build bound member functions here.
   if (IncludeMember) {
-    if (const FieldDecl *FD = dyn_cast<FieldDecl>(MemPtr.getDecl()))
-      HandleLValueMember(Info, BO, LV, FD);
-    else if (const IndirectFieldDecl *IFD =
-               dyn_cast<IndirectFieldDecl>(MemPtr.getDecl()))
-      HandleLValueIndirectMember(Info, BO, LV, IFD);
-    else
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(MemPtr.getDecl())) {
+      if (!HandleLValueMember(Info, BO, LV, FD))
+        return 0;
+    } else if (const IndirectFieldDecl *IFD =
+                 dyn_cast<IndirectFieldDecl>(MemPtr.getDecl())) {
+      if (!HandleLValueIndirectMember(Info, BO, LV, IFD))
+        return 0;
+    } else {
       llvm_unreachable("can't construct reference to bound member function");
+    }
   }
 
   return MemPtr.getDecl();
@@ -2189,6 +2204,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
     Result = APValue(APValue::UninitStruct(), RD->getNumBases(),
                      std::distance(RD->field_begin(), RD->field_end()));
 
+  if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
 
   bool Success = true;
@@ -2212,11 +2228,13 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
              "base class initializers not in expected order");
       ++BaseIt;
 #endif
-      HandleLValueDirectBase(Info, (*I)->getInit(), Subobject, RD,
-                             BaseType->getAsCXXRecordDecl(), &Layout);
+      if (!HandleLValueDirectBase(Info, (*I)->getInit(), Subobject, RD,
+                                  BaseType->getAsCXXRecordDecl(), &Layout))
+        return false;
       Value = &Result.getStructBase(BasesSeen++);
     } else if (FieldDecl *FD = (*I)->getMember()) {
-      HandleLValueMember(Info, (*I)->getInit(), Subobject, FD, &Layout);
+      if (!HandleLValueMember(Info, (*I)->getInit(), Subobject, FD, &Layout))
+        return false;
       if (RD->isUnion()) {
         Result = APValue(FD);
         Value = &Result.getUnionValue();
@@ -2244,7 +2262,8 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
             *Value = APValue(APValue::UninitStruct(), CD->getNumBases(),
                              std::distance(CD->field_begin(), CD->field_end()));
         }
-        HandleLValueMember(Info, (*I)->getInit(), Subobject, FD);
+        if (!HandleLValueMember(Info, (*I)->getInit(), Subobject, FD))
+          return false;
         if (CD->isUnion())
           Value = &Value->getUnionValue();
         else
@@ -2773,9 +2792,11 @@ public:
       assert(BaseTy->getAs<RecordType>()->getDecl()->getCanonicalDecl() ==
              FD->getParent()->getCanonicalDecl() && "record / field mismatch");
       (void)BaseTy;
-      HandleLValueMember(this->Info, E, Result, FD);
+      if (!HandleLValueMember(this->Info, E, Result, FD))
+        return false;
     } else if (const IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(MD)) {
-      HandleLValueIndirectMember(this->Info, E, Result, IFD);
+      if (!HandleLValueIndirectMember(this->Info, E, Result, IFD))
+        return false;
     } else
       return this->Error(E);
 
@@ -3373,6 +3394,7 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
   Result = APValue(APValue::UninitStruct(), CD ? CD->getNumBases() : 0,
                    std::distance(RD->field_begin(), RD->field_end()));
 
+  if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
 
   if (CD) {
@@ -3381,7 +3403,8 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
            End = CD->bases_end(); I != End; ++I, ++Index) {
       const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
       LValue Subobject = This;
-      HandleLValueDirectBase(Info, E, Subobject, CD, Base, &Layout);
+      if (!HandleLValueDirectBase(Info, E, Subobject, CD, Base, &Layout))
+        return false;
       if (!HandleClassZeroInitialization(Info, E, Base, Subobject,
                                          Result.getStructBase(Index)))
         return false;
@@ -3395,7 +3418,8 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
       continue;
 
     LValue Subobject = This;
-    HandleLValueMember(Info, E, Subobject, &*I, &Layout);
+    if (!HandleLValueMember(Info, E, Subobject, &*I, &Layout))
+      return false;
 
     ImplicitValueInitExpr VIE(I->getType());
     if (!EvaluateInPlace(
@@ -3419,7 +3443,8 @@ bool RecordExprEvaluator::ZeroInitialization(const Expr *E) {
     }
 
     LValue Subobject = This;
-    HandleLValueMember(Info, E, Subobject, &*I);
+    if (!HandleLValueMember(Info, E, Subobject, &*I))
+      return false;
     Result = APValue(&*I);
     ImplicitValueInitExpr VIE(I->getType());
     return EvaluateInPlace(Result.getUnionValue(), Info, Subobject, &VIE);
@@ -3472,7 +3497,6 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   const RecordDecl *RD = E->getType()->castAs<RecordType>()->getDecl();
   if (RD->isInvalidDecl()) return false;
-
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
 
   if (RD->isUnion()) {
@@ -3487,7 +3511,8 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     const Expr *InitExpr = E->getNumInits() ? E->getInit(0) : &VIE;
 
     LValue Subobject = This;
-    HandleLValueMember(Info, InitExpr, Subobject, Field, &Layout);
+    if (!HandleLValueMember(Info, InitExpr, Subobject, Field, &Layout))
+      return false;
     return EvaluateInPlace(Result.getUnionValue(), Info, Subobject, InitExpr);
   }
 
@@ -3510,8 +3535,9 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
     // FIXME: Diagnostics here should point to the end of the initializer
     // list, not the start.
-    HandleLValueMember(Info, HaveInit ? E->getInit(ElementNo) : E, Subobject,
-                       &*Field, &Layout);
+    if (!HandleLValueMember(Info, HaveInit ? E->getInit(ElementNo) : E,
+                            Subobject, &*Field, &Layout))
+      return false;
 
     // Perform an implicit value-initialization for members beyond the end of
     // the initializer list.
@@ -5285,6 +5311,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *OOE) {
       if (!RT)
         return Error(OOE);
       RecordDecl *RD = RT->getDecl();
+      if (RD->isInvalidDecl()) return false;
       const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
       unsigned i = MemberDecl->getFieldIndex();
       assert(i < RL.getFieldCount() && "offsetof field in wrong type");
@@ -5306,6 +5333,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *OOE) {
       if (!RT)
         return Error(OOE);
       RecordDecl *RD = RT->getDecl();
+      if (RD->isInvalidDecl()) return false;
       const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
 
       // Find the base class itself.
