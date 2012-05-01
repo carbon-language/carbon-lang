@@ -1970,12 +1970,12 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
   return true;
 }
 
-void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
+bool Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
   // If the list is empty, make it a singleton list.
   if (List->Method == 0) {
     List->Method = Method;
     List->Next = 0;
-    return;
+    return true;
   }
   
   // We've seen a method with this name, see if we have already seen this type
@@ -2004,13 +2004,14 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
         List->Method = Method;
     }
     
-    return;
+    return false;
   }
   
   // We have a new signature for an existing method - add it.
   // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
   ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
   Previous->Next = new (Mem) ObjCMethodList(Method, 0);
+  return false;
 }
 
 /// \brief Read the contents of the method pool for a given selector from
@@ -2020,11 +2021,11 @@ void Sema::ReadMethodPool(Selector Sel) {
   ExternalSource->ReadMethodPool(Sel);
 }
 
-void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
+bool Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
                                  bool instance) {
   // Ignore methods of invalid containers.
   if (cast<Decl>(Method->getDeclContext())->isInvalidDecl())
-    return;
+    return false;
 
   if (ExternalSource)
     ReadMethodPool(Method->getSelector());
@@ -2037,7 +2038,7 @@ void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
   Method->setDefined(impl);
   
   ObjCMethodList &Entry = instance ? Pos->second.first : Pos->second.second;
-  addMethodToGlobalList(&Entry, Method);
+  return addMethodToGlobalList(&Entry, Method);
 }
 
 /// Determines if this is an "acceptable" loose mismatch in the global
@@ -2272,10 +2273,11 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         }
         InsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "id".
-        AddInstanceMethodToGlobalPool(Method);
-        // verify that the instance method conforms to the same definition of
-        // parent methods if it shadows one.
-        CompareMethodParamsInBaseAndSuper(ClassDecl, Method, true);
+        if (!AddInstanceMethodToGlobalPool(Method)) {
+          // verify that the instance method conforms to the same definition of
+          // parent methods if it shadows one.
+          CompareMethodParamsInBaseAndSuper(ClassDecl, Method, true);
+        }
       }
     } else {
       /// Check for class method of the same name with incompatible types
@@ -2299,10 +2301,11 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         }
         ClsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "Class".
-        AddFactoryMethodToGlobalPool(Method);
-        // verify that the class method conforms to the same definition of
-        // parent methods if it shadows one.
-        CompareMethodParamsInBaseAndSuper(ClassDecl, Method, false);
+        if (!AddFactoryMethodToGlobalPool(Method)) {
+          // verify that the class method conforms to the same definition of
+          // parent methods if it shadows one.
+          CompareMethodParamsInBaseAndSuper(ClassDecl, Method, false);
+        }
       }
     }
   }
