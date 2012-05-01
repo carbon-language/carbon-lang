@@ -50,8 +50,8 @@ template struct EncodeTest<wchar_t>;
 // @() boxing expressions.
 template <typename T> struct BoxingTest {
   static id box(T value) {
-    return @(value);                     // expected-error {{Illegal type 'int *' used in a boxed expression}} \
-                                         // expected-error {{Illegal type 'long double' used in a boxed expression}}
+    return @(value);                     // expected-error {{illegal type 'int *' used in a boxed expression}} \
+                                         // expected-error {{illegal type 'long double' used in a boxed expression}}
   }
 };
 
