@@ -40,7 +40,7 @@ static const enum raw_ostream::Colors savedColor =
 /// \brief Number of spaces to indent when word-wrapping.
 const unsigned WordWrapIndentation = 6;
 
-int bytesSincePreviousTabOrLineBegin(StringRef SourceLine, size_t i) {
+static int bytesSincePreviousTabOrLineBegin(StringRef SourceLine, size_t i) {
   int bytes = 0;
   while (0<i) {
     if (SourceLine[--i]=='\t')
@@ -69,7 +69,7 @@ int bytesSincePreviousTabOrLineBegin(StringRef SourceLine, size_t i) {
 /// \param TabStop used to expand tabs
 /// \return pair(printable text, 'true' iff original text was printable)
 ///
-std::pair<SmallString<16>,bool>
+static std::pair<SmallString<16>, bool>
 printableTextForNextCharacter(StringRef SourceLine, size_t *i,
                               unsigned TabStop) {
   assert(i && "i must not be null");
@@ -146,7 +146,7 @@ printableTextForNextCharacter(StringRef SourceLine, size_t *i,
   return std::make_pair(expandedByte, false);
 }
 
-void expandTabs(std::string &SourceLine, unsigned TabStop) {
+static void expandTabs(std::string &SourceLine, unsigned TabStop) {
   size_t i = SourceLine.size();
   while (i>0) {
     i--;
@@ -181,8 +181,8 @@ void expandTabs(std::string &SourceLine, unsigned TabStop) {
 ///
 ///  (\u3042 is represented in UTF-8 by three bytes and takes two columns to
 ///   display)
-void byteToColumn(StringRef SourceLine, unsigned TabStop,
-                  SmallVectorImpl<int> &out) {
+static void byteToColumn(StringRef SourceLine, unsigned TabStop,
+                         SmallVectorImpl<int> &out) {
   out.clear();
 
   if (SourceLine.empty()) {
@@ -215,7 +215,7 @@ void byteToColumn(StringRef SourceLine, unsigned TabStop,
 ///
 ///  (\u3042 is represented in UTF-8 by three bytes and takes two columns to
 ///   display)
-void columnToByte(StringRef SourceLine, unsigned TabStop,
+static void columnToByte(StringRef SourceLine, unsigned TabStop,
                          SmallVectorImpl<int> &out) {
   out.clear();
 
@@ -934,8 +934,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   emitParseableFixits(Hints);
 }
 
-void TextDiagnostic::emitSnippet(StringRef line)
-{
+void TextDiagnostic::emitSnippet(StringRef line) {
   if (line.empty())
     return;
 
