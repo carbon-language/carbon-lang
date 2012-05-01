@@ -362,7 +362,7 @@ namespace test9 {
     f1<int>();
     f2();
   }
-  // CHECK: call void @_ZN5test97ArgTypeD1Ev(%"struct.test9::ArgType"* %ref.tmp)
+  // CHECK: call void @_ZN5test97ArgTypeD1Ev(%"struct.test9::ArgType"* %
   // CHECK: call void @_ZN5test92f2Ev()
 }
 

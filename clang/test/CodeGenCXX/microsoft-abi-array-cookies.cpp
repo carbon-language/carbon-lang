@@ -54,6 +54,6 @@ void check_array_cookies_aligned() {
 // CHECK: bitcast i8* [[ARRAY]] to [[CLASS:%.*]]*
 
   delete [] array;
-// CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast [[CLASS]]* %3 to i8*
+// CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast [[CLASS]]*
 // CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -8
 }
