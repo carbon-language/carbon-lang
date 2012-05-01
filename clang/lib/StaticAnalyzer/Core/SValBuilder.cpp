@@ -195,30 +195,26 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
 
 //===----------------------------------------------------------------------===//
 
-SVal SValBuilder::makeGenericVal(ProgramStateRef State,
-                                     BinaryOperator::Opcode Op,
-                                     NonLoc LHS, NonLoc RHS,
-                                     QualType ResultTy) {
-  // If operands are tainted, create a symbol to ensure that we propagate taint.
-  if (State->isTainted(RHS) || State->isTainted(LHS)) {
-    const SymExpr *symLHS;
-    const SymExpr *symRHS;
+SVal SValBuilder::makeSymExprValNN(ProgramStateRef State,
+                                 BinaryOperator::Opcode Op,
+                                 NonLoc LHS, NonLoc RHS,
+                                 QualType ResultTy) {
+  const SymExpr *symLHS;
+  const SymExpr *symRHS;
 
-    if (const nonloc::ConcreteInt *rInt = dyn_cast<nonloc::ConcreteInt>(&RHS)) {
-      symLHS = LHS.getAsSymExpr();
-      return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
-    }
-
-    if (const nonloc::ConcreteInt *lInt = dyn_cast<nonloc::ConcreteInt>(&LHS)) {
-      symRHS = RHS.getAsSymExpr();
-      return makeNonLoc(lInt->getValue(), Op, symRHS, ResultTy);
-    }
-
+  if (const nonloc::ConcreteInt *rInt = dyn_cast<nonloc::ConcreteInt>(&RHS)) {
     symLHS = LHS.getAsSymExpr();
-    symRHS = RHS.getAsSymExpr();
-    return makeNonLoc(symLHS, Op, symRHS, ResultTy);
+    return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
   }
-  return UnknownVal();
+
+  if (const nonloc::ConcreteInt *lInt = dyn_cast<nonloc::ConcreteInt>(&LHS)) {
+    symRHS = RHS.getAsSymExpr();
+    return makeNonLoc(lInt->getValue(), Op, symRHS, ResultTy);
+  }
+
+  symLHS = LHS.getAsSymExpr();
+  symRHS = RHS.getAsSymExpr();
+  return makeNonLoc(symLHS, Op, symRHS, ResultTy);
 }
 
 

@@ -776,6 +776,13 @@ int rdar11269741(struct rdar11269741_b_t o)
   return p->n.m; // expected-warning {{leak}}
 }
 
+// Pointer arithmetic, returning an ElementRegion.
+void *radar11329382(unsigned bl) {
+  void *ptr = malloc (16);
+  ptr = ptr + (2 - bl);
+  return ptr; // no warning
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 

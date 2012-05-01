@@ -107,12 +107,9 @@ public:
   /// that value is returned. Otherwise, returns NULL.
   virtual const llvm::APSInt *getKnownValue(ProgramStateRef state, SVal val) = 0;
   
-  /// Handles generation of the value in case the builder is not smart enough to
-  /// handle the given binary expression. Depending on the state, decides to
-  /// either keep the expression or forget the history and generate an
-  /// UnknownVal.
-  SVal makeGenericVal(ProgramStateRef state, BinaryOperator::Opcode op,
-                          NonLoc lhs, NonLoc rhs, QualType resultTy);
+  /// Constructs a symbolic expression for two non-location values.
+  SVal makeSymExprValNN(ProgramStateRef state, BinaryOperator::Opcode op,
+                      NonLoc lhs, NonLoc rhs, QualType resultTy);
 
   SVal evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
                  SVal lhs, SVal rhs, QualType type);
