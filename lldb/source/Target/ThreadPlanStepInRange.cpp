@@ -295,3 +295,41 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
 
     return NULL;
 }
+
+bool
+ThreadPlanStepInRange::PlanExplainsStop ()
+{
+    // We always explain a stop.  Either we've just done a single step, in which
+    // case we'll do our ordinary processing, or we stopped for some
+    // reason that isn't handled by our sub-plans, in which case we want to just stop right
+    // away.
+    // We also set ourselves complete when we stop for this sort of unintended reason, but mark
+    // success as false so we don't end up being the reason for the stop.
+    //
+    // The only variation is that if we are doing "step by running to next branch" in which case
+    // if we hit our branch breakpoint we don't set the plan to complete.
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
+    {
+        StopReason reason = stop_info_sp->GetStopReason();
+
+        switch (reason)
+        {
+        case eStopReasonBreakpoint:
+            if (NextRangeBreakpointExplainsStop(stop_info_sp))
+                return true;
+        case eStopReasonWatchpoint:
+        case eStopReasonSignal:
+        case eStopReasonException:
+            if (log)
+                log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
+            SetPlanComplete(false);
+            break;
+        default:
+            break;
+        }
+    }
+    return true;
+}

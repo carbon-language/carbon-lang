@@ -142,6 +142,16 @@ namespace lldb_private {
 //  all threads will be called, the stop event is placed on the Process's public broadcaster, and
 //  control returns to the upper layers of the debugger.
 //
+//  Reporting the stop:
+//
+//  When the process stops, the thread is given a StopReason, in the form of a StopInfo object.  If there is a completed
+//  plan corresponding to the stop, then the "actual" stop reason will be suppressed, and instead a StopInfoThreadPlan
+//  object will be cons'ed up from the highest completed plan in the stack.  However, if the plan doesn't want to be
+//  the stop reason, then it can call SetPlanComplete and pass in "false" for the "success" parameter.  In that case,
+//  the real stop reason will be used instead.  One exapmle of this is the "StepRangeStepIn" thread plan.  If it stops
+//  because of a crash or breakpoint hit, it wants to unship itself, because it isn't so useful to have step in keep going
+//  after a breakpoint hit.  But it can't be the reason for the stop or no-one would see that they had hit a breakpoint.
+//
 //  Automatically Resuming:
 //
 //  If ShouldStop for all threads returns "false", then the target process will resume.  This then cycles back to
@@ -396,7 +406,13 @@ public:
     IsPlanComplete();
     
     void
-    SetPlanComplete ();
+    SetPlanComplete (bool success = true);
+    
+    bool
+    PlanSucceeded ()
+    {
+        return m_plan_succeeded;
+    }
     
     virtual bool
     IsBasePlan()
@@ -489,6 +505,7 @@ private:
     bool m_plan_private;
     bool m_okay_to_discard;
     bool m_is_master_plan;
+    bool m_plan_succeeded;
     
     lldb::ThreadPlanTracerSP m_tracer_sp;
 

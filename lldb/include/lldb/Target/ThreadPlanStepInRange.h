@@ -49,6 +49,9 @@ public:
     static void
     SetDefaultFlagValue (uint32_t new_value);
 
+    virtual bool
+    PlanExplainsStop ();
+
 protected:
 
     virtual void

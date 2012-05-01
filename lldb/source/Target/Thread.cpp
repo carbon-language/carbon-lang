@@ -97,7 +97,7 @@ lldb::StopInfoSP
 Thread::GetStopInfo ()
 {
     ThreadPlanSP plan_sp (GetCompletedPlan());
-    if (plan_sp)
+    if (plan_sp && plan_sp->PlanSucceeded())
         return StopInfo::CreateStopReasonWithPlan (plan_sp, GetReturnValueObject());
     else
     {

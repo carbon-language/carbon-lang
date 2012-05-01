@@ -42,7 +42,6 @@ public:
     virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
-    virtual bool PlanExplainsStop ();
     virtual void DidPush ();
 
 

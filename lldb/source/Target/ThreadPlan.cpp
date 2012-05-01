@@ -37,7 +37,8 @@ ThreadPlan::ThreadPlan(ThreadPlanKind kind, const char *name, Thread &thread, Vo
     m_plan_complete (false),
     m_plan_private (false),
     m_okay_to_discard (false),
-    m_is_master_plan (false)
+    m_is_master_plan (false),
+    m_plan_succeeded(true)
 {
     SetID (GetNextID());
 }
@@ -57,10 +58,11 @@ ThreadPlan::IsPlanComplete ()
 }
 
 void
-ThreadPlan::SetPlanComplete ()
+ThreadPlan::SetPlanComplete (bool success)
 {
     Mutex::Locker locker(m_plan_complete_mutex);
     m_plan_complete = true;
+    m_plan_succeeded = success;
 }
 
 bool
