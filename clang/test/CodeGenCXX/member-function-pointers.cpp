@@ -1,6 +1,8 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
-// RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-apple-darwin9 | FileCheck -check-prefix LP32 %s
-// RUN: %clang_cc1 %s -emit-llvm -o - -triple=armv7-unknown-unknown | FileCheck -check-prefix ARM %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-unknown-unknown | FileCheck -check-prefix CODE-LP64 %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-unknown-unknown | FileCheck -check-prefix CODE-LP32 %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-unknown-unknown | FileCheck -check-prefix GLOBAL-LP64 %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-unknown-unknown | FileCheck -check-prefix GLOBAL-LP32 %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=armv7-unknown-unknown | FileCheck -check-prefix GLOBAL-ARM %s
 
 struct A { int a; void f(); virtual void vf1(); virtual void vf2(); };
 struct B { int b; virtual void g(); };
@@ -11,66 +13,56 @@ void (A::*volatile vpa)();
 void (B::*pb)();
 void (C::*pc)();
 
-// CHECK: @pa2 = global { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }, align 8
+// GLOBAL-LP64: @pa2 = global { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }, align 8
 void (A::*pa2)() = &A::f;
 
-// CHECK:      @pa3 = global { i64, i64 } { i64 1, i64 0 }, align 8
-// CHECK-LP32: @pa3 = global { i32, i32 } { i32 1, i32 0 }, align 4
+// GLOBAL-LP64: @pa3 = global { i64, i64 } { i64 1, i64 0 }, align 8
+// GLOBAL-LP32: @pa3 = global { i32, i32 } { i32 1, i32 0 }, align 4
 void (A::*pa3)() = &A::vf1;
 
-// CHECK:      @pa4 = global { i64, i64 } { i64 9, i64 0 }, align 8
-// CHECK-LP32: @pa4 = global { i32, i32 } { i32 5, i32 0 }, align 4
+// GLOBAL-LP64: @pa4 = global { i64, i64 } { i64 9, i64 0 }, align 8
+// GLOBAL-LP32: @pa4 = global { i32, i32 } { i32 5, i32 0 }, align 4
 void (A::*pa4)() = &A::vf2;
 
-// CHECK: @pc2 = global { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 16 }, align 8
+// GLOBAL-LP64: @pc2 = global { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 16 }, align 8
 void (C::*pc2)() = &C::f;
 
-// CHECK: @pc3 = global { i64, i64 } { i64 1, i64 0 }, align 8
+// GLOBAL-LP64: @pc3 = global { i64, i64 } { i64 1, i64 0 }, align 8
 void (A::*pc3)() = &A::vf1;
 
-// Tests for test10.
-// CHECK: @_ZN6test101aE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 0 }, align 8
-// CHECK: @_ZN6test101bE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 8 }, align 8
-// CHECK: @_ZN6test101cE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 8 }, align 8
-// CHECK: @_ZN6test101dE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 16 }, align 8
-// CHECK-LP32: @_ZN6test101aE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 0 }, align 4
-// CHECK-LP32: @_ZN6test101bE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 4 }, align 4
-// CHECK-LP32: @_ZN6test101cE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 4 }, align 4
-// CHECK-LP32: @_ZN6test101dE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
-
 void f() {
-  // CHECK: store { i64, i64 } zeroinitializer, { i64, i64 }* @pa
+  // CODE-LP64: store { i64, i64 } zeroinitializer, { i64, i64 }* @pa
   pa = 0;
 
   // Is this okay?  What are LLVM's volatile semantics for structs?
-  // CHECK: store volatile { i64, i64 } zeroinitializer, { i64, i64 }* @vpa
+  // CODE-LP64: store volatile { i64, i64 } zeroinitializer, { i64, i64 }* @vpa
   vpa = 0;
 
-  // CHECK: [[TMP:%.*]] = load { i64, i64 }* @pa, align 8
-  // CHECK: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
-  // CHECK: [[ADJ:%.*]] = add nsw i64 [[TMPADJ]], 16
-  // CHECK: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
-  // CHECK: store { i64, i64 } [[RES]], { i64, i64 }* @pc, align 8
+  // CODE-LP64: [[TMP:%.*]] = load { i64, i64 }* @pa, align 8
+  // CODE-LP64: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
+  // CODE-LP64: [[ADJ:%.*]] = add nsw i64 [[TMPADJ]], 16
+  // CODE-LP64: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
+  // CODE-LP64: store { i64, i64 } [[RES]], { i64, i64 }* @pc, align 8
   pc = pa;
 
-  // CHECK: [[TMP:%.*]] = load { i64, i64 }* @pc, align 8
-  // CHECK: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
-  // CHECK: [[ADJ:%.*]] = sub nsw i64 [[TMPADJ]], 16
-  // CHECK: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
-  // CHECK: store { i64, i64 } [[RES]], { i64, i64 }* @pa, align 8
+  // CODE-LP64: [[TMP:%.*]] = load { i64, i64 }* @pc, align 8
+  // CODE-LP64: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
+  // CODE-LP64: [[ADJ:%.*]] = sub nsw i64 [[TMPADJ]], 16
+  // CODE-LP64: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
+  // CODE-LP64: store { i64, i64 } [[RES]], { i64, i64 }* @pa, align 8
   pa = static_cast<void (A::*)()>(pc);
 }
 
 void f2() {
-  // CHECK:      store { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }
+  // CODE-LP64: store { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }
   void (A::*pa2)() = &A::f;
   
-  // CHECK:      store { i64, i64 } { i64 1, i64 0 }
-  // CHECK-LP32: store { i32, i32 } { i32 1, i32 0 }
+  // CODE-LP64: store { i64, i64 } { i64 1, i64 0 }
+  // CODE-LP32: store { i32, i32 } { i32 1, i32 0 }
   void (A::*pa3)() = &A::vf1;
   
-  // CHECK:      store { i64, i64 } { i64 9, i64 0 }
-  // CHECK-LP32: store { i32, i32 } { i32 5, i32 0 }
+  // CODE-LP64: store { i64, i64 } { i64 9, i64 0 }
+  // CODE-LP32: store { i32, i32 } { i32 5, i32 0 }
   void (A::*pa4)() = &A::vf2;
 }
 
@@ -195,12 +187,12 @@ namespace test7 {
   struct B { void foo(); virtual void vfoo(); };
   struct C : A, B { void foo(); virtual void vfoo(); };
 
-  // CHECK-ARM: @_ZN5test74ptr0E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71A3fooEv to i32), i32 0 }
-  // CHECK-ARM: @_ZN5test74ptr1E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71B3fooEv to i32), i32 8 }
-  // CHECK-ARM: @_ZN5test74ptr2E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71C3fooEv to i32), i32 0 }
-  // CHECK-ARM: @_ZN5test74ptr3E = global {{.*}} { i32 0, i32 1 }
-  // CHECK-ARM: @_ZN5test74ptr4E = global {{.*}} { i32 0, i32 9 }
-  // CHECK-ARM: @_ZN5test74ptr5E = global {{.*}} { i32 0, i32 1 }
+  // GLOBAL-ARM: @_ZN5test74ptr0E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71A3fooEv to i32), i32 0 }
+  // GLOBAL-ARM: @_ZN5test74ptr1E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71B3fooEv to i32), i32 8 }
+  // GLOBAL-ARM: @_ZN5test74ptr2E = global {{.*}} { i32 ptrtoint ({{.*}}* @_ZN5test71C3fooEv to i32), i32 0 }
+  // GLOBAL-ARM: @_ZN5test74ptr3E = global {{.*}} { i32 0, i32 1 }
+  // GLOBAL-ARM: @_ZN5test74ptr4E = global {{.*}} { i32 0, i32 9 }
+  // GLOBAL-ARM: @_ZN5test74ptr5E = global {{.*}} { i32 0, i32 1 }
   void (C::*ptr0)() = &A::foo;
   void (C::*ptr1)() = &B::foo;
   void (C::*ptr2)() = &C::foo;
@@ -234,9 +226,9 @@ namespace test9 {
     fooptr p;
   };
 
-  // CHECK:    define void @_ZN5test94testEv(
-  // CHECK:      alloca i32
-  // CHECK-NEXT: ret void
+  // CODE-LP64:    define void @_ZN5test94testEv(
+  // CODE-LP64:      alloca i32
+  // CODE-LP64-NEXT: ret void
   void test() {
     int x;
     static S array[] = { (fooptr) &B::foo };
@@ -261,14 +253,37 @@ namespace test10 {
     virtual void requireNonZeroAdjustment();
   };
 
-  // Non-ARM tests at top of file.
+
+// It's not that the offsets are doubled on ARM, it's that they're left-shifted by 1.
+
+// GLOBAL-LP64: @_ZN6test101aE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 0 }, align 8
+// GLOBAL-LP32: @_ZN6test101aE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 0 }, align 4
+// GLOBAL-ARM:  @_ZN6test101aE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 0 }, align 4
   void (A::*a)() = &A::foo;
+
+// GLOBAL-LP64: @_ZN6test101bE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 8 }, align 8
+// GLOBAL-LP32: @_ZN6test101bE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 4 }, align 4
+// GLOBAL-ARM:  @_ZN6test101bE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
   void (B::*b)() = (void (B::*)()) &A::foo;
+
+// GLOBAL-LP64: @_ZN6test101cE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 8 }, align 8
+// GLOBAL-LP32: @_ZN6test101cE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 4 }, align 4
+// GLOBAL-ARM:  @_ZN6test101cE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
   void (C::*c)() = (void (C::*)()) (void (B::*)()) &A::foo;
+
+// GLOBAL-LP64: @_ZN6test101dE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 16 }, align 8
+// GLOBAL-LP32: @_ZN6test101dE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
+// GLOBAL-ARM:  @_ZN6test101dE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 16 }, align 4
   void (D::*d)() = (void (C::*)()) (void (B::*)()) &A::foo;
 }
-// It's not that the offsets are doubled on ARM, it's that they're left-shifted by 1.
-// CHECK-ARM: @_ZN6test101aE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 0 }, align 4
-// CHECK-ARM: @_ZN6test101bE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
-// CHECK-ARM: @_ZN6test101cE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
-// CHECK-ARM: @_ZN6test101dE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 16 }, align 4
+
+namespace test11 {
+  struct A { virtual void a(); };
+  struct B : A {};
+  struct C : B { virtual void a(); };
+  void (C::*x)() = &C::a;
+
+  // GLOBAL-LP64: @_ZN6test111xE = global { i64, i64 } { i64 1, i64 0 }
+  // GLOBAL-LP32: @_ZN6test111xE = global { i32, i32 } { i32 1, i32 0 }
+  // GLOBAL-ARM:  @_ZN6test111xE = global { i32, i32 } { i32 0, i32 1 }
+}
