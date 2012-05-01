@@ -95,14 +95,14 @@ namespace {
     }
 
   private:
-    bool OptimizeBitcastInstr(MachineInstr *MI, MachineBasicBlock *MBB);
-    bool OptimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
-    bool OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
+    bool optimizeBitcastInstr(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool optimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSet<MachineInstr*, 8> &LocalMIs);
     bool isMoveImmediate(MachineInstr *MI,
                          SmallSet<unsigned, 4> &ImmDefRegs,
                          DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
-    bool FoldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
+    bool foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
                        SmallSet<unsigned, 4> &ImmDefRegs,
                        DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
   };
@@ -116,7 +116,7 @@ INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_END(PeepholeOptimizer, "peephole-opts",
                 "Peephole Optimizations", false, false)
 
-/// OptimizeExtInstr - If instruction is a copy-like instruction, i.e. it reads
+/// optimizeExtInstr - If instruction is a copy-like instruction, i.e. it reads
 /// a single register and writes a single register and it does not modify the
 /// source, and if the source value is preserved as a sub-register of the
 /// result, then replace all reachable uses of the source with the subreg of the
@@ -126,7 +126,7 @@ INITIALIZE_PASS_END(PeepholeOptimizer, "peephole-opts",
 /// the code. Since this code does not currently share EXTRACTs, just ignore all
 /// debug uses.
 bool PeepholeOptimizer::
-OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
+optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                  SmallPtrSet<MachineInstr*, 8> &LocalMIs) {
   unsigned SrcReg, DstReg, SubIdx;
   if (!TII->isCoalescableExtInstr(*MI, SrcReg, DstReg, SubIdx))
@@ -255,7 +255,7 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   return Changed;
 }
 
-/// OptimizeBitcastInstr - If the instruction is a bitcast instruction A that
+/// optimizeBitcastInstr - If the instruction is a bitcast instruction A that
 /// cannot be optimized away during isel (e.g. ARM::VMOVSR, which bitcast
 /// a value cross register classes), and the source is defined by another
 /// bitcast instruction B. And if the register class of source of B matches
@@ -265,7 +265,7 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
 ///   %vreg3<def> = VMOVRS %vreg0
 ///   Replace all uses of vreg3 with vreg1.
 
-bool PeepholeOptimizer::OptimizeBitcastInstr(MachineInstr *MI,
+bool PeepholeOptimizer::optimizeBitcastInstr(MachineInstr *MI,
                                              MachineBasicBlock *MBB) {
   unsigned NumDefs = MI->getDesc().getNumDefs();
   unsigned NumSrcs = MI->getDesc().getNumOperands() - NumDefs;
@@ -327,11 +327,11 @@ bool PeepholeOptimizer::OptimizeBitcastInstr(MachineInstr *MI,
   return true;
 }
 
-/// OptimizeCmpInstr - If the instruction is a compare and the previous
+/// optimizeCmpInstr - If the instruction is a compare and the previous
 /// instruction it's comparing against all ready sets (or could be modified to
 /// set) the same flag as the compare, then we can remove the comparison and use
 /// the flag from the previous instruction.
-bool PeepholeOptimizer::OptimizeCmpInstr(MachineInstr *MI,
+bool PeepholeOptimizer::optimizeCmpInstr(MachineInstr *MI,
                                          MachineBasicBlock *MBB) {
   // If this instruction is a comparison against zero and isn't comparing a
   // physical register, we can try to optimize it.
@@ -368,10 +368,10 @@ bool PeepholeOptimizer::isMoveImmediate(MachineInstr *MI,
   return false;
 }
 
-/// FoldImmediate - Try folding register operands that are defined by move
+/// foldImmediate - Try folding register operands that are defined by move
 /// immediate instructions, i.e. a trivial constant folding optimization, if
 /// and only if the def and use are in the same BB.
-bool PeepholeOptimizer::FoldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
+bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
                                       SmallSet<unsigned, 4> &ImmDefRegs,
                                  DenseMap<unsigned, MachineInstr*> &ImmDefMIs) {
   for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
@@ -430,7 +430,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       }
 
       if (MI->isBitcast()) {
-        if (OptimizeBitcastInstr(MI, MBB)) {
+        if (optimizeBitcastInstr(MI, MBB)) {
           // MI is deleted.
           LocalMIs.erase(MI);
           Changed = true;
@@ -438,7 +438,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
           continue;
         }
       } else if (MI->isCompare()) {
-        if (OptimizeCmpInstr(MI, MBB)) {
+        if (optimizeCmpInstr(MI, MBB)) {
           // MI is deleted.
           LocalMIs.erase(MI);
           Changed = true;
@@ -450,9 +450,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (isMoveImmediate(MI, ImmDefRegs, ImmDefMIs)) {
         SeenMoveImm = true;
       } else {
-        Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
+        Changed |= optimizeExtInstr(MI, MBB, LocalMIs);
         if (SeenMoveImm)
-          Changed |= FoldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
+          Changed |= foldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
       }
 
       First = false;
