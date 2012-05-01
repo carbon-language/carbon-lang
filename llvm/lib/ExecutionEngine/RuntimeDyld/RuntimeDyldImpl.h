@@ -179,12 +179,13 @@ protected:
     return (uint8_t*)Sections[SectionID].Address;
   }
 
-  /// \brief Emits a section containing common symbols.
-  /// \return SectionID.
-  unsigned emitCommonSymbols(ObjectImage &Obj,
-                             const CommonSymbolMap &Map,
-                             uint64_t TotalSize,
-                             SymbolTableMap &Symbols);
+  /// \brief Given the common symbols discovered in the object file, emit a
+  /// new section for them and update the symbol mappings in the object and
+  /// symbol table.
+  void emitCommonSymbols(ObjectImage &Obj,
+                         const CommonSymbolMap &CommonSymbols,
+                         uint64_t TotalSize,
+                         SymbolTableMap &SymbolTable);
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be
@@ -204,10 +205,12 @@ protected:
                              bool IsCode,
                              ObjSectionToIDMap &LocalSections);
 
-  /// \brief If Value.SymbolName is NULL then store relocation to the
-  ///        Relocations, else store it in the SymbolRelocations.
-  void addRelocation(const RelocationValueRef &Value, unsigned SectionID,
-                     uintptr_t Offset, uint32_t RelType);
+  // \brief Add a relocation entry that uses the given section.
+  void addRelocationForSection(const RelocationEntry &RE, unsigned SectionID);
+
+  // \brief Add a relocation entry that uses the given symbol.  This symbol may
+  // be found in the global symbol table, or it may be external.
+  void addRelocationForSymbol(const RelocationEntry &RE, StringRef SymbolName);
 
   /// \brief Emits long jump instruction to Addr.
   /// \return Pointer to the memory area for emitting target address.

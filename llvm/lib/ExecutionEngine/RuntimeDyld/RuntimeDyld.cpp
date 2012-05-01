@@ -182,10 +182,10 @@ bool RuntimeDyldImpl::loadObject(const MemoryBuffer *InputBuffer) {
   return false;
 }
 
-unsigned RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
-                                            const CommonSymbolMap &Map,
-                                            uint64_t TotalSize,
-                                            SymbolTableMap &Symbols) {
+void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
+                                        const CommonSymbolMap &CommonSymbols,
+                                        uint64_t TotalSize,
+                                        SymbolTableMap &SymbolTable) {
   // Allocate memory for the section
   unsigned SectionID = Sections.size();
   uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, sizeof(void*),
@@ -202,18 +202,16 @@ unsigned RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
                << "\n");
 
   // Assign the address of each symbol
-  for (CommonSymbolMap::const_iterator it = Map.begin(), itEnd = Map.end();
-       it != itEnd; it++) {
-    uint64_t Size = it->second;
+  for (CommonSymbolMap::const_iterator it = CommonSymbols.begin(),
+       itEnd = CommonSymbols.end(); it != itEnd; it++) {
     StringRef Name;
     it->first.getName(Name);
     Obj.updateSymbolAddress(it->first, (uint64_t)Addr);
-    Symbols[Name.data()] = SymbolLoc(SectionID, Offset);
+    SymbolTable[Name.data()] = SymbolLoc(SectionID, Offset);
+    uint64_t Size = it->second;
     Offset += Size;
     Addr += Size;
   }
-
-  return SectionID;
 }
 
 unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
@@ -312,36 +310,25 @@ unsigned RuntimeDyldImpl::findOrEmitSection(ObjectImage &Obj,
   return SectionID;
 }
 
-void RuntimeDyldImpl::addRelocation(const RelocationValueRef &Value,
-                                    unsigned SectionID, uintptr_t Offset,
-                                    uint32_t RelType) {
-  DEBUG(dbgs() << "addRelocation SymNamePtr: " << format("%p", Value.SymbolName)
-               << " SID: " << Value.SectionID
-               << " Addend: " << format("%p", Value.Addend)
-               << " Offset: " << format("%p", Offset)
-               << " RelType: " << format("%x", RelType)
-               << "\n");
+void RuntimeDyldImpl::addRelocationForSection(const RelocationEntry &RE,
+                                              unsigned SectionID) {
+  Relocations[SectionID].push_back(RE);
+}
 
-  if (Value.SymbolName == 0) {
-    Relocations[Value.SectionID].push_back(RelocationEntry(
-      SectionID,
-      Offset,
-      RelType,
-      Value.Addend));
+void RuntimeDyldImpl::addRelocationForSymbol(const RelocationEntry &RE,
+                                             StringRef SymbolName) {
+  // Relocation by symbol.  If the symbol is found in the global symbol table,
+  // create an appropriate section relocation.  Otherwise, add it to
+  // ExternalSymbolRelocations.
+  SymbolTableMap::const_iterator Loc =
+      GlobalSymbolTable.find(SymbolName);
+  if (Loc == GlobalSymbolTable.end()) {
+    ExternalSymbolRelocations[SymbolName].push_back(RE);
   } else {
-    // Relocation by symbol.  If the symbol is found in the global symbol table,
-    // create an appropriate section relocation.  Otherwise, add it to
-    // ExternalSymbolRelocations.
-    RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
-
-    SymbolTableMap::const_iterator Loc =
-        GlobalSymbolTable.find(Value.SymbolName);
-    if (Loc == GlobalSymbolTable.end()) {
-      ExternalSymbolRelocations[Value.SymbolName].push_back(RE);
-    } else {
-      RE.Addend += Loc->second.second;
-      Relocations[Loc->second.first].push_back(RE);
-    }
+    // Copy the RE since we want to modify its addend.
+    RelocationEntry RECopy = RE;
+    RECopy.Addend += Loc->second.second;
+    Relocations[Loc->second.first].push_back(RECopy);
   }
 }
 

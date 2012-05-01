@@ -215,16 +215,17 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
 
   bool isExtern = (RelType >> 27) & 1;
   if (isExtern) {
+    // Obtain the symbol name which is referenced in the relocation
     StringRef TargetName;
     const SymbolRef &Symbol = Rel.Symbol;
     Symbol.getName(TargetName);
-    // First look the symbol in object file symbols.
+    // First search for the symbol in the local symbol table
     SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
     if (lsi != Symbols.end()) {
       Value.SectionID = lsi->second.first;
       Value.Addend = lsi->second.second;
     } else {
-      // Second look the symbol in global symbol table.
+      // Search for the symbol in the global symbol table
       SymbolTableMap::const_iterator gsi = GlobalSymbolTable.find(TargetName.data());
       if (gsi != GlobalSymbolTable.end()) {
         Value.SectionID = gsi->second.first;
@@ -247,8 +248,8 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
     Value.SectionID = findOrEmitSection(Obj, *si, true, ObjSectionToID);
     Value.Addend = *(const intptr_t *)Target;
     if (Value.Addend) {
-      // The MachO addend is offset from the current section, we need set it
-      // as offset from destination section
+      // The MachO addend is an offset from the current section.  We need it
+      // to be an offset from the destination section
       Value.Addend += Section.ObjAddress - Sections[Value.SectionID].ObjAddress;
     }
   }
@@ -267,15 +268,24 @@ void RuntimeDyldMachO::processRelocationRef(const ObjRelocationInfo &Rel,
       Stubs[Value] = Section.StubOffset;
       uint8_t *StubTargetAddr = createStubFunction(Section.Address +
                                                    Section.StubOffset);
-      addRelocation(Value, Rel.SectionID, StubTargetAddr - Section.Address,
-                    macho::RIT_Vanilla);
+      RelocationEntry RE(Rel.SectionID, StubTargetAddr - Section.Address,
+                         macho::RIT_Vanilla, Value.Addend);
+      if (Value.SymbolName)
+        addRelocationForSymbol(RE, Value.SymbolName);
+      else
+        addRelocationForSection(RE, Value.SectionID);
       resolveRelocation(Target, (uint64_t)Target,
                         (uint64_t)Section.Address + Section.StubOffset,
                         RelType, 0);
       Section.StubOffset += getMaxStubSize();
     }
-  } else
-    addRelocation(Value, Rel.SectionID, Rel.Offset, RelType);
+  } else {
+    RelocationEntry RE(Rel.SectionID, Rel.Offset, RelType, Value.Addend);
+    if (Value.SymbolName)
+      addRelocationForSymbol(RE, Value.SymbolName);
+    else
+      addRelocationForSection(RE, Value.SectionID);
+  }
 }
 
 
