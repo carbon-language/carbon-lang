@@ -2246,8 +2246,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   }
 
   // Handle LOADX separately here. EXTLOAD case will fallthrough.
-  if (Op.getOpcode() == ISD::LOAD) {
-    LoadSDNode *LD = cast<LoadSDNode>(Op);
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
     unsigned ExtType = LD->getExtensionType();
     switch (ExtType) {
     default: break;
