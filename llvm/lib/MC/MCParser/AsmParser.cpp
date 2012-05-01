@@ -1238,9 +1238,7 @@ bool AsmParser::ParseStatement() {
     if (!getTargetParser().ParseDirective(ID))
       return false;
 
-    bool retval = Warning(IDLoc, "ignoring directive for now");
-    EatToEndOfStatement();
-    return retval;
+    return Warning(IDLoc, "ignoring directive for now");
   }
 
   CheckForValidSection();
