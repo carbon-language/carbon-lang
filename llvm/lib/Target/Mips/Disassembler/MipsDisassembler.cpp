@@ -29,6 +29,8 @@ using namespace llvm;
 
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 
+namespace {
+
 /// MipsDisassembler - a disasembler class for Mips32.
 class MipsDisassembler : public MCDisassembler {
 public:
@@ -83,6 +85,8 @@ public:
 private:
   bool isBigEndian;
 };
+
+} // end anonymous namespace
 
 const EDInstInfo *MipsDisassembler::getEDInfo() const {
   return instInfoMips;
