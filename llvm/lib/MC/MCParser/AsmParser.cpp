@@ -1238,7 +1238,7 @@ bool AsmParser::ParseStatement() {
     if (!getTargetParser().ParseDirective(ID))
       return false;
 
-    return Warning(IDLoc, "ignoring directive for now");
+    return Error(IDLoc, "unknown directive");
   }
 
   CheckForValidSection();

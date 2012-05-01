@@ -5,7 +5,7 @@
 .endmacro
 
 .macros_off
-// CHECK-ERRORS: 9:1: warning: ignoring directive for now
+// CHECK-ERRORS: 9:1: error: unknown directive
 .test0
 .macros_on
 
