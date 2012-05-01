@@ -3952,9 +3952,10 @@ static void AnalyzeComparison(Sema &S, BinaryOperator *E) {
       return;
   }
 
-  S.Diag(E->getOperatorLoc(), diag::warn_mixed_sign_comparison)
-    << LHS->getType() << RHS->getType()
-    << LHS->getSourceRange() << RHS->getSourceRange();
+  S.DiagRuntimeBehavior(E->getOperatorLoc(), E,
+    S.PDiag(diag::warn_mixed_sign_comparison)
+      << LHS->getType() << RHS->getType()
+      << LHS->getSourceRange() << RHS->getSourceRange());
 }
 
 /// Analyzes an attempt to assign the given value to a bitfield.
