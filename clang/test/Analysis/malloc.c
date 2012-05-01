@@ -783,6 +783,15 @@ void *radar11329382(unsigned bl) {
   return ptr; // no warning
 }
 
+void __assert_rtn(const char *, const char *, int, const char *) __attribute__((__noreturn__));
+int strcmp(const char *, const char *);
+char *a (void);
+void radar11270219(void) {
+  char *x = a(), *y = a();
+  (__builtin_expect(!(x && y), 0) ? __assert_rtn(__func__, "/Users/zaks/tmp/ex.c", 24, "x && y") : (void)0);
+  strcmp(x, y); // no warning
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 
