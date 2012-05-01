@@ -299,6 +299,16 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(X86::FS);
   Reserved.set(X86::GS);
 
+  // Mark the floating point stack registers as reserved.
+  Reserved.set(X86::ST0);
+  Reserved.set(X86::ST1);
+  Reserved.set(X86::ST2);
+  Reserved.set(X86::ST3);
+  Reserved.set(X86::ST4);
+  Reserved.set(X86::ST5);
+  Reserved.set(X86::ST6);
+  Reserved.set(X86::ST7);
+
   // Reserve the registers that only exist in 64-bit mode.
   if (!Is64Bit) {
     // These 8-bit registers are part of the x86-64 extension even though their
