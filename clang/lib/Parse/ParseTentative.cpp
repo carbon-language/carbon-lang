@@ -933,8 +933,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult) {
       return TPResult::Error();
     if (Tok.is(tok::identifier)) {
       const Token &Next = NextToken();
-      bool NotObjC = !(getLangOpts().ObjC1 || getLangOpts().ObjC2);
-      return (NotObjC && Next.is(tok::identifier)) ?
+      return (!getLangOpts().ObjC1 && Next.is(tok::identifier)) ?
           TPResult::True() : TPResult::False();
     }
     return isCXXDeclarationSpecifier(BracedCastResult);

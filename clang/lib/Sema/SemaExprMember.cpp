@@ -839,7 +839,7 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     if (ExtraArgs) {
       ExprResult RetryExpr;
       if (!IsArrow && BaseExpr) {
-        SFINAETrap Trap(*this);
+        SFINAETrap Trap(*this, false);
         ParsedType ObjectType;
         bool MayBePseudoDestructor = false;
         RetryExpr = ActOnStartCXXMemberReference(getCurScope(), BaseExpr,
