@@ -3969,6 +3969,17 @@ def : t2InstAlias<"add${s}${p} $Rdn, $imm",
 def : t2InstAlias<"add${p} $Rdn, $imm",
            (t2SUBri12 GPRnopc:$Rdn, GPRnopc:$Rdn, imm0_4095_neg:$imm, pred:$p)>;
 
+def : t2InstAlias<"add${s}${p}.w $Rd, $Rn, $imm",
+        (t2SUBri GPRnopc:$Rd, GPRnopc:$Rn, t2_so_imm_neg:$imm, pred:$p,
+                 cc_out:$s)>;
+def : t2InstAlias<"addw${p} $Rd, $Rn, $imm",
+           (t2SUBri12 GPRnopc:$Rd, GPR:$Rn, imm0_4095_neg:$imm, pred:$p)>;
+def : t2InstAlias<"add${s}${p}.w $Rdn, $imm",
+      (t2SUBri GPRnopc:$Rdn, GPRnopc:$Rdn, t2_so_imm_neg:$imm, pred:$p,
+               cc_out:$s)>;
+def : t2InstAlias<"addw${p} $Rdn, $imm",
+           (t2SUBri12 GPRnopc:$Rdn, GPRnopc:$Rdn, imm0_4095_neg:$imm, pred:$p)>;
+
 
 // Aliases for SUB without the ".w" optional width specifier.
 def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $imm",

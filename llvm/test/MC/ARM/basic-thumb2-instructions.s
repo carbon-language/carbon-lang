@@ -80,6 +80,12 @@ _func:
         adds r2, r2, #56
         adds r2, #56
 
+        adds.w r2, #-16
+        adds.w r2, r2, #-16
+        addw r2, #-16
+        addw r2, #-16
+        addw r2, r2, #-16
+
 @ CHECK: itet	eq                      @ encoding: [0x0a,0xbf]
 @ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
 @ CHECK: addwne	r5, r3, #1023           @ encoding: [0x03,0xf2,0xff,0x35]
@@ -95,6 +101,12 @@ _func:
 @ CHECK: add.w	r0, r0, #32             @ encoding: [0x00,0xf1,0x20,0x00]
 @ CHECK: adds	r2, #56                 @ encoding: [0x38,0x32]
 @ CHECK: adds	r2, #56                 @ encoding: [0x38,0x32]
+
+@ CHECK: subs.w	r2, r2, #16             @ encoding: [0xb2,0xf1,0x10,0x02]
+@ CHECK: subs.w	r2, r2, #16             @ encoding: [0xb2,0xf1,0x10,0x02]
+@ CHECK: subw	r2, r2, #16             @ encoding: [0xa2,0xf2,0x10,0x02]
+@ CHECK: subw	r2, r2, #16             @ encoding: [0xa2,0xf2,0x10,0x02]
+@ CHECK: subw	r2, r2, #16             @ encoding: [0xa2,0xf2,0x10,0x02]
 
 
 @------------------------------------------------------------------------------
