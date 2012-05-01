@@ -147,10 +147,6 @@ public:
 typedef SmallVector<Attr*, 2> AttrVec;
 typedef SmallVector<const Attr*, 2> ConstAttrVec;
 
-/// DestroyAttrs - Destroy the contents of an AttrVec.
-inline void DestroyAttrs (AttrVec& V, ASTContext &C) {
-}
-
 /// specific_attr_iterator - Iterates over a subrange of an AttrVec, only
 /// providing attributes that are of a specifc type.
 template <typename SpecificAttr>
