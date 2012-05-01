@@ -25,7 +25,8 @@ namespace options {
     RenderAsInput    = (1 << 5),
     RenderJoined     = (1 << 6),
     RenderSeparate   = (1 << 7),
-    Unsupported      = (1 << 8)
+    Unsupported      = (1 << 8),
+    CC1Option        = (1 << 9)
   };
 }
 

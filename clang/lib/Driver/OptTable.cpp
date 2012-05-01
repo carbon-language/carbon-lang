@@ -181,6 +181,8 @@ Option *OptTable::CreateOption(unsigned id) const {
   }
   if (info.Flags & Unsupported)
     Opt->setUnsupported(true);
+  if (info.Flags & CC1Option)
+    Opt->setIsCC1Option(true);
 
   return Opt;
 }

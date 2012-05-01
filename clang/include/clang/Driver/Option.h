@@ -91,6 +91,9 @@ namespace driver {
     /// This option should not be implicitly forwarded.
     bool NoForward : 1;
 
+    /// CC1Option - This option should be accepted by clang -cc1.
+    bool CC1Option : 1;
+
   protected:
     Option(OptionClass Kind, OptSpecifier ID, const char *Name,
            const OptionGroup *Group, const Option *Alias);
@@ -125,6 +128,9 @@ namespace driver {
 
     bool hasNoForward() const { return NoForward; }
     void setNoForward(bool Value) { NoForward = Value; }
+
+    bool isCC1Option() const { return CC1Option; }
+    void setIsCC1Option(bool Value) { CC1Option = Value; }
 
     bool hasForwardToGCC() const {
       return !NoForward && !DriverOption && !LinkerInput;
