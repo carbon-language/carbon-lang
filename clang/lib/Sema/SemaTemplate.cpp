@@ -354,12 +354,14 @@ void Sema::LookupTemplateName(LookupResult &Found,
     return;
   }
 
-  if (S && !ObjectType.isNull() && !ObjectTypeSearchedInScope) {
-    // C++ [basic.lookup.classref]p1:
+  if (S && !ObjectType.isNull() && !ObjectTypeSearchedInScope &&
+      !(getLangOpts().CPlusPlus0x && !Found.empty())) {
+    // C++03 [basic.lookup.classref]p1:
     //   [...] If the lookup in the class of the object expression finds a
     //   template, the name is also looked up in the context of the entire
     //   postfix-expression and [...]
     //
+    // Note: C++11 does not perform this second lookup.
     LookupResult FoundOuter(*this, Found.getLookupName(), Found.getNameLoc(),
                             LookupOrdinaryName);
     LookupName(FoundOuter, S);
