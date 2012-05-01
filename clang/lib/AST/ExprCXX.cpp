@@ -420,23 +420,20 @@ SourceRange CXXOperatorCallExpr::getSourceRangeImpl() const {
   if (Kind == OO_PlusPlus || Kind == OO_MinusMinus) {
     if (getNumArgs() == 1)
       // Prefix operator
-      return SourceRange(getOperatorLoc(),
-                         getArg(0)->getSourceRange().getEnd());
+      return SourceRange(getOperatorLoc(), getArg(0)->getLocEnd());
     else
       // Postfix operator
-      return SourceRange(getArg(0)->getSourceRange().getBegin(),
-                         getOperatorLoc());
+      return SourceRange(getArg(0)->getLocStart(), getOperatorLoc());
   } else if (Kind == OO_Arrow) {
     return getArg(0)->getSourceRange();
   } else if (Kind == OO_Call) {
-    return SourceRange(getArg(0)->getSourceRange().getBegin(), getRParenLoc());
+    return SourceRange(getArg(0)->getLocStart(), getRParenLoc());
   } else if (Kind == OO_Subscript) {
-    return SourceRange(getArg(0)->getSourceRange().getBegin(), getRParenLoc());
+    return SourceRange(getArg(0)->getLocStart(), getRParenLoc());
   } else if (getNumArgs() == 1) {
-    return SourceRange(getOperatorLoc(), getArg(0)->getSourceRange().getEnd());
+    return SourceRange(getOperatorLoc(), getArg(0)->getLocEnd());
   } else if (getNumArgs() == 2) {
-    return SourceRange(getArg(0)->getSourceRange().getBegin(),
-                       getArg(1)->getSourceRange().getEnd());
+    return SourceRange(getArg(0)->getLocStart(), getArg(1)->getLocEnd());
   } else {
     return getOperatorLoc();
   }
