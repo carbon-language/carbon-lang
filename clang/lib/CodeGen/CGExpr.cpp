@@ -880,7 +880,6 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
                                  CGM.getCodeGenOpts().StrictEnums &&
                                  !ET->getDecl()->isFixed());
   bool IsBool = hasBooleanRepresentation(Ty);
-  llvm::Type *LTy;
   if (!IsBool && !IsRegularCPlusPlusEnum)
     return NULL;
 
@@ -889,10 +888,9 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
   if (IsBool) {
     Min = llvm::APInt(8, 0);
     End = llvm::APInt(8, 2);
-    LTy = Int8Ty;
   } else {
     const EnumDecl *ED = ET->getDecl();
-    LTy = ConvertTypeForMem(ED->getIntegerType());
+    llvm::Type *LTy = ConvertTypeForMem(ED->getIntegerType());
     unsigned Bitwidth = LTy->getScalarSizeInBits();
     unsigned NumNegativeBits = ED->getNumNegativeBits();
     unsigned NumPositiveBits = ED->getNumPositiveBits();
