@@ -1153,7 +1153,6 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     default:
       llvm_unreachable("pseudo instructions should be removed before code"
                        " emission");
-      break;
     // Do nothing for Int_MemBarrier - it's just a comment.  Add a debug
     // to make it slightly easier to see.
     case X86::Int_MemBarrier:
