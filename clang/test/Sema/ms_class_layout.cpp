@@ -488,10 +488,11 @@ int main() {
 
 // Overriding a method means that all the vbases containing that
 // method need a vtordisp.
+// FIXME: this is unverified!!
 namespace test1 {
   struct A { virtual void foo(); };
   struct B : A {};
-  struct C : virtual A, virtual B { virtual void foo(); };
+  struct C : virtual A, virtual B { C(); virtual void foo(); };
   void test() { C *c; }
 
 // CHECK:        0 | struct test1::C
