@@ -861,11 +861,6 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   // Determine what file we're searching from.
   SourceManager &SourceMgr = getSourceManager();
   SourceLocation ExpandedImportLoc = SourceMgr.getExpansionLoc(ImportLoc);
-  const FileEntry *CurFile
-    = SourceMgr.getFileEntryForID(SourceMgr.getFileID(ExpandedImportLoc));
-  if (!CurFile)
-    CurFile = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
-
   StringRef ModuleName = Path[0].first->getName();
   SourceLocation ModuleNameLoc = Path[0].second;
 
