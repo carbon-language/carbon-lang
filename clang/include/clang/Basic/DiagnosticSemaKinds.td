@@ -675,10 +675,8 @@ def warn_receiver_is_weak : Warning <
   "weak %select{receiver|property|implicit property}0 may be "
   "unpredictably null in ARC mode">,
   InGroup<DiagGroup<"receiver-is-weak">>, DefaultIgnore;
-
-def error_synthesized_ivar_yet_not_supported : Error<
-  "instance variable synthesis not yet supported"
-  " (need to declare %0 explicitly)">;
+def err_incomplete_synthesized_property : Error<
+  "cannot synthesize property %0 with incomplete type %1">;
 
 def error_property_ivar_type : Error<
   "type of property %0 (%1) does not match type of ivar %2 (%3)">;

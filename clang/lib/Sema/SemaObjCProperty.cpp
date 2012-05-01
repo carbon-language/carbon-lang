@@ -588,6 +588,9 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
   }
   if (PropertyIvarLoc.isInvalid())
     PropertyIvarLoc = PropertyLoc;
+  SourceLocation PropertyDiagLoc = PropertyLoc;
+  if (PropertyDiagLoc.isInvalid())
+    PropertyDiagLoc = ClassImpDecl->getLocStart();
   ObjCPropertyDecl *property = 0;
   ObjCInterfaceDecl* IDecl = 0;
   // Find the class or category class where this property must have
@@ -654,6 +657,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     return 0;
   }
   ObjCIvarDecl *Ivar = 0;
+  bool CompleteTypeErr = false;
   // Check that we have a valid, previously declared ivar for @synthesize
   if (Synthesize) {
     // @synthesize
@@ -664,7 +668,14 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     QualType PropType = property->getType();
     QualType PropertyIvarType = PropType.getNonReferenceType();
-    
+
+    if (RequireCompleteType(PropertyDiagLoc, PropertyIvarType,
+                            PDiag(diag::err_incomplete_synthesized_property)
+                                << property->getDeclName())) {
+      Diag(property->getLocation(), diag::note_property_declare);
+      CompleteTypeErr = true;
+    }
+
     if (getLangOpts().ObjCAutoRefCount &&
         (property->getPropertyAttributesAsWritten() &
          ObjCPropertyDecl::OBJC_PR_readonly) &&
@@ -680,7 +691,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         getLangOpts().getGC() != LangOptions::NonGC) {
       assert(!getLangOpts().ObjCAutoRefCount);
       if (PropertyIvarType.isObjCGCStrong()) {
-        Diag(PropertyLoc, diag::err_gc_weak_property_strong_type);
+        Diag(PropertyDiagLoc, diag::err_gc_weak_property_strong_type);
         Diag(property->getLocation(), diag::note_property_declare);
       } else {
         PropertyIvarType =
@@ -699,7 +710,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         // explicitly write an ownership attribute on the property.
         if (!property->hasWrittenStorageAttribute() &&
             !(kind & ObjCPropertyDecl::OBJC_PR_strong)) {
-          Diag(PropertyLoc,
+          Diag(PropertyDiagLoc,
                diag::err_arc_objc_property_default_assign_on_object);
           Diag(property->getLocation(), diag::note_property_declare);
         } else {
@@ -711,12 +722,12 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
             if (const ObjCObjectPointerType *ObjT =
                 PropertyIvarType->getAs<ObjCObjectPointerType>())
               if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable()) {
-                Diag(PropertyLoc, diag::err_arc_weak_unavailable_property);
+                Diag(PropertyDiagLoc, diag::err_arc_weak_unavailable_property);
                 Diag(property->getLocation(), diag::note_property_declare);
                 err = true;
               }
             if (!err && !getLangOpts().ObjCRuntimeHasWeak) {
-              Diag(PropertyLoc, diag::err_arc_weak_no_runtime);
+              Diag(PropertyDiagLoc, diag::err_arc_weak_no_runtime);
               Diag(property->getLocation(), diag::note_property_declare);
             }
           }
@@ -730,7 +741,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       if (kind & ObjCPropertyDecl::OBJC_PR_weak &&
           !getLangOpts().ObjCAutoRefCount &&
           getLangOpts().getGC() == LangOptions::NonGC) {
-        Diag(PropertyLoc, diag::error_synthesize_weak_non_arc_or_gc);
+        Diag(PropertyDiagLoc, diag::error_synthesize_weak_non_arc_or_gc);
         Diag(property->getLocation(), diag::note_property_declare);
       }
 
@@ -739,17 +750,20 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   PropertyIvarType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Private,
                                   (Expr *)0, true);
+      if (CompleteTypeErr)
+        Ivar->setInvalidDecl();
       ClassImpDecl->addDecl(Ivar);
       IDecl->makeDeclVisibleInContext(Ivar);
       property->setPropertyIvarDecl(Ivar);
 
       if (!getLangOpts().ObjCNonFragileABI)
-        Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
+        Diag(PropertyDiagLoc, diag::error_missing_property_ivar_decl)
+            << PropertyId;
       // Note! I deliberately want it to fall thru so, we have a
       // a property implementation and to avoid future warnings.
     } else if (getLangOpts().ObjCNonFragileABI &&
                !declaresSameEntity(ClassDeclared, IDecl)) {
-      Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
+      Diag(PropertyDiagLoc, diag::error_ivar_in_superclass_use)
       << property->getDeclName() << Ivar->getDeclName()
       << ClassDeclared->getDeclName();
       Diag(Ivar->getLocation(), diag::note_previous_access_declaration)
@@ -773,7 +787,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                     == Compatible);
       }
       if (!compat) {
-        Diag(PropertyLoc, diag::error_property_ivar_type)
+        Diag(PropertyDiagLoc, diag::error_property_ivar_type)
           << property->getDeclName() << PropType
           << Ivar->getDeclName() << IvarType;
         Diag(Ivar->getLocation(), diag::note_ivar_decl);
@@ -788,7 +802,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       QualType rhsType =Context.getCanonicalType(IvarType).getUnqualifiedType();
       if (lhsType != rhsType &&
           lhsType->isArithmeticType()) {
-        Diag(PropertyLoc, diag::error_property_ivar_type)
+        Diag(PropertyDiagLoc, diag::error_property_ivar_type)
           << property->getDeclName() << PropType
           << Ivar->getDeclName() << IvarType;
         Diag(Ivar->getLocation(), diag::note_ivar_decl);
@@ -797,7 +811,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // __weak is explicit. So it works on Canonical type.
       if ((PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak() &&
            getLangOpts().getGC() != LangOptions::NonGC)) {
-        Diag(PropertyLoc, diag::error_weak_property)
+        Diag(PropertyDiagLoc, diag::error_weak_property)
         << property->getDeclName() << Ivar->getDeclName();
         Diag(Ivar->getLocation(), diag::note_ivar_decl);
         // Fall thru - see previous comment
@@ -806,7 +820,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       if ((property->getType()->isObjCObjectPointerType() ||
            PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
           getLangOpts().getGC() != LangOptions::NonGC) {
-        Diag(PropertyLoc, diag::error_strong_property)
+        Diag(PropertyDiagLoc, diag::error_strong_property)
         << property->getDeclName() << Ivar->getDeclName();
         // Fall thru - see previous comment
       }
@@ -815,7 +829,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       checkARCPropertyImpl(*this, PropertyLoc, property, Ivar);
   } else if (PropertyIvar)
     // @dynamic
-    Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
+    Diag(PropertyDiagLoc, diag::error_dynamic_property_ivar_decl);
     
   assert (property && "ActOnPropertyImplDecl - property declaration missing");
   ObjCPropertyImplDecl *PIDecl =
@@ -825,9 +839,13 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                 ObjCPropertyImplDecl::Synthesize
                                 : ObjCPropertyImplDecl::Dynamic),
                                Ivar, PropertyIvarLoc);
+
+  if (CompleteTypeErr)
+    PIDecl->setInvalidDecl();
+
   if (ObjCMethodDecl *getterMethod = property->getGetterMethodDecl()) {
     getterMethod->createImplicitParams(Context, IDecl);
-    if (getLangOpts().CPlusPlus && Synthesize &&
+    if (getLangOpts().CPlusPlus && Synthesize && !CompleteTypeErr &&
         Ivar->getType()->isRecordType()) {
       // For Objective-C++, need to synthesize the AST for the IVAR object to be
       // returned by the getter as it must conform to C++'s copy-return rules.
@@ -862,8 +880,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
   }
   if (ObjCMethodDecl *setterMethod = property->getSetterMethodDecl()) {
     setterMethod->createImplicitParams(Context, IDecl);
-    if (getLangOpts().CPlusPlus && Synthesize
-        && Ivar->getType()->isRecordType()) {
+    if (getLangOpts().CPlusPlus && Synthesize && !CompleteTypeErr &&
+        Ivar->getType()->isRecordType()) {
       // FIXME. Eventually we want to do this for Objective-C as well.
       ImplicitParamDecl *SelfDecl = setterMethod->getSelfDecl();
       DeclRefExpr *SelfExpr = 
@@ -941,7 +959,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl =
           CatImplClass->FindPropertyImplIvarDecl(PropertyIvar)) {
-        Diag(PropertyLoc, diag::error_duplicate_ivar_use)
+        Diag(PropertyDiagLoc, diag::error_duplicate_ivar_use)
         << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier()
         << PropertyIvar;
         Diag(PPIDecl->getLocation(), diag::note_previous_use);
@@ -949,7 +967,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
 
     if (ObjCPropertyImplDecl *PPIDecl =
         CatImplClass->FindPropertyImplDecl(PropertyId)) {
-      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
+      Diag(PropertyDiagLoc, diag::error_property_implemented) << PropertyId;
       Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
       return 0;
     }

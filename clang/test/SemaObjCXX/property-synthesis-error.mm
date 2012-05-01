@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class -fobjc-default-synthesize-properties %s
 // rdar: //8550657
 
 @interface NSArray @end
@@ -72,3 +72,14 @@ private:
 
 @synthesize tcppObject = _tcppObject;
 @end
+
+struct IncompleteStruct; // expected-note 2 {{forward declaration of 'IncompleteStruct'}}
+struct ConvertToIncomplete { operator IncompleteStruct&(); };
+@interface SynthIncompleteRef
+@property (readonly, nonatomic) IncompleteStruct& x; // expected-note {{property declared here}}
+@property (readonly, nonatomic) IncompleteStruct& y; // expected-note {{property declared here}}
+@end
+
+@implementation SynthIncompleteRef // expected-error {{cannot synthesize property 'x' with incomplete type 'IncompleteStruct'}}
+@synthesize y; // expected-error {{cannot synthesize property 'y' with incomplete type 'IncompleteStruct'}}
+@end 

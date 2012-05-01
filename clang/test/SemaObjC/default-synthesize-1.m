@@ -114,3 +114,10 @@
 }
 @end
 
+@interface rdar11333367
+@property enum A x; // expected-note {{forward declaration of 'enum A'}} expected-note {{property declared here}}
+@property struct B y; // expected-note {{forward declaration of 'struct B'}} expected-note {{property declared here}}
+@end
+@implementation rdar11333367 // expected-error {{cannot synthesize property 'y' with incomplete type 'struct B'}}
+@synthesize x; // expected-error {{cannot synthesize property 'x' with incomplete type 'enum A'}}
+@end
