@@ -71,6 +71,9 @@ protected:
 
   ASTContext &getContext() const { return CGM.getContext(); }
 
+  virtual bool requiresArrayCookie(const CXXDeleteExpr *E, QualType eltType);
+  virtual bool requiresArrayCookie(const CXXNewExpr *E);
+
 public:
 
   virtual ~CGCXXABI();
@@ -209,7 +212,8 @@ public:
   /// \param NewPtr - a char* which is the presumed-non-null
   ///   return value of the allocation function
   /// \param NumElements - the computed number of elements,
-  ///   potentially collapsed from the multidimensional array case
+  ///   potentially collapsed from the multidimensional array case;
+  ///   always a size_t
   /// \param ElementType - the base element allocated type,
   ///   i.e. the allocated type after stripping all array types
   virtual llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
@@ -235,6 +239,25 @@ public:
                                const CXXDeleteExpr *expr,
                                QualType ElementType, llvm::Value *&NumElements,
                                llvm::Value *&AllocPtr, CharUnits &CookieSize);
+
+protected:
+  /// Returns the extra size required in order to store the array
+  /// cookie for the given type.  Assumes that an array cookie is
+  /// required.
+  virtual CharUnits getArrayCookieSizeImpl(QualType elementType);
+
+  /// Reads the array cookie for an allocation which is known to have one.
+  /// This is called by the standard implementation of ReadArrayCookie.
+  ///
+  /// \param ptr - a pointer to the allocation made for an array, as a char*
+  /// \param cookieSize - the computed cookie size of an array
+  /// Other parameters are as above.
+  /// \return a size_t
+  virtual llvm::Value *readArrayCookieImpl(CodeGenFunction &IGF,
+                                           llvm::Value *ptr,
+                                           CharUnits cookieSize);
+
+public:
 
   /*************************** Static local guards ****************************/
 

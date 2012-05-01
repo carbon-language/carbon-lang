@@ -138,6 +138,7 @@ namespace CodeGen {
     union {
       unsigned char PointerAlignInBytes;
       unsigned char PointerSizeInBytes;
+      unsigned char SizeSizeInBytes;     // sizeof(size_t)
     };
   };
 

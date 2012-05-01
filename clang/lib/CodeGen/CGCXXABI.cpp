@@ -145,6 +145,13 @@ void CGCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
 }
 
 CharUnits CGCXXABI::GetArrayCookieSize(const CXXNewExpr *expr) {
+  if (!requiresArrayCookie(expr))
+    return CharUnits::Zero();
+  return getArrayCookieSizeImpl(expr->getAllocatedType());
+}
+
+CharUnits CGCXXABI::getArrayCookieSizeImpl(QualType elementType) {
+  // BOGUS
   return CharUnits::Zero();
 }
 
@@ -158,16 +165,53 @@ llvm::Value *CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   return 0;
 }
 
-void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
-                               const CXXDeleteExpr *expr, QualType ElementType,
-                               llvm::Value *&NumElements,
-                               llvm::Value *&AllocPtr, CharUnits &CookieSize) {
-  ErrorUnsupportedABI(CGF, "array cookie reading");
+bool CGCXXABI::requiresArrayCookie(const CXXDeleteExpr *expr,
+                                   QualType elementType) {
+  // If the class's usual deallocation function takes two arguments,
+  // it needs a cookie.
+  if (expr->doesUsualArrayDeleteWantSize())
+    return true;
 
-  // This should be enough to avoid assertions.
-  NumElements = 0;
-  AllocPtr = llvm::Constant::getNullValue(CGF.Builder.getInt8PtrTy());
-  CookieSize = CharUnits::Zero();
+  return elementType.isDestructedType();
+}
+
+bool CGCXXABI::requiresArrayCookie(const CXXNewExpr *expr) {
+  // If the class's usual deallocation function takes two arguments,
+  // it needs a cookie.
+  if (expr->doesUsualArrayDeleteWantSize())
+    return true;
+
+  return expr->getAllocatedType().isDestructedType();
+}
+
+void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *ptr,
+                               const CXXDeleteExpr *expr, QualType eltTy,
+                               llvm::Value *&numElements,
+                               llvm::Value *&allocPtr, CharUnits &cookieSize) {
+  // Derive a char* in the same address space as the pointer.
+  unsigned AS = cast<llvm::PointerType>(ptr->getType())->getAddressSpace();
+  llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS);
+  ptr = CGF.Builder.CreateBitCast(ptr, charPtrTy);
+
+  // If we don't need an array cookie, bail out early.
+  if (!requiresArrayCookie(expr, eltTy)) {
+    allocPtr = ptr;
+    numElements = 0;
+    cookieSize = CharUnits::Zero();
+    return;
+  }
+
+  cookieSize = getArrayCookieSizeImpl(eltTy);
+  allocPtr = CGF.Builder.CreateConstInBoundsGEP1_64(ptr,
+                                                    -cookieSize.getQuantity());
+  numElements = readArrayCookieImpl(CGF, allocPtr, cookieSize);
+}
+
+llvm::Value *CGCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
+                                           llvm::Value *ptr,
+                                           CharUnits cookieSize) {
+  ErrorUnsupportedABI(CGF, "reading a new[] cookie");
+  return llvm::ConstantInt::get(CGF.SizeTy, 0);
 }
 
 void CGCXXABI::EmitGuardedInit(CodeGenFunction &CGF,

@@ -113,7 +113,6 @@ void operator_new_delete() {
   char *array = new char[42];
 // CHECK: @"\01??_U@YAPAXI@Z"
 
-  // FIXME: enable once PR12333 is fixed
-  // delete [] array;
-// Should be: @"\01??_V@YAXPAX@Z"
+  delete [] array;
+// CHECK: @"\01??_V@YAXPAX@Z"
 }
