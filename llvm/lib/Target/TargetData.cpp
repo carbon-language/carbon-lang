@@ -117,8 +117,8 @@ TargetAlignElem::operator==(const TargetAlignElem &rhs) const {
           && TypeBitWidth == rhs.TypeBitWidth);
 }
 
-const TargetAlignElem TargetData::InvalidAlignmentElem =
-                TargetAlignElem::get((AlignTypeEnum) -1, 0, 0, 0);
+const TargetAlignElem
+TargetData::InvalidAlignmentElem = { (AlignTypeEnum)0xFF, 0, 0, 0 };
 
 //===----------------------------------------------------------------------===//
 //                       TargetData Class Implementation
