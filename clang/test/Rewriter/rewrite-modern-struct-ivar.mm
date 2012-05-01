@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -E %s -o %t.mm
 // RUN: %clang_cc1 -fblocks -rewrite-objc -fms-extensions %t.mm -o %t-rw.cpp 
 // RUN: FileCheck --input-file=%t-rw.cpp %s
-// RUN: %clang_cc1 -fsyntax-only -Werror -Wno-address-of-temporary -Wno-c++11-narrowing -std=c++11 -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -Werror -Wno-address-of-temporary -Wno-c++11-narrowing -std=c++11 -D"Class=void*" -D"id=void*" -D"SEL=void*" -U__declspec -D"__declspec(X)=" %t-rw.cpp
 
 struct S {
     int i1;
