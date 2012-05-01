@@ -581,13 +581,15 @@ def err_objc_property_requires_object : Error<
   "property with '%0' attribute must be of object type">;
 def warn_objc_property_no_assignment_attribute : Warning<
   "no 'assign', 'retain', or 'copy' attribute is specified - "
-  "'assign' is assumed">;
+  "'assign' is assumed">,
+  InGroup<ObjCPropertyNoAttribute>;
 def warn_objc_isa_use : Warning<
   "direct access to objective-c's isa is deprecated "
   "in favor of object_setClass() and object_getClass()">,
   InGroup<DiagGroup<"deprecated-objc-isa-usage">>;
 def warn_objc_property_default_assign_on_object : Warning<
-  "default property attribute 'assign' not appropriate for non-gc object">;
+  "default property attribute 'assign' not appropriate for non-GC object">,
+  InGroup<ObjCPropertyNoAttribute>;
 def warn_property_attr_mismatch : Warning<
   "property attribute in continuation class does not match the primary class">;
 def warn_objc_property_copy_missing_on_block : Warning<
@@ -3549,8 +3551,10 @@ def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,
   InGroup<DiagGroup<"float-equal">>, DefaultIgnore;
 
-def warn_division_by_zero : Warning<"division by zero is undefined">;
-def warn_remainder_by_zero : Warning<"remainder by zero is undefined">;
+def warn_division_by_zero : Warning<"division by zero is undefined">,
+  InGroup<DivZero>;
+def warn_remainder_by_zero : Warning<"remainder by zero is undefined">,
+  InGroup<DivZero>;
 def warn_shift_negative : Warning<"shift count is negative">,
   InGroup<DiagGroup<"shift-count-negative">>;
 def warn_shift_gt_typewidth : Warning<"shift count >= width of type">,

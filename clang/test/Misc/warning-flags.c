@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (252):
+CHECK: Warnings without flags (248):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -134,7 +134,6 @@ CHECK-NEXT:   warn_conv_to_base_not_used
 CHECK-NEXT:   warn_conv_to_self_not_used
 CHECK-NEXT:   warn_conv_to_void_not_used
 CHECK-NEXT:   warn_delete_array_type
-CHECK-NEXT:   warn_division_by_zero
 CHECK-NEXT:   warn_double_const_requires_fp64
 CHECK-NEXT:   warn_drv_assuming_mfloat_abi_is
 CHECK-NEXT:   warn_drv_clang_unsupported
@@ -192,8 +191,6 @@ CHECK-NEXT:   warn_ns_attribute_wrong_parameter_type
 CHECK-NEXT:   warn_ns_attribute_wrong_return_type
 CHECK-NEXT:   warn_objc_object_attribute_wrong_type
 CHECK-NEXT:   warn_objc_property_copy_missing_on_block
-CHECK-NEXT:   warn_objc_property_default_assign_on_object
-CHECK-NEXT:   warn_objc_property_no_assignment_attribute
 CHECK-NEXT:   warn_objc_protocol_qualifier_missing_id
 CHECK-NEXT:   warn_octal_escape_too_large
 CHECK-NEXT:   warn_odr_tag_type_inconsistent
@@ -243,7 +240,6 @@ CHECK-NEXT:   warn_redeclaration_without_attribute_prev_attribute_ignored
 CHECK-NEXT:   warn_register_objc_catch_parm
 CHECK-NEXT:   warn_related_result_type_compatibility_class
 CHECK-NEXT:   warn_related_result_type_compatibility_protocol
-CHECK-NEXT:   warn_remainder_by_zero
 CHECK-NEXT:   warn_root_inst_method_not_found
 CHECK-NEXT:   warn_second_parameter_of_va_start_not_last_named_argument
 CHECK-NEXT:   warn_second_parameter_to_va_arg_never_compatible
