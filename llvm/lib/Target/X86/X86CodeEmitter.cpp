@@ -939,7 +939,18 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned CurOp = 0;
   switch (TSFlags & X86II::FormMask) {
-    case X86II::MRMInitReg: llvm_unreachable("FIXME: Remove this!");
+    case X86II::MRMInitReg:
+      // Duplicate register.
+      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
+        VEX_R = 0x0;
+
+      if (HasVEX_4V)
+        VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
+        VEX_B = 0x0;
+      if (HasVEX_4VOp3)
+        VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+      break;
     case X86II::MRMDestMem: {
       // MRMDestMem instructions forms:
       //  MemAddr, src1(ModR/M)
