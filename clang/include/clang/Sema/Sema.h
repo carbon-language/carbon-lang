@@ -2130,15 +2130,12 @@ public:
   void CheckCategoryVsClassMethodMatches(ObjCCategoryImplDecl *CatIMP);
 
   /// \brief Add the given method to the list of globally-known methods.
-  ///
-  /// \returns true if this is the first method in the list with the given
-  /// selector.
-  bool addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method);
+  void addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method);
   
 private:
   /// AddMethodToGlobalPool - Add an instance or factory method to the global
   /// pool. See descriptoin of AddInstanceMethodToGlobalPool.
-  bool AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl, bool instance);
+  void AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl, bool instance);
 
   /// LookupMethodInGlobalPool - Returns the instance or factory method and
   /// optionally warns if there are multiple signatures.
@@ -2151,17 +2148,13 @@ public:
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking
   /// messages sent to "id" (where the class of the object is unknown).
-  ///
-  /// Returns true if the method was added, false if a method was already there.
-  bool AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false) {
-    return AddMethodToGlobalPool(Method, impl, /*instance*/true);
+  void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false) {
+    AddMethodToGlobalPool(Method, impl, /*instance*/true);
   }
 
   /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
-  ///
-  /// Returns true if the method was added, false if a method was already there.
-  bool AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false) {
-    return AddMethodToGlobalPool(Method, impl, /*instance*/false);
+  void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false) {
+    AddMethodToGlobalPool(Method, impl, /*instance*/false);
   }
 
   /// AddAnyMethodToGlobalPool - Add any method, instance or factory to global
@@ -5832,9 +5825,6 @@ public:
                                 const IdentifierInfo *Name);
   void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
 
-  void CompareMethodParamsInBaseAndSuper(Decl *IDecl,
-                                         ObjCMethodDecl *MethodDecl,
-                                         bool IsInstance);
 
   void CompareProperties(Decl *CDecl, Decl *MergeProtocols);
 
