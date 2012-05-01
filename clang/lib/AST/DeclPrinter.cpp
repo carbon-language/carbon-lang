@@ -666,6 +666,8 @@ void DeclPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
 // C++ declarations
 //----------------------------------------------------------------------------
 void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
+  if (D->isInline())
+    Out << "inline ";
   Out << "namespace " << *D << " {\n";
   VisitDeclContext(D);
   Indent() << "}";
