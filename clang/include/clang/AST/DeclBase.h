@@ -1632,6 +1632,23 @@ struct cast_convert_val< const ::clang::DeclContext, FromTy*, FromTy*> {
   }
 };
 
+// simplify_type - Allow clients to treat redecl_iterators just like Decl
+// pointers when using casting operators.
+template<> struct simplify_type< ::clang::Decl::redecl_iterator> {
+  typedef ::clang::Decl *SimpleType;
+  static SimpleType getSimplifiedValue(const ::clang::Decl::redecl_iterator
+      &Val) {
+    return Val;
+  }
+};
+template<> struct simplify_type<const ::clang::Decl::redecl_iterator> {
+  typedef ::clang::Decl *SimpleType;
+  static SimpleType getSimplifiedValue(const ::clang::Decl::redecl_iterator
+      &Val) {
+    return Val;
+  }
+};
+
 } // end namespace llvm
 
 #endif
