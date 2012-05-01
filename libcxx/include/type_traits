@@ -1298,6 +1298,31 @@ forward(typename std::remove_reference<_Tp>::type&& __t) _NOEXCEPT
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp&
+move(_Tp& __t)
+{
+    return __t;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+const _Tp&
+move(const _Tp& __t)
+{
+    return __t;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp&
+forward(typename std::remove_reference<_Tp>::type& __t) _NOEXCEPT
+{
+    return __t;
+}
+
+
+template <class _Tp>
 class __rv
 {
     typedef typename remove_reference<_Tp>::type _Trr;
@@ -1308,90 +1333,6 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     explicit __rv(_Trr& __t) : t_(__t) {}
 };
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    !is_convertible<_Tp, __rv<_Tp> >::value,
-    _Tp&
->::type
-move(_Tp& __t)
-{
-    return __t;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    !is_convertible<_Tp, __rv<_Tp> >::value,
-    const _Tp&
->::type
-move(const _Tp& __t)
-{
-    return __t;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_convertible<_Tp, __rv<_Tp> >::value,
-    _Tp
->::type
-move(_Tp& __t)
-{
-    return _Tp(__rv<_Tp>(__t));
-}
-
-template <class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    !is_convertible<_Tp, __rv<_Tp> >::value,
-    typename add_lvalue_reference<_Tp>::type
->::type
-forward(_Up& __t)
-{
-    return __t;
-}
-
-template <class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    !is_convertible<_Tp, __rv<_Tp> >::value,
-    typename add_lvalue_reference<_Tp>::type
->::type
-forward(const _Up& __t)
-{
-    return __t;
-}
-
-template <class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_convertible<_Tp, __rv<_Tp> >::value,
-    _Tp
->::type
-forward(_Up& __t)
-{
-    return _Tp(__rv<_Tp>(__t));
-}
-
-template <class _Tp, class _Up>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_convertible<_Tp, __rv<_Tp> >::value,
-    _Tp
->::type
-forward(const _Up& __t)
-{
-    return _Tp(__rv<_Tp>(__t));
-}
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
