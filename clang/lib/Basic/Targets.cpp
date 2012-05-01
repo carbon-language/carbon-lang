@@ -1699,7 +1699,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "sse4a", true);
   case CK_BDVER1:
   case CK_BDVER2:
-    setFeatureEnabled(Features, "sse4", true);
+    setFeatureEnabled(Features, "avx", true);
     setFeatureEnabled(Features, "sse4a", true);
     setFeatureEnabled(Features, "aes", true);
     break;
