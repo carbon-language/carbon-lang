@@ -497,7 +497,7 @@ def err_two_right_angle_brackets_need_space : Error<
   "a space is required between consecutive right angle brackets (use '> >')">;
 def warn_cxx0x_right_shift_in_template_arg : Warning<
   "use of right-shift operator ('>>') in template argument will require "
-  "parentheses in C++11">;
+  "parentheses in C++11">, InGroup<CXX11Compat>;
 def warn_cxx98_compat_two_right_angle_brackets : Warning<
   "consecutive right angle brackets are incompatible with C++98 (use '> >')">,
   InGroup<CXX98Compat>, DefaultIgnore;

@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (253):
+CHECK: Warnings without flags (252):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -133,7 +133,6 @@ CHECK-NEXT:   warn_conflicting_variadic
 CHECK-NEXT:   warn_conv_to_base_not_used
 CHECK-NEXT:   warn_conv_to_self_not_used
 CHECK-NEXT:   warn_conv_to_void_not_used
-CHECK-NEXT:   warn_cxx0x_right_shift_in_template_arg
 CHECK-NEXT:   warn_delete_array_type
 CHECK-NEXT:   warn_division_by_zero
 CHECK-NEXT:   warn_double_const_requires_fp64
