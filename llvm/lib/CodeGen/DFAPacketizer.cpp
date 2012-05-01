@@ -23,10 +23,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
-#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 using namespace llvm;
@@ -100,22 +100,23 @@ void DFAPacketizer::reserveResources(llvm::MachineInstr *MI) {
   reserveResources(&MID);
 }
 
-namespace {
+namespace llvm {
 // DefaultVLIWScheduler - This class extends ScheduleDAGInstrs and overrides
 // Schedule method to build the dependence graph.
 class DefaultVLIWScheduler : public ScheduleDAGInstrs {
 public:
   DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
-                       MachineDominatorTree &MDT, bool IsPostRA);
+                   MachineDominatorTree &MDT, bool IsPostRA);
   // Schedule - Actual scheduling work.
   void schedule();
 };
-} // end anonymous namespace
+}
 
 DefaultVLIWScheduler::DefaultVLIWScheduler(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
   bool IsPostRA) :
   ScheduleDAGInstrs(MF, MLI, MDT, IsPostRA) {
+  CanHandleTerminators = true;
 }
 
 void DefaultVLIWScheduler::schedule() {
@@ -129,49 +130,25 @@ VLIWPacketizerList::VLIWPacketizerList(
   bool IsPostRA) : TM(MF.getTarget()), MF(MF)  {
   TII = TM.getInstrInfo();
   ResourceTracker = TII->CreateTargetScheduleState(&TM, 0);
-  SchedulerImpl = new DefaultVLIWScheduler(MF, MLI, MDT, IsPostRA);
+  VLIWScheduler = new DefaultVLIWScheduler(MF, MLI, MDT, IsPostRA);
 }
 
 // VLIWPacketizerList Dtor
 VLIWPacketizerList::~VLIWPacketizerList() {
-  delete SchedulerImpl;
-  delete ResourceTracker;
-}
+  if (VLIWScheduler)
+    delete VLIWScheduler;
 
-// ignorePseudoInstruction - ignore pseudo instructions.
-bool VLIWPacketizerList::ignorePseudoInstruction(MachineInstr *MI,
-                                                 MachineBasicBlock *MBB) {
-  if (MI->isDebugValue())
-    return true;
-
-  if (TII->isSchedulingBoundary(MI, MBB, MF))
-    return true;
-
-  return false;
-}
-
-// isSoloInstruction - return true if instruction I must end previous
-// packet.
-bool VLIWPacketizerList::isSoloInstruction(MachineInstr *I) {
-  if (I->isInlineAsm())
-    return true;
-
-  return false;
-}
-
-// addToPacket - Add I to the current packet and reserve resource.
-void VLIWPacketizerList::addToPacket(MachineInstr *MI) {
-  CurrentPacketMIs.push_back(MI);
-  ResourceTracker->reserveResources(MI);
+  if (ResourceTracker)
+    delete ResourceTracker;
 }
 
 // endPacket - End the current packet, bundle packet instructions and reset
 // DFA state.
 void VLIWPacketizerList::endPacket(MachineBasicBlock *MBB,
-                                         MachineInstr *I) {
+                                         MachineInstr *MI) {
   if (CurrentPacketMIs.size() > 1) {
     MachineInstr *MIFirst = CurrentPacketMIs.front();
-    finalizeBundle(*MBB, MIFirst, I);
+    finalizeBundle(*MBB, MIFirst, MI);
   }
   CurrentPacketMIs.clear();
   ResourceTracker->clearResources();
@@ -181,31 +158,35 @@ void VLIWPacketizerList::endPacket(MachineBasicBlock *MBB,
 void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator BeginItr,
                                       MachineBasicBlock::iterator EndItr) {
-  assert(MBB->end() == EndItr && "Bad EndIndex");
+  assert(VLIWScheduler && "VLIW Scheduler is not initialized!");
+  VLIWScheduler->startBlock(MBB);
+  VLIWScheduler->enterRegion(MBB, BeginItr, EndItr, MBB->size());
+  VLIWScheduler->schedule();
 
-  SchedulerImpl->enterRegion(MBB, BeginItr, EndItr, MBB->size());
-
-  // Build the DAG without reordering instructions.
-  SchedulerImpl->schedule();
-
-  // Remember scheduling units.
-  SUnits = SchedulerImpl->SUnits;
+  // Generate MI -> SU map.
+  MIToSUnit.clear();
+  for (unsigned i = 0, e = VLIWScheduler->SUnits.size(); i != e; ++i) {
+    SUnit *SU = &VLIWScheduler->SUnits[i];
+    MIToSUnit[SU->getInstr()] = SU;
+  }
 
   // The main packetizer loop.
   for (; BeginItr != EndItr; ++BeginItr) {
     MachineInstr *MI = BeginItr;
 
-    // Ignore pseudo instructions.
-    if (ignorePseudoInstruction(MI, MBB))
-      continue;
+    this->initPacketizerState();
 
     // End the current packet if needed.
-    if (isSoloInstruction(MI)) {
+    if (this->isSoloInstruction(MI)) {
       endPacket(MBB, MI);
       continue;
     }
 
-    SUnit *SUI = SchedulerImpl->getSUnit(MI);
+    // Ignore pseudo instructions.
+    if (this->ignorePseudoInstruction(MI, MBB))
+      continue;
+
+    SUnit *SUI = MIToSUnit[MI];
     assert(SUI && "Missing SUnit Info!");
 
     // Ask DFA if machine resource is available for MI.
@@ -215,13 +196,13 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
       for (std::vector<MachineInstr*>::iterator VI = CurrentPacketMIs.begin(),
            VE = CurrentPacketMIs.end(); VI != VE; ++VI) {
         MachineInstr *MJ = *VI;
-        SUnit *SUJ = SchedulerImpl->getSUnit(MJ);
+        SUnit *SUJ = MIToSUnit[MJ];
         assert(SUJ && "Missing SUnit Info!");
 
         // Is it legal to packetize SUI and SUJ together.
-        if (!isLegalToPacketizeTogether(SUI, SUJ)) {
+        if (!this->isLegalToPacketizeTogether(SUI, SUJ)) {
           // Allow packetization if dependency can be pruned.
-          if (!isLegalToPruneDependencies(SUI, SUJ)) {
+          if (!this->isLegalToPruneDependencies(SUI, SUJ)) {
             // End the packet if dependency cannot be pruned.
             endPacket(MBB, MI);
             break;
@@ -234,11 +215,11 @@ void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
     }
 
     // Add MI to the current packet.
-    addToPacket(MI);
+    BeginItr = this->addToPacket(MI);
   } // For all instructions in BB.
 
   // End any packet left behind.
   endPacket(MBB, EndItr);
-
-  SchedulerImpl->exitRegion();
+  VLIWScheduler->exitRegion();
+  VLIWScheduler->finishBlock();
 }
