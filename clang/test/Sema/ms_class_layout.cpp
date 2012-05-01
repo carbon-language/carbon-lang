@@ -97,6 +97,48 @@ struct P : public M, public virtual L {
 
 struct R {};
 
+class IA {
+public:
+  virtual ~IA(){}
+  virtual void ia() = 0;
+};
+
+class ICh : public virtual IA {
+public:
+  virtual ~ICh(){}
+  virtual void ia(){}
+  virtual void iCh(){}
+};
+
+struct f {
+  virtual int asd() {return -90;}
+};
+
+struct s : public virtual f {
+  virtual ~s(){}
+  int r;
+  virtual int asd() {return -9;}
+};
+
+struct sd : virtual s, virtual ICh {
+  virtual ~sd(){}
+  int q;
+  char y;
+  virtual int asd() {return -1;}
+};
+struct AV { 
+  virtual void foo(); 
+};
+struct BV : AV { 
+};
+struct CV : virtual BV { 
+  CV(); 
+  virtual void foo(); 
+};
+struct DV : BV {
+};
+struct EV : CV, DV {
+};
 #pragma pack(pop)
 
 // This needs only for building layouts. 
@@ -113,6 +155,8 @@ int main() {
   O* o;
   P* p;
   R* r;
+  sd *h;
+  EV *j;
   return 0;
 }
 
@@ -333,3 +377,132 @@ int main() {
 // CHECK-NEXT:  nvsize=0, nvalign=1
 
 //CHECK: %struct.R = type { i8 }
+
+// CHECK:       0 | struct f
+// CHECK-NEXT:  0 |   (f vftable pointer)
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+// CHECK:       0 | struct s
+// CHECK-NEXT:  0 |   (s vftable pointer)
+// CHECK-NEXT:  4 |   (s vbtable pointer)
+// CHECK-NEXT:  8 |   int r
+// CHECK-NEXT: 12 |   (vtordisp for vbase f)
+// CHECK-NEXT: 16 |   struct f (virtual base)
+// CHECK-NEXT: 16 |     (f vftable pointer)
+// CHECK-NEXT: sizeof=20, dsize=20, align=4
+// CHECK-NEXT: nvsize=12, nvalign=4
+
+// CHECK:       0 | class IA
+// CHECK-NEXT:  0 |   (IA vftable pointer)
+// CHECK-NEXT:  sizeof=4, dsize=4, align=4
+// CHECK-NEXT:  nvsize=4, nvalign=4
+	
+// CHECK:       0 | class ICh
+// CHECK-NEXT:  0 |   (ICh vftable pointer)
+// CHECK-NEXT:  4 |   (ICh vbtable pointer)
+// CHECK-NEXT:  8 |   (vtordisp for vbase IA)
+// CHECK-NEXT: 12 |   class IA (virtual base)
+// CHECK-NEXT: 12 |     (IA vftable pointer)
+// CHECK-NEXT: sizeof=16, dsize=16, align=4
+// CHECK-NEXT: nvsize=8, nvalign=4
+
+// CHECK:       0 | struct sd
+// CHECK-NEXT:  0 |   (sd vbtable pointer)
+// CHECK-NEXT:  4 |   int q
+// CHECK-NEXT:  8 |   char y
+// CHECK-NEXT: 12 |   (vtordisp for vbase f)
+// CHECK-NEXT: 16 |   struct f (virtual base)
+// CHECK-NEXT: 16 |     (f vftable pointer)
+// CHECK-NEXT: 20 |   struct s (virtual base)
+// CHECK-NEXT: 20 |     (s vftable pointer)
+// CHECK-NEXT: 24 |     (s vbtable pointer)
+// CHECK-NEXT: 28 |     int r
+// CHECK-NEXT: 32 |   (vtordisp for vbase IA)
+// CHECK-NEXT: 36 |   class IA (virtual base)
+// CHECK-NEXT: 36 |     (IA vftable pointer)
+// CHECK-NEXT: 40 |   class ICh (virtual base)
+// CHECK-NEXT: 40 |     (ICh vftable pointer)
+// CHECK-NEXT: 44 |     (ICh vbtable pointer)
+// CHECK-NEXT: sizeof=48, dsize=48, align=4
+// CHECK-NEXT: nvsize=12, nvalign=4
+
+// CHECK: %struct.f = type { i32 (...)** }
+// CHECK: %struct.s = type { i32 (...)**, i32*, i32, [4 x i8], %struct.f }
+// CHECK: %class.IA = type { i32 (...)** }
+// CHECK: %class.ICh = type { i32 (...)**, i32*, [4 x i8], %class.IA }
+// CHECK: %struct.sd = type { i32*, i32, i8, [7 x i8], %struct.f, %struct.s.base, [4 x i8], %class.IA, %class.ICh.base }
+
+// CHECK:       0 | struct AV
+// CHECK-NEXT:  0 |   (AV vftable pointer)
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+
+// CHECK:       0 | struct BV
+// CHECK-NEXT:  0 |   struct AV (primary base)
+// CHECK-NEXT:  0 |     (AV vftable pointer)
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+
+// CHECK:       0 | struct CV
+// CHECK-NEXT:  0 |   (CV vbtable pointer)
+// CHECK-NEXT:  4 |   (vtordisp for vbase BV)
+// CHECK-NEXT:  8 |   struct BV (virtual base)
+// CHECK-NEXT:  8 |     struct AV (primary base)
+// CHECK-NEXT:  8 |       (AV vftable pointer)
+// CHECK-NEXT: sizeof=12, dsize=12, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+// CHECK: %struct.AV = type { i32 (...)** }
+// CHECK: %struct.BV = type { %struct.AV }
+// CHECK: %struct.CV = type { i32*, [4 x i8], %struct.BV }
+// CHECK: %struct.CV.base = type { i32* }
+
+// CHECK:       0 | struct DV
+// CHECK-NEXT:  0 |   struct BV (primary base)
+// CHECK-NEXT:  0 |     struct AV (primary base)
+// CHECK-NEXT:  0 |       (AV vftable pointer)
+// CHECK-NEXT: sizeof=4, dsize=4, align=4
+// CHECK-NEXT: nvsize=4, nvalign=4
+
+// CHECK: %struct.DV = type { %struct.BV }
+
+// CHECK:       0 | struct EV
+// CHECK-NEXT:  4 |   struct CV (base)
+// CHECK-NEXT:  4 |     (CV vbtable pointer)
+// CHECK-NEXT:  0 |   struct DV (primary base)
+// CHECK-NEXT:  0 |     struct BV (primary base)
+// CHECK-NEXT:  0 |       struct AV (primary base)
+// CHECK-NEXT:  0 |         (AV vftable pointer)
+// CHECK-NEXT:  8 |   (vtordisp for vbase BV)
+// CHECK-NEXT: 12 |   struct BV (virtual base)
+// CHECK-NEXT: 12 |     struct AV (primary base)
+// CHECK-NEXT: 12 |       (AV vftable pointer)
+// CHECK-NEXT: sizeof=16, dsize=16, align=4
+// CHECK-NEXT: nvsize=8, nvalign=4
+
+// CHECK: %struct.EV = type { %struct.DV, %struct.CV.base, [4 x i8], %struct.BV }
+// CHECK: %struct.EV.base = type { %struct.DV, %struct.CV.base }
+
+// Overriding a method means that all the vbases containing that
+// method need a vtordisp.
+namespace test1 {
+  struct A { virtual void foo(); };
+  struct B : A {};
+  struct C : virtual A, virtual B { virtual void foo(); };
+  void test() { C *c; }
+
+// CHECK:        0 | struct test1::C
+// CHECK-NEXT:   0 |   (C vbtable pointer)
+// CHECK-NEXT:   4 |   (vtordisp for vbase A)
+// CHECK-NEXT:   8 |   struct test1::A (virtual base)
+// CHECK-NEXT:   8 |     (A vftable pointer)
+// CHECK-NEXT:  12 |   (vtordisp for vbase B)
+// CHECK-NEXT:  16 |   struct test1::B (virtual base)
+// CHECK-NEXT:  16 |     struct test1::A (primary base)
+// CHECK-NEXT:  16 |       (A vftable pointer)
+// CHECK-NEXT:  sizeof=20, dsize=20, align=4
+// CHECK-NEXT:  nvsize=4, nvalign=4
+}

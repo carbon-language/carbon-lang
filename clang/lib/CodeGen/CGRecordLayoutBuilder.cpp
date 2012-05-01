@@ -714,9 +714,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
     }
 
   // Otherwise, add a vtable / vf-table if the layout says to do so.
-  } else if (Types.getContext().getTargetInfo().getCXXABI() == CXXABI_Microsoft
-               ? Layout.getVFPtrOffset() != CharUnits::fromQuantity(-1)
-               : RD->isDynamicClass()) {
+  } else if (Layout.hasOwnVFPtr()) {
     llvm::Type *FunctionType =
       llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
                               /*isVarArg=*/true);

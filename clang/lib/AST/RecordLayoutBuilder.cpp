@@ -538,6 +538,8 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const FieldDecl *FD,
   }
 }
 
+typedef llvm::SmallPtrSet<const CXXRecordDecl*, 4> ClassSetTy;
+
 class RecordLayoutBuilder {
 protected:
   // FIXME: Remove this and make the appropriate fields public.
@@ -600,8 +602,9 @@ protected:
   /// out is virtual.
   bool PrimaryBaseIsVirtual;
 
-  /// VFPtrOffset - Virtual function table offset. Only for MS layout.
-  CharUnits VFPtrOffset;
+  /// HasOwnVFPtr - Whether the class provides its own vtable/vftbl
+  /// pointer, as opposed to inheriting one from a primary base class.
+  bool HasOwnVFPtr;
 
   /// VBPtrOffset - Virtual base table offset. Only for MS layout.
   CharUnits VBPtrOffset;
@@ -612,7 +615,7 @@ protected:
   BaseOffsetsMapTy Bases;
 
   // VBases - virtual base classes and their offsets in the record.
-  BaseOffsetsMapTy VBases;
+  ASTRecordLayout::VBaseOffsetsMapTy VBases;
 
   /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
   /// primary base classes for some other direct or indirect base class.
@@ -652,7 +655,7 @@ protected:
       NonVirtualAlignment(CharUnits::One()), 
       ZeroLengthBitfield(0), PrimaryBase(0), 
       PrimaryBaseIsVirtual(false),
-      VFPtrOffset(CharUnits::fromQuantity(-1)),
+      HasOwnVFPtr(false),
       VBPtrOffset(CharUnits::fromQuantity(-1)),
       FirstNearlyEmptyVBase(0) { }
 
@@ -725,15 +728,20 @@ protected:
                                     CharUnits Offset);
 
   bool needsVFTable(const CXXRecordDecl *RD) const;
-  bool hasNewVirtualFunction(const CXXRecordDecl *RD) const;
+  bool hasNewVirtualFunction(const CXXRecordDecl *RD,
+                             bool IgnoreDestructor = false) const;
   bool isPossiblePrimaryBase(const CXXRecordDecl *Base) const;
+
+  void computeVtordisps(const CXXRecordDecl *RD, 
+                        ClassSetTy &VtordispVBases);
 
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *RD,
                           const CXXRecordDecl *MostDerivedClass);
 
   /// LayoutVirtualBase - Lays out a single virtual base.
-  void LayoutVirtualBase(const BaseSubobjectInfo *Base);
+  void LayoutVirtualBase(const BaseSubobjectInfo *Base, 
+                         bool IsVtordispNeed = false);
 
   /// LayoutBase - Will lay out a base and return the offset where it was
   /// placed, in chars.
@@ -1044,8 +1052,7 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     CharUnits PtrAlign = 
       Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerAlign(0));
     EnsureVTablePointerAlignment(PtrAlign);
-    if (isMicrosoftCXXABI())
-      VFPtrOffset = getSize();
+    HasOwnVFPtr = true;
     setSize(getSize() + PtrWidth);
     setDataSize(getSize());
   }
@@ -1142,7 +1149,7 @@ RecordLayoutBuilder::AddPrimaryVirtualBaseOffsets(const BaseSubobjectInfo *Info,
       assert(!VBases.count(Info->PrimaryVirtualBaseInfo->Class) && 
              "primary vbase offset already exists!");
       VBases.insert(std::make_pair(Info->PrimaryVirtualBaseInfo->Class,
-                                   Offset));
+                                   ASTRecordLayout::VBaseInfo(Offset, false)));
 
       // Traverse the primary virtual base.
       AddPrimaryVirtualBaseOffsets(Info->PrimaryVirtualBaseInfo, Offset);
@@ -1193,19 +1200,177 @@ bool RecordLayoutBuilder::needsVFTable(const CXXRecordDecl *RD) const {
   return hasNewVirtualFunction(RD);
 }
 
+/// Does the given class inherit non-virtually from any of the classes
+/// in the given set?
+static bool hasNonVirtualBaseInSet(const CXXRecordDecl *RD, 
+                                   const ClassSetTy &set) {
+  for (CXXRecordDecl::base_class_const_iterator
+         I = RD->bases_begin(), E = RD->bases_end(); I != E; ++I) {
+    // Ignore virtual links.
+    if (I->isVirtual()) continue;
+
+    // Check whether the set contains the base.
+    const CXXRecordDecl *base = I->getType()->getAsCXXRecordDecl();
+    if (set.count(base))
+      return true;
+
+    // Otherwise, recurse and propagate.
+    if (hasNonVirtualBaseInSet(base, set))
+      return true;
+  }
+
+  return false;
+}
+
+/// Does the given method (B::foo()) already override a method (A::foo())
+/// such that A requires a vtordisp in B?  If so, we don't need to add a
+/// new vtordisp for B in a yet-more-derived class C providing C::foo().
+static bool overridesMethodRequiringVtorDisp(const ASTContext &Context,
+                                             const CXXMethodDecl *M) {
+  CXXMethodDecl::method_iterator
+    I = M->begin_overridden_methods(), E = M->end_overridden_methods();
+  if (I == E) return false;
+
+  const ASTRecordLayout::VBaseOffsetsMapTy &offsets =
+    Context.getASTRecordLayout(M->getParent()).getVBaseOffsetsMap();
+  do {
+    const CXXMethodDecl *overridden = *I;
+
+    // If the overridden method's class isn't recognized as a virtual
+    // base in the derived class, ignore it.
+    ASTRecordLayout::VBaseOffsetsMapTy::const_iterator
+      it = offsets.find(overridden->getParent());
+    if (it == offsets.end()) continue;
+
+    // Otherwise, check if the overridden method's class needs a vtordisp.
+    if (it->second.hasVtorDisp()) return true;
+
+  } while (++I != E);
+  return false;
+}                                             
+
+/// In the Microsoft ABI, decide which of the virtual bases require a
+/// vtordisp field.
+void RecordLayoutBuilder::computeVtordisps(const CXXRecordDecl *RD,
+                                           ClassSetTy &vtordispVBases) {
+  // Bail out if we have no virtual bases.
+  assert(RD->getNumVBases());
+
+  // Build up the set of virtual bases that we haven't decided yet.
+  ClassSetTy undecidedVBases;
+  for (CXXRecordDecl::base_class_const_iterator
+         I = RD->vbases_begin(), E = RD->vbases_end(); I != E; ++I) {
+    const CXXRecordDecl *vbase = I->getType()->getAsCXXRecordDecl();
+    undecidedVBases.insert(vbase);
+  }
+  assert(!undecidedVBases.empty());
+
+  // A virtual base requires a vtordisp field in a derived class if it
+  // requires a vtordisp field in a base class.  Walk all the direct
+  // bases and collect this information.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *base = I->getType()->getAsCXXRecordDecl();
+    const ASTRecordLayout &baseLayout = Context.getASTRecordLayout(base);
+
+    // Iterate over the set of virtual bases provided by this class.
+    for (ASTRecordLayout::VBaseOffsetsMapTy::const_iterator
+           VI = baseLayout.getVBaseOffsetsMap().begin(),
+           VE = baseLayout.getVBaseOffsetsMap().end(); VI != VE; ++VI) {
+      // If it doesn't need a vtordisp in this base, ignore it.
+      if (!VI->second.hasVtorDisp()) continue;
+
+      // If we've already seen it and decided it needs a vtordisp, ignore it.
+      if (!undecidedVBases.erase(VI->first)) 
+        continue;
+
+      // Add it.
+      vtordispVBases.insert(VI->first);
+
+      // Quit as soon as we've decided everything.
+      if (undecidedVBases.empty()) 
+        return;
+    }
+  }
+
+  // Okay, we have virtual bases that we haven't yet decided about.  A
+  // virtual base requires a vtordisp if any the non-destructor
+  // virtual methods declared in this class directly override a method
+  // provided by that virtual base.  (If so, we need to emit a thunk
+  // for that method, to be used in the construction vftable, which
+  // applies an additional 'vtordisp' this-adjustment.)
+
+  // Collect the set of bases directly overridden by any method in this class.
+  // It's possible that some of these classes won't be virtual bases, or won't be
+  // provided by virtual bases, or won't be virtual bases in the overridden
+  // instance but are virtual bases elsewhere.  Only the last matters for what
+  // we're doing, and we can ignore those:  if we don't directly override
+  // a method provided by a virtual copy of a base class, but we do directly
+  // override a method provided by a non-virtual copy of that base class,
+  // then we must indirectly override the method provided by the virtual base,
+  // and so we should already have collected it in the loop above.
+  ClassSetTy overriddenBases;
+  for (CXXRecordDecl::method_iterator
+         M = RD->method_begin(), E = RD->method_end(); M != E; ++M) {
+    // Ignore non-virtual methods and destructors.
+    if (isa<CXXDestructorDecl>(*M) || !M->isVirtual())
+      continue;
+    
+    for (CXXMethodDecl::method_iterator I = M->begin_overridden_methods(),
+          E = M->end_overridden_methods(); I != E; ++I) {
+      const CXXMethodDecl *overriddenMethod = (*I);
+
+      // Ignore methods that override methods from vbases that require
+      // require vtordisps.
+      if (overridesMethodRequiringVtorDisp(Context, overriddenMethod))
+        continue;
+
+      // As an optimization, check immediately whether we're overriding
+      // something from the undecided set.
+      const CXXRecordDecl *overriddenBase = overriddenMethod->getParent();
+      if (undecidedVBases.erase(overriddenBase)) {
+        vtordispVBases.insert(overriddenBase);
+        if (undecidedVBases.empty()) return;
+
+        // We can't 'continue;' here because one of our undecided
+        // vbases might non-virtually inherit from this base.
+        // Consider:
+        //   struct A { virtual void foo(); };
+        //   struct B : A {};
+        //   struct C : virtual A, virtual B { virtual void foo(); };
+        // We need a vtordisp for B here.
+      }
+
+      // Otherwise, just collect it.
+      overriddenBases.insert(overriddenBase);
+    }
+  }
+
+  // Walk the undecided v-bases and check whether they (non-virtually)
+  // provide any of the overridden bases.  We don't need to consider
+  // virtual links because the vtordisp inheres to the layout
+  // subobject containing the base.
+  for (ClassSetTy::const_iterator
+         I = undecidedVBases.begin(), E = undecidedVBases.end(); I != E; ++I) {
+    if (hasNonVirtualBaseInSet(*I, overriddenBases))
+      vtordispVBases.insert(*I);
+  }
+}
+
 /// hasNewVirtualFunction - Does the given polymorphic class declare a
 /// virtual function that does not override a method from any of its
 /// base classes?
 bool 
-RecordLayoutBuilder::hasNewVirtualFunction(const CXXRecordDecl *RD) const {
-  assert(RD->isPolymorphic());
+RecordLayoutBuilder::hasNewVirtualFunction(const CXXRecordDecl *RD, 
+                                           bool IgnoreDestructor) const {
   if (!RD->getNumBases()) 
     return true;
 
   for (CXXRecordDecl::method_iterator method = RD->method_begin();
        method != RD->method_end();
        ++method) {
-    if (method->isVirtual() && !method->size_overridden_methods()) {
+    if (method->isVirtual() && !method->size_overridden_methods() &&
+        !(IgnoreDestructor && method->getKind() == Decl::CXXDestructor)) {
       return true;
     }
   }
@@ -1215,11 +1380,11 @@ RecordLayoutBuilder::hasNewVirtualFunction(const CXXRecordDecl *RD) const {
 /// isPossiblePrimaryBase - Is the given base class an acceptable
 /// primary base class?
 bool 
-RecordLayoutBuilder::isPossiblePrimaryBase(const CXXRecordDecl *Base) const {
+RecordLayoutBuilder::isPossiblePrimaryBase(const CXXRecordDecl *base) const {
   // In the Itanium ABI, a class can be a primary base class if it has
   // a vtable for any reason.
   if (!isMicrosoftCXXABI())
-    return Base->isDynamicClass();
+    return base->isDynamicClass();
 
   // In the MS ABI, a class can only be a primary base class if it
   // provides a vf-table at a static offset.  That means it has to be
@@ -1228,14 +1393,22 @@ RecordLayoutBuilder::isPossiblePrimaryBase(const CXXRecordDecl *Base) const {
   // base, which we have to guard against.
 
   // First off, it has to have virtual functions.
-  if (!Base->isPolymorphic()) return false;
+  if (!base->isPolymorphic()) return false;
 
-  // If it has no virtual bases, then everything is at a static offset.
-  if (!Base->getNumVBases()) return true;
+  // If it has no virtual bases, then the vfptr must be at a static offset.
+  if (!base->getNumVBases()) return true;
+  
+  // Otherwise, the necessary information is cached in the layout.
+  const ASTRecordLayout &layout = Context.getASTRecordLayout(base);
 
-  // Okay, just ask the base class's layout.
-  return (Context.getASTRecordLayout(Base).getVFPtrOffset()
-            != CharUnits::fromQuantity(-1));
+  // If the base has its own vfptr, it can be a primary base.
+  if (layout.hasOwnVFPtr()) return true;
+
+  // If the base has a primary base class, then it can be a primary base.
+  if (layout.getPrimaryBase()) return true;
+
+  // Otherwise it can't.
+  return false;
 }
 
 void
@@ -1288,10 +1461,12 @@ RecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
 }
 
 void RecordLayoutBuilder::MSLayoutVirtualBases(const CXXRecordDecl *RD) {
-
   if (!RD->getNumVBases())
     return;
 
+  ClassSetTy VtordispVBases;
+  computeVtordisps(RD, VtordispVBases);
+  
   // This is substantially simplified because there are no virtual
   // primary bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
@@ -1299,12 +1474,25 @@ void RecordLayoutBuilder::MSLayoutVirtualBases(const CXXRecordDecl *RD) {
     const CXXRecordDecl *BaseDecl = I->getType()->getAsCXXRecordDecl();
     const BaseSubobjectInfo *BaseInfo = VirtualBaseInfo.lookup(BaseDecl);
     assert(BaseInfo && "Did not find virtual base info!");
-    
-    LayoutVirtualBase(BaseInfo);
+
+    // If this base requires a vtordisp, add enough space for an int field.
+    // This is apparently always 32-bits, even on x64.
+    bool vtordispNeeded = false;
+    if (VtordispVBases.count(BaseDecl)) {
+      CharUnits IntSize = 
+        CharUnits::fromQuantity(Context.getTargetInfo().getIntWidth() / 8);
+
+      setSize(getSize() + IntSize);
+      setDataSize(getSize());
+      vtordispNeeded = true;
+    }
+
+    LayoutVirtualBase(BaseInfo, vtordispNeeded);
   }
 }
 
-void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
+void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base,
+                                            bool IsVtordispNeed) {
   assert(!Base->Derived && "Trying to lay out a primary virtual base!");
   
   // Layout the base.
@@ -1312,9 +1500,11 @@ void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
 
   // Add its base class offset.
   assert(!VBases.count(Base->Class) && "vbase offset already exists!");
-  VBases.insert(std::make_pair(Base->Class, Offset));
-  
-  AddPrimaryVirtualBaseOffsets(Base, Offset);
+  VBases.insert(std::make_pair(Base->Class, 
+                       ASTRecordLayout::VBaseInfo(Offset, IsVtordispNeed)));
+
+  if (!isMicrosoftCXXABI())
+    AddPrimaryVirtualBaseOffsets(Base, Offset);
 }
 
 CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
@@ -1461,8 +1651,8 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
                                  Context.getTargetInfo().getCharAlign()));
   NonVirtualAlignment = Alignment;
 
-  if (isMicrosoftCXXABI() &&
-      NonVirtualSize != NonVirtualSize.RoundUpToAlignment(Alignment)) {
+  if (isMicrosoftCXXABI()) {
+    if (NonVirtualSize != NonVirtualSize.RoundUpToAlignment(Alignment)) {
     CharUnits AlignMember = 
       NonVirtualSize.RoundUpToAlignment(Alignment) - NonVirtualSize;
 
@@ -1472,9 +1662,9 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
     NonVirtualSize = Context.toCharUnitsFromBits(
                              llvm::RoundUpToAlignment(getSizeInBits(),
                              Context.getTargetInfo().getCharAlign()));
+    }
 
     MSLayoutVirtualBases(RD);
-
   } else {
     // Lay out the virtual bases and add the primary virtual base offsets.
     LayoutVirtualBases(RD, RD);
@@ -2238,7 +2428,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     NewEntry =
       new (*this) ASTRecordLayout(*this, Builder.getSize(), 
                                   Builder.Alignment,
-                                  Builder.VFPtrOffset,
+                                  Builder.HasOwnVFPtr,
                                   Builder.VBPtrOffset,
                                   DataSize, 
                                   Builder.FieldOffsets.data(),
@@ -2375,7 +2565,7 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   IndentLevel++;
 
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-  bool HasVfptr = Layout.getVFPtrOffset() != CharUnits::fromQuantity(-1);
+  bool HasVfptr = Layout.hasOwnVFPtr();
   bool HasVbptr = Layout.getVBPtrOffset() != CharUnits::fromQuantity(-1);
 
   // Vtable pointer.
@@ -2405,7 +2595,7 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
 
   // vfptr and vbptr (for Microsoft C++ ABI)
   if (HasVfptr) {
-    PrintOffset(OS, Offset + Layout.getVFPtrOffset(), IndentLevel);
+    PrintOffset(OS, Offset, IndentLevel);
     OS << '(' << *RD << " vftable pointer)\n";
   }
   if (HasVbptr) {
@@ -2438,6 +2628,8 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
     return;
 
   // Dump virtual bases.
+  const ASTRecordLayout::VBaseOffsetsMapTy &vtordisps = 
+    Layout.getVBaseOffsetsMap();
   for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
          E = RD->vbases_end(); I != E; ++I) {
     assert(I->isVirtual() && "Found non-virtual class!");
@@ -2445,6 +2637,12 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     CharUnits VBaseOffset = Offset + Layout.getVBaseClassOffset(VBase);
+
+    if (vtordisps.find(VBase)->second.hasVtorDisp()) {
+      PrintOffset(OS, VBaseOffset - CharUnits::fromQuantity(4), IndentLevel);
+      OS << "(vtordisp for vbase " << *VBase << ")\n";
+    }
+
     DumpCXXRecordLayout(OS, VBase, C, VBaseOffset, IndentLevel,
                         VBase == PrimaryBase ?
                         "(primary virtual base)" : "(virtual base)",
