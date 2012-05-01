@@ -3302,7 +3302,6 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
     Expr *Arg = Result.takeAs<Expr>();
     CheckImplicitConversions(Arg, Arg->getExprLoc());
-    Param->setDefaultArg(Arg);
     // Build the default argument expression.
     return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param, Arg));
   }
