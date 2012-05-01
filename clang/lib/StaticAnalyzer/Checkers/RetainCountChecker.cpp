@@ -941,6 +941,7 @@ const RetainSummary * RetainSummaryManager::getSummary(const FunctionDecl *FD) {
     } else if (FName == "IOBSDNameMatching" ||
                FName == "IOServiceMatching" ||
                FName == "IOServiceNameMatching" ||
+               FName == "IORegistryEntrySearchCFProperty" ||
                FName == "IORegistryEntryIDMatching" ||
                FName == "IOOpenFirmwarePathMatching") {
       // Part of <rdar://problem/6961230>. (IOKit)
