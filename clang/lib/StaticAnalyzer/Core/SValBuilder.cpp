@@ -336,9 +336,12 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
 
   // Check for casts from a region to a specific type.
   if (const MemRegion *R = val.getAsRegion()) {
+    // Handle other casts of locations to integers.
+    if (castTy->isIntegerType())
+      return evalCastFromLoc(loc::MemRegionVal(R), castTy);
+
     // FIXME: We should handle the case where we strip off view layers to get
     //  to a desugared type.
-
     if (!Loc::isLocType(castTy)) {
       // FIXME: There can be gross cases where one casts the result of a function
       // (that returns a pointer) to some other value that happens to fit

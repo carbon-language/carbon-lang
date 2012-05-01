@@ -839,3 +839,17 @@ void localArrayTest() {
   ArrayL[0] = p;
 }
 
+// Test double assignment through integers.
+static long glob;
+void test_double_assign_ints()
+{
+  void *ptr = malloc (16);  // no-warning
+  glob = (long)(unsigned long)ptr;
+}
+
+void test_double_assign_ints_positive()
+{
+  void *ptr = malloc(16);
+  (void*)(long)(unsigned long)ptr; // expected-warning {{unused}} expected-warning {{leak}}
+}
+
