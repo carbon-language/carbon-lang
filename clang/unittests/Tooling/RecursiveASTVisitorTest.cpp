@@ -165,6 +165,25 @@ public:
   }
 };
 
+class CXXOperatorCallExprTraverser
+  : public ExpectedLocationVisitor<CXXOperatorCallExprTraverser> {
+public:
+  // Use Traverse, not Visit, to check that data recursion optimization isn't
+  // bypassing the call of this function.
+  bool TraverseCXXOperatorCallExpr(CXXOperatorCallExpr *CE) {
+    Match(getOperatorSpelling(CE->getOperator()), CE->getExprLoc());
+    return ExpectedLocationVisitor::TraverseCXXOperatorCallExpr(CE);
+  }
+};
+
+class ParenExprVisitor : public ExpectedLocationVisitor<ParenExprVisitor> {
+public:
+  bool VisitParenExpr(ParenExpr *Parens) {
+    Match("", Parens->getExprLoc());
+    return true;
+  }
+};
+
 TEST(RecursiveASTVisitor, VisitsBaseClassDeclarations) {
   TypeLocVisitor Visitor;
   Visitor.ExpectMatch("class X", 1, 30);
@@ -343,6 +362,22 @@ TEST(RecursiveASTVisitor, NoRecursionInSelfFriend) {
     "    template <typename C> friend class vector_iterator;\n"
     "};\n"
     "vector_iterator<int> it_int;\n"));
+}
+
+TEST(RecursiveASTVisitor, TraversesOverloadedOperator) {
+  CXXOperatorCallExprTraverser Visitor;
+  Visitor.ExpectMatch("()", 4, 9);
+  EXPECT_TRUE(Visitor.runOver(
+    "struct A {\n"
+    "  int operator()();\n"
+    "} a;\n"
+    "int k = a();\n"));
+}
+
+TEST(RecursiveASTVisitor, VisitsParensDuringDataRecursion) {
+  ParenExprVisitor Visitor;
+  Visitor.ExpectMatch("", 1, 9);
+  EXPECT_TRUE(Visitor.runOver("int k = (4) + 9;\n"));
 }
 
 } // end namespace clang
