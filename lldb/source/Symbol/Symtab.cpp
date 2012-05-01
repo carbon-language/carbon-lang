@@ -440,10 +440,35 @@ struct SymbolSortInfo
 namespace {
     struct SymbolIndexComparator {
         const std::vector<Symbol>& symbols;
-        SymbolIndexComparator(const std::vector<Symbol>& s) : symbols(s) { }
+        std::vector<lldb::addr_t>  &addr_cache;
+        
+        // Getting from the symbol to the Address to the File Address involves some work.
+        // Since there are potentially many symbols here, and we're using this for sorting so
+        // we're going to be computing the address many times, cache that in addr_cache.
+        // The array passed in has to be the same size as the symbols array passed into the
+        // member variable symbols, and should be initialized with LLDB_INVALID_ADDRESS.
+        // NOTE: You have to make addr_cache externally and pass it in because std::stable_sort
+        // makes copies of the comparator it is initially passed in, and you end up spending
+        // huge amounts of time copying this array...
+        
+        SymbolIndexComparator(const std::vector<Symbol>& s, std::vector<lldb::addr_t> &a) : symbols(s), addr_cache(a)  {
+            assert (symbols.size() == addr_cache.size());
+        }
         bool operator()(uint32_t index_a, uint32_t index_b) {
-            addr_t value_a = symbols[index_a].GetAddress().GetFileAddress();
-            addr_t value_b = symbols[index_b].GetAddress().GetFileAddress();
+            addr_t value_a = addr_cache[index_a];
+            if (value_a == LLDB_INVALID_ADDRESS)
+            {
+                value_a = symbols[index_a].GetAddress().GetFileAddress();
+                addr_cache[index_a] = value_a;
+            }
+            
+            addr_t value_b = addr_cache[index_b];
+            if (value_b == LLDB_INVALID_ADDRESS)
+            {
+                value_b = symbols[index_b].GetAddress().GetFileAddress();
+                addr_cache[index_b] = value_b;
+            }
+            
 
             if (value_a == value_b) {
                 // The if the values are equal, use the original symbol user ID
@@ -476,7 +501,11 @@ Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_du
     // NOTE: The use of std::stable_sort instead of std::sort here is strictly for performance,
     // not correctness.  The indexes vector tends to be "close" to sorted, which the
     // stable sort handles better.
-    std::stable_sort(indexes.begin(), indexes.end(), SymbolIndexComparator(m_symbols));
+    
+    std::vector<lldb::addr_t> addr_cache(m_symbols.size(), LLDB_INVALID_ADDRESS);
+    
+    SymbolIndexComparator comparator(m_symbols, addr_cache);
+    std::stable_sort(indexes.begin(), indexes.end(), comparator);
 
     // Remove any duplicates if requested
     if (remove_duplicates)
