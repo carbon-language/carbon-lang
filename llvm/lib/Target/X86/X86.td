@@ -87,7 +87,8 @@ def FeatureAVX2    : SubtargetFeature<"avx2", "X86SSELevel", "AVX2",
                                       "Enable AVX2 instructions",
                                       [FeatureAVX]>;
 def FeatureCLMUL   : SubtargetFeature<"clmul", "HasCLMUL", "true",
-                               "Enable carry-less multiplication instructions">;
+                               "Enable carry-less multiplication instructions",
+                               [FeatureSSE2]>;
 def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
                                       "Enable three-operand fused multiple-add",
                                       [FeatureAVX]>;
@@ -100,7 +101,8 @@ def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                                           "HasVectorUAMem", "true",
                  "Allow unaligned memory operands on vector/SIMD instructions">;
 def FeatureAES     : SubtargetFeature<"aes", "HasAES", "true",
-                                      "Enable AES instructions">;
+                                      "Enable AES instructions",
+                                      [FeatureSSE2]>;
 def FeatureMOVBE   : SubtargetFeature<"movbe", "HasMOVBE", "true",
                                       "Support MOVBE instruction">;
 def FeatureRDRAND  : SubtargetFeature<"rdrand", "HasRDRAND", "true",
