@@ -1536,7 +1536,7 @@ def err_invalid_nsnumber_type : Error<
 def err_undeclared_nsstring : Error<
   "cannot box a string value because NSString has not been declared">;
 def err_objc_illegal_boxed_expression_type : Error<
-  "Illegal type %0 used in a boxed expression">;
+  "illegal type %0 used in a boxed expression">;
 def err_undeclared_nsarray : Error<
   "NSArray must be available to use Objective-C array literals">;
 def err_undeclared_nsdictionary : Error<
