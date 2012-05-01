@@ -725,6 +725,10 @@ LIBBUILTIN(strndup, "c*cC*z",     "f",     "string.h", ALL_LANGUAGES)
 LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h", ALL_LANGUAGES)
 LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h", ALL_LANGUAGES)
 LIBBUILTIN(bzero, "vv*z",         "f",     "strings.h", ALL_LANGUAGES)
+// In some systems str[n]casejmp is a macro that expands to _str[n]icmp.
+// We undefine then here to avoid wrong name.
+#undef strcasecmp
+#undef strncasecmp
 LIBBUILTIN(strcasecmp, "icC*cC*", "f",     "strings.h", ALL_LANGUAGES)
 LIBBUILTIN(strncasecmp, "icC*cC*z", "f",   "strings.h", ALL_LANGUAGES)
 // POSIX unistd.h
