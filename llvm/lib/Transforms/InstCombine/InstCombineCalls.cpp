@@ -694,6 +694,57 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::arm_neon_vmulls:
+  case Intrinsic::arm_neon_vmullu: {
+    Value *Arg0 = II->getArgOperand(0);
+    Value *Arg1 = II->getArgOperand(1);
+
+    // Handle mul by zero first:
+    if (isa<ConstantAggregateZero>(Arg0) || isa<ConstantAggregateZero>(Arg1)) {
+      return ReplaceInstUsesWith(CI, ConstantAggregateZero::get(II->getType()));
+    }
+
+    // Check for constant LHS & RHS - in this case we just simplify.
+    bool Zext = (II->getIntrinsicID() == Intrinsic::arm_neon_vmullu);
+    VectorType *NewVT = cast<VectorType>(II->getType());
+    unsigned NewWidth = NewVT->getElementType()->getIntegerBitWidth();
+    if (ConstantDataVector *CV0 = dyn_cast<ConstantDataVector>(Arg0)) {
+      if (ConstantDataVector *CV1 = dyn_cast<ConstantDataVector>(Arg1)) {
+        VectorType* VT = cast<VectorType>(CV0->getType());
+        SmallVector<Constant*, 4> NewElems;
+        for (unsigned i = 0; i < VT->getNumElements(); ++i) {
+          APInt CV0E =
+            (cast<ConstantInt>(CV0->getAggregateElement(i)))->getValue();
+          CV0E = Zext ? CV0E.zext(NewWidth) : CV0E.sext(NewWidth);
+          APInt CV1E =
+            (cast<ConstantInt>(CV1->getAggregateElement(i)))->getValue();
+          CV1E = Zext ? CV1E.zext(NewWidth) : CV1E.sext(NewWidth);
+          NewElems.push_back(
+            ConstantInt::get(NewVT->getElementType(), CV0E * CV1E));
+        }
+        return ReplaceInstUsesWith(CI, ConstantVector::get(NewElems));
+      }
+
+      // Couldn't simplify - cannonicalize constant to the RHS.
+      std::swap(Arg0, Arg1);
+    }
+
+    // Handle mul by one:
+    if (ConstantDataVector *CV1 = dyn_cast<ConstantDataVector>(Arg1)) {
+      if (ConstantInt *Splat =
+            dyn_cast_or_null<ConstantInt>(CV1->getSplatValue())) {
+        if (Splat->isOne()) {
+          if (Zext)
+            return CastInst::CreateZExtOrBitCast(Arg0, II->getType());
+          // else    
+          return CastInst::CreateSExtOrBitCast(Arg0, II->getType());
+        }
+      }
+    }
+
+    break;
+  }
+
   case Intrinsic::stackrestore: {
     // If the save is right next to the restore, remove the restore.  This can
     // happen when variable allocas are DCE'd.
