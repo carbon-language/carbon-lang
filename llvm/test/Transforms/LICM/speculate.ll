@@ -165,3 +165,25 @@ for.inc:                                          ; preds = %if.then, %for.body
 for.end:                                          ; preds = %for.inc, %entry
   ret void
 }
+
+; SDiv is unsafe to speculate inside an infinite loop.
+
+define void @unsafe_sdiv_c(i64 %a, i64 %b, i64* %p) {
+entry:
+; CHECK: entry:
+; CHECK-NOT: sdiv
+; CHECK: br label %for.body
+  br label %for.body
+
+for.body:
+  %c = icmp eq i64 %b, 0
+  br i1 %c, label %backedge, label %if.then
+
+if.then:
+  %d = sdiv i64 %a, %b
+  store i64 %d, i64* %p
+  br label %backedge
+
+backedge:
+  br label %for.body
+}

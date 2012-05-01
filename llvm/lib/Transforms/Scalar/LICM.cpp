@@ -618,6 +618,11 @@ bool LICM::isGuaranteedToExecute(Instruction &Inst) {
     if (!DT->dominates(Inst.getParent(), ExitBlocks[i]))
       return false;
 
+  // As a degenerate case, if the loop is statically infinite then we haven't
+  // proven anything since there are no exit blocks.
+  if (ExitBlocks.empty())
+    return false;
+
   return true;
 }
 
