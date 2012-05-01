@@ -201,11 +201,11 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
 
-  if (IsIntel && ((ECX >> 1) & 0x1)) {
+  if ((ECX >> 1) & 0x1) {
     HasCLMUL = true;
     ToggleFeature(X86::FeatureCLMUL);
   }
-  if (IsIntel && ((ECX >> 12) & 0x1)) {
+  if ((ECX >> 12) & 0x1) {
     HasFMA3 = true;
     ToggleFeature(X86::FeatureFMA3);
   }
@@ -213,15 +213,15 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     HasMOVBE = true;
     ToggleFeature(X86::FeatureMOVBE);
   }
-  if (IsIntel && ((ECX >> 23) & 0x1)) {
+  if ((ECX >> 23) & 0x1) {
     HasPOPCNT = true;
     ToggleFeature(X86::FeaturePOPCNT);
   }
-  if (IsIntel && ((ECX >> 25) & 0x1)) {
+  if ((ECX >> 25) & 0x1) {
     HasAES = true;
     ToggleFeature(X86::FeatureAES);
   }
-  if (IsIntel && ((ECX >> 29) & 0x1)) {
+  if ((ECX >> 29) & 0x1) {
     HasF16C = true;
     ToggleFeature(X86::FeatureF16C);
   }
@@ -290,9 +290,9 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     }
   }
 
-  if (IsIntel && MaxLevel >= 7) {
+  if (MaxLevel >= 7) {
     if (!X86_MC::GetCpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX)) {
-      if (EBX & 0x1) {
+      if (IsIntel && (EBX & 0x1)) {
         HasFSGSBase = true;
         ToggleFeature(X86::FeatureFSGSBase);
       }
@@ -300,11 +300,11 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasBMI = true;
         ToggleFeature(X86::FeatureBMI);
       }
-      if ((EBX >> 5) & 0x1) {
+      if (IsIntel && ((EBX >> 5) & 0x1)) {
         X86SSELevel = AVX2;
         ToggleFeature(X86::FeatureAVX2);
       }
-      if ((EBX >> 8) & 0x1) {
+      if (IsIntel && ((EBX >> 8) & 0x1)) {
         HasBMI2 = true;
         ToggleFeature(X86::FeatureBMI2);
       }
