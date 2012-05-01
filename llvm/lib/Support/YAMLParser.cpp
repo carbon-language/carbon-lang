@@ -2125,5 +2125,3 @@ bool Document::expectToken(int TK) {
   }
   return true;
 }
-
-OwningPtr<Document> document_iterator::NullDoc;
