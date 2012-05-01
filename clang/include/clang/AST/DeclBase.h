@@ -692,17 +692,18 @@ public:
     Decl *Starter;
 
   public:
-    typedef Decl*                     value_type;
-    typedef Decl*                     reference;
-    typedef Decl*                     pointer;
+    typedef Decl                     value_type;
+    typedef value_type&              reference;
+    typedef value_type*              pointer;
     typedef std::forward_iterator_tag iterator_category;
     typedef std::ptrdiff_t            difference_type;
 
     redecl_iterator() : Current(0) { }
     explicit redecl_iterator(Decl *C) : Current(C), Starter(C) { }
 
-    reference operator*() const { return Current; }
+    reference operator*() const { return *Current; }
     pointer operator->() const { return Current; }
+    operator pointer() const { return Current; }
 
     redecl_iterator& operator++() {
       assert(Current && "Advancing while iterator has reached end");
@@ -1320,7 +1321,7 @@ public:
 
     filtered_decl_iterator() : Current() { }
 
-    /// specific_decl_iterator - Construct a new iterator over a
+    /// filtered_decl_iterator - Construct a new iterator over a
     /// subset of the declarations the range [C,
     /// end-of-declarations). If A is non-NULL, it is a pointer to a
     /// member function of SpecificDecl that should return true for

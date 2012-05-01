@@ -1069,7 +1069,7 @@ static NamedDecl *getVisibleDecl(NamedDecl *D) {
   
   for (Decl::redecl_iterator RD = D->redecls_begin(), RDEnd = D->redecls_end();
        RD != RDEnd; ++RD) {
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(*RD)) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(&*RD)) {
       if (LookupResult::isVisible(ND))
         return ND;
     }
