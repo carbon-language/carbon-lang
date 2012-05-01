@@ -60,6 +60,8 @@ public:
   bool hasReservedCallFrame(const MachineFunction &MF) const;
 
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+  int getFrameIndexReference(const MachineFunction &MF, int FI,
+                             unsigned &FrameReg) const;
   uint32_t getCompactUnwindEncoding(MachineFunction &MF) const;
 };
 

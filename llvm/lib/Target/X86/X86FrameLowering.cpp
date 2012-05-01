@@ -1174,6 +1174,18 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) con
   return Offset;
 }
 
+int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
+                                             unsigned &FrameReg) const {
+  const X86RegisterInfo *RI =
+      static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
+  // We can't calculate offset from frame pointer if the stack is realigned,
+  // so enforce usage of stack pointer.
+  FrameReg = (RI->needsStackRealignment(MF)) ? RI->getStackRegister()
+                                             : RI->getFrameRegister(MF);
+  return getFrameIndexOffset(MF, FI);
+}
+
+
 bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                              MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
