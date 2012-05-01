@@ -42,9 +42,27 @@ void f3() {
 }
 
 // rdar://problem/11322251
+// The bool can fill in between the header and the long long.
+// Add the appropriate amount of padding between them.
 void f4_helper(long long (^)(void));
+// CHECK: define void @f4()
 void f4(void) {
   _Bool b = 0;
   long long ll = 0;
+  // CHECK: alloca <{ i8*, i32, i32, i8*, {{%.*}}*, i8, [3 x i8], i64 }>, align 8
   f4_helper(^{ if (b) return ll; return 0LL; });
+}
+
+// rdar://problem/11354538
+// The alignment after rounding up to the align of F5 is actually
+// greater than the required alignment.  Don't assert.
+struct F5 {
+  char buffer[32] __attribute((aligned));
+};
+void f5_helper(void (^)(struct F5 *));
+// CHECK: define void @f5()
+void f5(void) {
+  struct F5 value;
+  // CHECK: alloca <{ i8*, i32, i32, i8*, {{%.*}}*, [12 x i8], [[F5:%.*]] }>, align 16
+  f5_helper(^(struct F5 *slot) { *slot = value; });
 }

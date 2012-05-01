@@ -469,9 +469,10 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
     elementTypes.push_back(llvm::ArrayType::get(CGM.Int8Ty,
                                                 padding.getQuantity()));
     blockSize = newBlockSize;
-    endAlign = maxFieldAlign;
+    endAlign = getLowBit(blockSize); // might be > maxFieldAlign
   }
 
+  assert(endAlign >= maxFieldAlign);
   assert(endAlign == getLowBit(blockSize));
 
   // Slam everything else on now.  This works because they have
