@@ -1186,7 +1186,10 @@ _mm_maskmoveu_si128(__m128i d, __m128i n, char *p)
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 _mm_storel_epi64(__m128i *p, __m128i a)
 {
-  __builtin_ia32_storelv4si((__v2si *)p, a);
+  struct __mm_storel_epi64_struct {
+    long long u;
+  } __attribute__((__packed__, __may_alias__));
+  ((struct __mm_storel_epi64_struct*)p)->u = a[0];
 }
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))

@@ -151,3 +151,9 @@ __m128d test_mm_round_sd(__m128d x, __m128d y) {
   // CHECK: @llvm.x86.sse41.round.sd
   return _mm_round_sd(x, y, 2);
 }
+
+void test_storel_epi64(__m128i x, void* y) {
+  // CHECK: define void @test_storel_epi64
+  // CHECK: store {{.*}} i64* {{.*}}, align 1{{$}}
+  _mm_storel_epi64(y, x);
+}

@@ -303,8 +303,6 @@ BUILTIN(__builtin_ia32_lddqu, "V16ccC*", "")
 BUILTIN(__builtin_ia32_palignr128, "V16cV16cV16cIc", "")
 BUILTIN(__builtin_ia32_insertps128, "V4fV4fV4fi", "")
 
-BUILTIN(__builtin_ia32_storelv4si, "vV2i*V2LLi", "")
-
 BUILTIN(__builtin_ia32_pblendvb128, "V16cV16cV16cV16c", "")
 BUILTIN(__builtin_ia32_pblendw128, "V8sV8sV8sIi", "")
 BUILTIN(__builtin_ia32_blendpd, "V2dV2dV2dIi", "")
