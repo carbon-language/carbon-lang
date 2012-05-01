@@ -346,7 +346,7 @@ namespace {
                                       std::string &Result);
     
     void RewriteObjCFieldDecl(FieldDecl *fieldDecl, std::string &Result);
-    bool IsTagDefinedInsideClass(ObjCInterfaceDecl *IDecl, TagDecl *Tag,
+    bool IsTagDefinedInsideClass(ObjCContainerDecl *IDecl, TagDecl *Tag,
                                  bool &IsNamedDefinition);
     void RewriteLocallyDefinedNamedAggregates(FieldDecl *fieldDecl, 
                                               std::string &Result);
@@ -988,17 +988,13 @@ void RewriteModernObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   SourceLocation LocStart = CatDecl->getLocStart();
 
   // FIXME: handle category headers that are declared across multiple lines.
-  ReplaceText(LocStart, 0, "// ");
-  if (CatDecl->getIvarLBraceLoc().isValid())
-    InsertText(CatDecl->getIvarLBraceLoc(), "// ");
-  for (ObjCCategoryDecl::ivar_iterator
-       I = CatDecl->ivar_begin(), E = CatDecl->ivar_end(); I != E; ++I) {
-    ObjCIvarDecl *Ivar = &*I;
-    SourceLocation LocStart = Ivar->getLocStart();
+  if (CatDecl->getIvarRBraceLoc().isValid()) {
+    ReplaceText(LocStart, 1, "/** ");
+    ReplaceText(CatDecl->getIvarRBraceLoc(), 1, "**/ ");
+  }
+  else {
     ReplaceText(LocStart, 0, "// ");
-  } 
-  if (CatDecl->getIvarRBraceLoc().isValid())
-    InsertText(CatDecl->getIvarRBraceLoc(), "// ");
+  }
   
   for (ObjCCategoryDecl::prop_iterator I = CatDecl->prop_begin(),
        E = CatDecl->prop_end(); I != E; ++I)
@@ -1224,17 +1220,13 @@ void RewriteModernObjC::RewriteImplementationDecl(Decl *OID) {
   ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(OID);
 
   if (IMD) {
-    InsertText(IMD->getLocStart(), "// ");
-    if (IMD->getIvarLBraceLoc().isValid())
-      InsertText(IMD->getIvarLBraceLoc(), "// ");
-    for (ObjCImplementationDecl::ivar_iterator
-         I = IMD->ivar_begin(), E = IMD->ivar_end(); I != E; ++I) {
-      ObjCIvarDecl *Ivar = &*I;
-      SourceLocation LocStart = Ivar->getLocStart();
-      ReplaceText(LocStart, 0, "// ");
+    if (IMD->getIvarRBraceLoc().isValid()) {
+      ReplaceText(IMD->getLocStart(), 1, "/** ");
+      ReplaceText(IMD->getIvarRBraceLoc(), 1, "**/ ");
     }
-    if (IMD->getIvarRBraceLoc().isValid())
-      InsertText(IMD->getIvarRBraceLoc(), "// ");
+    else {
+      InsertText(IMD->getLocStart(), "// ");
+    }
   }
   else
     InsertText(CID->getLocStart(), "// ");
@@ -3500,7 +3492,7 @@ bool RewriteModernObjC::BufferContainsPPDirectives(const char *startBuf,
 
 /// IsTagDefinedInsideClass - This routine checks that a named tagged type 
 /// is defined inside an objective-c class. If so, it returns true. 
-bool RewriteModernObjC::IsTagDefinedInsideClass(ObjCInterfaceDecl *IDecl, 
+bool RewriteModernObjC::IsTagDefinedInsideClass(ObjCContainerDecl *IDecl, 
                                                 TagDecl *Tag,
                                                 bool &IsNamedDefinition) {
   if (!IDecl)
@@ -3628,8 +3620,8 @@ void RewriteModernObjC::RewriteLocallyDefinedNamedAggregates(FieldDecl *fieldDec
   QualType Type = fieldDecl->getType();
   if (Type->isArrayType())
     Type = Context->getBaseElementType(Type);
-  ObjCInterfaceDecl *IDecl = 
-    dyn_cast<ObjCInterfaceDecl>(fieldDecl->getDeclContext());
+  ObjCContainerDecl *IDecl = 
+    dyn_cast<ObjCContainerDecl>(fieldDecl->getDeclContext());
   
   TagDecl *TD = 0;
   if (Type->isRecordType()) {
