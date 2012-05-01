@@ -5,6 +5,7 @@
 void *malloc(size_t size);
 void *calloc(size_t nmemb, size_t size);
 void *realloc(void *ptr, size_t size);
+void free(void *ptr);
 
 struct A {};
 struct B {};
@@ -24,4 +25,11 @@ void foo() {
   struct A *ap5 = calloc(4, sizeof(struct B)); // expected-warning {{Result of 'calloc' is converted to type 'struct A *', whose pointee type 'struct A' is incompatible with sizeof operand type 'struct B'}}
   struct A *ap6 = realloc(ap5, sizeof(struct A));
   struct A *ap7 = realloc(ap5, sizeof(struct B)); // expected-warning {{Result of 'realloc' is converted to type 'struct A *', whose pointee type 'struct A' is incompatible with sizeof operand type 'struct B'}}
+}
+
+// Don't warn when the types differ only by constness.
+void ignore_const() {
+  const char **x = (const char **)malloc(1 * sizeof(char *)); // no-warning
+  const char ***y = (const char ***)malloc(1 * sizeof(char *)); // expected-warning {{pointee type 'const char **' is incompatible with sizeof operand type 'char *'}}
+  free(x);
 }
