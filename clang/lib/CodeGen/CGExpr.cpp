@@ -462,7 +462,7 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
     if (ReferenceTemporaryDtor) {
       llvm::Constant *DtorFn = 
         CGM.GetAddrOfCXXDestructor(ReferenceTemporaryDtor, Dtor_Complete);
-      EmitCXXGlobalDtorRegistration(DtorFn, 
+      CGM.getCXXABI().registerGlobalDtor(*this, DtorFn, 
                                     cast<llvm::Constant>(ReferenceTemporary));
     } else {
       assert(!ObjCARCReferenceLifetimeType.isNull());

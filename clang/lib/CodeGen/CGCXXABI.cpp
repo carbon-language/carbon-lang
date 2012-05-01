@@ -221,6 +221,13 @@ void CGCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   ErrorUnsupportedABI(CGF, "static local variable initialization");
 }
 
+void CGCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
+                                  llvm::Constant *dtor,
+                                  llvm::Constant *addr) {
+  // The default behavior is to use atexit.
+  CGF.registerGlobalDtorWithAtExit(dtor, addr);
+}
+
 /// Returns the adjustment, in bytes, required for the given
 /// member-pointer operation.  Returns null if no adjustment is
 /// required.

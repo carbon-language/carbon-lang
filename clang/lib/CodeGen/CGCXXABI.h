@@ -272,6 +272,13 @@ public:
   virtual void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                                llvm::GlobalVariable *DeclPtr, bool PerformInit);
 
+  /// Emit code to force the execution of a destructor during global
+  /// teardown.  The default implementation of this uses atexit.
+  ///
+  /// \param dtor - a function taking a single pointer argument
+  /// \param addr - a pointer to pass to the destructor function.
+  virtual void registerGlobalDtor(CodeGenFunction &CGF, llvm::Constant *dtor,
+                                  llvm::Constant *addr);
 };
 
 /// Creates an instance of a C++ ABI class.

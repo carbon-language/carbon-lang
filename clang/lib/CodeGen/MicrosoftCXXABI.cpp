@@ -56,6 +56,11 @@ public:
     // TODO: 'for base' flag
   }
 
+  void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
+                       llvm::GlobalVariable *DeclPtr,
+                       bool PerformInit);
+
+
   // ==== Notes on array cookies =========
   //
   // MSVC seems to only use cookies when the class has a destructor; a
@@ -147,6 +152,17 @@ llvm::Value* MicrosoftCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   // over the cookie completely.
   return CGF.Builder.CreateConstInBoundsGEP1_64(newPtr,
                                                 cookieSize.getQuantity());
+}
+
+void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
+                                      llvm::GlobalVariable *DeclPtr,
+                                      bool PerformInit) {
+  // FIXME: this code was only tested for global initialization.
+  // Not sure whether we want thread-safe static local variables as VS
+  // doesn't make them thread-safe.
+
+  // Emit the initializer and add a global destructor if appropriate.
+  CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
 }
 
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {

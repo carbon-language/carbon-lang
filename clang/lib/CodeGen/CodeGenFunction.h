@@ -2411,10 +2411,9 @@ public:
   void EmitCXXGlobalVarDeclInit(const VarDecl &D, llvm::Constant *DeclPtr,
                                 bool PerformInit);
 
-  /// EmitCXXGlobalDtorRegistration - Emits a call to register the global ptr
-  /// with the C++ runtime so that its destructor will be called at exit.
-  void EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
-                                     llvm::Constant *DeclPtr);
+  /// Call atexit() with a function that passes the given argument to
+  /// the given function.
+  void registerGlobalDtorWithAtExit(llvm::Constant *fn, llvm::Constant *addr);
 
   /// Emit code in this function to perform a guarded variable
   /// initialization.  Guarded initializations are used when it's not

@@ -119,6 +119,8 @@ public:
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr, bool PerformInit);
+  void registerGlobalDtor(CodeGenFunction &CGF, llvm::Constant *dtor,
+                          llvm::Constant *addr);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1096,4 +1098,56 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   }
 
   CGF.EmitBlock(EndBlock);
+}
+
+/// Register a global destructor using __cxa_atexit.
+static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
+                                        llvm::Constant *dtor,
+                                        llvm::Constant *addr) {
+  // We're assuming that the destructor function is something we can
+  // reasonably call with the default CC.  Go ahead and cast it to the
+  // right prototype.
+  llvm::Type *dtorTy =
+    llvm::FunctionType::get(CGF.VoidTy, CGF.Int8PtrTy, false)->getPointerTo();
+
+  // extern "C" int __cxa_atexit(void (*f)(void *), void *p, void *d);
+  llvm::Type *paramTys[] = { dtorTy, CGF.Int8PtrTy, CGF.Int8PtrTy };
+  llvm::FunctionType *atexitTy =
+    llvm::FunctionType::get(CGF.IntTy, paramTys, false);
+
+  // Fetch the actual function.
+  llvm::Constant *atexit =
+    CGF.CGM.CreateRuntimeFunction(atexitTy, "__cxa_atexit");
+  if (llvm::Function *fn = dyn_cast<llvm::Function>(atexit))
+    fn->setDoesNotThrow();
+
+  // Create a variable that binds the atexit to this shared object.
+  llvm::Constant *handle =
+    CGF.CGM.CreateRuntimeVariable(CGF.Int8Ty, "__dso_handle");
+
+  llvm::Value *args[] = {
+    llvm::ConstantExpr::getBitCast(dtor, dtorTy),
+    llvm::ConstantExpr::getBitCast(addr, CGF.Int8PtrTy),
+    handle
+  };
+  CGF.Builder.CreateCall(atexit, args)->setDoesNotThrow();
+}
+
+/// Register a global destructor as best as we know how.
+void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
+                                       llvm::Constant *dtor,
+                                       llvm::Constant *addr) {
+  // Use __cxa_atexit if available.
+  if (CGM.getCodeGenOpts().CXAAtExit) {
+    return emitGlobalDtorWithCXAAtExit(CGF, dtor, addr);
+  }
+
+  // In Apple kexts, we want to add a global destructor entry.
+  // FIXME: shouldn't this be guarded by some variable?
+  if (CGM.getContext().getLangOpts().AppleKext) {
+    // Generate a global destructor entry.
+    return CGM.AddCXXDtorEntry(dtor, addr);
+  }
+
+  CGF.registerGlobalDtorWithAtExit(dtor, addr);
 }
