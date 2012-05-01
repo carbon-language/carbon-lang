@@ -32,3 +32,45 @@ entry:
   %cond = select i1 %cmp, i32 %sub, i32 0
   ret i32 %cond
 }
+
+; rdar://10734411
+define i32 @h(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: h:
+; CHECK-NOT: cmp
+; CHECK: cmov
+  %cmp = icmp slt i32 %b, %a
+  %sub = sub nsw i32 %a, %b
+  %cond = select i1 %cmp, i32 %sub, i32 0
+  ret i32 %cond
+}
+define i32 @i(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: i:
+; CHECK-NOT: cmp
+; CHECK: cmov
+  %cmp = icmp sgt i32 %a, %b
+  %sub = sub nsw i32 %a, %b
+  %cond = select i1 %cmp, i32 %sub, i32 0
+  ret i32 %cond
+}
+define i32 @j(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: j:
+; CHECK-NOT: cmp
+; CHECK: cmov
+  %cmp = icmp ugt i32 %a, %b
+  %sub = sub i32 %a, %b
+  %cond = select i1 %cmp, i32 %sub, i32 0
+  ret i32 %cond
+}
+define i32 @k(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: k:
+; CHECK-NOT: cmp
+; CHECK: cmov
+  %cmp = icmp ult i32 %b, %a
+  %sub = sub i32 %a, %b
+  %cond = select i1 %cmp, i32 %sub, i32 0
+  ret i32 %cond
+}
