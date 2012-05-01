@@ -96,7 +96,8 @@ def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       "Enable four-operand fused multiple-add",
                                       [FeatureAVX]>;
 def FeatureXOP     : SubtargetFeature<"xop", "HasXOP", "true",
-                                      "Enable XOP instructions">;
+                                      "Enable XOP instructions",
+                                      [FeatureAVX]>;
 def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                                           "HasVectorUAMem", "true",
                  "Allow unaligned memory operands on vector/SIMD instructions">;
