@@ -1441,7 +1441,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   std::vector<QualType> ResultRegQualTys;
   std::vector<llvm::Type *> ResultRegTypes;
   std::vector<llvm::Type *> ResultTruncRegTypes;
-  std::vector<llvm::Type*> ArgTypes;
+  std::vector<llvm::Type *> ArgTypes;
   std::vector<llvm::Value*> Args;
 
   // Keep track of inout constraints.
