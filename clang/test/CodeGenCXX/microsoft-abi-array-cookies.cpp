@@ -28,12 +28,12 @@ void check_array_cookies_simple() {
 // 46 = 42 + size of cookie (4)
 // CHECK: [[COOKIE:%.*]] = bitcast i8* [[ALLOCATED]] to i32*
 // CHECK: store i32 42, i32* [[COOKIE]]
-// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8* [[ALLOCATED]], i{{[0-9]+}} 4
-// CHECK: bitcast i8* [[ARRAY]] to %struct.ClassWithDtor*
+// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8* [[ALLOCATED]], i64 4
+// CHECK: bitcast i8* [[ARRAY]] to [[CLASS:%.*]]*
 
   delete [] array;
-// CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast %struct.ClassWithDtor* %3 to i8*
-// CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i{{[0-9]+}} -4
+// CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast [[CLASS]]* {{%.*}} to i8*
+// CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -4
 }
 
 struct __attribute__((aligned(8))) ClassWithAlignment {
@@ -47,13 +47,13 @@ void check_array_cookies_aligned() {
 // CHECK: define {{.*}} @"\01?check_array_cookies_aligned@@YAXXZ"()
   ClassWithAlignment *array = new ClassWithAlignment[42];
 // CHECK: [[ALLOCATED:%.*]] = call noalias i8* @"\01??_U@YAPAXI@Z"(i32 344)
-//   344 = 42*8 + size of cookie (8, due to aligment)
+//   344 = 42*8 + size of cookie (8, due to alignment)
 // CHECK: [[COOKIE:%.*]] = bitcast i8* [[ALLOCATED]] to i32*
 // CHECK: store i32 42, i32* [[COOKIE]]
-// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8* [[ALLOCATED]], i{{[0-9]+}} 8
-// CHECK: bitcast i8* [[ARRAY]] to %struct.ClassWithAlignment*
+// CHECK: [[ARRAY:%.*]] = getelementptr inbounds i8* [[ALLOCATED]], i64 8
+// CHECK: bitcast i8* [[ARRAY]] to [[CLASS:%.*]]*
 
   delete [] array;
-// CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast %struct.ClassWithAlignment* %3 to i8*
-// CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i{{[0-9]+}} -8
+// CHECK: [[ARRAY_AS_CHAR:%.*]] = bitcast [[CLASS]]* %3 to i8*
+// CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -8
 }
