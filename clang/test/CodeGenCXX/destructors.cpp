@@ -350,6 +350,22 @@ namespace test8 {
   // CHECK:      unreachable
 }
 
+// PR12710
+namespace test9 {
+  struct ArgType {
+    ~ArgType();
+  };
+  template<typename T>
+  void f1(const ArgType& = ArgType());
+  void f2();
+  void bar() {
+    f1<int>();
+    f2();
+  }
+  // CHECK: call void @_ZN5test97ArgTypeD1Ev(%"struct.test9::ArgType"* %ref.tmp)
+  // CHECK: call void @_ZN5test92f2Ev()
+}
+
 // Checks from test3:
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
