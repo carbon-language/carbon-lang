@@ -94,10 +94,10 @@ def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
                                       [FeatureAVX]>;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       "Enable four-operand fused multiple-add",
-                                      [FeatureAVX]>;
+                                      [FeatureAVX, FeatureSSE4A]>;
 def FeatureXOP     : SubtargetFeature<"xop", "HasXOP", "true",
                                       "Enable XOP instructions",
-                                      [FeatureAVX]>;
+                                      [FeatureAVX, FeatureSSE4A]>;
 def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                                           "HasVectorUAMem", "true",
                  "Allow unaligned memory operands on vector/SIMD instructions">;
@@ -212,22 +212,21 @@ def : Proc<"opteron-sse3",    [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
                                FeatureSlowBTMem]>;
 def : Proc<"athlon64-sse3",   [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
                                FeatureSlowBTMem]>;
-def : Proc<"amdfam10",        [FeatureSSE3,   FeatureSSE4A,
+def : Proc<"amdfam10",        [FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
                                FeaturePOPCNT, FeatureSlowBTMem]>;
 // Bobcat
 def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureLZCNT, FeaturePOPCNT]>;
 // Bulldozer
-def : Proc<"bdver1",          [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
+def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL,
-                               FeatureXOP, FeatureLZCNT, FeaturePOPCNT,
-                               FeatureFMA4]>;
+                               FeatureLZCNT, FeaturePOPCNT]>;
 // Enhanced Bulldozer
-def : Proc<"bdver2",          [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
+def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL,
-                               FeatureXOP, FeatureF16C, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureBMI, FeatureFMA4]>;
+                               FeatureF16C, FeatureLZCNT,
+                               FeaturePOPCNT, FeatureBMI]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;
