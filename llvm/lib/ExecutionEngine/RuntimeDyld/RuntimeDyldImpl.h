@@ -129,11 +129,11 @@ protected:
   // references it.
   typedef std::map<SectionRef, unsigned> ObjSectionToIDMap;
 
-  // Master symbol table. As modules are loaded and symbols are
-  // resolved, their addresses are stored here as a SectionID/Offset pair.
+  // A global symbol table for symbols from all loaded modules.  Maps the
+  // symbol name to a (SectionID, offset in section) pair.
   typedef std::pair<unsigned, uintptr_t> SymbolLoc;
-  StringMap<SymbolLoc> SymbolTable;
-  typedef DenseMap<const char*, SymbolLoc> LocalSymbolMap;
+  typedef StringMap<SymbolLoc> SymbolTableMap;
+  SymbolTableMap GlobalSymbolTable;
 
   // Keep a map of common symbols to their sizes
   typedef std::map<SymbolRef, unsigned> CommonSymbolMap;
@@ -184,7 +184,7 @@ protected:
   unsigned emitCommonSymbols(ObjectImage &Obj,
                              const CommonSymbolMap &Map,
                              uint64_t TotalSize,
-                             LocalSymbolMap &Symbols);
+                             SymbolTableMap &Symbols);
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be
@@ -234,7 +234,7 @@ protected:
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
-                                    LocalSymbolMap &Symbols,
+                                    const SymbolTableMap &Symbols,
                                     StubMap &Stubs) = 0;
 
   /// \brief Resolve relocations to external symbols.
@@ -256,9 +256,9 @@ public:
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
-    if (SymbolTable.find(Name) == SymbolTable.end())
+    if (GlobalSymbolTable.find(Name) == GlobalSymbolTable.end())
       return 0;
-    SymbolLoc Loc = SymbolTable.lookup(Name);
+    SymbolLoc Loc = GlobalSymbolTable.lookup(Name);
     return getSectionAddress(Loc.first) + Loc.second;
   }
 

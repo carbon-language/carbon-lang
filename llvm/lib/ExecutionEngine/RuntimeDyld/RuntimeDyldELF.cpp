@@ -334,7 +334,7 @@ void RuntimeDyldELF::resolveRelocation(uint8_t *LocalAddress,
 void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
                                           ObjectImage &Obj,
                                           ObjSectionToIDMap &ObjSectionToID,
-                                          LocalSymbolMap &Symbols,
+                                          const SymbolTableMap &Symbols,
                                           StubMap &Stubs) {
 
   uint32_t RelType = (uint32_t)(Rel.Type & 0xffffffffL);
@@ -348,14 +348,15 @@ void RuntimeDyldELF::processRelocationRef(const ObjRelocationInfo &Rel,
                << " TargetName: " << TargetName
                << "\n");
   // First look the symbol in object file symbols.
-  LocalSymbolMap::iterator lsi = Symbols.find(TargetName.data());
+  SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
   if (lsi != Symbols.end()) {
     Value.SectionID = lsi->second.first;
     Value.Addend = lsi->second.second;
   } else {
     // Second look the symbol in global symbol table.
-    StringMap<SymbolLoc>::iterator gsi = SymbolTable.find(TargetName.data());
-    if (gsi != SymbolTable.end()) {
+    SymbolTableMap::const_iterator gsi =
+        GlobalSymbolTable.find(TargetName.data());
+    if (gsi != GlobalSymbolTable.end()) {
       Value.SectionID = gsi->second.first;
       Value.Addend = gsi->second.second;
     } else {

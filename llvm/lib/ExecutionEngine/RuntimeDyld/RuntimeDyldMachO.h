@@ -51,7 +51,8 @@ protected:
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
-                                    LocalSymbolMap &Symbols, StubMap &Stubs);
+                                    const SymbolTableMap &Symbols,
+                                    StubMap &Stubs);
 
 public:
   virtual void resolveRelocation(uint8_t *LocalAddress,

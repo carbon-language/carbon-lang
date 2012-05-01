@@ -51,7 +51,8 @@ protected:
   virtual void processRelocationRef(const ObjRelocationInfo &Rel,
                                     ObjectImage &Obj,
                                     ObjSectionToIDMap &ObjSectionToID,
-                                    LocalSymbolMap &Symbols, StubMap &Stubs);
+                                    const SymbolTableMap &Symbols,
+                                    StubMap &Stubs);
 
   virtual ObjectImage *createObjectImage(const MemoryBuffer *InputBuffer);
   virtual void handleObjectLoaded(ObjectImage *Obj);
