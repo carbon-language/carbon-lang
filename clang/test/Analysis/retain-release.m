@@ -1305,6 +1305,11 @@ void testattr2_b() {
   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];  // expected-warning{{leak}}
 }
 
+void testattr2_b_11358224_self_assign_looses_the_leak() {
+  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];// expected-warning{{leak}}
+  x = x;
+}
+
 void testattr2_c() {
   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit]; // no-warning
   [x release];
