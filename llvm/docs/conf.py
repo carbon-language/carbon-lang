@@ -138,10 +138,14 @@ html_sidebars = {'index': 'indexsidebar.html'}
 # We load all the old-school HTML documentation pages into Sphinx here.
 basedir = os.path.dirname(__file__)
 html_additional_pages = {}
-for file in os.listdir(basedir):
-    if file.endswith('.html'):
-        name,_ = os.path.splitext(file)
-        html_additional_pages[name] = file
+for directory in ('', 'tutorial'):
+    for file in os.listdir(os.path.join(basedir, directory)):
+        if not file.endswith('.html'):
+            continue
+
+        subpath = os.path.join(directory, file)
+        name,_ = os.path.splitext(subpath)
+        html_additional_pages[name] = subpath
 
 # If false, no module index is generated.
 #html_domain_indices = True

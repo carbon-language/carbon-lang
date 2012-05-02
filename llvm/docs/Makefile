@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL      := ..
-DIRS       := CommandGuide tutorial
+DIRS       := CommandGuide
 
 ifdef BUILD_FOR_WEBSITE
 PROJ_OBJ_DIR = .
