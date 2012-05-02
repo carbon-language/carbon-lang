@@ -137,6 +137,9 @@ public:
   /// default.
   virtual bool IsStrictAliasingDefault() const { return true; }
 
+  /// IsMathErrnoDefault - Does this tool chain use -fmath-errno by default.
+  virtual bool IsMathErrnoDefault() const { return true; }
+
   /// IsObjCDefaultSynthPropertiesDefault - Does this tool chain enable
   /// -fobjc-default-synthesize-properties by default.
   virtual bool IsObjCDefaultSynthPropertiesDefault() const { return false; }

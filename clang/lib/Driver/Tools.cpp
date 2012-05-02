@@ -1617,9 +1617,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         A->getOption().getID() != options::OPT_fhonor_nans)
       CmdArgs.push_back("-menable-no-nans");
 
-  // -fno-math-errno is default on Darwin. Other platforms, -fmath-errno is the
-  // default.
-  bool MathErrno = !getToolChain().getTriple().isOSDarwin();
+  // -fmath-errno is the default on some platforms, e.g. BSD-derived OSes.
+  bool MathErrno = getToolChain().IsMathErrnoDefault();
   if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
                                options::OPT_fmath_errno,
                                options::OPT_fno_math_errno))

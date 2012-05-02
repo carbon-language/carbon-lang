@@ -26,6 +26,14 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
 // RUN: %clang -### -target i686-apple-darwin -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
+// RUN: %clang -### -target x86_64-unknown-freebsd -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
+// RUN: %clang -### -target x86_64-unknown-netbsd -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
+// RUN: %clang -### -target x86_64-unknown-openbsd -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
+// RUN: %clang -### -target x86_64-unknown-dragonfly -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
 // CHECK-NO-MATH-ERRNO: "-cc1"
 // CHECK-NO-MATH-ERRNO-NOT: "-fmath-errno"
 //
