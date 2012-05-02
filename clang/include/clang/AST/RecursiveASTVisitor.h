@@ -405,18 +405,14 @@ private:
   bool TraverseFunctionHelper(FunctionDecl *D);
   bool TraverseVarHelper(VarDecl *D);
 
-  bool Walk(Stmt *S);
-
   struct EnqueueJob {
     Stmt *S;
     Stmt::child_iterator StmtIt;
 
-    EnqueueJob(Stmt *S) : S(S), StmtIt() {
-      if (Expr *E = dyn_cast_or_null<Expr>(S))
-        S = E->IgnoreParens();
-    }
+    EnqueueJob(Stmt *S) : S(S), StmtIt() {}
   };
   bool dataTraverse(Stmt *S);
+  bool dataTraverseNode(Stmt *S, bool &EnqueueChildren);
 };
 
 template<typename Derived>
@@ -435,7 +431,12 @@ bool RecursiveASTVisitor<Derived>::dataTraverse(Stmt *S) {
 
     if (getDerived().shouldUseDataRecursionFor(CurrS)) {
       if (job.StmtIt == Stmt::child_iterator()) {
-        if (!Walk(CurrS)) return false;
+        bool EnqueueChildren = true;
+        if (!dataTraverseNode(CurrS, EnqueueChildren)) return false;
+        if (!EnqueueChildren) {
+          Queue.pop_back();
+          continue;
+        }
         job.StmtIt = CurrS->child_begin();
       } else {
         ++job.StmtIt;
@@ -456,10 +457,18 @@ bool RecursiveASTVisitor<Derived>::dataTraverse(Stmt *S) {
 }
 
 template<typename Derived>
-bool RecursiveASTVisitor<Derived>::Walk(Stmt *S) {
+bool RecursiveASTVisitor<Derived>::dataTraverseNode(Stmt *S,
+                                                    bool &EnqueueChildren) {
 
+  // Dispatch to the corresponding WalkUpFrom* function only if the derived
+  // class didn't override Traverse* (and thus the traversal is trivial).
+  // The cast here is necessary to work around a bug in old versions of g++.
 #define DISPATCH_WALK(NAME, CLASS, VAR) \
-  return getDerived().WalkUpFrom##NAME(static_cast<CLASS*>(VAR));
+  if (&RecursiveASTVisitor::Traverse##NAME == \
+      (bool (RecursiveASTVisitor::*)(CLASS*))&Derived::Traverse##NAME) \
+    return getDerived().WalkUpFrom##NAME(static_cast<CLASS*>(VAR)); \
+  EnqueueChildren = false; \
+  return getDerived().Traverse##NAME(static_cast<CLASS*>(VAR));
 
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
     switch (BinOp->getOpcode()) {
