@@ -1,4 +1,4 @@
-set(LLVM_USED_LIBS clangDriver clangFrontend clangRewrite clangCodeGen 
+set(LLVM_USED_LIBS clangDriver clangFrontend clangRewrite clangCodeGen
     clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore
     clangARCMigrate)
 
@@ -7,5 +7,4 @@ add_clang_library(clangFrontendTool
   )
 
 add_dependencies(clangFrontendTool
-  ClangCC1Options
   ClangDiagnosticFrontend)

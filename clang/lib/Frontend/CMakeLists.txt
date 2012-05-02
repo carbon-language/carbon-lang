@@ -49,11 +49,10 @@ IF(MSVC)
   set_target_properties(clangFrontend PROPERTIES COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
 ENDIF(MSVC)
 
-add_dependencies(clangFrontend 
+add_dependencies(clangFrontend
   ClangAttrClasses
   ClangAttrList
-  ClangCC1Options
-  ClangDiagnosticFrontend 
+  ClangDiagnosticFrontend
   ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDriverOptions
