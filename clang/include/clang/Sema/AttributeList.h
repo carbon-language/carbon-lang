@@ -162,17 +162,6 @@ public:
   enum Kind {           
     #define PARSED_ATTR(NAME) AT_##NAME,
     #include "clang/Sema/AttrParsedAttrList.inc"
-    PARSED_ATTR(address_space)
-    PARSED_ATTR(base_check)
-    PARSED_ATTR(cf_returns_autoreleased)
-    PARSED_ATTR(ext_vector_type)
-    PARSED_ATTR(mode)
-    PARSED_ATTR(neon_polyvector_type)
-    PARSED_ATTR(neon_vector_type)
-    PARSED_ATTR(objc_gc)
-    PARSED_ATTR(objc_ownership)
-    PARSED_ATTR(opencl_image_access)
-    PARSED_ATTR(vector_size)
     #undef PARSED_ATTR
     IgnoredAttribute,
     UnknownAttribute

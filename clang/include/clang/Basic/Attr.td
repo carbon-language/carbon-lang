@@ -95,6 +95,8 @@ class Attr {
   bit LateParsed = 0;  
   // Set to true for attributes which must be instantiated within templates
   bit TemplateDependent = 0;
+  // Set to true for attributes that have a corresponding AST node.
+  bit ASTNode = 1;
   // Set to true for attributes which have handler in Sema.
   bit SemaHandler = 1;
   // Any additional text that should be included verbatim in the class.  
@@ -111,6 +113,12 @@ class InheritableParamAttr : InheritableAttr;
 //
 // Attributes begin here
 //
+
+def AddressSpace : Attr {
+  let Spellings = ["address_space"];
+  let Args = [IntArgument<"AddressSpace">];
+  let ASTNode = 0;  
+}
 
 def Alias : InheritableAttr {
   let Spellings = ["alias"];
@@ -162,6 +170,11 @@ def Availability : InheritableAttr {
 } }];
 }
 
+def BaseCheck : Attr {
+  let Spellings = ["base_check"];
+  let ASTNode = 0;
+}
+
 def Blocks : InheritableAttr {
   let Spellings = ["blocks"];
   let Args = [EnumArgument<"Type", "BlockType", ["byref"], ["ByRef"]>];
@@ -192,6 +205,11 @@ def CFAuditedTransfer : InheritableAttr {
 def CFUnknownTransfer : InheritableAttr {
   let Spellings = ["cf_unknown_transfer"];
   let Subjects = [Function];
+}
+
+def CFReturnsAutoreleased : Attr {
+  let Spellings = ["cf_returns_autoreleased"];
+  let ASTNode = 0;
 }
 
 def CFReturnsRetained : InheritableAttr {
@@ -256,6 +274,12 @@ def OpenCLKernel : Attr {
   let Spellings = ["opencl_kernel_function"];
 }
 
+def OpenCLImageAccess : Attr {
+  let Spellings = ["opencl_image_access"];
+  let Args = [IntArgument<"Access">];
+  let ASTNode = 0;
+}
+
 def Deprecated : InheritableAttr {
   let Spellings = ["deprecated"];
   let Args = [StringArgument<"Message">];
@@ -272,6 +296,12 @@ def DLLExport : InheritableAttr {
 
 def DLLImport : InheritableAttr {
   let Spellings = ["dllimport"];
+}
+
+def ExtVectorType : Attr {
+  let Spellings = ["ext_vector_type"];
+  let Args = [ExprArgument<"NumElements">];
+  let ASTNode = 0;
 }
 
 def FastCall : InheritableAttr {
@@ -345,8 +375,26 @@ def MBlazeSaveVolatiles : InheritableAttr {
   let SemaHandler = 0;
 }
 
+def Mode : Attr {
+  let Spellings = ["mode"];
+  let Args = [IdentifierArgument<"Mode">];
+  let ASTNode = 0;
+}
+
 def Naked : InheritableAttr {
   let Spellings = ["naked"];
+}
+
+def NeonPolyVectorType : Attr {
+  let Spellings = ["neon_polyvector_type"];
+  let Args = [IntArgument<"NumElements">];
+  let ASTNode = 0;
+}
+
+def NeonVectorType : Attr {
+  let Spellings = ["neon_vector_type"];
+  let Args = [IntArgument<"NumElements">];
+  let ASTNode = 0;
 }
 
 def ReturnsTwice : InheritableAttr {
@@ -542,6 +590,18 @@ def ArcWeakrefUnavailable : InheritableAttr {
   let Subjects = [ObjCInterface];
 }
 
+def ObjCGC : Attr {
+  let Spellings = ["objc_gc"];
+  let Args = [IdentifierArgument<"Kind">];
+  let ASTNode = 0;
+}
+
+def ObjCOwnership : Attr {
+  let Spellings = ["objc_ownership"];
+  let Args = [IdentifierArgument<"Kind">];
+  let ASTNode = 0;
+}
+
 def ObjCRequiresPropertyDefs : InheritableAttr {
   let Spellings = ["objc_requires_property_definitions"];
   let Subjects = [ObjCInterface];
@@ -559,6 +619,12 @@ def Uuid : InheritableAttr {
   let Spellings = ["uuid"];
   let Args = [StringArgument<"Guid">];
   let Subjects = [CXXRecord];
+}
+
+def VectorSize : Attr {
+  let Spellings = ["vector_size"];
+  let Args = [ExprArgument<"NumBytes">];
+  let ASTNode = 0;
 }
 
 def Visibility : InheritableAttr {
