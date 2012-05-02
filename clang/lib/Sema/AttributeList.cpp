@@ -97,6 +97,8 @@ AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
   return create(Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1, 0);
 }
 
+#include "clang/Sema/AttrParsedAttrKinds.inc"
+
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   StringRef AttrName = Name->getName();
 
@@ -105,7 +107,5 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
       AttrName.size() >= 4)
     AttrName = AttrName.substr(2, AttrName.size() - 4);
 
-  return llvm::StringSwitch<AttributeList::Kind>(AttrName)
-    #include "clang/Sema/AttrParsedAttrKinds.inc"
-    .Default(UnknownAttribute);
+  return ::getAttrKind(AttrName);
 }
