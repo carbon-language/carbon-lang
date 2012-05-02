@@ -470,6 +470,55 @@ static bool isResultTypeOrTemplate(LookupResult &R, const Token &NextToken) {
   return false;
 }
 
+static bool isTagTypeWithMissingTag(Sema &SemaRef, LookupResult &Result,
+                                    Scope *S, CXXScopeSpec &SS,
+                                    IdentifierInfo *&Name,
+                                    SourceLocation NameLoc) {
+  Result.clear(Sema::LookupTagName);
+  SemaRef.LookupParsedName(Result, S, &SS);
+  if (TagDecl *Tag = Result.getAsSingle<TagDecl>()) {
+    const char *TagName = 0;
+    const char *FixItTagName = 0;
+    switch (Tag->getTagKind()) {
+      case TTK_Class:
+        TagName = "class";
+        FixItTagName = "class ";
+        break;
+
+      case TTK_Enum:
+        TagName = "enum";
+        FixItTagName = "enum ";
+        break;
+
+      case TTK_Struct:
+        TagName = "struct";
+        FixItTagName = "struct ";
+        break;
+
+      case TTK_Union:
+        TagName = "union";
+        FixItTagName = "union ";
+        break;
+    }
+
+    SemaRef.Diag(NameLoc, diag::err_use_of_tag_name_without_tag)
+      << Name << TagName << SemaRef.getLangOpts().CPlusPlus
+      << FixItHint::CreateInsertion(NameLoc, FixItTagName);
+
+    LookupResult R(SemaRef, Name, NameLoc, Sema::LookupOrdinaryName);
+    if (SemaRef.LookupParsedName(R, S, &SS)) {
+      for (LookupResult::iterator I = R.begin(), IEnd = R.end();
+           I != IEnd; ++I)
+        SemaRef.Diag((*I)->getLocation(), diag::note_decl_hiding_tag_type)
+          << Name << TagName;
+    }
+    return true;
+  }
+
+  Result.clear(Sema::LookupOrdinaryName);
+  return false;
+}
+
 Sema::NameClassification Sema::ClassifyName(Scope *S,
                                             CXXScopeSpec &SS,
                                             IdentifierInfo *&Name,
@@ -533,49 +582,9 @@ Corrected:
     // In C, we first see whether there is a tag type by the same name, in 
     // which case it's likely that the user just forget to write "enum", 
     // "struct", or "union".
-    if (!getLangOpts().CPlusPlus && !SecondTry) {
-      Result.clear(LookupTagName);
-      LookupParsedName(Result, S, &SS);
-      if (TagDecl *Tag = Result.getAsSingle<TagDecl>()) {
-        const char *TagName = 0;
-        const char *FixItTagName = 0;
-        switch (Tag->getTagKind()) {
-          case TTK_Class:
-            TagName = "class";
-            FixItTagName = "class ";
-            break;
-
-          case TTK_Enum:
-            TagName = "enum";
-            FixItTagName = "enum ";
-            break;
-            
-          case TTK_Struct:
-            TagName = "struct";
-            FixItTagName = "struct ";
-            break;
-            
-          case TTK_Union:
-            TagName = "union";
-            FixItTagName = "union ";
-            break;
-        }
-
-        Diag(NameLoc, diag::err_use_of_tag_name_without_tag)
-          << Name << TagName << getLangOpts().CPlusPlus
-          << FixItHint::CreateInsertion(NameLoc, FixItTagName);
-
-        LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
-        if (LookupParsedName(R, S, &SS)) {
-          for (LookupResult::iterator I = R.begin(), IEnd = R.end();
-               I != IEnd; ++I)
-            Diag((*I)->getLocation(), diag::note_decl_hiding_tag_type)
-              << Name << TagName;
-        }
-        break;
-      }
-      
-      Result.clear(LookupOrdinaryName);
+    if (!getLangOpts().CPlusPlus && !SecondTry &&
+        isTagTypeWithMissingTag(*this, Result, S, SS, Name, NameLoc)) {
+      break;
     }
 
     // Perform typo correction to determine if there is another name that is
@@ -748,7 +757,7 @@ Corrected:
   if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
     DiagnoseUseOfDecl(Type, NameLoc);
     QualType T = Context.getTypeDeclType(Type);
-    return ParsedType::make(T);    
+    return ParsedType::make(T);
   }
   
   ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(FirstDecl);
@@ -771,6 +780,23 @@ Corrected:
     
     QualType T = Context.getObjCInterfaceType(Class);
     return ParsedType::make(T);
+  }
+
+  // Check for a tag type hidden by a non-type decl in a few cases where it
+  // seems likely a type is wanted instead of the non-type that was found.
+  if (!getLangOpts().ObjC1 && FirstDecl && !isa<ClassTemplateDecl>(FirstDecl) &&
+      !isa<TypeAliasTemplateDecl>(FirstDecl)) {
+    bool NextIsOp = NextToken.is(tok::amp) || NextToken.is(tok::star);
+    if ((NextToken.is(tok::identifier) ||
+         (NextIsOp && FirstDecl->isFunctionOrFunctionTemplate())) &&
+        isTagTypeWithMissingTag(*this, Result, S, SS, Name, NameLoc)) {
+      FirstDecl = (*Result.begin())->getUnderlyingDecl();
+      if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
+        DiagnoseUseOfDecl(Type, NameLoc);
+        QualType T = Context.getTypeDeclType(Type);
+        return ParsedType::make(T);
+      }
+    }
   }
   
   if (!Result.empty() && (*Result.begin())->isCXXClassMember())

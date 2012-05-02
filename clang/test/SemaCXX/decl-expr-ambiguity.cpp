@@ -70,3 +70,23 @@ void foo() {
   fn(1); // expected-error {{no matching function}}
   fn(g); // OK
 }
+
+namespace PR11874 {
+void foo(); // expected-note 3 {{class 'foo' is hidden by a non-type declaration of 'foo' here}}
+class foo {};
+class bar {
+  bar() {
+    const foo* f1 = 0; // expected-error {{must use 'class' tag to refer to type 'foo' in this scope}}
+    foo* f2 = 0; // expected-error {{must use 'class' tag to refer to type 'foo' in this scope}}
+    foo f3; // expected-error {{must use 'class' tag to refer to type 'foo' in this scope}}
+  }
+};
+
+int baz; // expected-note 2 {{class 'baz' is hidden by a non-type declaration of 'baz' here}}
+class baz {};
+void fizbin() {
+  const baz* b1 = 0; // expected-error {{must use 'class' tag to refer to type 'baz' in this scope}}
+  baz* b2; // expected-error {{use of undeclared identifier 'b2'}}
+  baz b3; // expected-error {{must use 'class' tag to refer to type 'baz' in this scope}}
+}
+}
