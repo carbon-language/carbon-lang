@@ -29,4 +29,4 @@ IF(MSVC)
 ENDIF(MSVC)
 
 add_dependencies(clangDriver ClangAttrList ClangDiagnosticDriver
-                 ClangDriverOptions ClangCC1Options ClangCC1AsOptions)
+                 ClangDriverOptions ClangCC1AsOptions)
