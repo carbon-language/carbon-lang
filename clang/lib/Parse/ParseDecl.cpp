@@ -4208,7 +4208,6 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   SmallVector<ParsedType, 2> DynamicExceptions;
   SmallVector<SourceRange, 2> DynamicExceptionRanges;
   ExprResult NoexceptExpr;
-  CachedTokens *ExceptionSpecTokens = 0;
   ParsedAttributes FnAttrs(AttrFactory);
   ParsedType TrailingReturnType;
 
@@ -4275,26 +4274,12 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                dyn_cast<CXXRecordDecl>(Actions.CurContext),
                                DS.getTypeQualifiers(),
                                IsCXX11MemberFunction);
-      
+
       // Parse exception-specification[opt].
-      // FIXME: Remove the code to perform delayed parsing of exception
-      //        specifications.
-#if 0
-      bool Delayed = (D.getContext() == Declarator::MemberContext &&
-                      D.getDeclSpec().getStorageClassSpec()
-                        != DeclSpec::SCS_typedef &&
-                      !D.getDeclSpec().isFriendSpecified());
-      for (unsigned i = 0, e = D.getNumTypeObjects(); Delayed && i != e; ++i)
-        Delayed &= D.getTypeObject(i).Kind == DeclaratorChunk::Paren;
-#else
-      const bool Delayed = false;
-#endif
-      ESpecType = tryParseExceptionSpecification(Delayed,
-                                                 ESpecRange,
+      ESpecType = tryParseExceptionSpecification(ESpecRange,
                                                  DynamicExceptions,
                                                  DynamicExceptionRanges,
-                                                 NoexceptExpr,
-                                                 ExceptionSpecTokens);
+                                                 NoexceptExpr);
       if (ESpecType != EST_None)
         EndLoc = ESpecRange.getEnd();
 
@@ -4329,7 +4314,6 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              DynamicExceptions.size(),
                                              NoexceptExpr.isUsable() ?
                                                NoexceptExpr.get() : 0,
-                                             ExceptionSpecTokens,
                                              Tracker.getOpenLocation(), 
                                              EndLoc, D,
                                              TrailingReturnType),
