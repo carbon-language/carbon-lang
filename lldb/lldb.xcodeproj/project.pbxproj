@@ -347,7 +347,6 @@
 		2689010613353E6F00698AC0 /* ThreadPlanRunToAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAFCE031101218900CA63DB /* ThreadPlanRunToAddress.cpp */; };
 		2689010713353E6F00698AC0 /* ThreadPlanStepThrough.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C847510F50EFC00BB2B04 /* ThreadPlanStepThrough.cpp */; };
 		2689010813353E6F00698AC0 /* ThreadPlanStepUntil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2660D9FE11922A7F00958FBD /* ThreadPlanStepUntil.cpp */; };
-		2689010913353E6F00698AC0 /* ThreadPlanTestCondition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */; };
 		2689010A13353E6F00698AC0 /* ThreadPlanTracer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CC2A148128C73ED001531C4 /* ThreadPlanTracer.cpp */; };
 		2689010B13353E6F00698AC0 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
 		2689010C13353E6F00698AC0 /* UnixSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C00987011500B4300F316B0 /* UnixSignals.cpp */; };
@@ -1337,8 +1336,6 @@
 		4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSpec.h; path = include/lldb/Target/ThreadSpec.h; sourceTree = "<group>"; };
 		4C09CB73116BD98B00C7A725 /* CommandCompletions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandCompletions.h; path = include/lldb/Interpreter/CommandCompletions.h; sourceTree = "<group>"; };
 		4C09CB74116BD98B00C7A725 /* CommandCompletions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandCompletions.cpp; path = source/Commands/CommandCompletions.cpp; sourceTree = "<group>"; };
-		4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanTestCondition.cpp; path = source/Target/ThreadPlanTestCondition.cpp; sourceTree = "<group>"; };
-		4C1AB23E1263E61100D0F04A /* ThreadPlanTestCondition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanTestCondition.h; path = include/lldb/Target/ThreadPlanTestCondition.h; sourceTree = "<group>"; };
 		4C2FAE2E135E3A70001EDE44 /* SharedCluster.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharedCluster.h; path = include/lldb/Utility/SharedCluster.h; sourceTree = "<group>"; };
 		4C43DEF9110641F300E55CBF /* ThreadPlanShouldStopHere.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanShouldStopHere.h; path = include/lldb/Target/ThreadPlanShouldStopHere.h; sourceTree = "<group>"; };
 		4C43DEFA110641F300E55CBF /* ThreadPlanShouldStopHere.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanShouldStopHere.cpp; path = source/Target/ThreadPlanShouldStopHere.cpp; sourceTree = "<group>"; };
@@ -2827,8 +2824,6 @@
 				260C847510F50EFC00BB2B04 /* ThreadPlanStepThrough.cpp */,
 				4CEDAED311754F5E00E875A6 /* ThreadPlanStepUntil.h */,
 				2660D9FE11922A7F00958FBD /* ThreadPlanStepUntil.cpp */,
-				4C1AB23E1263E61100D0F04A /* ThreadPlanTestCondition.h */,
-				4C1AB23A1263E5F400D0F04A /* ThreadPlanTestCondition.cpp */,
 				4CC2A14C128C7409001531C4 /* ThreadPlanTracer.h */,
 				4CC2A148128C73ED001531C4 /* ThreadPlanTracer.cpp */,
 				4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */,
@@ -3815,7 +3810,6 @@
 				2689010613353E6F00698AC0 /* ThreadPlanRunToAddress.cpp in Sources */,
 				2689010713353E6F00698AC0 /* ThreadPlanStepThrough.cpp in Sources */,
 				2689010813353E6F00698AC0 /* ThreadPlanStepUntil.cpp in Sources */,
-				2689010913353E6F00698AC0 /* ThreadPlanTestCondition.cpp in Sources */,
 				2689010A13353E6F00698AC0 /* ThreadPlanTracer.cpp in Sources */,
 				2689010B13353E6F00698AC0 /* ThreadSpec.cpp in Sources */,
 				2689010C13353E6F00698AC0 /* UnixSignals.cpp in Sources */,
