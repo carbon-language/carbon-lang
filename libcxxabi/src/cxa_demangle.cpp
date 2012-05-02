@@ -134,9 +134,10 @@ void display(__node* x, int indent = 0)
     {
         for (int i = 0; i < 2*indent; ++i)
             printf(" ");
-        std::string buf(x->size(), '\0');
-        x->get_demangled_name(&buf.front());
-        printf("%s %s, %p\n", typeid(*x).name(), buf.c_str(), x);
+        char* buf = (char*)malloc(x->size());
+        x->get_demangled_name(buf);
+        printf("%s %s, %p\n", typeid(*x).name(), buf, x);
+        free(buf);
         display(x->__left_, indent+1);
         display(x->__right_, indent+1);
     }
@@ -6524,6 +6525,7 @@ __demangle_tree::__parse_bare_function_type(const char* first, const char* last)
 {
     if (first != last)
     {
+        bool prev_tag_templates = __tag_templates_;
         __tag_templates_ = false;
         const char* t = __parse_type(first, last);
         if (t != first && __make<__list>(__root_))
@@ -6554,7 +6556,7 @@ __demangle_tree::__parse_bare_function_type(const char* first, const char* last)
                 }
             }
         }
-        __tag_templates_ = true;
+        __tag_templates_ = prev_tag_templates;
     }
     return first;
 }
@@ -10696,6 +10698,7 @@ __demangle_tree::__parse_encoding(const char* first, const char* last)
                              !name->is_ctor_dtor_conv();
             __node* ret = NULL;
             const char* t2;
+            bool prev_tag_templates = __tag_templates_;
             __tag_templates_ = false;
             if (has_return)
             {
@@ -10728,7 +10731,7 @@ __demangle_tree::__parse_encoding(const char* first, const char* last)
                     }
                 }
             }
-            __tag_templates_ = true;
+            __tag_templates_ = prev_tag_templates;
         }
         else
             first = t;
@@ -10864,7 +10867,7 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
             *status = __libcxxabi::invalid_args;
         return NULL;
     }
-    const size_t bs = 64 * 1024;
+    const size_t bs = 4 * 1024;
     __attribute((aligned(16))) char static_buf[bs];
 
     buf = __libcxxabi::__demangle(__libcxxabi::__demangle(mangled_name,
