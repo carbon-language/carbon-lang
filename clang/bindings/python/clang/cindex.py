@@ -1008,6 +1008,30 @@ class Cursor(Structure):
         return self._enum_type
 
     @property
+    def enum_value(self):
+        """Return the value of an enum constant."""
+        if not hasattr(self, '_enum_value'):
+            assert self.kind == CursorKind.ENUM_CONSTANT_DECL
+            # Figure out the underlying type of the enum to know if it
+            # is a signed or unsigned quantity.
+            underlying_type = self.type
+            if underlying_type.kind == TypeKind.ENUM:
+                underlying_type = underlying_type.get_declaration().enum_type
+            if underlying_type.kind in (TypeKind.CHAR_U,
+                                        TypeKind.UCHAR,
+                                        TypeKind.CHAR16,
+                                        TypeKind.CHAR32,
+                                        TypeKind.USHORT,
+                                        TypeKind.UINT,
+                                        TypeKind.ULONG,
+                                        TypeKind.ULONGLONG,
+                                        TypeKind.UINT128):
+                self._enum_value = Cursor_enum_const_decl_unsigned(self)
+            else:
+                self._enum_value = Cursor_enum_const_decl(self)
+        return self._enum_value
+
+    @property
     def objc_type_encoding(self):
         """Return the Objective-C type encoding as a str."""
         if not hasattr(self, '_objc_type_encoding'):
@@ -1936,6 +1960,14 @@ Cursor_enum_type = lib.clang_getEnumDeclIntegerType
 Cursor_enum_type.argtypes = [Cursor]
 Cursor_enum_type.restype = Type
 Cursor_enum_type.errcheck = Type.from_result
+
+Cursor_enum_const_decl = lib.clang_getEnumConstantDeclValue
+Cursor_enum_const_decl.argtypes = [Cursor]
+Cursor_enum_const_decl.restype = c_longlong
+
+Cursor_enum_const_decl_unsigned = lib.clang_getEnumConstantDeclUnsignedValue
+Cursor_enum_const_decl_unsigned.argtypes = [Cursor]
+Cursor_enum_const_decl_unsigned.restype = c_ulonglong
 
 Cursor_objc_type_encoding = lib.clang_getDeclObjCTypeEncoding
 Cursor_objc_type_encoding.argtypes = [Cursor]
