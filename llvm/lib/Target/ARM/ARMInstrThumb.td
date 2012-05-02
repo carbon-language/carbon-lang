@@ -258,16 +258,20 @@ def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "", []>,
         Requires<[IsThumb2]>;
 
 def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "", []>,
-           T1SystemEncoding<0x10>; // A8.6.410
+           T1SystemEncoding<0x10>, // A8.6.410
+           Requires<[IsThumb2]>;
 
 def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "", []>,
-           T1SystemEncoding<0x20>; // A8.6.408
+           T1SystemEncoding<0x20>, // A8.6.408
+           Requires<[IsThumb2]>;
 
 def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "", []>,
-           T1SystemEncoding<0x30>; // A8.6.409
+           T1SystemEncoding<0x30>, // A8.6.409
+           Requires<[IsThumb2]>;
 
 def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "", []>,
-           T1SystemEncoding<0x40>; // A8.6.157
+           T1SystemEncoding<0x40>, // A8.6.157
+           Requires<[IsThumb2]>;
 
 // The imm operand $val can be used by a debugger to store more information
 // about the breakpoint.

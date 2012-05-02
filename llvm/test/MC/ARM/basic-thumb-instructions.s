@@ -635,13 +635,3 @@ _func:
 @ CHECK: uxth	r1, r4                  @ encoding: [0xa1,0xb2]
 
 
-@------------------------------------------------------------------------------
-@ WFE/WFI/YIELD
-@------------------------------------------------------------------------------
-        wfe
-        wfi
-        yield
-
-@ CHECK: wfe                             @ encoding: [0x20,0xbf]
-@ CHECK: wfi                             @ encoding: [0x30,0xbf]
-@ CHECK: yield                           @ encoding: [0x10,0xbf]

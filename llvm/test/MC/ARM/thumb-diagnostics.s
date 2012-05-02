@@ -138,3 +138,21 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: source register must be the same as destination
 @ CHECK-ERRORS:         add r2, sp, ip
 @ CHECK-ERRORS:                     ^
+ 
+@------------------------------------------------------------------------------
+@ WFE/WFI/YIELD - are not supported pre v6T2
+@------------------------------------------------------------------------------
+        wfe
+        wfi
+        yield
+
+@ CHECK-ERRORS: error: instruction requires: thumb2
+@ CHECK-ERRORS: wfe
+@ CHECK-ERRORS: ^
+@ CHECK-ERRORS: error: instruction requires: thumb2
+@ CHECK-ERRORS: wfi
+@ CHECK-ERRORS: ^
+@ CHECK-ERRORS: error: instruction requires: thumb2
+@ CHECK-ERRORS: yield
+@ CHECK-ERRORS: ^
+

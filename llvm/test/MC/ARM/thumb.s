@@ -44,13 +44,6 @@
         nop
 @ CHECK: nop @ encoding: [0xc0,0x46]
 
-        wfe
-        wfi
-        yield
-@ CHECK: wfe                            @ encoding: [0x20,0xbf]
-@ CHECK: wfi                            @ encoding: [0x30,0xbf]
-@ CHECK: yield                          @ encoding: [0x10,0xbf]
-
         cpsie aif
 @ CHECK: cpsie aif                      @ encoding: [0x67,0xb6]
 
