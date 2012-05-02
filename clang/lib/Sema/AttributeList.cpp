@@ -108,10 +108,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   return llvm::StringSwitch<AttributeList::Kind>(AttrName)
     #include "clang/Sema/AttrParsedAttrKinds.inc"
     .Case("address_space", AT_address_space)
-    .Case("align", AT_aligned) // FIXME - should it be "aligned"?
     .Case("base_check", AT_base_check)
     .Case("bounded", IgnoredAttribute)       // OpenBSD
-    .Case("__const", AT_const) // some GCC headers do contain this spelling
     .Case("cf_returns_autoreleased", AT_cf_returns_autoreleased)
     .Case("mode", AT_mode)
     .Case("vec_type_hint", IgnoredAttribute)

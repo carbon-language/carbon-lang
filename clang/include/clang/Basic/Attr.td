@@ -118,7 +118,7 @@ def Alias : InheritableAttr {
 }
 
 def Aligned : InheritableAttr {
-  let Spellings = ["aligned"];
+  let Spellings = ["aligned", "align"];
   let Subjects = [NonBitField, NormalVar, Tag];
   let Args = [AlignedArgument<"Alignment">];
   let Namespaces = ["", "std"];
@@ -219,7 +219,7 @@ def Common : InheritableAttr {
 }
 
 def Const : InheritableAttr {
-  let Spellings = ["const"];
+  let Spellings = ["const", "__const"];
 }
 
 def Constructor : InheritableAttr {
