@@ -10,3 +10,7 @@ void test3() __attribute__((visibility("protected"))); // expected-warning {{tar
 struct __attribute__((visibility("hidden"))) test4; // expected-note {{previous attribute is here}}
 struct test4;
 struct __attribute__((visibility("default"))) test4; // expected-error {{visibility does not match previous declaration}}
+
+struct test5;
+struct __attribute__((visibility("hidden"))) test5; // expected-note {{previous attribute is here}}
+struct __attribute__((visibility("default"))) test5; // expected-error {{visibility does not match previous declaration}}

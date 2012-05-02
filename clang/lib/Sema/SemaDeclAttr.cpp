@@ -1757,13 +1757,16 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  Decl *PrevDecl;
-  if (isa<FunctionDecl>(D))
-    PrevDecl = D->getMostRecentDecl()->getPreviousDecl();
-  else
-    PrevDecl = D->getCanonicalDecl();
+  // Find the last Decl that has an attribute.
+  VisibilityAttr *PrevAttr;
+  assert(D->redecls_begin() == D);
+  for (Decl::redecl_iterator I = D->redecls_begin(), E = D->redecls_end();
+       I != E; ++I) {
+    PrevAttr = I->getAttr<VisibilityAttr>() ;
+    if (PrevAttr)
+      break;
+  }
 
-  VisibilityAttr *PrevAttr = PrevDecl ? PrevDecl->getAttr<VisibilityAttr>() : 0;
   if (PrevAttr) {
     VisibilityAttr::VisibilityType PrevVisibility = PrevAttr->getVisibility();
     if (PrevVisibility != type) {
