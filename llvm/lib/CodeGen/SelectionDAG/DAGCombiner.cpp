@@ -5715,6 +5715,9 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   if (DAG.getTarget().Options.UnsafeFPMath &&
       ISD::isBuildVectorAllZeros(N1.getNode()))
     return N1;
+  // fold (fmul A, 1.0) -> A
+  if (N1CFP && N1CFP->isExactlyValue(1.0))
+    return N0;
   // fold (fmul X, 2.0) -> (fadd X, X)
   if (N1CFP && N1CFP->isExactlyValue(+2.0))
     return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N0);

@@ -21,3 +21,12 @@ entry:
 ; CORTEXA8: 	vmul.f32	d0, d1, d0
 ; CORTEXA9: test:
 ; CORTEXA9: 	vmul.f32	s{{.}}, s{{.}}, s{{.}}
+
+; VFP2: test2
+define float @test2(float %a) nounwind {
+; CHECK-NOT: mul
+; CHECK: mov pc, lr
+  %ret = fmul float %a, 1.0
+  ret float %ret
+}
+
