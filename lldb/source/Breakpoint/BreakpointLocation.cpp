@@ -235,15 +235,6 @@ BreakpointLocation::SetCondition (const char *condition)
     SendBreakpointLocationChangedEvent (eBreakpointEventTypeConditionChanged);
 }
 
-ThreadPlan *
-BreakpointLocation::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, Stream &error)
-{
-    if (m_options_ap.get())
-        return m_options_ap->GetThreadPlanToTestCondition (exe_ctx, shared_from_this(), error);
-    else
-        return m_owner.GetThreadPlanToTestCondition (exe_ctx, shared_from_this(), error);
-}
-
 const char *
 BreakpointLocation::GetConditionText () const
 {

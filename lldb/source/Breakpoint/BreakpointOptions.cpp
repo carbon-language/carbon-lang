@@ -170,51 +170,6 @@ BreakpointOptions::SetCondition (const char *condition)
     }
 }
 
-ThreadPlan * 
-BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
-                                                 const BreakpointLocationSP &break_loc_sp,
-                                                 Stream &error_stream)
-{
-    // No condition means we should stop, so return NULL.
-    if (!m_condition_ap.get())
-        return NULL;
-        
-    // FIXME: I shouldn't have to do this, the process should handle it for me:
-    Process *process = exe_ctx.GetProcessPtr();
-    if (!process->GetDynamicCheckers())
-    {
-        DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
-        
-        StreamString install_errors;
-        
-        if (!dynamic_checkers->Install(install_errors, exe_ctx))
-        {
-            error_stream.Printf("Couldn't install dynamic checkers into the execution context: %s\n", install_errors.GetData());
-            return NULL;
-        }
-        
-        process->SetDynamicCheckers(dynamic_checkers);
-    }
-    
-    const bool keep_in_memory = false;
-    
-    if (!m_condition_ap->Parse (error_stream, exe_ctx, eExecutionPolicyAlways, keep_in_memory))
-    {
-        // Errors mean we should stop.
-        return NULL;
-    }
-    // FIXME: When we can execute static expressions without running the target, we should check that here,
-    // and return something to indicate we should stop or just continue.
-
-    ThreadPlan *new_plan = new ThreadPlanTestCondition (exe_ctx.GetThreadRef(), 
-                                                        exe_ctx, 
-                                                        m_condition_ap.get(), 
-                                                        break_loc_sp, 
-                                                        true);
-    
-    return new_plan;
-}
-
 const char *
 BreakpointOptions::GetConditionText () const
 {

@@ -412,25 +412,6 @@ public:
     void SetCondition (const char *condition);
     
     //------------------------------------------------------------------
-    /// Test the breakpoint condition in the Execution context passed in.
-    ///
-    /// @param[in] exe_ctx
-    ///    The execution context in which to evaluate this expression.
-    /// 
-    /// @param[in] break_loc_sp
-    ///    A shared pointer to the location that we are testing thsi condition for.
-    ///
-    /// @param[in] error
-    ///    Error messages will be written to this stream.
-    ///
-    /// @return
-    ///     A thread plan to run to test the condition or NULL if no condition.
-    //------------------------------------------------------------------
-    ThreadPlan *GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
-                                              lldb::BreakpointLocationSP break_loc_sp, 
-                                              Stream &error);
-    
-    //------------------------------------------------------------------
     /// Return a pointer to the text of the condition expression.
     ///
     /// @return

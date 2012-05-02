@@ -247,12 +247,6 @@ Breakpoint::SetCondition (const char *condition)
     SendBreakpointChangedEvent (eBreakpointEventTypeConditionChanged);
 }
 
-ThreadPlan *
-Breakpoint::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, lldb::BreakpointLocationSP loc_sp, Stream &error)
-{
-    return m_options.GetThreadPlanToTestCondition (exe_ctx, loc_sp, error);
-}
-
 const char *
 Breakpoint::GetConditionText () const
 {

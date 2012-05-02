@@ -167,23 +167,7 @@ public:
     //------------------------------------------------------------------
     void 
     SetCondition (const char *condition);
-    
-    //------------------------------------------------------------------
-    /// Test the breakpoint location's condition in the Execution context passed in.
-    ///
-    /// @param[in] exe_ctx
-    ///    The execution context in which to evaluate this expression.
-    /// 
-    /// @param[in] error
-    ///    Error messages will be written to this stream.
-    ///
-    /// @return
-    ///     A thread plan to run to test the condition, or NULL if there is no condition.
-    //------------------------------------------------------------------
-    ThreadPlan *
-    GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
-                                  Stream &error);
-    
+
     //------------------------------------------------------------------
     /// Return a pointer to the text of the condition expression.
     ///
