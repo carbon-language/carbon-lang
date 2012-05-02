@@ -128,7 +128,7 @@ static int RunProgramRemotelyWithTimeout(const sys::Path &RemoteClientPath,
       ErrorFile.close();
     }
 
-    errs() << OS;
+    errs() << OS.str();
   }
 
   return ReturnCode;
