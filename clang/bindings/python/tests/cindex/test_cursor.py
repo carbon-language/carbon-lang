@@ -84,6 +84,14 @@ def test_enum_type():
     enum_type = enum.enum_type
     assert enum_type.kind == TypeKind.UINT
 
+def test_enum_type_cpp():
+    tu = get_tu('enum TEST : long long { FOO=1, BAR=2 };', lang="cpp")
+    enum = get_cursor(tu, 'TEST')
+    assert enum is not None
+
+    assert enum.kind == CursorKind.ENUM_DECL
+    assert enum.enum_type.kind == TypeKind.LONGLONG
+
 def test_objc_type_encoding():
     tu = get_tu('int i;', lang='objc')
     i = get_cursor(tu, 'i')
