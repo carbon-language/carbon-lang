@@ -255,8 +255,9 @@ class Ii32PCRel<bits<8> o, Format f, dag outs, dag ins, string asm,
 
 // FPStack Instruction Templates:
 // FPI - Floating Point Instruction template.
-class FPI<bits<8> o, Format F, dag outs, dag ins, string asm>
-  : I<o, F, outs, ins, asm, []> {}
+class FPI<bits<8> o, Format F, dag outs, dag ins, string asm,
+          InstrItinClass itin = IIC_DEFAULT>
+  : I<o, F, outs, ins, asm, [], itin> {}
 
 // FpI_ - Floating Point Pseudo Instruction template. Not Predicated.
 class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern,

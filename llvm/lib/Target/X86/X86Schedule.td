@@ -261,6 +261,44 @@ def IIC_CMPX_LOCK_16B : InstrItinClass;
 def IIC_XADD_LOCK_MEM : InstrItinClass;
 def IIC_XADD_LOCK_MEM8 : InstrItinClass;
 
+def IIC_FILD : InstrItinClass;
+def IIC_FLD : InstrItinClass;
+def IIC_FLD80 : InstrItinClass;
+def IIC_FST : InstrItinClass;
+def IIC_FST80 : InstrItinClass;
+def IIC_FIST : InstrItinClass;
+def IIC_FLDZ : InstrItinClass;
+def IIC_FUCOM : InstrItinClass;
+def IIC_FUCOMI : InstrItinClass;
+def IIC_FCOMI : InstrItinClass;
+def IIC_FNSTSW : InstrItinClass;
+def IIC_FNSTCW : InstrItinClass;
+def IIC_FLDCW : InstrItinClass;
+def IIC_FNINIT : InstrItinClass;
+def IIC_FFREE : InstrItinClass;
+def IIC_FNCLEX : InstrItinClass;
+def IIC_WAIT : InstrItinClass;
+def IIC_FXAM : InstrItinClass;
+def IIC_FNOP : InstrItinClass;
+def IIC_FLDL : InstrItinClass;
+def IIC_F2XM1 : InstrItinClass;
+def IIC_FYL2X : InstrItinClass;
+def IIC_FPTAN : InstrItinClass;
+def IIC_FPATAN : InstrItinClass;
+def IIC_FXTRACT : InstrItinClass;
+def IIC_FPREM1 : InstrItinClass;
+def IIC_FPSTP : InstrItinClass;
+def IIC_FPREM : InstrItinClass;
+def IIC_FYL2XP1 : InstrItinClass;
+def IIC_FSINCOS : InstrItinClass;
+def IIC_FRNDINT : InstrItinClass;
+def IIC_FSCALE : InstrItinClass;
+def IIC_FCOMPP : InstrItinClass;
+def IIC_FXSAVE : InstrItinClass;
+def IIC_FXRSTOR : InstrItinClass;
+
+def IIC_FXCH : InstrItinClass;
+
 
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.

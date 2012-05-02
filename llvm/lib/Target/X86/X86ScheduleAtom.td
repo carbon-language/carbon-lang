@@ -300,6 +300,46 @@ def AtomItineraries : ProcessorItineraries<
   InstrItinData<IIC_CMPX_LOCK_16B, [InstrStage<22, [Port0, Port1]>] >,
 
   InstrItinData<IIC_XADD_LOCK_MEM, [InstrStage<2, [Port0, Port1]>] >,
-  InstrItinData<IIC_XADD_LOCK_MEM, [InstrStage<3, [Port0, Port1]>] >
+  InstrItinData<IIC_XADD_LOCK_MEM, [InstrStage<3, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_FILD, [InstrStage<5, [Port0], 0>, InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_FLD,  [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_FLD80, [InstrStage<4, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_FST,   [InstrStage<2, [Port0, Port1]>] >,
+  InstrItinData<IIC_FST80, [InstrStage<5, [Port0, Port1]>] >,
+  InstrItinData<IIC_FIST,  [InstrStage<6, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_FLDZ,   [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_FUCOM,  [InstrStage<1, [Port1]>] >,
+  InstrItinData<IIC_FUCOMI, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_FCOMI,  [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_FNSTSW, [InstrStage<10, [Port0, Port1]>] >,
+  InstrItinData<IIC_FNSTCW, [InstrStage<8, [Port0, Port1]>] >,
+  InstrItinData<IIC_FLDCW,  [InstrStage<5, [Port0, Port1]>] >,
+  InstrItinData<IIC_FNINIT, [InstrStage<63, [Port0, Port1]>] >,
+  InstrItinData<IIC_FFREE,  [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_FNCLEX, [InstrStage<25, [Port0, Port1]>] >,
+  InstrItinData<IIC_WAIT,  [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_FXAM,  [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_FNOP,  [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_FLDL,  [InstrStage<10, [Port0, Port1]>] >,
+  InstrItinData<IIC_F2XM1,  [InstrStage<99, [Port0, Port1]>] >,
+  InstrItinData<IIC_FYL2X,  [InstrStage<146, [Port0, Port1]>] >,
+  InstrItinData<IIC_FPTAN,  [InstrStage<168, [Port0, Port1]>] >,
+  InstrItinData<IIC_FPATAN,  [InstrStage<183, [Port0, Port1]>] >,
+  InstrItinData<IIC_FXTRACT,  [InstrStage<25, [Port0, Port1]>] >,
+  InstrItinData<IIC_FPREM1,  [InstrStage<71, [Port0, Port1]>] >,
+  InstrItinData<IIC_FPSTP,  [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_FPREM,  [InstrStage<55, [Port0, Port1]>] >,
+  InstrItinData<IIC_FYL2XP1,  [InstrStage<147, [Port0, Port1]>] >,
+  InstrItinData<IIC_FSINCOS,  [InstrStage<174, [Port0, Port1]>] >,
+  InstrItinData<IIC_FRNDINT,  [InstrStage<46, [Port0, Port1]>] >,
+  InstrItinData<IIC_FSCALE,  [InstrStage<77, [Port0, Port1]>] >,
+  InstrItinData<IIC_FCOMPP,  [InstrStage<1, [Port1]>] >,
+  InstrItinData<IIC_FXSAVE,  [InstrStage<140, [Port0, Port1]>] >,
+  InstrItinData<IIC_FXRSTOR,  [InstrStage<141, [Port0, Port1]>] >,
+  InstrItinData<IIC_FXCH, [InstrStage<1, [Port0], 0>, InstrStage<1, [Port1]>] >
+
   ]>;
 

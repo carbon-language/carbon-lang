@@ -423,24 +423,40 @@ def IST_Fp64m80  : FpI_<(outs), (ins i64mem:$op, RFP80:$src), OneArgFP, []>;
 }
 
 let mayLoad = 1 in {
-def LD_F32m   : FPI<0xD9, MRM0m, (outs), (ins f32mem:$src), "fld{s}\t$src">;
-def LD_F64m   : FPI<0xDD, MRM0m, (outs), (ins f64mem:$src), "fld{l}\t$src">;
-def LD_F80m   : FPI<0xDB, MRM5m, (outs), (ins f80mem:$src), "fld{t}\t$src">;
-def ILD_F16m  : FPI<0xDF, MRM0m, (outs), (ins i16mem:$src), "fild{s}\t$src">;
-def ILD_F32m  : FPI<0xDB, MRM0m, (outs), (ins i32mem:$src), "fild{l}\t$src">;
-def ILD_F64m  : FPI<0xDF, MRM5m, (outs), (ins i64mem:$src), "fild{ll}\t$src">;
+def LD_F32m   : FPI<0xD9, MRM0m, (outs), (ins f32mem:$src), "fld{s}\t$src",
+                    IIC_FLD>;
+def LD_F64m   : FPI<0xDD, MRM0m, (outs), (ins f64mem:$src), "fld{l}\t$src",
+                    IIC_FLD>;
+def LD_F80m   : FPI<0xDB, MRM5m, (outs), (ins f80mem:$src), "fld{t}\t$src",
+                    IIC_FLD80>;
+def ILD_F16m  : FPI<0xDF, MRM0m, (outs), (ins i16mem:$src), "fild{s}\t$src",
+                    IIC_FILD>;
+def ILD_F32m  : FPI<0xDB, MRM0m, (outs), (ins i32mem:$src), "fild{l}\t$src",
+                    IIC_FILD>;
+def ILD_F64m  : FPI<0xDF, MRM5m, (outs), (ins i64mem:$src), "fild{ll}\t$src",
+                    IIC_FILD>;
 }
 let mayStore = 1 in {
-def ST_F32m   : FPI<0xD9, MRM2m, (outs), (ins f32mem:$dst), "fst{s}\t$dst">;
-def ST_F64m   : FPI<0xDD, MRM2m, (outs), (ins f64mem:$dst), "fst{l}\t$dst">;
-def ST_FP32m  : FPI<0xD9, MRM3m, (outs), (ins f32mem:$dst), "fstp{s}\t$dst">;
-def ST_FP64m  : FPI<0xDD, MRM3m, (outs), (ins f64mem:$dst), "fstp{l}\t$dst">;
-def ST_FP80m  : FPI<0xDB, MRM7m, (outs), (ins f80mem:$dst), "fstp{t}\t$dst">;
-def IST_F16m  : FPI<0xDF, MRM2m, (outs), (ins i16mem:$dst), "fist{s}\t$dst">;
-def IST_F32m  : FPI<0xDB, MRM2m, (outs), (ins i32mem:$dst), "fist{l}\t$dst">;
-def IST_FP16m : FPI<0xDF, MRM3m, (outs), (ins i16mem:$dst), "fistp{s}\t$dst">;
-def IST_FP32m : FPI<0xDB, MRM3m, (outs), (ins i32mem:$dst), "fistp{l}\t$dst">;
-def IST_FP64m : FPI<0xDF, MRM7m, (outs), (ins i64mem:$dst), "fistp{ll}\t$dst">;
+def ST_F32m   : FPI<0xD9, MRM2m, (outs), (ins f32mem:$dst), "fst{s}\t$dst",
+                    IIC_FST>;
+def ST_F64m   : FPI<0xDD, MRM2m, (outs), (ins f64mem:$dst), "fst{l}\t$dst",
+                    IIC_FST>;
+def ST_FP32m  : FPI<0xD9, MRM3m, (outs), (ins f32mem:$dst), "fstp{s}\t$dst",
+                    IIC_FST>;
+def ST_FP64m  : FPI<0xDD, MRM3m, (outs), (ins f64mem:$dst), "fstp{l}\t$dst",
+                    IIC_FST>;
+def ST_FP80m  : FPI<0xDB, MRM7m, (outs), (ins f80mem:$dst), "fstp{t}\t$dst",
+                    IIC_FST80>;
+def IST_F16m  : FPI<0xDF, MRM2m, (outs), (ins i16mem:$dst), "fist{s}\t$dst",
+                    IIC_FIST>;
+def IST_F32m  : FPI<0xDB, MRM2m, (outs), (ins i32mem:$dst), "fist{l}\t$dst",
+                    IIC_FIST>;
+def IST_FP16m : FPI<0xDF, MRM3m, (outs), (ins i16mem:$dst), "fistp{s}\t$dst",
+                    IIC_FIST>;
+def IST_FP32m : FPI<0xDB, MRM3m, (outs), (ins i32mem:$dst), "fistp{l}\t$dst",
+                    IIC_FIST>;
+def IST_FP64m : FPI<0xDF, MRM7m, (outs), (ins i64mem:$dst), "fistp{ll}\t$dst",
+                    IIC_FIST>;
 }
 
 // FISTTP requires SSE3 even though it's a FPStack op.
@@ -466,17 +482,23 @@ def ISTT_Fp64m80 : FpI_<(outs), (ins i64mem:$op, RFP80:$src), OneArgFP,
 } // Predicates = [HasSSE3]
 
 let mayStore = 1 in {
-def ISTT_FP16m : FPI<0xDF, MRM1m, (outs), (ins i16mem:$dst), "fisttp{s}\t$dst">;
-def ISTT_FP32m : FPI<0xDB, MRM1m, (outs), (ins i32mem:$dst), "fisttp{l}\t$dst">;
+def ISTT_FP16m : FPI<0xDF, MRM1m, (outs), (ins i16mem:$dst), "fisttp{s}\t$dst",
+  IIC_FST>;
+def ISTT_FP32m : FPI<0xDB, MRM1m, (outs), (ins i32mem:$dst), "fisttp{l}\t$dst",
+  IIC_FST>;
 def ISTT_FP64m : FPI<0xDD, MRM1m, (outs), (ins i64mem:$dst), 
-  "fisttp{ll}\t$dst">;
+  "fisttp{ll}\t$dst", IIC_FST>;
 }
 
 // FP Stack manipulation instructions.
-def LD_Frr   : FPI<0xC0, AddRegFrm, (outs), (ins RST:$op), "fld\t$op">, D9;
-def ST_Frr   : FPI<0xD0, AddRegFrm, (outs), (ins RST:$op), "fst\t$op">, DD;
-def ST_FPrr  : FPI<0xD8, AddRegFrm, (outs), (ins RST:$op), "fstp\t$op">, DD;
-def XCH_F    : FPI<0xC8, AddRegFrm, (outs), (ins RST:$op), "fxch\t$op">, D9;
+def LD_Frr   : FPI<0xC0, AddRegFrm, (outs), (ins RST:$op), "fld\t$op",
+                   IIC_FLD>, D9;
+def ST_Frr   : FPI<0xD0, AddRegFrm, (outs), (ins RST:$op), "fst\t$op",
+                   IIC_FST>, DD;
+def ST_FPrr  : FPI<0xD8, AddRegFrm, (outs), (ins RST:$op), "fstp\t$op",
+                   IIC_FST>, DD;
+def XCH_F    : FPI<0xC8, AddRegFrm, (outs), (ins RST:$op), "fxch\t$op",
+                   IIC_FXCH>, D9;
 
 // Floating point constant loads.
 let isReMaterializable = 1 in {
@@ -494,8 +516,8 @@ def LD_Fp180 : FpI_<(outs RFP80:$dst), (ins), ZeroArgFP,
                 [(set RFP80:$dst, fpimm1)]>;
 }
 
-def LD_F0 : FPI<0xEE, RawFrm, (outs), (ins), "fldz">, D9;
-def LD_F1 : FPI<0xE8, RawFrm, (outs), (ins), "fld1">, D9;
+def LD_F0 : FPI<0xEE, RawFrm, (outs), (ins), "fldz", IIC_FLDZ>, D9;
+def LD_F1 : FPI<0xE8, RawFrm, (outs), (ins), "fld1", IIC_FIST>, D9;
 
 
 // Floating point compares.
@@ -520,89 +542,91 @@ def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
 let Defs = [FPSW], Uses = [ST0] in {
 def UCOM_Fr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
-                    "fucom\t$reg">, DD;
+                    "fucom\t$reg", IIC_FUCOM>, DD;
 def UCOM_FPr   : FPI<0xE8, AddRegFrm,    // FPSW = cmp ST(0) with ST(i), pop
                     (outs), (ins RST:$reg),
-                    "fucomp\t$reg">, DD;
+                    "fucomp\t$reg", IIC_FUCOM>, DD;
 def UCOM_FPPr  : FPI<0xE9, RawFrm,       // cmp ST(0) with ST(1), pop, pop
                     (outs), (ins),
-                    "fucompp">, DA;
+                    "fucompp", IIC_FUCOM>, DA;
 }
 
 let Defs = [EFLAGS, FPSW], Uses = [ST0] in {
 def UCOM_FIr   : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
-                    "fucomi\t$reg">, DB;
+                    "fucomi\t$reg", IIC_FUCOMI>, DB;
 def UCOM_FIPr  : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i), pop
                     (outs), (ins RST:$reg),
-                    "fucompi\t$reg">, DF;
+                    "fucompi\t$reg", IIC_FUCOMI>, DF;
 }
 
 let Defs = [EFLAGS, FPSW] in {
 def COM_FIr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
-                  "fcomi\t$reg">, DB;
+                  "fcomi\t$reg", IIC_FCOMI>, DB;
 def COM_FIPr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
-                   "fcompi\t$reg">, DF;
+                   "fcompi\t$reg", IIC_FCOMI>, DF;
 }
 
 // Floating point flag ops.
 let Defs = [AX], Uses = [FPSW] in
 def FNSTSW16r : I<0xE0, RawFrm,                  // AX = fp flags
                   (outs), (ins), "fnstsw %ax",
-                  [(set AX, (X86fp_stsw FPSW))]>, DF;
+                  [(set AX, (X86fp_stsw FPSW))], IIC_FNSTSW>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
                   (outs), (ins i16mem:$dst), "fnstcw\t$dst",
-                  [(X86fp_cwd_get16 addr:$dst)]>;
+                  [(X86fp_cwd_get16 addr:$dst)], IIC_FNSTCW>;
                   
 let mayLoad = 1 in
 def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
-                  (outs), (ins i16mem:$dst), "fldcw\t$dst", []>;
+                  (outs), (ins i16mem:$dst), "fldcw\t$dst", [], IIC_FLDCW>;
 
 // FPU control instructions
 let Defs = [FPSW] in
-def FNINIT : I<0xE3, RawFrm, (outs), (ins), "fninit", []>, DB;
+def FNINIT : I<0xE3, RawFrm, (outs), (ins), "fninit", [], IIC_FNINIT>, DB;
 def FFREE : FPI<0xC0, AddRegFrm, (outs), (ins RST:$reg),
-                "ffree\t$reg">, DD;
+                "ffree\t$reg", IIC_FFREE>, DD;
 
 // Clear exceptions
 
 let Defs = [FPSW] in
-def FNCLEX : I<0xE2, RawFrm, (outs), (ins), "fnclex", []>, DB;
+def FNCLEX : I<0xE2, RawFrm, (outs), (ins), "fnclex", [], IIC_FNCLEX>, DB;
 
 // Operandless floating-point instructions for the disassembler.
-def WAIT : I<0x9B, RawFrm, (outs), (ins), "wait", []>;
+def WAIT : I<0x9B, RawFrm, (outs), (ins), "wait", [], IIC_WAIT>;
 
-def FNOP : I<0xD0, RawFrm, (outs), (ins), "fnop", []>, D9;
-def FXAM : I<0xE5, RawFrm, (outs), (ins), "fxam", []>, D9;
-def FLDL2T : I<0xE9, RawFrm, (outs), (ins), "fldl2t", []>, D9;
-def FLDL2E : I<0xEA, RawFrm, (outs), (ins), "fldl2e", []>, D9;
-def FLDPI : I<0xEB, RawFrm, (outs), (ins), "fldpi", []>, D9;
-def FLDLG2 : I<0xEC, RawFrm, (outs), (ins), "fldlg2", []>, D9;
-def FLDLN2 : I<0xED, RawFrm, (outs), (ins), "fldln2", []>, D9;
-def F2XM1 : I<0xF0, RawFrm, (outs), (ins), "f2xm1", []>, D9;
-def FYL2X : I<0xF1, RawFrm, (outs), (ins), "fyl2x", []>, D9;
-def FPTAN : I<0xF2, RawFrm, (outs), (ins), "fptan", []>, D9;
-def FPATAN : I<0xF3, RawFrm, (outs), (ins), "fpatan", []>, D9;
-def FXTRACT : I<0xF4, RawFrm, (outs), (ins), "fxtract", []>, D9;
-def FPREM1 : I<0xF5, RawFrm, (outs), (ins), "fprem1", []>, D9;
-def FDECSTP : I<0xF6, RawFrm, (outs), (ins), "fdecstp", []>, D9;
-def FINCSTP : I<0xF7, RawFrm, (outs), (ins), "fincstp", []>, D9;
-def FPREM : I<0xF8, RawFrm, (outs), (ins), "fprem", []>, D9;
-def FYL2XP1 : I<0xF9, RawFrm, (outs), (ins), "fyl2xp1", []>, D9;
-def FSINCOS : I<0xFB, RawFrm, (outs), (ins), "fsincos", []>, D9;
-def FRNDINT : I<0xFC, RawFrm, (outs), (ins), "frndint", []>, D9;
-def FSCALE : I<0xFD, RawFrm, (outs), (ins), "fscale", []>, D9;
-def FCOMPP : I<0xD9, RawFrm, (outs), (ins), "fcompp", []>, DE;
+def FNOP : I<0xD0, RawFrm, (outs), (ins), "fnop", [], IIC_FNOP>, D9;
+def FXAM : I<0xE5, RawFrm, (outs), (ins), "fxam", [], IIC_FXAM>, D9;
+def FLDL2T : I<0xE9, RawFrm, (outs), (ins), "fldl2t", [], IIC_FLDL>, D9;
+def FLDL2E : I<0xEA, RawFrm, (outs), (ins), "fldl2e", [], IIC_FLDL>, D9;
+def FLDPI : I<0xEB, RawFrm, (outs), (ins), "fldpi", [], IIC_FLDL>, D9;
+def FLDLG2 : I<0xEC, RawFrm, (outs), (ins), "fldlg2", [], IIC_FLDL>, D9;
+def FLDLN2 : I<0xED, RawFrm, (outs), (ins), "fldln2", [], IIC_FLDL>, D9;
+def F2XM1 : I<0xF0, RawFrm, (outs), (ins), "f2xm1", [], IIC_F2XM1>, D9;
+def FYL2X : I<0xF1, RawFrm, (outs), (ins), "fyl2x", [], IIC_FYL2X>, D9;
+def FPTAN : I<0xF2, RawFrm, (outs), (ins), "fptan", [], IIC_FPTAN>, D9;
+def FPATAN : I<0xF3, RawFrm, (outs), (ins), "fpatan", [], IIC_FPATAN>, D9;
+def FXTRACT : I<0xF4, RawFrm, (outs), (ins), "fxtract", [], IIC_FXTRACT>, D9;
+def FPREM1 : I<0xF5, RawFrm, (outs), (ins), "fprem1", [], IIC_FPREM1>, D9;
+def FDECSTP : I<0xF6, RawFrm, (outs), (ins), "fdecstp", [], IIC_FPSTP>, D9;
+def FINCSTP : I<0xF7, RawFrm, (outs), (ins), "fincstp", [], IIC_FPSTP>, D9;
+def FPREM : I<0xF8, RawFrm, (outs), (ins), "fprem", [], IIC_FPREM>, D9;
+def FYL2XP1 : I<0xF9, RawFrm, (outs), (ins), "fyl2xp1", [], IIC_FYL2XP1>, D9;
+def FSINCOS : I<0xFB, RawFrm, (outs), (ins), "fsincos", [], IIC_FSINCOS>, D9;
+def FRNDINT : I<0xFC, RawFrm, (outs), (ins), "frndint", [], IIC_FRNDINT>, D9;
+def FSCALE : I<0xFD, RawFrm, (outs), (ins), "fscale", [], IIC_FSCALE>, D9;
+def FCOMPP : I<0xD9, RawFrm, (outs), (ins), "fcompp", [], IIC_FCOMPP>, DE;
 
 def FXSAVE : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
-               "fxsave\t$dst", []>, TB;
+               "fxsave\t$dst", [], IIC_FXSAVE>, TB;
 def FXSAVE64 : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
-                 "fxsaveq\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
+                 "fxsaveq\t$dst", [], IIC_FXSAVE>, TB, REX_W,
+                 Requires<[In64BitMode]>;
 def FXRSTOR : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
-                "fxrstor\t$src", []>, TB;
+                "fxrstor\t$src", [], IIC_FXRSTOR>, TB;
 def FXRSTOR64 : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
-                  "fxrstorq\t$src", []>, TB, REX_W, Requires<[In64BitMode]>;
+                  "fxrstorq\t$src", [], IIC_FXRSTOR>, TB, REX_W,
+                  Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
