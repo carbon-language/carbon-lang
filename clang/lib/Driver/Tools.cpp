@@ -2500,12 +2500,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Honor -fpack-struct= and -fpack-struct, if given. Note that
   // -fno-pack-struct doesn't apply to -fpack-struct=.
   if (Arg *A = Args.getLastArg(options::OPT_fpack_struct_EQ)) {
-    CmdArgs.push_back("-fpack-struct");
-    CmdArgs.push_back(A->getValue(Args));
+    std::string PackStructStr = "-fpack-struct=";
+    PackStructStr += A->getValue(Args);
+    CmdArgs.push_back(Args.MakeArgString(PackStructStr));
   } else if (Args.hasFlag(options::OPT_fpack_struct,
                           options::OPT_fno_pack_struct, false)) {
-    CmdArgs.push_back("-fpack-struct");
-    CmdArgs.push_back("1");
+    CmdArgs.push_back("-fpack-struct=1");
   }
 
   if (Args.hasArg(options::OPT_mkernel) ||
