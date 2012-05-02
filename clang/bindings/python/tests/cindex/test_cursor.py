@@ -135,3 +135,15 @@ def test_enum_values_cpp():
     assert ham.kind == CursorKind.ENUM_CONSTANT_DECL
     assert ham.enum_value == 0x10000000000
 
+def test_annotation_attribute():
+    tu = get_tu('int foo (void) __attribute__ ((annotate("here be annotation attribute")));')
+
+    foo = get_cursor(tu, 'foo')
+    assert foo is not None
+
+    for c in foo.get_children():
+        if c.kind == CursorKind.ANNOTATE_ATTR:
+            assert c.displayname == "here be annotation attribute"
+            break
+    else:
+        assert False, "Couldn't find annotation"
