@@ -15,16 +15,17 @@ def get_tu(source, lang='c', all_warnings=False):
     all_warnings is a convenience argument to enable all compiler warnings.
     """
     name = 't.c'
+    args = []
     if lang == 'cpp':
         name = 't.cpp'
+        args.append('-std=c++11')
     elif lang == 'objc':
         name = 't.m'
     elif lang != 'c':
         raise Exception('Unknown language: %s' % lang)
 
-    args = []
     if all_warnings:
-        args = ['-Wall', '-Wextra']
+        args += ['-Wall', '-Wextra']
 
     index = Index.create()
     tu = index.parse(name, args=args, unsaved_files=[(name, source)])
