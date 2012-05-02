@@ -30,11 +30,16 @@
 	vbic	q8, q8, q9
 	vbic.i32	d16, #0xFF000000
 	vbic.i32	q8, #0xFF000000
+        vbic q10, q11
+        vbic d9, d1
 
 @ CHECK: vbic	d16, d17, d16           @ encoding: [0xb0,0x01,0x51,0xf2]
 @ CHECK: vbic	q8, q8, q9              @ encoding: [0xf2,0x01,0x50,0xf2]
 @ CHECK: vbic.i32	d16, #0xff000000 @ encoding: [0x3f,0x07,0xc7,0xf3]
 @ CHECK: vbic.i32	q8, #0xff000000 @ encoding: [0x7f,0x07,0xc7,0xf3]
+@ CHECK: vbic	q10, q10, q11           @ encoding: [0xf6,0x41,0x54,0xf2]
+@ CHECK: vbic	d9, d9, d1              @ encoding: [0x11,0x91,0x19,0xf2]
+
 
 	vorn	d16, d17, d16
 	vorn	q8, q8, q9

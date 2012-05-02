@@ -4308,6 +4308,7 @@ def VORRiv4i32 : N1ModImm<1, 0b000, {0,?,?,1}, 0, 1, 0, 1,
 
 
 //   VBIC     : Vector Bitwise Bit Clear (AND NOT)
+let TwoOperandAliasConstraint = "$Vn = $Vd" in {
 def  VBICd    : N3VX<0, 0, 0b01, 0b0001, 0, 1, (outs DPR:$Vd),
                      (ins DPR:$Vn, DPR:$Vm), N3RegFrm, IIC_VBINiD,
                      "vbic", "$Vd, $Vn, $Vm", "",
@@ -4318,6 +4319,7 @@ def  VBICq    : N3VX<0, 0, 0b01, 0b0001, 1, 1, (outs QPR:$Vd),
                      "vbic", "$Vd, $Vn, $Vm", "",
                      [(set QPR:$Vd, (v4i32 (and QPR:$Vn,
                                                  (vnotq QPR:$Vm))))]>;
+}
 
 def VBICiv4i16 : N1ModImm<1, 0b000, {1,0,?,1}, 0, 0, 1, 1,
                           (outs DPR:$Vd), (ins nImmSplatI16:$SIMM, DPR:$src),
