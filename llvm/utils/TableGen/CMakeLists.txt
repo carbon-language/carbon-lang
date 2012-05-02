@@ -27,7 +27,6 @@ add_tablegen(llvm-tblgen LLVM
   PseudoLoweringEmitter.cpp
   RegisterInfoEmitter.cpp
   SetTheory.cpp
-  StringMatcher.cpp
   SubtargetEmitter.cpp
   TGValueTypes.cpp
   TableGen.cpp

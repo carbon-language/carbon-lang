@@ -13,8 +13,8 @@
 
 #include "CodeGenTarget.h"
 #include "IntrinsicEmitter.h"
-#include "StringMatcher.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/StringMatcher.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 using namespace llvm;

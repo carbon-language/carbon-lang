@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "StringMatcher.h"
+#include "llvm/TableGen/StringMatcher.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 using namespace llvm;
