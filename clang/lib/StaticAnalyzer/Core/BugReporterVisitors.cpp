@@ -34,15 +34,23 @@ const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
   //   a[0], p->f, *p
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
 
-  if (const UnaryOperator *U = dyn_cast<UnaryOperator>(S)) {
-    if (U->getOpcode() == UO_Deref)
-      return U->getSubExpr()->IgnoreParenCasts();
-  }
-  else if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
-    return ME->getBase()->IgnoreParenCasts();
-  }
-  else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
-    return AE->getBase();
+  while (true) {
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {
+      assert(B->isAssignmentOp());
+      S = B->getLHS()->IgnoreParenCasts();
+      continue;
+    }
+    else if (const UnaryOperator *U = dyn_cast<UnaryOperator>(S)) {
+      if (U->getOpcode() == UO_Deref)
+        return U->getSubExpr()->IgnoreParenCasts();
+    }
+    else if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
+      return ME->getBase()->IgnoreParenCasts();
+    }
+    else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
+      return AE->getBase();
+    }
+    break;
   }
 
   return NULL;
@@ -320,7 +328,7 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
           StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
 
         // What did we load?
-        SVal V = state->getSVal(loc::MemRegionVal(R));
+        SVal V = state->getRawSVal(loc::MemRegionVal(R));
         report->markInteresting(R);
         report->markInteresting(V);
         return new FindLastStoreBRVisitor(V, R);
