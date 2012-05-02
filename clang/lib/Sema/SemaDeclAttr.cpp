@@ -241,26 +241,23 @@ static bool isIntOrBool(Expr *Exp) {
 
 // Check to see if the type is a smart pointer of some kind.  We assume
 // it's a smart pointer if it defines both operator-> and operator*.
-static bool threadSafetyCheckIsSmartPointer(Sema &S, const QualType QT) {
-  if (const RecordType *RT = QT->getAs<RecordType>()) {
-    DeclContextLookupConstResult Res1 = RT->getDecl()->lookup(
-      S.Context.DeclarationNames.getCXXOperatorName(OO_Star));
-    if (Res1.first == Res1.second)
-      return false;
+static bool threadSafetyCheckIsSmartPointer(Sema &S, const RecordType* RT) {
+  DeclContextLookupConstResult Res1 = RT->getDecl()->lookup(
+    S.Context.DeclarationNames.getCXXOperatorName(OO_Star));
+  if (Res1.first == Res1.second)
+    return false;
 
-    DeclContextLookupConstResult Res2 = RT->getDecl()->lookup(
-      S.Context.DeclarationNames.getCXXOperatorName(OO_Arrow));
-    if (Res2.first != Res2.second)
-      return true;
-  }
-  return false;
+  DeclContextLookupConstResult Res2 = RT->getDecl()->lookup(
+    S.Context.DeclarationNames.getCXXOperatorName(OO_Arrow));
+  if (Res2.first == Res2.second)
+    return false;
+
+  return true;
 }
 
-///
 /// \brief Check if passed in Decl is a pointer type.
 /// Note that this function may produce an error message.
 /// \return true if the Decl is a pointer type; false otherwise
-///
 static bool threadSafetyCheckIsPointer(Sema &S, const Decl *D,
                                        const AttributeList &Attr) {
   if (const ValueDecl *vd = dyn_cast<ValueDecl>(D)) {
@@ -268,8 +265,16 @@ static bool threadSafetyCheckIsPointer(Sema &S, const Decl *D,
     if (QT->isAnyPointerType())
       return true;
 
-    if (threadSafetyCheckIsSmartPointer(S, QT))
-      return true;
+    if (const RecordType *RT = QT->getAs<RecordType>()) {
+      // If it's an incomplete type, it could be a smart pointer; skip it.
+      // (We don't want to force template instantiation if we can avoid it,
+      // since that would alter the order in which templates are instantiated.)
+      if (RT->isIncompleteType())
+        return true;
+
+      if (threadSafetyCheckIsSmartPointer(S, RT))
+        return true;
+    }
 
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_pointer)
       << Attr.getName()->getName() << QT;
@@ -305,9 +310,16 @@ static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
       << Attr.getName() << Ty.getAsString();
     return;
   }
+
   // Don't check for lockable if the class hasn't been defined yet. 
   if (RT->isIncompleteType())
     return;
+
+  // Allow smart pointers to be used as lockable objects.
+  // FIXME -- Check the type that the smart pointer points to.
+  if (threadSafetyCheckIsSmartPointer(S, RT))
+    return;
+
   // Warn if the type is not lockable.
   if (!RT->getDecl()->getAttr<LockableAttr>()) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_lockable)

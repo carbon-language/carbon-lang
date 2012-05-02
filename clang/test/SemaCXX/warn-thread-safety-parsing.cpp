@@ -1368,8 +1368,6 @@ namespace SmartPointerTest {
 template<class T>
 class smart_ptr {
  public:
-  smart_ptr(T* p) : ptr_(p) { };
-
   T* operator->() { return ptr_; }
   T& operator*()  { return ptr_; }
 
@@ -1378,11 +1376,18 @@ class smart_ptr {
 };
 
 
+Mutex gmu;
+smart_ptr<int> gdat PT_GUARDED_BY(gmu);
+
+
 class MyClass {
 public:
   Mutex mu_;
+  smart_ptr<Mutex> smu_;
+
 
   smart_ptr<int> a PT_GUARDED_BY(mu_);
+  int b            GUARDED_BY(smu_);
 };
 
 }
