@@ -255,6 +255,13 @@ Enter your Python command(s). Type 'DONE' to end.
         <code><pre><tt>def command_function(<b>debugger</b>, <b>command</b>, <b>result</b>, <b>dict</b>):
           <font color=green># Your code goes here</font>
         </tt></pre></code>
+
+		Optionally, you can also provide a Python docstring, and LLDB will use it when providing help for your command, as in:
+        <code><pre><tt>def command_function(<b>debugger</b>, <b>command</b>, <b>result</b>, <b>dict</b>):
+          <font color=green>"""This command takes a lot of options and does many fancy things"""</font>    
+          <font color=green># Your code goes here</font>
+        </tt></pre></code>
+
         <p><table class="stats" width="620" cellspacing="0">
         <tr>
             <td class="hed" width="10%">Argument</td>
