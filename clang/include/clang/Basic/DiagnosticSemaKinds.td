@@ -16,7 +16,7 @@ let CategoryName = "Semantic Issue" in {
 
 // For loop analysis
 def warn_variables_not_in_loop_body : Warning<
-  "variable%select{s| %1|s %1 and %2|s %1 %2 and %3|s %1 %2 %3 and %4}0 "
+  "variable%select{s| %1|s %1 and %2|s %1, %2, and %3|s %1, %2, %3, and %4}0 "
   "used in loop condition not modified in loop body">,
   InGroup<DiagGroup<"loop-analysis">>, DefaultIgnore;
 
