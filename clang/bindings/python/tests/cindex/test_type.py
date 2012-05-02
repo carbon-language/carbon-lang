@@ -263,7 +263,7 @@ def test_is_volatile_qualified():
 def test_is_restrict_qualified():
     """Ensure Type.is_restrict_qualified works."""
 
-    tu = get_tu('struct s { void * restrict i; void * j };')
+    tu = get_tu('struct s { void * restrict i; void * j; };')
 
     i = get_cursor(tu, 'i')
     j = get_cursor(tu, 'j')
