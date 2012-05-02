@@ -1083,8 +1083,7 @@ void ClangAttrParsedAttrKindsEmitter::run(raw_ostream &OS) {
        AttrName = NormalizeAttrName(AttrName);
        Spelling = NormalizeAttrSpelling(Spelling);
 
-       OS << "Result[\"" << Spelling << "\"] = " << "AttributeList::AT_"
-          << AttrName << ";\n";
+       OS << ".Case(\"" << Spelling << "\", " << "AT_" << AttrName << ")\n";
       }
     }
   }
