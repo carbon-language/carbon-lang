@@ -681,9 +681,14 @@ static void handleLockReturnedAttr(Sema &S, Decl *D,
     return;
 
   // check that the argument is lockable object
-  checkForLockableRecord(S, D, Attr, Arg->getType());
+  SmallVector<Expr*, 1> Args;
+  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  unsigned Size = Args.size();
+  if (Size == 0)
+    return;
 
-  D->addAttr(::new (S.Context) LockReturnedAttr(Attr.getRange(), S.Context, Arg));
+  D->addAttr(::new (S.Context) LockReturnedAttr(Attr.getRange(), S.Context,
+                                                Args[0]));
 }
 
 static void handleLocksExcludedAttr(Sema &S, Decl *D,

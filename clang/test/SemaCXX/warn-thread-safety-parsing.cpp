@@ -970,7 +970,7 @@ int lr_function_8() LOCK_RETURNED(muPointer);
 int lr_function_bad_1() LOCK_RETURNED(1); // \
   // expected-warning {{'lock_returned' attribute requires arguments that are class type or point to class type}}
 int lr_function_bad_2() LOCK_RETURNED("mu"); // \
-  // expected-warning {{'lock_returned' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{ignoring 'lock_returned' attribute because its argument is invalid}}
 int lr_function_bad_3() LOCK_RETURNED(muDoublePointer); // \
   // expected-warning {{'lock_returned' attribute requires arguments that are class type or point to class type}}
 int lr_function_bad_4() LOCK_RETURNED(umu); // \
@@ -1350,6 +1350,8 @@ void testEmptyAttributeFunction() EXCLUSIVE_LOCKS_REQUIRED("");
 class Graph {
 public:
   Mutex mu_;
+
+  static Mutex* get_static_mu() LOCK_RETURNED(&Graph::mu_);
 };
 
 class Node {
