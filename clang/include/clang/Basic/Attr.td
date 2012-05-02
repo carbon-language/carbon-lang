@@ -99,6 +99,8 @@ class Attr {
   bit ASTNode = 1;
   // Set to true for attributes which have handler in Sema.
   bit SemaHandler = 1;
+  // Set to true for attributes that are completely ignored.
+  bit Ignored = 0;
   // Any additional text that should be included verbatim in the class.  
   code AdditionalMembers = [{}];
 }
@@ -178,6 +180,13 @@ def BaseCheck : Attr {
 def Blocks : InheritableAttr {
   let Spellings = ["blocks"];
   let Args = [EnumArgument<"Type", "BlockType", ["byref"], ["ByRef"]>];
+}
+
+def Bounded : Attr {
+  let Spellings = ["bounded"];
+  let ASTNode = 0;
+  let SemaHandler = 0;
+  let Ignored = 1;
 }
 
 def CarriesDependency : InheritableParamAttr {
@@ -625,6 +634,13 @@ def VectorSize : Attr {
   let Spellings = ["vector_size"];
   let Args = [ExprArgument<"NumBytes">];
   let ASTNode = 0;
+}
+
+def VecTypeHint : Attr {
+  let Spellings = ["vec_type_hint"];
+  let ASTNode = 0;
+  let SemaHandler = 0;
+  let Ignored = 1;
 }
 
 def Visibility : InheritableAttr {

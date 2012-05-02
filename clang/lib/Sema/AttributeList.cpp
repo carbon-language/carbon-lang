@@ -107,7 +107,5 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
 
   return llvm::StringSwitch<AttributeList::Kind>(AttrName)
     #include "clang/Sema/AttrParsedAttrKinds.inc"
-    .Case("bounded", IgnoredAttribute)       // OpenBSD
-    .Case("vec_type_hint", IgnoredAttribute)
     .Default(UnknownAttribute);
 }

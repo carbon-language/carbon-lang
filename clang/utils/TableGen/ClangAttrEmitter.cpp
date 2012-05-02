@@ -1093,19 +1093,23 @@ void ClangAttrParsedAttrKindsEmitter::run(raw_ostream &OS) {
     Record &Attr = **I;
     
     bool SemaHandler = Attr.getValueAsBit("SemaHandler");
+    bool Ignored = Attr.getValueAsBit("Ignored");
     
-    if (SemaHandler) {
+    if (SemaHandler || Ignored) {
       std::vector<StringRef> Spellings =
         getValueAsListOfStrings(Attr, "Spellings");
 
       for (std::vector<StringRef>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
-       StringRef AttrName = *I, Spelling = *I;
+        StringRef AttrName = *I, Spelling = *I;
        
-       AttrName = NormalizeAttrName(AttrName);
-       Spelling = NormalizeAttrSpelling(Spelling);
+        AttrName = NormalizeAttrName(AttrName);
+        Spelling = NormalizeAttrSpelling(Spelling);
 
-       OS << ".Case(\"" << Spelling << "\", " << "AT_" << AttrName << ")\n";
+        if (SemaHandler)
+          OS << ".Case(\"" << Spelling << "\", " << "AT_" << AttrName << ")\n";
+        else
+          OS << ".Case(\"" << Spelling << "\", IgnoredAttribute)\n";
       }
     }
   }
