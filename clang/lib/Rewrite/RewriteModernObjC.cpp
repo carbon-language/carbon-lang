@@ -3523,6 +3523,11 @@ bool RewriteModernObjC::IsTagDefinedInsideClass(ObjCContainerDecl *IDecl,
 /// It handles elaborated types, as well as enum types in the process.
 bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type, 
                                                  std::string &Result) {
+  if (isa<TypedefType>(Type)) {
+    Result += "\t";
+    return false;
+  }
+    
   if (Type->isArrayType()) {
     QualType ElemTy = Context->getBaseElementType(Type);
     return RewriteObjCFieldDeclType(ElemTy, Result);
@@ -3618,6 +3623,8 @@ void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl,
 void RewriteModernObjC::RewriteLocallyDefinedNamedAggregates(FieldDecl *fieldDecl, 
                                              std::string &Result) {
   QualType Type = fieldDecl->getType();
+  if (isa<TypedefType>(Type))
+    return;
   if (Type->isArrayType())
     Type = Context->getBaseElementType(Type);
   ObjCContainerDecl *IDecl = 
@@ -7308,12 +7315,17 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                               addExpr);
       QualType IvarT = D->getType();
 
-      if (IvarT->isRecordType()) {
+      if (!isa<TypedefType>(IvarT) && IvarT->isRecordType()) {
         RecordDecl *RD = IvarT->getAs<RecordType>()->getDecl();
         RD = RD->getDefinition();
         if (RD && !RD->getDeclName().getAsIdentifierInfo()) {
           // decltype(((Foo_IMPL*)0)->bar) *
-          std::string RecName = iFaceDecl->getDecl()->getName();
+          ObjCContainerDecl *CDecl = 
+            dyn_cast<ObjCContainerDecl>(D->getDeclContext());
+          // ivar in class extensions requires special treatment.
+          if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(CDecl))
+            CDecl = CatDecl->getClassInterface();
+          std::string RecName = CDecl->getName();
           RecName += "_IMPL";
           RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
                                               SourceLocation(), SourceLocation(),
