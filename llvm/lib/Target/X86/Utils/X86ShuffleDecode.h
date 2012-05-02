@@ -37,9 +37,9 @@ void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask);
 
 void DecodePSHUFMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
-void DecodePSHUFHWMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFHWMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
-void DecodePSHUFLWMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFLWMask(EVT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 /// DecodeSHUFPMask - This decodes the shuffle masks for shufp*. VT indicates
 /// the type of the vector allowing it to handle different datatypes and vector

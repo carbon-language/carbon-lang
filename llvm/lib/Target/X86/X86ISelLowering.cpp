@@ -3196,8 +3196,8 @@ static bool isPSHUFDMask(ArrayRef<int> Mask, EVT VT) {
 
 /// isPSHUFHWMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PSHUFHW.
-static bool isPSHUFHWMask(ArrayRef<int> Mask, EVT VT) {
-  if (VT != MVT::v8i16)
+static bool isPSHUFHWMask(ArrayRef<int> Mask, EVT VT, bool HasAVX2) {
+  if (VT != MVT::v8i16 && (!HasAVX2 || VT != MVT::v16i16))
     return false;
 
   // Lower quadword copied in order or undef.
@@ -3206,16 +3206,27 @@ static bool isPSHUFHWMask(ArrayRef<int> Mask, EVT VT) {
 
   // Upper quadword shuffled.
   for (unsigned i = 4; i != 8; ++i)
-    if (Mask[i] >= 0 && (Mask[i] < 4 || Mask[i] > 7))
+    if (!isUndefOrInRange(Mask[i], 4, 8))
       return false;
+
+  if (VT == MVT::v16i16) {
+    // Lower quadword copied in order or undef.
+    if (!isSequentialOrUndefInRange(Mask, 8, 4, 8))
+      return false;
+
+    // Upper quadword shuffled.
+    for (unsigned i = 12; i != 16; ++i)
+      if (!isUndefOrInRange(Mask[i], 12, 16))
+        return false;
+  }
 
   return true;
 }
 
 /// isPSHUFLWMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PSHUFLW.
-static bool isPSHUFLWMask(ArrayRef<int> Mask, EVT VT) {
-  if (VT != MVT::v8i16)
+static bool isPSHUFLWMask(ArrayRef<int> Mask, EVT VT, bool HasAVX2) {
+  if (VT != MVT::v8i16 && (!HasAVX2 || VT != MVT::v16i16))
     return false;
 
   // Upper quadword copied in order.
@@ -3224,8 +3235,19 @@ static bool isPSHUFLWMask(ArrayRef<int> Mask, EVT VT) {
 
   // Lower quadword shuffled.
   for (unsigned i = 0; i != 4; ++i)
-    if (Mask[i] >= 4)
+    if (!isUndefOrInRange(Mask[i], 0, 4))
       return false;
+
+  if (VT == MVT::v16i16) {
+    // Upper quadword copied in order.
+    if (!isSequentialOrUndefInRange(Mask, 12, 4, 12))
+      return false;
+
+    // Lower quadword shuffled.
+    for (unsigned i = 8; i != 12; ++i)
+      if (!isUndefOrInRange(Mask[i], 8, 12))
+        return false;
+  }
 
   return true;
 }
@@ -4405,12 +4427,12 @@ static bool getTargetShuffleMask(SDNode *N, EVT VT,
     break;
   case X86ISD::PSHUFHW:
     ImmN = N->getOperand(N->getNumOperands()-1);
-    DecodePSHUFHWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    DecodePSHUFHWMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     IsUnary = true;
     break;
   case X86ISD::PSHUFLW:
     ImmN = N->getOperand(N->getNumOperands()-1);
-    DecodePSHUFLWMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    DecodePSHUFLWMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     IsUnary = true;
     break;
   case X86ISD::MOVSS:
@@ -6581,12 +6603,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V1, V1, DAG);
   }
 
-  if (isPSHUFHWMask(M, VT))
+  if (isPSHUFHWMask(M, VT, HasAVX2))
     return getTargetShuffleNode(X86ISD::PSHUFHW, dl, VT, V1,
                                 getShufflePSHUFHWImmediate(SVOp),
                                 DAG);
 
-  if (isPSHUFLWMask(M, VT))
+  if (isPSHUFLWMask(M, VT, HasAVX2))
     return getTargetShuffleNode(X86ISD::PSHUFLW, dl, VT, V1,
                                 getShufflePSHUFLWImmediate(SVOp),
                                 DAG);
@@ -11376,8 +11398,8 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isMOVLMask(M, VT) ||
           isSHUFPMask(M, VT, Subtarget->hasAVX()) ||
           isPSHUFDMask(M, VT) ||
-          isPSHUFHWMask(M, VT) ||
-          isPSHUFLWMask(M, VT) ||
+          isPSHUFHWMask(M, VT, Subtarget->hasAVX2()) ||
+          isPSHUFLWMask(M, VT, Subtarget->hasAVX2()) ||
           isPALIGNRMask(M, VT, Subtarget) ||
           isUNPCKLMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKHMask(M, VT, Subtarget->hasAVX2()) ||

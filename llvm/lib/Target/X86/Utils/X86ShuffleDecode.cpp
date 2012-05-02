@@ -70,7 +70,7 @@ void DecodePSHUFMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumLanes = VT.getSizeInBits() / 128;
   unsigned NumLaneElts = NumElts / NumLanes;
 
-  int NewImm = Imm;
+  unsigned NewImm = Imm;
   for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
     for (unsigned i = 0; i != NumLaneElts; ++i) {
       ShuffleMask.push_back(NewImm % NumLaneElts + l);
@@ -80,26 +80,38 @@ void DecodePSHUFMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   }
 }
 
-void DecodePSHUFHWMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
-  ShuffleMask.push_back(0);
-  ShuffleMask.push_back(1);
-  ShuffleMask.push_back(2);
-  ShuffleMask.push_back(3);
-  for (unsigned i = 0; i != 4; ++i) {
-    ShuffleMask.push_back(4+(Imm & 3));
-    Imm >>= 2;
+void DecodePSHUFHWMask(EVT VT, unsigned Imm,
+                       SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumElts = 8 * NumLanes;
+
+  for (unsigned l = 0; l != NumElts; l += 8) {
+    unsigned NewImm = Imm;
+    for (unsigned i = 0, e = 4; i != e; ++i) {
+      ShuffleMask.push_back(l + i);
+    }
+    for (unsigned i = 4, e = 8; i != e; ++i) {
+      ShuffleMask.push_back(l + 4 + (NewImm & 3));
+      NewImm >>= 2;
+    }
   }
 }
 
-void DecodePSHUFLWMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
-  for (unsigned i = 0; i != 4; ++i) {
-    ShuffleMask.push_back((Imm & 3));
-    Imm >>= 2;
+void DecodePSHUFLWMask(EVT VT, unsigned Imm,
+                       SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumElts = 8 * NumLanes;
+
+  for (unsigned l = 0; l != NumElts; l += 8) {
+    unsigned NewImm = Imm;
+    for (unsigned i = 0, e = 4; i != e; ++i) {
+      ShuffleMask.push_back(l + (NewImm & 3));
+      NewImm >>= 2;
+    }
+    for (unsigned i = 4, e = 8; i != e; ++i) {
+      ShuffleMask.push_back(l + i);
+    }
   }
-  ShuffleMask.push_back(4);
-  ShuffleMask.push_back(5);
-  ShuffleMask.push_back(6);
-  ShuffleMask.push_back(7);
 }
 
 /// DecodeSHUFPMask - This decodes the shuffle masks for shufp*. VT indicates
@@ -111,7 +123,7 @@ void DecodeSHUFPMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumLanes = VT.getSizeInBits() / 128;
   unsigned NumLaneElts = NumElts / NumLanes;
 
-  int NewImm = Imm;
+  unsigned NewImm = Imm;
   for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
     // Part that reads from dest.
     for (unsigned i = 0; i != NumLaneElts/2; ++i) {
@@ -176,9 +188,9 @@ void DecodeVPERM2X128Mask(EVT VT, unsigned Imm,
   unsigned FstHalfBegin = (Imm & 0x3) * HalfSize;
   unsigned SndHalfBegin = ((Imm >> 4) & 0x3) * HalfSize;
 
-  for (int i = FstHalfBegin, e = FstHalfBegin+HalfSize; i != e; ++i)
+  for (unsigned i = FstHalfBegin, e = FstHalfBegin+HalfSize; i != e; ++i)
     ShuffleMask.push_back(i);
-  for (int i = SndHalfBegin, e = SndHalfBegin+HalfSize; i != e; ++i)
+  for (unsigned i = SndHalfBegin, e = SndHalfBegin+HalfSize; i != e; ++i)
     ShuffleMask.push_back(i);
 }
 
