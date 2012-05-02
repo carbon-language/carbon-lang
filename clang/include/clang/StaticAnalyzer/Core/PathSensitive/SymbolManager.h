@@ -553,7 +553,7 @@ public:
   BasicValueFactory &getBasicVals() { return BV; }
 };
 
-/// \class A class responsible for cleaning up unused symbols.
+/// \brief A class responsible for cleaning up unused symbols.
 class SymbolReaper {
   enum SymbolStatus {
     NotProcessed,
