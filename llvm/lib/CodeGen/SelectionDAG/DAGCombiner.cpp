@@ -215,6 +215,7 @@ namespace {
     SDValue visitFADD(SDNode *N);
     SDValue visitFSUB(SDNode *N);
     SDValue visitFMUL(SDNode *N);
+    SDValue visitFMA(SDNode *N);
     SDValue visitFDIV(SDNode *N);
     SDValue visitFREM(SDNode *N);
     SDValue visitFCOPYSIGN(SDNode *N);
@@ -1126,6 +1127,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::FADD:               return visitFADD(N);
   case ISD::FSUB:               return visitFSUB(N);
   case ISD::FMUL:               return visitFMUL(N);
+  case ISD::FMA:                return visitFMA(N);
   case ISD::FDIV:               return visitFDIV(N);
   case ISD::FREM:               return visitFREM(N);
   case ISD::FCOPYSIGN:          return visitFCOPYSIGN(N);
@@ -5747,6 +5749,22 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
     return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
                                    N0.getOperand(1), N1));
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFMA(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  SDValue N2 = N->getOperand(2);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+  EVT VT = N->getValueType(0);
+
+  if (N0CFP && N0CFP->isExactlyValue(1.0))
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N1, N2);
+  if (N1CFP && N1CFP->isExactlyValue(1.0))
+    return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N2);
 
   return SDValue();
 }

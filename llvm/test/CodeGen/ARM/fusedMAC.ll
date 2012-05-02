@@ -180,6 +180,15 @@ entry:
   ret double %tmp3
 }
 
+define float @test_fma_const_fold(float %a, float %b) nounwind {
+; CHECK: test_fma_const_fold
+; CHECK-NOT: vfma
+; CHECK-NOT: vmul
+; CHECK: vadd
+  %ret = call float @llvm.fma.f32(float %a, float 1.0, float %b)
+  ret float %ret
+}
+
 declare float @llvm.fma.f32(float, float, float) nounwind readnone
 declare double @llvm.fma.f64(double, double, double) nounwind readnone
 declare <2 x float> @llvm.fma.v2f32(<2 x float>, <2 x float>, <2 x float>) nounwind readnone
