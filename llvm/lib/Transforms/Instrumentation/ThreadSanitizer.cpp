@@ -71,8 +71,8 @@ struct ThreadSanitizer : public FunctionPass {
  private:
   bool instrumentLoadOrStore(Instruction *I);
   bool instrumentAtomic(Instruction *I);
-  void choseInstructionsToInstrument(SmallVectorImpl<Instruction*> &Local,
-                                     SmallVectorImpl<Instruction*> &All);
+  void chooseInstructionsToInstrument(SmallVectorImpl<Instruction*> &Local,
+                                      SmallVectorImpl<Instruction*> &All);
   bool addrPointsToConstantData(Value *Addr);
   int getMemoryAccessFuncIndex(Value *Addr);
 
@@ -207,7 +207,7 @@ bool ThreadSanitizer::addrPointsToConstantData(Value *Addr) {
 //
 // 'Local' is a vector of insns within the same BB (no calls between).
 // 'All' is a vector of insns that will be instrumented.
-void ThreadSanitizer::choseInstructionsToInstrument(
+void ThreadSanitizer::chooseInstructionsToInstrument(
     SmallVectorImpl<Instruction*> &Local,
     SmallVectorImpl<Instruction*> &All) {
   SmallSet<Value*, 8> WriteTargets;
@@ -238,13 +238,13 @@ void ThreadSanitizer::choseInstructionsToInstrument(
 static bool isAtomic(Instruction *I) {
   if (LoadInst *LI = dyn_cast<LoadInst>(I))
     return LI->isAtomic() && LI->getSynchScope() == CrossThread;
-  else if (StoreInst *SI = dyn_cast<StoreInst>(I))
+  if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->isAtomic() && SI->getSynchScope() == CrossThread;
-  else if (isa<AtomicRMWInst>(I))
+  if (isa<AtomicRMWInst>(I))
     return true;
-  else if (isa<AtomicCmpXchgInst>(I))
+  if (isa<AtomicCmpXchgInst>(I))
     return true;
-  else if (FenceInst *FI = dyn_cast<FenceInst>(I))
+  if (FenceInst *FI = dyn_cast<FenceInst>(I))
     return FI->getSynchScope() == CrossThread;
   return false;
 }
@@ -273,10 +273,10 @@ bool ThreadSanitizer::runOnFunction(Function &F) {
         RetVec.push_back(BI);
       else if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) {
         HasCalls = true;
-        choseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
+        chooseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
       }
     }
-    choseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
+    chooseInstructionsToInstrument(LocalLoadsAndStores, AllLoadsAndStores);
   }
 
   // We have collected all loads and stores.
