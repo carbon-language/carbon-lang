@@ -196,25 +196,24 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
 //===----------------------------------------------------------------------===//
 
 SVal SValBuilder::makeSymExprValNN(ProgramStateRef State,
-                                 BinaryOperator::Opcode Op,
-                                 NonLoc LHS, NonLoc RHS,
-                                 QualType ResultTy) {
-  const SymExpr *symLHS;
-  const SymExpr *symRHS;
+                                   BinaryOperator::Opcode Op,
+                                   NonLoc LHS, NonLoc RHS,
+                                   QualType ResultTy) {
+  const SymExpr *symLHS = LHS.getAsSymExpr();
+  const SymExpr *symRHS = RHS.getAsSymExpr();
 
-  if (const nonloc::ConcreteInt *rInt = dyn_cast<nonloc::ConcreteInt>(&RHS)) {
-    symLHS = LHS.getAsSymExpr();
-    return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
-  }
+  if (symLHS && symRHS)
+    return makeNonLoc(symLHS, Op, symRHS, ResultTy);
 
-  if (const nonloc::ConcreteInt *lInt = dyn_cast<nonloc::ConcreteInt>(&LHS)) {
-    symRHS = RHS.getAsSymExpr();
-    return makeNonLoc(lInt->getValue(), Op, symRHS, ResultTy);
-  }
+  if (symLHS)
+    if (const nonloc::ConcreteInt *rInt = dyn_cast<nonloc::ConcreteInt>(&RHS))
+      return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
 
-  symLHS = LHS.getAsSymExpr();
-  symRHS = RHS.getAsSymExpr();
-  return makeNonLoc(symLHS, Op, symRHS, ResultTy);
+  if (symRHS)
+    if (const nonloc::ConcreteInt *lInt = dyn_cast<nonloc::ConcreteInt>(&LHS))
+      return makeNonLoc(lInt->getValue(), Op, symRHS, ResultTy);
+
+  return UnknownVal();
 }
 
 
