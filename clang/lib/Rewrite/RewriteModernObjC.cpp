@@ -5814,7 +5814,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "\t  arr[i] = va_arg(marker, void *);\n";
   Preamble += "\tva_end( marker );\n";
   Preamble += "  };\n";
-  Preamble += "  __NSContainer_literal() {\n";
+  Preamble += "  ~__NSContainer_literal() {\n";
   Preamble += "\tdelete[] arr;\n";
   Preamble += "  }\n";
   Preamble += "};\n";
