@@ -1191,15 +1191,16 @@ def function (valobj,dict):<br/>
 			  or OS release.</p>
 			  <p>By default, several categories are created in LLDB: 
 				<ul>
-					<li><code>default</code>: this is the category where every formatter ends up, unless an other category is explicitly 			<li><code>objc</code>: formatters for basic and common Objective-C types that do not specifically depend on Mac OS X
+					<li><code>default</code>: this is the category where every formatter ends up, unless another category is specified
+		 			<li><code>objc</code>: formatters for basic and common Objective-C types that do not specifically depend on Mac OS X
 					<li><code>gnu-libstdc++</code>: formatters for std::string, std::vector, std::list and std::map as implemented by libstdcpp
-					<li><code>libcxx</code>: formatters for std::string, std::vector, std::list and std::map as implemented by libcxx
+					<li><code>libcxx</code>: formatters for std::string, std::vector, std::list and std::map as implemented by <a href="http://libcxx.llvm.org/">libcxx</a>
 					<li><code>system</code>: truly basic types for which a formatter is required
-					<li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/ObjC_classic/_index.html#//apple_ref/doc/uid/20001091"><code>AppKit</code></a>: Cocoa classes - disabled by default since this is Mac OS X specific
-					<li><a href="https://developer.apple.com/corefoundation/"><code>CoreFoundation</code></a>: CF classes - disabled by default since this is Mac OS X specific
-					<li><a href="https://developer.apple.com/library/mac/#documentation/CoreGraphics/Reference/CoreGraphicsConstantsRef/Reference/reference.html"><code>CoreGraphics</code></a>: CG classes - disabled by default since this is Mac OS X specific
-					<li><a href="http://developer.apple.com/library/mac/#documentation/Carbon/reference/CoreServicesReferenceCollection/_index.html"><code>CoreServices</code></a>: CS classes - disabled by default since this is Mac OS X specific
-					<li><code>VectorTypes</code>: compact display for several vector types - disabled by default since this is Mac OS X specific
+					<li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/Foundation/ObjC_classic/_index.html#//apple_ref/doc/uid/20001091"><code>AppKit</code></a>: Cocoa classes
+					<li><a href="https://developer.apple.com/corefoundation/"><code>CoreFoundation</code></a>: CF classes
+					<li><a href="https://developer.apple.com/library/mac/#documentation/CoreGraphics/Reference/CoreGraphicsConstantsRef/Reference/reference.html"><code>CoreGraphics</code></a>: CG classes
+					<li><a href="http://developer.apple.com/library/mac/#documentation/Carbon/reference/CoreServicesReferenceCollection/_index.html"><code>CoreServices</code></a>: CS classes
+					<li><code>VectorTypes</code>: compact display for several vector types
 				</ul>
 				If you want to use a custom category for your formatters, all the <code>type ... add</code> (except for <code>type format add</code>),
 				provide a <code>--category</code> (<code>-w</code>) option, that names the category to add the formatter to.
@@ -1209,8 +1210,19 @@ def function (valobj,dict):<br/>
 					the command to use is <code>type category disable</code>. 
 					<p>The order in which categories are enabled or disabled
 					is significant, in that LLDB uses that order when looking for formatters. Therefore, when you enable a category, it becomes
-					the second one to be searched (after <code>default</code>, which always stays on top of the list). The default categories are enabled in such a way that the search order is: <code>default</code>, <code>objc</code>,
-					then <code>gnu-libstdc++</code>, <code>libcxx</code> and finally <code>system</code>.
+					the second one to be searched (after <code>default</code>, which always stays on top of the list). The default categories are enabled in such a way that the search order is: 
+					<ul>
+					<li>default</li>
+					<li>objc</li>
+					<li>CoreFoundation</li>
+					<li>AppKit</li>
+					<li>CoreServices</li>
+					<li>CoreGraphics</li>
+					<li>gnu-libstdc++</li>
+					<li>libcxx</li>
+					<li>VectorTypes</li>
+					<li>system</li>
+					</ul>
 					<p>As said, <code>gnu-libstdc++</code> and <code>libcxx</code> contain formatters for C++ STL
 					data types. <code>system</code> contains formatters for <code>char*</code> and <code>char[]</code>, which reflect the behavior
 					of older versions of LLDB which had built-in formatters for these types. Because now these are formatters, you can even
