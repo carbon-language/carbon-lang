@@ -792,6 +792,12 @@ void radar11270219(void) {
   strcmp(x, y); // no warning
 }
 
+void radar_11358224_test_double_assign_ints_positive_2()
+{
+  void *ptr = malloc(16);
+  ptr = ptr; // expected-warning {{leak}}
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 
