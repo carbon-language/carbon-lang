@@ -4277,12 +4277,18 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                IsCXX11MemberFunction);
       
       // Parse exception-specification[opt].
+      // FIXME: Remove the code to perform delayed parsing of exception
+      //        specifications.
+#if 0
       bool Delayed = (D.getContext() == Declarator::MemberContext &&
                       D.getDeclSpec().getStorageClassSpec()
                         != DeclSpec::SCS_typedef &&
                       !D.getDeclSpec().isFriendSpecified());
       for (unsigned i = 0, e = D.getNumTypeObjects(); Delayed && i != e; ++i)
         Delayed &= D.getTypeObject(i).Kind == DeclaratorChunk::Paren;
+#else
+      const bool Delayed = false;
+#endif
       ESpecType = tryParseExceptionSpecification(Delayed,
                                                  ESpecRange,
                                                  DynamicExceptions,
