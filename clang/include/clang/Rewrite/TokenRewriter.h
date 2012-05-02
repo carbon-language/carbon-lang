@@ -16,12 +16,12 @@
 #define LLVM_CLANG_TOKENREWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <list>
 #include <map>
 
 namespace clang {
-  class Token;
   class LangOptions;
   class ScratchBuffer;
 
