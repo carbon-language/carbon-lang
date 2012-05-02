@@ -14,7 +14,7 @@
 #include "clang/Sema/AttributeList.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/StringMap.h"
 using namespace clang;
 
 size_t AttributeList::allocated_size() const {
@@ -97,6 +97,30 @@ AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
   return create(Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1, 0);
 }
 
+
+typedef llvm::StringMap<AttributeList::Kind> AttributeNameKindMap;
+
+static AttributeNameKindMap createAttributeNameKindMap(){
+  AttributeNameKindMap Result;
+#include "clang/Sema/AttrParsedAttrKinds.inc"
+  Result["address_space"] = AttributeList::AT_address_space;
+  Result["align"] = AttributeList::AT_aligned; // FIXME: should it be "aligned"?
+  Result["base_check"] = AttributeList::AT_base_check;
+  Result["bounded"] = AttributeList::IgnoredAttribute; // OpenBSD
+  Result["__const"] = AttributeList::AT_const; // some GCC headers do contain this spelling
+  Result["cf_returns_autoreleased"] = AttributeList::AT_cf_returns_autoreleased;
+  Result["mode"] = AttributeList::AT_mode;
+  Result["vec_type_hint"] = AttributeList::IgnoredAttribute;
+  Result["ext_vector_type"] = AttributeList::AT_ext_vector_type;
+  Result["neon_vector_type"] = AttributeList::AT_neon_vector_type;
+  Result["neon_polyvector_type"] = AttributeList::AT_neon_polyvector_type;
+  Result["opencl_image_access"] = AttributeList::AT_opencl_image_access;
+  Result["objc_gc"] = AttributeList::AT_objc_gc;
+  Result["objc_ownership"] = AttributeList::AT_objc_ownership;
+  Result["vector_size"] = AttributeList::AT_vector_size;
+  return Result;
+}
+
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   StringRef AttrName = Name->getName();
 
@@ -105,22 +129,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
       AttrName.size() >= 4)
     AttrName = AttrName.substr(2, AttrName.size() - 4);
 
-  return llvm::StringSwitch<AttributeList::Kind>(AttrName)
-    #include "clang/Sema/AttrParsedAttrKinds.inc"
-    .Case("address_space", AT_address_space)
-    .Case("align", AT_aligned) // FIXME - should it be "aligned"?
-    .Case("base_check", AT_base_check)
-    .Case("bounded", IgnoredAttribute)       // OpenBSD
-    .Case("__const", AT_const) // some GCC headers do contain this spelling
-    .Case("cf_returns_autoreleased", AT_cf_returns_autoreleased)
-    .Case("mode", AT_mode)
-    .Case("vec_type_hint", IgnoredAttribute)
-    .Case("ext_vector_type", AT_ext_vector_type)
-    .Case("neon_vector_type", AT_neon_vector_type)
-    .Case("neon_polyvector_type", AT_neon_polyvector_type)
-    .Case("opencl_image_access", AT_opencl_image_access)
-    .Case("objc_gc", AT_objc_gc)
-    .Case("objc_ownership", AT_objc_ownership)
-    .Case("vector_size", AT_vector_size)
-    .Default(UnknownAttribute);
+  static AttributeNameKindMap Map = createAttributeNameKindMap();
+  AttributeNameKindMap::iterator Pos = Map.find(AttrName);
+  if (Pos != Map.end())
+    return Pos->second;
+  
+  return UnknownAttribute;
 }
