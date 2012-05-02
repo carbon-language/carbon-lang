@@ -158,12 +158,24 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))
                         output_strm.Printf ("\n%s", long_help);
-                    // Emit the message about using ' -- ' between the end of the command options and the raw input
-                    // conditionally, i.e., only if the command object does not want completion.
                     if (sub_cmd_obj->WantsRawCommandString() && !sub_cmd_obj->WantsCompletion())
                     {
-                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", "\nIMPORTANT NOTE:  Because this command takes 'raw' input, if you use any command options you must use ' -- ' between the end of the command options and the beginning of the raw input.", 1);
+                        // Emit the message about using ' -- ' between the end of the command options and the raw input
+                        // conditionally, i.e., only if the command object does not want completion.
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "",
+                                                               "\nIMPORTANT NOTE:  Because this command takes 'raw' input, if you use any command options"
+                                                               " you must use ' -- ' between the end of the command options and the beginning of the raw input.", 1);
                     }
+                    else if (sub_cmd_obj->GetNumArgumentEntries() > 0
+                             && sub_cmd_obj->GetOptions()
+                             && sub_cmd_obj->GetOptions()->NumCommandOptions() > 0)
+                    {
+                            // Also emit a warning about using "--" in case you are using a command that takes options and arguments.
+                            m_interpreter.OutputFormattedHelpText (output_strm, "", "",
+                                                                   "\nThis command takes options and arguments, if your arguments look like option specifiers"
+                                                                   " you must use '--' to terminate the options before starting to give the arguments.", 1);
+                    }
+
                     // Mark this help command with a success status.
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
