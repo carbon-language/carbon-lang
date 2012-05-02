@@ -234,8 +234,9 @@ std::string sys::getHostCPUName() {
       case 58:
         return "core-avx-i";
 
-      case 28: // Intel Atom processor. All processors are manufactured using
-               // the 45 nm process
+      case 28: // Most 45 nm Intel Atom processors
+      case 38: // 45 nm Atom Lincroft
+      case 39: // 32 nm Atom Medfield
         return "atom";
 
       default: return "i686";
