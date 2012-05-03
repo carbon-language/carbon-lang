@@ -300,11 +300,23 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       }
     } else if (CallInst *MI = extractMallocCall(Op1)) {
       // Get allocation size.
-      Type* MallocType = getMallocAllocatedType(MI);
-      if (MallocType && MallocType->isSized())
-        if (Value *NElems = getMallocArraySize(MI, TD, true))
-          if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
-            Size = NElements->getZExtValue() * TD->getTypeAllocSize(MallocType);
+      Value *Arg = MI->getArgOperand(0);
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Arg))
+          Size = CI->getZExtValue();
+
+    } else if (CallInst *MI = extractCallocCall(Op1)) {
+      // Get allocation size.
+      Value *Arg1 = MI->getArgOperand(0);
+      Value *Arg2 = MI->getArgOperand(1);
+      if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Arg1))
+        if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Arg2)) {
+          bool overflow;
+          APInt SizeAP = CI1->getValue().umul_ov(CI2->getValue(), overflow);
+          if (!overflow)
+            Size = SizeAP.getZExtValue();
+          else
+            return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, DontKnow));
+        }
     }
 
     // Do not return "I don't know" here. Later optimization passes could

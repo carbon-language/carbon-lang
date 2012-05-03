@@ -68,6 +68,17 @@ Type *getMallocAllocatedType(const CallInst *CI);
 Value *getMallocArraySize(CallInst *CI, const TargetData *TD,
                           bool LookThroughSExt = false);
                           
+
+//===----------------------------------------------------------------------===//
+//  calloc Call Utility Functions.
+//
+
+/// extractCallocCall - Returns the corresponding CallInst if the instruction
+/// is a calloc call.
+const CallInst *extractCallocCall(const Value *I);
+CallInst *extractCallocCall(Value *I);
+
+
 //===----------------------------------------------------------------------===//
 //  free Call Utility Functions.
 //

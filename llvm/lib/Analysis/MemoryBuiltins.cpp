@@ -180,6 +180,46 @@ Value *llvm::getMallocArraySize(CallInst *CI, const TargetData *TD,
   return computeArraySize(CI, TD, LookThroughSExt);
 }
 
+
+//===----------------------------------------------------------------------===//
+//  clloc Call Utility Functions.
+//
+
+static bool isCallocCall(const CallInst *CI) {
+  if (!CI)
+    return false;
+  
+  Function *Callee = CI->getCalledFunction();
+  if (Callee == 0 || !Callee->isDeclaration())
+    return false;
+  if (Callee->getName() != "calloc")
+    return false;
+  
+  // Check malloc prototype.
+  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
+  // attribute will exist.
+  FunctionType *FTy = Callee->getFunctionType();
+  return FTy->getReturnType() == Type::getInt8PtrTy(FTy->getContext()) &&
+  FTy->getNumParams() == 2 &&
+  ((FTy->getParamType(0)->isIntegerTy(32) &&
+    FTy->getParamType(1)->isIntegerTy(32)) ||
+   (FTy->getParamType(0)->isIntegerTy(64) &&
+    FTy->getParamType(1)->isIntegerTy(64)));
+}
+
+/// extractCallocCall - Returns the corresponding CallInst if the instruction
+/// is a calloc call.
+const CallInst *llvm::extractCallocCall(const Value *I) {
+  const CallInst *CI = dyn_cast<CallInst>(I);
+  return isCallocCall(CI) ? CI : 0;
+}
+
+CallInst *llvm::extractCallocCall(Value *I) {
+  CallInst *CI = dyn_cast<CallInst>(I);
+  return isCallocCall(CI) ? CI : 0;
+}
+
+
 //===----------------------------------------------------------------------===//
 //  free Call Utility Functions.
 //
