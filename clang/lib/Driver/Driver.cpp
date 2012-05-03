@@ -521,7 +521,19 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
             Cmd.erase(I, E - I + 1);
           } while(1);
         }
-        // FIXME: Append the new filename with correct preprocessed suffix.
+        // Append the new filename with correct preprocessed suffix.
+        size_t I, E;
+        I = Cmd.find("-main-file-name ");
+        assert (I != std::string::npos && "Expected to find -main-file-name");
+        I += 16;
+        E = Cmd.find(" ", I);
+        assert (E != std::string::npos && "-main-file-name missing argument?");
+        std::string OldFilename = Cmd.substr(I, E - I);
+        std::string NewFilename = llvm::sys::path::filename(*it).str();
+        I = Cmd.rfind(OldFilename);
+        E = I + OldFilename.length() - 1;
+        I = Cmd.rfind(" ", I);
+        Cmd.replace(I + 1, E - I, NewFilename);
         ScriptOS << Cmd;
         Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
       }
