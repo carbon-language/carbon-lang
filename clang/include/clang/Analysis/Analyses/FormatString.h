@@ -175,6 +175,7 @@ public:
     switch (kind) {
       case PrintErrno:
         assert(IsPrintf);
+        return false;
       case PercentArg:
         return false;
       default:

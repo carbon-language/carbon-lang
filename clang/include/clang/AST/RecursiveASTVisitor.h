@@ -1400,6 +1400,7 @@ bool RecursiveASTVisitor<Derived>::TraverseClassInstantiations(
     case TSK_Undeclared:
     case TSK_ImplicitInstantiation:
       TRY_TO(TraverseDecl(SD));
+      break;
 
     // We don't need to do anything on an explicit instantiation
     // or explicit specialization because there will be an explicit
