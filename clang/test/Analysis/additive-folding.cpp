@@ -240,3 +240,31 @@ void PR12206(int x) {
   if (1 == (local + 1))
     malloc(1); // expected-warning{{never executed}}
 }
+
+void PR12206_truncation(signed char x) {
+  // Build a SymIntExpr, dependent on x.
+  signed char local = x - 1;
+
+  // Constrain the value of x.
+  if (x != 1) return;
+
+  // Constant-folding will turn (local+1) back into the symbol for x.
+  // The point of this dance is to make SValBuilder be responsible for
+  // turning the symbol into a ConcreteInt, rather than ExprEngine.
+
+  // Construct a value that cannot be represented by 'char',
+  // but that has the same lower bits as x.
+  signed int value = 1 + (1 << 8);
+
+  // Test relational operators.
+  if ((local + 1) >= value)
+    malloc(1); // expected-warning{{never executed}}
+  if (value <= (local + 1))
+    malloc(1); // expected-warning{{never executed}}
+
+  // Test equality operators.
+  if ((local + 1) == value) 
+    malloc(1); // expected-warning{{never executed}}
+  if (value == (local + 1))
+    malloc(1); // expected-warning{{never executed}}
+}

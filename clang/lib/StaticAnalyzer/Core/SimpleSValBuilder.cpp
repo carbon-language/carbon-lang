@@ -496,29 +496,47 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
         QualType conversionType = resultTy;
         if (BinaryOperator::isComparisonOp(op))
           conversionType = lhsType;
+        const llvm::APSInt *conversionPrototype = NULL;
 
         // Does the symbol simplify to a constant?  If so, "fold" the constant
         // by setting 'lhs' to a ConcreteInt and try again.
         if (lhsType->isIntegerType())
           if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
-            // The symbol evaluates to a constant. If necessary, promote the
-            // folded constant (LHS) to the result type.
-            const llvm::APSInt &lhs_I = BasicVals.Convert(conversionType,
-                *Constant);
-            lhs = nonloc::ConcreteInt(lhs_I);
+            // Promote the RHS if necessary. Shift operations do not
+            // need their arguments to match in type, but others do.
+            if (!BinaryOperator::isShiftOp(op)) {
+              // If the RHS is a constant, we need to promote it.
+              if (nonloc::ConcreteInt *rhs_I =
+                    dyn_cast<nonloc::ConcreteInt>(&rhs)) {
+                const llvm::APSInt &val = rhs_I->getValue();
 
-            // Also promote the RHS (if necessary).
+                // The RHS may have a better type for performing comparisons.
+                // Consider x == 0xF00, where x is a fully constrained char.
+                if (BinaryOperator::isComparisonOp(op)) {
+                  const ASTContext &Ctx = getContext();
+                  unsigned width = std::max((unsigned)Ctx.getTypeSize(lhsType),
+                                            (unsigned)val.getBitWidth());
 
-            // For shifts, it is not necessary to promote the RHS.
-            if (BinaryOperator::isShiftOp(op))
-              continue;
+                  // Use the LHS's signedness.
+                  bool isUnsigned =
+                    lhsType->isUnsignedIntegerOrEnumerationType();
 
-            // Other operators: do an implicit conversion.  This shouldn't be
-            // necessary once we support truncation/extension of symbolic values.
-            if (nonloc::ConcreteInt *rhs_I = dyn_cast<nonloc::ConcreteInt>(&rhs)){
-              rhs = nonloc::ConcreteInt(BasicVals.Convert(conversionType,
-                  rhs_I->getValue()));
+                  conversionPrototype = &BasicVals.getValue(val.getSExtValue(),
+                                                            width, isUnsigned);
+                } else {
+                  conversionPrototype = &BasicVals.Convert(resultTy, val);
+                }
+
+                // Record the promoted value.
+                rhs = nonloc::ConcreteInt(*conversionPrototype);
+              }              
             }
+
+            // Promote the LHS constant to the appropriate type.
+            const llvm::APSInt &lhs_I = conversionPrototype ? 
+              BasicVals.Convert(*conversionPrototype, *Constant) :
+              BasicVals.Convert(conversionType, *Constant);
+            lhs = nonloc::ConcreteInt(lhs_I);
 
             continue;
           }
@@ -529,6 +547,8 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
           if (RSym->getType(Context)->isIntegerType()) {
             if (const llvm::APSInt *Constant = state->getSymVal(RSym)) {
               // The symbol evaluates to a constant.
+              // FIXME: This may not be the proper conversion type. Consider
+              // x > y, where y is a fully constrained int but x is a char.
               const llvm::APSInt &rhs_I = BasicVals.Convert(conversionType,
                   *Constant);
               rhs = nonloc::ConcreteInt(rhs_I);
@@ -536,10 +556,9 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
           }
         }
 
-        if (isa<nonloc::ConcreteInt>(rhs)) {
+        if (nonloc::ConcreteInt *rhs_I = dyn_cast<nonloc::ConcreteInt>(&rhs)) {
           return MakeSymIntVal(slhs->getSymbol(), op,
-              cast<nonloc::ConcreteInt>(rhs).getValue(),
-              resultTy);
+                               rhs_I->getValue(), resultTy);
         }
 
         return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
