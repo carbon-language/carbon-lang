@@ -1420,11 +1420,16 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
     // aren't really synthesized at a particular location; they just exist.
     // Saying that they are located at the @implementation isn't really going
     // to help users.
-    ActOnPropertyImplDecl(S, SourceLocation(), SourceLocation(),
-                          true,
-                          /* property = */ Prop->getIdentifier(),
-                          /* ivar = */ getDefaultSynthIvarName(Prop, Context),
-                          SourceLocation());
+    ObjCPropertyImplDecl *PIDecl = dyn_cast_or_null<ObjCPropertyImplDecl>(
+      ActOnPropertyImplDecl(S, SourceLocation(), SourceLocation(),
+                            true,
+                            /* property = */ Prop->getIdentifier(),
+                            /* ivar = */ getDefaultSynthIvarName(Prop, Context),
+                            SourceLocation()));
+    if (PIDecl) {
+      Diag(Prop->getLocation(), diag::warn_missing_explicit_synthesis);
+      Diag(IMPDecl->getLocation(), diag::not_while_in_implementation);
+    }
   }
 }
 

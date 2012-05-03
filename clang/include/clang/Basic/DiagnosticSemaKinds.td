@@ -448,6 +448,8 @@ def err_class_extension_after_impl : Error<
   "cannot declare class extension for %0 after class implementation">;
 def note_implementation_declared : Note<
   "class implementation is declared here">;
+def not_while_in_implementation : Note<
+  "detected while default synthesizing properties in class implementation">;
 def note_class_declared : Note<
   "class is declared here">;
 def note_receiver_is_id : Note<
@@ -618,6 +620,9 @@ def warn_auto_synthesizing_protocol_property :Warning<
   "auto property synthesis will not synthesize property"
   " declared in a protocol">,
   InGroup<DiagGroup<"objc-protocol-property-synthesis">>;
+def warn_missing_explicit_synthesis : Warning <
+  "auto property synthesis is synthesizing property not explicitly synthesized">,
+  InGroup<DiagGroup<"objc-missing-property-synthesis">>, DefaultIgnore;
 def warn_property_getter_owning_mismatch : Warning<
   "property declared as returning non-retained objects"
   "; getter returning retained objects">;
