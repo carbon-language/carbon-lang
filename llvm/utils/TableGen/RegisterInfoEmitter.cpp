@@ -680,10 +680,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   if (!RegBank.getSubRegIndices().empty()) {
     OS << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
       << "  const TargetRegisterClass *"
-      "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n"
-      << "  const TargetRegisterClass *getMatchingSuperRegClass("
-      "const TargetRegisterClass*, const TargetRegisterClass*, "
-      "unsigned) const;\n";
+      "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n";
   }
   OS << "  const RegClassWeight &getRegClassWeight("
      << "const TargetRegisterClass *RC) const;\n"
@@ -733,9 +730,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Start out by emitting each of the register classes.
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = RegBank.getRegClasses();
   ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
-
-  // The number of 32-bit words in a register class bit mask.
-  const unsigned RCMaskWords = (RegisterClasses.size()+31)/32;
 
   // Collect all registers belonging to any allocatable class.
   std::set<Record*> AllocatableRegs;
@@ -1048,33 +1042,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
        << "  unsigned TV = Table[RC->getID()][Idx];\n"
        << "  return TV ? getRegClass(TV - 1) : 0;\n}\n\n";
-  }
-
-  if (!SubRegIndices.empty()) {
-    // Emit getMatchingSuperRegClass.
-    // We need to find the largest sub-class of A such that every register has
-    // an Idx sub-register in B.  Map (B, Idx) to a bit-vector of
-    // super-register classes that map into B. Then compute the largest common
-    // sub-class with A by taking advantage of the register class ordering,
-    // like getCommonSubClass().
-    OS << "const TargetRegisterClass *" << ClassName
-       << "::getMatchingSuperRegClass(const TargetRegisterClass *A,"
-       << " const TargetRegisterClass *B, unsigned Idx) const {\n"
-       << "  assert(A && B && \"Missing regclass\");\n"
-       << "  assert(Idx && Idx <= " << SubRegIndices.size()
-       << " && \"Bad subreg\");\n"
-       << "  const uint16_t *SRI = B->getSuperRegIndices();\n"
-       << "  unsigned Offset = 0;\n"
-       << "  while (SRI[Offset] != Idx) {\n"
-       << "    if (!SRI[Offset])\n      return 0;\n"
-       << "    ++Offset;\n  }\n"
-       << "  const uint32_t *TV = B->getSubClassMask() + (Offset+1)*"
-       << RCMaskWords << ";\n"
-       << "  const uint32_t *SC = A->getSubClassMask();\n"
-       << "  for (unsigned i = 0; i != " << RCMaskWords << "; ++i)\n"
-       << "    if (unsigned Common = TV[i] & SC[i])\n"
-       << "      return getRegClass(32*i + CountTrailingZeros_32(Common));\n"
-       << "  return 0;\n}\n\n";
   }
 
   EmitRegUnitPressure(OS, RegBank, ClassName);

@@ -434,9 +434,7 @@ public:
   /// TableGen will synthesize missing A sub-classes.
   virtual const TargetRegisterClass *
   getMatchingSuperRegClass(const TargetRegisterClass *A,
-                           const TargetRegisterClass *B, unsigned Idx) const {
-    llvm_unreachable("Target has no sub-registers");
-  }
+                           const TargetRegisterClass *B, unsigned Idx) const;
 
   /// getSubClassWithSubReg - Returns the largest legal sub-class of RC that
   /// supports the sub-register index Idx.

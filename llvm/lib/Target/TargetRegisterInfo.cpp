@@ -145,3 +145,33 @@ TargetRegisterInfo::getCommonSubClass(const TargetRegisterClass *A,
   // No common sub-class exists.
   return NULL;
 }
+
+const TargetRegisterClass *
+TargetRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
+                                             const TargetRegisterClass *B,
+                                             unsigned Idx) const {
+  assert(A && B && "Missing register class");
+  assert(Idx && "Bad sub-register index");
+
+  // Find Idx in the list of super-register indices.
+  const uint16_t *SRI = B->getSuperRegIndices();
+  unsigned Offset = 0;
+  while (SRI[Offset] != Idx) {
+    if (!SRI[Offset])
+      return 0;
+    ++Offset;
+  }
+
+  // The register class bit mask corresponding to SRI[Offset]. The bit mask
+  // contains all register classes that are projected into B by Idx. Find a
+  // class that is also a sub-class of A.
+  const unsigned RCMaskWords = (getNumRegClasses()+31)/32;
+  const uint32_t *TV = B->getSubClassMask() + (Offset + 1) * RCMaskWords;
+  const uint32_t *SC = A->getSubClassMask();
+
+  // Find the first common register class in TV and SC.
+  for (unsigned i = 0; i != RCMaskWords ; ++i)
+    if (unsigned Common = TV[i] & SC[i])
+      return getRegClass(32*i + CountTrailingZeros_32(Common));
+  return 0;
+}
