@@ -203,3 +203,12 @@ unsigned radar11369570_hanging(const unsigned char *arr, int l) {
   }
   return 5/a; // expected-warning {{Division by a tainted value, possibly zero}}
 }
+
+// Check that we do not assert of the following code.
+int SymSymExprWithDiffTypes(void* p) {
+  int i;
+  scanf("%d", &i);
+  int j = (i % (int)(long)p);
+  return 5/j; // expected-warning {{Division by a tainted value, possibly zero}}
+}
+

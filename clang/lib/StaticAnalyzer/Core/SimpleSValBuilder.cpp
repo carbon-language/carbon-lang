@@ -280,6 +280,9 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
                                   BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
+  NonLoc InputLHS = lhs;
+  NonLoc InputRHS = rhs;
+
   // Handle trivial case where left-side and right-side are the same.
   if (lhs == rhs)
     switch (op) {
@@ -327,7 +330,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
               return makeTruthVal(true, resultTy);
             default:
               // This case also handles pointer arithmetic.
-              return makeSymExprValNN(state, op, lhs, rhs, resultTy);
+              return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
           }
       }
     }
@@ -389,9 +392,9 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
             if (lhsValue == 0)
               // At this point lhs and rhs have been swapped.
               return rhs;
-            return makeSymExprValNN(state, op, rhs, lhs, resultTy);
+            return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
           default:
-            return makeSymExprValNN(state, op, rhs, lhs, resultTy);
+            return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
         }
       }
     }
@@ -406,7 +409,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
             dyn_cast<SymIntExpr>(selhs->getSymbol());
 
         if (!symIntExpr)
-          return makeSymExprValNN(state, op, lhs, rhs, resultTy);
+          return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
 
         // Is this a logical not? (!x is represented as x == 0.)
         if (op == BO_EQ && rhs.isZeroConstant()) {
@@ -454,7 +457,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
         // For now, only handle expressions whose RHS is a constant.
         const nonloc::ConcreteInt *rhsInt = dyn_cast<nonloc::ConcreteInt>(&rhs);
         if (!rhsInt)
-          return makeSymExprValNN(state, op, lhs, rhs, resultTy);
+          return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
 
         // If both the LHS and the current expression are additive,
         // fold their constants.
@@ -539,7 +542,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
               resultTy);
         }
 
-        return makeSymExprValNN(state, op, lhs, rhs, resultTy);
+        return makeSymExprValNN(state, op, InputLHS, InputRHS, resultTy);
       }
     }
     }

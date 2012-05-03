@@ -61,7 +61,6 @@ NonLoc SValBuilder::makeNonLoc(const llvm::APSInt& lhs,
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                                const SymExpr *rhs, QualType type) {
   assert(lhs && rhs);
-  assert(haveSameType(lhs->getType(Context), rhs->getType(Context)) == true);
   assert(!Loc::isLocType(type));
   return nonloc::SymbolVal(SymMgr.getSymSymExpr(lhs, op, rhs, type));
 }
