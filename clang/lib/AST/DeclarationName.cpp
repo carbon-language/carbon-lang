@@ -323,10 +323,10 @@ Selector DeclarationName::getObjCSelector() const {
   return Selector();
 }
 
-void *DeclarationName::getFETokenInfoAsVoid() const {
+void *DeclarationName::getFETokenInfoAsVoidSlow() const {
   switch (getNameKind()) {
   case Identifier:
-    return getAsIdentifierInfo()->getFETokenInfo<void>();
+    llvm_unreachable("Handled by getFETokenInfoAsVoid()");
 
   case CXXConstructorName:
   case CXXDestructorName:

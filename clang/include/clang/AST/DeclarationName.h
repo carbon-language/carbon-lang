@@ -155,7 +155,13 @@ private:
 
   /// getFETokenInfoAsVoid - Retrieves the front end-specified pointer
   /// for this name as a void pointer.
-  void *getFETokenInfoAsVoid() const;
+  void *getFETokenInfoAsVoid() const {
+    if (getNameKind() == Identifier)
+      return getAsIdentifierInfo()->getFETokenInfo<void>();
+    return getFETokenInfoAsVoidSlow();
+  }
+
+  void *getFETokenInfoAsVoidSlow() const;
 
 public:
   /// DeclarationName - Used to create an empty selector.

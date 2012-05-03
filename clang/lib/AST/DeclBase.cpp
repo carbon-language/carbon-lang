@@ -1192,11 +1192,6 @@ DeclContext::lookup(DeclarationName Name) {
   return I->second.getLookupResult();
 }
 
-DeclContext::lookup_const_result
-DeclContext::lookup(DeclarationName Name) const {
-  return const_cast<DeclContext*>(this)->lookup(Name);
-}
-
 void DeclContext::localUncachedLookup(DeclarationName Name, 
                                   llvm::SmallVectorImpl<NamedDecl *> &Results) {
   Results.clear();
