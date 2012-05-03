@@ -3176,8 +3176,8 @@ static bool isUndefOrEqual(int Val, int CmpVal) {
 /// from position Pos and ending in Pos+Size, falls within the specified
 /// sequential range (L, L+Pos]. or is undef.
 static bool isSequentialOrUndefInRange(ArrayRef<int> Mask,
-                                       int Pos, int Size, int Low) {
-  for (int i = Pos, e = Pos+Size; i != e; ++i, ++Low)
+                                       unsigned Pos, unsigned Size, int Low) {
+  for (unsigned i = Pos, e = Pos+Size; i != e; ++i, ++Low)
     if (!isUndefOrEqual(Mask[i], Low))
       return false;
   return true;
@@ -10670,7 +10670,7 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
         EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
 
         EVT ExtraEltVT = ExtraVT.getVectorElementType();
-        int ExtraNumElems = ExtraVT.getVectorNumElements();
+        unsigned ExtraNumElems = ExtraVT.getVectorNumElements();
         ExtraVT = EVT::getVectorVT(*DAG.getContext(), ExtraEltVT,
                                    ExtraNumElems/2);
         SDValue Extra = DAG.getValueType(ExtraVT);
