@@ -394,39 +394,65 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     return swapped;
   }
   case ARM::fixup_arm_thumb_bl: {
-    // The value doesn't encode the low bit (always zero) and is offset by
-    // four. The value is encoded into disjoint bit positions in the destination
-    // opcode. x = unchanged, I = immediate value bit, S = sign extension bit
-    //
-    //   BL:  xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
-    //
-    // Note that the halfwords are stored high first, low second; so we need
-    // to transpose the fixup value here to map properly.
-    unsigned isNeg = (int64_t(Value - 4) < 0) ? 1 : 0;
-    uint32_t Binary = 0;
-    Value = 0x3fffff & ((Value - 4) >> 1);
-    Binary  = (Value & 0x7ff) << 16;    // Low imm11 value.
-    Binary |= (Value & 0x1ffc00) >> 11; // High imm10 value.
-    Binary |= isNeg << 10;              // Sign bit.
-    return Binary;
+     // The value doesn't encode the low bit (always zero) and is offset by
+     // four. The 32-bit immediate value is encoded as
+     //   imm32 = SignExtend(S:I1:I2:imm10:imm11:0)
+     // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
+     // The value is encoded into disjoint bit positions in the destination
+     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit,
+     // J = either J1 or J2 bit
+     //
+     //   BL:  xxxxxSIIIIIIIIII xxJxJIIIIIIIIIII
+     //
+     // Note that the halfwords are stored high first, low second; so we need
+     // to transpose the fixup value here to map properly.
+     uint32_t offset = (Value - 4) >> 1;
+     uint32_t signBit = (offset & 0x800000) >> 23;
+     uint32_t I1Bit = (offset & 0x400000) >> 22;
+     uint32_t J1Bit = (I1Bit ^ 0x1) ^ signBit;
+     uint32_t I2Bit = (offset & 0x200000) >> 21;
+     uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
+     uint32_t imm10Bits = (offset & 0x1FF800) >> 11;
+     uint32_t imm11Bits = (offset & 0x000007FF);
+ 
+     uint32_t Binary = 0;
+     uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10Bits);
+     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) |
+                           (uint16_t)imm11Bits);
+     Binary |= secondHalf << 16;
+     Binary |= firstHalf;
+     return Binary;
+
   }
   case ARM::fixup_arm_thumb_blx: {
-    // The value doesn't encode the low two bits (always zero) and is offset by
-    // four (see fixup_arm_thumb_cp). The value is encoded into disjoint bit
-    // positions in the destination opcode. x = unchanged, I = immediate value
-    // bit, S = sign extension bit, 0 = zero.
-    //
-    //   BLX: xxxxxSIIIIIIIIII xxxxxIIIIIIIIII0
-    //
-    // Note that the halfwords are stored high first, low second; so we need
-    // to transpose the fixup value here to map properly.
-    unsigned isNeg = (int64_t(Value-4) < 0) ? 1 : 0;
-    uint32_t Binary = 0;
-    Value = 0xfffff & ((Value - 2) >> 2);
-    Binary  = (Value & 0x3ff) << 17;    // Low imm10L value.
-    Binary |= (Value & 0xffc00) >> 10;  // High imm10H value.
-    Binary |= isNeg << 10;              // Sign bit.
-    return Binary;
+     // The value doesn't encode the low two bits (always zero) and is offset by
+     // four (see fixup_arm_thumb_cp). The 32-bit immediate value is encoded as
+     //   imm32 = SignExtend(S:I1:I2:imm10H:imm10L:00)
+     // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
+     // The value is encoded into disjoint bit positions in the destination 
+     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit, 
+     // J = either J1 or J2 bit, 0 = zero.
+     //
+     //   BLX: xxxxxSIIIIIIIIII xxJxJIIIIIIIIII0
+     //
+     // Note that the halfwords are stored high first, low second; so we need
+     // to transpose the fixup value here to map properly.
+     uint32_t offset = (Value - 2) >> 2;
+     uint32_t signBit = (offset & 0x400000) >> 22;
+     uint32_t I1Bit = (offset & 0x200000) >> 21;
+     uint32_t J1Bit = (I1Bit ^ 0x1) ^ signBit;
+     uint32_t I2Bit = (offset & 0x100000) >> 20;
+     uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
+     uint32_t imm10HBits = (offset & 0xFFC00) >> 10;
+     uint32_t imm10LBits = (offset & 0x3FF);
+ 
+     uint32_t Binary = 0;
+     uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10HBits);
+     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) | 
+                           ((uint16_t)imm10LBits) << 1);
+     Binary |= secondHalf << 16;
+     Binary |= firstHalf;
+     return Binary;
   }
   case ARM::fixup_arm_thumb_cp:
     // Offset by 4, and don't encode the low two bits. Two bytes of that

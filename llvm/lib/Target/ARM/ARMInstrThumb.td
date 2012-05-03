@@ -427,11 +427,11 @@ let isCall = 1,
                   "bl${p}\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb]> {
-    bits<22> func;
-    let Inst{26} = func{21};
+    bits<24> func;
+    let Inst{26} = func{23};
     let Inst{25-16} = func{20-11};
-    let Inst{13} = 1;
-    let Inst{11} = 1;
+    let Inst{13} = func{22};
+    let Inst{11} = func{21};
     let Inst{10-0} = func{10-0};
   }
 
@@ -441,10 +441,11 @@ let isCall = 1,
                    "blx${p}\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T]> {
-    bits<21> func;
+    bits<24> func;
+    let Inst{26} = func{23};
     let Inst{25-16} = func{20-11};
-    let Inst{13} = 1;
-    let Inst{11} = 1;
+    let Inst{13} = func{22};
+    let Inst{11} = func{21};
     let Inst{10-1} = func{10-1};
     let Inst{0} = 0; // func{0} is assumed zero
   }
