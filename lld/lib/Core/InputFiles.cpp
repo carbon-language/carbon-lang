@@ -1,4 +1,4 @@
-//===- Core/InputFiles.cpp - Manages list of Files -----------------------===//
+//===- Core/InputFiles.cpp - Manages list of Files ------------------------===//
 //
 //                             The LLVM Linker
 //

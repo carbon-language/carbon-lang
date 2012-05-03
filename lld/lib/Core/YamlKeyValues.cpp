@@ -18,35 +18,6 @@ namespace lld {
 namespace yaml {
 
 
-const char* const KeyValues::nameKeyword            = "name";
-const char* const KeyValues::refNameKeyword         = "ref-name";
-const char* const KeyValues::definitionKeyword      = "definition";
-const char* const KeyValues::scopeKeyword           = "scope";
-const char* const KeyValues::contentTypeKeyword     = "type";
-const char* const KeyValues::deadStripKindKeyword   = "dead-strip";
-const char* const KeyValues::sectionChoiceKeyword   = "section-choice";
-const char* const KeyValues::interposableKeyword    = "interposable";
-const char* const KeyValues::mergeKeyword           = "merge";
-const char* const KeyValues::isThumbKeyword         = "is-thumb";
-const char* const KeyValues::isAliasKeyword         = "is-alias";
-const char* const KeyValues::sectionNameKeyword     = "section-name";
-const char* const KeyValues::contentKeyword         = "content";
-const char* const KeyValues::loadNameKeyword        = "load-name";
-const char* const KeyValues::sizeKeyword            = "size";
-const char* const KeyValues::valueKeyword           = "value";
-const char* const KeyValues::fixupsKeyword          = "fixups";
-const char* const KeyValues::permissionsKeyword     = "permissions";
-const char* const KeyValues::canBeNullKeyword       = "can-be-null";
-const char* const KeyValues::fixupsKindKeyword      = "kind";
-const char* const KeyValues::fixupsOffsetKeyword    = "offset";
-const char* const KeyValues::fixupsTargetKeyword    = "target";
-const char* const KeyValues::fixupsAddendKeyword    = "addend";
-const char* const KeyValues::fileAtomsKeyword       = "atoms";
-const char* const KeyValues::fileKindKeyword        = "kind";
-const char* const KeyValues::fileMembersKeyword     = "members";
-
-
-
 const DefinedAtom::Definition         KeyValues::definitionDefault = Atom::definitionRegular;
 const DefinedAtom::Scope              KeyValues::scopeDefault = DefinedAtom::scopeTranslationUnit;
 const DefinedAtom::ContentType        KeyValues::contentTypeDefault = DefinedAtom::typeData;
@@ -58,36 +29,8 @@ const DefinedAtom::ContentPermissions KeyValues::permissionsDefault = DefinedAto
 const bool                            KeyValues::isThumbDefault = false;
 const bool                            KeyValues::isAliasDefault = false;
 const UndefinedAtom::CanBeNull        KeyValues::canBeNullDefault = UndefinedAtom::canBeNullNever;
-const File::Kind                      KeyValues::fileKindDefault = File::kindObject;
 
 
-struct FileKindMapping {
-  const char*       string;
-  File::Kind        value;
-};
-
-static const FileKindMapping fileKindMappings[] = {
-  { "object",         File::kindObject },
-  { "archive",        File::kindArchiveLibrary },
-  { "shared-library", File::kindSharedLibrary },
-  { nullptr,          File::kindObject }
-};
-
- File::Kind KeyValues::fileKind(StringRef str) {
-  for (const FileKindMapping* p = fileKindMappings; p->string != nullptr; ++p) {
-    if (str == p->string)
-      return p->value;
-  }
-  llvm::report_fatal_error("bad file kind value");
-}
-
-const char* KeyValues::fileKind(File::Kind k) {
-  for (const FileKindMapping* p = fileKindMappings; p->string != nullptr; ++p) {
-    if ( p->value == k )
-      return p->string;
-  }
-  llvm::report_fatal_error("bad file kind value");
-}
 
 
 struct DefinitionMapping {
@@ -103,13 +46,15 @@ static const DefinitionMapping defMappings[] = {
   { nullptr,          Atom::definitionRegular }
 };
 
-Atom::Definition KeyValues::definition(StringRef s)
+bool KeyValues::definition(StringRef s, Atom::Definition &out)
 {
   for (const DefinitionMapping* p = defMappings; p->string != nullptr; ++p) {
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad definition value");
+  return true;
 }
 
 const char* KeyValues::definition(Atom::Definition s) {
@@ -136,13 +81,15 @@ static const ScopeMapping scopeMappings[] = {
   { nullptr,  DefinedAtom::scopeGlobal }
 };
 
-DefinedAtom::Scope KeyValues::scope(StringRef s)
+bool KeyValues::scope(StringRef s, DefinedAtom::Scope &out)
 {
   for (const ScopeMapping* p = scopeMappings; p->string != nullptr; ++p) {
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad scope value");
+  return true;
 }
 
 const char* KeyValues::scope(DefinedAtom::Scope s) {
@@ -197,13 +144,15 @@ static const ContentTypeMapping typeMappings[] = {
   { nullptr,          DefinedAtom::typeUnknown }
 };
 
-DefinedAtom::ContentType KeyValues::contentType(StringRef s)
+bool KeyValues::contentType(StringRef s, DefinedAtom::ContentType &out)
 {
   for (const ContentTypeMapping* p = typeMappings; p->string != nullptr; ++p) {
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad content type value");
+  return true;
 }
 
 const char* KeyValues::contentType(DefinedAtom::ContentType s) {
@@ -225,26 +174,26 @@ struct DeadStripMapping {
   DefinedAtom::DeadStripKind   value;
 };
 
-static const DeadStripMapping deadStripMappings[] = {
+static const DeadStripMapping dsMappings[] = {
   { "normal",         DefinedAtom::deadStripNormal },
   { "never",          DefinedAtom::deadStripNever },
   { "always",         DefinedAtom::deadStripAlways },
   { nullptr,          DefinedAtom::deadStripNormal }
 };
 
-DefinedAtom::DeadStripKind KeyValues::deadStripKind(StringRef s)
+bool KeyValues::deadStripKind(StringRef s, DefinedAtom::DeadStripKind &out)
 {
-  for (const DeadStripMapping* p = deadStripMappings; p->string != nullptr; ++p)
-  {
-    if (s == p->string)
-      return p->value;
+  for (const DeadStripMapping* p = dsMappings; p->string != nullptr; ++p) {
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad dead strip value");
+  return true;
 }
 
 const char* KeyValues::deadStripKind(DefinedAtom::DeadStripKind dsk) {
-  for (const DeadStripMapping* p = deadStripMappings; p->string != nullptr; ++p)
-  {
+  for (const DeadStripMapping* p = dsMappings; p->string != nullptr; ++p) {
     if ( p->value == dsk )
       return p->string;
   }
@@ -267,13 +216,15 @@ static const InterposableMapping interMappings[] = {
   { nullptr,        DefinedAtom::interposeNo }
 };
 
-DefinedAtom::Interposable KeyValues::interposable(StringRef s)
+bool KeyValues::interposable(StringRef s, DefinedAtom::Interposable &out)
 {
   for (const InterposableMapping* p = interMappings; p->string != nullptr; ++p){
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad interposable value");
+  return true;
 }
 
 const char* KeyValues::interposable(DefinedAtom::Interposable in) {
@@ -302,13 +253,15 @@ static const MergeMapping mergeMappings[] = {
   { nullptr,          DefinedAtom::mergeNo }
 };
 
-DefinedAtom::Merge KeyValues::merge(StringRef s)
+bool KeyValues::merge(StringRef s, DefinedAtom::Merge& out)
 {
   for (const MergeMapping* p = mergeMappings; p->string != nullptr; ++p) {
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad merge value");
+  return true;
 }
 
 const char* KeyValues::merge(DefinedAtom::Merge in) {
@@ -336,13 +289,15 @@ static const SectionChoiceMapping sectMappings[] = {
   { nullptr,           DefinedAtom::sectionBasedOnContent }
 };
 
-DefinedAtom::SectionChoice KeyValues::sectionChoice(StringRef s)
+bool KeyValues::sectionChoice(StringRef s, DefinedAtom::SectionChoice &out)
 {
   for (const SectionChoiceMapping* p = sectMappings; p->string != nullptr; ++p){
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad dead strip value");
+  return true;
 }
 
 const char* KeyValues::sectionChoice(DefinedAtom::SectionChoice s) {
@@ -365,21 +320,23 @@ struct PermissionsMapping {
 };
 
 static const PermissionsMapping permMappings[] = {
-  { "content",         DefinedAtom::perm___ },
-  { "custom",          DefinedAtom::permR__ },
-  { "custom-required", DefinedAtom::permR_X },
-  { "custom-required", DefinedAtom::permRW_ },
-  { "custom-required", DefinedAtom::permRW_L },
-  { nullptr,           DefinedAtom::perm___ }
+  { "---",    DefinedAtom::perm___  },
+  { "r--",    DefinedAtom::permR__  },
+  { "r-x",    DefinedAtom::permR_X  },
+  { "rw-",    DefinedAtom::permRW_  },
+  { "rw-l",   DefinedAtom::permRW_L },
+  { nullptr,  DefinedAtom::perm___  }
 };
 
-DefinedAtom::ContentPermissions KeyValues::permissions(StringRef s)
+bool KeyValues::permissions(StringRef s, DefinedAtom::ContentPermissions &out)
 {
   for (const PermissionsMapping* p = permMappings; p->string != nullptr; ++p) {
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad permissions value");
+  return true;
 }
 
 const char* KeyValues::permissions(DefinedAtom::ContentPermissions s) {
@@ -390,8 +347,40 @@ const char* KeyValues::permissions(DefinedAtom::ContentPermissions s) {
   llvm::report_fatal_error("bad permissions value");
 }
 
+
+bool KeyValues::isThumb(StringRef s, bool &out)
+{
+  if ( s.equals("true") ) {
+    out = true;
+    return false;
+  }
+  
+  if ( s.equals("false") ) {
+    out = false;
+    return false;
+  }
+
+  return true;
+}
+
 const char* KeyValues::isThumb(bool b) {
   return b ? "true" : "false";
+}
+
+
+bool KeyValues::isAlias(StringRef s, bool &out)
+{
+  if ( s.equals("true") ) {
+    out = true;
+    return false;
+  }
+  
+  if ( s.equals("false") ) {
+    out = false;
+    return false;
+  }
+
+  return true;
 }
 
 const char* KeyValues::isAlias(bool b) {
@@ -414,13 +403,15 @@ static const CanBeNullMapping cbnMappings[] = {
 };
 
 
-UndefinedAtom::CanBeNull KeyValues::canBeNull(StringRef s)
+bool KeyValues::canBeNull(StringRef s, UndefinedAtom::CanBeNull &out)
 {
   for (const CanBeNullMapping* p = cbnMappings; p->string != nullptr; ++p) {
-    if (s == p->string)
-      return p->value;
+    if (s == p->string) {
+      out = p->value;
+      return false;
+    }
   }
-  llvm::report_fatal_error("bad can-be-null value");
+  return true;
 }
 
 const char* KeyValues::canBeNull(UndefinedAtom::CanBeNull c) {

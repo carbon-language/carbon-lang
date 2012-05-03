@@ -14,7 +14,7 @@ atoms:
 
     - name:              bar
       scope:             global
-      content:           zero-fill
+      type:              zero-fill
       merge:             asTentative
 
 ---

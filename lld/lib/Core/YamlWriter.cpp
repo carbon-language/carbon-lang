@@ -164,9 +164,8 @@ public:
     bool hasDash = false;
     if ( !atom.name().empty() ) {
       out   << "    - "
-            << KeyValues::nameKeyword
-            << ":"
-            << spacePadding(KeyValues::nameKeyword)
+            << "name:"
+            << spacePadding(strlen("name"))
             << atom.name()
             << "\n";
       hasDash = true;
@@ -174,9 +173,8 @@ public:
 
     if ( _rnb.hasRefName(&atom) ) {
       out   << (hasDash ? "      " : "    - ")
-            << KeyValues::refNameKeyword
-            << ":"
-            << spacePadding(KeyValues::refNameKeyword)
+            << "ref-name:"
+            << spacePadding(strlen("ref-name"))
             << _rnb.refName(&atom)
             << "\n";
       hasDash = true;
@@ -184,9 +182,8 @@ public:
 
     if ( atom.definition() != KeyValues::definitionDefault ) {
       out   << (hasDash ? "      " : "    - ")
-            << KeyValues::definitionKeyword
-            << ":"
-            << spacePadding(KeyValues::definitionKeyword)
+            << "definition:"
+            << spacePadding(strlen("definition"))
             << KeyValues::definition(atom.definition())
             << "\n";
       hasDash = true;
@@ -194,9 +191,8 @@ public:
 
     if ( atom.scope() != KeyValues::scopeDefault ) {
       out   << (hasDash ? "      " : "    - ")
-            << KeyValues::scopeKeyword
-            << ":"
-            << spacePadding(KeyValues::scopeKeyword)
+            << "scope:"
+            << spacePadding(strlen("scope"))
             << KeyValues::scope(atom.scope())
             << "\n";
       hasDash = true;
@@ -204,70 +200,62 @@ public:
 
      if ( atom.interposable() != KeyValues::interposableDefault ) {
       out   << "      "
-            << KeyValues::interposableKeyword
-            << ":"
-            << spacePadding(KeyValues::interposableKeyword)
+            << "interposable:"
+            << spacePadding(strlen("interposable"))
             << KeyValues::interposable(atom.interposable())
             << "\n";
     }
 
     if ( atom.merge() != KeyValues::mergeDefault ) {
       out   << "      "
-            << KeyValues::mergeKeyword
-            << ":"
-            << spacePadding(KeyValues::mergeKeyword)
+            << "merge:"
+            << spacePadding(strlen("merge"))
             << KeyValues::merge(atom.merge())
             << "\n";
     }
 
     if ( atom.contentType() != KeyValues::contentTypeDefault ) {
       out   << "      "
-            << KeyValues::contentTypeKeyword
-            << ":"
-            << spacePadding(KeyValues::contentTypeKeyword)
+            << "type:"
+            << spacePadding(strlen("type"))
             << KeyValues::contentType(atom.contentType())
             << "\n";
     }
 
     if ( atom.deadStrip() != KeyValues::deadStripKindDefault ) {
       out   << "      "
-            << KeyValues::deadStripKindKeyword
-            << ":"
-            << spacePadding(KeyValues::deadStripKindKeyword)
+            << "dead-strip:"
+            << spacePadding(strlen("dead-strip"))
             << KeyValues::deadStripKind(atom.deadStrip())
             << "\n";
     }
 
     if ( atom.sectionChoice() != KeyValues::sectionChoiceDefault ) {
       out   << "      "
-            << KeyValues::sectionChoiceKeyword
-            << ":"
-            << spacePadding(KeyValues::sectionChoiceKeyword)
+            << "section-choice:"
+            << spacePadding(strlen("section-choice"))
             << KeyValues::sectionChoice(atom.sectionChoice())
             << "\n";
       assert( ! atom.customSectionName().empty() );
       out   << "      "
-            << KeyValues::sectionNameKeyword
-            << ":"
-            << spacePadding(KeyValues::sectionNameKeyword)
+            << "section-name:"
+            << spacePadding(strlen("section-name"))
             << atom.customSectionName()
             << "\n";
     }
 
     if ( atom.isThumb() != KeyValues::isThumbDefault ) {
       out   << "      "
-            << KeyValues::isThumbKeyword
-            << ":"
-            << spacePadding(KeyValues::isThumbKeyword)
+            << "is-thumb:"
+            << spacePadding(strlen("is-thumb"))
             << KeyValues::isThumb(atom.isThumb())
             << "\n";
     }
 
     if ( atom.isAlias() != KeyValues::isAliasDefault ) {
       out   << "      "
-            << KeyValues::isAliasKeyword
-            << ":"
-            << spacePadding(KeyValues::isAliasKeyword)
+            << "is-alias:"
+            << spacePadding(strlen("is-alias"))
             << KeyValues::isAlias(atom.isAlias())
             << "\n";
     }
@@ -275,9 +263,8 @@ public:
     if ( (atom.contentType() != DefinedAtom::typeZeroFill)
                                    && (atom.size() != 0) ) {
       out   << "      "
-            << KeyValues::contentKeyword
-            << ":"
-            << spacePadding(KeyValues::contentKeyword)
+            << "content:"
+            << spacePadding(strlen("content"))
             << "[ ";
       ArrayRef<uint8_t> arr = atom.rawContent();
       bool needComma = false;
@@ -301,15 +288,13 @@ public:
         wroteFirstFixup = true;
       }
       out   << "      - "
-            << KeyValues::fixupsOffsetKeyword
-            << ":"
-            << spacePadding(KeyValues::fixupsOffsetKeyword)
+            << "offset:"
+            << spacePadding(strlen("offset"))
             << ref->offsetInAtom()
             << "\n";
       out   << "        "
-            << KeyValues::fixupsKindKeyword
-            << ":"
-            << spacePadding(KeyValues::fixupsKindKeyword)
+            << "kind:"
+            << spacePadding(strlen("kind"))
             << _platform.kindToString(ref->kind())
             << "\n";
       const Atom* target = ref->target();
@@ -319,17 +304,15 @@ public:
           refName = _rnb.refName(target);
         assert(!refName.empty());
         out   << "        "
-              << KeyValues::fixupsTargetKeyword
-              << ":"
-              << spacePadding(KeyValues::fixupsTargetKeyword)
+              << "target:"
+              << spacePadding(strlen("target"))
               << refName
               << "\n";
       }
       if ( ref->addend() != 0 ) {
         out   << "        "
-              << KeyValues::fixupsAddendKeyword
-              << ":"
-              << spacePadding(KeyValues::fixupsAddendKeyword)
+              << "addend:"
+              << spacePadding(strlen("addend"))
               << ref->addend()
               << "\n";
       }
@@ -348,24 +331,21 @@ public:
     }
 
     out   << "    - "
-          << KeyValues::nameKeyword
-          << ":"
-          << spacePadding(KeyValues::nameKeyword)
+          << "name:"
+          << spacePadding(strlen("name"))
           << atom.name()
           << "\n";
 
     out   << "      "
-          << KeyValues::definitionKeyword
-          << ":"
-          << spacePadding(KeyValues::definitionKeyword)
+          << "definition:"
+          << spacePadding(strlen("definition"))
           << KeyValues::definition(atom.definition())
           << "\n";
 
     if ( atom.canBeNull() != KeyValues::canBeNullDefault ) {
       out   << "      "
-            << KeyValues::canBeNullKeyword
-            << ":"
-            << spacePadding(KeyValues::canBeNullKeyword)
+            << "can-be-null:"
+            << spacePadding(strlen("can-be-null"))
             << KeyValues::canBeNull(atom.canBeNull())
             << "\n";
     }
@@ -382,33 +362,29 @@ public:
     }
 
     out   << "    - "
-          << KeyValues::nameKeyword
-          << ":"
-          << spacePadding(KeyValues::nameKeyword)
+          << "name:"
+          << spacePadding(strlen("name"))
           << atom.name()
           << "\n";
 
     out   << "      "
-          << KeyValues::definitionKeyword
-          << ":"
-          << spacePadding(KeyValues::definitionKeyword)
+          << "definition:"
+          << spacePadding(strlen("definition"))
           << KeyValues::definition(atom.definition())
           << "\n";
 
     if ( !atom.loadName().empty() ) {
       out   << "      "
-            << KeyValues::loadNameKeyword
-            << ":"
-            << spacePadding(KeyValues::loadNameKeyword)
+            << "load-name:"
+            << spacePadding(strlen("load-name"))
             << atom.loadName()
             << "\n";
     }
 
     if ( atom.canBeNullAtRuntime() ) {
       out   << "      "
-            << KeyValues::canBeNullKeyword
-            << ":"
-            << spacePadding(KeyValues::canBeNullKeyword)
+            << "can-be-null:"
+            << spacePadding(strlen("can-be-null"))
             << KeyValues::canBeNull(UndefinedAtom::canBeNullAtRuntime)
             << "\n";
     }
@@ -425,23 +401,20 @@ public:
     }
 
     out   << "    - "
-          << KeyValues::nameKeyword
-          << ":"
-          << spacePadding(KeyValues::nameKeyword)
+          << "name:"
+          << spacePadding(strlen("name"))
           << atom.name()
           << "\n";
 
     out   << "      "
-          << KeyValues::definitionKeyword
-          << ":"
-          << spacePadding(KeyValues::definitionKeyword)
+          << "definition:"
+          << spacePadding(strlen("definition"))
           << KeyValues::definition(atom.definition())
           << "\n";
 
     out   << "      "
-          << KeyValues::valueKeyword
-          << ":"
-          << spacePadding(KeyValues::valueKeyword)
+          << "value:"
+          << spacePadding(strlen("value"))
           << "0x";
      out.write_hex(atom.value());
      out << "\n";
@@ -450,10 +423,10 @@ public:
 
 private:
   // return a string of the correct number of spaces to align value
-  const char* spacePadding(const char* key) {
+  const char* spacePadding(int keyLen) {
     const char* spaces = "                  ";
-    assert(strlen(spaces) > strlen(key));
-    return &spaces[strlen(key)];
+    assert(strlen(spaces) > keyLen);
+    return &spaces[keyLen];
   }
 
   char hexdigit(uint8_t nibble) {
