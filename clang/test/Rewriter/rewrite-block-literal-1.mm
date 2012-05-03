@@ -5,6 +5,9 @@
 // RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -Did="void *" -D"SEL=void*" -D"__declspec(X)=" %t-modern-rw.cpp
 // rdar://11259664
 
+// rdar://11375908
+typedef unsigned long size_t;
+
 void *sel_registerName(const char *);
 typedef void (^BLOCK_TYPE)(void);
 

@@ -6,6 +6,7 @@
 // grep "static void __FUNC_block_copy_" %t-modern-rw.cpp | count 2
 // rdar://8499592
 
+typedef unsigned long size_t;
 void Outer(void (^bk)());
 void Inner(void (^bk)());
 void INNER_FUNC(id d);

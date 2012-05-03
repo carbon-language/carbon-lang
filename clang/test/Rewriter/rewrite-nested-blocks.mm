@@ -5,6 +5,7 @@
 // radar 7682149
 
 
+typedef unsigned long size_t;
 void f(void (^block)(void));
 
 @interface X {

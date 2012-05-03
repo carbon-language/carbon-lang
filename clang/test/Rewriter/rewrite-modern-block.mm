@@ -2,6 +2,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Werror -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -U__declspec -D"__declspec(X)=" %t-rw.cpp
 // rdar://11230308
 
+typedef unsigned long size_t;
 typedef struct {
     char byte0;
     char byte1;

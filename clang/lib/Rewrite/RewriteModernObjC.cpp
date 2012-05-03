@@ -4053,8 +4053,8 @@ std::string RewriteModernObjC::SynthesizeBlockDescriptor(std::string DescTag,
                                                    unsigned hasCopy) {
   std::string S = "\nstatic struct " + DescTag;
   
-  S += " {\n  unsigned long reserved;\n";
-  S += "  unsigned long Block_size;\n";
+  S += " {\n  size_t reserved;\n";
+  S += "  size_t Block_size;\n";
   if (hasCopy) {
     S += "  void (*copy)(struct ";
     S += ImplTag; S += "*, struct ";

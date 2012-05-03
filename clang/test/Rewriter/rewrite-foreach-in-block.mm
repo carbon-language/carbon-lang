@@ -4,6 +4,8 @@
 // RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-modern-rw.cpp
 // rdar:// 9878420
 
+typedef unsigned long size_t;
+
 void objc_enumerationMutation(id);
 void *sel_registerName(const char *);
 typedef void (^CoreDAVCompletionBlock)(void);

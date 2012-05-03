@@ -4,6 +4,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Werror -Wno-address-of-temporary -D"SEL=void*" -U__declspec -D"__declspec(X)=" %t-rw-modern.cpp
 // radar 7669784
 
+typedef unsigned long size_t;
 typedef void * id;
 void *sel_registerName(const char *);
 
