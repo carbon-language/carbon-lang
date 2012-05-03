@@ -1200,9 +1200,6 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::LDriub:
     return !invertPredicate ? Hexagon::LDriub_cPt :
                               Hexagon::LDriub_cNotPt;
-  case Hexagon::LDriubit:
-    return !invertPredicate ? Hexagon::LDriub_cPt :
-                              Hexagon::LDriub_cNotPt;
  // Load Indexed.
   case Hexagon::LDrid_indexed:
     return !invertPredicate ? Hexagon::LDrid_indexed_cPt :
@@ -1409,7 +1406,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::LDrih:
   case Hexagon::LDriuh:
   case Hexagon::STrih:
-  case Hexagon::LDrih_ae:
     assert((Offset % 2 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMH_OFFSET_MAX);
@@ -1417,9 +1413,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::LDrib:
   case Hexagon::STrib:
   case Hexagon::LDriub:
-  case Hexagon::LDriubit:
-  case Hexagon::LDrib_ae:
-  case Hexagon::LDriub_ae:
     return (Offset >= Hexagon_MEMB_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMB_OFFSET_MAX);
 

@@ -375,7 +375,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
       };
       ReplaceUses(Froms, Tos, 3);
       return Result_2;
-    } 
+    }
     SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
     SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
     SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
@@ -723,7 +723,7 @@ SDNode *HexagonDAGToDAGISel::SelectStore(SDNode *N) {
   if (AM != ISD::UNINDEXED) {
     return SelectIndexedStore(ST, dl);
   }
-   
+
   return SelectBaseOffsetStore(ST, dl);
 }
 
@@ -1215,7 +1215,7 @@ SDNode *HexagonDAGToDAGISel::SelectAdd(SDNode *N) {
 
   // Build Rd = Rd' + asr(Rs, Rt). The machine constraints will ensure that
   // Rd and Rd' are assigned to the same register
-  SDNode* Result = CurDAG->getMachineNode(Hexagon::ASR_rr_acc, dl, MVT::i32,
+  SDNode* Result = CurDAG->getMachineNode(Hexagon::ASR_ADD_rr, dl, MVT::i32,
                                           N->getOperand(1),
                                           Src1->getOperand(0),
                                           Src1->getOperand(1));
