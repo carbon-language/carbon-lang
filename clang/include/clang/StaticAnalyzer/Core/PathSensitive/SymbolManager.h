@@ -94,6 +94,8 @@ public:
     return symbol_iterator(this);
   }
   static symbol_iterator symbol_end() { return symbol_iterator(); }
+
+  unsigned computeComplexity() const;
 };
 
 typedef const SymExpr* SymbolRef;

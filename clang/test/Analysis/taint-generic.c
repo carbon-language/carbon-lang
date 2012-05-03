@@ -183,3 +183,23 @@ void testTaintedVLASize() {
   scanf("%d", &x);
   int vla[x]; // expected-warning{{Declared variable-length array (VLA) has tainted size}}
 }
+
+// This computation used to take a very long time.
+#define longcmp(a,b,c) { \
+  a -= c;  a ^= c;  c += b; b -= a;  b ^= (a<<6) | (a >> (32-b));  a += c; c -= b;  c ^= b;  b += a; \
+  a -= c;  a ^= c;  c += b; b -= a;  b ^= a;  a += c; c -= b;  c ^= b;  b += a; }
+
+unsigned radar11369570_hanging(const unsigned char *arr, int l) {
+  unsigned a, b, c;
+  a = b = c = 0x9899e3 + l;
+  while (l >= 6) {
+    unsigned t;
+    scanf("%d", &t);
+    a += b;
+    a ^= a;
+    a += (arr[3] + ((unsigned) arr[2] << 8) + ((unsigned) arr[1] << 16) + ((unsigned) arr[0] << 24));
+    longcmp(a, t, c);
+    l -= 12;
+  }
+  return 5/a; // expected-warning {{Division by a tainted value, possibly zero}}
+}
