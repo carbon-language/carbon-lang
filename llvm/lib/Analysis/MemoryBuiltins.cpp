@@ -182,7 +182,7 @@ Value *llvm::getMallocArraySize(CallInst *CI, const TargetData *TD,
 
 
 //===----------------------------------------------------------------------===//
-//  clloc Call Utility Functions.
+//  calloc Call Utility Functions.
 //
 
 static bool isCallocCall(const CallInst *CI) {
@@ -197,7 +197,7 @@ static bool isCallocCall(const CallInst *CI) {
   
   // Check malloc prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
-  // attribute will exist.
+  // attribute exists.
   FunctionType *FTy = Callee->getFunctionType();
   return FTy->getReturnType() == Type::getInt8PtrTy(FTy->getContext()) &&
   FTy->getNumParams() == 2 &&
