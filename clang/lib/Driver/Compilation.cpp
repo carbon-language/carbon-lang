@@ -219,8 +219,7 @@ void Compilation::initCompilationForDiagnostics(void) {
   // to avoid emitting warnings about unused args.
   OptSpecifier OutputOpts[] = { options::OPT_o, options::OPT_MD,
                                 options::OPT_MMD };
-  for (unsigned i = 0, e = sizeof(OutputOpts)/sizeof(OutputOpts[0]); i != e;
-       ++i) {
+  for (unsigned i = 0, e = llvm::array_lengthof(OutputOpts); i != e; ++i) {
     if (TranslatedArgs->hasArg(OutputOpts[i]))
       TranslatedArgs->eraseArg(OutputOpts[i]);
   }
