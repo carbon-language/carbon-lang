@@ -177,6 +177,7 @@ def err_bad_character_encoding : Error<
 def warn_bad_character_encoding : ExtWarn<
   "illegal character encoding in character literal">,
   InGroup<DiagGroup<"invalid-source-encoding">>;
+def err_lexing_string : Error<"failure when lexing a string">;
 
 
 //===----------------------------------------------------------------------===//

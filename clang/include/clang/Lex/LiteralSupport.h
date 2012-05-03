@@ -232,6 +232,7 @@ private:
   void init(const Token *StringToks, unsigned NumStringToks);
   bool CopyStringFragment(StringRef Fragment);
   bool DiagnoseBadString(const Token& Tok);
+  void DiagnoseLexingError(SourceLocation Loc);
 };
 
 }  // end namespace clang

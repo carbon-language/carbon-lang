@@ -1037,10 +1037,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
 void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   // The literal token may have come from an invalid source location (e.g. due
   // to a PCH error), in which case the token length will be 0.
-  if (NumStringToks == 0 || StringToks[0].getLength() < 2) {
-    hadError = true;
-    return;
-  }
+  if (NumStringToks == 0 || StringToks[0].getLength() < 2)
+    return DiagnoseLexingError(SourceLocation());
 
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
@@ -1057,10 +1055,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   // Implement Translation Phase #6: concatenation of string literals
   /// (C99 5.1.1.2p1).  The common case is only one string fragment.
   for (unsigned i = 1; i != NumStringToks; ++i) {
-    if (StringToks[i].getLength() < 2) {
-      hadError = true;
-      return;
-    }
+    if (StringToks[i].getLength() < 2)
+      return DiagnoseLexingError(StringToks[i].getLocation());
 
     // The string could be shorter than this if it needs cleaning, but this is a
     // reasonable bound, which is all we need.
@@ -1123,10 +1119,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
     unsigned ThisTokLen = 
       Lexer::getSpelling(StringToks[i], ThisTokBuf, SM, Features,
                          &StringInvalid);
-    if (StringInvalid) {
-      hadError = true;
-      continue;
-    }
+    if (StringInvalid)
+      return DiagnoseLexingError(StringToks[i].getLocation());
 
     const char *ThisTokBegin = ThisTokBuf;
     const char *ThisTokEnd = ThisTokBuf+ThisTokLen;
@@ -1195,8 +1189,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
       if (ThisTokBuf[0] != '"') {
         // The file may have come from PCH and then changed after loading the
         // PCH; Fail gracefully.
-        hadError = true;
-        continue;
+        return DiagnoseLexingError(StringToks[i].getLocation());
       }
       ++ThisTokBuf; // skip "
 
@@ -1352,6 +1345,12 @@ bool StringLiteralParser::DiagnoseBadString(const Token &Tok) {
   if (Diags)
     Diags->Report(FullSourceLoc(Tok.getLocation(), SM), Msg);
   return !NoErrorOnBadEncoding;
+}
+
+void StringLiteralParser::DiagnoseLexingError(SourceLocation Loc) {
+  hadError = true;
+  if (Diags)
+    Diags->Report(Loc, diag::err_lexing_string);
 }
 
 /// getOffsetOfStringByte - This function returns the offset of the
