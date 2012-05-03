@@ -36,3 +36,4 @@ FILE *funopen(const void *,
                  fpos_t (*)(void *, fpos_t, int),
                  int (*)(void *));
 
+int sqlite3_bind_text_my(int, const char*, int n, void(*)(void*));

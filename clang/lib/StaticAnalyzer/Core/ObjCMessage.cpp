@@ -88,3 +88,69 @@ const Decl *CallOrObjCMessage::getDecl() const {
   return 0;
 }
 
+bool CallOrObjCMessage::isCallbackArg(unsigned Idx, const Type *T) const {
+  // Should we dig into struct fields, arrays ect?
+  if (T->isBlockPointerType() || T->isFunctionPointerType())
+    if (!getArgSVal(Idx).isZeroConstant())
+      return true;
+  return false;
+}
+
+bool CallOrObjCMessage::hasNonZeroCallbackArg() const {
+  unsigned NumOfArgs = getNumArgs();
+
+  // Process ObjC message first.
+  if (!CallE) {
+    const ObjCMethodDecl *D = Msg.getMethodDecl();
+    unsigned Idx = 0;
+    for (ObjCMethodDecl::param_const_iterator I = D->param_begin(),
+                                     E = D->param_end(); I != E; ++I, ++Idx) {
+      if (NumOfArgs <= Idx)
+        break;
+
+      if (isCallbackArg(Idx, (*I)->getType().getTypePtr()))
+        return true;
+    }
+    return false;
+  }
+
+  // Else, assume we are dealing with a Function call.
+  const FunctionDecl *FD = 0;
+  if (const CXXConstructExpr *Ctor =
+        CallE.dyn_cast<const CXXConstructExpr *>())
+    FD = Ctor->getConstructor();
+
+  const CallExpr * CE = CallE.get<const CallExpr *>();
+  FD = dyn_cast<FunctionDecl>(CE->getCalleeDecl());
+
+  // If calling using a function pointer, assume the function does not
+  // have a callback. TODO: We could check the types of the arguments here.
+  if (!FD)
+    return false;
+
+  unsigned Idx = 0;
+  for (FunctionDecl::param_const_iterator I = FD->param_begin(),
+                                      E = FD->param_end(); I != E; ++I, ++Idx) {
+    if (NumOfArgs <= Idx)
+      break;
+
+    if (isCallbackArg(Idx, (*I)->getType().getTypePtr()))
+      return true;
+  }
+  return false;
+}
+
+bool CallOrObjCMessage::isCFCGAllowingEscape(StringRef FName) {
+  if (FName[0] == 'C' && (FName[1] == 'F' || FName[1] == 'G'))
+         if (StrInStrNoCase(FName, "InsertValue") != StringRef::npos||
+             StrInStrNoCase(FName, "AddValue") != StringRef::npos ||
+             StrInStrNoCase(FName, "SetValue") != StringRef::npos ||
+             StrInStrNoCase(FName, "WithData") != StringRef::npos ||
+             StrInStrNoCase(FName, "AppendValue") != StringRef::npos||
+             StrInStrNoCase(FName, "SetAttribute") != StringRef::npos) {
+       return true;
+     }
+  return false;
+}
+
+

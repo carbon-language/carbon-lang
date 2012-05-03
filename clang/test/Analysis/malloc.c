@@ -798,6 +798,27 @@ void radar_11358224_test_double_assign_ints_positive_2()
   ptr = ptr; // expected-warning {{leak}}
 }
 
+// Assume that functions which take a function pointer can free memory even if
+// they are defined in system headers and take the const pointer to the
+// allocated memory. (radar://11160612)
+int const_ptr_and_callback(int, const char*, int n, void(*)(void*));
+void r11160612_1() {
+  char *x = malloc(12);
+  const_ptr_and_callback(0, x, 12, free); // no - warning
+}
+
+// Null is passed as callback.
+void r11160612_2() {
+  char *x = malloc(12);
+  const_ptr_and_callback(0, x, 12, 0); // expected-warning {{leak}}
+}
+
+// Callback is passed to a function defined in a system header.
+void r11160612_4() {
+  char *x = malloc(12);
+  sqlite3_bind_text_my(0, x, 12, free); // no - warning
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 

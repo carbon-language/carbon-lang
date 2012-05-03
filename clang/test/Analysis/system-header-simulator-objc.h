@@ -112,3 +112,5 @@ extern void CFRelease(CFTypeRef cf);
 extern CFMutableStringRef CFStringCreateMutableWithExternalCharactersNoCopy(CFAllocatorRef alloc, UniChar *chars, CFIndex numChars, CFIndex capacity, CFAllocatorRef externalCharactersAllocator);
 extern CFStringRef CFStringCreateWithCStringNoCopy(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding, CFAllocatorRef contentsDeallocator);
 extern void CFStringAppend(CFMutableStringRef theString, CFStringRef appendedString);
+
+void SystemHeaderFunctionWithBlockParam(void *, void (^block)(void *), unsigned);

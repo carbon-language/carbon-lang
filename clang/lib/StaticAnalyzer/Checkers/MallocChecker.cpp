@@ -1285,6 +1285,11 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     if (FName.startswith("NS") && (FName.find("Insert") != StringRef::npos))
       return false;
 
+    // If the call has a callback as an argument, assume the memory
+    // can be freed.
+    if (Call->hasNonZeroCallbackArg())
+      return false;
+
     // Otherwise, assume that the function does not free memory.
     // Most system calls, do not free the memory.
     return true;
@@ -1311,6 +1316,11 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     if (S.getNameForSlot(0).endswith("NoCopy")) {
       return false;
     }
+
+    // If the call has a callback as an argument, assume the memory
+    // can be freed.
+    if (Call->hasNonZeroCallbackArg())
+      return false;
 
     // Otherwise, assume that the function does not free memory.
     // Most system calls, do not free the memory.

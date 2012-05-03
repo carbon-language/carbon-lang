@@ -154,3 +154,28 @@ void testCGDataProviderCreateWithData() {
   void* b = calloc(8, 8);
   CGDataProviderRef p = CGDataProviderCreateWithData(0, b, 8*8, releaseDataCallback);
 }
+
+// Assume that functions which take a function pointer can free memory even if
+// they are defined in system headers and take the const pointer to the
+// allocated memory. (radar://11160612)
+extern CGDataProviderRef UnknownFunWithCallback(void *info,
+    const void *data, size_t size,
+    CGDataProviderReleaseDataCallback releaseData)
+    __attribute__((visibility("default")));
+void testUnknownFunWithCallBack() { 
+  void* b = calloc(8, 8);
+  CGDataProviderRef p = UnknownFunWithCallback(0, b, 8*8, releaseDataCallback);
+}
+
+// Test blocks.
+void acceptBlockParam(void *, void (^block)(void *), unsigned);
+void testCallWithBlockCallback() {
+  void *l = malloc(12);
+  acceptBlockParam(l, ^(void *i) { free(i); }, sizeof(char *));
+}
+
+// Test blocks in system headers.
+void testCallWithBlockCallbackInSystem() {
+  void *l = malloc(12);
+  SystemHeaderFunctionWithBlockParam(l, ^(void *i) { free(i); }, sizeof(char *));
+}
