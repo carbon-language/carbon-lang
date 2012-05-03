@@ -102,7 +102,7 @@ namespace {
     MachineInstr *FindLastUseInMBB(unsigned Reg, MachineBasicBlock *MBB,
                                    unsigned Dist);
 
-    bool isProfitableToCommute(unsigned regB, unsigned regC,
+    bool isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
                                MachineInstr *MI, MachineBasicBlock *MBB,
                                unsigned Dist);
 
@@ -567,7 +567,8 @@ regsAreCompatible(unsigned RegA, unsigned RegB, const TargetRegisterInfo *TRI) {
 /// isProfitableToReMat - Return true if it's potentially profitable to commute
 /// the two-address instruction that's being processed.
 bool
-TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
+TwoAddressInstructionPass::isProfitableToCommute(unsigned regA, unsigned regB,
+                                       unsigned regC,
                                        MachineInstr *MI, MachineBasicBlock *MBB,
                                        unsigned Dist) {
   if (OptLevel == CodeGenOpt::None)
@@ -604,15 +605,15 @@ TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
   // %reg1026<def> = ADD %reg1024, %reg1025
   // r0            = MOV %reg1026
   // Commute the ADD to hopefully eliminate an otherwise unavoidable copy.
-  unsigned FromRegB = getMappedReg(regB, SrcRegMap);
-  unsigned FromRegC = getMappedReg(regC, SrcRegMap);
-  unsigned ToRegB = getMappedReg(regB, DstRegMap);
-  unsigned ToRegC = getMappedReg(regC, DstRegMap);
-  if ((FromRegB && ToRegB && !regsAreCompatible(FromRegB, ToRegB, TRI)) &&
-      ((!FromRegC && !ToRegC) ||
-       regsAreCompatible(FromRegB, ToRegC, TRI) ||
-       regsAreCompatible(FromRegC, ToRegB, TRI)))
-    return true;
+  unsigned ToRegA = getMappedReg(regA, DstRegMap);
+  if (ToRegA) {
+    unsigned FromRegB = getMappedReg(regB, SrcRegMap);
+    unsigned FromRegC = getMappedReg(regC, SrcRegMap);
+    bool BComp = !FromRegB || regsAreCompatible(FromRegB, ToRegA, TRI);
+    bool CComp = !FromRegC || regsAreCompatible(FromRegC, ToRegA, TRI);
+    if (BComp != CComp)
+      return !BComp && CComp;
+  }
 
   // If there is a use of regC between its last def (could be livein) and this
   // instruction, then bail.
@@ -1211,6 +1212,9 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
     return true; // Done with this instruction.
   }
 
+  if (TargetRegisterInfo::isVirtualRegister(regA))
+    ScanUses(regA, &*mbbi, Processed);
+
   // Check if it is profitable to commute the operands.
   unsigned SrcOp1, SrcOp2;
   unsigned regC = 0;
@@ -1230,7 +1234,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
         // If C dies but B does not, swap the B and C operands.
         // This makes the live ranges of A and C joinable.
         TryCommute = true;
-      else if (isProfitableToCommute(regB, regC, &MI, mbbi, Dist)) {
+      else if (isProfitableToCommute(regA, regB, regC, &MI, mbbi, Dist)) {
         TryCommute = true;
         AggressiveCommute = true;
       }
@@ -1251,9 +1255,6 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
     ++NumReSchedDowns;
     return true;
   }
-
-  if (TargetRegisterInfo::isVirtualRegister(regA))
-    ScanUses(regA, &*mbbi, Processed);
 
   if (MI.isConvertibleTo3Addr()) {
     // This instruction is potentially convertible to a true
