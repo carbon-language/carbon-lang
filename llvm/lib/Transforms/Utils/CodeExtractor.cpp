@@ -756,24 +756,31 @@ ExtractCodeRegion(ArrayRef<BasicBlock*> code) {
 }
 
 bool CodeExtractor::isEligible(ArrayRef<BasicBlock*> code) {
-  // Deny a single basic block that's a landing pad block.
-  if (code.size() == 1 && code[0]->isLandingPad())
-    return false;
+  for (ArrayRef<BasicBlock*>::iterator I = code.begin(), E = code.end();
+       I != E; ++I)
+    if (!isBlockViableForExtraction(**I))
+      return false;
 
-  // Deny code region if it contains allocas or vastarts.
-  for (ArrayRef<BasicBlock*>::iterator BB = code.begin(), e=code.end();
-       BB != e; ++BB)
-    for (BasicBlock::const_iterator I = (*BB)->begin(), Ie = (*BB)->end();
-         I != Ie; ++I)
-      if (isa<AllocaInst>(*I))
-        return false;
-      else if (const CallInst *CI = dyn_cast<CallInst>(I))
-        if (const Function *F = CI->getCalledFunction())
-          if (F->getIntrinsicID() == Intrinsic::vastart)
-            return false;
   return true;
 }
 
+bool llvm::isBlockViableForExtraction(const BasicBlock &BB) {
+  // Landing pads must be in the function where they were inserted for cleanup.
+  if (BB.isLandingPad())
+    return false;
+
+  // Don't hoist code containing allocas, invokes, or vastarts.
+  for (BasicBlock::const_iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
+    if (isa<AllocaInst>(I) || isa<InvokeInst>(I))
+      return false;
+    if (const CallInst *CI = dyn_cast<CallInst>(I))
+      if (const Function *F = CI->getCalledFunction())
+        if (F->getIntrinsicID() == Intrinsic::vastart)
+          return false;
+  }
+
+  return true;
+}
 
 /// ExtractCodeRegion - Slurp a sequence of basic blocks into a brand new
 /// function.
