@@ -489,10 +489,23 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         Diag(clang::diag::note_drv_command_failed_diag_msg)
           << "Error generating run script: " + Script + " " + Err;
       } else {
-        // Strip -D, -F, and -I.
+        // Strip away options not necessary to reproduce the crash.
         // FIXME: This doesn't work with quotes (e.g., -D "foo bar").
-        std::string Flag[4] = {"-D ", "-F", "-I ", "-o "};
-        for (unsigned i = 0; i < 4; ++i) {
+        SmallVector<std::string, 16> Flag;
+        Flag.push_back("-D ");
+        Flag.push_back("-F");
+        Flag.push_back("-I ");
+        Flag.push_back("-o ");
+        Flag.push_back("-coverage-file ");
+        Flag.push_back("-dependency-file ");
+        Flag.push_back("-fdebug-compilation-dir ");
+        Flag.push_back("-fmodule-cache-path ");
+        Flag.push_back("-include ");
+        Flag.push_back("-include-pch ");
+        Flag.push_back("-isysroot ");
+        Flag.push_back("-resource-dir ");
+        Flag.push_back("-serialize-diagnostic-file ");
+        for (unsigned i = 0, e = Flag.size(); i < e; ++i) {
           size_t I = 0, E = 0;
           do {
             I = Cmd.find(Flag[i], I);
