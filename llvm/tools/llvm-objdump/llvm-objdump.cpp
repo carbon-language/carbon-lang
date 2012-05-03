@@ -632,6 +632,9 @@ int main(int argc, char **argv) {
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();
 
+  // Register the target printer for --version.
+  cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
+
   cl::ParseCommandLineOptions(argc, argv, "llvm object file dumper\n");
   TripleName = Triple::normalize(TripleName);
 
