@@ -424,3 +424,13 @@ void rdar9432305(float *P) {
   for (; i < 10000; ++i) // expected-warning {{variable 'i' is uninitialized when used here}}
     P[i] = 0.0f;
 }
+
+// Test that fixits are not emitted inside macros.
+#define UNINIT(T, x, y) T x; T y = x;
+#define ASSIGN(T, x, y) T y = x;
+void test54() {
+  UNINIT(int, a, b);  // expected-warning {{variable 'a' is uninitialized when used here}} \
+                      // expected-note {{variable 'a' is declared here}}
+  int c;  // expected-note {{initialize the variable 'c' to silence this warning}}
+  ASSIGN(int, c, d);  // expected-warning {{variable 'c' is uninitialized when used here}}
+}

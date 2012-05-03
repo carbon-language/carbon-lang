@@ -441,6 +441,11 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   std::string Init = S.getFixItZeroInitializerForType(VariableTy);
   if (Init.empty())
     return false;
+
+  // Don't suggest a fixit inside macros.
+  if (VD->getLocEnd().isMacroID())
+    return false;
+
   SourceLocation Loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
   
   S.Diag(Loc, diag::note_var_fixit_add_initialization) << VD->getDeclName()
