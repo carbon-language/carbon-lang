@@ -455,8 +455,33 @@ Thread::ShouldStop (Event* event_ptr)
                 }
             }
         }
+        
         if (over_ride_stop)
             should_stop = false;
+
+        // One other potential problem is that we set up a master plan, then stop in before it is complete - for instance
+        // by hitting a breakpoint during a step-over - then do some step/finish/etc operations that wind up
+        // past the end point condition of the initial plan.  We don't want to strand the original plan on the stack,
+        // This code clears stale plans off the stack.
+        
+        if (should_stop)
+        {
+            ThreadPlan *plan_ptr = GetCurrentPlan();
+            while (!PlanIsBasePlan(plan_ptr))
+            {
+                bool stale = plan_ptr->IsPlanStale ();
+                ThreadPlan *examined_plan = plan_ptr;
+                plan_ptr = GetPreviousPlan (examined_plan);
+                
+                if (stale)
+                {
+                    if (log)
+                        log->Printf("Plan %s being discarded in cleanup, it says it is already done.", examined_plan->GetName());
+                    DiscardThreadPlansUpToPlan(examined_plan);
+                }
+            }
+        }
+        
     }
 
     if (log)
@@ -750,10 +775,16 @@ Thread::SetTracer (lldb::ThreadPlanTracerSP &tracer_sp)
 void
 Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
 {
+    DiscardThreadPlansUpToPlan (up_to_plan_sp.get());
+}
+
+void
+Thread::DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr)
+{
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
-        log->Printf("Discarding thread plans for thread tid = 0x%4.4llx, up to %p", GetID(), up_to_plan_sp.get());
+        log->Printf("Discarding thread plans for thread tid = 0x%4.4llx, up to %p", GetID(), up_to_plan_ptr);
     }
 
     int stack_size = m_plan_stack.size();
@@ -761,7 +792,7 @@ Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
     // If the input plan is NULL, discard all plans.  Otherwise make sure this plan is in the
     // stack, and if so discard up to and including it.
     
-    if (up_to_plan_sp.get() == NULL)
+    if (up_to_plan_ptr == NULL)
     {
         for (int i = stack_size - 1; i > 0; i--)
             DiscardPlan();
@@ -771,7 +802,7 @@ Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
         bool found_it = false;
         for (int i = stack_size - 1; i > 0; i--)
         {
-            if (m_plan_stack[i] == up_to_plan_sp)
+            if (m_plan_stack[i].get() == up_to_plan_ptr)
                 found_it = true;
         }
         if (found_it)
@@ -779,7 +810,7 @@ Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
             bool last_one = false;
             for (int i = stack_size - 1; i > 0 && !last_one ; i--)
             {
-                if (GetCurrentPlan() == up_to_plan_sp.get())
+                if (GetCurrentPlan() == up_to_plan_ptr)
                     last_one = true;
                 DiscardPlan();
             }

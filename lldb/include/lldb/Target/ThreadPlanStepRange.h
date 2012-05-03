@@ -43,6 +43,7 @@ public:
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
     virtual void DidPush ();
+    virtual bool IsPlanStale ();
 
 
     void AddRange(const AddressRange &new_range);

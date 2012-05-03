@@ -36,7 +36,7 @@ ThreadPlan::ThreadPlan(ThreadPlanKind kind, const char *name, Thread &thread, Vo
     m_plan_complete_mutex (Mutex::eMutexTypeRecursive),
     m_plan_complete (false),
     m_plan_private (false),
-    m_okay_to_discard (false),
+    m_okay_to_discard (true),
     m_is_master_plan (false),
     m_plan_succeeded(true)
 {

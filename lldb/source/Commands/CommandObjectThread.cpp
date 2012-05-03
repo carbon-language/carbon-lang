@@ -451,10 +451,11 @@ public:
             else
                 bool_stop_other_threads = true;
 
+            ThreadPlan *new_plan = NULL;
+            
             if (m_step_type == eStepTypeInto)
             {
                 StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
-                ThreadPlan *new_plan;
 
                 if (frame->HasDebugInformation ())
                 {
@@ -471,14 +472,11 @@ public:
                 }
                 else
                     new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
-
-                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-                process->Resume ();
+                    
             }
             else if (m_step_type == eStepTypeOver)
             {
                 StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
-                ThreadPlan *new_plan;
 
                 if (frame->HasDebugInformation())
                     new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans, 
@@ -492,29 +490,17 @@ public:
                                                                                 abort_other_plans, 
                                                                                 bool_stop_other_threads);
 
-                // FIXME: This will keep the step plan on the thread stack when we hit a breakpoint while stepping over.
-                // Maybe there should be a parameter to control this.
-                new_plan->SetOkayToDiscard(false);
-
-                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-                process->Resume ();
             }
             else if (m_step_type == eStepTypeTrace)
             {
-                thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
-                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-                process->Resume ();
+                new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
             }
             else if (m_step_type == eStepTypeTraceOver)
             {
-                thread->QueueThreadPlanForStepSingleInstruction (true, abort_other_plans, bool_stop_other_threads);
-                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-                process->Resume ();
+                new_plan = thread->QueueThreadPlanForStepSingleInstruction (true, abort_other_plans, bool_stop_other_threads);
             }
             else if (m_step_type == eStepTypeOut)
             {
-                ThreadPlan *new_plan;
-
                 new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans, 
                                                               NULL, 
                                                               false, 
@@ -522,32 +508,46 @@ public:
                                                               eVoteYes, 
                                                               eVoteNoOpinion, 
                                                               thread->GetSelectedFrameIndex());
-                // FIXME: This will keep the step plan on the thread stack when we hit a breakpoint while stepping over.
-                // Maybe there should be a parameter to control this.
-                new_plan->SetOkayToDiscard(false);
-
-                process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-                process->Resume ();
             }
             else
             {
                 result.AppendError ("step type is not supported");
                 result.SetStatus (eReturnStatusFailed);
+                return false;
             }
-            if (synchronous_execution)
+            
+            // If we got a new plan, then set it to be a master plan (User level Plans should be master plans
+            // so that they can be interruptible).  Then resume the process.
+            
+            if (new_plan != NULL)
             {
-                StateType state = process->WaitForProcessToStop (NULL);
-                
-                //EventSP event_sp;
-                //StateType state = process->WaitForStateChangedEvents (NULL, event_sp);
-                //while (! StateIsStoppedState (state))
-                //  {
-                //    state = process->WaitForStateChangedEvents (NULL, event_sp);
-                //  }
+                new_plan->SetIsMasterPlan (true);
+                new_plan->SetOkayToDiscard (false);
+
                 process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-                result.SetDidChangeProcessState (true);
-                result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                process->Resume ();
+            
+
+                if (synchronous_execution)
+                {
+                    StateType state = process->WaitForProcessToStop (NULL);
+                    
+                    //EventSP event_sp;
+                    //StateType state = process->WaitForStateChangedEvents (NULL, event_sp);
+                    //while (! StateIsStoppedState (state))
+                    //  {
+                    //    state = process->WaitForStateChangedEvents (NULL, event_sp);
+                    //  }
+                    process->GetThreadList().SetSelectedThreadByID (thread->GetID());
+                    result.SetDidChangeProcessState (true);
+                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
+            }
+            else
+            {
+                result.AppendError ("Couldn't find thread plan to implement step type.");
+                result.SetStatus (eReturnStatusFailed);
             }
         }
         return result.Succeeded();
@@ -959,7 +959,7 @@ public:
                 return false;
             }
 
-            ThreadPlan *new_plan;
+            ThreadPlan *new_plan = NULL;
 
             if (frame->HasDebugInformation ())
             {
@@ -1027,6 +1027,10 @@ public:
                                                                 address_list.size(), 
                                                                 m_options.m_stop_others, 
                                                                 thread->GetSelectedFrameIndex ());
+                // User level plans should be master plans so they can be interrupted (e.g. by hitting a breakpoint)
+                // and other plans executed by the user (stepping around the breakpoint) and then a "continue"
+                // will resume the original plan.
+                new_plan->SetIsMasterPlan (true);
                 new_plan->SetOkayToDiscard(false);
             }
             else

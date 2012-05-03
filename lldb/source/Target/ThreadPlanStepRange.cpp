@@ -403,3 +403,30 @@ ThreadPlanStepRange::MischiefManaged ()
     }
 
 }
+
+bool
+ThreadPlanStepRange::IsPlanStale ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    FrameComparison frame_order = CompareCurrentFrameToStartFrame();
+    
+    if (frame_order == eFrameCompareOlder)
+    {
+        if (log)
+        {
+            log->Printf("ThreadPlanStepRange::IsPlanStale returning true, we've stepped out.");
+        }
+        return true;
+    }
+    else if (frame_order == eFrameCompareEqual && InSymbol())
+    {
+        // If we are not in a place we should step through, we've gotten stale.
+        // One tricky bit here is that some stubs don't push a frame, so we should.  
+        // check that we are in the same symbol.          
+        if (!InRange())
+        {
+            return true;
+        }
+    }
+    return false;
+}

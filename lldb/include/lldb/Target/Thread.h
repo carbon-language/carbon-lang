@@ -674,6 +674,9 @@ public:
     void
     DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp);
 
+    void
+    DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr);
+    
     //------------------------------------------------------------------
     /// Prints the current plan stack.
     ///

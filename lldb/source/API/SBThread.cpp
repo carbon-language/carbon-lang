@@ -474,6 +474,47 @@ SBThread::GetQueueName () const
     return name;
 }
 
+SBError
+SBThread::ResumeNewPlan (ExecutionContext &exe_ctx, ThreadPlan *new_plan)
+{
+    SBError sb_error;
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    if (!process)
+    {
+        sb_error.SetErrorString("No process in SBThread::ResumeNewPlan");
+        return sb_error;
+    }
+
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (!thread)
+    {
+        sb_error.SetErrorString("No thread in SBThread::ResumeNewPlan");
+        return sb_error;
+    }
+    
+    // User level plans should be Master Plans so they can be interrupted, other plans executed, and
+    // then a "continue" will resume the plan.
+    if (new_plan != NULL)
+    {
+        new_plan->SetIsMasterPlan(true);
+        new_plan->SetOkayToDiscard(false);
+    }
+    
+    // Why do we need to set the current thread by ID here???
+    process->GetThreadList().SetSelectedThreadByID (thread->GetID());
+    sb_error.ref() = process->Resume();
+    
+    if (sb_error.Success())
+    {
+        // If we are doing synchronous mode, then wait for the
+        // process to stop yet again!
+        if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
+            process->WaitForProcessToStop (NULL);
+    }
+    
+    return sb_error;
+}
 
 void
 SBThread::StepOver (lldb::RunMode stop_other_threads)
@@ -492,39 +533,31 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
         Thread *thread = exe_ctx.GetThreadPtr();
         bool abort_other_plans = true;
         StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
+        ThreadPlan *new_plan = NULL;
 
         if (frame_sp)
         {
             if (frame_sp->HasDebugInformation ())
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-                thread->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                     eStepTypeOver,
-                                                     sc.line_entry.range, 
-                                                     sc,
-                                                     stop_other_threads,
-                                                     false);
+                new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans,
+                                                                eStepTypeOver,
+                                                                sc.line_entry.range,
+                                                                sc,
+                                                                stop_other_threads,
+                                                                false);
                 
             }
             else
             {
-                thread->QueueThreadPlanForStepSingleInstruction (true, 
-                                                                 abort_other_plans, 
-                                                                 stop_other_threads);
+                new_plan = thread->QueueThreadPlanForStepSingleInstruction (true,
+                                                                            abort_other_plans, 
+                                                                            stop_other_threads);
             }
         }
 
-        Process *process = exe_ctx.GetProcessPtr();
-        // Why do we need to set the current thread by ID here???
-        process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-        Error error (process->Resume());
-        if (error.Success())
-        {
-            // If we are doing synchronous mode, then wait for the
-            // process to stop yet again!
-            if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                process->WaitForProcessToStop (NULL);
-        }
+        // This returns an error, we should use it!
+        ResumeNewPlan (exe_ctx, new_plan);
     }
 }
 
@@ -545,36 +578,28 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 
         Thread *thread = exe_ctx.GetThreadPtr();
         StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
+        ThreadPlan *new_plan = NULL;
 
         if (frame_sp && frame_sp->HasDebugInformation ())
         {
             bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-            thread->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                 eStepTypeInto, 
-                                                 sc.line_entry.range, 
-                                                 sc, 
-                                                 stop_other_threads,
-                                                 avoid_code_without_debug_info);
+            new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans,
+                                                            eStepTypeInto,
+                                                            sc.line_entry.range,
+                                                            sc,
+                                                            stop_other_threads,
+                                                            avoid_code_without_debug_info);
         }
         else
         {
-            thread->QueueThreadPlanForStepSingleInstruction (false, 
-                                                             abort_other_plans, 
-                                                             stop_other_threads);
+            new_plan = thread->QueueThreadPlanForStepSingleInstruction (false,
+                                                                        abort_other_plans, 
+                                                                        stop_other_threads);
         }
-
-        Process *process = exe_ctx.GetProcessPtr();
-        // Why do we need to set the current thread by ID here???
-        process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-        Error error (process->Resume());
-        if (error.Success())
-        {
-            // If we are doing synchronous mode, then wait for the
-            // process to stop yet again!
-            if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                process->WaitForProcessToStop (NULL);
-        }
+        
+        // This returns an error, we should use it!
+        ResumeNewPlan (exe_ctx, new_plan);
     }
 }
 
@@ -596,24 +621,16 @@ SBThread::StepOut ()
 
         Thread *thread = exe_ctx.GetThreadPtr();
 
-        thread->QueueThreadPlanForStepOut (abort_other_plans, 
-                                              NULL, 
-                                              false, 
-                                              stop_other_threads, 
-                                              eVoteYes, 
-                                              eVoteNoOpinion,
-                                              0);
-        
-        Process *process = exe_ctx.GetProcessPtr();
-        process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-        Error error (process->Resume());
-        if (error.Success())
-        {
-            // If we are doing synchronous mode, then wait for the
-            // process to stop yet again!
-            if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                process->WaitForProcessToStop (NULL);
-        }
+        ThreadPlan *new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans,
+                                                                  NULL, 
+                                                                  false, 
+                                                                  stop_other_threads, 
+                                                                  eVoteYes, 
+                                                                  eVoteNoOpinion,
+                                                                  0);
+                                                                  
+        // This returns an error, we should use it!
+        ResumeNewPlan (exe_ctx, new_plan);
     }
 }
 
@@ -638,24 +655,16 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
         bool stop_other_threads = true;
         Thread *thread = exe_ctx.GetThreadPtr();
 
-        thread->QueueThreadPlanForStepOut (abort_other_plans, 
-                                              NULL, 
-                                              false, 
-                                              stop_other_threads, 
-                                              eVoteYes, 
-                                              eVoteNoOpinion,
-                                              frame_sp->GetFrameIndex());
-        
-        Process *process = exe_ctx.GetProcessPtr();
-        process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-        Error error (process->Resume());
-        if (error.Success())
-        {
-            // If we are doing synchronous mode, then wait for the
-            // process to stop yet again!
-            if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                process->WaitForProcessToStop (NULL);
-        }
+        ThreadPlan *new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans,
+                                                                    NULL, 
+                                                                    false, 
+                                                                    stop_other_threads, 
+                                                                    eVoteYes, 
+                                                                    eVoteNoOpinion,
+                                                                    frame_sp->GetFrameIndex());
+                                                                    
+        // This returns an error, we should use it!
+        ResumeNewPlan (exe_ctx, new_plan);
     }
 }
 
@@ -674,17 +683,10 @@ SBThread::StepInstruction (bool step_over)
     {
         Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
         Thread *thread = exe_ctx.GetThreadPtr();
-        Process *process = exe_ctx.GetProcessPtr();
-        thread->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
-        process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-        Error error (process->Resume());
-        if (error.Success())
-        {
-            // If we are doing synchronous mode, then wait for the
-            // process to stop yet again!
-            if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                process->WaitForProcessToStop (NULL);
-        }
+        ThreadPlan *new_plan = thread->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
+        
+        // This returns an error, we should use it!
+        ResumeNewPlan (exe_ctx, new_plan);
     }
 }
 
@@ -707,18 +709,11 @@ SBThread::RunToAddress (lldb::addr_t addr)
         Address target_addr (addr);
 
         Thread *thread = exe_ctx.GetThreadPtr();
-        Process *process = exe_ctx.GetProcessPtr();
 
-        thread->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
-        process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-        Error error (process->Resume());
-        if (error.Success())
-        {
-            // If we are doing synchronous mode, then wait for the
-            // process to stop yet again!
-            if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                process->WaitForProcessToStop (NULL);
-        }
+        ThreadPlan *new_plan = thread->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
+        
+        // This returns an error, we should use it!
+        ResumeNewPlan (exe_ctx, new_plan);
     }
 }
 
@@ -854,23 +849,13 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         }
         else
         {
-            thread->QueueThreadPlanForStepUntil (abort_other_plans, 
-                                                 &step_over_until_addrs[0],
-                                                 step_over_until_addrs.size(),
-                                                 stop_other_threads,
-                                                 frame_sp->GetFrameIndex());      
+            ThreadPlan *new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans,
+                                                                        &step_over_until_addrs[0],
+                                                                        step_over_until_addrs.size(),
+                                                                        stop_other_threads,
+                                                                        frame_sp->GetFrameIndex());      
 
-            Process *process = exe_ctx.GetProcessPtr();
-
-            process->GetThreadList().SetSelectedThreadByID (thread->GetID());
-            sb_error.ref() = process->Resume();
-            if (sb_error->Success())
-            {
-                // If we are doing synchronous mode, then wait for the
-                // process to stop yet again!
-                if (process->GetTarget().GetDebugger().GetAsyncExecution () == false)
-                    process->WaitForProcessToStop (NULL);
-            }
+            sb_error = ResumeNewPlan (exe_ctx, new_plan);
         }
     }
     else

@@ -81,7 +81,6 @@ ThreadPlanStepOut::ThreadPlanStepOut
                                                             eVoteNoOpinion, 
                                                             eVoteNoOpinion, 
                                                             frame_idx - 1));
-            m_step_out_plan_sp->SetOkayToDiscard(true);
         }
         else
         {
@@ -468,3 +467,17 @@ ThreadPlanStepOut::CalculateReturnValue ()
         }
     }
 }
+
+bool
+ThreadPlanStepOut::IsPlanStale()
+{
+    // If we are still lower on the stack than the frame we are returning to, then
+    // there's something for us to do.  Otherwise, we're stale.
+    
+    StackID frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+    if (frame_zero_id < m_step_out_to_id)
+        return false;
+    else
+        return true;
+}
+

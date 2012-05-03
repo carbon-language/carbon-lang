@@ -28,8 +28,7 @@ public:
     ThreadPlanStepOverRange (Thread &thread, 
                              const AddressRange &range, 
                              const SymbolContext &addr_context, 
-                             lldb::RunMode stop_others, 
-                             bool okay_to_discard = false);
+                             lldb::RunMode stop_others);
                              
     virtual ~ThreadPlanStepOverRange ();
 

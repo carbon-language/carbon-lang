@@ -42,6 +42,7 @@ public:
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
     virtual void DidPush();
+    virtual bool IsPlanStale();
     
     virtual lldb::ValueObjectSP GetReturnValueObject()
     {

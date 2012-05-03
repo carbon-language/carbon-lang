@@ -172,6 +172,11 @@ protected:
     void
     SetThread (const lldb::ThreadSP& lldb_object_sp);
 
+#ifndef SWIG
+    SBError
+    ResumeNewPlan (lldb_private::ExecutionContext &exe_ctx, lldb_private::ThreadPlan *new_plan);
+#endif
+
 private:
     lldb::ExecutionContextRefSP m_opaque_sp;
 };

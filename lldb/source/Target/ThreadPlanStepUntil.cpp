@@ -51,12 +51,6 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     m_until_points (),
     m_stop_others (stop_others)
 {
-
-    // Step until plans can be master plans, since you could hit a breakpoint while stepping to the stop point, step around
-    // a bit, then continue to finish up the step until.
-    SetIsMasterPlan (true);
-    SetOkayToDiscard(true);
-    
     // Stash away our "until" addresses:
     TargetSP target_sp (m_thread.CalculateTarget());
 

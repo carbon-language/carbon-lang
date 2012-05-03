@@ -115,11 +115,32 @@ namespace lldb_private {
 //  figure out what to do about the plans below it in the stack.  If the stop is recoverable, then the plan that
 //  understands it can just do what it needs to set up to restart, and then continue.
 //  Otherwise, the plan that understood the stop should call DiscardPlanStack to clean up the stack below it.
-//  In the normal case, this will just collapse the plan stack up to the point of the plan that understood
+//
+//  Master plans:
+//
+//  In the normal case, when we decide to stop, we will  collapse the plan stack up to the point of the plan that understood
 //  the stop reason.  However, if a plan wishes to stay on the stack after an event it didn't directly handle
 //  it can designate itself a "Master" plan by responding true to IsMasterPlan, and then if it wants not to be
 //  discarded, it can return true to OkayToDiscard, and it and all its dependent plans will be preserved when
 //  we resume execution.
+//
+//  The other effect of being a master plan is that when the Master plan is done , if it has set "OkayToDiscard" to false,
+//  then it will be popped & execution will stop and return to the user.  Remember that if OkayToDiscard is false, the
+//  plan will be popped and control will be given to the next plan above it on the stack  So setting OkayToDiscard to
+//  false means the user will regain control when the MasterPlan is completed.
+//
+//  Between these two controls this allows things like: a MasterPlan/DontDiscard Step Over to hit a breakpoint, stop and
+//  return control to the user, but then when the user continues, the step out succeeds.
+//  Even more tricky, when the breakpoint is hit, the user can continue to step in/step over/etc, and finally when they
+//  continue, they will finish up the Step Over.
+//
+//  FIXME: MasterPlan & OkayToDiscard aren't really orthogonal.  MasterPlan designation means that this plan controls
+//  it's fate and the fate of plans below it.  OkayToDiscard tells whether the MasterPlan wants to stay on the stack.  I
+//  originally thought "MasterPlan-ness" would need to be a fixed characteristic of a ThreadPlan, in which case you needed
+//  the extra control.  But that doesn't seem to be true.  So we should be able to convert to only MasterPlan status to mean
+//  the current "MasterPlan/DontDiscard".  Then no plans would be MasterPlans by default, and you would set the ones you
+//  wanted to be "user level" in this way.
+//
 //
 //  Actually Stopping:
 //
@@ -151,6 +172,18 @@ namespace lldb_private {
 //  the real stop reason will be used instead.  One exapmle of this is the "StepRangeStepIn" thread plan.  If it stops
 //  because of a crash or breakpoint hit, it wants to unship itself, because it isn't so useful to have step in keep going
 //  after a breakpoint hit.  But it can't be the reason for the stop or no-one would see that they had hit a breakpoint.
+//
+//  Cleaning up the plan stack:
+//
+//  One of the complications of MasterPlans is that you may get past the limits of a plan without triggering it to clean
+//  itself up.  For instance, if you are doing a MasterPlan StepOver, and hit a breakpoint in a called function, then
+//  step over enough times to step out of the initial StepOver range, each of the step overs will explain the stop & 
+//  take themselves off the stack, but control would never be returned to the original StepOver.  Eventually, the user 
+//  will continue, and when that continue stops, the old stale StepOver plan that was left on the stack will get woken 
+//  up and notice it is done. But that can leave junk on the stack for a while.  To avoid that, the plans implement a
+//  "IsPlanStale" method, that can check whether it is relevant anymore.  On stop, after the regular plan negotiation, 
+//  the remaining plan stack is consulted and if any plan says it is stale, it and the plans below it are discarded from
+//  the stack.
 //
 //  Automatically Resuming:
 //
@@ -407,6 +440,12 @@ public:
     
     void
     SetPlanComplete (bool success = true);
+    
+    virtual bool
+    IsPlanStale ()
+    {
+        return false;
+    }
     
     bool
     PlanSucceeded ()
