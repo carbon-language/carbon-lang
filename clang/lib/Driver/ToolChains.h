@@ -279,14 +279,6 @@ public:
     return TargetVersion < VersionTuple(V0, V1, V2);
   }
 
-  /// AddLinkSearchPathArgs - Add the linker search paths to \arg CmdArgs.
-  ///
-  /// \param Args - The input argument list.
-  /// \param CmdArgs [out] - The command argument list to append the paths
-  /// (prefixed by -L) to.
-  virtual void AddLinkSearchPathArgs(const ArgList &Args,
-                                     ArgStringList &CmdArgs) const = 0;
-
   /// AddLinkARCArgs - Add the linker arguments to link the ARC runtime library.
   virtual void AddLinkARCArgs(const ArgList &Args,
                               ArgStringList &CmdArgs) const = 0;
@@ -395,9 +387,6 @@ public:
 
   /// @name Darwin ToolChain Implementation
   /// {
-
-  virtual void AddLinkSearchPathArgs(const ArgList &Args,
-                                    ArgStringList &CmdArgs) const;
 
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const;

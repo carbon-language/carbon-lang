@@ -4210,8 +4210,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // This is more complicated in gcc...
     CmdArgs.push_back("-lgomp");
 
-  getDarwinToolChain().AddLinkSearchPathArgs(Args, CmdArgs);
-
   if (isObjCRuntimeLinked(Args)) {
     // Avoid linking compatibility stubs on i386 mac.
     if (!getDarwinToolChain().isTargetMacOS() ||
