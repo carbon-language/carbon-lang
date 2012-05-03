@@ -2499,7 +2499,6 @@ class OverrideSearch {
 public:
   Sema &S;
   ObjCMethodDecl *Method;
-  llvm::SmallPtrSet<ObjCContainerDecl*, 128> Searched;
   llvm::SmallPtrSet<ObjCMethodDecl*, 4> Overridden;
   bool Recursive;
 
@@ -2528,8 +2527,12 @@ public:
     // Prevent the search from reaching this container again.  This is
     // important with categories, which override methods from the
     // interface and each other.
-    Searched.insert(container);
-    searchFromContainer(container);
+    if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(container)) {
+      searchFromContainer(container);
+      searchFromContainer(Category->getClassInterface());
+    } else {
+      searchFromContainer(container);
+    }
   }
 
   typedef llvm::SmallPtrSet<ObjCMethodDecl*, 128>::iterator iterator;
@@ -2565,7 +2568,7 @@ private:
   void searchFrom(ObjCCategoryDecl *category) {
     // A method in a category declaration overrides declarations from
     // the main class and from protocols the category references.
-    search(category->getClassInterface());
+    // The main class is handled in the constructor.
     search(category->getReferencedProtocols());
   }
 
@@ -2575,6 +2578,7 @@ private:
     // declaration.
     if (ObjCCategoryDecl *category = impl->getCategoryDecl()) {
       search(category);
+      search(category->getClassInterface());
 
     // Otherwise it overrides declarations from the class.
     } else {
@@ -2614,9 +2618,6 @@ private:
   }
 
   void search(ObjCContainerDecl *container) {
-    // Abort if we've already searched this container.
-    if (!Searched.insert(container)) return;
-
     // Check for a method in this container which matches this selector.
     ObjCMethodDecl *meth = container->getMethod(Method->getSelector(),
                                                 Method->isInstanceMethod());
