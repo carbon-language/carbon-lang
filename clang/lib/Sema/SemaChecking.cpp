@@ -1975,9 +1975,12 @@ void CheckFormatHandler::DoneProcessing() {
     signed notCoveredArg = CoveredArgs.find_first();
     if (notCoveredArg >= 0) {
       assert((unsigned)notCoveredArg < NumDataArgs);
-      EmitFormatDiagnostic(S.PDiag(diag::warn_printf_data_arg_not_used),
-                           getDataArg((unsigned) notCoveredArg)->getLocStart(),
-                           /*IsStringLocation*/false, getFormatStringRange());
+      SourceLocation Loc = getDataArg((unsigned) notCoveredArg)->getLocStart();
+      if (!S.getSourceManager().isInSystemMacro(Loc)) {
+        EmitFormatDiagnostic(S.PDiag(diag::warn_printf_data_arg_not_used),
+                             Loc,
+                             /*IsStringLocation*/false, getFormatStringRange());
+      }
     }
   }
 }
