@@ -81,7 +81,8 @@ OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_NOT_10, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
-        "Set the breakpoint only in this shared library (can use this option multiple times for multiple shlibs)."},
+        "Set the breakpoint only in this shared library.  "
+        "Can repeat this option multiple times to specify multiple shared libraries."},
 
     { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument,   NULL, 0, eArgTypeCount,
         "Set the number of times this breakpoint is skipped before stopping." },
@@ -113,23 +114,25 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the breakpoint by address, at the specified address."},
 
     { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
-        "Set the breakpoint by function name." },
+        "Set the breakpoint by function name.  Can be repeated multiple times to make one breakpoint for multiple snames" },
 
     { LLDB_OPT_SET_4, true, "fullname", 'F', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFullName,
-        "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguemnts, and "
-        "for Objective C this means a full function prototype with class and selector." },
+        "Set the breakpoint by fully qualified function names. For C++ this means namespaces and all arguments, and "
+        "for Objective C this means a full function prototype with class and selector.   "
+        "Can be repeated multiple times to make one breakpoint for multiple names." },
 
     { LLDB_OPT_SET_5, true, "selector", 'S', required_argument, NULL, 0, eArgTypeSelector,
-        "Set the breakpoint by ObjC selector name." },
+        "Set the breakpoint by ObjC selector name. Can be repeated multiple times to make one breakpoint for multiple Selectors." },
 
     { LLDB_OPT_SET_6, true, "method", 'M', required_argument, NULL, 0, eArgTypeMethod,
-        "Set the breakpoint by C++ method names." },
+        "Set the breakpoint by C++ method names.  Can be repeated multiple times to make one breakpoint for multiple methods." },
 
     { LLDB_OPT_SET_7, true, "func-regex", 'r', required_argument, NULL, 0, eArgTypeRegularExpression,
         "Set the breakpoint by function name, evaluating a regular-expression to find the function name(s)." },
 
     { LLDB_OPT_SET_8, true, "basename", 'b', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
-        "Set the breakpoint by function basename (C++ namespaces and arguments will be ignored)." },
+        "Set the breakpoint by function basename (C++ namespaces and arguments will be ignored). "
+        "Can be repeated multiple times to make one breakpoint for multiple symbols." },
 
     { LLDB_OPT_SET_9, true, "source-pattern-regexp", 'p', required_argument, NULL, 0, eArgTypeRegularExpression,
         "Set the breakpoint specifying a regular expression to match a pattern in the source text in a given source file." },
