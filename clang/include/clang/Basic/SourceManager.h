@@ -21,7 +21,9 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <map>
 #include <vector>
@@ -501,9 +503,24 @@ class SourceManager : public RefCountedBase<SourceManager> {
   /// files, should report the original file name. Defaults to true.
   bool OverridenFilesKeepOriginalName;
 
-  /// \brief Files that have been overriden with the contents from another file.
-  llvm::DenseMap<const FileEntry *, const FileEntry *> OverriddenFiles;
+  struct OverriddenFilesInfoTy {
+    /// \brief Files that have been overriden with the contents from another
+    /// file.
+    llvm::DenseMap<const FileEntry *, const FileEntry *> OverriddenFiles;
+    /// \brief Files that were overridden with a memory buffer.
+    llvm::DenseSet<const FileEntry *> OverriddenFilesWithBuffer;
+  };
 
+  /// \brief Lazily create the object keeping overridden files info, since
+  /// it is uncommonly used.
+  OwningPtr<OverriddenFilesInfoTy> OverriddenFilesInfo;
+
+  OverriddenFilesInfoTy &getOverriddenFilesInfo() {
+    if (!OverriddenFilesInfo)
+      OverriddenFilesInfo.reset(new OverriddenFilesInfoTy);
+    return *OverriddenFilesInfo;
+  }
+  
   /// MemBufferInfos - Information about various memory buffers that we have
   /// read in.  All FileEntry* within the stored ContentCache objects are NULL,
   /// as they do not refer to a file.
@@ -714,6 +731,23 @@ public:
   /// data instead of the contents of the given source file.
   void overrideFileContents(const FileEntry *SourceFile,
                             const FileEntry *NewFile);
+
+  /// \brief Returns true if the file contents have been overridden.
+  bool isFileOverridden(const FileEntry *File) {
+    if (OverriddenFilesInfo) {
+      if (OverriddenFilesInfo->OverriddenFilesWithBuffer.count(File))
+        return true;
+      if (OverriddenFilesInfo->OverriddenFiles.find(File) !=
+          OverriddenFilesInfo->OverriddenFiles.end())
+        return true;
+    }
+    return false;
+  }
+
+  /// \brief Disable overridding the contents of a file, previously enabled
+  /// with \see overrideFileContents.
+  /// This should be called before parsing has begun.
+  void disableFileContentsOverride(const FileEntry *File);
 
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.

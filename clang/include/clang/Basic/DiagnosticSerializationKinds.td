@@ -22,6 +22,8 @@ def err_fe_pch_error_at_end_block : Error<
 def err_fe_pch_file_modified : Error<
     "file '%0' has been modified since the precompiled header was built">,
     DefaultFatal;
+def err_fe_pch_file_overridden : Error<
+    "file '%0' from the precompiled header has been overridden">;
 
 def warn_pch_target_triple : Error<
     "PCH file was compiled for the target '%0' but the current translation "

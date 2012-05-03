@@ -226,6 +226,11 @@ public:
   void GetUniqueIDMapping(
                     SmallVectorImpl<const FileEntry *> &UIDToFiles) const;
 
+  /// \brief Modifies the size and modification time of a previously created
+  /// FileEntry. Use with caution.
+  static void modifyFileEntry(FileEntry *File, off_t Size,
+                              time_t ModificationTime);
+
   void PrintStats() const;
 };
 

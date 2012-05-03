@@ -71,7 +71,7 @@ unsigned ContentCache::getSize() const {
 
 void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B,
                                  bool DoNotFree) {
-  if (B == Buffer.getPointer()) {
+  if (B && B == Buffer.getPointer()) {
     assert(0 && "Replacing with the same buffer");
     Buffer.setInt(DoNotFree? DoNotFreeFlag : 0);
     return;
@@ -440,16 +440,20 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   EntryAlign = std::max(8U, EntryAlign);
   Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
 
-  // If the file contents are overridden with contents from another file,
-  // pass that file to ContentCache.
-  llvm::DenseMap<const FileEntry *, const FileEntry *>::iterator
-      overI = OverriddenFiles.find(FileEnt);
-  if (overI == OverriddenFiles.end())
+  if (OverriddenFilesInfo) {
+    // If the file contents are overridden with contents from another file,
+    // pass that file to ContentCache.
+    llvm::DenseMap<const FileEntry *, const FileEntry *>::iterator
+        overI = OverriddenFilesInfo->OverriddenFiles.find(FileEnt);
+    if (overI == OverriddenFilesInfo->OverriddenFiles.end())
+      new (Entry) ContentCache(FileEnt);
+    else
+      new (Entry) ContentCache(OverridenFilesKeepOriginalName ? FileEnt
+                                                              : overI->second,
+                               overI->second);
+  } else {
     new (Entry) ContentCache(FileEnt);
-  else
-    new (Entry) ContentCache(OverridenFilesKeepOriginalName ? FileEnt
-                                                            : overI->second,
-                             overI->second);
+  }
 
   return Entry;
 }
@@ -622,6 +626,8 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
 
   const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer, DoNotFree);
   const_cast<SrcMgr::ContentCache *>(IR)->BufferOverridden = true;
+
+  getOverriddenFilesInfo().OverriddenFilesWithBuffer.insert(SourceFile);
 }
 
 void SourceManager::overrideFileContents(const FileEntry *SourceFile,
@@ -632,7 +638,20 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
   assert(FileInfos.count(SourceFile) == 0 &&
          "This function should be called at the initialization stage, before "
          "any parsing occurs.");
-  OverriddenFiles[SourceFile] = NewFile;
+  getOverriddenFilesInfo().OverriddenFiles[SourceFile] = NewFile;
+}
+
+void SourceManager::disableFileContentsOverride(const FileEntry *File) {
+  if (!isFileOverridden(File))
+    return;
+
+  const SrcMgr::ContentCache *IR = getOrCreateContentCache(File);
+  const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(0);
+  const_cast<SrcMgr::ContentCache *>(IR)->ContentsEntry = IR->OrigEntry;
+
+  assert(OverriddenFilesInfo);
+  OverriddenFilesInfo->OverriddenFiles.erase(File);
+  OverriddenFilesInfo->OverriddenFilesWithBuffer.erase(File);
 }
 
 StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
@@ -1887,10 +1906,14 @@ SourceManager::MemoryBufferSizes SourceManager::getMemoryBufferSizes() const {
 }
 
 size_t SourceManager::getDataStructureSizes() const {
-  return llvm::capacity_in_bytes(MemBufferInfos)
+  size_t size = llvm::capacity_in_bytes(MemBufferInfos)
     + llvm::capacity_in_bytes(LocalSLocEntryTable)
     + llvm::capacity_in_bytes(LoadedSLocEntryTable)
     + llvm::capacity_in_bytes(SLocEntryLoaded)
-    + llvm::capacity_in_bytes(FileInfos)
-    + llvm::capacity_in_bytes(OverriddenFiles);
+    + llvm::capacity_in_bytes(FileInfos);
+  
+  if (OverriddenFilesInfo)
+    size += llvm::capacity_in_bytes(OverriddenFilesInfo->OverriddenFiles);
+
+  return size;
 }

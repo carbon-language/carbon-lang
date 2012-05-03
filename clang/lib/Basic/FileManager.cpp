@@ -584,6 +584,12 @@ void FileManager::GetUniqueIDMapping(
       UIDToFiles[(*VFE)->getUID()] = *VFE;
 }
 
+void FileManager::modifyFileEntry(FileEntry *File,
+                                  off_t Size, time_t ModificationTime) {
+  File->Size = Size;
+  File->ModTime = ModificationTime;
+}
+
 
 void FileManager::PrintStats() const {
   llvm::errs() << "\n*** File Manager Stats:\n";
