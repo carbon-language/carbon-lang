@@ -2741,11 +2741,23 @@ Process::CompleteAttach ()
     assert (platform_sp.get());
     if (platform_sp)
     {
-        ProcessInstanceInfo process_info;
-        platform_sp->GetProcessInfo (GetID(), process_info);
-        const ArchSpec &process_arch = process_info.GetArchitecture();
-        if (process_arch.IsValid() && m_target.GetArchitecture() != process_arch)
-            m_target.SetArchitecture (process_arch);
+	  const ArchSpec &target_arch = m_target.GetArchitecture();
+	  if (target_arch.IsValid() && !platform_sp->IsCompatibleWithArchitecture (target_arch))
+	  {
+              platform_sp = platform_sp->GetPlatformForArchitecture (target_arch);
+              if (platform_sp)
+              {
+                  m_target.SetPlatform (platform_sp);
+              }
+	  }
+	  else
+	  {
+      	         ProcessInstanceInfo process_info;
+	         platform_sp->GetProcessInfo (GetID(), process_info);
+	         const ArchSpec &process_arch = process_info.GetArchitecture();
+	         if (process_arch.IsValid() && m_target.GetArchitecture() != process_arch)
+	             m_target.SetArchitecture (process_arch);
+	  }
     }
 
     // We have completed the attach, now it is time to find the dynamic loader

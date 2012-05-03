@@ -457,6 +457,14 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
         else
             error.SetErrorStringWithFormat ("Process %llu was reported after connecting to '%s', but no stop reply packet was received", pid, remote_url);
     }
+
+    if (error.Success() 
+        && !GetTarget().GetArchitecture().IsValid()
+        && m_gdb_comm.GetHostArchitecture().IsValid())
+    {
+        GetTarget().SetArchitecture(m_gdb_comm.GetHostArchitecture());
+    }
+
     return error;
 }
 
