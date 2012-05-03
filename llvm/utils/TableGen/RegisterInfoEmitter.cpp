@@ -672,14 +672,16 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  explicit " << ClassName
      << "(unsigned RA, unsigned D = 0, unsigned E = 0);\n"
      << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
-     << "     { return false; }\n"
-     << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
-     << "  const TargetRegisterClass *"
-        "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n"
-     << "  const TargetRegisterClass *getMatchingSuperRegClass("
-        "const TargetRegisterClass*, const TargetRegisterClass*, "
-        "unsigned) const;\n"
-     << "  const RegClassWeight &getRegClassWeight("
+     << "     { return false; }\n";
+  if (!RegBank.getSubRegIndices().empty()) {
+    OS << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
+      << "  const TargetRegisterClass *"
+      "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n"
+      << "  const TargetRegisterClass *getMatchingSuperRegClass("
+      "const TargetRegisterClass*, const TargetRegisterClass*, "
+      "unsigned) const;\n";
+  }
+  OS << "  const RegClassWeight &getRegClassWeight("
      << "const TargetRegisterClass *RC) const;\n"
      << "  unsigned getNumRegPressureSets() const;\n"
      << "  const char *getRegPressureSetName(unsigned Idx) const;\n"
@@ -945,37 +947,36 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   std::string ClassName = Target.getName() + "GenRegisterInfo";
 
   // Emit composeSubRegIndices
-  OS << "unsigned " << ClassName
-     << "::composeSubRegIndices(unsigned IdxA, unsigned IdxB) const {\n"
-     << "  switch (IdxA) {\n"
-     << "  default:\n    return IdxB;\n";
-  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
-    bool Open = false;
-    for (unsigned j = 0; j != e; ++j) {
-      if (CodeGenSubRegIndex *Comp =
+  if (!SubRegIndices.empty()) {
+    OS << "unsigned " << ClassName
+      << "::composeSubRegIndices(unsigned IdxA, unsigned IdxB) const {\n"
+      << "  switch (IdxA) {\n"
+      << "  default:\n    return IdxB;\n";
+    for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
+      bool Open = false;
+      for (unsigned j = 0; j != e; ++j) {
+        if (CodeGenSubRegIndex *Comp =
             SubRegIndices[i]->compose(SubRegIndices[j])) {
-        if (!Open) {
-          OS << "  case " << SubRegIndices[i]->getQualifiedName()
-             << ": switch(IdxB) {\n    default: return IdxB;\n";
-          Open = true;
+          if (!Open) {
+            OS << "  case " << SubRegIndices[i]->getQualifiedName()
+              << ": switch(IdxB) {\n    default: return IdxB;\n";
+            Open = true;
+          }
+          OS << "    case " << SubRegIndices[j]->getQualifiedName()
+            << ": return " << Comp->getQualifiedName() << ";\n";
         }
-        OS << "    case " << SubRegIndices[j]->getQualifiedName()
-           << ": return " << Comp->getQualifiedName() << ";\n";
       }
+      if (Open)
+        OS << "    }\n";
     }
-    if (Open)
-      OS << "    }\n";
+    OS << "  }\n}\n\n";
   }
-  OS << "  }\n}\n\n";
 
   // Emit getSubClassWithSubReg.
-  OS << "const TargetRegisterClass *" << ClassName
-     << "::getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx)"
-        " const {\n";
-  if (SubRegIndices.empty()) {
-    OS << "  assert(Idx == 0 && \"Target has no sub-registers\");\n"
-       << "  return RC;\n";
-  } else {
+  if (!SubRegIndices.empty()) {
+    OS << "const TargetRegisterClass *" << ClassName
+       << "::getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx)"
+       << " const {\n";
     // Use the smallest type that can hold a regclass ID with room for a
     // sentinel.
     if (RegisterClasses.size() < UINT8_MAX)
@@ -1002,17 +1003,14 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  if (!Idx) return RC;\n  --Idx;\n"
        << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
        << "  unsigned TV = Table[RC->getID()][Idx];\n"
-       << "  return TV ? getRegClass(TV - 1) : 0;\n";
+       << "  return TV ? getRegClass(TV - 1) : 0;\n}\n\n";
   }
-  OS << "}\n\n";
 
   // Emit getMatchingSuperRegClass.
-  OS << "const TargetRegisterClass *" << ClassName
-     << "::getMatchingSuperRegClass(const TargetRegisterClass *A,"
-        " const TargetRegisterClass *B, unsigned Idx) const {\n";
-  if (SubRegIndices.empty()) {
-    OS << "  llvm_unreachable(\"Target has no sub-registers\");\n";
-  } else {
+  if (!SubRegIndices.empty()) {
+    OS << "const TargetRegisterClass *" << ClassName
+       << "::getMatchingSuperRegClass(const TargetRegisterClass *A,"
+       << " const TargetRegisterClass *B, unsigned Idx) const {\n";
     // We need to find the largest sub-class of A such that every register has
     // an Idx sub-register in B.  Map (B, Idx) to a bit-vector of
     // super-register classes that map into B. Then compute the largest common
@@ -1047,9 +1045,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  for (unsigned i = 0; i != " << BVWords << "; ++i)\n"
        << "    if (unsigned Common = TV[i] & SC[i])\n"
        << "      return getRegClass(32*i + CountTrailingZeros_32(Common));\n"
-       << "  return 0;\n";
+       << "  return 0;\n}\n\n";
   }
-  OS << "}\n\n";
 
   EmitRegUnitPressure(OS, RegBank, ClassName);
 

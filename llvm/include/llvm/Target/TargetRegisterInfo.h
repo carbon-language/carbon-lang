@@ -421,7 +421,9 @@ public:
   /// TableGen will synthesize missing A sub-classes.
   virtual const TargetRegisterClass *
   getMatchingSuperRegClass(const TargetRegisterClass *A,
-                           const TargetRegisterClass *B, unsigned Idx) const =0;
+                           const TargetRegisterClass *B, unsigned Idx) const {
+    llvm_unreachable("Target has no sub-registers");
+  }
 
   /// getSubClassWithSubReg - Returns the largest legal sub-class of RC that
   /// supports the sub-register index Idx.
@@ -436,7 +438,10 @@ public:
   ///
   /// TableGen will synthesize missing RC sub-classes.
   virtual const TargetRegisterClass *
-  getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx) const =0;
+  getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx) const {
+    assert(Idx == 0 && "Target has no sub-registers");
+    return RC;
+  }
 
   /// composeSubRegIndices - Return the subregister index you get from composing
   /// two subregister indices.
