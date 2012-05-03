@@ -538,6 +538,7 @@ namespace {
     void markFallthroughVisited(const AttributedStmt *Stmt) {
       bool Found = FallthroughStmts.erase(Stmt);
       assert(Found);
+      (void)Found;
     }
 
     typedef llvm::SmallPtrSet<const AttributedStmt*, 8> AttrStmts;
