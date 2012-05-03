@@ -450,6 +450,10 @@ static void printSimpleValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
   OS << getEnumName(VT);
 }
 
+static void printSubRegIndex(raw_ostream &OS, const CodeGenSubRegIndex *Idx) {
+  OS << Idx->getQualifiedName();
+}
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -1006,41 +1010,85 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  return TV ? getRegClass(TV - 1) : 0;\n}\n\n";
   }
 
-  // Emit getMatchingSuperRegClass.
   if (!SubRegIndices.empty()) {
-    OS << "const TargetRegisterClass *" << ClassName
-       << "::getMatchingSuperRegClass(const TargetRegisterClass *A,"
-       << " const TargetRegisterClass *B, unsigned Idx) const {\n";
-    // We need to find the largest sub-class of A such that every register has
-    // an Idx sub-register in B.  Map (B, Idx) to a bit-vector of
-    // super-register classes that map into B. Then compute the largest common
-    // sub-class with A by taking advantage of the register class ordering,
-    // like getCommonSubClass().
-
     // Bitvector table is NumRCs x NumSubIndexes x BVWords, where BVWords is
     // the number of 32-bit words required to represent all register classes.
     const unsigned BVWords = (RegisterClasses.size()+31)/32;
     BitVector BV(RegisterClasses.size());
 
-    OS << "  static const uint32_t Table[" << RegisterClasses.size()
-       << "][" << SubRegIndices.size() << "][" << BVWords << "] = {\n";
+    // Emit super-register class tables. For each register class, RC, create a
+    // list of subreg indices and bit masks, (Idx, Mask). The bit mask has a
+    // bit for every superreg regclass, SuperRC, that satisfies:
+    //
+    //   For all SuperReg in SuperRC: SuperReg:Idx in RC
+    //
+    // The 0-terminated list of subreg indices starts at:
+    //
+    //   SuperRegIdxSeqs + SuperRegIdxOffset[RC]
+    //
+    // The corresponding bitmasks start at:
+    //
+    //   SuperRegMasks + SuperRegMaskOffset[RC]
+    //
+    // Every bit mask present in the list has at least one bit set.
+
+    // Compress the sub-reg index lists.
+    SmallVector<std::vector<const CodeGenSubRegIndex*>, 8>
+      SRILists(RegisterClasses.size());
+    SequenceToOffsetTable<std::vector<const CodeGenSubRegIndex*> > SRISeqs;
+
+    // Emit the SuperRegMasks table while computing per-RC offsets.
+    SmallVector<unsigned, 8> MaskOffsets;
+    unsigned MaskOffset = 0;
+    OS << "static const uint32_t SuperRegMasks[][" << BVWords << "] = {\n";
     for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci) {
       const CodeGenRegisterClass &RC = *RegisterClasses[rci];
-      OS << "    {\t// " << RC.getName() << "\n";
+      OS << "  // " << RC.getName() << '\n';
+      MaskOffsets.push_back(MaskOffset);
+      std::vector<const CodeGenSubRegIndex*> &SRIList = SRILists[rci];
       for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
         CodeGenSubRegIndex *Idx = SubRegIndices[sri];
         BV.reset();
         RC.getSuperRegClasses(Idx, BV);
-        OS << "      { ";
+        if (BV.none())
+          continue;
+        SRIList.push_back(Idx);
+        OS << "  { ";
         printBitVectorAsHex(OS, BV, 32);
         OS << "},\t// " << Idx->getName() << '\n';
+        ++MaskOffset;
       }
-      OS << "    },\n";
+      SRISeqs.add(SRIList);
     }
-    OS << "  };\n  assert(A && B && \"Missing regclass\");\n"
-       << "  --Idx;\n"
-       << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
-       << "  const uint32_t *TV = Table[B->getID()][Idx];\n"
+    OS << "};\n\nstatic const unsigned SuperRegMaskOffset[] = {\n ";
+    for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci)
+      OS << ' ' << MaskOffsets[rci] << ',';
+    OS << "\n};\n\nstatic const uint16_t SuperRegIdxSeqs[] = {\n";
+    SRISeqs.layout();
+    SRISeqs.emit(OS, printSubRegIndex);
+    OS << "};\n\nstatic const unsigned SuperRegIdxOffset[] = {\n ";
+    for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci)
+      OS << ' ' << SRISeqs.get(SRILists[rci]) << ',';
+    OS << "\n};\n\n";
+
+    // Emit getMatchingSuperRegClass.
+    // We need to find the largest sub-class of A such that every register has
+    // an Idx sub-register in B.  Map (B, Idx) to a bit-vector of
+    // super-register classes that map into B. Then compute the largest common
+    // sub-class with A by taking advantage of the register class ordering,
+    // like getCommonSubClass().
+    OS << "const TargetRegisterClass *" << ClassName
+       << "::getMatchingSuperRegClass(const TargetRegisterClass *A,"
+       << " const TargetRegisterClass *B, unsigned Idx) const {\n"
+       << "  assert(A && B && \"Missing regclass\");\n"
+       << "  assert(Idx && Idx <= " << SubRegIndices.size()
+       << " && \"Bad subreg\");\n"
+       << "  unsigned MOff = SuperRegMaskOffset[B->getID()];\n"
+       << "  unsigned IOff = SuperRegIdxOffset[B->getID()];\n"
+       << "  while (SuperRegIdxSeqs[IOff] != Idx) {\n"
+       << "    if (!SuperRegIdxSeqs[IOff])\n      return 0;\n"
+       << "    ++IOff, ++MOff;\n  }\n"
+       << "  const uint32_t *TV = SuperRegMasks[MOff];\n"
        << "  const uint32_t *SC = A->getSubClassMask();\n"
        << "  for (unsigned i = 0; i != " << BVWords << "; ++i)\n"
        << "    if (unsigned Common = TV[i] & SC[i])\n"
