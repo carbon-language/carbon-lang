@@ -776,6 +776,13 @@ int rdar11269741(struct rdar11269741_b_t o)
   return p->n.m; // expected-warning {{leak}}
 }
 
+// Pointer arithmetic, returning an ElementRegion.
+void *radar11329382(unsigned bl) {
+  void *ptr = malloc (16);
+  ptr = ptr + (2 - bl);
+  return ptr; // no warning
+}
+
 void __assert_rtn(const char *, const char *, int, const char *) __attribute__((__noreturn__));
 int strcmp(const char *, const char *);
 char *a (void);
