@@ -512,7 +512,8 @@ protected:
     typedef _SETraits SETraits;
     typedef _DeclType DeclType;
 
-    typedef typename llvm::FoldingSet<EntryType>::iterator SetIteratorType;
+    typedef typename llvm::FoldingSetVector<EntryType>::iterator
+      SetIteratorType;
 
     SetIteratorType SetIter;
 
@@ -541,13 +542,13 @@ protected:
   };
 
   template <typename EntryType>
-  SpecIterator<EntryType> makeSpecIterator(llvm::FoldingSet<EntryType> &Specs,
-                                           bool isEnd) {
+  SpecIterator<EntryType>
+  makeSpecIterator(llvm::FoldingSetVector<EntryType> &Specs, bool isEnd) {
     return SpecIterator<EntryType>(isEnd ? Specs.end() : Specs.begin());
   }
 
   template <class EntryType> typename SpecEntryTraits<EntryType>::DeclType*
-  findSpecializationImpl(llvm::FoldingSet<EntryType> &Specs,
+  findSpecializationImpl(llvm::FoldingSetVector<EntryType> &Specs,
                          const TemplateArgument *Args, unsigned NumArgs,
                          void *&InsertPos);
 
@@ -706,7 +707,7 @@ protected:
 
     /// \brief The function template specializations for this function
     /// template, including explicit specializations and instantiations.
-    llvm::FoldingSet<FunctionTemplateSpecializationInfo> Specializations;
+    llvm::FoldingSetVector<FunctionTemplateSpecializationInfo> Specializations;
 
     /// \brief The set of "injected" template arguments used within this
     /// function template.
@@ -732,13 +733,14 @@ protected:
 
   /// \brief Retrieve the set of function template specializations of this
   /// function template.
-  llvm::FoldingSet<FunctionTemplateSpecializationInfo> &getSpecializations() {
+  llvm::FoldingSetVector<FunctionTemplateSpecializationInfo> &
+  getSpecializations() {
     return getCommonPtr()->Specializations;
   }
 
   /// \brief Add a specialization of this function template.
   ///
-  /// \param InsertPos Insert position in the FoldingSet, must have been
+  /// \param InsertPos Insert position in the FoldingSetVector, must have been
   ///        retrieved by an earlier call to findSpecialization().
   void addSpecialization(FunctionTemplateSpecializationInfo* Info,
                          void *InsertPos);
@@ -1688,11 +1690,11 @@ protected:
 
     /// \brief The class template specializations for this class
     /// template, including explicit specializations and instantiations.
-    llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
+    llvm::FoldingSetVector<ClassTemplateSpecializationDecl> Specializations;
 
     /// \brief The class template partial specializations for this class
     /// template.
-    llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>
+    llvm::FoldingSetVector<ClassTemplatePartialSpecializationDecl>
       PartialSpecializations;
 
     /// \brief The injected-class-name type for this class template.
@@ -1710,11 +1712,11 @@ protected:
   void LoadLazySpecializations();
 
   /// \brief Retrieve the set of specializations of this class template.
-  llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations();
+  llvm::FoldingSetVector<ClassTemplateSpecializationDecl> &getSpecializations();
 
   /// \brief Retrieve the set of partial specializations of this class
   /// template.
-  llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
+  llvm::FoldingSetVector<ClassTemplatePartialSpecializationDecl> &
   getPartialSpecializations();
 
   ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
