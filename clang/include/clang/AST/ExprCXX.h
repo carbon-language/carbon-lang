@@ -118,7 +118,7 @@ public:
   /// declaration as that of the class context of the CXXMethodDecl which this
   /// function is calling.
   /// FIXME: Returns 0 for member pointer call exprs.
-  CXXRecordDecl *getRecordDecl();
+  CXXRecordDecl *getRecordDecl() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXMemberCallExprClass;

@@ -458,7 +458,7 @@ CXXMethodDecl *CXXMemberCallExpr::getMethodDecl() const {
 }
 
 
-CXXRecordDecl *CXXMemberCallExpr::getRecordDecl() {
+CXXRecordDecl *CXXMemberCallExpr::getRecordDecl() const {
   Expr* ThisArg = getImplicitObjectArgument();
   if (!ThisArg)
     return 0;
