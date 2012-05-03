@@ -2648,7 +2648,12 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
              diag::warn_cxx98_compat_longlong : diag::ext_longlong);
 
     // Get the value in the widest-possible width.
-    llvm::APInt ResultVal(Context.getTargetInfo().getIntMaxTWidth(), 0);
+    unsigned MaxWidth = Context.getTargetInfo().getIntMaxTWidth();
+    // The microsoft literal suffix extensions support 128-bit literals, which
+    // may be wider than [u]intmax_t.
+    if (Literal.isMicrosoftInteger && MaxWidth < 128)
+      MaxWidth = 128;
+    llvm::APInt ResultVal(MaxWidth, 0);
 
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.
@@ -2696,7 +2701,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
         }
       }
 
-      // Finally, check long long if needed.
+      // Check long long if needed.
       if (Ty.isNull()) {
         unsigned LongLongSize = Context.getTargetInfo().getLongLongWidth();
 
@@ -2712,6 +2717,16 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
             Ty = Context.UnsignedLongLongTy;
           Width = LongLongSize;
         }
+      }
+        
+      // If it doesn't fit in unsigned long long, and we're using Microsoft
+      // extensions, then its a 128-bit integer literal.
+      if (Ty.isNull() && Literal.isMicrosoftInteger) {
+        if (Literal.isUnsigned)
+          Ty = Context.UnsignedInt128Ty;
+        else
+          Ty = Context.Int128Ty;
+        Width = 128;
       }
 
       // If we still couldn't decide a type, we probably have something that
