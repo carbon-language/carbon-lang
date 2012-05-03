@@ -95,7 +95,10 @@ class CrashLog(lldb.utils.symbolication.Symbolicator):
             if self.description:
                 return "[%3u] 0x%16.16x %s" % (self.index, self.pc, self.description)
             else:
-                return "[%3u] 0x%16.16x" % (self.index, self.pc)        
+                return "[%3u] 0x%16.16x" % (self.index, self.pc)
+
+        def dump(self, prefix):
+            print "%s%s" % (prefix, str(self))
     
     class DarwinImage(lldb.utils.symbolication.Image):
         """Class that represents a binary images in a darwin crash log"""
