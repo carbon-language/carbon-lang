@@ -6,7 +6,7 @@ typedef typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 #define NULL ((void*)0)
-#define UINT_MAX -1U
+#define UINT_MAX (~0U)
 
 //---------------
 //  Plus/minus
@@ -16,7 +16,7 @@ void separateExpressions (int a) {
   int b = a + 1;
   --b;
 
-  char* buf = malloc(1);
+  void *buf = malloc(1);
   if (a != 0 && b == 0)
     return; // expected-warning{{never executed}}
   free(buf);
@@ -27,14 +27,14 @@ void oneLongExpression (int a) {
   // the first term is on the left.
   int b = 15 + a + 15 - 10 - 20;
 
-  char* buf = malloc(1);
+  void *buf = malloc(1);
   if (a != 0 && b == 0)
     return; // expected-warning{{never executed}}
   free(buf);
 }
 
 void mixedTypes (int a) {
-  char* buf = malloc(1);
+  void *buf = malloc(1);
 
   // Different additive types should not cause crashes when constant-folding.
   // This is part of PR7406.
@@ -55,7 +55,7 @@ void mixedTypes (int a) {
 
 // Equality and inequality only
 void eq_ne (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a == UINT_MAX)
     b = malloc(1);
   if (a+1 != 0)
@@ -66,7 +66,7 @@ void eq_ne (unsigned a) {
 }
 
 void ne_eq (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a != UINT_MAX)
     b = malloc(1);
   if (a+1 == 0)
@@ -79,7 +79,7 @@ void ne_eq (unsigned a) {
 // Mixed typed inequalities (part of PR7406)
 // These should not crash.
 void mixed_eq_ne (int a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a == 1)
     b = malloc(1);
   if (a+1U != 2)
@@ -90,7 +90,7 @@ void mixed_eq_ne (int a) {
 }
 
 void mixed_ne_eq (int a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a != 1)
     b = malloc(1);
   if (a+1U == 2)
@@ -103,7 +103,7 @@ void mixed_ne_eq (int a) {
 
 // Simple order comparisons with no adjustment
 void baselineGT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a > 0)
     b = malloc(1);
   if (a == 0)
@@ -112,7 +112,7 @@ void baselineGT (unsigned a) {
 }
 
 void baselineGE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a >= UINT_MAX)
     b = malloc(1);
   if (a == UINT_MAX)
@@ -121,7 +121,7 @@ void baselineGE (unsigned a) {
 }
 
 void baselineLT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a < UINT_MAX)
     b = malloc(1);
   if (a == UINT_MAX)
@@ -130,7 +130,7 @@ void baselineLT (unsigned a) {
 }
 
 void baselineLE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a <= 0)
     b = malloc(1);
   if (a == 0)
@@ -141,14 +141,14 @@ void baselineLE (unsigned a) {
 
 // Adjustment gives each of these an extra solution!
 void adjustedGT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a-1 > UINT_MAX-1)
     b = malloc(1);
   return; // expected-warning{{leak}}
 }
 
 void adjustedGE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a-1 >= UINT_MAX-1)
     b = malloc(1);
   if (a == UINT_MAX)
@@ -157,14 +157,14 @@ void adjustedGE (unsigned a) {
 }
 
 void adjustedLT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+1 < 1)
     b = malloc(1);
   return; // expected-warning{{leak}}
 }
 
 void adjustedLE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+1 <= 1)
     b = malloc(1);
   if (a == 0)
@@ -175,28 +175,28 @@ void adjustedLE (unsigned a) {
 
 // Tautologies
 void tautologyGT (unsigned a) {
-  char* b = malloc(1);
+  void *b = malloc(1);
   if (a > UINT_MAX)
     return; // no-warning
   free(b);
 }
 
 void tautologyGE (unsigned a) {
-  char* b = malloc(1);
+  void *b = malloc(1);
   if (a >= 0) // expected-warning{{always true}}
     free(b);
   return; // no-warning
 }
 
 void tautologyLT (unsigned a) {
-  char* b = malloc(1);
+  void *b = malloc(1);
   if (a < 0) // expected-warning{{always false}}
     return; // expected-warning{{never executed}}
   free(b);
 }
 
 void tautologyLE (unsigned a) {
-  char* b = malloc(1);
+  void *b = malloc(1);
   if (a <= UINT_MAX)
     free(b);
   return; // no-warning

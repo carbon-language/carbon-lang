@@ -1,17 +1,17 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -verify -analyzer-constraints=range %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.deadcode.UnreachableCode,unix.Malloc -verify -analyzer-constraints=range %s
 
 // These are used to trigger warnings.
 typedef typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 #define NULL ((void*)0)
-#define UINT_MAX (__INT_MAX__  *2U +1U)
+#define UINT_MAX (~0U)
 
 // Each of these adjusted ranges has an adjustment small enough to split the
 // solution range across an overflow boundary (Min for <, Max for >).
 // This corresponds to one set of branches in RangeConstraintManager.
 void smallAdjustmentGT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+2 > 1)
     b = malloc(1);
   if (a == UINT_MAX-1 || a == UINT_MAX)
@@ -22,7 +22,7 @@ void smallAdjustmentGT (unsigned a) {
 }
 
 void smallAdjustmentGE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+2 >= 1)
     b = malloc(1);
   if (a == UINT_MAX-1)
@@ -33,7 +33,7 @@ void smallAdjustmentGE (unsigned a) {
 }
 
 void smallAdjustmentLT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+1 < 2)
     b = malloc(1);
   if (a == 0 || a == UINT_MAX)
@@ -42,7 +42,7 @@ void smallAdjustmentLT (unsigned a) {
 }
 
 void smallAdjustmentLE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+1 <= 2)
     b = malloc(1);
   if (a == 0 || a == 1 || a == UINT_MAX)
@@ -55,7 +55,7 @@ void smallAdjustmentLE (unsigned a) {
 // comparison value over an overflow boundary (Min for <, Max for >).
 // This corresponds to one set of branches in RangeConstraintManager.
 void largeAdjustmentGT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a-2 > UINT_MAX-1)
     b = malloc(1);
   if (a == 1 || a == 0)
@@ -66,7 +66,7 @@ void largeAdjustmentGT (unsigned a) {
 }
 
 void largeAdjustmentGE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a-2 >= UINT_MAX-1)
     b = malloc(1);
   if (a > 1)
@@ -77,7 +77,7 @@ void largeAdjustmentGE (unsigned a) {
 }
 
 void largeAdjustmentLT (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+2 < 1)
     b = malloc(1);
   if (a == UINT_MAX-1 || a == UINT_MAX)
@@ -88,7 +88,7 @@ void largeAdjustmentLT (unsigned a) {
 }
 
 void largeAdjustmentLE (unsigned a) {
-  char* b = NULL;
+  void *b = NULL;
   if (a+2 <= 1)
     b = malloc(1);
   if (a < UINT_MAX-1)
