@@ -648,10 +648,17 @@ using ::double_t;
 
 // abs
 
-template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, _A1>::type
-abs(_A1 __x) {return fabs(__x);}
+float
+abs(float __x) {return fabsf(__x);}
+
+inline _LIBCPP_INLINE_VISIBILITY
+double
+abs(double __x) {return fabs(__x);}
+
+inline _LIBCPP_INLINE_VISIBILITY
+long double
+abs(long double __x) {return fabsl(__x);}
 
 #ifndef __sun__
 
