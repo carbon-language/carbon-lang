@@ -1224,8 +1224,8 @@ static DecodeStatus DecodeSPRRegListOperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
 
-  unsigned Vd = fieldFromInstruction32(Val, 8, 4);
-  unsigned regs = Val & 0xFF;
+  unsigned Vd = fieldFromInstruction32(Val, 8, 5);
+  unsigned regs = fieldFromInstruction32(Val, 0, 8);
 
   if (!Check(S, DecodeSPRRegisterClass(Inst, Vd, Address, Decoder)))
     return MCDisassembler::Fail;
@@ -1241,8 +1241,10 @@ static DecodeStatus DecodeDPRRegListOperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
 
-  unsigned Vd = fieldFromInstruction32(Val, 8, 4);
-  unsigned regs = (Val & 0xFF) / 2;
+  unsigned Vd = fieldFromInstruction32(Val, 8, 5);
+  unsigned regs = fieldFromInstruction32(Val, 0, 8);
+
+  regs = regs >> 1;
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Vd, Address, Decoder)))
       return MCDisassembler::Fail;
