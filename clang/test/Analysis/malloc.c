@@ -819,6 +819,16 @@ void r11160612_4() {
   sqlite3_bind_text_my(0, x, 12, free); // no - warning
 }
 
+// Passing callbacks in a struct.
+void r11160612_5(StWithCallback St) {
+  void *x = malloc(12);
+  dealocateMemWhenDoneByVal(x, St);
+}
+void r11160612_6(StWithCallback St) {
+  void *x = malloc(12);
+  dealocateMemWhenDoneByRef(&St, x);
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 

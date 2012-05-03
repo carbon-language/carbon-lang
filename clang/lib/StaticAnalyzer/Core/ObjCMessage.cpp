@@ -89,10 +89,28 @@ const Decl *CallOrObjCMessage::getDecl() const {
 }
 
 bool CallOrObjCMessage::isCallbackArg(unsigned Idx, const Type *T) const {
-  // Should we dig into struct fields, arrays ect?
+  // If the parameter is 0, it's harmless.
+  if (getArgSVal(Idx).isZeroConstant())
+    return false;
+    
+  // If a parameter is a block or a callback, assume it can modify pointer.
   if (T->isBlockPointerType() || T->isFunctionPointerType())
-    if (!getArgSVal(Idx).isZeroConstant())
-      return true;
+    return true;
+
+  // Check if a callback is passed inside a struct (for both, struct passed by
+  // reference and by value). Dig just one level into the struct for now.
+  if (const PointerType *PT = dyn_cast<PointerType>(T))
+    T = PT->getPointeeType().getTypePtr();
+
+  if (const RecordType *RT = T->getAsStructureType()) {
+    const RecordDecl *RD = RT->getDecl();
+    for (RecordDecl::field_iterator I = RD->field_begin(),
+                                    E = RD->field_end(); I != E; ++I ) {
+      const Type *FieldT = I->getType().getTypePtr();
+      if (FieldT->isBlockPointerType() || FieldT->isFunctionPointerType())
+        return true;
+    }
+  }
   return false;
 }
 
