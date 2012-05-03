@@ -357,7 +357,7 @@ public:
         if (category.get())
         {
             Position pos_w = pos;
-            if (pos == First)
+            if (pos == First || m_active_categories.size() == 0)
                 m_active_categories.push_front(category);
             else if (pos == Last || pos == m_active_categories.size())
                 m_active_categories.push_back(category);

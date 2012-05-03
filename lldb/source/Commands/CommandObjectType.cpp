@@ -1985,10 +1985,10 @@ public:
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
-        
+          
         type_style_arg.arg_type = eArgTypeName;
         type_style_arg.arg_repetition = eArgRepeatPlus;
-        
+                
         type_arg.push_back (type_style_arg);
         
         m_arguments.push_back (type_arg);
@@ -2083,19 +2083,33 @@ public:
             return false;
         }
         
-        // the order is not relevant here
-        for (int i = argc - 1; i >= 0; i--)
+        if (argc == 1 && strcmp(command.GetArgumentAtIndex(0),"*") == 0)
         {
-            const char* typeA = command.GetArgumentAtIndex(i);
-            ConstString typeCS(typeA);
-            
-            if (!typeCS)
+            uint32_t num_categories = DataVisualization::Categories::GetCount();
+            for (uint32_t i = 0; i < num_categories; i++)
             {
-                result.AppendError("empty category name not allowed");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
+                lldb::TypeCategoryImplSP category_sp = DataVisualization::Categories::GetCategoryAtIndex(i);
+                // no need to check if the category is enabled - disabling a disabled category has no effect
+                if (category_sp)
+                    DataVisualization::Categories::Disable(category_sp);
             }
-            DataVisualization::Categories::Disable(typeCS);
+        }
+        else
+        {
+            // the order is not relevant here
+            for (int i = argc - 1; i >= 0; i--)
+            {
+                const char* typeA = command.GetArgumentAtIndex(i);
+                ConstString typeCS(typeA);
+                
+                if (!typeCS)
+                {
+                    result.AppendError("empty category name not allowed");
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+                DataVisualization::Categories::Disable(typeCS);
+            }
         }
 
         result.SetStatus(eReturnStatusSuccessFinishResult);
