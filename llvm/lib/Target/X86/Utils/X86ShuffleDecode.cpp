@@ -82,8 +82,7 @@ void DecodePSHUFMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
 
 void DecodePSHUFHWMask(EVT VT, unsigned Imm,
                        SmallVectorImpl<int> &ShuffleMask) {
-  unsigned NumLanes = VT.getSizeInBits() / 128;
-  unsigned NumElts = 8 * NumLanes;
+  unsigned NumElts = VT.getVectorNumElements();
 
   for (unsigned l = 0; l != NumElts; l += 8) {
     unsigned NewImm = Imm;
@@ -99,8 +98,7 @@ void DecodePSHUFHWMask(EVT VT, unsigned Imm,
 
 void DecodePSHUFLWMask(EVT VT, unsigned Imm,
                        SmallVectorImpl<int> &ShuffleMask) {
-  unsigned NumLanes = VT.getSizeInBits() / 128;
-  unsigned NumElts = 8 * NumLanes;
+  unsigned NumElts = VT.getVectorNumElements();
 
   for (unsigned l = 0; l != NumElts; l += 8) {
     unsigned NewImm = Imm;

@@ -3904,9 +3904,8 @@ static unsigned getShuffleSHUFImmediate(ShuffleVectorSDNode *N) {
   for (unsigned i = 0; i != NumElts; ++i) {
     int Elt = N->getMaskElt(i);
     if (Elt < 0) continue;
-    Elt %= NumLaneElts;
-    unsigned ShAmt = i << Shift;
-    if (ShAmt >= 8) ShAmt -= 8;
+    Elt &= NumLaneElts - 1;
+    unsigned ShAmt = (i << Shift) % 8;
     Mask |= Elt << ShAmt;
   }
 
@@ -3916,30 +3915,48 @@ static unsigned getShuffleSHUFImmediate(ShuffleVectorSDNode *N) {
 /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_SHUFFLE mask with the PSHUFHW instruction.
 static unsigned getShufflePSHUFHWImmediate(ShuffleVectorSDNode *N) {
+  EVT VT = N->getValueType(0);
+
+  assert((VT == MVT::v8i16 || VT == MVT::v16i16) &&
+         "Unsupported vector type for PSHUFHW");
+
+  unsigned NumElts = VT.getVectorNumElements();
+
   unsigned Mask = 0;
-  // 8 nodes, but we only care about the last 4.
-  for (unsigned i = 7; i >= 4; --i) {
-    int Val = N->getMaskElt(i);
-    if (Val >= 0)
-      Mask |= (Val - 4);
-    if (i != 4)
-      Mask <<= 2;
+  for (unsigned l = 0; l != NumElts; l += 8) {
+    // 8 nodes per lane, but we only care about the last 4.
+    for (unsigned i = 0; i < 4; ++i) {
+      int Elt = N->getMaskElt(l+i+4);
+      if (Elt < 0) continue;
+      Elt &= 0x3; // only 2-bits.
+      Mask |= Elt << (i * 2);
+    }
   }
+
   return Mask;
 }
 
 /// getShufflePSHUFLWImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_SHUFFLE mask with the PSHUFLW instruction.
 static unsigned getShufflePSHUFLWImmediate(ShuffleVectorSDNode *N) {
+  EVT VT = N->getValueType(0);
+
+  assert((VT == MVT::v8i16 || VT == MVT::v16i16) &&
+         "Unsupported vector type for PSHUFHW");
+
+  unsigned NumElts = VT.getVectorNumElements();
+
   unsigned Mask = 0;
-  // 8 nodes, but we only care about the first 4.
-  for (int i = 3; i >= 0; --i) {
-    int Val = N->getMaskElt(i);
-    if (Val >= 0)
-      Mask |= Val;
-    if (i != 0)
-      Mask <<= 2;
+  for (unsigned l = 0; l != NumElts; l += 8) {
+    // 8 nodes per lane, but we only care about the first 4.
+    for (unsigned i = 0; i < 4; ++i) {
+      int Elt = N->getMaskElt(l+i);
+      if (Elt < 0) continue;
+      Elt &= 0x3; // only 2-bits
+      Mask |= Elt << (i * 2);
+    }
   }
+
   return Mask;
 }
 
