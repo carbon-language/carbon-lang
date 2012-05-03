@@ -33,3 +33,13 @@ typedef void (^void_block_t)(void);
 // CHECK: T@?,C,V__completion
 // CHECK: T@\"PropertyClass\",&,VYVAR
 
+@interface Test @end
+@interface Test (Category)
+@property int q;
+@end
+
+@implementation Test (Category)
+@dynamic q;
+@end
+
+// CHECK: {{"q","Ti,D"}}
