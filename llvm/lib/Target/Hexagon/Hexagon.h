@@ -40,6 +40,7 @@ namespace llvm {
   FunctionPass *createHexagonHardwareLoops();
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonFixupHwLoops();
+  FunctionPass *createHexagonPacketizer();
 
 /* TODO: object output.
   MCCodeEmitter *createHexagonMCCodeEmitter(const Target &,
@@ -47,7 +48,8 @@ namespace llvm {
                                             MCContext &Ctx);
 */
 /* TODO: assembler input.
-  TargetAsmBackend *createHexagonAsmBackend(const Target &, const std::string &);
+  TargetAsmBackend *createHexagonAsmBackend(const Target &, 
+                                                  const std::string &);
 */
   void HexagonLowerToMC(const MachineInstr *MI, MCInst &MCI,
                         HexagonAsmPrinter &AP);
@@ -67,7 +69,7 @@ namespace llvm {
 // Normal instruction size (in bytes).
 #define HEXAGON_INSTR_SIZE 4
 
-// Maximum number of words in a packet (in instructions).
+// Maximum number of words and instructions in a packet.
 #define HEXAGON_PACKET_SIZE 4
 
 #endif

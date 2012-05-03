@@ -111,7 +111,6 @@ bool HexagonPassConfig::addPreRegAlloc() {
   if (!DisableHardwareLoops) {
     PM->add(createHexagonHardwareLoops());
   }
-
   return false;
 }
 
@@ -137,6 +136,9 @@ bool HexagonPassConfig::addPreEmitPass() {
 
   // Split up TFRcondsets into conditional transfers.
   PM->add(createHexagonSplitTFRCondSets(getHexagonTargetMachine()));
+
+  // Create Packets.
+  PM->add(createHexagonPacketizer());
 
   return false;
 }

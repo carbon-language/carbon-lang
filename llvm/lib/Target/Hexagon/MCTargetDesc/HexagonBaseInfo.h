@@ -23,14 +23,41 @@ namespace llvm {
 /// instruction info tracks.
 ///
 namespace HexagonII {
-
   // *** The code below must match HexagonInstrFormat*.td *** //
 
+  // Insn types.
+  // *** Must match HexagonInstrFormat*.td ***
+  enum Type {
+    TypePSEUDO = 0,
+    TypeALU32  = 1,
+    TypeCR     = 2,
+    TypeJR     = 3,
+    TypeJ      = 4,
+    TypeLD     = 5,
+    TypeST     = 6,
+    TypeSYSTEM = 7,
+    TypeXTYPE  = 8,
+    TypeMEMOP  = 9,
+    TypeNV     = 10,
+    TypePREFIX = 30, // Such as extenders.
+    TypeMARKER = 31  // Such as end of a HW loop.
+  };
+
+
+
   // MCInstrDesc TSFlags
+  // *** Must match HexagonInstrFormat*.td ***
   enum {
+    // This 5-bit field describes the insn type.
+    TypePos  = 0,
+    TypeMask = 0x1f,
+
+    // Solo instructions.
+    SoloPos  = 5,
+    SoloMask = 0x1,
 
     // Predicated instructions.
-    PredicatedPos  = 1,
+    PredicatedPos  = 6,
     PredicatedMask = 0x1
   };
 

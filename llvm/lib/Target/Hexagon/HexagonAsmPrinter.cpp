@@ -13,11 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #define DEBUG_TYPE "asm-printer"
 #include "Hexagon.h"
 #include "HexagonAsmPrinter.h"
 #include "HexagonMachineFunctionInfo.h"
+#include "HexagonMCInst.h"
 #include "HexagonTargetMachine.h"
 #include "HexagonSubtarget.h"
 #include "InstPrinter/HexagonInstPrinter.h"
@@ -77,8 +77,7 @@ void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   const MachineOperand &MO = MI->getOperand(OpNo);
 
   switch (MO.getType()) {
-  default:
-    assert(0 && "<unknown operand type>");
+  default: llvm_unreachable ("<unknown operand type>");
   case MachineOperand::MO_Register:
     O << HexagonInstPrinter::getRegisterName(MO.getReg());
     return;
@@ -196,10 +195,45 @@ void HexagonAsmPrinter::printPredicateOperand(const MachineInstr *MI,
 /// the current output stream.
 ///
 void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  MCInst MCI;
+  if (MI->isBundle()) {
+    std::vector<const MachineInstr*> BundleMIs;
 
-  HexagonLowerToMC(MI, MCI, *this);
-  OutStreamer.EmitInstruction(MCI);
+    const MachineBasicBlock *MBB = MI->getParent();
+    MachineBasicBlock::const_instr_iterator MII = MI;
+    ++MII;
+    unsigned int IgnoreCount = 0;
+    while (MII != MBB->end() && MII->isInsideBundle()) {
+      const MachineInstr *MInst = MII;
+      if (MInst->getOpcode() == TargetOpcode::DBG_VALUE ||
+          MInst->getOpcode() == TargetOpcode::IMPLICIT_DEF) {
+          IgnoreCount++;
+          ++MII;
+          continue;
+      }
+      //BundleMIs.push_back(&*MII);
+      BundleMIs.push_back(MInst);
+      ++MII;
+    }
+    unsigned Size = BundleMIs.size();
+    assert((Size+IgnoreCount) == MI->getBundleSize() && "Corrupt Bundle!");
+    for (unsigned Index = 0; Index < Size; Index++) {
+      HexagonMCInst MCI;
+      MCI.setStartPacket(Index == 0);
+      MCI.setEndPacket(Index == (Size-1));
+
+      HexagonLowerToMC(BundleMIs[Index], MCI, *this);
+      OutStreamer.EmitInstruction(MCI);
+    }
+  }
+  else {
+    HexagonMCInst MCI;
+    if (MI->getOpcode() == Hexagon::ENDLOOP0) {
+      MCI.setStartPacket(true);
+      MCI.setEndPacket(true);
+    }
+    HexagonLowerToMC(MI, MCI, *this);
+    OutStreamer.EmitInstruction(MCI);
+  }
 
   return;
 }
@@ -241,15 +275,15 @@ void HexagonAsmPrinter::printGlobalOperand(const MachineInstr *MI, int OpNo,
 void HexagonAsmPrinter::printJumpTable(const MachineInstr *MI, int OpNo,
                                        raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNo);
-  assert( (MO.getType() == MachineOperand::MO_JumpTableIndex) &&
-	  "Expecting jump table index");
+  assert( (MO.getType() == MachineOperand::MO_JumpTableIndex) && 
+           "Expecting jump table index");
 
   // Hexagon_TODO: Do we need name mangling?
   O << *GetJTISymbol(MO.getIndex());
 }
 
 void HexagonAsmPrinter::printConstantPool(const MachineInstr *MI, int OpNo,
-                                          raw_ostream &O) {
+                                       raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   assert( (MO.getType() == MachineOperand::MO_ConstantPoolIndex) &&
           "Expecting constant pool index");
