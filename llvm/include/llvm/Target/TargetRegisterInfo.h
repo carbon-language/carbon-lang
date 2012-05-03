@@ -43,6 +43,7 @@ public:
   const MCRegisterClass *MC;
   const vt_iterator VTs;
   const uint32_t *SubClassMask;
+  const uint16_t *SuperRegIndices;
   const sc_iterator SuperClasses;
   const sc_iterator SuperRegClasses;
   ArrayRef<uint16_t> (*OrderFunc)(const MachineFunction&);
@@ -161,6 +162,18 @@ public:
   /// use it.
   const uint32_t *getSubClassMask() const {
     return SubClassMask;
+  }
+
+  /// getSuperRegIndices - Returns a 0-terminated list of sub-register indices
+  /// that projec some super-register class into this register class. The list
+  /// has an entry for each Idx such that:
+  ///
+  ///   There exists SuperRC where:
+  ///     For all Reg in SuperRC:
+  ///       this->contains(Reg:Idx)
+  ///
+  const uint16_t *getSuperRegIndices() const {
+    return SuperRegIndices;
   }
 
   /// getSuperClasses - Returns a NULL terminated list of super-classes.  The

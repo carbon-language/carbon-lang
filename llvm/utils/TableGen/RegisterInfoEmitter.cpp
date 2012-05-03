@@ -845,7 +845,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     //
     // The 0-terminated list of subreg indices starts at:
     //
-    //   SuperRegIdxSeqs + SuperRegIdxOffset[RC]
+    //   RC->getSuperRegIndices() = SuperRegIdxSeqs + ...
     //
     // The corresponding bitmasks follow the sub-class mask in memory. Each
     // mask has RCMaskWords uint32_t entries.
@@ -946,7 +946,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << '&' << Target.getName() << "MCRegisterClasses[" << RC.getName()
          << "RegClassID],\n    "
          << "VTLists + " << VTSeqs.get(RC.VTs) << ",\n    "
-         << RC.getName() << "SubClassMask,\n    ";
+         << RC.getName() << "SubClassMask,\n    SuperRegIdxSeqs + "
+         << SuperRegIdxSeqs.get(SuperRegIdxLists[i]) << ",\n    ";
       if (RC.getSuperClasses().empty())
         OS << "NullRegClasses,\n    ";
       else
@@ -1062,8 +1063,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  assert(A && B && \"Missing regclass\");\n"
        << "  assert(Idx && Idx <= " << SubRegIndices.size()
        << " && \"Bad subreg\");\n"
-       << "  const uint16_t *SRI = SuperRegIdxSeqs + "
-          "SuperRegIdxOffset[B->getID()];\n"
+       << "  const uint16_t *SRI = B->getSuperRegIndices();\n"
        << "  unsigned Offset = 0;\n"
        << "  while (SRI[Offset] != Idx) {\n"
        << "    if (!SRI[Offset])\n      return 0;\n"
