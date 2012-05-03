@@ -1192,7 +1192,12 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         if (DiagnoseBadString(StringToks[i]))
           hadError = true;
     } else {
-      assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
+      if (ThisTokBuf[0] != '"') {
+        // The file may have come from PCH and then changed after loading the
+        // PCH; Fail gracefully.
+        hadError = true;
+        continue;
+      }
       ++ThisTokBuf; // skip "
 
       // Check if this is a pascal string
