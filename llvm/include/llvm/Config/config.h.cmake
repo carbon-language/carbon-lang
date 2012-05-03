@@ -155,7 +155,7 @@
 #cmakedefine HAVE_GETTIMEOFDAY ${HAVE_GETTIMEOFDAY}
 
 /* Define if the Graphviz program is available */
-#undef HAVE_GRAPHVIZ
+#cmakedefine HAVE_GRAPHVIZ ${HAVE_GRAPHVIZ}
 
 /* Define if the gv program is available */
 #cmakedefine HAVE_GV ${HAVE_GV}
