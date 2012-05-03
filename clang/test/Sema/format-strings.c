@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -isystem %S/Inputs %s
 
 #include <stdarg.h>
 typedef __typeof(sizeof(int)) size_t;
@@ -520,4 +520,11 @@ void test_other_formats() {
   monformat(str); // expected-warning{{format string is not a string literal (potentially insecure)}}
   dateformat(""); // expected-warning{{format string is empty}}
   dateformat(str); // no-warning (using strftime non literal is not unsafe)
+}
+
+// Do not warn about unused arguments coming from system headers.
+// <rdar://problem/11317765>
+#include <format-unused-system-args.h>
+void test_unused_system_args(int x) {
+  PRINT1("%d\n", x); // no-warning{{extra argument is system header is OK}}
 }
