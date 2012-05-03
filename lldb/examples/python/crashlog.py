@@ -469,7 +469,7 @@ if __name__ == '__main__':
     # Create a new debugger instance
     lldb.debugger = lldb.SBDebugger.Create()
     SymbolicateCrashLog (sys.argv[1:])
-elif lldb.debugger:
+elif getattr(lldb, 'debugger', None):
     lldb.debugger.HandleCommand('command script add -f lldb.macosx.crashlog.Symbolicate crashlog')
     print '"crashlog" command installed, type "crashlog --help" for detailed help'
 
