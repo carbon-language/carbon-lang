@@ -393,7 +393,12 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // Save the original job command(s).
   std::string Cmd;
   llvm::raw_string_ostream OS(Cmd);
-  C.PrintJob(OS, C.getJobs(), "\n", false);
+  if (FailingCommand)
+    C.PrintJob(OS, *FailingCommand, "\n", false);
+  else
+    // Crash triggered by FORCE_CLANG_DIAGNOSTICS_CRASH, which doesn't have an 
+    // associated FailingCommand, so just pass all jobs.
+    C.PrintJob(OS, C.getJobs(), "\n", false);
   OS.flush();
 
   // Clear stale state and suppress tool output.
