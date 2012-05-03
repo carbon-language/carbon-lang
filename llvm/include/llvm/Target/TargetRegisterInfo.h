@@ -42,7 +42,7 @@ public:
   // Instance variables filled by tablegen, do not use!
   const MCRegisterClass *MC;
   const vt_iterator VTs;
-  const unsigned *SubClassMask;
+  const uint32_t *SubClassMask;
   const sc_iterator SuperClasses;
   const sc_iterator SuperRegClasses;
   ArrayRef<uint16_t> (*OrderFunc)(const MachineFunction&);
