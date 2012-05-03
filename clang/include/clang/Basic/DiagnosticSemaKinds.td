@@ -5250,17 +5250,13 @@ def warn_unannotated_fallthrough : Warning<
   "unannotated fall-through between switch labels">,
   InGroup<ImplicitFallthrough>, DefaultIgnore;
 def note_insert_fallthrough_fixit : Note<
-  "insert '[[clang::fallthrough]];' to silence this warning">,
-  InGroup<ImplicitFallthrough>, DefaultIgnore;
+  "insert '[[clang::fallthrough]];' to silence this warning">;
 def note_insert_break_fixit : Note<
-  "insert 'break;' to avoid fall-through">,
-  InGroup<ImplicitFallthrough>, DefaultIgnore;
+  "insert 'break;' to avoid fall-through">;
 def err_fallthrough_attr_wrong_target : Error<
   "clang::fallthrough attribute is only allowed on empty statements">,
   InGroup<IgnoredAttributes>;
-def note_fallthrough_insert_semi_fixit : Note<
-  "did you forget ';'?">,
-  InGroup<IgnoredAttributes>;
+def note_fallthrough_insert_semi_fixit : Note<"did you forget ';'?">;
 def err_fallthrough_attr_outside_switch : Error<
   "fallthrough annotation is outside switch statement">,
   InGroup<IgnoredAttributes>;
