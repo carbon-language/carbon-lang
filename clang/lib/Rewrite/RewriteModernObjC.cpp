@@ -781,19 +781,34 @@ static std::string getIvarAccessString(ObjCIvarDecl *OID) {
   return S;
 }
 
+/// mustSynthesizeSetterGetterMethod - returns true if setter or getter has not
+/// been found in the class implementation. In this case, it must be synthesized.
+static bool mustSynthesizeSetterGetterMethod(ObjCImplementationDecl *IMP,
+                                             ObjCPropertyDecl *PD,
+                                             bool getter) {
+  return getter ? !IMP->getInstanceMethod(PD->getGetterName())
+                : !IMP->getInstanceMethod(PD->getSetterName());
+  
+}
+
 void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
                                           ObjCImplementationDecl *IMD,
                                           ObjCCategoryImplDecl *CID) {
   static bool objcGetPropertyDefined = false;
   static bool objcSetPropertyDefined = false;
-  SourceLocation startLoc = PID->getLocStart();
-  InsertText(startLoc, "// ");
-  const char *startBuf = SM->getCharacterData(startLoc);
-  assert((*startBuf == '@') && "bogus @synthesize location");
-  const char *semiBuf = strchr(startBuf, ';');
-  assert((*semiBuf == ';') && "@synthesize: can't find ';'");
-  SourceLocation onePastSemiLoc =
-    startLoc.getLocWithOffset(semiBuf-startBuf+1);
+  SourceLocation startGetterSetterLoc;
+  
+  if (PID->getLocStart().isValid()) {
+    SourceLocation startLoc = PID->getLocStart();
+    InsertText(startLoc, "// ");
+    const char *startBuf = SM->getCharacterData(startLoc);
+    assert((*startBuf == '@') && "bogus @synthesize location");
+    const char *semiBuf = strchr(startBuf, ';');
+    assert((*semiBuf == ';') && "@synthesize: can't find ';'");
+    startGetterSetterLoc = startLoc.getLocWithOffset(semiBuf-startBuf+1);
+  }
+  else
+    startGetterSetterLoc = IMD ? IMD->getLocEnd() : CID->getLocEnd();
 
   if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
     return; // FIXME: is this correct?
@@ -805,7 +820,7 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   if (!OID)
     return;
   unsigned Attributes = PD->getPropertyAttributes();
-  if (!PD->getGetterMethodDecl()->isDefined()) {
+  if (mustSynthesizeSetterGetterMethod(IMD, PD, true /*getter*/)) {
     bool GenGetProperty = !(Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
                           (Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
                                          ObjCPropertyDecl::OBJC_PR_copy));
@@ -857,10 +872,11 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     else
       Getr += "return " + getIvarAccessString(OID);
     Getr += "; }";
-    InsertText(onePastSemiLoc, Getr);
+    InsertText(startGetterSetterLoc, Getr);
   }
   
-  if (PD->isReadOnly() || PD->getSetterMethodDecl()->isDefined())
+  if (PD->isReadOnly() || 
+      !mustSynthesizeSetterGetterMethod(IMD, PD, false /*setter*/))
     return;
 
   // Generate the 'setter' function.
@@ -898,8 +914,8 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     Setr += getIvarAccessString(OID) + " = ";
     Setr += PD->getName();
   }
-  Setr += "; }";
-  InsertText(onePastSemiLoc, Setr);
+  Setr += "; }\n";
+  InsertText(startGetterSetterLoc, Setr);
 }
 
 static void RewriteOneForwardClassDecl(ObjCInterfaceDecl *ForwardDecl,
@@ -6837,12 +6853,12 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     if (!PD)
       continue;
     if (ObjCMethodDecl *Getter = PD->getGetterMethodDecl())
-      if (!Getter->isDefined())
+      if (mustSynthesizeSetterGetterMethod(IDecl, PD, true /*getter*/))
         InstanceMethods.push_back(Getter);
     if (PD->isReadOnly())
       continue;
     if (ObjCMethodDecl *Setter = PD->getSetterMethodDecl())
-      if (!Setter->isDefined())
+      if (mustSynthesizeSetterGetterMethod(IDecl, PD, false /*setter*/))
         InstanceMethods.push_back(Setter);
   }
   
