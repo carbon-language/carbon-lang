@@ -288,20 +288,16 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
     else if (!LangOpts.GNUMode && LangOpts.Digraphs)
       Builder.defineMacro("__STDC_VERSION__", "199409L");
   } else {
-    if (LangOpts.GNUMode)
-      Builder.defineMacro("__cplusplus");
-    else {
-      // C++0x [cpp.predefined]p1:
-      //   The name_ _cplusplus is defined to the value 201103L when compiling a
-      //   C++ translation unit.
-      if (LangOpts.CPlusPlus0x)
-        Builder.defineMacro("__cplusplus", "201103L");
-      // C++03 [cpp.predefined]p1:
-      //   The name_ _cplusplus is defined to the value 199711L when compiling a
-      //   C++ translation unit.
-      else
-        Builder.defineMacro("__cplusplus", "199711L");
-    }
+    // C++11 [cpp.predefined]p1:
+    //   The name __cplusplus is defined to the value 201103L when compiling a
+    //   C++ translation unit.
+    if (LangOpts.CPlusPlus0x)
+      Builder.defineMacro("__cplusplus", "201103L");
+    // C++03 [cpp.predefined]p1:
+    //   The name __cplusplus is defined to the value 199711L when compiling a
+    //   C++ translation unit.
+    else
+      Builder.defineMacro("__cplusplus", "199711L");
   }
 
   if (LangOpts.ObjC1)
