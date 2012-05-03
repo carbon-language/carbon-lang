@@ -518,6 +518,111 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// FoldingSetVectorIterator - This implements an iterator for
+/// FoldingSetVector. It is only necessary because FoldingSetIterator provides
+/// a value_type of T, while the vector in FoldingSetVector exposes
+/// a value_type of T*. Fortunately, FoldingSetIterator doesn't expose very
+/// much besides operator* and operator->, so we just wrap the inner vector
+/// iterator and perform the extra dereference.
+template <class T, class VectorIteratorT>
+class FoldingSetVectorIterator {
+  // Provide a typedef to workaround the lack of correct injected class name
+  // support in older GCCs.
+  typedef FoldingSetVectorIterator<T, VectorIteratorT> SelfT;
+
+  VectorIteratorT Iterator;
+
+public:
+  FoldingSetVectorIterator(VectorIteratorT I) : Iterator(I) {}
+
+  bool operator==(const SelfT &RHS) const {
+    return Iterator == RHS.Iterator;
+  }
+  bool operator!=(const SelfT &RHS) const {
+    return Iterator != RHS.Iterator;
+  }
+
+  T &operator*() const { return **Iterator; }
+
+  T *operator->() const { return *Iterator; }
+
+  inline SelfT &operator++() {
+    ++Iterator;
+    return *this;
+  }
+  SelfT operator++(int) {
+    SelfT tmp = *this;
+    ++*this;
+    return tmp;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// FoldingSetVector - This template class combines a FoldingSet and a vector
+/// to provide the interface of FoldingSet but with deterministic iteration
+/// order based on the insertion order. T must be a subclass of FoldingSetNode
+/// and implement a Profile function.
+template <class T, class VectorT = SmallVector<T*, 8> >
+class FoldingSetVector {
+  FoldingSet<T> Set;
+  VectorT Vector;
+
+public:
+  explicit FoldingSetVector(unsigned Log2InitSize = 6)
+      : Set(Log2InitSize) {
+  }
+
+  typedef FoldingSetVectorIterator<T, typename VectorT::iterator> iterator;
+  iterator begin() { return Vector.begin(); }
+  iterator end()   { return Vector.end(); }
+
+  typedef FoldingSetVectorIterator<const T, typename VectorT::const_iterator>
+    const_iterator;
+  const_iterator begin() const { return Vector.begin(); }
+  const_iterator end()   const { return Vector.end(); }
+
+  /// clear - Remove all nodes from the folding set.
+  void clear() { Set.clear(); Vector.clear(); }
+
+  /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
+  /// return it.  If not, return the insertion token that will make insertion
+  /// faster.
+  T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
+    return Set.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
+  /// GetOrInsertNode - If there is an existing simple Node exactly
+  /// equal to the specified node, return it.  Otherwise, insert 'N' and
+  /// return it instead.
+  T *GetOrInsertNode(T *N) {
+    T *Result = Set.GetOrInsertNode(N);
+    if (Result == N) Vector.push_back(N);
+    return Result;
+  }
+
+  /// InsertNode - Insert the specified node into the folding set, knowing that
+  /// it is not already in the folding set.  InsertPos must be obtained from
+  /// FindNodeOrInsertPos.
+  void InsertNode(T *N, void *InsertPos) {
+    Set.InsertNode(N, InsertPos);
+    Vector.push_back(N);
+  }
+
+  /// InsertNode - Insert the specified node into the folding set, knowing that
+  /// it is not already in the folding set.
+  void InsertNode(T *N) {
+    Set.InsertNode(N);
+    Vector.push_back(N);
+  }
+
+  /// size - Returns the number of nodes in the folding set.
+  unsigned size() const { return Set.size(); }
+
+  /// empty - Returns true if there are no nodes in the folding set.
+  bool empty() const { return Set.empty(); }
+};
+
+//===----------------------------------------------------------------------===//
 /// FoldingSetIteratorImpl - This is the common iterator support shared by all
 /// folding sets, which knows how to walk the folding set hash table.
 class FoldingSetIteratorImpl {
