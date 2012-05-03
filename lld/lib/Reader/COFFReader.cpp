@@ -209,12 +209,11 @@ public:
       return;
 
     Obj.reset(llvm::dyn_cast<const llvm::object::COFFObjectFile>(Bin.get()));
-    if (Obj)
-      Bin.take();
-    else {
+    if (!Obj) {
       EC = make_error_code(llvm::object::object_error::invalid_file_type);
       return;
     }
+    Bin.take();
 
     const llvm::object::coff_file_header *Header = nullptr;
     if ((EC = Obj->getHeader(Header)))
@@ -270,9 +269,8 @@ public:
 
     // For each section, sort its symbols by address, then create a defined atom
     // for each range.
-    for (auto i = SectionSymbols.begin(), e = SectionSymbols.end();
-              i != e; ++i) {
-      auto &Symbs = i->second;
+    for (auto &i : SectionSymbols) {
+      auto &Symbs = i.second;
       // Sort symbols by position.
       std::stable_sort(Symbs.begin(), Symbs.end(),
         // For some reason MSVC fails to allow the lambda in this context with a
@@ -288,12 +286,12 @@ public:
         llvm::ArrayRef<uint8_t> Data;
         DefinedAtoms._atoms.push_back(
           new (AtomStorage.Allocate<COFFDefinedAtom>())
-            COFFDefinedAtom(*this, "", nullptr, i->first, Data));
+            COFFDefinedAtom(*this, "", nullptr, i.first, Data));
         continue;
       }
 
       llvm::ArrayRef<uint8_t> SecData;
-      if ((EC = Obj->getSectionContents(i->first, SecData)))
+      if ((EC = Obj->getSectionContents(i.first, SecData)))
         return;
 
       // Create an unnamed atom if the first atom isn't at the start of the
@@ -303,7 +301,7 @@ public:
         llvm::ArrayRef<uint8_t> Data(SecData.data(), Size);
         DefinedAtoms._atoms.push_back(
           new (AtomStorage.Allocate<COFFDefinedAtom>())
-            COFFDefinedAtom(*this, "", nullptr, i->first, Data));
+            COFFDefinedAtom(*this, "", nullptr, i.first, Data));
       }
 
       for (auto si = Symbs.begin(), se = Symbs.end(); si != se; ++si) {
@@ -321,7 +319,7 @@ public:
           return;
         DefinedAtoms._atoms.push_back(
           new (AtomStorage.Allocate<COFFDefinedAtom>())
-            COFFDefinedAtom(*this, Name, *si, i->first, Data));
+            COFFDefinedAtom(*this, Name, *si, i.first, Data));
       }
     }
   }
