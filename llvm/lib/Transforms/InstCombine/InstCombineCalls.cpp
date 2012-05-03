@@ -247,7 +247,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   default: break;
   case Intrinsic::objectsize: {
     // We need target data for just about everything so depend on it.
-    if (!TD) break;
+    if (!TD) return 0;
 
     Type *ReturnTy = CI.getType();
     uint64_t DontKnow = II->getArgOperand(1) == Builder->getTrue() ? 0 : -1ULL;
@@ -260,7 +260,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // Try to look through constant GEPs.
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op1)) {
-      if (!GEP->hasAllConstantIndices()) break;
+      if (!GEP->hasAllConstantIndices()) return 0;
 
       // Get the current byte offset into the thing. Use the original
       // operand in case we're looking through a bitcast.
@@ -274,7 +274,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Make sure we're not a constant offset from an external
       // global.
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1))
-        if (!GV->hasDefinitiveInitializer()) break;
+        if (!GV->hasDefinitiveInitializer()) return 0;
     }
 
     // If we've stripped down to a single global variable that we
@@ -294,7 +294,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Size = TD->getTypeAllocSize(AI->getAllocatedType());
         if (AI->isArrayAllocation()) {
           const ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize());
-          if (!C) break;
+          if (!C) return 0;
           Size *= C->getZExtValue();
         }
       }
@@ -310,7 +310,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Do not return "I don't know" here. Later optimization passes could
     // make it possible to evaluate objectsize to a constant.
     if (Size == -1ULL)
-      break;
+      return 0;
 
     if (Size < Offset) {
       // Out of bound reference? Negative index normalized to large
