@@ -1506,24 +1506,24 @@ with a <tt>__c11_</tt> prefix. The supported operations are:</p>
 <h2 id="non-standard-attributes">Non-standard C++11 Attributes</h2>
 <!-- ======================================================================= -->
 
-<p>Clang supports one non-standard C++11 attribute. It resides in <tt>clang</tt>
-namespace.</p>
+<p>Clang supports one non-standard C++11 attribute. It resides in the
+<tt>clang</tt> attribute namespace.</p>
 
 <!-- ======================================================================= -->
 <h3 id="clang__fallthrough">The <tt>clang::fallthrough</tt> attribute</h3>
 <!-- ======================================================================= -->
 
-<p>The <tt>clang::fallthrough</tt> attribute is used along with
-<tt>-Wimplicit-fallthrough</tt> diagnostic to annotate intentional fall-through
-between switch labels. It can only be applied to a null statement placed in a
+<p>The <tt>clang::fallthrough</tt> attribute is used along with the
+<tt>-Wimplicit-fallthrough</tt> argument to annotate intentional fall-through
+between switch labels. It can only be applied to a null statement placed at a
 point of execution between any statement and the next switch label. It is common
 to mark these places with a specific comment, but this attribute is meant to
 replace comments with a more strict annotation, which can be checked by the
 compiler. This attribute doesn't change semantics of the code and can be used
-wherever an intended fall-through occurs, but it is designed to mimic
-control-flow statements like <tt>break;</tt> so it can be placed in most places
-where <tt>break;</tt> can, but only if there are no statements on execution path
-between it and the next switch label.</p>
+wherever an intended fall-through occurs. It is designed to mimic
+control-flow statements like <tt>break;</tt>, so it can be placed in most places
+where <tt>break;</tt> can, but only if there are no statements on the execution
+path between it and the next switch label.</p>
 <p>Here is an example:</p>
 <pre>
 // compile with -Wimplicit-fallthrough
