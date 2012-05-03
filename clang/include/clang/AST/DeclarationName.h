@@ -570,7 +570,9 @@ struct DenseMapInfo<clang::DeclarationName> {
     return clang::DeclarationName::getTombstoneMarker();
   }
 
-  static unsigned getHashValue(clang::DeclarationName);
+  static unsigned getHashValue(clang::DeclarationName Name) {
+    return DenseMapInfo<void*>::getHashValue(Name.getAsOpaquePtr());
+  }
 
   static inline bool
   isEqual(clang::DeclarationName LHS, clang::DeclarationName RHS) {

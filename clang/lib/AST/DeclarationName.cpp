@@ -481,12 +481,6 @@ DeclarationNameTable::getCXXLiteralOperatorName(IdentifierInfo *II) {
   return DeclarationName(LiteralName);
 }
 
-unsigned
-llvm::DenseMapInfo<clang::DeclarationName>::
-getHashValue(clang::DeclarationName N) {
-  return DenseMapInfo<void*>::getHashValue(N.getAsOpaquePtr());
-}
-
 DeclarationNameLoc::DeclarationNameLoc(DeclarationName Name) {
   switch (Name.getNameKind()) {
   case DeclarationName::Identifier:
