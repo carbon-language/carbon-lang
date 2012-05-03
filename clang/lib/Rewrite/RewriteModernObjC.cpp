@@ -5727,11 +5727,11 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSendSuper_stret(void);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSend_fpret(void);\n";
 
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getClass";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *objc_getClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *class_getSuperclass";
   Preamble += "(struct objc_class *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getMetaClass";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *objc_getMetaClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw( struct objc_object *);\n";
   // @synchronized hooks.
