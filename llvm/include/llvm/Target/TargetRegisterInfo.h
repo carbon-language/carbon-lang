@@ -301,6 +301,11 @@ public:
   const TargetRegisterClass *
     getMinimalPhysRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
+  /// getAllocatableClass - Return the maximal subclass of the given register
+  /// class that is alloctable, or NULL.
+  const TargetRegisterClass *
+    getAllocatableClass(const TargetRegisterClass *RC) const;
+
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is
   /// specified, returns the subset for the class.

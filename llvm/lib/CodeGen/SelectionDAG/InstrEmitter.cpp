@@ -114,8 +114,10 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
           if (User->isMachineOpcode()) {
             const MCInstrDesc &II = TII->get(User->getMachineOpcode());
             const TargetRegisterClass *RC = 0;
-            if (i+II.getNumDefs() < II.getNumOperands())
-              RC = TII->getRegClass(II, i+II.getNumDefs(), TRI);
+            if (i+II.getNumDefs() < II.getNumOperands()) {
+              RC = TRI->getAllocatableClass(
+                TII->getRegClass(II, i+II.getNumDefs(), TRI));
+            }
             if (!UseRC)
               UseRC = RC;
             else if (RC) {
@@ -196,7 +198,8 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // is a vreg in the same register class, use the CopyToReg'd destination
     // register instead of creating a new vreg.
     unsigned VRBase = 0;
-    const TargetRegisterClass *RC = TII->getRegClass(II, i, TRI);
+    const TargetRegisterClass *RC =
+      TRI->getAllocatableClass(TII->getRegClass(II, i, TRI));
     if (II.OpInfo[i].isOptionalDef()) {
       // Optional def must be a physical register.
       unsigned NumResults = CountResults(Node);
@@ -293,7 +296,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
   if (II) {
     const TargetRegisterClass *DstRC = 0;
     if (IIOpNum < II->getNumOperands())
-      DstRC = TII->getRegClass(*II, IIOpNum, TRI);
+      DstRC = TRI->getAllocatableClass(TII->getRegClass(*II, IIOpNum, TRI));
     assert((DstRC || (MI->isVariadic() && IIOpNum >= MCID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
     if (DstRC && !MRI->constrainRegClass(VReg, DstRC, MinRCSize)) {
@@ -548,7 +551,8 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
 
   // Create the new VReg in the destination class and emit a copy.
   unsigned DstRCIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
-  const TargetRegisterClass *DstRC = TRI->getRegClass(DstRCIdx);
+  const TargetRegisterClass *DstRC =
+    TRI->getAllocatableClass(TRI->getRegClass(DstRCIdx));
   unsigned NewVReg = MRI->createVirtualRegister(DstRC);
   BuildMI(*MBB, InsertPos, Node->getDebugLoc(), TII->get(TargetOpcode::COPY),
     NewVReg).addReg(VReg);
@@ -566,7 +570,7 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
                                   bool IsClone, bool IsCloned) {
   unsigned DstRCIdx = cast<ConstantSDNode>(Node->getOperand(0))->getZExtValue();
   const TargetRegisterClass *RC = TRI->getRegClass(DstRCIdx);
-  unsigned NewVReg = MRI->createVirtualRegister(RC);
+  unsigned NewVReg = MRI->createVirtualRegister(TRI->getAllocatableClass(RC));
   MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
                              TII->get(TargetOpcode::REG_SEQUENCE), NewVReg);
   unsigned NumOps = Node->getNumOperands();
