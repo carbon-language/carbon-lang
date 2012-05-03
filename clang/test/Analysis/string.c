@@ -1122,3 +1122,35 @@ void strncasecmp_embedded_null () {
 	if (strncasecmp("ab\0zz", "ab\0yy", 4) != 0)
 		(void)*(char*)0; // no-warning
 }
+
+//===----------------------------------------------------------------------===
+// Miscellaneous extras.
+//===----------------------------------------------------------------------===
+
+// See additive-folding.cpp for a description of this bug.
+// This test is insurance in case we significantly change how SymExprs are
+// evaluated. It isn't as good as additive-folding.cpp's version
+// because it will only actually be a test on systems where
+//   sizeof(1 == 1) < sizeof(size_t).
+// We could add a triple if it becomes necessary.
+void PR12206(const char *x) {
+  // This test is only useful under these conditions.
+  size_t comparisonSize = sizeof(1 == 1);
+  if (sizeof(size_t) <= comparisonSize) return;
+
+  // Create a value that requires more bits to store than a comparison result.
+  size_t value = 1UL;
+  value <<= 8 * comparisonSize;
+  value += 1;
+
+  // Constrain the length of x.
+  if (strlen(x) != value) return;
+
+  // Test relational operators.
+  if (strlen(x) < 2) { (void)*(char*)0; } // no-warning
+  if (2 > strlen(x)) { (void)*(char*)0; } // no-warning
+
+  // Test equality operators.
+  if (strlen(x) == 1) { (void)*(char*)0; } // no-warning
+  if (1 == strlen(x)) { (void)*(char*)0; } // no-warning
+}

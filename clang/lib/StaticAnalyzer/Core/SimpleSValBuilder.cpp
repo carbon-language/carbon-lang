@@ -345,7 +345,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
           if (const llvm::APSInt *Constant = state->getSymVal(RSym)) {
             // The symbol evaluates to a constant.
             const llvm::APSInt *rhs_I;
-            if (BinaryOperator::isRelationalOp(op))
+            if (BinaryOperator::isComparisonOp(op))
               rhs_I = &BasicVals.Convert(lhsInt.getValue(), *Constant);
             else
               rhs_I = &BasicVals.Convert(resultTy, *Constant);
@@ -494,7 +494,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
         // The conversion type is usually the result type, but not in the case
         // of relational expressions.
         QualType conversionType = resultTy;
-        if (BinaryOperator::isRelationalOp(op))
+        if (BinaryOperator::isComparisonOp(op))
           conversionType = lhsType;
 
         // Does the symbol simplify to a constant?  If so, "fold" the constant
