@@ -1070,9 +1070,6 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
     case Stmt::LambdaExprClass:
       return VisitLambdaExpr(cast<LambdaExpr>(S), asc);
 
-    case Stmt::AttributedStmtClass:
-      return Visit(cast<AttributedStmt>(S)->getSubStmt(), asc);
-
     case Stmt::MemberExprClass:
       return VisitMemberExpr(cast<MemberExpr>(S), asc);
 

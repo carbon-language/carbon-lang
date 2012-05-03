@@ -2870,28 +2870,30 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
     }
 
     bool AttrParsed = false;
-    // No scoped names are supported; ideally we could put all non-standard
-    // attributes into namespaces.
-    if (!ScopeName) {
-      switch (AttributeList::getKind(AttrName)) {
-      // No arguments
-      case AttributeList::AT_carries_dependency:
-      case AttributeList::AT_noreturn: {
-        if (Tok.is(tok::l_paren)) {
-          Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
-            << AttrName->getName();
-          break;
-        }
-
-        attrs.addNew(AttrName, AttrLoc, 0, AttrLoc, 0,
-                     SourceLocation(), 0, 0, false, true);
-        AttrParsed = true;
+    switch (AttributeList::getKind(AttrName, ScopeName)) {
+    // No arguments
+    case AttributeList::AT_carries_dependency:
+    // FIXME: implement generic support of attributes with C++11 syntax
+    // see Parse/ParseDecl.cpp: ParseGNUAttributes
+    case AttributeList::AT_clang___fallthrough:
+    case AttributeList::AT_noreturn: {
+      if (Tok.is(tok::l_paren)) {
+        Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
+          << AttrName->getName();
         break;
       }
 
-      // Silence warnings
-      default: break;
-      }
+      attrs.addNew(AttrName,
+                   SourceRange(ScopeLoc.isValid() ? ScopeLoc : AttrLoc,
+                               AttrLoc),
+                   ScopeName, ScopeLoc, 0,
+                   SourceLocation(), 0, 0, false, true);
+      AttrParsed = true;
+      break;
+    }
+
+    // Silence warnings
+    default: break;
     }
 
     // Skip the entire parameter clause, if any

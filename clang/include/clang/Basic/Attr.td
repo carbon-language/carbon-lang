@@ -313,6 +313,11 @@ def ExtVectorType : Attr {
   let ASTNode = 0;
 }
 
+def FallThrough : Attr {
+  let Spellings = ["clang___fallthrough"];
+  let Subjects = [CaseStmt, DefaultStmt];
+}
+
 def FastCall : InheritableAttr {
   let Spellings = ["fastcall", "__fastcall"];
 }

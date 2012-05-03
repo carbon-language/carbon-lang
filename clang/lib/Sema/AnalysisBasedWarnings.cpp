@@ -27,6 +27,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Analyses/ReachableCode.h"
@@ -42,7 +43,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 #include <algorithm>
+#include <iterator>
 #include <vector>
+#include <deque>
 
 using namespace clang;
 
@@ -522,6 +525,188 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
   return true;
 }
 
+namespace {
+  class FallthroughMapper : public RecursiveASTVisitor<FallthroughMapper> {
+  public:
+    FallthroughMapper(Sema &S)
+      : FoundSwitchStatements(false),
+        S(S) {
+    }
+
+    bool foundSwitchStatements() const { return FoundSwitchStatements; }
+
+    void markFallthroughVisited(const AttributedStmt *Stmt) {
+      bool Found = FallthroughStmts.erase(Stmt);
+      assert(Found);
+    }
+
+    typedef llvm::SmallPtrSet<const AttributedStmt*, 8> AttrStmts;
+
+    const AttrStmts &getFallthroughStmts() const {
+      return FallthroughStmts;
+    }
+
+    bool checkFallThroughIntoBlock(const CFGBlock &B, int &AnnotatedCnt) {
+      int UnannotatedCnt = 0;
+      AnnotatedCnt = 0;
+
+      std::deque<const CFGBlock*> BlockQueue;
+
+      std::copy(B.pred_begin(), B.pred_end(), std::back_inserter(BlockQueue));
+
+      while (!BlockQueue.empty()) {
+        const CFGBlock *P = BlockQueue.front();
+        BlockQueue.pop_front();
+
+        const Stmt *Term = P->getTerminator();
+        if (Term && isa<SwitchStmt>(Term))
+          continue; // Switch statement, good.
+
+        const SwitchCase *SW = dyn_cast_or_null<SwitchCase>(P->getLabel());
+        if (SW && SW->getSubStmt() == B.getLabel() && P->begin() == P->end())
+          continue; // Previous case label has no statements, good.
+
+        if (P->pred_begin() == P->pred_end()) {  // The block is unreachable.
+          // This only catches trivially unreachable blocks.
+          for (CFGBlock::const_iterator ElIt = P->begin(), ElEnd = P->end();
+               ElIt != ElEnd; ++ElIt) {
+            if (const CFGStmt *CS = ElIt->getAs<CFGStmt>()){
+              if (const AttributedStmt *AS = asFallThroughAttr(CS->getStmt())) {
+                S.Diag(AS->getLocStart(),
+                       diag::warn_fallthrough_attr_unreachable);
+                markFallthroughVisited(AS);
+                ++AnnotatedCnt;
+              }
+              // Don't care about other unreachable statements.
+            }
+          }
+          // If there are no unreachable statements, this may be a special
+          // case in CFG:
+          // case X: {
+          //    A a;  // A has a destructor.
+          //    break;
+          // }
+          // // <<<< This place is represented by a 'hanging' CFG block.
+          // case Y:
+          continue;
+        }
+
+        const Stmt *LastStmt = getLastStmt(*P);
+        if (const AttributedStmt *AS = asFallThroughAttr(LastStmt)) {
+          markFallthroughVisited(AS);
+          ++AnnotatedCnt;
+          continue; // Fallthrough annotation, good.
+        }
+
+        if (!LastStmt) { // This block contains no executable statements.
+          // Traverse its predecessors.
+          std::copy(P->pred_begin(), P->pred_end(),
+                    std::back_inserter(BlockQueue));
+          continue;
+        }
+
+        ++UnannotatedCnt;
+      }
+      return !!UnannotatedCnt;
+    }
+
+    // RecursiveASTVisitor setup.
+    bool shouldWalkTypesOfTypeLocs() const { return false; }
+
+    bool VisitAttributedStmt(AttributedStmt *S) {
+      if (asFallThroughAttr(S))
+        FallthroughStmts.insert(S);
+      return true;
+    }
+
+    bool VisitSwitchStmt(SwitchStmt *S) {
+      FoundSwitchStatements = true;
+      return true;
+    }
+
+  private:
+
+    static const AttributedStmt *asFallThroughAttr(const Stmt *S) {
+      if (const AttributedStmt *AS = dyn_cast_or_null<AttributedStmt>(S)) {
+        if (hasSpecificAttr<FallThroughAttr>(AS->getAttrs()))
+          return AS;
+      }
+      return 0;
+    }
+
+    static const Stmt *getLastStmt(const CFGBlock &B) {
+      if (const Stmt *Term = B.getTerminator())
+        return Term;
+      for (CFGBlock::const_reverse_iterator ElemIt = B.rbegin(),
+                                            ElemEnd = B.rend();
+                                            ElemIt != ElemEnd; ++ElemIt) {
+        if (const CFGStmt *CS = ElemIt->getAs<CFGStmt>())
+          return CS->getStmt();
+      }
+      // Workaround to detect a statement thrown out by CFGBuilder:
+      //   case X: {} case Y:
+      //   case X: ; case Y:
+      if (const SwitchCase *SW = dyn_cast_or_null<SwitchCase>(B.getLabel()))
+        if (!isa<SwitchCase>(SW->getSubStmt()))
+          return SW->getSubStmt();
+
+      return 0;
+    }
+
+    bool FoundSwitchStatements;
+    AttrStmts FallthroughStmts;
+    Sema &S;
+  };
+}
+
+static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC) {
+  FallthroughMapper FM(S);
+  FM.TraverseStmt(AC.getBody());
+
+  if (!FM.foundSwitchStatements())
+    return;
+
+  CFG *Cfg = AC.getCFG();
+
+  if (!Cfg)
+    return;
+
+  int AnnotatedCnt;
+
+  for (CFG::reverse_iterator I = Cfg->rbegin(), E = Cfg->rend(); I != E; ++I) {
+    const CFGBlock &B = **I;
+    const Stmt *Label = B.getLabel();
+
+    if (!Label || !isa<SwitchCase>(Label))
+      continue;
+
+    if (!FM.checkFallThroughIntoBlock(B, AnnotatedCnt))
+      continue;
+
+    S.Diag(Label->getLocStart(), diag::warn_unannotated_fallthrough);
+
+    if (!AnnotatedCnt) {
+      SourceLocation L = Label->getLocStart();
+      if (L.isMacroID())
+        continue;
+      if (S.getLangOpts().CPlusPlus0x) {
+        S.Diag(L, diag::note_insert_fallthrough_fixit) <<
+          FixItHint::CreateInsertion(L, "[[clang::fallthrough]]; ");
+      }
+      S.Diag(L, diag::note_insert_break_fixit) <<
+        FixItHint::CreateInsertion(L, "break; ");
+    }
+  }
+
+  const FallthroughMapper::AttrStmts &Fallthroughs = FM.getFallthroughStmts();
+  for (FallthroughMapper::AttrStmts::const_iterator I = Fallthroughs.begin(),
+                                                    E = Fallthroughs.end();
+                                                    I != E; ++I) {
+    S.Diag((*I)->getLocStart(), diag::warn_fallthrough_attr_invalid_placement);
+  }
+
+}
+
 typedef std::pair<const Expr*, bool> UninitUse;
 
 namespace {
@@ -861,7 +1046,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       .setAlwaysAdd(Stmt::CStyleCastExprClass)
       .setAlwaysAdd(Stmt::DeclRefExprClass)
       .setAlwaysAdd(Stmt::ImplicitCastExprClass)
-      .setAlwaysAdd(Stmt::UnaryOperatorClass);
+      .setAlwaysAdd(Stmt::UnaryOperatorClass)
+      .setAlwaysAdd(Stmt::AttributedStmtClass);
   }
 
   // Construct the analysis context with the specified CFG build options.
@@ -971,6 +1157,11 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
                      stats.NumBlockVisits);
       }
     }
+  }
+
+  if (Diags.getDiagnosticLevel(diag::warn_unannotated_fallthrough,
+                              D->getLocStart()) != DiagnosticsEngine::Ignored) {
+    DiagnoseSwitchLabelsFallthrough(S, AC);
   }
 
   // Collect statistics about the CFG if it was built.

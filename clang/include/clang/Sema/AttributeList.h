@@ -131,7 +131,7 @@ private:
       UsedAsTypeAttr(false), IsAvailability(false), 
       NextInPosition(0), NextInPool(0) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(Expr*));
-    AttrKind = getKind(getName());
+    AttrKind = getKind(getName(), getScopeName());
   }
 
   AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
@@ -152,7 +152,7 @@ private:
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
     new (&getAvailabilitySlot(DeprecatedSlot)) AvailabilityChange(deprecated);
     new (&getAvailabilitySlot(ObsoletedSlot)) AvailabilityChange(obsoleted);
-    AttrKind = getKind(getName());
+    AttrKind = getKind(getName(), getScopeName());
   }
 
   friend class AttributePool;
@@ -188,7 +188,7 @@ public:
   void setUsedAsTypeAttr() { UsedAsTypeAttr = true; }
 
   Kind getKind() const { return Kind(AttrKind); }
-  static Kind getKind(const IdentifierInfo *Name);
+  static Kind getKind(const IdentifierInfo *Name, const IdentifierInfo *Scope);
 
   AttributeList *getNext() const { return NextInPosition; }
   void setNext(AttributeList *N) { NextInPosition = N; }

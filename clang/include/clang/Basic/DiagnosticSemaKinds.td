@@ -5246,6 +5246,31 @@ def warn_missing_cases : Warning<
   "%0 enumeration values not handled in switch: %1, %2, %3...">,
   InGroup<Switch>;
 
+def warn_unannotated_fallthrough : Warning<
+  "unannotated fall-through between switch labels">,
+  InGroup<ImplicitFallthrough>, DefaultIgnore;
+def note_insert_fallthrough_fixit : Note<
+  "insert '[[clang::fallthrough]];' to silence this warning">,
+  InGroup<ImplicitFallthrough>, DefaultIgnore;
+def note_insert_break_fixit : Note<
+  "insert 'break;' to avoid fall-through">,
+  InGroup<ImplicitFallthrough>, DefaultIgnore;
+def err_fallthrough_attr_wrong_target : Error<
+  "clang::fallthrough attribute is only allowed on empty statements">,
+  InGroup<IgnoredAttributes>;
+def note_fallthrough_insert_semi_fixit : Note<
+  "did you forget ';'?">,
+  InGroup<IgnoredAttributes>;
+def err_fallthrough_attr_outside_switch : Error<
+  "fallthrough annotation is outside switch statement">,
+  InGroup<IgnoredAttributes>;
+def warn_fallthrough_attr_invalid_placement : Warning<
+  "fallthrough annotation does not directly precede switch label">,
+  InGroup<ImplicitFallthrough>;
+def warn_fallthrough_attr_unreachable : Warning<
+  "fallthrough annotation in unreachable code">,
+  InGroup<ImplicitFallthrough>;
+
 def warn_unreachable_default : Warning<
   "default label in switch which covers all enumeration values">,
   InGroup<CoveredSwitchDefault>, DefaultIgnore;

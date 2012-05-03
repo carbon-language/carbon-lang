@@ -15,6 +15,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 size_t AttributeList::allocated_size() const {
@@ -99,13 +100,19 @@ AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
 
 #include "clang/Sema/AttrParsedAttrKinds.inc"
 
-AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
+AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
+                                           const IdentifierInfo *ScopeName) {
   StringRef AttrName = Name->getName();
 
   // Normalize the attribute name, __foo__ becomes foo.
   if (AttrName.startswith("__") && AttrName.endswith("__") &&
       AttrName.size() >= 4)
     AttrName = AttrName.substr(2, AttrName.size() - 4);
+
+  // FIXME: implement attribute namespacing correctly.
+  SmallString<64> Buf;
+  if (ScopeName)
+    AttrName = ((Buf += ScopeName->getName()) += "___") += AttrName;
 
   return ::getAttrKind(AttrName);
 }
