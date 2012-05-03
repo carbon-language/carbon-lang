@@ -428,3 +428,13 @@ void bcopy2 () {
 
   bcopy(src, dst, 4); // expected-warning{{overflow}}
 }
+
+void *malloc(size_t);
+void free(void *);
+char radar_11125445_memcopythenlogfirstbyte(const char *input, size_t length) {
+  char *bytes = malloc(sizeof(char) * (length + 1));
+  memcpy(bytes, input, length);
+  char x = bytes[0]; // no warning
+  free(bytes);
+  return x;
+}

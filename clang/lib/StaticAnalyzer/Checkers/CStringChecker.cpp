@@ -901,9 +901,10 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
 
   // If the size is zero, there won't be any actual memory access, so
   // just bind the return value to the destination buffer and return.
-  if (stateZeroSize) {
+  if (stateZeroSize && !stateNonZeroSize) {
     stateZeroSize = stateZeroSize->BindExpr(CE, LCtx, destVal);
     C.addTransition(stateZeroSize);
+    return;
   }
 
   // If the size can be nonzero, we have to check the other arguments.
