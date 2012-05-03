@@ -1,11 +1,13 @@
 set(LLVM_USED_LIBS
   lldCore
+  lldReader
   lldPasses
   lldDarwinPlatform
   )
 
 set(LLVM_LINK_COMPONENTS
   support
+  Object
   )
 
 add_lld_executable(lld-core

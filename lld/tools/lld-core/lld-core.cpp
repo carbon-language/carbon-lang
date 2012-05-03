@@ -15,6 +15,7 @@
 #include "lld/Core/Resolver.h"
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/YamlWriter.h"
+#include "lld/Reader/Reader.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/CommandLine.h"
@@ -348,10 +349,9 @@ const TestingPlatform::KindMapping TestingPlatform::_s_kindMappings[] = {
 } // anon namespace
 
 
-llvm::cl::opt<std::string> 
-cmdLineInputFilePath(llvm::cl::Positional,
-              llvm::cl::desc("<input file>"),
-              llvm::cl::init("-"));
+llvm::cl::list<std::string>
+cmdLineInputFilePaths(llvm::cl::Positional,
+              llvm::cl::desc("<input file>"));
 
 llvm::cl::opt<std::string> 
 cmdLineOutputFilePath("o", 
@@ -421,6 +421,9 @@ int main(int argc, char *argv[]) {
   // parse options
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
+  if (cmdLineInputFilePaths.empty())
+    cmdLineInputFilePaths.emplace_back("-");
+
   // create platform for testing
   Platform* platform = nullptr;
   switch ( platformSelected ) {
@@ -434,9 +437,23 @@ int main(int argc, char *argv[]) {
   
   // read input YAML doc into object file(s)
   std::vector<std::unique_ptr<const File>> files;
-  if (error(yaml::parseObjectTextFileOrSTDIN(cmdLineInputFilePath, 
-                                            *platform, files))) {
-    return 1;
+  for (auto path : cmdLineInputFilePaths) {
+    OwningPtr<llvm::MemoryBuffer> ofile;
+    if (error(llvm::MemoryBuffer::getFileOrSTDIN(path, ofile)))
+      return 1;
+    std::unique_ptr<llvm::MemoryBuffer> file(ofile.take());
+    if (llvm::sys::fs::identify_magic(file->getBuffer())
+        == llvm::sys::fs::file_magic::coff_object) {
+      std::unique_ptr<File> f;
+      if (error(parseCOFFObjectFile(std::move(file), f)))
+        return 1;
+      files.push_back(std::move(f));
+    } else {
+      if (error(yaml::parseObjectText( file.release()
+                                     , *platform
+                                     , files)))
+        return 1;
+    }
   }
 
   // create options for resolving
