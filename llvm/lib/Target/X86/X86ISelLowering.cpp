@@ -5008,8 +5008,8 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
       SDValue CP = DAG.getConstantPool(C, getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
       Ld = DAG.getLoad(CVT, dl, DAG.getEntryNode(), CP,
-                         MachinePointerInfo::getConstantPool(),
-                         false, false, false, Alignment);
+                       MachinePointerInfo::getConstantPool(),
+                       false, false, false, Alignment);
 
       return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
     }
@@ -5739,10 +5739,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     int EltIdx = MaskVals[i];
     if (EltIdx < 0)
       continue;
-    SDValue ExtOp = (EltIdx < 8)
-    ? DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V1,
-                  DAG.getIntPtrConstant(EltIdx))
-    : DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V2,
+    SDValue ExtOp = (EltIdx < 8) ?
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V1,
+                  DAG.getIntPtrConstant(EltIdx)) :
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i16, V2,
                   DAG.getIntPtrConstant(EltIdx - 8));
     NewV = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, NewV, ExtOp,
                        DAG.getIntPtrConstant(i));
