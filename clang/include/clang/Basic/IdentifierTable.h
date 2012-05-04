@@ -574,9 +574,10 @@ class Selector {
   friend class Diagnostic;
 
   enum IdentifierInfoFlag {
-    // MultiKeywordSelector = 0.
+    // Empty selector = 0.
     ZeroArg  = 0x1,
     OneArg   = 0x2,
+    MultiArg = 0x3,
     ArgFlags = ZeroArg|OneArg
   };
   uintptr_t InfoPtr; // a pointer to the MultiKeywordSelector or IdentifierInfo.
@@ -590,13 +591,18 @@ class Selector {
   Selector(MultiKeywordSelector *SI) {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
+    InfoPtr |= MultiArg;
   }
 
   IdentifierInfo *getAsIdentifierInfo() const {
-    if (getIdentifierInfoFlag())
+    if (getIdentifierInfoFlag() < MultiArg)
       return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
     return 0;
   }
+  MultiKeywordSelector *getMultiKeywordSelector() const {
+    return reinterpret_cast<MultiKeywordSelector *>(InfoPtr & ~ArgFlags);
+  }
+  
   unsigned getIdentifierInfoFlag() const {
     return InfoPtr & ArgFlags;
   }

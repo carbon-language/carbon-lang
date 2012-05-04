@@ -58,11 +58,14 @@ public:
 private:
   /// StoredNameKind - The kind of name that is actually stored in the
   /// upper bits of the Ptr field. This is only used internally.
+  ///
+  /// Note: The entries here are synchronized with the entries in Selector,
+  /// for efficient translation between the two.
   enum StoredNameKind {
     StoredIdentifier = 0,
-    StoredObjCZeroArgSelector,
-    StoredObjCOneArgSelector,
-    StoredDeclarationNameExtra,
+    StoredObjCZeroArgSelector = 0x01,
+    StoredObjCOneArgSelector = 0x02,
+    StoredDeclarationNameExtra = 0x03,
     PtrMask = 0x03
   };
 
@@ -174,7 +177,7 @@ public:
   }
 
   // Construct a declaration name from an Objective-C selector.
-  DeclarationName(Selector Sel);
+  DeclarationName(Selector Sel) : Ptr(Sel.InfoPtr) { }
 
   /// getUsingDirectiveName - Return name for all using-directives.
   static DeclarationName getUsingDirectiveName();
@@ -257,7 +260,13 @@ public:
 
   /// getObjCSelector - Get the Objective-C selector stored in this
   /// declaration name.
-  Selector getObjCSelector() const;
+  Selector getObjCSelector() const {
+    assert((getNameKind() == ObjCZeroArgSelector ||
+            getNameKind() == ObjCOneArgSelector ||
+            getNameKind() == ObjCMultiArgSelector ||
+            Ptr == 0) && "Not a selector!");
+    return Selector(Ptr);
+  }
 
   /// getFETokenInfo/setFETokenInfo - The language front-end is
   /// allowed to associate arbitrary metadata with some kinds of

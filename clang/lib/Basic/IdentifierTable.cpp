@@ -335,22 +335,22 @@ public:
 
 unsigned Selector::getNumArgs() const {
   unsigned IIF = getIdentifierInfoFlag();
-  if (IIF == ZeroArg)
+  if (IIF <= ZeroArg)
     return 0;
   if (IIF == OneArg)
     return 1;
-  // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
-  MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  // We point to a MultiKeywordSelector.
+  MultiKeywordSelector *SI = getMultiKeywordSelector();
   return SI->getNumArgs();
 }
 
 IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) const {
-  if (getIdentifierInfoFlag()) {
+  if (getIdentifierInfoFlag() < MultiArg) {
     assert(argIndex == 0 && "illegal keyword index");
     return getAsIdentifierInfo();
   }
-  // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
-  MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  // We point to a MultiKeywordSelector.
+  MultiKeywordSelector *SI = getMultiKeywordSelector();
   return SI->getIdentifierInfoForSlot(argIndex);
 }
 
@@ -375,7 +375,7 @@ std::string Selector::getAsString() const {
   if (InfoPtr == 0)
     return "<null selector>";
 
-  if (InfoPtr & ArgFlags) {
+  if (getIdentifierInfoFlag() < MultiArg) {
     IdentifierInfo *II = getAsIdentifierInfo();
 
     // If the number of arguments is 0 then II is guaranteed to not be null.
@@ -388,8 +388,8 @@ std::string Selector::getAsString() const {
     return II->getName().str() + ":";
   }
 
-  // We have a multiple keyword selector (no embedded flags).
-  return reinterpret_cast<MultiKeywordSelector *>(InfoPtr)->getName();
+  // We have a multiple keyword selector.
+  return getMultiKeywordSelector()->getName();
 }
 
 /// Interpreting the given string using the normal CamelCase
