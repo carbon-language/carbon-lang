@@ -436,6 +436,8 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   } else // C99
     WCharTy = getFromTargetType(Target.getWCharType());
 
+  WIntTy = getFromTargetType(Target.getWIntType());
+
   if (LangOpts.CPlusPlus) // C++0x 3.9.1p5, extension for C++
     InitBuiltinType(Char16Ty,           BuiltinType::Char16);
   else // C99

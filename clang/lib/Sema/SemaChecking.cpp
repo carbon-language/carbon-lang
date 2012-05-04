@@ -2392,7 +2392,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     // or 'short' to an 'int'.  This is done because printf is a varargs
     // function.
     if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex))
-      if (ICE->getType() == S.Context.IntTy) {
+      if (ICE->getType() == S.Context.IntTy ||
+          ICE->getType() == S.Context.UnsignedIntTy) {
         // All further checking is done on the subexpression.
         Ex = ICE->getSubExpr();
         if (ATR.matchesType(S.Context, Ex->getType()))

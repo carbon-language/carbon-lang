@@ -1,7 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -isystem %S/Inputs %s
 
+#define __need_wint_t
 #include <stdarg.h>
-typedef __typeof(sizeof(int)) size_t;
+#include <stddef.h> // For wint_t and wchar_t
+
 typedef struct _FILE FILE;
 int fprintf(FILE *, const char *restrict, ...);
 int printf(const char *restrict, ...); // expected-note{{passing argument to parameter here}}
@@ -258,7 +260,6 @@ void f0(int_t x) { printf("%d\n", x); }
 
 // Unicode test cases.  These are possibly specific to Mac OS X.  If so, they should
 // eventually be moved into a separate test.
-typedef __WCHAR_TYPE__ wchar_t;
 
 void test_unicode_conversions(wchar_t *s) {
   printf("%S", s); // no-warning
@@ -332,16 +333,12 @@ void bug7377_bad_length_mod_usage() {
 }
 
 // PR 7981 - handle '%lc' (wint_t)
-#ifndef wint_t
-typedef int __darwin_wint_t;
-typedef __darwin_wint_t wint_t;
-#endif
 
 void pr7981(wint_t c, wchar_t c2) {
   printf("%lc", c); // no-warning
   printf("%lc", 1.0); // expected-warning{{the argument has type 'double'}}
   printf("%lc", (char) 1); // no-warning
-  printf("%lc", &c); // expected-warning{{the argument has type 'wint_t *' (aka 'int *')}}
+  printf("%lc", &c); // expected-warning{{the argument has type 'wint_t *'}}
   printf("%lc", c2); // no-warning
 }
 

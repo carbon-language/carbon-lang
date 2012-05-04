@@ -319,20 +319,21 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
     }
     
     case WIntTy: {
-      // Instead of doing a lookup for the definition of 'wint_t' (which
-      // is defined by the system headers) instead see if wchar_t and
-      // the argument type promote to the same type.
-      QualType PromoWChar =
-        C.getWCharType()->isPromotableIntegerType() 
-          ? C.getPromotedIntegerType(C.getWCharType()) : C.getWCharType();
+      
       QualType PromoArg = 
         argTy->isPromotableIntegerType()
           ? C.getPromotedIntegerType(argTy) : argTy;
       
-      PromoWChar = C.getCanonicalType(PromoWChar).getUnqualifiedType();
+      QualType WInt = C.getCanonicalType(C.getWIntType()).getUnqualifiedType();
       PromoArg = C.getCanonicalType(PromoArg).getUnqualifiedType();
       
-      return PromoWChar == PromoArg;
+      // If the promoted argument is the corresponding signed type of the
+      // wint_t type, then it should match.
+      if (PromoArg->hasSignedIntegerRepresentation() &&
+          C.getCorrespondingUnsignedType(PromoArg) == WInt)
+        return true;
+
+      return WInt == PromoArg;
     }
 
     case CPointerTy:
@@ -380,8 +381,7 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
     case CPointerTy:
       return C.VoidPtrTy;
     case WIntTy: {
-      QualType WC = C.getWCharType();
-      return WC->isPromotableIntegerType() ? C.getPromotedIntegerType(WC) : WC;
+      return C.getWIntType();
     }
   }
 
