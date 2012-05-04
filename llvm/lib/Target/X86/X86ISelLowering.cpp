@@ -5914,41 +5914,35 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
 static
 SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
                                  SelectionDAG &DAG, DebugLoc dl) {
-  EVT VT = SVOp->getValueType(0);
-  SDValue V1 = SVOp->getOperand(0);
-  SDValue V2 = SVOp->getOperand(1);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
   unsigned NumElems = VT.getVectorNumElements();
-  unsigned NewWidth = (NumElems == 4) ? 2 : 4;
-  EVT NewVT;
-  switch (VT.getSimpleVT().SimpleTy) {
+  MVT NewVT;
+  unsigned Scale;
+  switch (VT.SimpleTy) {
   default: llvm_unreachable("Unexpected!");
-  case MVT::v4f32: NewVT = MVT::v2f64; break;
-  case MVT::v4i32: NewVT = MVT::v2i64; break;
-  case MVT::v8i16: NewVT = MVT::v4i32; break;
-  case MVT::v16i8: NewVT = MVT::v4i32; break;
+  case MVT::v4f32: NewVT = MVT::v2f64; Scale = 2; break;
+  case MVT::v4i32: NewVT = MVT::v2i64; Scale = 2; break;
+  case MVT::v8i16: NewVT = MVT::v4i32; Scale = 2; break;
+  case MVT::v16i8: NewVT = MVT::v4i32; Scale = 4; break;
   }
 
-  int Scale = NumElems / NewWidth;
   SmallVector<int, 8> MaskVec;
-  for (unsigned i = 0; i < NumElems; i += Scale) {
+  for (unsigned i = 0; i != NumElems; i += Scale) {
     int StartIdx = -1;
-    for (int j = 0; j < Scale; ++j) {
+    for (unsigned j = 0; j != Scale; ++j) {
       int EltIdx = SVOp->getMaskElt(i+j);
       if (EltIdx < 0)
         continue;
-      if (StartIdx == -1)
-        StartIdx = EltIdx - (EltIdx % Scale);
-      if (EltIdx != StartIdx + j)
+      if (StartIdx < 0)
+        StartIdx = (EltIdx / Scale);
+      if (EltIdx != (int)(StartIdx*Scale + j))
         return SDValue();
     }
-    if (StartIdx == -1)
-      MaskVec.push_back(-1);
-    else
-      MaskVec.push_back(StartIdx / Scale);
+    MaskVec.push_back(StartIdx);
   }
 
-  V1 = DAG.getNode(ISD::BITCAST, dl, NewVT, V1);
-  V2 = DAG.getNode(ISD::BITCAST, dl, NewVT, V2);
+  SDValue V1 = DAG.getNode(ISD::BITCAST, dl, NewVT, SVOp->getOperand(0));
+  SDValue V2 = DAG.getNode(ISD::BITCAST, dl, NewVT, SVOp->getOperand(1));
   return DAG.getVectorShuffle(NewVT, dl, V1, V2, &MaskVec[0]);
 }
 
