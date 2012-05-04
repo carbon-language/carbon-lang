@@ -1214,11 +1214,12 @@ public:
     // No decls found.
     if (Decls.size() == 0) return;
 
-    // Don't warn on volatile decls.
+    // Don't warn on volatile, static, or global variables.
     for (llvm::SmallPtrSet<VarDecl*, 8>::iterator I = Decls.begin(),
                                                   E = Decls.end();
          I != E; ++I)
-      if ((*I)->getType().isVolatileQualified()) return;
+      if ((*I)->getType().isVolatileQualified() ||
+          (*I)->hasGlobalStorage()) return;
 
     if (DeclMatcher(S, Decls, Second).FoundDeclInUse() ||
         DeclMatcher(S, Decls, Third).FoundDeclInUse() ||

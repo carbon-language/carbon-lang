@@ -144,3 +144,11 @@ void test5() {
   for (int a; a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a;);//\
    // expected-warning {{variable 'a' used in loop condition not modified in loop body}}
 }
+
+// Ignore global variables and static variables.
+int x6;
+void test6() {
+  static int y;
+  for (;x6;);
+  for (;y;);
+}
