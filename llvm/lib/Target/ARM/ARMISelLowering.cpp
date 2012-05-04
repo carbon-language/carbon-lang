@@ -2175,6 +2175,7 @@ ARMTargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     case TLSModel::LocalExec:
       return LowerToTLSExecModels(GA, DAG, model);
   }
+  llvm_unreachable("bogus TLS model");
 }
 
 SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
