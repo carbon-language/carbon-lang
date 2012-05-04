@@ -67,6 +67,8 @@ static SetVector<BasicBlock *>
 buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
   SetVector<BasicBlock *> Result;
 
+  assert(!BBs.empty());
+
   // Loop over the blocks, adding them to our set-vector, and aborting with an
   // empty set if we encounter invalid blocks.
   for (ArrayRef<BasicBlock *>::iterator I = BBs.begin(), E = BBs.end();
@@ -79,6 +81,17 @@ buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
       break;
     }
   }
+
+#ifndef NDEBUG
+  for (ArrayRef<BasicBlock *>::iterator I = llvm::next(BBs.begin()),
+                                        E = BBs.end();
+       I != E; ++I)
+    for (pred_iterator PI = pred_begin(*I), PE = pred_end(*I);
+         PI != PE; ++PI)
+      assert(Result.count(*PI) &&
+             "No blocks in this region may have entries from outside the region"
+             " except for the first block!");
+#endif
 
   return Result;
 }
@@ -664,15 +677,6 @@ Function *CodeExtractor::extractCodeRegion() {
   // Assumption: this is a single-entry code region, and the header is the first
   // block in the region.
   BasicBlock *header = *Blocks.begin();
-
-  for (SetVector<BasicBlock *>::iterator BI = llvm::next(Blocks.begin()),
-                                         BE = Blocks.end();
-       BI != BE; ++BI)
-    for (pred_iterator PI = pred_begin(*BI), E = pred_end(*BI);
-         PI != E; ++PI)
-      assert(Blocks.count(*PI) &&
-             "No blocks in this region may have entries from outside the region"
-             " except for the first block!");
 
   // If we have to split PHI nodes or the entry block, do so now.
   severSplitPHINodes(header);
