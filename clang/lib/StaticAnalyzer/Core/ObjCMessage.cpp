@@ -139,7 +139,7 @@ bool CallOrObjCMessage::hasNonZeroCallbackArg() const {
     FD = Ctor->getConstructor();
 
   const CallExpr * CE = CallE.get<const CallExpr *>();
-  FD = dyn_cast<FunctionDecl>(CE->getCalleeDecl());
+  FD = dyn_cast_or_null<FunctionDecl>(CE->getCalleeDecl());
 
   // If calling using a function pointer, assume the function does not
   // have a callback. TODO: We could check the types of the arguments here.

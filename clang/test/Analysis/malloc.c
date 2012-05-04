@@ -829,6 +829,12 @@ void r11160612_6(StWithCallback St) {
   dealocateMemWhenDoneByRef(&St, x);
 }
 
+int mySub(int, int);
+int myAdd(int, int);
+int fPtr(unsigned cond, int x) {
+  return (cond ? mySub : myAdd)(x, x);
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 
