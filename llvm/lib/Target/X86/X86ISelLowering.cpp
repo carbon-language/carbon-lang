@@ -4933,6 +4933,9 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
 
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Unsupported vector type for broadcast.");
+
   SDValue Ld;
   bool ConstSplatVal;
 
@@ -4984,7 +4987,6 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
   }
 
   bool Is256 = VT.getSizeInBits() == 256;
-  bool Is128 = VT.getSizeInBits() == 128;
 
   // Handle the broadcasting a single constant scalar from the constant pool
   // into a vector. On Sandybridge it is still better to load a constant vector
@@ -4994,9 +4996,7 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
     assert(!CVT.isVector() && "Must not broadcast a vector type");
     unsigned ScalarSize = CVT.getSizeInBits();
 
-    if ((Is256 && (ScalarSize == 32 || ScalarSize == 64)) ||
-        (Is128 && (ScalarSize == 32))) {
-
+    if (ScalarSize == 32 || (Is256 && ScalarSize == 64)) {
       const Constant *C = 0;
       if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Ld))
         C = CI->getConstantIntValue();
@@ -5025,23 +5025,13 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
 
   unsigned ScalarSize = Ld.getValueType().getSizeInBits();
 
-  // VBroadcast to YMM
-  if (Is256 && (ScalarSize == 32 || ScalarSize == 64))
-    return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
-
-  // VBroadcast to XMM
-  if (Is128 && (ScalarSize == 32))
+  if (ScalarSize == 32 || (Is256 && ScalarSize == 64))
     return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
   // The integer check is needed for the 64-bit into 128-bit so it doesn't match
-  // double since there is vbroadcastsd xmm
+  // double since there is no vbroadcastsd xmm
   if (Subtarget->hasAVX2() && Ld.getValueType().isInteger()) {
-    // VBroadcast to YMM
-    if (Is256 && (ScalarSize == 8 || ScalarSize == 16))
-      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
-
-    // VBroadcast to XMM
-    if (Is128 && (ScalarSize ==  8 || ScalarSize == 16 || ScalarSize == 64))
+    if (ScalarSize == 8 || ScalarSize == 16 || ScalarSize == 64)
       return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
   }
 
