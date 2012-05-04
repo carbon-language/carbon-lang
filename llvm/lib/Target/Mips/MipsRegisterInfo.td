@@ -263,9 +263,7 @@ def CPU64Regs : RegisterClass<"Mips", [i64], 64, (add
   // Callee save
   S0_64, S1_64, S2_64, S3_64, S4_64, S5_64, S6_64, S7_64,
   // Reserved
-  ZERO_64, AT_64, K0_64, K1_64, GP_64, SP_64, FP_64, RA_64)> {
-  let SubRegClasses = [(CPURegs sub_32)];
-}
+  ZERO_64, AT_64, K0_64, K1_64, GP_64, SP_64, FP_64, RA_64)>;
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
@@ -282,22 +280,16 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
   // Not preserved across procedure calls
   D2, D3, D4, D5, D8, D9,
   // Callee save
-  D10, D11, D12, D13, D14, D15)> {
-  let SubRegClasses = [(FGR32 sub_fpeven, sub_fpodd)];
-}
+  D10, D11, D12, D13, D14, D15)>;
 
-def FGR64 : RegisterClass<"Mips", [f64], 64, (sequence "D%u_64", 0, 31)> {
-  let SubRegClasses = [(FGR32 sub_32)];
-}
+def FGR64 : RegisterClass<"Mips", [f64], 64, (sequence "D%u_64", 0, 31)>;
 
 // Condition Register for floating point operations
 def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31)>;
 
 // Hi/Lo Registers
 def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>;
-def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)> {
-  let SubRegClasses = [(HILO sub_32)];
-}
+def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)>;
 
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>;

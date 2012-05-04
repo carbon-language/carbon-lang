@@ -151,10 +151,6 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // a valid alternate name for the given index.
   RegAltNameIndex altNameIndex = idx;
 
-  // SubRegClasses - Specify the register class of subregisters as a list of
-  // dags: (RegClass SubRegIndex, SubRegindex, ...)
-  list<dag> SubRegClasses = [];
-
   // isAllocatable - Specify that the register class can be used for virtual
   // registers and register allocation.  Some register classes are only used to
   // model instruction operand constraints, and should have isAllocatable = 0.

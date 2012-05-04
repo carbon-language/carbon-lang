@@ -150,9 +150,7 @@ def IntRegs : RegisterClass<"Hexagon", [i32], 32,
 
 def DoubleRegs : RegisterClass<"Hexagon", [i64], 64,
                                (add (sequence "D%u", 0, 4),
-                                    (sequence "D%u", 6, 13), D5, D14, D15)> {
-  let SubRegClasses = [(IntRegs subreg_loreg, subreg_hireg)];
-}
+                                    (sequence "D%u", 6, 13), D5, D14, D15)>;
 
 
 def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
