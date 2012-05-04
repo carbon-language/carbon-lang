@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_CODEMETRICS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/CallSite.h"
 
 namespace llvm {
   class BasicBlock;
@@ -29,10 +30,11 @@ namespace llvm {
 
   /// \brief Check whether a call will lower to something small.
   ///
-  /// This tests checks whether calls to this function will lower to something
+  /// This tests checks whether this callsite will lower to something
   /// significantly cheaper than a traditional call, often a single
-  /// instruction.
-  bool callIsSmall(const Function *F);
+  /// instruction. Note that if isInstructionFree(CS.getInstruction()) would
+  /// return true, so will this function.
+  bool callIsSmall(ImmutableCallSite CS);
 
   /// \brief Utility to calculate the size and a few similar metrics for a set
   /// of basic blocks.

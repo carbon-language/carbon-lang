@@ -391,7 +391,7 @@ TailCallElim::FindTRECandidate(Instruction *TI,
   if (BB == &F->getEntryBlock() && 
       FirstNonDbg(BB->front()) == CI &&
       FirstNonDbg(llvm::next(BB->begin())) == TI &&
-      callIsSmall(F)) {
+      callIsSmall(CI)) {
     // A single-block function with just a call and a return. Check that
     // the arguments match.
     CallSite::arg_iterator I = CallSite(CI).arg_begin(),

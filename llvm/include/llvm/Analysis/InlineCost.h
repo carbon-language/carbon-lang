@@ -127,10 +127,6 @@ namespace llvm {
     //  adding a replacement API.
     InlineCost getInlineCost(CallSite CS, Function *Callee, int Threshold);
   };
-
-  /// callIsSmall - If a call is likely to lower to a single target instruction,
-  /// or is otherwise deemed small return true.
-  bool callIsSmall(const Function *Callee);
 }
 
 #endif

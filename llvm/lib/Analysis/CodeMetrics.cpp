@@ -22,7 +22,11 @@ using namespace llvm;
 /// callIsSmall - If a call is likely to lower to a single target instruction,
 /// or is otherwise deemed small return true.
 /// TODO: Perhaps calls like memcpy, strcpy, etc?
-bool llvm::callIsSmall(const Function *F) {
+bool llvm::callIsSmall(ImmutableCallSite CS) {
+  if (isa<IntrinsicInst>(CS.getInstruction()))
+    return true;
+
+  const Function *F = CS.getCalledFunction();
   if (!F) return false;
 
   if (F->hasLocalLinkage()) return false;
@@ -79,8 +83,24 @@ bool llvm::isInstructionFree(const Instruction *I, const TargetData *TD) {
 
   if (const CastInst *CI = dyn_cast<CastInst>(I)) {
     // Noop casts, including ptr <-> int,  don't count.
-    if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || isa<PtrToIntInst>(CI))
+    if (CI->isLosslessCast())
       return true;
+
+    Value *Op = CI->getOperand(0);
+    // An inttoptr cast is free so long as the input is a legal integer type
+    // which doesn't contain values outside the range of a pointer.
+    if (isa<IntToPtrInst>(CI) && TD &&
+        TD->isLegalInteger(Op->getType()->getScalarSizeInBits()) &&
+        Op->getType()->getScalarSizeInBits() <= TD->getPointerSizeInBits())
+      return true;
+
+    // A ptrtoint cast is free so long as the result is large enough to store
+    // the pointer, and a legal integer type.
+    if (isa<PtrToIntInst>(CI) && TD &&
+        TD->isLegalInteger(Op->getType()->getScalarSizeInBits()) &&
+        Op->getType()->getScalarSizeInBits() >= TD->getPointerSizeInBits())
+      return true;
+
     // trunc to a native type is free (assuming the target has compare and
     // shift-right of the same width).
     if (TD && isa<TruncInst>(CI) &&
@@ -126,7 +146,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
           isRecursive = true;
       }
 
-      if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction())) {
+      if (!callIsSmall(CS)) {
         // Each argument to a call takes on average one instruction to set up.
         NumInsts += CS.arg_size();
 

@@ -398,10 +398,7 @@ bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
   if (lookupSROAArgAndCost(I.getOperand(0), SROAArg, CostIt))
     SROAArgValues[&I] = SROAArg;
 
-  // A ptrtoint cast is free so long as the result is large enough to store the
-  // pointer, and a legal integer type.
-  return TD && TD->isLegalInteger(IntegerSize) &&
-         IntegerSize >= TD->getPointerSizeInBits();
+  return isInstructionFree(&I, TD);
 }
 
 bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
@@ -428,10 +425,7 @@ bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
   if (lookupSROAArgAndCost(Op, SROAArg, CostIt))
     SROAArgValues[&I] = SROAArg;
 
-  // An inttoptr cast is free so long as the input is a legal integer type
-  // which doesn't contain values outside the range of a pointer.
-  return TD && TD->isLegalInteger(IntegerSize) &&
-         IntegerSize <= TD->getPointerSizeInBits();
+  return isInstructionFree(&I, TD);
 }
 
 bool CallAnalyzer::visitCastInst(CastInst &I) {
@@ -445,24 +439,7 @@ bool CallAnalyzer::visitCastInst(CastInst &I) {
   // Disable SROA in the face of arbitrary casts we don't whitelist elsewhere.
   disableSROA(I.getOperand(0));
 
-  // No-op casts don't have any cost.
-  if (I.isLosslessCast())
-    return true;
-
-  // trunc to a native type is free (assuming the target has compare and
-  // shift-right of the same width).
-  if (TD && isa<TruncInst>(I) &&
-      TD->isLegalInteger(TD->getTypeSizeInBits(I.getType())))
-    return true;
-
-  // Result of a cmp instruction is often extended (to be used by other
-  // cmp instructions, logical or return instructions). These are usually
-  // no-ops on most sane targets.
-  if (isa<CmpInst>(I.getOperand(0)))
-    return true;
-
-  // Assume the rest of the casts require work.
-  return false;
+  return isInstructionFree(&I, TD);
 }
 
 bool CallAnalyzer::visitUnaryInstruction(UnaryInstruction &I) {
@@ -636,21 +613,11 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
     default:
       return Base::visitCallSite(CS);
 
-    case Intrinsic::dbg_declare:
-    case Intrinsic::dbg_value:
-    case Intrinsic::invariant_start:
-    case Intrinsic::invariant_end:
-    case Intrinsic::lifetime_start:
-    case Intrinsic::lifetime_end:
     case Intrinsic::memset:
     case Intrinsic::memcpy:
     case Intrinsic::memmove:
-    case Intrinsic::objectsize:
-    case Intrinsic::ptr_annotation:
-    case Intrinsic::var_annotation:
-      // SROA can usually chew through these intrinsics and they have no cost
-      // so don't pay the price of analyzing them in detail.
-      return true;
+      // SROA can usually chew through these intrinsics, but they aren't free.
+      return false;
     }
   }
 
@@ -662,7 +629,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
       return false;
     }
 
-    if (!callIsSmall(F)) {
+    if (!callIsSmall(CS)) {
       // We account for the average 1 instruction per call argument setup
       // here.
       Cost += CS.arg_size() * InlineConstants::InstrCost;
@@ -706,6 +673,11 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
 }
 
 bool CallAnalyzer::visitInstruction(Instruction &I) {
+  // Some instructions are free. All of the free intrinsics can also be
+  // handled by SROA, etc.
+  if (isInstructionFree(&I, TD))
+    return true;
+
   // We found something we don't understand or can't handle. Mark any SROA-able
   // values in the operand list as no longer viable.
   for (User::op_iterator OI = I.op_begin(), OE = I.op_end(); OI != OE; ++OI)
