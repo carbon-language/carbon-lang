@@ -13,6 +13,7 @@
 #ifndef POLLY_CONFIG_H
 #define POLLY_CONFIG_H
 
+#cmakedefine CLOOG_FOUND
 #cmakedefine OPENSCOP_FOUND
 #cmakedefine SCOPLIB_FOUND
 

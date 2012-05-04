@@ -24,6 +24,10 @@
 
 #ifndef POLLY_CLOOG_H
 #define POLLY_CLOOG_H
+
+#include "polly/Config/config.h"
+#ifdef CLOOG_FOUND
+
 #include "polly/ScopPass.h"
 
 #define CLOOG_INT_GMP 1
@@ -66,4 +70,6 @@ namespace llvm {
   class PassRegistry;
   void initializeCloogInfoPass(llvm::PassRegistry&);
 }
+
+#endif /* CLOOG_FOUND */
 #endif /* POLLY_CLOOG_H */

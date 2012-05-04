@@ -80,19 +80,20 @@ find_lib_and_headers([gmp], [gmp.h], [gmp], [required])
 dnl Find Isl
 find_lib_and_headers([isl], [isl/config.h], [isl], [required])
 
-dnl Find cloog
+dnl Check that we have cloog.
 saved_CXXFLAGS=$CXXFLAGS
 CXXFLAGS="$CXXFLAGS $gmp_inc $isl_inc"
 find_lib_and_headers([cloog], [cloog/isl/cloog.h], [cloog-isl], [required])
 CXXFLAGS=$saved_CXXFLAGS
+AS_IF([test "cloog_found" = "xyes"],
+  [AC_DEFINE([CLOOG_FOUND],[1],[Define if cloog found])])
 
-
-dnl Check if Scoplib there
+dnl Check that we have openscop.
 find_lib_and_headers([openscop], [openscop/scop.h], [openscop])
 AS_IF([test "x$openscop_found" = "xyes"],
   [AC_DEFINE([OPENSCOP_FOUND],[1],[Define if openscop found])])
 
-dnl Check if Scoplib there
+dnl Check that we have scoplib.
 find_lib_and_headers([scoplib], [scoplib/scop.h], [scoplib])
 AS_IF([test "x$scoplib_found" = "xyes"],
   [AC_DEFINE([SCOPLIB_FOUND],[1],[Define if scoplib found])])

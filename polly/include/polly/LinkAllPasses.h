@@ -29,9 +29,11 @@ using namespace llvm;
 
 namespace polly {
   Pass *createAffSCEVItTesterPass();
+#ifdef CLOOG_FOUND
   Pass *createCloogExporterPass();
   Pass *createCloogInfoPass();
   Pass *createCodeGenerationPass();
+#endif
   Pass *createCodePreparationPass();
   Pass *createDeadCodeElimPass();
   Pass *createDependencesPass();
@@ -77,9 +79,11 @@ namespace {
         return;
 
        createAffSCEVItTesterPass();
+#ifdef CLOOG_FOUND
        createCloogExporterPass();
        createCloogInfoPass();
        createCodeGenerationPass();
+#endif
        createCodePreparationPass();
        createDeadCodeElimPass();
        createDependencesPass();
@@ -113,7 +117,9 @@ namespace {
 
 namespace llvm {
   class PassRegistry;
+#ifdef CLOOG_FOUND
   void initializeCodeGenerationPass(llvm::PassRegistry&);
+#endif
   void initializeCodePreparationPass(llvm::PassRegistry&);
   void initializeDeadCodeElimPass(llvm::PassRegistry&);
   void initializeIndependentBlocksPass(llvm::PassRegistry&);

@@ -106,8 +106,10 @@ CFGPrinter("polly-view-cfg",
        cl::init(false));
 
 static void initializePollyPasses(PassRegistry &Registry) {
+#ifdef CLOOG_FOUND
   initializeCloogInfoPass(Registry);
   initializeCodeGenerationPass(Registry);
+#endif
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
   initializeDependencesPass(Registry);
@@ -212,8 +214,10 @@ void polly::registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) 
   if (ExportJScop)
     PM.add(polly::createJSONExporterPass());
 
+#ifdef CLOOG_FOUND
   if (RunCodegen)
     PM.add(polly::createCodeGenerationPass());
+#endif
 
   if (CFGPrinter)
     PM.add(llvm::createCFGPrinterPass());

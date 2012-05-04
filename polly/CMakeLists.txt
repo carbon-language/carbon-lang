@@ -85,7 +85,9 @@ if (POLLY_ENABLE_SCOPLIB)
   FIND_PACKAGE(SCoPLib)
 endif(POLLY_ENABLE_SCOPLIB)
 
-INCLUDE_DIRECTORIES( ${CLOOG_INCLUDE_DIR} )
+if (CLOOG_FOUND)
+  INCLUDE_DIRECTORIES( ${CLOOG_INCLUDE_DIR} )
+endif(CLOOG_FOUND)
 INCLUDE_DIRECTORIES( ${ISL_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES( ${GMP_INCLUDE_DIR} )
 
@@ -125,7 +127,11 @@ macro(add_polly_library name)
     endforeach(lib)
   endif( LLVM_USED_LIBS )
 
-  target_link_libraries( ${name} ${CLOOG_LIBRARY} ${ISL_LIBRARY} ${GMP_LIBRARY})
+  target_link_libraries( ${name} ${ISL_LIBRARY} ${GMP_LIBRARY})
+
+  if (CLOOG_FOUND)
+    target_link_libraries( ${name} ${CLOOG_LIBRARY})
+  endif(CLOOG_FOUND)
   if (OPENSCOP_FOUND)
     target_link_libraries( ${name} ${OPENSCOP_LIBRARY})
   endif(OPENSCOP_FOUND)

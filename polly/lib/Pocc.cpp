@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/Cloog.h"
 #include "polly/LinkAllPasses.h"
 
 #ifdef SCOPLIB_FOUND
