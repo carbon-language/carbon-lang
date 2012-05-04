@@ -124,7 +124,7 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
 
   for (Region::block_iterator I = R.block_begin(), E = R.block_end();
        I != E; ++I) {
-    Loop *L = LI->getLoopFor(I->getNodeAs<BasicBlock>());
+    Loop *L = LI->getLoopFor(*I);
 
     if (!L || !R.contains(L))
       continue;
@@ -232,9 +232,8 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
 
   for (Region::block_iterator I = R.block_begin(), E = R.block_end();
        I != E; ++I) {
-    BasicBlock *BB =  I->getNodeAs<BasicBlock>();
-    buildAccessFunctions(R, *BB);
-    buildCondition(BB, R.getEntry(), *TScop);
+    buildAccessFunctions(R, *I);
+    buildCondition(*I, R.getEntry(), *TScop);
   }
 
   buildLoopBounds(*TScop);
