@@ -473,19 +473,71 @@ public:
   const_iterator end() const { return children.end(); }
   //@}
 
-  /// @name BasicBlock Iterators
+  /// @name BasicBlock Node Iterators
   ///
   /// These iterators iterate over all BasicBlock RegionNodes that are
-  /// contained in this Region. The iterator also iterates over BasicBlocks
-  /// that are elements of a subregion of this Region. It is therefore called a
-  /// flat iterator.
+  /// contained in this Region. The iterator also iterates over BasicBlock
+  /// RegionNodes that are elements of a subregion of this Region. It is
+  /// therefore called a flat iterator.
   //@{
   typedef df_iterator<RegionNode*, SmallPtrSet<RegionNode*, 8>, false,
-                      GraphTraits<FlatIt<RegionNode*> > > block_iterator;
+                      GraphTraits<FlatIt<RegionNode*> > > block_node_iterator;
 
   typedef df_iterator<const RegionNode*, SmallPtrSet<const RegionNode*, 8>,
                       false, GraphTraits<FlatIt<const RegionNode*> > >
-            const_block_iterator;
+            const_block_node_iterator;
+
+  block_node_iterator block_node_begin();
+  block_node_iterator block_node_end();
+
+  const_block_node_iterator block_node_begin() const;
+  const_block_node_iterator block_node_end() const;
+  //@}
+
+  /// @name BasicBlock Iterators
+  ///
+  /// These iterators iterate over all BasicBlocks that are contained in this
+  /// Region. The iterator also iterates over BasicBlocks that are elements of
+  /// a subregion of this Region. It is therefore called a flat iterator.
+  //@{
+  template <typename RegionNodeItT>
+  class block_iterator_wrapper
+    : public std::iterator<std::forward_iterator_tag, BasicBlock, ptrdiff_t> {
+    typedef std::iterator<std::forward_iterator_tag, BasicBlock, ptrdiff_t>
+      super;
+
+    RegionNodeItT Iter;
+
+  public:
+    typedef block_iterator_wrapper<RegionNodeItT> Self;
+    typedef typename super::pointer pointer;
+
+    block_iterator_wrapper(RegionNodeItT Iter) : Iter(Iter) {}
+
+    bool operator==(const Self &RHS) const { return Iter == RHS.Iter; }
+    bool operator!=(const Self &RHS) const { return Iter != RHS.Iter; }
+    pointer operator*() const {
+      return (*Iter)->template getNodeAs<BasicBlock>();
+    }
+
+    Self& operator++() {
+      ++Iter;
+      return *this;
+    }
+    Self operator++(int) {
+      Self tmp = *this;
+      ++*this;
+      return tmp;
+    }
+
+    const Self &operator=(const Self &I) {
+      Iter = I.Iter;
+      return *this;
+    }
+  };
+  typedef block_iterator_wrapper<block_node_iterator> block_iterator;
+  typedef block_iterator_wrapper<const_block_node_iterator>
+    const_block_iterator;
 
   block_iterator block_begin();
   block_iterator block_end();
