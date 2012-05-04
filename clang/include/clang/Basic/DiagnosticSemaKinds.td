@@ -1328,10 +1328,8 @@ def err_delegating_initializer_alone : Error<
 def warn_delegating_ctor_cycle : Warning<
   "constructor for %0 creates a delegation cycle">, DefaultError,
   InGroup<DelegatingCtorCycles>;
-def note_it_delegates_to : Note<
-  "it delegates to">, InGroup<DelegatingCtorCycles>;
-def note_which_delegates_to : Note<
-  "which delegates to">, InGroup<DelegatingCtorCycles>;
+def note_it_delegates_to : Note<"it delegates to">;
+def note_which_delegates_to : Note<"which delegates to">;
 
 // C++11 range-based for loop
 def err_for_range_decl_must_be_var : Error<
@@ -1720,8 +1718,7 @@ def warn_lock_exclusive_and_shared : Warning<
   "mutex '%0' is locked exclusively and shared in the same scope">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 def note_lock_exclusive_and_shared : Note<
-  "the other lock of mutex '%0' is here">,
-  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
+  "the other lock of mutex '%0' is here">;
 def warn_variable_requires_lock : Warning<
   "%select{reading|writing}2 variable '%0' requires locking "
   "%select{'%1'|'%1' exclusively}2">,
@@ -5299,8 +5296,7 @@ def warn_empty_while_body : Warning<
 def warn_empty_switch_body : Warning<
   "switch statement has empty body">, InGroup<EmptyBody>;
 def note_empty_body_on_separate_line : Note<
-  "put the semicolon on a separate line to silence this warning">,
-  InGroup<EmptyBody>;
+  "put the semicolon on a separate line to silence this warning">;
 
 def err_va_start_used_in_non_variadic_function : Error<
   "'va_start' used in function with fixed args">;
