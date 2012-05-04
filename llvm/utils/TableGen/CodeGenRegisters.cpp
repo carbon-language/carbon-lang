@@ -611,13 +611,6 @@ static int TopoOrderRC(const void *PA, const void *PB) {
   if (A == B)
     return 0;
 
-  // Order by descending set size.  Note that the classes' allocation order may
-  // not have been computed yet.  The Members set is always vaild.
-  if (A->getMembers().size() > B->getMembers().size())
-    return -1;
-  if (A->getMembers().size() < B->getMembers().size())
-    return 1;
-
   // Order by ascending spill size.
   if (A->SpillSize < B->SpillSize)
     return -1;
@@ -628,6 +621,13 @@ static int TopoOrderRC(const void *PA, const void *PB) {
   if (A->SpillAlignment < B->SpillAlignment)
     return -1;
   if (A->SpillAlignment > B->SpillAlignment)
+    return 1;
+
+  // Order by descending set size.  Note that the classes' allocation order may
+  // not have been computed yet.  The Members set is always vaild.
+  if (A->getMembers().size() > B->getMembers().size())
+    return -1;
+  if (A->getMembers().size() < B->getMembers().size())
     return 1;
 
   // Finally order by name as a tie breaker.
