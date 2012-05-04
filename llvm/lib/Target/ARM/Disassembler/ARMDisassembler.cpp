@@ -3016,7 +3016,7 @@ static DecodeStatus DecodeThumbBROperand(MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeT2BROperand(MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
-  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val) + 4,
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<21>(Val) + 4,
                                 true, 4, Inst, Decoder))
     Inst.addOperand(MCOperand::CreateImm(SignExtend32<21>(Val)));
   return MCDisassembler::Success;
