@@ -899,7 +899,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
-    for (int i = MVT::v16i8; i != MVT::v2i64; i++) {
+    for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
       MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
       EVT VT = SVT;
 
@@ -5196,7 +5196,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       // Turn it into a shuffle of zero and zero-extended scalar to vector.
       Item = getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0, Subtarget, DAG);
       SmallVector<int, 8> MaskVec;
-      for (unsigned i = 0; i < NumElems; i++)
+      for (unsigned i = 0; i != NumElems; ++i)
         MaskVec.push_back(i == Idx ? 0 : 1);
       return DAG.getVectorShuffle(VT, dl, Item, DAG.getUNDEF(VT), &MaskVec[0]);
     }
@@ -9106,7 +9106,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
       const Function *F = MF.getFunction();
 
       for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-           I != E; I++)
+           I != E; ++I)
         if (I->hasNestAttr())
           report_fatal_error("Cannot use segmented stacks with functions that "
                              "have nested arguments.");
@@ -14489,7 +14489,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
 
     // Redistribute the loaded elements into the different locations.
     SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
-    for (unsigned i = 0; i < NumElems; i++) ShuffleVec[i*SizeRatio] = i;
+    for (unsigned i = 0; i != NumElems; ++i)
+      ShuffleVec[i*SizeRatio] = i;
 
     SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
                                          DAG.getUNDEF(WideVecVT),
@@ -14568,7 +14569,8 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 
     SDValue WideVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, St->getValue());
     SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
-    for (unsigned i = 0; i < NumElems; i++ ) ShuffleVec[i] = i * SizeRatio;
+    for (unsigned i = 0; i != NumElems; ++i)
+      ShuffleVec[i] = i * SizeRatio;
 
     // Can't shuffle using an illegal type
     if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
@@ -14599,7 +14601,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     SDValue Ptr = St->getBasePtr();
 
     // Perform one or more big stores into memory.
-    for (unsigned i = 0; i < (ToSz*NumElems)/StoreType.getSizeInBits() ; i++) {
+    for (unsigned i=0, e=(ToSz*NumElems)/StoreType.getSizeInBits(); i!=e; ++i) {
       SDValue SubVec = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                                    StoreType, ShuffWide,
                                    DAG.getIntPtrConstant(i));
