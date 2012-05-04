@@ -264,7 +264,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
           NeedComma = true;
       }
 
-      if (isKill() || isDead() || isUndef() || isInternalRead()) {
+      if (isKill() || isDead() || (isUndef() && isUse()) || isInternalRead()) {
         if (NeedComma) OS << ',';
         NeedComma = false;
         if (isKill()) {
