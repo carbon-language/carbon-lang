@@ -132,8 +132,7 @@ Mutex::Locker::Locker (Mutex* m) :
 Mutex::Locker::Locker (pthread_mutex_t *mutex_ptr) :
     m_mutex_ptr (NULL)
 {
-    if (m_mutex_ptr)
-        Lock (m_mutex_ptr);
+    Lock (mutex_ptr);
 }
 
 //----------------------------------------------------------------------

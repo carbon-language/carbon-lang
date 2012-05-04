@@ -14,6 +14,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ThreadSafeSTLMap.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/FileSpec.h"
@@ -610,6 +611,24 @@ Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Err
     return err == 0;
 }
 
+// rdar://problem/8153284
+// Fixed a crasher where during shutdown, loggings attempted to access the
+// thread name but the static map instance had already been destructed.
+// So we are using a ThreadSafeSTLMap POINTER, initializing it with a
+// pthread_once action.  That map will get leaked.
+//
+// Another approach is to introduce a static guard object which monitors its
+// own destruction and raises a flag, but this incurs more overhead.
+
+static pthread_once_t g_thread_map_once = PTHREAD_ONCE_INIT;
+static ThreadSafeSTLMap<uint64_t, std::string> *g_thread_names_map_ptr;
+
+static void
+InitThreadNamesMap()
+{
+    g_thread_names_map_ptr = new ThreadSafeSTLMap<uint64_t, std::string>();
+}
+
 //------------------------------------------------------------------
 // Control access to a static file thread name map using a single
 // static function to avoid a static constructor.
@@ -617,31 +636,26 @@ Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Err
 static const char *
 ThreadNameAccessor (bool get, lldb::pid_t pid, lldb::tid_t tid, const char *name)
 {
+    int success = ::pthread_once (&g_thread_map_once, InitThreadNamesMap);
+    if (success != 0)
+        return NULL;
+    
     uint64_t pid_tid = ((uint64_t)pid << 32) | (uint64_t)tid;
-
-    static pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
-    Mutex::Locker locker(&g_mutex);
-
-    typedef std::map<uint64_t, std::string> thread_name_map;
-    // rdar://problem/8153284
-    // Fixed a crasher where during shutdown, loggings attempted to access the
-    // thread name but the static map instance had already been destructed.
-    // Another approach is to introduce a static guard object which monitors its
-    // own destruction and raises a flag, but this incurs more overhead.
-    static thread_name_map *g_thread_names_ptr = new thread_name_map();
-    thread_name_map &g_thread_names = *g_thread_names_ptr;
 
     if (get)
     {
         // See if the thread name exists in our thread name pool
-        thread_name_map::iterator pos = g_thread_names.find(pid_tid);
-        if (pos != g_thread_names.end())
-            return pos->second.c_str();
+        std::string value;
+        bool found_it = g_thread_names_map_ptr->GetValueForKey (pid_tid, value);
+        if (found_it)
+            return value.c_str();
+        else
+            return NULL;
     }
-    else
+    else if (name)
     {
         // Set the thread name
-        g_thread_names[pid_tid] = name;
+        g_thread_names_map_ptr->SetValueForKey (pid_tid, std::string(name));
     }
     return NULL;
 }
