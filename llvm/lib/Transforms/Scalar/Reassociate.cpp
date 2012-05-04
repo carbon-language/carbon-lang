@@ -175,6 +175,7 @@ void Reassociate::RemoveDeadBinaryOp(Value *V) {
 
 static bool isUnmovableInstruction(Instruction *I) {
   if (I->getOpcode() == Instruction::PHI ||
+      I->getOpcode() == Instruction::LandingPad ||
       I->getOpcode() == Instruction::Alloca ||
       I->getOpcode() == Instruction::Load ||
       I->getOpcode() == Instruction::Invoke ||
@@ -272,13 +273,14 @@ static Instruction *LowerNegateToMultiply(Instruction *Neg,
 // linearize it as well.  Besides that case, this does not recurse into A,B, or
 // C.
 void Reassociate::LinearizeExpr(BinaryOperator *I) {
-  BinaryOperator *LHS = cast<BinaryOperator>(I->getOperand(0));
-  BinaryOperator *RHS = cast<BinaryOperator>(I->getOperand(1));
-  assert(isReassociableOp(LHS, I->getOpcode()) &&
-         isReassociableOp(RHS, I->getOpcode()) &&
-         "Not an expression that needs linearization?");
+  BinaryOperator *LHS = isReassociableOp(I->getOperand(0), I->getOpcode());
+  BinaryOperator *RHS = isReassociableOp(I->getOperand(1), I->getOpcode());
+  assert(LHS && RHS && "Not an expression that needs linearization?");
 
-  DEBUG(dbgs() << "Linear" << *LHS << '\n' << *RHS << '\n' << *I << '\n');
+  DEBUG({
+      dbgs() << "Linear:\n";
+      dbgs() << '\t' << *LHS << "\t\n" << *RHS << "\t\n" << *I << '\n';
+    });
 
   // Move the RHS instruction to live immediately before I, avoiding breaking
   // dominator properties.
