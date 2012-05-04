@@ -339,7 +339,73 @@ def AtomItineraries : ProcessorItineraries<
   InstrItinData<IIC_FCOMPP,  [InstrStage<1, [Port1]>] >,
   InstrItinData<IIC_FXSAVE,  [InstrStage<140, [Port0, Port1]>] >,
   InstrItinData<IIC_FXRSTOR,  [InstrStage<141, [Port0, Port1]>] >,
-  InstrItinData<IIC_FXCH, [InstrStage<1, [Port0], 0>, InstrStage<1, [Port1]>] >
+  InstrItinData<IIC_FXCH, [InstrStage<1, [Port0], 0>, InstrStage<1, [Port1]>] >,
+
+  // System instructions
+  InstrItinData<IIC_CPUID, [InstrStage<121, [Port0, Port1]>] >,
+  InstrItinData<IIC_INT,   [InstrStage<127, [Port0, Port1]>] >,
+  InstrItinData<IIC_INT3,  [InstrStage<130, [Port0, Port1]>] >,
+  InstrItinData<IIC_INVD,  [InstrStage<1003, [Port0, Port1]>] >,
+  InstrItinData<IIC_INVLPG, [InstrStage<71, [Port0, Port1]>] >,
+  InstrItinData<IIC_IRET,  [InstrStage<109, [Port0, Port1]>] >,
+  InstrItinData<IIC_HLT,   [InstrStage<121, [Port0, Port1]>] >,
+  InstrItinData<IIC_LXS,   [InstrStage<10, [Port0, Port1]>] >,
+  InstrItinData<IIC_LTR,   [InstrStage<83, [Port0, Port1]>] >,
+  InstrItinData<IIC_RDTSC, [InstrStage<30, [Port0, Port1]>] >,
+  InstrItinData<IIC_RSM,   [InstrStage<741, [Port0, Port1]>] >,
+  InstrItinData<IIC_SIDT,  [InstrStage<4, [Port0, Port1]>] >,
+  InstrItinData<IIC_SGDT,  [InstrStage<4, [Port0, Port1]>] >,
+  InstrItinData<IIC_SLDT,  [InstrStage<3, [Port0, Port1]>] >,
+  InstrItinData<IIC_STR,    [InstrStage<3, [Port0, Port1]>] >,
+  InstrItinData<IIC_SWAPGS, [InstrStage<22, [Port0, Port1]>] >,
+  InstrItinData<IIC_SYSCALL, [InstrStage<96, [Port0, Port1]>] >,
+  InstrItinData<IIC_SYS_ENTER_EXIT, [InstrStage<88, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_IN_RR,  [InstrStage<94, [Port0, Port1]>] >,
+  InstrItinData<IIC_IN_RI,  [InstrStage<92, [Port0, Port1]>] >,
+  InstrItinData<IIC_OUT_RR, [InstrStage<68, [Port0, Port1]>] >,
+  InstrItinData<IIC_OUT_IR, [InstrStage<72, [Port0, Port1]>] >,
+  InstrItinData<IIC_INS,    [InstrStage<59, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_MOV_REG_DR, [InstrStage<88, [Port0, Port1]>] >,
+  InstrItinData<IIC_MOV_DR_REG, [InstrStage<123, [Port0, Port1]>] >,
+  // worst case for mov REG_CRx
+  InstrItinData<IIC_MOV_REG_CR, [InstrStage<12, [Port0, Port1]>] >,
+  InstrItinData<IIC_MOV_CR_REG, [InstrStage<136, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_MOV_REG_SR, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_MOV_MEM_SR, [InstrStage<2, [Port0, Port1]>] >,
+  InstrItinData<IIC_MOV_SR_REG, [InstrStage<21, [Port0, Port1]>] >,
+  InstrItinData<IIC_MOV_SR_MEM, [InstrStage<26, [Port0, Port1]>] >,
+  // LAR
+  InstrItinData<IIC_LAR_RM,  [InstrStage<50, [Port0, Port1]>] >,
+  InstrItinData<IIC_LAR_RR,  [InstrStage<54, [Port0, Port1]>] >,
+  // LSL
+  InstrItinData<IIC_LSL_RM,  [InstrStage<46, [Port0, Port1]>] >,
+  InstrItinData<IIC_LSL_RR,  [InstrStage<49, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_LGDT, [InstrStage<44, [Port0, Port1]>] >,
+  InstrItinData<IIC_LIDT, [InstrStage<44, [Port0, Port1]>] >,
+  InstrItinData<IIC_LLDT_REG, [InstrStage<60, [Port0, Port1]>] >,
+  InstrItinData<IIC_LLDT_MEM, [InstrStage<64, [Port0, Port1]>] >,
+  // push control register, segment registers
+  InstrItinData<IIC_PUSH_CS, [InstrStage<2, [Port0, Port1]>] >,
+  InstrItinData<IIC_PUSH_SR, [InstrStage<2, [Port0, Port1]>] >,
+  // pop control register, segment registers
+  InstrItinData<IIC_POP_SR,    [InstrStage<29, [Port0, Port1]>] >,
+  InstrItinData<IIC_POP_SR_SS, [InstrStage<48, [Port0, Port1]>] >,
+  // VERR, VERW
+  InstrItinData<IIC_VERR,     [InstrStage<41, [Port0, Port1]>] >,
+  InstrItinData<IIC_VERW_REG, [InstrStage<51, [Port0, Port1]>] >,
+  InstrItinData<IIC_VERW_MEM, [InstrStage<50, [Port0, Port1]>] >,
+  // WRMSR, RDMSR
+  InstrItinData<IIC_WRMSR, [InstrStage<202, [Port0, Port1]>] >,
+  InstrItinData<IIC_RDMSR, [InstrStage<78, [Port0, Port1]>] >,
+  InstrItinData<IIC_RDPMC, [InstrStage<46, [Port0, Port1]>] >,
+  // SMSW, LMSW
+  InstrItinData<IIC_SMSW, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_LMSW_REG, [InstrStage<69, [Port0, Port1]>] >,
+  InstrItinData<IIC_LMSW_MEM, [InstrStage<67, [Port0, Port1]>] >
 
   ]>;
 

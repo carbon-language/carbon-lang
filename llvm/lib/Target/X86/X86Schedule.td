@@ -299,6 +299,59 @@ def IIC_FXRSTOR : InstrItinClass;
 
 def IIC_FXCH : InstrItinClass;
 
+// System instructions
+def IIC_CPUID : InstrItinClass;
+def IIC_INT : InstrItinClass;
+def IIC_INT3 : InstrItinClass;
+def IIC_INVD : InstrItinClass;
+def IIC_INVLPG : InstrItinClass;
+def IIC_IRET : InstrItinClass;
+def IIC_HLT : InstrItinClass;
+def IIC_LXS : InstrItinClass;
+def IIC_LTR : InstrItinClass;
+def IIC_RDTSC : InstrItinClass;
+def IIC_RSM : InstrItinClass;
+def IIC_SIDT : InstrItinClass;
+def IIC_SGDT : InstrItinClass;
+def IIC_SLDT : InstrItinClass;
+def IIC_STR : InstrItinClass;
+def IIC_SWAPGS : InstrItinClass;
+def IIC_SYSCALL : InstrItinClass;
+def IIC_SYS_ENTER_EXIT : InstrItinClass;
+def IIC_IN_RR : InstrItinClass;
+def IIC_IN_RI : InstrItinClass;
+def IIC_OUT_RR : InstrItinClass;
+def IIC_OUT_IR : InstrItinClass;
+def IIC_INS : InstrItinClass;
+def IIC_MOV_REG_DR : InstrItinClass;
+def IIC_MOV_DR_REG : InstrItinClass;
+def IIC_MOV_REG_CR : InstrItinClass;
+def IIC_MOV_CR_REG : InstrItinClass;
+def IIC_MOV_REG_SR : InstrItinClass;
+def IIC_MOV_MEM_SR : InstrItinClass;
+def IIC_MOV_SR_REG : InstrItinClass;
+def IIC_MOV_SR_MEM : InstrItinClass;
+def IIC_LAR_RM : InstrItinClass;
+def IIC_LAR_RR : InstrItinClass;
+def IIC_LSL_RM : InstrItinClass;
+def IIC_LSL_RR : InstrItinClass;
+def IIC_LGDT : InstrItinClass;
+def IIC_LIDT : InstrItinClass;
+def IIC_LLDT_REG : InstrItinClass;
+def IIC_LLDT_MEM : InstrItinClass;
+def IIC_PUSH_CS : InstrItinClass;
+def IIC_PUSH_SR : InstrItinClass;
+def IIC_POP_SR : InstrItinClass;
+def IIC_POP_SR_SS : InstrItinClass;
+def IIC_VERR : InstrItinClass;
+def IIC_VERW_REG : InstrItinClass;
+def IIC_VERW_MEM : InstrItinClass;
+def IIC_WRMSR : InstrItinClass;
+def IIC_RDMSR : InstrItinClass;
+def IIC_RDPMC : InstrItinClass;
+def IIC_SMSW : InstrItinClass;
+def IIC_LMSW_REG : InstrItinClass;
+def IIC_LMSW_MEM : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.
