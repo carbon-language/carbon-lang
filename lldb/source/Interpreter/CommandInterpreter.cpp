@@ -113,6 +113,12 @@ CommandInterpreter::Initialize ()
         AddAlias ("q", cmd_obj_sp);
         AddAlias ("exit", cmd_obj_sp);
     }
+    
+    cmd_obj_sp = GetCommandSPExact ("process attach", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("attach", cmd_obj_sp);
+    }
 
     cmd_obj_sp = GetCommandSPExact ("process continue", false);
     if (cmd_obj_sp)
