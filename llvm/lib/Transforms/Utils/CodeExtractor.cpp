@@ -23,6 +23,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
@@ -63,16 +65,16 @@ static bool isBlockValidForExtraction(const BasicBlock &BB) {
 }
 
 /// \brief Build a set of blocks to extract if the input blocks are viable.
-static SetVector<BasicBlock *>
-buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
+template <typename IteratorT>
+static SetVector<BasicBlock *> buildExtractionBlockSet(IteratorT BBBegin,
+                                                       IteratorT BBEnd) {
   SetVector<BasicBlock *> Result;
 
-  assert(!BBs.empty());
+  assert(BBBegin != BBEnd);
 
   // Loop over the blocks, adding them to our set-vector, and aborting with an
   // empty set if we encounter invalid blocks.
-  for (ArrayRef<BasicBlock *>::iterator I = BBs.begin(), E = BBs.end();
-       I != E; ++I) {
+  for (IteratorT I = BBBegin, E = BBEnd; I != E; ++I) {
     if (!Result.insert(*I))
       llvm_unreachable("Repeated basic blocks in extraction input");
 
@@ -83,8 +85,8 @@ buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
   }
 
 #ifndef NDEBUG
-  for (ArrayRef<BasicBlock *>::iterator I = llvm::next(BBs.begin()),
-                                        E = BBs.end();
+  for (SetVector<BasicBlock *>::iterator I = llvm::next(Result.begin()),
+                                         E = Result.end();
        I != E; ++I)
     for (pred_iterator PI = pred_begin(*I), PE = pred_end(*I);
          PI != PE; ++PI)
@@ -94,6 +96,24 @@ buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
 #endif
 
   return Result;
+}
+
+/// \brief Helper to call buildExtractionBlockSet with an ArrayRef.
+static SetVector<BasicBlock *>
+buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
+  return buildExtractionBlockSet(BBs.begin(), BBs.end());
+}
+
+/// \brief Helper to call buildExtractionBlockSet with a RegionNode.
+static SetVector<BasicBlock *>
+buildExtractionBlockSet(const RegionNode &RN) {
+  if (!RN.isSubRegion())
+    // Just a single BasicBlock.
+    return buildExtractionBlockSet(RN.getNodeAs<BasicBlock>());
+
+  const Region &R = *RN.getNodeAs<Region>();
+
+  return buildExtractionBlockSet(R.block_begin(), R.block_end());
 }
 
 CodeExtractor::CodeExtractor(BasicBlock *BB, bool AggregateArgs)
@@ -108,6 +128,11 @@ CodeExtractor::CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT,
 CodeExtractor::CodeExtractor(DominatorTree &DT, Loop &L, bool AggregateArgs)
   : DT(&DT), AggregateArgs(AggregateArgs||AggregateArgsOpt),
     Blocks(buildExtractionBlockSet(L.getBlocks())), NumExitBlocks(~0U) {}
+
+CodeExtractor::CodeExtractor(DominatorTree &DT, const RegionNode &RN,
+                             bool AggregateArgs)
+  : DT(&DT), AggregateArgs(AggregateArgs||AggregateArgsOpt),
+    Blocks(buildExtractionBlockSet(RN)), NumExitBlocks(~0U) {}
 
 /// definedInRegion - Return true if the specified value is defined in the
 /// extracted region.

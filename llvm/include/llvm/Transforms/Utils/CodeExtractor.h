@@ -24,6 +24,7 @@ namespace llvm {
   class Function;
   class Loop;
   class Module;
+  class RegionNode;
   class Type;
   class Value;
 
@@ -73,6 +74,13 @@ namespace llvm {
     /// Behaves just like the generic code sequence constructor, but uses the
     /// block sequence of the loop.
     CodeExtractor(DominatorTree &DT, Loop &L, bool AggregateArgs = false);
+
+    /// \brief Create a code extractor for a region node.
+    ///
+    /// Behaves just like the generic code sequence constructor, but uses the
+    /// block sequence of the region node passed in.
+    CodeExtractor(DominatorTree &DT, const RegionNode &RN,
+                  bool AggregateArgs = false);
 
     /// \brief Perform the extraction, returning the new function.
     ///
