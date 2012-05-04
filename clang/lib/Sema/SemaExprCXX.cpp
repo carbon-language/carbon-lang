@@ -590,8 +590,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
       return ExprError();
 
     if (RequireNonAbstractType(ThrowLoc, E->getType(),
-                               PDiag(diag::err_throw_abstract_type)
-                                 << E->getSourceRange()))
+                               diag::err_throw_abstract_type, E))
       return ExprError();
   }
 

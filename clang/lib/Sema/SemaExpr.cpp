@@ -9205,9 +9205,9 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
       return ExprError();
 
     if (RequireNonAbstractType(TInfo->getTypeLoc().getBeginLoc(),
-          TInfo->getType(),
-          PDiag(diag::err_second_parameter_to_va_arg_abstract)
-          << TInfo->getTypeLoc().getSourceRange()))
+                               TInfo->getType(),
+                               diag::err_second_parameter_to_va_arg_abstract,
+                               TInfo->getTypeLoc()))
       return ExprError();
 
     if (!TInfo->getType().isPODType(Context)) {
