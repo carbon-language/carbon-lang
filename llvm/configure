@@ -1420,7 +1420,7 @@ Optional Features:
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, arm, mips, spu, hexagon,
-                          xcore, msp430, ptx, and cpp (default=all)
+                          xcore, msp430, ptx, nvptx, and cpp (default=all)
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
   --enable-libffi         Check for the presence of libffi (default is NO)
@@ -3903,6 +3903,7 @@ else
   hexagon-*)              llvm_cv_target_arch="Hexagon" ;;
   mblaze-*)               llvm_cv_target_arch="MBlaze" ;;
   ptx-*)                  llvm_cv_target_arch="PTX" ;;
+  nvptx-*)                llvm_cv_target_arch="NVPTX" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac
 fi
@@ -5126,6 +5127,8 @@ else
  ;;
     PTX)         TARGET_HAS_JIT=0
  ;;
+    NVPTX)       TARGET_HAS_JIT=0
+ ;;
     *)           TARGET_HAS_JIT=0
  ;;
   esac
@@ -5310,7 +5313,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC ARM Mips CellSPU XCore MSP430 CppBackend MBlaze PTX Hexagon" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC ARM Mips CellSPU XCore MSP430 CppBackend MBlaze PTX NVPTX Hexagon" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -5327,6 +5330,7 @@ case "$enableval" in
         hexagon)  TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
         mblaze)   TARGETS_TO_BUILD="MBlaze $TARGETS_TO_BUILD" ;;
         ptx)      TARGETS_TO_BUILD="PTX $TARGETS_TO_BUILD" ;;
+        nvptx)    TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
         host) case "$llvm_cv_target_arch" in
             x86)         TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
             x86_64)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -5340,6 +5344,7 @@ case "$enableval" in
             MSP430)      TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
             Hexagon)     TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
             PTX)         TARGETS_TO_BUILD="PTX $TARGETS_TO_BUILD" ;;
+            NVPTX)       TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
             *)       { { echo "$as_me:$LINENO: error: Can not set target to build" >&5
 echo "$as_me: error: Can not set target to build" >&2;}
    { (exit 1); exit 1; }; } ;;
@@ -10401,7 +10406,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10404 "configure"
+#line 10409 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

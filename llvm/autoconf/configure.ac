@@ -370,6 +370,7 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   hexagon-*)              llvm_cv_target_arch="Hexagon" ;;
   mblaze-*)               llvm_cv_target_arch="MBlaze" ;;
   ptx-*)                  llvm_cv_target_arch="PTX" ;;
+  nvptx-*)                llvm_cv_target_arch="NVPTX" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac])
 
@@ -517,6 +518,7 @@ else
     Hexagon)     AC_SUBST(TARGET_HAS_JIT,0) ;;
     MBlaze)      AC_SUBST(TARGET_HAS_JIT,0) ;;
     PTX)         AC_SUBST(TARGET_HAS_JIT,0) ;;
+    NVPTX)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     *)           AC_SUBST(TARGET_HAS_JIT,0) ;;
   esac
 fi
@@ -628,13 +630,13 @@ TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all or target1,target2,... Valid targets are:
      host, x86, x86_64, sparc, powerpc, arm, mips, spu, hexagon,
-     xcore, msp430, ptx, and cpp (default=all)]),,
+     xcore, msp430, ptx, nvptx, and cpp (default=all)]),,
     enableval=all)
 if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC ARM Mips CellSPU XCore MSP430 CppBackend MBlaze PTX Hexagon" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC ARM Mips CellSPU XCore MSP430 CppBackend MBlaze PTX NVPTX Hexagon" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -651,6 +653,7 @@ case "$enableval" in
         hexagon)  TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
         mblaze)   TARGETS_TO_BUILD="MBlaze $TARGETS_TO_BUILD" ;;
         ptx)      TARGETS_TO_BUILD="PTX $TARGETS_TO_BUILD" ;;
+        nvptx)    TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
         host) case "$llvm_cv_target_arch" in
             x86)         TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
             x86_64)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -664,6 +667,7 @@ case "$enableval" in
             MSP430)      TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
             Hexagon)     TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
             PTX)         TARGETS_TO_BUILD="PTX $TARGETS_TO_BUILD" ;;
+            NVPTX)       TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
             *)       AC_MSG_ERROR([Can not set target to build]) ;;
           esac ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
