@@ -197,8 +197,6 @@ namespace llvm {
     unsigned SpillAlignment;
     int CopyCost;
     bool Allocatable;
-    // Map SubRegIndex -> RegisterClass
-    DenseMap<Record*,Record*> SubRegClasses;
     std::string AltOrderSelect;
 
     // Return the Record that defined this class, or NULL if the class was

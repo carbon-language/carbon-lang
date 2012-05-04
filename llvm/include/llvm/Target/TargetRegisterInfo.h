@@ -45,7 +45,6 @@ public:
   const uint32_t *SubClassMask;
   const uint16_t *SuperRegIndices;
   const sc_iterator SuperClasses;
-  const sc_iterator SuperRegClasses;
   ArrayRef<uint16_t> (*OrderFunc)(const MachineFunction&);
 
   /// getID() - Return the register class ID number.
@@ -117,18 +116,6 @@ public:
   vt_iterator vt_end() const {
     vt_iterator I = VTs;
     while (*I != MVT::Other) ++I;
-    return I;
-  }
-
-  /// superregclasses_begin / superregclasses_end - Loop over all of
-  /// the superreg register classes of this register class.
-  sc_iterator superregclasses_begin() const {
-    return SuperRegClasses;
-  }
-
-  sc_iterator superregclasses_end() const {
-    sc_iterator I = SuperRegClasses;
-    while (*I != NULL) ++I;
     return I;
   }
 

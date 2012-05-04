@@ -776,57 +776,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Now that all of the structs have been emitted, emit the instances.
   if (!RegisterClasses.empty()) {
-    std::map<unsigned, std::set<unsigned> > SuperRegClassMap;
-
     OS << "\nstatic const TargetRegisterClass *const "
        << "NullRegClasses[] = { NULL };\n\n";
-
-    unsigned NumSubRegIndices = RegBank.getSubRegIndices().size();
-
-    if (NumSubRegIndices) {
-      // Compute the super-register classes for each RegisterClass
-      for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
-        const CodeGenRegisterClass &RC = *RegisterClasses[rc];
-        for (DenseMap<Record*,Record*>::const_iterator
-             i = RC.SubRegClasses.begin(),
-             e = RC.SubRegClasses.end(); i != e; ++i) {
-          // Find the register class number of i->second for SuperRegClassMap.
-          const CodeGenRegisterClass *RC2 = RegBank.getRegClass(i->second);
-          assert(RC2 && "Invalid register class in SubRegClasses");
-          SuperRegClassMap[RC2->EnumValue].insert(rc);
-        }
-      }
-
-      // Emit the super-register classes for each RegisterClass
-      for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
-        const CodeGenRegisterClass &RC = *RegisterClasses[rc];
-
-        // Give the register class a legal C name if it's anonymous.
-        std::string Name = RC.getName();
-
-        OS << "// " << Name
-           << " Super-register Classes...\n"
-           << "static const TargetRegisterClass *const "
-           << Name << "SuperRegClasses[] = {\n  ";
-
-        bool Empty = true;
-        std::map<unsigned, std::set<unsigned> >::iterator I =
-          SuperRegClassMap.find(rc);
-        if (I != SuperRegClassMap.end()) {
-          for (std::set<unsigned>::iterator II = I->second.begin(),
-                 EE = I->second.end(); II != EE; ++II) {
-            const CodeGenRegisterClass &RC2 = *RegisterClasses[*II];
-            if (!Empty)
-              OS << ", ";
-            OS << "&" << RC2.getQualifiedName() << "RegClass";
-            Empty = false;
-          }
-        }
-
-        OS << (!Empty ? ", " : "") << "NULL";
-        OS << "\n};\n\n";
-      }
-    }
 
     // Emit register class bit mask tables. The first bit mask emitted for a
     // register class, RC, is the set of sub-classes, including RC itself.
@@ -946,8 +897,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         OS << "NullRegClasses,\n    ";
       else
         OS << RC.getName() << "Superclasses,\n    ";
-      OS << (NumSubRegIndices ? RC.getName() + "Super" : std::string("Null"))
-         << "RegClasses,\n    ";
       if (RC.AltOrderSelect.empty())
         OS << "0\n";
       else
