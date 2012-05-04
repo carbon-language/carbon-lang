@@ -24,7 +24,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/FunctionUtils.h"
+#include "llvm/Transforms/Utils/CodeExtractor.h"
 #include "llvm/ADT/Statistic.h"
 #include <fstream>
 #include <set>
@@ -132,7 +132,8 @@ bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (ShouldExtractLoop) {
     if (NumLoops == 0) return Changed;
     --NumLoops;
-    if (ExtractLoop(DT, L) != 0) {
+    CodeExtractor Extractor(DT, *L);
+    if (Extractor.extractCodeRegion() != 0) {
       Changed = true;
       // After extraction, the loop is replaced by a function call, so
       // we shouldn't try to run any more loop passes on it.
@@ -296,7 +297,7 @@ bool BlockExtractorPass::runOnModule(Module &M) {
     if (const InvokeInst *II =
         dyn_cast<InvokeInst>(BlocksToExtract[i]->getTerminator()))
       BlocksToExtractVec.push_back(II->getUnwindDest());
-    ExtractBasicBlock(BlocksToExtractVec);
+    CodeExtractor(BlocksToExtractVec).extractCodeRegion();
   }
 
   return !BlocksToExtract.empty();

@@ -24,7 +24,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/FunctionUtils.h"
+#include "llvm/Transforms/Utils/CodeExtractor.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

@@ -19,7 +19,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/FunctionUtils.h"
+#include "llvm/Transforms/Utils/CodeExtractor.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
 using namespace llvm;
@@ -122,7 +122,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   DT.runOnFunction(*duplicateFunction);
   
   // Extract the body of the if.
-  Function* extractedFunction = ExtractCodeRegion(DT, toExtract);
+  Function* extractedFunction
+    = CodeExtractor(toExtract, &DT).extractCodeRegion();
   
   InlineFunctionInfo IFI;
   
