@@ -78,7 +78,7 @@ buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
 
     if (!isBlockValidForExtraction(**I)) {
       Result.clear();
-      break;
+      return Result;
     }
   }
 
