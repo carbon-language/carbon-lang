@@ -482,7 +482,7 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
 
   for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
        ++I)
-    if (!isValidBasicBlock(*I, Context))
+    if (!isValidBasicBlock(**I, Context))
       return false;
 
   return true;
