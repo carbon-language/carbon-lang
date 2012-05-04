@@ -6,5 +6,5 @@
 const char *str = STR;
 int ge = zool;
 
-// CHECK: file '{{.*}}/remap-file-from-pch.cpp.h' from the precompiled header has been overridden
+// CHECK: file '{{.*[/\\]}}remap-file-from-pch.cpp.h' from the precompiled header has been overridden
 // CHECK: use of undeclared identifier 'zool'
