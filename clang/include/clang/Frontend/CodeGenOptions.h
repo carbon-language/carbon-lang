@@ -37,6 +37,8 @@ public:
 
   enum DebugInfoKind {
     NoDebugInfo,          // Don't generate debug info.
+    DebugLineTablesOnly,  // Emit only debug info necessary for generating
+                          // line number tables (-gline-tables-only).
     LimitedDebugInfo,     // Limit generated debug info to reduce size
                           // (-flimit-debug-info).
     FullDebugInfo         // Generate complete debug info.

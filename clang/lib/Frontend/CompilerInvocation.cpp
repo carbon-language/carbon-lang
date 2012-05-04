@@ -184,6 +184,9 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
   switch (Opts.DebugInfo) {
     case CodeGenOptions::NoDebugInfo:
       break;
+    case CodeGenOptions::DebugLineTablesOnly:
+      Res.push_back("-gline-tables-only");
+      break;
     case CodeGenOptions::LimitedDebugInfo:
       Res.push_back("-g");
       Res.push_back("-flimit-debug-info");
@@ -1148,7 +1151,9 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.Inlining = Args.hasArg(OPT_fno_inline_functions) ?
     CodeGenOptions::OnlyAlwaysInlining : Opts.Inlining;
 
-  if (Args.hasArg(OPT_g_Flag)) {
+  if (Args.hasArg(OPT_gline_tables_only)) {
+    Opts.DebugInfo = CodeGenOptions::DebugLineTablesOnly;
+  } else if (Args.hasArg(OPT_g_Flag)) {
     if (Args.hasFlag(OPT_flimit_debug_info, OPT_fno_limit_debug_info, true))
       Opts.DebugInfo = CodeGenOptions::LimitedDebugInfo;
     else

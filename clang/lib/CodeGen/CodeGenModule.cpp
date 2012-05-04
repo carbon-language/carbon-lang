@@ -1606,7 +1606,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   // Emit global variable debug information.
   if (CGDebugInfo *DI = getModuleDebugInfo())
-    DI->EmitGlobalVariable(GV, D);
+    if (getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo)
+      DI->EmitGlobalVariable(GV, D);
 }
 
 llvm::GlobalValue::LinkageTypes

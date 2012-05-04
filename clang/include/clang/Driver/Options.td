@@ -673,6 +673,8 @@ def gstabs2 : Flag<"-gstabs2">, Group<g_Group>;
 def gused : Flag<"-gused">, Group<g_Group>;
 def g_Flag : Flag<"-g">, Group<g_Group>, HelpText<"Generate source level debug information">,
     Flags<[CC1Option]>;
+def gline_tables_only : Flag<"-gline-tables-only">, Group<g_Group>,
+  HelpText<"Emit debug line number tables only">, Flags<[CC1Option]>;
 def headerpad__max__install__names : Joined<"-headerpad_max_install_names">;
 def help : Flag<"-help">, Flags<[CC1Option]>,
   HelpText<"Display available options">;

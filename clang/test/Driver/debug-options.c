@@ -7,6 +7,8 @@
 // RUN: %clang -### -c -ganything %s 2>&1 | FileCheck -check-prefix=GANY %s
 // RUN: %clang -### -c -ggdb %s 2>&1 | FileCheck -check-prefix=GGDB %s
 // RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=GFOO %s
+// RUN: %clang -### -c -gline-tables-only %s 2>&1 \
+// RUN:             | FileCheck -check-prefix=GLTO %s
 //
 // G: "-cc1"
 // G: "-g"
@@ -25,3 +27,6 @@
 //
 // GFOO: "-cc1"
 // GFOO-NOT: "-g"
+//
+// GLTO: "-cc1"
+// GLTO: "-g"

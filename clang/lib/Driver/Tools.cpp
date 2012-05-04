@@ -1816,6 +1816,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (!A->getOption().matches(options::OPT_g0)) {
       CmdArgs.push_back("-g");
     }
+  if (Args.hasArg(options::OPT_gline_tables_only))
+    CmdArgs.push_back("-gline-tables-only");
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
   Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);

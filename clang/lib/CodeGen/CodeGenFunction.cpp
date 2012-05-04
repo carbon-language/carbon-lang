@@ -1087,7 +1087,8 @@ void CodeGenFunction::EmitDeclRefExprDbgValue(const DeclRefExpr *E,
                                               llvm::Constant *Init) {
   assert (Init && "Invalid DeclRefExpr initializer!");
   if (CGDebugInfo *Dbg = getDebugInfo())
-    Dbg->EmitGlobalVariable(E->getDecl(), Init);
+    if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo)
+      Dbg->EmitGlobalVariable(E->getDecl(), Init);
 }
 
 CodeGenFunction::PeepholeProtection

@@ -1134,15 +1134,17 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
       const VarDecl *variable = ci->getVariable();
       DI->EmitLocation(Builder, variable->getLocation());
 
-      const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
-      if (capture.isConstant()) {
-        DI->EmitDeclareOfAutoVariable(variable, LocalDeclMap[variable],
-                                      Builder);
-        continue;
-      }
+      if (CGM.getCodeGenOpts().DebugInfo >= CodeGenOptions::LimitedDebugInfo) {
+        const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
+        if (capture.isConstant()) {
+          DI->EmitDeclareOfAutoVariable(variable, LocalDeclMap[variable],
+                                        Builder);
+          continue;
+        }
 
-      DI->EmitDeclareOfBlockDeclRefVariable(variable, BlockPointer,
-                                            Builder, blockInfo);
+        DI->EmitDeclareOfBlockDeclRefVariable(variable, BlockPointer,
+                                              Builder, blockInfo);
+      }
     }
   }
 
