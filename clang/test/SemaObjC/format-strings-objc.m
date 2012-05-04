@@ -111,11 +111,20 @@ NSString *test_literal_propagation(void) {
 }
 
 // Do not emit warnings when using NSLocalizedString
-extern NSString *GetLocalizedString(NSString *str);
-#define NSLocalizedString(key) GetLocalizedString(key)
+#include "format-strings-system.h"
+
+// Test it inhibits diag only for macros in system headers
+#define MyNSLocalizedString(key) GetLocalizedString(key)
+#define MyNSAssert(fmt, arg) NSLog(fmt, arg, 0, 0)
 
 void check_NSLocalizedString() {
   [Foo fooWithFormat:NSLocalizedString(@"format"), @"arg"]; // no-warning
+  [Foo fooWithFormat:MyNSLocalizedString(@"format"), @"arg"]; // expected-warning {{format string is not a string literal}}}
+}
+
+void check_NSAssert() {
+  NSAssert(@"Hello %@", @"World"); // no-warning
+  MyNSAssert(@"Hello %@", @"World"); // expected-warning  {{data argument not used by format string}}
 }
 
 typedef __WCHAR_TYPE__ wchar_t;

@@ -1749,7 +1749,8 @@ void Sema::CheckFormatArguments(Expr **Args, unsigned NumArgs,
   // format is either NSString or CFString. This is a hack to prevent
   // diag when using the NSLocalizedString and CFCopyLocalizedString macros
   // which are usually used in place of NS and CF string literals.
-  if (Type == FST_NSString && Args[format_idx]->getLocStart().isMacroID())
+  if (Type == FST_NSString &&
+      SourceMgr.isInSystemMacro(Args[format_idx]->getLocStart()))
     return;
 
   // If there are no arguments specified, warn with -Wformat-security, otherwise
