@@ -206,7 +206,7 @@ class Image:
         print "%s%s" % (prefix, self)
     
     def __str__(self):
-        s = "%s %s" % (self.get_uuid(), self.get_resolved_path())
+        s = "%s %s %s" % (self.get_uuid(), self.version, self.get_resolved_path())
         for section_info in self.section_infos:
             s += ", %s" % (section_info)
         if self.slide != None:
