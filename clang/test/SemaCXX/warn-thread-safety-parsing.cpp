@@ -1319,6 +1319,8 @@ private:
   Mutex mu_;
 };
 
+} // end namespace TestMultiDecl
+
 
 namespace NestedClassLateDecl {
 
@@ -1393,5 +1395,38 @@ public:
 }
 
 
-} // end namespace TestMultiDecl
+namespace InheritanceTest {
+
+class LOCKABLE Base {
+ public:
+  void lock()   EXCLUSIVE_LOCK_FUNCTION();
+  void unlock() UNLOCK_FUNCTION();
+};
+
+class Base2 { };
+
+class Derived1 : public Base { };
+
+class Derived2 : public Base2, public Derived1 { };
+
+class Derived3 : public Base2 { };
+
+class Foo {
+  Derived1 mu1_;
+  Derived2 mu2_;
+  Derived3 mu3_;
+  int a GUARDED_BY(mu1_);
+  int b GUARDED_BY(mu2_);
+  int c GUARDED_BY(mu3_);  // \
+    // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute; type here is 'class InheritanceTest::Derived3'}}
+
+  void foo() EXCLUSIVE_LOCKS_REQUIRED(mu1_, mu2_) {
+    a = 0;
+    b = 0;
+  }
+};
+
+}
+
+
 
