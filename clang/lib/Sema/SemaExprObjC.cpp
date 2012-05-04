@@ -910,8 +910,8 @@ ExprResult Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
     if (!EncodedType->getAsArrayTypeUnsafe() && //// Incomplete array is handled.
         !EncodedType->isVoidType()) // void is handled too.
       if (RequireCompleteType(AtLoc, EncodedType,
-                         PDiag(diag::err_incomplete_type_objc_at_encode)
-                             << EncodedTypeInfo->getTypeLoc().getSourceRange()))
+                              diag::err_incomplete_type_objc_at_encode,
+                              EncodedTypeInfo->getTypeLoc()))
         return ExprError();
 
     std::string Str;
@@ -1176,8 +1176,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
     if (RequireCompleteType(argExpr->getSourceRange().getBegin(),
                             param->getType(),
-                            PDiag(diag::err_call_incomplete_argument)
-                              << argExpr->getSourceRange()))
+                            diag::err_call_incomplete_argument, argExpr))
       return true;
 
     InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
@@ -1395,8 +1394,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   SourceRange BaseRange = Super? SourceRange(SuperLoc)
                                : BaseExpr->getSourceRange();
   if (RequireCompleteType(MemberLoc, OPT->getPointeeType(), 
-                          PDiag(diag::err_property_not_found_forward_class)
-                            << MemberName << BaseRange))
+                          diag::err_property_not_found_forward_class,
+                          MemberName, BaseRange))
     return ExprError();
   
   // Search for a declared property first.
@@ -1524,8 +1523,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     if (const ObjCObjectPointerType * OBJPT = 
         T->getAsObjCInterfacePointerType()) {
       if (RequireCompleteType(MemberLoc, OBJPT->getPointeeType(), 
-                              PDiag(diag::err_property_not_as_forward_class)
-                                << MemberName << BaseExpr->getSourceRange()))
+                              diag::err_property_not_as_forward_class,
+                              MemberName, BaseExpr))
         return ExprError();
     }
     Diag(MemberLoc, 
@@ -1958,11 +1957,11 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     SourceRange TypeRange 
       = SuperLoc.isValid()? SourceRange(SuperLoc)
                           : ReceiverTypeInfo->getTypeLoc().getSourceRange();
-    if (RequireCompleteType(Loc, Context.getObjCInterfaceType(Class), 
+    if (RequireCompleteType(Loc, Context.getObjCInterfaceType(Class),
                             (getLangOpts().ObjCAutoRefCount
-                               ? PDiag(diag::err_arc_receiver_forward_class)
-                               : PDiag(diag::warn_receiver_forward_class))
-                                   << TypeRange)) {
+                               ? diag::err_arc_receiver_forward_class
+                               : diag::warn_receiver_forward_class),
+                            TypeRange)) {
       // A forward class used in messaging is treated as a 'Class'
       Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                SourceRange(LBracLoc, RBracLoc));
@@ -2221,12 +2220,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         const ObjCInterfaceDecl *forwardClass = 0;
         if (RequireCompleteType(Loc, OCIType->getPointeeType(),
               getLangOpts().ObjCAutoRefCount
-                ? PDiag(diag::err_arc_receiver_forward_instance)
-                    << (Receiver ? Receiver->getSourceRange() 
-                                 : SourceRange(SuperLoc))
-                : PDiag(diag::warn_receiver_forward_instance)
-                    << (Receiver ? Receiver->getSourceRange() 
-                                 : SourceRange(SuperLoc)))) {
+                ? diag::err_arc_receiver_forward_instance
+                : diag::warn_receiver_forward_instance,
+                                Receiver? Receiver->getSourceRange()
+                                        : SourceRange(SuperLoc))) {
           if (getLangOpts().ObjCAutoRefCount)
             return ExprError();
           

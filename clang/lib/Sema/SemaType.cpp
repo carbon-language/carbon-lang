@@ -4043,14 +4043,12 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
 /// case of a reference type, the referred-to type).
 ///
 /// \param E The expression whose type is required to be complete.
-/// \param PD The partial diagnostic that will be printed out if the type cannot
-/// be completed.
+/// \param Diagnoser The object that will emit a diagnostic if the type is
+/// incomplete.
 ///
 /// \returns \c true if the type of \p E is incomplete and diagnosed, \c false
 /// otherwise.
-bool Sema::RequireCompleteExprType(Expr *E, const PartialDiagnostic &PD,
-                                   std::pair<SourceLocation,
-                                             PartialDiagnostic> Note) {
+bool Sema::RequireCompleteExprType(Expr *E, IncompleteTypeDiagnoser &Diagnoser){
   QualType T = E->getType();
 
   // Fast path the case where the type is already complete.
@@ -4107,7 +4105,26 @@ bool Sema::RequireCompleteExprType(Expr *E, const PartialDiagnostic &PD,
   if (const ReferenceType *Ref = T->getAs<ReferenceType>())
     T = Ref->getPointeeType();
 
-  return RequireCompleteType(E->getExprLoc(), T, PD, Note);
+  return RequireCompleteType(E->getExprLoc(), T, Diagnoser);
+}
+
+namespace {
+  struct IncompleteTypeDiagnoserDiag : Sema::IncompleteTypeDiagnoser {
+    unsigned DiagID;
+    
+    IncompleteTypeDiagnoserDiag(unsigned DiagID)
+      : Sema::IncompleteTypeDiagnoser(DiagID == 0), DiagID(DiagID) {}
+    
+    virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+      if (Suppressed) return;
+      S.Diag(Loc, DiagID) << T;
+    }
+  };
+}
+
+bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
+  IncompleteTypeDiagnoserDiag Diagnoser(DiagID);
+  return RequireCompleteExprType(E, Diagnoser);
 }
 
 /// @brief Ensure that the type T is a complete type.
@@ -4131,11 +4148,7 @@ bool Sema::RequireCompleteExprType(Expr *E, const PartialDiagnostic &PD,
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
-                               const PartialDiagnostic &PD,
-                               std::pair<SourceLocation, 
-                                         PartialDiagnostic> Note) {
-  unsigned diag = PD.getDiagID();
-
+                               IncompleteTypeDiagnoser &Diagnoser) {
   // FIXME: Add this assertion to make sure we always get instantiation points.
   //  assert(!Loc.isInvalid() && "Invalid location in RequireCompleteType");
   // FIXME: Add this assertion to help us flush out problems with
@@ -4148,7 +4161,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   NamedDecl *Def = 0;
   if (!T->isIncompleteType(&Def)) {
     // If we know about the definition but it is not visible, complain.
-    if (diag != 0 && Def && !LookupResult::isVisible(Def)) {
+    if (!Diagnoser.Suppressed && Def && !LookupResult::isVisible(Def)) {
       // Suppress this error outside of a SFINAE context if we've already
       // emitted the error once for this type. There's no usefulness in 
       // repeating the diagnostic.
@@ -4204,7 +4217,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared)
         return InstantiateClassTemplateSpecialization(Loc, ClassTemplateSpec,
                                                       TSK_ImplicitInstantiation,
-                                                      /*Complain=*/diag != 0);
+                                            /*Complain=*/!Diagnoser.Suppressed);
     } else if (CXXRecordDecl *Rec
                  = dyn_cast<CXXRecordDecl>(Record->getDecl())) {
       CXXRecordDecl *Pattern = Rec->getInstantiatedFromMemberClass();
@@ -4216,20 +4229,16 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
           return InstantiateClass(Loc, Rec, Pattern,
                                   getTemplateInstantiationArgs(Rec),
                                   TSK_ImplicitInstantiation,
-                                  /*Complain=*/diag != 0);
+                                  /*Complain=*/!Diagnoser.Suppressed);
       }
     }
   }
 
-  if (diag == 0)
+  if (Diagnoser.Suppressed)
     return true;
-    
+
   // We have an incomplete type. Produce a diagnostic.
-  Diag(Loc, PD) << T;
-    
-  // If we have a note, produce it.
-  if (!Note.first.isInvalid())
-    Diag(Note.first, Note.second);
+  Diagnoser.diagnose(*this, Loc, T);
     
   // If the type was a forward declaration of a class/struct/union
   // type, produce a note.
@@ -4247,15 +4256,9 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 }
 
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
-                               const PartialDiagnostic &PD) {
-  return RequireCompleteType(Loc, T, PD, 
-                             std::make_pair(SourceLocation(), PDiag(0)));
-}
-  
-bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
-                               unsigned DiagID) {
-  return RequireCompleteType(Loc, T, PDiag(DiagID),
-                             std::make_pair(SourceLocation(), PDiag(0)));
+                               unsigned DiagID) {  
+  IncompleteTypeDiagnoserDiag Diagnoser(DiagID);
+  return RequireCompleteType(Loc, T, Diagnoser);
 }
 
 /// @brief Ensure that the type T is a literal type.
@@ -4305,8 +4308,7 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
   // class type must have a trivial destructor (which can't be checked until
   // the class definition is complete).
   if (!RD->isCompleteDefinition()) {
-    RequireCompleteType(Loc, ElemType,
-                        PDiag(diag::note_non_literal_incomplete) << T);
+    RequireCompleteType(Loc, ElemType, diag::note_non_literal_incomplete, T);
     return true;
   }
 
@@ -4487,8 +4489,7 @@ QualType Sema::BuildAtomicType(QualType T, SourceLocation Loc) {
   if (!T->isDependentType()) {
     // FIXME: It isn't entirely clear whether incomplete atomic types
     // are allowed or not; for simplicity, ban them for the moment.
-    if (RequireCompleteType(Loc, T,
-                            PDiag(diag::err_atomic_specifier_bad_type) << 0))
+    if (RequireCompleteType(Loc, T, diag::err_atomic_specifier_bad_type, 0))
       return QualType();
 
     int DisallowedKind = -1;

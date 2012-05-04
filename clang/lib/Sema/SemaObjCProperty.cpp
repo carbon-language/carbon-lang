@@ -670,8 +670,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     QualType PropertyIvarType = PropType.getNonReferenceType();
 
     if (RequireCompleteType(PropertyDiagLoc, PropertyIvarType,
-                            PDiag(diag::err_incomplete_synthesized_property)
-                                << property->getDeclName())) {
+                            diag::err_incomplete_synthesized_property,
+                            property->getDeclName())) {
       Diag(property->getLocation(), diag::note_property_declare);
       CompleteTypeErr = true;
     }

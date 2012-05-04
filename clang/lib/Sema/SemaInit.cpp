@@ -3108,7 +3108,7 @@ static void TryListInitialization(Sema &S,
     return;
   }
   if (DestType->isRecordType()) {
-    if (S.RequireCompleteType(InitList->getLocStart(), DestType, S.PDiag())) {
+    if (S.RequireCompleteType(InitList->getLocStart(), DestType, 0)) {
       Sequence.setIncompleteTypeFailure(DestType);
       return;
     }
@@ -4452,7 +4452,7 @@ static ExprResult CopyObject(Sema &S,
   SourceLocation Loc = getInitializationLoc(Entity, CurInit.get());
 
   // Make sure that the type we are copying is complete.
-  if (S.RequireCompleteType(Loc, T, S.PDiag(diag::err_temp_copy_incomplete)))
+  if (S.RequireCompleteType(Loc, T, diag::err_temp_copy_incomplete))
     return move(CurInit);
 
   // Perform overload resolution using the class's copy/move constructors.
@@ -4516,7 +4516,7 @@ static ExprResult CopyObject(Sema &S,
     for (unsigned I = 1, N = Constructor->getNumParams(); I != N; ++I) {
       ParmVarDecl *Parm = Constructor->getParamDecl(I);
       if (S.RequireCompleteType(Loc, Parm->getType(),
-                                S.PDiag(diag::err_call_incomplete_argument)))
+                                diag::err_call_incomplete_argument))
         break;
 
       // Build the default argument expression; we don't actually care

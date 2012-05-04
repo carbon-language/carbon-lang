@@ -1055,8 +1055,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   //   The class-name in a base-specifier shall not be an incompletely
   //   defined class.
   if (RequireCompleteType(BaseLoc, BaseType,
-                          PDiag(diag::err_incomplete_base_class)
-                            << SpecifierRange)) {
+                          diag::err_incomplete_base_class, SpecifierRange)) {
     Class->setInvalidDecl();
     return 0;
   }
@@ -10650,8 +10649,8 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   if (const RecordType *RT = NewClassTy->getAs<RecordType>()) {
     if (!RT->isBeingDefined() &&
         RequireCompleteType(New->getLocation(), NewClassTy, 
-                            PDiag(diag::err_covariant_return_incomplete)
-                              << New->getDeclName()))
+                            diag::err_covariant_return_incomplete,
+                            New->getDeclName()))
     return true;
   }
 

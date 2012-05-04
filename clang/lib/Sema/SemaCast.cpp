@@ -561,8 +561,8 @@ void CastOperation::CheckDynamicCast() {
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
     if (Self.RequireCompleteType(OpRange.getBegin(), DestPointee,
-                               Self.PDiag(diag::err_bad_dynamic_cast_incomplete)
-                                   << DestRange))
+                                 diag::err_bad_dynamic_cast_incomplete,
+                                 DestRange))
       return;
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
@@ -597,8 +597,8 @@ void CastOperation::CheckDynamicCast() {
   const RecordType *SrcRecord = SrcPointee->getAs<RecordType>();
   if (SrcRecord) {
     if (Self.RequireCompleteType(OpRange.getBegin(), SrcPointee,
-                             Self.PDiag(diag::err_bad_dynamic_cast_incomplete)
-                                   << SrcExpr.get()->getSourceRange()))
+                                 diag::err_bad_dynamic_cast_incomplete,
+                                 SrcExpr.get()))
       return;
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
@@ -1075,8 +1075,8 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
                   QualType OrigDestType, unsigned &msg, 
                   CastKind &Kind, CXXCastPath &BasePath) {
   // We can only work with complete types. But don't complain if it doesn't work
-  if (Self.RequireCompleteType(OpRange.getBegin(), SrcType, Self.PDiag(0)) ||
-      Self.RequireCompleteType(OpRange.getBegin(), DestType, Self.PDiag(0)))
+  if (Self.RequireCompleteType(OpRange.getBegin(), SrcType, 0) ||
+      Self.RequireCompleteType(OpRange.getBegin(), DestType, 0))
     return TC_NotApplicable;
 
   // Downcast can only happen in class hierarchies, so we need classes.

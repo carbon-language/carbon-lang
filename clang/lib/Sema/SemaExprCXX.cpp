@@ -584,9 +584,9 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   }
   if (!isPointer || !Ty->isVoidType()) {
     if (RequireCompleteType(ThrowLoc, Ty,
-                            PDiag(isPointer ? diag::err_throw_incomplete_ptr
-                                            : diag::err_throw_incomplete)
-                              << E->getSourceRange()))
+                            isPointer? diag::err_throw_incomplete_ptr
+                                     : diag::err_throw_incomplete,
+                            E->getSourceRange()))
       return ExprError();
 
     if (RequireNonAbstractType(ThrowLoc, E->getType(),
@@ -839,8 +839,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
 
   if (!Ty->isVoidType() &&
       RequireCompleteType(TyBeginLoc, ElemTy,
-                          PDiag(diag::err_invalid_incomplete_type_use)
-                            << FullRange))
+                          diag::err_invalid_incomplete_type_use, FullRange))
     return ExprError();
 
   if (RequireNonAbstractType(TyBeginLoc, Ty,
@@ -1401,9 +1400,7 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
     return Diag(Loc, diag::err_bad_new_type)
       << AllocType << 1 << R;
   else if (!AllocType->isDependentType() &&
-           RequireCompleteType(Loc, AllocType,
-                               PDiag(diag::err_new_incomplete_type)
-                                 << R))
+           RequireCompleteType(Loc, AllocType, diag::err_new_incomplete_type,R))
     return true;
   else if (RequireNonAbstractType(Loc, AllocType,
                                   diag::err_allocation_of_abstract_type))
@@ -2014,7 +2011,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
     if (const RecordType *Record = Type->getAs<RecordType>()) {
       if (RequireCompleteType(StartLoc, Type,
-                              PDiag(diag::err_delete_incomplete_class_type)))
+                              diag::err_delete_incomplete_class_type))
         return ExprError();
 
       SmallVector<CXXConversionDecl*, 4> ObjectPtrConversions;
@@ -2084,8 +2081,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         << Type << Ex.get()->getSourceRange());
     } else if (!Pointee->isDependentType()) {
       if (!RequireCompleteType(StartLoc, Pointee,
-                               PDiag(diag::warn_delete_incomplete)
-                                 << Ex.get()->getSourceRange())) {
+                               diag::warn_delete_incomplete, Ex.get())) {
         if (const RecordType *RT = PointeeElem->getAs<RecordType>())
           PointeeRD = cast<CXXRecordDecl>(RT->getDecl());
       }
@@ -3767,8 +3763,8 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &LHS, ExprResult &RHS,
 
   if (!Context.hasSameUnqualifiedType(Class, LHSType)) {
     // If we want to check the hierarchy, we need a complete type.
-    if (RequireCompleteType(Loc, LHSType, PDiag(diag::err_bad_memptr_lhs)
-        << OpSpelling << (int)isIndirect)) {
+    if (RequireCompleteType(Loc, LHSType, diag::err_bad_memptr_lhs,
+                            OpSpelling, (int)isIndirect)) {
       return QualType();
     }
     CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
@@ -4833,8 +4829,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   //   the member function body.
   if (!BaseType->isDependentType() &&
       !isThisOutsideMemberFunctionBody(BaseType) &&
-      RequireCompleteType(OpLoc, BaseType,
-                          PDiag(diag::err_incomplete_member_access)))
+      RequireCompleteType(OpLoc, BaseType, diag::err_incomplete_member_access))
     return ExprError();
 
   // C++ [basic.lookup.classref]p2:

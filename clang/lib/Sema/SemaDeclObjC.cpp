@@ -474,11 +474,11 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
           Diag(SuperLoc, diag::err_undef_superclass)
             << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
         else if (RequireCompleteType(SuperLoc, 
-                   Context.getObjCInterfaceType(SuperClassDecl),
-                   PDiag(diag::err_forward_superclass)
-                     << SuperClassDecl->getDeclName() 
-                     << ClassName
-                   << SourceRange(AtInterfaceLoc, ClassLoc))) {
+                                  Context.getObjCInterfaceType(SuperClassDecl),
+                                     diag::err_forward_superclass,
+                                     SuperClassDecl->getDeclName(),
+                                     ClassName,
+                                     SourceRange(AtInterfaceLoc, ClassLoc))) {
           SuperClassDecl = 0;
         }
       }
@@ -759,8 +759,8 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
 
   if (!IDecl 
       || RequireCompleteType(ClassLoc, Context.getObjCInterfaceType(IDecl),
-                             PDiag(diag::err_category_forward_interface)
-                               << (CategoryName == 0))) {
+                             diag::err_category_forward_interface,
+                             CategoryName == 0)) {
     // Create an invalid ObjCCategoryDecl to serve as context for
     // the enclosing method declarations.  We mark the decl invalid
     // to make it clear that this isn't a valid AST.

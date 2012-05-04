@@ -889,8 +889,7 @@ Sema::ObjCSubscriptKind
   
   // We must have a complete class type.
   if (RequireCompleteType(FromE->getExprLoc(), T, 
-                          PDiag(diag::err_objc_index_incomplete_class_type)
-                          << FromE->getSourceRange()))
+                          diag::err_objc_index_incomplete_class_type, FromE))
     return OS_Error;
   
   // Look for a conversion to an integral, enumeration type, or

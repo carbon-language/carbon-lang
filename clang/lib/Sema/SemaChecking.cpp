@@ -4488,7 +4488,7 @@ bool Sema::CheckParmsForFunctionDef(ParmVarDecl **P, ParmVarDecl **PEnd,
     // This is also C++ [dcl.fct]p6.
     if (!Param->isInvalidDecl() &&
         RequireCompleteType(Param->getLocation(), Param->getType(),
-                               diag::err_typecheck_decl_incomplete_type)) {
+                            diag::err_typecheck_decl_incomplete_type)) {
       Param->setInvalidDecl();
       HasInvalidParm = true;
     }

@@ -2838,9 +2838,8 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *E,
     return false;
 
   if (RequireCompleteExprType(E,
-                              PDiag(diag::err_sizeof_alignof_incomplete_type)
-                              << ExprKind << E->getSourceRange(),
-                              std::make_pair(SourceLocation(), PDiag(0))))
+                              diag::err_sizeof_alignof_incomplete_type,
+                              ExprKind, E->getSourceRange()))
     return true;
 
   // Completeing the expression's type may have changed it.
@@ -2907,8 +2906,8 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType ExprType,
     return false;
 
   if (RequireCompleteType(OpLoc, ExprType,
-                          PDiag(diag::err_sizeof_alignof_incomplete_type)
-                          << ExprKind << ExprRange))
+                          diag::err_sizeof_alignof_incomplete_type,
+                          ExprKind, ExprRange))
     return true;
 
   if (CheckObjCTraitOperandConstraints(*this, ExprType, OpLoc, ExprRange,
@@ -3246,8 +3245,7 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
     if (!ResultType.hasQualifiers()) VK = VK_RValue;
   } else if (!ResultType->isDependentType() &&
       RequireCompleteType(LLoc, ResultType,
-                          PDiag(diag::err_subscript_incomplete_type)
-                            << BaseExpr->getSourceRange()))
+                          diag::err_subscript_incomplete_type, BaseExpr))
     return ExprError();
 
   // Diagnose bad cases where we step over interface counts.
@@ -3465,8 +3463,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
       if (RequireCompleteType(Arg->getLocStart(),
                               ProtoArgType,
-                              PDiag(diag::err_call_incomplete_argument)
-                              << Arg->getSourceRange()))
+                              diag::err_call_incomplete_argument, Arg))
         return true;
 
       // Pass the argument
@@ -3909,8 +3906,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       
       if (RequireCompleteType(Arg->getLocStart(),
                               Arg->getType(),
-                              PDiag(diag::err_call_incomplete_argument)
-                                << Arg->getSourceRange()))
+                              diag::err_call_incomplete_argument, Arg))
         return ExprError();
 
       TheCall->setArg(i, Arg);
@@ -3963,18 +3959,17 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
 
   if (literalType->isArrayType()) {
     if (RequireCompleteType(LParenLoc, Context.getBaseElementType(literalType),
-             PDiag(diag::err_illegal_decl_array_incomplete_type)
-               << SourceRange(LParenLoc,
-                              LiteralExpr->getSourceRange().getEnd())))
+          diag::err_illegal_decl_array_incomplete_type,
+          SourceRange(LParenLoc,
+                      LiteralExpr->getSourceRange().getEnd())))
       return ExprError();
     if (literalType->isVariableArrayType())
       return ExprError(Diag(LParenLoc, diag::err_variable_object_no_init)
         << SourceRange(LParenLoc, LiteralExpr->getSourceRange().getEnd()));
   } else if (!literalType->isDependentType() &&
              RequireCompleteType(LParenLoc, literalType,
-                      PDiag(diag::err_typecheck_decl_incomplete_type)
-                        << SourceRange(LParenLoc,
-                                       LiteralExpr->getSourceRange().getEnd())))
+               diag::err_typecheck_decl_incomplete_type,
+               SourceRange(LParenLoc, LiteralExpr->getSourceRange().getEnd())))
     return ExprError();
 
   InitializedEntity Entity
@@ -6059,8 +6054,8 @@ static bool checkArithmeticIncompletePointerType(Sema &S, SourceLocation Loc,
     QualType PointeeTy = Operand->getType()->getPointeeType();
     if (S.RequireCompleteType(
           Loc, PointeeTy,
-          S.PDiag(diag::err_typecheck_arithmetic_incomplete_type)
-            << PointeeTy << Operand->getSourceRange()))
+          diag::err_typecheck_arithmetic_incomplete_type,
+          PointeeTy, Operand->getSourceRange()))
       return true;
   }
   return false;
@@ -7288,8 +7283,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_IncompleteType:
   case Expr::MLV_IncompleteVoidType:
     return S.RequireCompleteType(Loc, E->getType(),
-              S.PDiag(diag::err_typecheck_incomplete_type_not_modifiable_lvalue)
-                  << E->getSourceRange());
+             diag::err_typecheck_incomplete_type_not_modifiable_lvalue, E);
   case Expr::MLV_DuplicateVectorComponents:
     Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
     break;
@@ -8686,8 +8680,7 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
   // with an incomplete type would be ill-formed.
   if (!Dependent 
       && RequireCompleteType(BuiltinLoc, ArgTy,
-                             PDiag(diag::err_offsetof_incomplete_type)
-                               << TypeRange))
+                             diag::err_offsetof_incomplete_type, TypeRange))
     return ExprError();
   
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
@@ -9207,8 +9200,8 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
 
   if (!TInfo->getType()->isDependentType()) {
     if (RequireCompleteType(TInfo->getTypeLoc().getBeginLoc(), TInfo->getType(),
-          PDiag(diag::err_second_parameter_to_va_arg_incomplete)
-          << TInfo->getTypeLoc().getSourceRange()))
+                            diag::err_second_parameter_to_va_arg_incomplete,
+                            TInfo->getTypeLoc()))
       return ExprError();
 
     if (RequireNonAbstractType(TInfo->getTypeLoc().getBeginLoc(),
@@ -10670,18 +10663,30 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
     return false;
   }
 
-  PartialDiagnostic Note =
-    FD ? PDiag(diag::note_function_with_incomplete_return_type_declared_here)
-    << FD->getDeclName() : PDiag();
-  SourceLocation NoteLoc = FD ? FD->getLocation() : SourceLocation();
-
-  if (RequireCompleteType(Loc, ReturnType,
-                          FD ?
-                          PDiag(diag::err_call_function_incomplete_return)
-                            << CE->getSourceRange() << FD->getDeclName() :
-                          PDiag(diag::err_call_incomplete_return)
-                            << CE->getSourceRange(),
-                          std::make_pair(NoteLoc, Note)))
+  class CallReturnIncompleteDiagnoser : public IncompleteTypeDiagnoser {
+    FunctionDecl *FD;
+    CallExpr *CE;
+    
+  public:
+    CallReturnIncompleteDiagnoser(FunctionDecl *FD, CallExpr *CE)
+      : FD(FD), CE(CE) { }
+    
+    virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+      if (!FD) {
+        S.Diag(Loc, diag::err_call_incomplete_return)
+          << T << CE->getSourceRange();
+        return;
+      }
+      
+      S.Diag(Loc, diag::err_call_function_incomplete_return)
+        << CE->getSourceRange() << FD->getDeclName() << T;
+      S.Diag(FD->getLocation(),
+             diag::note_function_with_incomplete_return_type_declared_here)
+        << FD->getDeclName();
+    }
+  } Diagnoser(FD, CE);
+  
+  if (RequireCompleteType(Loc, ReturnType, Diagnoser))
     return true;
 
   return false;

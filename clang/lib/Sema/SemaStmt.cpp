@@ -1350,9 +1350,9 @@ Sema::ActOnObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
   if (iface && 
       RequireCompleteType(forLoc, QualType(objectType, 0),
                           getLangOpts().ObjCAutoRefCount
-                            ? PDiag(diag::err_arc_collection_forward)
-                                << collection->getSourceRange()
-                          : PDiag(0))) {
+                            ? diag::err_arc_collection_forward
+                            : 0,
+                          collection)) {
     // Otherwise, if we have any useful type information, check that
     // the type declares the appropriate method.
   } else if (iface || !objectType->qual_empty()) {
@@ -1659,7 +1659,7 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
     QualType RangeType = Range->getType();
 
     if (RequireCompleteType(RangeLoc, RangeType,
-                            PDiag(diag::err_for_range_incomplete_type)))
+                            diag::err_for_range_incomplete_type))
       return StmtError();
 
     // Build auto __begin = begin-expr, __end = end-expr.

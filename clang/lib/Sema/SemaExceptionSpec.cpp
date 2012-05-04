@@ -51,7 +51,8 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   // C++ 15.4p2: A type denoted in an exception-specification shall not denote
   //   an incomplete type.
   if (RequireCompleteType(Range.getBegin(), T,
-      PDiag(diag::err_incomplete_in_exception_spec) << /*direct*/0 << Range))
+                          diag::err_incomplete_in_exception_spec,
+                          /*direct*/0, Range))
     return true;
 
   // C++ 15.4p2: A type denoted in an exception-specification shall not denote
@@ -71,8 +72,9 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   if (T->isRecordType() && T->getAs<RecordType>()->isBeingDefined())
     return false;
     
-  if (!T->isVoidType() && RequireCompleteType(Range.getBegin(), T,
-      PDiag(diag::err_incomplete_in_exception_spec) << kind << Range))
+  if (!T->isVoidType() &&
+      RequireCompleteType(Range.getBegin(), T,
+                          diag::err_incomplete_in_exception_spec, kind, Range))
     return true;
 
   return false;
