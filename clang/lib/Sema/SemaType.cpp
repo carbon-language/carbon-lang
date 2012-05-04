@@ -4048,7 +4048,7 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
 ///
 /// \returns \c true if the type of \p E is incomplete and diagnosed, \c false
 /// otherwise.
-bool Sema::RequireCompleteExprType(Expr *E, IncompleteTypeDiagnoser &Diagnoser){
+bool Sema::RequireCompleteExprType(Expr *E, TypeDiagnoser &Diagnoser){
   QualType T = E->getType();
 
   // Fast path the case where the type is already complete.
@@ -4109,11 +4109,11 @@ bool Sema::RequireCompleteExprType(Expr *E, IncompleteTypeDiagnoser &Diagnoser){
 }
 
 namespace {
-  struct IncompleteTypeDiagnoserDiag : Sema::IncompleteTypeDiagnoser {
+  struct TypeDiagnoserDiag : Sema::TypeDiagnoser {
     unsigned DiagID;
     
-    IncompleteTypeDiagnoserDiag(unsigned DiagID)
-      : Sema::IncompleteTypeDiagnoser(DiagID == 0), DiagID(DiagID) {}
+    TypeDiagnoserDiag(unsigned DiagID)
+      : Sema::TypeDiagnoser(DiagID == 0), DiagID(DiagID) {}
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
       if (Suppressed) return;
@@ -4123,7 +4123,7 @@ namespace {
 }
 
 bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
-  IncompleteTypeDiagnoserDiag Diagnoser(DiagID);
+  TypeDiagnoserDiag Diagnoser(DiagID);
   return RequireCompleteExprType(E, Diagnoser);
 }
 
@@ -4148,7 +4148,7 @@ bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
-                               IncompleteTypeDiagnoser &Diagnoser) {
+                               TypeDiagnoser &Diagnoser) {
   // FIXME: Add this assertion to make sure we always get instantiation points.
   //  assert(!Loc.isInvalid() && "Invalid location in RequireCompleteType");
   // FIXME: Add this assertion to help us flush out problems with
@@ -4257,7 +4257,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                                unsigned DiagID) {  
-  IncompleteTypeDiagnoserDiag Diagnoser(DiagID);
+  TypeDiagnoserDiag Diagnoser(DiagID);
   return RequireCompleteType(Loc, T, Diagnoser);
 }
 
@@ -4275,13 +4275,12 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 ///
 /// @param T  The type that this routine is examining for literalness.
 ///
-/// @param PD The partial diagnostic that will be printed out if T is not a
-/// literal type.
+/// @param Diagnoser Emits a diagnostic if T is not a literal type.
 ///
 /// @returns @c true if @p T is not a literal type and a diagnostic was emitted,
 /// @c false otherwise.
 bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
-                              const PartialDiagnostic &PD) {
+                              TypeDiagnoser &Diagnoser) {
   assert(!T->isDependentType() && "type should not be dependent");
 
   QualType ElemType = Context.getBaseElementType(T);
@@ -4290,10 +4289,10 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
   if (T->isLiteralType())
     return false;
 
-  if (PD.getDiagID() == 0)
+  if (Diagnoser.Suppressed)
     return true;
 
-  Diag(Loc, PD) << T;
+  Diagnoser.diagnose(*this, Loc, T);
 
   if (T->isVariableArrayType())
     return true;
@@ -4360,6 +4359,11 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
   }
 
   return true;
+}
+
+bool Sema::RequireLiteralType(SourceLocation Loc, QualType T, unsigned DiagID) {  
+  TypeDiagnoserDiag Diagnoser(DiagID);
+  return RequireLiteralType(Loc, T, Diagnoser);
 }
 
 /// \brief Retrieve a version of the type 'T' that is elaborated by Keyword

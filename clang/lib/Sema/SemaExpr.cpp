@@ -10663,7 +10663,7 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
     return false;
   }
 
-  class CallReturnIncompleteDiagnoser : public IncompleteTypeDiagnoser {
+  class CallReturnIncompleteDiagnoser : public TypeDiagnoser {
     FunctionDecl *FD;
     CallExpr *CE;
     

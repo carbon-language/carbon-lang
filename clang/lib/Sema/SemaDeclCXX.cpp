@@ -667,9 +667,9 @@ static bool CheckConstexprParameterTypes(Sema &SemaRef,
     SourceLocation ParamLoc = PD->getLocation();
     if (!(*i)->isDependentType() &&
         SemaRef.RequireLiteralType(ParamLoc, *i,
-                            SemaRef.PDiag(diag::err_constexpr_non_literal_param)
-                                     << ArgIndex+1 << PD->getSourceRange()
-                                     << isa<CXXConstructorDecl>(FD)))
+                                   diag::err_constexpr_non_literal_param,
+                                   ArgIndex+1, PD->getSourceRange(),
+                                   isa<CXXConstructorDecl>(FD)))
       return false;
   }
   return true;
@@ -725,7 +725,7 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD) {
     QualType RT = NewFD->getResultType();
     if (!RT->isDependentType() &&
         RequireLiteralType(NewFD->getLocation(), RT,
-                           PDiag(diag::err_constexpr_non_literal_return)))
+                           diag::err_constexpr_non_literal_return))
       return false;
   }
 
@@ -3762,7 +3762,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
         case TSK_Undeclared:
         case TSK_ExplicitSpecialization:
           RequireLiteralType(M->getLocation(), Context.getRecordType(Record),
-                             PDiag(diag::err_constexpr_method_non_literal));
+                             diag::err_constexpr_method_non_literal);
           break;
         }
 

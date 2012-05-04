@@ -945,16 +945,17 @@ public:
   ParsedType ActOnObjCInstanceType(SourceLocation Loc);
 
   /// \brief Abstract class used to diagnose incomplete types.
-  struct IncompleteTypeDiagnoser {
+  struct TypeDiagnoser {
     bool Suppressed;
     
-    IncompleteTypeDiagnoser(bool Suppressed = false) : Suppressed(Suppressed) { }
+    TypeDiagnoser(bool Suppressed = false) : Suppressed(Suppressed) { }
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) = 0;
-    virtual ~IncompleteTypeDiagnoser() {}
+    virtual ~TypeDiagnoser() {}
   };
 
   static int getPrintable(int I) { return I; }
+  static unsigned getPrintable(unsigned I) { return I; }
   static bool getPrintable(bool B) { return B; }
   static const char * getPrintable(const char *S) { return S; }
   static StringRef getPrintable(StringRef S) { return S; }
@@ -970,31 +971,31 @@ public:
   static SourceRange getPrintable(TypeLoc TL) { return TL.getSourceRange();}
   
   template<typename T1>
-  class BoundIncompleteTypeDiagnoser1 : public IncompleteTypeDiagnoser {
+  class BoundTypeDiagnoser1 : public TypeDiagnoser {
     unsigned DiagID;
     const T1 &Arg1;
     
   public:
-    BoundIncompleteTypeDiagnoser1(unsigned DiagID, const T1 &Arg1)
-      : IncompleteTypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1) { }
+    BoundTypeDiagnoser1(unsigned DiagID, const T1 &Arg1)
+      : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1) { }
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
       if (Suppressed) return;
       S.Diag(Loc, DiagID) << getPrintable(Arg1) << T;
     }
     
-    virtual ~BoundIncompleteTypeDiagnoser1() { }
+    virtual ~BoundTypeDiagnoser1() { }
   };
 
   template<typename T1, typename T2>
-  class BoundIncompleteTypeDiagnoser2 : public IncompleteTypeDiagnoser {
+  class BoundTypeDiagnoser2 : public TypeDiagnoser {
     unsigned DiagID;
     const T1 &Arg1;
     const T2 &Arg2;
     
   public:
-    BoundIncompleteTypeDiagnoser2(unsigned DiagID, const T1 &Arg1,
+    BoundTypeDiagnoser2(unsigned DiagID, const T1 &Arg1,
                                   const T2 &Arg2)
-      : IncompleteTypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1),
+      : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1),
         Arg2(Arg2) { }
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
@@ -1002,20 +1003,20 @@ public:
       S.Diag(Loc, DiagID) << getPrintable(Arg1) << getPrintable(Arg2) << T;
     }
     
-    virtual ~BoundIncompleteTypeDiagnoser2() { }
+    virtual ~BoundTypeDiagnoser2() { }
   };
 
   template<typename T1, typename T2, typename T3>
-  class BoundIncompleteTypeDiagnoser3 : public IncompleteTypeDiagnoser {
+  class BoundTypeDiagnoser3 : public TypeDiagnoser {
     unsigned DiagID;
     const T1 &Arg1;
     const T2 &Arg2;
     const T3 &Arg3;
     
   public:
-    BoundIncompleteTypeDiagnoser3(unsigned DiagID, const T1 &Arg1,
+    BoundTypeDiagnoser3(unsigned DiagID, const T1 &Arg1,
                                   const T2 &Arg2, const T3 &Arg3)
-    : IncompleteTypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1),
+    : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1),
       Arg2(Arg2), Arg3(Arg3) { }
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
@@ -1024,25 +1025,25 @@ public:
         << getPrintable(Arg1) << getPrintable(Arg2) << getPrintable(Arg3) << T;
     }
     
-    virtual ~BoundIncompleteTypeDiagnoser3() { }
+    virtual ~BoundTypeDiagnoser3() { }
   };
   
   bool RequireCompleteType(SourceLocation Loc, QualType T,
-                           IncompleteTypeDiagnoser &Diagnoser);
+                           TypeDiagnoser &Diagnoser);
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            unsigned DiagID);
   
   template<typename T1>
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            unsigned DiagID, const T1 &Arg1) {
-    BoundIncompleteTypeDiagnoser1<T1> Diagnoser(DiagID, Arg1);
+    BoundTypeDiagnoser1<T1> Diagnoser(DiagID, Arg1);
     return RequireCompleteType(Loc, T, Diagnoser);
   }
   
   template<typename T1, typename T2>
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            unsigned DiagID, const T1 &Arg1, const T2 &Arg2) {
-    BoundIncompleteTypeDiagnoser2<T1, T2> Diagnoser(DiagID, Arg1, Arg2);
+    BoundTypeDiagnoser2<T1, T2> Diagnoser(DiagID, Arg1, Arg2);
     return RequireCompleteType(Loc, T, Diagnoser);
   }
 
@@ -1050,37 +1051,61 @@ public:
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            unsigned DiagID, const T1 &Arg1, const T2 &Arg2,
                            const T3 &Arg3) {
-    BoundIncompleteTypeDiagnoser3<T1, T2, T3> Diagnoser(DiagID, Arg1, Arg2,
+    BoundTypeDiagnoser3<T1, T2, T3> Diagnoser(DiagID, Arg1, Arg2,
                                                         Arg3);
     return RequireCompleteType(Loc, T, Diagnoser);
   }
 
-  bool RequireCompleteExprType(Expr *E, IncompleteTypeDiagnoser &Diagnoser);
+  bool RequireCompleteExprType(Expr *E, TypeDiagnoser &Diagnoser);
   bool RequireCompleteExprType(Expr *E, unsigned DiagID);
 
   template<typename T1>
   bool RequireCompleteExprType(Expr *E, unsigned DiagID, const T1 &Arg1) {
-    BoundIncompleteTypeDiagnoser1<T1> Diagnoser(DiagID, Arg1);
+    BoundTypeDiagnoser1<T1> Diagnoser(DiagID, Arg1);
     return RequireCompleteExprType(E, Diagnoser);
   }
 
   template<typename T1, typename T2>
   bool RequireCompleteExprType(Expr *E, unsigned DiagID, const T1 &Arg1,
                                const T2 &Arg2) {
-    BoundIncompleteTypeDiagnoser2<T1, T2> Diagnoser(DiagID, Arg1, Arg2);
+    BoundTypeDiagnoser2<T1, T2> Diagnoser(DiagID, Arg1, Arg2);
     return RequireCompleteExprType(E, Diagnoser);
   }
 
   template<typename T1, typename T2, typename T3>
   bool RequireCompleteExprType(Expr *E, unsigned DiagID, const T1 &Arg1,
                                const T2 &Arg2, const T3 &Arg3) {
-    BoundIncompleteTypeDiagnoser3<T1, T2, T3> Diagnoser(DiagID, Arg1, Arg2,
+    BoundTypeDiagnoser3<T1, T2, T3> Diagnoser(DiagID, Arg1, Arg2,
                                                         Arg3);
     return RequireCompleteExprType(E, Diagnoser);
   }
 
   bool RequireLiteralType(SourceLocation Loc, QualType T,
-                          const PartialDiagnostic &PD);
+                          TypeDiagnoser &Diagnoser);
+  bool RequireLiteralType(SourceLocation Loc, QualType T, unsigned DiagID);
+  
+  template<typename T1>
+  bool RequireLiteralType(SourceLocation Loc, QualType T,
+                          unsigned DiagID, const T1 &Arg1) {
+    BoundTypeDiagnoser1<T1> Diagnoser(DiagID, Arg1);
+    return RequireLiteralType(Loc, T, Diagnoser);
+  }
+
+  template<typename T1, typename T2>
+  bool RequireLiteralType(SourceLocation Loc, QualType T,
+                          unsigned DiagID, const T1 &Arg1, const T2 &Arg2) {
+    BoundTypeDiagnoser2<T1, T2> Diagnoser(DiagID, Arg1, Arg2);
+    return RequireLiteralType(Loc, T, Diagnoser);
+  }
+
+  template<typename T1, typename T2, typename T3>
+  bool RequireLiteralType(SourceLocation Loc, QualType T,
+                          unsigned DiagID, const T1 &Arg1, const T2 &Arg2,
+                          const T3 &Arg3) {
+    BoundTypeDiagnoser3<T1, T2, T3> Diagnoser(DiagID, Arg1, Arg2,
+                                                        Arg3);
+    return RequireLiteralType(Loc, T, Diagnoser);
+  }
 
   QualType getElaboratedType(ElaboratedTypeKeyword Keyword,
                              const CXXScopeSpec &SS, QualType T);

@@ -5061,11 +5061,11 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   }
 
   // We must have a complete class type.
-  struct IncompleteTypeDiagnoserPartialDiag : IncompleteTypeDiagnoser {
+  struct TypeDiagnoserPartialDiag : TypeDiagnoser {
     const PartialDiagnostic &PD;
     
-    IncompleteTypeDiagnoserPartialDiag(const PartialDiagnostic &PD)
-      : IncompleteTypeDiagnoser(PD.getDiagID() == 0), PD(PD) {}
+    TypeDiagnoserPartialDiag(const PartialDiagnostic &PD)
+      : TypeDiagnoser(PD.getDiagID() == 0), PD(PD) {}
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
       S.Diag(Loc, PD) << T;

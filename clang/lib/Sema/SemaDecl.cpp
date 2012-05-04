@@ -4452,7 +4452,7 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
 
   if (NewVD->isConstexpr() && !T->isDependentType() &&
       RequireLiteralType(NewVD->getLocation(), T,
-                         PDiag(diag::err_constexpr_var_non_literal))) {
+                         diag::err_constexpr_var_non_literal)) {
     NewVD->setInvalidDecl();
     return false;
   }
