@@ -24,3 +24,14 @@ void r11160612_3() {
   char *x = (char*)malloc(12);
   const_ptr_and_callback_def_param(0, x, 12);
 }
+
+// Test member function pointer.
+struct CanFreeMemory {
+  static void myFree(void*);
+};
+//This is handled because we look at the type of the parameter(not argument).
+void r11160612_3(CanFreeMemory* p) {
+  char *x = (char*)malloc(12);
+  const_ptr_and_callback_def_param(0, x, 12, p->myFree);
+}
+
