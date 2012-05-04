@@ -2108,7 +2108,8 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
 // "local exec" model.
 SDValue
 ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
-                                        SelectionDAG &DAG) const {
+                                        SelectionDAG &DAG,
+                                        TLSModel::Model model) const {
   const GlobalValue *GV = GA->getGlobal();
   DebugLoc dl = GA->getDebugLoc();
   SDValue Offset;
@@ -2117,7 +2118,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
   // Get the Thread Pointer
   SDValue ThreadPointer = DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
 
-  if (GV->isDeclaration()) {
+  if (model == TLSModel::InitialExec) {
     MachineFunction &MF = DAG.getMachineFunction();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
@@ -2142,6 +2143,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
                          false, false, false, 0);
   } else {
     // local exec model
+    assert(model == TLSModel::LocalExec);
     ARMConstantPoolValue *CPV =
       ARMConstantPoolConstant::Create(GV, ARMCP::TPOFF);
     Offset = DAG.getTargetConstantPool(CPV, PtrVT, 4);
@@ -2162,12 +2164,17 @@ ARMTargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
   assert(Subtarget->isTargetELF() &&
          "TLS not implemented for non-ELF targets");
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
-  // If the relocation model is PIC, use the "General Dynamic" TLS Model,
-  // otherwise use the "Local Exec" TLS Model
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
-    return LowerToTLSGeneralDynamicModel(GA, DAG);
-  else
-    return LowerToTLSExecModels(GA, DAG);
+
+  TLSModel::Model model = getTargetMachine().getTLSModel(GA->getGlobal());
+
+  switch (model) {
+    case TLSModel::GeneralDynamic:
+    case TLSModel::LocalDynamic:
+      return LowerToTLSGeneralDynamicModel(GA, DAG);
+    case TLSModel::InitialExec:
+    case TLSModel::LocalExec:
+      return LowerToTLSExecModels(GA, DAG, model);
+  }
 }
 
 SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,

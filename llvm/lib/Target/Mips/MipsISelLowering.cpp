@@ -1614,7 +1614,9 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
   const GlobalValue *GV = GA->getGlobal();
   EVT PtrVT = getPointerTy();
 
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  TLSModel::Model model = getTargetMachine().getTLSModel(GV);
+
+  if (model == TLSModel::GeneralDynamic || model == TLSModel::LocalDynamic) {
     // General Dynamic TLS Model
     bool LocalDynamic = GV->hasInternalLinkage();
     unsigned Flag = LocalDynamic ? MipsII::MO_TLSLDM :MipsII::MO_TLSGD;
@@ -1641,7 +1643,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 
     SDValue Ret = CallResult.first;
 
-    if (!LocalDynamic)
+    if (model != TLSModel::LocalDynamic)
       return Ret;
 
     SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
@@ -1655,7 +1657,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
   }
 
   SDValue Offset;
-  if (GV->isDeclaration()) {
+  if (model == TLSModel::InitialExec) {
     // Initial Exec TLS Model
     SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
                                              MipsII::MO_GOTTPREL);
@@ -1666,6 +1668,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
                          false, false, false, 0);
   } else {
     // Local Exec TLS Model
+    assert(model == TLSModel::LocalExec);
     SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
                                                MipsII::MO_TPREL_HI);
     SDValue TGALo = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,

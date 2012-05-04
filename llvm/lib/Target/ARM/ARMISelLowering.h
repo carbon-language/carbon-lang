@@ -422,7 +422,8 @@ namespace llvm {
     SDValue LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
                                             SelectionDAG &DAG) const;
     SDValue LowerToTLSExecModels(GlobalAddressSDNode *GA,
-                                   SelectionDAG &DAG) const;
+                                 SelectionDAG &DAG,
+                                 TLSModel::Model model) const;
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
