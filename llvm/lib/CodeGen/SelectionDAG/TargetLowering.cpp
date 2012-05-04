@@ -719,18 +719,22 @@ TargetLowering::findRepresentativeClass(EVT VT) const {
     return std::make_pair(RC, 0);
 
   // Compute the set of all super-register classes.
-  // Include direct sub-classes of RC in case there are no super-registers.
   BitVector SuperRegRC(TRI->getNumRegClasses());
-  for (SuperRegClassIterator RCI(RC, TRI, true); RCI.isValid(); ++RCI)
+  for (SuperRegClassIterator RCI(RC, TRI); RCI.isValid(); ++RCI)
     SuperRegRC.setBitsInMask(RCI.getMask());
 
-  // Find the first legal register class in the set.
+  // Find the first legal register class with the largest spill size.
+  const TargetRegisterClass *BestRC = RC;
   for (int i = SuperRegRC.find_first(); i >= 0; i = SuperRegRC.find_next(i)) {
     const TargetRegisterClass *SuperRC = TRI->getRegClass(i);
-    if (isLegalRC(SuperRC))
-      return std::make_pair(SuperRC, 1);
+    // We want the largest possible spill size.
+    if (SuperRC->getSize() <= BestRC->getSize())
+      continue;
+    if (!isLegalRC(SuperRC))
+      continue;
+    BestRC = SuperRC;
   }
-  llvm_unreachable("Inconsistent register class tables.");
+  return std::make_pair(BestRC, 1);
 }
 
 /// computeRegisterProperties - Once all of the register classes are added,
