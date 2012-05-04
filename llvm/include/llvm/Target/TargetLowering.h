@@ -2032,10 +2032,6 @@ private:
   /// isLegalRC - Return true if the value types that can be represented by the
   /// specified register class are all legal.
   bool isLegalRC(const TargetRegisterClass *RC) const;
-
-  /// hasLegalSuperRegRegClasses - Return true if the specified register class
-  /// has one or more super-reg register classes that are legal.
-  bool hasLegalSuperRegRegClasses(const TargetRegisterClass *RC) const;
 };
 
 /// GetReturnInfo - Given an LLVM IR type and return type attributes,

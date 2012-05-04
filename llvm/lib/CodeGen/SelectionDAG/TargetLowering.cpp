@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -708,41 +709,29 @@ bool TargetLowering::isLegalRC(const TargetRegisterClass *RC) const {
   return false;
 }
 
-/// hasLegalSuperRegRegClasses - Return true if the specified register class
-/// has one or more super-reg register classes that are legal.
-bool
-TargetLowering::hasLegalSuperRegRegClasses(const TargetRegisterClass *RC) const{
-  if (*RC->superregclasses_begin() == 0)
-    return false;
-  for (TargetRegisterInfo::regclass_iterator I = RC->superregclasses_begin(),
-         E = RC->superregclasses_end(); I != E; ++I) {
-    const TargetRegisterClass *RRC = *I;
-    if (isLegalRC(RRC))
-      return true;
-  }
-  return false;
-}
-
 /// findRepresentativeClass - Return the largest legal super-reg register class
 /// of the register class for the specified type and its associated "cost".
 std::pair<const TargetRegisterClass*, uint8_t>
 TargetLowering::findRepresentativeClass(EVT VT) const {
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
   if (!RC)
     return std::make_pair(RC, 0);
-  const TargetRegisterClass *BestRC = RC;
-  for (TargetRegisterInfo::regclass_iterator I = RC->superregclasses_begin(),
-         E = RC->superregclasses_end(); I != E; ++I) {
-    const TargetRegisterClass *RRC = *I;
-    if (RRC->isASubClass() || !isLegalRC(RRC))
-      continue;
-    if (!hasLegalSuperRegRegClasses(RRC))
-      return std::make_pair(RRC, 1);
-    BestRC = RRC;
-  }
-  return std::make_pair(BestRC, 1);
-}
 
+  // Compute the set of all super-register classes.
+  // Include direct sub-classes of RC in case there are no super-registers.
+  BitVector SuperRegRC(TRI->getNumRegClasses());
+  for (SuperRegClassIterator RCI(RC, TRI, true); RCI.isValid(); ++RCI)
+    SuperRegRC.setBitsInMask(RCI.getMask());
+
+  // Find the first legal register class in the set.
+  for (int i = SuperRegRC.find_first(); i >= 0; i = SuperRegRC.find_next(i)) {
+    const TargetRegisterClass *SuperRC = TRI->getRegClass(i);
+    if (isLegalRC(SuperRC))
+      return std::make_pair(SuperRC, 1);
+  }
+  llvm_unreachable("Inconsistent register class tables.");
+}
 
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
