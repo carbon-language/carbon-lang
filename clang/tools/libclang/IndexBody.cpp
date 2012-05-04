@@ -117,6 +117,12 @@ public:
     return true;
   }
 
+  bool TraverseCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+    if (E->getOperatorLoc().isInvalid())
+      return true; // implicit.
+    return base::TraverseCXXOperatorCallExpr(E);
+  }
+
   bool VisitDeclStmt(DeclStmt *S) {
     if (IndexCtx.shouldIndexFunctionLocalSymbols())
       IndexCtx.indexDeclGroupRef(S->getDeclGroup());
