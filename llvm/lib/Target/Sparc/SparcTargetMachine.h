@@ -28,9 +28,9 @@ namespace llvm {
 class SparcTargetMachine : public LLVMTargetMachine {
   SparcSubtarget Subtarget;
   const TargetData DataLayout;       // Calculates type size & alignment
+  SparcInstrInfo InstrInfo;
   SparcTargetLowering TLInfo;
   SparcSelectionDAGInfo TSInfo;
-  SparcInstrInfo InstrInfo;
   SparcFrameLowering FrameLowering;
 public:
   SparcTargetMachine(const Target &T, StringRef TT,
