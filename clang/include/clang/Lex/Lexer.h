@@ -335,6 +335,28 @@ public:
   ///
   /// Returns a null range if a part of the range resides inside a macro
   /// expansion or the range does not reside on the same FileID.
+  ///
+  /// This function is trying to deal with macros and return a range based on
+  /// file locations. The cases where it can successfully handle macros are:
+  ///
+  /// -begin or end range lies at the start or end of a macro expansion, in
+  ///  which case the location will be set to the expansion point, e.g:
+  ///    #define M 1 2
+  ///    a M
+  /// If you have a range [a, 2] (where 2 came from the macro), the function
+  /// will return a range for "a M"
+  /// if you have range [a, 1], the function will fail because the range
+  /// overlaps with only a part of the macro
+  ///
+  /// -The macro is a function macro and the range can be mapped to the macro
+  ///  arguments, e.g:
+  ///    #define M 1 2
+  ///    #define FM(x) x
+  ///    FM(a b M)
+  /// if you have range [b, 2], the function will return the file range "b M"
+  /// inside the macro arguments.
+  /// if you have range [a, 2], the function will return the file range
+  /// "FM(a b M)" since the range includes all of the macro expansion.
   static CharSourceRange makeFileCharRange(CharSourceRange Range,
                                            const SourceManager &SM,
                                            const LangOptions &LangOpts);
