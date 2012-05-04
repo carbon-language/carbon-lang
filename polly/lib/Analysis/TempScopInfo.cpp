@@ -232,7 +232,7 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
 
   for (Region::block_iterator I = R.block_begin(), E = R.block_end();
        I != E; ++I) {
-    buildAccessFunctions(R, *I);
+    buildAccessFunctions(R, **I);
     buildCondition(*I, R.getEntry(), *TScop);
   }
 
