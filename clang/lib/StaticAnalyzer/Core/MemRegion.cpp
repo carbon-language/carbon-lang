@@ -1056,26 +1056,37 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
   typedef BumpVector<const MemRegion*> VarVec;
   VarVec *BV = (VarVec*) A.Allocate<VarVec>();
   new (BV) VarVec(BC, E - I);
+  VarVec *BVOriginal = (VarVec*) A.Allocate<VarVec>();
+  new (BVOriginal) VarVec(BC, E - I);
 
   for ( ; I != E; ++I) {
     const VarDecl *VD = *I;
     const VarRegion *VR = 0;
+    const VarRegion *OriginalVR = 0;
 
-    if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage())
+    if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage()) {
       VR = MemMgr.getVarRegion(VD, this);
+      OriginalVR = MemMgr.getVarRegion(VD, LC);
+    }
     else {
-      if (LC)
+      if (LC) {
         VR = MemMgr.getVarRegion(VD, LC);
+        OriginalVR = VR;
+      }
       else {
         VR = MemMgr.getVarRegion(VD, MemMgr.getUnknownRegion());
+        OriginalVR = MemMgr.getVarRegion(VD, LC);
       }
     }
 
     assert(VR);
+    assert(OriginalVR);
     BV->push_back(VR, BC);
+    BVOriginal->push_back(OriginalVR, BC);
   }
 
   ReferencedVars = BV;
+  OriginalVars = BVOriginal;
 }
 
 BlockDataRegion::referenced_vars_iterator
@@ -1085,8 +1096,14 @@ BlockDataRegion::referenced_vars_begin() const {
   BumpVector<const MemRegion*> *Vec =
     static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
 
-  return BlockDataRegion::referenced_vars_iterator(Vec == (void*) 0x1 ?
-                                                   NULL : Vec->begin());
+  if (Vec == (void*) 0x1)
+    return BlockDataRegion::referenced_vars_iterator(0, 0);
+  
+  BumpVector<const MemRegion*> *VecOriginal =
+    static_cast<BumpVector<const MemRegion*>*>(OriginalVars);
+  
+  return BlockDataRegion::referenced_vars_iterator(Vec->begin(),
+                                                   VecOriginal->begin());
 }
 
 BlockDataRegion::referenced_vars_iterator
@@ -1096,6 +1113,12 @@ BlockDataRegion::referenced_vars_end() const {
   BumpVector<const MemRegion*> *Vec =
     static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
 
-  return BlockDataRegion::referenced_vars_iterator(Vec == (void*) 0x1 ?
-                                                   NULL : Vec->end());
+  if (Vec == (void*) 0x1)
+    return BlockDataRegion::referenced_vars_iterator(0, 0);
+  
+  BumpVector<const MemRegion*> *VecOriginal =
+    static_cast<BumpVector<const MemRegion*>*>(OriginalVars);
+
+  return BlockDataRegion::referenced_vars_iterator(Vec->end(),
+                                                   VecOriginal->end());
 }

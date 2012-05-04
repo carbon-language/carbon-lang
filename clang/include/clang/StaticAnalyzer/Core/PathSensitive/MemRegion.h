@@ -580,25 +580,37 @@ class BlockDataRegion : public SubRegion {
   const BlockTextRegion *BC;
   const LocationContext *LC; // Can be null */
   void *ReferencedVars;
+  void *OriginalVars;
 
   BlockDataRegion(const BlockTextRegion *bc, const LocationContext *lc,
                   const MemRegion *sreg)
-  : SubRegion(sreg, BlockDataRegionKind), BC(bc), LC(lc), ReferencedVars(0) {}
+  : SubRegion(sreg, BlockDataRegionKind), BC(bc), LC(lc),
+    ReferencedVars(0), OriginalVars(0) {}
 
-public:  
+public:
   const BlockTextRegion *getCodeRegion() const { return BC; }
   
   const BlockDecl *getDecl() const { return BC->getDecl(); }
   
   class referenced_vars_iterator {
     const MemRegion * const *R;
+    const MemRegion * const *OriginalR;
   public:
-    explicit referenced_vars_iterator(const MemRegion * const *r) : R(r) {}
+    explicit referenced_vars_iterator(const MemRegion * const *r,
+                                      const MemRegion * const *originalR)
+      : R(r), OriginalR(originalR) {}
     
     operator const MemRegion * const *() const {
       return R;
     }
-    
+  
+    const MemRegion *getCapturedRegion() const {
+      return *R;
+    }
+    const MemRegion *getOriginalRegion() const {
+      return *OriginalR;
+    }
+
     const VarRegion* operator*() const {
       return cast<VarRegion>(*R);
     }
@@ -611,6 +623,7 @@ public:
     }
     referenced_vars_iterator &operator++() {
       ++R;
+      ++OriginalR;
       return *this;
     }
   };

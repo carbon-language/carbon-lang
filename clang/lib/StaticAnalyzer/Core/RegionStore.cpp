@@ -681,8 +681,22 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
          BI != BE; ++BI) {
       const VarRegion *VR = *BI;
       const VarDecl *VD = VR->getDecl();
-      if (VD->getAttr<BlocksAttr>() || !VD->hasLocalStorage())
+      if (VD->getAttr<BlocksAttr>() || !VD->hasLocalStorage()) {
         AddToWorkList(VR);
+      }
+      else if (Loc::isLocType(VR->getValueType())) {
+        // Map the current bindings to a Store to retrieve the value
+        // of the binding.  If that binding itself is a region, we should
+        // invalidate that region.  This is because a block may capture
+        // a pointer value, but the thing pointed by that pointer may
+        // get invalidated.
+        Store store = B.getRootWithoutRetain();
+        SVal V = RM.getBinding(store, loc::MemRegionVal(VR));
+        if (const Loc *L = dyn_cast<Loc>(&V)) {
+          if (const MemRegion *LR = L->getAsRegion())
+            AddToWorkList(LR);
+        }
+      }
     }
     return;
   }
