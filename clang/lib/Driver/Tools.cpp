@@ -4033,9 +4033,6 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   } else if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
     CmdArgs.push_back("-syslibroot");
     CmdArgs.push_back(A->getValue(Args));
-  } else if (getDarwinToolChain().isTargetIPhoneOS()) {
-    CmdArgs.push_back("-syslibroot");
-    CmdArgs.push_back("/Developer/SDKs/Extra");
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace);
