@@ -74,7 +74,7 @@ buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
   for (ArrayRef<BasicBlock *>::iterator I = BBs.begin(), E = BBs.end();
        I != E; ++I) {
     if (!Result.insert(*I))
-      continue;
+      llvm_unreachable("Repeated basic blocks in extraction input");
 
     if (!isBlockValidForExtraction(**I)) {
       Result.clear();
