@@ -339,7 +339,12 @@ void pr7981(wint_t c, wchar_t c2) {
   printf("%lc", 1.0); // expected-warning{{the argument has type 'double'}}
   printf("%lc", (char) 1); // no-warning
   printf("%lc", &c); // expected-warning{{the argument has type 'wint_t *'}}
+  // If wint_t and wchar_t are the same width and wint_t is signed where
+  // wchar_t is unsigned, an implicit conversion isn't possible.
+#if defined(__WINT_UNSIGNED__) || !defined(__WCHAR_UNSIGNED__) ||   \
+  __WINT_WIDTH__ > __WCHAR_WIDTH__
   printf("%lc", c2); // no-warning
+#endif
 }
 
 // <rdar://problem/8269537> -Wformat-security says NULL is not a string literal

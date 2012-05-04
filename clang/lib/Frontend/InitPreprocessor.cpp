@@ -497,6 +497,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!LangOpts.CharIsSigned)
     Builder.defineMacro("__CHAR_UNSIGNED__");
 
+  if (!TargetInfo::isTypeSigned(TI.getWCharType()))
+    Builder.defineMacro("__WCHAR_UNSIGNED__");
+
   if (!TargetInfo::isTypeSigned(TI.getWIntType()))
     Builder.defineMacro("__WINT_UNSIGNED__");
 
