@@ -386,7 +386,10 @@ ScriptInterpreterPython::LeaveSession ()
     // in some (rare) cases during cleanup Python may end up believing we have no thread state
     // and PyImport_AddModule will crash if that is the case - since that seems to only happen
     // when destroying the SBDebugger, we can make do without clearing up stdout and stderr
-    if (PyThreadState_Get())
+
+    // rdar://problem/11292882
+    // When the current thread state is NULL, PyThreadState_Get() issues a fatal error.
+    if (PyThreadState_GetDict())
     {
         PyObject *sysmod = PyImport_AddModule ("sys");
         PyObject *sysdict = PyModule_GetDict (sysmod);
