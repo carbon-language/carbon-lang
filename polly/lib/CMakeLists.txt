@@ -20,7 +20,6 @@ set(LLVM_USED_LIBS
   )
 
 add_polly_library(LLVMPolly
-  Cloog.cpp
   CodePreparation.cpp
   DeadCodeElimination.cpp
   IndependentBlocks.cpp
