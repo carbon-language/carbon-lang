@@ -84,12 +84,21 @@ namespace llvm {
     ///
     /// Based on the blocks used when constructing the code extractor,
     /// determine whether it is eligible for extraction.
-    bool isEligible() { return !Blocks.empty(); };
+    bool isEligible() const { return !Blocks.empty(); };
+
+    /// \brief Compute the set of input values and output values for the code.
+    ///
+    /// These can be used either when performing the extraction or to evaluate
+    /// the expected size of a call to the extracted function. Note that this
+    /// work cannot be cached between the two as once we decide to extract
+    /// a code sequence, that sequence is modified, including changing these
+    /// sets, before extraction occurs. These modifications won't have any
+    /// significant impact on the cost however.
+    void findInputsOutputs(ValueSet &Inputs, ValueSet &Outputs) const;
 
   private:
     void severSplitPHINodes(BasicBlock *&Header);
     void splitReturnBlocks();
-    void findInputsOutputs(ValueSet &inputs, ValueSet &outputs);
 
     Function *constructFunction(const ValueSet &inputs,
                                 const ValueSet &outputs,

@@ -109,7 +109,6 @@ CodeExtractor::CodeExtractor(DominatorTree &DT, Loop &L, bool AggregateArgs)
   : DT(&DT), AggregateArgs(AggregateArgs||AggregateArgsOpt),
     Blocks(buildExtractionBlockSet(L.getBlocks())), NumExitBlocks(~0U) {}
 
-
 /// definedInRegion - Return true if the specified value is defined in the
 /// extracted region.
 static bool definedInRegion(const SetVector<BasicBlock *> &Blocks, Value *V) {
@@ -128,6 +127,32 @@ static bool definedInCaller(const SetVector<BasicBlock *> &Blocks, Value *V) {
     if (!Blocks.count(I->getParent()))
       return true;
   return false;
+}
+
+void CodeExtractor::findInputsOutputs(ValueSet &Inputs,
+                                      ValueSet &Outputs) const {
+  for (SetVector<BasicBlock *>::const_iterator I = Blocks.begin(),
+                                               E = Blocks.end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+
+    // If a used value is defined outside the region, it's an input.  If an
+    // instruction is used outside the region, it's an output.
+    for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
+         II != IE; ++II) {
+      for (User::op_iterator OI = II->op_begin(), OE = II->op_end();
+           OI != OE; ++OI)
+        if (definedInCaller(Blocks, *OI))
+          Inputs.insert(*OI);
+
+      for (Value::use_iterator UI = II->use_begin(), UE = II->use_end();
+           UI != UE; ++UI)
+        if (!definedInRegion(Blocks, *UI)) {
+          Outputs.insert(II);
+          break;
+        }
+    }
+  }
 }
 
 /// severSplitPHINodes - If a PHI node has multiple inputs from outside of the
@@ -231,40 +256,6 @@ void CodeExtractor::splitReturnBlocks() {
           DT->changeImmediateDominator(*I, NewNode);
       }
     }
-}
-
-// findInputsOutputs - Find inputs to, outputs from the code region.
-//
-void CodeExtractor::findInputsOutputs(ValueSet &inputs, ValueSet &outputs) {
-  std::set<BasicBlock*> ExitBlocks;
-  for (SetVector<BasicBlock*>::const_iterator ci = Blocks.begin(),
-       ce = Blocks.end(); ci != ce; ++ci) {
-    BasicBlock *BB = *ci;
-
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      // If a used value is defined outside the region, it's an input.  If an
-      // instruction is used outside the region, it's an output.
-      for (User::op_iterator O = I->op_begin(), E = I->op_end(); O != E; ++O)
-        if (definedInCaller(Blocks, *O))
-          inputs.insert(*O);
-
-      // Consider uses of this instruction (outputs).
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-           UI != E; ++UI)
-        if (!definedInRegion(Blocks, *UI)) {
-          outputs.insert(I);
-          break;
-        }
-    } // for: insts
-
-    // Keep track of the exit blocks from the region.
-    TerminatorInst *TI = BB->getTerminator();
-    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-      if (!Blocks.count(TI->getSuccessor(i)))
-        ExitBlocks.insert(TI->getSuccessor(i));
-  } // for: basic blocks
-
-  NumExitBlocks = ExitBlocks.size();
 }
 
 /// constructFunction - make a function based on inputs and outputs, as follows:
@@ -700,6 +691,14 @@ Function *CodeExtractor::extractCodeRegion() {
 
   // Find inputs to, outputs from the code region.
   findInputsOutputs(inputs, outputs);
+
+  SmallPtrSet<BasicBlock *, 1> ExitBlocks;
+  for (SetVector<BasicBlock *>::iterator I = Blocks.begin(), E = Blocks.end();
+       I != E; ++I)
+    for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I); SI != SE; ++SI)
+      if (!Blocks.count(*SI))
+        ExitBlocks.insert(*SI);
+  NumExitBlocks = ExitBlocks.size();
 
   // Construct new function based on inputs/outputs & add allocas for all defs.
   Function *newFunction = constructFunction(inputs, outputs, header,
