@@ -5920,10 +5920,12 @@ SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
   unsigned Scale;
   switch (VT.SimpleTy) {
   default: llvm_unreachable("Unexpected!");
-  case MVT::v4f32: NewVT = MVT::v2f64; Scale = 2; break;
-  case MVT::v4i32: NewVT = MVT::v2i64; Scale = 2; break;
-  case MVT::v8i16: NewVT = MVT::v4i32; Scale = 2; break;
-  case MVT::v16i8: NewVT = MVT::v4i32; Scale = 4; break;
+  case MVT::v4f32:  NewVT = MVT::v2f64; Scale = 2; break;
+  case MVT::v4i32:  NewVT = MVT::v2i64; Scale = 2; break;
+  case MVT::v8i16:  NewVT = MVT::v4i32; Scale = 2; break;
+  case MVT::v16i8:  NewVT = MVT::v4i32; Scale = 4; break;
+  case MVT::v16i16: NewVT = MVT::v8i32; Scale = 2; break;
+  case MVT::v32i8:  NewVT = MVT::v8i32; Scale = 4; break;
   }
 
   SmallVector<int, 8> MaskVec;
@@ -6370,7 +6372,8 @@ X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
   // do it!
-  if (VT == MVT::v8i16 || VT == MVT::v16i8) {
+  if (VT == MVT::v8i16  || VT == MVT::v16i8 ||
+      VT == MVT::v16i16 || VT == MVT::v32i8) {
     SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, dl);
     if (NewOp.getNode())
       return DAG.getNode(ISD::BITCAST, dl, VT, NewOp);
