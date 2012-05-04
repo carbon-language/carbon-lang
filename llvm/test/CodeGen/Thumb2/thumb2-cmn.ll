@@ -9,7 +9,7 @@ define i1 @f1(i32 %a, i32 %b) {
     ret i1 %tmp
 }
 ; CHECK: f1:
-; CHECK: 	cmn.w	r0, r1
+; CHECK: 	cmn	r0, r1
 
 define i1 @f2(i32 %a, i32 %b) {
     %nb = sub i32 0, %b
@@ -17,7 +17,7 @@ define i1 @f2(i32 %a, i32 %b) {
     ret i1 %tmp
 }
 ; CHECK: f2:
-; CHECK: 	cmn.w	r0, r1
+; CHECK: 	cmn	r0, r1
 
 define i1 @f3(i32 %a, i32 %b) {
     %nb = sub i32 0, %b
@@ -25,7 +25,7 @@ define i1 @f3(i32 %a, i32 %b) {
     ret i1 %tmp
 }
 ; CHECK: f3:
-; CHECK: 	cmn.w	r0, r1
+; CHECK: 	cmn	r0, r1
 
 define i1 @f4(i32 %a, i32 %b) {
     %nb = sub i32 0, %b
@@ -33,7 +33,7 @@ define i1 @f4(i32 %a, i32 %b) {
     ret i1 %tmp
 }
 ; CHECK: f4:
-; CHECK: 	cmn.w	r0, r1
+; CHECK: 	cmn	r0, r1
 
 define i1 @f5(i32 %a, i32 %b) {
     %tmp = shl i32 %b, 5
@@ -73,3 +73,13 @@ define i1 @f8(i32 %a, i32 %b) {
 ; CHECK: f8:
 ; CHECK: 	cmn.w	r0, r0, ror #8
 
+
+define void @f9(i32 %a, i32 %b) nounwind optsize {
+  tail call void asm sideeffect "cmn.w     r0, r1", ""() nounwind, !srcloc !0
+  ret void
+}
+
+!0 = metadata !{i32 81}
+
+; CHECK: f9:
+; CHECK: 	cmn.w	r0, r1
