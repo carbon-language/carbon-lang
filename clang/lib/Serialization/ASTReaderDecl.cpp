@@ -25,6 +25,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "llvm/Support/SaveAndRestore.h"
 using namespace clang;
 using namespace clang::serialization;
 
@@ -629,8 +630,10 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   if (Record[Idx++]) {
     // In practice, this won't be executed (since method definitions
     // don't occur in header files).
-    // Switch case IDs are per method body.
-    Reader.ClearSwitchCaseIDs();
+    // Switch case IDs for this method body.
+    std::map<unsigned, SwitchCase *> SwitchCaseStmtsForObjCMethod;
+    SaveAndRestore<std::map<unsigned, SwitchCase *> *>
+      SCFOM(Reader.CurrSwitchCaseStmts, &SwitchCaseStmtsForObjCMethod);
     MD->setBody(Reader.ReadStmt(F));
     MD->setSelfDecl(ReadDeclAs<ImplicitParamDecl>(Record, Idx));
     MD->setCmdDecl(ReadDeclAs<ImplicitParamDecl>(Record, Idx));

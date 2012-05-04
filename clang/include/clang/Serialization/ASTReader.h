@@ -597,6 +597,8 @@ private:
   /// switch statement can refer to them.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
 
+  std::map<unsigned, SwitchCase *> *CurrSwitchCaseStmts;
+
   /// \brief The number of stat() calls that hit/missed the stat
   /// cache.
   unsigned NumStatHits, NumStatMisses;

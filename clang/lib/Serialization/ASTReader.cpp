@@ -6248,18 +6248,19 @@ IdentifierTable &ASTReader::getIdentifierTable() {
 /// \brief Record that the given ID maps to the given switch-case
 /// statement.
 void ASTReader::RecordSwitchCaseID(SwitchCase *SC, unsigned ID) {
-  assert(SwitchCaseStmts[ID] == 0 && "Already have a SwitchCase with this ID");
-  SwitchCaseStmts[ID] = SC;
+  assert((*CurrSwitchCaseStmts)[ID] == 0 &&
+         "Already have a SwitchCase with this ID");
+  (*CurrSwitchCaseStmts)[ID] = SC;
 }
 
 /// \brief Retrieve the switch-case statement with the given ID.
 SwitchCase *ASTReader::getSwitchCaseWithID(unsigned ID) {
-  assert(SwitchCaseStmts[ID] != 0 && "No SwitchCase with this ID");
-  return SwitchCaseStmts[ID];
+  assert((*CurrSwitchCaseStmts)[ID] != 0 && "No SwitchCase with this ID");
+  return (*CurrSwitchCaseStmts)[ID];
 }
 
 void ASTReader::ClearSwitchCaseIDs() {
-  SwitchCaseStmts.clear();
+  CurrSwitchCaseStmts->clear();
 }
 
 void ASTReader::finishPendingActions() {
@@ -6374,7 +6375,8 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     DisableValidation(DisableValidation),
     DisableStatCache(DisableStatCache),
     AllowASTWithCompilerErrors(AllowASTWithCompilerErrors), 
-    CurrentGeneration(0), NumStatHits(0), NumStatMisses(0), 
+    CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
+    NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0), 
     TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 

@@ -25,3 +25,17 @@
   }
 }
 @end
+
+@interface PR12689_2
+@end
+
+@implementation PR12689_2
+-(void)mugi:(int)x {
+    switch(x) {
+        case 23: [self bonk:x]; break;
+        case 82: break;
+    }
+}
+-(void)bonk:(int)x {
+}
+@end
