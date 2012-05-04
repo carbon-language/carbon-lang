@@ -2709,10 +2709,10 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E) {
   SourceLocation AttrLoc = AttrRange.getBegin();
   // FIXME: Cache the number on the Attr object?
   llvm::APSInt Alignment(32);
-  ExprResult ICE =
-    VerifyIntegerConstantExpression(E, &Alignment,
-      PDiag(diag::err_attribute_argument_not_int) << "aligned",
-      /*AllowFold*/ false);
+  ExprResult ICE
+    = VerifyIntegerConstantExpression(E, &Alignment,
+        diag::err_aligned_attribute_argument_not_int,
+        /*AllowFold*/ false);
   if (ICE.isInvalid())
     return;
   if (!llvm::isPowerOf2_64(Alignment.getZExtValue())) {

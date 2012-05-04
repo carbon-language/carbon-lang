@@ -1205,9 +1205,20 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
 static bool isArraySizeVLA(Sema &S, Expr *ArraySize, llvm::APSInt &SizeVal) {
   // If the size is an ICE, it certainly isn't a VLA. If we're in a GNU mode
   // (like gnu99, but not c99) accept any evaluatable value as an extension.
-  return S.VerifyIntegerConstantExpression(
-      ArraySize, &SizeVal, S.PDiag(), S.LangOpts.GNUMode,
-      S.PDiag(diag::ext_vla_folded_to_constant)).isInvalid();
+  class VLADiagnoser : public Sema::VerifyICEDiagnoser {
+  public:
+    VLADiagnoser() : Sema::VerifyICEDiagnoser(true) {}
+    
+    virtual void diagnoseNotICE(Sema &S, SourceLocation Loc, SourceRange SR) {
+    }
+    
+    virtual void diagnoseFold(Sema &S, SourceLocation Loc, SourceRange SR) {
+      S.Diag(Loc, diag::ext_vla_folded_to_constant) << SR;
+    }
+  } Diagnoser;
+  
+  return S.VerifyIntegerConstantExpression(ArraySize, &SizeVal, Diagnoser,
+                                           S.LangOpts.GNUMode).isInvalid();
 }
 
 

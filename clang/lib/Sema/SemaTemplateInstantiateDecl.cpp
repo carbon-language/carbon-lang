@@ -2354,9 +2354,10 @@ static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
       NoexceptExpr = E.take();
       if (!NoexceptExpr->isTypeDependent() &&
           !NoexceptExpr->isValueDependent())
-        NoexceptExpr = SemaRef.VerifyIntegerConstantExpression(NoexceptExpr,
-          0, SemaRef.PDiag(diag::err_noexcept_needs_constant_expression),
-          /*AllowFold*/ false).take();
+        NoexceptExpr
+          = SemaRef.VerifyIntegerConstantExpression(NoexceptExpr,
+              0, diag::err_noexcept_needs_constant_expression,
+              /*AllowFold*/ false).take();
     }
   }
 

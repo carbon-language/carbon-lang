@@ -982,8 +982,10 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       DeclaratorChunk::ArrayTypeInfo &Array = D.getTypeObject(I).Arr;
       if (Expr *NumElts = (Expr *)Array.NumElts) {
         if (!NumElts->isTypeDependent() && !NumElts->isValueDependent()) {
-          Array.NumElts = VerifyIntegerConstantExpression(NumElts, 0,
-            PDiag(diag::err_new_array_nonconst)).take();
+          Array.NumElts
+            = VerifyIntegerConstantExpression(NumElts, 0,
+                                              diag::err_new_array_nonconst)
+                .take();
           if (!Array.NumElts)
             return ExprError();
         }
@@ -1148,19 +1150,64 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   //   enumeration type, or a class type for which a single non-explicit
   //   conversion function to integral or unscoped enumeration type exists.
   if (ArraySize && !ArraySize->isTypeDependent()) {
-    ExprResult ConvertedSize = ConvertToIntegralOrEnumerationType(
-      StartLoc, ArraySize,
-      PDiag(diag::err_array_size_not_integral) << getLangOpts().CPlusPlus0x,
-      PDiag(diag::err_array_size_incomplete_type)
-        << ArraySize->getSourceRange(),
-      PDiag(diag::err_array_size_explicit_conversion),
-      PDiag(diag::note_array_size_conversion),
-      PDiag(diag::err_array_size_ambiguous_conversion),
-      PDiag(diag::note_array_size_conversion),
-      PDiag(getLangOpts().CPlusPlus0x ?
-              diag::warn_cxx98_compat_array_size_conversion :
-              diag::ext_array_size_conversion),
-      /*AllowScopedEnumerations*/ false);
+    class SizeConvertDiagnoser : public ICEConvertDiagnoser {
+      Expr *ArraySize;
+      
+    public:
+      SizeConvertDiagnoser(Expr *ArraySize)
+        : ICEConvertDiagnoser(false, false), ArraySize(ArraySize) { }
+      
+      virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                               QualType T) {
+        return S.Diag(Loc, diag::err_array_size_not_integral)
+                 << S.getLangOpts().CPlusPlus0x << T;
+      }
+      
+      virtual DiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
+                                                   QualType T) {
+        return S.Diag(Loc, diag::err_array_size_incomplete_type)
+                 << T << ArraySize->getSourceRange();
+      }
+      
+      virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S,
+                                                     SourceLocation Loc,
+                                                     QualType T,
+                                                     QualType ConvTy) {
+        return S.Diag(Loc, diag::err_array_size_explicit_conversion) << T << ConvTy;
+      }
+      
+      virtual DiagnosticBuilder noteExplicitConv(Sema &S,
+                                                 CXXConversionDecl *Conv,
+                                                 QualType ConvTy) {
+        return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
+                 << ConvTy->isEnumeralType() << ConvTy;
+      }
+      
+      virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                                  QualType T) {
+        return S.Diag(Loc, diag::err_array_size_ambiguous_conversion) << T;
+      }
+      
+      virtual DiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
+                                              QualType ConvTy) {
+        return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
+                 << ConvTy->isEnumeralType() << ConvTy;
+      }
+      
+      virtual DiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
+                                                   QualType T,
+                                                   QualType ConvTy) {
+        return S.Diag(Loc,
+                      S.getLangOpts().CPlusPlus0x
+                        ? diag::warn_cxx98_compat_array_size_conversion
+                        : diag::ext_array_size_conversion)
+                 << T << ConvTy->isEnumeralType() << ConvTy;
+      }
+    } SizeDiagnoser(ArraySize);
+
+    ExprResult ConvertedSize
+      = ConvertToIntegralOrEnumerationType(StartLoc, ArraySize, SizeDiagnoser,
+                                           /*AllowScopedEnumerations*/ false);
     if (ConvertedSize.isInvalid())
       return ExprError();
 
@@ -3610,7 +3657,7 @@ static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
     llvm::APSInt Value;
     uint64_t Dim;
     if (Self.VerifyIntegerConstantExpression(DimExpr, &Value,
-          Self.PDiag(diag::err_dimension_expr_not_constant_integer),
+          diag::err_dimension_expr_not_constant_integer,
           false).isInvalid())
       return 0;
     if (Value.isSigned() && Value.isNegative()) {

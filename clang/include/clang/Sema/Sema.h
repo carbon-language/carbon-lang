@@ -1715,16 +1715,59 @@ public:
   ExprResult CheckConvertedConstantExpression(Expr *From, QualType T,
                                               llvm::APSInt &Value, CCEKind CCE);
 
+  /// \brief Abstract base class used to diagnose problems that occur while
+  /// trying to convert an expression to integral or enumeration type.
+  class ICEConvertDiagnoser {
+  public:
+    bool Suppress;
+    bool SuppressConversion;
+    
+    ICEConvertDiagnoser(bool Suppress = false,
+                        bool SuppressConversion = false)
+      : Suppress(Suppress), SuppressConversion(SuppressConversion) { }
+    
+    /// \brief Emits a diagnostic complaining that the expression does not have
+    /// integral or enumeration type.
+    virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                             QualType T) = 0;
+    
+    /// \brief Emits a diagnostic when the expression has incomplete class type.
+    virtual DiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
+                                                 QualType T) = 0;
+    
+    /// \brief Emits a diagnostic when the only matching conversion function
+    /// is explicit.
+    virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S, SourceLocation Loc,
+                                                   QualType T,
+                                                   QualType ConvTy) = 0;
+
+    /// \brief Emits a note for the explicit conversion function.
+    virtual DiagnosticBuilder
+    noteExplicitConv(Sema &S, CXXConversionDecl *Conv, QualType ConvTy) = 0;
+
+    /// \brief Emits a diagnostic when there are multiple possible conversion
+    /// functions.
+    virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                                QualType T) = 0;
+
+    /// \brief Emits a note for one of the candidate conversions.
+    virtual DiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
+                                            QualType ConvTy) = 0;
+
+    /// \brief Emits a diagnostic when we picked a conversion function
+    /// (for cases when we are not allowed to pick a conversion function).
+    virtual DiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
+                                                 QualType T,
+                                                 QualType ConvTy) = 0;
+    
+    virtual ~ICEConvertDiagnoser() {}
+  };
+
   ExprResult
   ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *FromE,
-                                     const PartialDiagnostic &NotIntDiag,
-                                     const PartialDiagnostic &IncompleteDiag,
-                                     const PartialDiagnostic &ExplicitConvDiag,
-                                     const PartialDiagnostic &ExplicitConvNote,
-                                     const PartialDiagnostic &AmbigDiag,
-                                     const PartialDiagnostic &AmbigNote,
-                                     const PartialDiagnostic &ConvDiag,
+                                     ICEConvertDiagnoser &Diagnoser,
                                      bool AllowScopedEnumerations);
+
   enum ObjCSubscriptKind {
     OS_Array,
     OS_Dictionary,
@@ -6738,20 +6781,29 @@ public:
   /// in the global scope.
   bool CheckObjCDeclScope(Decl *D);
 
+  /// \brief Abstract base class used for diagnosing integer constant
+  /// expression violations.
+  class VerifyICEDiagnoser {
+  public:
+    bool Suppress;
+    
+    VerifyICEDiagnoser(bool Suppress = false) : Suppress(Suppress) { }
+    
+    virtual void diagnoseNotICE(Sema &S, SourceLocation Loc, SourceRange SR) =0;
+    virtual void diagnoseFold(Sema &S, SourceLocation Loc, SourceRange SR);
+    virtual ~VerifyICEDiagnoser() { }
+  };
+    
   /// VerifyIntegerConstantExpression - Verifies that an expression is an ICE,
   /// and reports the appropriate diagnostics. Returns false on success.
   /// Can optionally return the value of the expression.
   ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
-                                             const PartialDiagnostic &Diag,
-                                             bool AllowFold,
-                                             const PartialDiagnostic &FoldDiag);
+                                             VerifyICEDiagnoser &Diagnoser,
+                                             bool AllowFold = true);
   ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
-                                             const PartialDiagnostic &Diag,
-                                             bool AllowFold = true) {
-    return VerifyIntegerConstantExpression(E, Result, Diag, AllowFold,
-                                           PDiag(0));
-  }
-  ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result = 0);
+                                             unsigned DiagID,
+                                             bool AllowFold = true);
+  ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result=0);
 
   /// VerifyBitField - verifies that a bit field expression is an ICE and has
   /// the correct width, and that the field type is valid.

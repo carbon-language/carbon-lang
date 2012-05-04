@@ -9906,7 +9906,7 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
 
     llvm::APSInt Cond;
     if (VerifyIntegerConstantExpression(Converted.get(), &Cond,
-          PDiag(diag::err_static_assert_expression_is_not_constant),
+          diag::err_static_assert_expression_is_not_constant,
           /*AllowFold=*/false).isInvalid())
       return 0;
 
@@ -11302,7 +11302,7 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
       
       if (!NoexceptExpr->isValueDependent())
         NoexceptExpr = VerifyIntegerConstantExpression(NoexceptExpr, 0,
-                         PDiag(diag::err_noexcept_needs_constant_expression),
+                         diag::err_noexcept_needs_constant_expression,
                          /*AllowFold*/ false).take();
       EPI.NoexceptExpr = NoexceptExpr;
     }

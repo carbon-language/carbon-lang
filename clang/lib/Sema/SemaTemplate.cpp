@@ -4113,8 +4113,20 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Diag(Param->getLocation(), diag::note_template_param_here);
       return ExprError();
     } else if (!Arg->isValueDependent()) {
-      Arg = VerifyIntegerConstantExpression(Arg, &Value,
-        PDiag(diag::err_template_arg_not_ice) << ArgType, false).take();
+      class TmplArgICEDiagnoser : public VerifyICEDiagnoser {
+        QualType T;
+        
+      public:
+        TmplArgICEDiagnoser(QualType T) : T(T) { }
+        
+        virtual void diagnoseNotICE(Sema &S, SourceLocation Loc,
+                                    SourceRange SR) {
+          S.Diag(Loc, diag::err_template_arg_not_ice) << T << SR;
+        }
+      } Diagnoser(ArgType);
+
+      Arg = VerifyIntegerConstantExpression(Arg, &Value, Diagnoser,
+                                            false).take();
       if (!Arg)
         return ExprError();
     }

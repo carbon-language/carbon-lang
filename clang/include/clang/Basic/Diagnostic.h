@@ -781,13 +781,17 @@ class DiagnosticBuilder {
 
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class DiagnosticsEngine;
+  
+  DiagnosticBuilder()
+    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(false) { }
+
   explicit DiagnosticBuilder(DiagnosticsEngine *diagObj)
     : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(true) {
     assert(diagObj && "DiagnosticBuilder requires a valid DiagnosticsEngine!");
   }
 
   friend class PartialDiagnostic;
-
+  
 protected:
   void FlushCounts() {
     DiagObj->NumDiagArgs = NumArgs;
@@ -839,6 +843,11 @@ public:
     NumArgs = D.NumArgs;
     NumRanges = D.NumRanges;
     NumFixits = D.NumFixits;
+  }
+
+  /// \brief Retrieve an empty diagnostic builder.
+  static DiagnosticBuilder getEmpty() {
+    return DiagnosticBuilder();
   }
 
   /// Destructor - The dtor emits the diagnostic.

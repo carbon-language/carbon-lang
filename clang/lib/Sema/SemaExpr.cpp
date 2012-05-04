@@ -8868,8 +8868,9 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
   } else {
     // The conditional expression is required to be a constant expression.
     llvm::APSInt condEval(32);
-    ExprResult CondICE = VerifyIntegerConstantExpression(CondExpr, &condEval,
-      PDiag(diag::err_typecheck_choose_expr_requires_constant), false);
+    ExprResult CondICE
+      = VerifyIntegerConstantExpression(CondExpr, &condEval,
+          diag::err_typecheck_choose_expr_requires_constant, false);
     if (CondICE.isInvalid())
       return ExprError();
     CondExpr = CondICE.take();
@@ -9452,15 +9453,44 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
 ExprResult Sema::VerifyIntegerConstantExpression(Expr *E,
                                                  llvm::APSInt *Result) {
-  return VerifyIntegerConstantExpression(E, Result,
-      PDiag(diag::err_expr_not_ice) << LangOpts.CPlusPlus);
+  class SimpleICEDiagnoser : public VerifyICEDiagnoser {
+  public:
+    virtual void diagnoseNotICE(Sema &S, SourceLocation Loc, SourceRange SR) {
+      S.Diag(Loc, diag::err_expr_not_ice) << S.LangOpts.CPlusPlus << SR;
+    }
+  } Diagnoser;
+  
+  return VerifyIntegerConstantExpression(E, Result, Diagnoser);
+}
+
+ExprResult Sema::VerifyIntegerConstantExpression(Expr *E,
+                                                 llvm::APSInt *Result,
+                                                 unsigned DiagID,
+                                                 bool AllowFold) {
+  class IDDiagnoser : public VerifyICEDiagnoser {
+    unsigned DiagID;
+    
+  public:
+    IDDiagnoser(unsigned DiagID)
+      : VerifyICEDiagnoser(DiagID == 0), DiagID(DiagID) { }
+    
+    virtual void diagnoseNotICE(Sema &S, SourceLocation Loc, SourceRange SR) {
+      S.Diag(Loc, DiagID) << SR;
+    }
+  } Diagnoser(DiagID);
+  
+  return VerifyIntegerConstantExpression(E, Result, Diagnoser, AllowFold);
+}
+
+void Sema::VerifyICEDiagnoser::diagnoseFold(Sema &S, SourceLocation Loc,
+                                            SourceRange SR) {
+  S.Diag(Loc, diag::ext_expr_not_ice) << SR << S.LangOpts.CPlusPlus;
 }
 
 ExprResult
 Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
-                                      const PartialDiagnostic &NotIceDiag,
-                                      bool AllowFold,
-                                      const PartialDiagnostic &FoldDiag) {
+                                      VerifyICEDiagnoser &Diagnoser,
+                                      bool AllowFold) {
   SourceLocation DiagLoc = E->getLocStart();
 
   if (getLangOpts().CPlusPlus0x) {
@@ -9470,23 +9500,111 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
     //   have a single non-explicit conversion function to an integral or
     //   unscoped enumeration type
     ExprResult Converted;
-    if (NotIceDiag.getDiagID()) {
-      Converted = ConvertToIntegralOrEnumerationType(
-        DiagLoc, E,
-        PDiag(diag::err_ice_not_integral),
-        PDiag(diag::err_ice_incomplete_type),
-        PDiag(diag::err_ice_explicit_conversion),
-        PDiag(diag::note_ice_conversion_here),
-        PDiag(diag::err_ice_ambiguous_conversion),
-        PDiag(diag::note_ice_conversion_here),
-        PDiag(0),
-        /*AllowScopedEnumerations*/ false);
+    if (!Diagnoser.Suppress) {
+      class CXX11ConvertDiagnoser : public ICEConvertDiagnoser {
+      public:
+        CXX11ConvertDiagnoser() : ICEConvertDiagnoser(false, true) { }
+        
+        virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                                 QualType T) {
+          return S.Diag(Loc, diag::err_ice_not_integral) << T;
+        }
+        
+        virtual DiagnosticBuilder diagnoseIncomplete(Sema &S,
+                                                     SourceLocation Loc,
+                                                     QualType T) {
+          return S.Diag(Loc, diag::err_ice_incomplete_type) << T;
+        }
+        
+        virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S,
+                                                       SourceLocation Loc,
+                                                       QualType T,
+                                                       QualType ConvTy) {
+          return S.Diag(Loc, diag::err_ice_explicit_conversion) << T << ConvTy;
+        }
+        
+        virtual DiagnosticBuilder noteExplicitConv(Sema &S,
+                                                   CXXConversionDecl *Conv,
+                                                   QualType ConvTy) {
+          return S.Diag(Conv->getLocation(), diag::note_ice_conversion_here)
+                   << ConvTy->isEnumeralType() << ConvTy;
+        }
+        
+        virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                                    QualType T) {
+          return S.Diag(Loc, diag::err_ice_ambiguous_conversion) << T;
+        }
+        
+        virtual DiagnosticBuilder noteAmbiguous(Sema &S,
+                                                CXXConversionDecl *Conv,
+                                                QualType ConvTy) {
+          return S.Diag(Conv->getLocation(), diag::note_ice_conversion_here)
+                   << ConvTy->isEnumeralType() << ConvTy;
+        }
+        
+        virtual DiagnosticBuilder diagnoseConversion(Sema &S,
+                                                     SourceLocation Loc,
+                                                     QualType T,
+                                                     QualType ConvTy) {
+          return DiagnosticBuilder::getEmpty();
+        }
+      } ConvertDiagnoser;
+
+      Converted = ConvertToIntegralOrEnumerationType(DiagLoc, E,
+                                                     ConvertDiagnoser,
+                                             /*AllowScopedEnumerations*/ false);
     } else {
       // The caller wants to silently enquire whether this is an ICE. Don't
       // produce any diagnostics if it isn't.
-      Converted = ConvertToIntegralOrEnumerationType(
-        DiagLoc, E, PDiag(), PDiag(), PDiag(), PDiag(),
-        PDiag(), PDiag(), PDiag(), false);
+      class SilentICEConvertDiagnoser : public ICEConvertDiagnoser {
+      public:
+        SilentICEConvertDiagnoser() : ICEConvertDiagnoser(true, true) { }
+        
+        virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                                 QualType T) {
+          return DiagnosticBuilder::getEmpty();
+        }
+        
+        virtual DiagnosticBuilder diagnoseIncomplete(Sema &S,
+                                                     SourceLocation Loc,
+                                                     QualType T) {
+          return DiagnosticBuilder::getEmpty();
+        }
+        
+        virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S,
+                                                       SourceLocation Loc,
+                                                       QualType T,
+                                                       QualType ConvTy) {
+          return DiagnosticBuilder::getEmpty();
+        }
+        
+        virtual DiagnosticBuilder noteExplicitConv(Sema &S,
+                                                   CXXConversionDecl *Conv,
+                                                   QualType ConvTy) {
+          return DiagnosticBuilder::getEmpty();
+        }
+        
+        virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                                    QualType T) {
+          return DiagnosticBuilder::getEmpty();
+        }
+        
+        virtual DiagnosticBuilder noteAmbiguous(Sema &S,
+                                                CXXConversionDecl *Conv,
+                                                QualType ConvTy) {
+          return DiagnosticBuilder::getEmpty();
+        }
+        
+        virtual DiagnosticBuilder diagnoseConversion(Sema &S,
+                                                     SourceLocation Loc,
+                                                     QualType T,
+                                                     QualType ConvTy) {
+          return DiagnosticBuilder::getEmpty();
+        }
+      } ConvertDiagnoser;
+      
+      Converted = ConvertToIntegralOrEnumerationType(DiagLoc, E,
+                                                     ConvertDiagnoser, false);
     }
     if (Converted.isInvalid())
       return Converted;
@@ -9495,8 +9613,8 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
       return ExprError();
   } else if (!E->getType()->isIntegralOrUnscopedEnumerationType()) {
     // An ICE must be of integral or unscoped enumeration type.
-    if (NotIceDiag.getDiagID())
-      Diag(DiagLoc, NotIceDiag) << E->getSourceRange();
+    if (!Diagnoser.Suppress)
+      Diagnoser.diagnoseNotICE(*this, DiagLoc, E->getSourceRange());
     return ExprError();
   }
 
@@ -9536,8 +9654,8 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
   }
 
   if (!Folded || !AllowFold) {
-    if (NotIceDiag.getDiagID()) {
-      Diag(DiagLoc, NotIceDiag) << E->getSourceRange();
+    if (!Diagnoser.Suppress) {
+      Diagnoser.diagnoseNotICE(*this, DiagLoc, E->getSourceRange());
       for (unsigned I = 0, N = Notes.size(); I != N; ++I)
         Diag(Notes[I].first, Notes[I].second);
     }
@@ -9545,11 +9663,7 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
     return ExprError();
   }
 
-  if (FoldDiag.getDiagID())
-    Diag(DiagLoc, FoldDiag) << E->getSourceRange();
-  else
-    Diag(DiagLoc, diag::ext_expr_not_ice)
-      << E->getSourceRange() << LangOpts.CPlusPlus;
+  Diagnoser.diagnoseFold(*this, DiagLoc, E->getSourceRange());
   for (unsigned I = 0, N = Notes.size(); I != N; ++I)
     Diag(Notes[I].first, Notes[I].second);
 

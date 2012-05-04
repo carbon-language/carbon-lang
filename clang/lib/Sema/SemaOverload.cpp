@@ -5025,13 +5025,7 @@ static bool isIntegralOrEnumerationType(QualType T, bool AllowScopedEnum) {
 /// successful.
 ExprResult
 Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
-                                         const PartialDiagnostic &NotIntDiag,
-                                       const PartialDiagnostic &IncompleteDiag,
-                                     const PartialDiagnostic &ExplicitConvDiag,
-                                     const PartialDiagnostic &ExplicitConvNote,
-                                         const PartialDiagnostic &AmbigDiag,
-                                         const PartialDiagnostic &AmbigNote,
-                                         const PartialDiagnostic &ConvDiag,
+                                         ICEConvertDiagnoser &Diagnoser,
                                          bool AllowScopedEnumerations) {
   // We can't perform any more checking for type-dependent expressions.
   if (From->isTypeDependent())
@@ -5055,22 +5049,23 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   // expression of integral or enumeration type.
   const RecordType *RecordTy = T->getAs<RecordType>();
   if (!RecordTy || !getLangOpts().CPlusPlus) {
-    if (NotIntDiag.getDiagID())
-      Diag(Loc, NotIntDiag) << T << From->getSourceRange();
+    if (!Diagnoser.Suppress)
+      Diagnoser.diagnoseNotInt(*this, Loc, T) << From->getSourceRange();
     return Owned(From);
   }
 
   // We must have a complete class type.
   struct TypeDiagnoserPartialDiag : TypeDiagnoser {
-    const PartialDiagnostic &PD;
+    ICEConvertDiagnoser &Diagnoser;
+    Expr *From;
     
-    TypeDiagnoserPartialDiag(const PartialDiagnostic &PD)
-      : TypeDiagnoser(PD.getDiagID() == 0), PD(PD) {}
+    TypeDiagnoserPartialDiag(ICEConvertDiagnoser &Diagnoser, Expr *From)
+      : TypeDiagnoser(Diagnoser.Suppress), Diagnoser(Diagnoser), From(From) {}
     
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
-      S.Diag(Loc, PD) << T;
+      Diagnoser.diagnoseIncomplete(S, Loc, T) << From->getSourceRange();
     }
-  } IncompleteDiagnoser(IncompleteDiag);
+  } IncompleteDiagnoser(Diagnoser, From);
 
   if (RequireCompleteType(Loc, T, IncompleteDiagnoser))
     return Owned(From);
@@ -5102,7 +5097,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
 
   switch (ViableConversions.size()) {
   case 0:
-    if (ExplicitConversions.size() == 1 && ExplicitConvDiag.getDiagID()) {
+    if (ExplicitConversions.size() == 1 && !Diagnoser.Suppress) {
       DeclAccessPair Found = ExplicitConversions[0];
       CXXConversionDecl *Conversion
         = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
@@ -5114,14 +5109,12 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
       std::string TypeStr;
       ConvTy.getAsStringInternal(TypeStr, getPrintingPolicy());
 
-      Diag(Loc, ExplicitConvDiag)
-        << T << ConvTy
+      Diagnoser.diagnoseExplicitConv(*this, Loc, T, ConvTy)
         << FixItHint::CreateInsertion(From->getLocStart(),
                                       "static_cast<" + TypeStr + ">(")
         << FixItHint::CreateInsertion(PP.getLocForEndOfToken(From->getLocEnd()),
                                       ")");
-      Diag(Conversion->getLocation(), ExplicitConvNote)
-        << ConvTy->isEnumeralType() << ConvTy;
+      Diagnoser.noteExplicitConv(*this, Conversion, ConvTy);
 
       // If we aren't in a SFINAE context, build a call to the
       // explicit conversion function.
@@ -5152,12 +5145,12 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
       = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
     QualType ConvTy
       = Conversion->getConversionType().getNonReferenceType();
-    if (ConvDiag.getDiagID()) {
+    if (!Diagnoser.SuppressConversion) {
       if (isSFINAEContext())
         return ExprError();
 
-      Diag(Loc, ConvDiag)
-        << T << ConvTy->isEnumeralType() << ConvTy << From->getSourceRange();
+      Diagnoser.diagnoseConversion(*this, Loc, T, ConvTy)
+        << From->getSourceRange();
     }
 
     ExprResult Result = BuildCXXMemberCallExpr(From, Found, Conversion,
@@ -5173,24 +5166,24 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   }
 
   default:
-    if (!AmbigDiag.getDiagID())
-      return Owned(From);
+    if (Diagnoser.Suppress)
+      return ExprError();
 
-    Diag(Loc, AmbigDiag)
-      << T << From->getSourceRange();
+    Diagnoser.diagnoseAmbiguous(*this, Loc, T) << From->getSourceRange();
     for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
       CXXConversionDecl *Conv
         = cast<CXXConversionDecl>(ViableConversions[I]->getUnderlyingDecl());
       QualType ConvTy = Conv->getConversionType().getNonReferenceType();
-      Diag(Conv->getLocation(), AmbigNote)
-        << ConvTy->isEnumeralType() << ConvTy;
+      Diagnoser.noteAmbiguous(*this, Conv, ConvTy);
     }
     return Owned(From);
   }
 
   if (!isIntegralOrEnumerationType(From->getType(), AllowScopedEnumerations) &&
-      NotIntDiag.getDiagID())
-    Diag(Loc, NotIntDiag) << From->getType() << From->getSourceRange();
+      !Diagnoser.Suppress) {
+    Diagnoser.diagnoseNotInt(*this, Loc, From->getType())
+      << From->getSourceRange();
+  }
 
   return DefaultLvalueConversion(From);
 }

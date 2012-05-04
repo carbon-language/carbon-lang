@@ -521,16 +521,56 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   if (!Cond)
     return StmtError();
 
+  class SwitchConvertDiagnoser : public ICEConvertDiagnoser {
+    Expr *Cond;
+    
+  public:
+    SwitchConvertDiagnoser(Expr *Cond)
+      : ICEConvertDiagnoser(false, true), Cond(Cond) { }
+    
+    virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                             QualType T) {
+      return S.Diag(Loc, diag::err_typecheck_statement_requires_integer) << T;
+    }
+    
+    virtual DiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
+                                                 QualType T) {
+      return S.Diag(Loc, diag::err_switch_incomplete_class_type)
+               << T << Cond->getSourceRange();
+    }
+    
+    virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S, SourceLocation Loc,
+                                                   QualType T,
+                                                   QualType ConvTy) {
+      return S.Diag(Loc, diag::err_switch_explicit_conversion) << T << ConvTy;
+    }
+    
+    virtual DiagnosticBuilder noteExplicitConv(Sema &S, CXXConversionDecl *Conv,
+                                               QualType ConvTy) {
+      return S.Diag(Conv->getLocation(), diag::note_switch_conversion)
+        << ConvTy->isEnumeralType() << ConvTy;
+    }
+    
+    virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                                QualType T) {
+      return S.Diag(Loc, diag::err_switch_multiple_conversions) << T;
+    }
+    
+    virtual DiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
+                                            QualType ConvTy) {
+      return S.Diag(Conv->getLocation(), diag::note_switch_conversion)
+      << ConvTy->isEnumeralType() << ConvTy;
+    }
+    
+    virtual DiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
+                                                 QualType T,
+                                                 QualType ConvTy) {
+      return DiagnosticBuilder::getEmpty();
+    }
+  } SwitchDiagnoser(Cond);
+
   CondResult
-    = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond,
-                          PDiag(diag::err_typecheck_statement_requires_integer),
-                                   PDiag(diag::err_switch_incomplete_class_type)
-                                     << Cond->getSourceRange(),
-                                   PDiag(diag::err_switch_explicit_conversion),
-                                         PDiag(diag::note_switch_conversion),
-                                   PDiag(diag::err_switch_multiple_conversions),
-                                         PDiag(diag::note_switch_conversion),
-                                         PDiag(0),
+    = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond, SwitchDiagnoser,
                                          /*AllowScopedEnumerations*/ true);
   if (CondResult.isInvalid()) return StmtError();
   Cond = CondResult.take();
