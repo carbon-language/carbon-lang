@@ -631,8 +631,8 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
     // In practice, this won't be executed (since method definitions
     // don't occur in header files).
     // Switch case IDs for this method body.
-    std::map<unsigned, SwitchCase *> SwitchCaseStmtsForObjCMethod;
-    SaveAndRestore<std::map<unsigned, SwitchCase *> *>
+    ASTReader::SwitchCaseMapTy SwitchCaseStmtsForObjCMethod;
+    SaveAndRestore<ASTReader::SwitchCaseMapTy *>
       SCFOM(Reader.CurrSwitchCaseStmts, &SwitchCaseStmtsForObjCMethod);
     MD->setBody(Reader.ReadStmt(F));
     MD->setSelfDecl(ReadDeclAs<ImplicitParamDecl>(Record, Idx));

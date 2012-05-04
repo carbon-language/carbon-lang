@@ -591,13 +591,14 @@ private:
   /// indicates how many separate module file load operations have occurred.
   unsigned CurrentGeneration;
 
+  typedef llvm::DenseMap<unsigned, SwitchCase *> SwitchCaseMapTy;
   /// \brief Mapping from switch-case IDs in the chain to switch-case statements
   ///
   /// Statements usually don't have IDs, but switch cases need them, so that the
   /// switch statement can refer to them.
-  std::map<unsigned, SwitchCase *> SwitchCaseStmts;
+  SwitchCaseMapTy SwitchCaseStmts;
 
-  std::map<unsigned, SwitchCase *> *CurrSwitchCaseStmts;
+  SwitchCaseMapTy *CurrSwitchCaseStmts;
 
   /// \brief The number of stat() calls that hit/missed the stat
   /// cache.

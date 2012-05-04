@@ -337,7 +337,7 @@ private:
   SmallVector<Stmt *, 16> *CollectedStmts;
 
   /// \brief Mapping from SwitchCase statements to IDs.
-  std::map<SwitchCase *, unsigned> SwitchCaseIDs;
+  llvm::DenseMap<SwitchCase *, unsigned> SwitchCaseIDs;
 
   /// \brief The number of statements written to the AST file.
   unsigned NumStatements;
