@@ -220,7 +220,7 @@ public:
 #endif
         while (err == 0 && ((m_value & bits) == 0))
         {
-            err = m_condition.Wait (m_mutex.GetMutex(), abstime);
+            err = m_condition.Wait (m_mutex, abstime);
         }
 #ifdef DB_PTHREAD_LOG_EVENTS
         printf("%s (bits = 0x%8.8x), m_value = 0x%8.8x, returning 0x%8.8x\n", __FUNCTION__, bits, m_value, m_value & bits);
@@ -264,7 +264,7 @@ public:
 #endif
         while (err == 0 && ((m_value & bits) != 0))
         {
-            err = m_condition.Wait (m_mutex.GetMutex(), abstime);
+            err = m_condition.Wait (m_mutex, abstime);
         }
 
 #ifdef DB_PTHREAD_LOG_EVENTS
@@ -388,7 +388,7 @@ public:
 #endif
         while (err == 0 && m_value == value)
         {
-            err = m_condition.Wait (m_mutex.GetMutex(), abstime);
+            err = m_condition.Wait (m_mutex, abstime);
         }
 
         if (m_value != value)
