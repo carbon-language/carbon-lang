@@ -23,6 +23,9 @@ namespace lldb_private {
 class Mutex
 {
 public:
+    friend class Locker;
+    friend class Condition;
+    
     enum Type
     {
         eMutexTypeNormal,       ///< Mutex that can't recursively entered by the same thread
@@ -78,18 +81,6 @@ public:
         Locker(Mutex* m);
 
         //--------------------------------------------------------------
-        /// Constructor with a raw pthread mutex object pointer.
-        ///
-        /// This will create a scoped mutex locking object that locks
-        /// \a mutex.
-        ///
-        /// @param[in] mutex
-        ///     A pointer to a pthread_mutex_t that will get locked if
-        ///     non-NULL.
-        //--------------------------------------------------------------
-        Locker(pthread_mutex_t *mutex);
-
-        //--------------------------------------------------------------
         /// Desstructor
         ///
         /// Unlocks any valid pthread_mutex_t that this object may
@@ -105,7 +96,14 @@ public:
         /// non-NULL.
         //--------------------------------------------------------------
         void
-        Lock (pthread_mutex_t *mutex);
+        Lock (Mutex &mutex);
+        
+        void
+        Lock (Mutex *mutex)
+        {
+            if (mutex)
+                Lock(*mutex);
+        }
 
         //--------------------------------------------------------------
         /// Change the contained mutex only if the mutex can be locked.
@@ -123,7 +121,16 @@ public:
         ///     returns \b false otherwise.
         //--------------------------------------------------------------
         bool
-        TryLock (pthread_mutex_t *mutex);
+        TryLock (Mutex &mutex);
+        
+        bool
+        TryLock (Mutex *mutex)
+        {
+            if (mutex)
+                return TryLock(*mutex);
+            else
+                return false;
+        }
 
         void
         Unlock ();
@@ -170,15 +177,6 @@ public:
     /// Destroys the mutex owned by this object.
     //------------------------------------------------------------------
     ~Mutex();
-
-    //------------------------------------------------------------------
-    /// Mutex get accessor.
-    ///
-    /// @return
-    ///     A pointer to the pthread mutex object owned by this object.
-    //------------------------------------------------------------------
-    pthread_mutex_t *
-    GetMutex();
 
     //------------------------------------------------------------------
     /// Lock the mutex.
@@ -234,7 +232,17 @@ protected:
     // Member variables
     //------------------------------------------------------------------
     pthread_mutex_t m_mutex; ///< The pthread mutex object.
+
 private:
+    //------------------------------------------------------------------
+    /// Mutex get accessor.
+    ///
+    /// @return
+    ///     A pointer to the pthread mutex object owned by this object.
+    //------------------------------------------------------------------
+    pthread_mutex_t *
+    GetMutex();
+
     Mutex(const Mutex&);
     const Mutex& operator=(const Mutex&);
 };

@@ -264,7 +264,7 @@ GDBRemoteCommunication::GetAck ()
 bool
 GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker)
 {
-    return locker.TryLock (m_sequence_mutex.GetMutex());
+    return locker.TryLock (m_sequence_mutex);
 }
 
 

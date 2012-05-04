@@ -466,8 +466,8 @@ StackFrameList::InvalidateFrames (uint32_t start_idx)
 void
 StackFrameList::Merge (std::auto_ptr<StackFrameList>& curr_ap, lldb::StackFrameListSP& prev_sp)
 {
-    Mutex::Locker curr_locker (curr_ap.get() ? curr_ap->m_mutex.GetMutex() : NULL);
-    Mutex::Locker prev_locker (prev_sp.get() ? prev_sp->m_mutex.GetMutex() : NULL);
+    Mutex::Locker curr_locker (curr_ap.get() ? &curr_ap->m_mutex : NULL);
+    Mutex::Locker prev_locker (prev_sp.get() ? &prev_sp->m_mutex : NULL);
 
 #if defined (DEBUG_STACK_FRAMES)
     StreamFile s(stdout, false);

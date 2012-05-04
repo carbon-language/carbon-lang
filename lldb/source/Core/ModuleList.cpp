@@ -118,12 +118,12 @@ ModuleList::RemoveOrphans (bool mandatory)
     
     if (mandatory)
     {
-        locker.Lock (m_modules_mutex.GetMutex());
+        locker.Lock (m_modules_mutex);
     }
     else
     {
         // Not mandatory, remove orphans if we can get the mutex
-        if (!locker.TryLock(m_modules_mutex.GetMutex()))
+        if (!locker.TryLock(m_modules_mutex))
             return 0;
     }
     collection::iterator pos = m_modules.begin();

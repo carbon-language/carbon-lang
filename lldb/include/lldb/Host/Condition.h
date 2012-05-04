@@ -13,6 +13,7 @@
 
 
 #include <pthread.h>
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -54,15 +55,6 @@ public:
     //------------------------------------------------------------------
     int
     Broadcast ();
-
-    //------------------------------------------------------------------
-    /// Get accessor to the pthread condition object.
-    ///
-    /// @return
-    ///     A pointer to the condition variable owned by this object.
-    //------------------------------------------------------------------
-    pthread_cond_t *
-    GetCondition ();
 
     //------------------------------------------------------------------
     /// Unblocks one thread waiting for the condition variable
@@ -107,13 +99,22 @@ public:
     /// @see Condition::Signal()
     //------------------------------------------------------------------
     int
-    Wait (pthread_mutex_t *mutex, const TimeValue *abstime = NULL, bool *timed_out = NULL);
+    Wait (Mutex &mutex, const TimeValue *abstime = NULL, bool *timed_out = NULL);
 
 protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
     pthread_cond_t m_condition; ///< The condition variable.
+    
+    //------------------------------------------------------------------
+    /// Get accessor to the pthread condition object.
+    ///
+    /// @return
+    ///     A pointer to the condition variable owned by this object.
+    //------------------------------------------------------------------
+    pthread_cond_t *
+    GetCondition ();
 };
 
 } // namespace lldb_private

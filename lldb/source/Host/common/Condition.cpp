@@ -78,7 +78,7 @@ Condition::Signal ()
 // The current thread re-acquires the lock on "mutex".
 //----------------------------------------------------------------------
 int
-Condition::Wait (pthread_mutex_t *mutex, const TimeValue *abstime, bool *timed_out)
+Condition::Wait (Mutex &mutex, const TimeValue *abstime, bool *timed_out)
 {
     int err = 0;
     do
@@ -86,10 +86,10 @@ Condition::Wait (pthread_mutex_t *mutex, const TimeValue *abstime, bool *timed_o
         if (abstime && abstime->IsValid())
         {
             struct timespec abstime_ts = abstime->GetAsTimeSpec();
-            err = ::pthread_cond_timedwait (&m_condition, mutex, &abstime_ts);
+            err = ::pthread_cond_timedwait (&m_condition, mutex.GetMutex(), &abstime_ts);
         }
         else
-            err = ::pthread_cond_wait (&m_condition, mutex);
+            err = ::pthread_cond_wait (&m_condition, mutex.GetMutex());
     } while (err == EINTR);
 
     if (timed_out != NULL)

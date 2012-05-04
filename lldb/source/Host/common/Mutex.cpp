@@ -108,7 +108,7 @@ Mutex::Locker::Locker () :
 Mutex::Locker::Locker (Mutex& m) :
     m_mutex_ptr(NULL)
 {
-    Lock (m.GetMutex());
+    Lock (m);
 }
 
 //----------------------------------------------------------------------
@@ -121,18 +121,7 @@ Mutex::Locker::Locker (Mutex* m) :
     m_mutex_ptr(NULL)
 {
     if (m)
-        Lock (m->GetMutex());
-}
-
-//----------------------------------------------------------------------
-// Constructor with a raw pthread mutex object pointer.
-//
-// This will create a scoped mutex locking object that locks "mutex"
-//----------------------------------------------------------------------
-Mutex::Locker::Locker (pthread_mutex_t *mutex_ptr) :
-    m_mutex_ptr (NULL)
-{
-    Lock (mutex_ptr);
+        Lock (m);
 }
 
 //----------------------------------------------------------------------
@@ -150,8 +139,10 @@ Mutex::Locker::~Locker ()
 // mutex) and lock the new "mutex" object if it is non-NULL.
 //----------------------------------------------------------------------
 void
-Mutex::Locker::Lock (pthread_mutex_t *mutex_ptr)
+Mutex::Locker::Lock (Mutex &mutex)
 {
+    pthread_mutex_t *mutex_ptr = mutex.GetMutex();
+
     // We already have this mutex locked or both are NULL...
     if (m_mutex_ptr == mutex_ptr)
         return;
@@ -176,8 +167,10 @@ Mutex::Locker::Unlock ()
 }
 
 bool
-Mutex::Locker::TryLock (pthread_mutex_t *mutex_ptr)
+Mutex::Locker::TryLock (Mutex &mutex)
 {
+    pthread_mutex_t *mutex_ptr = mutex.GetMutex();
+    
     // We already have this mutex locked!
     if (m_mutex_ptr == mutex_ptr)
         return m_mutex_ptr != NULL;

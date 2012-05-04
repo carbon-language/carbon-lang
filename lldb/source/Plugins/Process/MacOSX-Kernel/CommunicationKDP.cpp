@@ -153,7 +153,7 @@ CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packe
 bool
 CommunicationKDP::GetSequenceMutex (Mutex::Locker& locker)
 {
-    return locker.TryLock (m_sequence_mutex.GetMutex());
+    return locker.TryLock (m_sequence_mutex);
 }
 
 
