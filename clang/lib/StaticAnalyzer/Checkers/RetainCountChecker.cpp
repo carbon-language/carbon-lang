@@ -739,7 +739,8 @@ public:
     InitializeMethodSummaries();
   }
 
-  const RetainSummary *getSummary(const FunctionDecl *FD);
+  const RetainSummary *getSummary(const FunctionDecl *FD,
+                                  const CallOrObjCMessage *CME = 0);
 
   const RetainSummary *getMethodSummary(Selector S, IdentifierInfo *ClsName,
                                         const ObjCInterfaceDecl *ID,
@@ -886,7 +887,9 @@ static bool isMakeCollectable(const FunctionDecl *FD, StringRef FName) {
   return FName.find("MakeCollectable") != StringRef::npos;
 }
 
-const RetainSummary * RetainSummaryManager::getSummary(const FunctionDecl *FD) {
+const RetainSummary *
+RetainSummaryManager::getSummary(const FunctionDecl *FD,
+                                 const CallOrObjCMessage *CME) {
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
   if (I != FuncSummaries.end())
@@ -1000,6 +1003,11 @@ const RetainSummary * RetainSummaryManager::getSummary(const FunctionDecl *FD) {
       // be deallocated by NSMapRemove. (radar://11152419)
       ScratchArgs = AF.add(ScratchArgs, 1, StopTracking);
       ScratchArgs = AF.add(ScratchArgs, 2, StopTracking);
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+    } else if (CME && CME->hasNonZeroCallbackArg()) {
+      // Allow objects to escape throug callbacks. radar://10973977
+      for (unsigned I = 0; I < CME->getNumArgs(); ++I)
+        ScratchArgs = AF.add(ScratchArgs, I, StopTracking);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
     }
 
@@ -2633,10 +2641,13 @@ void RetainCountChecker::checkPostStmt(const CallExpr *CE,
   if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
     Summ = Summaries.getPersistentStopSummary();
   } else if (const FunctionDecl *FD = L.getAsFunctionDecl()) {
-    Summ = Summaries.getSummary(FD);
+    CallOrObjCMessage CME(CE, state, C.getLocationContext());
+    Summ = Summaries.getSummary(FD, &CME);
   } else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
-    if (const CXXMethodDecl *MD = me->getMethodDecl())
-      Summ = Summaries.getSummary(MD);
+    if (const CXXMethodDecl *MD = me->getMethodDecl()) {
+      CallOrObjCMessage CME(CE, state, C.getLocationContext());
+      Summ = Summaries.getSummary(MD, &CME);
+    }
   }
 
   if (!Summ)
@@ -2652,13 +2663,14 @@ void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
     return;
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
-  const RetainSummary *Summ = Summaries.getSummary(Ctor);
+  ProgramStateRef state = C.getState();
+  CallOrObjCMessage CME(CE, state, C.getLocationContext());
+  const RetainSummary *Summ = Summaries.getSummary(Ctor, &CME);
 
   // If we didn't get a summary, this constructor doesn't affect retain counts.
   if (!Summ)
     return;
 
-  ProgramStateRef state = C.getState();
   checkSummary(*Summ, CallOrObjCMessage(CE, state, C.getLocationContext()), C);
 }
 
@@ -3250,7 +3262,7 @@ void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
     if (!isa<CXXMethodDecl>(FD))
-      if (const RetainSummary *Summ = Summaries.getSummary(FD))
+      if (const RetainSummary *Summ = Summaries.getSummary(FD, 0))
         checkReturnWithRetEffect(S, C, Pred, Summ->getRetEffect(), X,
                                  Sym, state);
   }

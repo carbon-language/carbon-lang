@@ -1686,6 +1686,32 @@ void rdar_10824732() {
   }
 }
 
+// Stop tracking objects passed to functions, which take callbacks as parameters.
+// radar://10973977
+typedef int (*CloseCallback) (void *);
+void ReaderForIO(CloseCallback ioclose, void *ioctx);
+int IOClose(void *context);
+
+@protocol SInS <NSObject>
+@end
+
+@interface radar10973977 : NSObject
+- (id<SInS>)inputS;
+- (void)reader;
+@end
+
+@implementation radar10973977
+- (void)reader
+{
+    id<SInS> inputS = [[self inputS] retain];
+    ReaderForIO(IOClose, inputS);
+}
+- (id<SInS>)inputS
+{
+    return 0;
+}
+@end
+
 //===----------------------------------------------------------------------===//
 // Test returning allocated memory in a struct.
 // 
