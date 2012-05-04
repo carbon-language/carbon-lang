@@ -75,6 +75,7 @@ uint64_t encode_leb128(const char *str)
 
   int retval = encode_leb128(temp64.x, &nbytes, encoded, 16);
 
+  (void)retval;
   assert(retval == 0 &&
          "Encoding to leb128 failed");
 

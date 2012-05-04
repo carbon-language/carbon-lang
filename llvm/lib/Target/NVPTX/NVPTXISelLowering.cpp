@@ -860,7 +860,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return Op;
   case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   default:
-    assert(0 && "Custom lowering not defined for operation");
+    llvm_unreachable("Custom lowering not defined for operation");
   }
 }
 
