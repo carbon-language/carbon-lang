@@ -2018,11 +2018,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Arg *A = Args.getLastArg(options::OPT_Wlarge_by_value_copy_EQ,
                                options::OPT_Wlarge_by_value_copy_def)) {
-    CmdArgs.push_back("-Wlarge-by-value-copy");
-    if (A->getNumValues())
-      CmdArgs.push_back(A->getValue(Args));
-    else
-      CmdArgs.push_back("64"); // default value for -Wlarge-by-value-copy.
+    if (A->getNumValues()) {
+      StringRef bytes = A->getValue(Args);
+      CmdArgs.push_back(Args.MakeArgString("-Wlarge-by-value-copy=" + bytes));
+    } else
+      CmdArgs.push_back("-Wlarge-by-value-copy=64"); // default value
   }
 
   if (Args.hasArg(options::OPT__relocatable_pch))
