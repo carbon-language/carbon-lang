@@ -154,24 +154,22 @@ TargetRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   assert(Idx && "Bad sub-register index");
 
   // Find Idx in the list of super-register indices.
-  const uint16_t *SRI = B->getSuperRegIndices();
-  unsigned Offset = 0;
-  while (SRI[Offset] != Idx) {
-    if (!SRI[Offset])
-      return 0;
-    ++Offset;
-  }
+  const uint32_t *Mask = 0;
+  for (SuperRegClassIterator RCI(B, this); RCI.isValid(); ++RCI)
+    if (RCI.getSubReg() == Idx) {
+      Mask = RCI.getMask();
+      break;
+    }
+  if (!Mask)
+    return 0;
 
-  // The register class bit mask corresponding to SRI[Offset]. The bit mask
-  // contains all register classes that are projected into B by Idx. Find a
-  // class that is also a sub-class of A.
-  const unsigned RCMaskWords = (getNumRegClasses()+31)/32;
-  const uint32_t *TV = B->getSubClassMask() + (Offset + 1) * RCMaskWords;
+  // The bit mask contains all register classes that are projected into B by
+  // Idx. Find a class that is also a sub-class of A.
   const uint32_t *SC = A->getSubClassMask();
 
   // Find the first common register class in TV and SC.
-  for (unsigned i = 0; i != RCMaskWords ; ++i)
-    if (unsigned Common = TV[i] & SC[i])
-      return getRegClass(32*i + CountTrailingZeros_32(Common));
+  for (unsigned Base = 0, BaseE = getNumRegClasses(); Base < BaseE; Base += 32)
+    if (unsigned Common = *Mask++ & *SC++)
+      return getRegClass(Base + CountTrailingZeros_32(Common));
   return 0;
 }

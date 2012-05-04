@@ -738,6 +738,62 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+//                           SuperRegClassIterator
+//===----------------------------------------------------------------------===//
+//
+// Iterate over the possible super-registers for a given register class. The
+// iterator will visit a list of pairs (Idx, Mask) corresponding to the
+// possible classes of super-registers.
+//
+// Each bit mask will have at least one set bit, and each set bit in Mask
+// corresponds to a SuperRC such that:
+//
+//   For all Reg in SuperRC: Reg:Idx is in RC.
+//
+// The iterator can include (O, RC->getSubClassMask()) as the first entry which
+// also satisfies the above requirement, assuming Reg:0 == Reg.
+//
+class SuperRegClassIterator {
+  const unsigned RCMaskWords;
+  unsigned SubReg;
+  const uint16_t *Idx;
+  const uint32_t *Mask;
+
+public:
+  /// Create a SuperRegClassIterator that visits all the super-register classes
+  /// of RC. When IncludeSelf is set, also include the (0, sub-classes) entry.
+  SuperRegClassIterator(const TargetRegisterClass *RC,
+                        const TargetRegisterInfo *TRI,
+                        bool IncludeSelf = false)
+    : RCMaskWords((TRI->getNumRegClasses() + 31) / 32),
+      SubReg(0),
+      Idx(RC->getSuperRegIndices()),
+      Mask(RC->getSubClassMask()) {
+    if (!IncludeSelf)
+      ++*this;
+  }
+
+  /// Returns true if this iterator is still pointing at a valid entry.
+  bool isValid() const { return Idx; }
+
+  /// Returns the current sub-register index.
+  unsigned getSubReg() const { return SubReg; }
+
+  /// Returns the bit mask if register classes that getSubReg() projects into
+  /// RC.
+  const uint32_t *getMask() const { return Mask; }
+
+  /// Advance iterator to the next entry.
+  void operator++() {
+    assert(isValid() && "Cannot move iterator past end.");
+    Mask += RCMaskWords;
+    SubReg = *Idx++;
+    if (!SubReg)
+      Idx = 0;
+  }
+};
+
 // This is useful when building IndexedMaps keyed on virtual registers
 struct VirtReg2IndexFunctor : public std::unary_function<unsigned, unsigned> {
   unsigned operator()(unsigned Reg) const {
