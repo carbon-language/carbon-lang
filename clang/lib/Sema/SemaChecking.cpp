@@ -4587,11 +4587,15 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
 
   // Don't consider sizes resulting from macro expansions or template argument
   // substitution to form C89 tail-padded arrays.
-  ConstantArrayTypeLoc TL =
-    cast<ConstantArrayTypeLoc>(FD->getTypeSourceInfo()->getTypeLoc());
-  const Expr *SizeExpr = dyn_cast<IntegerLiteral>(TL.getSizeExpr());
-  if (!SizeExpr || SizeExpr->getExprLoc().isMacroID())
-    return false;
+
+  TypeSourceInfo *TInfo = FD->getTypeSourceInfo();
+  if (TInfo) {
+    ConstantArrayTypeLoc TL =
+      cast<ConstantArrayTypeLoc>(TInfo->getTypeLoc());
+    const Expr *SizeExpr = dyn_cast<IntegerLiteral>(TL.getSizeExpr());
+    if (!SizeExpr || SizeExpr->getExprLoc().isMacroID())
+      return false;
+  }
 
   const RecordDecl *RD = dyn_cast<RecordDecl>(FD->getDeclContext());
   if (!RD) return false;
