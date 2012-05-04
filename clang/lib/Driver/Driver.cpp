@@ -528,12 +528,12 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         I += 16;
         E = Cmd.find(" ", I);
         assert (E != std::string::npos && "-main-file-name missing argument?");
-        std::string OldFilename = Cmd.substr(I, E - I);
-        std::string NewFilename = llvm::sys::path::filename(*it).str();
-        I = Cmd.rfind(OldFilename);
-        E = I + OldFilename.length() - 1;
-        I = Cmd.rfind(" ", I);
-        Cmd.replace(I + 1, E - I, NewFilename);
+        StringRef OldFilename = StringRef(Cmd).slice(I, E);
+        StringRef NewFilename = llvm::sys::path::filename(*it);
+        I = StringRef(Cmd).rfind(OldFilename);
+        E = I + OldFilename.size();
+        I = Cmd.rfind(" ", I) + 1;
+        Cmd.replace(I, E - I, NewFilename.data(), NewFilename.size());
         ScriptOS << Cmd;
         Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
       }
