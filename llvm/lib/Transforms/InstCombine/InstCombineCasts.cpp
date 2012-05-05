@@ -34,7 +34,7 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
   if (BinaryOperator *I = dyn_cast<BinaryOperator>(Val)) {
     // Cannot look past anything that might overflow.
     OverflowingBinaryOperator *OBI = dyn_cast<OverflowingBinaryOperator>(Val);
-    if (OBI && !OBI->hasNoUnsignedWrap()) {
+    if (OBI && !OBI->hasNoUnsignedWrap() && !OBI->hasNoSignedWrap()) {
       Scale = 1;
       Offset = 0;
       return Val;
