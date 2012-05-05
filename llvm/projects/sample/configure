@@ -7632,7 +7632,7 @@ else
 
    # Check for ld64.
    if (echo "$version_string" | grep -q "ld64"); then
-     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#.*ld64-\([^ ]*\)#\1#")
+     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#.*ld64-\([^ ]*\)\( (.*)\)\{0,1\}#\1#")
    else
      llvm_cv_link_version=$(echo "$version_string" | sed -e "s#[^0-9]*\([0-9.]*\).*#\1#")
    fi
@@ -15974,7 +15974,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
     ac_save_CXXFLAGS=$CXXFLAGS
-    CXXFLAGS+=" -pedantic"
+    CXXFLAGS="$CXXFLAGS -pedantic"
     if test "$cross_compiling" = yes; then
   ac_cv_huge_val_sanity=yes
 else
@@ -20800,18 +20800,18 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
   oldcxxflags="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+  CXXFLAGS="$CXXFLAGS -O0 -fvisibility-inlines-hidden -Werror"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
+template <typename T> struct X { void __attribute__((noinline)) f() {} };
 int
 main ()
 {
-
+X<int>().f();
   ;
   return 0;
 }
@@ -22098,16 +22098,16 @@ echo "$as_me: executing $ac_file commands" >&6;}
 
 
   case $ac_file$ac_mode in
-    "Makefile":C) ${srcdir}/autoconf/mkinstalldirs `dirname Makefile`
-   ${SHELL} ${srcdir}/autoconf/install-sh -m 0644 -c ${srcdir}/Makefile Makefile ;;
-    "lib/Makefile":C) ${srcdir}/autoconf/mkinstalldirs `dirname lib/Makefile`
-   ${SHELL} ${srcdir}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/Makefile lib/Makefile ;;
-    "lib/sample/Makefile":C) ${srcdir}/autoconf/mkinstalldirs `dirname lib/sample/Makefile`
-   ${SHELL} ${srcdir}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/sample/Makefile lib/sample/Makefile ;;
-    "tools/Makefile":C) ${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
-   ${SHELL} ${srcdir}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/Makefile tools/Makefile ;;
-    "tools/sample/Makefile":C) ${srcdir}/autoconf/mkinstalldirs `dirname tools/sample/Makefile`
-   ${SHELL} ${srcdir}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/sample/Makefile tools/sample/Makefile ;;
+    "Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/Makefile Makefile ;;
+    "lib/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/Makefile lib/Makefile ;;
+    "lib/sample/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/sample/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/sample/Makefile lib/sample/Makefile ;;
+    "tools/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/Makefile tools/Makefile ;;
+    "tools/sample/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/sample/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/sample/Makefile tools/sample/Makefile ;;
 
   esac
 done # for ac_tag
