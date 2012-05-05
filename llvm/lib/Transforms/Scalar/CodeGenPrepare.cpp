@@ -60,6 +60,7 @@ STATISTIC(NumExtsMoved,  "Number of [s|z]ext instructions combined with loads");
 STATISTIC(NumExtUses,    "Number of uses of [s|z]ext instructions optimized");
 STATISTIC(NumRetsDup,    "Number of return instructions duplicated");
 STATISTIC(NumDbgValueMoved, "Number of debug value instructions moved");
+STATISTIC(NumSelectsExpanded, "Number of selects turned into branches");
 
 static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
@@ -69,6 +70,9 @@ static cl::opt<bool> DisableBranchOpts(
 static cl::opt<bool> DisableDeleteDeadBlocks(
   "disable-cgp-delete-dead-blocks", cl::Hidden, cl::init(false),
   cl::desc("Disable deleting dead blocks in CodeGenPrepare"));
+
+static cl::opt<bool> EnableSelectToBranch("enable-cgp-select2branch", cl::Hidden,
+  cl::desc("Enable select to branch conversion."));
 
 namespace {
   class CodeGenPrepare : public FunctionPass {
@@ -92,6 +96,9 @@ namespace {
     /// ModifiedDT - If CFG is modified in anyway, dominator tree may need to
     /// be updated.
     bool ModifiedDT;
+
+    /// OptSize - True if optimizing for size.
+    bool OptSize;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -118,6 +125,7 @@ namespace {
     bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
+    bool OptimizeSelectInst(SelectInst *SI);
     bool DupRetToEnableTailCallOpts(ReturnInst *RI);
     bool PlaceDbgValues(Function &F);
   };
@@ -141,6 +149,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
+  OptSize = F.hasFnAttr(Attribute::OptimizeForSize);
 
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
@@ -1091,6 +1100,78 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   return MadeChange;
 }
 
+/// isFormingBranchFromSelectProfitable - Returns true if a SelectInst should be
+/// turned into an explicit branch.
+static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
+  // FIXME: This should use the same heuristics as IfConversion to determine
+  // whether a select is better represented as a branch.  This requires that
+  // branch probability metadata is preserved for the select, which is not the
+  // case currently.
+
+  CmpInst *Cmp = dyn_cast<CmpInst>(SI->getCondition());
+
+  // If the branch is predicted right, an out of order CPU can avoid blocking on
+  // the compare.  Emit cmovs on compares with a memory operand as branches to
+  // avoid stalls on the load from memory.  If the compare has more than one use
+  // there's probably another cmov or setcc around so it's not worth emitting a
+  // branch.
+  if (!Cmp)
+    return false;
+
+  Value *CmpOp0 = Cmp->getOperand(0);
+  Value *CmpOp1 = Cmp->getOperand(1);
+
+  // We check that the memory operand has one use to avoid uses of the loaded
+  // value directly after the compare, making branches unprofitable.
+  return Cmp->hasOneUse() &&
+         ((isa<LoadInst>(CmpOp0) && CmpOp0->hasOneUse()) ||
+          (isa<LoadInst>(CmpOp1) && CmpOp1->hasOneUse()));
+}
+
+
+bool CodeGenPrepare::OptimizeSelectInst(SelectInst *SI) {
+  // If we have a SelectInst that will likely profit from branch prediction,
+  // turn it into a branch.
+  if (!EnableSelectToBranch || OptSize || !TLI->isPredictableSelectExpensive())
+    return false;
+
+  if (!SI->getCondition()->getType()->isIntegerTy(1) ||
+      !isFormingBranchFromSelectProfitable(SI))
+    return false;
+
+  ModifiedDT = true;
+
+  // First, we split the block containing the select into 2 blocks.
+  BasicBlock *StartBlock = SI->getParent();
+  BasicBlock::iterator SplitPt = ++(BasicBlock::iterator(SI));
+  BasicBlock *NextBlock = StartBlock->splitBasicBlock(SplitPt, "select.end");
+
+  // Create a new block serving as the landing pad for the branch.
+  BasicBlock *SmallBlock = BasicBlock::Create(SI->getContext(), "select.mid",
+                                             NextBlock->getParent(), NextBlock);
+
+  // Move the unconditional branch from the block with the select in it into our
+  // landing pad block.
+  StartBlock->getTerminator()->eraseFromParent();
+  BranchInst::Create(NextBlock, SmallBlock);
+
+  // Insert the real conditional branch based on the original condition.
+  BranchInst::Create(NextBlock, SmallBlock, SI->getCondition(), SI);
+
+  // The select itself is replaced with a PHI Node.
+  PHINode *PN = PHINode::Create(SI->getType(), 2, "", NextBlock->begin());
+  PN->takeName(SI);
+  PN->addIncoming(SI->getTrueValue(), StartBlock);
+  PN->addIncoming(SI->getFalseValue(), SmallBlock);
+  SI->replaceAllUsesWith(PN);
+  SI->eraseFromParent();
+
+  // Instruct OptimizeBlock to skip to the next block.
+  CurInstIterator = StartBlock->end();
+  ++NumSelectsExpanded;
+  return true;
+}
+
 bool CodeGenPrepare::OptimizeInst(Instruction *I) {
   if (PHINode *P = dyn_cast<PHINode>(I)) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
@@ -1160,6 +1241,9 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
 
   if (ReturnInst *RI = dyn_cast<ReturnInst>(I))
     return DupRetToEnableTailCallOpts(RI);
+
+  if (SelectInst *SI = dyn_cast<SelectInst>(I))
+    return OptimizeSelectInst(SI);
 
   return false;
 }
