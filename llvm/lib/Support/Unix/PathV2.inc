@@ -366,14 +366,12 @@ error_code unique_file(const Twine &model, int &result_fd,
     }
   }
 
-  // Replace '%' with random chars. From here on, DO NOT modify model. It may be
-  // needed if the randomly chosen path already exists.
+  // From here on, DO NOT modify model. It may be needed if the randomly chosen
+  // path already exists.
   SmallString<128> RandomPath = Model;
 
 retry_random_path:
-  // This is opened here instead of above to make it easier to track when to
-  // close it. Collisions should be rare enough for the possible extra syscalls
-  // not to matter.
+  // Replace '%' with random chars.
   for (unsigned i = 0, e = Model.size(); i != e; ++i) {
     if (Model[i] == '%')
       RandomPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
