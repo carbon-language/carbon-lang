@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "llvm/Support/Process.h"
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -367,31 +368,16 @@ error_code unique_file(const Twine &model, int &result_fd,
 
   // Replace '%' with random chars. From here on, DO NOT modify model. It may be
   // needed if the randomly chosen path already exists.
-  SmallString<128> RandomPath;
-  RandomPath.reserve(Model.size() + 1);
-  ::srand(::time(NULL));
+  SmallString<128> RandomPath = Model;
 
 retry_random_path:
   // This is opened here instead of above to make it easier to track when to
   // close it. Collisions should be rare enough for the possible extra syscalls
   // not to matter.
-  FILE *RandomSource = ::fopen("/dev/urandom", "r");
-  RandomPath.set_size(0);
-  for (SmallVectorImpl<char>::const_iterator i = Model.begin(),
-                                             e = Model.end(); i != e; ++i) {
-    if (*i == '%') {
-      char val = 0;
-      if (RandomSource)
-        val = fgetc(RandomSource);
-      else
-        val = ::rand();
-      RandomPath.push_back("0123456789abcdef"[val & 15]);
-    } else
-      RandomPath.push_back(*i);
+  for (unsigned i = 0, e = Model.size(); i != e; ++i) {
+    if (Model[i] == '%')
+      RandomPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
   }
-
-  if (RandomSource)
-    ::fclose(RandomSource);
 
   // Try to open + create the file.
 rety_open_create:
