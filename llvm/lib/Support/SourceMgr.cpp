@@ -79,9 +79,10 @@ int SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
   return -1;
 }
 
-/// FindLineNumber - Find the line number for the specified location in the
-/// specified file.  This is not a fast method.
-unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
+/// getLineAndColumn - Find the line and column number for the specified
+/// location in the specified file.  This is not a fast method.
+std::pair<unsigned, unsigned>
+SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
   if (BufferID == -1) BufferID = FindBufferContainingLoc(Loc);
   assert(BufferID != -1 && "Invalid Location!");
 
@@ -91,7 +92,8 @@ unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   // location.
   unsigned LineNo = 1;
 
-  const char *Ptr = Buff->getBufferStart();
+  const char *BufStart = Buff->getBufferStart();
+  const char *Ptr = BufStart;
 
   // If we have a line number cache, and if the query is to a later point in the
   // same file, start searching from the last query location.  This optimizes
@@ -108,7 +110,6 @@ unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   for (; SMLoc::getFromPointer(Ptr) != Loc; ++Ptr)
     if (*Ptr == '\n') ++LineNo;
 
-
   // Allocate the line number cache if it doesn't exist.
   if (LineNoCache == 0)
     LineNoCache = new LineNoCacheTy();
@@ -118,7 +119,10 @@ unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   Cache.LastQueryBufferID = BufferID;
   Cache.LastQuery = Ptr;
   Cache.LineNoOfQuery = LineNo;
-  return LineNo;
+  
+  size_t NewlineOffs = StringRef(BufStart, Ptr-BufStart).find_last_of("\n\r");
+  if (NewlineOffs == StringRef::npos) NewlineOffs = ~0ULL;
+  return std::make_pair(LineNo, Ptr-BufStart-NewlineOffs);
 }
 
 void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
@@ -153,14 +157,15 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
 
   // Scan backward to find the start of the line.
   const char *LineStart = Loc.getPointer();
-  while (LineStart != CurMB->getBufferStart() &&
-         LineStart[-1] != '\n' && LineStart[-1] != '\r')
+  const char *BufStart = CurMB->getBufferStart();
+  while (LineStart != BufStart && LineStart[-1] != '\n' &&
+         LineStart[-1] != '\r')
     --LineStart;
 
   // Get the end of the line.
   const char *LineEnd = Loc.getPointer();
-  while (LineEnd != CurMB->getBufferEnd() &&
-         LineEnd[0] != '\n' && LineEnd[0] != '\r')
+  const char *BufEnd = CurMB->getBufferEnd();
+  while (LineEnd != BufEnd && LineEnd[0] != '\n' && LineEnd[0] != '\r')
     ++LineEnd;
   std::string LineStr(LineStart, LineEnd);
 
@@ -186,9 +191,10 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
                                        R.End.getPointer()-LineStart));
   }
   
+  std::pair<unsigned, unsigned> LineAndCol = getLineAndColumn(Loc, CurBuf);
   return SMDiagnostic(*this, Loc,
-                      CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
-                      Loc.getPointer()-LineStart, Kind, Msg.str(),
+                      CurMB->getBufferIdentifier(), LineAndCol.first,
+                      LineAndCol.second-1, Kind, Msg.str(),
                       LineStr, ColRanges);
 }
 
