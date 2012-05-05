@@ -861,9 +861,7 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
         for (unsigned i = 0; i < NumParams; ++i) {
           if (i)
             OS << ", ";
-          std::string Param;
-          FD->getParamDecl(i)->getType().getAsStringInternal(Param, P);
-          OS << Param;
+          OS << FD->getParamDecl(i)->getType().stream(P);
         }
 
         if (FT->isVariadic()) {

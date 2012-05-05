@@ -669,6 +669,7 @@ public:
   
   /// getAsString - Derive the full selector name (e.g. "foo:bar:") and return
   /// it as an std::string.
+  // FIXME: Add a print method that uses a raw_ostream.
   std::string getAsString() const;
 
   /// getMethodFamily - Derive the conventional family of this method.

@@ -29,6 +29,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/Twine.h"
 #include "clang/Basic/LLVM.h"
 
 namespace clang {
@@ -412,12 +413,11 @@ public:
   }
 
   std::string getAsString() const;
-  std::string getAsString(const PrintingPolicy &Policy) const {
-    std::string Buffer;
-    getAsStringInternal(Buffer, Policy);
-    return Buffer;
-  }
-  void getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const;
+  std::string getAsString(const PrintingPolicy &Policy) const;
+
+  bool isEmptyWhenPrinted(const PrintingPolicy &Policy) const;
+  void print(raw_ostream &OS, const PrintingPolicy &Policy,
+             bool appendSpaceIfNonEmpty = false) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddInteger(Mask);
@@ -829,11 +829,20 @@ public:
   }
   static std::string getAsString(const Type *ty, Qualifiers qs);
 
-  std::string getAsString(const PrintingPolicy &Policy) const {
-    std::string S;
-    getAsStringInternal(S, Policy);
-    return S;
+  std::string getAsString(const PrintingPolicy &Policy) const;
+
+  void print(raw_ostream &OS, const PrintingPolicy &Policy,
+             const Twine &PlaceHolder = Twine()) const {
+    print(split(), OS, Policy, PlaceHolder);
   }
+  static void print(SplitQualType split, raw_ostream &OS,
+                    const PrintingPolicy &policy, const Twine &PlaceHolder) {
+    return print(split.Ty, split.Quals, OS, policy, PlaceHolder);
+  }
+  static void print(const Type *ty, Qualifiers qs,
+                    raw_ostream &OS, const PrintingPolicy &policy,
+                    const Twine &PlaceHolder);
+
   void getAsStringInternal(std::string &Str,
                            const PrintingPolicy &Policy) const {
     return getAsStringInternal(split(), Str, Policy);
@@ -845,6 +854,27 @@ public:
   static void getAsStringInternal(const Type *ty, Qualifiers qs,
                                   std::string &out,
                                   const PrintingPolicy &policy);
+
+  class StreamedQualTypeHelper {
+    const QualType &T;
+    const PrintingPolicy &Policy;
+    const Twine &PlaceHolder;
+  public:
+    StreamedQualTypeHelper(const QualType &T, const PrintingPolicy &Policy,
+                           const Twine &PlaceHolder)
+      : T(T), Policy(Policy), PlaceHolder(PlaceHolder) { }
+
+    friend raw_ostream &operator<<(raw_ostream &OS,
+                                   const StreamedQualTypeHelper &SQT) {
+      SQT.T.print(OS, SQT.Policy, SQT.PlaceHolder);
+      return OS;
+    }
+  };
+
+  StreamedQualTypeHelper stream(const PrintingPolicy &Policy,
+                                const Twine &PlaceHolder = Twine()) const {
+    return StreamedQualTypeHelper(*this, Policy, PlaceHolder);
+  }
 
   void dump(const char *s) const;
   void dump() const;
@@ -2939,7 +2969,10 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
+  // FIXME: Remove the string version.
   void printExceptionSpecification(std::string &S, 
+                                   PrintingPolicy Policy) const;
+  void printExceptionSpecification(raw_ostream &OS, 
                                    PrintingPolicy Policy) const;
 
   static bool classof(const Type *T) {
@@ -3593,6 +3626,7 @@ public:
 
   /// \brief Print a template argument list, including the '<' and '>'
   /// enclosing the template arguments.
+  // FIXME: remove the string ones.
   static std::string PrintTemplateArgumentList(const TemplateArgument *Args,
                                                unsigned NumArgs,
                                                const PrintingPolicy &Policy,
@@ -3604,6 +3638,23 @@ public:
 
   static std::string PrintTemplateArgumentList(const TemplateArgumentListInfo &,
                                                const PrintingPolicy &Policy);
+
+  /// \brief Print a template argument list, including the '<' and '>'
+  /// enclosing the template arguments.
+  static void PrintTemplateArgumentList(raw_ostream &OS,
+                                        const TemplateArgument *Args,
+                                        unsigned NumArgs,
+                                        const PrintingPolicy &Policy,
+                                        bool SkipBrackets = false);
+
+  static void PrintTemplateArgumentList(raw_ostream &OS,
+                                        const TemplateArgumentLoc *Args,
+                                        unsigned NumArgs,
+                                        const PrintingPolicy &Policy);
+
+  static void PrintTemplateArgumentList(raw_ostream &OS,
+                                        const TemplateArgumentListInfo &,
+                                        const PrintingPolicy &Policy);
 
   /// True if this template specialization type matches a current
   /// instantiation in the context in which it is found.

@@ -322,15 +322,13 @@ void DeclPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
 }
 
 void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
-  std::string S = D->getNameAsString();
-  D->getUnderlyingType().getAsStringInternal(S, Policy);
   if (!Policy.SuppressSpecifiers) {
     Out << "typedef ";
     
     if (D->isModulePrivate())
       Out << "__module_private__ ";
   }
-  Out << S;
+  D->getUnderlyingType().print(Out, Policy, D->getName());
   prettyPrintAttributes(D);
 }
 
@@ -350,11 +348,8 @@ void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
   }
   Out << *D;
 
-  if (D->isFixed()) {
-    std::string Underlying;
-    D->getIntegerType().getAsStringInternal(Underlying, Policy);
-    Out << " : " << Underlying;
-  }
+  if (D->isFixed())
+    Out << " : " << D->getIntegerType().stream(Policy);
 
   if (D->isCompleteDefinition()) {
     Out << " {\n";
@@ -460,9 +455,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           if (I)
             Proto += ", ";
 
-          std::string ExceptionType;
-          FT->getExceptionType(I).getAsStringInternal(ExceptionType, SubPolicy);
-          Proto += ExceptionType;
+          Proto += FT->getExceptionType(I).getAsString(SubPolicy);;
         }
       Proto += ")";
     } else if (FT && isNoexceptExceptionSpec(FT->getExceptionSpecType())) {
@@ -542,12 +535,11 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       }
     }
     else
-      AFT->getResultType().getAsStringInternal(Proto, Policy);
+      AFT->getResultType().print(Out, Policy, Proto);
   } else {
-    Ty.getAsStringInternal(Proto, Policy);
+    Ty.print(Out, Policy, Proto);
   }
 
-  Out << Proto;
   prettyPrintAttributes(D);
 
   if (D->isPure())
@@ -581,9 +573,7 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
   if (!Policy.SuppressSpecifiers && D->isModulePrivate())
     Out << "__module_private__ ";
 
-  std::string Name = D->getNameAsString();
-  D->getType().getAsStringInternal(Name, Policy);
-  Out << Name;
+  Out << D->getType().stream(Policy, D->getName());
 
   if (D->isBitField()) {
     Out << " : ";
@@ -613,12 +603,10 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
   if (!Policy.SuppressSpecifiers && D->isModulePrivate())
     Out << "__module_private__ ";
 
-  std::string Name = D->getNameAsString();
   QualType T = D->getType();
   if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))
     T = Parm->getOriginalType();
-  T.getAsStringInternal(Name, Policy);
-  Out << Name;
+  T.print(Out, Policy, D->getName());
   Expr *Init = D->getInit();
   if (!Policy.SuppressInitializers && Init) {
     bool ImplicitInit = false;
