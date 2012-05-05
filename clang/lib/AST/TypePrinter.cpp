@@ -210,7 +210,7 @@ void TypePrinter::printBuiltin(const BuiltinType *T, std::string &S) {
   } else {
     // Prefix the basic type, e.g. 'int X'.
     S = ' ' + S;
-    S = T->getName(Policy) + S;
+    S = T->getNameAsCString(Policy) + S;
   }
 }
 

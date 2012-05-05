@@ -1414,7 +1414,7 @@ static const char *GetCompletionTypeString(QualType T,
   if (!T.getLocalQualifiers()) {
     // Built-in type names are constant strings.
     if (const BuiltinType *BT = dyn_cast<BuiltinType>(T))
-      return BT->getName(Policy);
+      return BT->getNameAsCString(Policy);
     
     // Anonymous tag types are constant strings.
     if (const TagType *TagT = dyn_cast<TagType>(T))

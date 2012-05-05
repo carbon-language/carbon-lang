@@ -335,7 +335,7 @@ void CGDebugInfo::CreateCompileUnit() {
 /// one if necessary.
 llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   unsigned Encoding = 0;
-  const char *BTName = NULL;
+  StringRef BTName;
   switch (BT->getKind()) {
 #define BUILTIN_TYPE(Id, SingletonId)
 #define PLACEHOLDER_TYPE(Id, SingletonId) \

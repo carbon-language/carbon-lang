@@ -1757,7 +1757,13 @@ public:
   }
 
   Kind getKind() const { return static_cast<Kind>(BuiltinTypeBits.Kind); }
-  const char *getName(const PrintingPolicy &Policy) const;
+  StringRef getName(const PrintingPolicy &Policy) const;
+  const char *getNameAsCString(const PrintingPolicy &Policy) const {
+    // The StringRef is null-terminated.
+    StringRef str = getName(Policy);
+    assert(!str.empty() && str.data()[str.size()] == '\0');
+    return str.data();
+  }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

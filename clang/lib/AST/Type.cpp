@@ -1425,7 +1425,7 @@ const char *Type::getTypeClassName() const {
   llvm_unreachable("Invalid type class.");
 }
 
-const char *BuiltinType::getName(const PrintingPolicy &Policy) const {
+StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   switch (getKind()) {
   case Void:              return "void";
   case Bool:              return Policy.Bool ? "bool" : "_Bool";
