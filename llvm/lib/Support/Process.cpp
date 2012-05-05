@@ -22,6 +22,15 @@ using namespace sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
+unsigned llvm::sys::Process::GetRandomNumber() {
+#if defined(HAVE_ARC4RANDOM)
+  return arc4random();
+#else
+  static int x = (::srand(::time(NULL)), 0);
+  return rand();
+#endif
+}
+
 }
 
 // Include the platform-specific parts of this class.
