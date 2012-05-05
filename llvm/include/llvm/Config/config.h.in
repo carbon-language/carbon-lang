@@ -24,6 +24,9 @@
 /* Directory where gcc is installed. */
 #undef GCC_INSTALL_PREFIX
 
+/* Define to 1 if you have the `arc4random' function. */
+#undef HAVE_ARC4RANDOM
+
 /* Define to 1 if you have the `argz_append' function. */
 #undef HAVE_ARGZ_APPEND
 

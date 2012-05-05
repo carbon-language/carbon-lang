@@ -23,6 +23,9 @@
 /* Define if timestamp information (e.g., __DATE___) is allowed */
 #cmakedefine ENABLE_TIMESTAMPS ${ENABLE_TIMESTAMPS}
 
+/* Define to 1 if you have the `arc4random' function. */
+#cmakedefine HAVE_ARC4RANDOM
+
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND ${HAVE_ARGZ_APPEND}
 
