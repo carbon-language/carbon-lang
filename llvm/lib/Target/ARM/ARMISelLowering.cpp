@@ -824,6 +824,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   benefitFromCodePlacementOpt = true;
 
+  // Prefer likely predicted branches to selects on out-of-order cores.
+  predictableSelectIsExpensive = Subtarget->isCortexA9();
+
   setMinFunctionAlignment(Subtarget->isThumb() ? 1 : 2);
 }
 

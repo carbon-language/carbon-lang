@@ -605,6 +605,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
   JumpIsExpensive = false;
+  predictableSelectIsExpensive = false;
   StackPointerRegisterToSaveRestore = 0;
   ExceptionPointerRegister = 0;
   ExceptionSelectorRegister = 0;

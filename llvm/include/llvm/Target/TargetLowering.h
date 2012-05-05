@@ -150,6 +150,12 @@ public:
   /// that should be avoided.
   bool isJumpExpensive() const { return JumpIsExpensive; }
 
+  /// isPredictableSelectExpensive - Return true if selects are only cheaper
+  /// than branches if the branch is unlikely to be predicted right.
+  bool isPredictableSelectExpensive() const {
+    return predictableSelectIsExpensive;
+  }
+
   /// getSetCCResultType - Return the ValueType of the result of SETCC
   /// operations.  Also used to obtain the target's preferred type for
   /// the condition operand of SELECT and BRCOND nodes.  In the case of
@@ -2027,6 +2033,10 @@ protected:
   /// This field specifies whether the target can benefit from code placement
   /// optimization.
   bool benefitFromCodePlacementOpt;
+
+  /// predictableSelectIsExpensive - Tells the code generator that select is
+  /// more expensive than a branch if the branch is usually predicted right.
+  bool predictableSelectIsExpensive;
 
 private:
   /// isLegalRC - Return true if the value types that can be represented by the

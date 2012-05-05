@@ -1243,6 +1243,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setPrefLoopAlignment(4); // 2^4 bytes.
   benefitFromCodePlacementOpt = true;
 
+  // Predictable cmov don't hurt on atom because it's in-order.
+  predictableSelectIsExpensive = !Subtarget->isAtom();
+
   setPrefFunctionAlignment(4); // 2^4 bytes.
 }
 
