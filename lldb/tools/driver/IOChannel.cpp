@@ -196,6 +196,7 @@ IOChannel::IOChannel
             IOChannel::ElCompletionFn);
     el_set (m_edit_line, EL_BIND, m_completion_key, "lldb_complete", NULL);
     el_set (m_edit_line, EL_BIND, "^r", "em-inc-search-prev", NULL);  // Cycle through backwards search, entering string
+    el_set (m_edit_line, EL_BIND, "^w", "ed-delete-prev-word", NULL); // Delete previous word, behave like bash does.
     el_set (m_edit_line, EL_CLIENTDATA, this);
 
     assert (m_history);
