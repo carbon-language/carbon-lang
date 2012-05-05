@@ -123,7 +123,14 @@ public:
 
   /// FindLineNumber - Find the line number for the specified location in the
   /// specified file.  This is not a fast method.
-  unsigned FindLineNumber(SMLoc Loc, int BufferID = -1) const;
+  unsigned FindLineNumber(SMLoc Loc, int BufferID = -1) const {
+    return getLineAndColumn(Loc, BufferID).first;
+  }
+
+  /// getLineAndColumn - Find the line and column number for the specified
+  /// location in the specified file.  This is not a fast method.
+  std::pair<unsigned, unsigned>
+    getLineAndColumn(SMLoc Loc, int BufferID = -1) const;
 
   /// PrintMessage - Emit a message about the specified location with the
   /// specified string.
