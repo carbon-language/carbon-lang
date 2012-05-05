@@ -95,8 +95,6 @@ MCAsmInfo::MCAsmInfo() {
   DwarfUsesRelocationsForStringPool = true;
   DwarfRegNumForCFI = false;
   HasMicrosoftFastStdCallMangling = false;
-
-  AsmTransCBE = 0;
 }
 
 MCAsmInfo::~MCAsmInfo() {

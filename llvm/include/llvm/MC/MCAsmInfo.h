@@ -338,10 +338,6 @@ namespace llvm {
     /// instead of symbolic register names in .cfi_* directives.
     bool DwarfRegNumForCFI;  // Defaults to false;
 
-    //===--- CBE Asm Translation Table -----------------------------------===//
-
-    const char *const *AsmTransCBE;          // Defaults to empty
-
     //===--- Prologue State ----------------------------------------------===//
 
     std::vector<MachineMove> InitialFrameState;
@@ -576,9 +572,6 @@ namespace llvm {
     }
     bool useDwarfRegNumForCFI() const {
       return DwarfRegNumForCFI;
-    }
-    const char *const *getAsmCBE() const {
-      return AsmTransCBE;
     }
 
     void addInitialFrameState(MCSymbol *label, const MachineLocation &D,
