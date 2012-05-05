@@ -78,6 +78,8 @@ NVPTXDAGToDAGISel::NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,
 
   allowFMA = (FMAContractLevel >= 1) || UseFMADInstruction;
 
+  UseF32FTZ = false;
+
   doMulWide = (OptLevel > 0);
 
   // Decide how to translate f32 div
