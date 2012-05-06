@@ -16,7 +16,14 @@
 #ifdef CLOOG_FOUND
 
 namespace polly {
-  extern bool EnablePollyVector;
+  enum VectorizerChoice {
+    VECTORIZER_NONE,
+    VECTORIZER_POLLY,
+    VECTORIZER_UNROLL_ONLY,
+    VECTORIZER_FIRST_NEED_GROUPED_UNROLL = VECTORIZER_UNROLL_ONLY,
+    VECTORIZER_BB
+  };
+  extern VectorizerChoice PollyVectorizerChoice;
 }
 
 #endif // CLOOG_FOUND

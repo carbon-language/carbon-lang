@@ -118,7 +118,7 @@ bool Pocc::runOnScop(Scop &S) {
   if (!DisablePollyTiling)
     arguments.push_back("--pluto-tile");
 
-  if (EnablePollyVector)
+  if (PollyVectorizerChoice != VECTORIZER_NONE)
     arguments.push_back("--pluto-prevector");
 
   arguments.push_back(0);

@@ -412,7 +412,7 @@ isl_union_map *IslScheduleOptimizer::getScheduleForBandList(
       PartialSchedule = isl_union_map_flat_range_product(PartialSchedule,
 							 SuffixSchedule);
       isl_band_list_free(Children);
-    } else if (EnablePollyVector) {
+    } else if (PollyVectorizerChoice != VECTORIZER_NONE) {
       for (int j = 0;  j < isl_band_n_member(Band); j++) {
 	if (isl_band_member_is_zero_distance(Band, j)) {
           isl_map *TileMap;

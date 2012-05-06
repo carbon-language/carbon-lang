@@ -57,14 +57,6 @@ using namespace llvm;
 struct isl_set;
 
 namespace polly {
-
-bool EnablePollyVector;
-
-static cl::opt<bool, true>
-Vector("enable-polly-vector",
-       cl::desc("Enable polly vector code generation"), cl::Hidden,
-       cl::location(EnablePollyVector), cl::init(false), cl::ZeroOrMore);
-
 static cl::opt<bool>
 OpenMP("enable-polly-openmp",
        cl::desc("Generate OpenMP parallel code"), cl::Hidden,
@@ -616,6 +608,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
+  bool Vector = PollyVectorizerChoice != VECTORIZER_NONE;
   if ((Vector || OpenMP) && P->getAnalysis<Dependences>().isParallelFor(f)) {
     if (Vector && isInnermostLoop(f) && (-1 != getNumberOfIterations(f))
         && (getNumberOfIterations(f) <= 16)) {

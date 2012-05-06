@@ -18,6 +18,7 @@
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
+#include "polly/CodeGen/CodeGeneration.h"
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/CFGPrinter.h"
@@ -25,6 +26,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -60,6 +62,21 @@ Optimizer("polly-optimizer",
             clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
             clEnumValEnd),
           cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore);
+
+static cl::opt<polly::VectorizerChoice, true>
+Vectorizer("polly-vectorizer",
+          cl::desc("Select the scheduling optimizer"),
+          cl::values(
+            clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
+            clEnumValN(polly::VECTORIZER_POLLY, "polly",
+                       "Polly internal vectorizer"),
+            clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
+                       "Only grouped unroll the vectorize candidate loops"),
+            clEnumValN(polly::VECTORIZER_BB, "bb",
+                       "The Basic Block vectorizer driven by Polly"),
+            clEnumValEnd),
+          cl::Hidden, cl::location(PollyVectorizerChoice),
+          cl::init(polly::VECTORIZER_NONE), cl::ZeroOrMore);
 
 static cl::opt<bool>
 ImportJScop("polly-import",
@@ -174,6 +191,8 @@ void polly::registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   PM.add(polly::createRegionSimplifyPass());
 }
 
+VectorizerChoice polly::PollyVectorizerChoice;
+
 void polly::registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) {
   bool RunCodegen = !DisableCodegen;
 
@@ -215,8 +234,15 @@ void polly::registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) 
     PM.add(polly::createJSONExporterPass());
 
 #ifdef CLOOG_FOUND
-  if (RunCodegen)
+  if (RunCodegen) {
     PM.add(polly::createCodeGenerationPass());
+
+    if (PollyVectorizerChoice == VECTORIZER_BB) {
+      VectorizeConfig C;
+      C.FastDep = true;
+      PM.add(createBBVectorizePass(C));
+    }
+  }
 #endif
 
   if (CFGPrinter)
