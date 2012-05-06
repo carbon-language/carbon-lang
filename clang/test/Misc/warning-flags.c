@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (248):
+CHECK: Warnings without flags (245):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -112,9 +112,6 @@ CHECK-NEXT:   warn_attribute_weak_import_invalid_on_definition
 CHECK-NEXT:   warn_attribute_weak_on_field
 CHECK-NEXT:   warn_attribute_weak_on_local
 CHECK-NEXT:   warn_attribute_wrong_decl_type
-CHECK-NEXT:   warn_availability_and_unavailable
-CHECK-NEXT:   warn_availability_unknown_platform
-CHECK-NEXT:   warn_availability_version_ordering
 CHECK-NEXT:   warn_bad_receiver_type
 CHECK-NEXT:   warn_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_bool_switch_condition

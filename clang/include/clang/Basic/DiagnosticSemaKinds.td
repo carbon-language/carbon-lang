@@ -1667,12 +1667,12 @@ def warn_attribute_not_on_decl : Error<
 
 // Availability attribute
 def warn_availability_unknown_platform : Warning<
-  "unknown platform %0 in availability macro">;
+  "unknown platform %0 in availability macro">, InGroup<Availability>;
 def warn_availability_version_ordering : Warning<
   "feature cannot be %select{introduced|deprecated|obsoleted}0 in %1 version "
   "%2 before it was %select{introduced|deprecated|obsoleted}3 in version %4; "
-  "attribute ignored">;
-  
+  "attribute ignored">, InGroup<Availability>;
+
 // Thread Safety Attributes
 def warn_thread_attribute_ignored : Warning<
   "ignoring %0 attribute because its argument is invalid">,
