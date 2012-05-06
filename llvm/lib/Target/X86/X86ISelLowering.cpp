@@ -4417,7 +4417,7 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
 /// getTargetShuffleMask - Calculates the shuffle mask corresponding to the
 /// target specific opcode. Returns true if the Mask could be calculated.
 /// Sets IsUnary to true if only uses one source.
-static bool getTargetShuffleMask(SDNode *N, EVT VT,
+static bool getTargetShuffleMask(SDNode *N, MVT VT,
                                  SmallVectorImpl<int> &Mask, bool &IsUnary) {
   unsigned NumElems = VT.getVectorNumElements();
   SDValue ImmN;
@@ -4518,20 +4518,21 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
 
   // Recurse into target specific vector shuffles to find scalars.
   if (isTargetShuffle(Opcode)) {
-    unsigned NumElems = VT.getVectorNumElements();
+    MVT ShufVT = V.getValueType().getSimpleVT();
+    unsigned NumElems = ShufVT.getVectorNumElements();
     SmallVector<int, 16> ShuffleMask;
     SDValue ImmN;
     bool IsUnary;
 
-    if (!getTargetShuffleMask(N, VT, ShuffleMask, IsUnary))
+    if (!getTargetShuffleMask(N, ShufVT, ShuffleMask, IsUnary))
       return SDValue();
 
     int Elt = ShuffleMask[Index];
     if (Elt < 0)
-      return DAG.getUNDEF(VT.getVectorElementType());
+      return DAG.getUNDEF(ShufVT.getVectorElementType());
 
     SDValue NewV = (Elt < (int)NumElems) ? N->getOperand(0)
-                                           : N->getOperand(1);
+                                         : N->getOperand(1);
     return getShuffleScalarElt(NewV.getNode(), Elt % NumElems, DAG,
                                Depth+1);
   }
@@ -13266,7 +13267,8 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
   SmallVector<int, 16> ShuffleMask;
   bool UnaryShuffle;
-  if (!getTargetShuffleMask(InVec.getNode(), VT, ShuffleMask, UnaryShuffle))
+  if (!getTargetShuffleMask(InVec.getNode(), VT.getSimpleVT(), ShuffleMask,
+                            UnaryShuffle))
     return SDValue();
 
   // Select the input vector, guarding against out of range extract vector.

@@ -35,29 +35,29 @@ void DecodeMOVHLPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask);
 // <0,2> or <0,1,4,5>
 void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask);
 
-void DecodePSHUFMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
-void DecodePSHUFHWMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFHWMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
-void DecodePSHUFLWMask(EVT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFLWMask(MVT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 /// DecodeSHUFPMask - This decodes the shuffle masks for shufp*. VT indicates
 /// the type of the vector allowing it to handle different datatypes and vector
 /// widths.
-void DecodeSHUFPMask(EVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodeSHUFPMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 /// DecodeUNPCKHMask - This decodes the shuffle masks for unpckhps/unpckhpd
 /// and punpckh*. VT indicates the type of the vector allowing it to handle
 /// different datatypes and vector widths.
-void DecodeUNPCKHMask(EVT VT, SmallVectorImpl<int> &ShuffleMask);
+void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
 /// DecodeUNPCKLMask - This decodes the shuffle masks for unpcklps/unpcklpd
 /// and punpckl*. VT indicates the type of the vector allowing it to handle
 /// different datatypes and vector widths.
-void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<int> &ShuffleMask);
+void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
 
-void DecodeVPERM2X128Mask(EVT VT, unsigned Imm,
+void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask);
 
 /// DecodeVPERMMask - this decodes the shuffle masks for VPERMQ/VPERMPD.
