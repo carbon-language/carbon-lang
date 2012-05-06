@@ -507,6 +507,16 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
+  case X86::VPERMQYri:
+  case X86::VPERMPDYri:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::VPERMQYmi:
+  case X86::VPERMPDYmi:
+    DecodeVPERMMask(MI->getOperand(MI->getNumOperands()-1).getImm(),
+                    ShuffleMask);
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
   }
 
 

@@ -60,6 +60,10 @@ void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<int> &ShuffleMask);
 void DecodeVPERM2X128Mask(EVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask);
 
+/// DecodeVPERMMask - this decodes the shuffle masks for VPERMQ/VPERMPD.
+/// No VT provided since it only works on 256-bit, 4 element vectors.
+void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+
 } // llvm namespace
 
 #endif
