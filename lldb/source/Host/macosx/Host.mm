@@ -325,7 +325,7 @@ LaunchInNewTerminalWithCommandFile
 
     unix_socket_name.assign (temp_file_path);
 
-    ::strncat (temp_file_path, ".command", sizeof (temp_file_path));
+    ::strlcat (temp_file_path, ".command", sizeof (temp_file_path));
 
     StreamFile command_file;
     command_file.GetFile().Open (temp_file_path, 

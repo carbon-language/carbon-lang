@@ -483,8 +483,8 @@ LocateDSYMInVincinityOfExecutable (const ModuleSpec &module_spec, FileSpec &dsym
             if (strcasestr(path, ".dSYM/Contents/Resources/DWARF") == NULL)
             {
                 size_t obj_file_path_length = strlen(path);
-                strncat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
-                strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
+                strlcat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
+                strlcat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
 
                 dsym_fspec.SetFile(path, false);
 
@@ -503,8 +503,8 @@ LocateDSYMInVincinityOfExecutable (const ModuleSpec &module_spec, FileSpec &dsym
                         if (next_slash != NULL)
                         {
                             *next_slash = '\0';
-                            strncat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
-                            strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
+                            strlcat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
+                            strlcat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
                             dsym_fspec.SetFile(path, false);
                             if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, module_spec.GetArchitecturePtr(), module_spec.GetUUIDPtr()))
                                 return true;
