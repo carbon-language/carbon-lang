@@ -297,3 +297,12 @@ const char *Process::OutputReverse() {
 const char *Process::ResetColor() {
   return "\033[0m";
 }
+
+unsigned llvm::sys::Process::GetRandomNumber() {
+#if defined(HAVE_ARC4RANDOM)
+  return arc4random();
+#else
+  static int x = (::srand(::time(NULL)), 0);
+  return ::rand();
+#endif
+}

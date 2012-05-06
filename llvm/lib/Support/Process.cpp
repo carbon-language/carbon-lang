@@ -13,7 +13,6 @@
 
 #include "llvm/Support/Process.h"
 #include "llvm/Config/config.h"
-#include <cstdlib>
 
 namespace llvm {
 using namespace sys;
@@ -22,15 +21,6 @@ using namespace sys;
 //=== WARNING: Implementation here must contain only TRULY operating system
 //===          independent code.
 //===----------------------------------------------------------------------===//
-
-unsigned llvm::sys::Process::GetRandomNumber() {
-#if defined(HAVE_ARC4RANDOM)
-  return arc4random();
-#else
-  static int x = (::srand(::time(NULL)), 0);
-  return ::rand();
-#endif
-}
 
 }
 
