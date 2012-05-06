@@ -149,51 +149,58 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
                                    ArrayRef<SMRange> Ranges) const {
 
   // First thing to do: find the current buffer containing the specified
-  // location.
-  int CurBuf = FindBufferContainingLoc(Loc);
-  assert(CurBuf != -1 && "Invalid or unspecified location!");
-
-  MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
-
-  // Scan backward to find the start of the line.
-  const char *LineStart = Loc.getPointer();
-  const char *BufStart = CurMB->getBufferStart();
-  while (LineStart != BufStart && LineStart[-1] != '\n' &&
-         LineStart[-1] != '\r')
-    --LineStart;
-
-  // Get the end of the line.
-  const char *LineEnd = Loc.getPointer();
-  const char *BufEnd = CurMB->getBufferEnd();
-  while (LineEnd != BufEnd && LineEnd[0] != '\n' && LineEnd[0] != '\r')
-    ++LineEnd;
-  std::string LineStr(LineStart, LineEnd);
-
-  // Convert any ranges to column ranges that only intersect the line of the
-  // location.
+  // location to pull out the source line.
   SmallVector<std::pair<unsigned, unsigned>, 4> ColRanges;
-  for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
-    SMRange R = Ranges[i];
-    if (!R.isValid()) continue;
-    
-    // If the line doesn't contain any part of the range, then ignore it.
-    if (R.Start.getPointer() > LineEnd || R.End.getPointer() < LineStart)
-      continue;
-   
-    // Ignore pieces of the range that go onto other lines.
-    if (R.Start.getPointer() < LineStart)
-      R.Start = SMLoc::getFromPointer(LineStart);
-    if (R.End.getPointer() > LineEnd)
-      R.End = SMLoc::getFromPointer(LineEnd);
-    
-    // Translate from SMLoc ranges to column ranges.
-    ColRanges.push_back(std::make_pair(R.Start.getPointer()-LineStart,
-                                       R.End.getPointer()-LineStart));
-  }
+  std::pair<unsigned, unsigned> LineAndCol;
+  const char *BufferID = "<unknown>";
+  std::string LineStr;
   
-  std::pair<unsigned, unsigned> LineAndCol = getLineAndColumn(Loc, CurBuf);
-  return SMDiagnostic(*this, Loc,
-                      CurMB->getBufferIdentifier(), LineAndCol.first,
+  if (Loc.isValid()) {
+    int CurBuf = FindBufferContainingLoc(Loc);
+    assert(CurBuf != -1 && "Invalid or unspecified location!");
+
+    MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
+    BufferID = CurMB->getBufferIdentifier();
+    
+    // Scan backward to find the start of the line.
+    const char *LineStart = Loc.getPointer();
+    const char *BufStart = CurMB->getBufferStart();
+    while (LineStart != BufStart && LineStart[-1] != '\n' &&
+           LineStart[-1] != '\r')
+      --LineStart;
+
+    // Get the end of the line.
+    const char *LineEnd = Loc.getPointer();
+    const char *BufEnd = CurMB->getBufferEnd();
+    while (LineEnd != BufEnd && LineEnd[0] != '\n' && LineEnd[0] != '\r')
+      ++LineEnd;
+    LineStr = std::string(LineStart, LineEnd);
+
+    // Convert any ranges to column ranges that only intersect the line of the
+    // location.
+    for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
+      SMRange R = Ranges[i];
+      if (!R.isValid()) continue;
+      
+      // If the line doesn't contain any part of the range, then ignore it.
+      if (R.Start.getPointer() > LineEnd || R.End.getPointer() < LineStart)
+        continue;
+     
+      // Ignore pieces of the range that go onto other lines.
+      if (R.Start.getPointer() < LineStart)
+        R.Start = SMLoc::getFromPointer(LineStart);
+      if (R.End.getPointer() > LineEnd)
+        R.End = SMLoc::getFromPointer(LineEnd);
+      
+      // Translate from SMLoc ranges to column ranges.
+      ColRanges.push_back(std::make_pair(R.Start.getPointer()-LineStart,
+                                         R.End.getPointer()-LineStart));
+    }
+
+    LineAndCol = getLineAndColumn(Loc, CurBuf);
+  }
+    
+  return SMDiagnostic(*this, Loc, BufferID, LineAndCol.first,
                       LineAndCol.second-1, Kind, Msg.str(),
                       LineStr, ColRanges);
 }
@@ -211,9 +218,11 @@ void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
 
   raw_ostream &OS = errs();
 
-  int CurBuf = FindBufferContainingLoc(Loc);
-  assert(CurBuf != -1 && "Invalid or unspecified location!");
-  PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
+  if (Loc != SMLoc()) {
+    int CurBuf = FindBufferContainingLoc(Loc);
+    assert(CurBuf != -1 && "Invalid or unspecified location!");
+    PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
+  }
 
   Diagnostic.print(0, OS, ShowColors);
 }
