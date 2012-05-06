@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 -mcpu=core2 -enable-cgp-select2branch < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mcpu=core2 < %s | FileCheck %s
 
 ; cmp with single-use load, should not form cmov.
 define i32 @test1(double %a, double* nocapture %b, i32 %x, i32 %y)  {

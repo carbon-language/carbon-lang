@@ -71,8 +71,9 @@ static cl::opt<bool> DisableDeleteDeadBlocks(
   "disable-cgp-delete-dead-blocks", cl::Hidden, cl::init(false),
   cl::desc("Disable deleting dead blocks in CodeGenPrepare"));
 
-static cl::opt<bool> EnableSelectToBranch("enable-cgp-select2branch", cl::Hidden,
-  cl::desc("Enable select to branch conversion."));
+static cl::opt<bool> DisableSelectToBranch(
+  "disable-cgp-select2branch", cl::Hidden, cl::init(false),
+  cl::desc("Disable select to branch conversion."));
 
 namespace {
   class CodeGenPrepare : public FunctionPass {
@@ -1132,7 +1133,7 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
 bool CodeGenPrepare::OptimizeSelectInst(SelectInst *SI) {
   // If we have a SelectInst that will likely profit from branch prediction,
   // turn it into a branch.
-  if (!EnableSelectToBranch || OptSize || !TLI->isPredictableSelectExpensive())
+  if (DisableSelectToBranch || OptSize || !TLI->isPredictableSelectExpensive())
     return false;
 
   if (!SI->getCondition()->getType()->isIntegerTy(1) ||
