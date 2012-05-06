@@ -56,11 +56,11 @@ opt -basicaa -polly-import-jscop \
     matmul.preopt.ll | opt -O3 > matmul.polly.interchanged+tiled.ll
 opt -basicaa -polly-import-jscop \
     -polly-import-jscop-postfix=interchanged+tiled+vector -polly-codegen \
-    matmul.preopt.ll -enable-polly-vector\
+    matmul.preopt.ll -polly-vectorizer=polly\
     | opt -O3 > matmul.polly.interchanged+tiled+vector.ll
 opt -basicaa -polly-import-jscop \
     -polly-import-jscop-postfix=interchanged+tiled+vector -polly-codegen \
-    matmul.preopt.ll -enable-polly-vector -enable-polly-openmp\
+    matmul.preopt.ll -polly-vectorizer=polly -enable-polly-openmp\
     | opt -O3 > matmul.polly.interchanged+tiled+vector+openmp.ll
 opt matmul.preopt.ll | opt -O3 > matmul.normalopt.ll
 

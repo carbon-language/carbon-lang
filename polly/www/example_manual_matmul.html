@@ -390,7 +390,7 @@ Reading JScop '%1 =&gt; %17' in function 'main' from
 <pre class="code">
 opt -basicaa \
     -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
-    -polly-codegen -enable-polly-vector matmul.preopt.ll \
+    -polly-codegen -polly-vectorizer=polly matmul.preopt.ll \
    | opt -O3 &gt; matmul.polly.interchanged+tiled+vector.ll</pre>
 <pre>
 Reading JScop '%1 =&gt; %19' in function 'init_array' from
@@ -402,7 +402,7 @@ Reading JScop '%1 =&gt; %17' in function 'main' from
 <pre class="code">
 opt -basicaa \
     -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
-    -polly-codegen -enable-polly-vector -enable-polly-openmp matmul.preopt.ll \
+    -polly-codegen -polly-vectorizer=polly -enable-polly-openmp matmul.preopt.ll \
   | opt -O3 &gt; matmul.polly.interchanged+tiled+openmp.ll</pre>
 <pre>
 Reading JScop '%1 =&gt; %19' in function 'init_array' from
