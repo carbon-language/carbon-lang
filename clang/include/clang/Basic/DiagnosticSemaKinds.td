@@ -1672,6 +1672,8 @@ def warn_availability_version_ordering : Warning<
   "feature cannot be %select{introduced|deprecated|obsoleted}0 in %1 version "
   "%2 before it was %select{introduced|deprecated|obsoleted}3 in version %4; "
   "attribute ignored">, InGroup<Availability>;
+def warn_mismatched_availability: Warning<
+  "availability does not match previous declaration">, InGroup<Availability>;
 
 // Thread Safety Attributes
 def warn_thread_attribute_ignored : Warning<

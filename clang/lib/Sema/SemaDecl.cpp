@@ -1633,6 +1633,13 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
 /// attribute.
 static bool
 DeclHasAttr(const Decl *D, const Attr *A) {
+  // There can be multiple AvailabilityAttr in a Decl. Make sure we copy
+  // all of them. It is mergeAvailabilityAttr in SemaDeclAttr.cpp that is
+  // responsible for making sure they are consistent.
+  const AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(A);
+  if (AA)
+    return false;
+
   const OwnershipAttr *OA = dyn_cast<OwnershipAttr>(A);
   const AnnotateAttr *Ann = dyn_cast<AnnotateAttr>(A);
   for (Decl::attr_iterator i = D->attr_begin(), e = D->attr_end(); i != e; ++i)

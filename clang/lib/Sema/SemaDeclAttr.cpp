@@ -1690,64 +1690,143 @@ static void handleObjCRequiresPropertyDefsAttr(Sema &S, Decl *D,
                                  Attr.getRange(), S.Context));
 }
 
+bool checkAvailabilityAttr(Sema &S, SourceRange Range,
+                           IdentifierInfo *Platform,
+                           VersionTuple Introduced,
+                           VersionTuple Deprecated,
+                           VersionTuple Obsoleted) {
+  StringRef PlatformName
+    = AvailabilityAttr::getPrettyPlatformName(Platform->getName());
+  if (PlatformName.empty())
+    PlatformName = Platform->getName();
+
+  // Ensure that Introduced <= Deprecated <= Obsoleted (although not all
+  // of these steps are needed).
+  if (!Introduced.empty() && !Deprecated.empty() &&
+      !(Introduced <= Deprecated)) {
+    S.Diag(Range.getBegin(), diag::warn_availability_version_ordering)
+      << 1 << PlatformName << Deprecated.getAsString()
+      << 0 << Introduced.getAsString();
+    return true;
+  }
+
+  if (!Introduced.empty() && !Obsoleted.empty() &&
+      !(Introduced <= Obsoleted)) {
+    S.Diag(Range.getBegin(), diag::warn_availability_version_ordering)
+      << 2 << PlatformName << Obsoleted.getAsString()
+      << 0 << Introduced.getAsString();
+    return true;
+  }
+
+  if (!Deprecated.empty() && !Obsoleted.empty() &&
+      !(Deprecated <= Obsoleted)) {
+    S.Diag(Range.getBegin(), diag::warn_availability_version_ordering)
+      << 2 << PlatformName << Obsoleted.getAsString()
+      << 1 << Deprecated.getAsString();
+    return true;
+  }
+
+  return false;
+}
+
+static void mergeAvailabilityAttr(Sema &S, Decl *D, SourceRange Range,
+                                  IdentifierInfo *Platform,
+                                  VersionTuple Introduced,
+                                  VersionTuple Deprecated,
+                                  VersionTuple Obsoleted,
+                                  bool IsUnavailable,
+                                  StringRef Message) {
+  VersionTuple MergedIntroduced;
+  VersionTuple MergedDeprecated;
+  VersionTuple MergedObsoleted;
+  bool FoundAny = false;
+
+  for (specific_attr_iterator<AvailabilityAttr>
+         i = D->specific_attr_begin<AvailabilityAttr>(),
+         e = D->specific_attr_end<AvailabilityAttr>();
+       i != e ; ++i) {
+    const AvailabilityAttr *OldAA = *i;
+    IdentifierInfo *OldPlatform = OldAA->getPlatform();
+    if (OldPlatform != Platform)
+      continue;
+    FoundAny = true;
+    VersionTuple OldIntroduced = OldAA->getIntroduced();
+    VersionTuple OldDeprecated = OldAA->getDeprecated();
+    VersionTuple OldObsoleted = OldAA->getObsoleted();
+    bool OldIsUnavailable = OldAA->getUnavailable();
+    StringRef OldMessage = OldAA->getMessage();
+
+    if ((!OldIntroduced.empty() && !Introduced.empty() &&
+         OldIntroduced != Introduced) ||
+        (!OldDeprecated.empty() && !Deprecated.empty() &&
+         OldDeprecated != Deprecated) ||
+        (!OldObsoleted.empty() && !Obsoleted.empty() &&
+         OldObsoleted != Obsoleted) ||
+        (OldIsUnavailable != IsUnavailable) ||
+        (OldMessage != Message)) {
+      S.Diag(Range.getBegin(), diag::warn_mismatched_availability);
+      S.Diag(OldAA->getLocation(), diag::note_previous_attribute);
+      return;
+    }
+    if (MergedIntroduced.empty())
+      MergedIntroduced = OldIntroduced;
+    if (MergedDeprecated.empty())
+      MergedDeprecated = OldDeprecated;
+    if (MergedObsoleted.empty())
+      MergedObsoleted = OldObsoleted;
+  }
+
+  if (FoundAny &&
+      MergedIntroduced == Introduced &&
+      MergedDeprecated == Deprecated &&
+      MergedObsoleted == Obsoleted)
+    return;
+
+  if (MergedIntroduced.empty())
+    MergedIntroduced = Introduced;
+  if (MergedDeprecated.empty())
+    MergedDeprecated = Deprecated;
+  if (MergedObsoleted.empty())
+    MergedObsoleted = Obsoleted;
+
+  if (!checkAvailabilityAttr(S, Range, Platform, MergedIntroduced,
+                             MergedDeprecated, MergedObsoleted)) {
+    D->addAttr(::new (S.Context) AvailabilityAttr(Range, S.Context,
+                                                  Platform,
+                                                  Introduced,
+                                                  Deprecated,
+                                                  Obsoleted,
+                                                  IsUnavailable,
+                                                  Message));
+  }
+}
+
 static void handleAvailabilityAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   IdentifierInfo *Platform = Attr.getParameterName();
   SourceLocation PlatformLoc = Attr.getParameterLoc();
 
-  StringRef PlatformName
-    = AvailabilityAttr::getPrettyPlatformName(Platform->getName());
-  if (PlatformName.empty()) {
+  if (AvailabilityAttr::getPrettyPlatformName(Platform->getName()).empty())
     S.Diag(PlatformLoc, diag::warn_availability_unknown_platform)
       << Platform;
-
-    PlatformName = Platform->getName();
-  }
 
   AvailabilityChange Introduced = Attr.getAvailabilityIntroduced();
   AvailabilityChange Deprecated = Attr.getAvailabilityDeprecated();
   AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
   bool IsUnavailable = Attr.getUnavailableLoc().isValid();
-
-  // Ensure that Introduced <= Deprecated <= Obsoleted (although not all
-  // of these steps are needed).
-  if (Introduced.isValid() && Deprecated.isValid() &&
-      !(Introduced.Version <= Deprecated.Version)) {
-    S.Diag(Introduced.KeywordLoc, diag::warn_availability_version_ordering)
-      << 1 << PlatformName << Deprecated.Version.getAsString()
-      << 0 << Introduced.Version.getAsString();
-    return;
-  }
-
-  if (Introduced.isValid() && Obsoleted.isValid() &&
-      !(Introduced.Version <= Obsoleted.Version)) {
-    S.Diag(Introduced.KeywordLoc, diag::warn_availability_version_ordering)
-      << 2 << PlatformName << Obsoleted.Version.getAsString()
-      << 0 << Introduced.Version.getAsString();
-    return;
-  }
-
-  if (Deprecated.isValid() && Obsoleted.isValid() &&
-      !(Deprecated.Version <= Obsoleted.Version)) {
-    S.Diag(Deprecated.KeywordLoc, diag::warn_availability_version_ordering)
-      << 2 << PlatformName << Obsoleted.Version.getAsString()
-      << 1 << Deprecated.Version.getAsString();
-    return;
-  }
-
   StringRef Str;
   const StringLiteral *SE = 
     dyn_cast_or_null<const StringLiteral>(Attr.getMessageExpr());
   if (SE)
     Str = SE->getString();
-  
-  D->addAttr(::new (S.Context) AvailabilityAttr(Attr.getRange(), S.Context,
-                                                Platform,
-                                                Introduced.Version,
-                                                Deprecated.Version,
-                                                Obsoleted.Version,
-                                                IsUnavailable, 
-                                                Str));
+
+  mergeAvailabilityAttr(S, D, Attr.getRange(),
+                        Platform,
+                        Introduced.Version,
+                        Deprecated.Version,
+                        Obsoleted.Version,
+                        IsUnavailable,
+                        Str);
 }
 
 static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
