@@ -70,3 +70,12 @@ void testLocations (char *a) {
   if (b<a) WARN; // expected-warning{{never executed}}
   if (b-a) WARN; // expected-warning{{never executed}}
 }
+
+void testMixedTypeComparisons (char a, unsigned long b) {
+  if (a != 0) return;
+  if (b != 0x100) return;
+
+  if (a > b) WARN; // expected-warning{{never executed}}
+  if (b < a) WARN; // expected-warning{{never executed}}
+  if (a == b) WARN; // expected-warning{{never executed}}
+}
