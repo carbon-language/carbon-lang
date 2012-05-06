@@ -2914,6 +2914,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::UNPCKH:
   case X86ISD::VPERMILP:
   case X86ISD::VPERM2X128:
+  case X86ISD::VPERMI:
     return true;
   }
 }
@@ -4453,6 +4454,11 @@ static bool getTargetShuffleMask(SDNode *N, EVT VT,
   case X86ISD::PSHUFLW:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodePSHUFLWMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = true;
+    break;
+  case X86ISD::VPERMI:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodeVPERMMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     IsUnary = true;
     break;
   case X86ISD::MOVSS:
