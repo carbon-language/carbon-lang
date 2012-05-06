@@ -92,25 +92,25 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
 /// type for example, or from a smaller to a larger illegal type.
 bool InstCombiner::ShouldChangeType(Type *From, Type *To) const {
   assert(From->isIntegerTy() && To->isIntegerTy());
-  
+
   // If we don't have TD, we don't know if the source/dest are legal.
   if (!TD) return false;
-  
+
   unsigned FromWidth = From->getPrimitiveSizeInBits();
   unsigned ToWidth = To->getPrimitiveSizeInBits();
   bool FromLegal = TD->isLegalInteger(FromWidth);
   bool ToLegal = TD->isLegalInteger(ToWidth);
-  
+
   // If this is a legal integer from type, and the result would be an illegal
   // type, don't do the transformation.
   if (FromLegal && !ToLegal)
     return false;
-  
+
   // Otherwise, if both are illegal, do not increase the size of the result. We
   // do allow things like i160 -> i64, but not i64 -> i160.
   if (!FromLegal && !ToLegal && ToWidth > FromWidth)
     return false;
-  
+
   return true;
 }
 
@@ -127,7 +127,7 @@ static bool MaintainNoSignedWrap(BinaryOperator &I, Value *B, Value *C) {
 
   // We reason about Add and Sub Only.
   Instruction::BinaryOps Opcode = I.getOpcode();
-  if (Opcode != Instruction::Add && 
+  if (Opcode != Instruction::Add &&
       Opcode != Instruction::Sub) {
     return false;
   }
@@ -211,7 +211,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           } else {
             I.clearSubclassOptionalData();
           }
-            
+
           Changed = true;
           ++NumReassoc;
           continue;
@@ -540,7 +540,7 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
   Value *Op0 = SO, *Op1 = ConstOperand;
   if (!ConstIsRHS)
     std::swap(Op0, Op1);
-  
+
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I))
     return IC->Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
                                     SO->getName()+".op");
@@ -579,7 +579,7 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
       if (SrcTy && SrcTy->getNumElements() != DestTy->getNumElements())
         return 0;
     }
-    
+
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, this);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, this);
 
@@ -599,7 +599,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   unsigned NumPHIValues = PN->getNumIncomingValues();
   if (NumPHIValues == 0)
     return 0;
-  
+
   // We normally only transform phis with a single use.  However, if a PHI has
   // multiple uses and they are all the same operation, we can fold *all* of the
   // uses into the PHI.
@@ -613,7 +613,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     }
     // Otherwise, we can replace *all* users with the new PHI we form.
   }
-  
+
   // Check to see if all of the operands of the PHI are simple constants
   // (constantint/constantfp/undef).  If there is one non-constant value,
   // remember the BB it is in.  If there is more than one or if *it* is a PHI,
@@ -627,7 +627,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 
     if (isa<PHINode>(InVal)) return 0;  // Itself a phi.
     if (NonConstBB) return 0;  // More than one non-const value.
-    
+
     NonConstBB = PN->getIncomingBlock(i);
 
     // If the InVal is an invoke at the end of the pred block, then we can't
@@ -635,14 +635,14 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(InVal))
       if (II->getParent() == NonConstBB)
         return 0;
-    
+
     // If the incoming non-constant value is in I's block, we will remove one
     // instruction, but insert another equivalent one, leading to infinite
     // instcombine.
     if (NonConstBB == I.getParent())
       return 0;
   }
-  
+
   // If there is exactly one non-constant value, we can insert a copy of the
   // operation in that block.  However, if this is a critical edge, we would be
   // inserting the computation one some other paths (e.g. inside a loop).  Only
@@ -656,12 +656,12 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   PHINode *NewPN = PHINode::Create(I.getType(), PN->getNumIncomingValues());
   InsertNewInstBefore(NewPN, *PN);
   NewPN->takeName(PN);
-  
+
   // If we are going to have to insert a new computation, do so right before the
   // predecessors terminator.
   if (NonConstBB)
     Builder->SetInsertPoint(NonConstBB->getTerminator());
-  
+
   // Next, add all of the operands to the PHI.
   if (SelectInst *SI = dyn_cast<SelectInst>(&I)) {
     // We only currently try to fold the condition of a select when it is a phi,
@@ -706,20 +706,20 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
                                    PN->getIncomingValue(i), C, "phitmp");
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
-  } else { 
+  } else {
     CastInst *CI = cast<CastInst>(&I);
     Type *RetTy = CI->getType();
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i)))
         InV = ConstantExpr::getCast(CI->getOpcode(), InC, RetTy);
-      else 
+      else
         InV = Builder->CreateCast(CI->getOpcode(),
                                 PN->getIncomingValue(i), I.getType(), "phitmp");
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   }
-  
+
   for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
        UI != E; ) {
     Instruction *User = cast<Instruction>(*UI++);
@@ -734,11 +734,11 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 /// or not there is a sequence of GEP indices into the type that will land us at
 /// the specified offset.  If so, fill them into NewIndices and return the
 /// resultant element type, otherwise return null.
-Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset, 
+Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
                                           SmallVectorImpl<Value*> &NewIndices) {
   if (!TD) return 0;
   if (!Ty->isSized()) return 0;
-  
+
   // Start with the index over the outer type.  Note that the type size
   // might be zero (even if the offset isn't zero) if the indexed type
   // is something like [0 x {int, int}]
@@ -747,7 +747,7 @@ Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
   if (int64_t TySize = TD->getTypeAllocSize(Ty)) {
     FirstIdx = Offset/TySize;
     Offset -= FirstIdx*TySize;
-    
+
     // Handle hosts where % returns negative instead of values [0..TySize).
     if (Offset < 0) {
       --FirstIdx;
@@ -756,24 +756,24 @@ Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
     }
     assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
   }
-  
+
   NewIndices.push_back(ConstantInt::get(IntPtrTy, FirstIdx));
-    
+
   // Index into the types.  If we fail, set OrigBase to null.
   while (Offset) {
     // Indexing into tail padding between struct/array elements.
     if (uint64_t(Offset*8) >= TD->getTypeSizeInBits(Ty))
       return 0;
-    
+
     if (StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SL = TD->getStructLayout(STy);
       assert(Offset < (int64_t)SL->getSizeInBytes() &&
              "Offset must stay within the indexed type");
-      
+
       unsigned Elt = SL->getElementContainingOffset(Offset);
       NewIndices.push_back(ConstantInt::get(Type::getInt32Ty(Ty->getContext()),
                                             Elt));
-      
+
       Offset -= SL->getElementOffset(Elt);
       Ty = STy->getElementType(Elt);
     } else if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
@@ -787,7 +787,7 @@ Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
       return 0;
     }
   }
-  
+
   return Ty;
 }
 
@@ -948,7 +948,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Res->setIsInBounds(GEP.isInBounds());
           return Res;
         }
-        
+
         if (ArrayType *XATy =
               dyn_cast<ArrayType>(StrippedPtrTy->getElementType())){
           // GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ... ?
@@ -981,16 +981,16 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // V and GEP are both pointer types --> BitCast
         return new BitCastInst(NewGEP, GEP.getType());
       }
-      
+
       // Transform things like:
       // getelementptr i8* bitcast ([100 x double]* X to i8*), i32 %tmp
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
-      
+
       if (TD && SrcElTy->isArrayTy() && ResElTy->isIntegerTy(8)) {
         uint64_t ArrayEltSize =
             TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
-        
+
         // Check to see if "tmp" is a scale by a multiple of ArrayEltSize.  We
         // allow either a mul, shift, or constant here.
         Value *NewIdx = 0;
@@ -1015,7 +1015,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             NewIdx = Inst->getOperand(0);
           }
         }
-        
+
         // If the index will be to exactly the right offset with the scale taken
         // out, perform the transformation. Note, we don't know whether Scale is
         // signed or not. We'll use unsigned version of division/modulo
@@ -1078,7 +1078,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         }
         return new BitCastInst(BCI->getOperand(0), GEP.getType());
       }
-      
+
       // Otherwise, if the offset is non-zero, we need to find out if there is a
       // field at Offset in 'A's type.  If so, we can pull the cast through the
       // GEP.
@@ -1089,15 +1089,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *NGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices) :
           Builder->CreateGEP(BCI->getOperand(0), NewIndices);
-        
+
         if (NGEP->getType() == GEP.getType())
           return ReplaceInstUsesWith(GEP, NGEP);
         NGEP->takeName(&GEP);
         return new BitCastInst(NGEP, GEP.getType());
       }
     }
-  }    
-    
+  }
+
   return 0;
 }
 
@@ -1181,7 +1181,7 @@ Instruction *InstCombiner::visitFree(CallInst &FI) {
                          UndefValue::get(Type::getInt1PtrTy(FI.getContext())));
     return EraseInstFromFunction(FI);
   }
-  
+
   // If we have 'free null' delete the instruction.  This can happen in stl code
   // when lots of inlining happens.
   if (isa<ConstantPointerNull>(Op))
@@ -1207,14 +1207,14 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
 
   // Cannonicalize fcmp_one -> fcmp_oeq
   FCmpInst::Predicate FPred; Value *Y;
-  if (match(&BI, m_Br(m_FCmp(FPred, m_Value(X), m_Value(Y)), 
+  if (match(&BI, m_Br(m_FCmp(FPred, m_Value(X), m_Value(Y)),
                              TrueDest, FalseDest)) &&
       BI.getCondition()->hasOneUse())
     if (FPred == FCmpInst::FCMP_ONE || FPred == FCmpInst::FCMP_OLE ||
         FPred == FCmpInst::FCMP_OGE) {
       FCmpInst *Cond = cast<FCmpInst>(BI.getCondition());
       Cond->setPredicate(FCmpInst::getInversePredicate(FPred));
-      
+
       // Swap Destinations and condition.
       BI.swapSuccessors();
       Worklist.Add(Cond);
@@ -1280,7 +1280,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
     }
     return 0; // Can't handle other constants
   }
-  
+
   if (InsertValueInst *IV = dyn_cast<InsertValueInst>(Agg)) {
     // We're extracting from an insertvalue instruction, compare the indices
     const unsigned *exti, *exte, *insi, *inse;
@@ -1329,7 +1329,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       // %E = extractvalue { i32, { i32 } } %I, 1, 0
       // with
       // %E extractvalue { i32 } { i32 42 }, 0
-      return ExtractValueInst::Create(IV->getInsertedValueOperand(), 
+      return ExtractValueInst::Create(IV->getInsertedValueOperand(),
                                       makeArrayRef(exti, exte));
   }
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Agg)) {
@@ -1349,7 +1349,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateAdd(LHS, RHS);
         }
-          
+
         // If the normal result of the add is dead, and the RHS is a constant,
         // we can transform this into a range comparison.
         // overflow = uadd a, -4  -->  overflow = icmp ugt a, 3
@@ -1798,7 +1798,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 /// many instructions are dead or constant).  Additionally, if we find a branch
 /// whose condition is a known constant, we only visit the reachable successors.
 ///
-static bool AddReachableCodeToWorklist(BasicBlock *BB, 
+static bool AddReachableCodeToWorklist(BasicBlock *BB,
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
                                        const TargetData *TD,
@@ -1812,13 +1812,13 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
 
   do {
     BB = Worklist.pop_back_val();
-    
+
     // We have now visited this block!  If we've already been here, ignore it.
     if (!Visited.insert(BB)) continue;
 
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *Inst = BBI++;
-      
+
       // DCE instruction if trivially dead.
       if (isInstructionTriviallyDead(Inst)) {
         ++NumDeadInst;
@@ -1826,7 +1826,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
         Inst->eraseFromParent();
         continue;
       }
-      
+
       // ConstantProp instruction if trivially constant.
       if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
         if (Constant *C = ConstantFoldInstruction(Inst, TD, TLI)) {
@@ -1837,7 +1837,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
           Inst->eraseFromParent();
           continue;
         }
-      
+
       if (TD) {
         // See if we can constant fold its operands.
         for (User::op_iterator i = Inst->op_begin(), e = Inst->op_end();
@@ -1881,17 +1881,17 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
             Worklist.push_back(ReachableBB);
             continue;
           }
-        
+
         // Otherwise it is the default destination.
         Worklist.push_back(SI->getDefaultDest());
         continue;
       }
     }
-    
+
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
       Worklist.push_back(TI->getSuccessor(i));
   } while (!Worklist.empty());
-  
+
   // Once we've found all of the instructions to add to instcombine's worklist,
   // add them in reverse order.  This way instcombine will visit from the top
   // of the function down.  This jives well with the way that it adds all uses
@@ -1899,13 +1899,13 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
   // some N^2 behavior in pathological cases.
   IC.Worklist.AddInitialGroup(&InstrsForInstCombineWorklist[0],
                               InstrsForInstCombineWorklist.size());
-  
+
   return MadeIRChange;
 }
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   MadeIRChange = false;
-  
+
   DEBUG(errs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
                << F.getName() << "\n");
 
@@ -1976,13 +1976,13 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       BasicBlock *BB = I->getParent();
       Instruction *UserInst = cast<Instruction>(I->use_back());
       BasicBlock *UserParent;
-      
+
       // Get the block the use occurs in.
       if (PHINode *PN = dyn_cast<PHINode>(UserInst))
         UserParent = PN->getIncomingBlock(I->use_begin().getUse());
       else
         UserParent = UserInst->getParent();
-      
+
       if (UserParent != BB) {
         bool UserIsSuccessor = false;
         // See if the user is one of our successors.
@@ -2004,7 +2004,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // Now that we have an instruction, try combining it to simplify it.
     Builder->SetInsertPoint(I->getParent(), I);
     Builder->SetCurrentDebugLocation(I->getDebugLoc());
-    
+
 #ifndef NDEBUG
     std::string OrigI;
 #endif
@@ -2069,14 +2069,14 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 bool InstCombiner::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<TargetData>();
   TLI = &getAnalysis<TargetLibraryInfo>();
-  
+
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
-  IRBuilder<true, TargetFolder, InstCombineIRInserter> 
+  IRBuilder<true, TargetFolder, InstCombineIRInserter>
     TheBuilder(F.getContext(), TargetFolder(TD),
                InstCombineIRInserter(Worklist));
   Builder = &TheBuilder;
-  
+
   bool EverMadeChange = false;
 
   // Lower dbg.declare intrinsics otherwise their value may be clobbered
@@ -2087,7 +2087,7 @@ bool InstCombiner::runOnFunction(Function &F) {
   unsigned Iteration = 0;
   while (DoOneIteration(F, Iteration++))
     EverMadeChange = true;
-  
+
   Builder = 0;
   return EverMadeChange;
 }
