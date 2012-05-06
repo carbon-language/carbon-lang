@@ -298,11 +298,24 @@ const char *Process::ResetColor() {
   return "\033[0m";
 }
 
+#if !defined(HAVE_ARC4RANDOM)
+static unsigned GetRandomNumberSeed() {
+  unsigned seed = ::time(NULL); // FIXME: It might not provide unique seed.
+  FILE *RandomSource = ::fopen("/dev/urandom", "r");
+  if (RandomSource) {
+    ::fread((void *)&seed, sizeof(seed), 1, RandomSource);
+    ::fclose(RandomSource);
+  }
+  return seed;
+}
+#endif
+
 unsigned llvm::sys::Process::GetRandomNumber() {
 #if defined(HAVE_ARC4RANDOM)
   return arc4random();
 #else
-  static int x = (::srand(::time(NULL)), 0);
+  static int x = (::srand(GetRandomNumberSeed()), 0);
+  (void)x;
   return ::rand();
 #endif
 }
