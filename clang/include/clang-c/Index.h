@@ -966,7 +966,7 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  * passed to the \c clang executable if it were being invoked out-of-process.
  * These command-line options will be parsed and will affect how the translation
  * unit is parsed. Note that the following options are ignored: '-c',
- * '-emit-ast', '-fsyntex-only' (which is the default), and '-o <output file>'.
+ * '-emit-ast', '-fsyntax-only' (which is the default), and '-o <output file>'.
  *
  * \param num_unsaved_files the number of unsaved file entries in \p
  * unsaved_files.
@@ -1115,7 +1115,7 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  * passed to the \c clang executable if it were being invoked out-of-process.
  * These command-line options will be parsed and will affect how the translation
  * unit is parsed. Note that the following options are ignored: '-c', 
- * '-emit-ast', '-fsyntex-only' (which is the default), and '-o <output file>'.
+ * '-emit-ast', '-fsyntax-only' (which is the default), and '-o <output file>'.
  *
  * \param num_command_line_args The number of command-line arguments in
  * \p command_line_args.
