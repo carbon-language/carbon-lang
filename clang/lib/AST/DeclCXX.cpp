@@ -1050,8 +1050,10 @@ static void CollectVisibleConversions(ASTContext &Context,
     HiddenTypes = &HiddenTypesBuffer;
 
     for (UnresolvedSetIterator I = Cs.begin(), E = Cs.end(); I != E; ++I) {
-      bool Hidden =
-        !HiddenTypesBuffer.insert(GetConversionType(Context, I.getDecl()));
+      CanQualType ConvType(GetConversionType(Context, I.getDecl()));
+      bool Hidden = ParentHiddenTypes.count(ConvType);
+      if (!Hidden)
+        HiddenTypesBuffer.insert(ConvType);
 
       // If this conversion is hidden and we're in a virtual base,
       // remember that it's hidden along some inheritance path.

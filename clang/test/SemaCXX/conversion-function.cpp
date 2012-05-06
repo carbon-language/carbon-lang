@@ -392,3 +392,14 @@ namespace PR8800 {
     A& a4 = (A&)c;
   }
 }
+
+namespace PR12712 {
+  struct A {};
+  struct B {
+    operator A();
+    operator A() const;
+  };
+  struct C : B {};
+
+  A f(const C c) { return c; }
+}
