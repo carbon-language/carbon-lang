@@ -1623,6 +1623,12 @@ def : Pat<(sub GR16:$src1, i16immSExt8:$src2),
 def : Pat<(sub GR32:$src1, i32immSExt8:$src2),
           (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
+// sub 0, reg
+def : Pat<(X86sub_flag 0, GR8 :$src), (NEG8r  GR8 :$src)>;
+def : Pat<(X86sub_flag 0, GR16:$src), (NEG16r GR16:$src)>;
+def : Pat<(X86sub_flag 0, GR32:$src), (NEG32r GR32:$src)>;
+def : Pat<(X86sub_flag 0, GR64:$src), (NEG64r GR64:$src)>;
+
 // mul reg, reg
 def : Pat<(mul GR16:$src1, GR16:$src2),
           (IMUL16rr GR16:$src1, GR16:$src2)>;

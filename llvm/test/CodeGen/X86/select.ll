@@ -218,3 +218,33 @@ define i32 @test14(i32 %a, i32 %b) nounwind {
 ; CHECK-NEXT: ret
 }
 
+; rdar://10961709
+define i32 @test15(i32 %x) nounwind {
+entry:
+  %cmp = icmp ne i32 %x, 0
+  %sub = sext i1 %cmp to i32
+  ret i32 %sub
+; CHECK: test15:
+; CHECK: negl
+; CHECK: sbbl
+}
+
+define i64 @test16(i64 %x) nounwind uwtable readnone ssp {
+entry:
+  %cmp = icmp ne i64 %x, 0
+  %conv1 = sext i1 %cmp to i64
+  ret i64 %conv1
+; CHECK: test16:
+; CHECK: negq
+; CHECK: sbbq
+}
+
+define i16 @test17(i16 %x) nounwind {
+entry:
+  %cmp = icmp ne i16 %x, 0
+  %sub = sext i1 %cmp to i16
+  ret i16 %sub
+; CHECK: test17:
+; CHECK: negw
+; CHECK: sbbw
+}
