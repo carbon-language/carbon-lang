@@ -179,6 +179,12 @@ private:
   }
 
 public:
+  struct NullDiagnostic {};
+  /// \brief Create a null partial diagnostic, which cannot carry a payload,
+  /// and only exists to be swapped with a real partial diagnostic.
+  PartialDiagnostic(NullDiagnostic)
+    : DiagID(0), DiagStorage(0), Allocator(0) { }
+
   PartialDiagnostic(unsigned DiagID, StorageAllocator &Allocator)
     : DiagID(DiagID), DiagStorage(0), Allocator(&Allocator) { }
 
@@ -237,6 +243,12 @@ public:
     freeStorage();
   }
 
+  void swap(PartialDiagnostic &PD) {
+    std::swap(DiagID, PD.DiagID);
+    std::swap(DiagStorage, PD.DiagStorage);
+    std::swap(Allocator, PD.Allocator);
+  }
+
   unsigned getDiagID() const { return DiagID; }
 
   void AddTaggedVal(intptr_t V, DiagnosticsEngine::ArgumentKind Kind) const {
@@ -281,6 +293,18 @@ public:
     // Add all fix-its.
     for (unsigned i = 0, e = DiagStorage->FixItHints.size(); i != e; ++i)
       DB.AddFixItHint(DiagStorage->FixItHints[i]);
+  }
+
+  void EmitToString(DiagnosticsEngine &Diags,
+                    llvm::SmallVectorImpl<char> &Buf) const {
+    // FIXME: It should be possible to render a diagnostic to a string without
+    //        messing with the state of the diagnostics engine.
+    DiagnosticBuilder DB(Diags.Report(getDiagID()));
+    Emit(DB);
+    DB.FlushCounts();
+    Diagnostic(&Diags).FormatDiagnostic(Buf);
+    DB.Clear();
+    Diags.Clear();
   }
 
   /// \brief Clear out this partial diagnostic, giving it a new diagnostic ID

@@ -2023,7 +2023,7 @@ def note_ovl_candidate_underqualified : Note<
     "candidate template ignored: can't deduce a type for %0 which would "
     "make %2 equal %1">;
 def note_ovl_candidate_substitution_failure : Note<
-    "candidate template ignored: substitution failure %0">;
+    "candidate template ignored: substitution failure%0%1">;
     
 // Note that we don't treat templates differently for this diagnostic.
 def note_ovl_candidate_arity : Note<"candidate "

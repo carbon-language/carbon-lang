@@ -698,6 +698,15 @@ void Sema::EmitCurrentDiagnostic(unsigned DiagID) {
       // Count this failure so that we know that template argument deduction
       // has failed.
       ++NumSFINAEErrors;
+
+      // Make a copy of this suppressed diagnostic and store it with the
+      // template-deduction information.
+      if (*Info && !(*Info)->hasSFINAEDiagnostic()) {
+        Diagnostic DiagInfo(&Diags);
+        (*Info)->addSFINAEDiagnostic(DiagInfo.getLocation(),
+                       PartialDiagnostic(DiagInfo, Context.getDiagAllocator()));
+      }
+
       Diags.setLastDiagnosticIgnored();
       Diags.Clear();
       return;
@@ -714,6 +723,15 @@ void Sema::EmitCurrentDiagnostic(unsigned DiagID) {
 
       // Suppress this diagnostic.
       ++NumSFINAEErrors;
+
+      // Make a copy of this suppressed diagnostic and store it with the
+      // template-deduction information.
+      if (*Info && !(*Info)->hasSFINAEDiagnostic()) {
+        Diagnostic DiagInfo(&Diags);
+        (*Info)->addSFINAEDiagnostic(DiagInfo.getLocation(),
+                       PartialDiagnostic(DiagInfo, Context.getDiagAllocator()));
+      }
+
       Diags.setLastDiagnosticIgnored();
       Diags.Clear();
 
@@ -730,13 +748,13 @@ void Sema::EmitCurrentDiagnostic(unsigned DiagID) {
     case DiagnosticIDs::SFINAE_Suppress:
       // Make a copy of this suppressed diagnostic and store it with the
       // template-deduction information;
-      Diagnostic DiagInfo(&Diags);
-        
-      if (*Info)
+      if (*Info) {
+        Diagnostic DiagInfo(&Diags);
         (*Info)->addSuppressedDiagnostic(DiagInfo.getLocation(),
-                        PartialDiagnostic(DiagInfo,Context.getDiagAllocator()));
-        
-      // Suppress this diagnostic.        
+                       PartialDiagnostic(DiagInfo, Context.getDiagAllocator()));
+      }
+
+      // Suppress this diagnostic.
       Diags.setLastDiagnosticIgnored();
       Diags.Clear();
       return;

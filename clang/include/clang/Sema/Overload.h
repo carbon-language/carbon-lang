@@ -659,12 +659,25 @@ namespace clang {
     /// A structure used to record information about a failed
     /// template argument deduction.
     struct DeductionFailureInfo {
-      // A Sema::TemplateDeductionResult.
-      unsigned Result;
+      /// A Sema::TemplateDeductionResult.
+      unsigned Result : 8;
+
+      /// \brief Indicates whether a diagnostic is stored in Diagnostic.
+      unsigned HasDiagnostic : 1;
 
       /// \brief Opaque pointer containing additional data about
       /// this deduction failure.
       void *Data;
+
+      /// \brief A diagnostic indicating why deduction failed.
+      union {
+        void *Align;
+        char Diagnostic[sizeof(PartialDiagnosticAt)];
+      };
+
+      /// \brief Retrieve the diagnostic which caused this deduction failure,
+      /// if any.
+      PartialDiagnosticAt *getSFINAEDiagnostic();
       
       /// \brief Retrieve the template parameter this deduction failure
       /// refers to, if any.
@@ -741,9 +754,12 @@ namespace clang {
   public:
     OverloadCandidateSet(SourceLocation Loc) : Loc(Loc), NumInlineSequences(0){}
     ~OverloadCandidateSet() {
-      for (iterator i = begin(), e = end(); i != e; ++i)
+      for (iterator i = begin(), e = end(); i != e; ++i) {
         for (unsigned ii = 0, ie = i->NumConversions; ii != ie; ++ii)
           i->Conversions[ii].~ImplicitConversionSequence();
+        if (i->FailureKind == ovl_fail_bad_deduction)
+          i->DeductionFailure.Destroy();
+      }
     }
 
     SourceLocation getLocation() const { return Loc; }
