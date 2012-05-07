@@ -458,6 +458,34 @@ public:
     return b;
   }
 
+  /// getCommonSuperRegClass - Find a common super-register class if it exists.
+  ///
+  /// Find a register class, SuperRC and two sub-register indices, PreA and
+  /// PreB, such that:
+  ///
+  ///   1. PreA + SubA == PreB + SubB  (using composeSubRegIndices()), and
+  ///
+  ///   2. For all Reg in SuperRC: Reg:PreA in RCA and Reg:PreB in RCB, and
+  ///
+  ///   3. SuperRC->getSize() >= max(RCA->getSize(), RCB->getSize()).
+  ///
+  /// SuperRC will be chosen such that no super-class of SuperRC satisfies the
+  /// requirements, and there is no register class with a smaller spill size
+  /// that satisfies the requirements.
+  ///
+  /// SubA and SubB must not be 0. Use getMatchingSuperRegClass() instead.
+  ///
+  /// Either of the PreA and PreB sub-register indices may be returned as 0. In
+  /// that case, the returned register class will be a sub-class of the
+  /// corresponding argument register class.
+  ///
+  /// The function returns NULL if no register class can be found.
+  ///
+  const TargetRegisterClass*
+  getCommonSuperRegClass(const TargetRegisterClass *RCA, unsigned SubA,
+                         const TargetRegisterClass *RCB, unsigned SubB,
+                         unsigned &PreA, unsigned &PreB) const;
+
   //===--------------------------------------------------------------------===//
   // Register Class Information
   //
