@@ -182,16 +182,6 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  // The attribute is also overridden by a subsequent declaration as dllexport.
-  // Warning is emitted.
-  for (AttributeList *nextAttr = Attr.getNext(); nextAttr;
-       nextAttr = nextAttr->getNext()) {
-    if (nextAttr->getKind() == AttributeList::AT_dllexport) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
-      return;
-    }
-  }
-
   if (D->getAttr<DLLExportAttr>()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
     return;
@@ -226,6 +216,11 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     // FIXME: ... unless the -fkeep-inline-functions flag has been used.
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllexport";
     return;
+  }
+
+  if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
+    S.Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
+    D->dropAttr<DLLImportAttr>();
   }
 
   D->addAttr(::new (S.Context) DLLExportAttr(Attr.getLoc(), S.Context));

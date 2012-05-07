@@ -35,3 +35,6 @@ typedef int __declspec(dllimport) type2; // expected-warning{{'dllimport' attrib
 
 void __declspec(dllimport) foo12();
 void foo12(){} // expected-warning {{'foo12' redeclared without dllimport attribute: previous dllimport ignored}}
+
+void __attribute__((dllimport)) foo13(); // expected-warning{{dllimport attribute ignored}}
+void __attribute__((dllexport)) foo13();
