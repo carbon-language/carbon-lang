@@ -176,6 +176,15 @@ namespace llvm {
               getRegForInlineAsmConstraint(const std::string &Constraint,
               EVT VT) const;
 
+    /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+    /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
+    /// true it means one of the asm constraint of the inline asm instruction
+    /// being processed is 'm'.
+    virtual void LowerAsmOperandForConstraint(SDValue Op,
+                                              std::string &Constraint,
+                                              std::vector<SDValue> &Ops,
+                                              SelectionDAG &DAG) const;
+
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
     /// isFPImmLegal - Returns true if the target can instruction select the
