@@ -26,9 +26,11 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/raw_ostream.h"
 
-#ifdef _WIN32
 // For chdir, see the comment in ClangTool::run for more information.
+#ifdef _WIN32
 #  include <direct.h>
+#else
+#  include <unistd.h>
 #endif
 
 namespace clang {
