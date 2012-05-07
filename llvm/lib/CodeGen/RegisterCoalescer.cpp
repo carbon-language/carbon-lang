@@ -258,24 +258,35 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
     }
   } else {
     // Both registers are virtual.
+    const TargetRegisterClass *SrcRC = MRI.getRegClass(Src);
+    const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
 
     // Both registers have subreg indices.
     if (SrcSub && DstSub) {
-      // For now we only handle the case of identical indices in commensurate
-      // registers: Dreg:ssub_1 + Dreg:ssub_1 -> Dreg
-      // FIXME: Handle Qreg:ssub_3 + Dreg:ssub_1 as QReg:dsub_1 + Dreg.
-      if (SrcSub != DstSub)
+      unsigned SrcPre, DstPre;
+      NewRC = TRI.getCommonSuperRegClass(SrcRC, SrcSub, DstRC, DstSub,
+                                         SrcPre, DstPre);
+      if (!NewRC)
         return false;
-      const TargetRegisterClass *SrcRC = MRI.getRegClass(Src);
-      const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
-      if (!TRI.getCommonSubClass(DstRC, SrcRC))
+
+      // We cannot handle the case where both Src and Dst would be a
+      // sub-register. Yet.
+      if (SrcPre && DstPre) {
+        DEBUG(dbgs() << "\tCannot handle " << NewRC->getName()
+                     << " with subregs " << TRI.getSubRegIndexName(SrcPre)
+                     << " and " << TRI.getSubRegIndexName(DstPre) << '\n');
         return false;
-      SrcSub = DstSub = 0;
+      }
+
+      // One of these will be 0, so one register is a sub-register of the other.
+      SrcSub = DstPre;
+      DstSub = SrcPre;
     }
 
     // There can be no SrcSub.
     if (SrcSub) {
       std::swap(Src, Dst);
+      std::swap(SrcRC, DstRC);
       DstSub = SrcSub;
       SrcSub = 0;
       assert(!Flipped && "Unexpected flip");
@@ -283,12 +294,12 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
     }
 
     // Find the new register class.
-    const TargetRegisterClass *SrcRC = MRI.getRegClass(Src);
-    const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
-    if (DstSub)
-      NewRC = TRI.getMatchingSuperRegClass(DstRC, SrcRC, DstSub);
-    else
-      NewRC = TRI.getCommonSubClass(DstRC, SrcRC);
+    if (!NewRC) {
+      if (DstSub)
+        NewRC = TRI.getMatchingSuperRegClass(DstRC, SrcRC, DstSub);
+      else
+        NewRC = TRI.getCommonSubClass(DstRC, SrcRC);
+    }
     if (!NewRC)
       return false;
     CrossClass = NewRC != DstRC || NewRC != SrcRC;
