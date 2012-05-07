@@ -33,5 +33,11 @@ entry:
 ; CHECK: #NO_APP	
   tail call i32 asm sideeffect "add $0,$1,$3\0A\09", "=r,r,L,r"(i32 7, i32 1048576, i32 0) nounwind
 
+; Now N with -3
+; CHECK: #APP
+; CHECK: addi ${{[0-9]+}},${{[0-9]+}},-3
+; CHECK: #NO_APP	
+  tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,N"(i32 7, i32 -3) nounwind
+
   ret i32 0
 }
