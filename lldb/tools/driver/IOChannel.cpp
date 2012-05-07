@@ -188,9 +188,6 @@ IOChannel::IOChannel
     ::el_set (m_edit_line, EL_EDITOR, "emacs");
     ::el_set (m_edit_line, EL_HIST, history, m_history);
 
-    // Source $PWD/.editrc then $HOME/.editrc
-    ::el_source (m_edit_line, NULL);
-
     el_set (m_edit_line, EL_ADDFN, "lldb_complete",
             "LLDB completion function",
             IOChannel::ElCompletionFn);
@@ -198,6 +195,9 @@ IOChannel::IOChannel
     el_set (m_edit_line, EL_BIND, "^r", "em-inc-search-prev", NULL);  // Cycle through backwards search, entering string
     el_set (m_edit_line, EL_BIND, "^w", "ed-delete-prev-word", NULL); // Delete previous word, behave like bash does.
     el_set (m_edit_line, EL_CLIENTDATA, this);
+
+    // Source $PWD/.editrc then $HOME/.editrc
+    ::el_source (m_edit_line, NULL);
 
     assert (m_history);
     ::history (m_history, &m_history_event, H_SETSIZE, 800);
