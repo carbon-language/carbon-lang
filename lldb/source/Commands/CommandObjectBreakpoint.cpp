@@ -74,8 +74,8 @@ CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 {
 }
 
-#define LLDB_OPT_FILE ( LLDB_OPT_SET_FROM(1, 9) & ~LLDB_OPT_SET_2 )
-#define LLDB_OPT_NOT_10 ( LLDB_OPT_SET_FROM(1, 10) & ~LLDB_OPT_SET_10 )
+#define LLDB_OPT_FILE ( LLDB_OPT_SET_FROM_TO(1, 9) & ~LLDB_OPT_SET_2 )
+#define LLDB_OPT_NOT_10 ( LLDB_OPT_SET_FROM_TO(1, 10) & ~LLDB_OPT_SET_10 )
 
 OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
