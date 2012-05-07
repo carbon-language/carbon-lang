@@ -3056,8 +3056,10 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'r':
       if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8)
         return std::make_pair(0U, &Mips::CPURegsRegClass);
-      assert(VT == MVT::i64 && "Unexpected type.");
-      return std::make_pair(0U, &Mips::CPU64RegsRegClass);
+      if (VT == MVT::i64 && HasMips64)
+        return std::make_pair(0U, &Mips::CPU64RegsRegClass);
+      // This will generate an error message
+      return std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
     case 'f':
       if (VT == MVT::f32)
         return std::make_pair(0U, &Mips::FGR32RegClass);
