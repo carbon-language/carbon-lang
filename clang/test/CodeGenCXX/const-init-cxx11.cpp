@@ -49,6 +49,17 @@ namespace StructUnion {
 
   // CHECK: @_ZN11StructUnion1fE = global {{.*}} { i32 5 }
   D f;
+
+  union E {
+    int a;
+    void *b = &f;
+  };
+
+  // CHECK: @_ZN11StructUnion1gE = global {{.*}} @_ZN11StructUnion1fE
+  E g;
+
+  // CHECK: @_ZN11StructUnion1hE = global {{.*}} @_ZN11StructUnion1fE
+  E h = E();
 }
 
 namespace BaseClass {

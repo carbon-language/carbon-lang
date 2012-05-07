@@ -55,3 +55,42 @@ struct A {}; // expected-note {{here}}
 struct B {
   friend A::A(); // expected-error {{non-constexpr declaration of 'A' follows constexpr declaration}}
 };
+
+namespace UnionCtors {
+  union A { // expected-note {{here}}
+    int a;
+    int b;
+  };
+  union B {
+    int a;
+    int b = 5;
+  };
+  union C {
+    int a = 5;
+    int b;
+  };
+  struct D {
+    union {
+      int a = 5;
+      int b;
+    };
+    union {
+      int c;
+      int d = 5;
+    };
+  };
+  struct E { // expected-note {{here}}
+    union {
+      int a;
+      int b;
+    };
+  };
+
+  struct Test {
+    friend constexpr A::A() noexcept; // expected-error {{follows non-constexpr declaration}}
+    friend constexpr B::B() noexcept;
+    friend constexpr C::C() noexcept;
+    friend constexpr D::D() noexcept;
+    friend constexpr E::E() noexcept; // expected-error {{follows non-constexpr declaration}}
+  };
+}

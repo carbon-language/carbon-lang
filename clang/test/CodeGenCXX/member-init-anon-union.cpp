@@ -2,8 +2,10 @@
 
 // PR10531.
 
+int make_a();
+
 static union {
-  int a = 42;
+  int a = make_a();
   char *b;
 };
 
@@ -32,4 +34,4 @@ int g() {
 
 // CHECK: define {{.*}}@"[[CONSTRUCT_GLOBAL]]C2Ev"
 // CHECK-NOT: }
-// CHECK: store i32 42
+// CHECK: call {{.*}}@_Z6make_a

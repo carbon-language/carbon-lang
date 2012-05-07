@@ -43,6 +43,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
     HasMutableFields(false), HasOnlyCMembers(true),
+    HasInClassInitializer(false),
     HasTrivialDefaultConstructor(true),
     HasConstexprNonCopyMoveConstructor(false),
     DefaultedDefaultConstructorIsConstexpr(true),
@@ -818,17 +819,19 @@ NotASpecialMember:;
       data().HasNonLiteralTypeFieldsOrBases = true;
 
     if (Field->hasInClassInitializer()) {
-      // C++0x [class]p5:
+      data().HasInClassInitializer = true;
+
+      // C++11 [class]p5:
       //   A default constructor is trivial if [...] no non-static data member
       //   of its class has a brace-or-equal-initializer.
       data().HasTrivialDefaultConstructor = false;
 
-      // C++0x [dcl.init.aggr]p1:
+      // C++11 [dcl.init.aggr]p1:
       //   An aggregate is a [...] class with [...] no
       //   brace-or-equal-initializers for non-static data members.
       data().Aggregate = false;
 
-      // C++0x [class]p10:
+      // C++11 [class]p10:
       //   A POD struct is [...] a trivial class.
       data().PlainOldData = false;
     }
@@ -920,7 +923,7 @@ NotASpecialMember:;
         //    -- every constructor involved in initializing non-static data
         //       members [...] shall be a constexpr constructor
         if (!Field->hasInClassInitializer() &&
-            !FieldRec->hasConstexprDefaultConstructor())
+            !FieldRec->hasConstexprDefaultConstructor() && !isUnion())
           // The standard requires any in-class initializer to be a constant
           // expression. We consider this to be a defect.
           data().DefaultedDefaultConstructorIsConstexpr = false;
@@ -944,7 +947,7 @@ NotASpecialMember:;
         data().DefaultedDefaultConstructorIsConstexpr = false;
         data().DefaultedCopyConstructorIsConstexpr = false;
         data().DefaultedMoveConstructorIsConstexpr = false;
-      } else if (!Field->hasInClassInitializer())
+      } else if (!Field->hasInClassInitializer() && !isUnion())
         data().DefaultedDefaultConstructorIsConstexpr = false;
     }
 

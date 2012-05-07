@@ -3642,11 +3642,10 @@ static void TryValueInitialization(Sema &S,
       //    user-provided or deleted default constructor, then the object is
       //    zero-initialized and, if T has a non-trivial default constructor,
       //    default-initialized;
-      if ((ClassDecl->getTagKind() == TTK_Class ||
-           ClassDecl->getTagKind() == TTK_Struct)) {
-        Sequence.AddZeroInitializationStep(Entity.getType());
-        return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);
-      }
+      // FIXME: The 'non-union' here is a defect (not yet assigned an issue
+      // number). Update the quotation when the defect is resolved.
+      Sequence.AddZeroInitializationStep(Entity.getType());
+      return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);
     }
   }
 
