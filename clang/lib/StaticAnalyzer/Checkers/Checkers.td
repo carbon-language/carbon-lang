@@ -283,6 +283,10 @@ def MallocPessimistic : Checker<"Malloc">,
   HelpText<"Check for memory leaks, double free, and use-after-free problems.">,
   DescFile<"MallocChecker.cpp">;
   
+def MallocSizeofChecker : Checker<"MallocSizeof">,
+  HelpText<"Check for dubious malloc arguments involving sizeof">,
+  DescFile<"MallocSizeofChecker.cpp">;
+  
 } // end "unix"
 
 let ParentPackage = UnixExperimental in {
@@ -294,10 +298,6 @@ def ChrootChecker : Checker<"Chroot">,
 def MallocOptimistic : Checker<"MallocWithAnnotations">,
   HelpText<"Check for memory leaks, double free, and use-after-free problems. Assumes that all user-defined functions which might free a pointer are annotated.">,
   DescFile<"MallocChecker.cpp">;
-
-def MallocSizeofChecker : Checker<"MallocSizeof">,
-  HelpText<"Check for dubious malloc arguments involving sizeof">,
-  DescFile<"MallocSizeofChecker.cpp">;
 
 def PthreadLockChecker : Checker<"PthreadLock">,
   HelpText<"Simple lock -> unlock checker">,

@@ -203,9 +203,8 @@ public:
 
           OS << "Result of '"
              << i->AllocCall->getDirectCallee()->getIdentifier()->getName()
-             << "' is converted to type '"
-             << CastedType.getAsString() << "', whose pointee type '"
-             << PointeeType.getAsString() << "' is incompatible with "
+             << "' is converted to a pointer of type '"
+             << PointeeType.getAsString() << "', which is incompatible with "
              << "sizeof operand type '" << SizeofType.getAsString() << "'";
           llvm::SmallVector<SourceRange, 4> Ranges;
           Ranges.push_back(i->AllocCall->getCallee()->getSourceRange());
@@ -217,7 +216,7 @@ public:
             PathDiagnosticLocation::createBegin(i->AllocCall->getCallee(),
                                                 BR.getSourceManager(), ADC);
 
-          BR.EmitBasicReport(D, "allocator sizeof operand mismatch",
+          BR.EmitBasicReport(D, "Allocator sizeof operand mismatch",
                              categories::UnixAPI,
                              OS.str(),
                              L, Ranges.data(), Ranges.size());
