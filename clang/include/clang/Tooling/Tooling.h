@@ -35,6 +35,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/Util.h"
+#include "clang/Tooling/CompilationDatabase.h"
 #include <string>
 #include <vector>
 
@@ -49,8 +50,6 @@ class SourceManager;
 class FrontendAction;
 
 namespace tooling {
-
-class CompilationDatabase;
 
 /// \brief Interface to generate clang::FrontendActions.
 class FrontendActionFactory {
@@ -169,9 +168,8 @@ class ClangTool {
   FileManager &getFiles() { return Files; }
 
  private:
-  // We store command lines as pair (file name, command line).
-  typedef std::pair< std::string, std::vector<std::string> > CommandLine;
-  std::vector<CommandLine> CommandLines;
+  // We store compile commands as pair (file name, compile command).
+  std::vector< std::pair<std::string, CompileCommand> > CompileCommands;
 
   FileManager Files;
   // Contains a list of pairs (<file name>, <file content>).
