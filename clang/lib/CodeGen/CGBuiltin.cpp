@@ -2411,8 +2411,11 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   case X86::BI__builtin_ia32_movntps:
+  case X86::BI__builtin_ia32_movntps256:
   case X86::BI__builtin_ia32_movntpd:
+  case X86::BI__builtin_ia32_movntpd256:
   case X86::BI__builtin_ia32_movntdq:
+  case X86::BI__builtin_ia32_movntdq256:
   case X86::BI__builtin_ia32_movnti: {
     llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(),
                                            Builder.getInt32(1));
