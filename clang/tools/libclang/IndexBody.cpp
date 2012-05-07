@@ -9,7 +9,7 @@
 
 #include "IndexingContext.h"
 
-#include "clang/AST/RecursiveASTVisitor.h"
+#include "RecursiveASTVisitor.h"
 
 using namespace clang;
 using namespace cxindex;
