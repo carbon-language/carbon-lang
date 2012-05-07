@@ -123,23 +123,23 @@ by compiling the program with the "safe" backend and running it.
 
 Profile file loaded by B<--profile-loader>.
 
-=item B<--run-{int,jit,llc,cbe,custom}>
+=item B<--run-{int,jit,llc,custom}>
 
 Whenever the test program is compiled, B<bugpoint> should generate code for it
 using the specified code generator.  These options allow you to choose the
-interpreter, the JIT compiler, the static native code compiler, the C
-backend, or a custom command (see B<--exec-command>) respectively.
+interpreter, the JIT compiler, the static native code compiler, or a
+custom command (see B<--exec-command>) respectively.
 
-=item B<--safe-{llc,cbe,custom}>
+=item B<--safe-{llc,custom}>
 
 When debugging a code generator, B<bugpoint> should use the specified code
 generator as the "safe" code generator. This is a known-good code generator
 used to generate the "reference output" if it has not been provided, and to
 compile portions of the program that as they are excluded from the testcase.
 These options allow you to choose the
-static native code compiler, the C backend, or a custom command,
-(see B<--exec-command>) respectively. The interpreter and the JIT backends
-cannot currently be used as the "safe" backends.
+static native code compiler, or a custom command, (see B<--exec-command>)
+respectively. The interpreter and the JIT backends cannot currently
+be used as the "safe" backends.
 
 =item B<--exec-command> I<command>
 
@@ -165,7 +165,7 @@ will be the minimum bitcode that passes FileCheck.
 =item B<--safe-path> I<path>
 
 This option defines the path to the command to execute with the
-B<--safe-{int,jit,llc,cbe,custom}>
+B<--safe-{int,jit,llc,custom}>
 option.
 
 =back
