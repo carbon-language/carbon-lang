@@ -3054,7 +3054,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
     case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
-      if (VT == MVT::i32)
+      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8)
         return std::make_pair(0U, &Mips::CPURegsRegClass);
       assert(VT == MVT::i64 && "Unexpected type.");
       return std::make_pair(0U, &Mips::CPU64RegsRegClass);
