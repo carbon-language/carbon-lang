@@ -33,7 +33,7 @@
 /// llvm_move - Expands to ::std::move if the compiler supports
 /// r-value references; otherwise, expands to the argument.
 #if LLVM_USE_RVALUE_REFERENCES
-#define llvm_move(value) (::std::move(arg))
+#define llvm_move(value) (::std::move(value))
 #else
 #define llvm_move(value) (value)
 #endif
