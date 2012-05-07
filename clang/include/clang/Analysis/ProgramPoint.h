@@ -40,13 +40,13 @@ public:
               BlockEntranceKind,
               BlockExitKind,
               PreStmtKind,
+              PreStmtPurgeDeadSymbolsKind,
+              PostStmtPurgeDeadSymbolsKind,
               PostStmtKind,
               PreLoadKind,
               PostLoadKind,
               PreStoreKind,
               PostStoreKind,
-              PostStmtPurgeDeadSymbolsKind,
-              PreStmtPurgeDeadSymbolsKind,
               PostConditionKind,
               PostLValueKind,
               PostInitializerKind,
@@ -352,11 +352,11 @@ public:
 
 /// \class Represents a point after we ran remove dead bindings BEFORE
 /// processing the given statement.
-class PreStmtPurgeDeadSymbols : public PostStmt {
+class PreStmtPurgeDeadSymbols : public StmtPoint {
 public:
   PreStmtPurgeDeadSymbols(const Stmt *S, const LocationContext *L,
                        const ProgramPointTag *tag = 0)
-    : PostStmt(S, PreStmtPurgeDeadSymbolsKind, L, tag) { }
+    : StmtPoint(S, 0, PreStmtPurgeDeadSymbolsKind, L, tag) { }
 
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PreStmtPurgeDeadSymbolsKind;
@@ -365,11 +365,11 @@ public:
 
 /// \class Represents a point after we ran remove dead bindings AFTER
 /// processing the  given statement.
-class PostStmtPurgeDeadSymbols : public PostStmt {
+class PostStmtPurgeDeadSymbols : public StmtPoint {
 public:
   PostStmtPurgeDeadSymbols(const Stmt *S, const LocationContext *L,
                        const ProgramPointTag *tag = 0)
-    : PostStmt(S, PostStmtPurgeDeadSymbolsKind, L, tag) { }
+    : StmtPoint(S, 0, PostStmtPurgeDeadSymbolsKind, L, tag) { }
 
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStmtPurgeDeadSymbolsKind;
