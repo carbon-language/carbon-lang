@@ -1005,10 +1005,8 @@ RetainSummaryManager::getSummary(const FunctionDecl *FD,
       ScratchArgs = AF.add(ScratchArgs, 2, StopTracking);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
     } else if (CME && CME->hasNonZeroCallbackArg()) {
-      // Allow objects to escape throug callbacks. radar://10973977
-      for (unsigned I = 0; I < CME->getNumArgs(); ++I)
-        ScratchArgs = AF.add(ScratchArgs, I, StopTracking);
-      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+      // Allow objects to escape through callbacks. radar://10973977
+      S = getPersistentStopSummary();
     }
 
     // Did we get a summary?
