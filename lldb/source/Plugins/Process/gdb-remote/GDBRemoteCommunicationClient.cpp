@@ -1407,7 +1407,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
             else if (name.compare("name") == 0)
             {
                 StringExtractor extractor;
-                // The the process name from ASCII hex bytes since we can't 
+                // The process name from ASCII hex bytes since we can't 
                 // control the characters in a process name
                 extractor.GetStringRef().swap(value);
                 extractor.SetFilePos(0);
