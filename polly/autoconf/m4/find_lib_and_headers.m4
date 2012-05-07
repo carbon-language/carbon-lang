@@ -23,7 +23,8 @@ AC_DEFUN([find_lib_and_headers],
        given_lib_path=lib_not_give_$1]
     )
   # Check for library and headers works
-  AC_MSG_CHECKING([for $1 in $given_inc_path, $given_lib_path])
+  AC_MSG_CHECKING([for $1: $2 in $given_inc_path, and lib$3 in $given_lib_path])
+
   # try to compile a file that includes a header of the library
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <$2>]], [[;]])],
     [AC_MSG_RESULT([ok])
