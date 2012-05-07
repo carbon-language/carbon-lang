@@ -965,7 +965,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                   tok::TokenKind mType,
                                   tok::ObjCKeywordKind MethodImplKind,
                                   bool MethodDefinition) {
-  ParsingDeclRAIIObject PD(*this);
+  ParsingDeclRAIIObject PD(*this, ParsingDeclRAIIObject::NoParent);
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCMethodDecl(getCurScope(), mType == tok::minus, 

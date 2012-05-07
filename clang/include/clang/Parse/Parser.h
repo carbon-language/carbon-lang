@@ -31,6 +31,9 @@ namespace clang {
   class DeclGroupRef;
   class DiagnosticBuilder;
   class Parser;
+  class ParsingDeclRAIIObject;
+  class ParsingDeclSpec;
+  class ParsingDeclarator;
   class PragmaUnusedHandler;
   class ColonProtectionRAIIObject;
   class InMessageExpressionRAIIObject;
@@ -207,6 +210,7 @@ public:
   const TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
   Preprocessor &getPreprocessor() const { return PP; }
   Sema &getActions() const { return Actions; }
+  AttributeFactory &getAttrFactory() { return AttrFactory; }
 
   const Token &getCurToken() const { return Tok; }
   Scope *getCurScope() const { return Actions.getCurScope(); }
@@ -951,120 +955,7 @@ private:
     return *ClassStack.top();
   }
 
-  /// \brief RAII object used to inform the actions that we're
-  /// currently parsing a declaration.  This is active when parsing a
-  /// variable's initializer, but not when parsing the body of a
-  /// class or function definition.
-  class ParsingDeclRAIIObject {
-    Sema &Actions;
-    Sema::ParsingDeclState State;
-    bool Popped;
-
-  public:
-    ParsingDeclRAIIObject(Parser &P) : Actions(P.Actions) {
-      push();
-    }
-
-    ParsingDeclRAIIObject(Parser &P, ParsingDeclRAIIObject *Other)
-        : Actions(P.Actions) {
-      if (Other) steal(*Other);
-      else push();
-    }
-
-    /// Creates a RAII object which steals the state from a different
-    /// object instead of pushing.
-    ParsingDeclRAIIObject(ParsingDeclRAIIObject &Other)
-        : Actions(Other.Actions) {
-      steal(Other);
-    }
-
-    ~ParsingDeclRAIIObject() {
-      abort();
-    }
-
-    /// Resets the RAII object for a new declaration.
-    void reset() {
-      abort();
-      push();
-    }
-
-    /// Signals that the context was completed without an appropriate
-    /// declaration being parsed.
-    void abort() {
-      pop(0);
-    }
-
-    void complete(Decl *D) {
-      assert(!Popped && "ParsingDeclaration has already been popped!");
-      pop(D);
-    }
-
-  private:
-    void steal(ParsingDeclRAIIObject &Other) {
-      State = Other.State;
-      Popped = Other.Popped;
-      Other.Popped = true;
-    }
-
-    void push() {
-      State = Actions.PushParsingDeclaration();
-      Popped = false;
-    }
-
-    void pop(Decl *D) {
-      if (!Popped) {
-        Actions.PopParsingDeclaration(State, D);
-        Popped = true;
-      }
-    }
-  };
-
-  /// A class for parsing a DeclSpec.
-  class ParsingDeclSpec : public DeclSpec {
-    ParsingDeclRAIIObject ParsingRAII;
-
-  public:
-    ParsingDeclSpec(Parser &P) : DeclSpec(P.AttrFactory), ParsingRAII(P) {}
-    ParsingDeclSpec(Parser &P, ParsingDeclRAIIObject *RAII)
-      : DeclSpec(P.AttrFactory), ParsingRAII(P, RAII) {}
-
-    void complete(Decl *D) {
-      ParsingRAII.complete(D);
-    }
-
-    void abort() {
-      ParsingRAII.abort();
-    }
-  };
-
-  /// A class for parsing a declarator.
-  class ParsingDeclarator : public Declarator {
-    ParsingDeclRAIIObject ParsingRAII;
-
-  public:
-    ParsingDeclarator(Parser &P, const ParsingDeclSpec &DS, TheContext C)
-      : Declarator(DS, C), ParsingRAII(P) {
-    }
-
-    const ParsingDeclSpec &getDeclSpec() const {
-      return static_cast<const ParsingDeclSpec&>(Declarator::getDeclSpec());
-    }
-
-    ParsingDeclSpec &getMutableDeclSpec() const {
-      return const_cast<ParsingDeclSpec&>(getDeclSpec());
-    }
-
-    void clear() {
-      Declarator::clear();
-      ParsingRAII.reset();
-    }
-
-    void complete(Decl *D) {
-      ParsingRAII.complete(D);
-    }
-  };
-
-  /// \brief RAII object used to
+  /// \brief RAII object used to manage the parsing of a class definition.
   class ParsingClassDefinition {
     Parser &P;
     bool Popped;

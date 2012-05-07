@@ -2560,7 +2560,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
   bool FirstDeclarator = true;
   SourceLocation CommaLoc;
   while (1) {
-    ParsingDeclRAIIObject PD(*this);
+    ParsingDeclRAIIObject PD(*this, ParsingDeclRAIIObject::NoParent);
     FieldDeclarator DeclaratorInfo(DS);
     DeclaratorInfo.D.setCommaLoc(CommaLoc);
 
@@ -3067,7 +3067,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
 
     SourceLocation EqualLoc;
     ExprResult AssignedVal;
-    ParsingDeclRAIIObject PD(*this);
+    ParsingDeclRAIIObject PD(*this, ParsingDeclRAIIObject::NoParent);
     
     if (Tok.is(tok::equal)) {
       EqualLoc = ConsumeToken();

@@ -169,6 +169,7 @@ namespace sema {
   class BlockScopeInfo;
   class CompoundScopeInfo;
   class DelayedDiagnostic;
+  class DelayedDiagnosticPool;
   class FunctionScopeInfo;
   class LambdaScopeInfo;
   class PossiblyUnreachableDiag;
@@ -355,93 +356,63 @@ public:
 
   class DelayedDiagnostics;
 
-  class ParsingDeclState {
-    unsigned SavedStackSize;
+  class DelayedDiagnosticsState {
+    sema::DelayedDiagnosticPool *SavedPool;
     friend class Sema::DelayedDiagnostics;
   };
-
-  class ProcessingContextState {
-    unsigned SavedParsingDepth;
-    unsigned SavedActiveStackBase;
-    friend class Sema::DelayedDiagnostics;
-  };
+  typedef DelayedDiagnosticsState ParsingDeclState;
+  typedef DelayedDiagnosticsState ProcessingContextState;
 
   /// A class which encapsulates the logic for delaying diagnostics
   /// during parsing and other processing.
   class DelayedDiagnostics {
-    /// \brief The stack of diagnostics that were delayed due to being
-    /// produced during the parsing of a declaration.
-    sema::DelayedDiagnostic *Stack;
-
-    /// \brief The number of objects on the delayed-diagnostics stack.
-    unsigned StackSize;
-
-    /// \brief The current capacity of the delayed-diagnostics stack.
-    unsigned StackCapacity;
-
-    /// \brief The index of the first "active" delayed diagnostic in
-    /// the stack.  When parsing class definitions, we ignore active
-    /// delayed diagnostics from the surrounding context.
-    unsigned ActiveStackBase;
-
-    /// \brief The depth of the declarations we're currently parsing.
-    /// This gets saved and reset whenever we enter a class definition.
-    unsigned ParsingDepth;
+    /// \brief The current pool of diagnostics into which delayed
+    /// diagnostics should go.
+    sema::DelayedDiagnosticPool *CurPool;
 
   public:
-    DelayedDiagnostics() : Stack(0), StackSize(0), StackCapacity(0),
-      ActiveStackBase(0), ParsingDepth(0) {}
+    DelayedDiagnostics() : CurPool(0) {}
 
-    ~DelayedDiagnostics() {
-      delete[] reinterpret_cast<char*>(Stack);
-    }
-
-    /// Adds a delayed diagnostic.
-    void add(const sema::DelayedDiagnostic &diag);
+    /// Adds a delayed diagnostic.    
+    void add(const sema::DelayedDiagnostic &diag); // in DelayedDiagnostic.h
 
     /// Determines whether diagnostics should be delayed.
-    bool shouldDelayDiagnostics() { return ParsingDepth > 0; }
+    bool shouldDelayDiagnostics() { return CurPool != 0; }
 
-    /// Observe that we've started parsing a declaration.  Access and
-    /// deprecation diagnostics will be delayed; when the declaration
-    /// is completed, all active delayed diagnostics will be evaluated
-    /// in its context, and then active diagnostics stack will be
-    /// popped down to the saved depth.
-    ParsingDeclState pushParsingDecl() {
-      ParsingDepth++;
+    /// Returns the current delayed-diagnostics pool.
+    sema::DelayedDiagnosticPool *getCurrentPool() const {
+      return CurPool;
+    }
 
-      ParsingDeclState state;
-      state.SavedStackSize = StackSize;
+    /// Enter a new scope.  Access and deprecation diagnostics will be
+    /// collected in this pool.
+    DelayedDiagnosticsState push(sema::DelayedDiagnosticPool &pool) {
+      DelayedDiagnosticsState state;
+      state.SavedPool = CurPool;
+      CurPool = &pool;
       return state;
     }
 
-    /// Observe that we're completed parsing a declaration.
-    static void popParsingDecl(Sema &S, ParsingDeclState state, Decl *decl);
+    /// Leave a delayed-diagnostic state that was previously pushed.
+    /// Do not emit any of the diagnostics.  This is performed as part
+    /// of the bookkeeping of popping a pool "properly".
+    void popWithoutEmitting(DelayedDiagnosticsState state) {
+      CurPool = state.SavedPool;
+    }
 
-    /// Observe that we've started processing a different context, the
-    /// contents of which are semantically separate from the
-    /// declarations it may lexically appear in.  This sets aside the
-    /// current stack of active diagnostics and starts afresh.
-    ProcessingContextState pushContext() {
-      assert(StackSize >= ActiveStackBase);
-
-      ProcessingContextState state;
-      state.SavedParsingDepth = ParsingDepth;
-      state.SavedActiveStackBase = ActiveStackBase;
-
-      ActiveStackBase = StackSize;
-      ParsingDepth = 0;
-
+    /// Enter a new scope where access and deprecation diagnostics are
+    /// not delayed.
+    DelayedDiagnosticsState pushUndelayed() {
+      DelayedDiagnosticsState state;
+      state.SavedPool = CurPool;
+      CurPool = 0;
       return state;
     }
 
-    /// Observe that we've stopped processing a context.  This
-    /// restores the previous stack of active diagnostics.
-    void popContext(ProcessingContextState state) {
-      assert(ActiveStackBase == StackSize);
-      assert(ParsingDepth == 0);
-      ActiveStackBase = state.SavedActiveStackBase;
-      ParsingDepth = state.SavedParsingDepth;
+    /// Undo a previous pushUndelayed().
+    void popUndelayed(DelayedDiagnosticsState state) {
+      assert(CurPool == NULL);
+      CurPool = state.SavedPool;
     }
   } DelayedDiagnostics;
 
@@ -456,7 +427,7 @@ public:
   public:
     ContextRAII(Sema &S, DeclContext *ContextToPush)
       : S(S), SavedContext(S.CurContext),
-        SavedContextState(S.DelayedDiagnostics.pushContext()),
+        SavedContextState(S.DelayedDiagnostics.pushUndelayed()),
         SavedCXXThisTypeOverride(S.CXXThisTypeOverride)
     {
       assert(ContextToPush && "pushing null context");
@@ -466,7 +437,7 @@ public:
     void pop() {
       if (!SavedContext) return;
       S.CurContext = SavedContext;
-      S.DelayedDiagnostics.popContext(SavedContextState);
+      S.DelayedDiagnostics.popUndelayed(SavedContextState);
       S.CXXThisTypeOverride = SavedCXXThisTypeOverride;
       SavedContext = 0;
     }
@@ -2608,19 +2579,17 @@ public:
   void DiagnoseEmptyLoopBody(const Stmt *S,
                              const Stmt *PossibleBody);
 
-  ParsingDeclState PushParsingDeclaration() {
-    return DelayedDiagnostics.pushParsingDecl();
+  ParsingDeclState PushParsingDeclaration(sema::DelayedDiagnosticPool &pool) {
+    return DelayedDiagnostics.push(pool);
   }
-  void PopParsingDeclaration(ParsingDeclState state, Decl *decl) {
-    DelayedDiagnostics::popParsingDecl(*this, state, decl);
-  }
+  void PopParsingDeclaration(ParsingDeclState state, Decl *decl);
 
   typedef ProcessingContextState ParsingClassState;
   ParsingClassState PushParsingClass() {
-    return DelayedDiagnostics.pushContext();
+    return DelayedDiagnostics.pushUndelayed();
   }
   void PopParsingClass(ParsingClassState state) {
-    DelayedDiagnostics.popContext(state);
+    DelayedDiagnostics.popUndelayed(state);
   }
 
   void EmitDeprecationWarning(NamedDecl *D, StringRef Message,

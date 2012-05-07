@@ -4198,57 +4198,30 @@ static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
   diag.Triggered = true;
 }
 
-// This duplicates a vector push_back but hides the need to know the
-// size of the type.
-void Sema::DelayedDiagnostics::add(const DelayedDiagnostic &diag) {
-  assert(StackSize <= StackCapacity);
+void Sema::PopParsingDeclaration(ParsingDeclState state, Decl *decl) {
+  assert(DelayedDiagnostics.getCurrentPool());
+  sema::DelayedDiagnosticPool &poppedPool =
+    *DelayedDiagnostics.getCurrentPool();
+  DelayedDiagnostics.popWithoutEmitting(state);
 
-  // Grow the stack if necessary.
-  if (StackSize == StackCapacity) {
-    unsigned newCapacity = 2 * StackCapacity + 2;
-    char *newBuffer = new char[newCapacity * sizeof(DelayedDiagnostic)];
-    const char *oldBuffer = (const char*) Stack;
+  // When delaying diagnostics to run in the context of a parsed
+  // declaration, we only want to actually emit anything if parsing
+  // succeeds.
+  if (!decl) return;
 
-    if (StackCapacity)
-      memcpy(newBuffer, oldBuffer, StackCapacity * sizeof(DelayedDiagnostic));
-    
-    delete[] oldBuffer;
-    Stack = reinterpret_cast<sema::DelayedDiagnostic*>(newBuffer);
-    StackCapacity = newCapacity;
-  }
-
-  assert(StackSize < StackCapacity);
-  new (&Stack[StackSize++]) DelayedDiagnostic(diag);
-}
-
-void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
-                                              Decl *decl) {
-  DelayedDiagnostics &DD = S.DelayedDiagnostics;
-
-  // Check the invariants.
-  assert(DD.StackSize >= state.SavedStackSize);
-  assert(state.SavedStackSize >= DD.ActiveStackBase);
-  assert(DD.ParsingDepth > 0);
-
-  // Drop the parsing depth.
-  DD.ParsingDepth--;
-
-  // If there are no active diagnostics, we're done.
-  if (DD.StackSize == DD.ActiveStackBase)
-    return;
-
-  // We only want to actually emit delayed diagnostics when we
-  // successfully parsed a decl.
-  if (decl) {
-    // We emit all the active diagnostics, not just those starting
-    // from the saved state.  The idea is this:  we get one push for a
-    // decl spec and another for each declarator;  in a decl group like:
-    //   deprecated_typedef foo, *bar, baz();
-    // only the declarator pops will be passed decls.  This is correct;
-    // we really do need to consider delayed diagnostics from the decl spec
-    // for each of the different declarations.
-    for (unsigned i = DD.ActiveStackBase, e = DD.StackSize; i != e; ++i) {
-      DelayedDiagnostic &diag = DD.Stack[i];
+  // We emit all the active diagnostics in this pool or any of its
+  // parents.  In general, we'll get one pool for the decl spec
+  // and a child pool for each declarator; in a decl group like:
+  //   deprecated_typedef foo, *bar, baz();
+  // only the declarator pops will be passed decls.  This is correct;
+  // we really do need to consider delayed diagnostics from the decl spec
+  // for each of the different declarations.
+  const sema::DelayedDiagnosticPool *pool = &poppedPool;
+  do {
+    for (sema::DelayedDiagnosticPool::pool_iterator
+           i = pool->pool_begin(), e = pool->pool_end(); i != e; ++i) {
+      // This const_cast is a bit lame.  Really, Triggered should be mutable.
+      DelayedDiagnostic &diag = const_cast<DelayedDiagnostic&>(*i);
       if (diag.Triggered)
         continue;
 
@@ -4256,25 +4229,19 @@ void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
       case DelayedDiagnostic::Deprecation:
         // Don't bother giving deprecation diagnostics if the decl is invalid.
         if (!decl->isInvalidDecl())
-          S.HandleDelayedDeprecationCheck(diag, decl);
+          HandleDelayedDeprecationCheck(diag, decl);
         break;
 
       case DelayedDiagnostic::Access:
-        S.HandleDelayedAccessCheck(diag, decl);
+        HandleDelayedAccessCheck(diag, decl);
         break;
 
       case DelayedDiagnostic::ForbiddenType:
-        handleDelayedForbiddenType(S, diag, decl);
+        handleDelayedForbiddenType(*this, diag, decl);
         break;
       }
     }
-  }
-
-  // Destroy all the delayed diagnostics we're about to pop off.
-  for (unsigned i = state.SavedStackSize, e = DD.StackSize; i != e; ++i)
-    DD.Stack[i].Destroy();
-
-  DD.StackSize = state.SavedStackSize;
+  } while ((pool = pool->getParent()));
 }
 
 static bool isDeclDeprecated(Decl *D) {

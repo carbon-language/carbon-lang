@@ -90,7 +90,8 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
 
   // Tell the action that names should be checked in the context of
   // the declaration to come.
-  ParsingDeclRAIIObject ParsingTemplateParams(*this);
+  ParsingDeclRAIIObject
+    ParsingTemplateParams(*this, ParsingDeclRAIIObject::NoParent);
 
   // Parse multiple levels of template headers within this template
   // parameter scope, e.g.,
@@ -213,10 +214,11 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return ParseUsingDirectiveOrDeclaration(Context, TemplateInfo, DeclEnd,
                                             prefixAttrs);
 
-  // Parse the declaration specifiers, stealing the accumulated
-  // diagnostics from the template parameters.
+  // Parse the declaration specifiers, stealing any diagnostics from
+  // the template parameters.
   ParsingDeclSpec DS(*this, &DiagsFromTParams);
 
+  // Move the attributes from the prefix into the DS.
   DS.takeAttributesFrom(prefixAttrs);
 
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS,
@@ -1132,7 +1134,8 @@ Decl *Parser::ParseExplicitInstantiation(unsigned Context,
                                          SourceLocation &DeclEnd,
                                          AccessSpecifier AS) {
   // This isn't really required here.
-  ParsingDeclRAIIObject ParsingTemplateParams(*this);
+  ParsingDeclRAIIObject
+    ParsingTemplateParams(*this, ParsingDeclRAIIObject::NoParent);
 
   return ParseSingleDeclarationAfterTemplate(Context,
                                              ParsedTemplateInfo(ExternLoc,
