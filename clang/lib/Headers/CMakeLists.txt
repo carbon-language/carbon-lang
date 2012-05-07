@@ -8,7 +8,6 @@ set(files
   float.h
   fma4intrin.h
   immintrin.h
-  intrin.h
   iso646.h
   limits.h
   lzcntintrin.h
