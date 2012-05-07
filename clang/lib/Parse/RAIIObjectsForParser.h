@@ -24,6 +24,59 @@ namespace clang {
   // TODO: move ParsingClassDefinition here.
   // TODO: move TentativeParsingAction here.
 
+  /// \brief A RAII object used to temporarily suppress access-like
+  /// checking.  Access-like checks are those associated with
+  /// controlling the use of a declaration, like C++ access control
+  /// errors and deprecation warnings.  They are contextually
+  /// dependent, in that they can only be resolved with full
+  /// information about what's being declared.  They are also
+  /// suppressed in certain contexts, like the template arguments of
+  /// an explicit instantiation.  However, those suppression contexts
+  /// cannot necessarily be fully determined in advance;  for
+  /// example, something starting like this:
+  ///   template <> class std::vector<A::PrivateType>
+  /// might be the entirety of an explicit instantiation:
+  ///   template <> class std::vector<A::PrivateType>;
+  /// or just an elaborated type specifier:
+  ///   template <> class std::vector<A::PrivateType> make_vector<>();
+  /// Therefore this class collects all the diagnostics and permits
+  /// them to be re-delayed in a new context.
+  class SuppressAccessChecks {
+    Sema &S;
+    sema::DelayedDiagnosticPool DiagnosticPool;
+    Sema::ParsingDeclState State;
+    bool Active;
+
+  public:
+    /// Begin suppressing access-like checks 
+    SuppressAccessChecks(Parser &P, bool activate = true)
+        : S(P.getActions()), DiagnosticPool(NULL) {
+      if (activate) {
+        State = S.PushParsingDeclaration(DiagnosticPool);
+        Active = true;
+      } else {
+        Active = false;
+      }
+    }
+
+    void done() {
+      assert(Active && "trying to end an inactive suppression");
+      S.PopParsingDeclaration(State, NULL);
+      Active = false;
+    }
+
+    void redelay() {
+      assert(!Active && "redelaying without having ended first");
+      if (!DiagnosticPool.pool_empty())
+        S.redelayDiagnostics(DiagnosticPool);
+      assert(DiagnosticPool.pool_empty());
+    }
+
+    ~SuppressAccessChecks() {
+      if (Active) done();
+    }
+  };
+
   /// \brief RAII object used to inform the actions that we're
   /// currently parsing a declaration.  This is active when parsing a
   /// variable's initializer, but not when parsing the body of a
@@ -93,14 +146,13 @@ namespace clang {
       pop(D);
     }
 
-  private:
-    void steal(ParsingDeclRAIIObject &Other) {
-      DiagnosticPool.steal(Other.DiagnosticPool);
-      State = Other.State;
-      Popped = Other.Popped;
-      Other.Popped = true;
+    /// Unregister this object from Sema, but remember all the
+    /// diagnostics that were emitted into it.
+    void abortAndRemember() {
+      pop(0);
     }
 
+  private:
     void push() {
       State = Actions.PushParsingDeclaration(DiagnosticPool);
       Popped = false;

@@ -4200,8 +4200,7 @@ static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
 
 void Sema::PopParsingDeclaration(ParsingDeclState state, Decl *decl) {
   assert(DelayedDiagnostics.getCurrentPool());
-  sema::DelayedDiagnosticPool &poppedPool =
-    *DelayedDiagnostics.getCurrentPool();
+  DelayedDiagnosticPool &poppedPool = *DelayedDiagnostics.getCurrentPool();
   DelayedDiagnostics.popWithoutEmitting(state);
 
   // When delaying diagnostics to run in the context of a parsed
@@ -4216,9 +4215,9 @@ void Sema::PopParsingDeclaration(ParsingDeclState state, Decl *decl) {
   // only the declarator pops will be passed decls.  This is correct;
   // we really do need to consider delayed diagnostics from the decl spec
   // for each of the different declarations.
-  const sema::DelayedDiagnosticPool *pool = &poppedPool;
+  const DelayedDiagnosticPool *pool = &poppedPool;
   do {
-    for (sema::DelayedDiagnosticPool::pool_iterator
+    for (DelayedDiagnosticPool::pool_iterator
            i = pool->pool_begin(), e = pool->pool_end(); i != e; ++i) {
       // This const_cast is a bit lame.  Really, Triggered should be mutable.
       DelayedDiagnostic &diag = const_cast<DelayedDiagnostic&>(*i);
@@ -4242,6 +4241,15 @@ void Sema::PopParsingDeclaration(ParsingDeclState state, Decl *decl) {
       }
     }
   } while ((pool = pool->getParent()));
+}
+
+/// Given a set of delayed diagnostics, re-emit them as if they had
+/// been delayed in the current context instead of in the given pool.
+/// Essentially, this just moves them to the current pool.
+void Sema::redelayDiagnostics(DelayedDiagnosticPool &pool) {
+  DelayedDiagnosticPool *curPool = DelayedDiagnostics.getCurrentPool();
+  assert(curPool && "re-emitting in undelayed context not supported");
+  curPool->steal(pool);
 }
 
 static bool isDeclDeprecated(Decl *D) {

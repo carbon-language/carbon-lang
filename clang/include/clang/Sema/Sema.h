@@ -2592,6 +2592,8 @@ public:
     DelayedDiagnostics.popUndelayed(state);
   }
 
+  void redelayDiagnostics(sema::DelayedDiagnosticPool &pool);
+
   void EmitDeprecationWarning(NamedDecl *D, StringRef Message,
                               SourceLocation Loc,
                               const ObjCInterfaceDecl *UnknownObjCClass=0);
@@ -4395,44 +4397,9 @@ public:
 
   void HandleDelayedAccessCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
-  /// A flag to suppress access checking.
-  bool SuppressAccessChecking;
-
   /// \brief When true, access checking violations are treated as SFINAE
   /// failures rather than hard errors.
   bool AccessCheckingSFINAE;
-
-  /// \brief RAII object used to temporarily suppress access checking.
-  class SuppressAccessChecksRAII {
-    Sema &S;
-    bool SuppressingAccess;
-
-  public:
-    SuppressAccessChecksRAII(Sema &S, bool Suppress)
-      : S(S), SuppressingAccess(Suppress) {
-      if (Suppress) S.ActOnStartSuppressingAccessChecks();
-    }
-    ~SuppressAccessChecksRAII() {
-      done();
-    }
-    void done() {
-      if (!SuppressingAccess) return;
-      S.ActOnStopSuppressingAccessChecks();
-      SuppressingAccess = false;
-    }
-  };
-
-  void ActOnStartSuppressingAccessChecks() {
-    assert(!SuppressAccessChecking &&
-           "Tried to start access check suppression when already started.");
-    SuppressAccessChecking = true;
-  }
-
-  void ActOnStopSuppressingAccessChecks() {
-    assert(SuppressAccessChecking &&
-           "Tried to stop access check suprression when already stopped.");
-    SuppressAccessChecking = false;
-  }
 
   enum AbstractDiagSelID {
     AbstractNone = -1,

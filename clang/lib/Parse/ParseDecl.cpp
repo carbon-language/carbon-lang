@@ -2773,12 +2773,16 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     ScopedEnumKWLoc = ConsumeToken();
   }
 
-  // C++11 [temp.explicit]p12: The usual access controls do not apply to names
-  // used to specify explicit instantiations. We extend this to also cover
-  // explicit specializations.
-  Sema::SuppressAccessChecksRAII SuppressAccess(Actions,
-    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
-    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
+  // C++11 [temp.explicit]p12:
+  //   The usual access controls do not apply to names used to specify
+  //   explicit instantiations.
+  // We extend this to also cover explicit specializations.  Note that
+  // we don't suppress if this turns out to be an elaborated type
+  // specifier.
+  bool shouldDelayDiagsInTag =
+    (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
+     TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
+  SuppressAccessChecks diagsFromTag(*this, shouldDelayDiagsInTag);
 
   // If attributes exist after tag, parse them.
   ParsedAttributes attrs(AttrFactory);
@@ -2842,8 +2846,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     IsScopedUsingClassTag = false;
   }
 
-  // Stop suppressing access control now we've parsed the enum name.
-  SuppressAccess.done();
+  // Okay, end the suppression area.  We'll decide whether to emit the
+  // diagnostics in a second.
+  if (shouldDelayDiagsInTag)
+    diagsFromTag.done();
 
   TypeResult BaseType;
 
@@ -2925,16 +2931,29 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // enum foo {..};  void bar() { enum foo x; }  <- use of old foo.
   //
   Sema::TagUseKind TUK;
-  if (DS.isFriendSpecified())
-    TUK = Sema::TUK_Friend;
-  else if (!AllowDeclaration)
+  if (!AllowDeclaration) {
     TUK = Sema::TUK_Reference;
-  else if (Tok.is(tok::l_brace))
-    TUK = Sema::TUK_Definition;
-  else if (Tok.is(tok::semi) && DSC != DSC_type_specifier)
-    TUK = Sema::TUK_Declaration;
-  else
+  } else if (Tok.is(tok::l_brace)) {
+    if (DS.isFriendSpecified()) {
+      Diag(Tok.getLocation(), diag::err_friend_decl_defines_type)
+        << SourceRange(DS.getFriendSpecLoc());
+      ConsumeBrace();
+      SkipUntil(tok::r_brace);
+      TUK = Sema::TUK_Friend;
+    } else {
+      TUK = Sema::TUK_Definition;
+    }
+  } else if (Tok.is(tok::semi) && DSC != DSC_type_specifier) {
+    TUK = (DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration);
+  } else {
     TUK = Sema::TUK_Reference;
+  }
+
+  // If this is an elaborated type specifier, and we delayed
+  // diagnostics before, just merge them into the current pool.
+  if (TUK == Sema::TUK_Reference && shouldDelayDiagsInTag) {
+    diagsFromTag.redelay();
+  }
 
   MultiTemplateParamsArg TParams;
   if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
@@ -3014,14 +3033,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   }
 
   if (Tok.is(tok::l_brace) && TUK != Sema::TUK_Reference) {
-    if (TUK == Sema::TUK_Friend) {
-      Diag(Tok, diag::err_friend_decl_defines_type)
-        << SourceRange(DS.getFriendSpecLoc());
-      ConsumeBrace();
-      SkipUntil(tok::r_brace);
-    } else {
-      ParseEnumBody(StartLoc, TagDecl);
-    }
+    ParseEnumBody(StartLoc, TagDecl);
   }
 
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc,

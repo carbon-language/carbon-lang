@@ -1391,9 +1391,6 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   if (Entity.getAccess() == AS_public)
     return Sema::AR_accessible;
 
-  if (S.SuppressAccessChecking)
-    return Sema::AR_accessible;
-
   // If we're currently parsing a declaration, we may need to delay
   // access control checking, because our effective context might be
   // different based on what the declaration comes out as.

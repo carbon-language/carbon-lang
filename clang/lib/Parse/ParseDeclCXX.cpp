@@ -968,9 +968,13 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // As an extension we do not perform access checking on the names used to
   // specify explicit specializations either. This is important to allow
   // specializing traits classes for private types.
-  Sema::SuppressAccessChecksRAII SuppressAccess(Actions,
-    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
-    TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
+  //
+  // Note that we don't suppress if this turns out to be an elaborated
+  // type specifier.
+  bool shouldDelayDiagsInTag =
+    (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
+     TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
+  SuppressAccessChecks diagsFromTag(*this, shouldDelayDiagsInTag);
 
   ParsedAttributes attrs(AttrFactory);
   // If attributes exist after tag, parse them.
@@ -1103,10 +1107,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     }
   }
 
-  // As soon as we're finished parsing the class's template-id, turn access
-  // checking back on.
-  SuppressAccess.done();
-
   // There are four options here.
   //  - If we are in a trailing return type, this is always just a reference,
   //    and we must not try to parse a definition. For instance,
@@ -1148,6 +1148,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
   else
     TUK = Sema::TUK_Reference;
+
+  // If this is an elaborated type specifier, and we delayed
+  // diagnostics before, just merge them into the current pool.
+  if (shouldDelayDiagsInTag) {
+    diagsFromTag.done();
+    if (TUK == Sema::TUK_Reference)
+      diagsFromTag.redelay();
+  }
 
   if (!Name && !TemplateId && (DS.getTypeSpecType() == DeclSpec::TST_error ||
                                TUK != Sema::TUK_Definition)) {
