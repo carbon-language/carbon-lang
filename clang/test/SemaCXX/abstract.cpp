@@ -259,3 +259,17 @@ namespace pr9247 {
     };
   };
 }
+
+namespace pr12658 {
+  class C {
+    public:
+      C(int v){}
+      virtual void f() = 0; // expected-note {{unimplemented pure virtual method 'f' in 'C'}}
+  };
+
+  void foo( C& c ) {}
+
+  void bar( void ) {
+    foo(C(99)); // expected-error {{allocating an object of abstract class type 'pr12658::C'}}
+  }
+}

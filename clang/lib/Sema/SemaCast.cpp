@@ -1302,7 +1302,9 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
                       CastKind &Kind, bool ListInitialization) {
   if (DestType->isRecordType()) {
     if (Self.RequireCompleteType(OpRange.getBegin(), DestType,
-                                 diag::err_bad_dynamic_cast_incomplete)) {
+                                 diag::err_bad_dynamic_cast_incomplete) ||
+        Self.RequireNonAbstractType(OpRange.getBegin(), DestType,
+                                    diag::err_allocation_of_abstract_type)) {
       msg = 0;
       return TC_Failed;
     }
