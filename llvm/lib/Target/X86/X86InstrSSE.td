@@ -7271,6 +7271,20 @@ defm : pclmul_alias<"lqhq", 0x10>;
 defm : pclmul_alias<"lqlq", 0x00>;
 
 //===----------------------------------------------------------------------===//
+// SSE4A Instructions
+//===----------------------------------------------------------------------===//
+
+let Predicates = [HasSSE4A] in {
+def MOVNTSS : I<0x2B, MRMDestMem, (outs), (ins f32mem:$dst, VR128:$src),
+                "movntss\t{$src, $dst|$dst, $src}",
+                [(int_x86_sse4a_movnt_ss addr:$dst, VR128:$src)]>, XS;
+
+def MOVNTSD : I<0x2B, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
+                "movntsd\t{$src, $dst|$dst, $src}",
+                [(int_x86_sse4a_movnt_sd addr:$dst, VR128:$src)]>, XD;
+}
+
+//===----------------------------------------------------------------------===//
 // AVX Instructions
 //===----------------------------------------------------------------------===//
 
