@@ -58,9 +58,38 @@ def get_cursor(source, spelling):
             return result
 
     return None
+ 
+def get_cursors(source, spelling):
+    """Obtain all cursors from a source object with a specific spelling.
 
+    This provides a convenient search mechanism to find all cursors with specific
+    spelling within a source. The first argument can be either a
+    TranslationUnit or Cursor instance.
+
+    If no cursors are found, an empty list is returned.
+    """
+    cursors = []
+    children = []
+    if isinstance(source, Cursor):
+        children = source.get_children()
+    else:
+        # Assume TU
+        children = source.cursor.get_children()
+
+    for cursor in children:
+        if cursor.spelling == spelling:
+            cursors.append(cursor)
+
+        # Recurse into children.
+        cursors.extend(get_cursors(cursor, spelling))
+
+    return cursors
+
+    
+    
 
 __all__ = [
     'get_cursor',
+    'get_cursors',
     'get_tu',
 ]

@@ -1047,6 +1047,22 @@ class Cursor(Structure):
 
         return self._hash
 
+    @property
+    def semantic_parent(self):
+        """Return the semantic parent for this cursor."""
+        if not hasattr(self, '_semantic_parent'):
+            self._semantic_parent = Cursor_semantic_parent(self)
+        
+        return self._semantic_parent
+
+    @property
+    def lexical_parent(self):
+        """Return the lexical parent for this cursor."""
+        if not hasattr(self, '_lexical_parent'):
+            self._lexical_parent = Cursor_lexical_parent(self)
+        
+        return self._lexical_parent
+		
     def get_children(self):
         """Return an iterator for accessing the children of this cursor."""
 
@@ -1973,6 +1989,16 @@ Cursor_objc_type_encoding = lib.clang_getDeclObjCTypeEncoding
 Cursor_objc_type_encoding.argtypes = [Cursor]
 Cursor_objc_type_encoding.restype = _CXString
 Cursor_objc_type_encoding.errcheck = _CXString.from_result
+
+Cursor_semantic_parent = lib.clang_getCursorSemanticParent
+Cursor_semantic_parent.argtypes = [Cursor]
+Cursor_semantic_parent.restype = Cursor
+Cursor_semantic_parent.errcheck = Cursor.from_result
+
+Cursor_lexical_parent = lib.clang_getCursorLexicalParent
+Cursor_lexical_parent.argtypes = [Cursor]
+Cursor_lexical_parent.restype = Cursor
+Cursor_lexical_parent.errcheck = Cursor.from_result
 
 Cursor_visit_callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 Cursor_visit = lib.clang_visitChildren

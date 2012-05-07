@@ -1,6 +1,7 @@
 from clang.cindex import CursorKind
 from clang.cindex import TypeKind
 from .util import get_cursor
+from .util import get_cursors
 from .util import get_tu
 
 kInput = """\
@@ -74,6 +75,30 @@ def test_underlying_type():
     assert typedef.kind.is_declaration()
     underlying = typedef.underlying_typedef_type
     assert underlying.kind == TypeKind.INT
+
+kParentTest = """\
+        class C {
+            void f();
+        }
+        
+        void C::f() { }
+    """
+def test_semantic_parent():
+    tu = get_tu(kParentTest, 'cpp')
+    curs = get_cursors(tu, 'f')
+    decl = get_cursor(tu, 'C')
+    assert(len(curs) == 2)
+    assert(curs[0].semantic_parent == curs[1].semantic_parent)
+    assert(curs[0].semantic_parent == decl)   
+
+def test_lexical_parent():
+    tu = get_tu(kParentTest, 'cpp')
+    curs = get_cursors(tu, 'f')
+    decl = get_cursor(tu, 'C')
+    assert(len(curs) == 2)
+    assert(curs[0].lexical_parent != curs[1].lexical_parent)
+    assert(curs[0].lexical_parent == decl)   
+    assert(curs[1].lexical_parent == tu.cursor)
 
 def test_enum_type():
     tu = get_tu('enum TEST { FOO=1, BAR=2 };')
