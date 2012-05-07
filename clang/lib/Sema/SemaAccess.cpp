@@ -1836,15 +1836,3 @@ bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
   
   return true;
 }
-
-void Sema::ActOnStartSuppressingAccessChecks() {
-  assert(!SuppressAccessChecking &&
-         "Tried to start access check suppression when already started.");
-  SuppressAccessChecking = true;
-}
-
-void Sema::ActOnStopSuppressingAccessChecks() {
-  assert(SuppressAccessChecking &&
-         "Tried to stop access check suprression when already stopped.");
-  SuppressAccessChecking = false;
-}

@@ -4422,8 +4422,17 @@ public:
     }
   };
 
-  void ActOnStartSuppressingAccessChecks();
-  void ActOnStopSuppressingAccessChecks();
+  void ActOnStartSuppressingAccessChecks() {
+    assert(!SuppressAccessChecking &&
+           "Tried to start access check suppression when already started.");
+    SuppressAccessChecking = true;
+  }
+
+  void ActOnStopSuppressingAccessChecks() {
+    assert(SuppressAccessChecking &&
+           "Tried to stop access check suprression when already stopped.");
+    SuppressAccessChecking = false;
+  }
 
   enum AbstractDiagSelID {
     AbstractNone = -1,
