@@ -3001,6 +3001,7 @@ getConstraintType(const std::string &Constraint) const
   //       backwards compatibility.
   // 'c' : A register suitable for use in an indirect
   //       jump. This will always be $25 for -mabicalls.
+  // 'l' : The lo register.
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
       default : break;
@@ -3008,6 +3009,7 @@ getConstraintType(const std::string &Constraint) const
       case 'y':
       case 'f':
       case 'c':
+      case 'l':
         return C_RegisterClass;
     }
   }
@@ -3042,6 +3044,7 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
       weight = CW_Register;
     break;
   case 'c': // $25 for indirect jumps
+  case 'l': // lo register
       if (type->isIntegerTy())
       weight = CW_SpecificReg;
       break;
@@ -3090,6 +3093,10 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
         return std::make_pair((unsigned)Mips::T9, &Mips::CPURegsRegClass);
       assert(VT == MVT::i64 && "Unexpected type.");
       return std::make_pair((unsigned)Mips::T9_64, &Mips::CPU64RegsRegClass);
+    case 'l': // register suitable for indirect jump
+      if (VT == MVT::i32)
+        return std::make_pair((unsigned)Mips::LO, &Mips::HILORegClass);
+      return std::make_pair((unsigned)Mips::LO64, &Mips::HILO64RegClass);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
