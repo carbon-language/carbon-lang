@@ -2999,13 +2999,15 @@ getConstraintType(const std::string &Constraint) const
   //       unless generating MIPS16 code.
   // 'y' : Equivalent to r; retained for
   //       backwards compatibility.
-  // 'f' : Floating Point registers.
+  // 'c' : A register suitable for use in an indirect
+  //       jump. This will always be $25 for -mabicalls.
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
       default : break;
       case 'd':
       case 'y':
       case 'f':
+      case 'c':
         return C_RegisterClass;
     }
   }
@@ -3039,6 +3041,10 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
     if (type->isFloatTy())
       weight = CW_Register;
     break;
+  case 'c': // $25 for indirect jumps
+      if (type->isIntegerTy())
+      weight = CW_SpecificReg;
+      break;
   case 'I': // signed 16 bit immediate
   case 'J': // integer zero
   case 'K': // unsigned 16 bit immediate
@@ -3078,6 +3084,12 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
           return std::make_pair(0U, &Mips::FGR64RegClass);
         return std::make_pair(0U, &Mips::AFGR64RegClass);
       }
+      break;
+    case 'c': // register suitable for indirect jump
+      if (VT == MVT::i32)
+        return std::make_pair((unsigned)Mips::T9, &Mips::CPURegsRegClass);
+      assert(VT == MVT::i64 && "Unexpected type.");
+      return std::make_pair((unsigned)Mips::T9_64, &Mips::CPU64RegsRegClass);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);

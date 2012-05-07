@@ -22,6 +22,12 @@ entry:
 ;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},3
 ;CHECK:	#NO_APP
   tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,n"(i32 7, i32 3) nounwind
- 
+
+; Now c with 1024: make sure register $25 is picked
+; CHECK: #APP
+; CHECK: addi $25,${{[0-9]+}},1024
+; CHECK: #NO_APP	
+   tail call i32 asm sideeffect "addi $0,$1,$2", "=c,c,I"(i32 4194304, i32 1024) nounwind
+
   ret i32 0
 }
