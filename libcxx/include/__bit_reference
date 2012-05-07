@@ -22,7 +22,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class _Cp, bool _IsConst> class __bit_iterator;
+template <class _Cp, bool _IsConst, typename _Cp::__storage_type = 0> class __bit_iterator;
 template <class _Cp> class __bit_const_reference;
 
 template <class _Tp>
@@ -1057,7 +1057,8 @@ equal(__bit_iterator<_Cp, _IC1> __first1, __bit_iterator<_Cp, _IC1> __last1, __b
     return __equal_unaligned(__first1, __last1, __first2);
 }
 
-template <class _Cp, bool _IsConst>
+template <class _Cp, bool _IsConst,
+          typename _Cp::__storage_type>
 class __bit_iterator
 {
 public:

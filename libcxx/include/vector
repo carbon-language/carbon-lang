@@ -1970,6 +1970,7 @@ public:
     typedef allocator_traits<allocator_type>         __alloc_traits;
     typedef typename __alloc_traits::size_type       size_type;
     typedef typename __alloc_traits::difference_type difference_type;
+    typedef size_type __storage_type;
     typedef __bit_iterator<vector, false>            pointer;
     typedef __bit_iterator<vector, true>             const_pointer;
 #ifdef _LIBCPP_DEBUG
@@ -1991,7 +1992,6 @@ public:
     typedef _VSTD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
 private:
-    typedef size_type __storage_type;
     typedef typename __alloc_traits::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
                 rebind_alloc<__storage_type>

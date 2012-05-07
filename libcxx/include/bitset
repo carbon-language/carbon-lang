@@ -148,9 +148,9 @@ class __bitset
 public:
     typedef ptrdiff_t              difference_type;
     typedef size_t                 size_type;
+    typedef size_type              __storage_type;
 protected:
     typedef __bitset __self;
-    typedef size_type              __storage_type;
     typedef       __storage_type*  __storage_pointer;
     typedef const __storage_type*  __const_storage_pointer;
     static const unsigned __bits_per_word = static_cast<unsigned>(sizeof(__storage_type) * CHAR_BIT);
@@ -406,9 +406,9 @@ class __bitset<1, _Size>
 public:
     typedef ptrdiff_t              difference_type;
     typedef size_t                 size_type;
+    typedef size_type              __storage_type;
 protected:
     typedef __bitset __self;
-    typedef size_type              __storage_type;
     typedef       __storage_type*  __storage_pointer;
     typedef const __storage_type*  __const_storage_pointer;
     static const unsigned __bits_per_word = static_cast<unsigned>(sizeof(__storage_type) * CHAR_BIT);
@@ -549,9 +549,9 @@ class __bitset<0, 0>
 public:
     typedef ptrdiff_t              difference_type;
     typedef size_t                 size_type;
+    typedef size_type              __storage_type;
 protected:
     typedef __bitset __self;
-    typedef size_type              __storage_type;
     typedef       __storage_type*  __storage_pointer;
     typedef const __storage_type*  __const_storage_pointer;
     static const unsigned __bits_per_word = static_cast<unsigned>(sizeof(__storage_type) * CHAR_BIT);
