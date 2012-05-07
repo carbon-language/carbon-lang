@@ -3041,6 +3041,7 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
     break;
   case 'I': // signed 16 bit immediate
   case 'J': // integer zero
+  case 'K': // unsigned 16 bit immediate
     if (isa<ConstantInt>(CallOperandVal))
       weight = CW_Constant;
     break;
@@ -3109,6 +3110,16 @@ void MipsTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       int64_t Val = C->getZExtValue();
       if (Val == 0) {
         Result = DAG.getTargetConstant(0, Type);
+        break;
+      }
+    }
+    return;
+  case 'K': // unsigned 16 bit immediate
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      EVT Type = Op.getValueType();
+      uint64_t Val = (uint64_t)C->getZExtValue();
+      if (isUInt<16>(Val)) {
+        Result = DAG.getTargetConstant(Val, Type);
         break;
       }
     }
