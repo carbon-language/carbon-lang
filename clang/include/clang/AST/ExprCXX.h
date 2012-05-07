@@ -375,10 +375,21 @@ public:
     return const_cast<UserDefinedLiteral*>(this)->getCookedLiteral();
   }
 
+  SourceLocation getLocStart() const {
+    if (getLiteralOperatorKind() == LOK_Template)
+      return getRParenLoc();
+    return getArg(0)->getLocStart();
+  }
+  SourceLocation getLocEnd() const { return getRParenLoc(); }
+  SourceRange getSourceRange() const {
+    return SourceRange(getLocStart(), getLocEnd());
+  }
+
+
   /// getUDSuffixLoc - Returns the location of a ud-suffix in the expression.
   /// For a string literal, there may be multiple identical suffixes. This
   /// returns the first.
-  SourceLocation getUDSuffixLoc() const { return getRParenLoc(); }
+  SourceLocation getUDSuffixLoc() const { return UDSuffixLoc; }
 
   /// getUDSuffix - Returns the ud-suffix specified for this literal.
   const IdentifierInfo *getUDSuffix() const;
