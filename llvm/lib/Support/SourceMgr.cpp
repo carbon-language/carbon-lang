@@ -121,7 +121,7 @@ SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
   Cache.LineNoOfQuery = LineNo;
   
   size_t NewlineOffs = StringRef(BufStart, Ptr-BufStart).find_last_of("\n\r");
-  if (NewlineOffs == StringRef::npos) NewlineOffs = ~0ULL;
+  if (NewlineOffs == StringRef::npos) NewlineOffs = ~(size_t)0;
   return std::make_pair(LineNo, Ptr-BufStart-NewlineOffs);
 }
 
@@ -358,5 +358,3 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
   
   S << '\n';
 }
-
-
