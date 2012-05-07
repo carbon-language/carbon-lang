@@ -312,15 +312,21 @@ subdirectories = %s
 
             f.close()
 
-    def write_library_table(self, output_path):
+    def write_library_table(self, output_path, enabled_optional_components):
         # Write out the mapping from component names to required libraries.
         #
         # We do this in topological order so that we know we can append the
         # dependencies for added library groups.
         entries = {}
         for c in self.ordered_component_infos:
+            # Skip optional components which are not enabled
+            if c.type_name == 'OptionalLibrary' \
+                and c.name not in enabled_optional_components:
+                continue
+
             # Only certain components are in the table.
-            if c.type_name not in ('Library', 'LibraryGroup', 'TargetGroup'):
+            if c.type_name not in ('Library', 'OptionalLibrary', \
+                                   'LibraryGroup', 'TargetGroup'):
                 continue
 
             # Compute the llvm-config "component name". For historical reasons,
@@ -328,7 +334,7 @@ subdirectories = %s
             llvmconfig_component_name = c.get_llvmconfig_component_name()
             
             # Get the library name, or None for LibraryGroups.
-            if c.type_name == 'Library':
+            if c.type_name == 'Library' or c.type_name == 'OptionalLibrary':
                 library_name = c.get_prefixed_library_name()
             else:
                 library_name = None
@@ -778,6 +784,11 @@ given by --build-root) at the same SUBPATH""",
                       help=("Enable the given space or semi-colon separated "
                             "list of targets, or all targets if not present"),
                       action="store", default=None)
+    group.add_option("", "--enable-optional-components",
+                      dest="optional_components", metavar="NAMES",
+                      help=("Enable the given space or semi-colon separated "
+                            "list of optional components"),
+                      action="store", default=None)
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
@@ -819,7 +830,8 @@ given by --build-root) at the same SUBPATH""",
 
     # Write out the required library table, if requested.
     if opts.write_library_table:
-        project_info.write_library_table(opts.write_library_table)
+        project_info.write_library_table(opts.write_library_table,
+                                         opts.optional_components)
 
     # Write out the make fragment, if requested.
     if opts.write_make_fragment:

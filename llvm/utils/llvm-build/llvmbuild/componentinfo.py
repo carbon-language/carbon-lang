@@ -95,12 +95,17 @@ class LibraryComponentInfo(ComponentInfo):
     type_name = 'Library'
 
     @staticmethod
-    def parse(subpath, items):
+    def parse_items(items):
         kwargs = ComponentInfo.parse_items(items)
         kwargs['library_name'] = items.get_optional_string('library_name')
         kwargs['required_libraries'] = items.get_list('required_libraries')
         kwargs['add_to_library_groups'] = items.get_list(
             'add_to_library_groups')
+        return kwargs
+
+    @staticmethod
+    def parse(subpath, items):
+        kwargs = LibraryComponentInfo.parse_items(items)
         return LibraryComponentInfo(subpath, **kwargs)
 
     def __init__(self, subpath, name, dependencies, parent, library_name,
@@ -164,6 +169,20 @@ class LibraryComponentInfo(ComponentInfo):
 
     def get_llvmconfig_component_name(self):
         return self.get_library_name().lower()
+
+class OptionalLibraryComponentInfo(LibraryComponentInfo):
+    type_name = "OptionalLibrary"
+
+    @staticmethod
+    def parse(subpath, items):
+      kwargs = LibraryComponentInfo.parse_items(items)
+      return OptionalLibraryComponentInfo(subpath, **kwargs)
+
+    def __init__(self, subpath, name, dependencies, parent, library_name,
+                 required_libraries, add_to_library_groups):
+      LibraryComponentInfo.__init__(self, subpath, name, dependencies, parent,
+                                    library_name, required_libraries,
+                                    add_to_library_groups)
 
 class LibraryGroupComponentInfo(ComponentInfo):
     type_name = 'LibraryGroup'
@@ -375,7 +394,7 @@ _component_type_map = dict(
     for t in (GroupComponentInfo,
               LibraryComponentInfo, LibraryGroupComponentInfo,
               ToolComponentInfo, BuildToolComponentInfo,
-              TargetGroupComponentInfo))
+              TargetGroupComponentInfo, OptionalLibraryComponentInfo))
 def load_from_path(path, subpath):
     # Load the LLVMBuild.txt file as an .ini format file.
     parser = ConfigParser.RawConfigParser()
