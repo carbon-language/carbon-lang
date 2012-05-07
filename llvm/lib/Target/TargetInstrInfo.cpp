@@ -28,13 +28,14 @@ TargetInstrInfo::~TargetInstrInfo() {
 
 const TargetRegisterClass*
 TargetInstrInfo::getRegClass(const MCInstrDesc &MCID, unsigned OpNum,
-                             const TargetRegisterInfo *TRI) const {
+                             const TargetRegisterInfo *TRI,
+                             const MachineFunction &MF) const {
   if (OpNum >= MCID.getNumOperands())
     return 0;
 
   short RegClass = MCID.OpInfo[OpNum].RegClass;
   if (MCID.OpInfo[OpNum].isLookupPtrRegClass())
-    return TRI->getPointerRegClass(RegClass);
+    return TRI->getPointerRegClass(MF, RegClass);
 
   // Instructions like INSERT_SUBREG do not have fixed register classes.
   if (RegClass < 0)

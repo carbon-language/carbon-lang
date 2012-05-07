@@ -109,7 +109,8 @@ public:
                                        SmallVectorImpl<unsigned> &SubIndices,
                                        unsigned &NewSubIdx) const;
 
-  const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
+  const TargetRegisterClass*
+  getPointerRegClass(const MachineFunction &MF, unsigned Kind = 0) const;
   const TargetRegisterClass*
   getCrossCopyRegClass(const TargetRegisterClass *RC) const;
 

@@ -116,7 +116,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
             const TargetRegisterClass *RC = 0;
             if (i+II.getNumDefs() < II.getNumOperands()) {
               RC = TRI->getAllocatableClass(
-                TII->getRegClass(II, i+II.getNumDefs(), TRI));
+                TII->getRegClass(II, i+II.getNumDefs(), TRI, *MF));
             }
             if (!UseRC)
               UseRC = RC;
@@ -199,7 +199,7 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // register instead of creating a new vreg.
     unsigned VRBase = 0;
     const TargetRegisterClass *RC =
-      TRI->getAllocatableClass(TII->getRegClass(II, i, TRI));
+      TRI->getAllocatableClass(TII->getRegClass(II, i, TRI, *MF));
     if (II.OpInfo[i].isOptionalDef()) {
       // Optional def must be a physical register.
       unsigned NumResults = CountResults(Node);
@@ -296,7 +296,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
   if (II) {
     const TargetRegisterClass *DstRC = 0;
     if (IIOpNum < II->getNumOperands())
-      DstRC = TRI->getAllocatableClass(TII->getRegClass(*II, IIOpNum, TRI));
+      DstRC = TRI->getAllocatableClass(TII->getRegClass(*II,IIOpNum,TRI,*MF));
     assert((DstRC || (MI->isVariadic() && IIOpNum >= MCID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
     if (DstRC && !MRI->constrainRegClass(VReg, DstRC, MinRCSize)) {

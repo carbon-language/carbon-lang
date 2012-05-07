@@ -1300,7 +1300,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
         DEBUG(dbgs() << "2addr:   UNFOLDING: " << MI);
         const TargetRegisterClass *RC =
           TRI->getAllocatableClass(
-            TII->getRegClass(UnfoldMCID, LoadRegIndex, TRI));
+            TII->getRegClass(UnfoldMCID, LoadRegIndex, TRI, MF));
         unsigned Reg = MRI->createVirtualRegister(RC);
         SmallVector<MachineInstr *, 2> NewMIs;
         if (!TII->unfoldMemoryOperand(MF, &MI, Reg,

@@ -35,7 +35,8 @@ public:
   
   /// getPointerRegClass - Return the register class to use to hold pointers.
   /// This is used for addressing modes.
-  virtual const TargetRegisterClass *getPointerRegClass(unsigned Kind=0) const;  
+  virtual const TargetRegisterClass *
+  getPointerRegClass(const MachineFunction &MF, unsigned Kind=0) const;
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const;

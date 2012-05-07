@@ -314,7 +314,8 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
             // No previously defined register was in range, so create a
             // new one.
             int64_t InstrOffset = TRI->getFrameIndexInstrOffset(MI, idx);
-            const TargetRegisterClass *RC = TRI->getPointerRegClass();
+            const MachineFunction *MF = MI->getParent()->getParent();
+            const TargetRegisterClass *RC = TRI->getPointerRegClass(*MF);
             BaseReg = Fn.getRegInfo().createVirtualRegister(RC);
 
             DEBUG(dbgs() << "  Materializing base register " << BaseReg <<

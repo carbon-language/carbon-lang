@@ -266,7 +266,8 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
                           const TargetLowering *TLI,
                           const TargetInstrInfo *TII,
                           const TargetRegisterInfo *TRI,
-                          unsigned &RegClass, unsigned &Cost) {
+                          unsigned &RegClass, unsigned &Cost,
+                          const MachineFunction &MF) {
   EVT VT = RegDefPos.GetValue();
 
   // Special handling for untyped values.  These values can only come from
@@ -285,7 +286,7 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
 
     unsigned Idx = RegDefPos.GetIdx();
     const MCInstrDesc Desc = TII->get(Opcode);
-    const TargetRegisterClass *RC = TII->getRegClass(Desc, Idx, TRI);
+    const TargetRegisterClass *RC = TII->getRegClass(Desc, Idx, TRI, MF);
     RegClass = RC->getID();
     // FIXME: Cost arbitrarily set to 1 because there doesn't seem to be a
     // better way to determine it.
@@ -1920,7 +1921,7 @@ bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
     for (ScheduleDAGSDNodes::RegDefIter RegDefPos(PredSU, scheduleDAG);
          RegDefPos.IsValid(); RegDefPos.Advance()) {
       unsigned RCId, Cost;
-      GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost);
+      GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost, MF);
 
       if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
         return true;
@@ -2034,7 +2035,7 @@ void RegReductionPQBase::scheduledNode(SUnit *SU) {
         continue;
 
       unsigned RCId, Cost;
-      GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost);
+      GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost, MF);
       RegPressure[RCId] += Cost;
       break;
     }
@@ -2049,7 +2050,7 @@ void RegReductionPQBase::scheduledNode(SUnit *SU) {
     if (SkipRegDefs > 0)
       continue;
     unsigned RCId, Cost;
-    GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost);
+    GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost, MF);
     if (RegPressure[RCId] < Cost) {
       // Register pressure tracking is imprecise. This can happen. But we try
       // hard not to let it happen because it likely results in poor scheduling.

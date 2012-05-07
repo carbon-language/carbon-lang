@@ -83,7 +83,8 @@ public:
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.
-  const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
+  const TargetRegisterClass *
+  getPointerRegClass(const MachineFunction &MF, unsigned Kind = 0) const;
 
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns NULL if it is possible to copy

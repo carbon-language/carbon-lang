@@ -181,7 +181,8 @@ X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC) const{
 }
 
 const TargetRegisterClass *
-X86RegisterInfo::getPointerRegClass(unsigned Kind) const {
+X86RegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
+                                                                         const {
   switch (Kind) {
   default: llvm_unreachable("Unexpected Kind in getPointerRegClass!");
   case 0: // Normal GPRs.

@@ -2796,7 +2796,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
   // first operand is always the result
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  const TargetRegisterClass* PacketRC = QII->getRegClass(MCID, 0, QRI);
+  const TargetRegisterClass* PacketRC = QII->getRegClass(MCID, 0, QRI, MF);
 
   // if there is already an store in the packet, no can do new value store
   // Arch Spec 3.4.4.2.

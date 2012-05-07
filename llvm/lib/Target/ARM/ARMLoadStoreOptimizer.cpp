@@ -1737,7 +1737,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
           Ops.pop_back();
 
           const MCInstrDesc &MCID = TII->get(NewOpc);
-          const TargetRegisterClass *TRC = TII->getRegClass(MCID, 0, TRI);
+          const TargetRegisterClass *TRC = TII->getRegClass(MCID, 0, TRI, *MF);
           MRI->constrainRegClass(EvenReg, TRC);
           MRI->constrainRegClass(OddReg, TRC);
 

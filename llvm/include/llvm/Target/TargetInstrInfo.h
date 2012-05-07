@@ -57,7 +57,8 @@ public:
   /// class constraint for OpNum, or NULL.
   const TargetRegisterClass *getRegClass(const MCInstrDesc &TID,
                                          unsigned OpNum,
-                                         const TargetRegisterInfo *TRI) const;
+                                         const TargetRegisterInfo *TRI,
+                                         const MachineFunction &MF) const;
 
   /// isTriviallyReMaterializable - Return true if the instruction is trivially
   /// rematerializable, meaning it has no side effects and requires no operands

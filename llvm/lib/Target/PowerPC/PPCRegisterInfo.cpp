@@ -98,7 +98,8 @@ PPCRegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
 /// getPointerRegClass - Return the register class to use to hold pointers.
 /// This is used for addressing modes.
 const TargetRegisterClass *
-PPCRegisterInfo::getPointerRegClass(unsigned Kind) const {
+PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
+                                                                       const {
   if (Subtarget.isPPC64())
     return &PPC::G8RCRegClass;
   return &PPC::GPRCRegClass;

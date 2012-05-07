@@ -54,7 +54,8 @@ Thumb1RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
 }
 
 const TargetRegisterClass *
-Thumb1RegisterInfo::getPointerRegClass(unsigned Kind) const {
+Thumb1RegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
+                                                                         const {
   return &ARM::tGPRRegClass;
 }
 

@@ -1128,7 +1128,7 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
     // For immediates, lower it.
     for (unsigned i = 1; i < N->getNumOperands(); ++i) {
       SDNode *Arg = N->getOperand(i).getNode();
-      const TargetRegisterClass *RC = TII->getRegClass(MCID, i, TRI);
+      const TargetRegisterClass *RC = TII->getRegClass(MCID, i, TRI, *MF);
 
       if (RC == &Hexagon::IntRegsRegClass ||
           RC == &Hexagon::DoubleRegsRegClass) {

@@ -404,7 +404,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
     // Note register reference...
     const TargetRegisterClass *RC = NULL;
     if (i < MI->getDesc().getNumOperands())
-      RC = TII->getRegClass(MI->getDesc(), i, TRI);
+      RC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
     AggressiveAntiDepState::RegisterReference RR = { &MO, RC };
     RegRefs.insert(std::make_pair(Reg, RR));
   }
@@ -479,7 +479,7 @@ void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
     // Note register reference...
     const TargetRegisterClass *RC = NULL;
     if (i < MI->getDesc().getNumOperands())
-      RC = TII->getRegClass(MI->getDesc(), i, TRI);
+      RC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
     AggressiveAntiDepState::RegisterReference RR = { &MO, RC };
     RegRefs.insert(std::make_pair(Reg, RR));
   }

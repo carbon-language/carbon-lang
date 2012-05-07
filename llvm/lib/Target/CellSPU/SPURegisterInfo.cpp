@@ -193,7 +193,8 @@ SPURegisterInfo::SPURegisterInfo(const SPUSubtarget &subtarget,
 /// getPointerRegClass - Return the register class to use to hold pointers.
 /// This is used for addressing modes.
 const TargetRegisterClass *
-SPURegisterInfo::getPointerRegClass(unsigned Kind) const {
+SPURegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
+                                                                        const {
   return &SPU::R32CRegClass;
 }
 

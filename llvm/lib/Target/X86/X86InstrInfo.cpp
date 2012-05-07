@@ -2811,7 +2811,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         return NULL;
       bool NarrowToMOV32rm = false;
       if (Size) {
-        unsigned RCSize = getRegClass(MI->getDesc(), i, &RI)->getSize();
+        unsigned RCSize = getRegClass(MI->getDesc(), i, &RI, MF)->getSize();
         if (Size < RCSize) {
           // Check if it's safe to fold the load. If the size of the object is
           // narrower than the load width, then it's not.
@@ -3204,7 +3204,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   UnfoldStore &= FoldedStore;
 
   const MCInstrDesc &MCID = get(Opc);
-  const TargetRegisterClass *RC = getRegClass(MCID, Index, &RI);
+  const TargetRegisterClass *RC = getRegClass(MCID, Index, &RI, MF);
   if (!MI->hasOneMemOperand() &&
       RC == &X86::VR128RegClass &&
       !TM.getSubtarget<X86Subtarget>().isUnalignedMemAccessFast())
@@ -3299,7 +3299,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   // Emit the store instruction.
   if (UnfoldStore) {
-    const TargetRegisterClass *DstRC = getRegClass(MCID, 0, &RI);
+    const TargetRegisterClass *DstRC = getRegClass(MCID, 0, &RI, MF);
     std::pair<MachineInstr::mmo_iterator,
               MachineInstr::mmo_iterator> MMOs =
       MF.extractStoreMemRefs(MI->memoperands_begin(),
@@ -3325,7 +3325,8 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   bool FoldedLoad = I->second.second & TB_FOLDED_LOAD;
   bool FoldedStore = I->second.second & TB_FOLDED_STORE;
   const MCInstrDesc &MCID = get(Opc);
-  const TargetRegisterClass *RC = getRegClass(MCID, Index, &RI);
+  MachineFunction &MF = DAG.getMachineFunction();
+  const TargetRegisterClass *RC = getRegClass(MCID, Index, &RI, MF);
   unsigned NumDefs = MCID.NumDefs;
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
@@ -3346,7 +3347,6 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
 
   // Emit the load instruction.
   SDNode *Load = 0;
-  MachineFunction &MF = DAG.getMachineFunction();
   if (FoldedLoad) {
     EVT VT = *RC->vt_begin();
     std::pair<MachineInstr::mmo_iterator,
@@ -3373,7 +3373,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   std::vector<EVT> VTs;
   const TargetRegisterClass *DstRC = 0;
   if (MCID.getNumDefs() > 0) {
-    DstRC = getRegClass(MCID, 0, &RI);
+    DstRC = getRegClass(MCID, 0, &RI, MF);
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {

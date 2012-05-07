@@ -259,7 +259,8 @@ ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
 }
 
 const TargetRegisterClass *
-ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
+ARMBaseRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
+                                                                         const {
   return &ARM::GPRRegClass;
 }
 
@@ -939,7 +940,8 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
 
   const MCInstrDesc &MCID = TII.get(ADDriOpc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  MRI.constrainRegClass(BaseReg, TII.getRegClass(MCID, 0, this));
+  const MachineFunction &MF = *MBB->getParent();
+  MRI.constrainRegClass(BaseReg, TII.getRegClass(MCID, 0, this, MF));
 
   MachineInstrBuilder MIB = AddDefaultPred(BuildMI(*MBB, Ins, DL, MCID, BaseReg)
     .addFrameIndex(FrameIdx).addImm(Offset));

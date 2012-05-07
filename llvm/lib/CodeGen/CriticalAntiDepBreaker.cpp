@@ -208,7 +208,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     const TargetRegisterClass *NewRC = 0;
 
     if (i < MI->getDesc().getNumOperands())
-      NewRC = TII->getRegClass(MI->getDesc(), i, TRI);
+      NewRC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
 
     // For now, only allow the register to be changed if its register
     // class is consistent across all uses.
@@ -308,7 +308,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
 
     const TargetRegisterClass *NewRC = 0;
     if (i < MI->getDesc().getNumOperands())
-      NewRC = TII->getRegClass(MI->getDesc(), i, TRI);
+      NewRC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
 
     // For now, only allow the register to be changed if its register
     // class is consistent across all uses.

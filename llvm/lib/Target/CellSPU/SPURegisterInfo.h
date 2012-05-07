@@ -46,7 +46,7 @@ namespace llvm {
     /// getPointerRegClass - Return the register class to use to hold pointers.
     /// This is used for addressing modes.
     virtual const TargetRegisterClass *
-    getPointerRegClass(unsigned Kind = 0) const;
+    getPointerRegClass(const MachineFunction &MF, unsigned Kind = 0) const;
 
     /// After allocating this many registers, the allocator should feel
     /// register pressure. The value is a somewhat random guess, based on the

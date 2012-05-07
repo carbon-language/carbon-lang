@@ -515,7 +515,8 @@ public:
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.  If a target supports multiple different pointer register classes,
   /// kind specifies which one is indicated.
-  virtual const TargetRegisterClass *getPointerRegClass(unsigned Kind=0) const {
+  virtual const TargetRegisterClass *
+  getPointerRegClass(const MachineFunction &MF, unsigned Kind=0) const {
     llvm_unreachable("Target didn't implement getPointerRegClass!");
   }
 
