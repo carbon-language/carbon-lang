@@ -15,6 +15,12 @@ entry:
 ; CHECK: #NO_APP
    tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,I"(i32 7, i32 -3) nounwind
 
+; Now J with 0
+; CHECK: #APP
+; CHECK: addi ${{[0-9]+}},${{[0-9]+}},0
+; CHECK: #NO_APP
+  tail call i32 asm sideeffect "addi $0,$1,$2\0A\09 ", "=r,r,J"(i32 7, i16 0) nounwind
+
   ret i32 0
 }
 
