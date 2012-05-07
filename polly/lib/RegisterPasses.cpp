@@ -193,7 +193,7 @@ void polly::registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
 
 VectorizerChoice polly::PollyVectorizerChoice;
 
-void polly::registerPollyPasses(llvm::PassManagerBase &PM, bool DisableCodegen) {
+static void registerPollyPasses(llvm::PassManagerBase &PM) {
   bool RunCodegen = !DisableCodegen;
 
   registerPollyPreoptPasses(PM);
@@ -274,7 +274,7 @@ void registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
     return;
   }
 
-  registerPollyPasses(PM, DisableCodegen);
+  registerPollyPasses(PM);
 }
 
 static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &,

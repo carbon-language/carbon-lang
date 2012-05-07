@@ -23,9 +23,5 @@ namespace polly {
 // optimized.
 // (These passes are automatically included in registerPollyPasses).
 void registerPollyPreoptPasses(llvm::PassManagerBase &PM);
-
-// Register the Polly optimizer (including its preoptimizations).
-void registerPollyPasses(llvm::PassManagerBase &PM,
-                         bool DisableCodegen = false);
 }
 #endif
