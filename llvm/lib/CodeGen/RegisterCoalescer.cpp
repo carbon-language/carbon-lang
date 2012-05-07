@@ -97,64 +97,64 @@ namespace {
     /// been remat'ed.
     SmallPtrSet<MachineInstr*, 8> ReMatDefs;
 
-    /// joinIntervals - join compatible live intervals
-    void joinIntervals();
+    /// joinAllIntervals - join compatible live intervals
+    void joinAllIntervals();
 
-    /// CopyCoalesceInMBB - Coalesce copies in the specified MBB, putting
+    /// copyCoalesceInMBB - Coalesce copies in the specified MBB, putting
     /// copies that cannot yet be coalesced into the "TryAgain" list.
-    void CopyCoalesceInMBB(MachineBasicBlock *MBB,
+    void copyCoalesceInMBB(MachineBasicBlock *MBB,
                            std::vector<MachineInstr*> &TryAgain);
 
-    /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
+    /// joinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns
     /// true if the copy was successfully coalesced away. If it is not
     /// currently possible to coalesce this interval, but it may be possible if
     /// other things get coalesced, then it returns true by reference in
     /// 'Again'.
-    bool JoinCopy(MachineInstr *TheCopy, bool &Again);
+    bool joinCopy(MachineInstr *TheCopy, bool &Again);
 
-    /// JoinIntervals - Attempt to join these two intervals.  On failure, this
+    /// joinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  The output "SrcInt" will not have been modified, so we
     /// can use this information below to update aliases.
-    bool JoinIntervals(CoalescerPair &CP);
+    bool joinIntervals(CoalescerPair &CP);
 
-    /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
+    /// adjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
     /// the source value number is defined by a copy from the destination reg
     /// see if we can merge these two destination reg valno# into a single
     /// value number, eliminating a copy.
-    bool AdjustCopiesBackFrom(const CoalescerPair &CP, MachineInstr *CopyMI);
+    bool adjustCopiesBackFrom(const CoalescerPair &CP, MachineInstr *CopyMI);
 
-    /// HasOtherReachingDefs - Return true if there are definitions of IntB
+    /// hasOtherReachingDefs - Return true if there are definitions of IntB
     /// other than BValNo val# that can reach uses of AValno val# of IntA.
-    bool HasOtherReachingDefs(LiveInterval &IntA, LiveInterval &IntB,
+    bool hasOtherReachingDefs(LiveInterval &IntA, LiveInterval &IntB,
                               VNInfo *AValNo, VNInfo *BValNo);
 
-    /// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy.
+    /// removeCopyByCommutingDef - We found a non-trivially-coalescable copy.
     /// If the source value number is defined by a commutable instruction and
     /// its other operand is coalesced to the copy dest register, see if we
     /// can transform the copy into a noop by commuting the definition.
-    bool RemoveCopyByCommutingDef(const CoalescerPair &CP,MachineInstr *CopyMI);
+    bool removeCopyByCommutingDef(const CoalescerPair &CP,MachineInstr *CopyMI);
 
-    /// ReMaterializeTrivialDef - If the source of a copy is defined by a
+    /// reMaterializeTrivialDef - If the source of a copy is defined by a
     /// trivial computation, replace the copy by rematerialize the definition.
     /// If PreserveSrcInt is true, make sure SrcInt is valid after the call.
-    bool ReMaterializeTrivialDef(LiveInterval &SrcInt, bool PreserveSrcInt,
+    bool reMaterializeTrivialDef(LiveInterval &SrcInt, bool PreserveSrcInt,
                                  unsigned DstReg, MachineInstr *CopyMI);
 
     /// shouldJoinPhys - Return true if a physreg copy should be joined.
     bool shouldJoinPhys(CoalescerPair &CP);
 
-    /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
+    /// updateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a
     /// physical register and the existing subregister number of the def / use
     /// being updated is not zero, make sure to set it to the correct physical
     /// subregister.
-    void UpdateRegDefsUses(const CoalescerPair &CP);
+    void updateRegDefsUses(const CoalescerPair &CP);
 
-    /// RemoveDeadDef - If a def of a live interval is now determined dead,
+    /// removeDeadDef - If a def of a live interval is now determined dead,
     /// remove the val# it defines. If the live interval becomes empty, remove
     /// it as well.
-    bool RemoveDeadDef(LiveInterval &li, MachineInstr *DefMI);
+    bool removeDeadDef(LiveInterval &li, MachineInstr *DefMI);
 
     /// markAsJoined - Remember that CopyMI has already been joined.
     void markAsJoined(MachineInstr *CopyMI);
@@ -385,7 +385,7 @@ void RegisterCoalescer::markAsJoined(MachineInstr *CopyMI) {
       I->setIsUndef(true);
 }
 
-/// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy with IntA
+/// adjustCopiesBackFrom - We found a non-trivially-coalescable copy with IntA
 /// being the source and IntB being the dest, thus this defines a value number
 /// in IntB.  If the source value number (in IntA) is defined by a copy from B,
 /// see if we can merge these two pieces of B into a single value number,
@@ -400,8 +400,8 @@ void RegisterCoalescer::markAsJoined(MachineInstr *CopyMI) {
 ///
 /// This returns true if an interval was modified.
 ///
-bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
-                                                    MachineInstr *CopyMI) {
+bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
+                                             MachineInstr *CopyMI) {
   // Bail if there is no dst interval - can happen when merging physical subreg
   // operations.
   if (!LIS->hasInterval(CP.getDstReg()))
@@ -532,12 +532,12 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
   return true;
 }
 
-/// HasOtherReachingDefs - Return true if there are definitions of IntB
+/// hasOtherReachingDefs - Return true if there are definitions of IntB
 /// other than BValNo val# that can reach uses of AValno val# of IntA.
-bool RegisterCoalescer::HasOtherReachingDefs(LiveInterval &IntA,
-                                                    LiveInterval &IntB,
-                                                    VNInfo *AValNo,
-                                                    VNInfo *BValNo) {
+bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
+                                             LiveInterval &IntB,
+                                             VNInfo *AValNo,
+                                             VNInfo *BValNo) {
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
@@ -557,7 +557,7 @@ bool RegisterCoalescer::HasOtherReachingDefs(LiveInterval &IntA,
   return false;
 }
 
-/// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy with
+/// removeCopyByCommutingDef - We found a non-trivially-coalescable copy with
 /// IntA being the source and IntB being the dest, thus this defines a value
 /// number in IntB.  If the source value number (in IntA) is defined by a
 /// commutable instruction and its other operand is coalesced to the copy dest
@@ -580,8 +580,8 @@ bool RegisterCoalescer::HasOtherReachingDefs(LiveInterval &IntA,
 ///
 /// This returns true if an interval was modified.
 ///
-bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
-                                                        MachineInstr *CopyMI) {
+bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
+                                                 MachineInstr *CopyMI) {
   // FIXME: For now, only eliminate the copy by commuting its def when the
   // source register is a virtual register. We want to guard against cases
   // where the copy is a back edge copy and commuting the def lengthen the
@@ -645,7 +645,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
 
   // Make sure there are no other definitions of IntB that would reach the
   // uses which the new definition can reach.
-  if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
+  if (hasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
     return false;
 
   // Abort if the aliases of IntB.reg have values that are not simply the
@@ -653,7 +653,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
     for (const uint16_t *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
       if (LIS->hasInterval(*AS) &&
-          HasOtherReachingDefs(IntA, LIS->getInterval(*AS), AValNo, 0))
+          hasOtherReachingDefs(IntA, LIS->getInterval(*AS), AValNo, 0))
         return false;
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
@@ -670,7 +670,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
       return false;
   }
 
-  DEBUG(dbgs() << "\tRemoveCopyByCommutingDef: " << AValNo->def << '\t'
+  DEBUG(dbgs() << "\tremoveCopyByCommutingDef: " << AValNo->def << '\t'
                << *DefMI);
 
   // At this point we have decided that it is legal to do this
@@ -760,12 +760,12 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   return true;
 }
 
-/// ReMaterializeTrivialDef - If the source of a copy is defined by a trivial
+/// reMaterializeTrivialDef - If the source of a copy is defined by a trivial
 /// computation, replace the copy by rematerialize the definition.
-bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
-                                                       bool preserveSrcInt,
-                                                       unsigned DstReg,
-                                                       MachineInstr *CopyMI) {
+bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
+                                                bool preserveSrcInt,
+                                                unsigned DstReg,
+                                                MachineInstr *CopyMI) {
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot(true);
   LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
   assert(SrcLR != SrcInt.end() && "Live range not found!");
@@ -900,13 +900,12 @@ bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI,
   return true;
 }
 
-/// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
+/// updateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
 /// update the subregister number if it is not zero. If DstReg is a
 /// physical register and the existing subregister number of the def / use
 /// being updated is not zero, make sure to set it to the correct physical
 /// subregister.
-void
-RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
+void RegisterCoalescer::updateRegDefsUses(const CoalescerPair &CP) {
   bool DstIsPhys = CP.isPhys();
   unsigned SrcReg = CP.getSrcReg();
   unsigned DstReg = CP.getDstReg();
@@ -925,7 +924,7 @@ RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
           UseMI->getOperand(0).getReg() != SrcReg &&
           UseMI->getOperand(0).getReg() != DstReg &&
           !JoinedCopies.count(UseMI) &&
-          ReMaterializeTrivialDef(LIS->getInterval(SrcReg), false,
+          reMaterializeTrivialDef(LIS->getInterval(SrcReg), false,
                                   UseMI->getOperand(0).getReg(), UseMI))
         continue;
     }
@@ -985,10 +984,9 @@ static bool removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *LIS,
   return false;
 }
 
-/// RemoveDeadDef - If a def of a live interval is now determined dead, remove
+/// removeDeadDef - If a def of a live interval is now determined dead, remove
 /// the val# it defines. If the live interval becomes empty, remove it as well.
-bool RegisterCoalescer::RemoveDeadDef(LiveInterval &li,
-                                             MachineInstr *DefMI) {
+bool RegisterCoalescer::removeDeadDef(LiveInterval &li, MachineInstr *DefMI) {
   SlotIndex DefIdx = LIS->getInstructionIndex(DefMI).getRegSlot();
   LiveInterval::iterator MLR = li.FindLiveRangeContaining(DefIdx);
   if (DefIdx != MLR->valno->def)
@@ -1051,12 +1049,12 @@ bool RegisterCoalescer::shouldJoinPhys(CoalescerPair &CP) {
 }
 
 
-/// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
+/// joinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
 /// if the copy was successfully coalesced away. If it is not currently
 /// possible to coalesce this interval, but it may be possible if other
 /// things get coalesced, then it returns true by reference in 'Again'.
-bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
+bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 
   Again = false;
   if (JoinedCopies.count(CopyMI) || ReMatCopies.count(CopyMI))
@@ -1094,7 +1092,7 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
       // Before giving up coalescing, if definition of source is defined by
       // trivial computation, try rematerializing it.
       if (!CP.isFlipped() &&
-          ReMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
+          reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
                                   CP.getDstReg(), CopyMI))
         return true;
       return false;
@@ -1115,20 +1113,20 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
   // Otherwise, if one of the intervals being joined is a physreg, this method
   // always canonicalizes DstInt to be it.  The output "SrcInt" will not have
   // been modified, so we can use this information below to update aliases.
-  if (!JoinIntervals(CP)) {
+  if (!joinIntervals(CP)) {
     // Coalescing failed.
 
     // If definition of source is defined by trivial computation, try
     // rematerializing it.
     if (!CP.isFlipped() &&
-        ReMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
+        reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
                                 CP.getDstReg(), CopyMI))
       return true;
 
     // If we can eliminate the copy without merging the live ranges, do so now.
     if (!CP.isPartial()) {
-      if (AdjustCopiesBackFrom(CP, CopyMI) ||
-          RemoveCopyByCommutingDef(CP, CopyMI)) {
+      if (adjustCopiesBackFrom(CP, CopyMI) ||
+          removeCopyByCommutingDef(CP, CopyMI)) {
         markAsJoined(CopyMI);
         DEBUG(dbgs() << "\tTrivial!\n");
         return true;
@@ -1151,13 +1149,13 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
   // Remember to delete the copy instruction.
   markAsJoined(CopyMI);
 
-  UpdateRegDefsUses(CP);
+  updateRegDefsUses(CP);
 
   // If we have extended the live range of a physical register, make sure we
   // update live-in lists as well.
   if (CP.isPhys()) {
     SmallVector<MachineBasicBlock*, 16> BlockSeq;
-    // JoinIntervals invalidates the VNInfos in SrcInt, but we only need the
+    // joinIntervals invalidates the VNInfos in SrcInt, but we only need the
     // ranges for this, and they are preserved.
     LiveInterval &SrcInt = LIS->getInterval(CP.getSrcReg());
     for (LiveInterval::const_iterator I = SrcInt.begin(), E = SrcInt.end();
@@ -1311,9 +1309,9 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
   return true;
 }
 
-/// JoinIntervals - Attempt to join these two intervals.  On failure, this
+/// joinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.
-bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
+bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), TRI); dbgs() << "\n"; });
 
@@ -1614,8 +1612,9 @@ namespace {
   };
 }
 
-void RegisterCoalescer::CopyCoalesceInMBB(MachineBasicBlock *MBB,
-                                            std::vector<MachineInstr*> &TryAgain) {
+void
+RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB,
+                                     std::vector<MachineInstr*> &TryAgain) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
 
   SmallVector<MachineInstr*, 8> VirtCopies;
@@ -1652,27 +1651,27 @@ void RegisterCoalescer::CopyCoalesceInMBB(MachineBasicBlock *MBB,
   for (unsigned i = 0, e = ImpDefCopies.size(); i != e; ++i) {
     MachineInstr *TheCopy = ImpDefCopies[i];
     bool Again = false;
-    if (!JoinCopy(TheCopy, Again))
+    if (!joinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
   for (unsigned i = 0, e = PhysCopies.size(); i != e; ++i) {
     MachineInstr *TheCopy = PhysCopies[i];
     bool Again = false;
-    if (!JoinCopy(TheCopy, Again))
+    if (!joinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
   for (unsigned i = 0, e = VirtCopies.size(); i != e; ++i) {
     MachineInstr *TheCopy = VirtCopies[i];
     bool Again = false;
-    if (!JoinCopy(TheCopy, Again))
+    if (!joinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
 }
 
-void RegisterCoalescer::joinIntervals() {
+void RegisterCoalescer::joinAllIntervals() {
   DEBUG(dbgs() << "********** JOINING INTERVALS ***********\n");
 
   std::vector<MachineInstr*> TryAgainList;
@@ -1680,7 +1679,7 @@ void RegisterCoalescer::joinIntervals() {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = MF->begin(), E = MF->end();
          I != E; ++I)
-      CopyCoalesceInMBB(I, TryAgainList);
+      copyCoalesceInMBB(I, TryAgainList);
   } else {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
@@ -1699,7 +1698,7 @@ void RegisterCoalescer::joinIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoalesceInMBB(MBBs[i].second, TryAgainList);
+      copyCoalesceInMBB(MBBs[i].second, TryAgainList);
   }
 
   // Joining intervals can allow other intervals to be joined.  Iteratively join
@@ -1714,7 +1713,7 @@ void RegisterCoalescer::joinIntervals() {
         continue;
 
       bool Again = false;
-      bool Success = JoinCopy(TheCopy, Again);
+      bool Success = joinCopy(TheCopy, Again);
       if (Success || !Again) {
         TheCopy= 0;   // Mark this one as done.
         ProgressMade = true;
@@ -1751,7 +1750,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
 
   // Join (coalesce) intervals if requested.
   if (EnableJoining) {
-    joinIntervals();
+    joinAllIntervals();
     DEBUG({
         dbgs() << "********** INTERVALS POST JOINING **********\n";
         for (LiveIntervals::iterator I = LIS->begin(), E = LIS->end();
@@ -1845,7 +1844,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
           while (!DeadDefs.empty()) {
             unsigned DeadDef = DeadDefs.back();
             DeadDefs.pop_back();
-            RemoveDeadDef(LIS->getInterval(DeadDef), MI);
+            removeDeadDef(LIS->getInterval(DeadDef), MI);
           }
           LIS->RemoveMachineInstrFromMaps(mii);
           mii = mbbi->erase(mii);
