@@ -45,5 +45,11 @@ entry:
 ; CHECK: #NO_APP	
   tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,O"(i32 7, i16 -3) nounwind
 
+; Now P with 65535
+; CHECK: #APP
+; CHECK: addi ${{[0-9]+}},${{[0-9]+}},65535
+; CHECK: #NO_APP	
+  tail call i32 asm sideeffect "addi $0,$1,$2", "=r,r,P"(i32 7, i32 65535) nounwind
+
   ret i32 0
 }
