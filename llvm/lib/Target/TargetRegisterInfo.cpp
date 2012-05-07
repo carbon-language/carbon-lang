@@ -207,6 +207,7 @@ getCommonSuperRegClass(const TargetRegisterClass *RCA, unsigned SubA,
   unsigned *BestPreB = &PreB;
   if (RCA->getSize() < RCB->getSize()) {
     std::swap(RCA, RCB);
+    std::swap(SubA, SubB);
     std::swap(BestPreA, BestPreB);
   }
 
