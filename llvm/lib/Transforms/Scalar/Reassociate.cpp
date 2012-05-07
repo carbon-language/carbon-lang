@@ -1212,10 +1212,34 @@ void Reassociate::ReassociateInst(BasicBlock::iterator &BBI) {
       BI = NI;
     }
 
-  // Reject cases where it is pointless to do this.
-  if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPointTy() ||
-      BI->getType()->isVectorTy())
-    return;  // Floating point ops are not associative.
+  // Floating point binary operators are not associative, but we can still
+  // commute (some) of them, to canonicalize the order of their operands.
+  // This can potentially expose more CSE opportunities, and makes writing
+  // other transformations simpler.
+  if (isa<BinaryOperator>(BI) &&
+      (BI->getType()->isFloatingPointTy() || BI->getType()->isVectorTy())) {
+    // FAdd and FMul can be commuted.
+    if (BI->getOpcode() != Instruction::FMul &&
+        BI->getOpcode() != Instruction::FAdd)
+      return;
+
+    Value *LHS = BI->getOperand(0);
+    Value *RHS = BI->getOperand(1);
+    unsigned LHSRank = getRank(LHS);
+    unsigned RHSRank = getRank(RHS);
+
+    // Sort the operands by rank.
+    if (RHSRank < LHSRank) {
+      BI->setOperand(0, RHS);
+      BI->setOperand(1, LHS);
+    }
+
+    return;
+  }
+
+  // Do not reassociate operations that we do not understand.
+  if (!isa<BinaryOperator>(BI))
+    return;
 
   // Do not reassociate boolean (i1) expressions.  We want to preserve the
   // original order of evaluation for short-circuited comparisons that
