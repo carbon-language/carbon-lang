@@ -517,9 +517,6 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
 
 
       } else if (isa<SymbolData>(Sym)) {
-        // LHS is a simple symbol (not a symbolic expression).
-        QualType lhsType = Sym->getType(Context);
-
         // Does the symbol simplify to a constant?  If so, "fold" the constant
         // by setting 'lhs' to a ConcreteInt and try again.
         if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
