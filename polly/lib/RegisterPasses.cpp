@@ -159,7 +159,7 @@ public:
 
 static StaticInitializer InitializeEverything;
 
-void polly::registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
+static void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   // A standard set of optimization passes partially taken/copied from the
   // set of default optimization passes. It is used to bring the code into
   // a canonical form that can than be analyzed by Polly. This set of passes is
