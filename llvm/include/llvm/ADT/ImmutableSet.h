@@ -667,7 +667,7 @@ public:
     return reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
   }
 
-  uintptr_t getVisitState() {
+  uintptr_t getVisitState() const {
     assert(!stack.empty());
     return stack.back() & Flags;
   }
