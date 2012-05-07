@@ -875,6 +875,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
         return evalBinOpLL(state, op, lhs, loc::ConcreteInt(*x), resultTy);
       }
     }
+    return UnknownVal();
   }
   
   // We are dealing with pointer arithmetic.
