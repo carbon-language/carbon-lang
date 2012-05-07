@@ -23,6 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/Cloog.h"
+#ifdef CLOOG_FOUND
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 
@@ -333,3 +334,5 @@ INITIALIZE_PASS_END(CloogInfo, "polly-cloog",
 Pass *polly::createCloogInfoPass() {
   return new CloogInfo();
 }
+
+#endif // CLOOG_FOUND

@@ -20,9 +20,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "polly-codegen"
-
 #include "polly/Cloog.h"
+#ifdef CLOOG_FOUND
+
+#define DEBUG_TYPE "polly-codegen"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
@@ -937,3 +938,5 @@ INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
 Pass *polly::createCodeGenerationPass() {
   return new CodeGeneration();
 }
+
+#endif // CLOOG_FOUND

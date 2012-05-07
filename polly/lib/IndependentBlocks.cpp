@@ -491,7 +491,9 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<ScalarEvolution>();
   AU.addRequired<ScopDetection>();
   AU.addPreserved<ScopDetection>();
+#ifdef CLOOG_FOUND
   AU.addPreserved<CloogInfo>();
+#endif
 }
 
 bool IndependentBlocks::runOnFunction(llvm::Function &F) {
