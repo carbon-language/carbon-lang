@@ -16,7 +16,7 @@ using namespace cxindex;
 
 namespace {
 
-class TypeIndexer : public RecursiveASTVisitor<TypeIndexer> {
+class TypeIndexer : public cxindex::RecursiveASTVisitor<TypeIndexer> {
   IndexingContext &IndexCtx;
   const NamedDecl *Parent;
   const DeclContext *ParentDC;

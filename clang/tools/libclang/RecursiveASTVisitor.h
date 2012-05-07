@@ -65,6 +65,7 @@
   OPERATOR(Shl) OPERATOR(Shr) OPERATOR(And) OPERATOR(Or)  OPERATOR(Xor)
 
 namespace clang {
+namespace cxindex {
 
 // A helper macro to implement short-circuiting when recursing.  It
 // invokes CALL_EXPR, which must be a method call, on the derived
@@ -2238,6 +2239,7 @@ DEF_TRAVERSE_STMT(AsTypeExpr, { })
 
 #undef TRY_TO
 
+} // end namespace cxindex
 } // end namespace clang
 
 #endif // LLVM_CLANG_LIBCLANG_RECURSIVEASTVISITOR_H
