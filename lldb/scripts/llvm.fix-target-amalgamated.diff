@@ -41,150 +41,6 @@ Index: lib/Target/ARM/ARMInstrNEON.td
                       []>;
  
  // Vector Move Operations.
-Index: lib/Target/ARM/ARMInstrVFP.td
-===================================================================
---- lib/Target/ARM/ARMInstrVFP.td	(revision 152265)
-+++ lib/Target/ARM/ARMInstrVFP.td	(working copy)
-@@ -818,7 +818,29 @@
- 
- // FP to Fixed-Point:
- 
--def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
-+// Single Precision register
-+class AVConv1XInsS_Encode<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4, bit op5, 
-+                dag oops, dag iops, InstrItinClass itin, string opc, string asm,
-+                list<dag> pattern>
-+  : AVConv1XI<op1, op2, op3, op4, op5, oops, iops, itin, opc, asm, pattern> {
-+  bits<5> dst;
-+  // if dp_operation then UInt(D:Vd) else UInt(Vd:D);
-+  let Inst{22} = dst{0};
-+  let Inst{15-12} = dst{4-1};
-+}
-+
-+// Double Precision register
-+class AVConv1XInsD_Encode<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4, bit op5, 
-+                dag oops, dag iops, InstrItinClass itin, string opc, string asm,
-+                list<dag> pattern>
-+  : AVConv1XI<op1, op2, op3, op4, op5, oops, iops, itin, opc, asm, pattern> {
-+  bits<5> dst;
-+  // if dp_operation then UInt(D:Vd) else UInt(Vd:D);
-+  let Inst{22} = dst{4};
-+  let Inst{15-12} = dst{3-0};
-+}
-+
-+def VTOSHS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1110, 0b1010, 0,
-                        (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
-                  IIC_fpCVTSI, "vcvt", ".s16.f32\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -826,7 +848,7 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VTOUHS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 0,
-+def VTOUHS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1111, 0b1010, 0,
-                        (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
-                  IIC_fpCVTSI, "vcvt", ".u16.f32\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -834,7 +856,7 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VTOSLS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 1,
-+def VTOSLS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1110, 0b1010, 1,
-                        (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
-                  IIC_fpCVTSI, "vcvt", ".s32.f32\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -842,7 +864,7 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VTOULS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 1,
-+def VTOULS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1111, 0b1010, 1,
-                        (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
-                  IIC_fpCVTSI, "vcvt", ".u32.f32\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -850,25 +872,25 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VTOSHD : AVConv1XI<0b11101, 0b11, 0b1110, 0b1011, 0,
-+def VTOSHD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1110, 0b1011, 0,
-                        (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
-                  IIC_fpCVTDI, "vcvt", ".s16.f64\t$dst, $a, $fbits", []>;
- 
--def VTOUHD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 0,
-+def VTOUHD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1111, 0b1011, 0,
-                        (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
-                  IIC_fpCVTDI, "vcvt", ".u16.f64\t$dst, $a, $fbits", []>;
- 
--def VTOSLD : AVConv1XI<0b11101, 0b11, 0b1110, 0b1011, 1,
-+def VTOSLD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1110, 0b1011, 1,
-                        (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
-                  IIC_fpCVTDI, "vcvt", ".s32.f64\t$dst, $a, $fbits", []>;
- 
--def VTOULD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 1,
-+def VTOULD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1111, 0b1011, 1,
-                        (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
-                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a, $fbits", []>;
- 
- // Fixed-Point to FP:
- 
--def VSHTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 0,
-+def VSHTOS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1010, 0b1010, 0,
-                        (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
-                  IIC_fpCVTIS, "vcvt", ".f32.s16\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -876,7 +898,7 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VUHTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 0,
-+def VUHTOS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1011, 0b1010, 0,
-                        (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
-                  IIC_fpCVTIS, "vcvt", ".f32.u16\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -884,7 +906,7 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VSLTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 1,
-+def VSLTOS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1010, 0b1010, 1,
-                        (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
-                  IIC_fpCVTIS, "vcvt", ".f32.s32\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -892,7 +914,7 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VULTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 1,
-+def VULTOS : AVConv1XInsS_Encode<0b11101, 0b11, 0b1011, 0b1010, 1,
-                        (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
-                  IIC_fpCVTIS, "vcvt", ".f32.u32\t$dst, $a, $fbits", []> {
-   // Some single precision VFP instructions may be executed on both NEON and
-@@ -900,19 +922,19 @@
-   let D = VFPNeonA8Domain;
- }
- 
--def VSHTOD : AVConv1XI<0b11101, 0b11, 0b1010, 0b1011, 0,
-+def VSHTOD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1010, 0b1011, 0,
-                        (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
-                  IIC_fpCVTID, "vcvt", ".f64.s16\t$dst, $a, $fbits", []>;
- 
--def VUHTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 0,
-+def VUHTOD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1011, 0b1011, 0,
-                        (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
-                  IIC_fpCVTID, "vcvt", ".f64.u16\t$dst, $a, $fbits", []>;
- 
--def VSLTOD : AVConv1XI<0b11101, 0b11, 0b1010, 0b1011, 1,
-+def VSLTOD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1010, 0b1011, 1,
-                        (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
-                  IIC_fpCVTID, "vcvt", ".f64.s32\t$dst, $a, $fbits", []>;
- 
--def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
-+def VULTOD : AVConv1XInsD_Encode<0b11101, 0b11, 0b1011, 0b1011, 1,
-                        (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
-                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a, $fbits", []>;
- 
 Index: lib/Target/ARM/ARMInstrThumb2.td
 ===================================================================
 --- lib/Target/ARM/ARMInstrThumb2.td	(revision 152265)
@@ -197,6 +53,142 @@ Index: lib/Target/ARM/ARMInstrThumb2.td
  }
  
  let isNotDuplicable = 1, isIndirectBranch = 1 in {
+Index: lib/Target/ARM/ARMInstrThumb.td
+===================================================================
+--- lib/Target/ARM/ARMInstrThumb.td	(revision 152265)
++++ lib/Target/ARM/ARMInstrThumb.td	(working copy)
+@@ -413,11 +413,11 @@
+                   "bl${p}\t$func",
+                   [(ARMtcall tglobaladdr:$func)]>,
+              Requires<[IsThumb, IsNotIOS]> {
+-    bits<22> func;
+-    let Inst{26} = func{21};
++    bits<24> func;
++    let Inst{26} = func{23};
+     let Inst{25-16} = func{20-11};
+-    let Inst{13} = 1;
+-    let Inst{11} = 1;
++    let Inst{13} = func{22};
++    let Inst{11} = func{21};
+     let Inst{10-0} = func{10-0};
+   }
+ 
+@@ -427,10 +427,11 @@
+                    "blx${p}\t$func",
+                    [(ARMcall tglobaladdr:$func)]>,
+               Requires<[IsThumb, HasV5T, IsNotIOS]> {
+-    bits<21> func;
++    bits<24> func;
++    let Inst{26} = func{23};
+     let Inst{25-16} = func{20-11};
+-    let Inst{13} = 1;
+-    let Inst{11} = 1;
++    let Inst{13} = func{22};
++    let Inst{11} = func{21};
+     let Inst{10-1} = func{10-1};
+     let Inst{0} = 0; // func{0} is assumed zero
+   }
+Index: lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp
+===================================================================
+--- lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp	(revision 152265)
++++ lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp	(working copy)
+@@ -397,39 +397,65 @@
+     return swapped;
+   }
+   case ARM::fixup_arm_thumb_bl: {
+-    // The value doesn't encode the low bit (always zero) and is offset by
+-    // four. The value is encoded into disjoint bit positions in the destination
+-    // opcode. x = unchanged, I = immediate value bit, S = sign extension bit
+-    //
+-    //   BL:  xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
+-    //
+-    // Note that the halfwords are stored high first, low second; so we need
+-    // to transpose the fixup value here to map properly.
+-    unsigned isNeg = (int64_t(Value - 4) < 0) ? 1 : 0;
+-    uint32_t Binary = 0;
+-    Value = 0x3fffff & ((Value - 4) >> 1);
+-    Binary  = (Value & 0x7ff) << 16;    // Low imm11 value.
+-    Binary |= (Value & 0x1ffc00) >> 11; // High imm10 value.
+-    Binary |= isNeg << 10;              // Sign bit.
+-    return Binary;
++     // The value doesn't encode the low bit (always zero) and is offset by
++     // four. The 32-bit immediate value is encoded as
++     //   imm32 = SignExtend(S:I1:I2:imm10:imm11:0)
++     // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
++     // The value is encoded into disjoint bit positions in the destination
++     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit,
++     // J = either J1 or J2 bit
++     //
++     //   BL:  xxxxxSIIIIIIIIII xxJxJIIIIIIIIIII
++     //
++     // Note that the halfwords are stored high first, low second; so we need
++     // to transpose the fixup value here to map properly.
++     uint32_t offset = (Value - 4) >> 1;
++     uint32_t signBit = (offset & 0x800000) >> 23;
++     uint32_t I1Bit = (offset & 0x400000) >> 22;
++     uint32_t J1Bit = (I1Bit ^ 0x1) ^ signBit;
++     uint32_t I2Bit = (offset & 0x200000) >> 21;
++     uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
++     uint32_t imm10Bits = (offset & 0x1FF800) >> 11;
++     uint32_t imm11Bits = (offset & 0x000007FF);
++ 
++     uint32_t Binary = 0;
++     uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10Bits);
++     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) |
++                           (uint16_t)imm11Bits);
++     Binary |= secondHalf << 16;
++     Binary |= firstHalf;
++     return Binary;
++
+   }
+   case ARM::fixup_arm_thumb_blx: {
+-    // The value doesn't encode the low two bits (always zero) and is offset by
+-    // four (see fixup_arm_thumb_cp). The value is encoded into disjoint bit
+-    // positions in the destination opcode. x = unchanged, I = immediate value
+-    // bit, S = sign extension bit, 0 = zero.
+-    //
+-    //   BLX: xxxxxSIIIIIIIIII xxxxxIIIIIIIIII0
+-    //
+-    // Note that the halfwords are stored high first, low second; so we need
+-    // to transpose the fixup value here to map properly.
+-    unsigned isNeg = (int64_t(Value-4) < 0) ? 1 : 0;
+-    uint32_t Binary = 0;
+-    Value = 0xfffff & ((Value - 2) >> 2);
+-    Binary  = (Value & 0x3ff) << 17;    // Low imm10L value.
+-    Binary |= (Value & 0xffc00) >> 10;  // High imm10H value.
+-    Binary |= isNeg << 10;              // Sign bit.
+-    return Binary;
++     // The value doesn't encode the low two bits (always zero) and is offset by
++     // four (see fixup_arm_thumb_cp). The 32-bit immediate value is encoded as
++     //   imm32 = SignExtend(S:I1:I2:imm10H:imm10L:00)
++     // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
++     // The value is encoded into disjoint bit positions in the destination 
++     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit, 
++     // J = either J1 or J2 bit, 0 = zero.
++     //
++     //   BLX: xxxxxSIIIIIIIIII xxJxJIIIIIIIIII0
++     //
++     // Note that the halfwords are stored high first, low second; so we need
++     // to transpose the fixup value here to map properly.
++     uint32_t offset = (Value - 2) >> 2;
++     uint32_t signBit = (offset & 0x400000) >> 22;
++     uint32_t I1Bit = (offset & 0x200000) >> 21;
++     uint32_t J1Bit = (I1Bit ^ 0x1) ^ signBit;
++     uint32_t I2Bit = (offset & 0x100000) >> 20;
++     uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
++     uint32_t imm10HBits = (offset & 0xFFC00) >> 10;
++     uint32_t imm10LBits = (offset & 0x3FF);
++ 
++     uint32_t Binary = 0;
++     uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10HBits);
++     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) | 
++                           ((uint16_t)imm10LBits) << 1);
++     Binary |= secondHalf << 16;
++     Binary |= firstHalf;
++     return Binary;
+   }
+   case ARM::fixup_arm_thumb_cp:
+     // Offset by 4, and don't encode the low two bits. Two bytes of that
 Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
 ===================================================================
 --- lib/Target/ARM/Disassembler/ARMDisassembler.cpp	(revision 152265)
@@ -293,33 +285,7 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
        break;
    }
  
-@@ -2555,7 +2605,6 @@
-   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
-   unsigned align = fieldFromInstruction32(Insn, 4, 1);
-   unsigned size = 1 << fieldFromInstruction32(Insn, 6, 2);
--  unsigned pred = fieldFromInstruction32(Insn, 22, 4);
-   align *= 2*size;
- 
-   switch (Inst.getOpcode()) {
-@@ -2586,16 +2635,11 @@
-     return MCDisassembler::Fail;
-   Inst.addOperand(MCOperand::CreateImm(align));
- 
--  if (Rm == 0xD)
--    Inst.addOperand(MCOperand::CreateReg(0));
--  else if (Rm != 0xF) {
-+  if (Rm != 0xD && Rm != 0xF) {
-     if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
-       return MCDisassembler::Fail;
-   }
- 
--  if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
--    return MCDisassembler::Fail;
--
-   return S;
- }
- 
-@@ -2837,19 +2881,25 @@
+@@ -2837,19 +2887,25 @@
  
  static DecodeStatus DecodeThumbBROperand(llvm::MCInst &Inst, unsigned Val,
                                   uint64_t Address, const void *Decoder) {
@@ -348,7 +314,35 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
    return MCDisassembler::Success;
  }
  
-@@ -3271,7 +3321,9 @@
+@@ -3162,10 +3218,25 @@
+ 
+ static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Val,
+                                  uint64_t Address, const void *Decoder) {
++  // Val is passed in as S:J1:J2:imm10H:imm10L:’0’
++  // Note only one trailing zero not two.  Also the J1 and J2 values are from
++  // the encoded instruction.  So here change to I1 and I2 values via:
++  // I1 = NOT(J1 EOR S);
++  // I2 = NOT(J2 EOR S);
++  // and build the imm32 with two trailing zeros as documented:
++  // imm32 = SignExtend(S:I1:I2:imm10H:imm10L:’00’, 32);
++  unsigned S = (Val >> 23) & 1;
++  unsigned J1 = (Val >> 22) & 1;
++  unsigned J2 = (Val >> 21) & 1;
++  unsigned I1 = !(J1 ^ S);
++  unsigned I2 = !(J2 ^ S);
++  unsigned tmp = (Val & ~0x600000) | (I1 << 22) | (I2 << 21);
++  int imm32 = SignExtend32<25>(tmp << 1);
++
+   if (!tryAddingSymbolicOperand(Address,
+-                                (Address & ~2u) + SignExtend32<22>(Val << 1) + 4,
++                                (Address & ~2u) + imm32 + 4,
+                                 true, 4, Inst, Decoder))
+-    Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
++    Inst.addOperand(MCOperand::CreateImm(imm32));
+   return MCDisassembler::Success;
+ }
+ 
+@@ -3271,15 +3342,32 @@
  static DecodeStatus
  DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
                              uint64_t Address, const void *Decoder){
@@ -356,6 +350,31 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
 +  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<8>(Val<<1) + 4,
 +                                true, 2, Inst, Decoder))
 +    Inst.addOperand(MCOperand::CreateImm(SignExtend32<8>(Val << 1)));
+   return MCDisassembler::Success;
+ }
+ 
+ static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
+                                        uint64_t Address, const void *Decoder){
+-  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val<<1) + 4,
++  // Val is passed in as S:J1:J2:imm10:imm11
++  // Note no trailing zero after imm11.  Also the J1 and J2 values are from
++  // the encoded instruction.  So here change to I1 and I2 values via:
++  // I1 = NOT(J1 EOR S);
++  // I2 = NOT(J2 EOR S);
++  // and build the imm32 with one trailing zero as documented:
++  // imm32 = SignExtend(S:I1:I2:imm10:imm11:’0’, 32);
++  unsigned S = (Val >> 23) & 1;
++  unsigned J1 = (Val >> 22) & 1;
++  unsigned J2 = (Val >> 21) & 1;
++  unsigned I1 = !(J1 ^ S);
++  unsigned I2 = !(J2 ^ S);
++  unsigned tmp = (Val & ~0x600000) | (I1 << 22) | (I2 << 21);
++  int imm32 = SignExtend32<25>(tmp << 1);
++
++  if (!tryAddingSymbolicOperand(Address, Address + imm32 + 4,
+                                 true, 4, Inst, Decoder))
+-    Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
++    Inst.addOperand(MCOperand::CreateImm(imm32));
    return MCDisassembler::Success;
  }
  
