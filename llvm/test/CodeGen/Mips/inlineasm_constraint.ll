@@ -27,6 +27,11 @@ entry:
 ; CHECK: #NO_APP	
   tail call i16 asm sideeffect "addu $0,$1,$2\0A\09 ", "=r,r,K"(i16 7, i16 64) nounwind
 
+; Now L with 0x00100000
+; CHECK: #APP
+; CHECK: add ${{[0-9]+}},${{[0-9]+}},${{[0-9]+}}
+; CHECK: #NO_APP	
+  tail call i32 asm sideeffect "add $0,$1,$3\0A\09", "=r,r,L,r"(i32 7, i32 1048576, i32 0) nounwind
+
   ret i32 0
 }
-
