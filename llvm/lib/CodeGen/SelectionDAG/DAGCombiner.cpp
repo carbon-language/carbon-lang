@@ -5670,9 +5670,13 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
                        GetNegatedExpression(N1, DAG, LegalOperations));
 
   // If 'unsafe math' is enabled, fold
+  //    (fsub x, x) -> 0.0 &
   //    (fsub x, (fadd x, y)) -> (fneg y) &
   //    (fsub x, (fadd y, x)) -> (fneg y)
   if (DAG.getTarget().Options.UnsafeFPMath) {
+    if (N0 == N1)
+      return DAG.getConstantFP(0.0f, VT);
+
     if (N1.getOpcode() == ISD::FADD) {
       SDValue N10 = N1->getOperand(0);
       SDValue N11 = N1->getOperand(1);
