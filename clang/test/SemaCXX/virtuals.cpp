@@ -30,7 +30,7 @@ A fn(A) // expected-error{{parameter type 'A' is an abstract class}} \
         // expected-error{{return type 'A' is an abstract class}}
 {
   A a; // expected-error{{variable type 'A' is an abstract class}}
-  (void)static_cast<A>(0);
+  (void)static_cast<A>(0); // expected-error{{allocating an object of abstract class type 'A'}}
   try {
   } catch(A) { // expected-error{{variable type 'A' is an abstract class}}
   }
