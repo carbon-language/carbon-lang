@@ -2399,12 +2399,12 @@ void RewriteModernObjC::SynthMsgSendFpretFunctionDecl() {
                                               SC_None, false);
 }
 
-// SynthGetClassFunctionDecl - id objc_getClass(const char *name);
+// SynthGetClassFunctionDecl - Class objc_getClass(const char *name);
 void RewriteModernObjC::SynthGetClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
   SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
-  QualType getClassType = getSimpleFunctionType(Context->getObjCIdType(),
+  QualType getClassType = getSimpleFunctionType(Context->getObjCClassType(),
                                                 &ArgTys[0], ArgTys.size());
   GetClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                           SourceLocation(),
@@ -2432,12 +2432,12 @@ void RewriteModernObjC::SynthGetSuperClassFunctionDecl() {
                                                    false);
 }
 
-// SynthGetMetaClassFunctionDecl - id objc_getMetaClass(const char *name);
+// SynthGetMetaClassFunctionDecl - Class objc_getMetaClass(const char *name);
 void RewriteModernObjC::SynthGetMetaClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getMetaClass");
   SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
-  QualType getClassType = getSimpleFunctionType(Context->getObjCIdType(),
+  QualType getClassType = getSimpleFunctionType(Context->getObjCClassType(),
                                                 &ArgTys[0], ArgTys.size());
   GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
@@ -3048,17 +3048,14 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                    ClassDecl->getIdentifier()->getName(),
                                    StringLiteral::Ascii, false,
                                    argType, SourceLocation()));
+    // (Class)objc_getClass("CurrentClass")
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
                                                  &ClsExprs[0],
                                                  ClsExprs.size(),
                                                  StartLoc,
                                                  EndLoc);
-    // (Class)objc_getClass("CurrentClass")
-    CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
-                                             Context->getObjCClassType(),
-                                             CK_BitCast, Cls);
     ClsExprs.clear();
-    ClsExprs.push_back(ArgExpr);
+    ClsExprs.push_back(Cls);
     Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
                                        &ClsExprs[0], ClsExprs.size(),
                                        StartLoc, EndLoc);
@@ -3131,7 +3128,10 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                                  &ClsExprs[0],
                                                  ClsExprs.size(), 
                                                  StartLoc, EndLoc);
-    MsgExprs.push_back(Cls);
+    CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
+                                                 Context->getObjCIdType(),
+                                                 CK_BitCast, Cls);
+    MsgExprs.push_back(ArgExpr);
     break;
   }
 
@@ -3159,16 +3159,13 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                    ClassDecl->getIdentifier()->getName(),
                                    StringLiteral::Ascii, false, argType,
                                    SourceLocation()));
+    // (Class)objc_getClass("CurrentClass")
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                  &ClsExprs[0],
                                                  ClsExprs.size(), 
                                                  StartLoc, EndLoc);
-    // (Class)objc_getClass("CurrentClass")
-    CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
-                                                 Context->getObjCClassType(),
-                                                 CK_BitCast, Cls);
     ClsExprs.clear();
-    ClsExprs.push_back(ArgExpr);
+    ClsExprs.push_back(Cls);
     Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
                                        &ClsExprs[0], ClsExprs.size(),
                                        StartLoc, EndLoc);
@@ -5743,11 +5740,11 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSendSuper_stret(void);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_msgSend_fpret(void);\n";
 
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getClass";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *objc_getClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *class_getSuperclass";
   Preamble += "(struct objc_class *);\n";
-  Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_getMetaClass";
+  Preamble += "__OBJC_RW_DLLIMPORT struct objc_class *objc_getMetaClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_DLLIMPORT void objc_exception_throw( struct objc_object *);\n";
   // @synchronized hooks.
