@@ -60,7 +60,8 @@ class ObjCSelfInitChecker : public Checker<  check::PreObjCMessage,
                                              check::PreStmt<ReturnStmt>,
                                              check::PreStmt<CallExpr>,
                                              check::PostStmt<CallExpr>,
-                                             check::Location > {
+                                             check::Location,
+                                             check::Bind > {
 public:
   void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
   void checkPostObjCMessage(ObjCMessage msg, CheckerContext &C) const;
@@ -70,6 +71,7 @@ public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkLocation(SVal location, bool isLoad, const Stmt *S,
                      CheckerContext &C) const;
+  void checkBind(SVal loc, SVal val, const Stmt *S, CheckerContext &C) const;
 
   void checkPreStmt(const CallOrObjCMessage &CE, CheckerContext &C) const;
   void checkPostStmt(const CallOrObjCMessage &CE, CheckerContext &C) const;
@@ -334,6 +336,28 @@ void ObjCSelfInitChecker::checkLocation(SVal location, bool isLoad,
   ProgramStateRef state = C.getState();
   if (isSelfVar(location, C))
     addSelfFlag(state, state->getSVal(cast<Loc>(location)), SelfFlag_Self, C);
+}
+
+
+void ObjCSelfInitChecker::checkBind(SVal loc, SVal val, const Stmt *S,
+                                    CheckerContext &C) const {
+  // Allow assignment of anything to self. Self is a local variable in the
+  // initializer, so it is legal to assign anything to it, like results of
+  // static functions/method calls. After self is assigned something we cannot 
+  // reason about, stop enforcing the rules.
+  // (Only continue checking if the assigned value should be treated as self.)
+  if ((isSelfVar(loc, C)) &&
+      !hasSelfFlag(val, SelfFlag_InitRes, C) &&
+      !hasSelfFlag(val, SelfFlag_Self, C) &&
+      !isSelfVar(val, C)) {
+
+    // Stop tracking the checker-specific state in the state.
+    ProgramStateRef State = C.getState();
+    State = State->remove<CalledInit>();
+    if (SymbolRef sym = loc.getAsSymbol())
+      State = State->remove<SelfFlag>(sym);
+    C.addTransition(State);
+  }
 }
 
 // FIXME: A callback should disable checkers at the start of functions.

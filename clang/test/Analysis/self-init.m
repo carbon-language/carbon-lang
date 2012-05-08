@@ -1,7 +1,8 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit -fobjc-default-synthesize-properties -fno-builtin %s -verify
 
 @class NSZone, NSCoder;
-@protocol NSObject- (id)self;
+@protocol NSObject
+- (id)self;
 @end
 @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end 
@@ -254,3 +255,28 @@ extern id _commonInit(MyObj *self);
    return self;
 }
 @end
+
+// Test for radar://11125870: init constructing a special instance.
+typedef signed char BOOL;
+@interface MyClass : NSObject
+@end
+@implementation MyClass
++ (id)specialInstance {
+    return [[MyClass alloc] init];
+}
+- (id)initSpecially:(BOOL)handleSpecially {
+    if ((self = [super init])) {
+        if (handleSpecially) {
+            self = [MyClass specialInstance];
+        }
+    }
+    return self;
+}
+- (id)initSelfSelf {
+    if ((self = [super init])) {
+      self = self;
+    }
+    return self;
+}
+@end
+
