@@ -245,7 +245,7 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   }
 
   if (ghcCall)
-    return CSR_Ghc_SaveList;
+    return CSR_NoRegs_SaveList;
   if (Is64Bit) {
     if (IsWin64)
       return CSR_Win64_SaveList;
@@ -261,7 +261,7 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const uint32_t*
 X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   if (CC == CallingConv::GHC)
-    return CSR_Ghc_RegMask;
+    return CSR_NoRegs_RegMask;
   if (!Is64Bit)
     return CSR_32_RegMask;
   if (IsWin64)
