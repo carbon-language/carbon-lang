@@ -3925,18 +3925,38 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
   BasicBlock *BB = Release->getParent();
   if (Load->getParent() != BB) return;
 
-  // Walk down to find the store.
+  // Walk down to find the store and the release, which may be in either order.
   BasicBlock::iterator I = Load, End = BB->end();
   ++I;
   AliasAnalysis::Location Loc = AA->getLocation(Load);
-  while (I != End &&
-         (&*I == Release ||
-          IsRetain(GetBasicInstructionClass(I)) ||
-          !(AA->getModRefInfo(I, Loc) & AliasAnalysis::Mod)))
-    ++I;
-  StoreInst *Store = dyn_cast<StoreInst>(I);
-  if (!Store || !Store->isSimple()) return;
-  if (Store->getPointerOperand() != Loc.Ptr) return;
+  StoreInst *Store = 0;
+  bool SawRelease = false;
+  for (; !Store || !SawRelease; ++I) {
+    Instruction *Inst = I;
+    if (Inst == Release) {
+      SawRelease = true;
+      continue;
+    }
+
+    InstructionClass Class = GetBasicInstructionClass(Inst);
+
+    // Unrelated retains are harmless.
+    if (IsRetain(Class))
+      continue;
+
+    if (Store) {
+      // The store is the point where we're going to put the objc_storeStrong,
+      // so make sure there are no uses after it.
+      if (CanUse(Inst, Load, PA, Class))
+        return;
+    } else if (AA->getModRefInfo(Inst, Loc) & AliasAnalysis::Mod) {
+      // We are moving the load down to the store, so check for anything
+      // else which writes to the memory between the load and the store.
+      Store = dyn_cast<StoreInst>(Inst);
+      if (!Store || !Store->isSimple()) return;
+      if (Store->getPointerOperand() != Loc.Ptr) return;
+    }
+  }
 
   Value *New = StripPointerCastsAndObjCCalls(Store->getValueOperand());
 
