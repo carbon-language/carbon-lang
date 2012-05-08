@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "llvm/ADT/Hashing.h"
+#include "llvm/Support/TimeValue.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -300,13 +302,21 @@ const char *Process::ResetColor() {
 
 #if !defined(HAVE_ARC4RANDOM)
 static unsigned GetRandomNumberSeed() {
-  unsigned seed = ::time(NULL); // FIXME: It might not provide unique seed.
-  FILE *RandomSource = ::fopen("/dev/urandom", "r");
-  if (RandomSource) {
-    ::fread((void *)&seed, sizeof(seed), 1, RandomSource);
+  // Attempt to get the initial seed from /dev/urandom, if possible.
+  if (FILE *RandomSource = ::fopen("/dev/urandom", "r")) {
+    unsigned seed;
+    int count = ::fread((void *)&seed, sizeof(seed), 1, RandomSource);
     ::fclose(RandomSource);
+
+    // Return the seed if the read was successful.
+    if (count == 1)
+      return seed;
   }
-  return seed;
+
+  // Otherwise, swizzle the current time and the process ID to form a reasonable
+  // seed.
+  TimeValue Now = llvm::TimeValue::now();
+  return hash_combine(Now.seconds(), Now.nanoseconds(), ::getpid());
 }
 #endif
 
