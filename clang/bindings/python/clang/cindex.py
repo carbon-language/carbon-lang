@@ -1094,7 +1094,7 @@ class Cursor(Structure):
         """Return the semantic parent for this cursor."""
         if not hasattr(self, '_semantic_parent'):
             self._semantic_parent = Cursor_semantic_parent(self)
-        
+
         return self._semantic_parent
 
     @property
@@ -1102,9 +1102,9 @@ class Cursor(Structure):
         """Return the lexical parent for this cursor."""
         if not hasattr(self, '_lexical_parent'):
             self._lexical_parent = Cursor_lexical_parent(self)
-        
+
         return self._lexical_parent
-		
+
     def get_children(self):
         """Return an iterator for accessing the children of this cursor."""
 

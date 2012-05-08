@@ -80,7 +80,7 @@ kParentTest = """\
         class C {
             void f();
         }
-        
+
         void C::f() { }
     """
 def test_semantic_parent():
@@ -89,7 +89,7 @@ def test_semantic_parent():
     decl = get_cursor(tu, 'C')
     assert(len(curs) == 2)
     assert(curs[0].semantic_parent == curs[1].semantic_parent)
-    assert(curs[0].semantic_parent == decl)   
+    assert(curs[0].semantic_parent == decl)
 
 def test_lexical_parent():
     tu = get_tu(kParentTest, 'cpp')
@@ -97,7 +97,7 @@ def test_lexical_parent():
     decl = get_cursor(tu, 'C')
     assert(len(curs) == 2)
     assert(curs[0].lexical_parent != curs[1].lexical_parent)
-    assert(curs[0].lexical_parent == decl)   
+    assert(curs[0].lexical_parent == decl)
     assert(curs[1].lexical_parent == tu.cursor)
 
 def test_enum_type():
