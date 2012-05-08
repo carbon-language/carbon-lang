@@ -81,14 +81,9 @@ public:
 } // end anonymous namespace
 
 BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
-  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-    const RegionRawOffset &O = ER->getAsArrayOffset();
-
-    // FIXME: There are some ElementRegions for which we cannot compute
-    // raw offsets yet, including regions with symbolic offsets. These will be
-    // ignored by the store.
-    return BindingKey(O.getRegion(), O.getOffset().getQuantity(), k);
-  }
+  const RegionOffset &RO = R->getAsOffset();
+  if (RO.getRegion())
+    return BindingKey(RO.getRegion(), RO.getOffset(), k);
 
   return BindingKey(R, 0, k);
 }
@@ -648,7 +643,7 @@ void invalidateRegionsWorker::VisitBinding(SVal V) {
 
     for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI){
       const SubRegion *baseR = dyn_cast<SubRegion>(RI.getKey().getRegion());
-      if (baseR && baseR->isSubRegionOf(LazyR))
+      if (baseR && (baseR == LazyR || baseR->isSubRegionOf(LazyR)))
         VisitBinding(RI.getData());
     }
 

@@ -40,7 +40,7 @@ void taintTracking(int x) {
   // FIXME: We fail to propagate the taint here because RegionStore does not
   // handle ElementRegions with symbolic indexes.
   int addrDeref = *addr; // expected-warning + {{tainted}}
-  int _addrDeref = addrDeref;
+  int _addrDeref = addrDeref; // expected-warning + {{tainted}}
 
   // Tainted struct address, casts.
   struct XYStruct *xyPtr = 0;
