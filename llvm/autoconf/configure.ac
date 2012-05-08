@@ -1026,13 +1026,17 @@ dnl something if the tool was available.
 AC_PATH_PROG(BZIP2, [bzip2])
 AC_PATH_PROG(CAT, [cat])
 AC_PATH_PROG(DOXYGEN, [doxygen])
+AC_PATH_PROG(GROFF, [groff])
 AC_PATH_PROG(GZIPBIN, [gzip])
+AC_PATH_PROG(PDFROFF, [pdfroff])
+AC_PATH_PROG(RUNTEST, [runtest])
 DJ_AC_PATH_TCLSH
 AC_PATH_PROG(ZIP, [zip])
 AC_PATH_PROGS(OCAMLC, [ocamlc])
 AC_PATH_PROGS(OCAMLOPT, [ocamlopt])
 AC_PATH_PROGS(OCAMLDEP, [ocamldep])
 AC_PATH_PROGS(OCAMLDOC, [ocamldoc])
+AC_PATH_PROGS(GAS, [gas as])
 
 dnl Get the version of the linker in use.
 AC_LINK_GET_VERSION

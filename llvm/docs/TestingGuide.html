@@ -309,22 +309,23 @@ clang/test directory. </p>
   <a href="http://llvm.org/cmds/lit.html">Lit documentation</a> for more
   information. </p>
 
-  <p>The <tt>lit</tt> test runner looks at each file that is passed to it and
-  gathers any lines together that match "RUN:". These are the "RUN" lines that
-  specify how the test is to be run. So, each test script must contain RUN lines
-  if it is to do anything. If there are no RUN lines, <tt>lit</tt> function will
-  issue an error and the test will fail.</p>
+  <p>The <tt>llvm-runtests</tt> function looks at each file that is passed to
+  it and gathers any lines together that match "RUN:". These are the "RUN" lines
+  that specify how the test is to be run. So, each test script must contain
+  RUN lines if it is to do anything. If there are no RUN lines, the
+  <tt>llvm-runtests</tt> function will issue an error and the test will
+  fail.</p>
 
   <p>RUN lines are specified in the comments of the test program using the 
   keyword <tt>RUN</tt> followed by a colon, and lastly the command (pipeline) 
   to execute.  Together, these lines form the "script" that 
-  <tt>lit</tt> executes to run the test case.  The syntax of the RUN lines is
-  similar to a shell's syntax for pipelines including I/O redirection and
-  variable substitution.  However, even though these lines may <i>look</i> like
-  a shell script, they are not. RUN lines are interpreted directly by the
-  Tcl <tt>exec</tt> command. They are never executed by a shell. Consequently
-  the syntax differs from normal shell script syntax in a few ways.  You can
-  specify as many RUN lines as needed.</p>
+  <tt>llvm-runtests</tt> executes to run the test case.  The syntax of the
+  RUN lines is similar to a shell's syntax for pipelines including I/O
+  redirection and variable substitution.  However, even though these lines 
+  may <i>look</i> like a shell script, they are not. RUN lines are interpreted 
+  directly by the Tcl <tt>exec</tt> command. They are never executed by a 
+  shell. Consequently the syntax differs from normal shell script syntax in a 
+  few ways.  You can specify as many RUN lines as needed.</p>
 
   <p>lit performs substitution on each RUN line to replace LLVM tool
   names with the full paths to the executable built for each tool (in
@@ -811,6 +812,13 @@ define two separate CHECK lines that match on the same line.
 ; XFAIL: darwin,sun
 </pre>
 </div>
+
+  <p>To make the output more useful, the <tt>llvm_runtest</tt> function wil
+  scan the lines of the test case for ones that contain a pattern that matches
+  PR[0-9]+. This is the syntax for specifying a PR (Problem Report) number that
+  is related to the test case. The number after "PR" specifies the LLVM bugzilla
+  number. When a PR number is specified, it will be used in the pass/fail
+  reporting. This is useful to quickly get some context when a test fails.</p>
 
   <p>Finally, any line that contains "END." will cause the special
   interpretation of lines to terminate. This is generally done right after the
