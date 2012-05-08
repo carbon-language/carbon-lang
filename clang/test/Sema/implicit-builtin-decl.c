@@ -55,3 +55,5 @@ void snprintf() { }
 
 // PR8316
 void longjmp(); // expected-warning{{declaration of built-in function 'longjmp' requires inclusion of the header <setjmp.h>}}
+
+extern float fmaxf(float, float);
