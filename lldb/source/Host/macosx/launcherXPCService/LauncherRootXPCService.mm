@@ -33,10 +33,18 @@ int _validate_authorization(xpc_object_t message)
 	
 	// Given a set of rights, return the subset that is currently authorized by the AuthorizationRef given; count(subset) > 0  -> success.
 	bool auth_success = (status == errAuthorizationSuccess && outAuthorizedRights && outAuthorizedRights->count > 0) ? true : false;
-	
 	if (outAuthorizedRights) AuthorizationFreeItemSet(outAuthorizedRights);
-        
-        return auth_success ? 0 : 3;
+    if (!auth_success)
+        return 3;
+    
+    // On Lion, because the rights initially doesn't exist in /etc/authorization, if an admin user logs in and uses lldb within the first 5 minutes,
+    // it is possible to do AuthorizationCopyRights on LaunchUsingXPCRightName and get the rights back.
+    // As another security measure, we make sure that the LaunchUsingXPCRightName rights actually exists.
+    status = AuthorizationRightGet(LaunchUsingXPCRightName, NULL);
+    if (status == errAuthorizationSuccess)
+        return 0;
+    else
+        return 4;
 }
 
 #endif
