@@ -46,8 +46,8 @@ namespace llvm {
   class DIObjCProperty;
 
   /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
-  /// This should not be stored in a container, because underly MDNode may
-  /// change in certain situations.
+  /// This should not be stored in a container, because the underlying MDNode
+  /// may change in certain situations.
   class DIDescriptor {
   public:
     enum {
