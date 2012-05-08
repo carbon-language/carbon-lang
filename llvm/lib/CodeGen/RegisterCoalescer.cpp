@@ -118,6 +118,12 @@ namespace {
     /// can use this information below to update aliases.
     bool joinIntervals(CoalescerPair &CP);
 
+    /// Attempt joining with a reserved physreg.
+    bool joinReservedPhysReg(CoalescerPair &CP);
+
+    /// Check for interference with a normal unreserved physreg.
+    bool canJoinPhysReg(CoalescerPair &CP);
+
     /// adjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
     /// the source value number is defined by a copy from the destination reg
     /// see if we can merge these two destination reg valno# into a single
@@ -1188,6 +1194,96 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   return true;
 }
 
+/// Attempt joining with a reserved physreg.
+bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
+  assert(CP.isPhys() && "Must be a physreg copy");
+  assert(RegClassInfo.isReserved(CP.getDstReg()) && "Not a reserved register");
+  LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
+  DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), TRI); dbgs() << "\n"; });
+
+  assert(CP.isFlipped() && RHS.containsOneValue() &&
+         "Invalid join with reserved register");
+
+  // Optimization for reserved registers like ESP. We can only merge with a
+  // reserved physreg if RHS has a single value that is a copy of CP.DstReg().
+  // The live range of the reserved register will look like a set of dead defs
+  // - we don't properly track the live range of reserved registers.
+
+  // Deny any overlapping intervals.  This depends on all the reserved
+  // register live ranges to look like dead defs.
+  for (const uint16_t *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
+    if (!LIS->hasInterval(*AS)) {
+      // Make sure at least DstReg itself exists before attempting a join.
+      if (*AS == CP.getDstReg())
+        LIS->getOrCreateInterval(CP.getDstReg());
+      continue;
+    }
+    if (RHS.overlaps(LIS->getInterval(*AS))) {
+      DEBUG(dbgs() << "\t\tInterference: " << PrintReg(*AS, TRI) << '\n');
+      return false;
+    }
+  }
+  // Skip any value computations, we are not adding new values to the
+  // reserved register.  Also skip merging the live ranges, the reserved
+  // register live range doesn't need to be accurate as long as all the
+  // defs are there.
+  return true;
+}
+
+bool RegisterCoalescer::canJoinPhysReg(CoalescerPair &CP) {
+  assert(CP.isPhys() && "Must be a physreg copy");
+  // If a live interval is a physical register, check for interference with any
+  // aliases. The interference check implemented here is a bit more
+  // conservative than the full interfeence check below. We allow overlapping
+  // live ranges only when one is a copy of the other.
+  LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
+  DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), TRI); dbgs() << "\n"; });
+
+  // Check if a register mask clobbers DstReg.
+  BitVector UsableRegs;
+  if (LIS->checkRegMaskInterference(RHS, UsableRegs) &&
+      !UsableRegs.test(CP.getDstReg())) {
+    DEBUG(dbgs() << "\t\tRegister mask interference.\n");
+    return false;
+  }
+
+  for (const uint16_t *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
+    if (!LIS->hasInterval(*AS))
+      continue;
+    const LiveInterval &LHS = LIS->getInterval(*AS);
+    LiveInterval::const_iterator LI = LHS.begin();
+    for (LiveInterval::const_iterator RI = RHS.begin(), RE = RHS.end();
+         RI != RE; ++RI) {
+      LI = std::lower_bound(LI, LHS.end(), RI->start);
+      // Does LHS have an overlapping live range starting before RI?
+      if ((LI != LHS.begin() && LI[-1].end > RI->start) &&
+          (RI->start != RI->valno->def ||
+           !CP.isCoalescable(LIS->getInstructionFromIndex(RI->start)))) {
+        DEBUG({
+          dbgs() << "\t\tInterference from alias: ";
+          LHS.print(dbgs(), TRI);
+          dbgs() << "\n\t\tOverlap at " << RI->start << " and no copy.\n";
+        });
+        return false;
+      }
+
+      // Check that LHS ranges beginning in this range are copies.
+      for (; LI != LHS.end() && LI->start < RI->end; ++LI) {
+        if (LI->start != LI->valno->def ||
+            !CP.isCoalescable(LIS->getInstructionFromIndex(LI->start))) {
+          DEBUG({
+            dbgs() << "\t\tInterference from alias: ";
+            LHS.print(dbgs(), TRI);
+            dbgs() << "\n\t\tDef at " << LI->start << " is not a copy.\n";
+          });
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
 /// ComputeUltimateVN - Assuming we are going to join two live intervals,
 /// compute what the resultant value numbers for each value in the input two
 /// ranges will be.  This is complicated by copies between the two which can
@@ -1312,86 +1408,16 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
 /// joinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.
 bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
+  // Handle physreg joins separately.
+  if (CP.isPhys()) {
+    if (RegClassInfo.isReserved(CP.getDstReg()))
+      return joinReservedPhysReg(CP);
+    if (!canJoinPhysReg(CP))
+      return false;
+  }
+
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), TRI); dbgs() << "\n"; });
-
-  // If a live interval is a physical register, check for interference with any
-  // aliases. The interference check implemented here is a bit more conservative
-  // than the full interfeence check below. We allow overlapping live ranges
-  // only when one is a copy of the other.
-  if (CP.isPhys()) {
-    // Optimization for reserved registers like ESP.
-    // We can only merge with a reserved physreg if RHS has a single value that
-    // is a copy of CP.DstReg().  The live range of the reserved register will
-    // look like a set of dead defs - we don't properly track the live range of
-    // reserved registers.
-    if (RegClassInfo.isReserved(CP.getDstReg())) {
-      assert(CP.isFlipped() && RHS.containsOneValue() &&
-             "Invalid join with reserved register");
-      // Deny any overlapping intervals.  This depends on all the reserved
-      // register live ranges to look like dead defs.
-      for (const uint16_t *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
-        if (!LIS->hasInterval(*AS)) {
-          // Make sure at least DstReg itself exists before attempting a join.
-          if (*AS == CP.getDstReg())
-            LIS->getOrCreateInterval(CP.getDstReg());
-          continue;
-        }
-        if (RHS.overlaps(LIS->getInterval(*AS))) {
-          DEBUG(dbgs() << "\t\tInterference: " << PrintReg(*AS, TRI) << '\n');
-          return false;
-        }
-      }
-      // Skip any value computations, we are not adding new values to the
-      // reserved register.  Also skip merging the live ranges, the reserved
-      // register live range doesn't need to be accurate as long as all the
-      // defs are there.
-      return true;
-    }
-
-    // Check if a register mask clobbers DstReg.
-    BitVector UsableRegs;
-    if (LIS->checkRegMaskInterference(RHS, UsableRegs) &&
-        !UsableRegs.test(CP.getDstReg())) {
-      DEBUG(dbgs() << "\t\tRegister mask interference.\n");
-      return false;
-    }
-
-    for (const uint16_t *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
-      if (!LIS->hasInterval(*AS))
-        continue;
-      const LiveInterval &LHS = LIS->getInterval(*AS);
-      LiveInterval::const_iterator LI = LHS.begin();
-      for (LiveInterval::const_iterator RI = RHS.begin(), RE = RHS.end();
-           RI != RE; ++RI) {
-        LI = std::lower_bound(LI, LHS.end(), RI->start);
-        // Does LHS have an overlapping live range starting before RI?
-        if ((LI != LHS.begin() && LI[-1].end > RI->start) &&
-            (RI->start != RI->valno->def ||
-             !CP.isCoalescable(LIS->getInstructionFromIndex(RI->start)))) {
-          DEBUG({
-            dbgs() << "\t\tInterference from alias: ";
-            LHS.print(dbgs(), TRI);
-            dbgs() << "\n\t\tOverlap at " << RI->start << " and no copy.\n";
-          });
-          return false;
-        }
-
-        // Check that LHS ranges beginning in this range are copies.
-        for (; LI != LHS.end() && LI->start < RI->end; ++LI) {
-          if (LI->start != LI->valno->def ||
-              !CP.isCoalescable(LIS->getInstructionFromIndex(LI->start))) {
-            DEBUG({
-              dbgs() << "\t\tInterference from alias: ";
-              LHS.print(dbgs(), TRI);
-              dbgs() << "\n\t\tDef at " << LI->start << " is not a copy.\n";
-            });
-            return false;
-          }
-        }
-      }
-    }
-  }
 
   // Compute the final value assignment, assuming that the live ranges can be
   // coalesced.
