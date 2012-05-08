@@ -86,6 +86,48 @@ c_object_p = POINTER(c_void_p)
 
 lib = get_cindex_library()
 
+### Exception Classes ###
+
+class TranslationUnitLoadError(Exception):
+    """Represents an error that occurred when loading a TranslationUnit.
+
+    This is raised in the case where a TranslationUnit could not be
+    instantiated due to failure in the libclang library.
+
+    FIXME: Make libclang expose additional error information in this scenario.
+    """
+    pass
+
+class TranslationUnitSaveError(Exception):
+    """Represents an error that occurred when saving a TranslationUnit.
+
+    Each error has associated with it an enumerated value, accessible under
+    e.save_error. Consumers can compare the value with one of the ERROR_
+    constants in this class.
+    """
+
+    # Indicates that an unknown error occurred. This typically indicates that
+    # I/O failed during save.
+    ERROR_UNKNOWN = 1
+
+    # Indicates that errors during translation prevented saving. The errors
+    # should be available via the TranslationUnit's diagnostics.
+    ERROR_TRANSLATION_ERRORS = 2
+
+    # Indicates that the translation unit was somehow invalid.
+    ERROR_INVALID_TU = 3
+
+    def __init__(self, enumeration, message):
+        assert isinstance(enumeration, int)
+
+        if enumeration < 1 or enumeration > 3:
+            raise Exception("Encountered undefined TranslationUnit save error "
+                            "constant: %d. Please file a bug to have this "
+                            "value supported." % enumeration)
+
+        self.save_error = enumeration
+        Exception.__init__(self, message)
+
 ### Structures and Utility Classes ###
 
 class _CXString(Structure):
@@ -1621,15 +1663,11 @@ class Index(ClangObject):
         Index_dispose(self)
 
     def read(self, path):
-        """Load the translation unit from the given AST file."""
-        ptr = TranslationUnit_read(self, path)
-        if ptr:
-            return TranslationUnit(ptr)
-        return None
+        """Load a TranslationUnit from the given AST file."""
+        return TranslationUnit.from_ast(path, self)
 
-    def parse(self, path, args = [], unsaved_files = [], options = 0):
-        """
-        Load the translation unit from the given source code file by running
+    def parse(self, path, args=None, unsaved_files=None, options = 0):
+        """Load the translation unit from the given source code file by running
         clang and generating the AST before loading. Additional command line
         parameters can be passed to clang via the args parameter.
 
@@ -1637,39 +1675,150 @@ class Index(ClangObject):
         to as unsaved_files, the first item should be the filenames to be mapped
         and the second should be the contents to be substituted for the
         file. The contents may be passed as strings or file objects.
-        """
-        arg_array = 0
-        if len(args):
-            arg_array = (c_char_p * len(args))(* args)
-        unsaved_files_array = 0
-        if len(unsaved_files):
-            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
-            for i,(name,value) in enumerate(unsaved_files):
-                if not isinstance(value, str):
-                    # FIXME: It would be great to support an efficient version
-                    # of this, one day.
-                    value = value.read()
-                    print value
-                if not isinstance(value, str):
-                    raise TypeError,'Unexpected unsaved file contents.'
-                unsaved_files_array[i].name = name
-                unsaved_files_array[i].contents = value
-                unsaved_files_array[i].length = len(value)
-        ptr = TranslationUnit_parse(self, path, arg_array, len(args),
-                                    unsaved_files_array, len(unsaved_files),
-                                    options)
-        if ptr:
-            return TranslationUnit(ptr)
-        return None
 
+        If an error was encountered during parsing, a TranslationUnitLoadError
+        will be raised.
+        """
+        return TranslationUnit.from_source(path, args, unsaved_files, options,
+                                           self)
 
 class TranslationUnit(ClangObject):
-    """
-    The TranslationUnit class represents a source code translation unit and
-    provides read-only access to its top-level declarations.
+    """Represents a source code translation unit.
+
+    This is one of the main types in the API. Any time you wish to interact
+    with Clang's representation of a source file, you typically start with a
+    translation unit.
     """
 
-    def __init__(self, ptr):
+    # Default parsing mode.
+    PARSE_NONE = 0
+
+    # Instruct the parser to create a detailed processing record containing
+    # metadata not normally retained.
+    PARSE_DETAILED_PROCESSING_RECORD = 1
+
+    # Indicates that the translation unit is incomplete. This is typically used
+    # when parsing headers.
+    PARSE_INCOMPLETE = 2
+
+    # Instruct the parser to create a pre-compiled preamble for the translation
+    # unit. This caches the preamble (included files at top of source file).
+    # This is useful if the translation unit will be reparsed and you don't
+    # want to incur the overhead of reparsing the preamble.
+    PARSE_PRECOMPILED_PREAMBLE = 4
+
+    # Cache code completion information on parse. This adds time to parsing but
+    # speeds up code completion.
+    PARSE_CACHE_COMPLETION_RESULTS = 8
+
+    # Flags with values 16 and 32 are deprecated and intentionally omitted.
+
+    # Do not parse function bodies. This is useful if you only care about
+    # searching for declarations/definitions.
+    PARSE_SKIP_FUNCTION_BODIES = 64
+
+    @classmethod
+    def from_source(cls, filename, args=None, unsaved_files=None, options=0,
+                    index=None):
+        """Create a TranslationUnit by parsing source.
+
+        This is capable of processing source code both from files on the
+        filesystem as well as in-memory contents.
+
+        Command-line arguments that would be passed to clang are specified as
+        a list via args. These can be used to specify include paths, warnings,
+        etc. e.g. ["-Wall", "-I/path/to/include"].
+
+        In-memory file content can be provided via unsaved_files. This is an
+        iterable of 2-tuples. The first element is the str filename. The
+        second element defines the content. Content can be provided as str
+        source code or as file objects (anything with a read() method). If
+        a file object is being used, content will be read until EOF and the
+        read cursor will not be reset to its original position.
+
+        options is a bitwise or of TranslationUnit.PARSE_XXX flags which will
+        control parsing behavior.
+
+        To parse source from the filesystem, the filename of the file to parse
+        is specified by the filename argument. Or, filename could be None and
+        the args list would contain the filename(s) to parse.
+
+        To parse source from an in-memory buffer, set filename to the virtual
+        filename you wish to associate with this source (e.g. "test.c"). The
+        contents of that file are then provided in unsaved_files.
+
+        If an error occurs, a TranslationUnitLoadError is raised.
+
+        Please note that a TranslationUnit with parser errors may be returned.
+        It is the caller's responsibility to check tu.diagnostics for errors.
+
+        Also note that Clang infers the source language from the extension of
+        the input filename. If you pass in source code containing a C++ class
+        declaration with the filename "test.c" parsing will fail.
+        """
+        if args is None:
+            args = []
+
+        if unsaved_files is None:
+            unsaved_files = []
+
+        if index is None:
+            index = Index.create()
+
+        args_array = None
+        if len(args) > 0:
+            args_array = (c_char_p * len(args))(* args)
+
+        unsaved_array = None
+        if len(unsaved_files) > 0:
+            unsaved_array = (_CXUnsavedFile * len(unsaved_files))()
+            for i, (name, contents) in enumerate(unsaved_files):
+                if hasattr(contents, "read"):
+                    contents = contents.read()
+
+                unsaved_array[i].name = name
+                unsaved_array[i].contents = contents
+                unsaved_array[i].length = len(contents)
+
+        ptr = TranslationUnit_parse(index, filename, args_array, len(args),
+                                    unsaved_array, len(unsaved_files),
+                                    options)
+
+        if ptr is None:
+            raise TranslationUnitLoadError("Error parsing translation unit.")
+
+        return cls(ptr, index=index)
+
+    @classmethod
+    def from_ast_file(cls, filename, index=None):
+        """Create a TranslationUnit instance from a saved AST file.
+
+        A previously-saved AST file (provided with -emit-ast or
+        TranslationUnit.save()) is loaded from the filename specified.
+
+        If the file cannot be loaded, a TranslationUnitLoadError will be
+        raised.
+
+        index is optional and is the Index instance to use. If not provided,
+        a default Index will be created.
+        """
+        if index is None:
+            index = Index.create()
+
+        ptr = TranslationUnit_read(index, filename)
+        if ptr is None:
+            raise TranslationUnitLoadError(filename)
+
+        return cls(ptr=ptr, index=index)
+
+    def __init__(self, ptr, index):
+        """Create a TranslationUnit instance.
+
+        TranslationUnits should be created using one of the from_* @classmethod
+        functions above. __init__ is only called internally.
+        """
+        assert isinstance(index, Index)
+
         ClangObject.__init__(self, ptr)
 
     def __del__(self):
@@ -1725,7 +1874,7 @@ class TranslationUnit(ClangObject):
 
         return DiagIterator(self)
 
-    def reparse(self, unsaved_files = [], options = 0):
+    def reparse(self, unsaved_files=None, options=0):
         """
         Reparse an already parsed translation unit.
 
@@ -1734,6 +1883,9 @@ class TranslationUnit(ClangObject):
         and the second should be the contents to be substituted for the
         file. The contents may be passed as strings or file objects.
         """
+        if unsaved_files is None:
+            unsaved_files = []
+
         unsaved_files_array = 0
         if len(unsaved_files):
             unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
@@ -1751,7 +1903,29 @@ class TranslationUnit(ClangObject):
         ptr = TranslationUnit_reparse(self, len(unsaved_files),
                                       unsaved_files_array,
                                       options)
-    def codeComplete(self, path, line, column, unsaved_files = [], options = 0):
+
+    def save(self, filename):
+        """Saves the TranslationUnit to a file.
+
+        This is equivalent to passing -emit-ast to the clang frontend. The
+        saved file can be loaded back into a TranslationUnit. Or, if it
+        corresponds to a header, it can be used as a pre-compiled header file.
+
+        If an error occurs while saving, a TranslationUnitSaveError is raised.
+        If the error was TranslationUnitSaveError.ERROR_INVALID_TU, this means
+        the constructed TranslationUnit was not valid at time of save. In this
+        case, the reason(s) why should be available via
+        TranslationUnit.diagnostics().
+
+        filename -- The path to save the translation unit to.
+        """
+        options = TranslationUnit_defaultSaveOptions(self)
+        result = int(TranslationUnit_save(self, filename, options))
+        if result != 0:
+            raise TranslationUnitSaveError(result,
+                'Error saving TranslationUnit.')
+
+    def codeComplete(self, path, line, column, unsaved_files=[], options=0):
         """
         Code complete in this translation unit.
 
@@ -1760,6 +1934,9 @@ class TranslationUnit(ClangObject):
         and the second should be the contents to be substituted for the
         file. The contents may be passed as strings or file objects.
         """
+        if unsaved_files is None:
+            unsaved_files = []
+
         unsaved_files_array = 0
         if len(unsaved_files):
             unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
@@ -2126,6 +2303,14 @@ TranslationUnit_includes.argtypes = [TranslationUnit,
                                      TranslationUnit_includes_callback,
                                      py_object]
 
+TranslationUnit_defaultSaveOptions = lib.clang_defaultSaveOptions
+TranslationUnit_defaultSaveOptions.argtypes = [TranslationUnit]
+TranslationUnit_defaultSaveOptions.restype = c_uint
+
+TranslationUnit_save = lib.clang_saveTranslationUnit
+TranslationUnit_save.argtypes = [TranslationUnit, c_char_p, c_uint]
+TranslationUnit_save.restype = c_int
+
 # File Functions
 File_getFile = lib.clang_getFile
 File_getFile.argtypes = [TranslationUnit, c_char_p]
@@ -2177,8 +2362,18 @@ _clang_getCompletionPriority.argtypes = [c_void_p]
 _clang_getCompletionPriority.restype = c_int
 
 
-###
-
-__all__ = ['Index', 'TranslationUnit', 'Cursor', 'CursorKind', 'Type', 'TypeKind',
-           'Diagnostic', 'FixIt', 'CodeCompletionResults', 'SourceRange',
-           'SourceLocation', 'File']
+__all__ = [
+    'CodeCompletionResults',
+    'CursorKind',
+    'Cursor',
+    'Diagnostic',
+    'File',
+    'FixIt',
+    'Index',
+    'SourceLocation',
+    'SourceRange',
+    'TranslationUnitLoadError',
+    'TranslationUnit',
+    'TypeKind',
+    'Type',
+]

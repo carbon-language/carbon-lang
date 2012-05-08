@@ -1,7 +1,7 @@
 # This file provides common utility functions for the test suite.
 
 from clang.cindex import Cursor
-from clang.cindex import Index
+from clang.cindex import TranslationUnit
 
 def get_tu(source, lang='c', all_warnings=False):
     """Obtain a translation unit from source and language.
@@ -27,10 +27,8 @@ def get_tu(source, lang='c', all_warnings=False):
     if all_warnings:
         args += ['-Wall', '-Wextra']
 
-    index = Index.create()
-    tu = index.parse(name, args=args, unsaved_files=[(name, source)])
-    assert tu is not None
-    return tu
+    return TranslationUnit.from_source(name, args, unsaved_files=[(name,
+                                       source)])
 
 def get_cursor(source, spelling):
     """Obtain a cursor from a source object.
