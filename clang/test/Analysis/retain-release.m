@@ -1784,3 +1784,17 @@ void test_objc_arrays() {
     }
 }
 
+// Test NSLog doesn't escape tracked objects.
+void rdar11400885(int y)
+{
+  @autoreleasepool {
+    NSString *printString;
+    if(y > 2)
+      printString = [[NSString alloc] init];
+    else
+      printString = [[NSString alloc] init];
+    NSLog(@"Once %@", printString);
+    [printString release];
+    NSLog(@"Again: %@", printString); // expected-warning {{Reference-counted object is used after it is released}}
+  }
+}
