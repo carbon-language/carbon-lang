@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/StaticAnalyzer/Core/PathSensitive/APSIntType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 
@@ -106,9 +107,7 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
     return UnknownVal();
 
   llvm::APSInt i = cast<nonloc::ConcreteInt>(val).getValue();
-  i.setIsUnsigned(castTy->isUnsignedIntegerOrEnumerationType() || 
-                  Loc::isLocType(castTy));
-  i = i.extOrTrunc(Context.getTypeSize(castTy));
+  BasicVals.getAPSIntType(castTy).apply(i);
 
   if (isLocType)
     return makeIntLocVal(i);
@@ -139,9 +138,7 @@ SVal SimpleSValBuilder::evalCastFromLoc(Loc val, QualType castTy) {
       return makeLocAsInteger(val, BitWidth);
 
     llvm::APSInt i = cast<loc::ConcreteInt>(val).getValue();
-    i.setIsUnsigned(castTy->isUnsignedIntegerOrEnumerationType() || 
-                    Loc::isLocType(castTy));
-    i = i.extOrTrunc(BitWidth);
+    BasicVals.getAPSIntType(castTy).apply(i);
     return makeIntVal(i);
   }
 
@@ -341,8 +338,7 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
         case nonloc::ConcreteIntKind: {
           // Transform the integer into a location and compare.
           llvm::APSInt i = cast<nonloc::ConcreteInt>(rhs).getValue();
-          i.setIsUnsigned(true);
-          i = i.extOrTrunc(Context.getTypeSize(Context.VoidPtrTy));
+          BasicVals.getAPSIntType(Context.VoidPtrTy).apply(i);
           return evalBinOpLL(state, op, lhsL, makeLoc(i), resultTy);
         }
         default:
@@ -365,23 +361,16 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
         llvm::APSInt RHSValue = *KnownRHSValue;
         if (BinaryOperator::isComparisonOp(op)) {
           // We're looking for a type big enough to compare the two values.
-          uint32_t LeftWidth = LHSValue.getBitWidth();
-          uint32_t RightWidth = RHSValue.getBitWidth();
-
-          // Based on the conversion rules of [C99 6.3.1.8] and the example
-          // in SemaExpr's handleIntegerConversion().
-          if (LeftWidth > RightWidth)
-            RHSValue = RHSValue.extend(LeftWidth);
-          else if (LeftWidth < RightWidth)
-            LHSValue = LHSValue.extend(RightWidth);
-          else if (LHSValue.isUnsigned() != RHSValue.isUnsigned()) {
-            LHSValue.setIsUnsigned(true);
-            RHSValue.setIsUnsigned(true);
-          }
+          // FIXME: This is not correct. char + short will result in a promotion
+          // to int. Unfortunately we have lost types by this point.
+          APSIntType CompareType = std::max(APSIntType(LHSValue),
+                                            APSIntType(RHSValue));
+          CompareType.apply(LHSValue);
+          CompareType.apply(RHSValue);
         } else if (!BinaryOperator::isShiftOp(op)) {
-          // FIXME: These values don't need to be persistent.
-          LHSValue = BasicVals.Convert(resultTy, LHSValue);
-          RHSValue = BasicVals.Convert(resultTy, RHSValue);          
+          APSIntType IntType = BasicVals.getAPSIntType(resultTy);
+          IntType.apply(LHSValue);
+          IntType.apply(RHSValue);
         }
 
         const llvm::APSInt *Result =
@@ -490,12 +479,9 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
               // (such as x+1U+2LL). The rules for implicit conversions should
               // choose a reasonable type to preserve the expression, and will
               // at least match how the value is going to be used.
-
-              // FIXME: These values don't need to be persistent.
-              const llvm::APSInt &first =
-                  BasicVals.Convert(resultTy, symIntExpr->getRHS());
-              const llvm::APSInt &second =
-                  BasicVals.Convert(resultTy, *RHSValue);
+              APSIntType IntType = BasicVals.getAPSIntType(resultTy);
+              const llvm::APSInt &first = IntType.convert(symIntExpr->getRHS());
+              const llvm::APSInt &second = IntType.convert(*RHSValue);
 
               const llvm::APSInt *newRHS;
               if (lop == op)
