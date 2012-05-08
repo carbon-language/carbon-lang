@@ -300,8 +300,8 @@ static const RecordType *getRecordType(QualType QT) {
 }
 
 
-bool checkBaseClassIsLockableCallback(const CXXBaseSpecifier *Specifier,
-                                      CXXBasePath &Path, void *UserData) {
+static bool checkBaseClassIsLockableCallback(const CXXBaseSpecifier *Specifier,
+                                             CXXBasePath &Path, void *Unused) {
   const RecordType *RT = Specifier->getType()->getAs<RecordType>();
   if (RT->getDecl()->getAttr<LockableAttr>())
     return true;
@@ -1690,11 +1690,11 @@ static void handleObjCRequiresPropertyDefsAttr(Sema &S, Decl *D,
                                  Attr.getRange(), S.Context));
 }
 
-bool checkAvailabilityAttr(Sema &S, SourceRange Range,
-                           IdentifierInfo *Platform,
-                           VersionTuple Introduced,
-                           VersionTuple Deprecated,
-                           VersionTuple Obsoleted) {
+static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
+                                  IdentifierInfo *Platform,
+                                  VersionTuple Introduced,
+                                  VersionTuple Deprecated,
+                                  VersionTuple Obsoleted) {
   StringRef PlatformName
     = AvailabilityAttr::getPrettyPlatformName(Platform->getName());
   if (PlatformName.empty())
@@ -1868,7 +1868,7 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   // Find the last Decl that has an attribute.
-  VisibilityAttr *PrevAttr;
+  VisibilityAttr *PrevAttr = 0;
   assert(D->redecls_begin() == D);
   for (Decl::redecl_iterator I = D->redecls_begin(), E = D->redecls_end();
        I != E; ++I) {
