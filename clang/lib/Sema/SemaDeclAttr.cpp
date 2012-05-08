@@ -1880,7 +1880,7 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (PrevAttr) {
     VisibilityAttr::VisibilityType PrevVisibility = PrevAttr->getVisibility();
     if (PrevVisibility != type) {
-      S.Diag(Attr.getLoc(), diag::err_mismatched_visibilit);
+      S.Diag(Attr.getLoc(), diag::err_mismatched_visibility);
       S.Diag(PrevAttr->getLocation(), diag::note_previous_attribute);
       return;
     }

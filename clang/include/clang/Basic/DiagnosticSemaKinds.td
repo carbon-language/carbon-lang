@@ -1831,7 +1831,7 @@ def warn_attribute_unknown_visibility : Warning<"unknown visibility '%0'">;
 def warn_attribute_protected_visibility :
   Warning<"target does not support 'protected' visibility; using 'default'">,
   InGroup<DiagGroup<"unsupported-visibility">>;
-def err_mismatched_visibilit: Error<"visibility does not match previous declaration">;
+def err_mismatched_visibility: Error<"visibility does not match previous declaration">;
 def note_previous_attribute : Note<"previous attribute is here">;
 def err_unknown_machine_mode : Error<"unknown machine mode %0">;
 def err_unsupported_machine_mode : Error<"unsupported machine mode %0">;
