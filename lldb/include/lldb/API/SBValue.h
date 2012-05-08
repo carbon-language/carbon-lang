@@ -382,7 +382,6 @@ protected:
     
 private:
     lldb::ValueObjectSP m_opaque_sp;
-    friend void* _wrap_SBValue_GetNonSyntheticValue(void*,void*);
 };
 
 } // namespace lldb
