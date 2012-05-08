@@ -366,42 +366,18 @@ int main(int argc, char **argv) {
   if (!TargetTriple.empty())
     mod.setTargetTriple(Triple::normalize(TargetTriple));
 
+  // Figure out the target triple.
   Triple TheTriple(mod.getTargetTriple());
   if (TheTriple.getTriple().empty())
     TheTriple.setTriple(sys::getDefaultTargetTriple());
 
-  // Allocate target machine.  First, check whether the user has explicitly
-  // specified an architecture to compile for. If so we have to look it up by
-  // name, because it might be a backend that has no mapping to a target triple.
-  const Target *TheTarget = 0;
-  if (!MArch.empty()) {
-    for (TargetRegistry::iterator it = TargetRegistry::begin(),
-           ie = TargetRegistry::end(); it != ie; ++it) {
-      if (MArch == it->getName()) {
-        TheTarget = &*it;
-        break;
-      }
-    }
-
-    if (!TheTarget) {
-      errs() << argv[0] << ": error: invalid target '" << MArch << "'.\n";
-      return 1;
-    }
-
-    // Adjust the triple to match (if known), otherwise stick with the
-    // module/host triple.
-    Triple::ArchType Type = Triple::getArchTypeForLLVMName(MArch);
-    if (Type != Triple::UnknownArch)
-      TheTriple.setArch(Type);
-  } else {
-    std::string Err;
-    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), Err);
-    if (TheTarget == 0) {
-      errs() << argv[0] << ": error auto-selecting target for module '"
-             << Err << "'.  Please use the -march option to explicitly "
-             << "pick a target.\n";
-      return 1;
-    }
+  // Get the target specific parser.
+  std::string Error;
+  const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
+                                                         Error);
+  if (!TheTarget) {
+    errs() << argv[0] << ": " << Error;
+    return 1;
   }
 
   // Package up features to be passed to target/subtarget

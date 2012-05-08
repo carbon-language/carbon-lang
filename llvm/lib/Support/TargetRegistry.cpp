@@ -23,6 +23,47 @@ TargetRegistry::iterator TargetRegistry::begin() {
   return iterator(FirstTarget);
 }
 
+const Target *TargetRegistry::lookupTarget(const std::string &ArchName,
+                                           Triple &TheTriple,
+                                           std::string &Error) {
+  // Allocate target machine.  First, check whether the user has explicitly
+  // specified an architecture to compile for. If so we have to look it up by
+  // name, because it might be a backend that has no mapping to a target triple.
+  const Target *TheTarget = 0;
+  if (!ArchName.empty()) {
+    for (TargetRegistry::iterator it = TargetRegistry::begin(),
+           ie = TargetRegistry::end(); it != ie; ++it) {
+      if (ArchName == it->getName()) {
+        TheTarget = &*it;
+        break;
+      }
+    }
+
+    if (!TheTarget) {
+      Error = "error: invalid target '" + ArchName + "'.\n";
+      return 0;
+    }
+
+    // Adjust the triple to match (if known), otherwise stick with the
+    // given triple.
+    Triple::ArchType Type = Triple::getArchTypeForLLVMName(ArchName);
+    if (Type != Triple::UnknownArch)
+      TheTriple.setArch(Type);
+  } else {
+    // Get the target specific parser.
+    std::string TempError;
+    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), TempError);
+    if (TheTarget == 0) {
+      Error = ": error: unable to get target for '"
+            + TheTriple.getTriple()
+            + "', see --version and --triple.\n";
+      return 0;
+    }
+  }
+
+  return TheTarget;
+}
+
 const Target *TargetRegistry::lookupTarget(const std::string &TT,
                                            std::string &Error) {
   // Provide special warning when no targets are initialized.

@@ -180,38 +180,16 @@ static const Target *GetTarget(const char *ProgName) {
     TripleName = sys::getDefaultTargetTriple();
   Triple TheTriple(Triple::normalize(TripleName));
 
-  const Target *TheTarget = 0;
-  if (!ArchName.empty()) {
-    for (TargetRegistry::iterator it = TargetRegistry::begin(),
-           ie = TargetRegistry::end(); it != ie; ++it) {
-      if (ArchName == it->getName()) {
-        TheTarget = &*it;
-        break;
-      }
-    }
-
-    if (!TheTarget) {
-      errs() << ProgName << ": error: invalid target '" << ArchName << "'.\n";
-      return 0;
-    }
-
-    // Adjust the triple to match (if known), otherwise stick with the
-    // module/host triple.
-    Triple::ArchType Type = Triple::getArchTypeForLLVMName(ArchName);
-    if (Type != Triple::UnknownArch)
-      TheTriple.setArch(Type);
-  } else {
-    // Get the target specific parser.
-    std::string Error;
-    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), Error);
-    if (TheTarget == 0) {
-      errs() << ProgName << ": error: unable to get target for '"
-             << TheTriple.getTriple()
-             << "', see --version and --triple.\n";
-      return 0;
-    }
+  // Get the target specific parser.
+  std::string Error;
+  const Target *TheTarget = TargetRegistry::lookupTarget(ArchName, TheTriple,
+                                                         Error);
+  if (!TheTarget) {
+    errs() << ProgName << ": " << Error;
+    return 0;
   }
 
+  // Update the triple name and return the found target.
   TripleName = TheTriple.getTriple();
   return TheTarget;
 }

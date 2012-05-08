@@ -106,27 +106,25 @@ static bool error(error_code ec) {
 
 static const Target *GetTarget(const ObjectFile *Obj = NULL) {
   // Figure out the target triple.
-  llvm::Triple TT("unknown-unknown-unknown");
+  llvm::Triple TheTriple("unknown-unknown-unknown");
   if (TripleName.empty()) {
     if (Obj)
-      TT.setArch(Triple::ArchType(Obj->getArch()));
+      TheTriple.setArch(Triple::ArchType(Obj->getArch()));
   } else
-    TT.setTriple(Triple::normalize(TripleName));
-
-  if (!ArchName.empty())
-    TT.setArchName(ArchName);
-
-  TripleName = TT.str();
+    TheTriple.setTriple(Triple::normalize(TripleName));
 
   // Get the target specific parser.
   std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
-  if (TheTarget)
-    return TheTarget;
+  const Target *TheTarget = TargetRegistry::lookupTarget(ArchName, TheTriple,
+                                                         Error);
+  if (!TheTarget) {
+    errs() << ToolName << ": " << Error;
+    return 0;
+  }
 
-  errs() << ToolName << ": error: unable to get target for '" << TripleName
-         << "', see --version and --triple.\n";
-  return 0;
+  // Update the triple name and return the found target.
+  TripleName = TheTriple.getTriple();
+  return TheTarget;
 }
 
 void llvm::StringRefMemoryObject::anchor() { }
