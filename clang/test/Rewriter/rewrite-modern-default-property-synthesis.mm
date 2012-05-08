@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -x objective-c++ -fms-extensions -fobjc-default-synthesize-properties -rewrite-objc %s -o %t-rw.cpp 
+// RUN: %clang_cc1 -E %s -o %t.mm
+// RUN: %clang_cc1 -x objective-c++ -fms-extensions -fobjc-default-synthesize-properties -rewrite-objc %t.mm -o %t-rw.cpp 
+// RUN: FileCheck --input-file=%t-rw.cpp %s
 // RUN: %clang_cc1 -fsyntax-only  -DSEL="void *" -Did="struct objc_object *" -Wno-attributes -Wno-address-of-temporary -D"__declspec(X)=" %t-rw.cpp
 // rdar://11374235
 
@@ -58,3 +60,26 @@ extern "C" void *sel_registerName(const char *);
 }
 @end
 
+typedef struct {
+        int x:1;
+        int y:1;
+} TBAR;
+
+@interface NONAME
+{
+  TBAR _bar;
+}
+@property TBAR bad;
+@end
+
+@implementation NONAME
+@end
+
+// CHECK: static int _I_SynthGetter_howMany
+// CHECL: return (*(int *)((char *)self + OBJC_IVAR_$_SynthGetter$_howMany));
+// CHECK: static NSString * _I_SynthGetter_what 
+// CHECK: return (*(NSString **)((char *)self + OBJC_IVAR_$_SynthGetter$_what));
+// CHECK: static TBAR _I_NONAME_bad
+// CHECK: return (*(TBAR *)((char *)self + OBJC_IVAR_$_NONAME$_bad));
+// CHECK: static void _I_NONAME_setBad_
+// CHECK: (*(TBAR *)((char *)self + OBJC_IVAR_$_NONAME$_bad)) = bad;
