@@ -591,6 +591,11 @@ public:
   /// we prefer to insert allocas.
   llvm::AssertingVH<llvm::Instruction> AllocaInsertPt;
 
+  /// BoundsChecking - Emit run-time bounds checks. Higher values mean
+  /// potentially higher performance penalties.
+  unsigned char BoundsChecking;
+
+  /// CatchUndefined - Emit run-time checks to catch undefined behaviors.
   bool CatchUndefined;
 
   /// In ARC, whether we should autorelease the return value.

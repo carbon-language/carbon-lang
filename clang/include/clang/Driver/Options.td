@@ -315,6 +315,10 @@ def fblocks : Flag<"-fblocks">, Group<f_Group>, Flags<[CC1Option]>,
 def fbootclasspath_EQ : Joined<"-fbootclasspath=">, Group<f_Group>;
 def fborland_extensions : Flag<"-fborland-extensions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Accept non-standard constructs supported by the Borland compiler">;
+def fbounds_checking : Flag<"-fbounds-checking">, Group<f_Group>,
+  HelpText<"Enable run-time bounds checks.">;
+def fbounds_checking_EQ : Joined<"-fbounds-checking=">, Flags<[CC1Option]>,
+  Group<f_Group>;
 def fbuiltin_strcat : Flag<"-fbuiltin-strcat">, Group<f_Group>;
 def fbuiltin_strcpy : Flag<"-fbuiltin-strcpy">, Group<f_Group>;
 def fbuiltin : Flag<"-fbuiltin">, Group<f_Group>;

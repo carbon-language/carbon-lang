@@ -41,6 +41,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     CXXVTTValue(0), OutermostConditional(0), TerminateLandingPad(0),
     TerminateHandler(0), TrapBB(0) {
 
+  BoundsChecking = getContext().getLangOpts().BoundsChecking;
   CatchUndefined = getContext().getLangOpts().CatchUndefined;
   CGM.getCXXABI().getMangleContext().startNewFunction();
 }

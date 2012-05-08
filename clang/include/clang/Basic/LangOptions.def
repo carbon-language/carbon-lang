@@ -157,6 +157,7 @@ BENIGN_LANGOPT(ConstexprCallDepth, 32, 512,
                "maximum constexpr call depth")
 BENIGN_LANGOPT(NumLargeByValueCopy, 32, 0, 
         "if non-zero, warn about parameter or return Warn if parameter/return value is larger in bytes than this setting. 0 is no check.")
+BENIGN_LANGOPT(BoundsChecking , 8, 0, "if non-zero, add run-time bounds checking code")
 VALUE_LANGOPT(MSCVersion, 32, 0, 
               "version of Microsoft Visual C/C++")
 
