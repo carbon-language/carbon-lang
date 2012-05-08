@@ -5222,7 +5222,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     SDValue EltNo = N0->getOperand(1);
     if (isa<ConstantSDNode>(EltNo) && isTypeLegal(NVT)) {
       int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
-
+      EVT IndexTy = N0->getOperand(1).getValueType();
       int Index = isLE ? (Elt*SizeRatio) : (Elt*SizeRatio + (SizeRatio-1));
 
       SDValue V = DAG.getNode(ISD::BITCAST, N->getDebugLoc(),
@@ -5230,7 +5230,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
 
       return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
                          N->getDebugLoc(), TrTy, V,
-                         DAG.getConstant(Index, MVT::i32));
+                         DAG.getConstant(Index, IndexTy));
     }
   }
 
@@ -7332,8 +7332,9 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       OrigElt -= NumElem;
     }
 
+    EVT IndexTy = N->getOperand(1).getValueType();
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, N->getDebugLoc(), NVT,
-                       InVec, DAG.getConstant(OrigElt, MVT::i32));
+                       InVec, DAG.getConstant(OrigElt, IndexTy));
   }
 
   // Perform only after legalization to ensure build_vector / vector_shuffle
