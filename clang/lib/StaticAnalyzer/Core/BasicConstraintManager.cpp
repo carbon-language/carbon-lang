@@ -333,7 +333,9 @@ BasicConstraintManager::assumeSymLE(ProgramStateRef state,
 ProgramStateRef BasicConstraintManager::AddEQ(ProgramStateRef state,
                                                   SymbolRef sym,
                                              const llvm::APSInt& V) {
-  // Create a new state with the old binding replaced.
+  // Now that we have an actual value, we can throw out the NE-set.
+  // Create a new state with the old bindings replaced.
+  state = state->remove<ConstNotEq>(sym);
   return state->set<ConstEq>(sym, &getBasicVals().getValue(V));
 }
 
