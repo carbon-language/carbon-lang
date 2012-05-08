@@ -237,6 +237,8 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
 
   // Use Scalar Evolution to compute the trip count.  This allows more
   // loops to be unrolled than relying on induction var simplification
+  if (!LPM)
+    return false;
   ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
   if (SE == 0)
     return false;

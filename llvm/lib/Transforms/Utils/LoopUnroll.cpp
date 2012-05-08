@@ -204,9 +204,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
   // Notify ScalarEvolution that the loop will be substantially changed,
   // if not outright eliminated.
-  ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
-  if (SE)
-    SE->forgetLoop(L);
+  if (LPM) {
+    ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
+    if (SE)
+      SE->forgetLoop(L);
+  }
 
   // If we know the trip count, we know the multiple...
   unsigned BreakoutTrip = 0;
@@ -405,24 +407,26 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     }
   }
 
-  // FIXME: Reconstruct dom info, because it is not preserved properly.
-  // Incrementally updating domtree after loop unrolling would be easy.
-  if (DominatorTree *DT = LPM->getAnalysisIfAvailable<DominatorTree>())
-    DT->runOnFunction(*L->getHeader()->getParent());
+  if (LPM) {
+    // FIXME: Reconstruct dom info, because it is not preserved properly.
+    // Incrementally updating domtree after loop unrolling would be easy.
+    if (DominatorTree *DT = LPM->getAnalysisIfAvailable<DominatorTree>())
+      DT->runOnFunction(*L->getHeader()->getParent());
 
-  // Simplify any new induction variables in the partially unrolled loop.
-  if (SE && !CompletelyUnroll) {
-    SmallVector<WeakVH, 16> DeadInsts;
-    simplifyLoopIVs(L, SE, LPM, DeadInsts);
+    // Simplify any new induction variables in the partially unrolled loop.
+    ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
+    if (SE && !CompletelyUnroll) {
+      SmallVector<WeakVH, 16> DeadInsts;
+      simplifyLoopIVs(L, SE, LPM, DeadInsts);
 
-    // Aggressively clean up dead instructions that simplifyLoopIVs already
-    // identified. Any remaining should be cleaned up below.
-    while (!DeadInsts.empty())
-      if (Instruction *Inst =
-          dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
-        RecursivelyDeleteTriviallyDeadInstructions(Inst);
+      // Aggressively clean up dead instructions that simplifyLoopIVs already
+      // identified. Any remaining should be cleaned up below.
+      while (!DeadInsts.empty())
+        if (Instruction *Inst =
+            dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
+          RecursivelyDeleteTriviallyDeadInstructions(Inst);
+    }
   }
-
   // At this point, the code is well formed.  We now do a quick sweep over the
   // inserted code, doing constant propagation and dead code elimination as we
   // go.
