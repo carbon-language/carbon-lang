@@ -1428,7 +1428,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
                             SourceLocation()));
     if (PIDecl) {
       Diag(Prop->getLocation(), diag::warn_missing_explicit_synthesis);
-      Diag(IMPDecl->getLocation(), diag::not_while_in_implementation);
+      Diag(IMPDecl->getLocation(), diag::note_while_in_implementation);
     }
   }
 }
