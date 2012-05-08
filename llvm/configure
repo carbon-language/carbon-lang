@@ -743,8 +743,6 @@ CAT
 DOXYGEN
 GROFF
 GZIPBIN
-POD2HTML
-POD2MAN
 PDFROFF
 RUNTEST
 TCLSH
@@ -7199,86 +7197,6 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-# Extract the first word of "pod2html", so it can be a program name with args.
-set dummy pod2html; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_POD2HTML+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $POD2HTML in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_POD2HTML="$POD2HTML" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_POD2HTML="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-POD2HTML=$ac_cv_path_POD2HTML
-if test -n "$POD2HTML"; then
-  { echo "$as_me:$LINENO: result: $POD2HTML" >&5
-echo "${ECHO_T}$POD2HTML" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-# Extract the first word of "pod2man", so it can be a program name with args.
-set dummy pod2man; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_POD2MAN+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $POD2MAN in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_POD2MAN="$POD2MAN" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_POD2MAN="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-POD2MAN=$ac_cv_path_POD2MAN
-if test -n "$POD2MAN"; then
-  { echo "$as_me:$LINENO: result: $POD2MAN" >&5
-echo "${ECHO_T}$POD2MAN" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
 # Extract the first word of "pdfroff", so it can be a program name with args.
 set dummy pdfroff; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -10406,7 +10324,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10409 "configure"
+#line 10327 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -22228,8 +22146,6 @@ CAT!$CAT$ac_delim
 DOXYGEN!$DOXYGEN$ac_delim
 GROFF!$GROFF$ac_delim
 GZIPBIN!$GZIPBIN$ac_delim
-POD2HTML!$POD2HTML$ac_delim
-POD2MAN!$POD2MAN$ac_delim
 PDFROFF!$PDFROFF$ac_delim
 RUNTEST!$RUNTEST$ac_delim
 TCLSH!$TCLSH$ac_delim
@@ -22278,7 +22194,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 92; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
