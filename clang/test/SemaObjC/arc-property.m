@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -fblocks -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -fblocks -fobjc-exceptions -verify -Wno-objc-root-class %s
 // rdar://9309489
 
 @interface MyClass {
@@ -55,3 +55,11 @@
 @implementation Test2
 @synthesize test2;
 @end
+
+// rdar://problem/11144407
+@interface Test3
+@property (strong) id exception;
+@end
+void test3(Test3 *t3) {
+  @throw t3.exception;
+}

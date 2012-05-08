@@ -2677,15 +2677,13 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
                                      Finally));
 }
 
-StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
-                                                  Expr *Throw) {
+StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw) {
   if (Throw) {
-    Throw = MaybeCreateExprWithCleanups(Throw);
     ExprResult Result = DefaultLvalueConversion(Throw);
     if (Result.isInvalid())
       return StmtError();
 
-    Throw = Result.take();
+    Throw = MaybeCreateExprWithCleanups(Result.take());
     QualType ThrowType = Throw->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
     if (!ThrowType->isDependentType() &&
