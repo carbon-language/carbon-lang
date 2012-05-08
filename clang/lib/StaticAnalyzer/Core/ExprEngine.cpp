@@ -496,7 +496,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXUuidofExprClass:
     case Stmt::CXXUnresolvedConstructExprClass:
-    case Stmt::CXXScalarValueInitExprClass:
     case Stmt::DependentScopeDeclRefExprClass:
     case Stmt::UnaryTypeTraitExprClass:
     case Stmt::BinaryTypeTraitExprClass:
@@ -573,15 +572,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       // Implicitly handled by Environment::getSVal().
       break;
 
-    case Stmt::ImplicitValueInitExprClass: {
-      ProgramStateRef state = Pred->getState();
-      QualType ty = cast<ImplicitValueInitExpr>(S)->getType();
-      SVal val = svalBuilder.makeZeroVal(ty);
-      Bldr.generateNode(S, Pred, state->BindExpr(S, Pred->getLocationContext(),
-                                                 val));
-      break;
-    }
-      
     case Stmt::ExprWithCleanupsClass:
       // Handled due to fully linearised CFG.
       break;
@@ -619,6 +609,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::AddrLabelExprClass:
     case Stmt::IntegerLiteralClass:
     case Stmt::CharacterLiteralClass:
+    case Stmt::ImplicitValueInitExprClass:
+    case Stmt::CXXScalarValueInitExprClass:
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::ObjCBoolLiteralExprClass:
     case Stmt::FloatingLiteralClass:
