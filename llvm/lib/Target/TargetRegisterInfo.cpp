@@ -143,17 +143,7 @@ TargetRegisterInfo::getCommonSubClass(const TargetRegisterClass *A,
 
   // Register classes are ordered topologically, so the largest common
   // sub-class it the common sub-class with the smallest ID.
-  const unsigned *SubA = A->getSubClassMask();
-  const unsigned *SubB = B->getSubClassMask();
-
-  // We could start the search from max(A.ID, B.ID), but we are only going to
-  // execute 2-3 iterations anyway.
-  for (unsigned Base = 0, BaseE = getNumRegClasses(); Base < BaseE; Base += 32)
-    if (unsigned Common = *SubA++ & *SubB++)
-      return getRegClass(Base + CountTrailingZeros_32(Common));
-
-  // No common sub-class exists.
-  return NULL;
+  return firstCommonClass(A->getSubClassMask(), B->getSubClassMask(), this);
 }
 
 const TargetRegisterClass *
@@ -166,21 +156,10 @@ TargetRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   // Find Idx in the list of super-register indices.
   const uint32_t *Mask = 0;
   for (SuperRegClassIterator RCI(B, this); RCI.isValid(); ++RCI)
-    if (RCI.getSubReg() == Idx) {
-      Mask = RCI.getMask();
-      break;
-    }
-  if (!Mask)
-    return 0;
-
-  // The bit mask contains all register classes that are projected into B by
-  // Idx. Find a class that is also a sub-class of A.
-  const uint32_t *SC = A->getSubClassMask();
-
-  // Find the first common register class in TV and SC.
-  for (unsigned Base = 0, BaseE = getNumRegClasses(); Base < BaseE; Base += 32)
-    if (unsigned Common = *Mask++ & *SC++)
-      return getRegClass(Base + CountTrailingZeros_32(Common));
+    if (RCI.getSubReg() == Idx)
+      // The bit mask contains all register classes that are projected into B
+      // by Idx. Find a class that is also a sub-class of A.
+      return firstCommonClass(RCI.getMask(), A->getSubClassMask(), this);
   return 0;
 }
 
