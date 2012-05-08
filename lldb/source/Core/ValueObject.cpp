@@ -2103,6 +2103,12 @@ ValueObject::GetStaticValue()
     return GetSP();
 }
 
+lldb::ValueObjectSP
+ValueObject::GetNonSyntheticValue ()
+{
+    return GetSP();
+}
+
 ValueObjectSP
 ValueObject::GetSyntheticValue (bool use_synthetic)
 {

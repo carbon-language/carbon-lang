@@ -174,3 +174,8 @@ ValueObjectSynthetic::IsInScope ()
     return m_parent->IsInScope();
 }
 
+lldb::ValueObjectSP
+ValueObjectSynthetic::GetNonSyntheticValue ()
+{
+    return m_parent->GetSP();
+}

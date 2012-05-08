@@ -1014,8 +1014,8 @@ SBValue::GetNonSyntheticValue ()
                 // deliberately breaking the rules here to optimize the case where we DO NOT want
                 // the synthetic value to be returned to the user - if we did not do this, we would have to tell
                 // the target to suppress the synthetic value, and then return the flag to its original value
-                if (value_sp->GetParent())
-                    sb_value.m_opaque_sp = value_sp->GetParent()->GetSP();
+                if (value_sp->GetNonSyntheticValue())
+                    sb_value.m_opaque_sp = value_sp->GetNonSyntheticValue();
             }
         }
     }

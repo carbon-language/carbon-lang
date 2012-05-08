@@ -832,6 +832,9 @@ public:
     virtual lldb::ValueObjectSP
     GetStaticValue ();
     
+    virtual lldb::ValueObjectSP
+    GetNonSyntheticValue ();
+    
     lldb::ValueObjectSP
     GetSyntheticValue (bool use_synthetic = true);
     

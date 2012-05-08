@@ -98,6 +98,9 @@ public:
             return NULL;
     }
     
+    virtual lldb::ValueObjectSP
+    GetNonSyntheticValue ();
+    
 protected:
     virtual bool
     UpdateValue ();

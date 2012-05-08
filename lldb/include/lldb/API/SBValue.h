@@ -26,7 +26,7 @@ public:
 
     lldb::SBValue &
     operator =(const lldb::SBValue &rhs);
-
+    
     ~SBValue ();
 
     bool
@@ -382,6 +382,7 @@ protected:
     
 private:
     lldb::ValueObjectSP m_opaque_sp;
+    friend void* _wrap_SBValue_GetNonSyntheticValue(void*,void*);
 };
 
 } // namespace lldb
