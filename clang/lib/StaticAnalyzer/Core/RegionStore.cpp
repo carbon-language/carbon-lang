@@ -1152,7 +1152,16 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R,
 }
 
 SVal RegionStoreManager::getBindingForElement(Store store,
-                                         const ElementRegion* R) {
+                                              const ElementRegion* R) {
+  // We do not currently model bindings of the CompoundLiteralregion.
+  const ElementRegion *Tmp = R;
+  while (Tmp) {
+    const MemRegion *Sup = Tmp->getSuperRegion();
+    if (isa<CompoundLiteralRegion>(Sup))
+      return UnknownVal();
+    Tmp = dyn_cast<ElementRegion>(Sup);
+  }
+
   // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(store);
   if (const Optional<SVal> &V = getDirectBinding(B, R))
