@@ -910,14 +910,14 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
     // A*A*B + A*A*C   -->   A*(A*B+A*C)   -->   A*(A*(B+C))
     assert(NumAddedValues > 1 && "Each occurrence should contribute a value");
     (void)NumAddedValues;
-    V = ReassociateExpression(cast<BinaryOperator>(V));
+    RedoInsts.push_back(V);
 
     // Create the multiply.
     Value *V2 = BinaryOperator::CreateMul(V, MaxOccVal, "tmp", I);
 
     // Rerun associate on the multiply in case the inner expression turned into
     // a multiply.  We want to make sure that we keep things in canonical form.
-    V2 = ReassociateExpression(cast<BinaryOperator>(V2));
+    RedoInsts.push_back(V2);
 
     // If every add operand included the factor (e.g. "A*B + A*C"), then the
     // entire result expression is just the multiply "A*(B+C)".
@@ -1070,9 +1070,8 @@ Value *Reassociate::buildMinimalMultiplyDAG(IRBuilder<> &Builder,
 
     // Reset the base value of the first factor to the new expression tree.
     // We'll remove all the factors with the same power in a second pass.
-    Factors[LastIdx].Base
-      = ReassociateExpression(
-          cast<BinaryOperator>(buildMultiplyTree(Builder, InnerProduct)));
+    Factors[LastIdx].Base = buildMultiplyTree(Builder, InnerProduct);
+    RedoInsts.push_back(Factors[LastIdx].Base);
 
     LastIdx = Idx;
   }
@@ -1098,8 +1097,9 @@ Value *Reassociate::buildMinimalMultiplyDAG(IRBuilder<> &Builder,
   if (OuterProduct.size() == 1)
     return OuterProduct.front();
 
-  return ReassociateExpression(
-    cast<BinaryOperator>(buildMultiplyTree(Builder, OuterProduct)));
+  Value *V = buildMultiplyTree(Builder, OuterProduct);
+  RedoInsts.push_back(V);
+  return V;
 }
 
 Value *Reassociate::OptimizeMul(BinaryOperator *I,
