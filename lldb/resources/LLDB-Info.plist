@@ -17,7 +17,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>145</string>
+	<string>146</string>
 	<key>CFBundleName</key>
 	<string>${EXECUTABLE_NAME}</string>
 </dict>
