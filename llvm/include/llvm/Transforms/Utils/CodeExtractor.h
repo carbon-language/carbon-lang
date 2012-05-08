@@ -92,7 +92,7 @@ namespace llvm {
     ///
     /// Based on the blocks used when constructing the code extractor,
     /// determine whether it is eligible for extraction.
-    bool isEligible() const { return !Blocks.empty(); };
+    bool isEligible() const { return !Blocks.empty(); }
 
     /// \brief Compute the set of input values and output values for the code.
     ///

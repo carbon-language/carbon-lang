@@ -26,15 +26,15 @@ namespace llvm {
     explicit HexagonMCInst(): MCInst(),
                               startPacket(0), endPacket(0) {}
 
-    const MachineInstr* getMI() const { return MachineI; };
+    const MachineInstr* getMI() const { return MachineI; }
 
-    void setMI(const MachineInstr *MI) { MachineI = MI; };
+    void setMI(const MachineInstr *MI) { MachineI = MI; }
 
-    bool isStartPacket() const { return (startPacket); };
-    bool isEndPacket() const { return (endPacket); };
+    bool isStartPacket() const { return (startPacket); }
+    bool isEndPacket() const { return (endPacket); }
 
-    void setStartPacket(bool yes) { startPacket = yes; };
-    void setEndPacket(bool yes) { endPacket = yes; };
+    void setStartPacket(bool yes) { startPacket = yes; }
+    void setEndPacket(bool yes) { endPacket = yes; }
   };
 }
 

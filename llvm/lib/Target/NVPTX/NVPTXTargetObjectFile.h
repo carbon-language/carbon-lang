@@ -21,7 +21,7 @@ class Module;
 class NVPTXTargetObjectFile : public TargetLoweringObjectFile {
 
 public:
-  NVPTXTargetObjectFile() {};
+  NVPTXTargetObjectFile() {}
   ~NVPTXTargetObjectFile() {
     delete TextSection;
     delete DataSection;
@@ -43,7 +43,7 @@ public:
     delete DwarfARangesSection;
     delete DwarfRangesSection;
     delete DwarfMacroInfoSection;
-  };
+  }
 
   virtual void Initialize(MCContext &ctx, const TargetMachine &TM) {
     TextSection = new NVPTXSection(MCSection::SV_ELF,
@@ -85,18 +85,18 @@ public:
                                           SectionKind::getMetadata());
     DwarfMacroInfoSection = new NVPTXSection(MCSection::SV_ELF,
                                              SectionKind::getMetadata());
-  };
+  }
 
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const {
     return ReadOnlySection;
-  };
+  }
 
   virtual const MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                            Mangler *Mang,
                            const TargetMachine &TM) const {
     return DataSection;
-  };
+  }
 
 };
 
