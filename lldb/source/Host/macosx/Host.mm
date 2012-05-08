@@ -1265,6 +1265,12 @@ PackageXPCArguments (xpc_object_t message, const char *prefix, const Args& args)
     }
 }
 
+/*
+ A valid authorizationRef means that 
+    - there is the LaunchUsingXPCRightName rights in the /etc/authorization
+    - we have successfully copied the rights to be send over the XPC wire
+ Once obtained, it will be valid for as long as the process lives.
+ */
 static AuthorizationRef authorizationRef = NULL;
 static Error
 getXPCAuthorization (ProcessLaunchInfo &launch_info)
@@ -1272,52 +1278,48 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
     Error error;
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
     
-    if (launch_info.GetUserID() == 0)
+    if ((launch_info.GetUserID() == 0) && !authorizationRef)
     {
-        CFDictionaryRef dict = NULL;
-        OSStatus osStatus;
-        
-        AuthorizationFlags authorizationFlags = kAuthorizationFlagDefaults;
-        if (!authorizationRef)
+        OSStatus createStatus = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, &authorizationRef);
+        if (createStatus != errAuthorizationSuccess)
         {
-            osStatus = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, authorizationFlags, &authorizationRef);
-            if (osStatus != errAuthorizationSuccess)
+            error.SetError(1, eErrorTypeGeneric);
+            error.SetErrorString("Can't create authorizationRef.");
+            if (log)
             {
-                error.SetError(1, eErrorTypeGeneric);
-                error.SetErrorString("Can't create authorizationRef.");
-                if (log)
-                {
-                    error.PutToLog(log.get(), "%s", error.AsCString());
-                }
-                return error;
+                error.PutToLog(log.get(), "%s", error.AsCString());
             }
-            
-            osStatus = AuthorizationRightGet(LaunchUsingXPCRightName, &dict);
-            if (dict) CFRelease(dict);
-            if (osStatus != errAuthorizationSuccess)
-            {
-                // No rights in the security database, Create it with the right prompt.
-                
-                CFStringRef prompt = CFSTR("The debugger needs administrator rights to debug a root process.");
-                CFStringRef keys[] = { CFSTR("en") };
-                CFTypeRef values[] = { prompt };
-                CFDictionaryRef promptDict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys, (const void **)values, 1, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-                
-                CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),               CFSTR("default-prompt"), CFSTR("shared") };
-                CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR(LaunchUsingXPCRightName), promptDict,              kCFBooleanFalse };
-                dict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys1, (const void **)values1, 5, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-                osStatus = AuthorizationRightSet(authorizationRef, LaunchUsingXPCRightName, dict, NULL, NULL, NULL);
-                CFRelease(promptDict);
-                CFRelease(dict);
-            }
+            return error;
         }
-  
-        AuthorizationItem item1 = { LaunchUsingXPCRightName, 0, NULL, 0 };
-        AuthorizationItem items[] = {item1};
-        AuthorizationRights requestedRights = {1, items };
-        authorizationFlags = kAuthorizationFlagInteractionAllowed | kAuthorizationFlagExtendRights;
-        osStatus = AuthorizationCopyRights(authorizationRef, &requestedRights, kAuthorizationEmptyEnvironment, authorizationFlags, NULL);
-        if (osStatus != errAuthorizationSuccess)
+        
+        OSStatus rightsStatus = AuthorizationRightGet(LaunchUsingXPCRightName, NULL);
+        if (rightsStatus != errAuthorizationSuccess)
+        {
+            // No rights in the security database, Create it with the right prompt.
+            CFStringRef prompt = CFSTR("Xcode is trying to take control of a root process.");
+            CFStringRef keys[] = { CFSTR("en") };
+            CFTypeRef values[] = { prompt };
+            CFDictionaryRef promptDict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys, (const void **)values, 1, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+            
+            CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),               CFSTR("default-prompt"), CFSTR("shared") };
+            CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR(LaunchUsingXPCRightName), promptDict,              kCFBooleanFalse };
+            CFDictionaryRef dict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys1, (const void **)values1, 5, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+            rightsStatus = AuthorizationRightSet(authorizationRef, LaunchUsingXPCRightName, dict, NULL, NULL, NULL);
+            CFRelease(promptDict);
+            CFRelease(dict);
+        }
+            
+        OSStatus copyRightStatus = errAuthorizationDenied;
+        if (rightsStatus == errAuthorizationSuccess)
+        {
+            AuthorizationItem item1 = { LaunchUsingXPCRightName, 0, NULL, 0 };
+            AuthorizationItem items[] = {item1};
+            AuthorizationRights requestedRights = {1, items };
+            AuthorizationFlags authorizationFlags = kAuthorizationFlagInteractionAllowed | kAuthorizationFlagExtendRights;
+            copyRightStatus = AuthorizationCopyRights(authorizationRef, &requestedRights, kAuthorizationEmptyEnvironment, authorizationFlags, NULL);
+        }
+        
+        if (copyRightStatus != errAuthorizationSuccess)
         {
             // Eventually when the commandline supports running as root and the user is not
             // logged in in the current audit session, we will need the trick in gdb where
@@ -1327,6 +1329,12 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
             if (log)
             {
                 error.PutToLog(log.get(), "%s", error.AsCString());
+            }
+            
+            if (authorizationRef)
+            {
+                AuthorizationFree(authorizationRef, kAuthorizationFlagDefaults);
+                authorizationRef = NULL;
             }
         }
     }
@@ -1361,7 +1369,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         }
         else
         {
-            error.SetError(2, eErrorTypeGeneric);
+            error.SetError(4, eErrorTypeGeneric);
             error.SetErrorStringWithFormat("Launching root via XPC needs to externalize authorization reference.");
             if (log)
             {
@@ -1436,6 +1444,12 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         if (log)
         {
             error.PutToLog(log.get(), "%s", error.AsCString());
+        }
+        
+        if (authorizationRef)
+        {
+            AuthorizationFree(authorizationRef, kAuthorizationFlagDefaults);
+            authorizationRef = NULL;
         }
     }
     
