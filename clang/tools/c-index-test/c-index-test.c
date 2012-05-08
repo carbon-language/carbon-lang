@@ -180,6 +180,20 @@ static void PrintRange(CXSourceRange R, const char *str) {
 
 int want_display_name = 0;
 
+static void printVersion(const char *Prefix, CXVersion Version) {
+  if (Version.Major < 0)
+    return;
+  printf("%s%d", Prefix, Version.Major);
+  
+  if (Version.Minor < 0)
+    return;
+  printf(".%d", Version.Minor);
+
+  if (Version.Subminor < 0)
+    return;
+  printf(".%d", Version.Subminor);
+}
+
 static void PrintCursor(CXCursor Cursor) {
   CXTranslationUnit TU = clang_Cursor_getTranslationUnit(Cursor);
   if (clang_isInvalid(Cursor.kind)) {
@@ -197,7 +211,14 @@ static void PrintCursor(CXCursor Cursor) {
     unsigned RefNameRangeNr;
     CXSourceRange CursorExtent;
     CXSourceRange RefNameRange;
-
+    int AlwaysUnavailable;
+    int AlwaysDeprecated;
+    CXString UnavailableMessage;
+    CXString DeprecatedMessage;
+    CXPlatformAvailability PlatformAvailability[2];
+    int NumPlatformAvailability;
+    int I;
+    
     ks = clang_getCursorKindSpelling(Cursor.kind);
     string = want_display_name? clang_getCursorDisplayName(Cursor) 
                               : clang_getCursorSpelling(Cursor);
@@ -248,6 +269,47 @@ static void PrintCursor(CXCursor Cursor) {
         printf(" (inaccessible)");
         break;
     }
+    
+    NumPlatformAvailability
+      = clang_getCursorPlatformAvailability(Cursor,
+                                            &AlwaysDeprecated,
+                                            &DeprecatedMessage,
+                                            &AlwaysUnavailable,
+                                            &UnavailableMessage,
+                                            PlatformAvailability, 2);
+    if (AlwaysUnavailable) {
+      printf("  (always unavailable: \"%s\")",
+             clang_getCString(UnavailableMessage));
+    } else if (AlwaysDeprecated) {
+      printf("  (always deprecated: \"%s\")",
+             clang_getCString(DeprecatedMessage));
+    } else {
+      for (I = 0; I != NumPlatformAvailability; ++I) {
+        if (I >= 2)
+          break;
+        
+        printf("  (%s", clang_getCString(PlatformAvailability[I].Platform));
+        if (PlatformAvailability[I].Unavailable)
+          printf(", unavailable");
+        else {
+          printVersion(", introduced=", PlatformAvailability[I].Introduced);
+          printVersion(", deprecated=", PlatformAvailability[I].Deprecated);
+          printVersion(", obsoleted=", PlatformAvailability[I].Obsoleted);
+        }
+        if (clang_getCString(PlatformAvailability[I].Message)[0])
+          printf(", message=\"%s\"",
+                 clang_getCString(PlatformAvailability[I].Message));
+        printf(")");
+      }
+    }
+    for (I = 0; I != NumPlatformAvailability; ++I) {
+      if (I >= 2)
+        break;
+      clang_disposeCXPlatformAvailability(PlatformAvailability + I);
+    }
+    
+    clang_disposeString(DeprecatedMessage);
+    clang_disposeString(UnavailableMessage);
     
     if (clang_CXXMethod_isStatic(Cursor))
       printf(" (static)");

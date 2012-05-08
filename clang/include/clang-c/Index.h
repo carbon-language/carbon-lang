@@ -132,6 +132,29 @@ enum CXAvailabilityKind {
    */
   CXAvailability_NotAccessible
 };
+
+/**
+ * \brief Describes a version number of the form major.minor.subminor.
+ */
+typedef struct CXVersion {
+  /**
+   * \brief The major version number, e.g., the '10' in '10.7.3'. A negative
+   * value indicates that there is no version number at all.
+   */
+  int Major;
+  /**
+   * \brief The minor version number, e.g., the '7' in '10.7.3'. This value
+   * will be negative if no minor version number was provided, e.g., for 
+   * version '10'.
+   */
+  int Minor;
+  /**
+   * \brief The subminor version number, e.g., the '3' in '10.7.3'. This value
+   * will be negative if no minor or subminor version number was provided,
+   * e.g., in version '10' or '10.7'.
+   */
+  int Subminor;
+} CXVersion;
   
 /**
  * \defgroup CINDEX_STRING String manipulation routines
@@ -2165,7 +2188,8 @@ enum CXLinkageKind {
 CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
 
 /**
- * \brief Determine the availability of the entity that this cursor refers to.
+ * \brief Determine the availability of the entity that this cursor refers to,
+ * taking the current target platform into account.
  *
  * \param cursor The cursor to query.
  *
@@ -2174,6 +2198,94 @@ CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
 CINDEX_LINKAGE enum CXAvailabilityKind 
 clang_getCursorAvailability(CXCursor cursor);
 
+/**
+ * Describes the availability of a given entity on a particular platform, e.g.,
+ * a particular class might only be available on Mac OS 10.7 or newer.
+ */
+typedef struct CXPlatformAvailability {
+  /**
+   * \brief A string that describes the platform for which this structure
+   * provides availability information.
+   *
+   * Possible values are "ios" or "macosx".
+   */
+  CXString Platform;
+  /**
+   * \brief The version number in which this entity was introduced.
+   */
+  CXVersion Introduced;
+  /**
+   * \brief The version number in which this entity was deprecated (but is
+   * still available).
+   */
+  CXVersion Deprecated;
+  /**
+   * \brief The version number in which this entity was obsoleted, and therefore
+   * is no longer available.
+   */
+  CXVersion Obsoleted;
+  /**
+   * \brief Whether the entity is unconditionally unavailable on this platform.
+   */
+  int Unavailable;
+  /**
+   * \brief An optional message to provide to a user of this API, e.g., to
+   * suggest replacement APIs.
+   */
+  CXString Message;
+} CXPlatformAvailability;
+
+/**
+ * \brief Determine the availability of the entity that this cursor refers to
+ * on any platforms for which availability information is known.
+ *
+ * \param cursor The cursor to query.
+ *
+ * \param always_deprecated If non-NULL, will be set to indicate whether the 
+ * entity is deprecated on all platforms.
+ *
+ * \param deprecated_message If non-NULL, will be set to the message text 
+ * provided along with the unconditional deprecation of this entity. The client
+ * is responsible for deallocating this string.
+ *
+ * \param always_unavailabile If non-NULL, will be set to indicate whether the
+ * entity is unavailable on all platforms.
+ *
+ * \param unavailable_message If non-NULL, will be set to the message text
+ * provided along with the unconditional unavailability of this entity. The 
+ * client is responsible for deallocating this string.
+ *
+ * \param availability If non-NULL, an array of CXPlatformAvailability instances
+ * that will be populated with platform availability information, up to either
+ * the number of platforms for which availability information is available (as
+ * returned by this function) or \c availability_size, whichever is smaller.
+ *
+ * \param availability_size The number of elements available in the 
+ * \c availability array.
+ *
+ * \returns The number of platforms (N) for which availability information is
+ * available (which is unrelated to \c availability_size).
+ *
+ * Note that the client is responsible for calling 
+ * \c clang_disposeCXPlatformAvailability to free each of the 
+ * platform-availability structures returned. There are 
+ * \c min(N, availability_size) such structures.
+ */
+CINDEX_LINKAGE int
+clang_getCursorPlatformAvailability(CXCursor cursor,
+                                    int *always_deprecated,
+                                    CXString *deprecated_message,
+                                    int *always_unavailable,
+                                    CXString *unavailable_message,
+                                    CXPlatformAvailability *availability,
+                                    int availability_size);
+
+/**
+ * \brief Free the memory associated with a \c CXPlatformAvailability structure.
+ */
+CINDEX_LINKAGE void
+clang_disposeCXPlatformAvailability(CXPlatformAvailability *availability);
+  
 /**
  * \brief Describe the "language" of the entity referred to by a cursor.
  */

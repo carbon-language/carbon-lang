@@ -5489,6 +5489,90 @@ enum CXAvailabilityKind clang_getCursorAvailability(CXCursor cursor) {
   return CXAvailability_Available;
 }
 
+static CXVersion convertVersion(VersionTuple In) {
+  CXVersion Out = { -1, -1, -1 };
+  if (In.empty())
+    return Out;
+
+  Out.Major = In.getMajor();
+  
+  if (llvm::Optional<unsigned> Minor = In.getMinor())
+    Out.Minor = *Minor;
+  else
+    return Out;
+
+  if (llvm::Optional<unsigned> Subminor = In.getSubminor())
+    Out.Subminor = *Subminor;
+  
+  return Out;
+}
+  
+int clang_getCursorPlatformAvailability(CXCursor cursor,
+                                        int *always_deprecated,
+                                        CXString *deprecated_message,
+                                        int *always_unavailable,
+                                        CXString *unavailable_message,
+                                        CXPlatformAvailability *availability,
+                                        int availability_size) {
+  if (always_deprecated)
+    *always_deprecated = 0;
+  if (deprecated_message)
+    *deprecated_message = cxstring::createCXString("", /*DupString=*/false);
+  if (always_unavailable)
+    *always_unavailable = 0;
+  if (unavailable_message)
+    *unavailable_message = cxstring::createCXString("", /*DupString=*/false);
+  
+  if (!clang_isDeclaration(cursor.kind))
+    return 0;
+  
+  Decl *D = cxcursor::getCursorDecl(cursor);
+  if (!D)
+    return 0;
+  
+  int N = 0;
+  for (Decl::attr_iterator A = D->attr_begin(), AEnd = D->attr_end(); A != AEnd;
+       ++A) {
+    if (DeprecatedAttr *Deprecated = dyn_cast<DeprecatedAttr>(*A)) {
+      if (always_deprecated)
+        *always_deprecated = 1;
+      if (deprecated_message)
+        *deprecated_message = cxstring::createCXString(Deprecated->getMessage());
+      continue;
+    }
+    
+    if (UnavailableAttr *Unavailable = dyn_cast<UnavailableAttr>(*A)) {
+      if (always_unavailable)
+        *always_unavailable = 1;
+      if (unavailable_message) {
+        *unavailable_message
+          = cxstring::createCXString(Unavailable->getMessage());
+      }
+      continue;
+    }
+    
+    if (AvailabilityAttr *Avail = dyn_cast<AvailabilityAttr>(*A)) {
+      if (N < availability_size) {
+        availability[N].Platform
+          = cxstring::createCXString(Avail->getPlatform()->getName());
+        availability[N].Introduced = convertVersion(Avail->getIntroduced());
+        availability[N].Deprecated = convertVersion(Avail->getDeprecated());
+        availability[N].Obsoleted = convertVersion(Avail->getObsoleted());
+        availability[N].Unavailable = Avail->getUnavailable();
+        availability[N].Message = cxstring::createCXString(Avail->getMessage());
+      }
+      ++N;
+    }
+  }
+  
+  return N;
+}
+  
+void clang_disposeCXPlatformAvailability(CXPlatformAvailability *availability) {
+  clang_disposeString(availability->Platform);
+  clang_disposeString(availability->Message);
+}
+
 CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind))
     return getDeclLanguage(cxcursor::getCursorDecl(cursor));

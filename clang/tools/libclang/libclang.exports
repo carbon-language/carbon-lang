@@ -43,6 +43,7 @@ clang_disposeDiagnostic
 clang_disposeDiagnosticSet
 clang_disposeIndex
 clang_disposeOverriddenCursors
+clang_disposeCXPlatformAvailability
 clang_disposeString
 clang_disposeTokens
 clang_disposeTranslationUnit
@@ -85,6 +86,7 @@ clang_getCursorLanguage
 clang_getCursorLexicalParent
 clang_getCursorLinkage
 clang_getCursorLocation
+clang_getCursorPlatformAvailability
 clang_getCursorReferenceNameRange
 clang_getCursorReferenced
 clang_getCursorResultType
