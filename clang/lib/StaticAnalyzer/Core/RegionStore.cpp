@@ -1427,12 +1427,30 @@ SVal RegionStoreManager::getBindingForLazySymbol(const TypedValueRegion *R) {
 SVal RegionStoreManager::getBindingForStruct(Store store, 
                                         const TypedValueRegion* R) {
   assert(R->getValueType()->isStructureOrClassType());
+  
+  // If we already have a lazy binding, don't create a new one.
+  RegionBindings B = GetRegionBindings(store);
+  BindingKey K = BindingKey::Make(R, BindingKey::Default);
+  if (const nonloc::LazyCompoundVal *V =
+      dyn_cast_or_null<nonloc::LazyCompoundVal>(lookup(B, K))) {
+    return *V;
+  }
+
   return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
 
-SVal RegionStoreManager::getBindingForArray(Store store, 
+SVal RegionStoreManager::getBindingForArray(Store store,
                                        const TypedValueRegion * R) {
   assert(Ctx.getAsConstantArrayType(R->getValueType()));
+  
+  // If we already have a lazy binding, don't create a new one.
+  RegionBindings B = GetRegionBindings(store);
+  BindingKey K = BindingKey::Make(R, BindingKey::Default);
+  if (const nonloc::LazyCompoundVal *V =
+      dyn_cast_or_null<nonloc::LazyCompoundVal>(lookup(B, K))) {
+    return *V;
+  }
+
   return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
 
