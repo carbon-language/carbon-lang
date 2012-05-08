@@ -1020,6 +1020,20 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                             {
                                 assert (byte_order == m_host_arch.GetByteOrder());
                             }
+
+                            if (!os_name.empty() && vendor_name.compare("apple") == 0 && os_name.find("darwin") == 0)
+                            {
+                                switch (m_host_arch.GetMachine())
+                                {
+                                case llvm::Triple::arm:
+                                case llvm::Triple::thumb:
+                                    os_name = "ios";
+                                    break;
+                                default:
+                                    os_name = "macosx";
+                                    break;
+                                }
+                            }
                             if (!vendor_name.empty())
                                 m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
                             if (!os_name.empty())
@@ -1031,17 +1045,35 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     {
                         std::string triple;
                         triple += arch_name;
-                        triple += '-';
-                        if (vendor_name.empty())
-                            triple += "unknown";
-                        else
-                            triple += vendor_name;
-                        triple += '-';
-                        if (os_name.empty())
-                            triple += "unknown";
-                        else
-                            triple += os_name;
-                        m_host_arch.SetTriple (triple.c_str(), NULL);
+                        if (!vendor_name.empty() || !os_name.empty())
+                        {
+                            triple += '-';
+                            if (vendor_name.empty())
+                                triple += "unknown";
+                            else
+                                triple += vendor_name;
+                            triple += '-';
+                            if (os_name.empty())
+                                triple += "unknown";
+                            else
+                                triple += os_name;
+                        }
+                        m_host_arch.SetTriple (triple.c_str());
+                        
+                        llvm::Triple &host_triple = m_host_arch.GetTriple();
+                        if (host_triple.getVendor() == llvm::Triple::Apple && host_triple.getOS() == llvm::Triple::Darwin)
+                        {
+                            switch (m_host_arch.GetMachine())
+                            {
+                                case llvm::Triple::arm:
+                                case llvm::Triple::thumb:
+                                    host_triple.setOS(llvm::Triple::IOS);
+                                    break;
+                                default:
+                                    host_triple.setOS(llvm::Triple::MacOSX);
+                                    break;
+                            }
+                        }
                         if (pointer_byte_size)
                         {
                             assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -1055,7 +1087,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                 }
                 else
                 {
-                    m_host_arch.SetTriple (triple.c_str(), NULL);
+                    m_host_arch.SetTriple (triple.c_str());
                     if (pointer_byte_size)
                     {
                         assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -1402,7 +1434,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
                 extractor.GetStringRef().swap(value);
                 extractor.SetFilePos(0);
                 extractor.GetHexByteString (value);
-                process_info.GetArchitecture ().SetTriple (value.c_str(), NULL);
+                process_info.GetArchitecture ().SetTriple (value.c_str());
             }
             else if (name.compare("name") == 0)
             {

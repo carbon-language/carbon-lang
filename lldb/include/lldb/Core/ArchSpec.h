@@ -86,21 +86,24 @@ public:
 
         kCore_invalid,
         // The following constants are used for wildcard matching only
-        kCore_any,           
-
+        kCore_any,
         kCore_arm_any,
+        kCore_ppc_any,
+        kCore_ppc64_any,
+        kCore_x86_32_any,
+
         kCore_arm_first     = eCore_arm_generic,
         kCore_arm_last      = eCore_arm_xscale,
 
-        kCore_ppc_any,
+        kCore_thumb_first   = eCore_thumb,
+        kCore_thumb_last    = eCore_thumbv7s,
+
         kCore_ppc_first     = eCore_ppc_generic,
         kCore_ppc_last      = eCore_ppc_ppc970,
 
-        kCore_ppc64_any,
         kCore_ppc64_first   = eCore_ppc64_generic,
         kCore_ppc64_last    = eCore_ppc64_ppc970_64,
 
-        kCore_x86_32_any,
         kCore_x86_32_first  = eCore_x86_32_i386,
         kCore_x86_32_last   = eCore_x86_32_i486sx
     };
@@ -121,6 +124,8 @@ public:
     //------------------------------------------------------------------
     explicit 
     ArchSpec (const llvm::Triple &triple);
+    explicit 
+    ArchSpec (const char *triple_cstr);
     explicit 
     ArchSpec (const char *triple_cstr, Platform *platform);
     //------------------------------------------------------------------
@@ -202,6 +207,17 @@ public:
         return m_core >= eCore_arm_generic && m_core < kNumCores;
     }
 
+    bool
+    TripleVendorWasSpecified() const
+    {
+        return !m_triple.getVendorName().empty();
+    }
+
+    bool
+    TripleOSWasSpecified() const
+    {
+        return !m_triple.getOSName().empty();
+    }
 
     //------------------------------------------------------------------
     /// Sets this ArchSpec according to the given architecture name.
@@ -334,7 +350,11 @@ public:
     SetTriple (const llvm::Triple &triple);
 
     bool
-    SetTriple (const char *triple_cstr, Platform *platform);
+    SetTriple (const char *triple_cstr);
+
+    bool
+    SetTriple (const char *triple_cstr,
+               Platform *platform);
     
     //------------------------------------------------------------------
     /// Returns the default endianness of the architecture.

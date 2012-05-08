@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="mov     pc, r4"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0x46a7
 before_state={
 registers={

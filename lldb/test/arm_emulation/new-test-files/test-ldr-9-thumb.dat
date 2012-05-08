@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="ldr.w r3, [r11, #8]"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0xf8db3008
 before_state={
 memory={

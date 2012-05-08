@@ -39,9 +39,36 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
     if (create == false && arch && arch->IsValid())
     {
         const llvm::Triple &triple = arch->GetTriple();
-        const llvm::Triple::OSType os = triple.getOS();
-        if (os == llvm::Triple::Linux)
-            create = true;
+        switch (triple.getVendor())
+        {
+            case llvm::Triple::PC:
+                create = true;
+                break;
+                
+            case llvm::Triple::UnknownArch:
+                create = !arch->TripleVendorWasSpecified();
+                break;
+                
+            default:
+                break;
+        }
+        
+        if (create)
+        {
+            switch (triple.getOS())
+            {
+                case llvm::Triple::Linux:
+                    break;
+                    
+                case llvm::Triple::UnknownOS:
+                    create = !arch->TripleOSWasSpecified();
+                    break;
+                    
+                default:
+                    create = false;
+                    break;
+            }
+        }
     }
     if (create)
         return new PlatformLinux(true);

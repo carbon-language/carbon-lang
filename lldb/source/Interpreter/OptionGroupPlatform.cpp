@@ -21,17 +21,30 @@ using namespace lldb;
 using namespace lldb_private;
 
 PlatformSP 
-OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter, const ArchSpec &arch, bool make_selected, Error& error) const
+OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter,
+                                                const ArchSpec &arch,
+                                                bool make_selected,
+                                                Error& error,
+                                                ArchSpec &platform_arch) const
 {
     PlatformSP platform_sp;
     
     if (!m_platform_name.empty())
     {
         platform_sp = Platform::Create (m_platform_name.c_str(), error);
+        if (platform_sp)
+        {
+            if (!platform_sp->IsCompatibleArchitecture(arch, &platform_arch))
+            {
+                error.SetErrorStringWithFormat("platform '%s' doesn't support '%s'", platform_sp->GetName(), arch.GetTriple().getTriple().c_str());
+                platform_sp.reset();
+                return platform_sp;
+            }
+        }
     }
     else if (arch.IsValid())
     {
-        platform_sp = Platform::Create (arch, error);
+        platform_sp = Platform::Create (arch, &platform_arch, error);
     }
     
     if (platform_sp)

@@ -592,8 +592,8 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             break;
             
         case 'a':
-            launch_info.GetArchitecture().SetTriple (option_arg, 
-                                                     m_interpreter.GetPlatform(true).get());
+            if (!launch_info.GetArchitecture().SetTriple (option_arg, m_interpreter.GetPlatform(true).get()))
+                launch_info.GetArchitecture().SetTriple (option_arg);
             break;
             
         case 'A':   
@@ -2741,23 +2741,25 @@ Process::CompleteAttach ()
     assert (platform_sp.get());
     if (platform_sp)
     {
-	  const ArchSpec &target_arch = m_target.GetArchitecture();
-	  if (target_arch.IsValid() && !platform_sp->IsCompatibleWithArchitecture (target_arch))
-	  {
-              platform_sp = platform_sp->GetPlatformForArchitecture (target_arch);
-              if (platform_sp)
-              {
-                  m_target.SetPlatform (platform_sp);
-              }
-	  }
-	  else
-	  {
-      	         ProcessInstanceInfo process_info;
-	         platform_sp->GetProcessInfo (GetID(), process_info);
-	         const ArchSpec &process_arch = process_info.GetArchitecture();
-	         if (process_arch.IsValid() && m_target.GetArchitecture() != process_arch)
-	             m_target.SetArchitecture (process_arch);
-	  }
+        const ArchSpec &target_arch = m_target.GetArchitecture();
+        if (target_arch.IsValid() && !platform_sp->IsCompatibleArchitecture (target_arch))
+        {
+            ArchSpec platform_arch;
+            platform_sp = platform_sp->GetPlatformForArchitecture (target_arch, &platform_arch);
+            if (platform_sp)
+            {
+                m_target.SetPlatform (platform_sp);
+                m_target.SetArchitecture(platform_arch);
+            }
+        }
+        else
+        {
+            ProcessInstanceInfo process_info;
+            platform_sp->GetProcessInfo (GetID(), process_info);
+            const ArchSpec &process_arch = process_info.GetArchitecture();
+            if (process_arch.IsValid() && m_target.GetArchitecture() != process_arch)
+                m_target.SetArchitecture (process_arch);
+        }
     }
 
     // We have completed the attach, now it is time to find the dynamic loader

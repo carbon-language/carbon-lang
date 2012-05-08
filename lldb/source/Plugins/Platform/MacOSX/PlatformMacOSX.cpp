@@ -71,10 +71,37 @@ PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
     if (create == false && arch && arch->IsValid())
     {
         const llvm::Triple &triple = arch->GetTriple();
-        const llvm::Triple::OSType os = triple.getOS();
-        const llvm::Triple::VendorType vendor = triple.getVendor();
-        if (os == llvm::Triple::Darwin && vendor == llvm::Triple::Apple)
-            create = true;
+        switch (triple.getVendor())
+        {
+            case llvm::Triple::Apple:
+                create = true;
+                break;
+                
+            case llvm::Triple::UnknownArch:
+                create = !arch->TripleVendorWasSpecified();
+                break;
+                
+            default:
+                break;
+        }
+        
+        if (create)
+        {
+            switch (triple.getOS())
+            {
+                case llvm::Triple::Darwin:  // Deprecated, but still support Darwin for historical reasons
+                case llvm::Triple::MacOSX:
+                    break;
+                    
+                case llvm::Triple::UnknownOS:
+                    create = !arch->TripleOSWasSpecified();
+                    break;
+                    
+                default:
+                    create = false;
+                    break;
+            }
+        }
     }
     if (create)
         return new PlatformMacOSX (is_host);

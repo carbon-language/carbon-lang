@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="ldmia.w r14!, {r1, r3}"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0xe8be000a
 before_state={
 memory={

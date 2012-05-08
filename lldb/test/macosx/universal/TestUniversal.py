@@ -27,7 +27,7 @@ class UniversalTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "testit")
 
         # Create a target by the debugger.
-        target = self.dbg.CreateTargetWithFileAndTargetTriple(exe, "i386-apple-darwin")
+        target = self.dbg.CreateTargetWithFileAndTargetTriple(exe, "i386-apple-macosx")
         self.assertTrue(target, VALID_TARGET)
 
         # Now launch the process, and do not stop at entry point.

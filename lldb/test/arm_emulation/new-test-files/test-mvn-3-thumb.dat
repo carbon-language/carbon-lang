@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="mvn r14, #1"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0xf06f0e01
 before_state={
 registers={

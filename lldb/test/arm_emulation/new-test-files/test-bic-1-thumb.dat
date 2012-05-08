@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="bics r4, r6"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0x43b4
 before_state={
 registers={

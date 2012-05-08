@@ -21,7 +21,7 @@ class DisassembleRawDataTestCase(TestBase):
         """Test disassembling raw bytes with the API."""
         # Create a target from the debugger.
 
-        target = self.dbg.CreateTargetWithFileAndTargetTriple ("", "x86_64-apple-darwin")
+        target = self.dbg.CreateTargetWithFileAndTargetTriple ("", "x86_64")
         self.assertTrue(target, VALID_TARGET)
 
         raw_bytes = bytearray([0x48, 0x89, 0xe5])

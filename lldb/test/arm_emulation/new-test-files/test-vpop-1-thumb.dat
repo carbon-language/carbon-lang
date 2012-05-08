@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="vpop    {d11, d12, d13, d14}"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0xecbdbb08
 before_state={
 memory={

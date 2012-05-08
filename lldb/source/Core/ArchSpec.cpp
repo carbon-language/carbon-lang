@@ -323,6 +323,16 @@ ArchSpec::ArchSpec (const char *triple_cstr, Platform *platform) :
         SetTriple(triple_cstr, platform);
 }
 
+
+ArchSpec::ArchSpec (const char *triple_cstr) :
+    m_triple (),
+    m_core (kCore_invalid),
+    m_byte_order (eByteOrderInvalid)
+{
+    if (triple_cstr)
+        SetTriple(triple_cstr);
+}
+
 ArchSpec::ArchSpec(const llvm::Triple &triple) :
     m_triple (),
     m_core (kCore_invalid),
@@ -473,7 +483,7 @@ ArchSpec::SetTriple (const llvm::Triple &triple)
 }
 
 bool
-ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
+ArchSpec::SetTriple (const char *triple_cstr)
 {
     if (triple_cstr && triple_cstr[0])
     {
@@ -492,6 +502,36 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
         {
             std::string normalized_triple_sstr (llvm::Triple::normalize(triple_stref));
             triple_stref = normalized_triple_sstr;
+            SetTriple (llvm::Triple (triple_stref));
+        }
+    }
+    else
+        Clear();
+    return IsValid();
+}
+
+bool
+ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
+{
+    if (triple_cstr && triple_cstr[0])
+    {
+        llvm::StringRef triple_stref (triple_cstr);
+        if (triple_stref.startswith (LLDB_ARCH_DEFAULT))
+        {
+            // Special case for the current host default architectures...
+            if (triple_stref.equals (LLDB_ARCH_DEFAULT_32BIT))
+                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            else if (triple_stref.equals (LLDB_ARCH_DEFAULT_64BIT))
+                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
+            else if (triple_stref.equals (LLDB_ARCH_DEFAULT))
+                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+        }
+        else
+        {
+            ArchSpec raw_arch (triple_cstr);
+
+            std::string normalized_triple_sstr (llvm::Triple::normalize(triple_stref));
+            triple_stref = normalized_triple_sstr;
             llvm::Triple normalized_triple (triple_stref);
             
             const bool os_specified = normalized_triple.getOSName().size() > 0;
@@ -507,18 +547,24 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
                     // If we were given a platform, use the platform's system
                     // architecture. If this is not available (might not be
                     // connected) use the first supported architecture.
-                    ArchSpec platform_arch (platform->GetSystemArchitecture());
-                    if (!platform_arch.IsValid())
+                    ArchSpec compatible_arch;
+                    if (platform->IsCompatibleArchitecture (raw_arch, &compatible_arch))
                     {
-                        if (!platform->GetSupportedArchitectureAtIndex (0, platform_arch))
-                            platform_arch.Clear();
+                        if (compatible_arch.IsValid())
+                        {
+                            const llvm::Triple &compatible_triple = compatible_arch.GetTriple();
+                            if (!vendor_specified)
+                                normalized_triple.setVendor(compatible_triple.getVendor());
+                            if (!os_specified)
+                                normalized_triple.setOS(compatible_triple.getOS());
+                            if (!env_specified && compatible_triple.getEnvironmentName().size())
+                                normalized_triple.setEnvironment(compatible_triple.getEnvironment());
+                        }
                     }
-
-                    if (platform_arch.IsValid())
+                    else
                     {
-                        normalized_triple.setVendor(platform_arch.GetTriple().getVendor());
-                        normalized_triple.setOS(platform_arch.GetTriple().getOS());
-                        normalized_triple.setEnvironment(platform_arch.GetTriple().getEnvironment());
+                        *this = raw_arch;
+                        return IsValid();
                     }
                 }
                 else
@@ -526,9 +572,12 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
                     // No platform specified, fall back to the host system for
                     // the default vendor, os, and environment.
                     llvm::Triple host_triple(llvm::sys::getDefaultTargetTriple());
-                    normalized_triple.setVendor(host_triple.getVendor());
-                    normalized_triple.setOS(host_triple.getOS());
-                    normalized_triple.setEnvironment(host_triple.getEnvironment());
+                    if (!vendor_specified)
+                        normalized_triple.setVendor(host_triple.getVendor());
+                    if (!vendor_specified)
+                        normalized_triple.setOS(host_triple.getOS());
+                    if (!env_specified && host_triple.getEnvironmentName().size())
+                        normalized_triple.setEnvironment(host_triple.getEnvironment());
                 }
             }
             SetTriple (normalized_triple);
@@ -561,7 +610,20 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                 if (arch_type == eArchTypeMachO)
                 {
                     m_triple.setVendor (llvm::Triple::Apple);
-                    m_triple.setOS (llvm::Triple::Darwin);
+
+                    switch (core_def->machine)
+                    {
+                        case llvm::Triple::arm:
+                        case llvm::Triple::thumb:
+                            m_triple.setOS (llvm::Triple::IOS);
+                            break;
+                            
+                        case llvm::Triple::x86:
+                        case llvm::Triple::x86_64:
+                        default:
+                            m_triple.setOS (llvm::Triple::MacOSX);
+                            break;
+                    }
                 }
                 else
                 {
@@ -620,6 +682,155 @@ ArchSpec::CoreUpdated (bool update_triple)
 //===----------------------------------------------------------------------===//
 // Operators.
 
+static bool
+cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_inverse)
+{
+    switch (core1)
+    {
+//    case ArchSpec::eCore_arm_armv4:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumb)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv4t:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv4t)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv5:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv5)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv5t:
+//    case ArchSpec::eCore_arm_armv5e:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv5e)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv6:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv6)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv7:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv7)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv7f:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv7f)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv7k:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv7k)
+//            return true;
+//        break;
+//        
+//    case ArchSpec::eCore_arm_armv7s:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_thumbv7s)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumb:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv4)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv4t:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv4t)
+//            return true;
+//        break;
+//    
+//    case ArchSpec::eCore_thumbv5:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv5)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv5e:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv5t || core2 == ArchSpec::eCore_arm_armv5e)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv6:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv6)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv7:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv7)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv7f:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv7f)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv7k:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv7k)
+//            return true;
+//        break;
+//
+//    case ArchSpec::eCore_thumbv7s:
+//        try_inverse = false;
+//        if (core2 == ArchSpec::eCore_arm_armv7s)
+//            return true;
+//        break;
+    
+    case ArchSpec::kCore_any:
+        return true;
+
+    case ArchSpec::kCore_arm_any:
+        if (core2 >= ArchSpec::kCore_arm_first && core2 <= ArchSpec::kCore_arm_last)
+            return true;
+        if (core2 >= ArchSpec::kCore_thumb_first && core2 <= ArchSpec::kCore_thumb_last)
+            return true;
+        if (core2 == ArchSpec::kCore_arm_any)
+            return true;
+        break;
+        
+    case ArchSpec::kCore_x86_32_any:
+        if ((core2 >= ArchSpec::kCore_x86_32_first && core2 <= ArchSpec::kCore_x86_32_last) || (core2 == ArchSpec::kCore_x86_32_any))
+            return true;
+        break;
+        
+    case ArchSpec::kCore_ppc_any:
+        if ((core2 >= ArchSpec::kCore_ppc_first && core2 <= ArchSpec::kCore_ppc_last) || (core2 == ArchSpec::kCore_ppc_any))
+            return true;
+        break;
+        
+    case ArchSpec::kCore_ppc64_any:
+        if ((core2 >= ArchSpec::kCore_ppc64_first && core2 <= ArchSpec::kCore_ppc64_last) || (core2 == ArchSpec::kCore_ppc64_any))
+            return true;
+        break;
+
+    default:
+        break;
+    }
+    if (try_inverse)
+        return cores_match (core2, core1, false);
+    return false;
+}
+
 bool
 lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
 {
@@ -629,61 +840,11 @@ lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
     const ArchSpec::Core lhs_core = lhs.GetCore ();
     const ArchSpec::Core rhs_core = rhs.GetCore ();
 
-    bool core_match = false;
-    if (lhs_core == rhs_core)
-        core_match = true;
-    else
-    {
+    // Check if the cores match, or check a little closer watching for wildcard
+    // and equivalent cores
+    const bool core_match = (lhs_core == rhs_core) || cores_match (lhs_core, rhs_core, true);
 
-        if (lhs_core == ArchSpec::kCore_any || rhs_core == ArchSpec::kCore_any)
-            core_match = true;
-        else
-        {
-            if (lhs_core == ArchSpec::kCore_arm_any)
-            {
-                if ((rhs_core >= ArchSpec::kCore_arm_first && rhs_core <= ArchSpec::kCore_arm_last) || (rhs_core == ArchSpec::kCore_arm_any))
-                    core_match = true;
-            }
-            else if (rhs_core == ArchSpec::kCore_arm_any)
-            {
-                if ((lhs_core >= ArchSpec::kCore_arm_first && lhs_core <= ArchSpec::kCore_arm_last) || (lhs_core == ArchSpec::kCore_arm_any))
-                    core_match = true;
-            }
-            else if (lhs_core == ArchSpec::kCore_x86_32_any)
-            {
-                if ((rhs_core >= ArchSpec::kCore_x86_32_first && rhs_core <= ArchSpec::kCore_x86_32_last) || (rhs_core == ArchSpec::kCore_x86_32_any))
-                    core_match = true;
-            }
-            else if (rhs_core == ArchSpec::kCore_x86_32_any)
-            {
-                if ((lhs_core >= ArchSpec::kCore_x86_32_first && lhs_core <= ArchSpec::kCore_x86_32_last) || (lhs_core == ArchSpec::kCore_x86_32_any))
-                    core_match = true;
-            }
-            else if (lhs_core == ArchSpec::kCore_ppc_any)
-            {
-                if ((rhs_core >= ArchSpec::kCore_ppc_first && rhs_core <= ArchSpec::kCore_ppc_last) || (rhs_core == ArchSpec::kCore_ppc_any))
-                    core_match = true;
-            }
-            else if (rhs_core == ArchSpec::kCore_ppc_any)
-            {
-                if ((lhs_core >= ArchSpec::kCore_ppc_first && lhs_core <= ArchSpec::kCore_ppc_last) || (lhs_core == ArchSpec::kCore_ppc_any))
-                    core_match = true;
-            }
-            else if (lhs_core == ArchSpec::kCore_ppc64_any)
-            {
-                if ((rhs_core >= ArchSpec::kCore_ppc64_first && rhs_core <= ArchSpec::kCore_ppc64_last) || (rhs_core == ArchSpec::kCore_ppc64_any))
-                    core_match = true;
-            }
-            else if (rhs_core == ArchSpec::kCore_ppc64_any)
-            {
-                if ((lhs_core >= ArchSpec::kCore_ppc64_first && lhs_core <= ArchSpec::kCore_ppc64_last) || (lhs_core == ArchSpec::kCore_ppc64_any))
-                    core_match = true;
-            }
-        }
-    }
-    if (!core_match)
-        return false;
-    else
+    if (core_match)
     {
         const llvm::Triple &lhs_triple = lhs.GetTriple();
         const llvm::Triple &rhs_triple = rhs.GetTriple();
@@ -692,6 +853,13 @@ lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
         const llvm::Triple::VendorType rhs_triple_vendor = rhs_triple.getVendor();
         if (lhs_triple_vendor != rhs_triple_vendor)
         {
+            const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
+            const bool lhs_vendor_specified = lhs.TripleVendorWasSpecified();
+            // Both architectures had the vendor specified, so if they aren't
+            // equal then we return false
+            if (rhs_vendor_specified && lhs_vendor_specified)
+                return false;
+            
             // Only fail if both vendor types are not unknown
             if (lhs_triple_vendor != llvm::Triple::UnknownVendor &&
                 rhs_triple_vendor != llvm::Triple::UnknownVendor)
@@ -702,6 +870,12 @@ lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
         const llvm::Triple::OSType rhs_triple_os = rhs_triple.getOS();
         if (lhs_triple_os != rhs_triple_os)
         {
+            const bool rhs_os_specified = rhs.TripleOSWasSpecified();
+            const bool lhs_os_specified = lhs.TripleOSWasSpecified();
+            // Both architectures had the OS specified, so if they aren't
+            // equal then we return false
+            if (rhs_os_specified && lhs_os_specified)
+                return false;
             // Only fail if both os types are not unknown
             if (lhs_triple_os != llvm::Triple::UnknownOS &&
                 rhs_triple_os != llvm::Triple::UnknownOS)
@@ -720,6 +894,7 @@ lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
         }
         return true;
     }
+    return false;
 }
 
 bool

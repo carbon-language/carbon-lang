@@ -134,7 +134,8 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         break;
 
     case 'a':
-            arch.SetTriple (option_arg, m_interpreter.GetPlatform (true).get());
+        if (!arch.SetTriple (option_arg, m_interpreter.GetPlatform (true).get()))
+            arch.SetTriple (option_arg);
         break;
 
     default:

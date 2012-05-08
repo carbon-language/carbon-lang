@@ -58,8 +58,16 @@ PlatformRemoteGDBServer::Terminate ()
 Platform* 
 PlatformRemoteGDBServer::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
-    return new PlatformRemoteGDBServer ();
+    bool create = force;
+    if (!create)
+    {
+        create = !arch->TripleVendorWasSpecified() && !arch->TripleOSWasSpecified();
+    }
+    if (create)
+        return new PlatformRemoteGDBServer ();
+    return NULL;
 }
+
 
 const char *
 PlatformRemoteGDBServer::GetShortPluginNameStatic()

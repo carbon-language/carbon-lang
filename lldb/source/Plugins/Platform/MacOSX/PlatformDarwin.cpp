@@ -612,14 +612,22 @@ PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     default:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
-        case 1: arch.SetTriple ("armv7f-apple-darwin", NULL); return true;
-        case 2: arch.SetTriple ("armv7k-apple-darwin", NULL); return true;
-        case 3: arch.SetTriple ("armv7s-apple-darwin", NULL); return true;
-        case 4: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
-        case 5: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 6: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 7: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+            case  0: arch.SetTriple ("armv7-apple-ios");    return true;
+            case  1: arch.SetTriple ("armv7f-apple-ios");   return true;
+            case  2: arch.SetTriple ("armv7k-apple-ios");   return true;
+            case  3: arch.SetTriple ("armv7s-apple-ios");   return true;
+            case  4: arch.SetTriple ("armv6-apple-ios");    return true;
+            case  5: arch.SetTriple ("armv5-apple-ios");    return true;
+            case  6: arch.SetTriple ("armv4-apple-ios");    return true;
+            case  7: arch.SetTriple ("arm-apple-ios");      return true;
+            case  8: arch.SetTriple ("thumbv7-apple-ios");  return true;
+            case  9: arch.SetTriple ("thumbv7f-apple-ios"); return true;
+            case 10: arch.SetTriple ("thumbv7k-apple-ios"); return true;
+            case 11: arch.SetTriple ("thumbv7s-apple-ios"); return true;
+            case 12: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case 13: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 14: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 15: arch.SetTriple ("thumb-apple-ios");    return true;
         default: break;
         }
         break;
@@ -627,81 +635,113 @@ PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv7f:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7f-apple-darwin", NULL); return true;
-        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
-        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
-        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case  0: arch.SetTriple ("armv7f-apple-ios");   return true;
+            case  1: arch.SetTriple ("armv7-apple-ios");    return true;
+            case  2: arch.SetTriple ("armv6-apple-ios");    return true;
+            case  3: arch.SetTriple ("armv5-apple-ios");    return true;
+            case  4: arch.SetTriple ("armv4-apple-ios");    return true;
+            case  5: arch.SetTriple ("arm-apple-ios");      return true;
+            case  6: arch.SetTriple ("thumbv7f-apple-ios"); return true;
+            case  7: arch.SetTriple ("thumbv7-apple-ios");  return true;
+            case  8: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case  9: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 10: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 11: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
 
     case ArchSpec::eCore_arm_armv7k:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7k-apple-darwin", NULL); return true;
-        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
-        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
-        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case  0: arch.SetTriple ("armv7k-apple-ios");   return true;
+            case  1: arch.SetTriple ("armv7-apple-ios");    return true;
+            case  2: arch.SetTriple ("armv6-apple-ios");    return true;
+            case  3: arch.SetTriple ("armv5-apple-ios");    return true;
+            case  4: arch.SetTriple ("armv4-apple-ios");    return true;
+            case  5: arch.SetTriple ("arm-apple-ios");      return true;
+            case  6: arch.SetTriple ("thumbv7k-apple-ios"); return true;
+            case  7: arch.SetTriple ("thumbv7-apple-ios");  return true;
+            case  8: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case  9: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 10: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 11: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
 
     case ArchSpec::eCore_arm_armv7s:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7s-apple-darwin", NULL); return true;
-        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
-        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
-        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case  0: arch.SetTriple ("armv7s-apple-ios");   return true;
+            case  1: arch.SetTriple ("armv7-apple-ios");    return true;
+            case  2: arch.SetTriple ("armv6-apple-ios");    return true;
+            case  3: arch.SetTriple ("armv5-apple-ios");    return true;
+            case  4: arch.SetTriple ("armv4-apple-ios");    return true;
+            case  5: arch.SetTriple ("arm-apple-ios");      return true;
+            case  6: arch.SetTriple ("thumbv7s-apple-ios"); return true;
+            case  7: arch.SetTriple ("thumbv7-apple-ios");  return true;
+            case  8: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case  9: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 10: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 11: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
 
     case ArchSpec::eCore_arm_armv7:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
-        case 1: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
-        case 2: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 3: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 4: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case 0: arch.SetTriple ("armv7-apple-ios");    return true;
+            case 1: arch.SetTriple ("armv6-apple-ios");    return true;
+            case 2: arch.SetTriple ("armv5-apple-ios");    return true;
+            case 3: arch.SetTriple ("armv4-apple-ios");    return true;
+            case 4: arch.SetTriple ("arm-apple-ios");      return true;
+            case 5: arch.SetTriple ("thumbv7-apple-ios");  return true;
+            case 6: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case 7: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 8: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 9: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
 
     case ArchSpec::eCore_arm_armv6:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
-        case 1: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 2: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 3: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case 0: arch.SetTriple ("armv6-apple-ios");    return true;
+            case 1: arch.SetTriple ("armv5-apple-ios");    return true;
+            case 2: arch.SetTriple ("armv4-apple-ios");    return true;
+            case 3: arch.SetTriple ("arm-apple-ios");      return true;
+            case 4: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case 5: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 6: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 7: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
 
     case ArchSpec::eCore_arm_armv5:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
-        case 1: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 2: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case 0: arch.SetTriple ("armv5-apple-ios");    return true;
+            case 1: arch.SetTriple ("armv4-apple-ios");    return true;
+            case 2: arch.SetTriple ("arm-apple-ios");      return true;
+            case 3: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 4: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 5: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
 
     case ArchSpec::eCore_arm_armv4:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
-        case 1: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
-        default: break;
+            case 0: arch.SetTriple ("armv4-apple-ios");    return true;
+            case 1: arch.SetTriple ("arm-apple-ios");      return true;
+            case 2: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 3: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
         }
         break;
     }

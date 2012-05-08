@@ -280,19 +280,37 @@ EmulateInstructionARM::GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num, Reg
 uint32_t
 EmulateInstructionARM::GetFramePointerRegisterNumber () const
 {
-    if (m_opcode_mode == eModeThumb || m_arch.GetTriple().getOS() == llvm::Triple::Darwin)
-        return 7;
-    else
-        return 11;
+    if (m_opcode_mode == eModeThumb)
+    {
+        switch (m_arch.GetTriple().getOS())
+        {
+            case llvm::Triple::Darwin:
+            case llvm::Triple::MacOSX:
+            case llvm::Triple::IOS:
+                return 7;
+            default:
+                break;
+        }
+    }
+    return 11;
 }
 
 uint32_t
 EmulateInstructionARM::GetFramePointerDWARFRegisterNumber () const
 {
-    if (m_opcode_mode == eModeThumb || m_arch.GetTriple().getOS() == llvm::Triple::Darwin)
-        return dwarf_r7;
-    else
-        return dwarf_r11;
+    if (m_opcode_mode == eModeThumb)
+    {
+        switch (m_arch.GetTriple().getOS())
+        {
+            case llvm::Triple::Darwin:
+            case llvm::Triple::MacOSX:
+            case llvm::Triple::IOS:
+                return dwarf_r7;
+            default:
+                break;
+        }
+    }
+    return dwarf_r11;
 }
 
 // Push Multiple Registers stores multiple registers to the stack, storing to

@@ -3553,14 +3553,25 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
         strm << "cpusubtype:" << std::dec << cpusubtype << ';';
     }
 
-    char ostype[64];
-    len = sizeof(ostype);
-    if (::sysctlbyname("kern.ostype", &ostype, &len, NULL, 0) == 0)
+    // The OS in the triple should be "ios" or "macosx" which doesn't match our
+    // "Darwin" which gets returned from "kern.ostype", so we need to hardcode
+    // this for now.
+    if (cputype == CPU_TYPE_ARM)
     {
-        len = strlen(ostype);
-        std::transform (ostype, ostype + len, ostype, tolower);
-        strm << "ostype:" << std::dec << ostype << ';';
+        strm << "ostype:ios;";
     }
+    else
+    {
+        strm << "ostype:macosx;";
+    }
+//    char ostype[64];
+//    len = sizeof(ostype);
+//    if (::sysctlbyname("kern.ostype", &ostype, &len, NULL, 0) == 0)
+//    {
+//        len = strlen(ostype);
+//        std::transform (ostype, ostype + len, ostype, tolower);
+//        strm << "ostype:" << std::dec << ostype << ';';
+//    }
 
     strm << "vendor:apple;";
 

@@ -94,10 +94,37 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
         case llvm::Triple::thumb:
             {
                 const llvm::Triple &triple = arch->GetTriple();
-                const llvm::Triple::OSType os = triple.getOS();
-                const llvm::Triple::VendorType vendor = triple.getVendor();
-                if (os == llvm::Triple::Darwin && vendor == llvm::Triple::Apple)
-                    create = true;
+                llvm::Triple::VendorType vendor = triple.getVendor();
+                switch (vendor)
+                {
+                    case llvm::Triple::Apple:
+                        create = true;
+
+                    case llvm::Triple::UnknownArch:
+                        create = !arch->TripleVendorWasSpecified();
+                        break;
+
+                    default:
+                        break;
+                }
+                
+                if (create)
+                {
+                    switch (triple.getOS())
+                    {
+                        case llvm::Triple::Darwin:  // Deprecated, but still support Darwin for historical reasons
+                        case llvm::Triple::IOS:     // This is the right triple value for iOS debugging
+                            break;
+
+                        case llvm::Triple::UnknownOS:
+                            create = !arch->TripleOSWasSpecified();
+                            break;
+                            
+                        default:
+                            create = false;
+                            break;
+                    }
+                }
             }
             break;
         default:

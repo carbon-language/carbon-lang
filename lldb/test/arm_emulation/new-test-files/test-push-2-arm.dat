@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="push {r6}"
-triple=arm-apple-darwin
+triple=arm-apple-ios
 opcode=0xe92d0040
 before_state={
 registers={

@@ -926,15 +926,12 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
 {
-    if (m_arch == arch_spec)
+    if (m_arch == arch_spec || !m_arch.IsValid())
     {
-        // If we're setting the architecture to our current architecture, we
-        // don't need to do anything.
-        return true;
-    }
-    else if (!m_arch.IsValid())
-    {
-        // If we haven't got a valid arch spec, then we just need to set it.
+        // If we haven't got a valid arch spec, or the architectures are
+        // compatible, so just update the architecture. Architectures can be
+        // equal, yet the triple OS and vendor might change, so we need to do
+        // the assignment here just in case.
         m_arch = arch_spec;
         return true;
     }
@@ -963,16 +960,9 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
                 SetExecutableModule (executable_sp, true);
                 return true;
             }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            return false;
         }
     }
+    return false;
 }
 
 void
@@ -2254,7 +2244,7 @@ Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
 {
     if (var_name == GetSettingNameForDefaultArch())
     {
-        m_default_architecture.SetTriple (value, NULL);
+        m_default_architecture.SetTriple (value);
         if (!m_default_architecture.IsValid())
             err.SetErrorStringWithFormat ("'%s' is not a valid architecture or triple.", value);
     }

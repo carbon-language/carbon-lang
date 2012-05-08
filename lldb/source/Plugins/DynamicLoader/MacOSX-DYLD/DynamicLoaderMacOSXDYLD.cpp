@@ -105,7 +105,17 @@ DynamicLoaderMacOSXDYLD::CreateInstance (Process* process, bool force)
         if (create)
         {
             const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
-            create = triple_ref.getOS() == llvm::Triple::Darwin && triple_ref.getVendor() == llvm::Triple::Apple;
+            switch (triple_ref.getOS())
+            {
+                case llvm::Triple::Darwin:
+                case llvm::Triple::MacOSX:
+                case llvm::Triple::IOS:
+                    create = triple_ref.getVendor() == llvm::Triple::Apple;
+                    break;
+                default:
+                    create = false;
+                    break;
+            }
         }
     }
     

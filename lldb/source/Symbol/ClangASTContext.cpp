@@ -622,7 +622,7 @@ ClangASTContext::getTargetOptions()
 TargetInfo *
 ClangASTContext::getTargetInfo()
 {
-    // target_triple should be something like "x86_64-apple-darwin10"
+    // target_triple should be something like "x86_64-apple-macosx"
     if (m_target_info_ap.get() == NULL && !m_target_triple.empty())
         m_target_info_ap.reset (TargetInfo::CreateTargetInfo(*getDiagnosticsEngine(), *getTargetOptions()));
     return m_target_info_ap.get();

@@ -435,7 +435,7 @@ SBDebugger::SetDefaultArchitecture (const char *arch_name)
 {
     if (arch_name)
     {
-        ArchSpec arch (arch_name, NULL);
+        ArchSpec arch (arch_name);
         if (arch.IsValid())
         {
             Target::SetDefaultArchitecture (arch);

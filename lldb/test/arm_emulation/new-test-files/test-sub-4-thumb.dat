@@ -1,6 +1,6 @@
 InstructionEmulationState={
 assembly_string="sub.w r1, sp, r3, lsl #2"
-triple=thumb-apple-darwin
+triple=thumb-apple-ios
 opcode=0xebad0183
 before_state={
 registers={

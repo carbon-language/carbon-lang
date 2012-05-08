@@ -71,10 +71,38 @@ PlatformiOSSimulator::CreateInstance (bool force, const ArchSpec *arch)
         case llvm::Triple::x86:
             {
                 const llvm::Triple &triple = arch->GetTriple();
-                const llvm::Triple::OSType os = triple.getOS();
-                const llvm::Triple::VendorType vendor = triple.getVendor();
-                if (os == llvm::Triple::Darwin && vendor == llvm::Triple::Apple)
-                    create = true;
+                switch (triple.getVendor())
+                {
+                    case llvm::Triple::Apple:
+                        create = true;
+                        break;
+                        
+                    case llvm::Triple::UnknownArch:
+                        create = !arch->TripleVendorWasSpecified();
+                        break;
+                        
+                    default:
+                        break;
+                }
+                
+                if (create)
+                {
+                    switch (triple.getOS())
+                    {
+                        case llvm::Triple::Darwin:  // Deprecated, but still support Darwin for historical reasons
+                        case llvm::Triple::MacOSX:
+                        case llvm::Triple::IOS:     // IOS is not used for simulator triples, but accept it just in case
+                            break;
+                            
+                        case llvm::Triple::UnknownOS:
+                            create = !arch->TripleOSWasSpecified();
+                            break;
+                            
+                        default:
+                            create = false;
+                            break;
+                    }
+                }
             }
             break;
         default:

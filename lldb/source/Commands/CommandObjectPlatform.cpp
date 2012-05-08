@@ -63,7 +63,8 @@ public:
                 const bool select = true;
                 m_platform_options.SetPlatformName (platform_name);
                 Error error;
-                PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter, ArchSpec(), select, error));
+                ArchSpec platform_arch;
+                PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter, ArchSpec(), select, error, platform_arch));
                 if (platform_sp)
                 {
                     platform_sp->GetStatus (result.GetOutputStream());

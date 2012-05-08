@@ -71,13 +71,22 @@ ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
     if (exe_module)
     {
         const llvm::Triple &triple_ref = target.GetArchitecture().GetTriple();
-        if (triple_ref.getOS() == llvm::Triple::Darwin && 
-            triple_ref.getVendor() == llvm::Triple::Apple)
+        switch (triple_ref.getOS())
         {
-            ObjectFile *exe_objfile = exe_module->GetObjectFile();
-            if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
-                exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
-                return true;
+            case llvm::Triple::Darwin:  // Should use "macosx" for desktop and "ios" for iOS, but accept darwin just in case
+            case llvm::Triple::MacOSX:  // For desktop targets
+            case llvm::Triple::IOS:     // For arm targets
+                if (triple_ref.getVendor() == llvm::Triple::Apple)
+                {
+                    ObjectFile *exe_objfile = exe_module->GetObjectFile();
+                    if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
+                        exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
+                        return true;
+                }
+                break;
+
+            default:
+                break;
         }
     }
     return false;

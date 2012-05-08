@@ -75,7 +75,7 @@ OperatingSystemDarwinKernel::CreateInstance (Process *process, bool force)
             }
         }
 
-        // We can limit the creation of this plug-in to "*-apple-darwin" triples
+        // We can limit the creation of this plug-in to "*-apple-macosx" or "*-apple-ios" triples
         // if we command out the lines below...
 //        if (create)
 //        {

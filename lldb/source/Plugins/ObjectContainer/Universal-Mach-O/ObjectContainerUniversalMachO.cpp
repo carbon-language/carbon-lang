@@ -197,7 +197,7 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
         {
             arch = Target::GetDefaultArchitecture ();
             if (!arch.IsValid())
-                arch.SetTriple (LLDB_ARCH_DEFAULT, NULL);
+                arch.SetTriple (LLDB_ARCH_DEFAULT);
         }
         else
             arch = module_sp->GetArchitecture();

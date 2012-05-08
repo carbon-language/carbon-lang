@@ -592,7 +592,7 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
     
     unwind_plan.AppendRow (row);
-    unwind_plan.SetSourceName ("arm-apple-darwin default unwind plan");
+    unwind_plan.SetSourceName ("arm-apple-ios default unwind plan");
     return true;
 }
 
@@ -623,7 +623,7 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 
                 case '2': return name[2] == '\0'; // r2
                 case '3': return name[2] == '\0'; // r3
-                case '9': return name[2] == '\0'; // r9 (apple-darwin only...)
+                case '9': return name[2] == '\0'; // r9 (apple-ios only...)
                     
                 break;
             }

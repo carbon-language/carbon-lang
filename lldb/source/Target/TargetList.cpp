@@ -68,11 +68,9 @@ TargetList::CreateTarget (Debugger &debugger,
     // This is purposely left empty unless it is specified by triple_cstr.
     // If not initialized via triple_cstr, then the currently selected platform
     // will set the architecture correctly.
-    ArchSpec arch;
-    
-    if (triple_cstr)
+    const ArchSpec arch(triple_cstr);
+    if (triple_cstr && triple_cstr[0])
     {
-        arch.SetTriple(triple_cstr, platform_sp.get());
         if (!arch.IsValid())
         {
             error.SetErrorStringWithFormat("invalid triple '%s'", triple_cstr);
@@ -80,6 +78,7 @@ TargetList::CreateTarget (Debugger &debugger,
         }
     }
 
+    ArchSpec platform_arch(arch);
     CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
     if (platform_options)
     {
@@ -89,7 +88,8 @@ TargetList::CreateTarget (Debugger &debugger,
             platform_sp = platform_options->CreatePlatformWithOptions (interpreter,
                                                                        arch,
                                                                        select_platform, 
-                                                                       error);
+                                                                       error,
+                                                                       platform_arch);
             if (!platform_sp)
                 return error;
         }
@@ -101,15 +101,18 @@ TargetList::CreateTarget (Debugger &debugger,
         // current architecture if we have a valid architecture.
         platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
         
-        if (arch.IsValid() && !platform_sp->IsCompatibleWithArchitecture(arch))
+        if (arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, &platform_arch))
         {
-            platform_sp = Platform::GetPlatformForArchitecture(arch);
+            platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
         }
     }
+    
+    if (!platform_arch.IsValid())
+        platform_arch = arch;
 
     error = TargetList::CreateTarget (debugger,
                                       file,
-                                      arch,
+                                      platform_arch,
                                       get_dependent_files,
                                       platform_sp,
                                       target_sp);
@@ -131,7 +134,7 @@ TargetList::CreateTarget
 (
     Debugger &debugger,
     const FileSpec& file,
-    const ArchSpec& arch,
+    const ArchSpec& specified_arch,
     bool get_dependent_files,
     PlatformSP &platform_sp,
     TargetSP &target_sp
@@ -141,28 +144,38 @@ TargetList::CreateTarget
                         "TargetList::CreateTarget (file = '%s/%s', arch = '%s')",
                         file.GetDirectory().AsCString(),
                         file.GetFilename().AsCString(),
-                        arch.GetArchitectureName());
+                        specified_arch.GetArchitectureName());
     Error error;
 
+    ArchSpec arch(specified_arch);
+
+    if (platform_sp)
+    {
+        if (arch.IsValid())
+        {
+            if (!platform_sp->IsCompatibleArchitecture(arch))
+                platform_sp = Platform::GetPlatformForArchitecture(specified_arch, &arch);
+        }
+    }
+    else if (arch.IsValid())
+    {
+        platform_sp = Platform::GetPlatformForArchitecture(specified_arch, &arch);
+    }
     
+    if (!platform_sp)
+        platform_sp = debugger.GetPlatformList().GetSelectedPlatform();
+
     if (file)
     {
         ModuleSP exe_module_sp;
         FileSpec resolved_file(file);
-        
         if (platform_sp)
         {
             FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
-            error = platform_sp->ResolveExecutable (file, arch, 
+            error = platform_sp->ResolveExecutable (file,
+                                                    arch,
                                                     exe_module_sp, 
                                                     executable_search_paths.GetSize() ? &executable_search_paths : NULL);
-            
-            if (exe_module_sp)
-            {
-                const ArchSpec &arch = exe_module_sp->GetArchitecture();
-                if (arch.IsValid() && !platform_sp->IsCompatibleWithArchitecture(arch))
-                    platform_sp = Platform::GetPlatformForArchitecture(arch);
-            }
         }
 
         if (error.Success() && exe_module_sp)

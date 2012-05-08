@@ -21,7 +21,7 @@ class Disassemble_VST1_64(TestBase):
         """Test disassembling invalid vst1.64 raw bytes with the API."""
         # Create a target from the debugger.
 
-        target = self.dbg.CreateTargetWithFileAndTargetTriple ("", "thumbv7-apple-darwin")
+        target = self.dbg.CreateTargetWithFileAndTargetTriple ("", "thumbv7")
         self.assertTrue(target, VALID_TARGET)
 
         raw_bytes = bytearray([0xf0, 0xb5, 0x03, 0xaf,
