@@ -222,35 +222,42 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'LLVM', u'LLVM Documentation',
-     [u'LLVM project'], 1)
-]
+man_pages = []
+
+# Automatically derive the list of man pages from the contents of the command
+# guide subdirectory.
+man_page_authors = "Maintained by The LLVM Team (http://llvm.org/)."
+command_guide_subpath = 'CommandGuide'
+command_guide_path = os.path.join(basedir, command_guide_subpath)
+for name in os.listdir(command_guide_path):
+    # Ignore non-ReST files and the index page.
+    if not name.endswith('.rst') or name in ('index.rst',):
+        continue
+
+    # Otherwise, automatically extract the description.
+    file_subpath = os.path.join(command_guide_subpath, name)
+    with open(os.path.join(command_guide_path, name)) as f:
+        it = iter(f)
+        title = it.next()[:-1]
+        header = it.next()[:-1]
+
+        if len(header) != len(title):
+            print >>sys.stderr, (
+                "error: invalid header in %r (does not match title)" % (
+                    file_subpath,))
+        if ' - ' not in title:
+            print >>sys.stderr, (
+                ("error: invalid title in %r "
+                 "(expected '<name> - <description>')") % (
+                    file_subpath,))
+
+        # Split the name out of the title.
+        name,description = title.split(' - ', 1)
+        man_pages.append((file_subpath.replace('.rst',''), name,
+                          description, man_page_authors, 1))
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
-
-
-# -- Options for Texinfo output ------------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-  ('index', 'LLVM', u'LLVM Documentation',
-   u'LLVM project', 'LLVM', 'One line description of project.',
-   'Miscellaneous'),
-]
-
-# Documents to append as an appendix to all manuals.
-#texinfo_appendices = []
-
-# If false, no module index is generated.
-#texinfo_domain_indices = True
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#texinfo_show_urls = 'footnote'
-
 
 # FIXME: Define intersphinx configration.
 intersphinx_mapping = {}
