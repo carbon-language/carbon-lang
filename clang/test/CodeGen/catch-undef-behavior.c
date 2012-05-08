@@ -5,13 +5,13 @@
 void foo() {
   union { int i; } u;
   // CHECK: objectsize
-  // CHECK-NEXT: icmp uge
+  // CHECK: icmp uge
   u.i=1;
 }
 
 // CHECK: @bar
 int bar(int *a) {
   // CHECK: objectsize
-  // CHECK-NEXT: icmp uge
+  // CHECK: icmp uge
   return *a;
 }
