@@ -92,39 +92,39 @@ SBListener::Clear ()
         m_opaque_ptr->Clear ();
 }
 
-    uint32_t
-    SBListener::StartListeningForEventClass (SBDebugger &debugger,
-                                 const char *broadcaster_class, 
-                                 uint32_t event_mask)
+uint32_t
+SBListener::StartListeningForEventClass (SBDebugger &debugger,
+                             const char *broadcaster_class, 
+                             uint32_t event_mask)
+{
+    if (m_opaque_ptr)
     {
-        if (m_opaque_ptr)
-        {
-            Debugger *lldb_debugger = debugger.get();
-            if (!lldb_debugger)
-                return 0;
-            BroadcastEventSpec event_spec (ConstString (broadcaster_class), event_mask);
-            return m_opaque_ptr->StartListeningForEventSpec (*lldb_debugger, event_spec);
-        }
-        else
+        Debugger *lldb_debugger = debugger.get();
+        if (!lldb_debugger)
             return 0;
+        BroadcastEventSpec event_spec (ConstString (broadcaster_class), event_mask);
+        return m_opaque_ptr->StartListeningForEventSpec (*lldb_debugger, event_spec);
     }
-                                 
-    bool
-    SBListener::StopListeningForEventClass (SBDebugger &debugger,
-                                const char *broadcaster_class,
-                                uint32_t event_mask)
+    else
+        return 0;
+}
+                             
+bool
+SBListener::StopListeningForEventClass (SBDebugger &debugger,
+                            const char *broadcaster_class,
+                            uint32_t event_mask)
+{
+    if (m_opaque_ptr)
     {
-        if (m_opaque_ptr)
-        {
-            Debugger *lldb_debugger = debugger.get();
-            if (!lldb_debugger)
-                return false;
-            BroadcastEventSpec event_spec (ConstString (broadcaster_class), event_mask);
-            return m_opaque_ptr->StopListeningForEventSpec (*lldb_debugger, event_spec);
-        }
-        else
+        Debugger *lldb_debugger = debugger.get();
+        if (!lldb_debugger)
             return false;
+        BroadcastEventSpec event_spec (ConstString (broadcaster_class), event_mask);
+        return m_opaque_ptr->StopListeningForEventSpec (*lldb_debugger, event_spec);
     }
+    else
+        return false;
+}
     
 uint32_t
 SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t event_mask)
