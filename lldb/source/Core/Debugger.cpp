@@ -16,6 +16,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/FormatManager.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/RegisterValue.h"
@@ -1215,6 +1216,7 @@ Debugger::FormatPrompt
                                 const char* first_unparsed;
                                 bool was_plain_var = false;
                                 bool was_var_format = false;
+                                bool was_var_indexed = false;
 
                                 if (!valobj) break;
                                 // simplest case ${var}, just print valobj's value
@@ -1241,7 +1243,8 @@ Debugger::FormatPrompt
                                     // this is ${var.something} or multiple .something nested
                                 else if (::strncmp (var_name_begin, "var", strlen("var")) == 0)
                                 {
-
+                                    if (::strncmp(var_name_begin, "var[", strlen("var[")) == 0)
+                                        was_var_indexed = true;
                                     const char* percent_position;
                                     ScanFormatDescriptor (var_name_begin,
                                                           var_name_end,
@@ -1316,6 +1319,20 @@ Debugger::FormatPrompt
                                         break;
                                     }
                                     do_deref_pointer = false;
+                                }
+                                
+                                // <rdar://problem/11338654>
+                                // we do not want to use the summary for a bitfield of type T:n
+                                // if we were originally dealing with just a T - that would get
+                                // us into an endless recursion
+                                if (target->IsBitfield() && was_var_indexed)
+                                {
+                                    // TODO: check for a (T:n)-specific summary - we should still obey that
+                                    StreamString bitfield_name;
+                                    bitfield_name.Printf("%s:%d", target->GetTypeName().AsCString(), target->GetBitfieldBitSize());
+                                    lldb::TypeNameSpecifierImplSP type_sp(new TypeNameSpecifierImpl(bitfield_name.GetData(),false));
+                                    if (!DataVisualization::GetSummaryForType(type_sp))
+                                        val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
                                 }
                                 
                                 // TODO use flags for these

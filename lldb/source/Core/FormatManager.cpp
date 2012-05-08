@@ -445,6 +445,97 @@ CategoryMap::GetSummaryFormat (ValueObject& valobj,
     return lldb::TypeSummaryImplSP();
 }
 
+lldb::TypeSummaryImplSP
+FormatManager::GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    if (!type_sp)
+        return lldb::TypeSummaryImplSP();
+    lldb::TypeSummaryImplSP summary_chosen_sp;
+    uint32_t num_categories = m_categories_map.GetCount();
+    lldb::TypeCategoryImplSP category_sp;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sp = GetCategoryAtIndex(category_id);
+        if (category_sp->IsEnabled() == false)
+            continue;
+        lldb::TypeSummaryImplSP summary_current_sp = category_sp->GetSummaryForType(type_sp);
+        if (summary_current_sp && (summary_chosen_sp.get() == NULL || (prio_category > category_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sp->GetEnabledPosition();
+            summary_chosen_sp = summary_current_sp;
+        }
+    }
+    return summary_chosen_sp;
+}
+
+lldb::TypeFilterImplSP
+FormatManager::GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    if (!type_sp)
+        return lldb::TypeFilterImplSP();
+    lldb::TypeFilterImplSP filter_chosen_sp;
+    uint32_t num_categories = m_categories_map.GetCount();
+    lldb::TypeCategoryImplSP category_sp;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sp = GetCategoryAtIndex(category_id);
+        if (category_sp->IsEnabled() == false)
+            continue;
+        lldb::TypeFilterImplSP filter_current_sp((TypeFilterImpl*)category_sp->GetFilterForType(type_sp).get());
+        if (filter_current_sp && (filter_chosen_sp.get() == NULL || (prio_category > category_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sp->GetEnabledPosition();
+            filter_chosen_sp = filter_current_sp;
+        }
+    }
+    return filter_chosen_sp;
+}
+
+lldb::TypeSyntheticImplSP
+FormatManager::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    if (!type_sp)
+        return lldb::TypeSyntheticImplSP();
+    lldb::TypeSyntheticImplSP synth_chosen_sp;
+    uint32_t num_categories = m_categories_map.GetCount();
+    lldb::TypeCategoryImplSP category_sp;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sp = GetCategoryAtIndex(category_id);
+        if (category_sp->IsEnabled() == false)
+            continue;
+        lldb::TypeSyntheticImplSP synth_current_sp((TypeSyntheticImpl*)category_sp->GetSyntheticForType(type_sp).get());
+        if (synth_current_sp && (synth_chosen_sp.get() == NULL || (prio_category > category_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sp->GetEnabledPosition();
+            synth_chosen_sp = synth_current_sp;
+        }
+    }
+    return synth_chosen_sp;
+}
+
+lldb::SyntheticChildrenSP
+FormatManager::GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    if (!type_sp)
+        return lldb::SyntheticChildrenSP();
+    lldb::TypeFilterImplSP filter_sp = GetFilterForType(type_sp);
+    lldb::TypeSyntheticImplSP synth_sp = GetSyntheticForType(type_sp);
+    if (filter_sp->GetRevision() > synth_sp->GetRevision())
+        return lldb::SyntheticChildrenSP(filter_sp.get());
+    else
+        return lldb::SyntheticChildrenSP(synth_sp.get());
+}
+
 lldb::SyntheticChildrenSP
 CategoryMap::GetSyntheticChildren (ValueObject& valobj,
                                    lldb::DynamicValueType use_dynamic)

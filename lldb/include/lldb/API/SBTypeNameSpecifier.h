@@ -58,6 +58,7 @@ namespace lldb {
         operator != (lldb::SBTypeNameSpecifier &rhs);
         
     protected:
+        friend class SBDebugger;
         friend class SBTypeCategory;
         
         lldb::TypeNameSpecifierImplSP

@@ -99,6 +99,54 @@ public:
         return RegexFilterNavigatorSP(m_regex_filter_nav);
     }
     
+    SummaryNavigator::MapValueType
+    GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp)
+    {
+        SummaryNavigator::MapValueType retval;
+        
+        if (type_sp)
+        {
+            if (type_sp->IsRegex())
+                m_regex_summary_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            else
+                m_summary_nav->GetExact(ConstString(type_sp->GetName()),retval);
+        }
+
+        return retval;
+    }
+    
+    FilterNavigator::MapValueType
+    GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp)
+    {
+        FilterNavigator::MapValueType retval;
+        
+        if (type_sp)
+        {
+            if (type_sp->IsRegex())
+                m_regex_filter_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            else
+                m_filter_nav->GetExact(ConstString(type_sp->GetName()),retval);
+        }
+        
+        return retval;
+    }
+    
+    SynthNavigator::MapValueType
+    GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
+    {
+        SynthNavigator::MapValueType retval;
+        
+        if (type_sp)
+        {
+            if (type_sp->IsRegex())
+                m_regex_synth_nav->GetExact(ConstString(type_sp->GetName()),retval);
+            else
+                m_synth_nav->GetExact(ConstString(type_sp->GetName()),retval);
+        }
+        
+        return retval;
+    }
+    
     lldb::TypeNameSpecifierImplSP
     GetTypeNameSpecifierForSummaryAtIndex (uint32_t index)
     {
@@ -600,6 +648,18 @@ public:
     {
         return m_categories_map.GetSummaryFormat(valobj, use_dynamic);
     }
+    
+    lldb::TypeSummaryImplSP
+    GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp);
+
+    lldb::TypeFilterImplSP
+    GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp);
+
+    lldb::TypeSyntheticImplSP
+    GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp);
+    
+    lldb::SyntheticChildrenSP
+    GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp);
     
     lldb::SyntheticChildrenSP
     GetSyntheticChildren (ValueObject& valobj,

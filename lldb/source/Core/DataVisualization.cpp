@@ -103,11 +103,35 @@ DataVisualization::GetSummaryFormat (ValueObject& valobj,
     return GetFormatManager().GetSummaryFormat(valobj, use_dynamic);
 }
 
+lldb::TypeSummaryImplSP
+DataVisualization::GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    return GetFormatManager().GetSummaryForType(type_sp);
+}
+
 lldb::SyntheticChildrenSP
 DataVisualization::GetSyntheticChildren (ValueObject& valobj,
                                          lldb::DynamicValueType use_dynamic)
 {
     return GetFormatManager().GetSyntheticChildren(valobj, use_dynamic);
+}
+
+lldb::SyntheticChildrenSP
+DataVisualization::GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    return GetFormatManager().GetSyntheticChildrenForType(type_sp);
+}
+
+lldb::TypeFilterImplSP
+DataVisualization::GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    return GetFormatManager().GetFilterForType(type_sp);
+}
+
+lldb::TypeSyntheticImplSP
+DataVisualization::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    return GetFormatManager().GetSyntheticForType(type_sp);
 }
 
 bool

@@ -105,6 +105,11 @@ class AdvDataFormatterTestCase(TestBase):
             substrs = ['0x',
                        '2'])
 
+        # check fix for <rdar://problem/11338654> LLDB crashes when using a "type summary" that uses bitfields with no format
+        self.runCmd("type summary add --summary-string \"${var[0-1]}\" int")
+        self.expect("frame variable iAmInt",
+            substrs = ['9 1'])
+
         self.expect("frame variable cool_array[3].floating",
             substrs = ['0x'])
                     
