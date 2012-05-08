@@ -265,10 +265,9 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
             break;
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
-            return T == C.UnsignedCharTy;
           case BuiltinType::Char_U:
           case BuiltinType::UChar:                    
-            return T == C.SignedCharTy;
+            return T == C.UnsignedCharTy || T == C.SignedCharTy;
           case BuiltinType::Short:
             return T == C.UnsignedShortTy;
           case BuiltinType::UShort:

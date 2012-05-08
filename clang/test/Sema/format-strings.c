@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -isystem %S/Inputs %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -isystem %S/Inputs -fno-signed-char %s
 
 #define __need_wint_t
 #include <stdarg.h>
@@ -529,4 +530,9 @@ void test_other_formats() {
 #include <format-unused-system-args.h>
 void test_unused_system_args(int x) {
   PRINT1("%d\n", x); // no-warning{{extra argument is system header is OK}}
+}
+
+void pr12761(char c) {
+  // This should not warn even with -fno-signed-char.
+  printf("%hhx", c);
 }
