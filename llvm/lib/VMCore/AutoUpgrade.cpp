@@ -57,7 +57,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.sse2.pcmpgt.") ||
         Name.startswith("x86.avx2.pcmpeq.") ||
         Name.startswith("x86.avx2.pcmpgt.") ||
-        Name.startswith("x86.avx.vpermil.")) {
+        Name.startswith("x86.avx.vpermil.") ||
+        Name == "x86.avx.movnt.dq.256" ||
+        Name == "x86.avx.movnt.pd.256" ||
+        Name == "x86.avx.movnt.ps.256") {
       NewFn = 0;
       return true;
     }
@@ -118,15 +121,40 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                   "pcmpgt");
       // need to sign extend since icmp returns vector of i1
       Rep = Builder.CreateSExt(Rep, CI->getType(), "");
+    } else if (Name == "llvm.x86.avx.movnt.dq.256" ||
+               Name == "llvm.x86.avx.movnt.ps.256" ||
+               Name == "llvm.x86.avx.movnt.pd.256") {
+      IRBuilder<> Builder(C);
+      Builder.SetInsertPoint(CI->getParent(), CI);
+
+      Module *M = F->getParent();
+      SmallVector<Value *, 1> Elts;
+      Elts.push_back(ConstantInt::get(Type::getInt32Ty(C), 1));
+      MDNode *Node = MDNode::get(C, Elts);
+
+      Value *Arg0 = CI->getArgOperand(0);
+      Value *Arg1 = CI->getArgOperand(1);
+
+      // Convert the type of the pointer to a pointer to the stored type.
+      Value *BC = Builder.CreateBitCast(Arg0,
+                                        PointerType::getUnqual(Arg1->getType()),
+                                        "cast");
+      StoreInst *SI = Builder.CreateStore(Arg1, BC);
+      SI->setMetadata(M->getMDKindID("nontemporal"), Node);
+      SI->setAlignment(16);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
+      return;
     } else {
       bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;
-      if (Name.startswith("llvm.x86.avx.vpermil.pd.256"))
+      if (Name == "llvm.x86.avx.vpermil.pd.256")
         PD256 = true;
-      else if (Name.startswith("llvm.x86.avx.vpermil.pd"))
+      else if (Name == "llvm.x86.avx.vpermil.pd")
         PD128 = true;
-      else if (Name.startswith("llvm.x86.avx.vpermil.ps.256"))
+      else if (Name == "llvm.x86.avx.vpermil.ps.256")
         PS256 = true;
-      else if (Name.startswith("llvm.x86.avx.vpermil.ps"))
+      else if (Name == "llvm.x86.avx.vpermil.ps")
         PS128 = true;
 
       if (PD256 || PD128 || PS256 || PS128) {

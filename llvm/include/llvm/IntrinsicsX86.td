@@ -1282,16 +1282,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
         Intrinsic<[], [llvm_ptr_ty, llvm_v32i8_ty], []>;
 }
 
-// Cacheability support ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_movnt_dq_256 : GCCBuiltin<"__builtin_ia32_movntdq256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v4i64_ty], []>;
-  def int_x86_avx_movnt_pd_256 : GCCBuiltin<"__builtin_ia32_movntpd256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v4f64_ty], []>;
-  def int_x86_avx_movnt_ps_256 : GCCBuiltin<"__builtin_ia32_movntps256">,
-        Intrinsic<[], [llvm_ptr_ty, llvm_v8f32_ty], []>;
-}
-
 // Conditional load ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_maskload_pd : GCCBuiltin<"__builtin_ia32_maskloadpd">,

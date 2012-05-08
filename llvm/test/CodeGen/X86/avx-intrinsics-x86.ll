@@ -2555,3 +2555,27 @@ define i32 @crc32_32_32(i32 %a, i32 %b) nounwind {
   ret i32 %tmp
 }
 declare i32 @llvm.x86.sse42.crc32.32.32(i32, i32) nounwind
+
+; CHECK: movntdq
+define void @movnt_dq(i8* %p, <4 x i64> %a1) nounwind {
+  %a2 = add <4 x i64> %a1, <i64 1, i64 1, i64 1, i64 1>
+  tail call void @llvm.x86.avx.movnt.dq.256(i8* %p, <4 x i64> %a2) nounwind
+  ret void
+}
+declare void @llvm.x86.avx.movnt.dq.256(i8*, <4 x i64>) nounwind
+
+; CHECK: movntps
+define void @movnt_ps(i8* %p, <8 x float> %a) nounwind {
+  tail call void @llvm.x86.avx.movnt.ps.256(i8* %p, <8 x float> %a) nounwind
+  ret void
+}
+declare void @llvm.x86.avx.movnt.ps.256(i8*, <8 x float>) nounwind
+
+; CHECK: movntpd
+define void @movnt_pd(i8* %p, <4 x double> %a1) nounwind {
+  ; add operation forces the execution domain.
+  %a2 = fadd <4 x double> %a1, <double 0x0, double 0x0, double 0x0, double 0x0>
+  tail call void @llvm.x86.avx.movnt.pd.256(i8* %p, <4 x double> %a2) nounwind
+  ret void
+}
+declare void @llvm.x86.avx.movnt.pd.256(i8*, <4 x double>) nounwind

@@ -3336,13 +3336,6 @@ let AddedComplexity = 400 in { // Prefer non-temporal versions
                                                 IIC_SSE_MOVNT>, VEX;
 }
 
-def : Pat<(int_x86_avx_movnt_dq_256 addr:$dst, VR256:$src),
-          (VMOVNTDQYmr addr:$dst, VR256:$src)>;
-def : Pat<(int_x86_avx_movnt_pd_256 addr:$dst, VR256:$src),
-          (VMOVNTPDYmr addr:$dst, VR256:$src)>;
-def : Pat<(int_x86_avx_movnt_ps_256 addr:$dst, VR256:$src),
-          (VMOVNTPSYmr addr:$dst, VR256:$src)>;
-
 let AddedComplexity = 400 in { // Prefer non-temporal versions
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",
