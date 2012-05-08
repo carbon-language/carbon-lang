@@ -317,9 +317,11 @@ SBCommandInterpreter::SetCommandOverrideCallback (const char *command_name,
 {
     if (command_name && command_name[0] && m_opaque_ptr)
     {
-        CommandObject *cmd_obj = m_opaque_ptr->GetCommandObject(command_name);
+        std::string command_name_str (command_name);
+        CommandObject *cmd_obj = m_opaque_ptr->GetCommandObjectForCommand(command_name_str);
         if (cmd_obj)
         {
+            assert(command_name_str.empty());
             cmd_obj->SetOverrideCallback (callback, baton);
             return true;
         }
