@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/APSIntType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "llvm/Support/Debug.h"
@@ -143,6 +144,92 @@ private:
     }
   }
 
+  const llvm::APSInt &getMinValue() const {
+    assert(!isEmpty());
+    return ranges.begin()->From();
+  }
+
+  bool pin(llvm::APSInt &Lower, llvm::APSInt &Upper) const {
+    // This function has nine cases, the cartesian product of range-testing
+    // both the upper and lower bounds against the symbol's type.
+    // Each case requires a different pinning operation.
+    // The function returns false if the described range is entirely outside
+    // the range of values for the associated symbol.
+    APSIntType Type(getMinValue());
+    APSIntType::RangeTestResultKind LowerTest = Type.testInRange(Lower);
+    APSIntType::RangeTestResultKind UpperTest = Type.testInRange(Upper);
+
+    switch (LowerTest) {
+    case APSIntType::RTR_Below:
+      switch (UpperTest) {
+      case APSIntType::RTR_Below:
+        // The entire range is outside the symbol's set of possible values.
+        // If this is a conventionally-ordered range, the state is infeasible.
+        if (Lower < Upper)
+          return false;
+
+        // However, if the range wraps around, it spans all possible values.
+        Lower = Type.getMinValue();
+        Upper = Type.getMaxValue();
+        break;
+      case APSIntType::RTR_Within:
+        // The range starts below what's possible but ends within it. Pin.
+        Lower = Type.getMinValue();
+        Type.apply(Upper);
+        break;
+      case APSIntType::RTR_Above:
+        // The range spans all possible values for the symbol. Pin.
+        Lower = Type.getMinValue();
+        Upper = Type.getMaxValue();
+        break;
+      }
+      break;
+    case APSIntType::RTR_Within:
+      switch (UpperTest) {
+      case APSIntType::RTR_Below:
+        // The range wraps around, but all lower values are not possible.
+        Type.apply(Lower);
+        Upper = Type.getMaxValue();
+        break;
+      case APSIntType::RTR_Within:
+        // The range may or may not wrap around, but both limits are valid.
+        Type.apply(Lower);
+        Type.apply(Upper);
+        break;
+      case APSIntType::RTR_Above:
+        // The range starts within what's possible but ends above it. Pin.
+        Type.apply(Lower);
+        Upper = Type.getMaxValue();
+        break;
+      }
+      break;
+    case APSIntType::RTR_Above:
+      switch (UpperTest) {
+      case APSIntType::RTR_Below:
+        // The range wraps but is outside the symbol's set of possible values.
+        return false;
+      case APSIntType::RTR_Within:
+        // The range starts above what's possible but ends within it (wrap).
+        Lower = Type.getMinValue();
+        Type.apply(Upper);
+        break;
+      case APSIntType::RTR_Above:
+        // The entire range is outside the symbol's set of possible values.
+        // If this is a conventionally-ordered range, the state is infeasible.
+        if (Lower < Upper)
+          return false;
+
+        // However, if the range wraps around, it spans all possible values.
+        Lower = Type.getMinValue();
+        Upper = Type.getMaxValue();
+        break;
+      }
+      break;
+    }
+
+    return true;
+  }
+
 public:
   // Returns a set containing the values in the receiving set, intersected with
   // the closed range [Lower, Upper]. Unlike the Range type, this range uses
@@ -152,8 +239,10 @@ public:
   // intersection with the two ranges [Min, Upper] and [Lower, Max],
   // or, alternatively, /removing/ all integers between Upper and Lower.
   RangeSet Intersect(BasicValueFactory &BV, Factory &F,
-                     const llvm::APSInt &Lower,
-                     const llvm::APSInt &Upper) const {
+                     llvm::APSInt Lower, llvm::APSInt Upper) const {
+    if (!pin(Lower, Upper))
+      return F.getEmptySet();
+
     PrimRangeSet newRanges = F.getEmptySet();
 
     PrimRangeSet::iterator i = begin(), e = end();
@@ -166,6 +255,7 @@ public:
       IntersectInRange(BV, F, BV.getMinValue(Upper), Upper, newRanges, i, e);
       IntersectInRange(BV, F, Lower, BV.getMaxValue(Lower), newRanges, i, e);
     }
+
     return newRanges;
   }
 
@@ -206,8 +296,8 @@ namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(ProgramStateRef state, SymbolRef sym);
 public:
-  RangeConstraintManager(SubEngine &subengine)
-    : SimpleConstraintManager(subengine) {}
+  RangeConstraintManager(SubEngine &subengine, BasicValueFactory &BVF)
+    : SimpleConstraintManager(subengine, BVF) {}
 
   ProgramStateRef assumeSymNE(ProgramStateRef state, SymbolRef sym,
                              const llvm::APSInt& Int,
@@ -252,9 +342,9 @@ private:
 
 } // end anonymous namespace
 
-ConstraintManager* ento::CreateRangeConstraintManager(ProgramStateManager&,
-                                                    SubEngine &subeng) {
-  return new RangeConstraintManager(subeng);
+ConstraintManager *
+ento::CreateRangeConstraintManager(ProgramStateManager &StMgr, SubEngine &Eng) {
+  return new RangeConstraintManager(Eng, StMgr.getBasicVals());
 }
 
 const llvm::APSInt* RangeConstraintManager::getSymVal(ProgramStateRef St,
@@ -288,8 +378,8 @@ RangeConstraintManager::GetRange(ProgramStateRef state, SymbolRef sym) {
 
   // Lazily generate a new RangeSet representing all possible values for the
   // given symbol type.
-  QualType T = state->getSymbolManager().getType(sym);
-  BasicValueFactory& BV = state->getBasicVals();
+  BasicValueFactory &BV = getBasicVals();
+  QualType T = sym->getType(BV.getContext());
   return RangeSet(F, BV.getMinValue(T), BV.getMaxValue(T));
 }
 
@@ -306,117 +396,154 @@ RangeConstraintManager::GetRange(ProgramStateRef state, SymbolRef sym) {
 // UINT_MAX, 0, 1, and 2.
 
 ProgramStateRef 
-RangeConstraintManager::assumeSymNE(ProgramStateRef state, SymbolRef sym,
-                                    const llvm::APSInt& Int,
-                                    const llvm::APSInt& Adjustment) {
-  BasicValueFactory &BV = state->getBasicVals();
+RangeConstraintManager::assumeSymNE(ProgramStateRef St, SymbolRef Sym,
+                                    const llvm::APSInt &Int,
+                                    const llvm::APSInt &Adjustment) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  if (AdjustmentType.testInRange(Int) != APSIntType::RTR_Within)
+    return St;
 
-  llvm::APSInt Lower = Int-Adjustment;
+  llvm::APSInt Lower = AdjustmentType.convert(Int) - Adjustment;
   llvm::APSInt Upper = Lower;
   --Lower;
   ++Upper;
 
   // [Int-Adjustment+1, Int-Adjustment-1]
   // Notice that the lower bound is greater than the upper bound.
-  RangeSet New = GetRange(state, sym).Intersect(BV, F, Upper, Lower);
-  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+  RangeSet New = GetRange(St, Sym).Intersect(getBasicVals(), F, Upper, Lower);
+  return New.isEmpty() ? NULL : St->set<ConstraintRange>(Sym, New);
 }
 
 ProgramStateRef 
-RangeConstraintManager::assumeSymEQ(ProgramStateRef state, SymbolRef sym,
-                                    const llvm::APSInt& Int,
-                                    const llvm::APSInt& Adjustment) {
+RangeConstraintManager::assumeSymEQ(ProgramStateRef St, SymbolRef Sym,
+                                    const llvm::APSInt &Int,
+                                    const llvm::APSInt &Adjustment) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  if (AdjustmentType.testInRange(Int) != APSIntType::RTR_Within)
+    return NULL;
+
   // [Int-Adjustment, Int-Adjustment]
-  BasicValueFactory &BV = state->getBasicVals();
-  llvm::APSInt AdjInt = Int-Adjustment;
-  RangeSet New = GetRange(state, sym).Intersect(BV, F, AdjInt, AdjInt);
-  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+  llvm::APSInt AdjInt = AdjustmentType.convert(Int) - Adjustment;
+  RangeSet New = GetRange(St, Sym).Intersect(getBasicVals(), F, AdjInt, AdjInt);
+  return New.isEmpty() ? NULL : St->set<ConstraintRange>(Sym, New);
 }
 
 ProgramStateRef 
-RangeConstraintManager::assumeSymLT(ProgramStateRef state, SymbolRef sym,
-                                    const llvm::APSInt& Int,
-                                    const llvm::APSInt& Adjustment) {
-  BasicValueFactory &BV = state->getBasicVals();
-
-  QualType T = state->getSymbolManager().getType(sym);
-  const llvm::APSInt &Min = BV.getMinValue(T);
+RangeConstraintManager::assumeSymLT(ProgramStateRef St, SymbolRef Sym,
+                                    const llvm::APSInt &Int,
+                                    const llvm::APSInt &Adjustment) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  switch (AdjustmentType.testInRange(Int)) {
+  case APSIntType::RTR_Below:
+    return NULL;
+  case APSIntType::RTR_Within:
+    break;
+  case APSIntType::RTR_Above:
+    return St;
+  }
 
   // Special case for Int == Min. This is always false.
-  if (Int == Min)
+  llvm::APSInt ComparisonVal = AdjustmentType.convert(Int);
+  llvm::APSInt Min = AdjustmentType.getMinValue();
+  if (ComparisonVal == Min)
     return NULL;
 
   llvm::APSInt Lower = Min-Adjustment;
-  llvm::APSInt Upper = Int-Adjustment;
+  llvm::APSInt Upper = ComparisonVal-Adjustment;
   --Upper;
 
-  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
-  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+  RangeSet New = GetRange(St, Sym).Intersect(getBasicVals(), F, Lower, Upper);
+  return New.isEmpty() ? NULL : St->set<ConstraintRange>(Sym, New);
 }
 
 ProgramStateRef 
-RangeConstraintManager::assumeSymGT(ProgramStateRef state, SymbolRef sym,
-                                    const llvm::APSInt& Int,
-                                    const llvm::APSInt& Adjustment) {
-  BasicValueFactory &BV = state->getBasicVals();
-
-  QualType T = state->getSymbolManager().getType(sym);
-  const llvm::APSInt &Max = BV.getMaxValue(T);
+RangeConstraintManager::assumeSymGT(ProgramStateRef St, SymbolRef Sym,
+                                    const llvm::APSInt &Int,
+                                    const llvm::APSInt &Adjustment) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  switch (AdjustmentType.testInRange(Int)) {
+  case APSIntType::RTR_Below:
+    return St;
+  case APSIntType::RTR_Within:
+    break;
+  case APSIntType::RTR_Above:
+    return NULL;
+  }
 
   // Special case for Int == Max. This is always false.
-  if (Int == Max)
+  llvm::APSInt ComparisonVal = AdjustmentType.convert(Int);
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  if (ComparisonVal == Max)
     return NULL;
 
-  llvm::APSInt Lower = Int-Adjustment;
+  llvm::APSInt Lower = ComparisonVal-Adjustment;
   llvm::APSInt Upper = Max-Adjustment;
   ++Lower;
 
-  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
-  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+  RangeSet New = GetRange(St, Sym).Intersect(getBasicVals(), F, Lower, Upper);
+  return New.isEmpty() ? NULL : St->set<ConstraintRange>(Sym, New);
 }
 
 ProgramStateRef 
-RangeConstraintManager::assumeSymGE(ProgramStateRef state, SymbolRef sym,
-                                    const llvm::APSInt& Int,
-                                    const llvm::APSInt& Adjustment) {
-  BasicValueFactory &BV = state->getBasicVals();
-
-  QualType T = state->getSymbolManager().getType(sym);
-  const llvm::APSInt &Min = BV.getMinValue(T);
+RangeConstraintManager::assumeSymGE(ProgramStateRef St, SymbolRef Sym,
+                                    const llvm::APSInt &Int,
+                                    const llvm::APSInt &Adjustment) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  switch (AdjustmentType.testInRange(Int)) {
+  case APSIntType::RTR_Below:
+    return St;
+  case APSIntType::RTR_Within:
+    break;
+  case APSIntType::RTR_Above:
+    return NULL;
+  }
 
   // Special case for Int == Min. This is always feasible.
-  if (Int == Min)
-    return state;
+  llvm::APSInt ComparisonVal = AdjustmentType.convert(Int);
+  llvm::APSInt Min = AdjustmentType.getMinValue();
+  if (ComparisonVal == Min)
+    return St;
 
-  const llvm::APSInt &Max = BV.getMaxValue(T);
-
-  llvm::APSInt Lower = Int-Adjustment;
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  llvm::APSInt Lower = ComparisonVal-Adjustment;
   llvm::APSInt Upper = Max-Adjustment;
 
-  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
-  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+  RangeSet New = GetRange(St, Sym).Intersect(getBasicVals(), F, Lower, Upper);
+  return New.isEmpty() ? NULL : St->set<ConstraintRange>(Sym, New);
 }
 
 ProgramStateRef 
-RangeConstraintManager::assumeSymLE(ProgramStateRef state, SymbolRef sym,
-                                    const llvm::APSInt& Int,
-                                    const llvm::APSInt& Adjustment) {
-  BasicValueFactory &BV = state->getBasicVals();
-
-  QualType T = state->getSymbolManager().getType(sym);
-  const llvm::APSInt &Max = BV.getMaxValue(T);
+RangeConstraintManager::assumeSymLE(ProgramStateRef St, SymbolRef Sym,
+                                    const llvm::APSInt &Int,
+                                    const llvm::APSInt &Adjustment) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  switch (AdjustmentType.testInRange(Int)) {
+  case APSIntType::RTR_Below:
+    return NULL;
+  case APSIntType::RTR_Within:
+    break;
+  case APSIntType::RTR_Above:
+    return St;
+  }
 
   // Special case for Int == Max. This is always feasible.
-  if (Int == Max)
-    return state;
+  llvm::APSInt ComparisonVal = AdjustmentType.convert(Int);
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  if (ComparisonVal == Max)
+    return St;
 
-  const llvm::APSInt &Min = BV.getMinValue(T);
-
+  llvm::APSInt Min = AdjustmentType.getMinValue();
   llvm::APSInt Lower = Min-Adjustment;
-  llvm::APSInt Upper = Int-Adjustment;
+  llvm::APSInt Upper = ComparisonVal-Adjustment;
 
-  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
-  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+  RangeSet New = GetRange(St, Sym).Intersect(getBasicVals(), F, Lower, Upper);
+  return New.isEmpty() ? NULL : St->set<ConstraintRange>(Sym, New);
 }
 
 //===------------------------------------------------------------------------===

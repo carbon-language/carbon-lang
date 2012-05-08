@@ -51,6 +51,11 @@ public:
     return Result;
   }
 
+  /// Returns an all-zero value for this type.
+  llvm::APSInt getZeroValue() const LLVM_READONLY {
+    return llvm::APSInt(BitWidth, IsUnsigned);
+  }
+
   /// Returns the minimum value for this type.
   llvm::APSInt getMinValue() const LLVM_READONLY {
     return llvm::APSInt::getMinValue(BitWidth, IsUnsigned);
@@ -61,6 +66,21 @@ public:
     return llvm::APSInt::getMaxValue(BitWidth, IsUnsigned);
   }
 
+  /// Used to classify whether a value is representable using this type.
+  ///
+  /// \see testInRange
+  enum RangeTestResultKind {
+    RTR_Below = -1, ///< Value is less than the minimum representable value.
+    RTR_Within = 0, ///< Value is representable using this type.
+    RTR_Above = 1   ///< Value is greater than the maximum representable value.
+  };
+
+  /// Tests whether a given value is losslessly representable using this type.
+  ///
+  /// Note that signedness conversions will be rejected, even with the same bit
+  /// pattern. For example, -1s8 is not in range for 'unsigned char' (u8).
+  RangeTestResultKind testInRange(const llvm::APSInt &Val) const LLVM_READONLY;
+  
   bool operator==(const APSIntType &Other) const {
     return BitWidth == Other.BitWidth && IsUnsigned == Other.IsUnsigned;
   }

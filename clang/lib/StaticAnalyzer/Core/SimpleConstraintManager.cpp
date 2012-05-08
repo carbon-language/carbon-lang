@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/APSIntType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 
@@ -71,9 +72,6 @@ ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state, Loc cond,
 
 ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
                                                   Loc Cond, bool Assumption) {
-
-  BasicValueFactory &BasicVals = state->getBasicVals();
-
   switch (Cond.getSubKind()) {
   default:
     assert (false && "'Assume' not implemented for this Loc.");
@@ -88,7 +86,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     while (SubR) {
       // FIXME: now we only find the first symbolic region.
       if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR)) {
-        const llvm::APSInt &zero = BasicVals.getZeroWithPtrWidth();
+        const llvm::APSInt &zero = getBasicVals().getZeroWithPtrWidth();
         if (Assumption)
           return assumeSymNE(state, SymR->getSymbol(), zero, zero);
         else
@@ -134,12 +132,12 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
 }
 
 
-ProgramStateRef SimpleConstraintManager::assumeAuxForSymbol(
-                                              ProgramStateRef State,
-                                              SymbolRef Sym,
-                                              bool Assumption) {
-  QualType T =  State->getSymbolManager().getType(Sym);
-  const llvm::APSInt &zero = State->getBasicVals().getValue(0, T);
+ProgramStateRef
+SimpleConstraintManager::assumeAuxForSymbol(ProgramStateRef State,
+                                            SymbolRef Sym, bool Assumption) {
+  BasicValueFactory &BVF = getBasicVals();
+  QualType T = Sym->getType(BVF.getContext());
+  const llvm::APSInt &zero = BVF.getValue(0, T);
   if (Assumption)
     return assumeSymNE(State, Sym, zero, zero);
   else
@@ -158,8 +156,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     return assumeAuxForSymbol(state, sym, Assumption);
   }
 
-  BasicValueFactory &BasicVals = state->getBasicVals();
-  SymbolManager &SymMgr = state->getSymbolManager();
+  BasicValueFactory &BasicVals = getBasicVals();
 
   switch (Cond.getSubKind()) {
   default:
@@ -184,7 +181,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
       BinaryOperator::Opcode op = SE->getOpcode();
       // Implicitly compare non-comparison expressions to 0.
       if (!BinaryOperator::isComparisonOp(op)) {
-        QualType T = SymMgr.getType(SE);
+        QualType T = SE->getType(BasicVals.getContext());
         const llvm::APSInt &zero = BasicVals.getValue(0, T);
         op = (Assumption ? BO_NE : BO_EQ);
         return assumeSymRel(state, SE, op, zero);
@@ -209,33 +206,20 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
   } // end switch
 }
 
-static llvm::APSInt computeAdjustment(const SymExpr *LHS,
-                                      SymbolRef &Sym) {
-  llvm::APSInt DefaultAdjustment;
-  DefaultAdjustment = 0;
+static void computeAdjustment(SymbolRef &Sym, llvm::APSInt &Adjustment) {
+  // Is it a "($sym+constant1)" expression?
+  if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(Sym)) {
+    BinaryOperator::Opcode Op = SE->getOpcode();
+    if (Op == BO_Add || Op == BO_Sub) {
+      Sym = SE->getLHS();
+      Adjustment = APSIntType(Adjustment).convert(SE->getRHS());
 
-  // First check if the LHS is a simple symbol reference.
-  if (isa<SymbolData>(LHS))
-    return DefaultAdjustment;
-
-  // Next, see if it's a "($sym+constant1)" expression.
-  const SymIntExpr *SE = dyn_cast<SymIntExpr>(LHS);
-
-  // We cannot simplify "($sym1+$sym2)".
-  if (!SE)
-    return DefaultAdjustment;
-
-  // Get the constant out of the expression "($sym+constant1)" or
-  // "<expr>+constant1".
-  Sym = SE->getLHS();
-  switch (SE->getOpcode()) {
-  case BO_Add:
-    return SE->getRHS();
-  case BO_Sub:
-    return -SE->getRHS();
-  default:
-    // We cannot simplify non-additive operators.
-    return DefaultAdjustment;
+      // Don't forget to negate the adjustment if it's being subtracted.
+      // This should happen /after/ promotion, in case the value being
+      // subtracted is, say, CHAR_MIN, and the promoted type is 'int'.
+      if (Op == BO_Sub)
+        Adjustment = -Adjustment;
+    }
   }
 }
 
@@ -246,6 +230,12 @@ ProgramStateRef SimpleConstraintManager::assumeSymRel(ProgramStateRef state,
   assert(BinaryOperator::isComparisonOp(op) &&
          "Non-comparison ops should be rewritten as comparisons to zero.");
 
+  BasicValueFactory &BVF = getBasicVals();
+  ASTContext &Ctx = BVF.getContext();
+
+  // Get the type used for calculating wraparound.
+  APSIntType WraparoundType = BVF.getAPSIntType(LHS->getType(Ctx));
+
   // We only handle simple comparisons of the form "$sym == constant"
   // or "($sym+constant1) == constant2".
   // The adjustment is "constant1" in the above expression. It's used to
@@ -254,28 +244,12 @@ ProgramStateRef SimpleConstraintManager::assumeSymRel(ProgramStateRef state,
   // in modular arithmetic is [0, 1] U [UINT_MAX-1, UINT_MAX]. It's up to
   // the subclasses of SimpleConstraintManager to handle the adjustment.
   SymbolRef Sym = LHS;
-  llvm::APSInt Adjustment = computeAdjustment(LHS, Sym);
+  llvm::APSInt Adjustment = WraparoundType.getZeroValue();
+  computeAdjustment(Sym, Adjustment);
 
-  // FIXME: This next section is a hack. It silently converts the integers to
-  // be of the same type as the symbol, which is not always correct. Really the
-  // comparisons should be performed using the Int's type, then mapped back to
-  // the symbol's range of values.
-  ProgramStateManager &StateMgr = state->getStateManager();
-  ASTContext &Ctx = StateMgr.getContext();
-
-  QualType T = Sym->getType(Ctx);
-  assert(T->isIntegerType() || Loc::isLocType(T));
-  unsigned bitwidth = Ctx.getTypeSize(T);
-  bool isSymUnsigned 
-    = T->isUnsignedIntegerOrEnumerationType() || Loc::isLocType(T);
-
-  // Convert the adjustment.
-  Adjustment.setIsUnsigned(isSymUnsigned);
-  Adjustment = Adjustment.extOrTrunc(bitwidth);
-
-  // Convert the right-hand side integer.
-  llvm::APSInt ConvertedInt(Int, isSymUnsigned);
-  ConvertedInt = ConvertedInt.extOrTrunc(bitwidth);
+  // Convert the right-hand side integer as necessary.
+  APSIntType ComparisonType = std::max(WraparoundType, APSIntType(Int));
+  llvm::APSInt ConvertedInt = ComparisonType.convert(Int);
 
   switch (op) {
   default:

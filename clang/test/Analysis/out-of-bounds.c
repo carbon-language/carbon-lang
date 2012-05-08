@@ -128,11 +128,13 @@ void test2_multi_ok(int x) {
   buf[0][0] = 1; // no-warning
 }
 
-// Testing if solver handles (symbol * constant) < constant
+// *** FIXME ***
+// We don't get a warning here yet because our symbolic constraint solving
+// doesn't handle:  (symbol * constant) < constant
 void test3(int x) {
   int buf[100];
   if (x < 0)
-    buf[x] = 1; // expected-warning {{Out of bound memory access (accessed memory precedes memory block)}}
+    buf[x] = 1;
 }
 
 // *** FIXME ***

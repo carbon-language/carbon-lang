@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/APSIntType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "llvm/Support/raw_ostream.h"
@@ -53,18 +54,25 @@ class BasicConstraintManager
   ProgramState::IntSetTy::Factory ISetFactory;
 public:
   BasicConstraintManager(ProgramStateManager &statemgr, SubEngine &subengine)
-    : SimpleConstraintManager(subengine), 
+    : SimpleConstraintManager(subengine, statemgr.getBasicVals()),
       ISetFactory(statemgr.getAllocator()) {}
 
-  ProgramStateRef assumeSymNE(ProgramStateRef state,
-                                  SymbolRef sym,
-                                  const llvm::APSInt& V,
-                                  const llvm::APSInt& Adjustment);
+  ProgramStateRef assumeSymEquality(ProgramStateRef State, SymbolRef Sym,
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment,
+                                    bool Assumption);
 
-  ProgramStateRef assumeSymEQ(ProgramStateRef state,
-                                  SymbolRef sym,
-                                  const llvm::APSInt& V,
-                                  const llvm::APSInt& Adjustment);
+  ProgramStateRef assumeSymNE(ProgramStateRef State, SymbolRef Sym,
+                              const llvm::APSInt &V,
+                              const llvm::APSInt &Adjustment) {
+    return assumeSymEquality(State, Sym, V, Adjustment, false);
+  }
+
+  ProgramStateRef assumeSymEQ(ProgramStateRef State, SymbolRef Sym,
+                              const llvm::APSInt &V,
+                              const llvm::APSInt &Adjustment) {
+    return assumeSymEquality(State, Sym, V, Adjustment, true);
+  }
 
   ProgramStateRef assumeSymLT(ProgramStateRef state,
                                   SymbolRef sym,
@@ -108,6 +116,9 @@ public:
   ProgramStateRef removeDeadBindings(ProgramStateRef state,
                                          SymbolReaper& SymReaper);
 
+  bool performTest(llvm::APSInt SymVal, llvm::APSInt Adjustment,
+                   BinaryOperator::Opcode Op, llvm::APSInt ComparisonVal);
+
   void print(ProgramStateRef state,
              raw_ostream &Out,
              const char* nl,
@@ -122,58 +133,92 @@ ento::CreateBasicConstraintManager(ProgramStateManager& statemgr,
   return new BasicConstraintManager(statemgr, subengine);
 }
 
-ProgramStateRef 
-BasicConstraintManager::assumeSymNE(ProgramStateRef state,
-                                    SymbolRef sym,
-                                    const llvm::APSInt &V,
-                                    const llvm::APSInt &Adjustment) {
-  // First, determine if sym == X, where X+Adjustment != V.
-  llvm::APSInt Adjusted = V-Adjustment;
-  if (const llvm::APSInt* X = getSymVal(state, sym)) {
-    bool isFeasible = (*X != Adjusted);
-    return isFeasible ? state : NULL;
-  }
+// FIXME: This is a more general utility and should live somewhere else.
+bool BasicConstraintManager::performTest(llvm::APSInt SymVal,
+                                         llvm::APSInt Adjustment,
+                                         BinaryOperator::Opcode Op,
+                                         llvm::APSInt ComparisonVal) {
+  APSIntType Type(Adjustment);
+  Type.apply(SymVal);
+  Type.apply(ComparisonVal);
+  SymVal += Adjustment;
 
-  // Second, determine if sym+Adjustment != V.
-  if (isNotEqual(state, sym, Adjusted))
-    return state;
+  assert(BinaryOperator::isComparisonOp(Op));
+  BasicValueFactory &BVF = getBasicVals();
+  const llvm::APSInt *Result = BVF.evalAPSInt(Op, SymVal, ComparisonVal);
+  assert(Result && "Comparisons should always have valid results.");
 
-  // If we reach here, sym is not a constant and we don't know if it is != V.
-  // Make that assumption.
-  return AddNE(state, sym, Adjusted);
+  return Result->getBoolValue();
 }
 
-ProgramStateRef 
-BasicConstraintManager::assumeSymEQ(ProgramStateRef state,
-                                    SymbolRef sym,
-                                    const llvm::APSInt &V,
-                                    const llvm::APSInt &Adjustment) {
-  // First, determine if sym == X, where X+Adjustment != V.
-  llvm::APSInt Adjusted = V-Adjustment;
-  if (const llvm::APSInt* X = getSymVal(state, sym)) {
-    bool isFeasible = (*X == Adjusted);
-    return isFeasible ? state : NULL;
+ProgramStateRef
+BasicConstraintManager::assumeSymEquality(ProgramStateRef State, SymbolRef Sym,
+                                          const llvm::APSInt &V,
+                                          const llvm::APSInt &Adjustment,
+                                          bool Assumption) {
+  // Before we do any real work, see if the value can even show up.
+  APSIntType AdjustmentType(Adjustment);
+  if (AdjustmentType.testInRange(V) != APSIntType::RTR_Within)
+    return Assumption ? NULL : State;
+
+  // Get the symbol type.
+  BasicValueFactory &BVF = getBasicVals();
+  ASTContext &Ctx = BVF.getContext();
+  APSIntType SymbolType = BVF.getAPSIntType(Sym->getType(Ctx));
+
+  // First, see if the adjusted value is within range for the symbol.
+  llvm::APSInt Adjusted = AdjustmentType.convert(V) - Adjustment;
+  if (SymbolType.testInRange(Adjusted) != APSIntType::RTR_Within)
+    return Assumption ? NULL : State;
+
+  // Now we can do things properly in the symbol space.
+  SymbolType.apply(Adjusted);
+
+  // Second, determine if sym == X, where X+Adjustment != V.
+  if (const llvm::APSInt *X = getSymVal(State, Sym)) {
+    bool IsFeasible = (*X == Adjusted);
+    return (IsFeasible == Assumption) ? State : NULL;
   }
 
-  // Second, determine if sym+Adjustment != V.
-  if (isNotEqual(state, sym, Adjusted))
-    return NULL;
+  // Third, determine if we already know sym+Adjustment != V.
+  if (isNotEqual(State, Sym, Adjusted))
+    return Assumption ? NULL : State;
 
-  // If we reach here, sym is not a constant and we don't know if it is == V.
-  // Make that assumption.
-  return AddEQ(state, sym, Adjusted);
+  // If we reach here, sym is not a constant and we don't know if it is != V.
+  // Make the correct assumption.
+  if (Assumption)
+    return AddEQ(State, Sym, Adjusted);
+  else
+    return AddNE(State, Sym, Adjusted);
 }
 
 // The logic for these will be handled in another ConstraintManager.
+// Approximate it here anyway by handling some edge cases.
 ProgramStateRef 
 BasicConstraintManager::assumeSymLT(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
-  // Is 'V' the smallest possible value?
-  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
+  APSIntType ComparisonType(V), AdjustmentType(Adjustment);
+
+  // Is 'V' out of range above the type?
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  if (V > ComparisonType.convert(Max)) {
+    // This path is trivially feasible.
+    return state;
+  }
+
+  // Is 'V' the smallest possible value, or out of range below the type?
+  llvm::APSInt Min = AdjustmentType.getMinValue();
+  if (V <= ComparisonType.convert(Min)) {
     // sym cannot be any value less than 'V'.  This path is infeasible.
     return NULL;
+  }
+
+  // Reject a path if the value of sym is a constant X and !(X+Adj < V).
+  if (const llvm::APSInt *X = getSymVal(state, sym)) {
+    bool isFeasible = performTest(*X, Adjustment, BO_LT, V);
+    return isFeasible ? state : NULL;
   }
 
   // FIXME: For now have assuming x < y be the same as assuming sym != V;
@@ -185,10 +230,26 @@ BasicConstraintManager::assumeSymGT(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
-  // Is 'V' the largest possible value?
-  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
+  APSIntType ComparisonType(V), AdjustmentType(Adjustment);
+
+  // Is 'V' the largest possible value, or out of range above the type?
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  if (V >= ComparisonType.convert(Max)) {
     // sym cannot be any value greater than 'V'.  This path is infeasible.
     return NULL;
+  }
+
+  // Is 'V' out of range below the type?
+  llvm::APSInt Min = AdjustmentType.getMinValue();
+  if (V < ComparisonType.convert(Min)) {
+    // This path is trivially feasible.
+    return state;
+  }
+
+  // Reject a path if the value of sym is a constant X and !(X+Adj > V).
+  if (const llvm::APSInt *X = getSymVal(state, sym)) {
+    bool isFeasible = performTest(*X, Adjustment, BO_GT, V);
+    return isFeasible ? state : NULL;
   }
 
   // FIXME: For now have assuming x > y be the same as assuming sym != V;
@@ -200,25 +261,33 @@ BasicConstraintManager::assumeSymGE(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
-  // Reject a path if the value of sym is a constant X and !(X+Adj >= V).
-  if (const llvm::APSInt *X = getSymVal(state, sym)) {
-    bool isFeasible = (*X >= V-Adjustment);
-    return isFeasible ? state : NULL;
-  }
+  APSIntType ComparisonType(V), AdjustmentType(Adjustment);
 
-  // Sym is not a constant, but it is worth looking to see if V is the
-  // maximum integer value.
-  if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
-    llvm::APSInt Adjusted = V-Adjustment;
+  // Is 'V' the largest possible value, or out of range above the type?
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  ComparisonType.apply(Max);
 
-    // If we know that sym != V (after adjustment), then this condition
-    // is infeasible since there is no other value greater than V.
-    bool isFeasible = !isNotEqual(state, sym, Adjusted);
-
-    // If the path is still feasible then as a consequence we know that
+  if (V > Max) {
+    // sym cannot be any value greater than 'V'.  This path is infeasible.
+    return NULL;
+  } else if (V == Max) {
+    // If the path is feasible then as a consequence we know that
     // 'sym+Adjustment == V' because there are no larger values.
     // Add this constraint.
-    return isFeasible ? AddEQ(state, sym, Adjusted) : NULL;
+    return assumeSymEQ(state, sym, V, Adjustment);
+  }
+
+  // Is 'V' out of range below the type?
+  llvm::APSInt Min = AdjustmentType.getMinValue();
+  if (V < ComparisonType.convert(Min)) {
+    // This path is trivially feasible.
+    return state;
+  }
+
+  // Reject a path if the value of sym is a constant X and !(X+Adj >= V).
+  if (const llvm::APSInt *X = getSymVal(state, sym)) {
+    bool isFeasible = performTest(*X, Adjustment, BO_GE, V);
+    return isFeasible ? state : NULL;
   }
 
   return state;
@@ -229,25 +298,33 @@ BasicConstraintManager::assumeSymLE(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
-  // Reject a path if the value of sym is a constant X and !(X+Adj <= V).
-  if (const llvm::APSInt* X = getSymVal(state, sym)) {
-    bool isFeasible = (*X <= V-Adjustment);
-    return isFeasible ? state : NULL;
+  APSIntType ComparisonType(V), AdjustmentType(Adjustment);
+
+  // Is 'V' out of range above the type?
+  llvm::APSInt Max = AdjustmentType.getMaxValue();
+  if (V > ComparisonType.convert(Max)) {
+    // This path is trivially feasible.
+    return state;
   }
 
-  // Sym is not a constant, but it is worth looking to see if V is the
-  // minimum integer value.
-  if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
-    llvm::APSInt Adjusted = V-Adjustment;
+  // Is 'V' the smallest possible value, or out of range below the type?
+  llvm::APSInt Min = AdjustmentType.getMinValue();
+  ComparisonType.apply(Min);
 
-    // If we know that sym != V (after adjustment), then this condition
-    // is infeasible since there is no other value less than V.
-    bool isFeasible = !isNotEqual(state, sym, Adjusted);
-
-    // If the path is still feasible then as a consequence we know that
+  if (V < Min) {
+    // sym cannot be any value less than 'V'.  This path is infeasible.
+    return NULL;
+  } else if (V == Min) {
+    // If the path is feasible then as a consequence we know that
     // 'sym+Adjustment == V' because there are no smaller values.
     // Add this constraint.
-    return isFeasible ? AddEQ(state, sym, Adjusted) : NULL;
+    return assumeSymEQ(state, sym, V, Adjustment);
+  }
+
+  // Reject a path if the value of sym is a constant X and !(X+Adj >= V).
+  if (const llvm::APSInt *X = getSymVal(state, sym)) {
+    bool isFeasible = performTest(*X, Adjustment, BO_LE, V);
+    return isFeasible ? state : NULL;
   }
 
   return state;
@@ -257,7 +334,7 @@ ProgramStateRef BasicConstraintManager::AddEQ(ProgramStateRef state,
                                                   SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
-  return state->set<ConstEq>(sym, &state->getBasicVals().getValue(V));
+  return state->set<ConstEq>(sym, &getBasicVals().getValue(V));
 }
 
 ProgramStateRef BasicConstraintManager::AddNE(ProgramStateRef state,
@@ -269,7 +346,7 @@ ProgramStateRef BasicConstraintManager::AddNE(ProgramStateRef state,
   ProgramState::IntSetTy S = T ? *T : ISetFactory.getEmptySet();
 
   // Now add V to the NE set.
-  S = ISetFactory.add(S, &state->getBasicVals().getValue(V));
+  S = ISetFactory.add(S, &getBasicVals().getValue(V));
 
   // Create a new state with the old binding replaced.
   return state->set<ConstNotEq>(sym, S);
@@ -289,7 +366,7 @@ bool BasicConstraintManager::isNotEqual(ProgramStateRef state,
   const ConstNotEqTy::data_type* T = state->get<ConstNotEq>(sym);
 
   // See if V is present in the NE-set.
-  return T ? T->contains(&state->getBasicVals().getValue(V)) : false;
+  return T ? T->contains(&getBasicVals().getValue(V)) : false;
 }
 
 bool BasicConstraintManager::isEqual(ProgramStateRef state,

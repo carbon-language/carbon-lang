@@ -4,6 +4,7 @@ set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
 
 add_clang_library(clangStaticAnalyzerCore
   AnalysisManager.cpp
+  APSIntType.cpp
   BasicConstraintManager.cpp
   BasicValueFactory.cpp
   BlockCounter.cpp
