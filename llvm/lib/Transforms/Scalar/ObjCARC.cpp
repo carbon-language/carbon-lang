@@ -29,18 +29,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "objc-arc"
-#include "llvm/Function.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 // A handy option to enable/disable all optimizations in this file.
@@ -140,6 +130,13 @@ namespace {
 //===----------------------------------------------------------------------===//
 // ARC Utilities.
 //===----------------------------------------------------------------------===//
+
+#include "llvm/Intrinsics.h"
+#include "llvm/Module.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/CallSite.h"
+#include "llvm/ADT/StringSwitch.h"
 
 namespace {
   /// InstructionClass - A simple classification for instructions.
@@ -299,22 +296,23 @@ static InstructionClass GetInstructionClass(const Value *V) {
         // None of the intrinsic functions do objc_release. For intrinsics, the
         // only question is whether or not they may be users.
         switch (F->getIntrinsicID()) {
-        case 0: break;
-        case Intrinsic::bswap: case Intrinsic::ctpop:
-        case Intrinsic::ctlz: case Intrinsic::cttz:
         case Intrinsic::returnaddress: case Intrinsic::frameaddress:
         case Intrinsic::stacksave: case Intrinsic::stackrestore:
         case Intrinsic::vastart: case Intrinsic::vacopy: case Intrinsic::vaend:
+        case Intrinsic::objectsize: case Intrinsic::prefetch:
+        case Intrinsic::stackprotector:
+        case Intrinsic::eh_return_i32: case Intrinsic::eh_return_i64:
+        case Intrinsic::eh_typeid_for: case Intrinsic::eh_dwarf_cfa:
+        case Intrinsic::eh_sjlj_lsda: case Intrinsic::eh_sjlj_functioncontext:
+        case Intrinsic::init_trampoline: case Intrinsic::adjust_trampoline:
+        case Intrinsic::lifetime_start: case Intrinsic::lifetime_end:
+        case Intrinsic::invariant_start: case Intrinsic::invariant_end:
         // Don't let dbg info affect our results.
         case Intrinsic::dbg_declare: case Intrinsic::dbg_value:
           // Short cut: Some intrinsics obviously don't use ObjC pointers.
           return IC_None;
         default:
-          for (Function::const_arg_iterator AI = F->arg_begin(),
-               AE = F->arg_end(); AI != AE; ++AI)
-            if (IsPotentialUse(AI))
-              return IC_User;
-          return IC_None;
+          break;
         }
       }
       return GetCallSiteClass(CI);
@@ -565,9 +563,8 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
     return Arg;
   }
 
-  // If we found an identifiable object but it has multiple uses, but they
-  // are trivial uses, we can still consider this to be a single-use
-  // value.
+  // If we found an identifiable object but it has multiple uses, but they are
+  // trivial uses, we can still consider this to be a single-use value.
   if (IsObjCIdentifiedObject(Arg)) {
     for (Value::const_use_iterator UI = Arg->use_begin(), UE = Arg->use_end();
          UI != UE; ++UI) {
@@ -915,6 +912,7 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace {
   /// ObjCARCAPElim - Autorelease pool elimination.
@@ -1094,13 +1092,10 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
 
 // TODO: Delete release+retain pairs (rare).
 
-#include "llvm/GlobalAlias.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/DenseSet.h"
 
 STATISTIC(NumNoops,       "Number of no-op objc calls eliminated");
 STATISTIC(NumPartialNoops, "Number of partially no-op objc calls eliminated");
@@ -1386,6 +1381,9 @@ namespace {
   /// PtrState - This class summarizes several per-pointer runtime properties
   /// which are propogated through the flow graph.
   class PtrState {
+    /// NestCount - The known minimum level of retain+release nesting.
+    unsigned NestCount;
+
     /// KnownPositiveRefCount - True if the reference count is known to
     /// be incremented.
     bool KnownPositiveRefCount;
@@ -1395,19 +1393,16 @@ namespace {
     /// CFG diamond.
     bool Partial;
 
-    /// NestCount - The known minimum level of retain+release nesting.
-    unsigned NestCount;
-
     /// Seq - The current position in the sequence.
-    Sequence Seq;
+    Sequence Seq : 8;
 
   public:
     /// RRI - Unidirectional information about the current sequence.
     /// TODO: Encapsulate this better.
     RRInfo RRI;
 
-    PtrState() : KnownPositiveRefCount(false), Partial(false),
-                 NestCount(0), Seq(S_None) {}
+    PtrState() : NestCount(0), KnownPositiveRefCount(false), Partial(false),
+                 Seq(S_None) {}
 
     void SetKnownPositiveRefCount() {
       KnownPositiveRefCount = true;
@@ -1481,13 +1476,13 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
       RRI.ReleaseMetadata = 0;
 
     RRI.KnownSafe = RRI.KnownSafe && Other.RRI.KnownSafe;
-    RRI.IsTailCallRelease = RRI.IsTailCallRelease && Other.RRI.IsTailCallRelease;
+    RRI.IsTailCallRelease = RRI.IsTailCallRelease &&
+                            Other.RRI.IsTailCallRelease;
     RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
 
     // Merge the insert point sets. If there are any differences,
     // that makes this a partial merge.
-    Partial = RRI.ReverseInsertPts.size() !=
-              Other.RRI.ReverseInsertPts.size();
+    Partial = RRI.ReverseInsertPts.size() != Other.RRI.ReverseInsertPts.size();
     for (SmallPtrSet<Instruction *, 2>::const_iterator
          I = Other.RRI.ReverseInsertPts.begin(),
          E = Other.RRI.ReverseInsertPts.end(); I != E; ++I)
@@ -1792,12 +1787,9 @@ Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
   if (!RetainRVCallee) {
     LLVMContext &C = M->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
-    Params.push_back(I8X);
-    FunctionType *FTy =
-      FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { I8X };
+    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     RetainRVCallee =
       M->getOrInsertFunction("objc_retainAutoreleasedReturnValue", FTy,
                              Attributes);
@@ -1809,12 +1801,9 @@ Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
   if (!AutoreleaseRVCallee) {
     LLVMContext &C = M->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
-    Params.push_back(I8X);
-    FunctionType *FTy =
-      FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { I8X };
+    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     AutoreleaseRVCallee =
       M->getOrInsertFunction("objc_autoreleaseReturnValue", FTy,
                              Attributes);
@@ -1825,10 +1814,8 @@ Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
 Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
   if (!ReleaseCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
-    Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     ReleaseCallee =
       M->getOrInsertFunction(
         "objc_release",
@@ -1841,10 +1828,8 @@ Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
 Constant *ObjCARCOpt::getRetainCallee(Module *M) {
   if (!RetainCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
-    Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     RetainCallee =
       M->getOrInsertFunction(
         "objc_retain",
@@ -1857,16 +1842,14 @@ Constant *ObjCARCOpt::getRetainCallee(Module *M) {
 Constant *ObjCARCOpt::getRetainBlockCallee(Module *M) {
   if (!RetainBlockCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
-    Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
-    AttrListPtr Attributes;
+    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
     // objc_retainBlock is not nounwind because it calls user copy constructors
     // which could theoretically throw.
     RetainBlockCallee =
       M->getOrInsertFunction(
         "objc_retainBlock",
         FunctionType::get(Params[0], Params, /*isVarArg=*/false),
-        Attributes);
+        AttrListPtr());
   }
   return RetainBlockCallee;
 }
@@ -1874,10 +1857,8 @@ Constant *ObjCARCOpt::getRetainBlockCallee(Module *M) {
 Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
   if (!AutoreleaseCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
-    Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     AutoreleaseCallee =
       M->getOrInsertFunction(
         "objc_autorelease",
@@ -2426,7 +2407,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
           // These can always be moved up.
           break;
         case IC_Release:
-          // These can't be moved across things that care about the retain count.
+          // These can't be moved across things that care about the retain
+          // count.
           FindDependencies(NeedsPositiveRetainCount, Arg,
                            Inst->getParent(), Inst,
                            DependingInstructions, Visited, PA);
@@ -2508,8 +2490,8 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
         bool SuccSRRIKnownSafe = false;
-        // If VisitBottomUp has pointer information for this successor, take what we
-        // know about it.
+        // If VisitBottomUp has pointer information for this successor, take
+        // what we know about it.
         DenseMap<const BasicBlock *, BBState>::iterator BBI =
           BBStates.find(*SI);
         assert(BBI != BBStates.end());
@@ -2562,8 +2544,8 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
         bool SuccSRRIKnownSafe = false;
-        // If VisitBottomUp has pointer information for this successor, take what we
-        // know about it.
+        // If VisitBottomUp has pointer information for this successor, take
+        // what we know about it.
         DenseMap<const BasicBlock *, BBState>::iterator BBI =
           BBStates.find(*SI);
         assert(BBI != BBStates.end());
@@ -2992,9 +2974,10 @@ ComputePostOrders(Function &F,
   // Functions always have exactly one entry block, and we don't have
   // any other block that we treat like an entry block.
   BasicBlock *EntryBB = &F.getEntryBlock();
-  BBStates[EntryBB].SetAsEntry();
-
-  SuccStack.push_back(std::make_pair(EntryBB, succ_begin(EntryBB)));
+  BBState &MyStates = BBStates[EntryBB];
+  MyStates.SetAsEntry();
+  TerminatorInst *EntryTI = cast<TerminatorInst>(&EntryBB->back());
+  SuccStack.push_back(std::make_pair(EntryBB, succ_iterator(EntryTI)));
   Visited.insert(EntryBB);
   OnStack.insert(EntryBB);
   do {
@@ -3002,7 +2985,7 @@ ComputePostOrders(Function &F,
     BasicBlock *CurrBB = SuccStack.back().first;
     TerminatorInst *TI = cast<TerminatorInst>(&CurrBB->back());
     succ_iterator SE(TI, false);
-    
+
     // If the terminator is an invoke marked with the
     // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
     // ignored, for ARC purposes.
@@ -3012,9 +2995,11 @@ ComputePostOrders(Function &F,
     while (SuccStack.back().second != SE) {
       BasicBlock *SuccBB = *SuccStack.back().second++;
       if (Visited.insert(SuccBB)) {
-        SuccStack.push_back(std::make_pair(SuccBB, succ_begin(SuccBB)));
+        TerminatorInst *TI = cast<TerminatorInst>(&SuccBB->back());
+        SuccStack.push_back(std::make_pair(SuccBB, succ_iterator(TI)));
         BBStates[CurrBB].addSucc(SuccBB);
-        BBStates[SuccBB].addPred(CurrBB);
+        BBState &SuccStates = BBStates[SuccBB];
+        SuccStates.addPred(CurrBB);
         OnStack.insert(SuccBB);
         goto dfs_next_succ;
       }
@@ -3185,7 +3170,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     // not being managed by ObjC reference counting, so we can delete pairs
     // regardless of what possible decrements or uses lie between them.
     bool KnownSafe = isa<Constant>(Arg) || isa<AllocaInst>(Arg);
-   
+
     // A constant pointer can't be pointing to an object on the heap. It may
     // be reference-counted, but it won't be deleted.
     if (const LoadInst *LI = dyn_cast<LoadInst>(Arg))
@@ -3570,8 +3555,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
         dyn_cast_or_null<CallInst>(*DependingInstructions.begin());
       if (!Autorelease)
         goto next_block;
-      InstructionClass AutoreleaseClass =
-        GetBasicInstructionClass(Autorelease);
+      InstructionClass AutoreleaseClass = GetBasicInstructionClass(Autorelease);
       if (!IsAutorelease(AutoreleaseClass))
         goto next_block;
       if (GetObjCArg(Autorelease) != Arg)
@@ -3714,8 +3698,8 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
       while (OptimizeSequences(F)) {}
 
   // Optimizations if objc_autorelease is used.
-  if (UsedInThisFunction &
-      ((1 << IC_Autorelease) | (1 << IC_AutoreleaseRV)))
+  if (UsedInThisFunction & ((1 << IC_Autorelease) |
+                            (1 << IC_AutoreleaseRV)))
     OptimizeReturns(F);
 
   return Changed;
@@ -3763,7 +3747,7 @@ namespace {
     /// StoreStrongCalls - The set of inserted objc_storeStrong calls. If
     /// at the end of walking the function we have found no alloca
     /// instructions, these calls can be marked "tail".
-    DenseSet<CallInst *> StoreStrongCalls;
+    SmallPtrSet<CallInst *, 8> StoreStrongCalls;
 
     Constant *getStoreStrongCallee(Module *M);
     Constant *getRetainAutoreleaseCallee(Module *M);
@@ -3814,13 +3798,11 @@ Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
     LLVMContext &C = M->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
     Type *I8XX = PointerType::getUnqual(I8X);
-    std::vector<Type *> Params;
-    Params.push_back(I8XX);
-    Params.push_back(I8X);
+    Type *Params[] = { I8XX, I8X };
 
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
-    Attributes.addAttr(1, Attribute::NoCapture);
+    AttrListPtr Attributes = AttrListPtr()
+      .addAttr(~0u, Attribute::NoUnwind)
+      .addAttr(1, Attribute::NoCapture);
 
     StoreStrongCallee =
       M->getOrInsertFunction(
@@ -3835,12 +3817,9 @@ Constant *ObjCARCContract::getRetainAutoreleaseCallee(Module *M) {
   if (!RetainAutoreleaseCallee) {
     LLVMContext &C = M->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
-    Params.push_back(I8X);
-    FunctionType *FTy =
-      FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { I8X };
+    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     RetainAutoreleaseCallee =
       M->getOrInsertFunction("objc_retainAutorelease", FTy, Attributes);
   }
@@ -3851,12 +3830,9 @@ Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
   if (!RetainAutoreleaseRVCallee) {
     LLVMContext &C = M->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
-    Params.push_back(I8X);
-    FunctionType *FTy =
-      FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    Type *Params[] = { I8X };
+    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
+    AttrListPtr Attributes = AttrListPtr().addAttr(~0u, Attribute::NoUnwind);
     RetainAutoreleaseRVCallee =
       M->getOrInsertFunction("objc_retainAutoreleaseReturnValue", FTy,
                              Attributes);
@@ -4044,7 +4020,8 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   // It seems that functions which "return twice" are also unsafe for the
   // "tail" argument, because they are setjmp, which could need to
   // return to an earlier stack state.
-  bool TailOkForStoreStrongs = !F.isVarArg() && !F.callsFunctionThatReturnsTwice();
+  bool TailOkForStoreStrongs = !F.isVarArg() &&
+                               !F.callsFunctionThatReturnsTwice();
 
   // For ObjC library calls which return their argument, replace uses of the
   // argument with uses of the call return value, if it dominates the use. This
@@ -4134,17 +4111,14 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         // trivially dominate itself, which would lead us to rewriting its
         // argument in terms of its return value, which would lead to
         // infinite loops in GetObjCArg.
-        if (DT->isReachableFromEntry(U) &&
-            DT->dominates(Inst, U)) {
+        if (DT->isReachableFromEntry(U) && DT->dominates(Inst, U)) {
           Changed = true;
           Instruction *Replacement = Inst;
           Type *UseTy = U.get()->getType();
           if (PHINode *PHI = dyn_cast<PHINode>(U.getUser())) {
             // For PHI nodes, insert the bitcast in the predecessor block.
-            unsigned ValNo =
-              PHINode::getIncomingValueNumForOperand(OperandNo);
-            BasicBlock *BB =
-              PHI->getIncomingBlock(ValNo);
+            unsigned ValNo = PHINode::getIncomingValueNumForOperand(OperandNo);
+            BasicBlock *BB = PHI->getIncomingBlock(ValNo);
             if (Replacement->getType() != UseTy)
               Replacement = new BitCastInst(Replacement, UseTy, "",
                                             &BB->back());
@@ -4186,7 +4160,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   // If this function has no escaping allocas or suspicious vararg usage,
   // objc_storeStrong calls can be marked with the "tail" keyword.
   if (TailOkForStoreStrongs)
-    for (DenseSet<CallInst *>::iterator I = StoreStrongCalls.begin(),
+    for (SmallPtrSet<CallInst *, 8>::iterator I = StoreStrongCalls.begin(),
          E = StoreStrongCalls.end(); I != E; ++I)
       (*I)->setTailCall();
   StoreStrongCalls.clear();
