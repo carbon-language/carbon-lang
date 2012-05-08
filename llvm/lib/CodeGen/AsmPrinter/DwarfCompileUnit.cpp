@@ -308,7 +308,8 @@ void CompileUnit::addComplexAddress(DbgVariable *&DV, DIE *Die,
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
       addUInt(Block, 0, dwarf::DW_FORM_udata, DV->getAddrElement(++i));
     } else if (Element == DIBuilder::OpDeref) {
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+      if (!Location.isReg())
+        addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     } else llvm_unreachable("unknown DIBuilder Opcode");
   }
 
