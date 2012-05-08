@@ -94,7 +94,22 @@ static CXTypeKind GetTypeKind(QualType T) {
 
 
 CXType cxtype::MakeCXType(QualType T, CXTranslationUnit TU) {
-  CXTypeKind TK = GetTypeKind(T);
+  CXTypeKind TK = CXType_Invalid;
+
+  if (TU) {
+    ASTContext &Ctx = static_cast<ASTUnit *>(TU->TUData)->getASTContext();
+    if (Ctx.getLangOpts().ObjC1) {
+      if (Ctx.isObjCIdType(T))
+        TK = CXType_ObjCId;
+      else if (Ctx.isObjCClassType(T))
+        TK = CXType_ObjCClass;
+      else if (Ctx.isObjCSelType(T))
+        TK = CXType_ObjCSel;
+    }
+  }
+  if (TK == CXType_Invalid)
+    TK = GetTypeKind(T);
+
   CXType CT = { TK, { TK == CXType_Invalid ? 0 : T.getAsOpaquePtr(), TU }};
   return CT;
 }
