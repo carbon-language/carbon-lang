@@ -101,8 +101,12 @@ public:
     const char *
     GetLocation ();
 
+    // Deprecated - use the one that takes SBError&
     bool
     SetValueFromCString (const char *value_str);
+
+    bool
+    SetValueFromCString (const char *value_str, lldb::SBError& error);
     
     lldb::SBTypeFormat
     GetTypeFormat ();

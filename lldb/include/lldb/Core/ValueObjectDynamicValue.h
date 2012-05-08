@@ -160,6 +160,9 @@ public:
         m_owning_valobj_sp = owning_sp;
     }
     
+    virtual bool
+    SetValueFromCString (const char *value_str, Error& error);
+    
 protected:
     virtual bool
     UpdateValue ();

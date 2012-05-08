@@ -359,3 +359,39 @@ ValueObjectDynamicValue::IsInScope ()
     return m_parent->IsInScope();
 }
 
+bool
+ValueObjectDynamicValue::SetValueFromCString (const char *value_str, Error& error)
+{
+    if (!UpdateValueIfNeeded(false))
+    {
+        error.SetErrorString("unable to read value");
+        return false;
+    }
+    
+    uint64_t my_value = GetValueAsUnsigned(UINT64_MAX);
+    uint64_t parent_value = m_parent->GetValueAsUnsigned(UINT64_MAX);
+    
+    if (my_value == UINT64_MAX || parent_value == UINT64_MAX)
+    {
+        error.SetErrorString("unable to read value");
+        return false;
+    }
+    
+    // if we are at an offset from our parent, in order to set ourselves correctly we would need
+    // to change the new value so that it refers to the correct dynamic type. we choose not to deal
+    // with that - if anything more than a value overwrite is required, you should be using the
+    // expression parser instead of the value editing facility
+    if (my_value != parent_value)
+    {
+        // but NULL'ing out a value should always be allowed
+        if (strcmp(value_str,"0"))
+        {
+            error.SetErrorString("unable to modify dynamic value, use 'expression' command");
+            return false;
+        }
+    }
+    
+    bool ret_val = m_parent->SetValueFromCString(value_str,error);
+    SetNeedsUpdate();
+    return ret_val;
+}

@@ -158,7 +158,7 @@ public:
     CalculateNumChildren();
     
     virtual bool
-    SetValueFromCString (const char *value_str);
+    SetValueFromCString (const char *value_str, Error& error);
 
     virtual bool
     ResolveValue (Scalar &scalar);

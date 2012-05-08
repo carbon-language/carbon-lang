@@ -1591,12 +1591,16 @@ ValueObject::GetPointerValue (AddressType *address_type)
 }
 
 bool
-ValueObject::SetValueFromCString (const char *value_str)
+ValueObject::SetValueFromCString (const char *value_str, Error& error)
 {
+    error.Clear();
     // Make sure our value is up to date first so that our location and location
     // type is valid.
     if (!UpdateValueIfNeeded(false))
+    {
+        error.SetErrorString("unable to read value");
         return false;
+    }
 
     uint32_t count = 0;
     Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
@@ -1615,7 +1619,6 @@ ValueObject::SetValueFromCString (const char *value_str)
         // If the value fits in a scalar, then make a new scalar and again let the
         // scalar code do the conversion, then figure out where to put the new value.
         Scalar new_scalar;
-        Error error;
         error = new_scalar.SetValueFromCString (value_str, encoding, byte_size);
         if (error.Success())
         {
@@ -1634,8 +1637,13 @@ ValueObject::SetValueFromCString (const char *value_str)
                                                                              new_scalar, 
                                                                              byte_size, 
                                                                              error);
-                        if (!error.Success() || bytes_written != byte_size)
-                            return false;                            
+                        if (!error.Success())
+                            return false;
+                        if (bytes_written != byte_size)
+                        {
+                            error.SetErrorString("unable to write value to memory");
+                            return false;
+                        }
                     }
                 }
                 break;
@@ -1673,6 +1681,7 @@ ValueObject::SetValueFromCString (const char *value_str)
     else
     {
         // We don't support setting things bigger than a scalar at present.
+        error.SetErrorString("unable to write aggregate data type");
         return false;
     }
     

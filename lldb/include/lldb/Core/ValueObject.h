@@ -696,8 +696,8 @@ public:
     GetValueAsUnsigned (uint64_t fail_value);
 
     virtual bool
-    SetValueFromCString (const char *value_str);
-
+    SetValueFromCString (const char *value_str, Error& error);
+    
     // Return the module associated with this value object in case the
     // value is from an executable file and might have its data in
     // sections of the file. This can be used for variables.

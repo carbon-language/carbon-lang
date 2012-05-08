@@ -139,6 +139,9 @@ public:
     bool
     SetValueFromCString (const char *value_str);
 
+    bool
+    SetValueFromCString (const char *value_str, lldb::SBError& error);
+
     lldb::SBTypeFormat
     GetTypeFormat ();
     

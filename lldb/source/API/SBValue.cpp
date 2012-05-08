@@ -430,8 +430,16 @@ SBValue::GetLocation ()
     return cstr;
 }
 
+// Deprecated - use the one that takes an lldb::SBError
 bool
 SBValue::SetValueFromCString (const char *value_str)
+{
+    lldb::SBError dummy;
+    return SetValueFromCString(value_str,dummy);
+}
+
+bool
+SBValue::SetValueFromCString (const char *value_str, lldb::SBError& error)
 {
     bool success = false;
     lldb::ValueObjectSP value_sp(GetSP());
@@ -451,7 +459,7 @@ SBValue::SetValueFromCString (const char *value_str)
             if (target_sp)
             {
                 Mutex::Locker api_locker (target_sp->GetAPIMutex());
-                success = value_sp->SetValueFromCString (value_str);
+                success = value_sp->SetValueFromCString (value_str,error.ref());
             }
         }
     }
