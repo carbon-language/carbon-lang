@@ -2050,7 +2050,7 @@ void DwarfDebug::emitDebugLoc() {
               Asm->EmitInt8(dwarf::DW_OP_plus_uconst);
               Asm->EmitULEB128(DV.getAddrElement(++i));
             } else if (Element == DIBuilder::OpDeref) {
-              if (Entry.Loc.getOffset())
+              if (!Entry.Loc.isReg())
                 Asm->EmitInt8(dwarf::DW_OP_deref);
             } else
               llvm_unreachable("unknown Opcode found in complex address");
