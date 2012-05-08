@@ -2016,7 +2016,9 @@ StoreRef RegionStoreManager::enterStackFrame(ProgramStateRef state,
 void RegionStoreManager::print(Store store, raw_ostream &OS,
                                const char* nl, const char *sep) {
   RegionBindings B = GetRegionBindings(store);
-  OS << "Store (direct and default bindings):" << nl;
+  OS << "Store (direct and default bindings), "
+     << (void*) B.getRootWithoutRetain()
+     << " :" << nl;
 
   for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
     OS << ' ' << I.getKey() << " : " << I.getData() << nl;
