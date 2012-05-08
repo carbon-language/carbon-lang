@@ -28,10 +28,6 @@
 #include "llvm/OperandTraits.h"
 using namespace llvm;
 
-enum {
-  SWITCH_INST_MAGIC = 0x4B5 // May 2012 => 1205 => Hex
-};
-
 void BitcodeReader::materializeForwardReferencedFunctions() {
   while (!BlockAddrFwdRefs.empty()) {
     Function *F = BlockAddrFwdRefs.begin()->first;
@@ -981,17 +977,6 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
   return false;
 }
 
-template <typename intty>
-APInt ReadWideAPInt(const intty *Vals, unsigned ActiveWords,
-                    unsigned TypeBits) {
-  SmallVector<uint64_t, 8> Words;
-  Words.resize(ActiveWords);
-  for (unsigned i = 0; i != ActiveWords; ++i)
-    Words[i] = DecodeSignRotatedValue(Vals[i]);
-  
-  return APInt(TypeBits, Words);
-}
-
 bool BitcodeReader::ParseConstants() {
   if (Stream.EnterSubBlock(bitc::CONSTANTS_BLOCK_ID))
     return Error("Malformed block record");
@@ -1048,11 +1033,13 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid WIDE_INTEGER record");
 
       unsigned NumWords = Record.size();
-      
-      APInt VInt = ReadWideAPInt(&Record[0], NumWords,
-          cast<IntegerType>(CurTy)->getBitWidth());
-      V = ConstantInt::get(Context, VInt);
-      
+      SmallVector<uint64_t, 8> Words;
+      Words.resize(NumWords);
+      for (unsigned i = 0; i != NumWords; ++i)
+        Words[i] = DecodeSignRotatedValue(Record[i]);
+      V = ConstantInt::get(Context,
+                           APInt(cast<IntegerType>(CurTy)->getBitWidth(),
+                                 Words));
       break;
     }
     case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
@@ -2284,61 +2271,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
     case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, op0, op1, ...]
-      // Check magic 
-      if ((Record[0] >> 16) == SWITCH_INST_MAGIC) {
-        // New SwitchInst format with case ranges.
-        
-        Type *OpTy = getTypeByID(Record[1]);
-        unsigned ValueBitWidth = cast<IntegerType>(OpTy)->getBitWidth();
-
-        Value *Cond = getFnValueByID(Record[2], OpTy);
-        BasicBlock *Default = getBasicBlock(Record[3]);
-        if (OpTy == 0 || Cond == 0 || Default == 0)
-          return Error("Invalid SWITCH record");
-
-        unsigned NumCases = Record[4];
-        
-        SwitchInst *SI = SwitchInst::Create(Cond, Default, NumCases);
-        
-        unsigned CurIdx = 5;
-        for (unsigned i = 0; i != NumCases; ++i) {
-          CRSBuilder CaseBuilder;
-          unsigned NumItems = Record[CurIdx++];
-          for (unsigned ci = 0; ci != NumItems; ++ci) {
-            bool isSingleNumber = Record[CurIdx++];
-            
-            APInt Low;
-            unsigned ActiveWords = 1;
-            if (ValueBitWidth > 64)
-              ActiveWords = Record[CurIdx++];
-            Low = ReadWideAPInt(&Record[CurIdx], ActiveWords, ValueBitWidth);
-            CurIdx += ActiveWords;
-            
-            if (!isSingleNumber) {
-              ActiveWords = 1;
-              if (ValueBitWidth > 64)
-                ActiveWords = Record[CurIdx++];
-              APInt High =
-                  ReadWideAPInt(&Record[CurIdx], ActiveWords, ValueBitWidth);
-              CaseBuilder.add(cast<ConstantInt>(ConstantInt::get(OpTy, Low)),
-                              cast<ConstantInt>(ConstantInt::get(OpTy, High)));
-              CurIdx += ActiveWords;
-            } else
-              CaseBuilder.add(cast<ConstantInt>(ConstantInt::get(OpTy, Low)));
-          }
-          BasicBlock *DestBB = getBasicBlock(Record[CurIdx++]);
-          ConstantRangesSet Case = CaseBuilder.getCase(); 
-          SI->addCase(Case, DestBB);
-        }
-        uint16_t Hash = SI->Hash();
-        if (Hash != (Record[0] & 0xFFFF))
-          return Error("Invalid SWITCH record");
-        I = SI;
-        break;
-      }
-      
-      // Old SwitchInst format without case ranges.
-      
       if (Record.size() < 3 || (Record.size() & 1) == 0)
         return Error("Invalid SWITCH record");
       Type *OpTy = getTypeByID(Record[0]);
