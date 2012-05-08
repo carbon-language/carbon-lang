@@ -301,11 +301,21 @@ error_code rename(const Twine &from, const Twine &to) {
   if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
-  if (!::MoveFileExW(wide_from.begin(), wide_to.begin(),
-                     MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
-    return windows_error(::GetLastError());
+  error_code ec = error_code::success();
+  for (int i = 0; i < 2000; i++) {
+    if (::MoveFileExW(wide_from.begin(), wide_to.begin(),
+                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
+      return error_code::success();
+    ec = windows_error(::GetLastError());
+    if (ec != windows_error::access_denied)
+      break;
+    // Retry MoveFile() at ACCESS_DENIED.
+    // System scanners (eg. indexer) might open the source file when
+    // It is written and closed.
+    ::Sleep(1);
+  }
 
-  return error_code::success();
+  return ec;
 }
 
 error_code resize_file(const Twine &path, uint64_t size) {
