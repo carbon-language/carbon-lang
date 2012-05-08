@@ -945,11 +945,26 @@ Driver::HandleProcessEvent (const SBEvent &event)
             }
             else
             {
-                SBCommandReturnObject result;
-                UpdateSelectedThread ();
-                m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
-                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize(), ASYNC);
-                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), ASYNC);
+                if (GetDebugger().GetSelectedTarget() == process.GetTarget())
+                {
+                    SBCommandReturnObject result;
+                    UpdateSelectedThread ();
+                    m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
+                    m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize(), ASYNC);
+                    m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), ASYNC);
+                }
+                else
+                {
+                    SBStream out_stream;
+                    uint32_t target_idx = GetDebugger().GetIndexOfTarget(process.GetTarget());
+                    if (target_idx != UINT32_MAX)
+                        out_stream.Printf ("Target %d: (", target_idx);
+                    else
+                        out_stream.Printf ("Target <unknown index>: (");
+                    process.GetTarget().GetDescription (out_stream, eDescriptionLevelBrief);
+                    out_stream.Printf (") stopped.\n");
+                    m_io_channel_ap->OutWrite (out_stream.GetData(), out_stream.GetSize(), ASYNC);
+                }
             }
             break;
         }

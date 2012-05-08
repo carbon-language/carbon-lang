@@ -142,6 +142,9 @@ public:
 
     lldb::TargetSP
     GetTargetAtIndex (uint32_t index) const;
+    
+    uint32_t
+    GetIndexOfTarget (lldb::TargetSP target_sp) const;
 
     //------------------------------------------------------------------
     /// Find the target that contains has an executable whose path

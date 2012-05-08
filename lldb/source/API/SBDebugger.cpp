@@ -678,6 +678,20 @@ SBDebugger::GetTargetAtIndex (uint32_t idx)
     return sb_target;
 }
 
+uint32_t
+SBDebugger::GetIndexOfTarget (lldb::SBTarget target)
+{
+
+    lldb::TargetSP target_sp = target.GetSP();
+    if (!target_sp)
+        return UINT32_MAX;
+
+    if (!m_opaque_sp)
+        return UINT32_MAX;
+
+    return m_opaque_sp->GetTargetList().GetIndexOfTarget (target.GetSP());
+}
+
 SBTarget
 SBDebugger::FindTargetWithProcessID (pid_t pid)
 {

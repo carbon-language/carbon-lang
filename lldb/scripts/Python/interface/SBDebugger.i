@@ -209,6 +209,9 @@ public:
     lldb::SBTarget
     GetTargetAtIndex (uint32_t idx);
 
+    uint32_t
+    GetIndexOfTarget (lldb::SBTarget target);
+
     lldb::SBTarget
     FindTargetWithProcessID (pid_t pid);
 

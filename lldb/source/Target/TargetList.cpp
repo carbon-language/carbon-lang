@@ -421,6 +421,19 @@ TargetList::GetTargetAtIndex (uint32_t idx) const
 }
 
 uint32_t
+TargetList::GetIndexOfTarget (lldb::TargetSP target_sp) const
+{
+    Mutex::Locker locker (m_target_list_mutex);
+    size_t num_targets = m_target_list.size();
+    for (size_t idx = 0; idx < num_targets; idx++)
+    {
+        if (target_sp == m_target_list[idx])
+            return idx;
+    }
+    return UINT32_MAX;
+}
+
+uint32_t
 TargetList::SetSelectedTarget (Target* target)
 {
     Mutex::Locker locker (m_target_list_mutex);
