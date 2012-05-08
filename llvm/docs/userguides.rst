@@ -3,6 +3,13 @@
 User Guides
 ===========
 
+.. toctree::
+   :hidden:
+
+   CommandGuide/index
+
+\
+
  * `The LLVM Getting Started Guide <GettingStarted.html>`_
     
     Discusses how to get up and running quickly with the LLVM infrastructure.
@@ -28,8 +35,8 @@ User Guides
  * `Developer Policy <DeveloperPolicy.html>`_
 
     The LLVM project's policy towards developers and their contributions.
-    
- * `LLVM Command Guide <CommandGuide/index.html>`_
+
+ * :ref:`LLVM Command Guide <commands>`
 
     A reference manual for the LLVM command line utilities ("man" pages for LLVM
     tools).
