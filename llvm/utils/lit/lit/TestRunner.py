@@ -23,56 +23,6 @@ kUseCloseFDs = not kIsWindows
 # Use temporary files to replace /dev/null on Windows.
 kAvoidDevNull = kIsWindows
 
-# Negate if win32file is not found.
-kHaveWin32File = kIsWindows
-
-def RemoveForce(f):
-    try:
-        os.remove(f)
-    except OSError:
-        pass
-
-def WinWaitReleased(f):
-    global kHaveWin32File
-    if not kHaveWin32File:
-        return
-    try:
-        import time
-        import win32file, pywintypes
-        retry_cnt = 256
-        while True:
-            try:
-                h = win32file.CreateFile(
-                    f,
-                    win32file.GENERIC_READ,
-                    0, # Exclusive
-                    None,
-                    win32file.OPEN_EXISTING,
-                    win32file.FILE_ATTRIBUTE_NORMAL,
-                    None)
-                h.close()
-                return
-            except WindowsError, (winerror, strerror):
-                retry_cnt = retry_cnt - 1
-                if retry_cnt <= 0:
-                    raise
-                elif winerror == 32: # ERROR_SHARING_VIOLATION
-                    pass
-                else:
-                    raise
-            except pywintypes.error, e:
-                retry_cnt = retry_cnt - 1
-                if retry_cnt <= 0:
-                    raise
-                elif e[0]== 32: # ERROR_SHARING_VIOLATION
-                    pass
-                else:
-                    raise
-            time.sleep(0.01)
-    except ImportError, e:
-        kHaveWin32File = False
-        return
-
 def executeCommand(command, cwd=None, env=None):
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,
@@ -165,7 +115,6 @@ def executeShCmd(cmd, cfg, cwd, results):
             else:
                 if r[2] is None:
                     if kAvoidDevNull and r[0] == '/dev/null':
-                        r[0] = None
                         r[2] = tempfile.TemporaryFile(mode=r[1])
                     else:
                         r[2] = open(r[0], r[1])
@@ -174,7 +123,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                     # FIXME: Actually, this is probably an instance of PR6753.
                     if r[1] == 'a':
                         r[2].seek(0, 2)
-                    opened_files.append(r)
+                    opened_files.append(r[2])
                 result = r[2]
             final_redirects.append(result)
 
@@ -236,7 +185,7 @@ def executeShCmd(cmd, cfg, cwd, results):
     # on Win32, for example). Since we have already spawned the subprocess, our
     # handles have already been transferred so we do not need them anymore.
     for f in opened_files:
-        f[2].close()
+        f.close()
 
     # FIXME: There is probably still deadlock potential here. Yawn.
     procData = [None] * len(procs)
@@ -275,15 +224,12 @@ def executeShCmd(cmd, cfg, cwd, results):
         else:
             exitCode = res
 
-    # Make sure opened_files is released by other (child) processes.
-    if kIsWindows:
-        for f in opened_files:
-            if f[0] is not None:
-                WinWaitReleased(f[0])
-
     # Remove any named temporary files we created.
     for f in named_temp_files:
-        RemoveForce(f)
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 
     if cmd.negate:
         exitCode = not exitCode
