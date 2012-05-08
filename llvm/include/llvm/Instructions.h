@@ -20,6 +20,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/CallingConv.h"
+#include "llvm/ConstantRangesSet.h"
+#include "llvm/CRSBuilder.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -2500,9 +2502,19 @@ public:
     }
     
     /// Resolves case value for current case.
+    /// @Deprecated
     ConstantIntTy *getCaseValue() {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      return reinterpret_cast<ConstantIntTy*>(SI->getOperand(2 + Index*2));
+      ConstantRangesSet CRS =
+          reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
+      ConstantRangesSet::Range R = CRS.getItem(0);
+      return R.Low;
+    }
+
+    /// Resolves case value for current case.
+    ConstantRangesSet getCaseValueEx() {
+      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      return reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
     }
     
     /// Resolves successor for current case.
@@ -2572,9 +2584,19 @@ public:
     CaseIt(SwitchInst *SI, unsigned CaseNum) : ParentTy(SI, CaseNum) {}
 
     /// Sets the new value for current case.    
+    /// @Deprecated.
     void setValue(ConstantInt *V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      SI->setOperand(2 + Index*2, reinterpret_cast<Value*>(V));
+      CRSBuilder CB;
+      CB.add(V);
+      SI->setOperand(2 + Index*2,
+          reinterpret_cast<Value*>((Constant*)CB.getCase()));
+    }
+    
+    /// Sets the new value for current case.
+    void setValueEx(ConstantRangesSet& V) {
+      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      SI->setOperand(2 + Index*2, reinterpret_cast<Value*>((Constant*)V));      
     }
     
     /// Sets the new successor for current case.
@@ -2654,13 +2676,13 @@ public:
   /// that it is handled by the default handler.
   CaseIt findCaseValue(const ConstantInt *C) {
     for (CaseIt i = case_begin(), e = case_end(); i != e; ++i)
-      if (i.getCaseValue() == C)
+      if (i.getCaseValueEx().isSatisfies(C))
         return i;
     return case_default();
   }
   ConstCaseIt findCaseValue(const ConstantInt *C) const {
     for (ConstCaseIt i = case_begin(), e = case_end(); i != e; ++i)
-      if (i.getCaseValue() == C)
+      if (i.getCaseValueEx().isSatisfies(C))
         return i;
     return case_default();
   }    
@@ -2681,10 +2703,17 @@ public:
   }
 
   /// addCase - Add an entry to the switch instruction...
+  /// @Deprecated
   /// Note:
   /// This action invalidates case_end(). Old case_end() iterator will
   /// point to the added case.
   void addCase(ConstantInt *OnVal, BasicBlock *Dest);
+  
+  /// addCase - Add an entry to the switch instruction.
+  /// Note:
+  /// This action invalidates case_end(). Old case_end() iterator will
+  /// point to the added case.
+  void addCase(ConstantRangesSet& OnVal, BasicBlock *Dest);
 
   /// removeCase - This method removes the specified case and its successor
   /// from the switch instruction. Note that this operation may reorder the
@@ -2703,6 +2732,17 @@ public:
     assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
     setOperand(idx*2+1, (Value*)NewSucc);
   }
+  
+  uint16_t Hash() const {
+    uint32_t NumberOfCases = (uint32_t)getNumCases();
+    uint16_t Hash = (0xFFFF & NumberOfCases) ^ (NumberOfCases >> 16);
+    for (ConstCaseIt i = case_begin(), e = case_end();
+         i != e; ++i) {
+      uint32_t NumItems = (uint32_t)i.getCaseValueEx().getNumItems(); 
+      Hash = (Hash << 1) ^ (0xFFFF & NumItems) ^ (NumItems >> 16);
+    }
+    return Hash;
+  }  
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SwitchInst *) { return true; }

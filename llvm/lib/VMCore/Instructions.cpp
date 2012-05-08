@@ -3169,6 +3169,13 @@ SwitchInst::~SwitchInst() {
 /// addCase - Add an entry to the switch instruction...
 ///
 void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
+  CRSBuilder CB;
+  CB.add(OnVal);
+  ConstantRangesSet CRS = CB.getCase();
+  addCase(CRS, Dest);
+}
+
+void SwitchInst::addCase(ConstantRangesSet& OnVal, BasicBlock *Dest) {
   unsigned NewCaseIdx = getNumCases(); 
   unsigned OpNo = NumOperands;
   if (OpNo+2 > ReservedSpace)
@@ -3177,7 +3184,7 @@ void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
   assert(OpNo+1 < ReservedSpace && "Growing didn't work!");
   NumOperands = OpNo+2;
   CaseIt Case(this, NewCaseIdx);
-  Case.setValue(OnVal);
+  Case.setValueEx(OnVal);
   Case.setSuccessor(Dest);
 }
 
